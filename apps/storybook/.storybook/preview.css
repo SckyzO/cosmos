@@ -1,9 +1,15 @@
 /* Cosmos preview CSS — order matters:
- *   tailwindcss base → cosmos tokens (@theme) → cosmos vars (:root + .dark)
- *
- * Subpath exports (./tailwind, ./vars) are declared in @sckyzo/cosmos-theme/package.json.
- * Vite's strict exports resolution refuses any path not declared there.
+ *   tailwindcss base + @source (scan packages/react)
+ *   → cosmos tokens (@theme block)
+ *   → cosmos vars (:root + .dark)
  */
 @import 'tailwindcss';
+
+/* Tailwind 4 needs explicit @source for files outside the config root.
+ * Without this, classes used in @sckyzo/cosmos-react components don't get
+ * generated, breaking the styling. */
+@source "../../../packages/react/src/**/*.{ts,tsx}";
+@source "../stories/**/*.{ts,tsx,mdx}";
+
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';
