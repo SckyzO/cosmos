@@ -45,3 +45,7 @@ Thumbs.db
 
 # --- Storybook cache ---
 .storybook-cache/
+
+# --- Screenshots from Playwright tests (kept locally, never committed except .gitkeep) ---
+screenshots/*
+!screenshots/.gitkeep
