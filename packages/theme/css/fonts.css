@@ -1,1 +1,13 @@
-/* Placeholder — Phase 1 task #12 will add @fontsource imports for Outfit + JetBrains Mono */
+/* Cosmos fonts — self-hosted via @fontsource (no internet required at runtime).
+   Consumers must install @fontsource/outfit and @fontsource/jetbrains-mono as deps. */
+
+@import '@fontsource/outfit/300.css';
+@import '@fontsource/outfit/400.css';
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/600.css';
+@import '@fontsource/outfit/700.css';
+@import '@fontsource/outfit/800.css';
+
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
