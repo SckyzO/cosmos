@@ -19,17 +19,17 @@
     "./fonts": "./css/fonts.css",
     "./package.json": "./package.json"
   },
-  "files": [
-    "css/",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["css/", "README.md", "LICENSE"],
   "scripts": {
     "lint": "echo 'CSS-only package, no JS lint needed'",
     "lint:fix": "echo 'CSS-only package, no JS lint needed'",
     "typecheck": "echo 'CSS-only package, no TS check needed'",
     "test": "echo 'CSS-only package, no tests yet'",
     "build": "echo 'CSS-only package, no build step needed'"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/outfit": "^5.2.8"
   },
   "publishConfig": {
     "access": "public",

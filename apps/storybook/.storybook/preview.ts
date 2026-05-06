@@ -1,11 +1,19 @@
 import type { Preview } from '@storybook/react-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
 
-// Cosmos theme — order matters: fonts → tailwind tokens → tailwind itself → app-level CSS vars.
-import '@sckyzo/cosmos-theme/fonts';
-import '@sckyzo/cosmos-theme/tailwind';
-import 'tailwindcss';
-import '@sckyzo/cosmos-theme/vars';
+// Fonts (npm-distributed CSS via @fontsource — Vite handles @fontsource/*/x.css natively)
+import '@fontsource/outfit/300.css';
+import '@fontsource/outfit/400.css';
+import '@fontsource/outfit/500.css';
+import '@fontsource/outfit/600.css';
+import '@fontsource/outfit/700.css';
+import '@fontsource/outfit/800.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/700.css';
+
+// Tailwind 4 + Cosmos tokens (loaded via the @tailwindcss/vite plugin)
+import './preview.css';
 
 const preview: Preview = {
   parameters: {
@@ -22,10 +30,7 @@ const preview: Preview = {
         { name: 'light', value: '#f9fafb' },
       ],
     },
-    a11y: {
-      // Don't fail story render on a11y violations — surface them as warnings.
-      test: 'todo',
-    },
+    a11y: { test: 'todo' },
   },
   decorators: [
     withThemeByClassName({
