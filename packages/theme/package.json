@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-theme",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Cosmos design tokens — Tailwind 4 theme + universal CSS variables (palette, fonts, dark mode)",
   "license": "MIT",
   "author": "SckyzO",

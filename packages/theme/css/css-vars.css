@@ -1,1 +1,52 @@
-/* Placeholder — Phase 1 task #12 will populate this with rackscope app.css CSS vars + dark mode */
+/* Cosmos CSS variables — universal (work with or without Tailwind).
+ *
+ * Light mode is :root (default). Dark mode is .dark — applied by the
+ * consumer's theme switcher (ThemeContext, etc.) on the <html> element.
+ *
+ * Consumers reference these via var(--color-bg-base), var(--color-text-primary), etc.
+ * Tailwind 4 utilities (bg-accent-primary, etc.) are bridged via tailwind-tokens.css.
+ */
+
+:root {
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  --color-bg-base: #f9fafb;
+  --color-bg-panel: #fff;
+  --color-bg-elevated: #fff;
+
+  /* ── Borders ───────────────────────────────────────────────────────────── */
+  --color-border: #d0d5dd;
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --color-text-base: #101828;
+  --color-text-primary: #101828;
+  --color-text-secondary: #667085;
+  --color-text-muted: #98a2b3;
+
+  /* ── Accent ────────────────────────────────────────────────────────────── */
+  --color-accent: #465fff;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-bg-base: #0c111d;
+  --color-bg-panel: #1a2231;
+  --color-bg-elevated: #1d2939;
+
+  --color-border: #344054;
+
+  --color-text-base: #e4e7ec;
+  --color-text-primary: #fff;
+  --color-text-secondary: #98a2b3;
+  --color-text-muted: #667085;
+
+  --color-accent: #465fff;
+}
+
+/* Smooth theme switching transition — opt-in via .cosmos-bg-transition class
+   on the app shell (not body, to avoid transitioning every DOM element). */
+.cosmos-bg-transition {
+  transition-property: color, background-color, border-color;
+  transition-duration: 500ms;
+  transition-timing-function: ease;
+}
