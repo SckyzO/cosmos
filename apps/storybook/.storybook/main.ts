@@ -45,8 +45,12 @@ const config: StorybookConfig = {
         host: '0.0.0.0',
         allowedHosts: ['storybook', 'localhost', '127.0.0.1'],
         cors: true,
+        // HMR config:
+        //  - Browser on host accesses via localhost:6006 (port-forwarded from container).
+        //  - Playwright in compose network accesses via http://storybook:6006.
+        //  Force the WS endpoint to be relative so both work; chunk URLs stay relative too,
+        //  avoiding "Failed to fetch dynamically imported module" when hosts differ.
         hmr: {
-          host: 'localhost',
           clientPort: 6006,
           protocol: 'ws',
         },
