@@ -1,0 +1,6 @@
+default: true
+MD013: false       # Line length
+MD024:
+  siblings_only: true
+MD033: false       # Inline HTML allowed (Storybook MDX)
+MD041: false       # First line top-level heading

@@ -1,0 +1,67 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - '@sckyzo/cosmos-theme@*'
+      - '@sckyzo/cosmos-react@*'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        type: choice
+        required: true
+        options:
+          - cosmos-theme
+          - cosmos-react
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.package || 'tagged' }} to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Publish (tagged)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_REF: ${{ github.ref }}
+        run: |
+          tag="${GH_REF#refs/tags/}"
+          pkg=$(echo "$tag" | cut -d'@' -f2)
+          pnpm --filter "@sckyzo/$pkg" publish --provenance --access public --no-git-checks
+
+      - name: Publish (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PKG: ${{ inputs.package }}
+        run: |
+          pnpm --filter "@sckyzo/$PKG" publish --provenance --access public --no-git-checks

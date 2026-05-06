@@ -1,0 +1,47 @@
+# --- Node ---
+node_modules/
+.pnpm-store/
+*.tgz
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Build artifacts ---
+dist/
+build/
+.turbo/
+storybook-static/
+
+# --- Tests ---
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.vitest/
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Env ---
+.env
+.env.local
+.env.*.local
+
+# --- AI assistant files (gitignored, never committed) ---
+.claude/
+
+# --- Storybook cache ---
+.storybook-cache/

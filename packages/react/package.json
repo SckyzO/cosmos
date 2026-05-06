@@ -1,0 +1,75 @@
+{
+  "name": "@sckyzo/cosmos-react",
+  "version": "0.0.0",
+  "description": "Cosmos React component library — primitives, layout, forms, feedback (Phase 1)",
+  "license": "MIT",
+  "author": "SckyzO",
+  "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/react",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SckyzO/cosmos.git",
+    "directory": "packages/react"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@sckyzo/cosmos-theme": "workspace:*",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.470.0",
+    "tailwind-merge": "^3.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "happy-dom": "^15.11.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "design-system",
+    "react",
+    "react-19",
+    "tailwindcss",
+    "tailwind-v4",
+    "components",
+    "cosmos"
+  ]
+}

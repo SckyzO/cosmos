@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# cosmos — devctl wrapper. All commands run inside the cosmos-dev Docker image.
+# The host needs only: docker, git, gh, bash.
+
+set -euo pipefail
+
+DEV_IMAGE="cosmos-dev:latest"
+WORKSPACE="/workspace"
+DOCKER_RUN="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE}"
+DOCKER_RUN_IT="docker run -it --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE}"
+DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -p 6006:6006"
+
+ensure_image() {
+    if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
+        echo "→ Building cosmos-dev image (first run)..."
+        docker build -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+    fi
+}
+
+case "${1:-help}" in
+    build)
+        docker build -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+        ;;
+    rebuild)
+        docker build --no-cache -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+        ;;
+    shell)
+        ensure_image
+        $DOCKER_RUN_IT "$DEV_IMAGE" bash
+        ;;
+    storybook)
+        ensure_image
+        $DOCKER_RUN_SB "$DEV_IMAGE" pnpm storybook --host 0.0.0.0
+        ;;
+    e2e)
+        ensure_image
+        $DOCKER_RUN "$DEV_IMAGE" pnpm test:e2e
+        ;;
+    run)
+        ensure_image
+        shift
+        $DOCKER_RUN "$DEV_IMAGE" "$@"
+        ;;
+    help|--help|-h)
+        cat <<EOF
+cosmos devctl — docker-driven dev wrapper
+
+USAGE:
+    ./devctl <command> [args...]
+
+COMMANDS:
+    build         Build the cosmos-dev image
+    rebuild       Rebuild the cosmos-dev image without cache
+    shell         Open an interactive shell inside the dev container
+    storybook     Run Storybook dev server (http://localhost:6006)
+    e2e           Run Playwright e2e tests
+    run <cmd>     Run an arbitrary command inside the dev container
+                  e.g.: ./devctl run pnpm install
+                        ./devctl run pnpm --filter @sckyzo/cosmos-react test
+    help          Show this help
+
+PREFER make targets when available — see ./Makefile.
+EOF
+        ;;
+    *)
+        echo "Unknown command: $1" >&2
+        exit 1
+        ;;
+esac

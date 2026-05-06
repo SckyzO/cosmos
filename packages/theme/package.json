@@ -1,0 +1,46 @@
+{
+  "name": "@sckyzo/cosmos-theme",
+  "version": "0.0.0",
+  "description": "Cosmos design tokens — Tailwind 4 theme + universal CSS variables (palette, fonts, dark mode)",
+  "license": "MIT",
+  "author": "SckyzO",
+  "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/theme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SckyzO/cosmos.git",
+    "directory": "packages/theme"
+  },
+  "type": "module",
+  "main": "./css/tailwind-tokens.css",
+  "exports": {
+    ".": "./css/tailwind-tokens.css",
+    "./tailwind": "./css/tailwind-tokens.css",
+    "./vars": "./css/css-vars.css",
+    "./fonts": "./css/fonts.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "css/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "echo 'CSS-only package, no JS lint needed'",
+    "lint:fix": "echo 'CSS-only package, no JS lint needed'",
+    "typecheck": "echo 'CSS-only package, no TS check needed'",
+    "test": "echo 'CSS-only package, no tests yet'",
+    "build": "echo 'CSS-only package, no build step needed'"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "tailwindcss",
+    "tailwind-v4",
+    "css-variables",
+    "cosmos"
+  ]
+}

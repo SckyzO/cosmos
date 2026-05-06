@@ -1,0 +1,45 @@
+name: Repo hygiene
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    name: Block large files + forbidden paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Block files larger than 500 KB
+        run: |
+          large=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | while read -r f; do
+            [ -f "$f" ] || continue
+            size=$(stat -c %s "$f")
+            if [ "$size" -gt 512000 ]; then
+              echo "$f ($((size / 1024)) KB)"
+            fi
+          done)
+          if [ -n "$large" ]; then
+            echo "::error::Files larger than 500 KB are not allowed:"
+            echo "$large"
+            exit 1
+          fi
+
+      - name: Block forbidden paths
+        run: |
+          forbidden=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -E '^(node_modules/|dist/|build/|storybook-static/|playwright-report/|test-results/|coverage/)' || true)
+          if [ -n "$forbidden" ]; then
+            echo "::error::Build artifacts must not be committed:"
+            echo "$forbidden"
+            exit 1
+          fi
