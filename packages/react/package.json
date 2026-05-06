@@ -1,7 +1,7 @@
 {
   "name": "@sckyzo/cosmos-react",
   "version": "0.0.0",
-  "description": "Cosmos React component library — primitives, layout, forms, feedback (Phase 1)",
+  "description": "Cosmos React 19 component library — primitives, layout, forms, feedback (Phase 1)",
   "license": "MIT",
   "author": "SckyzO",
   "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/react",
@@ -22,11 +22,7 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist/",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist/", "README.md", "LICENSE"],
   "scripts": {
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -43,21 +39,22 @@
   "dependencies": {
     "@sckyzo/cosmos-theme": "workspace:*",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.470.0",
-    "tailwind-merge": "^3.0.0"
+    "lucide-react": "^1.14.0",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.0",
-    "happy-dom": "^15.11.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tsup": "^8.3.5",
-    "typescript": "^5.9.0",
-    "vitest": "^3.0.0"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "happy-dom": "^20.9.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.2",
+    "vitest": "^4.1.5"
   },
   "publishConfig": {
     "access": "public",

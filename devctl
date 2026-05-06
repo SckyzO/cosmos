@@ -1,28 +1,39 @@
 #!/usr/bin/env bash
-# cosmos — devctl wrapper. All commands run inside the cosmos-dev Docker image.
-# The host needs only: docker, git, gh, bash.
+# cosmos — devctl wrapper. All commands run inside cosmos-dev as non-root user
+# matching the host UID/GID. The host needs only: docker, git, gh, bash.
 
 set -euo pipefail
 
 DEV_IMAGE="cosmos-dev:latest"
 WORKSPACE="/workspace"
-DOCKER_RUN="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE}"
-DOCKER_RUN_IT="docker run -it --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE}"
-DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -p 6006:6006"
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+DOCKER_RUN="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node"
+DOCKER_RUN_IT="docker run -it --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node"
+DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node -p 6006:6006"
 
 ensure_image() {
     if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
         echo "→ Building cosmos-dev image (first run)..."
-        docker build -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+        docker build \
+            --build-arg "USER_UID=${HOST_UID}" \
+            --build-arg "USER_GID=${HOST_GID}" \
+            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
     fi
 }
 
 case "${1:-help}" in
     build)
-        docker build -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+        docker build \
+            --build-arg "USER_UID=${HOST_UID}" \
+            --build-arg "USER_GID=${HOST_GID}" \
+            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
         ;;
     rebuild)
-        docker build --no-cache -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+        docker build --no-cache \
+            --build-arg "USER_UID=${HOST_UID}" \
+            --build-arg "USER_GID=${HOST_GID}" \
+            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
         ;;
     shell)
         ensure_image
@@ -30,7 +41,7 @@ case "${1:-help}" in
         ;;
     storybook)
         ensure_image
-        $DOCKER_RUN_SB "$DEV_IMAGE" pnpm storybook --host 0.0.0.0
+        $DOCKER_RUN_SB "$DEV_IMAGE" pnpm storybook
         ;;
     e2e)
         ensure_image
@@ -42,25 +53,25 @@ case "${1:-help}" in
         $DOCKER_RUN "$DEV_IMAGE" "$@"
         ;;
     help|--help|-h)
-        cat <<EOF
+        cat <<USAGE
 cosmos devctl — docker-driven dev wrapper
 
 USAGE:
     ./devctl <command> [args...]
 
 COMMANDS:
-    build         Build the cosmos-dev image
-    rebuild       Rebuild the cosmos-dev image without cache
-    shell         Open an interactive shell inside the dev container
-    storybook     Run Storybook dev server (http://localhost:6006)
-    e2e           Run Playwright e2e tests
-    run <cmd>     Run an arbitrary command inside the dev container
+    build         Build the cosmos-dev image (UID/GID matched to host)
+    rebuild       Rebuild without cache
+    shell         Interactive shell as host user
+    storybook     Storybook dev server (http://localhost:6006, no auto-open)
+    e2e           Playwright e2e tests (screenshots in screenshots/)
+    run <cmd>     Run an arbitrary command in container (as host user)
                   e.g.: ./devctl run pnpm install
                         ./devctl run pnpm --filter @sckyzo/cosmos-react test
     help          Show this help
 
-PREFER make targets when available — see ./Makefile.
-EOF
+Prefer make targets when available — see ./Makefile.
+USAGE
         ;;
     *)
         echo "Unknown command: $1" >&2
