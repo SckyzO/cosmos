@@ -1,0 +1,9 @@
+/* Cosmos preview CSS — order matters:
+ *   tailwindcss base → cosmos tokens (@theme) → cosmos vars (:root + .dark)
+ *
+ * Subpath exports (./tailwind, ./vars) are declared in @sckyzo/cosmos-theme/package.json.
+ * Vite's strict exports resolution refuses any path not declared there.
+ */
+@import 'tailwindcss';
+@import '@sckyzo/cosmos-theme/tailwind';
+@import '@sckyzo/cosmos-theme/vars';

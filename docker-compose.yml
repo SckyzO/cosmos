@@ -1,0 +1,51 @@
+# cosmos — local dev orchestration.
+#
+# Usage:
+#   docker compose up storybook              # Storybook on http://localhost:6006
+#   make test-e2e                            # Playwright e2e via compose
+#   docker compose exec playwright bash      # Interactive shell in playwright container
+#   docker compose down                      # Stop everything
+#
+# Both services use the same cosmos-dev image (pnpm + playwright browsers preinstalled).
+# Containers run as the host user (UID:GID), no root.
+# Make sure UID/GID are exported (Makefile + devctl do it for you).
+
+services:
+  # --- Storybook dev server ------------------------------------------------
+  storybook:
+    image: cosmos-dev:latest
+    container_name: cosmos-storybook
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    environment:
+      HOME: /home/node
+    ports:
+      - "6006:6006"
+    command: pnpm --filter '@cosmos/storybook' dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:6006/ > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  # --- Playwright runner (uses same cosmos-dev image, has pnpm + browsers) ---
+  # Sleeps idle by default; tests are exec'd into it via:
+  #   make test-e2e
+  # Tests reach storybook via the compose network: http://storybook:6006
+  playwright:
+    image: cosmos-dev:latest
+    container_name: cosmos-playwright
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /workspace/tests/e2e
+    volumes:
+      - ./:/workspace
+    environment:
+      HOME: /home/node
+      PLAYWRIGHT_BASE_URL: http://storybook:6006
+    depends_on:
+      storybook:
+        condition: service_healthy
+    command: ["sleep", "infinity"]
