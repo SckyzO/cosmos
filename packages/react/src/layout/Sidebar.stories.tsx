@@ -1,21 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-  LayoutDashboard,
-  Layers,
-  Box,
-  FileText,
-  Settings,
-  Bell,
-  User,
-} from 'lucide-react';
+import { LayoutDashboard, Layers, Box, FileText, Settings, Bell, User } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 
 const meta = {
   title: 'Layout/Sidebar',
-  component: Sidebar,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
-} satisfies Meta<typeof Sidebar>;
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -62,7 +53,7 @@ export const WithFooter: Story = {
       <Sidebar
         footer={
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+            <span className="bg-brand-500/10 text-brand-500 flex h-8 w-8 items-center justify-center rounded-full">
               <User className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
@@ -95,7 +86,7 @@ export const WithBadges: Story = {
           icon={Bell}
           label="Notifications"
           badge={
-            <span className="rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="bg-brand-500 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white">
               3
             </span>
           }

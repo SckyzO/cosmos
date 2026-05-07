@@ -17,19 +17,18 @@ import { Sidebar } from './Sidebar';
 
 const meta = {
   title: 'Layout/Shell',
-  component: Shell,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof Shell>;
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 // Reusable mock content for the main area
 const PageContent = ({ title, description }: { title: string; description: string }) => (
-  <div className="p-10 max-w-4xl">
+  <div className="max-w-4xl p-10">
     <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
     <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{description}</p>
     <div className="mt-8 grid grid-cols-3 gap-4">
@@ -38,10 +37,10 @@ const PageContent = ({ title, description }: { title: string; description: strin
           key={n}
           className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6"
         >
-          <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+          <p className="text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
             Card {n}
           </p>
-          <p className="mt-2 text-3xl font-bold text-brand-500">{n * 12}</p>
+          <p className="text-brand-500 mt-2 text-3xl font-bold">{n * 12}</p>
         </div>
       ))}
     </div>
@@ -65,13 +64,7 @@ const ThemeToggle = () => {
   );
 };
 
-const IconButton = ({
-  icon: Icon,
-  label,
-}: {
-  icon: typeof Bell;
-  label: string;
-}) => (
+const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string }) => (
   <button
     type="button"
     aria-label={label}
@@ -141,11 +134,7 @@ export const CollapsedSidebar: Story = {
   render: () => (
     <Shell
       topbar={
-        <Topbar
-          logo={<Box className="h-6 w-6" />}
-          title="Cosmos"
-          rightActions={<ThemeToggle />}
-        />
+        <Topbar logo={<Box className="h-6 w-6" />} title="Cosmos" rightActions={<ThemeToggle />} />
       }
       sidebar={
         <Sidebar collapsed>
