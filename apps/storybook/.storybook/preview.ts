@@ -35,7 +35,12 @@ const preview: Preview = {
       // Sidebar group order — anything not listed lands at the bottom.
       // Aligns with the Storybook story-hierarchy convention.
       storySort: {
+        // `Pages/Dashboard` is the landing — the first story Storybook opens
+        // when the user arrives, showing a fully composed dashboard built
+        // from real Cosmos components. Then `Welcome` (intro doc), then
+        // groups ordered atomic-design-style.
         order: [
+          'Pages',
           'Welcome',
           'Foundations',
           'Atoms',
@@ -49,7 +54,6 @@ const preview: Preview = {
           'Tables',
           'Layout',
           'Lists',
-          'Pages',
           'Charts',
         ],
         method: 'alphabetical',
