@@ -7,7 +7,7 @@ import { SectionCard } from '../templates/SectionCard';
 const meta = {
   title: 'Overlays/Modal',
   component: Modal,
-  parameters: { layout: 'padded' },
+  parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },
 } satisfies Meta<typeof Modal>;

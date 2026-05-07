@@ -25,7 +25,7 @@ export const Shell = ({ topbar, sidebar, children, className }: ShellProps) => (
   <div
     className={clsx(
       'flex h-screen w-screen overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-base)]',
-      className,
+      className
     )}
   >
     {sidebar && <aside className="shrink-0">{sidebar}</aside>}
