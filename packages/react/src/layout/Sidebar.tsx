@@ -1,21 +1,37 @@
-import { useState, type ComponentType, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ComponentType, type ReactNode } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
+
+// ─── Internal context ─────────────────────────────────────────────────────────
+// Threads the `collapsed` state from <Sidebar> down to all subcomponents
+// (Brand / Item / Group / Section / SubMenu) without forcing the consumer to
+// pass it manually to each child.
+//
+// Subcomponents always allow an explicit `collapsed` prop that wins over the
+// context — useful for one-off overrides or stories that mount a child in
+// isolation.
+
+const SidebarContext = createContext<{ collapsed: boolean }>({ collapsed: false });
+
+const useSidebarCollapsed = (override?: boolean): boolean => {
+  const ctx = useContext(SidebarContext);
+  return override ?? ctx.collapsed;
+};
 
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
 export type SidebarProps = {
-  /** Whether the sidebar is in collapsed (icons-only) state */
+  /** Whether the sidebar is in collapsed (icons-only) state. */
   collapsed?: boolean;
   /** Width when expanded (px). Default: 264 */
   width?: number;
   /** Width when collapsed (px). Default: 72 */
   collapsedWidth?: number;
-  /** Sidebar content — typically Sidebar.Brand / Sidebar.Item / Sidebar.Group / Sidebar.Section / Sidebar.SubMenu */
+  /** Sidebar content — typically Sidebar.Brand / .Item / .SubMenu / .Group / .Section. */
   children: ReactNode;
-  /** Footer content (sticks to bottom — e.g. user profile) */
+  /** Footer content (sticks to bottom — e.g. user profile + collapse btn). */
   footer?: ReactNode;
-  /** Optional className override */
+  /** Optional className override. */
   className?: string;
 };
 
@@ -23,7 +39,9 @@ export type SidebarProps = {
  * Sidebar — left-side navigation panel.
  *
  * Compound component: brand + items + groups + sub-menus + footer slot.
- * Smooth width transition when `collapsed` toggles.
+ * Smooth width transition when `collapsed` toggles. The `collapsed` state
+ * is automatically threaded to every subcomponent via React context, so
+ * children don't need to receive it as a prop.
  */
 const SidebarRoot = ({
   collapsed = false,
@@ -33,18 +51,24 @@ const SidebarRoot = ({
   footer,
   className,
 }: SidebarProps) => (
-  <nav
-    aria-label="Main navigation"
-    style={{ width: collapsed ? collapsedWidth : width }}
-    className={clsx(
-      'flex h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-panel)]',
-      'transition-[width] duration-300 ease-in-out',
-      className
-    )}
-  >
-    <div className="flex-1 overflow-y-auto">{children}</div>
-    {footer && <div className="shrink-0 border-t border-[var(--color-border)] p-3">{footer}</div>}
-  </nav>
+  <SidebarContext.Provider value={{ collapsed }}>
+    <nav
+      aria-label="Main navigation"
+      style={{ width: collapsed ? collapsedWidth : width }}
+      className={clsx(
+        'flex h-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-bg-panel)]',
+        'transition-[width] duration-300 ease-in-out',
+        className
+      )}
+    >
+      <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+      {footer && (
+        <div className="shrink-0 overflow-hidden border-t border-[var(--color-border)] p-3">
+          {footer}
+        </div>
+      )}
+    </nav>
+  </SidebarContext.Provider>
 );
 
 // ─── Sidebar.Brand ────────────────────────────────────────────────────────────
@@ -52,17 +76,17 @@ const SidebarRoot = ({
 // Animates with the collapse state: in collapsed mode only the logo is visible.
 
 export type SidebarBrandProps = {
-  /** Logo node — typically a small icon, lucide component, or img */
+  /** Logo node — typically a small icon, lucide component, or img. */
   logo?: ReactNode;
-  /** Product / app name */
+  /** Product / app name. */
   title: string;
-  /** Optional smaller subtitle below the title */
+  /** Optional smaller subtitle below the title. */
   subtitle?: string;
-  /** href to navigate when the brand is clicked */
+  /** href to navigate when the brand is clicked. */
   href?: string;
-  /** click handler (alternative to href) */
+  /** click handler (alternative to href). */
   onClick?: () => void;
-  /** Whether parent sidebar is collapsed */
+  /** Override the inherited collapsed state (defaults to `useContext`). */
   collapsed?: boolean;
 };
 
@@ -72,8 +96,9 @@ const SidebarBrand = ({
   subtitle,
   href,
   onClick,
-  collapsed = false,
+  collapsed: collapsedProp,
 }: SidebarBrandProps) => {
+  const collapsed = useSidebarCollapsed(collapsedProp);
   const inner = (
     <>
       {logo && (
@@ -118,21 +143,21 @@ const SidebarBrand = ({
 // ─── Sidebar.Item ─────────────────────────────────────────────────────────────
 
 export type SidebarItemProps = {
-  /** Icon component (lucide-react or any React component accepting className) */
+  /** Icon component (lucide-react or any React component accepting className). */
   icon: ComponentType<{ className?: string }>;
-  /** Item label */
+  /** Item label. */
   label: string;
-  /** Whether the item is active (highlighted) */
+  /** Whether the item is active (highlighted). */
   active?: boolean;
-  /** Link target — renders an <a> if set, otherwise a <button> */
+  /** Link target — renders an <a> if set, otherwise a <button>. */
   href?: string;
-  /** Click handler (if not using href) */
+  /** Click handler (if not using href). */
   onClick?: () => void;
-  /** Optional badge (count, "new", etc.) shown right of label */
+  /** Optional badge (count, "new"…) shown right of label. Hidden when collapsed. */
   badge?: ReactNode;
-  /** Whether the parent sidebar is collapsed (passed automatically by parent if used inside Sidebar) */
+  /** Override the inherited collapsed state. */
   collapsed?: boolean;
-  /** Indentation depth (for nested items inside groups). Default: 0 */
+  /** Indentation depth (for nested items inside groups). Default: 0. */
   depth?: number;
 };
 
@@ -143,16 +168,18 @@ const SidebarItem = ({
   href,
   onClick,
   badge,
-  collapsed = false,
+  collapsed: collapsedProp,
   depth = 0,
 }: SidebarItemProps) => {
+  const collapsed = useSidebarCollapsed(collapsedProp);
   const baseClass = clsx(
-    'group mx-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    'group mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
+    collapsed ? 'justify-center px-2' : 'px-3',
     active
       ? 'bg-brand-500/10 text-brand-500'
       : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
   );
-  const style = depth > 0 ? { paddingLeft: 12 + depth * 20 } : undefined;
+  const style = !collapsed && depth > 0 ? { paddingLeft: 12 + depth * 20 } : undefined;
 
   const content = (
     <>
@@ -168,7 +195,13 @@ const SidebarItem = ({
 
   if (href) {
     return (
-      <a href={href} className={baseClass} style={style} aria-current={active ? 'page' : undefined}>
+      <a
+        href={href}
+        title={collapsed ? label : undefined}
+        className={baseClass}
+        style={style}
+        aria-current={active ? 'page' : undefined}
+      >
         {content}
       </a>
     );
@@ -177,6 +210,7 @@ const SidebarItem = ({
     <button
       type="button"
       onClick={onClick}
+      title={collapsed ? label : undefined}
       className={clsx(baseClass, 'w-[calc(100%-1rem)] text-left')}
       style={style}
       aria-current={active ? 'page' : undefined}
@@ -188,21 +222,21 @@ const SidebarItem = ({
 
 // ─── Sidebar.SubMenu ──────────────────────────────────────────────────────────
 // Expandable menu — clicking the trigger toggles a list of nested items.
-// Differs from Sidebar.Group (which is just a labelled section divider): this
-// produces a true nav item with children that expand/collapse.
+// In collapsed mode, the trigger renders icon-only and the children are
+// hidden completely (chevron + nested items don't appear).
 
 export type SidebarSubMenuProps = {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  /** Initial open state */
+  /** Initial open state. */
   defaultOpen?: boolean;
-  /** Whether parent sidebar is collapsed */
+  /** Override the inherited collapsed state. */
   collapsed?: boolean;
-  /** Whether any child item is active — keeps the submenu visually active when collapsed */
+  /** Whether any child item is active. */
   active?: boolean;
-  /** Optional badge (count) shown right of label */
+  /** Optional badge shown right of label (hidden when collapsed). */
   badge?: ReactNode;
-  /** Nested items — typically Sidebar.Item with `depth={1}` */
+  /** Nested items — typically `Sidebar.Item` with `depth={1}`. */
   children: ReactNode;
 };
 
@@ -210,21 +244,22 @@ const SidebarSubMenu = ({
   icon: Icon,
   label,
   defaultOpen = false,
-  collapsed = false,
+  collapsed: collapsedProp,
   active = false,
   badge,
   children,
 }: SidebarSubMenuProps) => {
+  const collapsed = useSidebarCollapsed(collapsedProp);
   const [open, setOpen] = useState(defaultOpen || active);
 
-  // In collapsed mode, render as a non-expandable item (children hidden).
+  // Collapsed mode: render as a centered icon-only button, no children.
   if (collapsed) {
     return (
       <button
         type="button"
         title={label}
         className={clsx(
-          'group mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+          'group mx-2 flex w-[calc(100%-1rem)] items-center justify-center rounded-lg px-2 py-2 text-sm font-medium transition-colors',
           active
             ? 'bg-brand-500/10 text-brand-500'
             : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
@@ -264,25 +299,23 @@ const SidebarSubMenu = ({
 };
 
 // ─── Sidebar.Group ────────────────────────────────────────────────────────────
-// Collapsible labelled group — header with chevron + items list.
+// Collapsible labelled group — header with chevron + items list. In collapsed
+// mode, the header is hidden and children render flat.
 
 export type SidebarGroupProps = {
-  /** Group header label */
   label: string;
-  /** Initial open/closed state */
   defaultOpen?: boolean;
-  /** Whether parent sidebar is collapsed */
   collapsed?: boolean;
-  /** Group items (typically Sidebar.Item) */
   children: ReactNode;
 };
 
 const SidebarGroup = ({
   label,
   defaultOpen = true,
-  collapsed = false,
+  collapsed: collapsedProp,
   children,
 }: SidebarGroupProps) => {
+  const collapsed = useSidebarCollapsed(collapsedProp);
   const [open, setOpen] = useState(defaultOpen);
 
   if (collapsed) {
@@ -305,7 +338,8 @@ const SidebarGroup = ({
 };
 
 // ─── Sidebar.Section ──────────────────────────────────────────────────────────
-// Visual separator + optional non-collapsible label.
+// Visual separator + optional non-collapsible label. Label hides automatically
+// when the sidebar is collapsed.
 
 export type SidebarSectionProps = {
   label?: string;
@@ -313,16 +347,19 @@ export type SidebarSectionProps = {
   children: ReactNode;
 };
 
-const SidebarSection = ({ label, collapsed = false, children }: SidebarSectionProps) => (
-  <div className="my-2 border-t border-[var(--color-border)] pt-2">
-    {label && !collapsed && (
-      <p className="px-5 py-1.5 text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
-        {label}
-      </p>
-    )}
-    <div className="space-y-0.5">{children}</div>
-  </div>
-);
+const SidebarSection = ({ label, collapsed: collapsedProp, children }: SidebarSectionProps) => {
+  const collapsed = useSidebarCollapsed(collapsedProp);
+  return (
+    <div className="my-2 border-t border-[var(--color-border)] pt-2">
+      {label && !collapsed && (
+        <p className="px-5 py-1.5 text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
+          {label}
+        </p>
+      )}
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+};
 
 // ─── Compound exports ─────────────────────────────────────────────────────────
 
