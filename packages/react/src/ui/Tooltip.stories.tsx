@@ -6,9 +6,11 @@ import { Button } from './Button';
 
 const meta = {
   title: 'Feedback/Tooltip',
+  component: Tooltip,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { content: 'Tooltip content', children: null },
+} satisfies Meta<typeof Tooltip>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

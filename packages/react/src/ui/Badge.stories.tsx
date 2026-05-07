@@ -4,9 +4,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Atoms/Badge',
+  component: Badge,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { children: 'Badge' },
+} satisfies Meta<typeof Badge>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

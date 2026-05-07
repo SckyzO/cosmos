@@ -4,9 +4,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Data/CodeBlock',
+  component: CodeBlock,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { code: 'echo hello' },
+} satisfies Meta<typeof CodeBlock>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

@@ -5,9 +5,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Navigation/Breadcrumb',
+  component: Breadcrumb,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { items: [] },
+} satisfies Meta<typeof Breadcrumb>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

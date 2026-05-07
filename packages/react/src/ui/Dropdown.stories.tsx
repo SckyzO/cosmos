@@ -6,9 +6,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Overlays/Dropdown',
+  component: Dropdown,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { options: [] },
+} satisfies Meta<typeof Dropdown>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

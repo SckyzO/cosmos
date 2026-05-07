@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true
+  },
+  "include": [
+    "../../packages/react/src/**/*.ts",
+    "../../packages/react/src/**/*.tsx",
+    "../../packages/charts/src/**/*.ts",
+    "../../packages/charts/src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx"
+  ]
+}

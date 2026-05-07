@@ -7,9 +7,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Overlays/Drawer',
+  component: Drawer,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { open: false, onClose: () => {}, children: null },
+} satisfies Meta<typeof Drawer>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

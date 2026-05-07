@@ -4,9 +4,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Atoms/Avatar',
+  component: Avatar,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { name: 'Tom Bourdin' },
+} satisfies Meta<typeof Avatar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

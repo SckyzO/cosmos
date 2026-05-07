@@ -4,9 +4,11 @@ import { Button } from './Button';
 
 const meta = {
   title: 'Data/Card',
+  component: Card,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { children: 'Card content' },
+} satisfies Meta<typeof Card>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
