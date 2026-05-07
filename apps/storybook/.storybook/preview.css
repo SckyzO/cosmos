@@ -8,8 +8,9 @@
 /* Tailwind 4 needs explicit @source for files outside the config root.
  * Without this, classes used in @sckyzo/cosmos-react components don't get
  * generated, breaking the styling. */
-@source "../../../packages/react/src/**/*.{ts,tsx}";
-@source "../stories/**/*.{ts,tsx,mdx}";
+@source '../../../packages/react/src/**/*.{ts,tsx}';
+@source '../../../packages/charts/src/**/*.{ts,tsx}';
+@source '../stories/**/*.{ts,tsx,mdx}';
 
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';

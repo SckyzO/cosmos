@@ -4,3 +4,7 @@ export * from './Select';
 export * from './Toggle';
 export * from './FilterPills';
 export * from './SegmentedControl';
+export * from './StepperInput';
+export * from './NumberInput';
+export * from './ZoomBar';
+export * from './FormRow';

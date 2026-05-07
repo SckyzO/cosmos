@@ -1,4 +1,11 @@
-import { CheckCircle, AlertTriangle, XCircle, HelpCircle, type LucideIcon } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  HelpCircle,
+  Info,
+  type LucideIcon,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { type HealthStatus } from './types';
 
@@ -36,6 +43,12 @@ const HEALTH_CONFIG: Record<
     bg: 'bg-gray-100 dark:bg-gray-800',
     text: 'text-gray-500 dark:text-gray-400',
     border: 'border-gray-200 dark:border-gray-700',
+  },
+  INFO: {
+    icon: Info,
+    bg: 'bg-blue-50 dark:bg-blue-500/10',
+    text: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-200 dark:border-blue-500/30',
   },
 };
 
