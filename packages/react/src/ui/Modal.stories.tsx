@@ -5,7 +5,7 @@ import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Modal',
+  title: 'Overlays/Modal',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

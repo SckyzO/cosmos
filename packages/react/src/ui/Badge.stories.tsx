@@ -3,7 +3,7 @@ import { Badge } from './Badge';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Badge',
+  title: 'Atoms/Badge',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

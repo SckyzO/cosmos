@@ -10,7 +10,7 @@ import { SegmentedControl } from './SegmentedControl';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'Forms/Controls',
+  title: 'Forms/Basic Controls',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

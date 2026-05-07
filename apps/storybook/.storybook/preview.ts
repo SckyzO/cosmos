@@ -31,6 +31,30 @@ const preview: Preview = {
       ],
     },
     a11y: { test: 'todo' },
+    options: {
+      // Sidebar group order — anything not listed lands at the bottom.
+      // Aligns with the Storybook story-hierarchy convention.
+      storySort: {
+        order: [
+          'Welcome',
+          'Foundations',
+          'Atoms',
+          'Status',
+          'Forms',
+          'Feedback',
+          'Overlays',
+          'Navigation',
+          'Actions',
+          'Data',
+          'Tables',
+          'Layout',
+          'Lists',
+          'Pages',
+          'Charts',
+        ],
+        method: 'alphabetical',
+      },
+    },
   },
   decorators: [
     withThemeByClassName({

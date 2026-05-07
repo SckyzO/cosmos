@@ -7,7 +7,7 @@ import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Settings',
+  title: 'Actions/Settings & Save',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

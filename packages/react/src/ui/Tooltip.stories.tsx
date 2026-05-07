@@ -5,7 +5,7 @@ import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
 
 const meta = {
-  title: 'UI/Tooltip',
+  title: 'Feedback/Tooltip',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

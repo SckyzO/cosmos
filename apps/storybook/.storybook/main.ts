@@ -23,6 +23,9 @@ const config: StorybookConfig = {
     // viewport is built into Storybook 10 core (no longer a separate addon since SB 9).
     // Use parameters.viewport in preview.ts to configure breakpoints.
     '@storybook/addon-mcp',
+    // Component testing in browser mode via Vitest + Playwright.
+    // Run via `pnpm --filter @cosmos/storybook test`.
+    '@storybook/addon-vitest',
   ],
   framework: {
     name: '@storybook/react-vite',

@@ -8,7 +8,7 @@ import { ContentNarrow } from './ContentNarrow';
 import { ColBox } from './ColBox';
 
 const meta = {
-  title: 'Templates/Overview',
+  title: 'Layout/Page Templates',
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
 } satisfies Meta;

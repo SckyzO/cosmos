@@ -3,7 +3,7 @@ import { Avatar } from './Avatar';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Avatar',
+  title: 'Atoms/Avatar',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

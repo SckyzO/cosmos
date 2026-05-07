@@ -5,7 +5,7 @@ import { Dropdown } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Dropdown',
+  title: 'Overlays/Dropdown',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

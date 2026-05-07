@@ -9,7 +9,7 @@ import { SelectInput } from './SelectInput';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Primitives',
+  title: 'Atoms/Primitives',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;
