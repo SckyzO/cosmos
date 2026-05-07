@@ -14,6 +14,7 @@
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/outfit": "^5.2.8",
+    "@sckyzo/cosmos-charts": "workspace:*",
     "@sckyzo/cosmos-react": "workspace:*",
     "@sckyzo/cosmos-theme": "workspace:*",
     "react": "^19.2.5",

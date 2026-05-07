@@ -3,6 +3,7 @@
   "files": [],
   "references": [
     { "path": "./packages/react" },
+    { "path": "./packages/charts" },
     { "path": "./apps/storybook" }
   ]
 }

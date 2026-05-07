@@ -1,0 +1,70 @@
+{
+  "name": "@sckyzo/cosmos-charts",
+  "version": "0.0.0",
+  "description": "Cosmos charts — opinionated ApexCharts wrappers themed for the Cosmos design system",
+  "license": "MIT",
+  "author": "SckyzO",
+  "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/charts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SckyzO/cosmos.git",
+    "directory": "packages/charts"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "apexcharts": "^4.4.0",
+    "clsx": "^2.1.1",
+    "react-apexcharts": "^1.7.0"
+  },
+  "devDependencies": {
+    "@storybook/react-vite": "^10.3.6",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "storybook": "^10.3.6",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "design-system",
+    "react",
+    "react-19",
+    "charts",
+    "apexcharts",
+    "cosmos"
+  ]
+}

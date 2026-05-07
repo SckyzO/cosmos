@@ -18,6 +18,7 @@ const STATUS_CLASS: Record<HealthStatus, string> = {
   WARN: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
   CRIT: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
   UNKNOWN: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+  INFO: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
 /**

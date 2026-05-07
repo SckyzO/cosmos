@@ -1,5 +1,5 @@
 /** Health status — used by StatusBadge, HealthDot, HealthBadge, and lists. */
-export type HealthStatus = 'OK' | 'WARN' | 'CRIT' | 'UNKNOWN';
+export type HealthStatus = 'OK' | 'WARN' | 'CRIT' | 'UNKNOWN' | 'INFO';
 
 /** Tailwind class string per status — pill background + text color. */
 export const STATUS_PILL: Record<HealthStatus, string> = {
@@ -7,6 +7,7 @@ export const STATUS_PILL: Record<HealthStatus, string> = {
   WARN: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
   CRIT: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
   UNKNOWN: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+  INFO: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
 /** Raw color hex per status — used for HealthDot pulse animation. */
@@ -15,4 +16,5 @@ export const STATUS_COLOR: Record<HealthStatus, string> = {
   WARN: '#f59e0b',
   CRIT: '#ef4444',
   UNKNOWN: '#6b7280',
+  INFO: '#3b82f6',
 };

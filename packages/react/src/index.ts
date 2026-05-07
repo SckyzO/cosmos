@@ -8,3 +8,6 @@ export * from './lists';
 export * from './navigation';
 export * from './ui';
 export * from './forms';
+export * from './data';
+export * from './table';
+export * from './pages';
