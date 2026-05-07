@@ -5,7 +5,6 @@ import {
   FileText,
   LayoutDashboard,
   Layers,
-  Menu,
   Moon,
   Server,
   Settings,
@@ -75,72 +74,115 @@ const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string })
   </button>
 );
 
-const CollapseButton = ({ onClick }: { onClick: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    aria-label="Toggle sidebar"
-    className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
-  >
-    <Menu className="h-4 w-4" />
-  </button>
-);
-
-// Reusable nav block
-const NavItems = ({ collapsed }: { collapsed: boolean }) => (
+const NavItems = () => (
   <div className="py-3">
-    <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active collapsed={collapsed} />
-    <Sidebar.SubMenu icon={Layers} label="Library" collapsed={collapsed} defaultOpen>
-      <Sidebar.Item icon={Box} label="Tokens" collapsed={collapsed} depth={1} />
-      <Sidebar.Item icon={Layers} label="Components" collapsed={collapsed} depth={1} />
+    <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
+    <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
+      <Sidebar.Item icon={Box} label="Tokens" depth={1} />
+      <Sidebar.Item icon={Layers} label="Components" depth={1} />
     </Sidebar.SubMenu>
-    <Sidebar.SubMenu icon={Server} label="Infrastructure" collapsed={collapsed}>
-      <Sidebar.Item icon={Server} label="Servers" collapsed={collapsed} depth={1} />
-      <Sidebar.Item icon={FileText} label="Documentation" collapsed={collapsed} depth={1} />
+    <Sidebar.SubMenu icon={Server} label="Infrastructure">
+      <Sidebar.Item icon={Server} label="Servers" depth={1} />
+      <Sidebar.Item icon={FileText} label="Documentation" depth={1} />
     </Sidebar.SubMenu>
-    <Sidebar.Section label="Account" collapsed={collapsed}>
-      <Sidebar.Item icon={Settings} label="Settings" collapsed={collapsed} />
+    <Sidebar.Section label="Account">
+      <Sidebar.Item icon={Settings} label="Settings" />
     </Sidebar.Section>
   </div>
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Story 1: Full layout — collapse btn in topbar (left), brand in sidebar
+// Story 1: Default — Shell owns the sidebar collapsed state
+//
+// Shell automatically threads `sidebarCollapsed` + `onToggleSidebar` into the
+// Topbar (built-in hamburger) and `collapsed` into the Sidebar. The consumer
+// only writes the markup, no plumbing.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Default: Story = {
+  render: () => (
+    <Shell
+      topbar={
+        <Topbar
+          pageTitle="Analytics Dashboard"
+          rightActions={
+            <>
+              <IconButton icon={Bell} label="Notifications" />
+              <ThemeToggle />
+              <IconButton icon={User} label="User profile" />
+            </>
+          }
+        />
+      }
+      sidebar={
+        <Sidebar>
+          <Sidebar.Brand
+            logo={<Box className="h-5 w-5" />}
+            title="Cosmos"
+            subtitle="Design system"
+          />
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent
+        title="Dashboard"
+        description="Click the built-in hamburger button in the topbar to toggle the sidebar collapsed state. Shell wires it up automatically."
+      />
+    </Shell>
+  ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2: Sidebar collapsed by default (uncontrolled)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const StartsCollapsed: Story = {
+  render: () => (
+    <Shell
+      defaultSidebarCollapsed
+      topbar={<Topbar pageTitle="Servers" rightActions={<ThemeToggle />} />}
+      sidebar={
+        <Sidebar>
+          <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent
+        title="Servers"
+        description="Sidebar starts collapsed. Click the hamburger to expand."
+      />
+    </Shell>
+  ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 3: Controlled mode — caller owns the state
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const Controlled: Story = {
   render: () => {
     const [collapsed, setCollapsed] = useState(false);
     return (
       <Shell
-        topbar={
-          <Topbar
-            leftActions={<CollapseButton onClick={() => setCollapsed((v) => !v)} />}
-            pageTitle="Analytics Dashboard"
-            rightActions={
-              <>
-                <IconButton icon={Bell} label="Notifications" />
-                <ThemeToggle />
-                <IconButton icon={User} label="User profile" />
-              </>
-            }
-          />
-        }
+        sidebarCollapsed={collapsed}
+        onSidebarToggle={setCollapsed}
+        topbar={<Topbar pageTitle="Controlled mode" rightActions={<ThemeToggle />} />}
         sidebar={
-          <Sidebar collapsed={collapsed}>
+          <Sidebar>
             <Sidebar.Brand
-              collapsed={collapsed}
               logo={<Box className="h-5 w-5" />}
               title="Cosmos"
               subtitle="Design system"
             />
-            <NavItems collapsed={collapsed} />
+            <NavItems />
           </Sidebar>
         }
       >
         <PageContent
-          title="Dashboard"
-          description="Click the menu button in the topbar (left) to toggle the sidebar collapsed state."
+          title="Controlled"
+          description={`The host owns the state and can persist it (collapsed = ${String(collapsed)}).`}
         />
       </Shell>
     );
@@ -148,50 +190,22 @@ export const Default: Story = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Story 2: Sidebar collapsed by default
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const CollapsedSidebar: Story = {
-  render: () => (
-    <Shell
-      topbar={<Topbar leftActions={<CollapseButton onClick={() => {}} />} pageTitle="Servers" />}
-      sidebar={
-        <Sidebar collapsed>
-          <Sidebar.Brand collapsed logo={<Box className="h-5 w-5" />} title="Cosmos" />
-          <NavItems collapsed />
-        </Sidebar>
-      }
-    >
-      <PageContent title="Servers" description="Sidebar in collapsed mode shows icons only." />
-    </Shell>
-  ),
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Story 3: Without sidebar (topbar + main only)
+// Story 4: Without sidebar (topbar + main only) — no hamburger rendered
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const NoSidebar: Story = {
   render: () => (
-    <Shell
-      topbar={
-        <Topbar
-          leftActions={<CollapseButton onClick={() => {}} />}
-          pageTitle="Documentation"
-          rightActions={<ThemeToggle />}
-        />
-      }
-    >
+    <Shell topbar={<Topbar pageTitle="Documentation" rightActions={<ThemeToggle />} />}>
       <PageContent
         title="Documentation"
-        description="A simpler layout for marketing or docs pages — no sidebar."
+        description="A simpler layout for marketing or docs pages — no sidebar, no hamburger."
       />
     </Shell>
   ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Story 4: Minimal (no topbar, no sidebar — just content)
+// Story 5: Minimal (no topbar, no sidebar — just content)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Minimal: Story = {
