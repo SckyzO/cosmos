@@ -97,7 +97,7 @@ const Panel = ({
   const { value: active } = useTabs();
   if (value !== active) return null;
   return (
-    <div role="tabpanel" className={clsx('pt-4', className)}>
+    <div role="tabpanel" className={clsx('pt-5', className)}>
       {children}
     </div>
   );

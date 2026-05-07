@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -84,4 +85,33 @@ export const States: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+export const ClickFiresOnClick: Story = {
+  args: { children: 'Click me', onClick: fn() },
+  play: async ({ args, canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Click me' });
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const DisabledBlocksClick: Story = {
+  args: { children: 'Disabled', onClick: fn(), disabled: true },
+  play: async ({ args, canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Disabled' });
+    await userEvent.click(button);
+    await expect(args.onClick).not.toHaveBeenCalled();
+  },
+};
+
+export const LoadingBlocksClick: Story = {
+  args: { children: 'Saving…', onClick: fn(), loading: true },
+  play: async ({ args, canvas }) => {
+    const button = canvas.getByRole('button', { name: /Saving/ });
+    await userEvent.click(button);
+    await expect(args.onClick).not.toHaveBeenCalled();
+  },
 };

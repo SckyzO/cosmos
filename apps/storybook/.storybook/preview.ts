@@ -54,6 +54,7 @@ const preview: Preview = {
           'Tables',
           'Layout',
           'Lists',
+          'Settings',
           'Charts',
         ],
         method: 'alphabetical',

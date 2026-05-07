@@ -11,3 +11,4 @@ export * from './forms';
 export * from './data';
 export * from './table';
 export * from './pages';
+export * from './settings';
