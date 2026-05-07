@@ -17,11 +17,11 @@ import { Sidebar } from './Sidebar';
 
 const meta = {
   title: 'Layout/Shell',
-  parameters: {
-    layout: 'fullscreen',
-  },
+  component: Shell,
+  parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { children: null },
+} satisfies Meta<typeof Shell>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

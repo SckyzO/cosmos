@@ -6,9 +6,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Overlays/Modal',
+  component: Modal,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { open: false, onClose: () => {}, children: null },
+} satisfies Meta<typeof Modal>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

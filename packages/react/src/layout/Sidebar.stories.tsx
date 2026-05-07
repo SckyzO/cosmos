@@ -4,9 +4,11 @@ import { Sidebar } from './Sidebar';
 
 const meta = {
   title: 'Layout/Sidebar',
+  component: Sidebar,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { children: null },
+} satisfies Meta<typeof Sidebar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

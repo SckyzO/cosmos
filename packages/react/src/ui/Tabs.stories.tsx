@@ -5,9 +5,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Navigation/Tabs',
+  component: Tabs,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { value: 'overview', onChange: () => {}, children: null },
+} satisfies Meta<typeof Tabs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

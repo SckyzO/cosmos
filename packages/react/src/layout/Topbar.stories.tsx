@@ -4,9 +4,10 @@ import { Topbar } from './Topbar';
 
 const meta = {
   title: 'Layout/Topbar',
+  component: Topbar,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
-} satisfies Meta;
+} satisfies Meta<typeof Topbar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

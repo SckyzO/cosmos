@@ -5,9 +5,11 @@ import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Atoms/Button',
+  component: Button,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-} satisfies Meta;
+  args: { children: 'Button' },
+} satisfies Meta<typeof Button>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
