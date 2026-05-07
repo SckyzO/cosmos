@@ -1,5 +1,15 @@
-// Storybook 10.3+ — `@storybook/addon-vitest` applies preview annotations
-// automatically. This file is kept (with no manual `setProjectAnnotations`
-// call) as a placeholder for any custom test setup we may add later.
+import { setProjectAnnotations } from '@storybook/react-vite';
+import { beforeAll } from 'vitest';
+
+import * as projectAnnotations from './preview';
+
+// Wire the framework's preview annotations into the Vitest test runner so
+// `context.renderToCanvas` is available when stories mount in browser mode.
 //
-// See https://storybook.js.org/docs/writing-tests/integrations/vitest-addon
+// Note: addon-vitest 10.3 prints "Skipping automatic provisioning" when it
+// detects this call, but the auto-provisioning currently does NOT wire
+// renderToCanvas — without this explicit call every story fails with
+// `TypeError: context.renderToCanvas is not a function`.
+const project = setProjectAnnotations([projectAnnotations.default]);
+
+beforeAll(project.beforeAll);
