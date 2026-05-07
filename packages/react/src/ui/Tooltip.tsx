@@ -48,12 +48,15 @@ export const Tooltip = ({
   variant = 'dark',
   maxWidth = 'max-w-xs',
 }: TooltipProps) => (
-  <div className="group relative inline-flex items-center">
+  // `inline-block w-fit` keeps the wrapper exactly the size of the children even
+  // inside grid/flex parents, so the absolute-positioned tooltip stays anchored
+  // on the trigger rather than on the parent cell.
+  <span className="group relative inline-block w-fit align-middle">
     {children}
-    <div
+    <span
       role="tooltip"
       className={clsx(
-        'pointer-events-none absolute z-50 w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal opacity-0 transition-opacity duration-150 group-hover:opacity-100',
+        'pointer-events-none absolute z-50 block w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal opacity-0 transition-opacity duration-150 group-hover:opacity-100',
         maxWidth,
         BOX_POS[position],
         VARIANT_BOX[variant]
@@ -64,8 +67,8 @@ export const Tooltip = ({
         aria-hidden
         className={clsx('absolute h-2 w-2 rotate-45', ARROW_POS[position], VARIANT_ARROW[variant])}
       />
-    </div>
-  </div>
+    </span>
+  </span>
 );
 
 export const TooltipHelp = ({

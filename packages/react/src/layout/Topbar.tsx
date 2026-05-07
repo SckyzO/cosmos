@@ -2,62 +2,58 @@ import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 
 export type TopbarProps = {
-  /** Brand logo or icon (left edge) */
-  logo?: ReactNode;
-  /** Main title (next to logo) */
-  title?: string;
-  /** Subtitle below title (small caps recommended) */
-  subtitle?: string;
-  /** Center area — typically search, breadcrumb, or empty */
+  /**
+   * Left-edge slot — typically the sidebar collapse/expand button.
+   * Place a button (e.g. hamburger icon) here that calls your sidebar
+   * toggle handler. The site brand belongs in `<Sidebar.Brand />`, not here.
+   */
+  leftActions?: ReactNode;
+  /** Current page title (≠ site name — that lives in Sidebar.Brand). */
+  pageTitle?: ReactNode;
+  /** Center area — typically search, breadcrumb, or empty. */
   center?: ReactNode;
-  /** Right-aligned actions (theme switcher, avatar, ...) */
+  /** Right-aligned actions — theme switcher, notifications, avatar… */
   rightActions?: ReactNode;
-  /** Optional className override */
+  /** Optional className override. */
   className?: string;
 };
 
 /**
  * Topbar — application header bar.
  *
- * Three slot zones: left (logo + title + subtitle), center (search/breadcrumb),
- * right (actions). Brand colors come from CSS variables, fonts inherit Cosmos.
+ * Layout: [leftActions] [pageTitle] [center] [rightActions]
  *
- * Height: fixed at h-16 (64px). Increase via className if needed.
+ * Height: 72px. The site brand belongs in `<Sidebar.Brand />` rather than the
+ * topbar, matching the rackscope/TailAdmin pattern (collapse button + page
+ * title on the left, never the product name).
  */
-export const Topbar = ({ logo, title, subtitle, center, rightActions, className }: TopbarProps) => (
-  <div
+export const Topbar = ({
+  leftActions,
+  pageTitle,
+  center,
+  rightActions,
+  className,
+}: TopbarProps) => (
+  <header
     className={clsx(
-      'flex h-16 items-center gap-4 px-6',
-      'text-[var(--color-text-primary)]',
-      className,
+      'flex h-[72px] items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-panel)] px-4 text-[var(--color-text-primary)]',
+      className
     )}
   >
-    {/* Left zone: logo + title block */}
-    <div className="flex shrink-0 items-center gap-3">
-      {logo && (
-        <span className="text-brand-500 flex h-9 w-9 items-center justify-center">{logo}</span>
-      )}
-      {(title || subtitle) && (
-        <div className="flex flex-col leading-tight">
-          {title && (
-            <span className="text-base font-bold tracking-tight">
-              {title}
-            </span>
-          )}
-          {subtitle && (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-              {subtitle}
-            </span>
-          )}
-        </div>
+    {/* Left: collapse btn + page title */}
+    <div className="flex min-w-0 shrink-0 items-center gap-3">
+      {leftActions}
+      {pageTitle && (
+        <h1 className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
+          {pageTitle}
+        </h1>
       )}
     </div>
 
-    {/* Center zone: stretches between left and right */}
-    {center && <div className="min-w-0 flex-1">{center}</div>}
-    {!center && <div className="flex-1" />}
+    {/* Center: stretches */}
+    {center ? <div className="min-w-0 flex-1">{center}</div> : <div className="flex-1" />}
 
-    {/* Right zone: actions */}
+    {/* Right: actions */}
     {rightActions && <div className="flex shrink-0 items-center gap-2">{rightActions}</div>}
-  </div>
+  </header>
 );

@@ -24,17 +24,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           {label}
         </span>
       )}
-      <div className="relative">
+      <div className="relative inline-flex h-9 w-full items-center">
         {Icon && (
-          <Icon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Icon aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
         )}
         <input
           ref={ref}
           id={inputId}
           className={clsx(
-            'h-9 w-full rounded-lg border bg-white pr-3 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'h-full w-full rounded-lg border bg-white text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
             Icon ? 'pl-9' : 'pl-3',
-            rightSlot && 'pr-12',
+            rightSlot ? 'pr-16' : 'pr-3',
             error
               ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
               : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
@@ -43,7 +43,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           {...rest}
         />
         {rightSlot && (
-          <span className="absolute top-1/2 right-3 -translate-y-1/2 text-xs text-gray-400">
+          <span className="pointer-events-none absolute right-3 text-xs text-gray-400">
             {rightSlot}
           </span>
         )}
