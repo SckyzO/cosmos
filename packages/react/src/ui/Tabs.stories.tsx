@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, userEvent } from 'storybook/test';
 import { Tabs } from './Tabs';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -52,5 +53,68 @@ export const ThreeTabs: Story = {
         </SectionCard>
       </Wrap>
     );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+export const SwitchesPanelOnTabClick: Story = {
+  render: () => {
+    const [tab, setTab] = useState('overview');
+    return (
+      <Tabs value={tab} onChange={setTab}>
+        <Tabs.List>
+          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+          <Tabs.Trigger value="metrics">Metrics</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Panel value="overview">
+          <p data-testid="panel">overview-panel-content</p>
+        </Tabs.Panel>
+        <Tabs.Panel value="metrics">
+          <p data-testid="panel">metrics-panel-content</p>
+        </Tabs.Panel>
+      </Tabs>
+    );
+  },
+  play: async ({ canvas }) => {
+    // Initial panel is "overview"
+    await expect(canvas.getByTestId('panel')).toHaveTextContent('overview-panel-content');
+    // Click "Metrics" → panel switches
+    await userEvent.click(canvas.getByRole('tab', { name: 'Metrics' }));
+    await expect(canvas.getByTestId('panel')).toHaveTextContent('metrics-panel-content');
+    // aria-selected wires correctly
+    await expect(canvas.getByRole('tab', { name: 'Metrics' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+export const DisabledTabIsNotClickable: Story = {
+  render: () => {
+    const [tab, setTab] = useState('overview');
+    return (
+      <Tabs value={tab} onChange={setTab}>
+        <Tabs.List>
+          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+          <Tabs.Trigger value="soon" disabled>
+            Soon
+          </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Panel value="overview">
+          <p data-testid="panel">overview-panel-content</p>
+        </Tabs.Panel>
+        <Tabs.Panel value="soon">
+          <p data-testid="panel">soon-panel-content</p>
+        </Tabs.Panel>
+      </Tabs>
+    );
+  },
+  play: async ({ canvas }) => {
+    const soon = canvas.getByRole('tab', { name: 'Soon' });
+    await expect(soon).toBeDisabled();
+    await userEvent.click(soon);
+    // Panel did not switch
+    await expect(canvas.getByTestId('panel')).toHaveTextContent('overview-panel-content');
   },
 };
