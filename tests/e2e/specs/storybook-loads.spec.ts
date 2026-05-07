@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('Storybook smoke test', () => {
   test('Hello story renders + capture console', async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe('Storybook smoke test', () => {
     page.on('console', (msg) => messages.push(`[${msg.type()}] ${msg.text()}`));
     page.on('pageerror', (err) => messages.push(`[pageerror] ${err.message}`));
     page.on('requestfailed', (req) =>
-      messages.push(`[reqfail] ${req.url()} - ${req.failure()?.errorText}`),
+      messages.push(`[reqfail] ${req.url()} - ${req.failure()?.errorText}`)
     );
 
     // Use viewMode=story for direct iframe access (otherwise story doesn't load)
