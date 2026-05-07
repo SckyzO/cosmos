@@ -9,7 +9,7 @@ import { SelectInput } from '../ui/SelectInput';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'Forms/Advanced',
+  title: 'Forms/Advanced Controls',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

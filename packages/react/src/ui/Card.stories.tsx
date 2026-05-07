@@ -3,7 +3,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 
 const meta = {
-  title: 'UI/Card',
+  title: 'Data/Card',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

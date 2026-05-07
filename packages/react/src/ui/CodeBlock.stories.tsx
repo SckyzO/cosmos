@@ -3,7 +3,7 @@ import { CodeBlock } from './CodeBlock';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/CodeBlock',
+  title: 'Data/CodeBlock',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

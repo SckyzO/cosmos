@@ -4,7 +4,7 @@ import { Tabs } from './Tabs';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Tabs',
+  title: 'Navigation/Tabs',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

@@ -7,7 +7,7 @@ import { RowActionButton } from './RowActionButton';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Page Actions',
+  title: 'Actions/Page Actions',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

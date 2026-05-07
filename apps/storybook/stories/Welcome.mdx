@@ -2,18 +2,51 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 <Meta title="Welcome" />
 
-# Cosmos
+# Cosmos design system
 
-Design system for sckyzo's projects — React 19 + Tailwind 4 + Storybook 10.
+Cosmos is the design system used across `sckyzo`'s projects (rackscope,
+monitoring-hub, monitoring-hub-website). It ships as three npm packages:
 
-## Status
+- **`@sckyzo/cosmos-theme`** — Tailwind 4 theme + CSS variables (CSS only).
+- **`@sckyzo/cosmos-react`** — React 19 component library.
+- **`@sckyzo/cosmos-charts`** — opinionated [ApexCharts](https://apexcharts.com/) wrappers
+  themed for Cosmos. Kept separate so consumers without charts don't ship the bundle.
 
-- **Phase 0** (current): monorepo + tooling + Storybook scaffolding ready, no components yet.
-- **Phase 1**: extraction of ~50 components from
-  [rackscope](https://github.com/SckyzO/rackscope) (`EmptyPage.tsx`, `TemplateDefaultPage.tsx`,
-  `pages/ui/*.tsx`).
+## Sidebar layout
 
-## Packages
+The components are grouped by **responsibility**, not by file location.
+This mirrors the Storybook
+[story-hierarchy convention](https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy)
+(`Design System / Atoms / Button` etc.) and keeps the navigation flat enough to scan.
 
-- [`@sckyzo/cosmos-theme`](https://github.com/SckyzO/cosmos/tree/main/packages/theme) — Tailwind 4 tokens + CSS vars
-- [`@sckyzo/cosmos-react`](https://github.com/SckyzO/cosmos/tree/main/packages/react) — React component library
+| Group          | Contains                                                                  |
+| -------------- | ------------------------------------------------------------------------- |
+| **Atoms**      | Indivisible primitives — Button, Badge, Avatar, Spinner, IconBox…         |
+| **Status**     | Health indicators — StatusBadge, HealthDot, HealthBadge                   |
+| **Forms**      | Input controls — Input, SearchInput, Toggle, FilterPills, Stepper…        |
+| **Feedback**   | Transient states — AlertBanner, Loading/Empty/Error, Skeleton, Tooltip    |
+| **Overlays**   | Floating UI — Modal, Drawer, Dropdown, ConfirmationModal                  |
+| **Navigation** | In-page nav — Tabs, Breadcrumb, Sidebar, Topbar                           |
+| **Actions**    | Contextual actions — PageActionButton, RefreshButton, StatefulSaveButton… |
+| **Data**       | Data display — Card, KpiCard, CodeBlock, Timeline, MiniCalendar           |
+| **Tables**     | DataTable + sub-components                                                |
+| **Layout**     | Page skeletons — Shell, Page Templates, StickyScrollNav                   |
+| **Lists**      | Repeatable rows — SimpleRow, ClickableRow, StatusRow                      |
+| **Pages**      | Full-page templates — ErrorPage                                           |
+| **Charts**     | Gallery (`@sckyzo/cosmos-charts`)                                         |
+
+## Conventions
+
+- Story IDs follow `Group/Component` (e.g. `Atoms/Button`, `Tables/DataTable`).
+- Compound components expose sub-components via `Object.assign`
+  (e.g. `<Modal><Modal.Header /><Modal.Body /><Modal.Footer /></Modal>`).
+- Status colors are inlined per-component to satisfy Tailwind 4's source scanner.
+- Dark mode is the default via `addon-themes` — toggle in the toolbar.
+
+## Tooling
+
+- Storybook 10 + Vite 7 (react renderer)
+- `@storybook/addon-vitest` for component testing in browser mode (Playwright)
+- `@storybook/addon-mcp` exposes a `/mcp` endpoint for AI agents (use the
+  `storybook-cosmos` MCP tools to query component documentation before answering)
+- All tooling runs in the `cosmos-dev` Docker container — host needs only Docker

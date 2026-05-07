@@ -4,7 +4,7 @@ import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Button',
+  title: 'Atoms/Button',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

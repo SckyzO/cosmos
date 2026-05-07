@@ -6,7 +6,7 @@ import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'UI/Drawer',
+  title: 'Overlays/Drawer',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;

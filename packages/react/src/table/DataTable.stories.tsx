@@ -7,7 +7,7 @@ import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
 
 const meta = {
-  title: 'Table/DataTable',
+  title: 'Tables/DataTable',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 } satisfies Meta;
