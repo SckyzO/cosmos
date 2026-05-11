@@ -42,7 +42,7 @@
   "dependencies": {
     "apexcharts": "^4.4.0",
     "clsx": "^2.1.1",
-    "react-apexcharts": "^1.7.0"
+    "react-apexcharts": "^2.1.0"
   },
   "devDependencies": {
     "@storybook/react-vite": "^10.3.6",
