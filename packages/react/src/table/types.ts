@@ -16,6 +16,8 @@ export type ColumnDef<T> = {
   sortValue?: (row: T) => string | number | null;
   /** Returns the raw filterable string for the row. */
   filterValue?: (row: T) => string;
+  /** Returns the searchable string for the row. Falls back to `filterValue` if absent. */
+  searchValue?: (row: T) => string;
   sortable?: boolean;
   filterable?: boolean;
 };

@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent } from 'storybook/test';
+import { Archive, Download, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { expect, fn, userEvent } from 'storybook/test';
 import { DataTable } from './DataTable';
 import type { ColumnDef } from './types';
 import { StatusBadge } from '../status/StatusBadge';
+import { Button } from '../ui/Button';
 import { RowActionButton } from '../ui/RowActionButton';
 import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
@@ -63,6 +66,7 @@ const columns: ColumnDef<Alert>[] = [
     width: '20%',
     sortable: true,
     sortValue: (r) => r.name,
+    searchValue: (r) => r.name,
     render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
   },
   {
@@ -187,5 +191,169 @@ export const SortByName: Story = {
     await userEvent.click(nameCol); // desc
     // After desc, the highest node-159 should appear in the first row
     await expect(canvas.getByText('node-159')).toBeInTheDocument();
+  },
+};
+
+// ── New: Selection + Bulk actions + Global search ────────────────────────────
+
+export const WithSelection: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 8)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={10}
+        selectable
+      />
+    </Wrap>
+  ),
+};
+
+export const WithBulkActions: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 8)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={10}
+        selectable
+        bulkActions={(selected) => (
+          <>
+            <Button variant="ghost" size="sm" icon={Download}>
+              Export ({selected.length})
+            </Button>
+            <Button variant="secondary" size="sm" icon={Archive}>
+              Archive
+            </Button>
+            <Button variant="danger" size="sm" icon={Trash2}>
+              Delete
+            </Button>
+          </>
+        )}
+      />
+    </Wrap>
+  ),
+};
+
+export const WithGlobalSearch: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={10}
+        defaultSearchValue=""
+        searchPlaceholder="Search by name…"
+      />
+    </Wrap>
+  ),
+};
+
+export const SelectionBulkSearchCombined: Story = {
+  render: () => {
+    const [selection, setSelection] = useState<Set<string | number>>(new Set());
+    const [search, setSearch] = useState('');
+    return (
+      <Wrap>
+        <SectionCard title={`DataTable — ${selection.size} selected · search: "${search || '(none)'}"`}>
+          <DataTable
+            rows={rows}
+            columns={columns}
+            rowKey={(r) => r.id}
+            pageSize={10}
+            selectable
+            selection={selection}
+            onSelectionChange={setSelection}
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Filter by name…"
+            bulkActions={(selected) => (
+              <>
+                <Button variant="ghost" size="sm" icon={Download}>
+                  Export ({selected.length})
+                </Button>
+                <Button variant="danger" size="sm" icon={Trash2}>
+                  Delete
+                </Button>
+              </>
+            )}
+          />
+        </SectionCard>
+      </Wrap>
+    );
+  },
+};
+
+// ── New interaction tests ────────────────────────────────────────────────────
+
+export const SelectAllToggles: Story = {
+  render: (args) => (
+    <DataTable
+      rows={rows.slice(0, 5)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={10}
+      selectable
+      onSelectionChange={args.onSelectionChange as (s: Set<string | number>) => void}
+    />
+  ),
+  args: { onSelectionChange: fn() },
+  play: async ({ args, canvas }) => {
+    const selectAll = canvas.getByLabelText(/select all rows/i);
+    await userEvent.click(selectAll);
+    // 5 rows selected
+    await expect(args.onSelectionChange).toHaveBeenCalled();
+    // The header checkbox should now reflect "all selected"
+    await expect((selectAll as HTMLInputElement).checked).toBe(true);
+  },
+};
+
+export const SearchFiltersRows: Story = {
+  render: () => (
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={10}
+      defaultSearchValue=""
+    />
+  ),
+  play: async ({ canvas }) => {
+    // Initially node-100 should be visible
+    await expect(canvas.getByText('node-100')).toBeInTheDocument();
+    const search = canvas.getByLabelText(/search rows/i);
+    await userEvent.type(search, 'node-159');
+    // After search, only node-159 should be visible
+    await expect(canvas.getByText('node-159')).toBeInTheDocument();
+    await expect(canvas.queryByText('node-100')).toBeNull();
+  },
+};
+
+export const BulkActionsAppearWhenSelected: Story = {
+  render: () => (
+    <DataTable
+      rows={rows.slice(0, 3)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={10}
+      selectable
+      bulkActions={(s) => <Button size="sm">Delete {s.length}</Button>}
+    />
+  ),
+  play: async ({ canvas }) => {
+    // No bulk action visible yet
+    await expect(canvas.queryByRole('button', { name: /delete/i })).toBeNull();
+    // Select first row
+    const firstRowCb = canvas.getByLabelText(/select row alert-1$/i);
+    await userEvent.click(firstRowCb);
+    // Bulk action toolbar appears
+    await expect(canvas.getByText(/1 selected/)).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: /delete 1/i })).toBeInTheDocument();
+    // Clear button restores
+    await userEvent.click(canvas.getByRole('button', { name: /clear/i }));
+    await expect(canvas.queryByText(/selected/i)).toBeNull();
   },
 };
