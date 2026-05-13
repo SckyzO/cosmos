@@ -49,6 +49,50 @@ export const WithRightSlot: Story = {
   },
 };
 
+export const WithPrefix: Story = {
+  args: {
+    label: 'Endpoint URL',
+    prefix: 'https://',
+    placeholder: 'prom.example.com',
+  },
+};
+
+export const WithSuffix: Story = {
+  args: {
+    label: 'Bucket name',
+    suffix: '.s3.amazonaws.com',
+    placeholder: 'my-bucket',
+  },
+};
+
+export const WithPrefixAndSuffix: Story = {
+  args: {
+    label: 'Domain',
+    prefix: 'https://',
+    suffix: '.com',
+    placeholder: 'example',
+  },
+};
+
+export const PrefixCurrency: Story = {
+  args: {
+    label: 'Monthly budget',
+    prefix: '€',
+    suffix: '/ month',
+    type: 'number',
+    placeholder: '0',
+  },
+};
+
+export const PrefixWithError: Story = {
+  args: {
+    label: 'Endpoint URL',
+    prefix: 'https://',
+    placeholder: 'prom.example.com',
+    error: 'Host could not be reached.',
+  },
+};
+
 export const Controlled: Story = {
   render: () => {
     const [v, setV] = useState('');
@@ -76,6 +120,20 @@ export const TypingFiresOnChange: Story = {
     const input = canvas.getByLabelText('Name');
     await userEvent.type(input, 'Tom');
     // onChange called once per keystroke
+    await expect(args.onChange).toHaveBeenCalledTimes(3);
+  },
+};
+
+export const PrefixTypingFiresOnChange: Story = {
+  args: {
+    label: 'Domain',
+    prefix: 'https://',
+    placeholder: 'example',
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByPlaceholderText('example');
+    await userEvent.type(input, 'abc');
     await expect(args.onChange).toHaveBeenCalledTimes(3);
   },
 };

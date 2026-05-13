@@ -34,3 +34,36 @@ export const SimpleText: Story = {
     ],
   },
 };
+
+const PATH = [
+  { label: 'Home', href: '/' },
+  { label: 'Library', href: '/library' },
+  { label: 'Components', href: '/library/components' },
+  { label: 'Breadcrumb' },
+];
+
+export const SeparatorSlash: Story = { args: { items: PATH, separator: 'slash' } };
+
+export const SeparatorDot: Story = { args: { items: PATH, separator: 'dot' } };
+
+export const SeparatorCustom: Story = {
+  args: {
+    items: PATH,
+    separator: <span className="text-xs text-[var(--color-text-muted)]">→</span>,
+  },
+};
+
+export const SeparatorMatrix: Story = {
+  render: () => (
+    <div className="space-y-3">
+      {(['chevron', 'slash', 'dot'] as const).map((sep) => (
+        <div key={sep} className="flex items-center gap-3">
+          <span className="w-16 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
+            {sep}
+          </span>
+          <Breadcrumb items={PATH} separator={sep} />
+        </div>
+      ))}
+    </div>
+  ),
+};

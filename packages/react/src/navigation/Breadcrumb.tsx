@@ -1,4 +1,4 @@
-import { type ComponentType } from 'react';
+import { type ComponentType, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -12,9 +12,39 @@ export type BreadcrumbItem = {
   onClick?: () => void;
 };
 
+export type BreadcrumbSeparator = 'chevron' | 'slash' | 'dot' | ReactNode;
+
 export type BreadcrumbProps = {
   items: BreadcrumbItem[];
+  /** Visual separator between items. Default `'chevron'`. Pass any ReactNode for full custom. */
+  separator?: BreadcrumbSeparator;
   className?: string;
+};
+
+const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
+  if (sep === 'chevron')
+    return (
+      <ChevronRight
+        className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]"
+        aria-hidden
+      />
+    );
+  if (sep === 'slash')
+    return (
+      <span aria-hidden className="select-none text-sm text-[var(--color-text-muted)]">
+        /
+      </span>
+    );
+  if (sep === 'dot')
+    return (
+      <span
+        aria-hidden
+        className="select-none text-base leading-none text-[var(--color-text-muted)]"
+      >
+        ·
+      </span>
+    );
+  return sep;
 };
 
 /**
@@ -27,7 +57,7 @@ export type BreadcrumbProps = {
  * page headers with the Home icon. This Breadcrumb is bigger and supports
  * an icon per item.
  */
-export const Breadcrumb = ({ items, className }: BreadcrumbProps) => (
+export const Breadcrumb = ({ items, separator = 'chevron', className }: BreadcrumbProps) => (
   <nav
     aria-label="Breadcrumb"
     className={clsx('flex items-center gap-1 overflow-x-auto', className)}
@@ -36,9 +66,7 @@ export const Breadcrumb = ({ items, className }: BreadcrumbProps) => (
       const isLast = i === items.length - 1;
       return (
         <div key={label} className="flex items-center gap-1">
-          {i > 0 && (
-            <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />
-          )}
+          {i > 0 && renderSeparator(separator)}
           {isLast ? (
             <span className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]">
               {Icon && <Icon className="text-brand-500 h-4 w-4" />}

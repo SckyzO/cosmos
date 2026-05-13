@@ -10,10 +10,17 @@ export type DropdownOption = {
   disabled?: boolean;
 };
 
+export type DropdownDivider = { divider: true };
+
+export type DropdownItem = DropdownOption | DropdownDivider;
+
+const isDivider = (item: DropdownItem): item is DropdownDivider =>
+  (item as DropdownDivider).divider === true;
+
 export type DropdownProps = {
   label?: string;
   icon?: ElementType;
-  options: DropdownOption[];
+  options: DropdownItem[];
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -45,7 +52,9 @@ export const Dropdown = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const selected = options.find((o) => o.value === value);
+  const selected = options.find(
+    (o): o is DropdownOption => !isDivider(o) && o.value === value,
+  );
   const displayLabel = selected?.label ?? placeholder ?? label ?? 'Select…';
 
   return (
@@ -78,7 +87,16 @@ export const Dropdown = ({
               align === 'right' ? 'right-0' : 'left-0'
             )}
           >
-            {options.map((opt) => {
+            {options.map((opt, idx) => {
+              if (isDivider(opt)) {
+                return (
+                  <div
+                    key={`divider-${idx}`}
+                    role="separator"
+                    className="my-1 border-t border-gray-100 dark:border-gray-800"
+                  />
+                );
+              }
               const Icon = opt.icon;
               const isSelected = opt.value === value;
               return (
