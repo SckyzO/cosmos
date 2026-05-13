@@ -9,6 +9,12 @@ export {
   type ContentStackedListItemProps,
 } from './ContentStackedList';
 export { StackedListInCard, type StackedListInCardProps } from './StackedListInCard';
+export {
+  NarrowStackedList,
+  type NarrowStackedListProps,
+  type NarrowStackedListItemProps,
+  type NarrowStackedListHeaderProps,
+} from './NarrowStackedList';
 export { SimpleRow, type SimpleRowProps } from './SimpleRow';
 export { ClickableRow, type ClickableRowProps } from './ClickableRow';
 export { StatusRow, type StatusRowProps } from './StatusRow';
