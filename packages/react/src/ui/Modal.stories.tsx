@@ -52,3 +52,147 @@ export const Confirmation: Story = {
     );
   },
 };
+
+export const FullScreen: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <SectionCard title="Full-screen modal — useful for long forms or media viewers">
+          <Button onClick={() => setOpen(true)}>Open full screen</Button>
+        </SectionCard>
+        <Modal open={open} onClose={() => setOpen(false)} size="full">
+          <Modal.Header
+            title="Edit template"
+            description="prod-default-template — used by 13 servers"
+            onClose={() => setOpen(false)}
+          />
+          <Modal.Body className="overflow-y-auto">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <p key={i} className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                Line {i + 1} — full-screen modals are great when content needs to scroll
+                or you&apos;re embedding a complex editor.
+              </p>
+            ))}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setOpen(false)}>Save changes</Button>
+          </Modal.Footer>
+        </Modal>
+      </Wrap>
+    );
+  },
+};
+
+// ── Modal.Alert variants ─────────────────────────────────────────────────────
+
+export const AlertInfo: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <SectionCard title="Info alert">
+          <Button onClick={() => setOpen(true)}>Show info alert</Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="info"
+          title="Maintenance scheduled"
+          message="The platform will be unavailable on Sunday from 02:00 to 04:00 UTC for upgrades."
+          confirmLabel="Got it"
+        />
+      </Wrap>
+    );
+  },
+};
+
+export const AlertWarning: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <SectionCard title="Warning alert">
+          <Button onClick={() => setOpen(true)}>Show warning</Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="warning"
+          title="Unsaved changes"
+          message="You have unsaved changes. Continue without saving?"
+          confirmLabel="Continue"
+          cancelLabel="Stay"
+        />
+      </Wrap>
+    );
+  },
+};
+
+export const AlertDanger: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <SectionCard title="Danger alert (destructive)">
+          <Button variant="danger" onClick={() => setOpen(true)}>
+            Delete account
+          </Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="danger"
+          title="Delete your account?"
+          message="This action is permanent. All your data, dashboards and integrations will be removed and cannot be recovered."
+          confirmLabel="Delete forever"
+          cancelLabel="Cancel"
+        />
+      </Wrap>
+    );
+  },
+};
+
+export const AlertSuccess: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <SectionCard title="Success alert">
+          <Button onClick={() => setOpen(true)}>Show success</Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="success"
+          title="Account created"
+          message="A confirmation email has been sent to john@example.com."
+          confirmLabel="Continue"
+        />
+      </Wrap>
+    );
+  },
+};
+
+export const AlertLoading: Story = {
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <Wrap>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="warning"
+          title="Saving changes…"
+          message="Please wait while we apply the configuration."
+          confirmLabel="Save"
+          cancelLabel="Cancel"
+          loading
+        />
+      </Wrap>
+    );
+  },
+};
