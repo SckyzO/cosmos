@@ -1,1 +1,3 @@
-export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './Breadcrumb';
+export * from './Breadcrumb';
+export * from './Pagination';
+export * from './Stepper';
