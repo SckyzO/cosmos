@@ -21,6 +21,8 @@ coverage/
 playwright-report/
 test-results/
 .vitest/
+tests/e2e/.tui-out.json
+tests/e2e/tailadmin-snapshots/
 
 # --- TypeScript ---
 *.tsbuildinfo
