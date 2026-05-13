@@ -7,7 +7,7 @@ const meta = {
   component: Avatar,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-  args: { name: 'Tom Bourdin' },
+  args: { name: 'John Doe' },
 } satisfies Meta<typeof Avatar>;
 
 export default meta;
@@ -24,7 +24,7 @@ export const InitialsAndImage: Story = {
         <div className="flex flex-wrap items-center gap-4">
           {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
             <div key={size} className="flex flex-col items-center gap-1">
-              <Avatar size={size} name="Tom Bourdin" />
+              <Avatar size={size} name="John Doe" />
               <span className="text-[10px] text-gray-500 uppercase">{size}</span>
             </div>
           ))}
@@ -34,7 +34,7 @@ export const InitialsAndImage: Story = {
         <SectionCard title="Image fallback">
           <div className="flex flex-wrap items-center gap-4">
             <Avatar size="lg" name="Jane Doe" />
-            <Avatar size="lg" name="Tom Bourdin" />
+            <Avatar size="lg" name="John Doe" />
             <Avatar size="lg" name="Sckyzo" />
             <Avatar size="lg" name="A B C D" />
           </div>

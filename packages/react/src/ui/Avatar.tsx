@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
 
-export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
 export type AvatarProps = {
   src?: string;
@@ -18,6 +18,8 @@ const SIZE_CLASS: Record<AvatarSize, string> = {
   md: 'h-10 w-10 text-sm',
   lg: 'h-12 w-12 text-base',
   xl: 'h-16 w-16 text-lg',
+  '2xl': 'h-20 w-20 text-xl',
+  '3xl': 'h-24 w-24 text-2xl',
 };
 
 const initialsOf = (name?: string): string => {
