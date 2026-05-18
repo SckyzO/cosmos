@@ -281,7 +281,8 @@ export const SingleColumn: Story = {
 };
 
 // ── Variant 4: With featured post ───────────────────────────────────────────
-// TUI "With featured post" — large featured article on the left, side list right.
+// Editorial magazine-style: large hero featured article (image + content) on
+// the left, compact "Latest" side list with thumbnails on the right.
 
 export const WithFeaturedPost: Story = {
   render: () => {
@@ -289,68 +290,133 @@ export const WithFeaturedPost: Story = {
     return (
       <Shell topbar={blogNavbar() as never}>
         <div className="bg-[var(--color-bg-base)]">
-          <ContentNarrow maxWidth={1152} className="px-6 py-16">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
+          <ContentNarrow maxWidth={1280} className="px-6 py-16">
+            {/* Section eyebrow */}
+            <div className="mb-10 flex items-end justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Editorial — Volume 01
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+                  From the blog
+                </h2>
+              </div>
+              <a
+                href="#archive"
+                className="hidden text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] sm:inline-flex sm:items-center sm:gap-1"
+              >
+                View all articles
+                <ArrowRight className="size-4" aria-hidden />
+              </a>
+            </div>
+
+            {/* Featured (8 cols) + Side list (4 cols) */}
+            <div className="grid grid-cols-1 gap-x-10 gap-y-12 lg:grid-cols-12">
               {/* Featured */}
-              <article>
-                <div className="text-xs text-[var(--color-text-secondary)]">
-                  <time dateTime={hero.date}>{hero.dateLabel}</time>
+              <article className="lg:col-span-8">
+                <a href={`#/${hero.slug}`} className="group block">
+                  <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
+                    <img
+                      alt=""
+                      src={hero.cover.replace('800/500', '1600/1000')}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
+                  </div>
+                </a>
+                <div className="mt-6 flex items-center gap-x-3 text-xs">
+                  <Badge variant="brand" size="sm">
+                    Featured
+                  </Badge>
+                  <span className="text-[var(--color-text-muted)]">·</span>
+                  <time
+                    dateTime={hero.date}
+                    className="text-[var(--color-text-secondary)]"
+                  >
+                    {hero.dateLabel}
+                  </time>
+                  <span className="text-[var(--color-text-muted)]">·</span>
+                  <span className="text-[var(--color-text-secondary)]">{hero.tag}</span>
                 </div>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-4xl lg:text-5xl">
                   <a href={`#/${hero.slug}`} className="hover:underline">
                     {hero.title}
                   </a>
-                </h2>
-                <p className="mt-4 text-base text-[var(--color-text-secondary)]">
+                </h3>
+                <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--color-text-secondary)]">
                   {hero.excerpt}
                 </p>
-                <a
-                  href={`#/${hero.slug}`}
-                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                >
-                  Continue reading
-                  <ArrowRight className="size-4" aria-hidden />
-                </a>
-                <div className="mt-6 flex items-center gap-x-3">
-                  <img
-                    alt=""
-                    src={hero.authorImg}
-                    className="size-9 rounded-full bg-gray-100"
-                  />
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                    {hero.author}
-                  </p>
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-y-4">
+                  <div className="flex items-center gap-x-3">
+                    <img
+                      alt=""
+                      src={hero.authorImg}
+                      className="size-10 rounded-full bg-gray-100"
+                    />
+                    <div className="text-sm">
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {hero.author}
+                      </p>
+                      <p className="text-[var(--color-text-secondary)]">
+                        {hero.authorRole}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={`#/${hero.slug}`}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+                  >
+                    Continue reading
+                    <ArrowRight className="size-4" aria-hidden />
+                  </a>
                 </div>
               </article>
 
-              {/* Side list */}
-              <div className="space-y-10 divide-y divide-[var(--color-border)]">
-                {rest.map((p, i) => (
-                  <article key={p.slug} className={i > 0 ? 'pt-10' : ''}>
-                    <div className="text-xs text-[var(--color-text-secondary)]">
-                      <time dateTime={p.date}>{p.dateLabel}</time>
-                    </div>
-                    <h3 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
-                      <a href={`#/${p.slug}`} className="hover:underline">
-                        {p.title}
-                      </a>
-                    </h3>
-                    <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                      {p.excerpt}
-                    </p>
-                    <div className="mt-4 flex items-center gap-x-3">
-                      <img
-                        alt=""
-                        src={p.authorImg}
-                        className="size-7 rounded-full bg-gray-100"
-                      />
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        {p.author}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
+              {/* Side list: compact items with thumbnails */}
+              <aside className="lg:col-span-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Latest from the blog
+                </h3>
+                <ul role="list" className="mt-5 divide-y divide-[var(--color-border)]">
+                  {rest.map((p) => (
+                    <li key={p.slug} className="py-5 first:pt-0 last:pb-0">
+                      <article>
+                        <a
+                          href={`#/${p.slug}`}
+                          className="group flex items-start gap-x-4"
+                        >
+                          <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                            <img
+                              alt=""
+                              src={p.cover}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-x-2 text-xs text-[var(--color-text-muted)]">
+                              <time dateTime={p.date}>{p.dateLabel}</time>
+                              <span aria-hidden>·</span>
+                              <span>{p.tag}</span>
+                            </div>
+                            <h4 className="mt-1.5 text-sm font-semibold leading-snug text-[var(--color-text-primary)] group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                              {p.title}
+                            </h4>
+                            <p className="mt-1 line-clamp-2 text-sm text-[var(--color-text-secondary)]">
+                              {p.excerpt}
+                            </p>
+                          </div>
+                        </a>
+                      </article>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#archive"
+                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 sm:hidden"
+                >
+                  View all articles
+                  <ArrowRight className="size-4" aria-hidden />
+                </a>
+              </aside>
             </div>
           </ContentNarrow>
         </div>
