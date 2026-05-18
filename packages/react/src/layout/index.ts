@@ -5,6 +5,14 @@ export {
   type DividerIconProps,
   type DividerRowProps,
 } from './Divider';
+export {
+  MediaObject,
+  type MediaObjectProps,
+  type MediaObjectImageProps,
+  type MediaObjectBodyProps,
+  type MediaObjectAlign,
+  type MediaObjectPosition,
+} from './MediaObject';
 export { Shell, type ShellProps } from './Shell';
 export { Topbar, type TopbarProps } from './Topbar';
 export {
