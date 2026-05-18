@@ -11,10 +11,11 @@ import {
 import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
 import { ContentNarrow } from '../templates/ContentNarrow';
+import { AnnouncementBar } from '../ui/AnnouncementBar';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
+import { CookieBanner } from '../ui/CookieBanner';
 import { GridList } from '../lists/GridList';
 
 // Pages/BlogPost — refined article reading template.
@@ -477,12 +478,50 @@ const DefaultBody = () => {
   );
 };
 
+const DefaultStoryRender = () => {
+  const [cookieOpen, setCookieOpen] = useState(true);
+  return (
+    <>
+      <AnnouncementBar
+        intent="brand"
+        sticky
+        message={
+          <span>
+            <strong>Cosmos 1.1 is out.</strong> DocPage template, Combobox, and
+            5 blog variants.
+          </span>
+        }
+        action={
+          <a
+            href="#changelog"
+            className="font-medium text-white underline underline-offset-2"
+          >
+            Read the changelog →
+          </a>
+        }
+        dismissible
+      />
+      <Shell topbar={blogNavbar() as never}>
+        <DefaultBody />
+      </Shell>
+      <CookieBanner
+        open={cookieOpen}
+        message={
+          <span>
+            We use a single cookie to remember your theme preference. No
+            tracking, no analytics, no third parties.
+          </span>
+        }
+        onSettings={() => setCookieOpen(false)}
+        onDeny={() => setCookieOpen(false)}
+        onAccept={() => setCookieOpen(false)}
+      />
+    </>
+  );
+};
+
 export const Default: Story = {
-  render: () => (
-    <Shell topbar={blogNavbar() as never}>
-      <DefaultBody />
-    </Shell>
-  ),
+  render: () => <DefaultStoryRender />,
 };
 
 // ── Variant 2: Minimal — short article, no hero, no TOC, no author card ────
