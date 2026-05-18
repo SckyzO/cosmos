@@ -23,6 +23,7 @@ test-results/
 .vitest/
 tests/e2e/.tui-out.json
 tests/e2e/tailadmin-snapshots/
+tests/e2e/screenshots/
 
 # --- TypeScript ---
 *.tsbuildinfo
