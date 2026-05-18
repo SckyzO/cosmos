@@ -21,3 +21,5 @@ export * from './Calendar';
 export * from './DatePicker';
 export * from './TimePicker';
 export * from './OtpInput';
+export * from './ActionPanel';
+export * from './Combobox';
