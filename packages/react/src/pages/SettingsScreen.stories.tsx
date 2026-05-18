@@ -12,6 +12,7 @@ import { Select } from '../forms/Select';
 import { Textarea } from '../forms/Textarea';
 import { AvatarUploader } from '../forms/AvatarUploader';
 import { FormFooter } from '../forms/FormFooter';
+import { Accordion } from '../ui/Accordion';
 import { Button } from '../ui/Button';
 
 // TUI Plus "Page Examples / Settings Screens" — typical user settings page
@@ -79,6 +80,36 @@ const SettingsForm = () => {
         description="Write a few sentences about yourself — visible on your profile."
       >
         <Textarea label="Bio" rows={4} />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Frequently asked"
+        description="Quick answers for common questions about the settings on this page."
+      >
+        <Accordion type="single" collapsible defaultValue="reset">
+          <Accordion.Item value="reset">
+            <Accordion.Trigger>How do I reset my profile to defaults?</Accordion.Trigger>
+            <Accordion.Content>
+              Open the user menu in the top-right corner, then choose
+              <em> Reset profile</em>. Your avatar and bio are cleared; account
+              identifiers stay untouched.
+            </Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="visibility">
+            <Accordion.Trigger>Who can see my bio?</Accordion.Trigger>
+            <Accordion.Content>
+              Anyone you have shared a workspace with. Bios are never indexed
+              outside the platform.
+            </Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="email">
+            <Accordion.Trigger>Can I change my email after signup?</Accordion.Trigger>
+            <Accordion.Content>
+              Yes. Update it above and confirm via the link sent to the new
+              address — the previous one stays valid until you confirm.
+            </Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
       </SettingsSection>
 
       <FormFooter>
