@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MessageCircle, MoreVertical } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Badge } from '../ui/Badge';
 import { ContentStackedList } from './ContentStackedList';
 
@@ -24,7 +25,7 @@ type Issue = {
   authorHref: string;
   ago: string;
   comments: number;
-  commenters: string[]; // avatar URLs (placeholder, will be swapped in I.1.5)
+  commenters: string[];
   href: string;
 };
 
@@ -36,11 +37,11 @@ const ISSUES: Issue[] = [
     ago: '2d ago',
     comments: 24,
     commenters: [
-      'https://i.pravatar.cc/64?u=aiden',
-      'https://i.pravatar.cc/64?u=mei',
-      'https://i.pravatar.cc/64?u=olivier',
-      'https://i.pravatar.cc/64?u=priya',
-      'https://i.pravatar.cc/64?u=ben',
+      placeholderAvatar('Aiden Park', 64),
+      placeholderAvatar('Mei Tanaka', 64),
+      placeholderAvatar('Olivier Dubois', 64),
+      placeholderAvatar('Priya Singh', 64),
+      placeholderAvatar('Ben', 64),
     ],
     href: '#',
   },
@@ -51,9 +52,9 @@ const ISSUES: Issue[] = [
     ago: '5h ago',
     comments: 8,
     commenters: [
-      'https://i.pravatar.cc/64?u=mei',
-      'https://i.pravatar.cc/64?u=aiden',
-      'https://i.pravatar.cc/64?u=olivier',
+      placeholderAvatar('Mei Tanaka', 64),
+      placeholderAvatar('Aiden Park', 64),
+      placeholderAvatar('Olivier Dubois', 64),
     ],
     href: '#',
   },
@@ -63,7 +64,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '1w ago',
     comments: 3,
-    commenters: ['https://i.pravatar.cc/64?u=olivier', 'https://i.pravatar.cc/64?u=mei'],
+    commenters: [placeholderAvatar('Olivier Dubois', 64), placeholderAvatar('Mei Tanaka', 64)],
     href: '#',
   },
 ];

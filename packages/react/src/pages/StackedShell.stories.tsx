@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Bell, Plus } from 'lucide-react';
 import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Button } from '../ui/Button';
 import { PageHeader } from '../templates/PageHeader';
 
@@ -22,7 +23,7 @@ type Story = StoryObj<typeof meta>;
 const Avatar = () => (
   <img
     alt=""
-    src="https://i.pravatar.cc/96?u=cosmos-stacked-shell-demo"
+    src={placeholderAvatar('cosmos-stacked-shell-demo', 96)}
     className="size-8 rounded-full bg-gray-700"
   />
 );

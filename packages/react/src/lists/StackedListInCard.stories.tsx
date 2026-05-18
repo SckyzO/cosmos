@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { placeholderAvatar } from '../storybook-avatars';
 import { StackedList } from './StackedList';
 import { StackedListInCard } from './StackedListInCard';
 
@@ -31,21 +32,21 @@ const SERVICES: Service[] = [
     email: 'aiden.park@example.com',
     role: 'SRE Lead',
     lastSeen: '3h ago',
-    avatar: 'https://i.pravatar.cc/96?u=aiden',
+    avatar: placeholderAvatar('Aiden Park', 96),
   },
   {
     name: 'Mei Tanaka',
     email: 'mei.tanaka@example.com',
     role: 'Platform Engineer',
     lastSeen: '12m ago',
-    avatar: 'https://i.pravatar.cc/96?u=mei',
+    avatar: placeholderAvatar('Mei Tanaka', 96),
   },
   {
     name: 'Olivier Dubois',
     email: 'olivier.dubois@example.com',
     role: 'Observability',
     lastSeen: '1d ago',
-    avatar: 'https://i.pravatar.cc/96?u=olivier',
+    avatar: placeholderAvatar('Olivier Dubois', 96),
   },
 ];
 

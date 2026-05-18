@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Bell, GitBranch, Home, Layers, Search, Server, Settings as SettingsIcon } from 'lucide-react';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
@@ -40,7 +41,7 @@ const ACTIVITY = [
 const Avatar = ({ name }: { name: string }) => (
   <img
     alt=""
-    src={`https://i.pravatar.cc/96?u=${encodeURIComponent(name)}`}
+    src={placeholderAvatar(name, 96)}
     className="size-8 shrink-0 rounded-full bg-gray-200"
   />
 );
@@ -76,7 +77,7 @@ export const Sidebar_: Story = {
                 </button>
                 <img
                   alt=""
-                  src="https://i.pravatar.cc/64?u=cosmos-detail-demo"
+                  src={placeholderAvatar('cosmos-detail-demo', 64)}
                   className="size-8 rounded-full"
                 />
               </>

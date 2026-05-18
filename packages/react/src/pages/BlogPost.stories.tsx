@@ -11,6 +11,7 @@ import {
 import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
 import { ContentNarrow } from '../templates/ContentNarrow';
+import { placeholderAvatar, placeholderCover } from '../storybook-avatars';
 import { AnnouncementBar } from '../ui/AnnouncementBar';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
@@ -224,7 +225,7 @@ const RELATED: RelatedPost[] = [
     excerpt: 'After six months in private beta, Cosmos hits 1.0 with 80+ components.',
     date: 'May 18, 2026',
     tag: 'Release',
-    cover: 'https://picsum.photos/seed/related-1/800/500',
+    cover: placeholderCover('related-1', 800, 500),
   },
   {
     slug: 'tailwind-4-token-bridge',
@@ -232,7 +233,7 @@ const RELATED: RelatedPost[] = [
     excerpt: 'One set of design tokens, two consumers (utilities + runtime).',
     date: 'May 2, 2026',
     tag: 'Theming',
-    cover: 'https://picsum.photos/seed/related-2/800/500',
+    cover: placeholderCover('related-2', 800, 500),
   },
   {
     slug: 'monitoring-as-design',
@@ -240,7 +241,7 @@ const RELATED: RelatedPost[] = [
     excerpt: 'Why most monitoring UIs feel hostile, and how to fix it.',
     date: 'Apr 25, 2026',
     tag: 'Opinion',
-    cover: 'https://picsum.photos/seed/related-3/800/500',
+    cover: placeholderCover('related-3', 800, 500),
   },
 ];
 
@@ -290,13 +291,13 @@ const POST = {
   date: '2026-05-12',
   dateLabel: 'May 12, 2026',
   readTime: '6 min read',
-  cover: 'https://picsum.photos/seed/cosmos-diff/1600/700',
+  cover: placeholderCover('cosmos-diff', 1600, 700),
   lead:
     'A small Playwright + Storybook setup that compares every component variant against a reference, with no per-pixel snapshots and no flake.',
   author: {
     name: 'Lindsay Walton',
     role: 'Front-end Developer · Cosmos team',
-    img: 'https://i.pravatar.cc/192?u=lindsay',
+    img: placeholderAvatar('Lindsay Walton', 192),
     bio: 'Lindsay maintains the Cosmos visual diff pipeline and writes about testing rigs that survive contact with real codebases.',
   } satisfies Author,
 };

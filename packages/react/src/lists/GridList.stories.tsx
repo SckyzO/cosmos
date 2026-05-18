@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Mail, Phone } from 'lucide-react';
+import { placeholderAvatar } from '../storybook-avatars';
 import { GridList } from './GridList';
 
 const meta = {
@@ -20,12 +21,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const PEOPLE = [
-  { name: 'Aiden Park', role: 'SRE Lead', img: 'https://i.pravatar.cc/96?u=aiden' },
-  { name: 'Mei Tanaka', role: 'Platform Engineer', img: 'https://i.pravatar.cc/96?u=mei' },
-  { name: 'Olivier Dubois', role: 'Observability', img: 'https://i.pravatar.cc/96?u=olivier' },
-  { name: 'Priya Singh', role: 'Backend Engineer', img: 'https://i.pravatar.cc/96?u=priya' },
-  { name: 'Marcus Bell', role: 'Security', img: 'https://i.pravatar.cc/96?u=marcus' },
-  { name: 'Aubrey Pham', role: 'Frontend Engineer', img: 'https://i.pravatar.cc/96?u=aubrey' },
+  { name: 'Aiden Park', role: 'SRE Lead', img: placeholderAvatar('Aiden Park', 96) },
+  { name: 'Mei Tanaka', role: 'Platform Engineer', img: placeholderAvatar('Mei Tanaka', 96) },
+  { name: 'Olivier Dubois', role: 'Observability', img: placeholderAvatar('Olivier Dubois', 96) },
+  { name: 'Priya Singh', role: 'Backend Engineer', img: placeholderAvatar('Priya Singh', 96) },
+  { name: 'Marcus Bell', role: 'Security', img: placeholderAvatar('Marcus Bell', 96) },
+  { name: 'Aubrey Pham', role: 'Frontend Engineer', img: placeholderAvatar('Aubrey Pham', 96) },
 ];
 
 // TUI Plus pattern "Contact cards with small portraits" — 3-col grid of

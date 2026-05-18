@@ -43,6 +43,7 @@ import { Textarea } from '../forms/Textarea';
 import { TimePicker } from '../forms/TimePicker';
 import { Toggle } from '../forms/Toggle';
 import { ZoomBar } from '../forms/ZoomBar';
+import { placeholderAvatar } from '../storybook-avatars';
 import { MiniCalendar } from '../data/MiniCalendar';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
@@ -430,7 +431,7 @@ const ToggleRow = () => {
 
 const AvatarUploaderInline = () => {
   const [src, setSrc] = useState<string | undefined>(
-    'https://i.pravatar.cc/192?u=form-elements-avatar',
+    placeholderAvatar('form-elements-avatar', 192),
   );
   return (
     <AvatarUploader

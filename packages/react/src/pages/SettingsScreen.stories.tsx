@@ -12,6 +12,7 @@ import { Select } from '../forms/Select';
 import { Textarea } from '../forms/Textarea';
 import { AvatarUploader } from '../forms/AvatarUploader';
 import { FormFooter } from '../forms/FormFooter';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Accordion } from '../ui/Accordion';
 import { Button } from '../ui/Button';
 
@@ -40,7 +41,7 @@ const TABS = [
 
 const SettingsForm = () => {
   const [avatar, setAvatar] = useState<string | null>(
-    'https://i.pravatar.cc/192?u=cosmos-settings-demo',
+    placeholderAvatar('cosmos-settings-demo', 192),
   );
   return (
     <div className="space-y-10">
@@ -174,7 +175,7 @@ export const Sidebar_: Story = {
                 <BellBtn />
                 <img
                   alt=""
-                  src="https://i.pravatar.cc/64?u=cosmos-settings-sidebar"
+                  src={placeholderAvatar('cosmos-settings-sidebar', 64)}
                   className="size-8 rounded-full"
                 />
               </>
@@ -242,7 +243,7 @@ export const Stacked: Story = {
                 </button>
                 <img
                   alt=""
-                  src="https://i.pravatar.cc/64?u=cosmos-settings-stacked"
+                  src={placeholderAvatar('cosmos-settings-stacked', 64)}
                   className="size-8 rounded-full"
                 />
               </Navbar.Actions>

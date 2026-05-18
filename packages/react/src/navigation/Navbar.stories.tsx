@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Bell, Plus } from 'lucide-react';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Navbar } from './Navbar';
 import { Button } from '../ui/Button';
 
@@ -25,7 +26,7 @@ type Story = StoryObj<typeof meta>;
 const Avatar = () => (
   <img
     alt=""
-    src="https://i.pravatar.cc/96?u=cosmos-navbar-demo"
+    src={placeholderAvatar('cosmos-navbar-demo', 96)}
     className="size-8 rounded-full bg-gray-700"
   />
 );

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowRight } from 'lucide-react';
 import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
+import { placeholderAvatar, placeholderCover } from '../storybook-avatars';
 import { ContentNarrow } from '../templates/ContentNarrow';
 import { Badge } from '../ui/Badge';
 
@@ -38,11 +39,11 @@ const POSTS: Post[] = [
       'After six months in private beta, Cosmos hits 1.0 with 80 React components, a tokenised theme, and a Storybook covering every variant.',
     author: 'Tom Cook',
     authorRole: 'Maintainer',
-    authorImg: 'https://i.pravatar.cc/96?u=tom',
+    authorImg: placeholderAvatar('Tom Cook', 96),
     date: '2026-05-18',
     dateLabel: 'May 18, 2026',
     tag: 'Release',
-    cover: 'https://picsum.photos/seed/cosmos-release/800/500',
+    cover: placeholderCover('cosmos-release', 800, 500),
   },
   {
     slug: 'visual-diff-pipeline',
@@ -51,11 +52,11 @@ const POSTS: Post[] = [
       'A small Playwright + Storybook setup that compares every component variant against a reference, with no per-pixel snapshots.',
     author: 'Lindsay Walton',
     authorRole: 'Front-end Developer',
-    authorImg: 'https://i.pravatar.cc/96?u=lindsay',
+    authorImg: placeholderAvatar('Lindsay Walton', 96),
     date: '2026-05-12',
     dateLabel: 'May 12, 2026',
     tag: 'Tooling',
-    cover: 'https://picsum.photos/seed/cosmos-diff/800/500',
+    cover: placeholderCover('cosmos-diff', 800, 500),
   },
   {
     slug: 'tailwind-4-token-bridge',
@@ -64,11 +65,11 @@ const POSTS: Post[] = [
       'How Cosmos exposes one set of design tokens to both Tailwind utilities and runtime theme switching, without duplicating values.',
     author: 'Michael Foster',
     authorRole: 'Co-Founder / CTO',
-    authorImg: 'https://i.pravatar.cc/96?u=michael',
+    authorImg: placeholderAvatar('Michael Foster', 96),
     date: '2026-05-02',
     dateLabel: 'May 2, 2026',
     tag: 'Theming',
-    cover: 'https://picsum.photos/seed/cosmos-tokens/800/500',
+    cover: placeholderCover('cosmos-tokens', 800, 500),
   },
 ];
 

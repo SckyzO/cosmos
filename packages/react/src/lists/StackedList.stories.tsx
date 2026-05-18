@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, MoreVertical } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { placeholderAvatar } from '../storybook-avatars';
 import { StackedList } from './StackedList';
 
 const meta = {
@@ -31,32 +32,28 @@ const SERVICES: Service[] = [
     email: 'aiden.park@example.com',
     role: 'SRE Lead',
     lastSeen: '3h ago',
-    avatar:
-      'https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    avatar: placeholderAvatar('Aiden Park', 96),
   },
   {
     name: 'Mei Tanaka',
     email: 'mei.tanaka@example.com',
     role: 'Platform Engineer',
     lastSeen: '12m ago',
-    avatar:
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    avatar: placeholderAvatar('Mei Tanaka', 96),
   },
   {
     name: 'Olivier Dubois',
     email: 'olivier.dubois@example.com',
     role: 'Observability',
     online: true,
-    avatar:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    avatar: placeholderAvatar('Olivier Dubois', 96),
   },
   {
     name: 'Priya Singh',
     email: 'priya.singh@example.com',
     role: 'Backend Engineer',
     lastSeen: '1d ago',
-    avatar:
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    avatar: placeholderAvatar('Priya Singh', 96),
   },
 ];
 

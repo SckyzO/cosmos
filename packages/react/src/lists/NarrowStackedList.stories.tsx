@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { placeholderAvatar } from '../storybook-avatars';
 import { NarrowStackedList } from './NarrowStackedList';
 
 const meta = {
@@ -20,26 +21,26 @@ type Story = StoryObj<typeof meta>;
 // ── Sample data (neutral, monitoring-flavored) ───────────────────────────────
 
 const PEOPLE = [
-  { name: 'Aiden Park', email: 'aiden.park@example.com', av: 'https://i.pravatar.cc/96?u=aiden' },
-  { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: 'https://i.pravatar.cc/96?u=mei' },
-  { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: 'https://i.pravatar.cc/96?u=olivier' },
-  { name: 'Priya Singh', email: 'priya.singh@example.com', av: 'https://i.pravatar.cc/96?u=priya' },
+  { name: 'Aiden Park', email: 'aiden.park@example.com', av: placeholderAvatar('Aiden Park', 96) },
+  { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: placeholderAvatar('Mei Tanaka', 96) },
+  { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: placeholderAvatar('Olivier Dubois', 96) },
+  { name: 'Priya Singh', email: 'priya.singh@example.com', av: placeholderAvatar('Priya Singh', 96) },
 ];
 
 const PEOPLE_GROUPED: Record<string, typeof PEOPLE> = {
   A: [
-    { name: 'Aiden Park', email: 'aiden.park@example.com', av: 'https://i.pravatar.cc/96?u=aiden' },
-    { name: 'Aubrey Pham', email: 'aubrey.pham@example.com', av: 'https://i.pravatar.cc/96?u=aubrey' },
+    { name: 'Aiden Park', email: 'aiden.park@example.com', av: placeholderAvatar('Aiden Park', 96) },
+    { name: 'Aubrey Pham', email: 'aubrey.pham@example.com', av: placeholderAvatar('Aubrey Pham', 96) },
   ],
   M: [
-    { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: 'https://i.pravatar.cc/96?u=mei' },
-    { name: 'Marcus Bell', email: 'marcus.bell@example.com', av: 'https://i.pravatar.cc/96?u=marcus' },
+    { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: placeholderAvatar('Mei Tanaka', 96) },
+    { name: 'Marcus Bell', email: 'marcus.bell@example.com', av: placeholderAvatar('Marcus Bell', 96) },
   ],
   O: [
-    { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: 'https://i.pravatar.cc/96?u=olivier' },
+    { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: placeholderAvatar('Olivier Dubois', 96) },
   ],
   P: [
-    { name: 'Priya Singh', email: 'priya.singh@example.com', av: 'https://i.pravatar.cc/96?u=priya' },
+    { name: 'Priya Singh', email: 'priya.singh@example.com', av: placeholderAvatar('Priya Singh', 96) },
   ],
 };
 
@@ -48,19 +49,19 @@ const NOTES = [
     name: 'Aiden Park',
     ago: '1d ago',
     body: 'Investigated the prom-stack pod restart loop after the upgrade. Root cause was a stale config map referencing a removed metric exporter.',
-    av: 'https://i.pravatar.cc/96?u=aiden',
+    av: placeholderAvatar('Aiden Park', 96),
   },
   {
     name: 'Mei Tanaka',
     ago: '4h ago',
     body: 'Pushed the hotfix for the Grafana datasource provisioning. Need to backport to the LTS branch before Friday.',
-    av: 'https://i.pravatar.cc/96?u=mei',
+    av: placeholderAvatar('Mei Tanaka', 96),
   },
   {
     name: 'Olivier Dubois',
     ago: 'just now',
     body: 'Drafted the runbook for the OTLP receiver promotion. Awaiting review from Aiden.',
-    av: 'https://i.pravatar.cc/96?u=olivier',
+    av: placeholderAvatar('Olivier Dubois', 96),
   },
 ];
 

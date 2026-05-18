@@ -16,6 +16,7 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
@@ -457,7 +458,7 @@ const DashboardOverlaysDemo = () => {
           </Button>
         </Tooltip>
         <Tooltip content="Avatar primitive (size lg)">
-          <Avatar name="Tom Cook" src="https://i.pravatar.cc/64?u=tom" size="lg" />
+          <Avatar name="Tom Cook" src={placeholderAvatar('Tom Cook', 64)} size="lg" />
         </Tooltip>
       </div>
 
