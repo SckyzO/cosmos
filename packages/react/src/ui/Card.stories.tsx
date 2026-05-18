@@ -234,3 +234,31 @@ export const ImageRendersImg: Story = {
     await expect(canvas.getByAltText('cover')).toBeInTheDocument();
   },
 };
+
+// TUI Plus pattern "Card, edge-to-edge on mobile" — flush corners on mobile,
+// rounded + bordered at `sm` and up. Resize the Storybook viewport below
+// 640px to see the effect.
+export const EdgeToEdgeMobile: Story = {
+  render: () => (
+    <Card edgeToEdgeMobile padding="lg">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        On mobile (&lt; 640px) this card touches both viewport edges with
+        only top/bottom borders. From the <code>sm</code> breakpoint and
+        above it gains rounded corners and a full border.
+      </p>
+    </Card>
+  ),
+};
+
+export const EdgeToEdgeAddsBorderY: Story = {
+  render: () => (
+    <Card edgeToEdgeMobile padding="md" data-testid="c">
+      x
+    </Card>
+  ),
+  play: async ({ canvasElement }) => {
+    const el = canvasElement.querySelector('[data-testid="c"]');
+    await expect(el?.className ?? '').toMatch(/border-y/);
+    await expect(el?.className ?? '').toMatch(/sm:rounded-2xl/);
+  },
+};

@@ -7,6 +7,13 @@ export type CardProps = {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   /** Adds hover-lift + cursor-pointer affordance. Pair with `as="a"` or wrap in your router's Link. */
   interactive?: boolean;
+  /**
+   * When `true`, the card is flush with the viewport edges on mobile
+   * (no rounded corners, no horizontal margins) and switches to rounded
+   * + bordered at the `sm` breakpoint and above. Mirrors the TUI Plus
+   * "Card, edge-to-edge on mobile" pattern.
+   */
+  edgeToEdgeMobile?: boolean;
 };
 
 const PADDING_CLASS = {
@@ -16,10 +23,19 @@ const PADDING_CLASS = {
   lg: 'p-6',
 } as const;
 
-const Root = ({ children, className, padding = 'md', interactive = false }: CardProps) => (
+const Root = ({
+  children,
+  className,
+  padding = 'md',
+  interactive = false,
+  edgeToEdgeMobile = false,
+}: CardProps) => (
   <div
     className={clsx(
-      'overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900',
+      'overflow-hidden bg-white dark:bg-gray-900',
+      edgeToEdgeMobile
+        ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
+        : 'rounded-2xl border border-gray-200 dark:border-gray-800',
       interactive &&
         'cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-brand-500/30',
       PADDING_CLASS[padding],
