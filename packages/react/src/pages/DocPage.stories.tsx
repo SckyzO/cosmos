@@ -1,13 +1,34 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
-import { ChevronRight, Pencil, Search, ThumbsDown, ThumbsUp } from 'lucide-react';
+import {
+  Box,
+  ChevronRight,
+  Component,
+  Layers,
+  MousePointerClick,
+  Package,
+  Palette,
+  Pencil,
+  Rocket,
+  Search,
+  Settings as SettingsIcon,
+  Square,
+  ThumbsDown,
+  ThumbsUp,
+  Type,
+} from 'lucide-react';
 import { Shell } from '../layout/Shell';
+import { Divider } from '../layout/Divider';
+import { MediaObject } from '../layout/MediaObject';
 import { Navbar } from '../navigation/Navbar';
+import { Stepper } from '../navigation/Stepper';
 import { VerticalNavigation } from '../navigation/VerticalNavigation';
+import { DescriptionList } from '../data/DescriptionList';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
+import { IconBox } from '../ui/IconBox';
 
 // Pages/DocPage — component documentation template (RTFM).
 // Style: Stripe Docs × Linear Docs × Tailwind Docs, dressed in Cosmos tokens.
@@ -118,100 +139,45 @@ const SectionHeading = ({ id, children }: { id: string; children: React.ReactNod
   </h2>
 );
 
-const PropRow = ({
-  name,
-  type,
-  defaultValue,
-  description,
-}: {
-  name: string;
-  type: string;
-  defaultValue: string;
-  description: string;
-}) => (
-  <tr className="border-b border-[var(--color-border)] last:border-0">
-    <td className="py-3 pr-4 align-top">
-      <code className="font-mono text-sm font-medium text-[var(--color-text-primary)]">
-        {name}
-      </code>
-    </td>
-    <td className="py-3 pr-4 align-top">
-      <code className="font-mono text-xs text-[var(--color-text-secondary)]">{type}</code>
-    </td>
-    <td className="py-3 pr-4 align-top">
-      <code className="font-mono text-xs text-[var(--color-text-secondary)]">
-        {defaultValue}
-      </code>
-    </td>
-    <td className="py-3 align-top text-sm text-[var(--color-text-secondary)]">
-      {description}
-    </td>
-  </tr>
-);
-
-// ── Sidebar nav (left rail) ─────────────────────────────────────────────────
-
-type SidebarGroup = { label: string; items: { label: string; active?: boolean }[] };
-
-const SIDEBAR_GROUPS: SidebarGroup[] = [
-  {
-    label: 'Getting started',
-    items: [
-      { label: 'Installation' },
-      { label: 'Theming' },
-      { label: 'Tokens' },
-      { label: 'Dark mode' },
-    ],
-  },
-  {
-    label: 'Components',
-    items: [
-      { label: 'Button', active: true },
-      { label: 'Card' },
-      { label: 'Dropdown' },
-      { label: 'Modal' },
-      { label: 'Drawer' },
-      { label: 'Divider' },
-    ],
-  },
-  {
-    label: 'Recipes',
-    items: [
-      { label: 'Settings form' },
-      { label: 'Dashboard layout' },
-      { label: 'Empty states' },
-    ],
-  },
-];
+// ── Sidebar nav (left rail, built on VerticalNavigation) ────────────────────
 
 const DocSidebar = () => (
-  <nav aria-label="Docs sidebar" className="space-y-6 px-4 py-6">
-    {SIDEBAR_GROUPS.map((g) => (
-      <div key={g.label}>
-        <div className="px-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-          {g.label}
-        </div>
-        <ul role="list" className="-mx-2 mt-2 space-y-1">
-          {g.items.map((it) => (
-            <li key={it.label}>
-              <a
-                href="#"
-                aria-current={it.active ? 'page' : undefined}
-                className={[
-                  'block rounded-md px-2 py-1.5 text-sm',
-                  it.active
-                    ? 'bg-[var(--color-bg-panel)] font-medium text-[var(--color-text-primary)]'
-                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-panel)] hover:text-[var(--color-text-primary)]',
-                ].join(' ')}
-              >
-                {it.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ))}
-  </nav>
+  <VerticalNavigation className="px-4 py-6" aria-label="Docs sidebar">
+    <VerticalNavigation.Section label="Getting started">
+      <VerticalNavigation.Item icon={Rocket} href="#install">
+        Installation
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Palette} href="#theming">
+        Theming
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Type} href="#tokens">
+        Tokens
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={SettingsIcon} href="#dark">
+        Dark mode
+      </VerticalNavigation.Item>
+    </VerticalNavigation.Section>
+    <VerticalNavigation.Section label="Components">
+      <VerticalNavigation.Item icon={MousePointerClick} active href="#button">
+        Button
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Square} href="#card">
+        Card
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Layers} href="#dropdown">
+        Dropdown
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Box} href="#modal" badge="new">
+        Modal
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Package} href="#drawer">
+        Drawer
+      </VerticalNavigation.Item>
+      <VerticalNavigation.Item icon={Component} href="#divider">
+        Divider
+      </VerticalNavigation.Item>
+    </VerticalNavigation.Section>
+  </VerticalNavigation>
 );
 
 // ── TOC (right rail) ────────────────────────────────────────────────────────
@@ -243,8 +209,10 @@ const TocRail = ({ sections, active }: { sections: DocSection[]; active: string 
 // ── Story body (Button doc — default story) ─────────────────────────────────
 
 const BUTTON_SECTIONS: DocSection[] = [
+  { id: 'install', label: 'Install' },
   { id: 'overview', label: 'Overview' },
   { id: 'variants', label: 'Variants' },
+  { id: 'anatomy', label: 'Anatomy' },
   { id: 'sizes', label: 'Sizes' },
   { id: 'with-icons', label: 'With icons' },
   { id: 'states', label: 'States' },
@@ -274,9 +242,17 @@ const ButtonDocBody = () => {
           <Breadcrumbs items={['Docs', 'Components', 'Button']} />
 
           <header className="mt-4">
-            <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
-              Button
-            </h1>
+            <div className="flex items-center gap-x-3">
+              <IconBox
+                icon={MousePointerClick}
+                size="lg"
+                bg="bg-brand-500/10 dark:bg-brand-500/15"
+                color="text-brand-600 dark:text-brand-400"
+              />
+              <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
+                Button
+              </h1>
+            </div>
             <p className="mt-3 text-lg text-[var(--color-text-secondary)]">
               Trigger an action with a click. Use Button anywhere a user makes a
               binary commit — submit, cancel, delete, save.
@@ -298,6 +274,26 @@ const ButtonDocBody = () => {
           </header>
 
           <div className="mt-12 space-y-12">
+            <section>
+              <SectionHeading id="install">Install</SectionHeading>
+              <p className="mt-4 text-[var(--color-text-secondary)]">
+                Three steps to drop Button into a Cosmos-powered app.
+              </p>
+              <div className="mt-6">
+                <Stepper variant="panels" current={1}>
+                  <Stepper.Step description="pnpm add @sckyzo/cosmos-react">
+                    Install the package
+                  </Stepper.Step>
+                  <Stepper.Step description="Make sure the Tailwind preset is loaded">
+                    Import the theme
+                  </Stepper.Step>
+                  <Stepper.Step description="<Button>Save</Button>">
+                    Render anywhere
+                  </Stepper.Step>
+                </Stepper>
+              </div>
+            </section>
+
             <section>
               <SectionHeading id="overview">Overview</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
@@ -337,6 +333,72 @@ const ButtonDocBody = () => {
                   <Button variant="danger">Danger</Button>
                 </PreviewBox>
               </div>
+            </section>
+
+            <section>
+              <SectionHeading id="anatomy">Anatomy</SectionHeading>
+              <p className="mt-4 text-[var(--color-text-secondary)]">
+                Three internal slots compose every Button: a leading or trailing
+                icon, a label, and an optional loading spinner that replaces the
+                icon when <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">loading</code>{' '}
+                is true.
+              </p>
+              <Card padding="lg" className="mt-6 space-y-5">
+                <MediaObject align="center">
+                  <MediaObject.Image>
+                    <IconBox
+                      icon={Box}
+                      size="md"
+                      bg="bg-emerald-500/10 dark:bg-emerald-500/15"
+                      color="text-emerald-600 dark:text-emerald-400"
+                    />
+                  </MediaObject.Image>
+                  <MediaObject.Body>
+                    <MediaObject.Title>Container</MediaObject.Title>
+                    <MediaObject.Description>
+                      A <code className="font-mono text-xs">button</code> element
+                      with rounded corners, padding from the size prop, and
+                      colors from the variant.
+                    </MediaObject.Description>
+                  </MediaObject.Body>
+                </MediaObject>
+                <MediaObject align="center">
+                  <MediaObject.Image>
+                    <IconBox
+                      icon={ThumbsUp}
+                      size="md"
+                      bg="bg-amber-500/10 dark:bg-amber-500/15"
+                      color="text-amber-600 dark:text-amber-400"
+                    />
+                  </MediaObject.Image>
+                  <MediaObject.Body>
+                    <MediaObject.Title>Icon slot</MediaObject.Title>
+                    <MediaObject.Description>
+                      Pass any Lucide icon component via{' '}
+                      <code className="font-mono text-xs">icon</code>; place it
+                      left or right with{' '}
+                      <code className="font-mono text-xs">iconPosition</code>.
+                    </MediaObject.Description>
+                  </MediaObject.Body>
+                </MediaObject>
+                <MediaObject align="center">
+                  <MediaObject.Image>
+                    <IconBox
+                      icon={Type}
+                      size="md"
+                      bg="bg-sky-500/10 dark:bg-sky-500/15"
+                      color="text-sky-600 dark:text-sky-400"
+                    />
+                  </MediaObject.Image>
+                  <MediaObject.Body>
+                    <MediaObject.Title>Label</MediaObject.Title>
+                    <MediaObject.Description>
+                      Children render as the visible label. Keep it short and
+                      action-oriented — verbs over nouns.
+                    </MediaObject.Description>
+                  </MediaObject.Body>
+                </MediaObject>
+              </Card>
             </section>
 
             <section>
@@ -394,69 +456,81 @@ const ButtonDocBody = () => {
 
             <section>
               <SectionHeading id="api">API</SectionHeading>
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--color-border)] text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      <th className="py-2 pr-4">Prop</th>
-                      <th className="py-2 pr-4">Type</th>
-                      <th className="py-2 pr-4">Default</th>
-                      <th className="py-2">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <PropRow
-                      name="variant"
-                      type="'primary' | 'secondary' | 'ghost' | 'danger' | 'soft'"
-                      defaultValue="'primary'"
-                      description="Visual style; conveys hierarchy and intent."
-                    />
-                    <PropRow
-                      name="size"
-                      type="'xs' | 'sm' | 'md' | 'lg' | 'xl'"
-                      defaultValue="'md'"
-                      description="Height + horizontal padding + text size."
-                    />
-                    <PropRow
-                      name="shape"
-                      type="'rounded' | 'pill' | 'circle'"
-                      defaultValue="'rounded'"
-                      description="Corner radius. Use 'circle' for icon-only buttons."
-                    />
-                    <PropRow
-                      name="icon"
-                      type="ElementType"
-                      defaultValue="—"
-                      description="Lucide icon component."
-                    />
-                    <PropRow
-                      name="iconPosition"
-                      type="'left' | 'right'"
-                      defaultValue="'left'"
-                      description="Icon position relative to children."
-                    />
-                    <PropRow
-                      name="loading"
-                      type="boolean"
-                      defaultValue="false"
-                      description="Replace the icon with a spinner and disable clicks."
-                    />
-                  </tbody>
-                </table>
+              <div className="mt-6">
+                <DescriptionList
+                  inCard
+                  title="Props"
+                  description="Every prop is optional except children."
+                >
+                  <DescriptionList.Item label={<code className="font-mono">variant</code>}>
+                    <code className="font-mono text-xs">
+                      &apos;primary&apos; | &apos;secondary&apos; | &apos;ghost&apos; |
+                      &apos;danger&apos; | &apos;soft&apos;
+                    </code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Default <code className="font-mono">&apos;primary&apos;</code> · Visual style
+                      conveying hierarchy and intent.
+                    </span>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label={<code className="font-mono">size</code>}>
+                    <code className="font-mono text-xs">
+                      &apos;xs&apos; | &apos;sm&apos; | &apos;md&apos; | &apos;lg&apos; |
+                      &apos;xl&apos;
+                    </code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Default <code className="font-mono">&apos;md&apos;</code> · Height, padding
+                      and text size.
+                    </span>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label={<code className="font-mono">shape</code>}>
+                    <code className="font-mono text-xs">
+                      &apos;rounded&apos; | &apos;pill&apos; | &apos;circle&apos;
+                    </code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Default <code className="font-mono">&apos;rounded&apos;</code> · Use
+                      <code className="font-mono">&apos;circle&apos;</code> for icon-only buttons.
+                    </span>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label={<code className="font-mono">icon</code>}>
+                    <code className="font-mono text-xs">ElementType</code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Any Lucide icon component.
+                    </span>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label={<code className="font-mono">iconPosition</code>}>
+                    <code className="font-mono text-xs">&apos;left&apos; | &apos;right&apos;</code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Default <code className="font-mono">&apos;left&apos;</code>.
+                    </span>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label={<code className="font-mono">loading</code>}>
+                    <code className="font-mono text-xs">boolean</code>
+                    <span className="block text-[var(--color-text-muted)]">
+                      Default <code className="font-mono">false</code> · Replaces the icon with a
+                      spinner and disables clicks.
+                    </span>
+                  </DescriptionList.Item>
+                </DescriptionList>
               </div>
             </section>
           </div>
 
-          {/* Footer: helpfulness + edit on GitHub */}
-          <footer className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-[var(--color-border)] pt-8 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3 text-sm text-[var(--color-text-secondary)]">
-              <span>Was this helpful?</span>
-              <Button size="xs" variant="secondary" icon={ThumbsUp} aria-label="Helpful" />
-              <Button size="xs" variant="secondary" icon={ThumbsDown} aria-label="Not helpful" />
-            </div>
+          <Divider.Row
+            className="mt-16"
+            title="Was this helpful?"
+            actions={
+              <>
+                <Button size="xs" variant="secondary" icon={ThumbsUp} aria-label="Helpful" />
+                <Button size="xs" variant="secondary" icon={ThumbsDown} aria-label="Not helpful" />
+              </>
+            }
+          />
+
+          {/* Footer: edit on GitHub */}
+          <footer className="mt-6 flex items-center justify-end text-sm">
             <a
               href="#edit"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              className="inline-flex items-center gap-2 font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             >
               <Pencil className="size-4" aria-hidden />
               Edit this page on GitHub
