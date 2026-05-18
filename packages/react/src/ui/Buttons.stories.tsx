@@ -115,3 +115,122 @@ export const LoadingBlocksClick: Story = {
     await expect(args.onClick).not.toHaveBeenCalled();
   },
 };
+
+// TUI Plus pattern "Primary buttons" — 5 sizes (xs/sm/md/lg/xl) of primary.
+export const PrimarySizes: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Primary — 5 sizes">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="xs">Button text</Button>
+          <Button size="sm">Button text</Button>
+          <Button size="md">Button text</Button>
+          <Button size="lg">Button text</Button>
+          <Button size="xl">Button text</Button>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+// TUI Plus pattern "Secondary buttons" — 5 sizes of secondary.
+export const SecondarySizes: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Secondary — 5 sizes">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" size="xs">Button text</Button>
+          <Button variant="secondary" size="sm">Button text</Button>
+          <Button variant="secondary" size="md">Button text</Button>
+          <Button variant="secondary" size="lg">Button text</Button>
+          <Button variant="secondary" size="xl">Button text</Button>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+// TUI Plus pattern "Soft buttons" — tinted background, no border.
+export const SoftSizes: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Soft — 5 sizes">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="soft" size="xs">Button text</Button>
+          <Button variant="soft" size="sm">Button text</Button>
+          <Button variant="soft" size="md">Button text</Button>
+          <Button variant="soft" size="lg">Button text</Button>
+          <Button variant="soft" size="xl">Button text</Button>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+// TUI Plus pattern "Rounded primary/secondary" — pill-shaped.
+export const PillShape: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Pill shape">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button shape="pill" size="xs">Button text</Button>
+          <Button shape="pill" size="sm">Button text</Button>
+          <Button shape="pill" size="md">Button text</Button>
+          <Button shape="pill" size="lg">Button text</Button>
+          <Button shape="pill" size="xl">Button text</Button>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button variant="secondary" shape="pill" size="xs">Secondary</Button>
+          <Button variant="secondary" shape="pill" size="sm">Secondary</Button>
+          <Button variant="secondary" shape="pill" size="md">Secondary</Button>
+          <Button variant="secondary" shape="pill" size="lg">Secondary</Button>
+          <Button variant="secondary" shape="pill" size="xl">Secondary</Button>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+// TUI Plus pattern "Circular buttons" — icon-only square.
+export const CircularIconOnly: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Circular (icon-only)">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button shape="circle" size="xs" icon={Plus} aria-label="Add" />
+          <Button shape="circle" size="sm" icon={Plus} aria-label="Add" />
+          <Button shape="circle" size="md" icon={Plus} aria-label="Add" />
+          <Button shape="circle" size="lg" icon={Plus} aria-label="Add" />
+          <Button shape="circle" size="xl" icon={Plus} aria-label="Add" />
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+// ── Interaction tests for new props ──────────────────────────────────────────
+
+export const SoftVariantHasTintedBg: Story = {
+  args: { children: 'Soft', variant: 'soft' },
+  play: async ({ canvas }) => {
+    const btn = canvas.getByRole('button', { name: 'Soft' });
+    await expect(btn.className).toMatch(/bg-brand-50/);
+  },
+};
+
+export const PillShapeIsFullyRounded: Story = {
+  args: { children: 'Pill', shape: 'pill' },
+  play: async ({ canvas }) => {
+    const btn = canvas.getByRole('button', { name: 'Pill' });
+    await expect(btn.className).toMatch(/rounded-full/);
+  },
+};
+
+export const CircleShapeMakesSquare: Story = {
+  args: { 'aria-label': 'Add', shape: 'circle', icon: Plus, children: undefined },
+  play: async ({ canvas }) => {
+    const btn = canvas.getByRole('button', { name: 'Add' });
+    await expect(btn.className).toMatch(/rounded-full/);
+    await expect(btn.className).toMatch(/w-9/); // default md size: w-9 h-9
+  },
+};
