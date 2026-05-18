@@ -15,9 +15,12 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { Divider } from '../layout/Divider';
+import { MediaObject } from '../layout/MediaObject';
 import { PageHeader } from '../templates/PageHeader';
 import { PageBreadcrumb } from '../templates/PageBreadcrumb';
 import { SectionCard } from '../templates/SectionCard';
@@ -28,6 +31,18 @@ import { Button } from '../ui/Button';
 import { StatusBadge } from '../status/StatusBadge';
 import { RowActionButton } from '../ui/RowActionButton';
 import { DataTable } from '../table/DataTable';
+import { Modal } from '../ui/Modal';
+import { Drawer } from '../ui/Drawer';
+import { Tooltip } from '../ui/Tooltip';
+import { ConfirmationModal } from '../ui/ConfirmationModal';
+import { BackToTopFab } from '../ui/BackToTopFab';
+import { IconBox } from '../ui/IconBox';
+import { Sk as Skeleton } from '../feedback/Skeleton';
+import { EmptyState } from '../feedback/EmptyState';
+import { LoadingState } from '../feedback/LoadingState';
+import { ErrorState } from '../feedback/ErrorState';
+import { Pagination } from '../navigation/Pagination';
+import { Avatar } from '../ui/Avatar';
 import type { ColumnDef } from '../table/types';
 import type { HealthStatus } from '../status/types';
 
@@ -392,17 +407,147 @@ export const Default: Story = {
         </SectionCard>
 
         {/* Footer */}
+        {/* Overlays + states showcase (single SectionCard demoing previously orphan components) */}
+        <SectionCard
+          title="Overlays & states"
+          desc="Modal, Drawer, Tooltip, ConfirmationModal, EmptyState, LoadingState, ErrorState, Skeleton, Pagination, IconBox, MediaObject, Divider, Avatar — all wired into a working dashboard context."
+        >
+          <DashboardOverlaysDemo />
+        </SectionCard>
+
+        <BackToTopFab threshold={200} />
+
         <div className="flex items-center justify-between gap-3 pt-2">
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Story composed from real Cosmos components — Shell, Topbar, Sidebar (with brand,
-            sub-menus, badges), PageHeader + PageBreadcrumb, KpiCard × 4, SectionCard × 4, Timeline,
-            DataTable.
-          </p>
-          <Button variant="ghost" size="sm">
-            View raw stories →
-          </Button>
+          <Divider.Row
+            title="Story composed from Cosmos components — Shell, Topbar, Sidebar, PageHeader, KpiCard × 4, SectionCard, Timeline, DataTable, plus overlays/states showcase above."
+            actions={
+              <Button variant="ghost" size="sm">
+                View raw stories →
+              </Button>
+            }
+          />
         </div>
       </div>
     </Shell>
   ),
+};
+
+// ── Overlays + states showcase ──────────────────────────────────────────────
+
+const DashboardOverlaysDemo = () => {
+  const [openModal, setOpenModal] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [page, setPage] = useState(1);
+  return (
+    <div className="space-y-6">
+      {/* Trigger buttons + tooltip */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Tooltip content="Opens a centred modal dialog">
+          <Button size="sm" onClick={() => setOpenModal(true)}>Open Modal</Button>
+        </Tooltip>
+        <Tooltip content="Opens a side panel for server inspector">
+          <Button size="sm" variant="secondary" onClick={() => setOpenDrawer(true)}>
+            Open Drawer
+          </Button>
+        </Tooltip>
+        <Tooltip content="Confirmation pattern with destructive intent">
+          <Button size="sm" variant="danger" onClick={() => setOpenConfirm(true)}>
+            Delete rack…
+          </Button>
+        </Tooltip>
+        <Tooltip content="Avatar primitive (size lg)">
+          <Avatar name="Tom Cook" src="https://i.pravatar.cc/64?u=tom" size="lg" />
+        </Tooltip>
+      </div>
+
+      {/* Data states grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-[var(--color-border)] p-4">
+          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+            Loading
+          </p>
+          <LoadingState message="Fetching alerts…" />
+        </div>
+        <div className="rounded-lg border border-[var(--color-border)] p-4">
+          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+            Empty
+          </p>
+          <EmptyState title="No alerts" description="All systems nominal." />
+        </div>
+        <div className="rounded-lg border border-[var(--color-border)] p-4">
+          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+            Error
+          </p>
+          <ErrorState message="Unable to load — check connection." />
+        </div>
+        <div className="rounded-lg border border-[var(--color-border)] p-4">
+          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+            Skeleton
+          </p>
+          <div className="space-y-2">
+            <Skeleton h="h-4" w="w-3/4" />
+            <Skeleton h="h-4" w="w-1/2" />
+            <Skeleton h="h-4" w="w-2/3" />
+          </div>
+        </div>
+      </div>
+
+      {/* MediaObject row */}
+      <MediaObject align="center">
+        <MediaObject.Image>
+          <IconBox icon={Bell} color="amber" />
+        </MediaObject.Image>
+        <MediaObject.Body>
+          <MediaObject.Title>Inline notification preview</MediaObject.Title>
+          <MediaObject.Description>
+            MediaObject pairs an icon (here via IconBox) with a title + description —
+            handy for inline notices inside a dashboard panel.
+          </MediaObject.Description>
+        </MediaObject.Body>
+      </MediaObject>
+
+      {/* Pagination */}
+      <Pagination page={page} totalPages={12} onPageChange={setPage} />
+
+      {/* Overlays */}
+      <Modal open={openModal} onClose={() => setOpenModal(false)} size="md">
+        <Modal.Header title="Quick inspection" onClose={() => setOpenModal(false)} />
+        <Modal.Body>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Modal opened from the Dashboard showcase. Closes on backdrop click or Escape.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setOpenModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Drawer open={openDrawer} onClose={() => setOpenDrawer(false)} side="right" size="md">
+        <Drawer.Header
+          title="Server inspector"
+          description="rack-a01-srv03"
+          onClose={() => setOpenDrawer(false)}
+        />
+        <Drawer.Body>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Drawer composed from the Cosmos primitive — same one used across Cosmos.
+          </p>
+        </Drawer.Body>
+      </Drawer>
+
+      <ConfirmationModal
+        open={openConfirm}
+        title="Delete rack A01 ?"
+        message="This action is permanent and cannot be undone."
+        onStay={() => setOpenConfirm(false)}
+        onDiscard={() => setOpenConfirm(false)}
+        hideSave
+        stayLabel="Cancel"
+        discardLabel="Delete"
+      />
+    </div>
+  );
 };
