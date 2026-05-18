@@ -1,8 +1,4 @@
-export {
-  StackedList,
-  type StackedListProps,
-  type StackedListItemProps,
-} from './StackedList';
+export { StackedList, type StackedListProps, type StackedListItemProps } from './StackedList';
 export {
   ContentStackedList,
   type ContentStackedListProps,

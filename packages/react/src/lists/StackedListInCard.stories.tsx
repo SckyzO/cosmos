@@ -51,11 +51,7 @@ const SERVICES: Service[] = [
 ];
 
 const Avatar = ({ src }: { src: string }) => (
-  <img
-    src={src}
-    alt=""
-    className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-  />
+  <img src={src} alt="" className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800" />
 );
 
 const Meta = ({ role, lastSeen }: { role: string; lastSeen: string }) => (
@@ -116,7 +112,7 @@ export const WithLeadingIcon: Story = {
           href={`/services/${s.name}`}
           chevron
           avatar={
-            <span className="flex size-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
+            <span className="bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300 flex size-12 items-center justify-center rounded-full">
               <Activity className="size-5" aria-hidden />
             </span>
           }
@@ -131,9 +127,7 @@ export const WithLeadingIcon: Story = {
 export const InsideContainer: Story = {
   render: () => (
     <div className="bg-gray-100 p-8 dark:bg-gray-950">
-      <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-        Team members
-      </h2>
+      <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Team members</h2>
       <StackedListInCard>
         {SERVICES.map((s) => (
           <StackedList.Item
@@ -190,9 +184,7 @@ export const NestedUlHasDivideY: Story = {
     </StackedListInCard>
   ),
   play: async ({ canvasElement }) => {
-    const ul = canvasElement
-      .querySelector('[data-testid="card"]')
-      ?.querySelector('ul');
+    const ul = canvasElement.querySelector('[data-testid="card"]')?.querySelector('ul');
     await expect(ul).not.toBeNull();
     await expect(ul?.className ?? '').toMatch(/divide-y/);
   },

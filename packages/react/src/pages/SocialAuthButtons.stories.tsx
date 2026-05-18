@@ -12,7 +12,7 @@ const meta = {
   component: SocialAuthButtons,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-  args: { onProviderClick: fn() },
+  args: { onProviderClick: fn(), providers: ['google', 'github'] },
 } satisfies Meta<typeof SocialAuthButtons>;
 
 export default meta;
@@ -82,12 +82,7 @@ export const InsideSignInForm: Story = {
       onSubmit={fn()}
       signUpHref="#"
       onForgotPassword={fn()}
-      extraTop={
-        <SocialAuthButtons
-          providers={['google', 'github']}
-          onProviderClick={fn()}
-        />
-      }
+      extraTop={<SocialAuthButtons providers={['google', 'github']} onProviderClick={fn()} />}
     />
   ),
   parameters: portalDocsParams(720),

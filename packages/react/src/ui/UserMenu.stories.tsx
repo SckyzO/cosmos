@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { CreditCard, KeyRound, LogOut, Settings, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
@@ -9,6 +10,8 @@ const meta = {
   component: UserMenu,
   parameters: portalDocsParams(380),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof UserMenu>;
 
 export default meta;
@@ -20,45 +23,45 @@ const SAMPLE_AVATAR =
     `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
        <rect width="64" height="64" fill="%236366f1"/>
        <text x="50%" y="58%" font-family="sans-serif" font-size="28" fill="white" text-anchor="middle">JD</text>
-     </svg>`,
+     </svg>`
   );
 
 // ── Stories ──────────────────────────────────────────────────────────────────
 
 export const Open: Story = {
-  render: (args) => (
-    <div className="flex h-[320px] items-start justify-end">
-      <UserMenu defaultOpen>
-        <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
-        <UserMenu.Content>
-          <UserMenu.Header
-            name="John Doe"
-            email="john@example.com"
-            avatarSrc={SAMPLE_AVATAR}
-          />
-          <UserMenu.Items>
-            <UserMenu.Item icon={User} onClick={args.onProfile as () => void}>
-              Profile
-            </UserMenu.Item>
-            <UserMenu.Item icon={Settings} onClick={args.onSettings as () => void}>
-              Settings
-            </UserMenu.Item>
-            <UserMenu.Item icon={CreditCard} onClick={args.onBilling as () => void}>
-              Billing
-            </UserMenu.Item>
-            <UserMenu.Separator />
-            <UserMenu.Item
-              icon={LogOut}
-              variant="danger"
-              onClick={args.onSignOut as () => void}
-            >
-              Sign Out
-            </UserMenu.Item>
-          </UserMenu.Items>
-        </UserMenu.Content>
-      </UserMenu>
-    </div>
-  ),
+  render: (args) => {
+    const extra = args as unknown as {
+      onProfile: () => void;
+      onSettings: () => void;
+      onBilling: () => void;
+      onSignOut: () => void;
+    };
+    return (
+      <div className="flex h-[320px] items-start justify-end">
+        <UserMenu defaultOpen>
+          <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+          <UserMenu.Content>
+            <UserMenu.Header name="John Doe" email="john@example.com" avatarSrc={SAMPLE_AVATAR} />
+            <UserMenu.Items>
+              <UserMenu.Item icon={User} onClick={extra.onProfile}>
+                Profile
+              </UserMenu.Item>
+              <UserMenu.Item icon={Settings} onClick={extra.onSettings}>
+                Settings
+              </UserMenu.Item>
+              <UserMenu.Item icon={CreditCard} onClick={extra.onBilling}>
+                Billing
+              </UserMenu.Item>
+              <UserMenu.Separator />
+              <UserMenu.Item icon={LogOut} variant="danger" onClick={extra.onSignOut}>
+                Sign Out
+              </UserMenu.Item>
+            </UserMenu.Items>
+          </UserMenu.Content>
+        </UserMenu>
+      </div>
+    );
+  },
   args: {
     onProfile: fn(),
     onSettings: fn(),
@@ -135,11 +138,7 @@ export const AlignLeft: Story = {
       <UserMenu defaultOpen align="left">
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
-          <UserMenu.Header
-            name="John Doe"
-            email="john@example.com"
-            avatarSrc={SAMPLE_AVATAR}
-          />
+          <UserMenu.Header name="John Doe" email="john@example.com" avatarSrc={SAMPLE_AVATAR} />
           <UserMenu.Items>
             <UserMenu.Item icon={User}>Profile</UserMenu.Item>
             <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
@@ -179,36 +178,36 @@ export const TriggerOpensMenu: Story = {
 };
 
 export const ItemClickFiresHandler: Story = {
-  render: (args) => (
-    <div className="flex h-[320px] items-start justify-end">
-      <UserMenu>
-        <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
-        <UserMenu.Content>
-          <UserMenu.Items>
-            <UserMenu.Item icon={User} onClick={args.onProfile as () => void}>
-              Profile
-            </UserMenu.Item>
-            <UserMenu.Item
-              icon={LogOut}
-              variant="danger"
-              onClick={args.onSignOut as () => void}
-            >
-              Sign Out
-            </UserMenu.Item>
-          </UserMenu.Items>
-        </UserMenu.Content>
-      </UserMenu>
-    </div>
-  ),
+  render: (args) => {
+    const extra = args as unknown as { onProfile: () => void; onSignOut: () => void };
+    return (
+      <div className="flex h-[320px] items-start justify-end">
+        <UserMenu>
+          <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+          <UserMenu.Content>
+            <UserMenu.Items>
+              <UserMenu.Item icon={User} onClick={extra.onProfile}>
+                Profile
+              </UserMenu.Item>
+              <UserMenu.Item icon={LogOut} variant="danger" onClick={extra.onSignOut}>
+                Sign Out
+              </UserMenu.Item>
+            </UserMenu.Items>
+          </UserMenu.Content>
+        </UserMenu>
+      </div>
+    );
+  },
   args: { onProfile: fn(), onSignOut: fn() } as never,
   play: async ({ args, canvas }) => {
+    const extra = args as unknown as { onProfile: ReturnType<typeof fn> };
     await userEvent.click(canvas.getByRole('button', { name: /user menu for/i }));
     await waitFor(() => expect(document.querySelector('[role="menu"]')).not.toBeNull());
-    const profileItem = document.querySelector('[role="menu"]')!.querySelector(
-      'button:nth-of-type(1)',
-    ) as HTMLButtonElement;
+    const profileItem = document
+      .querySelector('[role="menu"]')!
+      .querySelector('button:nth-of-type(1)') as HTMLButtonElement;
     await userEvent.click(profileItem);
-    await expect((args as { onProfile: ReturnType<typeof fn> }).onProfile).toHaveBeenCalledTimes(1);
+    await expect(extra.onProfile).toHaveBeenCalledTimes(1);
     // Menu should auto-close
     await waitFor(() => expect(document.querySelector('[role="menu"]')).toBeNull());
   },

@@ -1,13 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  Clock,
-  Link as LinkIcon,
-  User,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Clock, Link as LinkIcon, User } from 'lucide-react';
 import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
 import { ContentNarrow } from '../templates/ContentNarrow';
@@ -62,7 +55,7 @@ const useActiveSection = (ids: string[]) => {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         if (visible[0]) setActive(visible[0].target.id);
       },
-      { rootMargin: '-20% 0px -65% 0px', threshold: 0 },
+      { rootMargin: '-20% 0px -65% 0px', threshold: 0 }
     );
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -183,13 +176,9 @@ type Author = {
 const AuthorCard = ({ author }: { author: Author }) => (
   <Card padding="lg">
     <div className="flex items-start gap-4">
-      <img
-        alt=""
-        src={author.img}
-        className="size-14 shrink-0 rounded-full bg-gray-100"
-      />
+      <img alt="" src={author.img} className="size-14 shrink-0 rounded-full bg-gray-100" />
       <div className="min-w-0 flex-1">
-        <div className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+        <div className="text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
           Written by
         </div>
         <p className="mt-1 text-base font-semibold text-[var(--color-text-primary)]">
@@ -199,7 +188,7 @@ const AuthorCard = ({ author }: { author: Author }) => (
         <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{author.bio}</p>
         <a
           href="#"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+          className="text-brand-600 hover:text-brand-700 dark:text-brand-400 mt-3 inline-flex items-center gap-1 text-sm font-semibold"
         >
           Read more from {author.name.split(' ')[0]}
           <ArrowRight className="size-3.5" aria-hidden />
@@ -247,9 +236,7 @@ const RELATED: RelatedPost[] = [
 
 const RelatedArticles = () => (
   <div>
-    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-      Continue reading
-    </h3>
+    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Continue reading</h3>
     <div className="mt-6">
       <GridList cols={3}>
         {RELATED.map((p) => (
@@ -292,8 +279,7 @@ const POST = {
   dateLabel: 'May 12, 2026',
   readTime: '6 min read',
   cover: placeholderCover('cosmos-diff', 1600, 700),
-  lead:
-    'A small Playwright + Storybook setup that compares every component variant against a reference, with no per-pixel snapshots and no flake.',
+  lead: 'A small Playwright + Storybook setup that compares every component variant against a reference, with no per-pixel snapshots and no flake.',
   author: {
     name: 'Lindsay Walton',
     role: 'Front-end Developer · Cosmos team',
@@ -329,11 +315,7 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
     {withHero && (
       <div className="border-b border-[var(--color-border)]">
         <ContentNarrow maxWidth={1152} className="px-6 pt-10 pb-8">
-          <img
-            alt=""
-            src={POST.cover}
-            className="aspect-[3/1] w-full rounded-2xl object-cover"
-          />
+          <img alt="" src={POST.cover} className="aspect-[3/1] w-full rounded-2xl object-cover" />
         </ContentNarrow>
       </div>
     )}
@@ -341,7 +323,7 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
     {/* Header — kicker + title + lead + meta + share */}
     <ContentNarrow maxWidth={760} className="px-6 pt-12 pb-8">
       {/* Kicker (date + tag) above the title */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
         <Badge variant="brand" size="sm">
           {POST.tag}
         </Badge>
@@ -351,15 +333,9 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
       <h1 className="mt-4 text-4xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-5xl">
         {POST.title}
       </h1>
-      <p className="mt-5 text-xl leading-relaxed text-[var(--color-text-secondary)]">
-        {POST.lead}
-      </p>
+      <p className="mt-5 text-xl leading-relaxed text-[var(--color-text-secondary)]">{POST.lead}</p>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-y-3">
-        <ArticleMeta
-          author={POST.author.name}
-          date={POST.dateLabel}
-          readTime={POST.readTime}
-        />
+        <ArticleMeta author={POST.author.name} date={POST.dateLabel} readTime={POST.readTime} />
         <ShareRow />
       </div>
     </ContentNarrow>
@@ -369,50 +345,51 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
 const ProseBody = () => (
   <div className="prose-cosmos space-y-6 text-base leading-relaxed text-[var(--color-text-secondary)]">
     <p id="context">
-      Most visual regression setups either render a perfect-pixel snapshot for every
-      variant — which makes the suite flaky as soon as anti-aliasing or font hinting
-      shifts — or skip visual coverage entirely and rely on interaction tests that
-      cannot catch a regressed border or a swapped <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">color</code>{' '}
+      Most visual regression setups either render a perfect-pixel snapshot for every variant — which
+      makes the suite flaky as soon as anti-aliasing or font hinting shifts — or skip visual
+      coverage entirely and rely on interaction tests that cannot catch a regressed border or a
+      swapped{' '}
+      <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+        color
+      </code>{' '}
       token.
     </p>
 
     <SectionHeading id="setup">The setup</SectionHeading>
     <p>
-      Cosmos ships a Playwright helper that takes one screenshot per major variant,
-      against a reference rendered by the upstream design source. The diff is read
-      by a human at the &quot;does this still look right?&quot; level — not at the
-      pixel level.
+      Cosmos ships a Playwright helper that takes one screenshot per major variant, against a
+      reference rendered by the upstream design source. The diff is read by a human at the
+      &quot;does this still look right?&quot; level — not at the pixel level.
     </p>
 
     <div className="not-prose my-8">
       <CodeBlock language="ts" code={CODE_SAMPLE} />
     </div>
 
-    <blockquote className="border-l-2 border-brand-500 pl-5 text-xl italic leading-relaxed text-[var(--color-text-primary)]">
-      Pixels are noisy. Structure is not. The diff your team can trust is the one
-      that looks at structure.
+    <blockquote className="border-brand-500 border-l-2 pl-5 text-xl leading-relaxed text-[var(--color-text-primary)] italic">
+      Pixels are noisy. Structure is not. The diff your team can trust is the one that looks at
+      structure.
     </blockquote>
 
     <SectionHeading id="why">Why no per-pixel diffs</SectionHeading>
     <p>
-      Per-pixel diffs fail on every browser update, every font tweak, every shadow
-      recalculation. The maintenance cost greatly exceeds the bugs caught. Sampling
-      one screenshot per variant catches structural regressions (missing border,
-      wrong padding, swapped color) without the noise.
+      Per-pixel diffs fail on every browser update, every font tweak, every shadow recalculation.
+      The maintenance cost greatly exceeds the bugs caught. Sampling one screenshot per variant
+      catches structural regressions (missing border, wrong padding, swapped color) without the
+      noise.
     </p>
 
     <SectionHeading id="tradeoffs">Trade-offs</SectionHeading>
     <p>
-      The obvious one: subtle visual drift in a single variant can slip through
-      until the next sampled run. We accept it because the alternative — a
-      perpetually-flaky pixel suite — gets ignored by the team within a quarter,
-      and that drift slips through anyway.
+      The obvious one: subtle visual drift in a single variant can slip through until the next
+      sampled run. We accept it because the alternative — a perpetually-flaky pixel suite — gets
+      ignored by the team within a quarter, and that drift slips through anyway.
     </p>
     <p>
       Read more in the{' '}
       <a
         href="#"
-        className="text-brand-600 underline decoration-brand-500/40 underline-offset-2 hover:decoration-brand-500 dark:text-brand-400"
+        className="text-brand-600 decoration-brand-500/40 hover:decoration-brand-500 dark:text-brand-400 underline underline-offset-2"
       >
         Cosmos roadmap §4.2
       </a>
@@ -423,7 +400,7 @@ const ProseBody = () => (
 
 const TocRail = ({ sections, active }: { sections: Section[]; active: string }) => (
   <nav aria-label="On this page" className="px-2">
-    <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+    <div className="text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
       On this page
     </div>
     <ul role="list" className="mt-3 space-y-2 text-sm">
@@ -488,15 +465,11 @@ const DefaultStoryRender = () => {
         sticky
         message={
           <span>
-            <strong>Cosmos 1.1 is out.</strong> DocPage template, Combobox, and
-            5 blog variants.
+            <strong>Cosmos 1.1 is out.</strong> DocPage template, Combobox, and 5 blog variants.
           </span>
         }
         action={
-          <a
-            href="#changelog"
-            className="font-medium text-white underline underline-offset-2"
-          >
+          <a href="#changelog" className="font-medium text-white underline underline-offset-2">
             Read the changelog →
           </a>
         }
@@ -509,8 +482,8 @@ const DefaultStoryRender = () => {
         open={cookieOpen}
         message={
           <span>
-            We use a single cookie to remember your theme preference. No
-            tracking, no analytics, no third parties.
+            We use a single cookie to remember your theme preference. No tracking, no analytics, no
+            third parties.
           </span>
         }
         onSettings={() => setCookieOpen(false)}
@@ -532,8 +505,10 @@ export const Minimal: Story = {
     <Shell topbar={blogNavbar() as never}>
       <article className="bg-[var(--color-bg-base)]">
         <ContentNarrow maxWidth={680} className="px-6 py-16">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
-            <Badge variant="success" size="sm">Changelog</Badge>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
+            <Badge variant="success" size="sm">
+              Changelog
+            </Badge>
             <span aria-hidden>·</span>
             <time dateTime="2026-05-18">May 18, 2026</time>
           </div>
@@ -545,10 +520,12 @@ export const Minimal: Story = {
           </p>
           <div className="prose-cosmos mt-8 space-y-4 text-base leading-relaxed text-[var(--color-text-secondary)]">
             <p>
-              <strong className="text-[var(--color-text-primary)]">DocPage template.</strong>{' '}
-              A new <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">Pages/DocPage</code>{' '}
-              story ships a 3-column docs layout (sidebar + body + TOC) built entirely from
-              Cosmos primitives — no new dependency.
+              <strong className="text-[var(--color-text-primary)]">DocPage template.</strong> A new{' '}
+              <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                Pages/DocPage
+              </code>{' '}
+              story ships a 3-column docs layout (sidebar + body + TOC) built entirely from Cosmos
+              primitives — no new dependency.
             </p>
             <p>
               <strong className="text-[var(--color-text-primary)]">Combobox.</strong> Custom
@@ -556,8 +533,11 @@ export const Minimal: Story = {
             </p>
             <p>
               <strong className="text-[var(--color-text-primary)]">Blog index variants.</strong>{' '}
-              Five new layouts under <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">Pages/Blog Index</code>,
-              aligned on TUI Plus marketing/blog-sections.
+              Five new layouts under{' '}
+              <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                Pages/Blog Index
+              </code>
+              , aligned on TUI Plus marketing/blog-sections.
             </p>
           </div>
         </ContentNarrow>

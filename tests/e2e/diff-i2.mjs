@@ -5,17 +5,32 @@ import { mkdir } from 'node:fs/promises';
 
 // Free patterns only (first 2 per page in TUI gallery).
 const TARGETS = [
-  { page: 'overlays/drawers',         slug: 'drawer-01-close-outside',     title: 'With close button on outside preview' },
-  { page: 'overlays/drawers',         slug: 'drawer-02-empty',             title: 'Empty preview' },
-  { page: 'overlays/modal-dialogs',   slug: 'modal-01-simple-gray-footer', title: 'Simple with gray footer preview' },
-  { page: 'overlays/modal-dialogs',   slug: 'modal-02-centered-single',    title: 'Centered with single action preview' },
-  { page: 'overlays/notifications',   slug: 'notif-01-simple',             title: 'Simple preview' },
-  { page: 'overlays/notifications',   slug: 'notif-02-condensed',          title: 'Condensed preview' },
+  {
+    page: 'overlays/drawers',
+    slug: 'drawer-01-close-outside',
+    title: 'With close button on outside preview',
+  },
+  { page: 'overlays/drawers', slug: 'drawer-02-empty', title: 'Empty preview' },
+  {
+    page: 'overlays/modal-dialogs',
+    slug: 'modal-01-simple-gray-footer',
+    title: 'Simple with gray footer preview',
+  },
+  {
+    page: 'overlays/modal-dialogs',
+    slug: 'modal-02-centered-single',
+    title: 'Centered with single action preview',
+  },
+  { page: 'overlays/notifications', slug: 'notif-01-simple', title: 'Simple preview' },
+  { page: 'overlays/notifications', slug: 'notif-02-condensed', title: 'Condensed preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

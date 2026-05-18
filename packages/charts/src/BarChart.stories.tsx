@@ -1,18 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BarChart } from './BarChart';
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
+
 const meta = {
   title: 'Charts/Bar Chart',
   component: BarChart,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when `component` is set and the props have
+  // required fields. Stories below override via `render`; these defaults
+  // just satisfy the type contract and feed Controls.
+  args: { categories: MONTHS, series: [{ name: 'Sample', data: [1, 2, 3] }] },
 } satisfies Meta<typeof BarChart>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">

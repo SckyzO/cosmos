@@ -71,7 +71,7 @@ export const ImageGrid = ({
           'grid-cols-1',
           columns.sm && SM_COLS[columns.sm],
           columns.md && MD_COLS[columns.md],
-          columns.lg && LG_COLS[columns.lg],
+          columns.lg && LG_COLS[columns.lg]
         );
   return (
     <div className={clsx('grid', colsClass, GAP_CLASS[gap], className)}>
@@ -81,7 +81,7 @@ export const ImageGrid = ({
           className={clsx(
             'overflow-hidden bg-gray-100 dark:bg-gray-800 [&_img]:h-full [&_img]:w-full [&_img]:object-cover',
             aspectRatio,
-            rounded && 'rounded-xl',
+            rounded && 'rounded-xl'
           )}
         >
           {child}

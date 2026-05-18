@@ -48,7 +48,7 @@ const Root = forwardRef<HTMLDivElement, MediaObjectProps>(function MediaObjectRo
     children,
     ...rest
   },
-  ref,
+  ref
 ) {
   return (
     <div
@@ -59,7 +59,7 @@ const Root = forwardRef<HTMLDivElement, MediaObjectProps>(function MediaObjectRo
         mediaPosition === 'right' && 'flex-row-reverse',
         ALIGN_CLASS[align],
         gapClassName,
-        className,
+        className
       )}
       {...rest}
     >
@@ -74,7 +74,7 @@ export type MediaObjectImageProps = HTMLAttributes<HTMLDivElement>;
 
 const ImageSlot = forwardRef<HTMLDivElement, MediaObjectImageProps>(function MediaObjectImage(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <div ref={ref} className={clsx('shrink-0', className)} {...rest}>
@@ -89,7 +89,7 @@ export type MediaObjectBodyProps = HTMLAttributes<HTMLDivElement>;
 
 const Body = forwardRef<HTMLDivElement, MediaObjectBodyProps>(function MediaObjectBody(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <div ref={ref} className={clsx('min-w-0 flex-1', className)} {...rest}>
@@ -105,10 +105,7 @@ const Title = ({
   children,
   ...rest
 }: HTMLAttributes<HTMLHeadingElement> & { children?: ReactNode }) => (
-  <h4
-    className={clsx('text-lg font-bold text-gray-900 dark:text-white', className)}
-    {...rest}
-  >
+  <h4 className={clsx('text-lg font-bold text-gray-900 dark:text-white', className)} {...rest}>
     {children}
   </h4>
 );
@@ -118,10 +115,7 @@ const Description = ({
   children,
   ...rest
 }: HTMLAttributes<HTMLParagraphElement> & { children?: ReactNode }) => (
-  <p
-    className={clsx('mt-1 text-sm text-gray-600 dark:text-gray-400', className)}
-    {...rest}
-  >
+  <p className={clsx('mt-1 text-sm text-gray-600 dark:text-gray-400', className)} {...rest}>
     {children}
   </p>
 );

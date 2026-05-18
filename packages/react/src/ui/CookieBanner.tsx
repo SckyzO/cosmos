@@ -69,8 +69,7 @@ export const CookieBanner = ({
   const positionClass: Record<CookieBannerPosition, string> = {
     bottom: 'fixed inset-x-0 bottom-0 border-t',
     top: 'fixed inset-x-0 top-0 border-b',
-    floating:
-      'fixed inset-x-0 bottom-4 mx-auto max-w-3xl rounded-2xl border shadow-xl',
+    floating: 'fixed inset-x-0 bottom-4 mx-auto max-w-3xl rounded-2xl border shadow-xl',
   };
 
   return (
@@ -80,17 +79,12 @@ export const CookieBanner = ({
       className={clsx(
         'z-50 border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900',
         positionClass[position],
-        className,
+        className
       )}
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          {showIcon && (
-            <Cookie
-              className="text-brand-500 mt-0.5 h-5 w-5 shrink-0"
-              aria-hidden
-            />
-          )}
+          {showIcon && <Cookie className="text-brand-500 mt-0.5 h-5 w-5 shrink-0" aria-hidden />}
           <div className="min-w-0 flex-1">
             {title && (
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>

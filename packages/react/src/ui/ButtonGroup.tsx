@@ -36,7 +36,7 @@ export const ButtonGroup = ({
           'inline-flex',
           orientation === 'vertical' ? 'flex-col' : 'flex-row',
           gap,
-          className,
+          className
         )}
         role="group"
       >
@@ -53,7 +53,7 @@ export const ButtonGroup = ({
         // Reset corner radii on every child, then re-apply to the outer ones.
         '[&>button]:rounded-none',
         // Bring the focused button on top so its focus ring is fully visible.
-        '[&>button:focus-visible]:z-10 [&>button:focus]:z-10',
+        '[&>button:focus]:z-10 [&>button:focus-visible]:z-10',
         orientation === 'horizontal' && [
           '[&>button:first-child]:rounded-l-lg',
           '[&>button:last-child]:rounded-r-lg',
@@ -65,7 +65,7 @@ export const ButtonGroup = ({
           '[&>button:last-child]:rounded-b-lg',
           '[&>button:not(:first-child)]:-mt-px',
         ],
-        className,
+        className
       )}
     >
       {children}

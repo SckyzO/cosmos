@@ -75,16 +75,16 @@ export const InsideParagraph: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div className="space-y-2">
-      {(
-        ['colored', 'underline', 'opacity', 'opacity-hover', 'subtle'] as LinkVariant[]
-      ).map((v) => (
-        <div key={v} className="flex items-center gap-3">
-          <span className="w-28 font-mono text-[10px] uppercase text-gray-400">{v}</span>
-          <Link href="#" variant={v}>
-            Read the docs →
-          </Link>
-        </div>
-      ))}
+      {(['colored', 'underline', 'opacity', 'opacity-hover', 'subtle'] as LinkVariant[]).map(
+        (v) => (
+          <div key={v} className="flex items-center gap-3">
+            <span className="w-28 font-mono text-[10px] text-gray-400 uppercase">{v}</span>
+            <Link href="#" variant={v}>
+              Read the docs →
+            </Link>
+          </div>
+        )
+      )}
     </div>
   ),
 };

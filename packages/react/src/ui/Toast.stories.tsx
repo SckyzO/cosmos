@@ -91,7 +91,7 @@ export const PromiseFlow: Story = {
             window.setTimeout(() => {
               if (Math.random() > 0.3) resolve({ items: 42 });
               else reject(new Error('Network down'));
-            }, 1500),
+            }, 1500)
           );
           toast.promise(promise, {
             loading: 'Syncing nodes…',
@@ -195,29 +195,31 @@ export const ClickShowsToast: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Trigger' }));
     // Sonner renders into a portal at the end of <body>; query document.
     await waitFor(() => expect(document.querySelector('[data-sonner-toaster]')).not.toBeNull());
-    await waitFor(() =>
-      expect(document.body.textContent || '').toMatch(/Clicked/),
-    );
+    await waitFor(() => expect(document.body.textContent || '').toMatch(/Clicked/));
   },
 };
 
 export const ActionFiresHandler: Story = {
-  render: (args) => (
-    <>
-      <Button
-        onClick={() =>
-          toast('With action', {
-            action: { label: 'Undo', onClick: args.onUndo as () => void },
-          })
-        }
-      >
-        Trigger
-      </Button>
-      <Toaster />
-    </>
-  ),
+  render: (args) => {
+    const extra = args as unknown as { onUndo: () => void };
+    return (
+      <>
+        <Button
+          onClick={() =>
+            toast('With action', {
+              action: { label: 'Undo', onClick: extra.onUndo },
+            })
+          }
+        >
+          Trigger
+        </Button>
+        <Toaster />
+      </>
+    );
+  },
   args: { onUndo: fn() } as never,
   play: async ({ args, canvas }) => {
+    const extra = args as unknown as { onUndo: ReturnType<typeof fn> };
     await userEvent.click(canvas.getByRole('button', { name: 'Trigger' }));
     await waitFor(() => {
       const undoBtn = document.querySelector('button[data-button]');
@@ -225,6 +227,6 @@ export const ActionFiresHandler: Story = {
     });
     const undoBtn = document.querySelector('button[data-button]') as HTMLButtonElement;
     await userEvent.click(undoBtn);
-    await expect((args as { onUndo: ReturnType<typeof fn> }).onUndo).toHaveBeenCalledTimes(1);
+    await expect(extra.onUndo).toHaveBeenCalledTimes(1);
   },
 };

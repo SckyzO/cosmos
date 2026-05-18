@@ -3,10 +3,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Input } from '../forms/Input';
 import { PasswordInput } from '../forms/PasswordInput';
-import {
-  PasswordPolicyChecker,
-  defaultPasswordRules,
-} from '../forms/PasswordPolicyChecker';
+import { PasswordPolicyChecker, defaultPasswordRules } from '../forms/PasswordPolicyChecker';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
@@ -132,9 +129,7 @@ export const SignUpForm = ({
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
         />
-        {showPolicy && password.length > 0 && (
-          <PasswordPolicyChecker rules={rules} />
-        )}
+        {showPolicy && password.length > 0 && <PasswordPolicyChecker rules={rules} />}
         <Checkbox
           label={
             <span>
@@ -153,12 +148,7 @@ export const SignUpForm = ({
           onChange={(c) => setAgreedToTerms(c)}
           disabled={loading}
         />
-        <Button
-          type="submit"
-          loading={loading}
-          disabled={!canSubmit}
-          className="w-full"
-        >
+        <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
           {submitLabel}
         </Button>
       </div>

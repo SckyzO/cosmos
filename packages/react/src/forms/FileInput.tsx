@@ -40,9 +40,7 @@ const summarizeFiles = (files: File[], showSize: boolean): string => {
     return showSize ? `${f.name} — ${formatBytes(f.size)}` : f.name;
   }
   const total = files.reduce((sum, f) => sum + f.size, 0);
-  return showSize
-    ? `${files.length} files — ${formatBytes(total)} total`
-    : `${files.length} files`;
+  return showSize ? `${files.length} files — ${formatBytes(total)} total` : `${files.length} files`;
 };
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function FileInput(
@@ -62,7 +60,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
     className,
     ...rest
   },
-  forwardedRef,
+  forwardedRef
 ) {
   const generatedId = useId();
   const fieldId = id ?? name ?? generatedId;
@@ -97,8 +95,8 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
           'flex h-9 w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
           error
             ? 'border-red-400 focus-within:border-red-500 dark:border-red-500/60'
-            : 'border-gray-200 focus-within:border-brand-500 dark:border-gray-700',
-          disabled && 'cursor-not-allowed opacity-50',
+            : 'focus-within:border-brand-500 border-gray-200 dark:border-gray-700',
+          disabled && 'cursor-not-allowed opacity-50'
         )}
       >
         <button
@@ -115,7 +113,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
             'flex min-w-0 flex-1 items-center px-3 text-sm',
             files.length === 0
               ? 'text-gray-400 dark:text-gray-500'
-              : 'text-gray-900 dark:text-white',
+              : 'text-gray-900 dark:text-white'
           )}
         >
           <span className="truncate">{summary || placeholder}</span>
@@ -137,7 +135,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
         <p
           className={clsx(
             'mt-1 text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description}

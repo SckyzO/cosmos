@@ -3,19 +3,26 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'elements/buttons',  slug: 'btn-01-primary',           title: 'Primary buttons preview' },
-  { page: 'elements/buttons',  slug: 'btn-02-secondary',         title: 'Secondary buttons preview' },
-  { page: 'elements/dropdowns',slug: 'dd-01-simple',             title: 'Simple preview' },
-  { page: 'elements/dropdowns',slug: 'dd-02-with-dividers',      title: 'With dividers preview' },
-  { page: 'layout/cards',      slug: 'card-01-basic',            title: 'Basic card preview' },
-  { page: 'layout/cards',      slug: 'card-02-edge-to-edge',     title: 'Card, edge-to-edge on mobile preview' },
-  { page: 'layout/dividers',   slug: 'div-01-with-label',        title: 'With label preview' },
-  { page: 'layout/dividers',   slug: 'div-02-with-icon',         title: 'With icon preview' },
+  { page: 'elements/buttons', slug: 'btn-01-primary', title: 'Primary buttons preview' },
+  { page: 'elements/buttons', slug: 'btn-02-secondary', title: 'Secondary buttons preview' },
+  { page: 'elements/dropdowns', slug: 'dd-01-simple', title: 'Simple preview' },
+  { page: 'elements/dropdowns', slug: 'dd-02-with-dividers', title: 'With dividers preview' },
+  { page: 'layout/cards', slug: 'card-01-basic', title: 'Basic card preview' },
+  {
+    page: 'layout/cards',
+    slug: 'card-02-edge-to-edge',
+    title: 'Card, edge-to-edge on mobile preview',
+  },
+  { page: 'layout/dividers', slug: 'div-01-with-label', title: 'With label preview' },
+  { page: 'layout/dividers', slug: 'div-02-with-icon', title: 'With icon preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

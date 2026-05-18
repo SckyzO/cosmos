@@ -49,8 +49,7 @@ export const ProgressBar = ({
   const pct = indeterminate ? 100 : Math.max(0, Math.min(100, (value / max) * 100));
   const labelText = labelContent ?? `${Math.round(pct)}%`;
   // Inside label only fits in lg size (h-5 = 20px) — fall back to outside otherwise.
-  const effectiveLabel: ProgressBarLabel =
-    label === 'inside' && size !== 'lg' ? 'outside' : label;
+  const effectiveLabel: ProgressBarLabel = label === 'inside' && size !== 'lg' ? 'outside' : label;
   const showInsideLabel = effectiveLabel === 'inside' && !indeterminate;
   const showOutsideLabel = effectiveLabel === 'outside';
   return (
@@ -64,7 +63,7 @@ export const ProgressBar = ({
           aria-busy={indeterminate || undefined}
           className={clsx(
             'relative flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800',
-            SIZE_TRACK[size],
+            SIZE_TRACK[size]
           )}
         >
           {indeterminate ? (
@@ -72,7 +71,7 @@ export const ProgressBar = ({
               className={clsx(
                 'absolute h-full w-1/3 rounded-full motion-safe:animate-[progressIndeterminate_1.4s_ease-in-out_infinite]',
                 INTENT_BG[intent],
-                striped && 'bg-[length:1rem_1rem] bg-gradient-to-r',
+                striped && 'bg-gradient-to-r bg-[length:1rem_1rem]'
               )}
               style={{
                 backgroundImage: striped
@@ -93,11 +92,11 @@ export const ProgressBar = ({
               className={clsx(
                 'flex h-full items-center justify-center rounded-full transition-[width] duration-300 ease-out',
                 INTENT_BG[intent],
-                striped && 'motion-safe:animate-[progressStripes_1s_linear_infinite]',
+                striped && 'motion-safe:animate-[progressStripes_1s_linear_infinite]'
               )}
             >
               {showInsideLabel && (
-                <span className="px-2 text-[10px] font-bold leading-none text-white">
+                <span className="px-2 text-[10px] leading-none font-bold text-white">
                   {labelText}
                 </span>
               )}
@@ -107,7 +106,7 @@ export const ProgressBar = ({
         {showOutsideLabel && (
           <span
             aria-live="polite"
-            className="shrink-0 text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300"
+            className="shrink-0 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-300"
           >
             {labelText}
           </span>

@@ -59,12 +59,24 @@ export const Solid: Story = {
     <Wrap>
       <SectionCard title="Solid appearance — filled bg + white text">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge appearance="solid" variant="neutral">Neutral</Badge>
-          <Badge appearance="solid" variant="brand">Brand</Badge>
-          <Badge appearance="solid" variant="success">Success</Badge>
-          <Badge appearance="solid" variant="warning">Warning</Badge>
-          <Badge appearance="solid" variant="danger">Danger</Badge>
-          <Badge appearance="solid" variant="info">Info</Badge>
+          <Badge appearance="solid" variant="neutral">
+            Neutral
+          </Badge>
+          <Badge appearance="solid" variant="brand">
+            Brand
+          </Badge>
+          <Badge appearance="solid" variant="success">
+            Success
+          </Badge>
+          <Badge appearance="solid" variant="warning">
+            Warning
+          </Badge>
+          <Badge appearance="solid" variant="danger">
+            Danger
+          </Badge>
+          <Badge appearance="solid" variant="info">
+            Info
+          </Badge>
         </div>
       </SectionCard>
     </Wrap>
@@ -76,11 +88,21 @@ export const WithIconLeft: Story = {
     <Wrap>
       <SectionCard title="With left icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="success" icon={Check}>Verified</Badge>
-          <Badge variant="warning" icon={AlertTriangle}>Warning</Badge>
-          <Badge variant="danger" icon={X}>Failed</Badge>
-          <Badge variant="info" icon={Info}>FYI</Badge>
-          <Badge variant="brand" icon={Zap}>Pro</Badge>
+          <Badge variant="success" icon={Check}>
+            Verified
+          </Badge>
+          <Badge variant="warning" icon={AlertTriangle}>
+            Warning
+          </Badge>
+          <Badge variant="danger" icon={X}>
+            Failed
+          </Badge>
+          <Badge variant="info" icon={Info}>
+            FYI
+          </Badge>
+          <Badge variant="brand" icon={Zap}>
+            Pro
+          </Badge>
         </div>
       </SectionCard>
     </Wrap>
@@ -92,8 +114,12 @@ export const WithIconRight: Story = {
     <Wrap>
       <SectionCard title="With right icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="brand" icon={Star} iconPosition="right">Featured</Badge>
-          <Badge variant="success" icon={Check} iconPosition="right">Done</Badge>
+          <Badge variant="brand" icon={Star} iconPosition="right">
+            Featured
+          </Badge>
+          <Badge variant="success" icon={Check} iconPosition="right">
+            Done
+          </Badge>
         </div>
       </SectionCard>
     </Wrap>
@@ -105,10 +131,18 @@ export const SolidWithIcon: Story = {
     <Wrap>
       <SectionCard title="Solid + icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge appearance="solid" variant="success" icon={Check}>Approved</Badge>
-          <Badge appearance="solid" variant="danger" icon={X}>Rejected</Badge>
-          <Badge appearance="solid" variant="brand" icon={Zap}>New</Badge>
-          <Badge appearance="solid" variant="warning" icon={AlertTriangle}>Beta</Badge>
+          <Badge appearance="solid" variant="success" icon={Check}>
+            Approved
+          </Badge>
+          <Badge appearance="solid" variant="danger" icon={X}>
+            Rejected
+          </Badge>
+          <Badge appearance="solid" variant="brand" icon={Zap}>
+            New
+          </Badge>
+          <Badge appearance="solid" variant="warning" icon={AlertTriangle}>
+            Beta
+          </Badge>
         </div>
       </SectionCard>
     </Wrap>

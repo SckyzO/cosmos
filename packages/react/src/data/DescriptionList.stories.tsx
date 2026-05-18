@@ -22,10 +22,9 @@ const SHARED_ITEMS = (
     <DescriptionList.Item label="Email address">margotfoster@example.com</DescriptionList.Item>
     <DescriptionList.Item label="Salary expectation">$120,000</DescriptionList.Item>
     <DescriptionList.Item label="About">
-      Fugiat ipsum ipsum deserunt culpa aute sint do nostrud anim incididunt cillum culpa
-      consequat. Excepteur qui ipsum aliquip consequat sint. Sit id mollit nulla mollit nostrud
-      in ea officia proident. Irure nostrud pariatur mollit ad adipisicing reprehenderit
-      deserunt qui eu.
+      Fugiat ipsum ipsum deserunt culpa aute sint do nostrud anim incididunt cillum culpa consequat.
+      Excepteur qui ipsum aliquip consequat sint. Sit id mollit nulla mollit nostrud in ea officia
+      proident. Irure nostrud pariatur mollit ad adipisicing reprehenderit deserunt qui eu.
     </DescriptionList.Item>
     <DescriptionList.Item label="Attachments">
       <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 dark:divide-white/10 dark:border-white/10">
@@ -33,10 +32,7 @@ const SHARED_ITEMS = (
           { name: 'resume_back_end_developer.pdf', size: '2.4mb' },
           { name: 'coverletter_back_end_developer.pdf', size: '4.5mb' },
         ].map((f) => (
-          <li
-            key={f.name}
-            className="flex items-center justify-between py-4 pr-5 pl-4 text-sm/6"
-          >
+          <li key={f.name} className="flex items-center justify-between py-4 pr-5 pl-4 text-sm/6">
             <div className="flex w-0 flex-1 items-center">
               <Paperclip className="size-5 shrink-0 text-gray-400" aria-hidden />
               <div className="ml-4 flex min-w-0 flex-1 gap-2">

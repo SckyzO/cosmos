@@ -58,28 +58,17 @@ export const ResetPasswordForm = ({
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
           We&apos;ve sent a reset link to{' '}
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {sentEmail ?? email}
-          </span>
+          <span className="font-medium text-gray-700 dark:text-gray-200">{sentEmail ?? email}</span>
           . The link expires in 1 hour.
         </p>
         <div className="mt-6 flex flex-col items-stretch gap-2">
           {onResend && (
-            <Button
-              variant="secondary"
-              loading={loading}
-              disabled={loading}
-              onClick={onResend}
-            >
+            <Button variant="secondary" loading={loading} disabled={loading} onClick={onResend}>
               {resendLabel}
             </Button>
           )}
           {signInHref && (
-            <Link
-              href={signInHref}
-              variant="subtle"
-              className="justify-center"
-            >
+            <Link href={signInHref} variant="subtle" className="justify-center">
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
               {signInLabel}
             </Link>

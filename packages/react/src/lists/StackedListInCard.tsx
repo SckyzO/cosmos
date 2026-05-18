@@ -29,9 +29,7 @@ export type StackedListInCardProps = Omit<HTMLAttributes<HTMLDivElement>, 'child
 
 const ITEM_INSET_CLASS = 'px-4 sm:px-6';
 
-const isStackedListItem = (
-  node: ReactNode,
-): node is ReactElement<StackedListItemProps> =>
+const isStackedListItem = (node: ReactNode): node is ReactElement<StackedListItemProps> =>
   isValidElement(node) && node.type === StackedList.Item;
 
 export const StackedListInCard = forwardRef<HTMLDivElement, StackedListInCardProps>(
@@ -47,13 +45,13 @@ export const StackedListInCard = forwardRef<HTMLDivElement, StackedListInCardPro
       <div
         ref={ref}
         className={clsx(
-          'overflow-hidden bg-white ring-1 shadow-sm ring-gray-200 sm:rounded-md dark:bg-gray-900 dark:ring-white/10',
-          className,
+          'overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-md dark:bg-gray-900 dark:ring-white/10',
+          className
         )}
         {...rest}
       >
         <StackedList>{insetChildren}</StackedList>
       </div>
     );
-  },
+  }
 );

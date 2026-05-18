@@ -24,8 +24,16 @@ const out = [];
 for (const f of page.frames()) {
   if (f === page.mainFrame()) continue;
   try {
-    const html = await f.locator(tag).first().innerHTML().catch(() => '');
-    const outerTag = await f.locator(tag).first().getAttribute('class').catch(() => '');
+    const html = await f
+      .locator(tag)
+      .first()
+      .innerHTML()
+      .catch(() => '');
+    const outerTag = await f
+      .locator(tag)
+      .first()
+      .getAttribute('class')
+      .catch(() => '');
     if (html) {
       out.push({
         src: f.url(),

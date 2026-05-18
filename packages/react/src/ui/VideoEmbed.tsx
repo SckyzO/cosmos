@@ -54,7 +54,7 @@ export const VideoEmbed = ({
       'w-full overflow-hidden bg-black',
       resolveAspect(aspectRatio),
       rounded && 'rounded-xl',
-      className,
+      className
     )}
   >
     {type === 'iframe' ? (

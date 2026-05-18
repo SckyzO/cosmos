@@ -28,7 +28,13 @@ type Story = StoryObj<typeof meta>;
 
 // ── Sample content shared across stories ─────────────────────────────────────
 
-const SamplePanel = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => (
+const SamplePanel = ({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) => (
   <CommandPalette open={open} onOpenChange={onOpenChange}>
     <CommandPalette.Input placeholder="Type a command or search…" />
     <CommandPalette.List>
@@ -37,7 +43,11 @@ const SamplePanel = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
         <CommandPalette.Item icon={Home} shortcut="G H" onSelect={() => onOpenChange(false)}>
           Go home
         </CommandPalette.Item>
-        <CommandPalette.Item icon={LayoutDashboard} shortcut="G D" onSelect={() => onOpenChange(false)}>
+        <CommandPalette.Item
+          icon={LayoutDashboard}
+          shortcut="G D"
+          onSelect={() => onOpenChange(false)}
+        >
           Open dashboard
         </CommandPalette.Item>
         <CommandPalette.Item icon={User} shortcut="G P" onSelect={() => onOpenChange(false)}>
@@ -147,7 +157,12 @@ export const FlatList: Story = {
               'src/components/Button.tsx',
               'src/components/Modal.tsx',
             ].map((f) => (
-              <CommandPalette.Item key={f} icon={FileText} value={f} onSelect={() => setOpen(false)}>
+              <CommandPalette.Item
+                key={f}
+                icon={FileText}
+                value={f}
+                onSelect={() => setOpen(false)}
+              >
                 {f}
               </CommandPalette.Item>
             ))}
@@ -256,9 +271,7 @@ export const SelectingItemFiresHandler: Story = {
     );
   },
   play: async () => {
-    await waitFor(() =>
-      expect(document.querySelector('[data-testid="alpha"]')).not.toBeNull(),
-    );
+    await waitFor(() => expect(document.querySelector('[data-testid="alpha"]')).not.toBeNull());
     const alpha = document.querySelector('[data-testid="alpha"]') as HTMLElement;
     await userEvent.click(alpha);
     // After click, the dialog should remain in DOM (handler doesn't auto-close);
@@ -322,8 +335,6 @@ export const HotkeyOpensPalette: Story = {
     await expect(document.querySelector('[cmdk-dialog]')).toBeNull();
     // Trigger Ctrl+K
     await userEvent.keyboard('{Control>}k{/Control}');
-    await waitFor(() =>
-      expect(document.querySelector('[cmdk-dialog]')).not.toBeNull(),
-    );
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
   },
 };

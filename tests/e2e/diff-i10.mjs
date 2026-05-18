@@ -3,15 +3,18 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'page-examples/home-screens',   slug: 'hs-01-sidebar', title: 'Sidebar preview' },
-  { page: 'page-examples/home-screens',   slug: 'hs-02-stacked', title: 'Stacked preview' },
+  { page: 'page-examples/home-screens', slug: 'hs-01-sidebar', title: 'Sidebar preview' },
+  { page: 'page-examples/home-screens', slug: 'hs-02-stacked', title: 'Stacked preview' },
   { page: 'page-examples/detail-screens', slug: 'ds-01-sidebar', title: 'Sidebar preview' },
   { page: 'page-examples/detail-screens', slug: 'ds-02-stacked', title: 'Stacked preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

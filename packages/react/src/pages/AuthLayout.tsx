@@ -40,31 +40,25 @@ export const AuthLayout = ({
 }: AuthLayoutProps) => {
   const showBuiltInBrand = brand === undefined && (Logo || title || subtitle);
   const renderBrand =
-    brand !== undefined
-      ? brand // includes `null` → renders nothing
-      : showBuiltInBrand
-        ? (
-            <div className="mb-8 flex flex-col items-center gap-2 text-center">
-              {Logo && (
-                <div className="bg-brand-500 flex h-12 w-12 items-center justify-center rounded-xl text-white">
-                  <Logo className="h-6 w-6" />
-                </div>
-              )}
-              {title && (
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
-              )}
-              {subtitle && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
-              )}
-            </div>
-          )
-        : null;
+    brand !== undefined ? (
+      brand // includes `null` → renders nothing
+    ) : showBuiltInBrand ? (
+      <div className="mb-8 flex flex-col items-center gap-2 text-center">
+        {Logo && (
+          <div className="bg-brand-500 flex h-12 w-12 items-center justify-center rounded-xl text-white">
+            <Logo className="h-6 w-6" />
+          </div>
+        )}
+        {title && <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>}
+        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+      </div>
+    ) : null;
 
   return (
     <div
       className={clsx(
         'flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-950',
-        className,
+        className
       )}
     >
       <div className="w-full max-w-md">

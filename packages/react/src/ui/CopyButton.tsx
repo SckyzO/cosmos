@@ -57,7 +57,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(functio
     onClick,
     ...rest
   },
-  ref,
+  ref
 ) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
@@ -76,14 +76,14 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(functio
         // Clipboard API unavailable — silent noop
       }
     },
-    [value, duration, onClick, onCopy],
+    [value, duration, onClick, onCopy]
   );
 
   useEffect(
     () => () => {
       if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
     },
-    [],
+    []
   );
 
   const Icon = copied ? Check : Copy;
@@ -105,7 +105,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(functio
           'inline-flex items-center justify-center rounded-md',
           SIZE_ICON[size].box,
           baseClass,
-          className,
+          className
         )}
         {...rest}
       >
@@ -123,7 +123,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(functio
         'inline-flex items-center justify-center rounded-md font-medium',
         SIZE_BUTTON[size],
         baseClass,
-        className,
+        className
       )}
       {...rest}
     >

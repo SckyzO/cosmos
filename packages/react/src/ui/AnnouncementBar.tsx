@@ -44,8 +44,7 @@ const INTENT_BG: Record<AnnouncementBarIntent, string> = {
     'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/30',
   danger:
     'bg-red-50 text-red-800 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30',
-  brand:
-    'bg-brand-500 text-white border-brand-600 dark:bg-brand-600 dark:border-brand-500',
+  brand: 'bg-brand-500 text-white border-brand-600 dark:bg-brand-600 dark:border-brand-500',
 };
 
 const ICON_COLOR: Record<AnnouncementBarIntent, string> = {
@@ -76,12 +75,10 @@ export const AnnouncementBar = ({
         'flex w-full items-center gap-3 border-b px-4 py-2 text-sm',
         INTENT_BG[intent],
         sticky && 'sticky top-0 z-40',
-        className,
+        className
       )}
     >
-      {Icon && (
-        <Icon className={clsx('h-4 w-4 shrink-0', ICON_COLOR[intent])} aria-hidden />
-      )}
+      {Icon && <Icon className={clsx('h-4 w-4 shrink-0', ICON_COLOR[intent])} aria-hidden />}
       <span className="min-w-0 flex-1">{message}</span>
       {action && <span className="shrink-0">{action}</span>}
       {dismissible && (
@@ -96,7 +93,7 @@ export const AnnouncementBar = ({
             'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
             intent === 'brand'
               ? 'text-white/80 hover:bg-white/15 hover:text-white'
-              : 'text-current opacity-60 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10',
+              : 'text-current opacity-60 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10'
           )}
         >
           <X className="h-4 w-4" />

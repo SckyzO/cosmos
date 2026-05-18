@@ -57,9 +57,11 @@ export const OtpInput = ({
     const cleaned = sanitize(char, alphanumeric).slice(0, 1);
     const arr = value.padEnd(length, ' ').split('');
     arr[idx] = cleaned || ' ';
-    const next = arr.join('').replace(/ +$/g, '').replace(/ /g, '');
     // Trim trailing spaces but keep internal positions intact while building.
-    const finalValue = arr.map((c) => (c === ' ' ? '' : c)).join('').slice(0, length);
+    const finalValue = arr
+      .map((c) => (c === ' ' ? '' : c))
+      .join('')
+      .slice(0, length);
     onChange(finalValue);
     if (finalValue.length === length) onComplete?.(finalValue);
     return cleaned;
@@ -113,7 +115,10 @@ export const OtpInput = ({
     cleaned.split('').forEach((c, i) => {
       arr[idx + i] = c;
     });
-    const finalValue = arr.map((c) => (c === ' ' ? '' : c)).join('').slice(0, length);
+    const finalValue = arr
+      .map((c) => (c === ' ' ? '' : c))
+      .join('')
+      .slice(0, length);
     onChange(finalValue);
     const nextFocus = Math.min(length - 1, idx + cleaned.length);
     focusCell(nextFocus);
@@ -121,11 +126,7 @@ export const OtpInput = ({
   };
 
   return (
-    <div
-      className={clsx('flex items-center gap-2', className)}
-      role="group"
-      aria-label={ariaLabel}
-    >
+    <div className={clsx('flex items-center gap-2', className)} role="group" aria-label={ariaLabel}>
       {Array.from({ length }).map((_, i) => {
         const cellChar = value[i] ?? '';
         const display = mask && cellChar ? '•' : cellChar;
@@ -148,10 +149,10 @@ export const OtpInput = ({
             onPaste={handlePaste(i)}
             onFocus={(e) => e.target.select()}
             className={clsx(
-              'h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold tabular-nums text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+              'focus:ring-brand-500/30 h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
               error
                 ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
-                : 'border-gray-200 focus:border-brand-500 dark:border-gray-700',
+                : 'focus:border-brand-500 border-gray-200 dark:border-gray-700'
             )}
           />
         );

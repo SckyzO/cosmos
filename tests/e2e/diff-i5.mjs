@@ -3,19 +3,42 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'application-shells/stacked',     slug: 'stk-01-lighter-page-header',  title: 'With lighter page header preview' },
-  { page: 'application-shells/stacked',     slug: 'stk-02-bottom-border',        title: 'With bottom border preview' },
-  { page: 'application-shells/sidebar',     slug: 'sbr-01-simple',               title: 'Simple sidebar preview' },
-  { page: 'application-shells/sidebar',     slug: 'sbr-02-simple-dark',          title: 'Simple dark sidebar preview' },
-  { page: 'application-shells/multi-column',slug: 'mc-01-3col-full-width',       title: 'Full-width three-column preview' },
-  { page: 'application-shells/multi-column',slug: 'mc-02-secondary-right',       title: 'Full-width secondary column on right preview' },
-  { page: 'page-examples/settings-screens', slug: 'set-01-sidebar',              title: 'Sidebar preview' },
-  { page: 'page-examples/settings-screens', slug: 'set-02-stacked',              title: 'Stacked preview' },
+  {
+    page: 'application-shells/stacked',
+    slug: 'stk-01-lighter-page-header',
+    title: 'With lighter page header preview',
+  },
+  {
+    page: 'application-shells/stacked',
+    slug: 'stk-02-bottom-border',
+    title: 'With bottom border preview',
+  },
+  { page: 'application-shells/sidebar', slug: 'sbr-01-simple', title: 'Simple sidebar preview' },
+  {
+    page: 'application-shells/sidebar',
+    slug: 'sbr-02-simple-dark',
+    title: 'Simple dark sidebar preview',
+  },
+  {
+    page: 'application-shells/multi-column',
+    slug: 'mc-01-3col-full-width',
+    title: 'Full-width three-column preview',
+  },
+  {
+    page: 'application-shells/multi-column',
+    slug: 'mc-02-secondary-right',
+    title: 'Full-width secondary column on right preview',
+  },
+  { page: 'page-examples/settings-screens', slug: 'set-01-sidebar', title: 'Sidebar preview' },
+  { page: 'page-examples/settings-screens', slug: 'set-02-stacked', title: 'Stacked preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

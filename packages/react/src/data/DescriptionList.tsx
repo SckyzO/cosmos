@@ -1,9 +1,5 @@
 import { clsx } from 'clsx';
-import {
-  forwardRef,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Left-aligned"):
 //   <div>
@@ -36,7 +32,7 @@ export type DescriptionListItemProps = HTMLAttributes<HTMLDivElement> & {
 
 const Item = forwardRef<HTMLDivElement, DescriptionListItemProps>(function Item(
   { label, children, className, ...rest },
-  ref,
+  ref
 ) {
   return (
     <div
@@ -74,16 +70,17 @@ export type DescriptionListProps = HTMLAttributes<HTMLDListElement> & {
 
 const RootCmp = forwardRef<HTMLDListElement, DescriptionListProps>(function DescriptionListRoot(
   { title, description, inCard = false, striped = false, className, children, ...rest },
-  ref,
+  ref
 ) {
   const dl = (
     <dl
       ref={ref}
       className={clsx(
         'divide-y divide-gray-100 dark:divide-white/5',
-        striped && '[&>div:nth-child(even)]:bg-gray-50 dark:[&>div:nth-child(even)]:bg-white/[0.03]',
+        striped &&
+          '[&>div:nth-child(even)]:bg-gray-50 dark:[&>div:nth-child(even)]:bg-white/[0.03]',
         inCard && 'px-4 sm:px-6',
-        className,
+        className
       )}
       {...rest}
     >
@@ -98,9 +95,7 @@ const RootCmp = forwardRef<HTMLDListElement, DescriptionListProps>(function Desc
           <h3 className="text-base/7 font-semibold text-gray-900 dark:text-white">{title}</h3>
         )}
         {description && (
-          <p className="mt-1 max-w-2xl text-sm/6 text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
+          <p className="mt-1 max-w-2xl text-sm/6 text-gray-500 dark:text-gray-400">{description}</p>
         )}
       </div>
     ) : null;

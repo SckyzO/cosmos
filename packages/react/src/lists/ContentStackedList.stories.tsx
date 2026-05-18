@@ -124,10 +124,7 @@ const CommentCount = ({ count }: { count: number }) => (
   <div className="flex w-16 gap-x-2.5">
     <dt>
       <span className="sr-only">Total comments</span>
-      <MessageCircle
-        className="size-6 text-gray-400 dark:text-gray-500"
-        aria-hidden
-      />
+      <MessageCircle className="size-6 text-gray-400 dark:text-gray-500" aria-hidden />
     </dt>
     <dd className="text-sm/6 text-gray-900 dark:text-white">{count}</dd>
   </div>
@@ -189,7 +186,7 @@ export const ProjectsWithBadgeAndActions: Story = {
             <>
               <a
                 href="#"
-                className="hidden rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 ring-1 shadow-sm ring-inset ring-gray-300 hover:bg-gray-50 sm:block dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
+                className="hidden rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 sm:block dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
                 View project
               </a>

@@ -62,12 +62,16 @@ export const Badge = ({
         'inline-flex items-center rounded-full font-semibold',
         variantMap[variant],
         SIZE_CLASS[size],
-        className,
+        className
       )}
     >
-      {Icon && iconPosition === 'left' && <Icon className={clsx('shrink-0', iconClass)} aria-hidden />}
+      {Icon && iconPosition === 'left' && (
+        <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
+      )}
       <span>{children}</span>
-      {Icon && iconPosition === 'right' && <Icon className={clsx('shrink-0', iconClass)} aria-hidden />}
+      {Icon && iconPosition === 'right' && (
+        <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
+      )}
     </span>
   );
 };

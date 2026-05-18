@@ -1,11 +1,6 @@
 import { clsx } from 'clsx';
 import { Clock } from 'lucide-react';
-import {
-  forwardRef,
-  useId,
-  type ChangeEvent,
-  type InputHTMLAttributes,
-} from 'react';
+import { forwardRef, useId, type ChangeEvent, type InputHTMLAttributes } from 'react';
 
 export type TimePickerProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -43,7 +38,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
     className,
     ...rest
   },
-  ref,
+  ref
 ) {
   const generatedId = useId();
   const fieldId = id ?? name ?? generatedId;
@@ -60,10 +55,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
         </label>
       )}
       <div className="relative inline-flex h-9 w-full items-center">
-        <Clock
-          aria-hidden
-          className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400"
-        />
+        <Clock aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
         <input
           ref={ref}
           id={fieldId}
@@ -77,13 +69,13 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
           disabled={disabled}
           onChange={(e) => onChange?.(e.target.value, e)}
           className={clsx(
-            'h-full w-full rounded-lg border bg-white pl-9 pr-3 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'h-full w-full rounded-lg border bg-white pr-3 pl-9 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
             // Hide the browser-native time picker icon (Chrome adds an extra clock on the right) so only our left-icon shows.
-            '[&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer',
+            '[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0',
             error
               ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
               : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
-            className,
+            className
           )}
           {...rest}
         />
@@ -92,7 +84,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
         <p
           className={clsx(
             'mt-1 text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description}

@@ -11,6 +11,8 @@ const meta = {
   component: CookieBanner,
   parameters: portalDocsParams.sm(),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { message: 'We use cookies.', onAccept: fn() },
 } satisfies Meta<typeof CookieBanner>;
 
 export default meta;
@@ -31,10 +33,7 @@ const sampleMessage = (
 export const Default: Story = {
   render: (args) => (
     <div className="relative h-72 bg-gray-100 dark:bg-gray-800">
-      <CookieBanner
-        message={sampleMessage}
-        onAccept={args.onAccept as () => void}
-      />
+      <CookieBanner message={sampleMessage} onAccept={args.onAccept as () => void} />
     </div>
   ),
   args: { onAccept: fn() } as never,
@@ -85,11 +84,7 @@ export const Floating: Story = {
 export const TopPosition: Story = {
   render: (args) => (
     <div className="relative h-72 bg-gray-100 dark:bg-gray-800">
-      <CookieBanner
-        position="top"
-        message={sampleMessage}
-        onAccept={args.onAccept as () => void}
-      />
+      <CookieBanner position="top" message={sampleMessage} onAccept={args.onAccept as () => void} />
     </div>
   ),
   args: { onAccept: fn() } as never,
@@ -135,10 +130,7 @@ export const Controlled: Story = {
 export const ClickAcceptFiresHandlerAndCloses: Story = {
   render: (args) => (
     <div className="relative h-72">
-      <CookieBanner
-        message={sampleMessage}
-        onAccept={args.onAccept as () => void}
-      />
+      <CookieBanner message={sampleMessage} onAccept={args.onAccept as () => void} />
     </div>
   ),
   args: { onAccept: fn() } as never,

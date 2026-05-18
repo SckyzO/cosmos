@@ -37,9 +37,9 @@ const Root = ({
         ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
         : 'rounded-2xl border border-gray-200 dark:border-gray-800',
       interactive &&
-        'cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-brand-500/30',
+        'focus-within:ring-brand-500/30 cursor-pointer transition-all focus-within:ring-2 hover:-translate-y-0.5 hover:shadow-md',
       PADDING_CLASS[padding],
-      className,
+      className
     )}
   >
     {children}
@@ -50,7 +50,7 @@ const Header = ({ children, className }: { children: ReactNode; className?: stri
   <div
     className={clsx(
       'flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800',
-      className,
+      className
     )}
   >
     {children}
@@ -65,7 +65,7 @@ const Footer = ({ children, className }: { children: ReactNode; className?: stri
   <div
     className={clsx(
       'flex items-center justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800',
-      className,
+      className
     )}
   >
     {children}
@@ -88,12 +88,14 @@ const Image = ({
   alt,
   ...rest
 }: CardImageProps) => (
-  <div className={clsx('w-full overflow-hidden bg-gray-100 dark:bg-gray-800', aspectRatio, wrapperClassName)}>
-    <img
-      alt={alt}
-      className={clsx('h-full w-full object-cover', className)}
-      {...rest}
-    />
+  <div
+    className={clsx(
+      'w-full overflow-hidden bg-gray-100 dark:bg-gray-800',
+      aspectRatio,
+      wrapperClassName
+    )}
+  >
+    <img alt={alt} className={clsx('h-full w-full object-cover', className)} {...rest} />
   </div>
 );
 

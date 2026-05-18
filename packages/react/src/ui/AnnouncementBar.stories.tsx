@@ -20,11 +20,9 @@ export const Default: Story = {};
 export const Variants: Story = {
   render: () => (
     <div className="space-y-3">
-      {(['info', 'success', 'warning', 'danger', 'brand'] as AnnouncementBarIntent[]).map(
-        (i) => (
-          <AnnouncementBar key={i} intent={i} message={`This is an ${i} announcement.`} />
-        ),
-      )}
+      {(['info', 'success', 'warning', 'danger', 'brand'] as AnnouncementBarIntent[]).map((i) => (
+        <AnnouncementBar key={i} intent={i} message={`This is an ${i} announcement.`} />
+      ))}
     </div>
   ),
 };

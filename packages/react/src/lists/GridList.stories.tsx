@@ -43,27 +43,22 @@ export const ContactCardsWithSmallPortraits: Story = {
                   <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">
                     {p.name}
                   </h3>
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
                     Admin
                   </span>
                 </div>
                 <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
               </div>
-              <img
-                alt=""
-                src={p.img}
-                className="size-10 shrink-0 rounded-full bg-gray-300"
-              />
+              <img alt="" src={p.img} className="size-10 shrink-0 rounded-full bg-gray-300" />
             </div>
             <GridList.Footer>
-              <GridList.FooterAction href={`mailto:${p.name.toLowerCase().replace(' ', '.')}@example.com`}>
+              <GridList.FooterAction
+                href={`mailto:${p.name.toLowerCase().replace(' ', '.')}@example.com`}
+              >
                 <Mail className="size-5 text-gray-400" aria-hidden />
                 Email
               </GridList.FooterAction>
-              <GridList.FooterAction
-                index={1}
-                href={`tel:+33000000000`}
-              >
+              <GridList.FooterAction index={1} href={`tel:+33000000000`}>
                 <Phone className="size-5 text-gray-400" aria-hidden />
                 Call
               </GridList.FooterAction>

@@ -16,40 +16,104 @@ const PAIRS = {
     tuiUrl: 'https://tailwindcss.com/plus/ui-blocks/application-ui/lists/stacked-lists',
     cases: [
       { slug: 'simple', tuiTitle: 'Simple preview', storyId: 'lists-stacked-list--simple' },
-      { slug: 'with-links', tuiTitle: 'With links preview', storyId: 'lists-stacked-list--with-links' },
+      {
+        slug: 'with-links',
+        tuiTitle: 'With links preview',
+        storyId: 'lists-stacked-list--with-links',
+      },
       // Cosmos-only extensions (variants of Pattern 1/2, no direct TUI equivalent):
-      { slug: 'with-actions-menu', tuiTitle: 'Simple preview', storyId: 'lists-stacked-list--with-actions-menu' },
-      { slug: 'no-subtitle', tuiTitle: 'Simple preview', storyId: 'lists-stacked-list--no-subtitle' },
+      {
+        slug: 'with-actions-menu',
+        tuiTitle: 'Simple preview',
+        storyId: 'lists-stacked-list--with-actions-menu',
+      },
+      {
+        slug: 'no-subtitle',
+        tuiTitle: 'Simple preview',
+        storyId: 'lists-stacked-list--no-subtitle',
+      },
       { slug: 'no-avatar', tuiTitle: 'Simple preview', storyId: 'lists-stacked-list--no-avatar' },
-      { slug: 'with-leading-icon', tuiTitle: 'Simple preview', storyId: 'lists-stacked-list--with-leading-icon' },
+      {
+        slug: 'with-leading-icon',
+        tuiTitle: 'Simple preview',
+        storyId: 'lists-stacked-list--with-leading-icon',
+      },
     ],
   },
   content: {
     tuiUrl: 'https://tailwindcss.com/plus/ui-blocks/application-ui/lists/stacked-lists',
     cases: [
-      { slug: 'issues-with-avatar-group', tuiTitle: 'With inline links and avatar group preview', storyId: 'lists-content-stacked-list--issues-with-avatar-group' },
-      { slug: 'projects-with-badge-and-actions', tuiTitle: 'With badges, button, and actions menu preview', storyId: 'lists-content-stacked-list--projects-with-badge-and-actions' },
-      { slug: 'title-without-link', tuiTitle: 'With inline links and avatar group preview', storyId: 'lists-content-stacked-list--title-without-link' },
-      { slug: 'title-only-no-meta', tuiTitle: 'With inline links and avatar group preview', storyId: 'lists-content-stacked-list--title-only-no-meta' },
-      { slug: 'single-meta-item', tuiTitle: 'With inline links and actions menu preview', storyId: 'lists-content-stacked-list--single-meta-item' },
+      {
+        slug: 'issues-with-avatar-group',
+        tuiTitle: 'With inline links and avatar group preview',
+        storyId: 'lists-content-stacked-list--issues-with-avatar-group',
+      },
+      {
+        slug: 'projects-with-badge-and-actions',
+        tuiTitle: 'With badges, button, and actions menu preview',
+        storyId: 'lists-content-stacked-list--projects-with-badge-and-actions',
+      },
+      {
+        slug: 'title-without-link',
+        tuiTitle: 'With inline links and avatar group preview',
+        storyId: 'lists-content-stacked-list--title-without-link',
+      },
+      {
+        slug: 'title-only-no-meta',
+        tuiTitle: 'With inline links and avatar group preview',
+        storyId: 'lists-content-stacked-list--title-only-no-meta',
+      },
+      {
+        slug: 'single-meta-item',
+        tuiTitle: 'With inline links and actions menu preview',
+        storyId: 'lists-content-stacked-list--single-meta-item',
+      },
     ],
   },
   card: {
     tuiUrl: 'https://tailwindcss.com/plus/ui-blocks/application-ui/lists/stacked-lists',
     cases: [
-      { slug: 'default', tuiTitle: 'In card with links preview', storyId: 'lists-stacked-list-in-card--default' },
-      { slug: 'no-links', tuiTitle: 'In card with links preview', storyId: 'lists-stacked-list-in-card--no-links' },
-      { slug: 'with-leading-icon', tuiTitle: 'In card with links preview', storyId: 'lists-stacked-list-in-card--with-leading-icon' },
-      { slug: 'inside-container', tuiTitle: 'In card with links preview', storyId: 'lists-stacked-list-in-card--inside-container' },
+      {
+        slug: 'default',
+        tuiTitle: 'In card with links preview',
+        storyId: 'lists-stacked-list-in-card--default',
+      },
+      {
+        slug: 'no-links',
+        tuiTitle: 'In card with links preview',
+        storyId: 'lists-stacked-list-in-card--no-links',
+      },
+      {
+        slug: 'with-leading-icon',
+        tuiTitle: 'In card with links preview',
+        storyId: 'lists-stacked-list-in-card--with-leading-icon',
+      },
+      {
+        slug: 'inside-container',
+        tuiTitle: 'In card with links preview',
+        storyId: 'lists-stacked-list-in-card--inside-container',
+      },
     ],
   },
   narrow: {
     tuiUrl: 'https://tailwindcss.com/plus/ui-blocks/application-ui/lists/stacked-lists',
     cases: [
       { slug: 'narrow', tuiTitle: 'Narrow preview', storyId: 'lists-narrow-stacked-list--narrow' },
-      { slug: 'sticky-headings', tuiTitle: 'Narrow with sticky headings preview', storyId: 'lists-narrow-stacked-list--sticky-headings' },
-      { slug: 'with-actions', tuiTitle: 'Narrow with actions preview', storyId: 'lists-narrow-stacked-list--with-actions' },
-      { slug: 'with-truncated-description', tuiTitle: 'Narrow with truncated content preview', storyId: 'lists-narrow-stacked-list--with-truncated-description' },
+      {
+        slug: 'sticky-headings',
+        tuiTitle: 'Narrow with sticky headings preview',
+        storyId: 'lists-narrow-stacked-list--sticky-headings',
+      },
+      {
+        slug: 'with-actions',
+        tuiTitle: 'Narrow with actions preview',
+        storyId: 'lists-narrow-stacked-list--with-actions',
+      },
+      {
+        slug: 'with-truncated-description',
+        tuiTitle: 'Narrow with truncated content preview',
+        storyId: 'lists-narrow-stacked-list--with-truncated-description',
+      },
     ],
   },
 };

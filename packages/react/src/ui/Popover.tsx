@@ -63,7 +63,7 @@ const PopoverRoot = ({
       if (!isControlled) setInternalOpen(v);
       onOpenChange?.(v);
     },
-    [isControlled, onOpenChange, refreshRect],
+    [isControlled, onOpenChange, refreshRect]
   );
 
   useEffect(() => {
@@ -97,34 +97,35 @@ const PopoverRoot = ({
 
 export type PopoverTriggerProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
-const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(
-  function PopoverTrigger({ onClick, children, ...rest }, forwardedRef) {
-    const { open, setOpen, triggerRef, refreshRect } = useCtx();
-    const setRef = (node: HTMLButtonElement | null) => {
-      (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      if (typeof forwardedRef === 'function') forwardedRef(node);
-      else if (forwardedRef) forwardedRef.current = node;
-    };
-    useEffect(() => {
-      if (open) refreshRect();
-    }, [open, refreshRect]);
-    return (
-      <button
-        ref={setRef}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={(e) => {
-          onClick?.(e);
-          setOpen(!open);
-        }}
-        {...rest}
-      >
-        {children}
-      </button>
-    );
-  },
-);
+const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(function PopoverTrigger(
+  { onClick, children, ...rest },
+  forwardedRef
+) {
+  const { open, setOpen, triggerRef, refreshRect } = useCtx();
+  const setRef = (node: HTMLButtonElement | null) => {
+    (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+    if (typeof forwardedRef === 'function') forwardedRef(node);
+    else if (forwardedRef) forwardedRef.current = node;
+  };
+  useEffect(() => {
+    if (open) refreshRect();
+  }, [open, refreshRect]);
+  return (
+    <button
+      ref={setRef}
+      type="button"
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      onClick={(e) => {
+        onClick?.(e);
+        setOpen(!open);
+      }}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+});
 
 // ── Content (portal) ─────────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ const PopoverContent = ({
         className={clsx(
           'fixed z-[9999] rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
           width,
-          className,
+          className
         )}
       >
         {arrow && (
@@ -223,7 +224,7 @@ const PopoverContent = ({
         <div className="relative">{children}</div>
       </div>
     </>,
-    document.body,
+    document.body
   );
 };
 

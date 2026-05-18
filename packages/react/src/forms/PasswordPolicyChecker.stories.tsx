@@ -13,6 +13,9 @@ const meta = {
   component: PasswordPolicyChecker,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` on the meta when `component` is set and the
+  // component has required props. Stories override via their own args.
+  args: { rules: defaultPasswordRules('') },
 } satisfies Meta<typeof PasswordPolicyChecker>;
 
 export default meta;
@@ -70,11 +73,7 @@ export const LiveCheckUpdatesOnTyping: Story = {
     const rules = useMemo(() => defaultPasswordRules(pwd), [pwd]);
     return (
       <div className="max-w-sm space-y-3">
-        <PasswordInput
-          label="New password"
-          value={pwd}
-          onChange={(e) => setPwd(e.target.value)}
-        />
+        <PasswordInput label="New password" value={pwd} onChange={(e) => setPwd(e.target.value)} />
         <PasswordPolicyChecker rules={rules} />
       </div>
     );
@@ -90,10 +89,10 @@ export const LiveCheckUpdatesOnTyping: Story = {
     //   symbol        → fail
     const list = canvas.getByRole('list');
     const items = list.querySelectorAll('li');
-    await expect(items[0]).toHaveClass(/text-gray/);     // 12 chars: not yet
-    await expect(items[1]).toHaveClass(/text-green/);    // uppercase: yes
-    await expect(items[2]).toHaveClass(/text-green/);    // lowercase: yes
-    await expect(items[3]).toHaveClass(/text-green/);    // number: yes
-    await expect(items[4]).toHaveClass(/text-gray/);     // symbol: not yet
+    await expect(items[0]).toHaveClass(/text-gray/); // 12 chars: not yet
+    await expect(items[1]).toHaveClass(/text-green/); // uppercase: yes
+    await expect(items[2]).toHaveClass(/text-green/); // lowercase: yes
+    await expect(items[3]).toHaveClass(/text-green/); // number: yes
+    await expect(items[4]).toHaveClass(/text-gray/); // symbol: not yet
   },
 };

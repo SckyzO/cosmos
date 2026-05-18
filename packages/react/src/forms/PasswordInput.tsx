@@ -3,7 +3,10 @@ import { forwardRef, useState } from 'react';
 import { TooltipHelp } from '../ui/Tooltip';
 import { Input, type InputProps } from './Input';
 
-export type PasswordInputProps = Omit<InputProps, 'type' | 'icon' | 'rightSlot' | 'labelTrailing'> & {
+export type PasswordInputProps = Omit<
+  InputProps,
+  'type' | 'icon' | 'rightSlot' | 'labelTrailing'
+> & {
   /** Tooltip text shown next to the label (uses TooltipHelp). */
   helpText?: string;
   /** Override the visibility-toggle button labels (defaults: "Show/Hide password"). */
@@ -21,7 +24,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       disabled,
       ...rest
     },
-    ref,
+    ref
   ) {
     const [show, setShow] = useState(false);
     const ToggleIcon = show ? EyeOff : Eye;
@@ -47,5 +50,5 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         {...rest}
       />
     );
-  },
+  }
 );

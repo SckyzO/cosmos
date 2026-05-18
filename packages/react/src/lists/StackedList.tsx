@@ -1,11 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronRight } from 'lucide-react';
-import {
-  forwardRef,
-  type HTMLAttributes,
-  type LiHTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type LiHTMLAttributes, type ReactNode } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 // TUI reference: <ul role="list" class="divide-y divide-gray-100">
@@ -17,7 +12,7 @@ export type StackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'
 
 const StackedListRoot = forwardRef<HTMLUListElement, StackedListProps>(function StackedListRoot(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <ul
@@ -68,18 +63,8 @@ export type StackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
 };
 
 const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function StackedListItem(
-  {
-    avatar,
-    title,
-    subtitle,
-    meta,
-    trailing,
-    href,
-    chevron,
-    className,
-    ...rest
-  },
-  ref,
+  { avatar, title, subtitle, meta, trailing, href, chevron, className, ...rest },
+  ref
 ) {
   // The full-row link overlay needs the <li> to be `relative`.
   const isLinked = Boolean(href);
@@ -99,11 +84,7 @@ const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function
   return (
     <li
       ref={ref}
-      className={clsx(
-        'flex justify-between gap-x-6 py-5',
-        isLinked && 'relative',
-        className,
-      )}
+      className={clsx('flex justify-between gap-x-6 py-5', isLinked && 'relative', className)}
       {...rest}
     >
       <div className="flex min-w-0 gap-x-4">
@@ -111,17 +92,13 @@ const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function
         <div className="min-w-0 flex-auto">
           {titleEl}
           {subtitle && (
-            <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">
-              {subtitle}
-            </p>
+            <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
         </div>
       </div>
       {(meta || trailing || (isLinked && chevron)) && (
         <div className="flex shrink-0 items-center gap-x-4">
-          {meta && (
-            <div className="hidden sm:flex sm:flex-col sm:items-end">{meta}</div>
-          )}
+          {meta && <div className="hidden sm:flex sm:flex-col sm:items-end">{meta}</div>}
           {trailing}
           {isLinked && chevron && (
             <ChevronRight

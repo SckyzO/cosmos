@@ -1,11 +1,5 @@
 import { clsx } from 'clsx';
-import {
-  forwardRef,
-  useId,
-  useState,
-  type ReactNode,
-  type TextareaHTMLAttributes,
-} from 'react';
+import { forwardRef, useId, useState, type ReactNode, type TextareaHTMLAttributes } from 'react';
 
 export type TextareaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
@@ -45,13 +39,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
     onChange,
     ...rest
   },
-  ref,
+  ref
 ) {
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState<string>(
-    typeof defaultValue === 'string' ? defaultValue : '',
+    typeof defaultValue === 'string' ? defaultValue : ''
   );
   const currentValue = isControlled ? String(value ?? '') : internalValue;
   const counterEnabled = showCount ?? maxLength !== undefined;
@@ -89,7 +83,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           error || overLimit
             ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
             : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
-          className,
+          className
         )}
         {...rest}
       />
@@ -98,7 +92,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           id={descId}
           className={clsx(
             'block min-h-[1rem] text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description ?? ''}
@@ -108,7 +102,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
             aria-live="polite"
             className={clsx(
               'shrink-0 font-mono text-xs tabular-nums',
-              overLimit ? 'text-red-500' : 'text-gray-400 dark:text-gray-500',
+              overLimit ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
             )}
           >
             {currentValue.length}

@@ -54,11 +54,21 @@ export const WithLighterPageHeader: Story = {
               <Navbar.MobileMenuButton theme="dark" />
               <span className="ml-2 text-lg font-semibold text-white">Acme</span>
               <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">Dashboard</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Team</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Projects</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Calendar</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Reports</Navbar.Item>
+                <Navbar.Item theme="dark" active href="#">
+                  Dashboard
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Team
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Projects
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Calendar
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Reports
+                </Navbar.Item>
               </Navbar.Items>
             </Navbar.Brand>
             <Navbar.Actions>
@@ -95,9 +105,15 @@ export const WithPageHeaderActions: Story = {
               <Navbar.MobileMenuButton theme="dark" />
               <span className="ml-2 text-lg font-semibold text-white">Acme</span>
               <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">Dashboard</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Team</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Projects</Navbar.Item>
+                <Navbar.Item theme="dark" active href="#">
+                  Dashboard
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Team
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Projects
+                </Navbar.Item>
               </Navbar.Items>
             </Navbar.Brand>
             <Navbar.Actions>
@@ -136,8 +152,12 @@ export const MultiColumnWithSecondary: Story = {
             <Navbar.Brand>
               <span className="ml-2 text-lg font-semibold text-white">Acme</span>
               <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">Inbox</Navbar.Item>
-                <Navbar.Item theme="dark" href="#">Sent</Navbar.Item>
+                <Navbar.Item theme="dark" active href="#">
+                  Inbox
+                </Navbar.Item>
+                <Navbar.Item theme="dark" href="#">
+                  Sent
+                </Navbar.Item>
               </Navbar.Items>
             </Navbar.Brand>
             <Navbar.Actions>
@@ -152,20 +172,18 @@ export const MultiColumnWithSecondary: Story = {
             Secondary panel
           </h3>
           <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-            Use this slot for contextual actions, message previews, or filters
-            tied to the main column.
+            Use this slot for contextual actions, message previews, or filters tied to the main
+            column.
           </p>
           <div className="mt-4 h-64 rounded-lg border-2 border-dashed border-[var(--color-border)]" />
         </div>
       }
     >
       <div className="p-6">
-        <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">
-          Main content
-        </h2>
+        <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Main content</h2>
         <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Primary column. The secondary panel docks to the right via Shell's
-          new <code>secondary</code> slot.
+          Primary column. The secondary panel docks to the right via Shell's new{' '}
+          <code>secondary</code> slot.
         </p>
         <div className="mt-4 h-96 rounded-lg border-2 border-dashed border-[var(--color-border)]" />
       </div>

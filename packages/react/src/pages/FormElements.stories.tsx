@@ -3,7 +3,6 @@ import {
   Bell,
   Box,
   Calendar as CalendarIcon,
-  Check,
   CheckSquare,
   Clock,
   FileText,
@@ -34,7 +33,7 @@ import { NumberInput } from '../forms/NumberInput';
 import { OtpInput } from '../forms/OtpInput';
 import { PasswordInput } from '../forms/PasswordInput';
 import { PasswordPolicyChecker } from '../forms/PasswordPolicyChecker';
-import { Radio, RadioGroup } from '../forms/Radio';
+import { RadioGroup } from '../forms/Radio';
 import { SearchInput } from '../forms/SearchInput';
 import { SegmentedControl } from '../forms/SegmentedControl';
 import { Select } from '../forms/Select';
@@ -79,9 +78,7 @@ const FormContent = () => {
       <PageHeader
         title="Form Elements"
         breadcrumb={
-          <PageBreadcrumb
-            items={[{ label: 'Home', href: '#' }, { label: 'Form Elements' }]}
-          />
+          <PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Form Elements' }]} />
         }
       />
 
@@ -113,11 +110,7 @@ const FormContent = () => {
             ]}
           />
           <div className="sm:col-span-2">
-            <Textarea
-              label="Bio"
-              placeholder="Tell us a bit about yourself…"
-              maxLength={280}
-            />
+            <Textarea label="Bio" placeholder="Tell us a bit about yourself…" maxLength={280} />
           </div>
         </div>
       </SectionCard>
@@ -134,11 +127,7 @@ const FormContent = () => {
             placeholder="https://prom.example.com"
             description="HTTPS required for production."
           />
-          <Input
-            label="Project key"
-            placeholder="ACME-2026"
-            error="This key is already taken."
-          />
+          <Input label="Project key" placeholder="ACME-2026" error="This key is already taken." />
           <Input
             label="API token"
             placeholder="Generated automatically"
@@ -160,20 +149,9 @@ const FormContent = () => {
         iconTone="green"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Website"
-            prefix="https://"
-            suffix=".com"
-            placeholder="example"
-          />
+          <Input label="Website" prefix="https://" suffix=".com" placeholder="example" />
           <Input label="S3 bucket" suffix=".s3.amazonaws.com" placeholder="my-bucket" />
-          <Input
-            label="Monthly budget"
-            prefix="€"
-            suffix="/ month"
-            type="number"
-            placeholder="0"
-          />
+          <Input label="Monthly budget" prefix="€" suffix="/ month" type="number" placeholder="0" />
           <Input label="Mention" prefix="@" placeholder="username" />
         </div>
       </SectionCard>
@@ -431,7 +409,7 @@ const ToggleRow = () => {
 
 const AvatarUploaderInline = () => {
   const [src, setSrc] = useState<string | undefined>(
-    placeholderAvatar('form-elements-avatar', 192),
+    placeholderAvatar('form-elements-avatar', 192)
   );
   return (
     <AvatarUploader
@@ -484,9 +462,7 @@ const SegmentedControlCell = () => {
   const [v, setV] = useState<'5' | '15' | '60' | '300'>('15');
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-        Refresh interval
-      </p>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Refresh interval</p>
       <SegmentedControl
         value={v}
         onChange={setV}
@@ -505,9 +481,7 @@ const StepperInputCell = () => {
   const [n, setN] = useState(3);
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-        Replicas
-      </p>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Replicas</p>
       <StepperInput value={n} onChange={setN} min={1} max={20} unit="replicas" />
     </div>
   );

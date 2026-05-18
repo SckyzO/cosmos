@@ -51,10 +51,10 @@ const URLS = {
 };
 
 const ALL_URLS = Object.entries(URLS).flatMap(([cat, slugs]) =>
-  slugs.map((slug) => ({ cat, slug, url: `https://demo.tailadmin.com/${slug}` })),
+  slugs.map((slug) => ({ cat, slug, url: `https://demo.tailadmin.com/${slug}` }))
 );
 
-async function snapshot(page, slug) {
+async function snapshot(page) {
   return page.evaluate(() => {
     // Find the main content container — TailAdmin uses <main>; if absent
     // fall back to the largest non-aside non-header container.
@@ -82,7 +82,8 @@ async function snapshot(page, slug) {
         .slice(0, 50),
       inputs: sel('input,textarea,select').map((el) => ({
         type: el.tagName.toLowerCase() + (el.type ? `[${el.type}]` : ''),
-        placeholder: el.placeholder || el.getAttribute('aria-label') || el.getAttribute('name') || '',
+        placeholder:
+          el.placeholder || el.getAttribute('aria-label') || el.getAttribute('name') || '',
         cls: cls(el),
       })),
       labels: sel('label').map(text).slice(0, 40),
@@ -112,13 +113,10 @@ async function main() {
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
       await page.waitForTimeout(1000);
-      const data = await snapshot(page, slug);
-      await fs.writeFile(
-        path.join(OUT_DIR, `${cat}-${slug}.json`),
-        JSON.stringify(data, null, 2),
-      );
+      const data = await snapshot(page);
+      await fs.writeFile(path.join(OUT_DIR, `${cat}-${slug}.json`), JSON.stringify(data, null, 2));
       console.log(
-        `✓ h2=${data.h2.length} h3=${data.h3.length} buttons=${data.buttons.length} inputs=${data.inputs.length}`,
+        `✓ h2=${data.h2.length} h3=${data.h3.length} buttons=${data.buttons.length} inputs=${data.inputs.length}`
       );
     } catch (err) {
       console.log(`✗ ${err.message}`);

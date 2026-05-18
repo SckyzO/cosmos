@@ -139,11 +139,21 @@ export const SecondarySizes: Story = {
     <Wrap>
       <SectionCard title="Secondary — 5 sizes">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" size="xs">Button text</Button>
-          <Button variant="secondary" size="sm">Button text</Button>
-          <Button variant="secondary" size="md">Button text</Button>
-          <Button variant="secondary" size="lg">Button text</Button>
-          <Button variant="secondary" size="xl">Button text</Button>
+          <Button variant="secondary" size="xs">
+            Button text
+          </Button>
+          <Button variant="secondary" size="sm">
+            Button text
+          </Button>
+          <Button variant="secondary" size="md">
+            Button text
+          </Button>
+          <Button variant="secondary" size="lg">
+            Button text
+          </Button>
+          <Button variant="secondary" size="xl">
+            Button text
+          </Button>
         </div>
       </SectionCard>
     </Wrap>
@@ -156,11 +166,21 @@ export const SoftSizes: Story = {
     <Wrap>
       <SectionCard title="Soft — 5 sizes">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="soft" size="xs">Button text</Button>
-          <Button variant="soft" size="sm">Button text</Button>
-          <Button variant="soft" size="md">Button text</Button>
-          <Button variant="soft" size="lg">Button text</Button>
-          <Button variant="soft" size="xl">Button text</Button>
+          <Button variant="soft" size="xs">
+            Button text
+          </Button>
+          <Button variant="soft" size="sm">
+            Button text
+          </Button>
+          <Button variant="soft" size="md">
+            Button text
+          </Button>
+          <Button variant="soft" size="lg">
+            Button text
+          </Button>
+          <Button variant="soft" size="xl">
+            Button text
+          </Button>
         </div>
       </SectionCard>
     </Wrap>
@@ -173,18 +193,38 @@ export const PillShape: Story = {
     <Wrap>
       <SectionCard title="Pill shape">
         <div className="flex flex-wrap items-center gap-3">
-          <Button shape="pill" size="xs">Button text</Button>
-          <Button shape="pill" size="sm">Button text</Button>
-          <Button shape="pill" size="md">Button text</Button>
-          <Button shape="pill" size="lg">Button text</Button>
-          <Button shape="pill" size="xl">Button text</Button>
+          <Button shape="pill" size="xs">
+            Button text
+          </Button>
+          <Button shape="pill" size="sm">
+            Button text
+          </Button>
+          <Button shape="pill" size="md">
+            Button text
+          </Button>
+          <Button shape="pill" size="lg">
+            Button text
+          </Button>
+          <Button shape="pill" size="xl">
+            Button text
+          </Button>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button variant="secondary" shape="pill" size="xs">Secondary</Button>
-          <Button variant="secondary" shape="pill" size="sm">Secondary</Button>
-          <Button variant="secondary" shape="pill" size="md">Secondary</Button>
-          <Button variant="secondary" shape="pill" size="lg">Secondary</Button>
-          <Button variant="secondary" shape="pill" size="xl">Secondary</Button>
+          <Button variant="secondary" shape="pill" size="xs">
+            Secondary
+          </Button>
+          <Button variant="secondary" shape="pill" size="sm">
+            Secondary
+          </Button>
+          <Button variant="secondary" shape="pill" size="md">
+            Secondary
+          </Button>
+          <Button variant="secondary" shape="pill" size="lg">
+            Secondary
+          </Button>
+          <Button variant="secondary" shape="pill" size="xl">
+            Secondary
+          </Button>
         </div>
       </SectionCard>
     </Wrap>

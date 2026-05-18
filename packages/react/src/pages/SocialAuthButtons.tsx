@@ -120,18 +120,12 @@ export const SocialAuthButtons = ({
   if (providers.length === 0) return null;
 
   const buttonsList = (
-    <div
-      className={clsx(
-        layout === 'grid' ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2',
-      )}
-    >
+    <div className={clsx(layout === 'grid' ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2')}>
       {providers.map((provider) => {
         const Icon = PROVIDER_ICON[provider];
         const isLoading = loading === provider;
         const isDisabled = loading !== undefined && loading !== null;
-        const label = labelFor
-          ? labelFor(provider)
-          : `Continue with ${PROVIDER_NAME[provider]}`;
+        const label = labelFor ? labelFor(provider) : `Continue with ${PROVIDER_NAME[provider]}`;
         return (
           <button
             key={provider}
@@ -141,11 +135,7 @@ export const SocialAuthButtons = ({
             aria-label={label}
             className="flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Icon />
-            )}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon />}
             <span className="truncate">{label}</span>
           </button>
         );
@@ -158,7 +148,7 @@ export const SocialAuthButtons = ({
   const dividerNode = (
     <div className="my-4 flex items-center gap-3">
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-      <span className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+      <span className="text-xs tracking-wide text-gray-400 uppercase dark:text-gray-500">
         {dividerLabel}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />

@@ -13,7 +13,7 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
   <div
     className={clsx(
       'group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900',
-      className,
+      className
     )}
   >
     {language && (
@@ -26,8 +26,6 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
     <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-gray-800 dark:text-gray-200">
       <code>{code}</code>
     </pre>
-    {showCopy && (
-      <CopyButton value={code} floating className="absolute right-2 top-2" />
-    )}
+    {showCopy && <CopyButton value={code} floating className="absolute top-2 right-2" />}
   </div>
 );

@@ -101,7 +101,7 @@ export const Shell = ({
             <aside
               className={clsx(
                 'shrink-0 overflow-auto border-l border-[var(--color-border)]',
-                secondaryWidthClassName,
+                secondaryWidthClassName
               )}
             >
               {secondary}

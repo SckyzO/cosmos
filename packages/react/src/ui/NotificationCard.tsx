@@ -72,7 +72,7 @@ const SimpleVariant = ({
       aria-live="polite"
       className={clsx(
         'pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10',
-        className,
+        className
       )}
     >
       <div className="p-4">
@@ -130,7 +130,7 @@ const CondensedVariant = ({
     aria-live="polite"
     className={clsx(
       'pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-lg bg-gray-900 px-4 py-3 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10',
-      className,
+      className
     )}
   >
     <p className="flex-1 text-sm font-medium text-white">{title}</p>

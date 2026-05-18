@@ -83,7 +83,7 @@ const Root = ({
             insetBg,
             emphasis
               ? 'text-base font-semibold text-gray-900 dark:text-white'
-              : 'text-sm text-gray-500 dark:text-gray-400',
+              : 'text-sm text-gray-500 dark:text-gray-400'
           )}
         >
           {inset}
@@ -139,17 +139,11 @@ export type DividerRowProps = HTMLAttributes<HTMLDivElement> & {
   emphasis?: boolean;
 };
 
-const Row = ({
-  title,
-  actions,
-  emphasis = true,
-  className,
-  ...rest
-}: DividerRowProps) => (
+const Row = ({ title, actions, emphasis = true, className, ...rest }: DividerRowProps) => (
   <div
     className={clsx(
       'flex items-center justify-between gap-x-4 border-b border-gray-200 pb-3 dark:border-white/10',
-      className,
+      className
     )}
     {...rest}
   >
@@ -159,7 +153,7 @@ const Row = ({
           className={clsx(
             emphasis
               ? 'text-base font-semibold text-gray-900 dark:text-white'
-              : 'text-sm text-gray-500 dark:text-gray-400',
+              : 'text-sm text-gray-500 dark:text-gray-400'
           )}
         >
           {title}

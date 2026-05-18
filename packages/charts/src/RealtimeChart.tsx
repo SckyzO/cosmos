@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import { useChartTheme } from './theme';
@@ -34,13 +34,10 @@ export const RealtimeChart = ({
 }: RealtimeChartProps) => {
   const { grid, axisLabels, brand } = useChartTheme();
   const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generator()));
-  const seriesRef = useRef(series);
-  seriesRef.current = series;
 
   useEffect(() => {
     const id = setInterval(() => {
-      const next = [...seriesRef.current.slice(1), generator()];
-      setSeries(next);
+      setSeries((current) => [...current.slice(1), generator()]);
     }, intervalMs);
     return () => clearInterval(id);
   }, [generator, intervalMs]);

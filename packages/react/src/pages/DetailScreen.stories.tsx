@@ -1,6 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { Bell, GitBranch, Home, Layers, Search, Server, Settings as SettingsIcon } from 'lucide-react';
+import {
+  Bell,
+  GitBranch,
+  Home,
+  Layers,
+  Search,
+  Server,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
@@ -32,10 +40,34 @@ const TABS = [
 ];
 
 const ACTIVITY = [
-  { user: 'Michael Foster', commit: '2d89f0c8', status: 'OK' as const, duration: '25s', when: '45 minutes ago' },
-  { user: 'Lindsay Walton', commit: '249df660', status: 'OK' as const, duration: '1m 32s', when: '3 hours ago' },
-  { user: 'Courtney Henry', commit: '11464223', status: 'CRIT' as const, duration: '1m 4s', when: '12 hours ago' },
-  { user: 'Courtney Henry', commit: 'dad28e95', status: 'OK' as const, duration: '2m 15s', when: '2 days ago' },
+  {
+    user: 'Michael Foster',
+    commit: '2d89f0c8',
+    status: 'OK' as const,
+    duration: '25s',
+    when: '45 minutes ago',
+  },
+  {
+    user: 'Lindsay Walton',
+    commit: '249df660',
+    status: 'OK' as const,
+    duration: '1m 32s',
+    when: '3 hours ago',
+  },
+  {
+    user: 'Courtney Henry',
+    commit: '11464223',
+    status: 'CRIT' as const,
+    duration: '1m 4s',
+    when: '12 hours ago',
+  },
+  {
+    user: 'Courtney Henry',
+    commit: 'dad28e95',
+    status: 'OK' as const,
+    duration: '2m 15s',
+    when: '2 days ago',
+  },
 ];
 
 const Avatar = ({ name }: { name: string }) => (
@@ -62,7 +94,7 @@ export const Sidebar_: Story = {
                 <input
                   type="search"
                   placeholder="Search"
-                  className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
                 />
               </div>
             }
@@ -148,7 +180,7 @@ export const Sidebar_: Story = {
                       <th
                         key={h}
                         scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider"
+                        className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase"
                       >
                         {h}
                       </th>
@@ -168,7 +200,9 @@ export const Sidebar_: Story = {
                       </td>
                       <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
                         <span className="font-mono">{row.commit}</span>{' '}
-                        <Badge variant="neutral" size="sm">main</Badge>
+                        <Badge variant="neutral" size="sm">
+                          main
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">

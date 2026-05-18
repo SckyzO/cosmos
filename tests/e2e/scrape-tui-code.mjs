@@ -1,7 +1,10 @@
 import { chromium } from '@playwright/test';
 
 const url = process.argv[2];
-if (!url) { console.error('usage: scrape-tui-code.mjs <url>'); process.exit(2); }
+if (!url) {
+  console.error('usage: scrape-tui-code.mjs <url>');
+  process.exit(2);
+}
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 1200 } });

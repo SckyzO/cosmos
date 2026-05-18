@@ -258,7 +258,9 @@ export const SelectionBulkSearchCombined: Story = {
     const [search, setSearch] = useState('');
     return (
       <Wrap>
-        <SectionCard title={`DataTable — ${selection.size} selected · search: "${search || '(none)'}"`}>
+        <SectionCard
+          title={`DataTable — ${selection.size} selected · search: "${search || '(none)'}"`}
+        >
           <DataTable
             rows={rows}
             columns={columns}

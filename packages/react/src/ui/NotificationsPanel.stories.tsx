@@ -1,18 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
-import {
-  NotificationsPanel,
-  type NotificationSeverity,
-} from './NotificationsPanel';
+import { NotificationsPanel, type NotificationSeverity } from './NotificationsPanel';
 
 const meta = {
   title: 'Overlays/Notifications Panel',
   component: NotificationsPanel,
   parameters: portalDocsParams.md(),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof NotificationsPanel>;
 
 export default meta;
@@ -215,28 +215,27 @@ export const TriggerOpensPanel: Story = {
 };
 
 export const ItemClickFiresHandler: Story = {
-  render: (args) => (
-    <div className="flex h-[420px] items-start justify-end">
-      <FullPanel
-        defaultOpen={false}
-        onItemClick={args.onItemClick as (id: string) => void}
-      />
-    </div>
-  ),
+  render: (args) => {
+    const extra = args as unknown as { onItemClick: (id: string) => void };
+    return (
+      <div className="flex h-[420px] items-start justify-end">
+        <FullPanel defaultOpen={false} onItemClick={extra.onItemClick} />
+      </div>
+    );
+  },
   args: { onItemClick: fn() } as never,
   play: async ({ args, canvas }) => {
+    const extra = args as unknown as { onItemClick: ReturnType<typeof fn> };
     // Open the panel via the trigger to make rect computation deterministic.
     await userEvent.click(canvas.getByRole('button', { name: /^notifications$/i }));
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     const dialog = document.querySelector('[role="dialog"]')!;
     // Find the first severity item (it has a badge text like "CRIT" / "WARN")
     const items = Array.from(dialog.querySelectorAll('button')).filter((b) =>
-      b.textContent?.match(/CRIT|WARN|INFO|OK/),
+      b.textContent?.match(/CRIT|WARN|INFO|OK/)
     );
     await userEvent.click(items[0]);
-    await expect(
-      (args as { onItemClick: ReturnType<typeof fn> }).onItemClick,
-    ).toHaveBeenCalledTimes(1);
+    await expect(extra.onItemClick).toHaveBeenCalledTimes(1);
   },
 };
 

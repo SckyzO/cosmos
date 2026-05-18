@@ -87,13 +87,17 @@ const SectionHeader = () => (
 const blogNavbar = () => (
   <Navbar theme="light">
     <Navbar.Brand>
-      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">
-        Cosmos blog
-      </span>
+      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos blog</span>
       <Navbar.Items>
-        <Navbar.Item theme="light" active href="#">Articles</Navbar.Item>
-        <Navbar.Item theme="light" href="#">Releases</Navbar.Item>
-        <Navbar.Item theme="light" href="#">Talks</Navbar.Item>
+        <Navbar.Item theme="light" active href="#">
+          Articles
+        </Navbar.Item>
+        <Navbar.Item theme="light" href="#">
+          Releases
+        </Navbar.Item>
+        <Navbar.Item theme="light" href="#">
+          Talks
+        </Navbar.Item>
       </Navbar.Items>
     </Navbar.Brand>
     <Navbar.Actions>
@@ -121,10 +125,7 @@ export const ThreeColumn: Story = {
               {POSTS.map((p) => (
                 <article key={p.slug}>
                   <div className="flex items-center gap-x-3 text-xs">
-                    <time
-                      dateTime={p.date}
-                      className="text-[var(--color-text-secondary)]"
-                    >
+                    <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                       {p.dateLabel}
                     </time>
                     <Badge variant="neutral" size="sm">
@@ -140,18 +141,10 @@ export const ThreeColumn: Story = {
                     {p.excerpt}
                   </p>
                   <div className="mt-6 flex items-center gap-x-3">
-                    <img
-                      alt=""
-                      src={p.authorImg}
-                      className="size-9 rounded-full bg-gray-100"
-                    />
+                    <img alt="" src={p.authorImg} className="size-9 rounded-full bg-gray-100" />
                     <div className="text-sm">
-                      <p className="font-semibold text-[var(--color-text-primary)]">
-                        {p.author}
-                      </p>
-                      <p className="text-[var(--color-text-secondary)]">
-                        {p.authorRole}
-                      </p>
+                      <p className="font-semibold text-[var(--color-text-primary)]">{p.author}</p>
+                      <p className="text-[var(--color-text-secondary)]">{p.authorRole}</p>
                     </div>
                   </div>
                 </article>
@@ -186,10 +179,7 @@ export const ThreeColumnWithImages: Story = {
                   </div>
                 </a>
                 <div className="mt-5 flex items-center gap-x-3 text-xs">
-                  <time
-                    dateTime={p.date}
-                    className="text-[var(--color-text-secondary)]"
-                  >
+                  <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                     {p.dateLabel}
                   </time>
                   <Badge variant="neutral" size="sm">
@@ -205,18 +195,10 @@ export const ThreeColumnWithImages: Story = {
                   {p.excerpt}
                 </p>
                 <div className="mt-6 flex items-center gap-x-3">
-                  <img
-                    alt=""
-                    src={p.authorImg}
-                    className="size-9 rounded-full bg-gray-100"
-                  />
+                  <img alt="" src={p.authorImg} className="size-9 rounded-full bg-gray-100" />
                   <div className="text-sm">
-                    <p className="font-semibold text-[var(--color-text-primary)]">
-                      {p.author}
-                    </p>
-                    <p className="text-[var(--color-text-secondary)]">
-                      {p.authorRole}
-                    </p>
+                    <p className="font-semibold text-[var(--color-text-primary)]">{p.author}</p>
+                    <p className="text-[var(--color-text-secondary)]">{p.authorRole}</p>
                   </div>
                 </div>
               </article>
@@ -241,10 +223,7 @@ export const SingleColumn: Story = {
             {POSTS.map((p) => (
               <article key={p.slug}>
                 <div className="flex items-center gap-x-3 text-xs">
-                  <time
-                    dateTime={p.date}
-                    className="text-[var(--color-text-secondary)]"
-                  >
+                  <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                     {p.dateLabel}
                   </time>
                   <Badge variant="neutral" size="sm">
@@ -258,18 +237,10 @@ export const SingleColumn: Story = {
                 </h3>
                 <p className="mt-3 text-[var(--color-text-secondary)]">{p.excerpt}</p>
                 <div className="mt-5 flex items-center gap-x-3">
-                  <img
-                    alt=""
-                    src={p.authorImg}
-                    className="size-9 rounded-full bg-gray-100"
-                  />
+                  <img alt="" src={p.authorImg} className="size-9 rounded-full bg-gray-100" />
                   <div className="text-sm">
-                    <p className="font-semibold text-[var(--color-text-primary)]">
-                      {p.author}
-                    </p>
-                    <p className="text-[var(--color-text-secondary)]">
-                      {p.authorRole}
-                    </p>
+                    <p className="font-semibold text-[var(--color-text-primary)]">{p.author}</p>
+                    <p className="text-[var(--color-text-secondary)]">{p.authorRole}</p>
                   </div>
                 </div>
               </article>
@@ -295,7 +266,7 @@ export const WithFeaturedPost: Story = {
             {/* Section eyebrow */}
             <div className="mb-10 flex items-end justify-between gap-4 border-b border-[var(--color-border)] pb-6">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                <p className="text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
                   Editorial — Volume 01
                 </p>
                 <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
@@ -329,10 +300,7 @@ export const WithFeaturedPost: Story = {
                     Featured
                   </Badge>
                   <span className="text-[var(--color-text-muted)]">·</span>
-                  <time
-                    dateTime={hero.date}
-                    className="text-[var(--color-text-secondary)]"
-                  >
+                  <time dateTime={hero.date} className="text-[var(--color-text-secondary)]">
                     {hero.dateLabel}
                   </time>
                   <span className="text-[var(--color-text-muted)]">·</span>
@@ -348,23 +316,17 @@ export const WithFeaturedPost: Story = {
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-between gap-y-4">
                   <div className="flex items-center gap-x-3">
-                    <img
-                      alt=""
-                      src={hero.authorImg}
-                      className="size-10 rounded-full bg-gray-100"
-                    />
+                    <img alt="" src={hero.authorImg} className="size-10 rounded-full bg-gray-100" />
                     <div className="text-sm">
                       <p className="font-semibold text-[var(--color-text-primary)]">
                         {hero.author}
                       </p>
-                      <p className="text-[var(--color-text-secondary)]">
-                        {hero.authorRole}
-                      </p>
+                      <p className="text-[var(--color-text-secondary)]">{hero.authorRole}</p>
                     </div>
                   </div>
                   <a
                     href={`#/${hero.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+                    className="bg-brand-500 hover:bg-brand-600 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-white"
                   >
                     Continue reading
                     <ArrowRight className="size-4" aria-hidden />
@@ -374,17 +336,14 @@ export const WithFeaturedPost: Story = {
 
               {/* Side list: compact items with thumbnails */}
               <aside className="lg:col-span-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                <h3 className="text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
                   Latest from the blog
                 </h3>
                 <ul role="list" className="mt-5 divide-y divide-[var(--color-border)]">
                   {rest.map((p) => (
                     <li key={p.slug} className="py-5 first:pt-0 last:pb-0">
                       <article>
-                        <a
-                          href={`#/${p.slug}`}
-                          className="group flex items-start gap-x-4"
-                        >
+                        <a href={`#/${p.slug}`} className="group flex items-start gap-x-4">
                           <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                             <img
                               alt=""
@@ -398,7 +357,7 @@ export const WithFeaturedPost: Story = {
                               <span aria-hidden>·</span>
                               <span>{p.tag}</span>
                             </div>
-                            <h4 className="mt-1.5 text-sm font-semibold leading-snug text-[var(--color-text-primary)] group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                            <h4 className="group-hover:text-brand-600 dark:group-hover:text-brand-400 mt-1.5 text-sm leading-snug font-semibold text-[var(--color-text-primary)]">
                               {p.title}
                             </h4>
                             <p className="mt-1 line-clamp-2 text-sm text-[var(--color-text-secondary)]">
@@ -412,7 +371,7 @@ export const WithFeaturedPost: Story = {
                 </ul>
                 <a
                   href="#archive"
-                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 sm:hidden"
+                  className="text-brand-600 hover:text-brand-700 dark:text-brand-400 mt-6 inline-flex items-center gap-1 text-sm font-semibold sm:hidden"
                 >
                   View all articles
                   <ArrowRight className="size-4" aria-hidden />
@@ -450,10 +409,7 @@ export const WithPhotoAndList: Story = {
                   </div>
                 </a>
                 <div className="mt-6 flex items-center gap-x-3 text-xs">
-                  <time
-                    dateTime={hero.date}
-                    className="text-[var(--color-text-secondary)]"
-                  >
+                  <time dateTime={hero.date} className="text-[var(--color-text-secondary)]">
                     {hero.dateLabel}
                   </time>
                   <Badge variant="neutral" size="sm">
@@ -465,9 +421,7 @@ export const WithPhotoAndList: Story = {
                     {hero.title}
                   </a>
                 </h2>
-                <p className="mt-3 text-base text-[var(--color-text-secondary)]">
-                  {hero.excerpt}
-                </p>
+                <p className="mt-3 text-base text-[var(--color-text-secondary)]">{hero.excerpt}</p>
               </article>
 
               {/* Side compact list */}
@@ -475,7 +429,10 @@ export const WithPhotoAndList: Story = {
                 <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                   More from the blog
                 </h3>
-                <ul role="list" className="mt-6 space-y-8 border-t border-[var(--color-border)] pt-8">
+                <ul
+                  role="list"
+                  className="mt-6 space-y-8 border-t border-[var(--color-border)] pt-8"
+                >
                   {rest.map((p) => (
                     <li key={p.slug}>
                       <article>

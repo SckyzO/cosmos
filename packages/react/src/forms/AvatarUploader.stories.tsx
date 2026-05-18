@@ -10,7 +10,7 @@ const SAMPLE_AVATAR =
        <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="%236366f1"/><stop offset="1" stop-color="%23a855f7"/></linearGradient></defs>
        <rect width="128" height="128" fill="url(%23g)"/>
        <text x="50%" y="58%" font-family="sans-serif" font-size="56" fill="white" text-anchor="middle">JD</text>
-     </svg>`,
+     </svg>`
   );
 
 const meta = {

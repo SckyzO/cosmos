@@ -2,14 +2,7 @@ import { clsx } from 'clsx';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 type EmblaApi = UseEmblaCarouselType[1];
 
@@ -182,11 +175,7 @@ const CarouselControls = ({
         aria-label={prevLabel}
         disabled={!canScrollPrev}
         onClick={scrollPrev}
-        className={clsx(
-          'absolute left-2 top-1/2 z-10 -translate-y-1/2',
-          baseBtn,
-          className,
-        )}
+        className={clsx('absolute top-1/2 left-2 z-10 -translate-y-1/2', baseBtn, className)}
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -195,11 +184,7 @@ const CarouselControls = ({
         aria-label={nextLabel}
         disabled={!canScrollNext}
         onClick={scrollNext}
-        className={clsx(
-          'absolute right-2 top-1/2 z-10 -translate-y-1/2',
-          baseBtn,
-          className,
-        )}
+        className={clsx('absolute top-1/2 right-2 z-10 -translate-y-1/2', baseBtn, className)}
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -226,7 +211,7 @@ const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
             onClick={() => scrollTo(i)}
             className={clsx(
               'h-2 rounded-full transition-all',
-              active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600',
+              active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600'
             )}
           />
         );

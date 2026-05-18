@@ -39,7 +39,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
     className,
     ...rest
   },
-  forwardedRef,
+  forwardedRef
 ) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
@@ -54,7 +54,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
       className={clsx(
         'inline-flex cursor-pointer items-start gap-2',
         disabled && 'cursor-not-allowed opacity-50',
-        className,
+        className
       )}
     >
       <span className="relative inline-flex shrink-0 items-center justify-center">
@@ -75,16 +75,14 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
         <span
           aria-hidden
           className={clsx(
-            'flex items-center justify-center rounded-full border transition-colors peer-focus-visible:ring-brand-500/40 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 dark:peer-focus-visible:ring-offset-gray-900',
+            'peer-focus-visible:ring-brand-500/40 flex items-center justify-center rounded-full border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 dark:peer-focus-visible:ring-offset-gray-900',
             sizes.box,
             isChecked
               ? 'border-brand-500 bg-white dark:bg-gray-800'
-              : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800',
+              : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
           )}
         >
-          {isChecked && (
-            <span className={clsx('rounded-full bg-brand-500', sizes.dot)} />
-          )}
+          {isChecked && <span className={clsx('bg-brand-500 rounded-full', sizes.dot)} />}
         </span>
       </span>
       {(label || description) && (
@@ -159,9 +157,7 @@ export const RadioGroup = ({
       {description && (
         <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{description}</p>
       )}
-      <div
-        className={clsx(orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2')}
-      >
+      <div className={clsx(orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2')}>
         {options.map((opt) => (
           <Radio
             key={opt.value}

@@ -3,17 +3,20 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'forms/action-panels', slug: 'ap-01-simple',       title: 'Simple preview' },
-  { page: 'forms/action-panels', slug: 'ap-02-with-link',    title: 'With link preview' },
-  { page: 'forms/comboboxes',    slug: 'cb-01-simple',       title: 'Simple preview' },
-  { page: 'forms/comboboxes',    slug: 'cb-02-status',       title: 'With status indicator preview' },
-  { page: 'forms/form-layouts',  slug: 'fl-01-stacked',      title: 'Stacked preview' },
-  { page: 'forms/form-layouts',  slug: 'fl-02-two-column',   title: 'Two-column preview' },
+  { page: 'forms/action-panels', slug: 'ap-01-simple', title: 'Simple preview' },
+  { page: 'forms/action-panels', slug: 'ap-02-with-link', title: 'With link preview' },
+  { page: 'forms/comboboxes', slug: 'cb-01-simple', title: 'Simple preview' },
+  { page: 'forms/comboboxes', slug: 'cb-02-status', title: 'With status indicator preview' },
+  { page: 'forms/form-layouts', slug: 'fl-01-stacked', title: 'Stacked preview' },
+  { page: 'forms/form-layouts', slug: 'fl-02-two-column', title: 'Two-column preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

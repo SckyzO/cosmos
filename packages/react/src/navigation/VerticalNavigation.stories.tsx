@@ -24,7 +24,9 @@ export const Simple: Story = {
   render: () => (
     <div className="max-w-xs bg-white p-4 dark:bg-gray-900">
       <VerticalNavigation>
-        <VerticalNavigation.Item active href="#">Dashboard</VerticalNavigation.Item>
+        <VerticalNavigation.Item active href="#">
+          Dashboard
+        </VerticalNavigation.Item>
         <VerticalNavigation.Item href="#">Team</VerticalNavigation.Item>
         <VerticalNavigation.Item href="#">Projects</VerticalNavigation.Item>
         <VerticalNavigation.Item href="#">Calendar</VerticalNavigation.Item>

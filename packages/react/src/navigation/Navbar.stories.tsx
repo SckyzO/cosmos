@@ -54,10 +54,18 @@ export const SimpleDarkMenuLeft: Story = {
         <Navbar.MobileMenuButton theme="dark" />
         <span className="ml-2 text-lg font-semibold text-white">Acme</span>
         <Navbar.Items>
-          <Navbar.Item theme="dark" active href="#">Dashboard</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Team</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Projects</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Calendar</Navbar.Item>
+          <Navbar.Item theme="dark" active href="#">
+            Dashboard
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Team
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Projects
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Calendar
+          </Navbar.Item>
         </Navbar.Items>
       </Navbar.Brand>
       <Navbar.Actions>
@@ -77,10 +85,18 @@ export const DarkWithQuickAction: Story = {
         <Navbar.MobileMenuButton theme="dark" />
         <span className="ml-2 text-lg font-semibold text-white">Acme</span>
         <Navbar.Items>
-          <Navbar.Item theme="dark" active href="#">Dashboard</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Team</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Projects</Navbar.Item>
-          <Navbar.Item theme="dark" href="#">Calendar</Navbar.Item>
+          <Navbar.Item theme="dark" active href="#">
+            Dashboard
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Team
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Projects
+          </Navbar.Item>
+          <Navbar.Item theme="dark" href="#">
+            Calendar
+          </Navbar.Item>
         </Navbar.Items>
       </Navbar.Brand>
       <Navbar.Actions>
@@ -102,10 +118,18 @@ export const Light: Story = {
         <Navbar.MobileMenuButton theme="light" />
         <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
         <Navbar.Items>
-          <Navbar.Item theme="light" active href="#">Dashboard</Navbar.Item>
-          <Navbar.Item theme="light" href="#">Hosts</Navbar.Item>
-          <Navbar.Item theme="light" href="#">Alerts</Navbar.Item>
-          <Navbar.Item theme="light" href="#">Logs</Navbar.Item>
+          <Navbar.Item theme="light" active href="#">
+            Dashboard
+          </Navbar.Item>
+          <Navbar.Item theme="light" href="#">
+            Hosts
+          </Navbar.Item>
+          <Navbar.Item theme="light" href="#">
+            Alerts
+          </Navbar.Item>
+          <Navbar.Item theme="light" href="#">
+            Logs
+          </Navbar.Item>
         </Navbar.Items>
       </Navbar.Brand>
       <Navbar.Actions>

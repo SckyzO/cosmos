@@ -47,7 +47,11 @@ const SAMPLE_SHORTCUTS = (
 // ── Stories ──────────────────────────────────────────────────────────────────
 
 export const Default: Story = {
-  render: () => <HelpOverlay open onOpenChange={() => undefined}>{SAMPLE_SHORTCUTS}</HelpOverlay>,
+  render: () => (
+    <HelpOverlay open onOpenChange={() => undefined}>
+      {SAMPLE_SHORTCUTS}
+    </HelpOverlay>
+  ),
 };
 
 export const WithDescription: Story = {
@@ -152,9 +156,7 @@ export const EscapeClosesOverlay: Story = {
   play: async ({ canvas }) => {
     await waitFor(() => expect(canvas.getByRole('dialog')).toBeInTheDocument());
     await userEvent.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(canvas.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(canvas.queryByRole('dialog')).not.toBeInTheDocument());
   },
 };
 
@@ -170,8 +172,8 @@ export const CloseButtonClosesOverlay: Story = {
     await userEvent.click(closeBtn);
     await waitFor(() =>
       expect(
-        (args as unknown as { onOpenChange: ReturnType<typeof fn> }).onOpenChange,
-      ).toHaveBeenCalledWith(false),
+        (args as unknown as { onOpenChange: ReturnType<typeof fn> }).onOpenChange
+      ).toHaveBeenCalledWith(false)
     );
   },
 };

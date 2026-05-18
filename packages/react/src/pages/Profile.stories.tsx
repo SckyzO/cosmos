@@ -21,10 +21,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { AvatarUploader } from '../forms/AvatarUploader';
 import { Input } from '../forms/Input';
 import { PasswordInput } from '../forms/PasswordInput';
-import {
-  PasswordPolicyChecker,
-  defaultPasswordRules,
-} from '../forms/PasswordPolicyChecker';
+import { PasswordPolicyChecker, defaultPasswordRules } from '../forms/PasswordPolicyChecker';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
@@ -62,7 +59,7 @@ const SAMPLE_AVATAR =
        <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="%236366f1"/><stop offset="1" stop-color="%23a855f7"/></linearGradient></defs>
        <rect width="128" height="128" fill="url(%23g)"/>
        <text x="50%" y="58%" font-family="sans-serif" font-size="56" fill="white" text-anchor="middle">JD</text>
-     </svg>`,
+     </svg>`
   );
 
 const SAMPLE_ALERTS = [
@@ -198,8 +195,7 @@ const ClearCacheSection = () => {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            API response cache (
-            <code className="font-mono text-xs">cosmos.cache.*</code>)
+            API response cache (<code className="font-mono text-xs">cosmos.cache.*</code>)
           </p>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
             Auth token, theme and dashboard layouts are preserved.
@@ -315,12 +311,7 @@ const AppearanceSection = () => {
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           The primary colour used for buttons, focus rings and key highlights.
         </p>
-        <AccentPicker
-          className="mt-3"
-          colors={ACCENT_COLORS}
-          value={accent}
-          onChange={setAccent}
-        />
+        <AccentPicker className="mt-3" colors={ACCENT_COLORS} value={accent} onChange={setAccent} />
       </div>
       <div>
         <SectionLabel>Icon style</SectionLabel>
@@ -367,11 +358,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
     <div className="mx-auto w-full max-w-[760px] space-y-6 p-6">
       <PageHeader
         title="Profile"
-        breadcrumb={
-          <PageBreadcrumb
-            items={[{ label: 'Home', href: '#' }, { label: 'Profile' }]}
-          />
-        }
+        breadcrumb={<PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Profile' }]} />}
       />
       <div className="space-y-4">
         <SectionCard
@@ -393,9 +380,8 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
             />
             {withAuthBanner && (
               <AlertBanner variant="info">
-                Authentication is disabled — credential changes are saved but
-                not enforced. Enable auth in <strong>Settings → Security</strong>{' '}
-                to protect the UI with a password.
+                Authentication is disabled — credential changes are saved but not enforced. Enable
+                auth in <strong>Settings → Security</strong> to protect the UI with a password.
               </AlertBanner>
             )}
           </div>

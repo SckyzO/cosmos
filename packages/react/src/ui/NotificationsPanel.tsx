@@ -66,8 +66,7 @@ const NotificationsPanelContext = createContext<Ctx | null>(null);
 
 const useCtx = (): Ctx => {
   const ctx = useContext(NotificationsPanelContext);
-  if (!ctx)
-    throw new Error('NotificationsPanel.* must be used inside <NotificationsPanel>');
+  if (!ctx) throw new Error('NotificationsPanel.* must be used inside <NotificationsPanel>');
   return ctx;
 };
 
@@ -109,7 +108,7 @@ const NotificationsPanelRoot = ({
       if (!isControlled) setInternalOpen(v);
       onOpenChange?.(v);
     },
-    [isControlled, onOpenChange, refreshRect],
+    [isControlled, onOpenChange, refreshRect]
   );
 
   // Refresh rect on resize/scroll while open
@@ -160,7 +159,7 @@ export type NotificationsPanelTriggerProps = Omit<
 const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPanelTriggerProps>(
   function NotificationsPanelTrigger(
     { count = 0, muted = false, ping, className, ...rest },
-    forwardedRef,
+    forwardedRef
   ) {
     const { open, setOpen, triggerRef, refreshRect } = useCtx();
     // Merge refs
@@ -191,7 +190,7 @@ const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPan
           muted
             ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
             : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-          className,
+          className
         )}
         {...rest}
       >
@@ -208,7 +207,7 @@ const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPan
         )}
       </button>
     );
-  },
+  }
 );
 
 // ── Content (portal panel) ───────────────────────────────────────────────────
@@ -244,13 +243,13 @@ const NotificationsPanelContent = ({
         className={clsx(
           'fixed z-[9999] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900',
           width,
-          className,
+          className
         )}
       >
         {children}
       </div>
     </>,
-    document.body,
+    document.body
   );
 };
 
@@ -271,7 +270,7 @@ const NotificationsPanelHeader = ({
   <div
     className={clsx(
       'flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800',
-      className,
+      className
     )}
   >
     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
@@ -330,7 +329,7 @@ const NotificationsPanelHeaderAction = forwardRef<
         active
           ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
           : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300',
-        className,
+        className
       )}
       {...rest}
     >
@@ -357,7 +356,7 @@ const NotificationsPanelList = ({
     className={clsx(
       'divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800',
       maxHeight,
-      className,
+      className
     )}
   >
     {children}
@@ -391,7 +390,7 @@ const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelI
       className,
       ...rest
     },
-    ref,
+    ref
   ) {
     const { setOpen } = useCtx();
     const meta = SEVERITY_META[severity];
@@ -407,22 +406,20 @@ const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelI
         }}
         className={clsx(
           'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
-          className,
+          className
         )}
         {...rest}
       >
         <div
           className={clsx(
             'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-            meta.chipBg,
+            meta.chipBg
           )}
         >
           <Icon className={clsx('h-4 w-4', meta.color)} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-            {title}
-          </p>
+          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
           {subtitle && (
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
@@ -433,14 +430,14 @@ const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelI
         <span
           className={clsx(
             'mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white',
-            BADGE_BG[severity],
+            BADGE_BG[severity]
           )}
         >
           {badgeLabel ?? defaultLabel}
         </span>
       </button>
     );
-  },
+  }
 );
 
 // ── Empty ────────────────────────────────────────────────────────────────────
@@ -489,7 +486,7 @@ const NotificationsPanelFooter = ({
         }}
         className={clsx(
           'text-brand-500 w-full rounded-lg py-2 text-center text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
-          className,
+          className
         )}
         {...rest}
       >

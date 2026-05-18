@@ -32,7 +32,7 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         //  keeps the inner space click-through, then re-enables on the buttons).
         nav: clsx(
           def.nav,
-          'pointer-events-none absolute inset-x-0 top-1 flex items-center justify-between px-1',
+          'pointer-events-none absolute inset-x-0 top-1 flex items-center justify-between px-1'
         ),
         button_previous:
           'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
@@ -45,17 +45,16 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         dropdowns: 'flex items-center justify-center gap-1.5',
         dropdown_root: 'relative inline-flex items-center',
         dropdown: clsx(
-          'cursor-pointer appearance-none rounded-md border border-gray-200 bg-white py-1 pl-2.5 pr-6 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50',
-          'focus:outline-none focus:ring-2 focus:ring-brand-500/30',
+          'cursor-pointer appearance-none rounded-md border border-gray-200 bg-white py-1 pr-6 pl-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50',
+          'focus:ring-brand-500/30 focus:ring-2 focus:outline-none',
           'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
           // Custom chevron-down via inline SVG (text-gray-400 in light, text-gray-500 in dark — single SVG, neutral color works for both).
-          "bg-[url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")] bg-[length:12px] bg-[position:right_6px_center] bg-no-repeat",
+          "bg-[url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")] bg-[length:12px] bg-[position:right_6px_center] bg-no-repeat"
         ),
         months_dropdown: '',
         years_dropdown: '',
         weekdays: clsx(def.weekdays, ''),
-        weekday:
-          'h-8 w-8 text-center text-[11px] font-medium text-gray-400 dark:text-gray-500',
+        weekday: 'h-8 w-8 text-center text-[11px] font-medium text-gray-400 dark:text-gray-500',
         week: clsx(def.week, ''),
         day: 'h-8 w-8 p-0 text-center align-middle',
         day_button:

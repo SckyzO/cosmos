@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { HelpCircle, MoreVertical } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
@@ -11,6 +12,8 @@ const meta = {
   component: Popover,
   parameters: portalDocsParams.sm(),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof Popover>;
 
 export default meta;
@@ -58,9 +61,7 @@ export const RichContent: Story = {
           <HelpCircle className="h-5 w-5" />
         </Popover.Trigger>
         <Popover.Content position="bottom" arrow width="w-72">
-          <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
-            Need help?
-          </h4>
+          <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">Need help?</h4>
           <p className="mb-3 text-xs text-gray-600 dark:text-gray-300">
             Read the docs or contact support — we usually reply within a few hours.
           </p>
@@ -125,10 +126,7 @@ export const Controlled: Story = {
             <p className="text-xs">Externally controlled popover.</p>
           </Popover.Content>
         </Popover>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="text-brand-500 text-xs underline"
-        >
+        <button onClick={() => setOpen((o) => !o)} className="text-brand-500 text-xs underline">
           Toggle from outside
         </button>
       </div>
@@ -142,9 +140,7 @@ export const TriggerOpensCloses: Story = {
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
-        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">
-          Click
-        </Popover.Trigger>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Click</Popover.Trigger>
         <Popover.Content>
           <p>Panel</p>
         </Popover.Content>
@@ -166,9 +162,7 @@ export const EscapeCloses: Story = {
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
-        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">
-          Open
-        </Popover.Trigger>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Open</Popover.Trigger>
         <Popover.Content>
           <p>Panel</p>
         </Popover.Content>
@@ -187,9 +181,7 @@ export const OnOpenChangeFires: Story = {
   render: (args) => (
     <div className="flex h-48 items-center justify-center">
       <Popover onOpenChange={args.onOpenChange as (o: boolean) => void}>
-        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">
-          Trigger
-        </Popover.Trigger>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Trigger</Popover.Trigger>
         <Popover.Content>
           <p>Panel</p>
         </Popover.Content>
@@ -198,9 +190,8 @@ export const OnOpenChangeFires: Story = {
   ),
   args: { onOpenChange: fn() } as never,
   play: async ({ args, canvas }) => {
+    const extra = args as unknown as { onOpenChange: ReturnType<typeof fn> };
     await userEvent.click(canvas.getByRole('button', { name: 'Trigger' }));
-    await expect(
-      (args as { onOpenChange: ReturnType<typeof fn> }).onOpenChange,
-    ).toHaveBeenCalledWith(true);
+    await expect(extra.onOpenChange).toHaveBeenCalledWith(true);
   },
 };

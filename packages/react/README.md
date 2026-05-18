@@ -25,7 +25,7 @@ import 'tailwindcss';
 import '@sckyzo/cosmos-theme/vars';
 
 // Then use components:
-import { /* coming in Phase 1 */ } from '@sckyzo/cosmos-react';
+import {} from /* coming in Phase 1 */ '@sckyzo/cosmos-react';
 ```
 
 ## License

@@ -3,17 +3,32 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'headings/card-headings',         slug: 'ch-01-simple',          title: 'Simple preview' },
-  { page: 'headings/card-headings',         slug: 'ch-02-with-action',     title: 'With action preview' },
-  { page: 'headings/section-headings',      slug: 'sh-01-simple',          title: 'Simple preview' },
-  { page: 'headings/section-headings',      slug: 'sh-02-with-description',title: 'With description preview' },
-  { page: 'data-display/description-lists', slug: 'dl-01-left-aligned',    title: 'Left-aligned preview' },
-  { page: 'data-display/description-lists', slug: 'dl-02-left-card',       title: 'Left-aligned in card preview' },
+  { page: 'headings/card-headings', slug: 'ch-01-simple', title: 'Simple preview' },
+  { page: 'headings/card-headings', slug: 'ch-02-with-action', title: 'With action preview' },
+  { page: 'headings/section-headings', slug: 'sh-01-simple', title: 'Simple preview' },
+  {
+    page: 'headings/section-headings',
+    slug: 'sh-02-with-description',
+    title: 'With description preview',
+  },
+  {
+    page: 'data-display/description-lists',
+    slug: 'dl-01-left-aligned',
+    title: 'Left-aligned preview',
+  },
+  {
+    page: 'data-display/description-lists',
+    slug: 'dl-02-left-card',
+    title: 'Left-aligned in card preview',
+  },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

@@ -83,7 +83,7 @@ const Root = ({
         <div
           className={clsx(
             'fixed inset-0 z-40 bg-gray-500/75 transition-opacity duration-300 dark:bg-gray-900/75',
-            open ? 'opacity-100' : 'pointer-events-none opacity-0',
+            open ? 'opacity-100' : 'pointer-events-none opacity-0'
           )}
           onClick={onClose}
           aria-hidden
@@ -98,7 +98,7 @@ const Root = ({
             'fixed top-4 z-50 flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
             // Position close button adjacent to the panel edge, on the backdrop.
             side === 'right' ? OUTSIDE_OFFSET_RIGHT[size] : OUTSIDE_OFFSET_LEFT[size],
-            open ? 'opacity-100' : 'pointer-events-none opacity-0',
+            open ? 'opacity-100' : 'pointer-events-none opacity-0'
           )}
         >
           <X className="size-6" aria-hidden />
@@ -110,7 +110,7 @@ const Root = ({
           SIDE_CLASS[side],
           SIZE_CLASS[size],
           open ? SIDE_TRANSFORM[side].open : SIDE_TRANSFORM[side].closed,
-          className,
+          className
         )}
         role="dialog"
         aria-modal="true"

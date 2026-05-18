@@ -31,8 +31,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "echo 'Stories tested via @cosmos/storybook addon-vitest (apps/storybook).'",
     "build": "tsup",
     "dev": "tsup --watch"
   },

@@ -4,11 +4,11 @@ Cosmos design tokens — CSS only.
 
 Provides three CSS files consumable by any framework:
 
-| Import | Purpose |
-|---|---|
-| `@sckyzo/cosmos-theme/tailwind` | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors) |
-| `@sckyzo/cosmos-theme/vars` | Universal CSS custom properties (bg, text, border, accent + dark mode) |
-| `@sckyzo/cosmos-theme/fonts` | `@fontsource` font imports (Outfit + JetBrains Mono) |
+| Import                          | Purpose                                                                |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| `@sckyzo/cosmos-theme/tailwind` | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors)      |
+| `@sckyzo/cosmos-theme/vars`     | Universal CSS custom properties (bg, text, border, accent + dark mode) |
+| `@sckyzo/cosmos-theme/fonts`    | `@fontsource` font imports (Outfit + JetBrains Mono)                   |
 
 ## Usage
 
@@ -35,6 +35,7 @@ Provides three CSS files consumable by any framework:
 See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.
 
 Categories:
+
 - **Brand palette** : `--color-brand-25` to `--color-brand-950`
 - **Semantic colors** : `--color-success-*`, `--color-error-*`, `--color-warn-*`
 - **Status** : `--color-status-{ok,warn,crit,unknown}`

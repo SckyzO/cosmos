@@ -1,12 +1,5 @@
 import { clsx } from 'clsx';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  X,
-  XCircle,
-  type LucideIcon,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { Button, type ButtonVariant } from './Button';
 
@@ -46,7 +39,7 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
     <div
       className={clsx(
         'fixed inset-0 z-50 flex',
-        isFull ? 'items-stretch justify-stretch' : 'items-center justify-center p-4',
+        isFull ? 'items-stretch justify-stretch' : 'items-center justify-center p-4'
       )}
       role="dialog"
       aria-modal="true"
@@ -61,7 +54,7 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
           'relative w-full overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900',
           isFull ? '' : 'rounded-2xl',
           SIZE_CLASS[size],
-          className,
+          className
         )}
       >
         {children}
@@ -82,7 +75,7 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
   <div
     className={clsx(
       'flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800',
-      className,
+      className
     )}
   >
     <div className="min-w-0 flex-1">
@@ -115,7 +108,7 @@ const Footer = ({ children, className }: { children: ReactNode; className?: stri
   <div
     className={clsx(
       'flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-800/50',
-      className,
+      className
     )}
   >
     {children}
@@ -202,11 +195,11 @@ const Alert = ({
   if (layout === 'horizontal') {
     return (
       <Root open={open} onClose={onClose} size="lg">
-        <div className="bg-white dark:bg-gray-900 sm:flex sm:items-start sm:p-6">
+        <div className="bg-white sm:flex sm:items-start sm:p-6 dark:bg-gray-900">
           <div
             className={clsx(
               'mx-auto flex size-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:size-10',
-              ALERT_CHIP[intent],
+              ALERT_CHIP[intent]
             )}
           >
             <Icon className="size-6" aria-hidden />
@@ -220,11 +213,7 @@ const Alert = ({
         </div>
         <div className="flex flex-col-reverse gap-2 bg-gray-50 px-4 py-3 sm:flex-row sm:justify-end sm:gap-3 sm:px-6 dark:bg-gray-800/50">
           {cancelLabel && (
-            <Button
-              variant="secondary"
-              disabled={loading}
-              onClick={handleCancel}
-            >
+            <Button variant="secondary" disabled={loading} onClick={handleCancel}>
               {cancelLabel}
             </Button>
           )}
@@ -247,21 +236,17 @@ const Alert = ({
         <div
           className={clsx(
             'mx-auto flex size-12 items-center justify-center rounded-full',
-            ALERT_CHIP[intent],
+            ALERT_CHIP[intent]
           )}
         >
           <Icon className="size-6" aria-hidden />
         </div>
         <h2 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
-        {message && (
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</div>
-        )}
+        {message && <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</div>}
         <div
           className={clsx(
             'mt-5',
-            fullWidthAction
-              ? 'flex flex-col gap-2'
-              : 'flex items-center justify-center gap-2',
+            fullWidthAction ? 'flex flex-col gap-2' : 'flex items-center justify-center gap-2'
           )}
         >
           {cancelLabel && (

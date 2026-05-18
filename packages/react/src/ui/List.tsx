@@ -1,11 +1,6 @@
 import { clsx } from 'clsx';
 import { ArrowRight, Check, Dot } from 'lucide-react';
-import {
-  createContext,
-  useContext,
-  type ComponentType,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, type ComponentType, type ReactNode } from 'react';
 
 export type ListVariant = 'unordered' | 'ordered' | 'plain';
 export type ListMarker = 'disc' | 'check' | 'arrow' | 'dot' | 'none';
@@ -100,7 +95,7 @@ const ListRoot = ({
           // For icon markers, use vertical/horizontal flex layouts.
           !useNativeMarker && layout,
           useNativeMarker && (orientation === 'horizontal' ? layout : SPACING_VERTICAL[spacing]),
-          className,
+          className
         )}
       >
         {children}

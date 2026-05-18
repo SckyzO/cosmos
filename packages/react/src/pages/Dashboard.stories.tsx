@@ -445,7 +445,9 @@ const DashboardOverlaysDemo = () => {
       {/* Trigger buttons + tooltip */}
       <div className="flex flex-wrap items-center gap-3">
         <Tooltip content="Opens a centred modal dialog">
-          <Button size="sm" onClick={() => setOpenModal(true)}>Open Modal</Button>
+          <Button size="sm" onClick={() => setOpenModal(true)}>
+            Open Modal
+          </Button>
         </Tooltip>
         <Tooltip content="Opens a side panel for server inspector">
           <Button size="sm" variant="secondary" onClick={() => setOpenDrawer(true)}>
@@ -465,25 +467,25 @@ const DashboardOverlaysDemo = () => {
       {/* Data states grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-[var(--color-border)] p-4">
-          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase">
             Loading
           </p>
           <LoadingState message="Fetching alerts…" />
         </div>
         <div className="rounded-lg border border-[var(--color-border)] p-4">
-          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase">
             Empty
           </p>
           <EmptyState title="No alerts" description="All systems nominal." />
         </div>
         <div className="rounded-lg border border-[var(--color-border)] p-4">
-          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase">
             Error
           </p>
           <ErrorState message="Unable to load — check connection." />
         </div>
         <div className="rounded-lg border border-[var(--color-border)] p-4">
-          <p className="mb-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase">
             Skeleton
           </p>
           <div className="space-y-2">
@@ -502,8 +504,8 @@ const DashboardOverlaysDemo = () => {
         <MediaObject.Body>
           <MediaObject.Title>Inline notification preview</MediaObject.Title>
           <MediaObject.Description>
-            MediaObject pairs an icon (here via IconBox) with a title + description —
-            handy for inline notices inside a dashboard panel.
+            MediaObject pairs an icon (here via IconBox) with a title + description — handy for
+            inline notices inside a dashboard panel.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>

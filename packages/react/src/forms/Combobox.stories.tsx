@@ -67,7 +67,7 @@ export const WithStatusIndicator: Story = {
 export const WithSecondaryText: Story = {
   render: () => {
     const [v, setV] = useState<string | undefined>();
-    const opts = PEOPLE.map((p, i) => ({
+    const opts = PEOPLE.map((p) => ({
       ...p,
       secondary: `@${p.value}`,
       leading: undefined as undefined,
@@ -90,11 +90,7 @@ export const WithSecondaryText: Story = {
 export const WithError: Story = {
   render: () => (
     <div className="max-w-md bg-white p-8 dark:bg-gray-900">
-      <Combobox
-        label="Assigned to"
-        options={PEOPLE}
-        error="This field is required."
-      />
+      <Combobox label="Assigned to" options={PEOPLE} error="This field is required." />
     </div>
   ),
 };
@@ -121,9 +117,7 @@ export const TypingFiltersAndPickingFires: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const input = canvasElement.querySelector(
-      'input[role="combobox"]',
-    ) as HTMLInputElement;
+    const input = canvasElement.querySelector('input[role="combobox"]') as HTMLInputElement;
     await userEvent.click(input);
     await userEvent.type(input, 'tom');
     // Listbox shows Tom Cook; press Enter to pick.

@@ -3,17 +3,20 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { slug: 'blog-01-three-col',        title: 'Three-column preview' },
+  { slug: 'blog-01-three-col', title: 'Three-column preview' },
   { slug: 'blog-02-three-col-images', title: 'Three-column with images preview' },
-  { slug: 'blog-03-single-col',       title: 'Single-column preview' },
-  { slug: 'blog-04-single-col-img',   title: 'Single-column with images preview' },
-  { slug: 'blog-05-featured-post',    title: 'With featured post preview' },
-  { slug: 'blog-06-photo-list',       title: 'With photo and list preview' },
+  { slug: 'blog-03-single-col', title: 'Single-column preview' },
+  { slug: 'blog-04-single-col-img', title: 'Single-column with images preview' },
+  { slug: 'blog-05-featured-post', title: 'With featured post preview' },
+  { slug: 'blog-06-photo-list', title: 'With photo and list preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 const p = await ctx.newPage();
 await p.goto('https://tailwindcss.com/plus/ui-blocks/marketing/sections/blog-sections', {
   waitUntil: 'networkidle',

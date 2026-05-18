@@ -26,7 +26,8 @@ export const SimpleWithIcons: Story = {
           intent="neutral"
           timestamp={<time dateTime="2026-09-20">Sep 20</time>}
         >
-          Applied to <span className="font-medium text-gray-900 dark:text-white">Front End Developer</span>
+          Applied to{' '}
+          <span className="font-medium text-gray-900 dark:text-white">Front End Developer</span>
         </ActivityFeed.Item>
         <ActivityFeed.Item
           icon={ThumbsUp}
@@ -99,8 +100,12 @@ export const RootIsUlWithRoleList: Story = {
 export const LastItemHidesConnector: Story = {
   render: () => (
     <ActivityFeed>
-      <ActivityFeed.Item icon={User} data-testid="i1">a</ActivityFeed.Item>
-      <ActivityFeed.Item icon={User} data-testid="i2">b</ActivityFeed.Item>
+      <ActivityFeed.Item icon={User} data-testid="i1">
+        a
+      </ActivityFeed.Item>
+      <ActivityFeed.Item icon={User} data-testid="i2">
+        b
+      </ActivityFeed.Item>
     </ActivityFeed>
   ),
   play: async ({ canvasElement }) => {

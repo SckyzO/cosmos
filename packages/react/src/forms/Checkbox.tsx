@@ -45,7 +45,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     className,
     ...rest
   },
-  forwardedRef,
+  forwardedRef
 ) {
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
@@ -73,7 +73,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
       className={clsx(
         'inline-flex cursor-pointer items-start gap-2',
         disabled && 'cursor-not-allowed opacity-50',
-        className,
+        className
       )}
     >
       <span className="relative inline-flex shrink-0 items-center justify-center">
@@ -94,11 +94,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         <span
           aria-hidden
           className={clsx(
-            'relative flex items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-brand-500/40 peer-focus-visible:ring-2',
+            'peer-focus-visible:ring-brand-500/40 relative flex items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2',
             sizes.box,
             showFilled
               ? 'border-brand-500 bg-brand-500'
-              : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800',
+              : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
           )}
         >
           {/* Always render both icons; toggle visibility via opacity to keep
@@ -108,12 +108,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             className={clsx(
               'block text-white transition-opacity',
               sizes.icon,
-              isChecked && !indeterminate ? 'opacity-100' : 'opacity-0',
+              isChecked && !indeterminate ? 'opacity-100' : 'opacity-0'
             )}
           />
-          {indeterminate && (
-            <Minus className={clsx('absolute block text-white', sizes.icon)} />
-          )}
+          {indeterminate && <Minus className={clsx('absolute block text-white', sizes.icon)} />}
         </span>
       </span>
       {(label || description) && (
@@ -187,9 +185,7 @@ export const CheckboxGroup = ({
       {description && (
         <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{description}</p>
       )}
-      <div
-        className={clsx(orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2')}
-      >
+      <div className={clsx(orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2')}>
         {options.map((opt) => (
           <Checkbox
             key={opt.value}

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { Sparkles, Star, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
 import { List } from './List';
@@ -9,6 +10,8 @@ const meta = {
   subcomponents: { 'List.Item': List.Item },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof List>;
 
 export default meta;
@@ -85,7 +88,7 @@ export const SpacingComparison: Story = {
     <div className="grid gap-6 sm:grid-cols-3">
       {(['tight', 'normal', 'loose'] as const).map((s) => (
         <div key={s}>
-          <p className="mb-2 font-mono text-[10px] uppercase text-gray-400">{s}</p>
+          <p className="mb-2 font-mono text-[10px] text-gray-400 uppercase">{s}</p>
           <List marker="check" spacing={s}>
             {ITEMS.map((label) => (
               <List.Item key={label}>{label}</List.Item>
@@ -130,16 +133,16 @@ export const RichItems: Story = {
   render: () => (
     <List marker="check" spacing="loose">
       <List.Item>
-        <strong className="text-gray-900 dark:text-white">SSO &amp; SCIM</strong> — connect
-        your IdP for single sign-on and automated user provisioning.
+        <strong className="text-gray-900 dark:text-white">SSO &amp; SCIM</strong> — connect your IdP
+        for single sign-on and automated user provisioning.
       </List.Item>
       <List.Item>
-        <strong className="text-gray-900 dark:text-white">Audit logs</strong> — every
-        action is logged and exportable as JSON or CSV.
+        <strong className="text-gray-900 dark:text-white">Audit logs</strong> — every action is
+        logged and exportable as JSON or CSV.
       </List.Item>
       <List.Item>
-        <strong className="text-gray-900 dark:text-white">99.99 % SLA</strong> — backed by
-        a status page and 24/7 on-call rotation.
+        <strong className="text-gray-900 dark:text-white">99.99 % SLA</strong> — backed by a status
+        page and 24/7 on-call rotation.
       </List.Item>
     </List>
   ),

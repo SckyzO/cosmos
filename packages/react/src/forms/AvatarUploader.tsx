@@ -160,9 +160,7 @@ export const AvatarUploader = ({
             <AlertCircle className="h-3 w-3" /> {error}
           </p>
         ) : (
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {helperText ?? defaultHelper}
-          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{helperText ?? defaultHelper}</p>
         )}
       </div>
     </div>

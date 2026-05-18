@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { Ribbon, type RibbonIntent, type RibbonPosition } from './Ribbon';
 
 const meta = {
@@ -6,6 +7,8 @@ const meta = {
   component: Ribbon,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof Ribbon>;
 
 export default meta;
@@ -45,15 +48,13 @@ export const Angled: Story = {
 export const Positions: Story = {
   render: () => (
     <div className="grid grid-cols-2 gap-6">
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map(
-        (pos) => (
-          <Card key={pos}>
-            <Ribbon position={pos} intent="brand">
-              {pos}
-            </Ribbon>
-          </Card>
-        ),
-      )}
+      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+        <Card key={pos}>
+          <Ribbon position={pos} intent="brand">
+            {pos}
+          </Ribbon>
+        </Card>
+      ))}
     </div>
   ),
 };
@@ -73,15 +74,13 @@ export const Intents: Story = {
 export const AngledPositions: Story = {
   render: () => (
     <div className="grid grid-cols-2 gap-6">
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map(
-        (pos) => (
-          <Card key={pos}>
-            <Ribbon shape="angled" position={pos} intent="success">
-              {pos}
-            </Ribbon>
-          </Card>
-        ),
-      )}
+      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+        <Card key={pos}>
+          <Ribbon shape="angled" position={pos} intent="success">
+            {pos}
+          </Ribbon>
+        </Card>
+      ))}
     </div>
   ),
 };

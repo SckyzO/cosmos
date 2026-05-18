@@ -35,7 +35,7 @@ export type VerticalNavigationItemProps = AnchorHTMLAttributes<HTMLAnchorElement
 
 const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function Item(
   { icon: Icon, badge, active = false, className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <li>
@@ -47,7 +47,7 @@ const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function
           active
             ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-indigo-400'
             : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-indigo-400',
-          className,
+          className
         )}
         {...rest}
       >
@@ -57,7 +57,7 @@ const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function
               'size-5 shrink-0',
               active
                 ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-indigo-400',
+                : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-indigo-400'
             )}
             aria-hidden
           />
@@ -69,7 +69,7 @@ const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function
               'ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium ring-1 ring-inset',
               active
                 ? 'bg-white text-indigo-600 ring-indigo-600/20 dark:bg-gray-900 dark:text-indigo-400 dark:ring-indigo-400/30'
-                : 'bg-white text-gray-700 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-white/10',
+                : 'bg-white text-gray-700 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-white/10'
             )}
           >
             {badge}
@@ -89,9 +89,7 @@ export type VerticalNavigationSectionProps = HTMLAttributes<HTMLLIElement> & {
 
 const Section = ({ label, children, className, ...rest }: VerticalNavigationSectionProps) => (
   <li className={clsx('mt-4 first:mt-0', className)} {...rest}>
-    <div className="px-2 text-xs/6 font-semibold text-gray-400 dark:text-gray-500">
-      {label}
-    </div>
+    <div className="px-2 text-xs/6 font-semibold text-gray-400 dark:text-gray-500">{label}</div>
     <ul role="list" className="-mx-2 mt-1 space-y-1">
       {children}
     </ul>
@@ -108,7 +106,7 @@ export type VerticalNavigationProps = HTMLAttributes<HTMLElement> & {
 
 const Root = forwardRef<HTMLElement, VerticalNavigationProps>(function VerticalNavigationRoot(
   { variant = 'default', className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <nav
@@ -117,7 +115,7 @@ const Root = forwardRef<HTMLElement, VerticalNavigationProps>(function VerticalN
       className={clsx(
         'flex flex-1 flex-col',
         variant === 'on-gray' && 'rounded-md bg-gray-50 p-3 dark:bg-gray-800/60',
-        className,
+        className
       )}
       {...rest}
     >

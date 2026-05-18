@@ -19,8 +19,8 @@ const TallContent = ({ children }: { children?: React.ReactNode }) => (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Scroll down</h1>
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        The FAB fades in after the threshold is scrolled past. Click it to smooth-scroll
-        back to the top.
+        The FAB fades in after the threshold is scrolled past. Click it to smooth-scroll back to the
+        top.
       </p>
       {Array.from({ length: 30 }).map((_, i) => (
         <div
@@ -147,7 +147,7 @@ export const HiddenWhenAboveThreshold: Story = {
       // from the a11y tree. Query the DOM directly to verify the attribute.
       await waitFor(() => {
         const btn = canvasElement.querySelector<HTMLButtonElement>(
-          'button[aria-label="Back to top"]',
+          'button[aria-label="Back to top"]'
         );
         expect(btn).not.toBeNull();
         expect(btn).toHaveAttribute('aria-hidden', 'true');
@@ -189,9 +189,7 @@ export const ClickScrollsToTop: Story = {
     const restoreY = stubScrollY(10);
     const { spy, restore: restoreScrollTo } = stubScrollTo();
     try {
-      const btn = await waitFor(() =>
-        canvas.getByRole('button', { name: /back to top/i }),
-      );
+      const btn = await waitFor(() => canvas.getByRole('button', { name: /back to top/i }));
       await userEvent.click(btn);
       await expect(spy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
     } finally {
@@ -211,12 +209,10 @@ export const OnActivateOverride: Story = {
   play: async ({ args, canvas }) => {
     const restore = stubScrollY(10);
     try {
-      const btn = await waitFor(() =>
-        canvas.getByRole('button', { name: /back to top/i }),
-      );
+      const btn = await waitFor(() => canvas.getByRole('button', { name: /back to top/i }));
       await userEvent.click(btn);
       await expect(
-        (args as { onActivate: ReturnType<typeof fn> }).onActivate,
+        (args as { onActivate: ReturnType<typeof fn> }).onActivate
       ).toHaveBeenCalledTimes(1);
     } finally {
       restore();

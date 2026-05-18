@@ -3,17 +3,32 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'navigation/navbars',     slug: 'nav-01-simple-dark-menu-left',  title: 'Simple dark with menu button on left preview' },
-  { page: 'navigation/navbars',     slug: 'nav-02-dark-quick-action',      title: 'Dark with quick action preview' },
-  { page: 'navigation/progress-bars',slug:'pb-01-simple',                  title: 'Simple preview' },
-  { page: 'navigation/progress-bars',slug:'pb-02-panels',                  title: 'Panels preview' },
-  { page: 'headings/page-headings', slug: 'ph-01-meta-actions',            title: 'With meta and actions preview' },
-  { page: 'headings/page-headings', slug: 'ph-02-actions',                 title: 'With actions preview' },
+  {
+    page: 'navigation/navbars',
+    slug: 'nav-01-simple-dark-menu-left',
+    title: 'Simple dark with menu button on left preview',
+  },
+  {
+    page: 'navigation/navbars',
+    slug: 'nav-02-dark-quick-action',
+    title: 'Dark with quick action preview',
+  },
+  { page: 'navigation/progress-bars', slug: 'pb-01-simple', title: 'Simple preview' },
+  { page: 'navigation/progress-bars', slug: 'pb-02-panels', title: 'Panels preview' },
+  {
+    page: 'headings/page-headings',
+    slug: 'ph-01-meta-actions',
+    title: 'With meta and actions preview',
+  },
+  { page: 'headings/page-headings', slug: 'ph-02-actions', title: 'With actions preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

@@ -67,7 +67,7 @@ const UserMenuRoot = ({
       if (!isControlled) setInternalOpen(v);
       onOpenChange?.(v);
     },
-    [isControlled, onOpenChange, refreshRect],
+    [isControlled, onOpenChange, refreshRect]
   );
 
   useEffect(() => {
@@ -91,7 +91,9 @@ const UserMenuRoot = ({
   }, [open, setOpen]);
 
   return (
-    <UserMenuContext.Provider value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align }}>
+    <UserMenuContext.Provider
+      value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align }}
+    >
       {children}
     </UserMenuContext.Provider>
   );
@@ -114,7 +116,7 @@ export type UserMenuTriggerProps = Omit<
 const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
   function UserMenuTrigger(
     { name, avatarSrc, hideName = false, className, ...rest },
-    forwardedRef,
+    forwardedRef
   ) {
     const { open, setOpen, triggerRef, refreshRect } = useCtx();
     const setRef = (node: HTMLButtonElement | null) => {
@@ -134,7 +136,7 @@ const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
         onClick={() => setOpen(!open)}
         className={clsx(
           'flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
-          className,
+          className
         )}
         {...rest}
       >
@@ -145,13 +147,13 @@ const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
         <ChevronDown
           className={clsx(
             'h-4 w-4 shrink-0 text-gray-400 transition-transform',
-            open && 'rotate-180',
+            open && 'rotate-180'
           )}
           aria-hidden
         />
       </button>
     );
-  },
+  }
 );
 
 // ── Content (portal) ─────────────────────────────────────────────────────────
@@ -181,13 +183,13 @@ const UserMenuContent = ({ width = 'w-56', className, children }: UserMenuConten
         className={clsx(
           'fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900',
           width,
-          className,
+          className
         )}
       >
         {children}
       </div>
     </>,
-    document.body,
+    document.body
   );
 };
 
@@ -204,15 +206,13 @@ const UserMenuHeader = ({ name, email, avatarSrc, className }: UserMenuHeaderPro
   <div
     className={clsx(
       'flex items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800',
-      className,
+      className
     )}
   >
     <Avatar src={avatarSrc} name={name} size="md" />
     <div className="min-w-0 flex-1">
       <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
-      {email && (
-        <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>
-      )}
+      {email && <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>}
     </div>
   </div>
 );
@@ -238,7 +238,7 @@ export type UserMenuItemProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function UserMenuItem(
   { icon: Icon, variant = 'default', closeOnClick = true, onClick, className, children, ...rest },
-  ref,
+  ref
 ) {
   const { setOpen } = useCtx();
   return (
@@ -255,7 +255,7 @@ const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function U
         variant === 'danger'
           ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
           : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5',
-        className,
+        className
       )}
       {...rest}
     >
@@ -265,7 +265,7 @@ const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function U
             'h-4 w-4 shrink-0',
             variant === 'danger'
               ? 'text-red-500 dark:text-red-400'
-              : 'text-gray-400 dark:text-gray-500',
+              : 'text-gray-400 dark:text-gray-500'
           )}
           aria-hidden
         />

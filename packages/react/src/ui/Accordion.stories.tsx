@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { Accordion } from './Accordion';
@@ -8,6 +9,8 @@ const meta = {
   component: Accordion,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { type: 'single', collapsible: true, children: null as ReactNode },
 } satisfies Meta<typeof Accordion>;
 
 export default meta;
@@ -105,16 +108,14 @@ export const RichContent: Story = {
               <strong>Team</strong> — 99 € / month, unlimited
             </li>
           </ul>
-          <p className="mt-3 text-xs text-gray-500">
-            Annual billing saves 20 % on every plan.
-          </p>
+          <p className="mt-3 text-xs text-gray-500">Annual billing saves 20 % on every plan.</p>
         </Accordion.Content>
       </Accordion.Item>
       <Accordion.Item value="item-2">
         <Accordion.Trigger>Cancellation policy</Accordion.Trigger>
         <Accordion.Content>
-          You can cancel anytime — your subscription stays active until the end of the
-          billing period, no questions asked.
+          You can cancel anytime — your subscription stays active until the end of the billing
+          period, no questions asked.
         </Accordion.Content>
       </Accordion.Item>
     </Accordion>

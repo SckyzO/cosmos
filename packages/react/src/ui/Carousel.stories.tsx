@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Carousel } from './Carousel';
@@ -8,6 +9,8 @@ const meta = {
   component: Carousel,
   parameters: portalDocsParams.sm(),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof Carousel>;
 
 export default meta;

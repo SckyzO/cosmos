@@ -23,15 +23,10 @@ export type BreadcrumbProps = {
 
 const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
   if (sep === 'chevron')
-    return (
-      <ChevronRight
-        className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]"
-        aria-hidden
-      />
-    );
+    return <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />;
   if (sep === 'slash')
     return (
-      <span aria-hidden className="select-none text-sm text-[var(--color-text-muted)]">
+      <span aria-hidden className="text-sm text-[var(--color-text-muted)] select-none">
         /
       </span>
     );
@@ -39,7 +34,7 @@ const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
     return (
       <span
         aria-hidden
-        className="select-none text-base leading-none text-[var(--color-text-muted)]"
+        className="text-base leading-none text-[var(--color-text-muted)] select-none"
       >
         ·
       </span>

@@ -121,10 +121,7 @@ export const Combobox = ({
   return (
     <div ref={wrapperRef} className={clsx('w-full', className)}>
       {label && (
-        <label
-          htmlFor={id}
-          className="block text-sm font-medium text-gray-900 dark:text-white"
-        >
+        <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
           {label}
         </label>
       )}
@@ -135,7 +132,9 @@ export const Combobox = ({
           aria-expanded={open}
           aria-controls={listboxId}
           aria-autocomplete="list"
-          aria-activedescendant={open && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined}
+          aria-activedescendant={
+            open && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined
+          }
           disabled={disabled}
           value={query}
           placeholder={placeholder}
@@ -147,11 +146,11 @@ export const Combobox = ({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           className={clsx(
-            'w-full rounded-md border bg-white py-1.5 pr-10 pl-3 text-sm shadow-sm focus:outline-none focus:ring-2 dark:bg-gray-900 dark:text-white',
+            'w-full rounded-md border bg-white py-1.5 pr-10 pl-3 text-sm shadow-sm focus:ring-2 focus:outline-none dark:bg-gray-900 dark:text-white',
             error
               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
-              : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500/30 dark:border-white/10',
-            disabled && 'cursor-not-allowed opacity-50',
+              : 'focus:border-brand-500 focus:ring-brand-500/30 border-gray-300 dark:border-white/10',
+            disabled && 'cursor-not-allowed opacity-50'
           )}
         />
         <button
@@ -170,9 +169,7 @@ export const Combobox = ({
             className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
           >
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                {emptyMessage}
-              </li>
+              <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</li>
             ) : (
               filtered.map((opt, i) => {
                 const isActive = i === activeIndex;
@@ -192,10 +189,8 @@ export const Combobox = ({
                     }}
                     className={clsx(
                       'flex cursor-pointer items-center gap-2 px-3 py-2 select-none',
-                      isActive
-                        ? 'bg-brand-500 text-white'
-                        : 'text-gray-900 dark:text-gray-100',
-                      opt.disabled && 'cursor-not-allowed opacity-50',
+                      isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
+                      opt.disabled && 'cursor-not-allowed opacity-50'
                     )}
                   >
                     {opt.leading && <span className="shrink-0">{opt.leading}</span>}
@@ -204,7 +199,7 @@ export const Combobox = ({
                       <span
                         className={clsx(
                           'shrink-0 text-xs',
-                          isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400',
+                          isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
                         )}
                       >
                         {opt.secondary}
@@ -222,7 +217,7 @@ export const Combobox = ({
         <p
           className={clsx(
             'mt-1.5 text-xs',
-            error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? helperText}

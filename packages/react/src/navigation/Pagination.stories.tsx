@@ -66,8 +66,7 @@ export const Controlled: Story = {
       <div className="space-y-4">
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Currently viewing items{' '}
-            <span className="font-mono">{(page - 1) * pageSize + 1}</span>–
+            Currently viewing items <span className="font-mono">{(page - 1) * pageSize + 1}</span>–
             <span className="font-mono">{Math.min(page * pageSize, total)}</span> of{' '}
             <span className="font-mono">{total}</span>.
           </p>

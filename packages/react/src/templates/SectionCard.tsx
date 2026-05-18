@@ -1,14 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 
-export type SectionCardIconTone =
-  | 'brand'
-  | 'blue'
-  | 'violet'
-  | 'green'
-  | 'amber'
-  | 'red'
-  | 'gray';
+export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
 
 const TONE_CLASSES: Record<SectionCardIconTone, { color: string; bg: string }> = {
   brand: {
@@ -82,7 +75,7 @@ export const SectionCard = ({
     <div
       className={clsx(
         'rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6',
-        className,
+        className
       )}
     >
       <div className="mb-5 flex items-center gap-3">
@@ -90,7 +83,7 @@ export const SectionCard = ({
           <div
             className={clsx(
               'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-              finalIconBg,
+              finalIconBg
             )}
           >
             <Icon className={clsx('h-5 w-5', finalIconColor)} />

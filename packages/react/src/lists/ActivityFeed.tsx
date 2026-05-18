@@ -64,7 +64,7 @@ export type ActivityFeedItemProps = LiHTMLAttributes<HTMLLIElement> & {
 
 const Item = forwardRef<HTMLLIElement, ActivityFeedItemProps>(function ActivityFeedItem(
   { icon: Icon, intent = 'neutral', timestamp, children, className, __isLast = false, ...rest },
-  ref,
+  ref
 ) {
   return (
     <li ref={ref} className={className} {...rest}>
@@ -80,7 +80,7 @@ const Item = forwardRef<HTMLLIElement, ActivityFeedItemProps>(function ActivityF
             <span
               className={clsx(
                 'flex size-10 items-center justify-center rounded-full ring-8 ring-white dark:ring-gray-900',
-                INTENT_BG[intent],
+                INTENT_BG[intent]
               )}
             >
               <Icon className="size-5 text-white" aria-hidden />
@@ -110,7 +110,7 @@ export type ActivityFeedProps = Omit<HTMLAttributes<HTMLUListElement>, 'children
 
 const Root = forwardRef<HTMLUListElement, ActivityFeedProps>(function ActivityFeedRoot(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   const items = Children.toArray(children).filter(isValidElement);
   return (

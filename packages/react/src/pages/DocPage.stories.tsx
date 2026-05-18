@@ -50,9 +50,7 @@ type DocSection = { id: string; label: string };
 const docNavbar = () => (
   <Navbar theme="light">
     <Navbar.Brand>
-      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">
-        Cosmos
-      </span>
+      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
       <Navbar.Items>
         <Navbar.Item theme="light" active href="#docs">
           Docs
@@ -85,7 +83,9 @@ const Breadcrumbs = ({ items }: { items: string[] }) => (
     <ol className="flex items-center gap-x-1.5 text-[var(--color-text-secondary)]">
       {items.map((item, i) => (
         <li key={item} className="flex items-center gap-x-1.5">
-          {i > 0 && <ChevronRight className="size-3.5 text-[var(--color-text-muted)]" aria-hidden />}
+          {i > 0 && (
+            <ChevronRight className="size-3.5 text-[var(--color-text-muted)]" aria-hidden />
+          )}
           <span
             className={
               i === items.length - 1
@@ -112,7 +112,7 @@ const useActiveSection = (ids: string[]) => {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         if (visible[0]) setActive(visible[0].target.id);
       },
-      { rootMargin: '-20% 0px -65% 0px', threshold: 0 },
+      { rootMargin: '-20% 0px -65% 0px', threshold: 0 }
     );
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -184,7 +184,7 @@ const DocSidebar = () => (
 
 const TocRail = ({ sections, active }: { sections: DocSection[]; active: string }) => (
   <nav aria-label="On this page" className="px-4 py-6">
-    <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+    <div className="text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
       On this page
     </div>
     <ul role="list" className="mt-3 space-y-2 text-sm">
@@ -254,19 +254,17 @@ const ButtonDocBody = () => {
               </h1>
             </div>
             <p className="mt-3 text-lg text-[var(--color-text-secondary)]">
-              Trigger an action with a click. Use Button anywhere a user makes a
-              binary commit — submit, cancel, delete, save.
+              Trigger an action with a click. Use Button anywhere a user makes a binary commit —
+              submit, cancel, delete, save.
             </p>
             <div className="mt-4 flex items-center gap-x-3 text-sm">
               <Badge variant="success">Stable</Badge>
               <span className="text-[var(--color-text-muted)]">·</span>
-              <span className="font-mono text-xs text-[var(--color-text-secondary)]">
-                v1.0.0
-              </span>
+              <span className="font-mono text-xs text-[var(--color-text-secondary)]">v1.0.0</span>
               <span className="text-[var(--color-text-muted)]">·</span>
               <span className="text-[var(--color-text-secondary)]">
                 Source:{' '}
-                <a href="#" className="text-brand-600 hover:underline dark:text-brand-400">
+                <a href="#" className="text-brand-600 dark:text-brand-400 hover:underline">
                   packages/react/src/ui/Button.tsx
                 </a>
               </span>
@@ -287,9 +285,7 @@ const ButtonDocBody = () => {
                   <Stepper.Step description="Make sure the Tailwind preset is loaded">
                     Import the theme
                   </Stepper.Step>
-                  <Stepper.Step description="<Button>Save</Button>">
-                    Render anywhere
-                  </Stepper.Step>
+                  <Stepper.Step description="<Button>Save</Button>">Render anywhere</Stepper.Step>
                 </Stepper>
               </div>
             </section>
@@ -297,10 +293,15 @@ const ButtonDocBody = () => {
             <section>
               <SectionHeading id="overview">Overview</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
-                Buttons are the primary way users trigger actions in a Cosmos
-                interface. Use the appropriate <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">variant</code>{' '}
+                Buttons are the primary way users trigger actions in a Cosmos interface. Use the
+                appropriate{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  variant
+                </code>{' '}
                 to communicate intent, and pair it with the right{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">size</code>{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  size
+                </code>{' '}
                 for the surrounding layout density.
               </p>
               <div className="mt-6">
@@ -321,8 +322,8 @@ const ButtonDocBody = () => {
             <section>
               <SectionHeading id="variants">Variants</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
-                Five variants cover the visual hierarchy needed for a dashboard:
-                primary, secondary, ghost, soft, and danger.
+                Five variants cover the visual hierarchy needed for a dashboard: primary, secondary,
+                ghost, soft, and danger.
               </p>
               <div className="mt-6">
                 <PreviewBox>
@@ -338,9 +339,11 @@ const ButtonDocBody = () => {
             <section>
               <SectionHeading id="anatomy">Anatomy</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
-                Three internal slots compose every Button: a leading or trailing
-                icon, a label, and an optional loading spinner that replaces the
-                icon when <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">loading</code>{' '}
+                Three internal slots compose every Button: a leading or trailing icon, a label, and
+                an optional loading spinner that replaces the icon when{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  loading
+                </code>{' '}
                 is true.
               </p>
               <Card padding="lg" className="mt-6 space-y-5">
@@ -356,9 +359,8 @@ const ButtonDocBody = () => {
                   <MediaObject.Body>
                     <MediaObject.Title>Container</MediaObject.Title>
                     <MediaObject.Description>
-                      A <code className="font-mono text-xs">button</code> element
-                      with rounded corners, padding from the size prop, and
-                      colors from the variant.
+                      A <code className="font-mono text-xs">button</code> element with rounded
+                      corners, padding from the size prop, and colors from the variant.
                     </MediaObject.Description>
                   </MediaObject.Body>
                 </MediaObject>
@@ -375,8 +377,7 @@ const ButtonDocBody = () => {
                     <MediaObject.Title>Icon slot</MediaObject.Title>
                     <MediaObject.Description>
                       Pass any Lucide icon component via{' '}
-                      <code className="font-mono text-xs">icon</code>; place it
-                      left or right with{' '}
+                      <code className="font-mono text-xs">icon</code>; place it left or right with{' '}
                       <code className="font-mono text-xs">iconPosition</code>.
                     </MediaObject.Description>
                   </MediaObject.Body>
@@ -393,8 +394,8 @@ const ButtonDocBody = () => {
                   <MediaObject.Body>
                     <MediaObject.Title>Label</MediaObject.Title>
                     <MediaObject.Description>
-                      Children render as the visible label. Keep it short and
-                      action-oriented — verbs over nouns.
+                      Children render as the visible label. Keep it short and action-oriented —
+                      verbs over nouns.
                     </MediaObject.Description>
                   </MediaObject.Body>
                 </MediaObject>
@@ -404,12 +405,27 @@ const ButtonDocBody = () => {
             <section>
               <SectionHeading id="sizes">Sizes</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
-                Five sizes (<code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">xs</code>,{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">sm</code>,{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">md</code>,{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">lg</code>,{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">xl</code>),
-                matching TUI Plus.
+                Five sizes (
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  xs
+                </code>
+                ,{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  sm
+                </code>
+                ,{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  md
+                </code>
+                ,{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  lg
+                </code>
+                ,{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  xl
+                </code>
+                ), matching TUI Plus.
               </p>
               <div className="mt-6">
                 <PreviewBox>
@@ -426,7 +442,9 @@ const ButtonDocBody = () => {
               <SectionHeading id="with-icons">With icons</SectionHeading>
               <p className="mt-4 text-[var(--color-text-secondary)]">
                 Pass a Lucide icon via{' '}
-                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">icon</code>{' '}
+                <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
+                  icon
+                </code>{' '}
                 and choose its position with{' '}
                 <code className="rounded bg-[var(--color-bg-panel)] px-1 py-0.5 font-mono text-sm">
                   iconPosition
@@ -572,14 +590,12 @@ export const WithoutSidebar: Story = {
               Button
             </h1>
             <p className="mt-3 text-lg text-[var(--color-text-secondary)]">
-              Standalone documentation page without left sidebar or TOC. Useful
-              for mobile screens or deep-dive articles.
+              Standalone documentation page without left sidebar or TOC. Useful for mobile screens
+              or deep-dive articles.
             </p>
             <div className="mt-4 flex items-center gap-x-3 text-sm">
               <Badge variant="success">Stable</Badge>
-              <span className="font-mono text-xs text-[var(--color-text-secondary)]">
-                v1.0.0
-              </span>
+              <span className="font-mono text-xs text-[var(--color-text-secondary)]">v1.0.0</span>
             </div>
           </header>
           <div className="mt-10">
@@ -675,7 +691,9 @@ export const Changelog: Story = {
                       Added
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
-                      {r.added.map((i) => <li key={i}>{i}</li>)}
+                      {r.added.map((i) => (
+                        <li key={i}>{i}</li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -685,7 +703,9 @@ export const Changelog: Story = {
                       Changed
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
-                      {r.changed.map((i) => <li key={i}>{i}</li>)}
+                      {r.changed.map((i) => (
+                        <li key={i}>{i}</li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -695,7 +715,9 @@ export const Changelog: Story = {
                       Fixed
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
-                      {r.fixed.map((i) => <li key={i}>{i}</li>)}
+                      {r.fixed.map((i) => (
+                        <li key={i}>{i}</li>
+                      ))}
                     </ul>
                   </div>
                 )}

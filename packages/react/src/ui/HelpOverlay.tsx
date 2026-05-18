@@ -15,8 +15,7 @@ const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
   const expectAlt = parts.includes('alt') || parts.includes('option');
   const key = parts[parts.length - 1];
 
-  const isMac =
-    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
   const modPressed = isMac ? e.metaKey : e.ctrlKey;
 
   if (expectMod && !modPressed) return false;
@@ -32,12 +31,7 @@ const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
 const isTypingInFormControl = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
-  return (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    target.isContentEditable
-  );
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 };
 
 // ── Key rendering ────────────────────────────────────────────────────────────
@@ -74,7 +68,7 @@ const Kbd = ({ children, className }: { children: ReactNode; className?: string 
   <kbd
     className={clsx(
       'inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 font-mono text-[11px] font-medium text-gray-700 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
-      className,
+      className
     )}
   >
     {children}
@@ -168,14 +162,12 @@ const HelpOverlayRoot = ({
       <div
         className={clsx(
           'relative flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900',
-          className,
+          className
         )}
       >
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              {title}
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
             {description && (
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
             )}
@@ -216,7 +208,7 @@ export type HelpOverlaySectionProps = {
 
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
-    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+    <h3 className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
       {title}
     </h3>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
@@ -237,17 +229,11 @@ export type HelpOverlayShortcutProps = {
 };
 
 const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortcutProps) => {
-  const isMac =
-    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
   const sequence = Array.isArray(keys) ? keys : [keys];
 
   return (
-    <li
-      className={clsx(
-        'flex items-center justify-between gap-3 py-1.5 text-sm',
-        className,
-      )}
-    >
+    <li className={clsx('flex items-center justify-between gap-3 py-1.5 text-sm', className)}>
       <span className="text-gray-700 dark:text-gray-300">{description}</span>
       <span className="flex shrink-0 items-center gap-1">
         {sequence.map((combo, idx) => {
@@ -255,7 +241,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
           return (
             <Fragment key={`${combo}-${idx}`}>
               {idx > 0 && (
-                <span className="px-0.5 text-[10px] uppercase text-gray-400 dark:text-gray-500">
+                <span className="px-0.5 text-[10px] text-gray-400 uppercase dark:text-gray-500">
                   then
                 </span>
               )}

@@ -83,7 +83,7 @@ export type PlaceholderAvatarOptions = {
 export const placeholderAvatar = (
   seed: string,
   size = 64,
-  opts: PlaceholderAvatarOptions = {},
+  opts: PlaceholderAvatarOptions = {}
 ): string => {
   const initials = extractInitials(seed);
   const [defaultBg, defaultFg] = PALETTE[hashSeed(seed) % PALETTE.length]!;
@@ -106,7 +106,7 @@ const buildCoverSvg = (
   from: string,
   to: string,
   width: number,
-  height: number,
+  height: number
 ): string => {
   const h = hashSeed(seed);
   const angle = h % 180;
@@ -148,7 +148,7 @@ export const placeholderCover = (
   seed: string,
   width = 1600,
   height = 700,
-  opts: PlaceholderCoverOptions = {},
+  opts: PlaceholderCoverOptions = {}
 ): string => {
   const h = hashSeed(seed);
   const [from] = PALETTE[h % PALETTE.length]!;

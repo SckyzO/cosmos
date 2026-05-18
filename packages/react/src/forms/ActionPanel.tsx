@@ -40,7 +40,7 @@ export type ActionPanelProps = HTMLAttributes<HTMLDivElement> & {
 
 export const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(function ActionPanel(
   { title, description, action, layout = 'stacked', well = false, className, children, ...rest },
-  ref,
+  ref
 ) {
   const surface = well
     ? 'rounded-lg bg-gray-50 dark:bg-gray-800/60'
@@ -62,7 +62,7 @@ export const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(function
           className={clsx(
             layout === 'inline'
               ? 'mt-3 sm:mt-0 sm:ml-6 sm:flex sm:shrink-0 sm:items-center'
-              : 'mt-5',
+              : 'mt-5'
           )}
         >
           {action}
@@ -74,7 +74,12 @@ export const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(function
 
   return (
     <div ref={ref} className={clsx(surface, className)} {...rest}>
-      <div className={clsx('px-4 py-5 sm:p-6', layout === 'inline' && 'sm:flex sm:items-start sm:justify-between')}>
+      <div
+        className={clsx(
+          'px-4 py-5 sm:p-6',
+          layout === 'inline' && 'sm:flex sm:items-start sm:justify-between'
+        )}
+      >
         {body}
       </div>
     </div>

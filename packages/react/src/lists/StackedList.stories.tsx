@@ -58,11 +58,7 @@ const SERVICES: Service[] = [
 ];
 
 const Avatar = ({ src }: { src: string }) => (
-  <img
-    src={src}
-    alt=""
-    className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-  />
+  <img src={src} alt="" className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800" />
 );
 
 const MetaWithTimestamp = ({ role, lastSeen }: { role: string; lastSeen: string }) => (
@@ -163,11 +159,7 @@ export const NoSubtitle: Story = {
   render: () => (
     <StackedList>
       {SERVICES.map((s) => (
-        <StackedList.Item
-          key={s.email}
-          avatar={<Avatar src={s.avatar} />}
-          title={s.name}
-        />
+        <StackedList.Item key={s.email} avatar={<Avatar src={s.avatar} />} title={s.name} />
       ))}
     </StackedList>
   ),
@@ -199,7 +191,7 @@ export const WithLeadingIcon: Story = {
         <StackedList.Item
           key={s.name}
           avatar={
-            <span className="flex size-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
+            <span className="bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300 flex size-12 items-center justify-center rounded-full">
               <Activity className="size-5" aria-hidden />
             </span>
           }
@@ -259,10 +251,7 @@ export const HrefMakesRowLinkAndChevronShows: Story = {
 export const MetaIsHiddenOnMobileViewport: Story = {
   render: () => (
     <StackedList>
-      <StackedList.Item
-        title="X"
-        meta={<p data-testid="meta">meta-content</p>}
-      />
+      <StackedList.Item title="X" meta={<p data-testid="meta">meta-content</p>} />
     </StackedList>
   ),
   play: async ({ canvasElement }) => {

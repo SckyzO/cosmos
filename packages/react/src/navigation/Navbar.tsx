@@ -40,7 +40,8 @@ const ROOT_BG: Record<NavbarTheme, string> = {
 };
 
 const ITEM_BASE: Record<NavbarTheme, string> = {
-  light: 'rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
+  light:
+    'rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
   dark: 'rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white',
 };
 
@@ -62,16 +63,11 @@ export type NavbarProps = HTMLAttributes<HTMLElement> & {
 
 const RootCmp = forwardRef<HTMLElement, NavbarProps>(function NavbarRoot(
   { theme = 'light', maxWidth = '7xl', heightClassName = 'h-16', className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <nav ref={ref} className={clsx(ROOT_BG[theme], className)} data-theme={theme} {...rest}>
-      <div
-        className={clsx(
-          'px-4 sm:px-6 lg:px-8',
-          maxWidth === '7xl' && 'mx-auto max-w-7xl',
-        )}
-      >
+      <div className={clsx('px-4 sm:px-6 lg:px-8', maxWidth === '7xl' && 'mx-auto max-w-7xl')}>
         <div className={clsx('flex items-center justify-between', heightClassName)}>{children}</div>
       </div>
     </nav>
@@ -102,7 +98,13 @@ export type NavbarItemProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   theme?: NavbarTheme;
 };
 
-const Item = ({ active = false, theme = 'light', className, children, ...rest }: NavbarItemProps) => (
+const Item = ({
+  active = false,
+  theme = 'light',
+  className,
+  children,
+  ...rest
+}: NavbarItemProps) => (
   <a
     aria-current={active ? 'page' : undefined}
     className={clsx(ITEM_BASE[theme], active && ITEM_ACTIVE[theme], className)}
@@ -140,7 +142,7 @@ const MobileMenuButton = ({
       theme === 'dark'
         ? 'text-gray-400 hover:bg-gray-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'
         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500',
-      className,
+      className
     )}
     {...rest}
   >
@@ -153,7 +155,11 @@ const MobileMenuButton = ({
         stroke="currentColor"
         aria-hidden
       >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+        />
       </svg>
     )}
   </button>

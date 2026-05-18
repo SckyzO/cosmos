@@ -28,7 +28,7 @@ const ContentStackedListRoot = forwardRef<HTMLUListElement, ContentStackedListPr
         {children}
       </ul>
     );
-  },
+  }
 );
 
 // ── Dot separator (TUI: <svg viewBox="0 0 2 2"><circle r=1 /></svg>) ─────────
@@ -70,15 +70,9 @@ export type ContentStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
 };
 
 const ContentStackedListItem = forwardRef<HTMLLIElement, ContentStackedListItemProps>(
-  function ContentStackedListItem(
-    { title, href, badge, meta, trailing, className, ...rest },
-    ref,
-  ) {
+  function ContentStackedListItem({ title, href, badge, meta, trailing, className, ...rest }, ref) {
     const titleEl = href ? (
-      <a
-        href={href}
-        className="text-gray-900 hover:underline dark:text-white"
-      >
+      <a href={href} className="text-gray-900 hover:underline dark:text-white">
         {title}
       </a>
     ) : (
@@ -110,12 +104,10 @@ const ContentStackedListItem = forwardRef<HTMLLIElement, ContentStackedListItemP
             </div>
           )}
         </div>
-        {trailing && (
-          <div className="flex flex-none items-center gap-x-4">{trailing}</div>
-        )}
+        {trailing && <div className="flex flex-none items-center gap-x-4">{trailing}</div>}
       </li>
     );
-  },
+  }
 );
 
 // ── Compound export ──────────────────────────────────────────────────────────

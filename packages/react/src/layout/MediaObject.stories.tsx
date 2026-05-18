@@ -44,8 +44,8 @@ export const Basic: Story = {
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
           <MediaObject.Description>
-            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita
-            quia omnis voluptatem. Minus quidem ipsam quia iusto.
+            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+            voluptatem. Minus quidem ipsam quia iusto.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>
@@ -100,8 +100,8 @@ export const Stretched: Story = {
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
           <MediaObject.Description>
-            Media takes the full body height via `align='stretch'` and a media element
-            sized with `h-full`.
+            Media takes the full body height via `align='stretch'` and a media element sized with
+            `h-full`.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>

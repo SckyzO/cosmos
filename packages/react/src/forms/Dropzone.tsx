@@ -1,13 +1,6 @@
 import { clsx } from 'clsx';
 import { File as FileIcon, Upload, X } from 'lucide-react';
-import {
-  useCallback,
-  useId,
-  useRef,
-  useState,
-  type DragEvent,
-  type ReactNode,
-} from 'react';
+import { useCallback, useId, useRef, useState, type DragEvent, type ReactNode } from 'react';
 
 const formatBytes = (n: number): string => {
   if (n < 1024) return `${n} B`;
@@ -88,7 +81,7 @@ export const Dropzone = ({
         return { ok: [], error: `Too many files (max ${maxFiles}).` };
       return { ok: merged };
     },
-    [accept, files, maxFiles, maxSize, multiple],
+    [accept, files, maxFiles, maxSize, multiple]
   );
 
   const apply = (next: File[]) => {
@@ -159,12 +152,12 @@ export const Dropzone = ({
           'flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors',
           disabled
             ? 'cursor-not-allowed opacity-50'
-            : 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+            : 'focus-visible:ring-brand-500/40 cursor-pointer focus:outline-none focus-visible:ring-2',
           error
             ? 'border-red-300 bg-red-50/40 dark:border-red-500/40 dark:bg-red-500/5'
             : dragOver
               ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
-              : 'border-gray-300 bg-gray-50 hover:border-brand-400 dark:border-gray-700 dark:bg-gray-800/40 dark:hover:border-brand-500',
+              : 'hover:border-brand-400 dark:hover:border-brand-500 border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40'
         )}
       >
         {children ?? (
@@ -203,9 +196,7 @@ export const Dropzone = ({
               <FileIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-gray-900 dark:text-white">{f.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatBytes(f.size)}
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{formatBytes(f.size)}</p>
               </div>
               <button
                 type="button"

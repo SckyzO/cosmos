@@ -77,8 +77,8 @@ export const FullScreen: Story = {
           <Modal.Body className="overflow-y-auto">
             {Array.from({ length: 24 }).map((_, i) => (
               <p key={i} className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                Line {i + 1} — full-screen modals are great when content needs to scroll
-                or you&apos;re embedding a complex editor.
+                Line {i + 1} — full-screen modals are great when content needs to scroll or
+                you&apos;re embedding a complex editor.
               </p>
             ))}
           </Modal.Body>

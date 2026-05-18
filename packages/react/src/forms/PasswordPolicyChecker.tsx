@@ -35,7 +35,7 @@ export const PasswordPolicyChecker = ({
               key={`${i}-${r.label}`}
               className={clsx(
                 'flex items-center gap-2 text-xs transition-colors',
-                r.ok ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500',
+                r.ok ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />

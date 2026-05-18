@@ -54,12 +54,7 @@ export const Controlled: Story = {
     const [completed, setCompleted] = useState<string | null>(null);
     return (
       <div className="space-y-3">
-        <OtpInput
-          value={v}
-          onChange={setV}
-          onComplete={(final) => setCompleted(final)}
-          autoFocus
-        />
+        <OtpInput value={v} onChange={setV} onComplete={(final) => setCompleted(final)} autoFocus />
         <p className="text-xs text-[var(--color-text-muted)]">
           Value: <code>{v || '(empty)'}</code>
           {completed && (
@@ -94,14 +89,7 @@ export const TypingFillsCells: Story = {
 export const OnCompleteFiresOnLastCell: Story = {
   render: (args) => {
     const [v, setV] = useState('');
-    return (
-      <OtpInput
-        value={v}
-        onChange={setV}
-        onComplete={args.onComplete}
-        length={3}
-      />
-    );
+    return <OtpInput value={v} onChange={setV} onComplete={args.onComplete} length={3} />;
   },
   args: { onComplete: fn() },
   play: async ({ args, canvas }) => {

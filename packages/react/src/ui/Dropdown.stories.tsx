@@ -77,12 +77,7 @@ export const MultipleDividers: Story = {
     return (
       <Wrap>
         <SectionCard title="Multiple dividers — group related options">
-          <Dropdown
-            value={v}
-            onChange={setV}
-            options={items}
-            placeholder="Select a category"
-          />
+          <Dropdown value={v} onChange={setV} options={items} placeholder="Select a category" />
         </SectionCard>
       </Wrap>
     );

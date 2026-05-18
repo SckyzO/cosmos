@@ -27,20 +27,9 @@ export type TabsProps = {
   className?: string;
 };
 
-const Root = ({
-  value,
-  onChange,
-  orientation = 'horizontal',
-  children,
-  className,
-}: TabsProps) => (
+const Root = ({ value, onChange, orientation = 'horizontal', children, className }: TabsProps) => (
   <TabsContext.Provider value={{ value, onChange, orientation }}>
-    <div
-      className={clsx(
-        orientation === 'vertical' ? 'flex gap-6' : '',
-        className,
-      )}
-    >
+    <div className={clsx(orientation === 'vertical' ? 'flex gap-6' : '', className)}>
       {children}
     </div>
   </TabsContext.Provider>
@@ -56,7 +45,7 @@ const List = ({ children, className }: { children: ReactNode; className?: string
         orientation === 'vertical'
           ? 'flex shrink-0 flex-col gap-1 border-r border-gray-200 dark:border-gray-800'
           : 'flex items-center gap-1 border-b border-gray-200 dark:border-gray-800',
-        className,
+        className
       )}
     >
       {children}
@@ -87,18 +76,18 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
         'flex items-center gap-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         orientation === 'vertical'
           ? clsx(
-              '-mr-px justify-start whitespace-nowrap rounded-l-lg border-r-2 px-3 py-2 text-left',
+              '-mr-px justify-start rounded-l-lg border-r-2 px-3 py-2 text-left whitespace-nowrap',
               isActive
                 ? 'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
-                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
             )
           : clsx(
               '-mb-px border-b-2 px-3 py-2',
               isActive
                 ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             ),
-        className,
+        className
       )}
     >
       {Icon && <Icon className="h-4 w-4" />}
@@ -109,7 +98,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
             'ms-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold',
             isActive
               ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+              : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
           )}
         >
           {badge}

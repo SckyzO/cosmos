@@ -3,15 +3,22 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
 const TARGETS = [
-  { page: 'lists/feeds',      slug: 'fd-01-simple-icons',     title: 'Simple with icons preview' },
-  { page: 'lists/feeds',      slug: 'fd-02-comments',         title: 'With comments preview' },
-  { page: 'lists/grid-lists', slug: 'gl-01-contact-small',    title: 'Contact cards with small portraits preview' },
-  { page: 'lists/grid-lists', slug: 'gl-02-contact-cards',    title: 'Contact cards preview' },
+  { page: 'lists/feeds', slug: 'fd-01-simple-icons', title: 'Simple with icons preview' },
+  { page: 'lists/feeds', slug: 'fd-02-comments', title: 'With comments preview' },
+  {
+    page: 'lists/grid-lists',
+    slug: 'gl-01-contact-small',
+    title: 'Contact cards with small portraits preview',
+  },
+  { page: 'lists/grid-lists', slug: 'gl-02-contact-cards', title: 'Contact cards preview' },
 ];
 
 await mkdir('/workspace/tests/e2e/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+const ctx = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'light',
+});
 
 const byPage = {};
 for (const t of TARGETS) (byPage[t.page] ||= []).push(t);

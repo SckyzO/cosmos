@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,8 @@ const meta = {
   component: ButtonGroup,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof ButtonGroup>;
 
 export default meta;
@@ -176,22 +179,29 @@ export const ToggleGroup: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickButtonFiresHandler: Story = {
-  render: (args) => (
-    <ButtonGroup>
-      <Button variant="primary" onClick={args.onDay as () => void}>
-        Day
-      </Button>
-      <Button variant="primary" onClick={args.onWeek as () => void}>
-        Week
-      </Button>
-    </ButtonGroup>
-  ),
+  render: (args) => {
+    const extra = args as unknown as { onDay: () => void; onWeek: () => void };
+    return (
+      <ButtonGroup>
+        <Button variant="primary" onClick={extra.onDay}>
+          Day
+        </Button>
+        <Button variant="primary" onClick={extra.onWeek}>
+          Week
+        </Button>
+      </ButtonGroup>
+    );
+  },
   args: { onDay: fn(), onWeek: fn() } as never,
   play: async ({ args, canvas }) => {
+    const extra = args as unknown as {
+      onDay: ReturnType<typeof fn>;
+      onWeek: ReturnType<typeof fn>;
+    };
     await userEvent.click(canvas.getByRole('button', { name: 'Day' }));
-    await expect((args as { onDay: ReturnType<typeof fn> }).onDay).toHaveBeenCalledTimes(1);
+    await expect(extra.onDay).toHaveBeenCalledTimes(1);
     await userEvent.click(canvas.getByRole('button', { name: 'Week' }));
-    await expect((args as { onWeek: ReturnType<typeof fn> }).onWeek).toHaveBeenCalledTimes(1);
+    await expect(extra.onWeek).toHaveBeenCalledTimes(1);
   },
 };
 

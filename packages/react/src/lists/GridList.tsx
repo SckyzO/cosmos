@@ -1,10 +1,5 @@
 import { clsx } from 'clsx';
-import {
-  forwardRef,
-  type AnchorHTMLAttributes,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type AnchorHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Contact cards with small portraits"):
 //   <ul role="list" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -55,7 +50,7 @@ export type GridListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> &
 
 const Root = forwardRef<HTMLUListElement, GridListProps>(function GridListRoot(
   { cols = 3, gapClassName = 'gap-6', className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <ul
@@ -75,14 +70,14 @@ export type GridListCardProps = HTMLAttributes<HTMLLIElement>;
 
 const Card = forwardRef<HTMLLIElement, GridListCardProps>(function GridListCard(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <li
       ref={ref}
       className={clsx(
         'col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow dark:divide-white/10 dark:bg-gray-900 dark:ring-1 dark:ring-white/10',
-        className,
+        className
       )}
       {...rest}
     >
@@ -97,16 +92,11 @@ export type GridListFooterProps = HTMLAttributes<HTMLDivElement>;
 
 const Footer = forwardRef<HTMLDivElement, GridListFooterProps>(function GridListFooter(
   { className, children, ...rest },
-  ref,
+  ref
 ) {
   return (
     <div ref={ref} {...rest}>
-      <div
-        className={clsx(
-          '-mt-px flex divide-x divide-gray-200 dark:divide-white/10',
-          className,
-        )}
-      >
+      <div className={clsx('-mt-px flex divide-x divide-gray-200 dark:divide-white/10', className)}>
         {children}
       </div>
     </div>
@@ -128,7 +118,7 @@ const FooterAction = forwardRef<HTMLAnchorElement, GridListFooterActionProps>(
           ref={ref}
           className={clsx(
             'relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-bl-lg border border-transparent py-4 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5',
-            className,
+            className
           )}
           {...rest}
         >
@@ -136,7 +126,7 @@ const FooterAction = forwardRef<HTMLAnchorElement, GridListFooterActionProps>(
         </a>
       </div>
     );
-  },
+  }
 );
 
 // ── Compound export ──────────────────────────────────────────────────────────

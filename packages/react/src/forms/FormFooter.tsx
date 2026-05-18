@@ -68,7 +68,7 @@ export const FormFooter = ({
         'flex items-center gap-3 pt-4',
         bordered && 'border-t border-gray-100 dark:border-gray-800',
         align === 'between' ? 'justify-between' : 'justify-end',
-        className,
+        className
       )}
     >
       {extra && <div className="text-xs text-gray-500 dark:text-gray-400">{extra}</div>}

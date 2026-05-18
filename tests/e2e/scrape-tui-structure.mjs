@@ -2,7 +2,10 @@ import { chromium } from '@playwright/test';
 
 const url = process.argv[2];
 const tag = process.argv[3] ?? 'ul';
-if (!url) { console.error('usage: scrape-tui-structure.mjs <url> [tag]'); process.exit(2); }
+if (!url) {
+  console.error('usage: scrape-tui-structure.mjs <url> [tag]');
+  process.exit(2);
+}
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -15,13 +18,23 @@ for (const f of page.frames()) {
   try {
     const root = f.locator(tag).first();
     const rootClass = await root.getAttribute('class').catch(() => '');
-    const liCount = await f.locator(tag + ' > li, ' + tag + ' > div, ' + tag + ' > section').count().catch(() => 0);
+    const liCount = await f
+      .locator(tag + ' > li, ' + tag + ' > div, ' + tag + ' > section')
+      .count()
+      .catch(() => 0);
     const firstChild = f.locator(tag + ' > *').first();
     const childInnerHTML = await firstChild.innerHTML().catch(() => '');
     if (rootClass !== null) {
-      out.push({ rootTag: tag, rootClass, childCount: liCount, childInnerHTML: childInnerHTML.slice(0, 8000) });
+      out.push({
+        rootTag: tag,
+        rootClass,
+        childCount: liCount,
+        childInnerHTML: childInnerHTML.slice(0, 8000),
+      });
     }
-  } catch {}
+  } catch {
+    // Best-effort: any selector mismatch or stale frame is silently skipped.
+  }
 }
 
 const headings = await page.locator('h2').allTextContents();

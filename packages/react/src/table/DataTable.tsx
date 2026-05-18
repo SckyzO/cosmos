@@ -85,7 +85,7 @@ export const DataTable = <T,>({
 
   // Selection state (controlled / uncontrolled).
   const [internalSelection, setInternalSelection] = useState<Set<string | number>>(
-    defaultSelection ?? new Set(),
+    defaultSelection ?? new Set()
   );
   const isSelectionControlled = selectionProp !== undefined;
   const selection = isSelectionControlled ? selectionProp : internalSelection;
@@ -94,7 +94,7 @@ export const DataTable = <T,>({
       if (!isSelectionControlled) setInternalSelection(next);
       onSelectionChange?.(next);
     },
-    [isSelectionControlled, onSelectionChange],
+    [isSelectionControlled, onSelectionChange]
   );
 
   // Search state (controlled / uncontrolled).
@@ -109,7 +109,7 @@ export const DataTable = <T,>({
       onSearchChange?.(value);
       setPage(0);
     },
-    [isSearchControlled, onSearchChange],
+    [isSearchControlled, onSearchChange]
   );
 
   const handleSortToggle = (key: string) => {
@@ -177,7 +177,7 @@ export const DataTable = <T,>({
             ? col.filterValue(row)
             : '';
         return haystack.toLowerCase().includes(needle);
-      }),
+      })
     );
   }, [rows, columns, searchEnabled, searchValue]);
 
@@ -189,7 +189,7 @@ export const DataTable = <T,>({
         if (!sel || sel.size === 0) return true;
         const v = col.filterValue ? col.filterValue(row) : '';
         return sel.has(v);
-      }),
+      })
     );
   }, [searchedRows, columns, filters]);
 
@@ -219,13 +219,11 @@ export const DataTable = <T,>({
   // never touches rows hidden by the search/filter pipeline.
   const visibleKeys = useMemo(() => sortedRows.map(rowKey), [sortedRows, rowKey]);
   const visibleSelectedCount = useMemo(
-    () => visibleKeys.reduce((acc, k) => acc + (selection.has(k) ? 1 : 0), 0),
-    [visibleKeys, selection],
+    () => visibleKeys.filter((k) => selection.has(k)).length,
+    [visibleKeys, selection]
   );
-  const allVisibleSelected =
-    visibleKeys.length > 0 && visibleSelectedCount === visibleKeys.length;
-  const someVisibleSelected =
-    visibleSelectedCount > 0 && visibleSelectedCount < visibleKeys.length;
+  const allVisibleSelected = visibleKeys.length > 0 && visibleSelectedCount === visibleKeys.length;
+  const someVisibleSelected = visibleSelectedCount > 0 && visibleSelectedCount < visibleKeys.length;
 
   const toggleAllVisible = () => {
     const next = new Set(selection);
@@ -248,7 +246,7 @@ export const DataTable = <T,>({
 
   const selectedRows = useMemo(
     () => rows.filter((r) => selection.has(rowKey(r))),
-    [rows, rowKey, selection],
+    [rows, rowKey, selection]
   );
 
   const activeFilters: ActiveFilter[] = Object.entries(filters).map(([key, vals]) => ({
@@ -261,13 +259,13 @@ export const DataTable = <T,>({
     <div
       className={clsx(
         'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900',
-        className,
+        className
       )}
     >
       {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
       {selectable && selection.size > 0 ? (
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-brand-50 px-4 py-2 dark:border-gray-800 dark:bg-brand-500/10">
-          <span className="text-sm font-medium text-brand-700 dark:text-brand-300">
+        <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
+          <span className="text-brand-700 dark:text-brand-300 text-sm font-medium">
             {selection.size} selected
           </span>
           <button
@@ -286,7 +284,7 @@ export const DataTable = <T,>({
           <div className="relative h-9">
             <Search
               aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
             />
             <input
               type="search"
@@ -294,14 +292,14 @@ export const DataTable = <T,>({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label="Search rows"
-              className="h-full w-full rounded-lg border border-gray-200 bg-white pl-9 pr-9 text-sm transition-colors focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-9 pl-9 text-sm transition-colors focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
             {searchValue && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -381,7 +379,7 @@ export const DataTable = <T,>({
                     key={key}
                     className={clsx(
                       'hover:bg-gray-50 dark:hover:bg-white/5',
-                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
+                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5'
                     )}
                   >
                     {selectable && (

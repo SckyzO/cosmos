@@ -1,13 +1,6 @@
 import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar } from './Calendar';
 
@@ -154,14 +147,14 @@ export const DatePicker = ({
           'flex h-9 w-full items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800',
           error
             ? 'border-red-400 focus:border-red-500 focus:outline-none dark:border-red-500/60'
-            : 'border-gray-200 focus:border-brand-500 focus:outline-none dark:border-gray-700',
+            : 'focus:border-brand-500 border-gray-200 focus:outline-none dark:border-gray-700'
         )}
       >
         <CalendarIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
         <span
           className={clsx(
             'flex-1 truncate',
-            selected ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500',
+            selected ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'
           )}
         >
           {selected ? format(selected) : placeholder}
@@ -171,7 +164,7 @@ export const DatePicker = ({
         <p
           className={clsx(
             'mt-1 text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description}
@@ -209,7 +202,7 @@ export const DatePicker = ({
               />
             </div>
           </>,
-          document.body,
+          document.body
         )}
     </div>
   );

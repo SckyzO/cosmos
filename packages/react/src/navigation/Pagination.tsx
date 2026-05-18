@@ -59,7 +59,8 @@ export const Pagination = ({
   const isLast = safePage >= totalPages;
   const btnClass =
     'inline-flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
-  const activeClass = 'bg-brand-500 border-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
+  const activeClass =
+    'bg-brand-500 border-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
 
   const infoNode =
     showInfo && pageSize !== undefined && total !== undefined ? (
@@ -82,7 +83,7 @@ export const Pagination = ({
       className={clsx(
         'flex items-center gap-3',
         showInfo ? 'justify-between' : 'justify-center',
-        className,
+        className
       )}
     >
       {infoNode}
@@ -110,7 +111,7 @@ export const Pagination = ({
                 aria-hidden
                 className={clsx(
                   'inline-flex items-center justify-center text-gray-400',
-                  SIZE_BTN[size],
+                  SIZE_BTN[size]
                 )}
               >
                 …
@@ -122,15 +123,11 @@ export const Pagination = ({
                 aria-label={`Page ${p}`}
                 aria-current={p === safePage ? 'page' : undefined}
                 onClick={() => goTo(p)}
-                className={clsx(
-                  btnClass,
-                  SIZE_BTN[size],
-                  p === safePage && activeClass,
-                )}
+                className={clsx(btnClass, SIZE_BTN[size], p === safePage && activeClass)}
               >
                 {p}
               </button>
-            ),
+            )
           )
         )}
 

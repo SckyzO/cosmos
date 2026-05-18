@@ -52,9 +52,7 @@ export const Dropdown = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const selected = options.find(
-    (o): o is DropdownOption => !isDivider(o) && o.value === value,
-  );
+  const selected = options.find((o): o is DropdownOption => !isDivider(o) && o.value === value);
   const displayLabel = selected?.label ?? placeholder ?? label ?? 'Select…';
 
   return (

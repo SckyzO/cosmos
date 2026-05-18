@@ -35,8 +35,7 @@ const POSITION_CLASS: Record<BackToTopFabPosition, string> = {
 };
 
 const INTENT_CLASS: Record<BackToTopFabIntent, string> = {
-  brand:
-    'bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 active:scale-95',
+  brand: 'bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 active:scale-95',
   neutral:
     'bg-white text-gray-700 border border-gray-200 shadow-lg hover:bg-gray-50 active:scale-95 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700',
 };
@@ -90,9 +89,9 @@ export const BackToTopFab = ({
         POSITION_CLASS[position],
         INTENT_CLASS[intent],
         visible
-          ? 'pointer-events-auto opacity-100 translate-y-0'
-          : 'pointer-events-none opacity-0 translate-y-2',
-        className,
+          ? 'pointer-events-auto translate-y-0 opacity-100'
+          : 'pointer-events-none translate-y-2 opacity-0',
+        className
       )}
       {...rest}
     >

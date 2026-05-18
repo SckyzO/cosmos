@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import {
   Bell,
   Calendar,
@@ -19,6 +20,8 @@ const meta = {
   component: IntegrationCard,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { logo: null as ReactNode, name: 'Integration' },
 } satisfies Meta<typeof IntegrationCard>;
 
 export default meta;
@@ -117,12 +120,54 @@ export const Loading: Story = {
 // ── Real grid integration ────────────────────────────────────────────────────
 
 const INTEGRATIONS = [
-  { logo: Mail, color: 'text-orange-500', name: 'Mailchimp', description: 'Email marketing.', category: 'Marketing', status: 'available' as const },
-  { logo: Hash, color: 'text-violet-500', name: 'Hash', description: 'Incident alerts in chat.', category: 'Communication', status: 'connected' as const },
-  { logo: Video, color: 'text-blue-600', name: 'Zoom', description: 'Spin up incident calls.', category: 'Communication', status: 'connected' as const },
-  { logo: MessageSquare, color: 'text-pink-500', name: 'Loom', description: 'Async video updates.', category: 'Communication', status: 'available' as const },
-  { logo: FolderKanban, color: 'text-violet-600', name: 'Linear', description: 'Auto-create tickets from incidents.', category: 'Productivity', status: 'connected' as const },
-  { logo: Database, color: 'text-blue-500', name: 'Postgres', description: 'Sample query metrics.', category: 'Storage', status: 'error' as const },
+  {
+    logo: Mail,
+    color: 'text-orange-500',
+    name: 'Mailchimp',
+    description: 'Email marketing.',
+    category: 'Marketing',
+    status: 'available' as const,
+  },
+  {
+    logo: Hash,
+    color: 'text-violet-500',
+    name: 'Hash',
+    description: 'Incident alerts in chat.',
+    category: 'Communication',
+    status: 'connected' as const,
+  },
+  {
+    logo: Video,
+    color: 'text-blue-600',
+    name: 'Zoom',
+    description: 'Spin up incident calls.',
+    category: 'Communication',
+    status: 'connected' as const,
+  },
+  {
+    logo: MessageSquare,
+    color: 'text-pink-500',
+    name: 'Loom',
+    description: 'Async video updates.',
+    category: 'Communication',
+    status: 'available' as const,
+  },
+  {
+    logo: FolderKanban,
+    color: 'text-violet-600',
+    name: 'Linear',
+    description: 'Auto-create tickets from incidents.',
+    category: 'Productivity',
+    status: 'connected' as const,
+  },
+  {
+    logo: Database,
+    color: 'text-blue-500',
+    name: 'Postgres',
+    description: 'Sample query metrics.',
+    category: 'Storage',
+    status: 'error' as const,
+  },
 ];
 
 export const Grid: Story = {

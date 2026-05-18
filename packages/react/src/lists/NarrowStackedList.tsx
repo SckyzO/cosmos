@@ -1,10 +1,5 @@
 import { clsx } from 'clsx';
-import {
-  forwardRef,
-  type HTMLAttributes,
-  type LiHTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type LiHTMLAttributes, type ReactNode } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 // TUI reference (Pattern 10 — "Narrow"):
@@ -26,7 +21,7 @@ const NarrowStackedListRoot = forwardRef<HTMLUListElement, NarrowStackedListProp
         {children}
       </ul>
     );
-  },
+  }
 );
 
 // ── Header (TUI Pattern 11 — sticky group headings) ─────────────────────────
@@ -43,16 +38,16 @@ const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeade
       <li
         ref={ref}
         className={clsx(
-          'border-b border-t border-b-gray-200 border-t-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-b-white/10 dark:border-t-white/10 dark:bg-gray-800/60 dark:text-white',
+          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800/60 dark:text-white',
           sticky && 'sticky top-0 z-10',
-          className,
+          className
         )}
         {...rest}
       >
         {children}
       </li>
     );
-  },
+  }
 );
 
 // ── Item ─────────────────────────────────────────────────────────────────────
@@ -98,25 +93,19 @@ export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
 const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemProps>(
   function NarrowStackedListItem(
     { avatar, title, subtitle, timestamp, description, trailing, className, ...rest },
-    ref,
+    ref
   ) {
     const hasRichBody = Boolean(timestamp || description);
 
     if (hasRichBody) {
       return (
-        <li
-          ref={ref}
-          className={clsx('flex gap-x-4 py-5', className)}
-          {...rest}
-        >
+        <li ref={ref} className={clsx('flex gap-x-4 py-5', className)} {...rest}>
           {avatar}
           <div className="min-w-0 flex-auto">
             <div className="flex items-baseline justify-between gap-x-4">
               <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
               {timestamp && (
-                <p className="flex-none text-xs/5 text-gray-600 dark:text-gray-400">
-                  {timestamp}
-                </p>
+                <p className="flex-none text-xs/5 text-gray-600 dark:text-gray-400">{timestamp}</p>
               )}
             </div>
             {description && (
@@ -125,9 +114,7 @@ const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemPro
               </p>
             )}
             {!description && subtitle && (
-              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">
-                {subtitle}
-              </p>
+              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
             )}
           </div>
         </li>
@@ -158,23 +145,17 @@ const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemPro
     }
 
     return (
-      <li
-        ref={ref}
-        className={clsx('flex gap-x-4 py-5', className)}
-        {...rest}
-      >
+      <li ref={ref} className={clsx('flex gap-x-4 py-5', className)} {...rest}>
         {avatar}
         <div className="min-w-0">
           <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
           {subtitle && (
-            <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">
-              {subtitle}
-            </p>
+            <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
         </div>
       </li>
     );
-  },
+  }
 );
 
 // ── Compound export ──────────────────────────────────────────────────────────

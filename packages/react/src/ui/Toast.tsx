@@ -1,4 +1,4 @@
-import { Toaster as SonnerToaster, toast as sonnerToast, type ToasterProps } from 'sonner';
+import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
 
 /**
  * Cosmos toast — thin wrapper around sonner.
@@ -39,4 +39,11 @@ export const Toaster = (props: CosmosToasterProps) => (
 // Re-export the trigger function as `toast`. Includes `toast.success`,
 // `toast.error`, `toast.warning`, `toast.info`, `toast.loading`,
 // `toast.promise`, `toast.dismiss`.
-export const toast = sonnerToast;
+//
+// Re-exported directly from sonner (rather than aliased through a local
+// `const toast = sonnerToast`) because sonner's `.promise(...)` signature
+// references an internal `PromiseIExtendedResult` type that isn't part of
+// its public exports — re-exporting in place keeps the binding pointing at
+// the original symbol and avoids the TS4023 "cannot be named" error during
+// `.d.ts` emission.
+export { toast } from 'sonner';

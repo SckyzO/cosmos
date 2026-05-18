@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
@@ -6,6 +7,8 @@ const meta = {
   component: ImageGrid,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof ImageGrid>;
 
 export default meta;
@@ -31,7 +34,7 @@ const gradient = (i: number) => {
          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
          <rect width="400" height="400" fill="url(%23g)"/>
          <text x="50%" y="55%" font-family="sans-serif" font-size="64" font-weight="700" fill="white" text-anchor="middle" opacity="0.85">${i + 1}</text>
-       </svg>`,
+       </svg>`
     )
   );
 };

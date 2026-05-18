@@ -9,15 +9,15 @@ itself eventually).
 
 ## Packages
 
-| Package | Description | Status |
-|---|---|---|
+| Package                                  | Description                                           | Status  |
+| ---------------------------------------- | ----------------------------------------------------- | ------- |
 | [`@sckyzo/cosmos-theme`](packages/theme) | Tailwind 4 theme (CSS only): tokens, fonts, dark mode | Phase 0 |
-| [`@sckyzo/cosmos-react`](packages/react) | React component library (TSX) | Phase 1 |
+| [`@sckyzo/cosmos-react`](packages/react) | React component library (TSX)                         | Phase 1 |
 
 ## Apps
 
-| App | Purpose | URL |
-|---|---|---|
+| App                                | Purpose                             | URL        |
+| ---------------------------------- | ----------------------------------- | ---------- |
 | [`apps/storybook`](apps/storybook) | Component showcase + visual testing | (CF Pages) |
 
 ## Development (everything in Docker)
@@ -44,16 +44,16 @@ Or via `./devctl`:
 
 ## Versions
 
-| Tool | Version |
-|---|---|
-| Node | 22 LTS |
-| pnpm | 10.x |
-| React | 19.x |
-| Tailwind CSS | 4.x |
-| Storybook | 9.x |
-| Vite | 8.x |
-| TypeScript | 5.9.x |
-| Playwright | latest |
+| Tool         | Version |
+| ------------ | ------- |
+| Node         | 22 LTS  |
+| pnpm         | 10.x    |
+| React        | 19.x    |
+| Tailwind CSS | 4.x     |
+| Storybook    | 9.x     |
+| Vite         | 8.x     |
+| TypeScript   | 5.9.x   |
+| Playwright   | latest  |
 
 ## Contributing
 

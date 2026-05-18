@@ -174,7 +174,7 @@ export const GroupTogglesValue: Story = {
         { value: 'b', label: 'Banana' },
         { value: 'c', label: 'Cherry' },
       ]}
-      onChange={args.onChange as (v: string[]) => void}
+      onChange={args.onChange as unknown as (v: string[]) => void}
     />
   ),
   args: { onChange: fn() } as never,

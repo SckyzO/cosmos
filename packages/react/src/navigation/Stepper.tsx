@@ -119,7 +119,7 @@ const StepperStep = ({
           aria-current={__status === 'active' ? 'step' : undefined}
           className={clsx(
             'group flex flex-col border-l-4 py-2 pl-4 md:border-t-4 md:border-l-0 md:pt-4 md:pb-0 md:pl-0',
-            barColor,
+            barColor
           )}
         >
           <span className={clsx('text-sm font-medium', stepLabel)}>Step {__index + 1}</span>
@@ -161,7 +161,7 @@ const StepperStep = ({
             <span
               className={clsx(
                 'flex size-10 shrink-0 items-center justify-center rounded-full border-2',
-                dotColor,
+                dotColor
               )}
             >
               {__status === 'done' ? (
@@ -181,7 +181,12 @@ const StepperStep = ({
               fill="none"
               preserveAspectRatio="none"
             >
-              <path d="M0 -2L20 40L0 82" vectorEffect="non-scaling-stroke" stroke="currentColor" strokeLinejoin="round" />
+              <path
+                d="M0 -2L20 40L0 82"
+                vectorEffect="non-scaling-stroke"
+                stroke="currentColor"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
         )}
@@ -194,7 +199,7 @@ const StepperStep = ({
       className={clsx(
         'relative z-10 flex shrink-0 items-center justify-center rounded-full border-2 font-semibold transition-colors',
         INDICATOR_SIZE[__size],
-        STATUS_INDICATOR[__status],
+        STATUS_INDICATOR[__status]
       )}
     >
       {__status === 'done' ? (
@@ -234,7 +239,7 @@ const StepperStep = ({
             className={clsx(
               'absolute top-0 left-1/2 h-0.5 w-full',
               __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
-              __size === 'sm' ? 'mt-[14px]' : 'mt-[18px]',
+              __size === 'sm' ? 'mt-[14px]' : 'mt-[18px]'
             )}
           />
         )}
@@ -244,7 +249,7 @@ const StepperStep = ({
             onClick={handleClick}
             disabled={disabled}
             aria-current={__status === 'active' ? 'step' : undefined}
-            className="relative flex w-full flex-col items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-visible:ring-brand-500/40 relative flex w-full flex-col items-center focus:outline-none focus-visible:rounded-md focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {content}
           </button>
@@ -267,9 +272,9 @@ const StepperStep = ({
         <span
           aria-hidden
           className={clsx(
-            'absolute left-[17px] top-9 h-full w-0.5 -translate-x-1/2',
+            'absolute top-9 left-[17px] h-full w-0.5 -translate-x-1/2',
             __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
-            __size === 'sm' && 'left-[13px] top-7',
+            __size === 'sm' && 'top-7 left-[13px]'
           )}
         />
       )}
@@ -279,7 +284,7 @@ const StepperStep = ({
           onClick={handleClick}
           disabled={disabled}
           aria-current={__status === 'active' ? 'step' : undefined}
-          className="flex w-full items-start gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus-visible:ring-brand-500/40 flex w-full items-start gap-3 text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {content}
         </button>
@@ -320,7 +325,9 @@ export const StepperRoot = ({
   className,
   children,
 }: StepperProps) => {
-  const steps = Children.toArray(children).filter(isValidElement) as ReactElement<StepperStepProps>[];
+  const steps = Children.toArray(children).filter(
+    isValidElement
+  ) as ReactElement<StepperStepProps>[];
 
   // 'bars' and 'panels' are horizontal-only; force the orientation.
   const effectiveOrientation: StepperOrientation =

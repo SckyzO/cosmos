@@ -61,12 +61,18 @@ export const BarChart = ({
     grid,
     xaxis: {
       categories,
-      labels: { ...axisLabels, formatter: horizontal ? (val) => valueFormatter(Number(val)) : undefined },
+      labels: {
+        ...axisLabels,
+        formatter: horizontal ? (val) => valueFormatter(Number(val)) : undefined,
+      },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
     yaxis: {
-      labels: { ...axisLabels, formatter: horizontal ? undefined : (val) => valueFormatter(Number(val)) },
+      labels: {
+        ...axisLabels,
+        formatter: horizontal ? undefined : (val) => valueFormatter(Number(val)),
+      },
     },
     legend: {
       show: legendVisible,

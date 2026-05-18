@@ -1,11 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect } from 'storybook/test';
-import {
-  ProgressBar,
-  type ProgressBarIntent,
-  type ProgressBarSize,
-} from './ProgressBar';
+import { ProgressBar, type ProgressBarIntent, type ProgressBarSize } from './ProgressBar';
 
 const meta = {
   title: 'Navigation/Progress Bar',
@@ -25,7 +21,7 @@ export const Sizes: Story = {
     <div className="space-y-3">
       {(['xs', 'sm', 'md', 'lg'] as ProgressBarSize[]).map((s) => (
         <div key={s} className="flex items-center gap-3">
-          <span className="w-6 font-mono text-[10px] uppercase text-gray-400">{s}</span>
+          <span className="w-6 font-mono text-[10px] text-gray-400 uppercase">{s}</span>
           <ProgressBar value={62} size={s} className="flex-1" />
         </div>
       ))}
@@ -38,7 +34,7 @@ export const Intents: Story = {
     <div className="space-y-3">
       {(['brand', 'success', 'warning', 'danger'] as ProgressBarIntent[]).map((i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="w-16 font-mono text-[10px] uppercase text-gray-400">{i}</span>
+          <span className="w-16 font-mono text-[10px] text-gray-400 uppercase">{i}</span>
           <ProgressBar value={75} intent={i} className="flex-1" />
         </div>
       ))}
@@ -114,27 +110,21 @@ export const QuotaUsage: Story = {
     <div className="max-w-sm space-y-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <div>
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Storage
-          </span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Storage</span>
           <span className="text-xs text-gray-500">3.4 / 10 GB</span>
         </div>
         <ProgressBar value={34} intent="brand" />
       </div>
       <div>
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            API requests
-          </span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">API requests</span>
           <span className="text-xs text-gray-500">9 200 / 10 000</span>
         </div>
         <ProgressBar value={92} intent="warning" />
       </div>
       <div>
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Bandwidth
-          </span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Bandwidth</span>
           <span className="text-xs text-gray-500">490 / 500 MB</span>
         </div>
         <ProgressBar value={98} intent="danger" />

@@ -8,14 +8,12 @@ import {
   Search,
   Server,
   Settings as SettingsIcon,
-  User,
 } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { StackedList } from '../lists/StackedList';
-import { ActivityFeed } from '../lists/ActivityFeed';
 import { HealthDot } from '../status/HealthDot';
 import { Badge } from '../ui/Badge';
 
@@ -41,13 +39,55 @@ const DEPLOYMENTS: Array<{
   badge: 'Preview' | 'Production';
   status: DeployStatus;
 }> = [
-  { org: 'Planetaria', repo: 'ios-app', meta: 'Initiated 1m 32s ago', badge: 'Preview', status: 'WARN' },
-  { org: 'Planetaria', repo: 'mobile-api', meta: 'Deployed 3m ago', badge: 'Production', status: 'OK' },
-  { org: 'Tailwind Labs', repo: 'tailwindcss.com', meta: 'Deployed 3h ago', badge: 'Preview', status: 'OK' },
-  { org: 'Tailwind Labs', repo: 'company-website', meta: 'Deployed 1d ago', badge: 'Preview', status: 'OK' },
-  { org: 'Protocol', repo: 'relay-service', meta: 'Deployed 1d ago', badge: 'Production', status: 'OK' },
-  { org: 'Planetaria', repo: 'android-app', meta: 'Deployed 5d ago', badge: 'Preview', status: 'OK' },
-  { org: 'Protocol', repo: 'api.protocol.chat', meta: 'Failed to deploy 6d ago', badge: 'Preview', status: 'CRIT' },
+  {
+    org: 'Planetaria',
+    repo: 'ios-app',
+    meta: 'Initiated 1m 32s ago',
+    badge: 'Preview',
+    status: 'WARN',
+  },
+  {
+    org: 'Planetaria',
+    repo: 'mobile-api',
+    meta: 'Deployed 3m ago',
+    badge: 'Production',
+    status: 'OK',
+  },
+  {
+    org: 'Tailwind Labs',
+    repo: 'tailwindcss.com',
+    meta: 'Deployed 3h ago',
+    badge: 'Preview',
+    status: 'OK',
+  },
+  {
+    org: 'Tailwind Labs',
+    repo: 'company-website',
+    meta: 'Deployed 1d ago',
+    badge: 'Preview',
+    status: 'OK',
+  },
+  {
+    org: 'Protocol',
+    repo: 'relay-service',
+    meta: 'Deployed 1d ago',
+    badge: 'Production',
+    status: 'OK',
+  },
+  {
+    org: 'Planetaria',
+    repo: 'android-app',
+    meta: 'Deployed 5d ago',
+    badge: 'Preview',
+    status: 'OK',
+  },
+  {
+    org: 'Protocol',
+    repo: 'api.protocol.chat',
+    meta: 'Failed to deploy 6d ago',
+    badge: 'Preview',
+    status: 'CRIT',
+  },
 ];
 
 const FEED = [
@@ -80,7 +120,7 @@ export const Sidebar_: Story = {
               <input
                 type="search"
                 placeholder="Search"
-                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
               />
             </div>
           }
@@ -133,9 +173,7 @@ export const Sidebar_: Story = {
                   avatar={<Avatar name={f.user} />}
                   title={f.user}
                   subtitle={`Pushed to ${f.repo} (${f.sha})`}
-                  meta={
-                    <span className="text-xs text-[var(--color-text-muted)]">{f.when}</span>
-                  }
+                  meta={<span className="text-xs text-[var(--color-text-muted)]">{f.when}</span>}
                 />
               ))}
             </StackedList>
@@ -158,7 +196,7 @@ export const Sidebar_: Story = {
           {DEPLOYMENTS.map((d) => (
             <li key={d.org + d.repo} className="flex items-center gap-x-4 px-6 py-4">
               <HealthDot status={d.status} />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   {d.org} <span className="text-[var(--color-text-muted)]">/</span> {d.repo}
                 </p>

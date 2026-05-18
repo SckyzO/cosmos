@@ -160,8 +160,8 @@ export const InteractiveWizard: Story = {
         </Stepper>
         <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-sm text-gray-700 dark:text-gray-200">
-            Step <strong>{step + 1}</strong> of <strong>{total}</strong> — content for this
-            step would be rendered here.
+            Step <strong>{step + 1}</strong> of <strong>{total}</strong> — content for this step
+            would be rendered here.
           </p>
         </div>
         <div className="flex justify-between">
@@ -172,10 +172,7 @@ export const InteractiveWizard: Story = {
           >
             Back
           </Button>
-          <Button
-            disabled={step >= total}
-            onClick={() => setStep((s) => Math.min(total, s + 1))}
-          >
+          <Button disabled={step >= total} onClick={() => setStep((s) => Math.min(total, s + 1))}>
             {step >= total - 1 ? 'Finish' : 'Next'}
           </Button>
         </div>
@@ -215,7 +212,7 @@ export const ClickableStepFiresHandler: Story = {
     const buttons = canvas.getAllByRole('button');
     await userEvent.click(buttons[0]);
     await expect(
-      (args as unknown as { onStepClick: ReturnType<typeof fn> }).onStepClick,
+      (args as unknown as { onStepClick: ReturnType<typeof fn> }).onStepClick
     ).toHaveBeenCalledWith(0);
   },
 };
@@ -247,7 +244,7 @@ export const DisabledStepIsNotClickable: Story = {
     await expect(buttons[1]).toBeDisabled();
     await userEvent.click(buttons[1]).catch(() => undefined);
     await expect(
-      (args as unknown as { onStepClick: ReturnType<typeof fn> }).onStepClick,
+      (args as unknown as { onStepClick: ReturnType<typeof fn> }).onStepClick
     ).not.toHaveBeenCalled();
   },
 };

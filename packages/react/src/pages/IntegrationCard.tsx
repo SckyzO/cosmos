@@ -55,11 +55,11 @@ export const IntegrationCard = ({
   <div
     className={clsx(
       'flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800',
-      className,
+      className
     )}
   >
     <div className="flex items-start justify-between gap-3">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-900 [&_svg]:h-7 [&_svg]:w-7 [&_img]:h-full [&_img]:w-full [&_img]:object-contain">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-900 [&_img]:h-full [&_img]:w-full [&_img]:object-contain [&_svg]:h-7 [&_svg]:w-7">
         {logo}
       </div>
       {status && (
@@ -70,7 +70,7 @@ export const IntegrationCard = ({
     </div>
     <div className="mt-4 min-w-0 flex-1">
       {category && (
-        <p className="font-mono text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        <p className="font-mono text-[10px] tracking-wide text-gray-400 uppercase dark:text-gray-500">
           {category}
         </p>
       )}
@@ -78,9 +78,7 @@ export const IntegrationCard = ({
         {name}
       </h3>
       {description && (
-        <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
-          {description}
-        </p>
+        <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{description}</p>
       )}
     </div>
     {(actionLabel || secondaryLabel) && (

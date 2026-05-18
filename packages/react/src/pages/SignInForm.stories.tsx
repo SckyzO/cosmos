@@ -82,9 +82,7 @@ export const Interactive: Story = {
 // ── Interaction tests (override decorator → standalone container) ────────────
 
 const standaloneDecorator = [
-  (Story: () => React.ReactNode) => (
-    <div className="mx-auto max-w-sm p-12">{Story()}</div>
-  ),
+  (Story: () => React.ReactNode) => <div className="mx-auto max-w-sm p-12">{Story()}</div>,
 ];
 
 export const SubmitFiresWithValues: Story = {

@@ -62,9 +62,7 @@ export const TwoStepVerificationForm = ({
       <h1 className="mt-4 text-center text-xl font-semibold text-gray-900 dark:text-white">
         {title}
       </h1>
-      <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-        {description}
-      </p>
+      <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">{description}</p>
 
       {error && (
         <div className="mt-4">

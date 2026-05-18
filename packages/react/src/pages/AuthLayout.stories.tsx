@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
 import { Activity, Sparkles } from 'lucide-react';
 import { expect } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
@@ -12,6 +13,8 @@ const meta = {
   component: AuthLayout,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
 } satisfies Meta<typeof AuthLayout>;
 
 export default meta;
@@ -57,12 +60,8 @@ export const CustomBrand: Story = {
       brand={
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <Sparkles className="text-brand-500 h-10 w-10" aria-hidden />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            cosmos
-          </h1>
-          <p className="text-xs uppercase tracking-widest text-gray-400">
-            design system
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">cosmos</h1>
+          <p className="text-xs tracking-widest text-gray-400 uppercase">design system</p>
         </div>
       }
     >

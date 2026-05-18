@@ -40,10 +40,7 @@ export const WithLink: Story = {
         title="Plan"
         description="You are currently on the Free plan."
         action={
-          <a
-            href="#"
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
-          >
+          <a href="#" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
             Change plan <span aria-hidden>→</span>
           </a>
         }

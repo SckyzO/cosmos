@@ -26,14 +26,7 @@ export type PageHeaderProps = {
  * Use at the top of every page. If both `breadcrumb` and `description` are passed,
  * the breadcrumb wins (description is hidden — they're alternatives).
  */
-const Root = ({
-  title,
-  description,
-  breadcrumb,
-  meta,
-  actions,
-  className,
-}: PageHeaderProps) => (
+const Root = ({ title, description, breadcrumb, meta, actions, className }: PageHeaderProps) => (
   <div className={`flex items-start justify-between gap-4 ${className ?? ''}`}>
     <div className="min-w-0">
       <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{title}</h2>

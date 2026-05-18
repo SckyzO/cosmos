@@ -23,24 +23,56 @@ type Story = StoryObj<typeof meta>;
 const PEOPLE = [
   { name: 'Aiden Park', email: 'aiden.park@example.com', av: placeholderAvatar('Aiden Park', 96) },
   { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: placeholderAvatar('Mei Tanaka', 96) },
-  { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: placeholderAvatar('Olivier Dubois', 96) },
-  { name: 'Priya Singh', email: 'priya.singh@example.com', av: placeholderAvatar('Priya Singh', 96) },
+  {
+    name: 'Olivier Dubois',
+    email: 'olivier.dubois@example.com',
+    av: placeholderAvatar('Olivier Dubois', 96),
+  },
+  {
+    name: 'Priya Singh',
+    email: 'priya.singh@example.com',
+    av: placeholderAvatar('Priya Singh', 96),
+  },
 ];
 
 const PEOPLE_GROUPED: Record<string, typeof PEOPLE> = {
   A: [
-    { name: 'Aiden Park', email: 'aiden.park@example.com', av: placeholderAvatar('Aiden Park', 96) },
-    { name: 'Aubrey Pham', email: 'aubrey.pham@example.com', av: placeholderAvatar('Aubrey Pham', 96) },
+    {
+      name: 'Aiden Park',
+      email: 'aiden.park@example.com',
+      av: placeholderAvatar('Aiden Park', 96),
+    },
+    {
+      name: 'Aubrey Pham',
+      email: 'aubrey.pham@example.com',
+      av: placeholderAvatar('Aubrey Pham', 96),
+    },
   ],
   M: [
-    { name: 'Mei Tanaka', email: 'mei.tanaka@example.com', av: placeholderAvatar('Mei Tanaka', 96) },
-    { name: 'Marcus Bell', email: 'marcus.bell@example.com', av: placeholderAvatar('Marcus Bell', 96) },
+    {
+      name: 'Mei Tanaka',
+      email: 'mei.tanaka@example.com',
+      av: placeholderAvatar('Mei Tanaka', 96),
+    },
+    {
+      name: 'Marcus Bell',
+      email: 'marcus.bell@example.com',
+      av: placeholderAvatar('Marcus Bell', 96),
+    },
   ],
   O: [
-    { name: 'Olivier Dubois', email: 'olivier.dubois@example.com', av: placeholderAvatar('Olivier Dubois', 96) },
+    {
+      name: 'Olivier Dubois',
+      email: 'olivier.dubois@example.com',
+      av: placeholderAvatar('Olivier Dubois', 96),
+    },
   ],
   P: [
-    { name: 'Priya Singh', email: 'priya.singh@example.com', av: placeholderAvatar('Priya Singh', 96) },
+    {
+      name: 'Priya Singh',
+      email: 'priya.singh@example.com',
+      av: placeholderAvatar('Priya Singh', 96),
+    },
   ],
 };
 
@@ -66,11 +98,7 @@ const NOTES = [
 ];
 
 const Avatar = ({ src }: { src: string }) => (
-  <img
-    src={src}
-    alt=""
-    className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-  />
+  <img src={src} alt="" className="size-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800" />
 );
 
 // ── Stories ──────────────────────────────────────────────────────────────────
@@ -94,7 +122,7 @@ export const Narrow: Story = {
 
 export const StickyHeadings: Story = {
   render: () => (
-    <div className="max-w-md max-h-96 overflow-y-auto bg-white dark:bg-gray-900">
+    <div className="max-h-96 max-w-md overflow-y-auto bg-white dark:bg-gray-900">
       <NarrowStackedList>
         {Object.entries(PEOPLE_GROUPED).map(([letter, group]) => (
           <NarrowStackedList key={letter} className="contents">
@@ -127,7 +155,7 @@ export const WithActions: Story = {
             trailing={
               <a
                 href={`/users/${encodeURIComponent(p.email)}`}
-                className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 ring-1 shadow-sm ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
+                className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
                 View
               </a>

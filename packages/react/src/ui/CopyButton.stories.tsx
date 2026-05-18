@@ -30,7 +30,7 @@ export const Floating: Story = {
   render: (args) => (
     <div className="group relative inline-block rounded-lg bg-gray-900 p-6 pr-12 font-mono text-xs text-gray-200">
       <pre>npm install @sckyzo/cosmos-react</pre>
-      <CopyButton {...args} className="absolute right-2 top-2" />
+      <CopyButton {...args} className="absolute top-2 right-2" />
     </div>
   ),
   args: { value: 'npm install @sckyzo/cosmos-react', floating: true },
@@ -62,10 +62,7 @@ export const WithReadOnlyInput: Story = {
             value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
             className="font-mono text-xs"
           />
-          <CopyButton
-            value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
-            size="md"
-          />
+          <CopyButton value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n" size="md" />
         </div>
       </div>
       <div>
@@ -108,14 +105,8 @@ export const WithTextarea: Story = {
           package.json snippet
         </label>
         <div className="group relative">
-          <Textarea
-            readOnly
-            value={snippet}
-            rows={8}
-            resize="none"
-            className="font-mono text-xs"
-          />
-          <CopyButton value={snippet} floating className="absolute right-2 top-2" />
+          <Textarea readOnly value={snippet} rows={8} resize="none" className="font-mono text-xs" />
+          <CopyButton value={snippet} floating className="absolute top-2 right-2" />
         </div>
         <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
           Hover the textarea to reveal the copy button.
@@ -172,7 +163,7 @@ export const ClickFiresOnCopy: Story = {
       const btn = canvas.getByRole('button', { name: /copy/i });
       await userEvent.click(btn);
       await waitFor(() =>
-        expect(canvas.getByRole('button', { name: /copied/i })).toBeInTheDocument(),
+        expect(canvas.getByRole('button', { name: /copied/i })).toBeInTheDocument()
       );
       await expect(args.onCopy).toHaveBeenCalledWith('test-value');
     } finally {
@@ -189,11 +180,11 @@ export const FeedbackResetsAfterDuration: Story = {
       const btn = canvas.getByRole('button', { name: /copy/i });
       await userEvent.click(btn);
       await waitFor(() =>
-        expect(canvas.getByRole('button', { name: /copied/i })).toBeInTheDocument(),
+        expect(canvas.getByRole('button', { name: /copied/i })).toBeInTheDocument()
       );
       await waitFor(
         () => expect(canvas.getByRole('button', { name: /^copy$/i })).toBeInTheDocument(),
-        { timeout: 1500 },
+        { timeout: 1500 }
       );
     } finally {
       restore();

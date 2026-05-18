@@ -50,9 +50,7 @@ const PLANS = [
 ];
 
 export const Group: Story = {
-  render: () => (
-    <RadioGroup legend="Choose a plan" options={PLANS} defaultValue="pro" />
-  ),
+  render: () => <RadioGroup legend="Choose a plan" options={PLANS} defaultValue="pro" />,
 };
 
 export const GroupHorizontal: Story = {
@@ -130,7 +128,7 @@ export const GroupSelectsExclusive: Story = {
         { value: 'b', label: 'Banana' },
         { value: 'c', label: 'Cherry' },
       ]}
-      onChange={args.onChange as (v: string) => void}
+      onChange={args.onChange as unknown as (v: string) => void}
     />
   ),
   args: { onChange: fn() } as never,
@@ -140,14 +138,14 @@ export const GroupSelectsExclusive: Story = {
     await userEvent.click(apple);
     await expect(apple).toBeChecked();
     await expect((args as { onChange: ReturnType<typeof fn> }).onChange).toHaveBeenLastCalledWith(
-      'a',
+      'a'
     );
     await userEvent.click(banana);
     // Native radio behaviour: selecting Banana deselects Apple
     await expect(banana).toBeChecked();
     await expect(apple).not.toBeChecked();
     await expect((args as { onChange: ReturnType<typeof fn> }).onChange).toHaveBeenLastCalledWith(
-      'b',
+      'b'
     );
   },
 };

@@ -80,21 +80,16 @@ const gradientImage = (from: string, to: string, label: string) =>
        <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
        <rect width="640" height="360" fill="url(%23g)"/>
        <text x="50%" y="55%" font-family="sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle" opacity="0.9">${label}</text>
-     </svg>`,
+     </svg>`
   );
 
 export const WithImage: Story = {
   render: () => (
     <Wrap>
       <Card padding="none" className="max-w-sm">
-        <Card.Image
-          src={gradientImage('%236366f1', '%23a855f7', 'Cosmos')}
-          alt="Cosmos cover"
-        />
+        <Card.Image src={gradientImage('%236366f1', '%23a855f7', 'Cosmos')} alt="Cosmos cover" />
         <Card.Body>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Design system v1
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Design system v1</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Tailwind 4 tokens, React 19 components and ApexCharts wrappers.
           </p>
@@ -141,30 +136,18 @@ export const WithIcon: Story = {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card padding="lg">
           <IconBox icon={Server} color="blue" />
-          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">
-            128 servers
-          </h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Across 3 datacenters
-          </p>
+          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">128 servers</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Across 3 datacenters</p>
         </Card>
         <Card padding="lg">
           <IconBox icon={Zap} color="amber" />
-          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">
-            42 GW/h
-          </h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Peak this month
-          </p>
+          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">42 GW/h</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Peak this month</p>
         </Card>
         <Card padding="lg">
           <IconBox icon={Bell} color="red" />
-          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">
-            7 alerts
-          </h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            2 critical, 5 warnings
-          </p>
+          <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">7 alerts</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">2 critical, 5 warnings</p>
         </Card>
       </div>
     </Wrap>
@@ -176,20 +159,14 @@ export const Interactive: Story = {
     <Wrap>
       <div className="grid gap-4 sm:grid-cols-2">
         <Card interactive padding="lg">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Hover me
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Hover me</h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Lifts on hover. Wrap in your router&apos;s Link to navigate.
           </p>
         </Card>
         <Card padding="lg">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Static card
-          </h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            No hover affordance.
-          </p>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Static card</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">No hover affordance.</p>
         </Card>
       </div>
     </Wrap>
@@ -208,14 +185,9 @@ export const ImageGallery: Story = {
         <div className="grid gap-4 sm:grid-cols-3">
           {data.map((d) => (
             <Card key={d.title} interactive padding="none">
-              <Card.Image
-                src={gradientImage(d.from, d.to, d.title)}
-                alt={`${d.title} cover`}
-              />
+              <Card.Image src={gradientImage(d.from, d.to, d.title)} alt={`${d.title} cover`} />
               <Card.Body>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {d.title}
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{d.title}</h3>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Description for {d.title.toLowerCase()}.
                 </p>
@@ -248,9 +220,8 @@ export const EdgeToEdgeMobile: Story = {
   render: () => (
     <Card edgeToEdgeMobile padding="lg">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        On mobile (&lt; 640px) this card touches both viewport edges with
-        only top/bottom borders. From the <code>sm</code> breakpoint and
-        above it gains rounded corners and a full border.
+        On mobile (&lt; 640px) this card touches both viewport edges with only top/bottom borders.
+        From the <code>sm</code> breakpoint and above it gains rounded corners and a full border.
       </p>
     </Card>
   ),
@@ -258,7 +229,9 @@ export const EdgeToEdgeMobile: Story = {
 
 export const EdgeToEdgeAddsBorderY: Story = {
   render: () => (
-    <Card edgeToEdgeMobile padding="md">x</Card>
+    <Card edgeToEdgeMobile padding="md">
+      x
+    </Card>
   ),
   play: async ({ canvasElement }) => {
     // Card root is the first child of the storybook canvas.

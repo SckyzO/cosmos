@@ -1,12 +1,7 @@
 import * as RadixAccordion from '@radix-ui/react-accordion';
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
-import {
-  forwardRef,
-  type ComponentPropsWithoutRef,
-  type ElementRef,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type ComponentPropsWithoutRef, type ElementRef, type ReactNode } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
@@ -15,25 +10,24 @@ export type AccordionProps = ComponentPropsWithoutRef<typeof RadixAccordion.Root
   appearance?: 'bordered' | 'seamless';
 };
 
-const AccordionRoot = forwardRef<
-  ElementRef<typeof RadixAccordion.Root>,
-  AccordionProps
->(function Accordion({ appearance = 'bordered', className, children, ...rest }, ref) {
-  return (
-    <RadixAccordion.Root
-      ref={ref}
-      className={clsx(
-        'block',
-        appearance === 'bordered' &&
-          'overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900',
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-    </RadixAccordion.Root>
-  );
-}) as React.ForwardRefExoticComponent<
+const AccordionRoot = forwardRef<ElementRef<typeof RadixAccordion.Root>, AccordionProps>(
+  function Accordion({ appearance = 'bordered', className, children, ...rest }, ref) {
+    return (
+      <RadixAccordion.Root
+        ref={ref}
+        className={clsx(
+          'block',
+          appearance === 'bordered' &&
+            'overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900',
+          className
+        )}
+        {...rest}
+      >
+        {children}
+      </RadixAccordion.Root>
+    );
+  }
+) as React.ForwardRefExoticComponent<
   AccordionProps & React.RefAttributes<ElementRef<typeof RadixAccordion.Root>>
 >;
 
@@ -41,27 +35,21 @@ const AccordionRoot = forwardRef<
 
 export type AccordionItemProps = ComponentPropsWithoutRef<typeof RadixAccordion.Item>;
 
-const AccordionItem = forwardRef<
-  ElementRef<typeof RadixAccordion.Item>,
-  AccordionItemProps
->(function AccordionItem({ className, ...rest }, ref) {
-  return (
-    <RadixAccordion.Item
-      ref={ref}
-      className={clsx(
-        'border-b border-gray-100 last:border-b-0 dark:border-gray-800',
-        className,
-      )}
-      {...rest}
-    />
-  );
-});
+const AccordionItem = forwardRef<ElementRef<typeof RadixAccordion.Item>, AccordionItemProps>(
+  function AccordionItem({ className, ...rest }, ref) {
+    return (
+      <RadixAccordion.Item
+        ref={ref}
+        className={clsx('border-b border-gray-100 last:border-b-0 dark:border-gray-800', className)}
+        {...rest}
+      />
+    );
+  }
+);
 
 // ── Trigger (folds Radix Header inside) ──────────────────────────────────────
 
-export type AccordionTriggerProps = ComponentPropsWithoutRef<
-  typeof RadixAccordion.Trigger
-> & {
+export type AccordionTriggerProps = ComponentPropsWithoutRef<typeof RadixAccordion.Trigger> & {
   children: ReactNode;
   /** Hide the chevron indicator. Default `false`. */
   hideChevron?: boolean;
@@ -76,8 +64,8 @@ const AccordionTrigger = forwardRef<
       <RadixAccordion.Trigger
         ref={ref}
         className={clsx(
-          'group flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 dark:text-white dark:hover:bg-white/5',
-          className,
+          'group focus-visible:ring-brand-500/30 flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 dark:text-white dark:hover:bg-white/5',
+          className
         )}
         {...rest}
       >
@@ -95,9 +83,7 @@ const AccordionTrigger = forwardRef<
 
 // ── Content ──────────────────────────────────────────────────────────────────
 
-export type AccordionContentProps = ComponentPropsWithoutRef<
-  typeof RadixAccordion.Content
->;
+export type AccordionContentProps = ComponentPropsWithoutRef<typeof RadixAccordion.Content>;
 
 const AccordionContent = forwardRef<
   ElementRef<typeof RadixAccordion.Content>,
@@ -110,11 +96,11 @@ const AccordionContent = forwardRef<
       // `motion-safe` honours `prefers-reduced-motion`.
       className={clsx(
         'overflow-hidden text-sm text-gray-700 motion-safe:data-[state=closed]:animate-[accordionUp_180ms_ease-out] motion-safe:data-[state=open]:animate-[accordionDown_180ms_ease-out] dark:text-gray-300',
-        className,
+        className
       )}
       {...rest}
     >
-      <div className="px-4 pb-4 pt-0">{children}</div>
+      <div className="px-4 pt-0 pb-4">{children}</div>
       <style>{`
         @keyframes accordionDown {
           from { height: 0; }

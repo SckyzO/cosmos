@@ -32,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     id,
     ...rest
   },
-  ref,
+  ref
 ) {
   const inputId = id ?? rest.name;
   const hasGroup = prefix !== undefined || suffix !== undefined;
@@ -52,7 +52,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <div
           className={clsx(
             'flex h-9 w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
-            borderClass,
+            borderClass
           )}
         >
           {prefix !== undefined && (
@@ -64,8 +64,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             ref={ref}
             id={inputId}
             className={clsx(
-              'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
-              className,
+              'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
+              className
             )}
             {...rest}
           />
@@ -93,7 +93,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
               error
                 ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
                 : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
-              className,
+              className
             )}
             {...rest}
           />
@@ -108,7 +108,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <span
           className={clsx(
             'mt-1 block text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
+            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description}

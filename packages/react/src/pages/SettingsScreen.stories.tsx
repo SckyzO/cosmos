@@ -41,7 +41,7 @@ const TABS = [
 
 const SettingsForm = () => {
   const [avatar, setAvatar] = useState<string | null>(
-    placeholderAvatar('cosmos-settings-demo', 192),
+    placeholderAvatar('cosmos-settings-demo', 192)
   );
   return (
     <div className="space-y-10">
@@ -92,22 +92,21 @@ const SettingsForm = () => {
             <Accordion.Trigger>How do I reset my profile to defaults?</Accordion.Trigger>
             <Accordion.Content>
               Open the user menu in the top-right corner, then choose
-              <em> Reset profile</em>. Your avatar and bio are cleared; account
-              identifiers stay untouched.
+              <em> Reset profile</em>. Your avatar and bio are cleared; account identifiers stay
+              untouched.
             </Accordion.Content>
           </Accordion.Item>
           <Accordion.Item value="visibility">
             <Accordion.Trigger>Who can see my bio?</Accordion.Trigger>
             <Accordion.Content>
-              Anyone you have shared a workspace with. Bios are never indexed
-              outside the platform.
+              Anyone you have shared a workspace with. Bios are never indexed outside the platform.
             </Accordion.Content>
           </Accordion.Item>
           <Accordion.Item value="email">
             <Accordion.Trigger>Can I change my email after signup?</Accordion.Trigger>
             <Accordion.Content>
-              Yes. Update it above and confirm via the link sent to the new
-              address — the previous one stays valid until you confirm.
+              Yes. Update it above and confirm via the link sent to the new address — the previous
+              one stays valid until you confirm.
             </Accordion.Content>
           </Accordion.Item>
         </Accordion>
@@ -166,7 +165,7 @@ export const Sidebar_: Story = {
                 <input
                   type="search"
                   placeholder="Search"
-                  className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
                 />
               </div>
             }
@@ -229,8 +228,12 @@ export const Stacked: Story = {
                 <Navbar.MobileMenuButton theme="dark" />
                 <span className="ml-2 text-lg font-semibold text-white">Cosmos</span>
                 <Navbar.Items>
-                  <Navbar.Item theme="dark" href="#">Dashboard</Navbar.Item>
-                  <Navbar.Item theme="dark" active href="#">Settings</Navbar.Item>
+                  <Navbar.Item theme="dark" href="#">
+                    Dashboard
+                  </Navbar.Item>
+                  <Navbar.Item theme="dark" active href="#">
+                    Settings
+                  </Navbar.Item>
                 </Navbar.Items>
               </Navbar.Brand>
               <Navbar.Actions>

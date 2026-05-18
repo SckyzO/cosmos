@@ -57,11 +57,7 @@ export const Controlled: Story = {
     const [count, setCount] = useState(0);
     return (
       <div className="space-y-2">
-        <FileInput
-          label="Pick files"
-          multiple
-          onChange={(files) => setCount(files.length)}
-        />
+        <FileInput label="Pick files" multiple onChange={(files) => setCount(files.length)} />
         <p className="text-xs text-[var(--color-text-muted)]">
           Selected: <code>{count}</code> file(s)
         </p>

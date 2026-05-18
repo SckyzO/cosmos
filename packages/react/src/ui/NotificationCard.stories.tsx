@@ -34,11 +34,7 @@ export const Simple: Story = {
 export const SimpleNoDescription: Story = {
   render: () => (
     <div className="flex justify-end p-6">
-      <NotificationCard.Simple
-        intent="info"
-        title="Configuration applied"
-        onDismiss={() => {}}
-      />
+      <NotificationCard.Simple intent="info" title="Configuration applied" onDismiss={() => {}} />
     </div>
   ),
 };
@@ -81,9 +77,7 @@ export const CondensedWithoutAction: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SimpleRendersTitleAndDismiss: Story = {
-  render: () => (
-    <NotificationCard.Simple title="Hello" description="World" onDismiss={() => {}} />
-  ),
+  render: () => <NotificationCard.Simple title="Hello" description="World" onDismiss={() => {}} />,
   play: async ({ canvasElement }) => {
     const status = canvasElement.querySelector('[role="status"]');
     await expect(status).not.toBeNull();
