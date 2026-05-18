@@ -196,3 +196,94 @@ export const AlertLoading: Story = {
     );
   },
 };
+
+// TUI Plus pattern "Simple with gray footer" — horizontal danger alert with
+// icon to the left of the title and a gray footer carrying right-aligned actions.
+export const AlertHorizontalDanger: Story = {
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <Wrap>
+        <SectionCard title="Horizontal alert with gray footer">
+          <Button variant="danger" onClick={() => setOpen(true)}>
+            Deactivate account
+          </Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          layout="horizontal"
+          intent="danger"
+          title="Deactivate account"
+          message="Are you sure you want to deactivate your account? All of your data will be permanently removed. This action cannot be undone."
+          confirmLabel="Deactivate"
+          cancelLabel="Cancel"
+        />
+      </Wrap>
+    );
+  },
+};
+
+// TUI Plus pattern "Centered with single action" — payment-successful style
+// with a single full-width primary button.
+export const AlertCenteredFullWidth: Story = {
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <Wrap>
+        <SectionCard title="Centered alert with single full-width action">
+          <Button onClick={() => setOpen(true)}>Show success</Button>
+        </SectionCard>
+        <Modal.Alert
+          open={open}
+          onClose={() => setOpen(false)}
+          intent="success"
+          title="Payment successful"
+          message="Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur amet labore."
+          confirmLabel="Go back to dashboard"
+          fullWidthAction
+        />
+      </Wrap>
+    );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+export const HorizontalLayoutHasGrayFooter: Story = {
+  render: () => (
+    <Modal.Alert
+      open
+      onClose={() => {}}
+      layout="horizontal"
+      intent="danger"
+      title="X"
+      message="y"
+      confirmLabel="Go"
+      cancelLabel="No"
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const footer = canvasElement.querySelector('.bg-gray-50');
+    await expect(footer).not.toBeNull();
+    const buttons = footer?.querySelectorAll('button');
+    await expect(buttons?.length).toBe(2);
+  },
+};
+
+export const FullWidthActionMakesButtonFull: Story = {
+  render: () => (
+    <Modal.Alert
+      open
+      onClose={() => {}}
+      intent="success"
+      title="X"
+      confirmLabel="Continue"
+      fullWidthAction
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const btn = canvasElement.querySelector('button.w-full');
+    await expect(btn).not.toBeNull();
+  },
+};

@@ -147,6 +147,8 @@ const ALERT_PRIMARY_VARIANT: Record<ModalAlertIntent, ButtonVariant> = {
   success: 'primary',
 };
 
+export type ModalAlertLayout = 'centered' | 'horizontal';
+
 export type ModalAlertProps = {
   open: boolean;
   onClose: () => void;
@@ -163,6 +165,19 @@ export type ModalAlertProps = {
   onCancel?: () => void;
   /** When true, the primary button shows a spinner and both buttons are disabled. */
   loading?: boolean;
+  /**
+   * Visual layout. `centered` (default): icon + title + buttons stacked
+   * vertically and centered (TUI "Centered with single action").
+   * `horizontal`: icon to the left of the title/message, with buttons in
+   * a separate gray footer right-aligned (TUI "Simple with gray footer").
+   */
+  layout?: ModalAlertLayout;
+  /**
+   * In `centered` layout, render the primary action as a single
+   * full-width button (TUI "Centered with single action" pattern).
+   * Has no effect in `horizontal` layout.
+   */
+  fullWidthAction?: boolean;
 };
 
 const Alert = ({
@@ -176,40 +191,95 @@ const Alert = ({
   onConfirm,
   onCancel,
   loading = false,
+  layout = 'centered',
+  fullWidthAction = false,
 }: ModalAlertProps) => {
   const Icon = ALERT_ICON[intent];
-  return (
-    <Root open={open} onClose={onClose} size="sm">
-      <div className="p-6 text-center">
-        <div
-          className={clsx(
-            'mx-auto flex h-12 w-12 items-center justify-center rounded-full',
-            ALERT_CHIP[intent],
-          )}
-        >
-          <Icon className="h-6 w-6" aria-hidden />
+  const primaryVariant = ALERT_PRIMARY_VARIANT[intent];
+  const handleConfirm = () => (onConfirm ? onConfirm() : onClose());
+  const handleCancel = () => (onCancel ? onCancel() : onClose());
+
+  if (layout === 'horizontal') {
+    return (
+      <Root open={open} onClose={onClose} size="lg">
+        <div className="bg-white dark:bg-gray-900 sm:flex sm:items-start sm:p-6">
+          <div
+            className={clsx(
+              'mx-auto flex size-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:size-10',
+              ALERT_CHIP[intent],
+            )}
+          >
+            <Icon className="size-6" aria-hidden />
+          </div>
+          <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+            {message && (
+              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">{message}</div>
+            )}
+          </div>
         </div>
-        <h2 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
-        {message && (
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</div>
-        )}
-        <div className="mt-5 flex items-center justify-center gap-2">
+        <div className="flex flex-col-reverse gap-2 bg-gray-50 px-4 py-3 sm:flex-row sm:justify-end sm:gap-3 sm:px-6 dark:bg-gray-800/50">
           {cancelLabel && (
             <Button
               variant="secondary"
               disabled={loading}
-              onClick={() => (onCancel ? onCancel() : onClose())}
+              onClick={handleCancel}
             >
               {cancelLabel}
             </Button>
           )}
           <Button
-            variant={ALERT_PRIMARY_VARIANT[intent]}
+            variant={primaryVariant}
             loading={loading}
             disabled={loading}
-            onClick={() => (onConfirm ? onConfirm() : onClose())}
+            onClick={handleConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </Root>
+    );
+  }
+
+  return (
+    <Root open={open} onClose={onClose} size="sm">
+      <div className="p-6 text-center">
+        <div
+          className={clsx(
+            'mx-auto flex size-12 items-center justify-center rounded-full',
+            ALERT_CHIP[intent],
+          )}
+        >
+          <Icon className="size-6" aria-hidden />
+        </div>
+        <h2 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        {message && (
+          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</div>
+        )}
+        <div
+          className={clsx(
+            'mt-5',
+            fullWidthAction
+              ? 'flex flex-col gap-2'
+              : 'flex items-center justify-center gap-2',
+          )}
+        >
+          {cancelLabel && (
+            <Button
+              variant="secondary"
+              disabled={loading}
+              onClick={handleCancel}
+              className={clsx(fullWidthAction && 'w-full')}
+            >
+              {cancelLabel}
+            </Button>
+          )}
+          <Button
+            variant={primaryVariant}
+            loading={loading}
+            disabled={loading}
+            onClick={handleConfirm}
+            className={clsx(fullWidthAction && 'w-full')}
           >
             {confirmLabel}
           </Button>
