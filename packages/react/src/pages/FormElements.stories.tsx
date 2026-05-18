@@ -19,22 +19,38 @@ import {
   User,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { ActionPanel } from '../forms/ActionPanel';
+import { AvatarUploader } from '../forms/AvatarUploader';
+import { Calendar } from '../forms/Calendar';
 import { Checkbox, CheckboxGroup } from '../forms/Checkbox';
+import { Combobox } from '../forms/Combobox';
 import { DatePicker } from '../forms/DatePicker';
 import { Dropzone } from '../forms/Dropzone';
 import { FileInput } from '../forms/FileInput';
+import { FilterPills } from '../forms/FilterPills';
 import { FormFooter } from '../forms/FormFooter';
 import { Input } from '../forms/Input';
+import { NumberInput } from '../forms/NumberInput';
+import { OtpInput } from '../forms/OtpInput';
+import { PasswordInput } from '../forms/PasswordInput';
+import { PasswordPolicyChecker } from '../forms/PasswordPolicyChecker';
 import { Radio, RadioGroup } from '../forms/Radio';
+import { SearchInput } from '../forms/SearchInput';
+import { SegmentedControl } from '../forms/SegmentedControl';
 import { Select } from '../forms/Select';
+import { StepperInput } from '../forms/StepperInput';
 import { Textarea } from '../forms/Textarea';
 import { TimePicker } from '../forms/TimePicker';
+import { Toggle } from '../forms/Toggle';
+import { ZoomBar } from '../forms/ZoomBar';
+import { MiniCalendar } from '../data/MiniCalendar';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { PageBreadcrumb } from '../templates/PageBreadcrumb';
 import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
+import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
 
 const meta = {
@@ -279,6 +295,107 @@ const FormContent = () => {
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Specialised inputs"
+        desc="Password, OTP, number stepper — focused controls for specific data types."
+        icon={Type}
+        iconTone="brand"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <PasswordInput label="Password" placeholder="•••••••••" />
+          <NumberInputCell />
+          <div className="sm:col-span-2">
+            <PasswordPolicyChecker
+              rules={[
+                { label: 'At least 8 characters', ok: true },
+                { label: 'One uppercase letter', ok: true },
+                { label: 'One number', ok: true },
+                { label: 'One special character', ok: false },
+              ]}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+              One-time code
+            </p>
+            <OtpInputCell />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Search, filter & combo"
+        desc="SearchInput, Combobox (autocomplete) and FilterPills for typing-based selection."
+        icon={Globe}
+        iconTone="violet"
+      >
+        <div className="space-y-4">
+          <SearchInputCell />
+          <Combobox
+            label="Assigned to"
+            options={[
+              { value: 'aiden', label: 'Aiden Park' },
+              { value: 'mei', label: 'Mei Tanaka' },
+              { value: 'olivier', label: 'Olivier Dubois' },
+              { value: 'priya', label: 'Priya Singh' },
+            ]}
+          />
+          <FilterPillsCell />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Toggles, segmented & stepper"
+        desc="Binary toggles, segmented selectors, number stepper and a zoom toolbar."
+        icon={CheckSquare}
+        iconTone="green"
+      >
+        <div className="space-y-4">
+          <ToggleRow />
+          <SegmentedControlCell />
+          <StepperInputCell />
+          <ZoomBarCell />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Avatar & calendars"
+        desc="Picture upload + calendar widgets — DatePicker uses a popover, Calendar is full-size inline, MiniCalendar is a compact data widget."
+        icon={CalendarIcon}
+        iconTone="blue"
+      >
+        <div className="space-y-6">
+          <AvatarUploaderInline />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+                Full Calendar
+              </p>
+              <Calendar />
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+                MiniCalendar (data display)
+              </p>
+              <MiniCalendarCell />
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="ActionPanel"
+        desc="Card-shaped form section with title, description and a single trailing action."
+        icon={CheckSquare}
+        iconTone="amber"
+      >
+        <ActionPanel
+          title="Manage subscription"
+          description="Lorem ipsum dolor sit amet consectetur adipisicing elit."
+          action={<Button size="sm">Change plan</Button>}
+        />
+      </SectionCard>
+
       <FormFooter
         align="between"
         extra="All fields are demo-only — nothing is persisted."
@@ -287,6 +404,134 @@ const FormContent = () => {
         submitLabel="Save form"
       />
     </form>
+  );
+};
+
+const ToggleRow = () => {
+  const [a, setA] = useState(true);
+  const [b, setB] = useState(false);
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Toggle
+        checked={a}
+        onChange={setA}
+        label="Email notifications"
+        description="Daily summary at 9am."
+      />
+      <Toggle
+        checked={b}
+        onChange={setB}
+        label="Marketing updates"
+        description="Occasional product news."
+      />
+    </div>
+  );
+};
+
+const AvatarUploaderInline = () => {
+  const [src, setSrc] = useState<string | undefined>(
+    'https://i.pravatar.cc/192?u=form-elements-avatar',
+  );
+  return (
+    <AvatarUploader
+      src={src}
+      name="Jane Smith"
+      onUpload={(f) => setSrc(URL.createObjectURL(f))}
+      onRemove={() => setSrc(undefined)}
+      helperText="JPG, GIF or PNG. 1MB max."
+    />
+  );
+};
+
+const NumberInputCell = () => {
+  const [n, setN] = useState(1);
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Quantity</p>
+      <NumberInput value={n} onChange={setN} min={0} max={99} />
+    </div>
+  );
+};
+
+const OtpInputCell = () => {
+  const [code, setCode] = useState('');
+  return <OtpInput length={6} value={code} onChange={setCode} />;
+};
+
+const SearchInputCell = () => {
+  const [q, setQ] = useState('');
+  return <SearchInput value={q} onChange={setQ} placeholder="Search hosts, alerts, dashboards…" />;
+};
+
+const FilterPillsCell = () => {
+  const [tone, setTone] = useState<'crit' | 'warn' | 'ok' | 'info'>('crit');
+  return (
+    <FilterPills
+      value={tone}
+      onChange={setTone}
+      options={[
+        { value: 'crit', label: 'CRIT' },
+        { value: 'warn', label: 'WARN' },
+        { value: 'ok', label: 'OK' },
+        { value: 'info', label: 'INFO' },
+      ]}
+    />
+  );
+};
+
+const SegmentedControlCell = () => {
+  const [v, setV] = useState<'5' | '15' | '60' | '300'>('15');
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+        Refresh interval
+      </p>
+      <SegmentedControl
+        value={v}
+        onChange={setV}
+        options={[
+          { value: '5', label: '5s' },
+          { value: '15', label: '15s' },
+          { value: '60', label: '1m' },
+          { value: '300', label: '5m' },
+        ]}
+      />
+    </div>
+  );
+};
+
+const StepperInputCell = () => {
+  const [n, setN] = useState(3);
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+        Replicas
+      </p>
+      <StepperInput value={n} onChange={setN} min={1} max={20} unit="replicas" />
+    </div>
+  );
+};
+
+const MiniCalendarCell = () => {
+  const [d, setD] = useState(new Date());
+  return <MiniCalendar selected={d} onSelect={setD} />;
+};
+
+const ZoomBarCell = () => {
+  const [z, setZ] = useState(100);
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+        Zoom toolbar (current: {z}%)
+      </p>
+      <ZoomBar
+        zoom={z}
+        onZoomIn={() => setZ((v) => Math.min(200, v + 10))}
+        onZoomOut={() => setZ((v) => Math.max(25, v - 10))}
+        onFit={() => setZ(100)}
+        onReset={() => setZ(100)}
+      />
+    </div>
   );
 };
 
