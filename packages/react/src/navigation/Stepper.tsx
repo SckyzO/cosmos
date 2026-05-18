@@ -12,6 +12,17 @@ import {
 export type StepperOrientation = 'horizontal' | 'vertical';
 export type StepperSize = 'sm' | 'md';
 export type StepStatus = 'done' | 'active' | 'pending';
+/**
+ * Visual variant. `indicators` (default, existing): numbered circles with a
+ * horizontal connector. `bars` (TUI "Simple"): coloured top bar above each
+ * column with a label/description below — no circle indicator. `panels`
+ * (TUI "Panels"): row of bordered panels separated by `>` chevrons, each
+ * panel hosting a circle indicator + label.
+ *
+ * `bars` and `panels` are horizontal-only. Default falls back to existing
+ * `indicators` rendering for full backward compat.
+ */
+export type StepperVariant = 'indicators' | 'bars' | 'panels';
 
 // ── Step ─────────────────────────────────────────────────────────────────────
 
@@ -34,6 +45,8 @@ export type StepperStepProps = {
   __orientation?: StepperOrientation;
   /** @internal */
   __size?: StepperSize;
+  /** @internal */
+  __variant?: StepperVariant;
   /** @internal */
   __clickable?: boolean;
   /** @internal */
@@ -70,6 +83,7 @@ const StepperStep = ({
   __status = 'pending',
   __orientation = 'horizontal',
   __size = 'md',
+  __variant = 'indicators',
   __clickable = false,
   __onClick,
   __isLast = false,
@@ -79,6 +93,101 @@ const StepperStep = ({
   const handleClick = () => {
     if (interactive && __onClick) __onClick(__index);
   };
+
+  // ── Variant: bars (TUI "Simple") ─────────────────────────────────────────
+  // <li class="md:flex-1">
+  //   <a class="group flex flex-col border-l-4 border-brand-500 py-2 pl-4
+  //             hover:border-brand-700 md:border-t-4 md:border-l-0 md:pt-4 md:pb-0 md:pl-0">
+  //     <span class="text-sm font-medium text-brand-600">Step N</span>
+  //     <span class="text-sm font-medium">{label}</span>
+  //   </a>
+  // </li>
+  if (__variant === 'bars') {
+    const barColor =
+      __status === 'done'
+        ? 'border-brand-500'
+        : __status === 'active'
+          ? 'border-brand-500'
+          : 'border-gray-200 dark:border-white/10';
+    const stepLabel =
+      __status === 'done' || __status === 'active'
+        ? 'text-brand-600 dark:text-brand-400'
+        : 'text-gray-500 dark:text-gray-400';
+    return (
+      <li className="md:flex-1">
+        <div
+          aria-current={__status === 'active' ? 'step' : undefined}
+          className={clsx(
+            'group flex flex-col border-l-4 py-2 pl-4 md:border-t-4 md:border-l-0 md:pt-4 md:pb-0 md:pl-0',
+            barColor,
+          )}
+        >
+          <span className={clsx('text-sm font-medium', stepLabel)}>Step {__index + 1}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-white">{children}</span>
+          {description && (
+            <span className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</span>
+          )}
+        </div>
+      </li>
+    );
+  }
+
+  // ── Variant: panels (TUI "Panels") ───────────────────────────────────────
+  // <li class="relative flex md:flex-1">
+  //   <span class="flex items-center px-6 py-4 text-sm">
+  //     <span class="flex size-10 items-center justify-center rounded-full {indicator}">…</span>
+  //     <span class="ml-4 text-sm font-medium">{label}</span>
+  //   </span>
+  //   <ChevronRight class="absolute top-0 right-0 hidden md:block" />
+  // </li>
+  if (__variant === 'panels') {
+    const dotColor =
+      __status === 'done'
+        ? 'bg-brand-500 text-white border-transparent'
+        : __status === 'active'
+          ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+          : 'border-gray-300 text-gray-500 dark:border-white/10 dark:text-gray-400';
+    const labelColor =
+      __status === 'active'
+        ? 'text-brand-600 dark:text-brand-400'
+        : 'text-gray-900 dark:text-white';
+    return (
+      <li className="relative md:flex md:flex-1">
+        <div
+          aria-current={__status === 'active' ? 'step' : undefined}
+          className="group flex w-full items-center"
+        >
+          <span className="flex items-center px-6 py-4 text-sm font-medium">
+            <span
+              className={clsx(
+                'flex size-10 shrink-0 items-center justify-center rounded-full border-2',
+                dotColor,
+              )}
+            >
+              {__status === 'done' ? (
+                <Check className="size-5" aria-hidden />
+              ) : (
+                <span>{String(__index + 1).padStart(2, '0')}</span>
+              )}
+            </span>
+            <span className={clsx('ml-4 text-sm font-medium', labelColor)}>{children}</span>
+          </span>
+        </div>
+        {!__isLast && (
+          <div className="absolute top-0 right-0 hidden h-full w-5 md:block" aria-hidden>
+            <svg
+              className="size-full text-gray-200 dark:text-white/10"
+              viewBox="0 0 22 80"
+              fill="none"
+              preserveAspectRatio="none"
+            >
+              <path d="M0 -2L20 40L0 82" vectorEffect="non-scaling-stroke" stroke="currentColor" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+      </li>
+    );
+  }
 
   const indicator = (
     <span
@@ -193,6 +302,7 @@ export type StepperProps = {
   current: number;
   orientation?: StepperOrientation;
   size?: StepperSize;
+  variant?: StepperVariant;
   /** Make steps clickable for back-navigation. */
   clickable?: boolean;
   onStepClick?: (index: number) => void;
@@ -204,6 +314,7 @@ export const StepperRoot = ({
   current,
   orientation = 'horizontal',
   size = 'md',
+  variant = 'indicators',
   clickable = false,
   onStepClick,
   className,
@@ -211,22 +322,30 @@ export const StepperRoot = ({
 }: StepperProps) => {
   const steps = Children.toArray(children).filter(isValidElement) as ReactElement<StepperStepProps>[];
 
+  // 'bars' and 'panels' are horizontal-only; force the orientation.
+  const effectiveOrientation: StepperOrientation =
+    variant === 'indicators' ? orientation : 'horizontal';
+
+  const rootClass =
+    variant === 'panels'
+      ? 'divide-y divide-gray-200 overflow-hidden rounded-md border border-gray-300 md:flex md:divide-x md:divide-y-0 dark:divide-white/10 dark:border-white/10'
+      : variant === 'bars'
+        ? 'space-y-4 md:flex md:space-y-0 md:space-x-8'
+        : effectiveOrientation === 'horizontal'
+          ? 'flex w-full items-start'
+          : 'flex flex-col';
+
   return (
-    <ol
-      className={clsx(
-        orientation === 'horizontal' ? 'flex w-full items-start' : 'flex flex-col',
-        className,
-      )}
-      aria-label="Progress"
-    >
+    <ol className={clsx(rootClass, className)} aria-label="Progress">
       {steps.map((step, i) => {
         const status: StepStatus = i < current ? 'done' : i === current ? 'active' : 'pending';
         return cloneElement(step, {
           key: step.key ?? i,
           __index: i,
           __status: status,
-          __orientation: orientation,
+          __orientation: effectiveOrientation,
           __size: size,
+          __variant: variant,
           __clickable: clickable,
           __onClick: onStepClick,
           __isLast: i === steps.length - 1,

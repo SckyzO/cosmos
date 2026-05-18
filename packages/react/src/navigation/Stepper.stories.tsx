@@ -250,3 +250,56 @@ export const DisabledStepIsNotClickable: Story = {
     ).not.toHaveBeenCalled();
   },
 };
+
+// TUI Plus pattern "Simple" — coloured top bar above each step column,
+// no circle indicator. `variant='bars'`.
+export const VariantBars: Story = {
+  render: () => (
+    <div className="bg-white p-8 dark:bg-gray-900">
+      <Stepper current={1} variant="bars">
+        <Stepper.Step>Job details</Stepper.Step>
+        <Stepper.Step>Application form</Stepper.Step>
+        <Stepper.Step>Preview</Stepper.Step>
+      </Stepper>
+    </div>
+  ),
+};
+
+// TUI Plus pattern "Panels" — bordered card with steps separated by chevrons.
+// `variant='panels'`.
+export const VariantPanels: Story = {
+  render: () => (
+    <div className="bg-white p-8 dark:bg-gray-900">
+      <Stepper current={1} variant="panels">
+        <Stepper.Step>Job details</Stepper.Step>
+        <Stepper.Step>Application form</Stepper.Step>
+        <Stepper.Step>Preview</Stepper.Step>
+      </Stepper>
+    </div>
+  ),
+};
+
+export const BarsAddsBrandTopBorder: Story = {
+  render: () => (
+    <Stepper current={0} variant="bars">
+      <Stepper.Step>A</Stepper.Step>
+    </Stepper>
+  ),
+  play: async ({ canvasElement }) => {
+    const li = canvasElement.querySelector('li');
+    await expect(li?.querySelector('.border-brand-500')).not.toBeNull();
+  },
+};
+
+export const PanelsWrapsInBorderedOl: Story = {
+  render: () => (
+    <Stepper current={0} variant="panels">
+      <Stepper.Step>A</Stepper.Step>
+    </Stepper>
+  ),
+  play: async ({ canvasElement }) => {
+    const ol = canvasElement.querySelector('ol');
+    await expect(ol?.className ?? '').toMatch(/rounded-md/);
+    await expect(ol?.className ?? '').toMatch(/border/);
+  },
+};
