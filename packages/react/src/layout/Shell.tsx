@@ -10,6 +10,14 @@ export type ShellProps = {
   sidebar?: ReactElement<SidebarProps>;
   /** Main content area. */
   children: ReactNode;
+  /**
+   * Optional right-aligned secondary panel — mirrors the TUI Plus "Multi-
+   * column" application shell pattern (sidebar + main + secondary). Renders
+   * after `children` inside a flex row below the topbar.
+   */
+  secondary?: ReactNode;
+  /** Width class for the secondary panel. Default `w-80` (320px). */
+  secondaryWidthClassName?: string;
   /** Initial collapsed state of the sidebar. Default: `false`. */
   defaultSidebarCollapsed?: boolean;
   /**
@@ -44,6 +52,8 @@ export const Shell = ({
   topbar,
   sidebar,
   children,
+  secondary,
+  secondaryWidthClassName = 'w-80',
   defaultSidebarCollapsed = false,
   sidebarCollapsed: controlledCollapsed,
   onSidebarToggle,
@@ -85,7 +95,19 @@ export const Shell = ({
       {enhancedSidebar && <aside className="shrink-0">{enhancedSidebar}</aside>}
       <div className="flex min-w-0 flex-1 flex-col">
         {enhancedTopbar && <div className="shrink-0">{enhancedTopbar}</div>}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <div className="flex min-h-0 flex-1">
+          <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+          {secondary && (
+            <aside
+              className={clsx(
+                'shrink-0 overflow-auto border-l border-[var(--color-border)]',
+                secondaryWidthClassName,
+              )}
+            >
+              {secondary}
+            </aside>
+          )}
+        </div>
       </div>
     </div>
   );
