@@ -5,6 +5,10 @@ import { NotificationCard } from './NotificationCard';
 const meta = {
   title: 'Feedback/Notification Card',
   component: NotificationCard,
+  subcomponents: {
+    'NotificationCard.Simple': NotificationCard.Simple,
+    'NotificationCard.Condensed': NotificationCard.Condensed,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { title: 'Notification' },

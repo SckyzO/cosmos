@@ -8,6 +8,7 @@ import { Stepper } from './Stepper';
 const meta = {
   title: 'Navigation/Stepper',
   component: Stepper,
+  subcomponents: { 'Stepper.Step': Stepper.Step },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { current: 0, children: null },

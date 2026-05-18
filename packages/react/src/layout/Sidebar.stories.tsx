@@ -19,6 +19,13 @@ import { Sidebar } from './Sidebar';
 const meta = {
   title: 'Layout/Sidebar',
   component: Sidebar,
+  subcomponents: {
+    'Sidebar.Brand': Sidebar.Brand,
+    'Sidebar.Section': Sidebar.Section,
+    'Sidebar.Group': Sidebar.Group,
+    'Sidebar.Item': Sidebar.Item,
+    'Sidebar.SubMenu': Sidebar.SubMenu,
+  },
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
   args: { children: null },

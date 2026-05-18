@@ -5,6 +5,12 @@ import { MediaObject } from './MediaObject';
 const meta = {
   title: 'Layout/Media Object',
   component: MediaObject,
+  subcomponents: {
+    'MediaObject.Image': MediaObject.Image,
+    'MediaObject.Body': MediaObject.Body,
+    'MediaObject.Title': MediaObject.Title,
+    'MediaObject.Description': MediaObject.Description,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

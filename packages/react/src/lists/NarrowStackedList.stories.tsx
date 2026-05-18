@@ -5,6 +5,10 @@ import { NarrowStackedList } from './NarrowStackedList';
 const meta = {
   title: 'Lists/Narrow Stacked List',
   component: NarrowStackedList,
+  subcomponents: {
+    'NarrowStackedList.Item': NarrowStackedList.Item,
+    'NarrowStackedList.Header': NarrowStackedList.Header,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

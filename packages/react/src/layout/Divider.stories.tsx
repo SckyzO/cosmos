@@ -8,6 +8,7 @@ import { ButtonGroup } from '../ui/ButtonGroup';
 const meta = {
   title: 'Layout/Divider',
   component: Divider,
+  subcomponents: { 'Divider.Icon': Divider.Icon, 'Divider.Row': Divider.Row },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: {},

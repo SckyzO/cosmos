@@ -9,6 +9,11 @@ import { SectionCard } from '../templates/SectionCard';
 const meta = {
   title: 'Overlays/Drawer',
   component: Drawer,
+  subcomponents: {
+    'Drawer.Header': Drawer.Header,
+    'Drawer.Body': Drawer.Body,
+    'Drawer.Footer': Drawer.Footer,
+  },
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },

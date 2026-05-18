@@ -7,6 +7,7 @@ import { ContentStackedList } from './ContentStackedList';
 const meta = {
   title: 'Lists/Content Stacked List',
   component: ContentStackedList,
+  subcomponents: { 'ContentStackedList.Item': ContentStackedList.Item },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

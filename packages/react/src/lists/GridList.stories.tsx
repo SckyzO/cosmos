@@ -6,6 +6,11 @@ import { GridList } from './GridList';
 const meta = {
   title: 'Lists/Grid List',
   component: GridList,
+  subcomponents: {
+    'GridList.Card': GridList.Card,
+    'GridList.Footer': GridList.Footer,
+    'GridList.FooterAction': GridList.FooterAction,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

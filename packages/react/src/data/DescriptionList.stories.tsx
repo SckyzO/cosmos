@@ -6,6 +6,7 @@ import { DescriptionList } from './DescriptionList';
 const meta = {
   title: 'Data/Description List',
   component: DescriptionList,
+  subcomponents: { 'DescriptionList.Item': DescriptionList.Item },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

@@ -8,6 +8,12 @@ import { IconBox } from './IconBox';
 const meta = {
   title: 'Layout/Card',
   component: Card,
+  subcomponents: {
+    'Card.Header': Card.Header,
+    'Card.Body': Card.Body,
+    'Card.Footer': Card.Footer,
+    'Card.Image': Card.Image,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: 'Card content' },

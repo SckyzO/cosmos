@@ -8,6 +8,7 @@ import { PageActionButton } from '../ui/PageActionButton';
 const meta = {
   title: 'Layout/Page Header',
   component: PageHeader,
+  subcomponents: { 'PageHeader.MetaItem': PageHeader.MetaItem },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { title: 'Title' },

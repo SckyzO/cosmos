@@ -6,6 +6,10 @@ import { VerticalNavigation } from './VerticalNavigation';
 const meta = {
   title: 'Navigation/Vertical Navigation',
   component: VerticalNavigation,
+  subcomponents: {
+    'VerticalNavigation.Item': VerticalNavigation.Item,
+    'VerticalNavigation.Section': VerticalNavigation.Section,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

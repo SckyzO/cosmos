@@ -8,6 +8,11 @@ import { SectionCard } from '../templates/SectionCard';
 const meta = {
   title: 'Navigation/Tabs',
   component: Tabs,
+  subcomponents: {
+    'Tabs.List': Tabs.List,
+    'Tabs.Trigger': Tabs.Trigger,
+    'Tabs.Panel': Tabs.Panel,
+  },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { value: 'overview', onChange: () => {}, children: null },

@@ -6,6 +6,7 @@ import { ActivityFeed } from './ActivityFeed';
 const meta = {
   title: 'Lists/Activity Feed',
   component: ActivityFeed,
+  subcomponents: { 'ActivityFeed.Item': ActivityFeed.Item },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

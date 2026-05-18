@@ -6,6 +6,7 @@ import { StackedList } from './StackedList';
 const meta = {
   title: 'Lists/Stacked List',
   component: StackedList,
+  subcomponents: { 'StackedList.Item': StackedList.Item },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { children: null },

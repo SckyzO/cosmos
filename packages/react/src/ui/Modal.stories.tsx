@@ -8,6 +8,12 @@ import { SectionCard } from '../templates/SectionCard';
 const meta = {
   title: 'Overlays/Modal',
   component: Modal,
+  subcomponents: {
+    'Modal.Header': Modal.Header,
+    'Modal.Body': Modal.Body,
+    'Modal.Footer': Modal.Footer,
+    'Modal.Alert': Modal.Alert,
+  },
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },

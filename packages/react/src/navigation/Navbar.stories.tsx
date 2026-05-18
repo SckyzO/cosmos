@@ -7,6 +7,13 @@ import { Button } from '../ui/Button';
 const meta = {
   title: 'Navigation/Navbar',
   component: Navbar,
+  subcomponents: {
+    'Navbar.Brand': Navbar.Brand,
+    'Navbar.Items': Navbar.Items,
+    'Navbar.Item': Navbar.Item,
+    'Navbar.Actions': Navbar.Actions,
+    'Navbar.MobileMenuButton': Navbar.MobileMenuButton,
+  },
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],
   args: { children: null },
