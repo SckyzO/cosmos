@@ -4,12 +4,16 @@ import {
   Bell,
   Box,
   Calendar,
+  Circle,
   CreditCard,
   KeyRound,
   LayoutDashboard,
   LogOut,
+  Palette,
   Settings,
+  Squircle,
   Trash2,
+  Triangle,
   User,
   Users,
 } from 'lucide-react';
@@ -24,6 +28,10 @@ import {
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { AccentPicker, type AccentColor } from '../settings/AccentPicker';
+import { OptionPicker, type OptionItem } from '../settings/OptionPicker';
+import { PalettePicker } from '../settings/PalettePicker';
+import type { PaletteMeta } from '../settings/PaletteCard';
 import { PageBreadcrumb } from '../templates/PageBreadcrumb';
 import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
@@ -31,6 +39,7 @@ import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
 import { NotificationsPanel } from '../ui/NotificationsPanel';
+import { SectionLabel } from '../ui/SectionLabel';
 import { StatefulSaveButton, type SaveState } from '../ui/StatefulSaveButton';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { UserMenu } from '../ui/UserMenu';
@@ -221,6 +230,135 @@ const ClearCacheSection = () => {
   );
 };
 
+const ACCENT_COLORS: AccentColor[] = [
+  { id: 'indigo', label: 'Indigo', hex: '#6366f1' },
+  { id: 'violet', label: 'Violet', hex: '#8b5cf6' },
+  { id: 'sky', label: 'Sky', hex: '#0ea5e9' },
+  { id: 'emerald', label: 'Emerald', hex: '#10b981' },
+  { id: 'amber', label: 'Amber', hex: '#f59e0b' },
+  { id: 'rose', label: 'Rose', hex: '#f43f5e' },
+  { id: 'slate', label: 'Slate', hex: '#64748b' },
+];
+
+const ICON_STYLES: OptionItem[] = [
+  {
+    id: 'rounded',
+    label: 'Rounded',
+    desc: 'Soft',
+    preview: <Squircle className="h-6 w-6 text-gray-500 dark:text-gray-400" aria-hidden />,
+  },
+  {
+    id: 'circle',
+    label: 'Circle',
+    desc: 'Friendly',
+    preview: <Circle className="h-6 w-6 text-gray-500 dark:text-gray-400" aria-hidden />,
+  },
+  {
+    id: 'sharp',
+    label: 'Sharp',
+    desc: 'Bold',
+    preview: <Triangle className="h-6 w-6 text-gray-500 dark:text-gray-400" aria-hidden />,
+  },
+];
+
+const LIGHT_PALETTES: PaletteMeta[] = [
+  {
+    id: 'pure-light',
+    label: 'Pure Light',
+    desc: 'white surfaces',
+    preview: { bg: '#ffffff', surface: '#ffffff', border: '#e5e7eb' },
+  },
+  {
+    id: 'soft-light',
+    label: 'Soft Light',
+    desc: 'gray-50 surfaces',
+    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb' },
+  },
+  {
+    id: 'paper',
+    label: 'Paper',
+    desc: 'warm tinted',
+    preview: { bg: '#fafaf9', surface: '#ffffff', border: '#e7e5e4' },
+  },
+];
+
+const DARK_PALETTES: PaletteMeta[] = [
+  {
+    id: 'true-black',
+    label: 'True Black',
+    desc: 'OLED-friendly',
+    preview: { bg: '#000000', surface: '#0a0a0a', border: '#1f1f1f' },
+  },
+  {
+    id: 'slate',
+    label: 'Slate',
+    desc: 'cool gray',
+    preview: { bg: '#0f172a', surface: '#1e293b', border: '#334155' },
+  },
+  {
+    id: 'zinc',
+    label: 'Zinc',
+    desc: 'neutral',
+    preview: { bg: '#18181b', surface: '#27272a', border: '#3f3f46' },
+  },
+];
+
+const AppearanceSection = () => {
+  const [accent, setAccent] = useState('indigo');
+  const [iconStyle, setIconStyle] = useState('rounded');
+  const [lightPalette, setLightPalette] = useState('pure-light');
+  const [darkPalette, setDarkPalette] = useState('slate');
+  return (
+    <div className="space-y-6">
+      <div>
+        <SectionLabel>Brand accent</SectionLabel>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          The primary colour used for buttons, focus rings and key highlights.
+        </p>
+        <AccentPicker
+          className="mt-3"
+          colors={ACCENT_COLORS}
+          value={accent}
+          onChange={setAccent}
+        />
+      </div>
+      <div>
+        <SectionLabel>Icon style</SectionLabel>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          Visual character of nav and action icons throughout the app.
+        </p>
+        <OptionPicker
+          className="mt-3"
+          options={ICON_STYLES}
+          value={iconStyle}
+          onChange={setIconStyle}
+          cols={3}
+        />
+      </div>
+      <div>
+        <SectionLabel>Light theme palette</SectionLabel>
+        <PalettePicker
+          className="mt-3"
+          palettes={LIGHT_PALETTES}
+          value={lightPalette}
+          onChange={setLightPalette}
+          cols={3}
+        />
+      </div>
+      <div>
+        <SectionLabel>Dark theme palette</SectionLabel>
+        <PalettePicker
+          className="mt-3"
+          palettes={DARK_PALETTES}
+          value={darkPalette}
+          onChange={setDarkPalette}
+          cols={3}
+        />
+      </div>
+    </div>
+  );
+};
+
 // ── Profile content ──────────────────────────────────────────────────────────
 
 const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }) => {
@@ -279,6 +417,15 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
           iconTone="green"
         >
           <ChangePasswordForm />
+        </SectionCard>
+
+        <SectionCard
+          title="Appearance"
+          desc="Customise how Cosmos looks in your browser."
+          icon={Palette}
+          iconTone="violet"
+        >
+          <AppearanceSection />
         </SectionCard>
 
         <SectionCard
