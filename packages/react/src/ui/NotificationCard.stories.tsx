@@ -3,7 +3,7 @@ import { expect } from 'storybook/test';
 import { NotificationCard } from './NotificationCard';
 
 const meta = {
-  title: 'Overlays/Notification Card',
+  title: 'Feedback/Notification Card',
   component: NotificationCard,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

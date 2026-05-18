@@ -15,7 +15,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import { IntegrationCard } from './IntegrationCard';
 
 const meta = {
-  title: 'Pages/Integration Card',
+  title: 'Data/Integration Card',
   component: IntegrationCard,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

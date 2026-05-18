@@ -3,7 +3,7 @@ import { StickyScrollNav } from './StickyScrollNav';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
-  title: 'Pages/Sticky Scroll Nav',
+  title: 'Navigation/Sticky Scroll Nav',
   component: StickyScrollNav,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
-  title: 'Layout/Image Grid',
+  title: 'Data/Image Grid',
   component: ImageGrid,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

@@ -5,7 +5,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
 
 const meta = {
-  title: 'Actions/Confirmation Modal',
+  title: 'Overlays/Confirmation Modal',
   component: ConfirmationModal,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],

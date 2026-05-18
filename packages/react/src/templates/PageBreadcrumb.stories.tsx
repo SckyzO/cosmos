@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PageBreadcrumb } from './PageBreadcrumb';
 
 const meta = {
-  title: 'Layout/Page Breadcrumb',
+  title: 'Navigation/Page Breadcrumb',
   component: PageBreadcrumb,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

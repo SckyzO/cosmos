@@ -3,7 +3,7 @@ import { expect } from 'storybook/test';
 import { VideoEmbed } from './VideoEmbed';
 
 const meta = {
-  title: 'Layout/Video Embed',
+  title: 'Data/Video Embed',
   component: VideoEmbed,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

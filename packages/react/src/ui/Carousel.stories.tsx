@@ -4,7 +4,7 @@ import { portalDocsParams } from '../storybook-helpers';
 import { Carousel } from './Carousel';
 
 const meta = {
-  title: 'Overlays/Carousel',
+  title: 'Data/Carousel',
   component: Carousel,
   parameters: portalDocsParams.sm(),
   tags: ['autodocs'],

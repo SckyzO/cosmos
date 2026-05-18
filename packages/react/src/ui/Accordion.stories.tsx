@@ -4,7 +4,7 @@ import { expect, userEvent, waitFor } from 'storybook/test';
 import { Accordion } from './Accordion';
 
 const meta = {
-  title: 'Overlays/Accordion',
+  title: 'Data/Accordion',
   component: Accordion,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

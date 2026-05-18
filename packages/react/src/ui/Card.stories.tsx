@@ -6,7 +6,7 @@ import { Button } from './Button';
 import { IconBox } from './IconBox';
 
 const meta = {
-  title: 'Data/Card',
+  title: 'Layout/Card',
   component: Card,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
