@@ -252,12 +252,12 @@ export const EdgeToEdgeMobile: Story = {
 
 export const EdgeToEdgeAddsBorderY: Story = {
   render: () => (
-    <Card edgeToEdgeMobile padding="md" data-testid="c">
-      x
-    </Card>
+    <Card edgeToEdgeMobile padding="md">x</Card>
   ),
   play: async ({ canvasElement }) => {
-    const el = canvasElement.querySelector('[data-testid="c"]');
+    // Card root is the first child of the storybook canvas.
+    const el = canvasElement.querySelector('div.overflow-hidden');
+    await expect(el).not.toBeNull();
     await expect(el?.className ?? '').toMatch(/border-y/);
     await expect(el?.className ?? '').toMatch(/sm:rounded-2xl/);
   },

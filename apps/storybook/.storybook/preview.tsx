@@ -47,7 +47,7 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    a11y: { test: 'todo' },
+    a11y: { test: 'error' },
     // Per Storybook 10 docs: `parameters.docs.theme` controls the docs
     // page chrome (autodocs MDX, code blocks, sidebar within the docs).
     // Reuse the same Cosmos palette as the manager so chrome and content

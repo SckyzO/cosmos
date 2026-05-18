@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect } from 'storybook/test';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -263,11 +264,15 @@ export const HorizontalLayoutHasGrayFooter: Story = {
       cancelLabel="No"
     />
   ),
-  play: async ({ canvasElement }) => {
-    const footer = canvasElement.querySelector('.bg-gray-50');
-    await expect(footer).not.toBeNull();
-    const buttons = footer?.querySelectorAll('button');
-    await expect(buttons?.length).toBe(2);
+  play: async ({ canvas }) => {
+    // Both buttons land in the gray footer in horizontal layout.
+    const cancel = await canvas.findByRole('button', { name: 'No' });
+    const confirm = await canvas.findByRole('button', { name: 'Go' });
+    await expect(cancel).toBeVisible();
+    await expect(confirm).toBeVisible();
+    // The buttons share the same parent, which is the gray footer.
+    await expect(cancel.parentElement).toBe(confirm.parentElement);
+    await expect(cancel.parentElement?.className ?? '').toMatch(/bg-gray-50/);
   },
 };
 
@@ -282,8 +287,8 @@ export const FullWidthActionMakesButtonFull: Story = {
       fullWidthAction
     />
   ),
-  play: async ({ canvasElement }) => {
-    const btn = canvasElement.querySelector('button.w-full');
-    await expect(btn).not.toBeNull();
+  play: async ({ canvas }) => {
+    const btn = await canvas.findByRole('button', { name: 'Continue' });
+    await expect(btn.className).toMatch(/w-full/);
   },
 };
