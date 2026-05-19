@@ -1,5 +1,7 @@
-import ReactApexChart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
+import 'apexcharts/donut';
+import 'apexcharts/features/legend';
+import ReactApexChart from 'react-apexcharts/core';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
