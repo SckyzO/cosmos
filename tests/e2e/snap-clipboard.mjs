@@ -6,10 +6,10 @@ const out = '/workspace/tests/screenshots/clipboard';
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 760, height: 480 } });
+const ctx = await browser.newContext({ viewport: { width: 760, height: 900 } });
 const page = await ctx.newPage();
 
-const stories = ['inside-input', 'input-group-url', 'api-keys-card'];
+const stories = ['inside-input', 'input-group-with-copy', 'api-keys-card'];
 
 for (const theme of ['dark', 'light']) {
   for (const id of stories) {

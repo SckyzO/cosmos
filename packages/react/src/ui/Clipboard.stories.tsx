@@ -50,46 +50,6 @@ export const LongDuration: Story = {
   args: { variant: 'button', duration: 3000 },
 };
 
-export const WithReadOnlyInput: Story = {
-  render: () => (
-    <div className="max-w-md space-y-4">
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Share link
-        </label>
-        <div className="flex items-center gap-2">
-          <Input
-            readOnly
-            value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
-            className="font-mono text-xs"
-          />
-          <Clipboard value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n" size="md" />
-        </div>
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          API key
-        </label>
-        <div className="flex items-center gap-2">
-          <Input
-            readOnly
-            type="password"
-            value="sk-prod-A1B2C3D4E5F6G7H8I9J0"
-            className="font-mono text-xs"
-          />
-          <Clipboard
-            value="sk-prod-A1B2C3D4E5F6G7H8I9J0"
-            size="md"
-            variant="button"
-            copyLabel="Copy"
-            copiedLabel="Copied!"
-          />
-        </div>
-      </div>
-    </div>
-  ),
-};
-
 export const WithTextarea: Story = {
   render: () => {
     const snippet = `{
@@ -143,6 +103,10 @@ export const Interactive: Story = {
 // https://flowbite.com/docs/components/clipboard/ adapted to Cosmos primitives.
 
 export const InsideInput: Story = {
+  // Icon-only Clipboard layered ON TOP of a readonly Input — the button is
+  // vertically centered in the field (top-1/2 + translate-y) and uses
+  // `floating` so it has no border / transparent bg and blends with the
+  // field instead of looking bolted on.
   render: () => (
     <div className="max-w-md">
       <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -156,77 +120,102 @@ export const InsideInput: Story = {
         />
         <Clipboard
           value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
-          className="absolute top-1 right-1"
+          floating
           size="sm"
+          className="absolute top-1/2 right-1.5 -translate-y-1/2 opacity-100"
         />
       </div>
-      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-        Icon-only button anchored inside the field, mirroring Flowbite&apos;s &quot;Input with copy
-        button&quot; pattern.
-      </p>
     </div>
   ),
 };
 
-export const InputGroupUrl: Story = {
-  render: () => (
-    <div className="max-w-md">
-      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Shareable URL
-      </label>
-      <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-        <span className="flex shrink-0 items-center border-r border-gray-200 bg-gray-50 px-3 font-mono text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-          https://
-        </span>
-        <input
-          readOnly
-          value="cosmos.sckyzo.dev/r/xK9p"
-          className="flex-1 bg-white px-3 py-2 font-mono text-xs text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-white"
-        />
-        <Clipboard
-          value="https://cosmos.sckyzo.dev/r/xK9p"
-          variant="button"
-          size="sm"
-          className="rounded-none border-0 border-l border-gray-200 dark:border-gray-700"
-        />
+export const InputGroupWithCopy: Story = {
+  // Three-segment connected group — prefix, input, brand-coloured button —
+  // sharing a single border. Matches Flowbite's "Input group with copy"
+  // (https://flowbite.com/docs/components/clipboard/) which is the
+  // canonical "verify your URL" pattern.
+  render: () => {
+    const url = 'https://cosmos.sckyzo.dev';
+    return (
+      <div className="max-w-md">
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Verify your website
+        </label>
+        <div className="flex items-stretch overflow-hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-700">
+          <span className="flex shrink-0 items-center border-r border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+            URL
+          </span>
+          <input
+            readOnly
+            value={url}
+            className="flex-1 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-white"
+          />
+          <Clipboard
+            value={url}
+            className="bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 h-auto w-12 shrink-0 rounded-none border-0 text-white dark:text-white"
+            size="md"
+          />
+        </div>
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Security certificate is required for approval.
+        </p>
       </div>
-      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-        Three-segment input group with prefix + URL + Clipboard, all sharing a single border.
-      </p>
-    </div>
-  ),
+    );
+  },
 };
 
 export const ApiKeysCard: Story = {
+  // Multi-row credentials card with Clipboard as an absolute overlay inside
+  // each field (no second column needed). Matches Flowbite's "Card with API
+  // keys" pattern. Footer mirrors the "Cancel / Next step" actions from
+  // the reference for realism.
   render: () => {
     const keys = [
-      { label: 'Account ID', value: 'acc_01HQVZ8XKPYM2N3R4S5T6U7V8' },
-      { label: 'Public key', value: 'pk_live_51N9k2pLk...8oZqW' },
-      { label: 'Secret key', value: 'sk_live_51N9k2pLk...XnVbA', sensitive: true },
+      { label: 'Cosmos account ID', value: '756593826' },
+      { label: 'API key', value: 'f4h6sd3t-jsy63ind-hsgdt7rs-jdhf76st' },
+      { label: 'Role ARN', value: '123456789012:user/Cosmos' },
     ];
     return (
       <div className="max-w-xl">
         <SectionCard
-          title="API credentials"
-          description="Use these keys to authenticate your Cosmos exporter against the monitoring-hub API."
+          title="Create a role with read-only in-line policy"
+          description="To give Cosmos read access, please create an IAM Role following the trust relationship and inline policy."
         >
-          <div className="space-y-3">
+          <div className="space-y-4">
             {keys.map((k) => (
               <div key={k.label}>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {k.label}
                 </label>
-                <div className="flex items-center gap-2">
-                  <Input
+                <div className="relative">
+                  <input
                     readOnly
-                    type={k.sensitive ? 'password' : 'text'}
                     value={k.value}
-                    className="font-mono text-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-12 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
                   />
-                  <Clipboard value={k.value} size="md" />
+                  <Clipboard
+                    value={k.value}
+                    floating
+                    size="sm"
+                    className="absolute top-1/2 right-1.5 -translate-y-1/2 opacity-100"
+                  />
                 </div>
               </div>
             ))}
+            <div className="mt-2 flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-800">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="bg-brand-500 hover:bg-brand-600 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              >
+                Next step
+              </button>
+            </div>
           </div>
         </SectionCard>
       </div>

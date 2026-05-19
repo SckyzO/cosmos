@@ -19,6 +19,7 @@ export * from './Dropzone';
 export * from './FormFooter';
 export * from './Calendar';
 export * from './DatePicker';
+export * from './DateRangePicker';
 export * from './TimePicker';
 export * from './OtpInput';
 export * from './ActionPanel';
