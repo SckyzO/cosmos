@@ -4,6 +4,12 @@ Design system for sckyzo's projects — React 19 + Tailwind 4 + Storybook 10.
 
 **Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 15 sidebar groups, 930+ stories, dark/light theming.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/welcome-light.png">
+  <img alt="Cosmos welcome page — hero status bar, live component preview, page templates, sidebar group catalog" src="docs/images/welcome-dark.png">
+</picture>
+
 Cosmos provides a shared CSS theme and a library of React components extracted
 and refined from [rackscope](https://github.com/SckyzO/rackscope), reusable
 across multiple projects (monitoring-hub, monitoring-hub-website, future
