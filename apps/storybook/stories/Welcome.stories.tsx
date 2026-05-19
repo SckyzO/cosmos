@@ -51,11 +51,18 @@ const groupRows: Group[] = [
       'Dashboard, Profile, SettingsScreen, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
   },
   {
+    id: 'typography',
+    name: 'Typography',
+    count: 10,
+    contains:
+      'Headings (H1-H6 + decorations), Paragraphs (lead, drop cap, columns), Text utilities (italic/bold/mark/code/abbr/small/gradient), Blockquote (plain/solid/icon/testimonial), Kbd, Figure (image+caption), Link, Lists (List + List.Item), Description List, HR (Divider with 8 patterns)',
+  },
+  {
     id: 'atoms',
     name: 'Atoms',
-    count: 16,
+    count: 15,
     contains:
-      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Link, Ribbon, SectionLabel, SelectInput, Spinner, Clipboard, ThemeToggle, ThemeToggleTri, BackToTopFab',
+      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Ribbon, SectionLabel, SelectInput, Spinner, Clipboard, ThemeToggle, ThemeToggleTri, BackToTopFab',
   },
   {
     id: 'forms',
@@ -67,9 +74,9 @@ const groupRows: Group[] = [
   {
     id: 'data',
     name: 'Data',
-    count: 10,
+    count: 9,
     contains:
-      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, DescriptionList',
+      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, MiniCalendar',
   },
   { id: 'status', name: 'Status', count: 3, contains: 'HealthBadge, HealthDot, StatusBadge' },
   {
@@ -103,16 +110,16 @@ const groupRows: Group[] = [
   {
     id: 'layout',
     name: 'Layout',
-    count: 11,
+    count: 10,
     contains:
-      'Shell, Sidebar, Topbar, PageHeader, PageCard, SectionCard, Card, ContentNarrow, ColBox, Divider, MediaObject',
+      'Shell, Sidebar, Topbar, PageHeader, PageCard, SectionCard, Card, ContentNarrow, ColBox, MediaObject',
   },
   {
     id: 'lists',
     name: 'Lists',
-    count: 11,
+    count: 9,
     contains:
-      'StackedList, ContentStackedList, StackedListInCard, NarrowStackedList, ActivityFeed, GridList, List, SimpleRow, ClickableRow, StatusRow',
+      'StackedList, ContentStackedList, StackedListInCard, NarrowStackedList, ActivityFeed, GridList, SimpleRow, ClickableRow, StatusRow',
   },
   {
     id: 'tables',
@@ -136,6 +143,7 @@ const groupRows: Group[] = [
 
 const groupLinks: Record<string, string> = {
   pages: 'pages-dashboard--docs',
+  typography: 'typography-headings--docs',
   atoms: 'atoms-button--docs',
   forms: 'forms-input--docs',
   data: 'data-kpi-card--docs',

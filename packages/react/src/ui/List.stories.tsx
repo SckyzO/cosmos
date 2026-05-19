@@ -5,7 +5,7 @@ import { expect } from 'storybook/test';
 import { List } from './List';
 
 const meta = {
-  title: 'Lists/List',
+  title: 'Typography/Lists',
   component: List,
   subcomponents: { 'List.Item': List.Item },
   parameters: { layout: 'padded' },

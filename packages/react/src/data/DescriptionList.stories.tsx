@@ -4,7 +4,7 @@ import { Paperclip } from 'lucide-react';
 import { DescriptionList } from './DescriptionList';
 
 const meta = {
-  title: 'Data/Description List',
+  title: 'Typography/Description List',
   component: DescriptionList,
   subcomponents: { 'DescriptionList.Item': DescriptionList.Item },
   parameters: { layout: 'padded' },

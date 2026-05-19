@@ -4,7 +4,7 @@ import { expect } from 'storybook/test';
 import { Link, type LinkVariant } from './Link';
 
 const meta = {
-  title: 'Atoms/Link',
+  title: 'Typography/Link',
   component: Link,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

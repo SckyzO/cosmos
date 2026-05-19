@@ -6,7 +6,7 @@ import { Button } from '../ui/Button';
 import { ButtonGroup } from '../ui/ButtonGroup';
 
 const meta = {
-  title: 'Layout/Divider',
+  title: 'Typography/HR',
   component: Divider,
   subcomponents: { 'Divider.Icon': Divider.Icon, 'Divider.Row': Divider.Row },
   parameters: { layout: 'padded' },
