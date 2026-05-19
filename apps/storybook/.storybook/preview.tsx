@@ -63,6 +63,7 @@ const preview: Preview = {
           'Welcome',
           'Pages',
           'Foundations',
+          'Typography',
           'Atoms',
           'Forms',
           'Data',
