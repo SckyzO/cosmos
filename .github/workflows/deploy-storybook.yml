@@ -1,26 +1,35 @@
-name: Deploy Storybook to Cloudflare Pages
+name: Deploy Storybook to GitHub Pages
+
+# Storybook is served at https://sckyzo.github.io/cosmos/ — note the
+# `/cosmos/` sub-path. The build is told about that sub-path via the
+# STORYBOOK_BASE_PATH env var, which `apps/storybook/.storybook/main.ts`
+# wires into Vite's `base` option so every asset URL ends up absolute.
+#
+# This workflow replaces the previous Cloudflare Pages deployment. The
+# Cloudflare version stays in git history if we want to migrate back
+# later (the `cosmos.pages.dev` slug was already taken on Cloudflare).
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: write
+  pages: write
+  id-token: write
 
+# Cancel an in-flight deploy when a fresh commit lands on main, but
+# don't let preview/build jobs cancel each other across branches.
 concurrency:
-  group: deploy-storybook-${{ github.ref }}
+  group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Build + deploy Storybook
+  build:
+    name: Build Storybook (static)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment:
-      name: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -39,13 +48,29 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Storybook
+        env:
+          # Served under /cosmos/ on github.io — Vite rewrites every asset
+          # URL with this prefix at build time.
+          STORYBOOK_BASE_PATH: /cosmos/
         run: pnpm storybook:build
 
-      - name: Deploy to Cloudflare Pages
-        env:
-          BRANCH: ${{ github.head_ref || github.ref_name }}
-        uses: cloudflare/wrangler-action@v3
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/storybook/storybook-static --project-name=cosmos --branch=$BRANCH
+          path: ./apps/storybook/storybook-static
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

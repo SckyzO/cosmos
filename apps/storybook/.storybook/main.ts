@@ -60,6 +60,14 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return mergeConfig(config, {
       plugins: [tailwindcss()],
+      // When deployed under a sub-path (GitHub Pages serves the site at
+      // https://sckyzo.github.io/cosmos/), Vite needs to know the prefix so
+      // every asset URL — JS chunks, fonts, the docs iframe, lazy imports —
+      // is rewritten as absolute. Without this, the page loads but every
+      // import 404s because they resolve against `/` instead of `/cosmos/`.
+      // `STORYBOOK_BASE_PATH` is set by the GH Pages deploy workflow; local
+      // dev (`pnpm dev`) leaves it unset so `base` defaults to `/`.
+      base: process.env.STORYBOOK_BASE_PATH ?? '/',
       server: {
         host: '0.0.0.0',
         allowedHosts: ['storybook', 'localhost', '127.0.0.1'],
