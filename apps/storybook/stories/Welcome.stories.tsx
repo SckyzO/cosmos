@@ -60,9 +60,9 @@ const groupRows: Group[] = [
   {
     id: 'forms',
     name: 'Forms',
-    count: 26,
+    count: 25,
     contains:
-      'Input, Select, Combobox, Toggle, Checkbox, Radio, NumberInput, StepperInput, SearchInput, PasswordInput, OtpInput, Textarea, DatePicker, DateRangePicker, TimePicker, Calendar, FileInput, Dropzone, AvatarUploader, FilterPills, SegmentedControl, ZoomBar, FormRow, FormFooter, ActionPanel, PasswordPolicyChecker',
+      'Input, Select, Combobox, Toggle, Checkbox, Radio, NumberInput, StepperInput, SearchInput, PasswordInput, OtpInput, Textarea, DatePicker (single + range), TimePicker, Calendar, FileInput, Dropzone, AvatarUploader, FilterPills, SegmentedControl, ZoomBar, FormRow, FormFooter, ActionPanel, PasswordPolicyChecker',
   },
   {
     id: 'data',

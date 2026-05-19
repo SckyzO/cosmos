@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Calendar } from './Calendar';
-import { DatePicker } from './DatePicker';
+import { DatePicker, type DateRange } from './DatePicker';
 
 const meta = {
   title: 'Forms/Date Picker',
@@ -93,6 +93,66 @@ export const Controlled: Story = {
   },
 };
 
+// ── Range mode ───────────────────────────────────────────────────────────────
+// DatePicker switches to a two-trigger layout when `mode="range"`. The same
+// component covers both single-date and date-range cases — one import for
+// both flavours.
+
+export const Range: Story = {
+  args: { mode: 'range', label: 'Pick a date range' },
+};
+
+export const RangePreselected: Story = {
+  args: {
+    mode: 'range',
+    label: 'Maintenance window',
+    defaultValue: (() => {
+      const from = new Date();
+      const to = new Date();
+      to.setDate(to.getDate() + 7);
+      return { from, to };
+    })(),
+  },
+};
+
+export const RangeFullWidth: Story = {
+  args: {
+    mode: 'range',
+    label: 'Filter incidents',
+    fullWidth: true,
+    description: 'Both triggers stretch to share the available width.',
+  },
+};
+
+export const RangeBoundedTo30Days: Story = {
+  args: {
+    mode: 'range',
+    label: 'Booking dates',
+    description: 'Available within the next 30 days only.',
+    fromDate: new Date(),
+    toDate: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      return d;
+    })(),
+  },
+};
+
+export const RangeControlled: Story = {
+  render: () => {
+    const [range, setRange] = useState<DateRange>({ from: undefined, to: undefined });
+    const fmt = (d?: Date) => (d ? d.toISOString().slice(0, 10) : '—');
+    return (
+      <div className="space-y-3">
+        <DatePicker mode="range" label="Pick a range" value={range} onChange={setRange} />
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Selected: <code>{fmt(range.from)}</code> → <code>{fmt(range.to)}</code>
+        </p>
+      </div>
+    );
+  },
+};
+
 // ── Flowbite-inspired patterns ───────────────────────────────────────────────
 // Map to the canonical Flowbite Datepicker variants
 // (https://flowbite.com/docs/components/datepicker/) using Cosmos primitives.
@@ -105,12 +165,7 @@ export const InlineCalendar: Story = {
     const [date, setDate] = useState<Date | undefined>(new Date());
     return (
       <div className="max-w-xs rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          captionLayout="dropdown"
-        />
+        <Calendar mode="single" selected={date} onSelect={setDate} captionLayout="dropdown" />
       </div>
     );
   },

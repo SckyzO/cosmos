@@ -281,7 +281,7 @@ export const WithLink: Story = {
           What&apos;s new in v0.1.0
         </h3>
         <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-          DateRangePicker, Clipboard composition patterns, and a redesigned welcome page — read the
+          DatePicker range mode, Clipboard composition patterns, and a redesigned welcome page — read the
           full changelog.
         </p>
         <a
