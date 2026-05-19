@@ -1,6 +1,8 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
 
+import { cosmosDarkTheme } from './cosmos-theme';
+
 // Fonts (npm-distributed CSS via @fontsource — Vite handles @fontsource/*/x.css natively)
 import '@fontsource/outfit/300.css';
 import '@fontsource/outfit/400.css';
@@ -14,8 +16,6 @@ import '@fontsource/jetbrains-mono/700.css';
 
 // Tailwind 4 + Cosmos tokens (loaded via the @tailwindcss/vite plugin)
 import './preview.css';
-
-import { cosmosDarkTheme } from './cosmos-theme';
 
 /**
  * Wrap each story with a Cosmos-themed surface so the component is
@@ -48,11 +48,11 @@ const preview: Preview = {
       },
     },
     a11y: { test: 'error' },
-    // Per Storybook 10 docs: `parameters.docs.theme` controls the docs
-    // page chrome (autodocs MDX, code blocks, sidebar within the docs).
-    // Reuse the same Cosmos palette as the manager so chrome and content
-    // match.
-    // https://storybook.js.org/docs/configure/user-interface/theming#themed-docs
+    // Restore the dark docs chrome that was here before — removing it made every
+    // autodocs page (prop tables, code blocks) light by default, which broke the
+    // visual consistency users were relying on. The Welcome page no longer needs
+    // the toggle to flow through here because it lives in a story iframe now
+    // (Welcome.stories.tsx), so `withThemeByClassName` reaches it natively.
     docs: { theme: cosmosDarkTheme },
     options: {
       // `Pages/Dashboard` is the landing — the first story Storybook opens
