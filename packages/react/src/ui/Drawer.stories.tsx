@@ -128,8 +128,9 @@ export const CloseOutsideRendersBackdropButton: Story = {
       <Drawer.Header title="Panel" />
     </Drawer>
   ),
-  play: async ({ canvasElement }) => {
-    const btn = canvasElement.querySelector('button[aria-label="Close drawer"]');
+  // Drawer portals into `document.body` — query there, not in `canvasElement`.
+  play: async () => {
+    const btn = document.body.querySelector('button[aria-label="Close drawer"]');
     await expect(btn).not.toBeNull();
   },
 };
@@ -140,11 +141,15 @@ export const NoBackdropOmitsOverlay: Story = {
       <Drawer.Header title="Panel" />
     </Drawer>
   ),
-  play: async ({ canvasElement }) => {
-    // The backdrop overlay carries bg-gray-500/75; without backdrop, no aria-hidden div precedes the aside.
-    const aside = canvasElement.querySelector('aside[role="dialog"]');
+  // Drawer portals into `document.body` — query there, not in `canvasElement`.
+  // With `withBackdrop={false}`, the overlay <div class="bg-gray-500/75 …">
+  // must NOT be rendered. `previousElementSibling` would now match Storybook's
+  // own canvas wrapper since both share document.body, so check the absence
+  // of the backdrop class directly instead.
+  play: async () => {
+    const aside = document.body.querySelector('aside[role="dialog"]');
     await expect(aside).not.toBeNull();
-    const prev = aside?.previousElementSibling;
-    await expect(prev).toBeNull();
+    const backdrop = document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]');
+    await expect(backdrop).toBeNull();
   },
 };

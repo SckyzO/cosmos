@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
@@ -275,13 +275,14 @@ export const HorizontalLayoutHasGrayFooter: Story = {
       cancelLabel="No"
     />
   ),
-  play: async ({ canvas }) => {
-    // Both buttons land in the gray footer in horizontal layout.
-    const cancel = await canvas.findByRole('button', { name: 'No' });
-    const confirm = await canvas.findByRole('button', { name: 'Go' });
+  // Modal portals into `document.body` — scope queries to body, not canvas.
+  play: async () => {
+    const scope = within(document.body);
+    const cancel = await scope.findByRole('button', { name: 'No' });
+    const confirm = await scope.findByRole('button', { name: 'Go' });
     await expect(cancel).toBeVisible();
     await expect(confirm).toBeVisible();
-    // The buttons share the same parent, which is the gray footer.
+    // Both buttons share the same parent — the gray footer in horizontal layout.
     await expect(cancel.parentElement).toBe(confirm.parentElement);
     await expect(cancel.parentElement?.className ?? '').toMatch(/bg-gray-50/);
   },
@@ -298,8 +299,9 @@ export const FullWidthActionMakesButtonFull: Story = {
       fullWidthAction
     />
   ),
-  play: async ({ canvas }) => {
-    const btn = await canvas.findByRole('button', { name: 'Continue' });
+  // Modal portals into `document.body` — scope queries to body, not canvas.
+  play: async () => {
+    const btn = await within(document.body).findByRole('button', { name: 'Continue' });
     await expect(btn.className).toMatch(/w-full/);
   },
 };
