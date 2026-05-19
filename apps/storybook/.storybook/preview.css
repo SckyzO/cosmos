@@ -14,3 +14,16 @@
 
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';
+
+/* Force the iframe body to use the Cosmos background colour. Without this,
+ * stories with `layout: 'fullscreen'` (Modal/Drawer/ConfirmationModal docs
+ * via `portalDocsParams`) skip the `withCosmosSurface` decorator wrapper
+ * and the iframe body falls back to the browser dark-mode default
+ * (#1c1b22 on Firefox, similar on Chrome) — which leaked through wherever
+ * the story didn't paint its own background. */
+html,
+body,
+#storybook-root {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-base);
+}
