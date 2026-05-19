@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowRight, Bell, Server, Zap } from 'lucide-react';
+import { Activity, ArrowRight, Bell, Mail, MessageSquare, Server, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { Button } from './Button';
 import { IconBox } from './IconBox';
@@ -239,5 +240,193 @@ export const EdgeToEdgeAddsBorderY: Story = {
     await expect(el).not.toBeNull();
     await expect(el?.className ?? '').toMatch(/border-y/);
     await expect(el?.className ?? '').toMatch(/sm:rounded-2xl/);
+  },
+};
+
+// ── Flowbite-inspired patterns ───────────────────────────────────────────────
+// Compositions modeled on https://flowbite.com/docs/components/card/ adapted to
+// Cosmos primitives. Card itself is unchanged — these stories illustrate how to
+// assemble title + media + actions for the most common product flows. Excluded
+// on purpose: e-commerce, pricing, testimonial, crypto (outside the monitoring
+// audience).
+
+export const WithCTA: Story = {
+  // Heading + description + primary action — the most common "feature card"
+  // layout. Matches Flowbite's "Card with Button".
+  render: () => (
+    <Wrap>
+      <Card padding="lg" className="max-w-sm">
+        <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+          Deploy your first exporter
+        </h3>
+        <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+          Cosmos ships a Prometheus-style exporter for every supported service. Pick one and
+          we&apos;ll generate a kubectl manifest.
+        </p>
+        <Button variant="primary" icon={ArrowRight} iconPosition="right">
+          Browse exporters
+        </Button>
+      </Card>
+    </Wrap>
+  ),
+};
+
+export const WithLink: Story = {
+  // Heading + description + inline arrow link. Matches Flowbite's "Card with Link".
+  render: () => (
+    <Wrap>
+      <Card padding="lg" className="max-w-sm">
+        <IconBox icon={Zap} tone="brand" size="md" className="mb-3" />
+        <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+          What&apos;s new in v0.1.0
+        </h3>
+        <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+          DateRangePicker, Clipboard composition patterns, and a redesigned welcome page — read the
+          full changelog.
+        </p>
+        <a
+          href="#"
+          className="text-brand-500 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+        >
+          Read changelog <ArrowRight className="h-4 w-4" />
+        </a>
+      </Card>
+    </Wrap>
+  ),
+};
+
+export const UserProfile: Story = {
+  // Avatar + name + role + action buttons. Matches Flowbite's "User Profile Card".
+  // Useful as a teammate card in admin / team-management screens.
+  render: () => (
+    <Wrap>
+      <Card padding="lg" className="max-w-sm">
+        <div className="flex flex-col items-center text-center">
+          <Avatar size="xl" name="Jane Doe" />
+          <h3 className="mt-3 text-lg font-semibold text-gray-900 dark:text-white">Jane Doe</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Senior SRE · Platform Team</p>
+          <div className="mt-5 flex gap-2">
+            <Button variant="primary" icon={Mail} size="sm">
+              Message
+            </Button>
+            <Button variant="secondary" icon={MessageSquare} size="sm">
+              View profile
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </Wrap>
+  ),
+};
+
+export const CenteredCTA: Story = {
+  // Heading + description + dual action buttons, all centered. Matches Flowbite's
+  // "Call to Action Card".
+  render: () => (
+    <Wrap>
+      <Card padding="lg" className="mx-auto max-w-md text-center">
+        <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+          Ready to deploy?
+        </h3>
+        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+          Cosmos will generate the manifests, push to your cluster, and start scraping in under a
+          minute.
+        </p>
+        <div className="flex justify-center gap-3">
+          <Button variant="secondary">Preview manifest</Button>
+          <Button variant="primary" icon={ArrowRight} iconPosition="right">
+            Deploy now
+          </Button>
+        </div>
+      </Card>
+    </Wrap>
+  ),
+};
+
+export const WithList: Story = {
+  // Header with "View all" link + list of rows with icon + label + metric.
+  // Matches Flowbite's "Card with List".
+  render: () => {
+    const rows = [
+      { icon: Server, label: 'node-exporter', metric: '32 nodes' },
+      { icon: Activity, label: 'prometheus', metric: '12.4k series/s' },
+      { icon: Bell, label: 'alertmanager', metric: '3 firing' },
+      { icon: Zap, label: 'cosmos-agent', metric: '99.97% uptime' },
+    ];
+    return (
+      <Wrap>
+        <Card padding="none" className="max-w-md">
+          <Card.Header>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Top exporters</h3>
+            <a
+              href="#"
+              className="text-brand-500 inline-flex items-center gap-1 text-xs font-medium hover:underline"
+            >
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          </Card.Header>
+          <ul className="divide-y divide-gray-200 dark:divide-gray-800">
+            {rows.map((r) => {
+              const Icon = r.icon;
+              return (
+                <li
+                  key={r.label}
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                >
+                  <span className="bg-brand-500/10 text-brand-500 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="flex-1 truncate font-mono text-sm text-gray-900 dark:text-gray-100">
+                    {r.label}
+                  </span>
+                  <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                    {r.metric}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      </Wrap>
+    );
+  },
+};
+
+export const WithTabs: Story = {
+  // Card with an internal tab navigation row sitting in the Header. Composition
+  // pattern, no extra component needed — Card.Header + lightweight tab buttons.
+  // Matches Flowbite's "Card with Nav Tabs" without pulling in a full Tabs widget.
+  render: () => {
+    const tabs = ['Overview', 'Alerts', 'Logs'];
+    const active = 0;
+    return (
+      <Wrap>
+        <Card padding="none" className="max-w-md">
+          <div className="flex border-b border-gray-200 dark:border-gray-800">
+            {tabs.map((t, i) => (
+              <button
+                key={t}
+                type="button"
+                className={
+                  i === active
+                    ? 'text-brand-500 border-brand-500 -mb-px border-b-2 px-4 py-2.5 text-sm font-medium'
+                    : 'border-b-2 border-transparent px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <div className="p-4">
+            <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+              Cluster health
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              All 32 nodes reporting · 0 alerts firing · last scrape 12s ago.
+            </p>
+          </div>
+        </Card>
+      </Wrap>
+    );
   },
 };
