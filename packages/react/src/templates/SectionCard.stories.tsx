@@ -59,7 +59,7 @@ export const ToneGallery: Story = {
           title={title}
           icon={icon}
           iconTone={tone}
-          desc={`iconTone=\"${tone}\"`}
+          desc={`iconTone="${tone}"`}
         >
           <p className="text-xs text-[var(--color-text-secondary)]">
             Section body — same shell, recolored icon affordance.

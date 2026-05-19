@@ -16,6 +16,11 @@ const STORIES = [
   // NumberInput stories
   { id: 'forms-number-input--default', name: 'numberinput-default' },
   { id: 'forms-number-input--with-unit', name: 'numberinput-with-unit' },
+  // Timeline variants
+  { id: 'data-timeline--dot', name: 'timeline-dot' },
+  { id: 'data-timeline--avatar', name: 'timeline-avatar' },
+  { id: 'data-timeline--card', name: 'timeline-card' },
+  { id: 'data-timeline--stepper', name: 'timeline-stepper' },
   // Pages/Form Elements rendering — to see them in real form context
   { id: 'pages-form-elements--default', name: 'pages-formelements' },
 ];

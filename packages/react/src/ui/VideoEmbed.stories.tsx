@@ -2,9 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { VideoEmbed } from './VideoEmbed';
 
-// Use about:blank instead of YouTube so stories render reliably in CI / vitest browser
-// without depending on third-party domains.
-const SAMPLE_SRC = 'about:blank';
+// Real YouTube embed for the showcase stories. The interaction tests
+// (RendersIframeByDefault / NativeRendersVideo) target the structural
+// behaviour and don't actually load network video, so this is safe in CI.
+const SAMPLE_SRC = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ';
 
 const meta = {
   title: 'Data/Video Embed',
