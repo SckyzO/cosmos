@@ -20,7 +20,6 @@ for (const theme of ['dark', 'light']) {
     const fRoot = fDoc?.documentElement;
     const fBody = fDoc?.body;
     const h1 = fDoc?.querySelector('h1');
-    const kpi = fDoc?.querySelector('[class*="KpiCard"], .text-gray-900, dl');
     return {
       iframeHtmlClass: fRoot?.className,
       iframeBodyBg: fBody ? getComputedStyle(fBody).backgroundColor : null,
