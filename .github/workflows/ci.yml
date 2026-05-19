@@ -45,20 +45,21 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit tests
-        run: pnpm test
-
       - name: Build packages
         run: pnpm build
 
       - name: Build Storybook
         run: pnpm storybook:build
 
+      # `pnpm test` is recursive across workspaces and `tests/e2e`'s test
+      # script invokes Playwright, so the browsers have to exist before we
+      # run it. Installing here covers both `Unit tests` (which actually
+      # contains the e2e suite via `pnpm -r test`) and downstream needs.
       - name: Install Playwright browsers
         run: pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium firefox
 
-      - name: E2E tests
-        run: pnpm test:e2e
+      - name: Unit + E2E tests
+        run: pnpm test
 
       - name: Upload Playwright report
         if: failure()
