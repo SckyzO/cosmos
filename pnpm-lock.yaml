@@ -133,8 +133,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       react-apexcharts:
-        specifier: ^1.7.0
-        version: 1.9.0(apexcharts@4.7.0)(react@19.2.6)
+        specifier: ^2.1.0
+        version: 2.1.0(apexcharts@4.7.0)(react@19.2.6)
     devDependencies:
       '@storybook/react-vite':
         specifier: ^10.4.0
@@ -2591,10 +2591,10 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  react-apexcharts@1.9.0:
-    resolution: {integrity: sha512-DDBzQFuKdwyCEZnji1yIcjlnV8hRr4VDabS5Y3iuem/WcTq6n4VbjWPzbPm3aOwW4I+rf/gA3zWqhws4z9CwLw==}
+  react-apexcharts@2.1.0:
+    resolution: {integrity: sha512-xrmeTKRKHh3cvvLc8SasqFjlOgIqGpyHc81qjnRtcjUM0Fu7qEjgVRWGPokGFjqhwRZVgEym8zmuEyYr5LMYIg==}
     peerDependencies:
-      apexcharts: '>=4.0.0'
+      apexcharts: '>=5.10.1'
       react: '>=16.8.0'
 
   react-day-picker@9.14.0:
@@ -5154,7 +5154,7 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  react-apexcharts@1.9.0(apexcharts@4.7.0)(react@19.2.6):
+  react-apexcharts@2.1.0(apexcharts@4.7.0)(react@19.2.6):
     dependencies:
       apexcharts: 4.7.0
       prop-types: 15.8.1
