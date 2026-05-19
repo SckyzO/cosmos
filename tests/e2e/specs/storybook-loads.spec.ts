@@ -1,7 +1,10 @@
 import { test } from '@playwright/test';
 
 test.describe('Storybook smoke test', () => {
-  test('Hello story renders + capture console', async ({ page }) => {
+  // Smoke tests aim at `welcome--default` — the canonical first story,
+  // pinned at the top of the sidebar by storySort. Updated from the
+  // long-gone Phase 0 `phase-0-hello--default` story.
+  test('Welcome story renders + capture console', async ({ page }) => {
     const messages: string[] = [];
     page.on('console', (msg) => messages.push(`[${msg.type()}] ${msg.text()}`));
     page.on('pageerror', (err) => messages.push(`[pageerror] ${err.message}`));
@@ -9,12 +12,11 @@ test.describe('Storybook smoke test', () => {
       messages.push(`[reqfail] ${req.url()} - ${req.failure()?.errorText}`)
     );
 
-    // Use viewMode=story for direct iframe access (otherwise story doesn't load)
-    await page.goto('/iframe.html?viewMode=story&id=phase-0-hello--default', {
+    await page.goto('/iframe.html?viewMode=story&id=welcome--default', {
       waitUntil: 'networkidle',
     });
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: '../../screenshots/storybook-hello.png', fullPage: true });
+    await page.screenshot({ path: '../../screenshots/storybook-welcome.png', fullPage: true });
 
     console.log('--- BROWSER CONSOLE ---');
     messages.forEach((m) => console.log(m));
@@ -26,7 +28,7 @@ test.describe('Storybook smoke test', () => {
     page.on('console', (msg) => messages.push(`[${msg.type()}] ${msg.text()}`));
     page.on('pageerror', (err) => messages.push(`[pageerror] ${err.message}`));
 
-    await page.goto('/?path=/story/phase-0-hello--default', { waitUntil: 'networkidle' });
+    await page.goto('/?path=/story/welcome--default', { waitUntil: 'networkidle' });
     await page.waitForTimeout(5000);
     await page.screenshot({ path: '../../screenshots/storybook-manager.png', fullPage: true });
 
