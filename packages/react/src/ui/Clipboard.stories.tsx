@@ -179,7 +179,7 @@ export const ApiKeysCard: Story = {
       <div className="max-w-xl">
         <SectionCard
           title="Create a role with read-only in-line policy"
-          description="To give Cosmos read access, please create an IAM Role following the trust relationship and inline policy."
+          desc="To give Cosmos read access, please create an IAM Role following the trust relationship and inline policy."
         >
           <div className="space-y-4">
             {keys.map((k) => (

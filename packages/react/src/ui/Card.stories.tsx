@@ -276,13 +276,19 @@ export const WithLink: Story = {
   render: () => (
     <Wrap>
       <Card padding="lg" className="max-w-sm">
-        <IconBox icon={Zap} tone="brand" size="md" className="mb-3" />
+        <IconBox
+          icon={Zap}
+          color="text-brand-500"
+          bg="bg-brand-500/10"
+          size="md"
+          className="mb-3"
+        />
         <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
           What&apos;s new in v0.1.0
         </h3>
         <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-          DatePicker range mode, Clipboard composition patterns, and a redesigned welcome page — read the
-          full changelog.
+          DatePicker range mode, Clipboard composition patterns, and a redesigned welcome page —
+          read the full changelog.
         </p>
         <a
           href="#"
