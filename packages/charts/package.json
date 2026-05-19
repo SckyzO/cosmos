@@ -45,12 +45,12 @@
     "react-apexcharts": "^1.7.0"
   },
   "devDependencies": {
-    "@storybook/react-vite": "^10.3.6",
+    "@storybook/react-vite": "^10.4.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "storybook": "^10.3.6",
+    "storybook": "^10.4.0",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
