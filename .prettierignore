@@ -1,0 +1,17 @@
+# Lock files — managed by package managers, formatting drift is normal
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+storybook-static/
+coverage/
+playwright-report/
+test-results/
+
+# Generated docs / screenshots
+docs/api/
+screenshots/
+
+# Vendored / cache
+.cache/
+.turbo/
