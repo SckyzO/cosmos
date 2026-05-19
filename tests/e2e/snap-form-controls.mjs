@@ -29,18 +29,28 @@ const STORIES = [
   // Drawer — debugging report
   { id: 'overlays-drawer--sides', name: 'drawer-sides' },
   { id: 'overlays-drawer--empty-slide-over-no-backdrop', name: 'drawer-noback' },
+  // Docs-page reports
+  { id: 'overlays-modal', name: 'docs-modal' },
+  { id: 'overlays-drawer', name: 'docs-drawer' },
+  { id: 'overlays-confirmation-modal', name: 'docs-confirm' },
+  { id: 'overlays-notifications-panel', name: 'docs-notifications' },
   // Pages/Form Elements rendering — to see them in real form context
   { id: 'pages-form-elements--default', name: 'pages-formelements' },
 ];
 
 const STORYBOOK_URL = process.env.STORYBOOK_URL ?? 'http://storybook:6006';
+const MODE = process.env.MODE ?? 'story'; // 'story' or 'docs'
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 const page = await ctx.newPage();
 
 for (const s of STORIES) {
-  const url = `${STORYBOOK_URL}/iframe.html?id=${s.id}&viewMode=story`;
+  // In docs mode, use the manager URL (not iframe.html) so the docs wrapper renders.
+  const url =
+    MODE === 'docs'
+      ? `${STORYBOOK_URL}/?path=/docs/${s.id}`
+      : `${STORYBOOK_URL}/iframe.html?id=${s.id}&viewMode=story`;
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
     await page.waitForTimeout(500);

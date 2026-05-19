@@ -1,13 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { portalDocsParams } from '../storybook-helpers';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
 
 const meta = {
   title: 'Overlays/Confirmation Modal',
   component: ConfirmationModal,
-  parameters: { layout: 'fullscreen' },
+  // ConfirmationModal portals into `document.body` — force iframe rendering
+  // in autodocs so the dialog doesn't take over the Storybook docs page.
+  parameters: portalDocsParams.md(),
   tags: ['autodocs'],
   args: { open: false, onStay: () => {} },
 } satisfies Meta<typeof ConfirmationModal>;

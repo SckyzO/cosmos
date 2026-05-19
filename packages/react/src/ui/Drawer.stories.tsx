@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
+import { portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -14,7 +15,9 @@ const meta = {
     'Drawer.Body': Drawer.Body,
     'Drawer.Footer': Drawer.Footer,
   },
-  parameters: { layout: 'fullscreen' },
+  // Drawer portals into `document.body` — force iframe rendering in autodocs
+  // so the panel doesn't slide into the Storybook docs page itself.
+  parameters: portalDocsParams.lg(),
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },
 } satisfies Meta<typeof Drawer>;

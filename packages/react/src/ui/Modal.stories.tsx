@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect } from 'storybook/test';
+import { portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -14,7 +15,11 @@ const meta = {
     'Modal.Footer': Modal.Footer,
     'Modal.Alert': Modal.Alert,
   },
-  parameters: { layout: 'fullscreen' },
+  // Modal portals into `document.body` — force iframe rendering in autodocs
+  // so the dialog has its own document scope and doesn't leak into the
+  // Storybook docs page (which would otherwise show the overlay above its
+  // own content and clip the docs layout).
+  parameters: portalDocsParams.lg(),
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },
 } satisfies Meta<typeof Modal>;
