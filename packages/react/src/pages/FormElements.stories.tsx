@@ -245,12 +245,14 @@ const FormContent = () => {
             description="Year dropdown is bounded to the next 5 years."
             fromYear={new Date().getFullYear()}
             toYear={new Date().getFullYear() + 5}
+            fullWidth
           />
           <DatePicker
             label="Birthday"
             description="Year dropdown spans 1950–today."
             fromYear={1950}
             toYear={new Date().getFullYear()}
+            fullWidth
           />
         </div>
       </SectionCard>
@@ -262,7 +264,7 @@ const FormContent = () => {
         iconTone="red"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <TimePicker label="Reminder" defaultValue="09:00" />
+          <TimePicker label="Reminder" defaultValue="09:00" fullWidth />
           <TimePicker
             label="Meeting slot"
             description="15-minute increments only."
@@ -270,6 +272,7 @@ const FormContent = () => {
             min="08:00"
             max="18:00"
             defaultValue="14:30"
+            fullWidth
           />
         </div>
       </SectionCard>
@@ -427,7 +430,7 @@ const NumberInputCell = () => {
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Quantity</p>
-      <NumberInput value={n} onChange={setN} min={0} max={99} />
+      <NumberInput value={n} onChange={setN} min={0} max={99} fullWidth />
     </div>
   );
 };
@@ -454,6 +457,7 @@ const FilterPillsCell = () => {
         { value: 'ok', label: 'OK' },
         { value: 'info', label: 'INFO' },
       ]}
+      fullWidth
     />
   );
 };

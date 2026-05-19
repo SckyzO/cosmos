@@ -8,6 +8,12 @@ export type ZoomBarProps = {
   onZoomIn: () => void;
   onFit?: () => void;
   onReset?: () => void;
+  /**
+   * Stretch the zoom group to fill its parent (`flex w-full`). Default
+   * `false` — the group sizes to its content. Zoom bars are usually
+   * floated over a canvas, so the compact default is the right one.
+   */
+  fullWidth?: boolean;
   className?: string;
 };
 
@@ -39,10 +45,19 @@ const ZoomBtn = ({
  * ZoomBar — inline zoom control group: [−] [xx%] [+] [fit] [reset].
  * Use for canvas, map, and visualization views.
  */
-export const ZoomBar = ({ zoom, onZoomOut, onZoomIn, onFit, onReset, className }: ZoomBarProps) => (
+export const ZoomBar = ({
+  zoom,
+  onZoomOut,
+  onZoomIn,
+  onFit,
+  onReset,
+  fullWidth = false,
+  className,
+}: ZoomBarProps) => (
   <div
     className={clsx(
-      'flex overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+      fullWidth ? 'flex w-full' : 'inline-flex',
+      'overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
       className
     )}
   >

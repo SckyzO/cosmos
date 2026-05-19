@@ -8,6 +8,11 @@ export type FilterPillsProps<T extends string = string> = {
   value: T;
   onChange: (v: T) => void;
   icon?: ElementType;
+  /**
+   * Stretch the pill group to fill its parent (`flex w-full`). Default
+   * `false` — the group sizes to its content (pill labels + optional icon).
+   */
+  fullWidth?: boolean;
   className?: string;
 };
 
@@ -16,11 +21,13 @@ export const FilterPills = <T extends string = string>({
   value,
   onChange,
   icon: Icon,
+  fullWidth = false,
   className,
 }: FilterPillsProps<T>) => (
   <div
     className={clsx(
-      'flex h-9 items-center overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
+      fullWidth ? 'flex w-full' : 'inline-flex',
+      'h-9 items-center overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
       className
     )}
   >

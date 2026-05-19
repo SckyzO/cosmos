@@ -9,6 +9,12 @@ export type NumberInputProps = {
   unit?: string;
   /** Tailwind width class for the inner input — default `w-20`. */
   width?: string;
+  /**
+   * Stretch the whole control to fill its parent (`flex w-full`). Default
+   * `false` — the control sizes to its content (buttons + input width + unit).
+   * Use `fullWidth` for form grids where the column should be filled.
+   */
+  fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
 };
@@ -26,6 +32,7 @@ export const NumberInput = ({
   step = 1,
   unit,
   width = 'w-20',
+  fullWidth = false,
   disabled = false,
   className,
 }: NumberInputProps) => {
@@ -36,7 +43,10 @@ export const NumberInput = ({
   return (
     <div
       className={clsx(
-        'flex h-9 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+        // `inline-flex` so the control sizes to its content by default; opt into
+        // `flex w-full` via `fullWidth` for form grids that need the column.
+        fullWidth ? 'flex w-full' : 'inline-flex',
+        'h-9 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
         disabled && 'opacity-50',
         className
       )}

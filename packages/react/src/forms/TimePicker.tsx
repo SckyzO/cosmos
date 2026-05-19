@@ -19,6 +19,12 @@ export type TimePickerProps = Omit<
   min?: string;
   /** Latest time (HH:MM). */
   max?: string;
+  /**
+   * Stretch the input to fill its parent (`w-full`). Default `false` —
+   * the input sizes itself with a sensible `min-w-[140px]`. Use `fullWidth`
+   * in form grids that should fill the column.
+   */
+  fullWidth?: boolean;
 };
 
 export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function TimePicker(
@@ -35,6 +41,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
     disabled,
     id,
     name,
+    fullWidth = false,
     className,
     ...rest
   },
@@ -54,7 +61,12 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
           {label}
         </label>
       )}
-      <div className="relative inline-flex h-9 w-full items-center">
+      <div
+        className={clsx(
+          'relative inline-flex h-9 items-center',
+          fullWidth ? 'w-full' : 'min-w-[140px]'
+        )}
+      >
         <Clock aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
         <input
           ref={ref}

@@ -8,6 +8,13 @@ export type StepperInputProps = {
   max?: number;
   step?: number;
   unit?: string;
+  /** Tailwind width class for the inner input — default `w-20`. */
+  width?: string;
+  /**
+   * Stretch the whole control to fill its parent (`flex w-full`). Default
+   * `false` — the control sizes to its content (input width + unit + arrows).
+   */
+  fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
 };
@@ -23,6 +30,8 @@ export const StepperInput = ({
   max = Infinity,
   step = 1,
   unit,
+  width = 'w-20',
+  fullWidth = false,
   disabled = false,
   className,
 }: StepperInputProps) => {
@@ -33,7 +42,8 @@ export const StepperInput = ({
   return (
     <div
       className={clsx(
-        'flex h-9 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+        fullWidth ? 'flex w-full' : 'inline-flex',
+        'h-9 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
         disabled && 'opacity-50',
         className
       )}
@@ -49,7 +59,10 @@ export const StepperInput = ({
         min={min}
         max={max}
         step={step}
-        className="h-full flex-1 [appearance:textfield] bg-transparent pr-1 pl-3 text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className={clsx(
+          'h-full [appearance:textfield] bg-transparent pr-1 pl-3 text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+          fullWidth ? 'flex-1' : width
+        )}
       />
       {unit && (
         <span className="flex items-center pr-1.5 text-xs text-gray-400 select-none dark:text-gray-500">

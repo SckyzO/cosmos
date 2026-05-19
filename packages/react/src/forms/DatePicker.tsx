@@ -31,6 +31,13 @@ export type DatePickerProps = {
   format?: (date: Date) => string;
   /** Optional footer rendered below the calendar (replaces the Today button). */
   calendarFooter?: ReactNode;
+  /**
+   * Stretch the trigger to fill its parent (`w-full`). Default `false` —
+   * the trigger sizes itself with a sensible `min-w-[200px]` so a bare
+   * picker doesn't look stretched on a wide background. Pass `fullWidth`
+   * inside form grids where the column should be filled.
+   */
+  fullWidth?: boolean;
   className?: string;
 };
 
@@ -54,6 +61,7 @@ export const DatePicker = ({
   showTodayButton = true,
   format = defaultFormat,
   calendarFooter,
+  fullWidth = false,
   className,
 }: DatePickerProps) => {
   const fieldId = useId();
@@ -144,7 +152,11 @@ export const DatePicker = ({
         aria-expanded={open}
         onClick={() => toggle(!open)}
         className={clsx(
-          'flex h-9 w-full items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800',
+          // `inline-flex` so the trigger sizes to its content by default;
+          // `min-w-[200px]` keeps it readable without being a hairline.
+          // `fullWidth` opts into `flex w-full` for column-filling form grids.
+          fullWidth ? 'flex w-full' : 'inline-flex min-w-[200px]',
+          'h-9 items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800',
           error
             ? 'border-red-400 focus:border-red-500 focus:outline-none dark:border-red-500/60'
             : 'focus:border-brand-500 border-gray-200 focus:outline-none dark:border-gray-700'
