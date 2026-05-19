@@ -25,7 +25,7 @@ jobs:
         # No `version:` here — `packageManager: pnpm@X.Y.Z` in package.json
         # is the single source of truth. Setting both produces:
         #   Error: Multiple versions of pnpm specified
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
         uses: actions/setup-node@v6
