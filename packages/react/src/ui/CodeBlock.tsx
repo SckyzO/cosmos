@@ -21,11 +21,18 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
         <span className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
           {language}
         </span>
+        {/* When a title bar is present, the copy button lives inside it so the
+         *  bar doubles as the action surface — matches GitHub / Carbon / TUI. */}
+        {showCopy && <CopyButton value={code} floating />}
       </div>
     )}
     <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-gray-800 dark:text-gray-200">
       <code>{code}</code>
     </pre>
-    {showCopy && <CopyButton value={code} floating className="absolute top-2 right-2" />}
+    {/* Without a title bar there is nothing to anchor the button to, so we float
+     *  it over the code in the top-right corner (hover-revealed via `group`). */}
+    {showCopy && !language && (
+      <CopyButton value={code} floating className="absolute top-2 right-2" />
+    )}
   </div>
 );
