@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
 import type { ElementType, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export type DrawerSide = 'left' | 'right';
 export type DrawerSize = 'sm' | 'md' | 'lg';
@@ -77,7 +78,11 @@ const Root = ({
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  return (
+  // Portal into document.body so the drawer escapes any clipping ancestor
+  // (cards, sidebars, overflow:hidden containers). Without this, calling
+  // Drawer from inside e.g. a SectionCard or modal renders it in a
+  // confined coordinate space and the panel never appears.
+  return createPortal(
     <>
       {withBackdrop && (
         <div
@@ -117,7 +122,8 @@ const Root = ({
       >
         {children}
       </aside>
-    </>
+    </>,
+    document.body
   );
 };
 

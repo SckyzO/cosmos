@@ -21,6 +21,14 @@ const STORIES = [
   { id: 'data-timeline--avatar', name: 'timeline-avatar' },
   { id: 'data-timeline--card', name: 'timeline-card' },
   { id: 'data-timeline--stepper', name: 'timeline-stepper' },
+  // ConfirmationModal — debugging report
+  { id: 'overlays-confirmation-modal--unsaved-changes', name: 'confirm-unsaved' },
+  { id: 'overlays-confirmation-modal--confirm-delete', name: 'confirm-delete' },
+  { id: 'overlays-confirmation-modal--saving-in-progress', name: 'confirm-saving' },
+  { id: 'overlays-confirmation-modal--triggered-from-button', name: 'confirm-trigger' },
+  // Drawer — debugging report
+  { id: 'overlays-drawer--sides', name: 'drawer-sides' },
+  { id: 'overlays-drawer--empty-slide-over-no-backdrop', name: 'drawer-noback' },
   // Pages/Form Elements rendering — to see them in real form context
   { id: 'pages-form-elements--default', name: 'pages-formelements' },
 ];

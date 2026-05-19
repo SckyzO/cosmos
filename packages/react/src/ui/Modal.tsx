@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, type ButtonVariant } from './Button';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -35,7 +36,9 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
 
   const isFull = size === 'full';
 
-  return (
+  // Portal into document.body so the dialog escapes any clipping ancestor
+  // (cards, sidebars, overflow:hidden containers).
+  return createPortal(
     <div
       className={clsx(
         'fixed inset-0 z-50 flex',
@@ -59,7 +62,8 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

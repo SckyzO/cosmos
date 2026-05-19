@@ -1,4 +1,6 @@
 import { AlertTriangle, Loader2, Save, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export type ConfirmationModalProps = {
   open: boolean;
@@ -19,6 +21,10 @@ export type ConfirmationModalProps = {
  * ConfirmationModal — focused dialog for unsaved-changes guards or
  * destructive-action confirmation. Three actions: Stay (cancel) /
  * Discard (negative) / Save (primary). Set `hideSave` for binary confirm.
+ *
+ * Renders via `createPortal` into `document.body` so the dialog escapes
+ * any clipping container (cards, sidebars, overflow:hidden ancestors).
+ * Clicking the backdrop or pressing `Escape` calls `onStay`.
  */
 export const ConfirmationModal = ({
   open,
@@ -33,20 +39,41 @@ export const ConfirmationModal = ({
   saveLabel = 'Save & go',
   hideSave = false,
 }: ConfirmationModalProps) => {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onStay();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, onStay]);
+
   if (!open) return null;
-  return (
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="cosmos-confirmation-title"
     >
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onStay}
+        aria-hidden
+      />
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
         <div className="flex items-start gap-4 p-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-500/10">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <h3
+              id="cosmos-confirmation-title"
+              className="font-semibold text-gray-900 dark:text-white"
+            >
+              {title}
+            </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
           </div>
           <button
@@ -93,6 +120,7 @@ export const ConfirmationModal = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
