@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { CopyButton } from './CopyButton';
+import { Clipboard } from './Clipboard';
 
 export type CodeBlockProps = {
   code: string;
@@ -23,7 +23,7 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
         </span>
         {/* When a title bar is present, the copy button lives inside it so the
          *  bar doubles as the action surface — matches GitHub / Carbon / TUI. */}
-        {showCopy && <CopyButton value={code} floating />}
+        {showCopy && <Clipboard value={code} floating />}
       </div>
     )}
     <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-gray-800 dark:text-gray-200">
@@ -32,7 +32,7 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
     {/* Without a title bar there is nothing to anchor the button to, so we float
      *  it over the code in the top-right corner (hover-revealed via `group`). */}
     {showCopy && !language && (
-      <CopyButton value={code} floating className="absolute top-2 right-2" />
+      <Clipboard value={code} floating className="absolute top-2 right-2" />
     )}
   </div>
 );

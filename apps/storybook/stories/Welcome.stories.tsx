@@ -55,7 +55,7 @@ const groupRows: Group[] = [
     name: 'Atoms',
     count: 16,
     contains:
-      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Link, Ribbon, SectionLabel, SelectInput, Spinner, CopyButton, ThemeToggle, ThemeToggleTri, BackToTopFab',
+      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Link, Ribbon, SectionLabel, SelectInput, Spinner, Clipboard, ThemeToggle, ThemeToggleTri, BackToTopFab',
   },
   {
     id: 'forms',

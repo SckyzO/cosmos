@@ -39,6 +39,6 @@ export * from './Toast';
 export * from './AnnouncementBar';
 export * from './CookieBanner';
 export * from './CommandPalette';
-export * from './CopyButton';
+export * from './Clipboard';
 export * from './BackToTopFab';
 export * from './HelpOverlay';

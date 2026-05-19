@@ -3,15 +3,16 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { Input } from '../forms/Input';
 import { Textarea } from '../forms/Textarea';
-import { CopyButton } from './CopyButton';
+import { SectionCard } from '../templates';
+import { Clipboard } from './Clipboard';
 
 const meta = {
-  title: 'Atoms/Copy Button',
-  component: CopyButton,
+  title: 'Atoms/Clipboard',
+  component: Clipboard,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { value: 'Hello world!' },
-} satisfies Meta<typeof CopyButton>;
+} satisfies Meta<typeof Clipboard>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -30,7 +31,7 @@ export const Floating: Story = {
   render: (args) => (
     <div className="group relative inline-block rounded-lg bg-gray-900 p-6 pr-12 font-mono text-xs text-gray-200">
       <pre>npm install @sckyzo/cosmos-react</pre>
-      <CopyButton {...args} className="absolute top-2 right-2" />
+      <Clipboard {...args} className="absolute top-2 right-2" />
     </div>
   ),
   args: { value: 'npm install @sckyzo/cosmos-react', floating: true },
@@ -62,7 +63,7 @@ export const WithReadOnlyInput: Story = {
             value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
             className="font-mono text-xs"
           />
-          <CopyButton value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n" size="md" />
+          <Clipboard value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n" size="md" />
         </div>
       </div>
       <div>
@@ -76,7 +77,7 @@ export const WithReadOnlyInput: Story = {
             value="sk-prod-A1B2C3D4E5F6G7H8I9J0"
             className="font-mono text-xs"
           />
-          <CopyButton
+          <Clipboard
             value="sk-prod-A1B2C3D4E5F6G7H8I9J0"
             size="md"
             variant="button"
@@ -106,7 +107,7 @@ export const WithTextarea: Story = {
         </label>
         <div className="group relative">
           <Textarea readOnly value={snippet} rows={8} resize="none" className="font-mono text-xs" />
-          <CopyButton value={snippet} floating className="absolute top-2 right-2" />
+          <Clipboard value={snippet} floating className="absolute top-2 right-2" />
         </div>
         <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
           Hover the textarea to reveal the copy button.
@@ -125,13 +126,109 @@ export const Interactive: Story = {
           <code className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800">
             sk-XXXX-YYYY-ZZZZ
           </code>
-          <CopyButton value="sk-XXXX-YYYY-ZZZZ" onCopy={(v) => setLast(v)} />
+          <Clipboard value="sk-XXXX-YYYY-ZZZZ" onCopy={(v) => setLast(v)} />
         </div>
         {last && (
           <p className="text-xs text-[var(--color-text-muted)]">
             Last copied: <code>{last}</code>
           </p>
         )}
+      </div>
+    );
+  },
+};
+
+// ── Flowbite-inspired patterns ───────────────────────────────────────────────
+// These stories mirror the canonical "copy" patterns from
+// https://flowbite.com/docs/components/clipboard/ adapted to Cosmos primitives.
+
+export const InsideInput: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Share link
+      </label>
+      <div className="relative">
+        <Input
+          readOnly
+          value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
+          className="pr-10 font-mono text-xs"
+        />
+        <Clipboard
+          value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
+          className="absolute top-1 right-1"
+          size="sm"
+        />
+      </div>
+      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        Icon-only button anchored inside the field, mirroring Flowbite&apos;s &quot;Input with copy
+        button&quot; pattern.
+      </p>
+    </div>
+  ),
+};
+
+export const InputGroupUrl: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Shareable URL
+      </label>
+      <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <span className="flex shrink-0 items-center border-r border-gray-200 bg-gray-50 px-3 font-mono text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+          https://
+        </span>
+        <input
+          readOnly
+          value="cosmos.sckyzo.dev/r/xK9p"
+          className="flex-1 bg-white px-3 py-2 font-mono text-xs text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-white"
+        />
+        <Clipboard
+          value="https://cosmos.sckyzo.dev/r/xK9p"
+          variant="button"
+          size="sm"
+          className="rounded-none border-0 border-l border-gray-200 dark:border-gray-700"
+        />
+      </div>
+      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        Three-segment input group with prefix + URL + Clipboard, all sharing a single border.
+      </p>
+    </div>
+  ),
+};
+
+export const ApiKeysCard: Story = {
+  render: () => {
+    const keys = [
+      { label: 'Account ID', value: 'acc_01HQVZ8XKPYM2N3R4S5T6U7V8' },
+      { label: 'Public key', value: 'pk_live_51N9k2pLk...8oZqW' },
+      { label: 'Secret key', value: 'sk_live_51N9k2pLk...XnVbA', sensitive: true },
+    ];
+    return (
+      <div className="max-w-xl">
+        <SectionCard
+          title="API credentials"
+          description="Use these keys to authenticate your Cosmos exporter against the monitoring-hub API."
+        >
+          <div className="space-y-3">
+            {keys.map((k) => (
+              <div key={k.label}>
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                  {k.label}
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    type={k.sensitive ? 'password' : 'text'}
+                    value={k.value}
+                    className="font-mono text-xs"
+                  />
+                  <Clipboard value={k.value} size="md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
       </div>
     );
   },

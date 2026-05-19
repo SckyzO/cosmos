@@ -9,15 +9,15 @@ import {
   type ButtonHTMLAttributes,
 } from 'react';
 
-export type CopyButtonVariant = 'icon' | 'button';
-export type CopyButtonSize = 'sm' | 'md';
+export type ClipboardVariant = 'icon' | 'button';
+export type ClipboardSize = 'sm' | 'md';
 
-export type CopyButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onCopy'> & {
+export type ClipboardProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onCopy'> & {
   /** Text written to the clipboard on click. */
   value: string;
   /** `icon` (default) → square icon-only button. `button` → icon + label. */
-  variant?: CopyButtonVariant;
-  size?: CopyButtonSize;
+  variant?: ClipboardVariant;
+  size?: ClipboardSize;
   /** Override the label (only shown when `variant="button"`). */
   copyLabel?: string;
   copiedLabel?: string;
@@ -33,17 +33,17 @@ export type CopyButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onC
   floating?: boolean;
 };
 
-const SIZE_ICON: Record<CopyButtonSize, { box: string; icon: string }> = {
+const SIZE_ICON: Record<ClipboardSize, { box: string; icon: string }> = {
   sm: { box: 'h-7 w-7', icon: 'h-3.5 w-3.5' },
   md: { box: 'h-9 w-9', icon: 'h-4 w-4' },
 };
 
-const SIZE_BUTTON: Record<CopyButtonSize, string> = {
+const SIZE_BUTTON: Record<ClipboardSize, string> = {
   sm: 'h-7 px-2 text-xs gap-1.5',
   md: 'h-9 px-3 text-sm gap-2',
 };
 
-export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(function CopyButton(
+export const Clipboard = forwardRef<HTMLButtonElement, ClipboardProps>(function Clipboard(
   {
     value,
     variant = 'icon',
