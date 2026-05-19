@@ -79,5 +79,12 @@ compose-down: ## Stop and remove all compose services
 clean: ## Remove node_modules, dist, build artifacts, screenshots
 	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "rm -rf node_modules packages/*/node_modules apps/*/node_modules tests/*/node_modules packages/*/dist apps/*/storybook-static playwright-report test-results coverage screenshots/*.png"
 
-ci: ## Full CI pipeline (lint + format + typecheck + test + build)
-	$(DOCKER_RUN) $(DEV_IMAGE) pnpm ci
+ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every push)
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "set -e; \
+	  echo '── 1. lint ──' && pnpm lint && \
+	  echo '── 2. format:check ──' && pnpm format:check && \
+	  echo '── 3. typecheck ──' && pnpm typecheck && \
+	  echo '── 4. build packages ──' && pnpm build && \
+	  echo '── 5. storybook:build ──' && pnpm storybook:build && \
+	  echo '── 6. unit + e2e tests ──' && pnpm test && \
+	  echo '── ALL GREEN ──'"

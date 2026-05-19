@@ -8,10 +8,10 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
 const page = await ctx.newPage();
 
 for (const theme of ['dark', 'light']) {
-  await page.goto(
-    `http://storybook:6006/?path=/story/welcome--default&globals=theme:${theme}`,
-    { waitUntil: 'networkidle', timeout: 30000 }
-  );
+  await page.goto(`http://storybook:6006/?path=/story/welcome--default&globals=theme:${theme}`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
   await page.waitForTimeout(2500);
 
   const data = await page.evaluate(() => {

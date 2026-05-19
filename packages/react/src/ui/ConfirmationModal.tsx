@@ -57,11 +57,7 @@ export const ConfirmationModal = ({
       aria-modal="true"
       aria-labelledby="cosmos-confirmation-title"
     >
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onStay}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onStay} aria-hidden />
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
         <div className="flex items-start gap-4 p-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-500/10">

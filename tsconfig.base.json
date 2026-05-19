@@ -18,7 +18,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": false,
     "allowSyntheticDefaultImports": true,
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "dist", "build", "storybook-static", "playwright-report"]
 }
