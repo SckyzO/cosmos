@@ -17,8 +17,11 @@ export type CalendarProps = DayPickerProps & {
 export const Calendar = ({ classNames, components, className, ...rest }: CalendarProps) => {
   const def = getDefaultClassNames();
   return (
+    // `animate` is intentionally OFF: with our custom caption (mode/year
+    // dropdowns), the cross-fade transition renders the outgoing caption on
+    // top of the incoming one for ~150 ms, producing a visible ghost of
+    // "May 2026" overlapping the dropdowns. Static caption swaps look clean.
     <DayPicker
-      animate
       classNames={{
         root: clsx(def.root, 'p-3 text-sm', className),
         months: clsx(def.months, 'gap-4'),
@@ -26,7 +29,11 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         // Reserve horizontal padding so the absolute Nav prev/next chevrons sit
         // OUTSIDE of the caption content (dropdowns or label), never overlapping.
         month_caption: clsx(def.month_caption, 'flex min-h-9 items-center justify-center px-9'),
-        caption_label: 'text-sm font-semibold text-gray-900 dark:text-white',
+        // Hide the textual caption visually — react-day-picker still emits it
+        // for screen readers, but our `Dropdowns` (when `captionLayout` is set)
+        // already show the month + year, so the raw label produces a visual
+        // doubling. `sr-only` keeps the a11y guarantee, kills the ghost text.
+        caption_label: 'sr-only',
         // Nav stays absolutely positioned but vertically centered with the caption
         // (top-1.5 lines up with the caption baseline; pointer-events-none on wrapper
         //  keeps the inner space click-through, then re-enables on the buttons).
