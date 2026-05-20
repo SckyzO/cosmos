@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-react",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Cosmos React 19 component library — primitives, layout, forms, feedback (Phase 1)",
   "license": "MIT",
   "author": "SckyzO",
@@ -25,6 +25,7 @@
   "files": [
     "dist/",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
