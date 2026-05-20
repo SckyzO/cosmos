@@ -47,26 +47,38 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Upgrade npm for OIDC trusted publishing (needs npm >= 11.5.1)
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
         run: pnpm build
 
+      # Tokenless via OIDC trusted publishing — no NPM_TOKEN. Each package must
+      # have a trusted publisher configured on npmjs.com (repo SckyzO/cosmos,
+      # workflow publish.yml, env npm-publish). `pnpm pack` rewrites the
+      # `workspace:*` theme dependency into the tarball; `npm publish <tarball>`
+      # then authenticates via OIDC and attaches provenance.
       - name: Publish (tagged)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_REF: ${{ github.ref }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          tag="${GH_REF#refs/tags/}"
-          pkg=$(echo "$tag" | cut -d'@' -f2)
-          pnpm --filter "@sckyzo/$pkg" publish --provenance --access public --no-git-checks
+          tag="${GH_REF#refs/tags/}"      # @sckyzo/cosmos-theme@0.0.2
+          name="${tag%@*}"                # @sckyzo/cosmos-theme
+          short="${name##*cosmos-}"       # theme
+          cd "packages/$short"
+          pnpm pack
+          npm publish ./*.tgz --provenance --access public
 
       - name: Publish (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
         env:
-          PKG: ${{ inputs.package }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PKG: ${{ inputs.package }}      # cosmos-theme
         run: |
-          pnpm --filter "@sckyzo/$PKG" publish --provenance --access public --no-git-checks
+          short="${PKG##*cosmos-}"        # theme
+          cd "packages/$short"
+          pnpm pack
+          npm publish ./*.tgz --provenance --access public
