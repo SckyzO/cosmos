@@ -17,7 +17,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -w $(WORKSPACE) -u $
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install lint lint-fix format format-check typecheck test test-e2e build storybook storybook-build clean shell ci compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-e2e build storybook storybook-build clean shell ci compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -30,6 +30,12 @@ rebuild-image: ## Rebuild cosmos-dev image without cache
 
 install: ## pnpm install (in container, as host user)
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm install
+
+report-update: ## Report outdated dependencies across all workspaces (read-only)
+	@$(DOCKER_RUN) $(DEV_IMAGE) pnpm outdated -r || true
+
+update: ## Update ALL deps to latest (majors included) + refresh lockfile — run `make ci` after
+	$(DOCKER_RUN) $(DEV_IMAGE) pnpm update -r --latest
 
 lint: ## ESLint on all workspaces
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm lint
