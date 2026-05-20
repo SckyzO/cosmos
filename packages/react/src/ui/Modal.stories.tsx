@@ -22,6 +22,23 @@ const meta = {
   parameters: portalDocsParams.lg(),
   tags: ['autodocs'],
   args: { open: false, onClose: () => {}, children: null },
+  // `ModalRoot` renders through a portal, which react-docgen can't trace back
+  // to ModalProps — so the Controls table would otherwise list only the props
+  // present in `args`. Declare the prop surface explicitly.
+  argTypes: {
+    open: { control: 'boolean', description: 'Whether the modal is visible.' },
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg', 'xl', 'full'],
+      description: 'Dialog width preset. `full` goes edge-to-edge.',
+    },
+    className: { control: 'text' },
+    onClose: {
+      control: false,
+      description: 'Called when the backdrop or Escape closes the modal.',
+    },
+    children: { control: false },
+  },
 } satisfies Meta<typeof Modal>;
 
 export default meta;

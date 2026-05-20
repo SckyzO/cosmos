@@ -12,6 +12,33 @@ const meta = {
   tags: ['autodocs'],
   // Storybook 10 requires `args` when the component has required props.
   args: { children: null as ReactNode },
+  // `ListRoot` returns a dynamic `<Tag>` element (ul/ol chosen at runtime),
+  // which react-docgen can't trace back to ListProps — so the Controls table
+  // would otherwise be empty. Declare the prop surface explicitly.
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['unordered', 'ordered', 'plain'],
+      description: 'List style. `unordered` (ul), `ordered` (ol), or `plain` (no markers).',
+    },
+    marker: {
+      control: 'select',
+      options: ['disc', 'check', 'arrow', 'dot', 'none'],
+      description: 'Bullet marker. Ignored for ordered/plain variants.',
+    },
+    spacing: {
+      control: 'select',
+      options: ['tight', 'normal', 'loose'],
+      description: 'Vertical/horizontal gap between items.',
+    },
+    orientation: {
+      control: 'inline-radio',
+      options: ['vertical', 'horizontal'],
+      description: 'Layout direction.',
+    },
+    className: { control: 'text' },
+    children: { control: false },
+  },
 } satisfies Meta<typeof List>;
 
 export default meta;

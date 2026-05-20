@@ -6,6 +6,11 @@ import { test, expect } from '@playwright/test';
 // aliases + function components correctly. These assertions guard against a
 // regression of that fix — each component must expose a representative
 // optional prop, not just its required ones.
+//
+// Modal + Lists render through a portal / a dynamic `<Tag>` element, which
+// react-docgen can't trace to the props type; their Controls surface is
+// restored via explicit `argTypes` in the story meta — covered here too so a
+// dropped argTypes block is caught.
 const cases: Array<{ id: string; name: string; expectProp: string }> = [
   { id: 'atoms-button--docs', name: 'Button', expectProp: 'variant' },
   { id: 'atoms-badge--docs', name: 'Badge', expectProp: 'variant' },
@@ -13,6 +18,8 @@ const cases: Array<{ id: string; name: string; expectProp: string }> = [
   { id: 'navigation-breadcrumb--docs', name: 'Breadcrumb', expectProp: 'items' },
   { id: 'overlays-drawer--docs', name: 'Drawer', expectProp: 'open' },
   { id: 'tables-datatable--docs', name: 'DataTable', expectProp: 'selectable' },
+  { id: 'overlays-modal--docs', name: 'Modal', expectProp: 'size' },
+  { id: 'typography-lists--docs', name: 'Lists', expectProp: 'variant' },
 ];
 
 for (const c of cases) {
