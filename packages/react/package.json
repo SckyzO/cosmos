@@ -1,10 +1,11 @@
 {
   "name": "@sckyzo/cosmos-react",
   "version": "0.0.1",
-  "description": "Cosmos React 19 component library — primitives, layout, forms, feedback (Phase 1)",
+  "description": "React 19 + Tailwind 4 UI component library — 135+ themeable, accessible components (forms, overlays, navigation, tables, data display) with built-in light/dark mode.",
   "license": "MIT",
   "author": "SckyzO",
   "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/react",
+  "bugs": "https://github.com/SckyzO/cosmos/issues",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SckyzO/cosmos.git",

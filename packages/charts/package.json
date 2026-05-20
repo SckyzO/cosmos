@@ -1,10 +1,11 @@
 {
   "name": "@sckyzo/cosmos-charts",
   "version": "0.0.1",
-  "description": "Cosmos charts — opinionated ApexCharts wrappers themed for the Cosmos design system",
+  "description": "React chart components for the Cosmos design system — themeable ApexCharts 5 wrappers (bar, line, area, donut, radial gauges, sparkline, treemap, realtime) with light/dark support.",
   "license": "MIT",
   "author": "SckyzO",
   "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/charts",
+  "bugs": "https://github.com/SckyzO/cosmos/issues",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SckyzO/cosmos.git",
