@@ -39,6 +39,27 @@ const withCosmosSurface: Decorator = (Story, ctx) => {
   );
 };
 
+/**
+ * Viewport presets — first the Tailwind 4 breakpoints (the canonical contract
+ * for any responsive utility used in Cosmos components), then a handful of
+ * real-device sizes for spot-checking. Storybook 10 ships viewport in core
+ * (no addon needed); these entries surface in the toolbar's viewport switcher.
+ */
+const tailwindViewports = {
+  'tw-sm': { name: 'Tailwind sm — 640', styles: { width: '640px', height: '900px' } },
+  'tw-md': { name: 'Tailwind md — 768', styles: { width: '768px', height: '1024px' } },
+  'tw-lg': { name: 'Tailwind lg — 1024', styles: { width: '1024px', height: '768px' } },
+  'tw-xl': { name: 'Tailwind xl — 1280', styles: { width: '1280px', height: '800px' } },
+  'tw-2xl': { name: 'Tailwind 2xl — 1536', styles: { width: '1536px', height: '900px' } },
+};
+
+const deviceViewports = {
+  mobile: { name: 'iPhone 15 (393×852)', styles: { width: '393px', height: '852px' } },
+  tablet: { name: 'iPad (768×1024)', styles: { width: '768px', height: '1024px' } },
+  laptop: { name: 'Laptop (1366×768)', styles: { width: '1366px', height: '768px' } },
+  desktop: { name: 'Desktop (1920×1080)', styles: { width: '1920px', height: '1080px' } },
+};
+
 const preview: Preview = {
   parameters: {
     controls: {
@@ -46,6 +67,10 @@ const preview: Preview = {
         color: /(background|color)$/i,
         date: /Date$/i,
       },
+    },
+    viewport: {
+      viewports: { ...tailwindViewports, ...deviceViewports },
+      defaultViewport: 'reset',
     },
     a11y: { test: 'error' },
     // Restore the dark docs chrome that was here before — removing it made every
