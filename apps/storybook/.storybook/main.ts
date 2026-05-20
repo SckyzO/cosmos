@@ -1,10 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
   // Allowlist for Origin/Host header validation (Storybook 10+ default = []).
@@ -37,18 +33,12 @@ const config: StorybookConfig = {
   },
   typescript: {
     check: false,
-    reactDocgen: 'react-docgen-typescript',
-    // Force the docgen plugin to use a tsconfig that flatly includes all
-    // package sources. Without this, the plugin walks up from each component
-    // file and lands on packages/react/tsconfig.json — which has composite=true
-    // + restrictive rootDir, causing it to flag colocated component files as
-    // "not in the active TS project" and skip docgen (no prop tables in autodocs).
-    reactDocgenTypescriptOptions: {
-      tsconfigPath: resolve(HERE, '../tsconfig.docgen.json'),
-      shouldExtractLiteralValuesFromEnum: true,
-      shouldRemoveUndefinedFromOptional: true,
-      propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
-    },
+    // `react-docgen` (Babel-based) instead of `react-docgen-typescript`:
+    // the latter is pinned at 2.4.0 (its latest, now unmaintained) and predates
+    // TypeScript 6, so it silently drops every optional prop (`variant?`,
+    // `size?`, …) from autodocs/Controls — only required props survived. The
+    // Babel parser handles TS 6 function components + type aliases correctly.
+    reactDocgen: 'react-docgen',
   },
   // Inject the official Tailwind 4 Vite plugin so @import 'tailwindcss' resolves
   // and @theme blocks are processed across all CSS files (including imported npm packages).

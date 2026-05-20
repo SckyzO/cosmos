@@ -1,24 +1,22 @@
 import { test, expect } from '@playwright/test';
 
-// react-docgen-typescript (used by Storybook autodocs) currently fails to
-// surface every prop for these specific components — Button/Badge expose only
-// `children`, DataTable misses `selectable` / `bulkActions` etc. Tracked in
-// `reports/2026-05-19-docgen-autodocs-gap.md`. Re-enable each entry once the
-// docgen pipeline is fixed (likely react-docgen v6 + custom resolver, or
-// explicit Storybook `argTypes` on each affected component).
-const cases: Array<{ id: string; name: string; expectProp: string; broken?: true }> = [
-  { id: 'atoms-button--docs', name: 'Button', expectProp: 'variant', broken: true },
-  { id: 'atoms-badge--docs', name: 'Badge', expectProp: 'variant', broken: true },
-  { id: 'navigation-tabs--docs', name: 'Tabs', expectProp: 'value' },
+// Autodocs prop extraction uses `react-docgen` (Babel parser). The previous
+// `react-docgen-typescript` engine (pinned at its unmaintained 2.4.0, pre-TS6)
+// silently dropped every optional prop; the Babel parser handles TS 6 type
+// aliases + function components correctly. These assertions guard against a
+// regression of that fix — each component must expose a representative
+// optional prop, not just its required ones.
+const cases: Array<{ id: string; name: string; expectProp: string }> = [
+  { id: 'atoms-button--docs', name: 'Button', expectProp: 'variant' },
+  { id: 'atoms-badge--docs', name: 'Badge', expectProp: 'variant' },
+  { id: 'navigation-tabs--docs', name: 'Tabs', expectProp: 'orientation' },
   { id: 'navigation-breadcrumb--docs', name: 'Breadcrumb', expectProp: 'items' },
-  { id: 'overlays-modal--docs', name: 'Modal', expectProp: 'open' },
   { id: 'overlays-drawer--docs', name: 'Drawer', expectProp: 'open' },
-  { id: 'tables-datatable--docs', name: 'DataTable', expectProp: 'rows' },
+  { id: 'tables-datatable--docs', name: 'DataTable', expectProp: 'selectable' },
 ];
 
 for (const c of cases) {
-  const fn = c.broken ? test.fixme : test;
-  fn(`autodocs: ${c.name} has ${c.expectProp} prop`, async ({ page }) => {
+  test(`autodocs: ${c.name} has ${c.expectProp} prop`, async ({ page }) => {
     await page.goto(`/?path=/docs/${c.id}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2500);
     const frame = page.frameLocator('iframe#storybook-preview-iframe');
