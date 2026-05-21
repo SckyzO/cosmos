@@ -63,9 +63,13 @@ jobs:
 
       # Tokenless via OIDC trusted publishing — no NPM_TOKEN. Each package must
       # have a trusted publisher configured on npmjs.com (repo SckyzO/cosmos,
-      # workflow publish.yml, env npm-publish). `pnpm pack` rewrites the
-      # `workspace:*` theme dependency into the tarball; `npm publish <tarball>`
-      # then authenticates via OIDC and attaches provenance.
+      # workflow publish.yml, env npm-publish).
+      #
+      # We run `npm publish` from the package DIRECTORY (not a tarball): OIDC
+      # trusted publishing only engages on a directory publish, not on
+      # `npm publish <tarball>`. npm doesn't understand the pnpm `workspace:*`
+      # protocol, so cosmos-react's theme dependency is rewritten to the real
+      # version just before publishing. theme/charts have no workspace deps.
       - name: Publish (tagged)
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -75,8 +79,10 @@ jobs:
           name="${tag%@*}"                # @sckyzo/cosmos-theme
           short="${name##*cosmos-}"       # theme
           cd "packages/$short"
-          pnpm pack
-          npm publish ./*.tgz --provenance --access public
+          if [ "$short" = "react" ]; then
+            npm pkg set "dependencies.@sckyzo/cosmos-theme=^$(node -p "require('../theme/package.json').version")"
+          fi
+          npm publish --provenance --access public
 
       - name: Publish (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
@@ -85,5 +91,7 @@ jobs:
         run: |
           short="${PKG##*cosmos-}"        # theme
           cd "packages/$short"
-          pnpm pack
-          npm publish ./*.tgz --provenance --access public
+          if [ "$short" = "react" ]; then
+            npm pkg set "dependencies.@sckyzo/cosmos-theme=^$(node -p "require('../theme/package.json').version")"
+          fi
+          npm publish --provenance --access public
