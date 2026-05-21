@@ -76,7 +76,7 @@ jobs:
       - name: Publish (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
         env:
-          PKG: ${{ inputs.package }}      # cosmos-theme
+          PKG: ${{ inputs.package }} # cosmos-theme
         run: |
           short="${PKG##*cosmos-}"        # theme
           cd "packages/$short"
