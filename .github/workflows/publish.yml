@@ -42,17 +42,14 @@ jobs:
 
       - name: Setup Node
         # Node 24 ships npm 11.12+ (>= 11.5.1, required for OIDC trusted
-        # publishing) — avoids a flaky `npm install -g npm@latest` self-upgrade
-        # from npm 10 that fails with "Cannot find module 'promise-retry'".
-        #
-        # No `registry-url:` on purpose — it would write an `.npmrc` line
-        # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`; with no token
-        # set, npm authenticates with an empty token (404) instead of engaging
-        # OIDC trusted publishing. OIDC only kicks in when no auth token is
-        # configured. The default registry is already registry.npmjs.org.
+        # publishing). `registry-url` is REQUIRED (per npm's official trusted-
+        # publishing example): it sets the registry context. npm CLI treats the
+        # unresolved `${NODE_AUTH_TOKEN}` placeholder as empty and falls through
+        # to OIDC when a trusted publisher is configured.
         uses: actions/setup-node@v6
         with:
           node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
       - name: Install dependencies
