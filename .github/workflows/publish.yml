@@ -41,14 +41,14 @@ jobs:
         uses: pnpm/action-setup@v6
 
       - name: Setup Node
+        # Node 24 ships npm 11.12+ (>= 11.5.1, required for OIDC trusted
+        # publishing) — avoids a flaky `npm install -g npm@latest` self-upgrade
+        # from npm 10 that fails with "Cannot find module 'promise-retry'".
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Upgrade npm for OIDC trusted publishing (needs npm >= 11.5.1)
-        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
