@@ -54,7 +54,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@storybook/react-vite": "^10.4.0",
+    "@storybook/react-vite": "^10.5.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.15",
@@ -63,7 +63,7 @@
     "happy-dom": "^20.9.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "storybook": "^10.4.0",
+    "storybook": "^10.5.0",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.13",
