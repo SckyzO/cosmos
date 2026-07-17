@@ -1,10 +1,10 @@
 /* Cosmos Tailwind 4 theme — @theme block (generates Tailwind utility classes).
  *
- * Usage:
- *   @import '@sckyzo/cosmos-theme/fonts';
- *   @import '@sckyzo/cosmos-theme/tailwind';
+ * Usage (import order matters — tailwindcss first):
  *   @import 'tailwindcss';
+ *   @import '@sckyzo/cosmos-theme/tailwind';
  *   @import '@sckyzo/cosmos-theme/vars';
+ *   @import '@sckyzo/cosmos-theme/fonts';
  *
  * The dark variant is class-based (.dark) — applied by the consumer's theme switcher.
  */
