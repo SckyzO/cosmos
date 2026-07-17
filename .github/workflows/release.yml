@@ -13,7 +13,7 @@
 # automatically, add a fine-grained PAT as the RELEASE_PLEASE_TOKEN secret
 # (contents: write, pull-requests: write). Until then, run publish.yml manually
 # via workflow_dispatch after merging a release PR.
-name: release-please
+name: release
 
 on:
   push:
