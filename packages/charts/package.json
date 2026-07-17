@@ -43,7 +43,6 @@
   },
   "dependencies": {
     "apexcharts": "^5.16.0",
-    "clsx": "^2.1.1",
     "react-apexcharts": "^2.1.1"
   },
   "devDependencies": {
