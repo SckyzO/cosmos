@@ -1,5 +1,6 @@
 # cosmos-dev image
-# Node 22 LTS Debian (Playwright needs system libs Alpine doesn't bundle).
+# Node 26 Debian (Playwright needs system libs Alpine doesn't bundle).
+# Node 26 is the Current line and enters LTS on 2026-10-28.
 # Embeds: pnpm 10, Playwright browsers (Chromium + Firefox), Storybook deps.
 # Runs as non-root 'node' user, with UID/GID matching the host (build args).
 #
@@ -20,7 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # Enable pnpm via corepack (version pinned in repo via package.json packageManager field).
-RUN corepack enable
+# Node 25+ no longer bundles corepack, so install it from npm rather than pinning pnpm
+# here — that keeps `packageManager` in package.json the single source of truth.
+RUN npm install -g corepack@latest \
+ && corepack enable
 
 # --- Root: install Playwright system deps (most accurate list comes from playwright itself)
 RUN npx -y playwright@latest install-deps chromium firefox \
@@ -30,7 +34,7 @@ RUN npx -y playwright@latest install-deps chromium firefox \
 ARG USER_UID=1000
 ARG USER_GID=1000
 
-# Adjust 'node' user (already exists in node:22 image with UID 1000) to match host.
+# Adjust 'node' user (already exists in the node image with UID 1000) to match host.
 RUN if [ "$USER_UID" != "1000" ] || [ "$USER_GID" != "1000" ]; then \
         groupmod -g "$USER_GID" node && usermod -u "$USER_UID" -g "$USER_GID" node; \
     fi
