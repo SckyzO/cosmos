@@ -13,58 +13,58 @@ DOCKER_RUN_IT="docker run -it --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${H
 DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node -p 6006:6006"
 
 ensure_image() {
-    if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
-        echo "→ Building cosmos-dev image (first run)..."
-        docker build \
-            --build-arg "USER_UID=${HOST_UID}" \
-            --build-arg "USER_GID=${HOST_GID}" \
-            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
-    fi
+  if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
+    echo "→ Building cosmos-dev image (first run)..."
+    docker build \
+      --build-arg "USER_UID=${HOST_UID}" \
+      --build-arg "USER_GID=${HOST_GID}" \
+      -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+  fi
 }
 
 case "${1:-help}" in
-    build)
-        docker build \
-            --build-arg "USER_UID=${HOST_UID}" \
-            --build-arg "USER_GID=${HOST_GID}" \
-            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
-        ;;
-    rebuild)
-        docker build --no-cache \
-            --build-arg "USER_UID=${HOST_UID}" \
-            --build-arg "USER_GID=${HOST_GID}" \
-            -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
-        ;;
-    shell)
-        ensure_image
-        $DOCKER_RUN_IT "$DEV_IMAGE" bash
-        ;;
-    storybook)
-        ensure_image
-        $DOCKER_RUN_SB "$DEV_IMAGE" pnpm storybook
-        ;;
-    e2e)
-        ensure_image
-        $DOCKER_RUN "$DEV_IMAGE" pnpm test:e2e
-        ;;
-    outdated)
-        ensure_image
-        # pnpm outdated exits non-zero when anything is behind; that is a report,
-        # not a failure, so don't let set -e kill it.
-        $DOCKER_RUN "$DEV_IMAGE" pnpm outdated -r || true
-        ;;
-    update)
-        ensure_image
-        shift
-        $DOCKER_RUN "$DEV_IMAGE" pnpm update -r --latest "$@"
-        ;;
-    run)
-        ensure_image
-        shift
-        $DOCKER_RUN "$DEV_IMAGE" "$@"
-        ;;
-    help|--help|-h)
-        cat <<USAGE
+  build)
+    docker build \
+      --build-arg "USER_UID=${HOST_UID}" \
+      --build-arg "USER_GID=${HOST_GID}" \
+      -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+    ;;
+  rebuild)
+    docker build --no-cache \
+      --build-arg "USER_UID=${HOST_UID}" \
+      --build-arg "USER_GID=${HOST_GID}" \
+      -t "$DEV_IMAGE" -f config/docker/Dockerfile.dev .
+    ;;
+  shell)
+    ensure_image
+    $DOCKER_RUN_IT "$DEV_IMAGE" bash
+    ;;
+  storybook)
+    ensure_image
+    $DOCKER_RUN_SB "$DEV_IMAGE" pnpm storybook
+    ;;
+  e2e)
+    ensure_image
+    $DOCKER_RUN "$DEV_IMAGE" pnpm test:e2e
+    ;;
+  outdated)
+    ensure_image
+    # pnpm outdated exits non-zero when anything is behind; that is a report,
+    # not a failure, so don't let set -e kill it.
+    $DOCKER_RUN "$DEV_IMAGE" pnpm outdated -r || true
+    ;;
+  update)
+    ensure_image
+    shift
+    $DOCKER_RUN "$DEV_IMAGE" pnpm update -r --latest "$@"
+    ;;
+  run)
+    ensure_image
+    shift
+    $DOCKER_RUN "$DEV_IMAGE" "$@"
+    ;;
+  help | --help | -h)
+    cat <<USAGE
 cosmos devctl — docker-driven dev wrapper
 
 USAGE:
@@ -91,9 +91,9 @@ baked in at build time: ./devctl build && make ci
 
 Prefer make targets when available — see ./Makefile.
 USAGE
-        ;;
-    *)
-        echo "Unknown command: $1" >&2
-        exit 1
-        ;;
+    ;;
+  *)
+    echo "Unknown command: $1" >&2
+    exit 1
+    ;;
 esac
