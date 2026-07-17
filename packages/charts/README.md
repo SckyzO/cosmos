@@ -8,6 +8,7 @@ Kept in a dedicated subpackage so that `@sckyzo/cosmos-react` consumers who don'
 
 ```bash
 pnpm add @sckyzo/cosmos-charts
+pnpm add react react-dom   # peers, react 19+
 ```
 
 ## Use
@@ -27,6 +28,7 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens to the 
 
 | Chart                             | Notes                                             |
 | --------------------------------- | ------------------------------------------------- |
+| `BarChart`                        | Vertical or horizontal bars                       |
 | `LineAreaChart`                   | Smooth area + gradient fill                       |
 | `RealtimeChart`                   | Live updates with WARN/CRIT threshold annotations |
 | `RadialBarChart`                  | Multi-series radial gauge                         |
@@ -36,3 +38,7 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens to the 
 | `DonutChart` / `DonutRightLegend` | Donut with bottom or right legend                 |
 | `Sparkline` / `SparklineGroup`    | Mini sparklines + KPI grid                        |
 | `TreemapChart`                    | Repartition treemap                               |
+
+## License
+
+MIT — see [LICENSE](../../LICENSE).
