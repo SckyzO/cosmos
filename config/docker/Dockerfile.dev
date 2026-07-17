@@ -16,6 +16,11 @@
 FROM node:26-bookworm-slim
 
 # --- Root: minimal utilities + corepack -------------------------------------
+# DL3008 (pin apt versions) is intentionally ignored: on Debian bookworm-slim,
+# point releases rotate package versions and drop the old ones from the mirrors,
+# so pinning these base utilities would break `docker build` on the next refresh
+# for no reproducibility gain worth that cost.
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl wget git make jq vim less procps \
  && rm -rf /var/lib/apt/lists/*
