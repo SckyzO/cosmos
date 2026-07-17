@@ -47,6 +47,17 @@ case "${1:-help}" in
         ensure_image
         $DOCKER_RUN "$DEV_IMAGE" pnpm test:e2e
         ;;
+    outdated)
+        ensure_image
+        # pnpm outdated exits non-zero when anything is behind; that is a report,
+        # not a failure, so don't let set -e kill it.
+        $DOCKER_RUN "$DEV_IMAGE" pnpm outdated -r || true
+        ;;
+    update)
+        ensure_image
+        shift
+        $DOCKER_RUN "$DEV_IMAGE" pnpm update -r --latest "$@"
+        ;;
     run)
         ensure_image
         shift
@@ -65,10 +76,18 @@ COMMANDS:
     shell         Interactive shell as host user
     storybook     Storybook dev server (http://localhost:6006, no auto-open)
     e2e           Playwright e2e tests (screenshots in screenshots/)
+    outdated      Report dependencies that are behind (never fails)
+    update [pkg]  Update dependencies to latest, majors included
+                  e.g.: ./devctl update
+                        ./devctl update '!typescript'   # everything but typescript
+                        ./devctl update typescript      # just this one
     run <cmd>     Run an arbitrary command in container (as host user)
                   e.g.: ./devctl run pnpm install
                         ./devctl run pnpm --filter @sckyzo/cosmos-react test
     help          Show this help
+
+After 'update', rebuild the image if playwright moved — its browsers are
+baked in at build time: ./devctl build && make ci
 
 Prefer make targets when available — see ./Makefile.
 USAGE

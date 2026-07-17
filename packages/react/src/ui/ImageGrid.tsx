@@ -4,11 +4,7 @@ import { Children, type ReactNode } from 'react';
 export type ImageGridGap = 'sm' | 'md' | 'lg';
 
 export type ImageGridColumns =
-  | 1
-  | 2
-  | 3
-  | 4
-  | { sm?: 1 | 2 | 3 | 4; md?: 1 | 2 | 3 | 4; lg?: 1 | 2 | 3 | 4 };
+  1 | 2 | 3 | 4 | { sm?: 1 | 2 | 3 | 4; md?: 1 | 2 | 3 | 4; lg?: 1 | 2 | 3 | 4 };
 
 export type ImageGridProps = {
   /** Number of columns (static) or per-breakpoint object. Default 3. */
