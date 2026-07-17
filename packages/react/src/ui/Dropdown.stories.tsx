@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Filter, Globe, Database, LogOut, Server, Settings, User } from 'lucide-react';
 import { useState } from 'react';
+import { expect, userEvent, within } from 'storybook/test';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -81,5 +82,54 @@ export const MultipleDividers: Story = {
         </SectionCard>
       </Wrap>
     );
+  },
+};
+
+/**
+ * a11y: the trigger advertises a popup (aria-haspopup + aria-expanded), the
+ * panel is a real menu (role=menu / role=menuitem), opening moves focus to the
+ * first item, and ArrowDown roves between items.
+ */
+export const MenuSemanticsAndKeyboard: Story = {
+  render: () => {
+    const [v, setV] = useState('');
+    return (
+      <Wrap>
+        <Dropdown
+          label="Actions"
+          value={v}
+          onChange={setV}
+          options={[
+            { value: 'profile', label: 'Profile', icon: User },
+            { value: 'settings', label: 'Settings', icon: Settings },
+            { value: 'logout', label: 'Sign out', icon: LogOut },
+          ]}
+        />
+      </Wrap>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const scope = within(canvasElement);
+    const trigger = scope.getByRole('button', { name: /Actions|Select/ });
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(trigger);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    const menu = await scope.findByRole('menu');
+    await expect(menu).toBeInTheDocument();
+    const items = within(menu).getAllByRole('menuitem');
+    await expect(items).toHaveLength(3);
+
+    // Opening focuses the first item; ArrowDown moves to the second.
+    await expect(document.activeElement).toBe(items[0]);
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toBe(items[1]);
+
+    // Escape closes and returns focus to the trigger.
+    await userEvent.keyboard('{Escape}');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(document.activeElement).toBe(trigger);
   },
 };

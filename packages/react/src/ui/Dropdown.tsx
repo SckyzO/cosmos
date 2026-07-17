@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { ElementType } from 'react';
+import type { ElementType, KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 export type DropdownOption = {
   value: string;
@@ -42,6 +42,8 @@ export const Dropdown = ({
 }: DropdownProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -52,15 +54,52 @@ export const Dropdown = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Move focus to the first item when the menu opens (ARIA menu pattern).
+  useEffect(() => {
+    if (!open) return;
+    const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)');
+    first?.focus();
+  }, [open]);
+
+  const closeAndRefocus = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  // Roving focus between menu items; Escape closes and returns focus to trigger.
+  const onMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAndRefocus();
+      return;
+    }
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? []
+    );
+    if (items.length === 0) return;
+    const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+    const focusAt = (i: number) => {
+      e.preventDefault();
+      items[(i + items.length) % items.length]?.focus();
+    };
+    if (e.key === 'ArrowDown') focusAt(currentIndex + 1);
+    else if (e.key === 'ArrowUp') focusAt(currentIndex - 1);
+    else if (e.key === 'Home') focusAt(0);
+    else if (e.key === 'End') focusAt(items.length - 1);
+  };
+
   const selected = options.find((o): o is DropdownOption => !isDivider(o) && o.value === value);
   const displayLabel = selected?.label ?? placeholder ?? label ?? 'Select…';
 
   return (
     <div ref={ref} className={clsx('relative inline-block', className)}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className={clsx(
           'flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
           open && 'ring-brand-500/30 ring-2'
@@ -80,6 +119,10 @@ export const Dropdown = ({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
+            ref={menuRef}
+            role="menu"
+            aria-label={label}
+            onKeyDown={onMenuKeyDown}
             className={clsx(
               'absolute top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800',
               align === 'right' ? 'right-0' : 'left-0'
@@ -101,10 +144,11 @@ export const Dropdown = ({
                 <button
                   key={opt.value}
                   type="button"
+                  role="menuitem"
                   disabled={opt.disabled}
                   onClick={() => {
                     onChange?.(opt.value);
-                    setOpen(false);
+                    closeAndRefocus();
                   }}
                   className={clsx(
                     'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50',
