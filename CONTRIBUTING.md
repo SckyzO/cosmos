@@ -29,10 +29,10 @@ make ci                   # Full CI before pushing
 
 Conventional Commits, English, imperative present tense, ≤72 chars:
 
-```
+```text
 feat(react): add Drawer component
 fix(theme): correct dark mode contrast on muted text
-chore(deps): bump storybook to 9.0.5
+chore(deps): bump storybook to 10.5.2
 docs: update install steps for new Playwright browsers
 ```
 

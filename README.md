@@ -38,7 +38,7 @@ a searchable `DataTable`.
 Stories are organised by **responsibility**, not file location (Storybook
 [story-hierarchy convention](https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy)):
 
-```
+```text
 Welcome → Pages → Foundations → Typography → Atoms → Forms → Data → Status
        → Feedback → Overlays → Navigation → Actions → Layout → Lists
        → Tables → Settings → Charts
