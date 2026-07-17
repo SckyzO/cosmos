@@ -7,12 +7,13 @@
 # Tag format is pinned to match publish.yml: component = the npm package name,
 # tag-separator "@", no "v" prefix → @sckyzo/cosmos-react@1.2.3.
 #
-# Token: with the default GITHUB_TOKEN, release-please opens and updates the
-# release PR fine, but tags it pushes will NOT trigger publish.yml (GitHub does
-# not re-trigger workflows on token-authored events). To close the loop
-# automatically, add a fine-grained PAT as the RELEASE_PLEASE_TOKEN secret
-# (contents: write, pull-requests: write). Until then, run publish.yml manually
-# via workflow_dispatch after merging a release PR.
+# Token: GITHUB_TOKEN on purpose. Commits it authors through the API are
+# GitHub-signed (web-flow, "Verified"), so the release PR satisfies main's
+# required_signatures — a PAT authors unsigned commits, which the branch rejects.
+# The "Allow GitHub Actions to create pull requests" repo setting is enabled so
+# the token may open the PR. The trade-off: a tag pushed by GITHUB_TOKEN does not
+# re-trigger publish.yml, so after merging a release PR, publish to npm by running
+# publish.yml manually (Actions → Publish to npm → Run workflow).
 name: release
 
 on:
@@ -35,4 +36,4 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          token: ${{ github.token }}
