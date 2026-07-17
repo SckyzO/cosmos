@@ -1,7 +1,5 @@
 // @sckyzo/cosmos-react — barrel exports.
 
-export * from './storybook-avatars';
-export * from './storybook-helpers';
 export * from './layout';
 export * from './templates';
 export * from './feedback';

@@ -10,9 +10,12 @@
  * works offline, and produces no licensing concerns. Real apps should plug
  * their own avatar service for production data.
  *
+ * Internal authoring helper — not part of the public package API. Import it by
+ * relative path from within stories, not from '@sckyzo/cosmos-react'.
+ *
  * @example
  * ```tsx
- * import { placeholderAvatar } from '@sckyzo/cosmos-react';
+ * import { placeholderAvatar } from '../storybook-avatars';
  *
  * <img src={placeholderAvatar('Aiden Park', 64)} alt="" className="size-8 rounded-full" />
  * ```
