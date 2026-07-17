@@ -1,5 +1,7 @@
 # @sckyzo/cosmos-theme
 
+[![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)
+
 Cosmos design tokens — CSS only.
 
 Provides three CSS files consumable by any framework:

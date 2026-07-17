@@ -1,5 +1,7 @@
 # @sckyzo/cosmos-react
 
+[![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)
+
 React 19 component library for the Cosmos design system. 135+ themeable,
 accessible components, built with Tailwind 4 and shipped as ESM + CJS + types.
 
