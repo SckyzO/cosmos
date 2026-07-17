@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
 
 export type DrawerSide = 'left' | 'right';
 export type DrawerSize = 'sm' | 'md' | 'lg';
@@ -55,6 +56,12 @@ export type DrawerProps = {
    * Has no effect when `withBackdrop` is `false`.
    */
   closeOutside?: boolean;
+  /**
+   * Accessible name for the drawer when it has no `Drawer.Header` title to
+   * point at. With a `Drawer.Header title=…` present the drawer is labelled by
+   * it automatically and this is unnecessary.
+   */
+  ariaLabel?: string;
   className?: string;
   children: ReactNode;
 };
@@ -66,9 +73,13 @@ const Root = ({
   size = 'md',
   withBackdrop = true,
   closeOutside = false,
+  ariaLabel,
   className,
   children,
 }: DrawerProps) => {
+  const titleId = useId();
+  const trapRef = useFocusTrap<HTMLElement>(open);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -110,6 +121,8 @@ const Root = ({
         </button>
       )}
       <aside
+        ref={trapRef}
+        tabIndex={-1}
         className={clsx(
           'fixed top-0 bottom-0 z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
           SIDE_CLASS[side],
@@ -119,8 +132,10 @@ const Root = ({
         )}
         role="dialog"
         aria-modal="true"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabel ? undefined : titleId}
       >
-        {children}
+        <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
       </aside>
     </>,
     document.body
@@ -143,41 +158,51 @@ const Header = ({
   onClose,
   className,
   children,
-}: DrawerHeaderProps) => (
-  <div
-    className={clsx(
-      'flex shrink-0 items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800',
-      className
-    )}
-  >
-    <div className="flex min-w-0 items-center gap-2.5">
-      {Icon && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-          <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-        </div>
+}: DrawerHeaderProps) => {
+  const titleId = useDialogTitleId();
+  return (
+    <div
+      className={clsx(
+        'flex shrink-0 items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800',
+        className
       )}
-      <div className="min-w-0">
-        <h3 className="truncate text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
-        {description && (
-          <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{description}</p>
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        {Icon && (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+            <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          </div>
+        )}
+        <div className="min-w-0">
+          <h3
+            id={titleId}
+            className="truncate text-base font-semibold text-gray-900 dark:text-white"
+          >
+            {title}
+          </h3>
+          {description && (
+            <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+              {description}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {children}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close drawer"
+            className="text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <X className="h-5 w-5" />
+          </button>
         )}
       </div>
     </div>
-    <div className="flex items-center gap-2">
-      {children}
-      {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close drawer"
-          className="text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      )}
-    </div>
-  </div>
-);
+  );
+};
 
 const Body = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div className={clsx('flex-1 overflow-y-auto p-5', className)}>{children}</div>
