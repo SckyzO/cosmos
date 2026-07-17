@@ -42,20 +42,20 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "apexcharts": "^5.12.0",
+    "apexcharts": "^5.16.0",
     "clsx": "^2.1.1",
-    "react-apexcharts": "^2.1.0"
+    "react-apexcharts": "^2.1.1"
   },
   "devDependencies": {
-    "@storybook/react-vite": "^10.4.0",
-    "@types/react": "^19.2.15",
+    "@storybook/react-vite": "^10.5.2",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "storybook": "^10.4.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "storybook": "^10.5.2",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"
