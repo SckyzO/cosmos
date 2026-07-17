@@ -1,0 +1,18 @@
+title = "Cosmos gitleaks configuration"
+
+# Extend the built-in ruleset. Do NOT drop this: without useDefault the file
+# would REPLACE the default rules and disable all secret detection.
+[extend]
+useDefault = true
+
+# The generic-api-key rule flags high-entropy keyboard-shortcut strings in the
+# HelpOverlay stories (e.g. keys="shift+arrowdown"). These are demo props, not
+# secrets. Keep the exception tight: only that file, only that rule, only lines
+# that declare a shortcut, so a real secret in the same file still trips.
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "HelpOverlay keyboard-shortcut demos are not secrets"
+condition = "AND"
+paths = ['''packages/react/src/ui/HelpOverlay\.stories\.tsx''']
+regexTarget = "line"
+regexes = ['''keys="[^"]*"''']
