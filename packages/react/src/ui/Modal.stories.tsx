@@ -322,3 +322,33 @@ export const FullWidthActionMakesButtonFull: Story = {
     await expect(btn.className).toMatch(/w-full/);
   },
 };
+
+/**
+ * a11y: the dialog is named by its header title (aria-labelledby resolves to
+ * the visible heading), and opening moves focus into the dialog so keyboard
+ * users start inside it, not on the page behind.
+ */
+export const AccessibleNameAndInitialFocus: Story = {
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Header title="Delete workspace" />
+      <Modal.Body>This cannot be undone.</Modal.Body>
+      <Modal.Footer>
+        <Button>Cancel</Button>
+        <Button variant="danger">Delete</Button>
+      </Modal.Footer>
+    </Modal>
+  ),
+  // Modal portals into `document.body` — scope queries to body, not canvas.
+  play: async () => {
+    const scope = within(document.body);
+    const dialog = await scope.findByRole('dialog');
+    // Named by the header title, not left anonymous.
+    const labelId = dialog.getAttribute('aria-labelledby');
+    await expect(labelId).toBeTruthy();
+    const heading = document.getElementById(labelId ?? '');
+    await expect(heading?.textContent).toBe('Delete workspace');
+    // Focus moved inside the dialog on open.
+    await expect(dialog.contains(document.activeElement)).toBe(true);
+  },
+};

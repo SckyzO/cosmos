@@ -1,6 +1,7 @@
 import { AlertTriangle, Loader2, Save, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from './overlayA11y';
 
 export type ConfirmationModalProps = {
   open: boolean;
@@ -39,6 +40,9 @@ export const ConfirmationModal = ({
   saveLabel = 'Save & go',
   hideSave = false,
 }: ConfirmationModalProps) => {
+  const titleId = useId();
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -52,10 +56,12 @@ export const ConfirmationModal = ({
 
   return createPortal(
     <div
+      ref={trapRef}
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="cosmos-confirmation-title"
+      aria-labelledby={titleId}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onStay} aria-hidden />
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
@@ -64,10 +70,7 @@ export const ConfirmationModal = ({
             <AlertTriangle className="h-5 w-5 text-amber-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3
-              id="cosmos-confirmation-title"
-              className="font-semibold text-gray-900 dark:text-white"
-            >
+            <h3 id={titleId} className="font-semibold text-gray-900 dark:text-white">
               {title}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>

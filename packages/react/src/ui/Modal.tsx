@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, type ButtonVariant } from './Button';
+import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -19,10 +20,19 @@ export type ModalProps = {
   onClose: () => void;
   size?: ModalSize;
   className?: string;
+  /**
+   * Accessible name for the dialog when it has no `Modal.Header` title to point
+   * at. When a `Modal.Header title=…` is present, the dialog is labelled by it
+   * automatically and this is unnecessary.
+   */
+  ariaLabel?: string;
   children: ReactNode;
 };
 
-const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) => {
+const Root = ({ open, onClose, size = 'md', className, ariaLabel, children }: ModalProps) => {
+  const titleId = useId();
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -40,12 +50,16 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
   // (cards, sidebars, overflow:hidden containers).
   return createPortal(
     <div
+      ref={trapRef}
+      tabIndex={-1}
       className={clsx(
         'fixed inset-0 z-50 flex',
         isFull ? 'items-stretch justify-stretch' : 'items-center justify-center p-4'
       )}
       role="dialog"
       aria-modal="true"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabel ? undefined : titleId}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -60,7 +74,7 @@ const Root = ({ open, onClose, size = 'md', className, children }: ModalProps) =
           className
         )}
       >
-        {children}
+        <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
       </div>
     </div>,
     document.body
@@ -75,34 +89,39 @@ export type ModalHeaderProps = {
   children?: ReactNode;
 };
 
-const Header = ({ title, description, onClose, className, children }: ModalHeaderProps) => (
-  <div
-    className={clsx(
-      'flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800',
-      className
-    )}
-  >
-    <div className="min-w-0 flex-1">
-      {title && (
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+const Header = ({ title, description, onClose, className, children }: ModalHeaderProps) => {
+  const titleId = useDialogTitleId();
+  return (
+    <div
+      className={clsx(
+        'flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800',
+        className
       )}
-      {description && (
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+    >
+      <div className="min-w-0 flex-1">
+        {title && (
+          <h2 id={titleId} className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {title}
+          </h2>
+        )}
+        {description && (
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        )}
+        {children}
+      </div>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close modal"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
       )}
-      {children}
     </div>
-    {onClose && (
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close modal"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    )}
-  </div>
-);
+  );
+};
 
 const Body = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div className={clsx('px-5 py-4', className)}>{children}</div>
@@ -198,7 +217,7 @@ const Alert = ({
 
   if (layout === 'horizontal') {
     return (
-      <Root open={open} onClose={onClose} size="lg">
+      <Root open={open} onClose={onClose} size="lg" ariaLabel={title}>
         <div className="bg-white sm:flex sm:items-start sm:p-6 dark:bg-gray-900">
           <div
             className={clsx(
@@ -235,7 +254,7 @@ const Alert = ({
   }
 
   return (
-    <Root open={open} onClose={onClose} size="sm">
+    <Root open={open} onClose={onClose} size="sm" ariaLabel={title}>
       <div className="p-6 text-center">
         <div
           className={clsx(
