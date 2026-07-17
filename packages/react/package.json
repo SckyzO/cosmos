@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-react",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "React 19 + Tailwind 4 UI component library — 135+ themeable, accessible components (forms, overlays, navigation, tables, data display) with built-in light/dark mode.",
   "license": "MIT",
   "author": "SckyzO",
