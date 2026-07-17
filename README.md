@@ -2,7 +2,7 @@
 
 Design system for sckyzo's projects — React 19 + Tailwind 4 + Storybook 10.
 
-**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 15 sidebar groups, 930+ stories, dark/light theming.
+**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 16 groups, 940+ stories, dark/light theming.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
@@ -17,11 +17,11 @@ portals, and rackscope itself eventually).
 
 ## Packages
 
-| Package                                    | Description                                                    | Latest |
-| ------------------------------------------ | -------------------------------------------------------------- | ------ |
-| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, light/dark CSS vars   | 0.1.0  |
-| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — 135+ components, ESM + CJS + DTS  | 0.0.0  |
-| [`@sckyzo/cosmos-charts`](packages/charts) | Opinionated ApexCharts wrappers themed for Cosmos (separately) | 0.0.0  |
+| Package                                    | Description                                                    |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, light/dark CSS vars   |
+| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — 135+ components, ESM + CJS + DTS  |
+| [`@sckyzo/cosmos-charts`](packages/charts) | Opinionated ApexCharts wrappers themed for Cosmos (separately) |
 
 ## Apps
 
@@ -48,7 +48,7 @@ Notable groups:
 
 - **Pages** — 17 full-page templates (Dashboard, Auth, Blog, DocPage, …)
 - **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, Lists, Description List, HR
-- **Forms** — 26 controls (Input, Select, Combobox, DatePicker single + range, …)
+- **Forms** — 25 controls (Input, Select, Combobox, DatePicker single + range, …)
 - **Charts** — `@sckyzo/cosmos-charts` (BarChart, LineArea, Donut, Sparkline, Realtime, gauges)
 
 ## Development (everything in Docker)
@@ -66,9 +66,11 @@ make build          # Build all package dists
 make help           # See every available target
 ```
 
-`make ci` mirrors `.github/workflows/ci.yml` exactly — lint + format:check +
-typecheck + build + storybook:build + tests — and bails on the first failure.
-Running it before `git push` catches everything CI would catch.
+`make ci` mirrors `.github/workflows/ci.yml` (lint, format:check, typecheck,
+build, storybook:build, tests) and bails on the first failure. The one
+difference: CI installs Playwright browsers as a step, while `make ci` relies on
+the browsers baked into the dev image. Running it before `git push` catches what
+CI would catch.
 
 Alternative wrapper (`./devctl`) for ad-hoc commands:
 
@@ -80,16 +82,16 @@ Alternative wrapper (`./devctl`) for ad-hoc commands:
 
 ## Versions
 
-| Tool         | Version |
-| ------------ | ------- |
-| Node         | 22 LTS  |
-| pnpm         | 10.33.x |
-| React        | 19.2.x  |
-| Tailwind CSS | 4.2.x   |
-| Storybook    | 10.3.x  |
-| Vite         | 7.3.x   |
-| TypeScript   | 6.0.x   |
-| Playwright   | 1.60.x  |
+| Tool         | Version             |
+| ------------ | ------------------- |
+| Node         | ≥22 (dev image: 26) |
+| pnpm         | 10                  |
+| React        | 19                  |
+| Tailwind CSS | 4                   |
+| Storybook    | 10                  |
+| Vite         | 8                   |
+| TypeScript   | 6                   |
+| Playwright   | 1.6x                |
 
 ## Contributing
 
