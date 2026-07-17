@@ -1,0 +1,38 @@
+# Version automation. On every push to main, release-please maintains a single
+# "release PR" that bumps the changed packages and their CHANGELOGs from the
+# Conventional Commits since the last release. Merging that PR creates the git
+# tags (@sckyzo/cosmos-<pkg>@<version>), which publish.yml is already wired to
+# publish from.
+#
+# Tag format is pinned to match publish.yml: component = the npm package name,
+# tag-separator "@", no "v" prefix → @sckyzo/cosmos-react@1.2.3.
+#
+# Token: with the default GITHUB_TOKEN, release-please opens and updates the
+# release PR fine, but tags it pushes will NOT trigger publish.yml (GitHub does
+# not re-trigger workflows on token-authored events). To close the loop
+# automatically, add a fine-grained PAT as the RELEASE_PLEASE_TOKEN secret
+# (contents: write, pull-requests: write). Until then, run publish.yml manually
+# via workflow_dispatch after merging a release PR.
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Maintain the release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}

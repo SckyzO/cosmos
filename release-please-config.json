@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "include-v-in-tag": false,
+  "tag-separator": "@",
+  "separate-pull-requests": false,
+  "packages": {
+    "packages/theme": { "component": "@sckyzo/cosmos-theme" },
+    "packages/react": { "component": "@sckyzo/cosmos-react" },
+    "packages/charts": { "component": "@sckyzo/cosmos-charts" }
+  }
+}
