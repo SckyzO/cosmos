@@ -127,11 +127,11 @@ importers:
   packages/charts:
     dependencies:
       apexcharts:
-        specifier: ^5.16.0
-        version: 5.16.0
+        specifier: ^6.3.0
+        version: 6.3.0
       react-apexcharts:
         specifier: ^2.1.1
-        version: 2.1.1(apexcharts@5.16.0)(react@19.2.7)
+        version: 2.1.1(apexcharts@6.3.0)(react@19.2.7)
     devDependencies:
       '@storybook/react-vite':
         specifier: ^10.5.2
@@ -1972,8 +1972,8 @@ packages:
   any-promise@1.3.0:
     resolution: {integrity: sha512-7UvmKalWRt1wgjL1RrGxoSJW/0QZFIegpeGvZG9kjp8vrRu55XTHbwnqq2GpXm9uLbcuhxm3IqX9OB4MZR1b2A==}
 
-  apexcharts@5.16.0:
-    resolution: {integrity: sha512-ULO3Gqrm0/26uwBcYz49u181uIp8Fy6BQQgg9QUDajs+JAs/EbXxiAmdc6BLy1JY29/JXroM7P0j0t2JPDApdg==}
+  apexcharts@6.3.0:
+    resolution: {integrity: sha512-EjpwMV6SDSOMCPXAEO2MyzcJF4Tjtz9ZTKZKFLv/DgVysTgA/6EE4PkMzjbyuvs41L6zo0qGBMl9+DrEjcN9ig==}
 
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
@@ -4837,7 +4837,7 @@ snapshots:
 
   any-promise@1.3.0: {}
 
-  apexcharts@5.16.0: {}
+  apexcharts@6.3.0: {}
 
   aria-hidden@1.2.6:
     dependencies:
@@ -5595,9 +5595,9 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  react-apexcharts@2.1.1(apexcharts@5.16.0)(react@19.2.7):
+  react-apexcharts@2.1.1(apexcharts@6.3.0)(react@19.2.7):
     dependencies:
-      apexcharts: 5.16.0
+      apexcharts: 6.3.0
       prop-types: 15.8.1
       react: 19.2.7
 
