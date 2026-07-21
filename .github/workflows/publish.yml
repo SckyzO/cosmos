@@ -46,7 +46,12 @@ jobs:
         # publishing example): it sets the registry context. npm CLI treats the
         # unresolved `${NODE_AUTH_TOKEN}` placeholder as empty and falls through
         # to OIDC when a trusted publisher is configured.
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        # Pinned to v6 on purpose: setup-node v7 removed its dummy
+        # NODE_AUTH_TOKEN export, and OIDC trusted publishing here relies on npm
+        # reading an empty NODE_AUTH_TOKEN and falling through to OIDC. v6 is the
+        # version that published 0.0.3; revisit v7 only once a real publish
+        # confirms the OIDC fallthrough still works. Dependabot: do not bump.
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
