@@ -36,8 +36,10 @@ Two settings on the `<html>` element restyle every component:
 <html class="sand" data-accent="teal"></html>
 ```
 
-Every theme and accent pair meets WCAG AA; `scripts/check-contrast.mjs` in the theme
-package checks it on every CI run. `@sckyzo/cosmos-react` ships the pickers
+The theme tokens meet WCAG AA in every theme and accent pair (body text, links, white
+text on the accent), and `scripts/check-contrast.mjs` in the theme package checks them on
+every CI run. Some components still fall short of AA, tracked in #151.
+`@sckyzo/cosmos-react` ships the pickers
 (`AppearanceSettings`, and `AppearanceMenu` for a top bar) and `applyAppearance` to set
 both. Details in the [theme README](packages/theme#themes--accents).
 

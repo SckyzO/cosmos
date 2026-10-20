@@ -316,7 +316,7 @@ const ThemesShowcase = ({ theme: initialTheme, accent: initialAccent }: CosmosAp
     <div className="grid gap-6 rounded-lg border border-gray-200 bg-white p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] dark:border-gray-800 dark:bg-gray-900">
       <div className="space-y-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          4 themes × 12 accent colors, every pair WCAG AA.
+          4 themes × 12 accent colors, with WCAG AA tokens in every pair.
         </p>
         <p>
           The theme is one class on <code>&lt;html&gt;</code> and the accent a{' '}
