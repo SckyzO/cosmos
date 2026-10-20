@@ -5,6 +5,24 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.0.3...@sckyzo/cosmos-react@0.1.0) (2026-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** ThemeToggleTri's 'oled' mode is now 'deep-blue' and the oledLabel prop is replaced by deepBlueLabel.
+
+### Features
+
+* **react:** add align and aria-label to Popover.Content ([d4c39bd](https://github.com/SckyzO/cosmos/commit/d4c39bd28e9b0e27fadd08f932aa6debbecaff01))
+* **react:** add AppearanceMenu for picking theme and accent in a top bar ([5181ad7](https://github.com/SckyzO/cosmos/commit/5181ad7eb3d06c693fbc602500901536383978a6))
+* **react:** add AppearanceSettings and deep-blue ThemeToggleTri mode ([597f714](https://github.com/SckyzO/cosmos/commit/597f714ba4a22076dd9d11ffeffca222b34d0df6))
+
+
+### Bug Fixes
+
+* **react:** stretch PaletteCard label rows to the card's height ([de3aba7](https://github.com/SckyzO/cosmos/commit/de3aba7397b0ceb8bb8540e47997fe8ec9168b7f))
+
 ## [0.0.3](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.0.2...@sckyzo/cosmos-react@0.0.3) (2026-07-17)
 
 
