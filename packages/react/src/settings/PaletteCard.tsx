@@ -67,9 +67,9 @@ export const PaletteCard = ({ meta, active = false, onClick, className }: Palett
       />
     </div>
 
-    {/* Label row */}
+    {/* Label row — flex-1 fills the card when a taller neighbor stretches the grid row. */}
     <div
-      className="flex items-center justify-between px-2.5 py-1.5"
+      className="flex flex-1 items-center justify-between px-2.5 py-1.5"
       style={{
         backgroundColor: meta.preview.surface,
         borderTop: `1px solid ${meta.preview.border}`,
