@@ -28,6 +28,10 @@ import {
   type CosmosAppearance,
 } from '../../../packages/react/src';
 import type { ColumnDef } from '../../../packages/react/src/table/types';
+// Versions come from the packages so the page can't drift from what's published.
+import chartsPkg from '../../../packages/charts/package.json';
+import reactPkg from '../../../packages/react/package.json';
+import themePkg from '../../../packages/theme/package.json';
 
 // ---------------------------------------------------------------------------
 // Welcome page rendered as a regular story (not MDX) so that the preview
@@ -365,7 +369,7 @@ const WelcomePage = ({
       <span className="font-bold tracking-[0.18em] text-gray-900 dark:text-gray-100">COSMOS</span>
       <span className="text-gray-500 dark:text-gray-400">
         <span className="mr-1.5 inline-block size-[7px] animate-pulse rounded-full bg-emerald-500" />
-        v0.1.0 · 133 components · 128 stories · build live
+        v{reactPkg.version} · 130+ components · 960+ stories · build live
       </span>
     </div>
 
@@ -627,20 +631,20 @@ export default () => <Button variant="primary">Hello Cosmos</Button>;`}
       <div className="grid gap-3.5 md:grid-cols-3">
         <PkgCard
           name="@sckyzo/cosmos-theme"
-          version="v0.1.0"
-          what="Tailwind 4 theme tokens + CSS variables. Required by the other two packages."
+          version={`v${themePkg.version}`}
+          what="Tailwind 4 tokens, CSS variables, 4 themes and 12 accents. Installed with cosmos-react."
           install="pnpm add @sckyzo/cosmos-theme"
         />
         <PkgCard
           name="@sckyzo/cosmos-react"
-          version="v0.0.0"
-          what="React 19 component library. Peer-depends on the theme. Ships ESM only."
+          version={`v${reactPkg.version}`}
+          what="React 19 component library. Depends on the theme. Ships ESM, CJS and types."
           install="pnpm add @sckyzo/cosmos-react"
         />
         <PkgCard
           name="@sckyzo/cosmos-charts"
-          version="v0.0.0"
-          what="Opinionated ApexCharts wrappers themed for Cosmos. Optional, shipped separately."
+          version={`v${chartsPkg.version}`}
+          what="ApexCharts wrappers that follow the Cosmos theme and accent. Optional, shipped separately."
           install="pnpm add @sckyzo/cosmos-charts"
         />
       </div>

@@ -1,6 +1,12 @@
 # Spec — 4 themes and 12 accent colors
 
-> Status: approved.
+> Status: implemented in 0.1.0 (#145, then #146 for `AppearanceMenu`).
+>
+> Changes made during implementation: `PalettePreview` gained an optional `text` color so
+> light and dark previews stay readable in one picker; Sidebar icons in active rows inherit
+> the label color; `PageBreadcrumb` link hover moved to `brand-600`; LineAreaChart got a fix
+> for y-axis labels that went blank after an options update. The release is 0.1.0, not
+> 1.0.0 (`bump-minor-pre-major`).
 
 ## Goal
 
