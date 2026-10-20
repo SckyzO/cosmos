@@ -42,5 +42,9 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           use_commit_signing: true
+          # Code changes get high effort; the model default (medium on
+          # Opus/Sonnet 5.5) is fine for answers but thin for edits. Higher
+          # effort draws more of the subscription per run.
+          claude_args: --effort high
           additional_permissions: |
             actions: read
