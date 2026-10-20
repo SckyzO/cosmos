@@ -56,9 +56,15 @@ jobs:
       # run it. Installing here covers both `Unit tests` (which actually
       # contains the e2e suite via `pnpm -r test`) and downstream needs.
       # Chromium only: it is the sole Playwright project and the engine the
-      # Vitest browser runner uses.
+      # Vitest browser runner uses. Each package installs the revision its own
+      # Playwright pins: tests/e2e (`@playwright/test`) and apps/storybook
+      # (`playwright`, Vitest's provider). A patch bump can change the revision,
+      # and installing from e2e alone left Vitest unable to launch. Dependabot
+      # groups the two, so the second install is normally a no-op.
       - name: Install Playwright browsers
-        run: pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
+          pnpm --filter @cosmos/storybook exec playwright install chromium
 
       - name: Unit + E2E tests
         run: pnpm test
