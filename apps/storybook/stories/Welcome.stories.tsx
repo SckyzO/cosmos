@@ -11,7 +11,10 @@ import {
   Palette,
   Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 import {
+  AppearanceSettings,
+  applyAppearance,
   Avatar,
   Button,
   CodeBlock,
@@ -22,6 +25,7 @@ import {
   ProgressBar,
   StatusBadge,
   Toggle,
+  type CosmosAppearance,
 } from '../../../packages/react/src';
 import type { ColumnDef } from '../../../packages/react/src/table/types';
 
@@ -298,7 +302,63 @@ const PkgCard = ({
 // The Welcome page itself
 // ---------------------------------------------------------------------------
 
-const WelcomePage = () => (
+// The picker drives the same <html> class and data-accent as the toolbar menus,
+// so the whole page, live preview included, follows it. It starts from the
+// toolbar's values and remounts when they change.
+const ThemesShowcase = ({ theme: initialTheme, accent: initialAccent }: CosmosAppearance) => {
+  const [theme, setTheme] = useState(initialTheme);
+  const [accent, setAccent] = useState(initialAccent);
+  return (
+    <div className="grid gap-6 rounded-lg border border-gray-200 bg-white p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] dark:border-gray-800 dark:bg-gray-900">
+      <div className="space-y-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+        <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          4 themes × 12 accent colors, every pair WCAG AA.
+        </p>
+        <p>
+          The theme is one class on <code>&lt;html&gt;</code> and the accent a{' '}
+          <code>data-accent</code> attribute. Every component follows: pick one here and this page
+          changes with it.
+        </p>
+        <p>
+          Ship the picker with <code>AppearanceSettings</code> on a settings page, or{' '}
+          <code>AppearanceMenu</code> behind an icon in a top bar.
+        </p>
+        <p className="flex flex-wrap gap-x-4 gap-y-1">
+          <a
+            href="./?path=/story/foundations-appearance--default"
+            className="text-brand-600 dark:text-brand-400 hover:underline"
+          >
+            Foundations/Appearance →
+          </a>
+          <a
+            href="./?path=/story/settings-appearance-menu--in-topbar"
+            className="text-brand-600 dark:text-brand-400 hover:underline"
+          >
+            Appearance menu →
+          </a>
+        </p>
+      </div>
+      <AppearanceSettings
+        theme={theme}
+        accent={accent}
+        onThemeChange={(next) => {
+          setTheme(next);
+          applyAppearance({ theme: next, accent });
+        }}
+        onAccentChange={(next) => {
+          setAccent(next);
+          applyAppearance({ theme, accent: next });
+        }}
+      />
+    </div>
+  );
+};
+
+const WelcomePage = ({
+  appearance = { theme: 'deep-blue', accent: 'blue' },
+}: {
+  appearance?: CosmosAppearance;
+}) => (
   <div className="mx-auto max-w-[1180px] px-5 pb-16">
     {/* Hero: status bar */}
     <div className="mt-6 flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-white px-3.5 py-2 font-mono text-xs dark:border-gray-800 dark:bg-gray-900">
@@ -333,6 +393,14 @@ const WelcomePage = () => (
         </Button>
       </a>
     </div>
+
+    {/* Themes & accents */}
+    <section className="mt-12">
+      <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
+        Themes & accents
+      </h2>
+      <ThemesShowcase key={`${appearance.theme}-${appearance.accent}`} {...appearance} />
+    </section>
 
     {/* Live preview */}
     <section className="mt-12">
@@ -654,4 +722,12 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   name: 'Welcome',
+  render: (_args, { globals }) => (
+    <WelcomePage
+      appearance={{
+        theme: globals.theme || 'deep-blue',
+        accent: globals.accent || 'blue',
+      }}
+    />
+  ),
 };
