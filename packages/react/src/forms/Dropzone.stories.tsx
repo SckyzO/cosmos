@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ImageIcon } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fireEvent } from 'storybook/test';
+import { expect, fireEvent, waitFor } from 'storybook/test';
 import { Dropzone } from './Dropzone';
 
 const meta = {
@@ -118,7 +118,8 @@ export const RemovingClearsFile: Story = {
     await expect(canvas.getByText('foo.txt')).toBeInTheDocument();
     const remove = canvas.getByRole('button', { name: /remove foo\.txt/i });
     fireEvent.click(remove);
-    await expect(canvas.queryByText('foo.txt')).toBeNull();
+    // The removal re-renders asynchronously outside vitest's act() environment.
+    await waitFor(() => expect(canvas.queryByText('foo.txt')).toBeNull());
   },
 };
 
