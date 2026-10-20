@@ -1,4 +1,8 @@
 version: 2
+# Monthly (1st of the month) for every ecosystem: a weekly cadence opened a
+# stream of PRs that each replayed CI and conflicted on pnpm-lock.yaml. The
+# schedule only drives version updates; security updates still open as soon
+# as an advisory lands.
 updates:
   # ---------------------------------------------------------------------------
   # npm via pnpm — root + all workspaces
@@ -6,8 +10,7 @@ updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'weekly'
-      day: 'monday'
+      interval: 'monthly'
     open-pull-requests-limit: 10
     commit-message:
       prefix: 'chore(deps)'
@@ -74,13 +77,12 @@ updates:
           - 'patch'
 
   # ---------------------------------------------------------------------------
-  # GitHub Actions — pin by SHA, weekly bumps
+  # GitHub Actions — pin by SHA, monthly bumps
   # ---------------------------------------------------------------------------
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'weekly'
-      day: 'monday'
+      interval: 'monthly'
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(ci)'
@@ -100,8 +102,7 @@ updates:
   - package-ecosystem: 'docker'
     directory: '/config/docker'
     schedule:
-      interval: 'weekly'
-      day: 'monday'
+      interval: 'monthly'
     open-pull-requests-limit: 3
     commit-message:
       prefix: 'chore(docker)'
