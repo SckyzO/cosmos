@@ -1,6 +1,8 @@
 # --- Node ---
 node_modules/
 .pnpm-store/
+# Playwright browsers fetched by `make install` (PLAYWRIGHT_BROWSERS_PATH)
+.cache/
 *.tgz
 *.log
 npm-debug.log*
