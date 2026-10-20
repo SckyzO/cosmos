@@ -488,7 +488,15 @@ export default () => <Button variant="primary">Hello Cosmos</Button>;`}
         The theme is a class on <code>&lt;html&gt;</code> (none for light, <code>sand</code>,{' '}
         <code>dark</code> or <code>deep-blue</code>) and the accent a <code>data-accent</code>{' '}
         attribute: <code>&lt;html class=&quot;sand&quot; data-accent=&quot;teal&quot;&gt;</code>.
-        Your app's theme switcher sets both. The toolbar's theme and accent menus do the same here.
+        Your app's theme switcher sets both. The toolbar's theme and accent menus do the same here,
+        and{' '}
+        <a
+          href="./?path=/story/foundations-appearance--default"
+          className="text-brand-600 dark:text-brand-400 hover:underline"
+        >
+          Foundations/Appearance
+        </a>{' '}
+        lets you try every combination from one page.
       </p>
     </section>
 
