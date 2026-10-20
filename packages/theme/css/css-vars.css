@@ -1,7 +1,16 @@
 /* Cosmos CSS variables — universal (work with or without Tailwind).
  *
- * Light mode is :root (default). Dark mode is .dark — applied by the
- * consumer's theme switcher (ThemeContext, etc.) on the <html> element.
+ * Four themes, selected by a single class on the <html> element (set by the
+ * consumer's theme switcher — ThemeContext, etc.):
+ *
+ *   light  → no class (:root default) — cool gray
+ *   sand   → .sand — warm beige light theme
+ *   dark   → .dark — blue-tinted dark theme
+ *   oled   → .oled — neutral black/gray dark theme (also triggers `dark:` utilities)
+ *
+ * sand and oled also re-tint the Tailwind gray scale (--color-white,
+ * --color-gray-*) so components styled with bg-white / text-gray-500 /
+ * dark:bg-gray-900 follow the theme without per-theme classes.
  *
  * Consumers reference these via var(--color-bg-base), var(--color-text-primary), etc.
  * Tailwind 4 utilities (bg-accent-primary, etc.) are bridged via tailwind-tokens.css.
@@ -41,6 +50,66 @@
   --color-text-muted: #667085;
 
   --color-accent: #465fff;
+}
+
+.sand {
+  --color-bg-base: #f9f5eb;
+  --color-bg-panel: #fffcf7;
+  --color-bg-elevated: #fffcf7;
+
+  --color-border: #d5cbba;
+
+  --color-text-base: #1e1711;
+  --color-text-primary: #1e1711;
+  --color-text-secondary: #746656;
+  --color-text-muted: #a39684;
+
+  --color-accent: #465fff;
+
+  /* Warm gray scale — same lightness steps as Tailwind gray, beige hue. */
+  --color-white: oklch(99.3% 0.008 85);
+  --color-gray-50: oklch(97% 0.014 85);
+  --color-gray-100: oklch(94.8% 0.018 84);
+  --color-gray-200: oklch(90.5% 0.022 82);
+  --color-gray-300: oklch(84.5% 0.026 80);
+  --color-gray-400: oklch(68% 0.03 75);
+  --color-gray-500: oklch(52% 0.03 70);
+  --color-gray-600: oklch(43% 0.028 65);
+  --color-gray-700: oklch(36% 0.025 60);
+  --color-gray-800: oklch(27.5% 0.02 60);
+  --color-gray-900: oklch(21% 0.016 60);
+  --color-gray-950: oklch(13% 0.012 60);
+}
+
+.oled {
+  color-scheme: dark;
+
+  --color-bg-base: #000;
+  --color-bg-panel: #0a0a0a;
+  --color-bg-elevated: #171717;
+
+  --color-border: #262626;
+
+  --color-text-base: #e5e5e5;
+  --color-text-primary: #fff;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+
+  --color-accent: #465fff;
+
+  /* Neutral gray scale with the dark end pushed to true black. */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #404040;
+  --color-gray-700: #262626;
+  --color-gray-800: #171717;
+  --color-gray-900: #0a0a0a;
+  --color-gray-950: #000;
+  --color-gray-dark: #0a0a0a;
 }
 
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class

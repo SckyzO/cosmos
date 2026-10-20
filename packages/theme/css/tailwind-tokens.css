@@ -6,12 +6,12 @@
  *   @import '@sckyzo/cosmos-theme/vars';
  *   @import '@sckyzo/cosmos-theme/fonts';
  *
- * The dark variant is class-based (.dark) — applied by the consumer's theme switcher.
+ * The dark variant is class-based (.dark or .oled) — applied by the consumer's theme switcher.
  */
 
-/* Tailwind dark variant: respond to the .dark class set by the consumer's ThemeContext,
-   instead of (or in addition to) prefers-color-scheme. */
-@custom-variant dark (&:is(.dark, .dark *));
+/* Tailwind dark variant: respond to the .dark / .oled class set by the consumer's
+   ThemeContext, instead of (or in addition to) prefers-color-scheme. */
+@custom-variant dark (&:is(.dark, .dark *, .oled, .oled *));
 
 @theme {
   /* ── Typography ─────────────────────────────────────────────────────────── */

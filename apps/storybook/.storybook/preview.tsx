@@ -110,7 +110,7 @@ const preview: Preview = {
   decorators: [
     withCosmosSurface,
     withThemeByClassName({
-      themes: { light: '', dark: 'dark' },
+      themes: { light: '', sand: 'sand', dark: 'dark', oled: 'oled' },
       defaultTheme: 'dark',
       parentSelector: 'html',
     }),
