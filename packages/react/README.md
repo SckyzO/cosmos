@@ -91,6 +91,9 @@ function Appearance() {
 }
 ```
 
+For a top bar, `AppearanceMenu` takes the same props and puts the two pickers
+in a panel behind an icon button, for example in `Topbar`'s `rightActions`.
+
 Saving the choice (local storage, user profile) is left to the app.
 
 Charts live in a separate package, [`@sckyzo/cosmos-charts`](../charts), so apps

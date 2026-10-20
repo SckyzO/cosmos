@@ -26,6 +26,8 @@ export type AppearanceSettingsProps = {
   themes?: CosmosThemeMeta[];
   /** Accents to offer. Default: all of `COSMOS_ACCENTS`. */
   accents?: CosmosAccentMeta[];
+  /** Columns of the theme grid. Default 4; use 2 in narrow containers. */
+  themeColumns?: number;
   className?: string;
 };
 
@@ -43,6 +45,7 @@ export const AppearanceSettings = ({
   accentLabel = 'Accent color',
   themes = COSMOS_THEMES,
   accents = COSMOS_ACCENTS,
+  themeColumns = 4,
   className,
 }: AppearanceSettingsProps) => {
   const themeHeadingId = useId();
@@ -57,6 +60,7 @@ export const AppearanceSettings = ({
           className="mt-3"
           palettes={themes}
           value={theme}
+          cols={themeColumns}
           // ids come from `themes`, so they are CosmosTheme values.
           onChange={(id) => onThemeChange(id as CosmosTheme)}
         />
