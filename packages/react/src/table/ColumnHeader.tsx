@@ -84,7 +84,7 @@ export const ColumnHeader = ({
               aria-label="Filter column"
               className={clsx(
                 'flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
-                filterCount > 0 && 'text-brand-500'
+                filterCount > 0 && 'text-brand-600 dark:text-brand-400'
               )}
             >
               <Filter className="h-3 w-3" />

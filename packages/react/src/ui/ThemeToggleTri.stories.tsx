@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { applyAppearance, type CosmosAccent } from '../settings/appearance';
 import { ThemeToggleTri, type ThemeMode } from './ThemeToggleTri';
 
 const meta = {
@@ -18,30 +19,44 @@ type Story = StoryObj<typeof meta>;
 
 export const Light: Story = { args: { theme: 'light' } };
 export const Dark: Story = { args: { theme: 'dark' } };
-export const Oled: Story = { args: { theme: 'oled' } };
+export const DeepBlue: Story = { args: { theme: 'deep-blue' } };
 export const Small: Story = { args: { theme: 'light', size: 'sm' } };
 
-export const AllThemes: Story = {
+export const AllModes: Story = {
   render: () => (
     <div className="flex items-center gap-3">
       <ThemeToggleTri theme="light" onChange={fn()} />
       <ThemeToggleTri theme="dark" onChange={fn()} />
-      <ThemeToggleTri theme="oled" onChange={fn()} />
+      <ThemeToggleTri theme="deep-blue" onChange={fn()} />
     </div>
   ),
 };
 
+const MODES: readonly string[] = ['light', 'dark', 'deep-blue'];
+
+const ControlledToggle = ({ initial }: { initial: ThemeMode }) => {
+  const [theme, setTheme] = useState(initial);
+  const onChange = (next: ThemeMode) => {
+    setTheme(next);
+    // The toggle only reports the next mode: applying it is the app's job.
+    const accent = (document.documentElement.dataset.accent ?? 'blue') as CosmosAccent;
+    applyAppearance({ theme: next, accent });
+  };
+  return (
+    <div className="space-y-3">
+      <ThemeToggleTri theme={theme} onChange={onChange} />
+      <p className="text-xs text-[var(--color-text-muted)]">
+        Current: <code>{theme}</code> — click cycles to the next mode and applies it to the page
+      </p>
+    </div>
+  );
+};
+
+/** Starts from the toolbar theme (light when it's sand) and remounts when it changes. */
 export const Controlled: Story = {
-  render: () => {
-    const [theme, setTheme] = useState<ThemeMode>('light');
-    return (
-      <div className="space-y-3">
-        <ThemeToggleTri theme={theme} onChange={setTheme} />
-        <p className="text-xs text-[var(--color-text-muted)]">
-          Current: <code>{theme}</code> — click cycles to next
-        </p>
-      </div>
-    );
+  render: (_args, { globals }) => {
+    const initial = (MODES.includes(globals.theme) ? globals.theme : 'light') as ThemeMode;
+    return <ControlledToggle key={initial} initial={initial} />;
   },
 };
 
@@ -57,21 +72,21 @@ export const LightClickFiresWithDark: Story = {
   },
 };
 
-export const DarkClickFiresWithOled: Story = {
+export const DarkClickFiresWithDeepBlue: Story = {
   args: { theme: 'dark', onChange: fn() },
   play: async ({ args, canvas }) => {
-    const button = canvas.getByRole('button', { name: /switch to oled mode/i });
+    const button = canvas.getByRole('button', { name: /switch to deep blue mode/i });
     await expect(button).toHaveAttribute('data-theme', 'dark');
     await userEvent.click(button);
-    await expect(args.onChange).toHaveBeenCalledWith('oled');
+    await expect(args.onChange).toHaveBeenCalledWith('deep-blue');
   },
 };
 
-export const OledClickWrapsToLight: Story = {
-  args: { theme: 'oled', onChange: fn() },
+export const DeepBlueClickWrapsToLight: Story = {
+  args: { theme: 'deep-blue', onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to light mode/i });
-    await expect(button).toHaveAttribute('data-theme', 'oled');
+    await expect(button).toHaveAttribute('data-theme', 'deep-blue');
     await userEvent.click(button);
     await expect(args.onChange).toHaveBeenCalledWith('light');
   },

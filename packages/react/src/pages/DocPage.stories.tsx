@@ -644,7 +644,7 @@ const RELEASES: Release[] = [
     date: '2026-05-12',
     added: [
       '80+ React components covering Tailwind UI Plus / Application UI',
-      'Tokenised theme with light + dark + OLED variants',
+      'Tokenised theme with light + dark + deep blue variants',
       'Storybook 10 with vitest browser-mode test runner',
     ],
   },

@@ -108,7 +108,7 @@ export const SignInForm = ({
             <button
               type="button"
               onClick={onForgotPassword}
-              className="text-brand-500 hover:text-brand-600 text-xs font-medium transition-colors"
+              className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-xs font-medium transition-colors"
             >
               {forgotLabel}
             </button>

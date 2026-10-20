@@ -14,7 +14,7 @@ pnpm add @sckyzo/cosmos-react @sckyzo/cosmos-theme
 pnpm add react react-dom   # peers, react 19+
 ```
 
-`@sckyzo/cosmos-theme` carries the CSS (tokens, fonts, light/dark vars). The
+`@sckyzo/cosmos-theme` carries the CSS (tokens, fonts, theme and accent vars). The
 components render unstyled without it.
 
 ## Set up the styles
@@ -33,7 +33,7 @@ In your main CSS file:
    The path is relative to this CSS file; adjust the depth to your layout. */
 @source '../node_modules/@sckyzo/cosmos-react/dist/**/*.{js,cjs}';
 
-/* Cosmos tokens (the @theme block) then the light/dark CSS vars. */
+/* Cosmos tokens (the @theme block) then the theme and accent CSS vars. */
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';
 
@@ -63,6 +63,35 @@ function Example() {
   );
 }
 ```
+
+## Themes and accents
+
+The theme is a class on `<html>` and the accent a `data-accent` attribute, see
+the [theme README](../theme#themes--accents). `AppearanceSettings` renders a
+picker for each, and `applyAppearance` sets them on the document:
+
+```tsx
+import { useEffect, useState } from 'react';
+import { AppearanceSettings, applyAppearance, type CosmosAppearance } from '@sckyzo/cosmos-react';
+
+function Appearance() {
+  const [appearance, setAppearance] = useState<CosmosAppearance>({
+    theme: 'light',
+    accent: 'blue',
+  });
+  useEffect(() => applyAppearance(appearance), [appearance]);
+  return (
+    <AppearanceSettings
+      theme={appearance.theme}
+      accent={appearance.accent}
+      onThemeChange={(theme) => setAppearance((a) => ({ ...a, theme }))}
+      onAccentChange={(accent) => setAppearance((a) => ({ ...a, accent }))}
+    />
+  );
+}
+```
+
+Saving the choice (local storage, user profile) is left to the app.
 
 Charts live in a separate package, [`@sckyzo/cosmos-charts`](../charts), so apps
 that don't render charts don't ship the ApexCharts bundle.
