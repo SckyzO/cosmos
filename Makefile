@@ -95,5 +95,5 @@ ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every p
 	  echo '── 3. typecheck ──' && pnpm typecheck && \
 	  echo '── 4. build packages ──' && pnpm build && \
 	  echo '── 5. storybook:build ──' && pnpm storybook:build && \
-	  echo '── 6. unit + e2e tests ──' && pnpm test && \
+	  echo '── 6. unit + e2e tests ──' && CI=true pnpm test && \
 	  echo '── ALL GREEN ──'"

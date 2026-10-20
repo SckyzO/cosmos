@@ -32,8 +32,9 @@ for (const c of cases) {
     // that would shadow the props table.
     const argsTable = frame.locator('table.docblock-argstable').first();
     // Web-first assertion instead of a fixed sleep: retries until the table is
-    // populated. The generous timeout (kept under the 30 s test timeout) covers
-    // the dev server compiling the docs page on first visit.
+    // populated. The generous timeout (kept under the 30 s test timeout) is for
+    // the dev-server paths (compose, ./devctl e2e), which compile the docs page
+    // on first visit; CI serves the static build and resolves in a second.
     await expect(argsTable).toContainText(c.expectProp, { ignoreCase: true, timeout: 20_000 });
   });
 }
