@@ -10,9 +10,9 @@ import * as projectAnnotations from './preview';
 // is closed before the open handshake completes, generating a recurring
 // `WebSocket closed without opened` unhandled rejection. Tests still pass
 // but the noise pollutes the Storybook UI "Tests" panel — which captures
-// unhandled rejections via its own listener, so the
-// `dangerouslyIgnoreUnhandledErrors: true` flag in `vitest.config.ts`
-// (which only affects Vitest's own runner) doesn't reach it. Marking the
+// unhandled rejections via its own listener, so the `onUnhandledError`
+// filter in `vitest.config.ts` (which only affects Vitest's own runner)
+// doesn't reach it. Marking the
 // rejection as handled here suppresses the noise without hiding real
 // failures. See https://storybook.js.org/docs/writing-tests/integrations/vitest-addon/?ref=ui#what-happens-if-vitest-itself-has-an-error
 if (typeof window !== 'undefined') {

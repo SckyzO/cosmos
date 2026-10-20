@@ -20,8 +20,12 @@ export default defineConfig({
   test: {
     // The Vite HMR client tries to reach a dev server in browser mode and
     // fails with "WebSocket closed without opened" — those rejections are
-    // harmless in CI. Ignore so a successful test run doesn't exit 1.
-    dangerouslyIgnoreUnhandledErrors: true,
+    // harmless. Drop only that one: a blanket dangerouslyIgnoreUnhandledErrors
+    // also swallowed "browserType.launch: Executable doesn't exist", so a run
+    // that executed zero tests (browser revision mismatch) exited 0.
+    onUnhandledError(error) {
+      if (error.message?.includes('WebSocket closed without opened')) return false;
+    },
     projects: [
       {
         plugins: [
