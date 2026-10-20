@@ -37,8 +37,11 @@ export const Default: Story = {
 };
 
 export const Positions: Story = {
+  // The panels open outside the 2×2 grid: leave room on every side so the
+  // `top` one isn't cut off by the frame.
+  parameters: portalDocsParams(400),
   render: () => (
-    <div className="grid h-72 grid-cols-2 place-items-center gap-12">
+    <div className="grid grid-cols-2 place-items-center gap-x-12 gap-y-24 p-20">
       {(['top', 'right', 'bottom', 'left'] as PopoverPosition[]).map((pos) => (
         <Popover key={pos} defaultOpen>
           <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
