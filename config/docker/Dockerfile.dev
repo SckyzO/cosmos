@@ -45,6 +45,10 @@ RUN if [ "$USER_UID" != "1000" ] || [ "$USER_GID" != "1000" ]; then \
     fi
 
 # --- Switch to non-root user ------------------------------------------------
+# DL3066 wants a numeric UID so an orchestrator can verify runAsNonRoot. This is
+# a local dev image, never scheduled by one, and 'node' is remapped above to the
+# host UID — the name is what keeps HOME and the build args consistent.
+# hadolint ignore=DL3066
 USER node
 WORKDIR /workspace
 
