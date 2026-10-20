@@ -51,7 +51,7 @@ jobs:
         # reading an empty NODE_AUTH_TOKEN and falling through to OIDC. v6 is the
         # version that published 0.0.3; revisit v7 only once a real publish
         # confirms the OIDC fallthrough still works. Dependabot: do not bump.
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
