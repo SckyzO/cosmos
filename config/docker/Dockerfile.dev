@@ -1,7 +1,9 @@
 # cosmos-dev image
 # Node 26 Debian (Playwright needs system libs Alpine doesn't bundle).
 # Node 26 is the Current line and enters LTS on 2026-10-28.
-# Embeds: pnpm 10, Playwright browsers (Chromium + Firefox), Storybook deps.
+# Embeds: pnpm 10, the system libraries Chromium needs, Storybook deps.
+# Browsers are NOT baked in: `make install` fetches the revision each workspace
+# Playwright pins into the bind-mounted workspace (PLAYWRIGHT_BROWSERS_PATH).
 # Runs as non-root 'node' user, with UID/GID matching the host (build args).
 #
 # Build (preferred, via Makefile):
@@ -32,7 +34,7 @@ RUN npm install -g corepack@latest \
  && corepack enable
 
 # --- Root: install Playwright system deps (most accurate list comes from playwright itself)
-RUN npx -y playwright@latest install-deps chromium firefox \
+RUN npx -y playwright@latest install-deps chromium \
  && rm -rf /var/lib/apt/lists/*
 
 # --- UID/GID matching host (default 1000:1000 if not passed) ----------------
@@ -52,8 +54,14 @@ RUN if [ "$USER_UID" != "1000" ] || [ "$USER_GID" != "1000" ]; then \
 USER node
 WORKDIR /workspace
 
-# --- User: install Playwright browsers (cached in /home/node/.cache/ms-playwright)
-RUN npx -y playwright@latest install chromium firefox
+# --- Playwright browsers live in the workspace, not the image ---------------
+# Browser revisions are tied to the exact Playwright version, and the workspace
+# pins two (tests/e2e's @playwright/test, apps/storybook's playwright) that
+# Dependabot bumps weekly. Baking `playwright@latest` here drifted from both, so
+# e2e and Vitest couldn't launch. `make install` runs `pnpm browsers:install`,
+# which fetches whatever the lockfile pins into this bind-mounted, gitignored
+# path; a version bump then needs `make install`, not an image rebuild.
+ENV PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright
 
 # Tell pnpm to use a project-local store so it survives bind mounts.
 ENV PNPM_HOME=/home/node/.pnpm-store

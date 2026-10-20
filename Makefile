@@ -28,14 +28,14 @@ build-image: ## Build cosmos-dev Docker image (UID/GID matched to host)
 rebuild-image: ## Rebuild cosmos-dev image without cache
 	docker build --no-cache --build-arg USER_UID=$(HOST_UID) --build-arg USER_GID=$(HOST_GID) -t $(DEV_IMAGE) -f config/docker/Dockerfile.dev .
 
-install: ## pnpm install (in container, as host user)
-	$(DOCKER_RUN) $(DEV_IMAGE) pnpm install
+install: ## pnpm install + the Playwright browsers the lockfile pins (in container, as host user)
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "pnpm install && pnpm browsers:install"
 
 report-update: ## Report outdated dependencies across all workspaces (read-only)
 	@$(DOCKER_RUN) $(DEV_IMAGE) pnpm outdated -r || true
 
 update: ## Update ALL deps to latest (majors included) + refresh lockfile — run `make ci` after
-	$(DOCKER_RUN) $(DEV_IMAGE) pnpm update -r --latest
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "pnpm update -r --latest && pnpm browsers:install"
 
 lint: ## ESLint on all workspaces
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm lint
@@ -53,7 +53,7 @@ typecheck: ## tsc --noEmit on all workspaces
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm typecheck
 
 test: ## Vitest unit tests
-	$(DOCKER_RUN) $(DEV_IMAGE) pnpm test
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "pnpm browsers:install && pnpm test"
 
 storybook: ## Start Storybook via docker compose (http://localhost:6006)
 	docker compose up storybook
@@ -65,10 +65,10 @@ storybook-build: ## Build Storybook static site
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm storybook:build
 
 test-e2e: ## Run Playwright e2e (auto-starts storybook via compose)
-	docker compose run --rm playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm test"
+	docker compose run --rm playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm test"
 
 screenshots: ## Capture story screenshots into screenshots/ (not in CI). Filter: STORIES=<id substring>
-	docker compose run --rm -e STORIES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm screenshots"
+	docker compose run --rm -e STORIES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm screenshots"
 
 build: ## Build all packages
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm build
@@ -95,5 +95,5 @@ ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every p
 	  echo '── 3. typecheck ──' && pnpm typecheck && \
 	  echo '── 4. build packages ──' && pnpm build && \
 	  echo '── 5. storybook:build ──' && pnpm storybook:build && \
-	  echo '── 6. unit + e2e tests ──' && CI=true pnpm test && \
+	  echo '── 6. unit + e2e tests ──' && pnpm browsers:install && CI=true pnpm test && \
 	  echo '── ALL GREEN ──'"

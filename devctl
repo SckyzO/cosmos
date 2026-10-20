@@ -45,7 +45,7 @@ case "${1:-help}" in
     ;;
   e2e)
     ensure_image
-    $DOCKER_RUN "$DEV_IMAGE" pnpm test:e2e
+    $DOCKER_RUN "$DEV_IMAGE" sh -c "pnpm browsers:install && pnpm test:e2e"
     ;;
   outdated)
     ensure_image
@@ -57,6 +57,7 @@ case "${1:-help}" in
     ensure_image
     shift
     $DOCKER_RUN "$DEV_IMAGE" pnpm update -r --latest "$@"
+    $DOCKER_RUN "$DEV_IMAGE" pnpm browsers:install
     ;;
   run)
     ensure_image

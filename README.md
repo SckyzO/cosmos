@@ -58,7 +58,7 @@ no Playwright on the host.
 
 ```bash
 make build-image    # Build cosmos-dev image (first time only)
-make install        # pnpm install inside the container
+make install        # pnpm install + Playwright browsers, inside the container
 make storybook      # Start Storybook on http://localhost:6006
 make ci             # Run the FULL CI pipeline locally — RUN THIS BEFORE EVERY PUSH
 make test           # Unit + e2e tests only
@@ -67,10 +67,14 @@ make help           # See every available target
 ```
 
 `make ci` mirrors `.github/workflows/ci.yml` (lint, format:check, typecheck,
-build, storybook:build, tests) and bails on the first failure. The one
-difference: CI installs Playwright browsers as a step, while `make ci` relies on
-the browsers baked into the dev image. Running it before `git push` catches what
-CI would catch.
+build, storybook:build, tests) and bails on the first failure. Running it
+before `git push` catches what CI would catch.
+
+Playwright browsers are not baked into the dev image: their revision is tied to
+the exact Playwright version in the lockfile. `make install` fetches them into
+`.cache/ms-playwright` (gitignored), and the test targets top them up if a
+version bump needs a new revision. After pulling a Playwright bump, `make
+install` is enough; no image rebuild.
 
 Alternative wrapper (`./devctl`) for ad-hoc commands:
 
