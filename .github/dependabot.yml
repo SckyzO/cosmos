@@ -62,9 +62,13 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      # `playwright` (Vitest's browser provider, apps/storybook) and
+      # `@playwright/test` (tests/e2e) must resolve the same version: CI installs
+      # one browser revision for both, and a patch bump can change it.
       playwright:
         patterns:
           - '@playwright/*'
+          - 'playwright'
         update-types:
           - 'minor'
           - 'patch'
