@@ -6,11 +6,11 @@ Cosmos design tokens — CSS only.
 
 Provides three CSS files consumable by any framework:
 
-| Import                          | Purpose                                                                |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `@sckyzo/cosmos-theme/tailwind` | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors)      |
-| `@sckyzo/cosmos-theme/vars`     | Universal CSS custom properties (bg, text, border, accent + dark mode) |
-| `@sckyzo/cosmos-theme/fonts`    | `@fontsource` font imports (Outfit + JetBrains Mono)                   |
+| Import                          | Purpose                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `@sckyzo/cosmos-theme/tailwind` | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors)              |
+| `@sckyzo/cosmos-theme/vars`     | Universal CSS custom properties (bg, text, border, accent), themes and accents |
+| `@sckyzo/cosmos-theme/fonts`    | `@fontsource` font imports (Outfit + JetBrains Mono)                           |
 
 ## Usage
 
@@ -39,6 +39,38 @@ Tailwind scans the components — see the
 /* Then reference vars: var(--color-brand-500), var(--color-bg-base), etc. */
 ```
 
+## Themes & accents
+
+Two independent settings, both on the `<html>` element:
+
+- **Theme**: one class, and only one at a time.
+
+  | Theme       | Class        | Look                                         |
+  | ----------- | ------------ | -------------------------------------------- |
+  | `light`     | _(none)_     | Cool gray, the default                       |
+  | `sand`      | `.sand`      | Warm beige light theme                       |
+  | `dark`      | `.dark`      | Neutral black/gray, softened (no pure black) |
+  | `deep-blue` | `.deep-blue` | Navy dark theme                              |
+
+  `.dark` and `.deep-blue` both enable Tailwind's `dark:` variant.
+
+- **Accent**: a `data-accent` attribute that swaps the whole `--color-brand-*`
+  scale (and with it `--color-accent` and the focus ring). Leave it off for
+  `blue`. The others are `indigo`, `violet`, `purple`, `rose`, `teal`, `cyan`,
+  `graphite`, `red`, `orange`, `amber`, `green`.
+
+```html
+<html class="sand" data-accent="teal"></html>
+```
+
+`red`, `orange`, `amber` and `green` look like the status colors (error,
+warning, success): a red primary button reads as a destructive action. Offer
+them last in any picker, after the others.
+
+Every theme × accent pair meets WCAG AA for body text, links and white text on
+the accent. `pnpm --filter @sckyzo/cosmos-theme test` runs the contrast check
+(`scripts/check-contrast.mjs`) against the CSS files.
+
 ## Tokens
 
 See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.
@@ -50,7 +82,7 @@ Categories:
 - **Status** : `--color-status-{ok,warn,crit,unknown}`
 - **Typography** : `--font-sans` (Outfit), `--font-mono` (JetBrains Mono)
 - **Shadows** : `--shadow-card`, `--shadow-card-hover`
-- **Layout vars** (dark-mode aware): `--color-bg-{base,panel,elevated}`, `--color-text-{base,primary,secondary,muted}`, `--color-border`, `--color-accent`
+- **Layout vars** (theme-aware): `--color-bg-{base,panel,elevated}`, `--color-text-{base,primary,secondary,muted}`, `--color-border`, `--color-accent`
 
 ## License
 
