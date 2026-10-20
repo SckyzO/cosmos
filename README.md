@@ -2,7 +2,7 @@
 
 Design system for sckyzo's projects — React 19 + Tailwind 4 + Storybook 10.
 
-**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 16 groups, 940+ stories, dark/light theming.
+**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 16 groups, 960+ stories, four themes and twelve accent colors.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
@@ -19,9 +19,27 @@ portals, and rackscope itself eventually).
 
 | Package                                    | Description                                                    | npm                                                                                                               |
 | ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, light/dark CSS vars   | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
+| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, 4 themes, 12 accents  | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
 | [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — 135+ components, ESM + CJS + DTS  | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
 | [`@sckyzo/cosmos-charts`](packages/charts) | Opinionated ApexCharts wrappers themed for Cosmos (separately) | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
+
+## Themes and accents
+
+Two settings on the `<html>` element restyle every component:
+
+- the **theme**, one class: none for `light`, `sand`, `dark` (neutral black/gray) or
+  `deep-blue` (navy);
+- the **accent**, a `data-accent` attribute: none for `blue`, or `indigo`, `violet`,
+  `purple`, `rose`, `teal`, `cyan`, `graphite`, `red`, `orange`, `amber`, `green`.
+
+```html
+<html class="sand" data-accent="teal"></html>
+```
+
+Every theme and accent pair meets WCAG AA; `scripts/check-contrast.mjs` in the theme
+package checks it on every CI run. `@sckyzo/cosmos-react` ships the pickers
+(`AppearanceSettings`, and `AppearanceMenu` for a top bar) and `applyAppearance` to set
+both. Details in the [theme README](packages/theme#themes--accents).
 
 ## Apps
 
