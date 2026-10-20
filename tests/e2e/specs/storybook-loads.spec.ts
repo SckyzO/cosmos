@@ -1,39 +1,23 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Storybook smoke test', () => {
   // Smoke tests aim at `welcome--default` — the canonical first story,
-  // pinned at the top of the sidebar by storySort. Updated from the
-  // long-gone Phase 0 `phase-0-hello--default` story.
-  test('Welcome story renders + capture console', async ({ page }) => {
-    const messages: string[] = [];
-    page.on('console', (msg) => messages.push(`[${msg.type()}] ${msg.text()}`));
-    page.on('pageerror', (err) => messages.push(`[pageerror] ${err.message}`));
-    page.on('requestfailed', (req) =>
-      messages.push(`[reqfail] ${req.url()} - ${req.failure()?.errorText}`)
-    );
+  // pinned at the top of the sidebar by storySort. A story that throws on
+  // render still "loads" a page, so both tests assert on rendered content and
+  // the first one also fails on any uncaught page error.
+  test('Welcome story renders without page errors', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.goto('/iframe.html?viewMode=story&id=welcome--default', {
-      waitUntil: 'networkidle',
-    });
-    await page.waitForTimeout(5000);
-    await page.screenshot({ path: '../../screenshots/storybook-welcome.png', fullPage: true });
+    await page.goto('/iframe.html?viewMode=story&id=welcome--default');
+    await expect(page.locator('#storybook-root')).not.toBeEmpty({ timeout: 20_000 });
 
-    console.log('--- BROWSER CONSOLE ---');
-    messages.forEach((m) => console.log(m));
-    console.log('--- END (' + messages.length + ' messages) ---');
+    expect(errors).toEqual([]);
   });
 
   test('Manager renders story canvas', async ({ page }) => {
-    const messages: string[] = [];
-    page.on('console', (msg) => messages.push(`[${msg.type()}] ${msg.text()}`));
-    page.on('pageerror', (err) => messages.push(`[pageerror] ${err.message}`));
-
-    await page.goto('/?path=/story/welcome--default', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(5000);
-    await page.screenshot({ path: '../../screenshots/storybook-manager.png', fullPage: true });
-
-    console.log('--- MANAGER CONSOLE ---');
-    messages.forEach((m) => console.log(m));
-    console.log('--- END (' + messages.length + ' messages) ---');
+    await page.goto('/?path=/story/welcome--default');
+    const frame = page.frameLocator('iframe#storybook-preview-iframe');
+    await expect(frame.locator('#storybook-root')).not.toBeEmpty({ timeout: 20_000 });
   });
 });
