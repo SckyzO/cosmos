@@ -17,7 +17,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -w $(WORKSPACE) -u $
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-e2e build storybook storybook-build clean shell ci compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-e2e screenshots build storybook storybook-build clean shell ci compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -64,8 +64,11 @@ storybook-detached: ## Start Storybook in background
 storybook-build: ## Build Storybook static site
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm storybook:build
 
-test-e2e: ## Run Playwright e2e (auto-starts storybook via compose, screenshots in screenshots/)
+test-e2e: ## Run Playwright e2e (auto-starts storybook via compose)
 	docker compose run --rm playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm test"
+
+screenshots: ## Capture story screenshots into screenshots/ (not in CI). Filter: STORIES=<id substring>
+	docker compose run --rm -e STORIES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm screenshots"
 
 build: ## Build all packages
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm build
