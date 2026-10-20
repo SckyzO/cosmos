@@ -8,6 +8,11 @@ export type PalettePreview = {
   surface: string;
   /** Borders and faint dividers. */
   border: string;
+  /**
+   * Label color on `surface`. Set it when the palettes in one picker mix light
+   * and dark surfaces: the default gray only reads on light ones.
+   */
+  text?: string;
 };
 
 export type PaletteMeta = {
@@ -73,12 +78,12 @@ export const PaletteCard = ({ meta, active = false, onClick, className }: Palett
       <span className="text-left">
         <span
           className="block text-xs font-semibold"
-          style={{ color: active ? undefined : '#6b7280' }}
+          style={{ color: meta.preview.text ?? (active ? undefined : '#6b7280') }}
         >
           {meta.label}
         </span>
         {meta.desc && (
-          <span className="block text-[10px]" style={{ color: '#9ca3af' }}>
+          <span className="block text-[10px]" style={{ color: meta.preview.text ?? '#9ca3af' }}>
             {meta.desc}
           </span>
         )}

@@ -249,8 +249,8 @@ const MiniChart = ({
           cy="50"
           r="40"
           fill="none"
-          stroke="#465fff"
           strokeWidth="14"
+          className="stroke-brand-500"
           strokeDasharray="180 251"
           strokeDashoffset="0"
           transform="rotate(-90 50 50)"
@@ -291,12 +291,12 @@ const MiniChart = ({
     >
       <defs>
         <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#465fff" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#465fff" stopOpacity="0" />
+          <stop offset="0%" style={{ stopColor: 'var(--color-brand-500)' }} stopOpacity="0.45" />
+          <stop offset="100%" style={{ stopColor: 'var(--color-brand-500)' }} stopOpacity="0" />
         </linearGradient>
       </defs>
       <polygon points={`0,100 ${points} 240,100`} fill="url(#grad)" />
-      <polyline points={points} fill="none" stroke="#465fff" strokeWidth="2" />
+      <polyline points={points} fill="none" className="stroke-brand-500" strokeWidth="2" />
     </svg>
   );
 };

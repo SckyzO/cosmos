@@ -40,6 +40,40 @@ const withCosmosSurface: Decorator = (Story, ctx) => {
 };
 
 /**
+ * Accent colors, in the order a picker shows them: red, orange, amber and
+ * green look like the status colors, so they come last. Mirrors the
+ * [data-accent] blocks in @sckyzo/cosmos-theme/vars.
+ */
+const ACCENTS = [
+  { value: 'blue', title: 'Blue' },
+  { value: 'indigo', title: 'Indigo' },
+  { value: 'violet', title: 'Violet' },
+  { value: 'purple', title: 'Purple' },
+  { value: 'rose', title: 'Rose' },
+  { value: 'teal', title: 'Teal' },
+  { value: 'cyan', title: 'Cyan' },
+  { value: 'graphite', title: 'Graphite' },
+  { value: 'red', title: 'Red' },
+  { value: 'orange', title: 'Orange' },
+  { value: 'amber', title: 'Amber' },
+  { value: 'green', title: 'Green' },
+];
+
+/**
+ * Apply the `accent` toolbar global as `data-accent` on <html>. Blue is the
+ * theme default, so it removes the attribute. Set before the story renders so
+ * charts read the right --color-brand-500 on mount. Not a second addon-themes
+ * decorator: that would share the `theme` global with the class switcher.
+ */
+const withAccent: Decorator = (Story, ctx) => {
+  const accent = ctx.globals.accent as string | undefined;
+  const root = document.documentElement;
+  if (!accent || accent === 'blue') delete root.dataset.accent;
+  else root.dataset.accent = accent;
+  return <Story />;
+};
+
+/**
  * Viewport presets — first the Tailwind 4 breakpoints (the canonical contract
  * for any responsive utility used in Cosmos components), then a handful of
  * real-device sizes for spot-checking. Storybook 10 ships viewport in core
@@ -61,6 +95,18 @@ const deviceViewports = {
 };
 
 const preview: Preview = {
+  globalTypes: {
+    accent: {
+      description: 'Accent color',
+      toolbar: {
+        title: 'Accent',
+        icon: 'paintbrush',
+        items: ACCENTS,
+        dynamicTitle: true,
+      },
+    },
+  },
+  initialGlobals: { accent: 'blue' },
   parameters: {
     controls: {
       matchers: {
@@ -109,9 +155,12 @@ const preview: Preview = {
   },
   decorators: [
     withCosmosSurface,
+    withAccent,
+    // deep-blue by default: it keeps the navy look that matches the docs
+    // chrome (cosmosDarkTheme).
     withThemeByClassName({
-      themes: { light: '', dark: 'dark' },
-      defaultTheme: 'dark',
+      themes: { light: '', sand: 'sand', dark: 'dark', 'deep-blue': 'deep-blue' },
+      defaultTheme: 'deep-blue',
       parentSelector: 'html',
     }),
   ],

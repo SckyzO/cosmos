@@ -176,14 +176,14 @@ const SidebarItem = ({
     'group mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
     collapsed ? 'justify-center px-2' : 'px-3',
     active
-      ? 'bg-brand-500/10 text-brand-500'
+      ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
       : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
   );
   const style = !collapsed && depth > 0 ? { paddingLeft: 12 + depth * 20 } : undefined;
 
   const content = (
     <>
-      <Icon className={clsx('h-5 w-5 shrink-0', active && 'text-brand-500')} />
+      <Icon className="h-5 w-5 shrink-0" />
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{label}</span>
@@ -261,11 +261,11 @@ const SidebarSubMenu = ({
         className={clsx(
           'group mx-2 flex w-[calc(100%-1rem)] items-center justify-center rounded-lg px-2 py-2 text-sm font-medium transition-colors',
           active
-            ? 'bg-brand-500/10 text-brand-500'
+            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
             : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
         )}
       >
-        <Icon className={clsx('h-5 w-5 shrink-0', active && 'text-brand-500')} />
+        <Icon className="h-5 w-5 shrink-0" />
       </button>
     );
   }
@@ -279,11 +279,11 @@ const SidebarSubMenu = ({
         className={clsx(
           'group mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors',
           active
-            ? 'bg-brand-500/10 text-brand-500'
+            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
             : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
         )}
       >
-        <Icon className={clsx('h-5 w-5 shrink-0', active && 'text-brand-500')} />
+        <Icon className="h-5 w-5 shrink-0" />
         <span className="flex-1 truncate">{label}</span>
         {badge && <span className="shrink-0">{badge}</span>}
         <ChevronDown

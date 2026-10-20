@@ -30,7 +30,7 @@
     "lint": "echo 'CSS-only package, no JS lint needed'",
     "lint:fix": "echo 'CSS-only package, no JS lint needed'",
     "typecheck": "echo 'CSS-only package, no TS check needed'",
-    "test": "echo 'CSS-only package, no tests yet'",
+    "test": "node scripts/check-contrast.mjs",
     "build": "echo 'CSS-only package, no build step needed'"
   },
   "dependencies": {

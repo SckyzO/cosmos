@@ -28,13 +28,15 @@ export const LineAreaChart = ({
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.45, opacityTo: 0.05 } },
     grid,
+    // One labels object per axis: ApexCharts writes the x-axis category
+    // formatter onto it, which blanked the y labels on the next update.
     xaxis: {
       categories,
-      labels: axisLabels,
+      labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { labels: axisLabels },
+    yaxis: { labels: { ...axisLabels } },
     legend: { show: false },
     tooltip: { theme: 'dark' },
   };

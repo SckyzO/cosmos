@@ -3,7 +3,7 @@ import { Moon, MoonStar, Sun } from 'lucide-react';
 import { forwardRef, type ButtonHTMLAttributes, type ComponentType } from 'react';
 
 export type ThemeToggleTriSize = 'sm' | 'md';
-export type ThemeMode = 'light' | 'dark' | 'oled';
+export type ThemeMode = 'light' | 'dark' | 'deep-blue';
 
 export type ThemeToggleTriProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -11,7 +11,7 @@ export type ThemeToggleTriProps = Omit<
 > & {
   /** Current theme. */
   theme: ThemeMode;
-  /** Called with the next theme in the cycle (light → dark → oled → light). */
+  /** Called with the next theme in the cycle (light → dark → deep-blue → light). */
   onChange: (next: ThemeMode) => void;
   /** Visual size. `md` (default) = 40px, `sm` = 32px. */
   size?: ThemeToggleTriSize;
@@ -19,8 +19,8 @@ export type ThemeToggleTriProps = Omit<
   lightLabel?: string;
   /** Label used when the next click will switch to dark mode. */
   darkLabel?: string;
-  /** Label used when the next click will switch to OLED mode. */
-  oledLabel?: string;
+  /** Label used when the next click will switch to deep blue mode. */
+  deepBlueLabel?: string;
 };
 
 const SIZE_CLASS: Record<ThemeToggleTriSize, { box: string; icon: string }> = {
@@ -28,7 +28,7 @@ const SIZE_CLASS: Record<ThemeToggleTriSize, { box: string; icon: string }> = {
   md: { box: 'h-10 w-10', icon: 'h-5 w-5' },
 };
 
-const TRI_ORDER: readonly ThemeMode[] = ['light', 'dark', 'oled'];
+const TRI_ORDER: readonly ThemeMode[] = ['light', 'dark', 'deep-blue'];
 
 const nextInCycle = (current: ThemeMode): ThemeMode => {
   const idx = TRI_ORDER.indexOf(current);
@@ -39,9 +39,15 @@ const nextInCycle = (current: ThemeMode): ThemeMode => {
 const ICON_FOR: Record<ThemeMode, ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
-  oled: MoonStar,
+  'deep-blue': MoonStar,
 };
 
+/**
+ * ThemeToggleTri — icon button that cycles light → dark → deep-blue. It is
+ * controlled: a click calls `onChange` with the next mode and changes nothing
+ * else, so apply the theme there (for example with `applyAppearance`). To
+ * offer all four themes, sand included, use `AppearanceSettings`.
+ */
 export const ThemeToggleTri = forwardRef<HTMLButtonElement, ThemeToggleTriProps>(
   function ThemeToggleTri(
     {
@@ -50,14 +56,14 @@ export const ThemeToggleTri = forwardRef<HTMLButtonElement, ThemeToggleTriProps>
       size = 'md',
       lightLabel = 'Switch to light mode',
       darkLabel = 'Switch to dark mode',
-      oledLabel = 'Switch to OLED mode',
+      deepBlueLabel = 'Switch to deep blue mode',
       className,
       ...rest
     },
     ref
   ) {
     const next = nextInCycle(theme);
-    const label = next === 'light' ? lightLabel : next === 'dark' ? darkLabel : oledLabel;
+    const label = next === 'light' ? lightLabel : next === 'dark' ? darkLabel : deepBlueLabel;
     const Icon = ICON_FOR[theme];
     const { box, icon } = SIZE_CLASS[size];
     return (

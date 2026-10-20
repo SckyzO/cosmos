@@ -485,7 +485,7 @@ const NotificationsPanelFooter = ({
           if (closeOnClick && !e.defaultPrevented) setOpen(false);
         }}
         className={clsx(
-          'text-brand-500 w-full rounded-lg py-2 text-center text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
+          'text-brand-600 dark:text-brand-400 w-full rounded-lg py-2 text-center text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
           className
         )}
         {...rest}

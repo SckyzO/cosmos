@@ -1,7 +1,22 @@
 /* Cosmos CSS variables — universal (work with or without Tailwind).
  *
- * Light mode is :root (default). Dark mode is .dark — applied by the
- * consumer's theme switcher (ThemeContext, etc.) on the <html> element.
+ * Two independent settings on the <html> element, set by the consumer's
+ * theme switcher (ThemeContext, etc.):
+ *
+ *   theme  → one class, at most one at a time:
+ *              light      no class (:root default) — cool gray
+ *              sand       .sand — warm beige light theme
+ *              dark       .dark — neutral black/gray dark theme
+ *              deep-blue  .deep-blue — navy dark theme
+ *   accent → data-accent="indigo" etc. — no attribute means blue
+ *
+ *   <html class="sand" data-accent="teal">
+ *
+ * Themes and accents redefine Tailwind's palette variables (--color-white,
+ * --color-gray-*, --color-brand-*), so components styled with bg-white /
+ * text-gray-500 / dark:bg-gray-900 / bg-brand-500 follow them without
+ * per-theme classes. These rules stay outside any @layer so they win over
+ * the @theme block, which Tailwind emits in @layer theme.
  *
  * Consumers reference these via var(--color-bg-base), var(--color-text-primary), etc.
  * Tailwind 4 utilities (bg-accent-primary, etc.) are bridged via tailwind-tokens.css.
@@ -23,10 +38,69 @@
   --color-text-muted: #98a2b3;
 
   /* ── Accent ────────────────────────────────────────────────────────────── */
-  --color-accent: #465fff;
+  --color-accent: var(--color-brand-500);
+}
+
+/* ── Themes ────────────────────────────────────────────────────────────── */
+
+.sand {
+  --color-bg-base: #f9f5eb;
+  --color-bg-panel: #fffcf7;
+  --color-bg-elevated: #fffcf7;
+
+  --color-border: #d5cbba;
+
+  --color-text-base: #1e1711;
+  --color-text-primary: #1e1711;
+  --color-text-secondary: #746656;
+  --color-text-muted: #a39684;
+
+  /* Warm gray scale — same lightness steps as Tailwind gray, beige hue. */
+  --color-white: oklch(99.3% 0.008 85);
+  --color-gray-50: oklch(97% 0.014 85);
+  --color-gray-100: oklch(94.8% 0.018 84);
+  --color-gray-200: oklch(90.5% 0.022 82);
+  --color-gray-300: oklch(84.5% 0.026 80);
+  --color-gray-400: oklch(68% 0.03 75);
+  --color-gray-500: oklch(52% 0.03 70);
+  --color-gray-600: oklch(43% 0.028 65);
+  --color-gray-700: oklch(36% 0.025 60);
+  --color-gray-800: oklch(27.5% 0.02 60);
+  --color-gray-900: oklch(21% 0.016 60);
+  --color-gray-950: oklch(13% 0.012 60);
 }
 
 .dark {
+  color-scheme: dark;
+
+  --color-bg-base: #0a0a0a;
+  --color-bg-panel: #141414;
+  --color-bg-elevated: #242424;
+
+  --color-border: #3d3d3d;
+
+  --color-text-base: #e5e5e5;
+  --color-text-primary: #fff;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #8f8f8f;
+
+  /* Neutral gray scale, softened near-black (no pure #000). */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #8f8f8f;
+  --color-gray-600: #5c5c5c;
+  --color-gray-700: #3d3d3d;
+  --color-gray-800: #242424;
+  --color-gray-900: #141414;
+  --color-gray-950: #0a0a0a;
+  --color-gray-dark: #141414;
+}
+
+/* Uses Tailwind's default gray scale. */
+.deep-blue {
   color-scheme: dark;
 
   --color-bg-base: #0c111d;
@@ -39,8 +113,175 @@
   --color-text-primary: #fff;
   --color-text-secondary: #98a2b3;
   --color-text-muted: #667085;
+}
 
-  --color-accent: #465fff;
+/* ── Accents ───────────────────────────────────────────────────────────────
+   Blue is the @theme default and has no rule. Red, orange, amber and green
+   look like the status colors (error / warning / success): list them last. */
+
+[data-accent='indigo'] {
+  --color-brand-25: #f4f6fe;
+  --color-brand-50: #eff2fe;
+  --color-brand-100: #e2e7ff;
+  --color-brand-200: #c9d3ff;
+  --color-brand-300: #a7b5ff;
+  --color-brand-400: #7f8fff;
+  --color-brand-500: #5963e9;
+  --color-brand-600: #4a4fd3;
+  --color-brand-700: #3c3bbf;
+  --color-brand-800: #2f25ab;
+  --color-brand-900: #24257a;
+  --color-brand-950: #160b63;
+}
+
+[data-accent='violet'] {
+  --color-brand-25: #f7f5ff;
+  --color-brand-50: #f3f0fe;
+  --color-brand-100: #eae4ff;
+  --color-brand-200: #d8ceff;
+  --color-brand-300: #c0abff;
+  --color-brand-400: #a57eff;
+  --color-brand-500: #8745f1;
+  --color-brand-600: #752cdb;
+  --color-brand-700: #6508c6;
+  --color-brand-800: #5200a4;
+  --color-brand-900: #3f097e;
+  --color-brand-950: #2b005b;
+}
+
+[data-accent='purple'] {
+  --color-brand-25: #fcf3ff;
+  --color-brand-50: #fbedff;
+  --color-brand-100: #f7dfff;
+  --color-brand-200: #f0c2ff;
+  --color-brand-300: #e696ff;
+  --color-brand-400: #d55bf8;
+  --color-brand-500: #ad2ecf;
+  --color-brand-600: #990aba;
+  --color-brand-700: #81019e;
+  --color-brand-800: #690181;
+  --color-brand-900: #520066;
+  --color-brand-950: #380046;
+}
+
+[data-accent='rose'] {
+  --color-brand-25: #fff3f6;
+  --color-brand-50: #ffeef1;
+  --color-brand-100: #ffdfe6;
+  --color-brand-200: #ffc3d2;
+  --color-brand-300: #ff96b4;
+  --color-brand-400: #ff4e90;
+  --color-brand-500: #d4166d;
+  --color-brand-600: #b8005c;
+  --color-brand-700: #9b004c;
+  --color-brand-800: #7f013d;
+  --color-brand-900: #64002f;
+  --color-brand-950: #45001e;
+}
+
+[data-accent='teal'] {
+  --color-brand-25: #defffa;
+  --color-brand-50: #d2fdf6;
+  --color-brand-100: #c8f3ec;
+  --color-brand-200: #99e7dc;
+  --color-brand-300: #31d5c6;
+  --color-brand-400: #02b3a5;
+  --color-brand-500: #038378;
+  --color-brand-600: #006f66;
+  --color-brand-700: #015c54;
+  --color-brand-800: #024a43;
+  --color-brand-900: #003833;
+  --color-brand-950: #002723;
+}
+
+[data-accent='cyan'] {
+  --color-brand-25: #ecf9ff;
+  --color-brand-50: #e1f7ff;
+  --color-brand-100: #c8f0ff;
+  --color-brand-200: #96e3fe;
+  --color-brand-300: #25cefb;
+  --color-brand-400: #01abd3;
+  --color-brand-500: #017f9d;
+  --color-brand-600: #016b84;
+  --color-brand-700: #01596e;
+  --color-brand-800: #014759;
+  --color-brand-900: #003645;
+  --color-brand-950: #002631;
+}
+
+[data-accent='graphite'] {
+  --color-brand-25: #f5f7fb;
+  --color-brand-50: #f0f3f7;
+  --color-brand-100: #e6e8ec;
+  --color-brand-200: #d0d6e2;
+  --color-brand-300: #b5bbc7;
+  --color-brand-400: #959ba6;
+  --color-brand-500: #707580;
+  --color-brand-600: #5d626d;
+  --color-brand-700: #4c515c;
+  --color-brand-800: #3c414b;
+  --color-brand-900: #2e3138;
+  --color-brand-950: #1f2228;
+}
+
+[data-accent='red'] {
+  --color-brand-25: #fff4f3;
+  --color-brand-50: #ffeeec;
+  --color-brand-100: #ffe0dd;
+  --color-brand-200: #ffc6c0;
+  --color-brand-300: #ff9b94;
+  --color-brand-400: #ff5a57;
+  --color-brand-500: #db192a;
+  --color-brand-600: #be021e;
+  --color-brand-700: #a00118;
+  --color-brand-800: #830011;
+  --color-brand-900: #67000b;
+  --color-brand-950: #470005;
+}
+
+[data-accent='orange'] {
+  --color-brand-25: #fff4f0;
+  --color-brand-50: #ffefe8;
+  --color-brand-100: #ffe1d5;
+  --color-brand-200: #ffc8b0;
+  --color-brand-300: #ff9f73;
+  --color-brand-400: #f66a15;
+  --color-brand-500: #c04f01;
+  --color-brand-600: #a44201;
+  --color-brand-700: #8a3600;
+  --color-brand-800: #712b00;
+  --color-brand-900: #592000;
+  --color-brand-950: #3d1300;
+}
+
+[data-accent='amber'] {
+  --color-brand-25: #fff5ea;
+  --color-brand-50: #fff0e0;
+  --color-brand-100: #ffe3c5;
+  --color-brand-200: #ffcb8f;
+  --color-brand-300: #ffa408;
+  --color-brand-400: #d48700;
+  --color-brand-500: #a46800;
+  --color-brand-600: #8a5601;
+  --color-brand-700: #734701;
+  --color-brand-800: #5d3900;
+  --color-brand-900: #482b00;
+  --color-brand-950: #321c00;
+}
+
+[data-accent='green'] {
+  --color-brand-25: #e5ffe9;
+  --color-brand-50: #d7ffde;
+  --color-brand-100: #cdf4d4;
+  --color-brand-200: #a5e9b2;
+  --color-brand-300: #5ad87e;
+  --color-brand-400: #32b75e;
+  --color-brand-500: #02863c;
+  --color-brand-600: #027232;
+  --color-brand-700: #015e28;
+  --color-brand-800: #014b1f;
+  --color-brand-900: #003915;
+  --color-brand-950: #00280d;
 }
 
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class

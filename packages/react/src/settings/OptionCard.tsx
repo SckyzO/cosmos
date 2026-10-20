@@ -47,7 +47,7 @@ export const OptionCard = ({
       <p
         className={clsx(
           'text-xs font-semibold',
-          active ? 'text-brand-500' : 'text-gray-700 dark:text-gray-300'
+          active ? 'text-brand-600 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'
         )}
       >
         {label}

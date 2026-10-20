@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import { LineAreaChart } from './LineAreaChart';
 import { RealtimeChart } from './RealtimeChart';
 import { RadialBarChart } from './RadialBarChart';
@@ -125,4 +126,38 @@ export const Treemap: Story = {
       />
     </Card>
   ),
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/**
+ * Charts re-read their colors when the theme or accent changes on <html>. The
+ * y-axis labels used to come back empty after that update: LineAreaChart
+ * shared one labels object between both axes and ApexCharts wrote the
+ * category formatter onto it.
+ */
+export const AccentSwitchKeepsYAxisLabels: Story = {
+  render: LineArea.render,
+  play: async ({ canvasElement }) => {
+    const yLabels = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
+    await waitFor(() => expect(yLabels().length).toBeGreaterThan(0));
+
+    const root = document.documentElement;
+    const previous = root.dataset.accent;
+    root.dataset.accent = 'teal';
+    try {
+      // Wait for the update: the series turns teal (brand-500).
+      await waitFor(
+        () => expect(canvasElement.querySelector('[stroke="#038378"]')).not.toBeNull(),
+        {
+          timeout: 3000,
+        }
+      );
+      await expect(yLabels()).not.toContain('');
+    } finally {
+      if (previous) root.dataset.accent = previous;
+      else delete root.dataset.accent;
+    }
+  },
 };
