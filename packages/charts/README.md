@@ -24,7 +24,7 @@ import { LineAreaChart, RealtimeChart, useChartTheme } from '@sckyzo/cosmos-char
 />;
 ```
 
-The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens to the current Cosmos color scheme (subscribes to `<html class="dark">` toggles).
+The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the brand color to the current Cosmos theme and accent: it subscribes to the theme class (`dark` and `deep-blue` render dark charts) and `data-accent` on `<html>`, and reads `--color-brand-500` and the gray scale from the CSS. `COSMOS_BRAND` is the default blue; use `useChartTheme().brand` to follow the accent.
 
 ## Charts shipped
 
