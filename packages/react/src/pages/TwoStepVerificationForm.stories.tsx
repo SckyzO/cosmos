@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
@@ -96,8 +96,11 @@ export const AutoSubmitOnComplete: Story = {
   play: async ({ args, canvas }) => {
     const cells = canvas.getAllByRole('textbox');
     cells[0].focus();
-    await userEvent.keyboard('1234');
-    await expect(args.onSubmit).toHaveBeenCalledWith('1234');
+    // One keyboard() call per digit: each call targets the cell that has focus
+    // now. A single '1234' call kept typing into the first cell under the
+    // Storybook UI's simulated events, though the input moves focus forward.
+    for (const digit of '1234') await userEvent.keyboard(digit);
+    await waitFor(() => expect(args.onSubmit).toHaveBeenCalledWith('1234'));
   },
 };
 
@@ -114,10 +117,11 @@ export const ManualSubmitDisabledUntilFilled: Story = {
     await expect(submit).toBeDisabled();
     const cells = canvas.getAllByRole('textbox');
     cells[0].focus();
-    await userEvent.keyboard('123');
+    // One keyboard() call per digit, as in AutoSubmitOnComplete.
+    for (const digit of '123') await userEvent.keyboard(digit);
     await expect(submit).toBeDisabled();
     await userEvent.keyboard('4');
-    await expect(submit).not.toBeDisabled();
+    await waitFor(() => expect(submit).not.toBeDisabled());
     await userEvent.click(submit);
     await expect(args.onSubmit).toHaveBeenCalledWith('1234');
   },

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { OtpInput } from './OtpInput';
 
 const meta = {
@@ -141,6 +141,6 @@ export const BackspaceMovesBack: Story = {
     cells[3].focus();
     // Cell 3 is empty → Backspace moves focus back AND clears cell 2 (the '3').
     await userEvent.keyboard('{Backspace}');
-    await expect(cells[2]).toHaveFocus();
+    await waitFor(() => expect(cells[2]).toHaveFocus());
   },
 };

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fireEvent, fn, userEvent, waitFor } from 'storybook/test';
 import { Button } from './Button';
 import { Toaster, toast } from './Toast';
 
@@ -226,7 +226,9 @@ export const ActionFiresHandler: Story = {
       expect(undoBtn).not.toBeNull();
     });
     const undoBtn = document.querySelector('button[data-button]') as HTMLButtonElement;
-    await userEvent.click(undoBtn);
+    // A plain click: Sonner calls setPointerCapture on pointerdown, and Firefox
+    // rejects the synthetic pointer id of userEvent.click ("Invalid pointer id").
+    fireEvent.click(undoBtn);
     await expect(extra.onUndo).toHaveBeenCalledTimes(1);
   },
 };

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
@@ -348,7 +348,7 @@ export const AccessibleNameAndInitialFocus: Story = {
     await expect(labelId).toBeTruthy();
     const heading = document.getElementById(labelId ?? '');
     await expect(heading?.textContent).toBe('Delete workspace');
-    // Focus moved inside the dialog on open.
-    await expect(dialog.contains(document.activeElement)).toBe(true);
+    // Focus moves inside the dialog on open, from an effect: wait for it.
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   },
 };
