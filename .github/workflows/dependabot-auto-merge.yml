@@ -2,6 +2,11 @@
 # Major bumps are left open for a human to review, since they can break. The
 # groups in dependabot.yml are already minor+patch only, so a major always
 # arrives as its own ungrouped PR and stays manual.
+#
+# A rebase can retarget an open PR to a newer release: #120 went from
+# apexcharts 6.7.0 to 8.3.1, and the auto-merge armed for the minor merged the
+# major unreviewed. The workflow re-runs on every push to the PR, so it now
+# disarms auto-merge whenever the update is no longer minor or patch.
 name: dependabot-auto-merge
 
 on: pull_request
@@ -21,6 +26,15 @@ jobs:
       - name: Enable auto-merge for minor and patch updates
         if: ${{ steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch' }}
         run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Disable auto-merge for anything else
+        if: ${{ steps.meta.outputs.update-type != 'version-update:semver-minor' && steps.meta.outputs.update-type != 'version-update:semver-patch' }}
+        run: |
+          if [ "$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')" = "true" ]; then
+            gh pr merge --disable-auto "$PR_URL"
+          fi
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
