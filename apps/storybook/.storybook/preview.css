@@ -1,7 +1,7 @@
 /* Cosmos preview CSS — order matters:
  *   tailwindcss base + @source (scan packages/react)
  *   → cosmos tokens (@theme block)
- *   → cosmos vars (:root + .dark)
+ *   → cosmos vars (:root + .sand + .dark + .deep-blue + [data-accent])
  */
 @import 'tailwindcss';
 
