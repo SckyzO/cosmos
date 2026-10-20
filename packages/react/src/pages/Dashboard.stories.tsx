@@ -7,7 +7,6 @@ import {
   FileText,
   LayoutDashboard,
   Layers,
-  Moon,
   Network,
   Plus,
   RefreshCw,
@@ -38,6 +37,13 @@ import { Tooltip } from '../ui/Tooltip';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
 import { BackToTopFab } from '../ui/BackToTopFab';
 import { IconBox } from '../ui/IconBox';
+import { AppearanceMenu } from '../settings/AppearanceMenu';
+import {
+  applyAppearance,
+  type CosmosAccent,
+  type CosmosAppearance,
+  type CosmosTheme,
+} from '../settings/appearance';
 import { Sk as Skeleton } from '../feedback/Skeleton';
 import { EmptyState } from '../feedback/EmptyState';
 import { LoadingState } from '../feedback/LoadingState';
@@ -174,24 +180,34 @@ const TIMELINE: TimelineItem[] = [
 
 // ── Reusable shell ───────────────────────────────────────────────────────────
 
-const ThemeToggle = () => (
-  <button
-    type="button"
-    onClick={() => document.documentElement.classList.toggle('dark')}
-    className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
-    aria-label="Toggle theme"
-  >
-    <Moon className="h-4 w-4" />
-  </button>
-);
+// Applies the choice to the page; starts from the toolbar's values and
+// remounts when they change.
+const HeaderAppearance = ({ theme: initialTheme, accent: initialAccent }: CosmosAppearance) => {
+  const [theme, setTheme] = useState(initialTheme);
+  const [accent, setAccent] = useState(initialAccent);
+  return (
+    <AppearanceMenu
+      theme={theme}
+      accent={accent}
+      onThemeChange={(next) => {
+        setTheme(next);
+        applyAppearance({ theme: next, accent });
+      }}
+      onAccentChange={(next) => {
+        setAccent(next);
+        applyAppearance({ theme, accent: next });
+      }}
+    />
+  );
+};
 
 const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string }) => (
   <button
     type="button"
     aria-label={label}
-    className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
+    className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
   >
-    <Icon className="h-4 w-4" />
+    <Icon className="h-5 w-5" aria-hidden />
   </button>
 );
 
@@ -304,7 +320,7 @@ const MiniChart = ({
 // ── The Dashboard story ──────────────────────────────────────────────────────
 
 export const Default: Story = {
-  render: () => (
+  render: (_args, { globals }) => (
     <Shell
       topbar={
         <Topbar
@@ -312,7 +328,11 @@ export const Default: Story = {
           rightActions={
             <>
               <IconButton icon={Bell} label="Notifications" />
-              <ThemeToggle />
+              <HeaderAppearance
+                key={`${globals.theme}-${globals.accent}`}
+                theme={(globals.theme || 'deep-blue') as CosmosTheme}
+                accent={(globals.accent || 'blue') as CosmosAccent}
+              />
               <IconButton icon={User} label="User profile" />
             </>
           }

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect } from 'storybook/test';
 import { PalettePicker } from './PalettePicker';
 import type { PaletteMeta } from './PaletteCard';
 
@@ -97,5 +98,41 @@ export const DarkThemes: Story = {
         </p>
       </Wrap>
     );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/**
+ * In a narrow grid a long label wraps and stretches its row: every card's
+ * label row must still reach the bottom of the card, with no gap under it.
+ */
+export const UnevenLabelsFillCards: Story = {
+  render: () => (
+    <Wrap>
+      <div className="w-80">
+        <PalettePicker
+          palettes={[
+            ...LIGHT_THEMES.slice(0, 3),
+            { ...LIGHT_THEMES[3], label: 'Paper with a long name' },
+          ]}
+          value="pure"
+          onChange={() => {}}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const cards = canvas.getAllByRole('button');
+    const heights = new Set(cards.map((c) => c.getBoundingClientRect().height));
+    await expect(heights.size).toBe(1);
+    for (const card of cards) {
+      const labelRow = card.lastElementChild as HTMLElement;
+      const borderBottom = parseFloat(getComputedStyle(card).borderBottomWidth);
+      await expect(labelRow.getBoundingClientRect().bottom).toBeCloseTo(
+        card.getBoundingClientRect().bottom - borderBottom,
+        1
+      );
+    }
   },
 };

@@ -37,8 +37,11 @@ export const Default: Story = {
 };
 
 export const Positions: Story = {
+  // The panels open outside the 2×2 grid: leave room on every side so the
+  // `top` one isn't cut off by the frame.
+  parameters: portalDocsParams(400),
   render: () => (
-    <div className="grid h-72 grid-cols-2 place-items-center gap-12">
+    <div className="grid grid-cols-2 place-items-center gap-x-12 gap-y-24 p-20">
       {(['top', 'right', 'bottom', 'left'] as PopoverPosition[]).map((pos) => (
         <Popover key={pos} defaultOpen>
           <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
@@ -49,6 +52,22 @@ export const Positions: Story = {
           </Popover.Content>
         </Popover>
       ))}
+    </div>
+  ),
+};
+
+/** `align="end"` keeps a panel opened from the right edge of the screen inside it. */
+export const AlignEnd: Story = {
+  render: () => (
+    <div className="flex h-48 items-start justify-end p-6">
+      <Popover defaultOpen>
+        <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+          Settings
+        </Popover.Trigger>
+        <Popover.Content align="end" arrow width="w-64">
+          <p className="text-xs">Flush with the trigger&apos;s right edge.</p>
+        </Popover.Content>
+      </Popover>
     </div>
   ),
 };
@@ -174,6 +193,62 @@ export const EscapeCloses: Story = {
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+  },
+};
+
+export const AlignEndIsFlushWithTrigger: Story = {
+  render: () => (
+    <div className="flex h-48 items-start justify-end p-6">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Align</Popover.Trigger>
+        <Popover.Content align="end" offset={8} aria-label="Aligned panel">
+          <p>Panel</p>
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Align' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    const panel = document.querySelector('[role="dialog"]') as HTMLElement;
+    await expect(panel).toHaveAccessibleName('Aligned panel');
+    const t = trigger.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    await expect(p.right).toBeCloseTo(t.right, 2);
+    await expect(p.top).toBeCloseTo(t.bottom + 8, 2);
+  },
+};
+
+export const AlignEndFollowsTriggerResize: Story = {
+  render: () => (
+    <div className="flex h-48 items-start justify-end p-6">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Resize</Popover.Trigger>
+        <Popover.Content align="end" arrow>
+          <p>Panel</p>
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // Fonts first, so a late font swap can't refresh the rect by itself.
+    await document.fonts.ready;
+    const trigger = canvas.getByRole('button', { name: 'Resize' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    // A wider trigger (web font swap, new label) must move the arrow with it.
+    trigger.style.paddingLeft = '48px';
+    const arrowCenter = () => {
+      const a = document
+        .querySelector('[role="dialog"] span[aria-hidden]')!
+        .getBoundingClientRect();
+      return (a.left + a.right) / 2;
+    };
+    await waitFor(() => {
+      const t = trigger.getBoundingClientRect();
+      expect(arrowCenter()).toBeCloseTo((t.left + t.right) / 2, 1);
+    });
   },
 };
 
