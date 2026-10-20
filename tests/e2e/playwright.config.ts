@@ -21,15 +21,20 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-  ],
+  // Chromium only: the suite guards Storybook wiring (smoke + autodocs), which
+  // is decided at build time and identical across engines. A second browser
+  // doubled the CI time without catching anything the first one missed.
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   // Only spawn storybook ourselves when not running inside the compose stack.
+  // In CI (and `make ci`) the static build from the previous step is served:
+  // the dev server compiles each docs page on first visit and Vite's dep
+  // optimizer can reload it mid-test, which is what made the suite flaky.
   webServer: inCompose
     ? undefined
     : {
-        command: 'pnpm --filter @cosmos/storybook dev --ci --quiet',
+        command: process.env.CI
+          ? `pnpm --filter @cosmos/storybook exec vite preview --outDir storybook-static --port ${STORYBOOK_PORT} --strictPort`
+          : 'pnpm --filter @cosmos/storybook dev --ci --quiet',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120 * 1000,

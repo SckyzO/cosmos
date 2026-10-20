@@ -75,7 +75,7 @@ COMMANDS:
     rebuild       Rebuild without cache
     shell         Interactive shell as host user
     storybook     Storybook dev server (http://localhost:6006, no auto-open)
-    e2e           Playwright e2e tests (screenshots in screenshots/)
+    e2e           Playwright e2e tests
     outdated      Report dependencies that are behind (never fails)
     update [pkg]  Update dependencies to latest, majors included
                   e.g.: ./devctl update

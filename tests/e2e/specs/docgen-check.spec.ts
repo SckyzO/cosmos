@@ -24,16 +24,17 @@ const cases: Array<{ id: string; name: string; expectProp: string }> = [
 
 for (const c of cases) {
   test(`autodocs: ${c.name} has ${c.expectProp} prop`, async ({ page }) => {
-    await page.goto(`/?path=/docs/${c.id}`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2500);
+    await page.goto(`/?path=/docs/${c.id}`);
     const frame = page.frameLocator('iframe#storybook-preview-iframe');
     // Storybook 10 renders the ArgTypes table with class `docblock-argstable`.
     // We can't fall back to "first visible table" because for table-rendering
     // components (DataTable) the story preview itself contains a <table>
     // that would shadow the props table.
     const argsTable = frame.locator('table.docblock-argstable').first();
-    await argsTable.waitFor({ state: 'visible', timeout: 10000 });
-    const txt = (await argsTable.innerText()).toLowerCase();
-    expect(txt).toContain(c.expectProp);
+    // Web-first assertion instead of a fixed sleep: retries until the table is
+    // populated. The generous timeout (kept under the 30 s test timeout) is for
+    // the dev-server paths (compose, ./devctl e2e), which compile the docs page
+    // on first visit; CI serves the static build and resolves in a second.
+    await expect(argsTable).toContainText(c.expectProp, { ignoreCase: true, timeout: 20_000 });
   });
 }
