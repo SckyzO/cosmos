@@ -94,3 +94,7 @@ test('CI scans the whole git history for secrets', () => {
   expect(workflow).toMatch(/fetch-depth: 0\b/);
   expect(workflow).toMatch(/pre-commit run --hook-stage manual gitleaks-history\b/);
 });
+
+test('SECURITY.md points to private vulnerability reporting', () => {
+  expect(read('SECURITY.md')).toContain('https://github.com/SckyzO/cosmos/security/advisories/new');
+});
