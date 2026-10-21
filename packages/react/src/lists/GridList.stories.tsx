@@ -113,6 +113,41 @@ export const ColsPropMapsToGridCols: Story = {
   },
 };
 
+/**
+ * Each footer action rounds the card corner it sits in, so its hover background
+ * follows the card: the first the bottom-left, the last the bottom-right.
+ */
+export const FooterActionsRoundTheirOuterCorner: Story = {
+  render: () => (
+    <GridList cols={2}>
+      <GridList.Card>
+        <div className="p-6 text-sm font-medium text-gray-900 dark:text-white">Two actions</div>
+        <GridList.Footer>
+          <GridList.FooterAction href="mailto:aiden.park@example.com">Email</GridList.FooterAction>
+          <GridList.FooterAction index={1} href="tel:+33000000000">
+            Call
+          </GridList.FooterAction>
+        </GridList.Footer>
+      </GridList.Card>
+      <GridList.Card>
+        <div className="p-6 text-sm font-medium text-gray-900 dark:text-white">One action</div>
+        <GridList.Footer>
+          <GridList.FooterAction href="/people/aiden.park">View profile</GridList.FooterAction>
+        </GridList.Footer>
+      </GridList.Card>
+    </GridList>
+  ),
+  play: async ({ canvas }) => {
+    const corners = (name: string) => {
+      const style = getComputedStyle(canvas.getByRole('link', { name }));
+      return [style.borderBottomLeftRadius !== '0px', style.borderBottomRightRadius !== '0px'];
+    };
+    await expect(corners('Email')).toEqual([true, false]);
+    await expect(corners('Call')).toEqual([false, true]);
+    await expect(corners('View profile')).toEqual([true, true]);
+  },
+};
+
 export const FooterActionAddsMlPxAfterFirst: Story = {
   render: () => (
     <GridList>
