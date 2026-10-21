@@ -1,5 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Filter, Globe, Database, LogOut, Server, Settings, User } from 'lucide-react';
+import {
+  Archive,
+  Filter,
+  Globe,
+  Database,
+  LogOut,
+  Server,
+  Settings,
+  Smartphone,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { Dropdown, type DropdownItem } from './Dropdown';
@@ -22,20 +32,20 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 export const SingleSelect: Story = {
   render: () => {
-    const [room, setRoom] = useState('all');
+    const [project, setProject] = useState('all');
     return (
       <Wrap>
         <SectionCard title="Filter dropdown with icon">
           <Dropdown
             icon={Filter}
-            value={room}
-            onChange={setRoom}
+            value={project}
+            onChange={setProject}
             options={[
-              { value: 'all', label: 'All rooms' },
-              { value: 'dc1-a', label: 'DC1 / Room A', icon: Globe },
-              { value: 'dc1-b', label: 'DC1 / Room B', icon: Globe },
-              { value: 'dc2-a', label: 'DC2 / Room A', icon: Database },
-              { value: 'maint', label: 'Maintenance', icon: Server, disabled: true },
+              { value: 'all', label: 'All projects' },
+              { value: 'website', label: 'Website', icon: Globe },
+              { value: 'mobile', label: 'Mobile app', icon: Smartphone },
+              { value: 'api', label: 'Public API', icon: Database },
+              { value: 'legacy', label: 'Legacy portal', icon: Archive, disabled: true },
             ]}
           />
         </SectionCard>
