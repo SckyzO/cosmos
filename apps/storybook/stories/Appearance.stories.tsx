@@ -90,3 +90,29 @@ export const PickingAppliesToDocument: Story = {
     await expect(root).not.toHaveAttribute('data-accent');
   },
 };
+
+/** The sizes under text-xs match the pixel classes they replace: font-size only. */
+export const SmallTextTokens: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <p style={{ fontSize: '16px', lineHeight: '24px' }}>
+      <span data-testid="text-2xs" className="text-2xs">
+        Eleven
+      </span>{' '}
+      <span data-testid="text-3xs" className="text-3xs">
+        Ten
+      </span>
+    </p>
+  ),
+  play: async ({ canvas }) => {
+    for (const [id, size] of [
+      ['text-2xs', '11px'],
+      ['text-3xs', '10px'],
+    ]) {
+      const style = getComputedStyle(canvas.getByTestId(id));
+      await expect(style.fontSize).toBe(size);
+      // No line height of their own: they keep the parent's.
+      await expect(style.lineHeight).toBe('24px');
+    }
+  },
+};
