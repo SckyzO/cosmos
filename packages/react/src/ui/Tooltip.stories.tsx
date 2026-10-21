@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Tooltip, TooltipHelp } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -68,4 +69,69 @@ export const Variants: Story = {
       </div>
     </Wrap>
   ),
+};
+
+// ── Keyboard access ──────────────────────────────────────────────────────────
+
+/** Focus shows the tooltip, Escape hides it, and it describes its trigger. */
+export const KeyboardFocusShowsTooltip: Story = {
+  render: () => (
+    <Wrap>
+      <Tooltip content="Deletes the selected rows">
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Delete' });
+    const tip = canvas.getByRole('tooltip');
+    await expect(tip).not.toBeVisible();
+
+    await userEvent.tab();
+    await expect(trigger).toHaveFocus();
+    await waitFor(() => expect(tip).toBeVisible());
+    await expect(trigger).toHaveAccessibleDescription('Deletes the selected rows');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tip).not.toBeVisible());
+    await expect(trigger).toHaveFocus();
+  },
+};
+
+/** Escape also closes a tooltip opened by the pointer, wherever focus is. */
+export const EscapeClosesHoveredTooltip: Story = {
+  render: () => (
+    <Wrap>
+      <Tooltip content="Deletes the selected rows">
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tip = canvas.getByRole('tooltip');
+    await userEvent.hover(canvas.getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(tip).toBeVisible());
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tip).not.toBeVisible());
+  },
+};
+
+/** The help icon is a button, so keyboard users can open its tooltip too. */
+export const HelpIconOpensOnFocus: Story = {
+  render: () => (
+    <Wrap>
+      <TooltipHelp text="Share of failed requests allowed this month." />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    const help = canvas.getByRole('button', { name: 'Help' });
+    await expect(help).toHaveFocus();
+    await waitFor(() => expect(canvas.getByRole('tooltip')).toBeVisible());
+    await expect(help).toHaveAccessibleDescription('Share of failed requests allowed this month.');
+  },
 };
