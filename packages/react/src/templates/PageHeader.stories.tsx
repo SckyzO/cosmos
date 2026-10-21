@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { Briefcase, Calendar, DollarSign, MapPin, Plus, RefreshCw } from 'lucide-react';
+import { Clock, Cpu, MapPin, Plus, RefreshCw, Server } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { PageBreadcrumb } from './PageBreadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
@@ -66,20 +66,20 @@ export const WithActions: Story = {
 export const WithMetaAndActions: Story = {
   render: () => (
     <PageHeader
-      title="Back End Developer"
+      title="compute-042"
       meta={
         <>
-          <PageHeader.MetaItem icon={Briefcase}>Full-time</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={MapPin}>Remote</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={DollarSign}>$120k – $140k</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={Calendar}>Closing on January 9, 2020</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Server}>Rack R12, slot 14</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={MapPin}>Paris DC1</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Cpu}>64 cores, 512 GB</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Clock}>Up 41 days</PageHeader.MetaItem>
         </>
       }
       actions={
         <>
+          <PageActionButton>Silence</PageActionButton>
           <PageActionButton>Edit</PageActionButton>
-          <PageActionButton>View</PageActionButton>
-          <PageActionButton variant="primary">Publish</PageActionButton>
+          <PageActionButton variant="primary">Drain</PageActionButton>
         </>
       }
     />
