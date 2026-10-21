@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ElementType, ReactNode } from 'react';
+import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 
 export type TimelineItem = {
@@ -21,6 +21,13 @@ export type TimelineItem = {
    * Defaults to `brand`.
    */
   tone?: TimelineTone;
+  /** Extra line under the description, e.g. "by Sarah Chen". */
+  meta?: ReactNode;
+  /**
+   * Section label, e.g. "Today". Consecutive items with the same `group` get
+   * one header above them.
+   */
+  group?: string;
 };
 
 export type TimelineTone = 'brand' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -84,7 +91,10 @@ const StepperIndicator = ({
   </span>
 );
 
-// ── Body (title + description + time) — shared across all line variants ──────
+// ── Body (title + description + meta + time) — shared across line variants ───
+
+const Meta = ({ meta }: { meta: ReactNode }) =>
+  meta ? <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{meta}</p> : null;
 
 const Body = ({ item }: { item: TimelineItem }) => (
   <div className="min-w-0 flex-1 pb-2 last:pb-0">
@@ -92,20 +102,26 @@ const Body = ({ item }: { item: TimelineItem }) => (
     {item.description && (
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
     )}
+    <Meta meta={item.meta} />
     {item.time && (
       <p className="mt-0.5 font-mono text-[10px] text-gray-400 uppercase">{item.time}</p>
     )}
   </div>
 );
 
-// ── Main component ──────────────────────────────────────────────────────────
+// ── One list of entries ─────────────────────────────────────────────────────
 
-export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) => {
+type TimelineListProps = TimelineProps & {
+  /** Id of the group header naming this list. */
+  labelledBy?: string;
+};
+
+const TimelineList = ({ items, variant = 'dot', className, labelledBy }: TimelineListProps) => {
   // `card` keeps its own simple stacked layout — no connector line, no
   // indicator column to align.
   if (variant === 'card') {
     return (
-      <ol className={clsx('space-y-3', className)}>
+      <ol aria-labelledby={labelledBy} className={clsx('space-y-3', className)}>
         {items.map((item) => (
           <li
             key={item.id}
@@ -119,6 +135,7 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
                     {item.description}
                   </p>
                 )}
+                <Meta meta={item.meta} />
               </div>
               {item.time && (
                 <span className="shrink-0 font-mono text-[10px] text-gray-400 uppercase">
@@ -140,7 +157,7 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
   const gap = variant === 'stepper' ? 'gap-x-4' : 'gap-x-3';
 
   return (
-    <ol className={clsx('flex flex-col', className)}>
+    <ol aria-labelledby={labelledBy} className={clsx('flex flex-col', className)}>
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return (
@@ -162,5 +179,57 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
         );
       })}
     </ol>
+  );
+};
+
+// ── Groups ───────────────────────────────────────────────────────────────────
+
+type TimelineRun = { group?: string; start: number; items: TimelineItem[] };
+
+/** Consecutive items sharing a `group` form one run, headed by that group. */
+const groupRuns = (items: TimelineItem[]) => {
+  const runs: TimelineRun[] = [];
+  items.forEach((item, i) => {
+    const last = runs[runs.length - 1];
+    if (last && last.group === item.group) last.items.push(item);
+    else runs.push({ group: item.group, start: i, items: [item] });
+  });
+  return runs;
+};
+
+const GroupHeader = ({ id, label }: { id: string; label: string }) => (
+  <h3
+    id={id}
+    className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+  >
+    {label}
+  </h3>
+);
+
+// ── Main component ──────────────────────────────────────────────────────────
+
+export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) => {
+  const baseId = useId();
+  const runs = groupRuns(items);
+  // Without groups the timeline stays one list.
+  if (runs.every((run) => !run.group)) {
+    return <TimelineList items={items} variant={variant} className={className} />;
+  }
+  return (
+    <div className={clsx('space-y-6', className)}>
+      {runs.map((run, i) => {
+        const headerId = `${baseId}-group-${i}`;
+        return (
+          <div key={run.start}>
+            {run.group && <GroupHeader id={headerId} label={run.group} />}
+            <TimelineList
+              items={run.items}
+              variant={variant}
+              labelledBy={run.group ? headerId : undefined}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 };
