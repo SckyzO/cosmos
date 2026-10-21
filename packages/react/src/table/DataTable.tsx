@@ -8,7 +8,8 @@ import { Checkbox } from '../forms/Checkbox';
 import { LoadingState } from '../feedback/LoadingState';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
-import type { ColumnDef, SortDirection } from './types';
+import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
+import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
@@ -22,6 +23,12 @@ export type DataTableProps<T> = {
   onRetry?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  /**
+   * Row height. `default` keeps the standard rows. `comfortable` pads the
+   * header and body cells more, for rows that carry two lines (a name over an
+   * email, an avatar) or need more room. Cell content stays vertically centred.
+   */
+  density?: DataTableDensity;
 
   // ── Selection ──────────────────────────────────────────────────────────────
   /** Show a checkbox column and enable row selection. */
@@ -66,6 +73,7 @@ export const DataTable = <T,>({
   onRetry,
   emptyTitle = 'No results',
   emptyDescription,
+  density = 'default',
   selectable = false,
   selection: selectionProp,
   defaultSelection,
@@ -339,7 +347,13 @@ export const DataTable = <T,>({
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-gray-100 dark:border-gray-800">
                 {selectable && (
-                  <th className="bg-gray-50 px-4 py-3 dark:bg-gray-800">
+                  <th
+                    className={clsx(
+                      'bg-gray-50 px-4',
+                      HEADER_CELL_PADDING[density],
+                      'dark:bg-gray-800'
+                    )}
+                  >
                     <Checkbox
                       aria-label="Select all rows"
                       checked={allVisibleSelected}
@@ -361,10 +375,17 @@ export const DataTable = <T,>({
                     filterSelected={filters[col.key]}
                     onFilterToggle={(v) => handleFilterToggle(col.key, v)}
                     onFilterClear={() => clearFilter(col.key)}
+                    density={density}
                   />
                 ))}
                 {renderRowAction && (
-                  <th className="bg-gray-50 px-4 py-3 text-right text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400">
+                  <th
+                    className={clsx(
+                      'bg-gray-50 px-4',
+                      HEADER_CELL_PADDING[density],
+                      'text-right text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400'
+                    )}
+                  >
                     Action
                   </th>
                 )}
@@ -383,7 +404,7 @@ export const DataTable = <T,>({
                     )}
                   >
                     {selectable && (
-                      <td className="px-4 py-3.5">
+                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
                         <Checkbox
                           aria-label={`Select row ${key}`}
                           checked={isSelected}
@@ -394,13 +415,20 @@ export const DataTable = <T,>({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={clsx('px-4 py-3.5 text-sm', ALIGN_CELL[col.align ?? 'left'])}
+                        className={clsx(
+                          'px-4',
+                          BODY_CELL_PADDING[density],
+                          'text-sm',
+                          ALIGN_CELL[col.align ?? 'left']
+                        )}
                       >
                         {col.render(row)}
                       </td>
                     ))}
                     {renderRowAction && (
-                      <td className="px-4 py-3.5 text-right">{renderRowAction(row)}</td>
+                      <td className={clsx('px-4', BODY_CELL_PADDING[density], 'text-right')}>
+                        {renderRowAction(row)}
+                      </td>
                     )}
                   </tr>
                 );

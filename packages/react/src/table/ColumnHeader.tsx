@@ -3,7 +3,8 @@ import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
-import type { SortDirection } from './types';
+import { HEADER_CELL_PADDING } from './density';
+import type { DataTableDensity, SortDirection } from './types';
 
 export type ColumnHeaderProps = {
   label: ReactNode;
@@ -18,6 +19,8 @@ export type ColumnHeaderProps = {
   filterSelected?: Set<string>;
   onFilterToggle?: (v: string) => void;
   onFilterClear?: () => void;
+  /** Cell padding, matching the `density` of the table it heads. Default `default`. */
+  density?: DataTableDensity;
   className?: string;
 };
 
@@ -38,6 +41,7 @@ export const ColumnHeader = ({
   filterSelected,
   onFilterToggle,
   onFilterClear,
+  density = 'default',
   className,
 }: ColumnHeaderProps) => {
   const [open, setOpen] = useState(false);
@@ -56,7 +60,9 @@ export const ColumnHeader = ({
   return (
     <th
       className={clsx(
-        'bg-gray-50 px-4 py-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400',
+        'bg-gray-50 px-4',
+        HEADER_CELL_PADDING[density],
+        'text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400',
         ALIGN_CLASS[align],
         className
       )}

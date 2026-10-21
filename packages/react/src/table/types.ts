@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 
 export type SortDirection = 'asc' | 'desc';
 
+/** Row height of a `DataTable`: the standard rows, or taller `comfortable` ones. */
+export type DataTableDensity = 'default' | 'comfortable';
+
 export type ColumnDef<T> = {
   /** Stable key — used for sort/filter identity. */
   key: string;
