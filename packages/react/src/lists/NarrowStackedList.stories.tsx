@@ -131,6 +131,7 @@ export const StickyHeadings: Story = {
             {group.map((p) => (
               <NarrowStackedList.Item
                 key={p.email}
+                className="px-3"
                 avatar={<Avatar src={p.av} />}
                 title={p.name}
                 subtitle={p.email}
