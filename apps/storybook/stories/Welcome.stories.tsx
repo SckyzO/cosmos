@@ -54,9 +54,9 @@ const groupRows: Group[] = [
   {
     id: 'pages',
     name: 'Pages',
-    count: 18,
+    count: 19,
     contains:
-      'Dashboard, Profile, SettingsScreen, Calendar, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
+      'Dashboard, Profile, SettingsScreen, Calendar, Activity, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
   },
   {
     id: 'typography',

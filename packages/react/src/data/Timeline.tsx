@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ElementType, ReactNode } from 'react';
+import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 
 export type TimelineItem = {
@@ -10,17 +10,24 @@ export type TimelineItem = {
   description?: ReactNode;
   /** Time label — e.g. "5m ago", "2026-05-07 14:32". */
   time?: ReactNode;
-  /** Lucide icon — used by `dot` and `stepper` variants. */
+  /** Lucide icon — used by `dot`, `stepper` and `alternating` variants. */
   icon?: ElementType;
   /** Initials/name for `avatar` variant. */
   avatarName?: string;
   /** Optional image URL for `avatar` variant. */
   avatarSrc?: string;
   /**
-   * Visual tone for `stepper` variant (icon circle background).
-   * Defaults to `brand`.
+   * Visual tone for `stepper` and `alternating` variants (icon circle
+   * background). Defaults to `brand`.
    */
   tone?: TimelineTone;
+  /** Extra line under the description, e.g. "by Sarah Chen". */
+  meta?: ReactNode;
+  /**
+   * Section label, e.g. "Today". Consecutive items with the same `group` get
+   * one header above them.
+   */
+  group?: string;
 };
 
 export type TimelineTone = 'brand' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -37,7 +44,13 @@ export type TimelineVariant =
    */
   | 'stepper'
   /** Each entry rendered as a stand-alone card (no connector line). */
-  | 'card';
+  | 'card'
+  /**
+   * Cards alternating left and right of a centred line, with a `stepper`
+   * icon circle on the line and the time on the other side. Below `md`, one
+   * column with the line on the left.
+   */
+  | 'alternating';
 
 export type TimelineProps = {
   items: TimelineItem[];
@@ -84,7 +97,10 @@ const StepperIndicator = ({
   </span>
 );
 
-// ── Body (title + description + time) — shared across all line variants ──────
+// ── Body (title + description + meta + time) — shared across line variants ───
+
+const Meta = ({ meta }: { meta: ReactNode }) =>
+  meta ? <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{meta}</p> : null;
 
 const Body = ({ item }: { item: TimelineItem }) => (
   <div className="min-w-0 flex-1 pb-2 last:pb-0">
@@ -92,20 +108,34 @@ const Body = ({ item }: { item: TimelineItem }) => (
     {item.description && (
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
     )}
+    <Meta meta={item.meta} />
     {item.time && (
       <p className="mt-0.5 font-mono text-[10px] text-gray-400 uppercase">{item.time}</p>
     )}
   </div>
 );
 
-// ── Main component ──────────────────────────────────────────────────────────
+// ── One list of entries ─────────────────────────────────────────────────────
 
-export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) => {
+type TimelineListProps = TimelineProps & {
+  /** Position of the first item in the whole timeline: sides keep alternating across groups. */
+  startIndex?: number;
+  /** Id of the group header naming this list. */
+  labelledBy?: string;
+};
+
+const TimelineList = ({
+  items,
+  variant = 'dot',
+  className,
+  startIndex = 0,
+  labelledBy,
+}: TimelineListProps) => {
   // `card` keeps its own simple stacked layout — no connector line, no
   // indicator column to align.
   if (variant === 'card') {
     return (
-      <ol className={clsx('space-y-3', className)}>
+      <ol aria-labelledby={labelledBy} className={clsx('space-y-3', className)}>
         {items.map((item) => (
           <li
             key={item.id}
@@ -119,6 +149,7 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
                     {item.description}
                   </p>
                 )}
+                <Meta meta={item.meta} />
               </div>
               {item.time && (
                 <span className="shrink-0 font-mono text-[10px] text-gray-400 uppercase">
@@ -132,6 +163,64 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
     );
   }
 
+  // One grid row per entry: indicator column, card, and (from `md`) the time
+  // on the other side of the line. Even positions put the card on the left.
+  if (variant === 'alternating') {
+    return (
+      <ol aria-labelledby={labelledBy} className={clsx('flex flex-col', className)}>
+        {items.map((item, i) => {
+          const isLast = i === items.length - 1;
+          const left = (startIndex + i) % 2 === 0;
+          return (
+            <li
+              key={item.id}
+              className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 md:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)]"
+            >
+              <div className="col-start-1 row-start-1 flex flex-col items-center md:col-start-2">
+                <StepperIndicator icon={item.icon} tone={item.tone} />
+                {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
+              </div>
+              <div
+                className={clsx(
+                  'col-start-2 row-start-1',
+                  left ? 'md:col-start-1' : 'md:col-start-3',
+                  !isLast && 'pb-6'
+                )}
+              >
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {item.title}
+                  </p>
+                  {item.description && (
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      {item.description}
+                    </p>
+                  )}
+                  <Meta meta={item.meta} />
+                  {item.time && (
+                    <p className="mt-2 font-mono text-[10px] text-gray-400 uppercase md:hidden">
+                      {item.time}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {item.time && (
+                <p
+                  className={clsx(
+                    'row-start-1 hidden pt-3 font-mono text-[10px] text-gray-400 uppercase md:block',
+                    left ? 'md:col-start-3' : 'md:col-start-1 md:text-right'
+                  )}
+                >
+                  {item.time}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    );
+  }
+
   // Shared flex-column layout for `dot`, `avatar`, `stepper`. The connector
   // line is rendered per-item *inside* the indicator column, so it always
   // tracks the actual indicator size rather than relying on a `border-l`
@@ -140,7 +229,7 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
   const gap = variant === 'stepper' ? 'gap-x-4' : 'gap-x-3';
 
   return (
-    <ol className={clsx('flex flex-col', className)}>
+    <ol aria-labelledby={labelledBy} className={clsx('flex flex-col', className)}>
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return (
@@ -162,5 +251,68 @@ export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) =
         );
       })}
     </ol>
+  );
+};
+
+// ── Groups ───────────────────────────────────────────────────────────────────
+
+type TimelineRun = { group?: string; start: number; items: TimelineItem[] };
+
+/** Consecutive items sharing a `group` form one run, headed by that group. */
+const groupRuns = (items: TimelineItem[]) => {
+  const runs: TimelineRun[] = [];
+  items.forEach((item, i) => {
+    const last = runs[runs.length - 1];
+    if (last && last.group === item.group) last.items.push(item);
+    else runs.push({ group: item.group, start: i, items: [item] });
+  });
+  return runs;
+};
+
+const GroupHeader = ({ id, label, centred }: { id: string; label: string; centred: boolean }) =>
+  centred ? (
+    // A pill on the line; it moves to the left with the line below `md`.
+    <h3 id={id} className="mb-4 flex md:justify-center">
+      <span className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        {label}
+      </span>
+    </h3>
+  ) : (
+    <h3
+      id={id}
+      className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+    >
+      {label}
+    </h3>
+  );
+
+// ── Main component ──────────────────────────────────────────────────────────
+
+export const Timeline = ({ items, variant = 'dot', className }: TimelineProps) => {
+  const baseId = useId();
+  const runs = groupRuns(items);
+  // Without groups the timeline stays one list.
+  if (runs.every((run) => !run.group)) {
+    return <TimelineList items={items} variant={variant} className={className} />;
+  }
+  return (
+    <div className={clsx('space-y-6', className)}>
+      {runs.map((run, i) => {
+        const headerId = `${baseId}-group-${i}`;
+        return (
+          <div key={run.start}>
+            {run.group && (
+              <GroupHeader id={headerId} label={run.group} centred={variant === 'alternating'} />
+            )}
+            <TimelineList
+              items={run.items}
+              variant={variant}
+              startIndex={run.start}
+              labelledBy={run.group ? headerId : undefined}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 };
