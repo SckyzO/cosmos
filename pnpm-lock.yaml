@@ -138,7 +138,7 @@ importers:
     devDependencies:
       '@storybook/react-vite':
         specifier: ^10.5.5
-        version: 10.5.5(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rollup@4.62.2)(storybook@10.5.5(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(typescript@6.0.3)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
+        version: 10.5.5(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.27.7)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rollup@4.62.2)(storybook@10.5.5(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(typescript@6.0.3)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0
@@ -162,7 +162,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.6.5)(@vitest/browser-playwright@4.1.12)(@vitest/coverage-v8@4.1.12)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
+        version: 4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
 
   packages/react:
     dependencies:
@@ -196,10 +196,10 @@ importers:
     devDependencies:
       '@storybook/react-vite':
         specifier: ^10.5.5
-        version: 10.5.5(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.27.7)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rollup@4.62.2)(storybook@10.5.5(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(typescript@6.0.3)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 10.5.5(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rollup@4.62.2)(storybook@10.5.5(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(typescript@6.0.3)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
       '@testing-library/jest-dom':
         specifier: ^7.0.1
-        version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0)))
+        version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)))
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -211,7 +211,7 @@ importers:
         version: 19.3.0(@types/react@19.3.0)
       '@vitejs/plugin-react':
         specifier: ^6.0.4
-        version: 6.0.4(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 6.0.4(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
@@ -238,13 +238,25 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.1.6
-        version: 8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0)
+        version: 8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 4.1.11(@types/node@26.6.5)(@vitest/browser-playwright@4.1.12)(@vitest/coverage-v8@4.1.12)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
 
   packages/theme:
     dependencies:
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/inter':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/montserrat':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/open-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/jetbrains-mono':
         specifier: ^5.3.0
         version: 5.3.0
@@ -724,6 +736,18 @@ packages:
   '@eslint/plugin-kit@0.7.2':
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@fontsource-variable/ibm-plex-sans@5.3.0':
+    resolution: {integrity: sha512-agG8tXFEo0hD9+J7npa4vbbWult52eMLVaQ6WQRlhs/iCAojrMAoejru85W9HTVXHfyUj96KM7gp/KGAS87XaQ==}
+
+  '@fontsource-variable/inter@5.3.0':
+    resolution: {integrity: sha512-OupL48va4JNofb97w6NYeF9S7W/kHNKM0Er8Dem5nqi4jeOLrVJDoE8tZEpnMJmtkvNbB1EIPPwHcdkF6b1oUA==}
+
+  '@fontsource-variable/montserrat@5.3.0':
+    resolution: {integrity: sha512-7PaZoxaxrWLAyrhO46v65An9LhUhfkTExWLhfbywYZCnZEgg/W1rEHnlNmZKjNZ3nJTVYyicqxlJt10z/26yTA==}
+
+  '@fontsource-variable/open-sans@5.3.0':
+    resolution: {integrity: sha512-VOfhZfLIOBVa6K/dTEu7scqQXYdGa4jBX8quFpQ0S6574B+W2EOBJf9PkqyVtMEI7WWIWNEbpvPc3vY1mN2mmQ==}
 
   '@fontsource/jetbrains-mono@5.3.0':
     resolution: {integrity: sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==}
@@ -4149,6 +4173,14 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
+  '@fontsource-variable/ibm-plex-sans@5.3.0': {}
+
+  '@fontsource-variable/inter@5.3.0': {}
+
+  '@fontsource-variable/montserrat@5.3.0': {}
+
+  '@fontsource-variable/open-sans@5.3.0': {}
+
   '@fontsource/jetbrains-mono@5.3.0': {}
 
   '@fontsource/outfit@5.3.0': {}
@@ -5074,7 +5106,7 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
 
-  '@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0)))':
+  '@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)))':
     dependencies:
       '@adobe/css-tools': 4.5.0
       '@testing-library/dom': 10.4.1
@@ -5084,7 +5116,7 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
     optionalDependencies:
-      vitest: 4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))
+      vitest: 4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
 
   '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -5309,11 +5341,6 @@ snapshots:
   '@valibot/to-json-schema@1.7.1(valibot@1.5.0(typescript@6.0.3))':
     dependencies:
       valibot: 1.5.0(typescript@6.0.3)
-
-  '@vitejs/plugin-react@6.0.4(vite@8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0))':
-    dependencies:
-      '@rolldown/pluginutils': 1.0.1
-      vite: 8.1.6(@types/node@26.6.5)(esbuild@0.27.7)(jiti@2.7.0)
 
   '@vitejs/plugin-react@6.0.4(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))':
     dependencies:
@@ -7162,6 +7189,35 @@ snapshots:
       happy-dom: 20.11.1
     transitivePeerDependencies:
       - msw
+
+  vitest@4.1.11(@types/node@26.6.5)(happy-dom@20.11.1)(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)):
+    dependencies:
+      '@vitest/expect': 4.1.11
+      '@vitest/mocker': 4.1.11(vite@8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))
+      '@vitest/pretty-format': 4.1.11
+      '@vitest/runner': 4.1.11
+      '@vitest/snapshot': 4.1.11
+      '@vitest/spy': 4.1.11
+      '@vitest/utils': 4.1.11
+      es-module-lexer: 2.3.2
+      expect-type: 1.4.0
+      magic-string: 0.30.21
+      obug: 2.2.1
+      pathe: 2.0.3
+      picomatch: 4.0.7
+      std-env: 4.3.0
+      tinybench: 2.9.0
+      tinyexec: 1.3.1
+      tinyglobby: 0.2.17
+      tinyrainbow: 3.2.0
+      vite: 8.1.6(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 26.6.5
+      happy-dom: 20.11.1
+    transitivePeerDependencies:
+      - msw
+    optional: true
 
   webpack-virtual-modules@0.6.2: {}
 
