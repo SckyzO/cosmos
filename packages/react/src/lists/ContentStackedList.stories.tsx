@@ -276,6 +276,42 @@ export const BadgeRendersInsideTitleRow: Story = {
   },
 };
 
+/**
+ * At phone width the meta items keep one line each: the last one truncates
+ * instead of every item breaking in the middle around the dots.
+ */
+export const MetaItemsStayOnOneLineWhenNarrow: Story = {
+  render: () => (
+    <div style={{ width: 320 }}>
+      <ContentStackedList>
+        <ContentStackedList.Item
+          title={PROJECTS[2]!.name}
+          meta={[
+            <span key="d">
+              Due on <time>{PROJECTS[2]!.due}</time>
+            </span>,
+            <span key="c">Created by {PROJECTS[2]!.createdBy}</span>,
+          ]}
+          trailing={<ActionsMenuButton name={PROJECTS[2]!.name} />}
+          data-testid="li"
+        />
+      </ContentStackedList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const items = [
+      canvas.getByText(PROJECTS[2]!.due).parentElement!,
+      canvas.getByText(`Created by ${PROJECTS[2]!.createdBy}`),
+    ];
+    for (const item of items) {
+      // text-xs/5: a line is 20px tall
+      await expect(item.getBoundingClientRect().height).toBeLessThanOrEqual(20);
+    }
+    const li = canvas.getByTestId('li');
+    await expect(li.scrollWidth).toBeLessThanOrEqual(li.clientWidth);
+  },
+};
+
 export const MetaRendersDotSeparatorBetweenItems: Story = {
   render: () => (
     <ContentStackedList>
