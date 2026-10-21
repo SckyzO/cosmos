@@ -164,7 +164,7 @@ export const WithActions: Story = {
                 href={`/users/${encodeURIComponent(p.email)}`}
                 className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
-                View
+                View<span className="sr-only">, {p.name}</span>
               </a>
             }
           />
@@ -172,6 +172,13 @@ export const WithActions: Story = {
       </NarrowStackedList>
     </div>
   ),
+  play: async ({ canvas }) => {
+    // Each View link names its person for screen readers.
+    for (const p of PEOPLE) {
+      const name = new RegExp(`^View\\s*, ${p.name}$`);
+      await expect(canvas.getByRole('link', { name })).toBeInTheDocument();
+    }
+  },
 };
 
 export const WithTruncatedDescription: Story = {

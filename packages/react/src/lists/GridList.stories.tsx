@@ -57,17 +57,24 @@ export const ContactCardsWithSmallPortraits: Story = {
               href={`mailto:${p.name.toLowerCase().replace(' ', '.')}@example.com`}
             >
               <Mail className="size-5 text-gray-400" aria-hidden />
-              Email
+              Email<span className="sr-only"> {p.name}</span>
             </GridList.FooterAction>
             <GridList.FooterAction index={1} href={`tel:+33000000000`}>
               <Phone className="size-5 text-gray-400" aria-hidden />
-              Call
+              Call<span className="sr-only"> {p.name}</span>
             </GridList.FooterAction>
           </GridList.Footer>
         </GridList.Card>
       ))}
     </GridList>
   ),
+  play: async ({ canvas }) => {
+    // Each Email / Call link names its person for screen readers.
+    for (const p of PEOPLE) {
+      await expect(canvas.getByRole('link', { name: `Email ${p.name}` })).toBeInTheDocument();
+      await expect(canvas.getByRole('link', { name: `Call ${p.name}` })).toBeInTheDocument();
+    }
+  },
 };
 
 // Simple 2-column grid without footer.

@@ -189,7 +189,7 @@ export const ProjectsWithBadgeAndActions: Story = {
                 href="#"
                 className="hidden rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 sm:block dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
-                View project
+                View project<span className="sr-only">, {p.name}</span>
               </a>
               <ActionsMenuButton name={p.name} />
             </>
@@ -198,6 +198,14 @@ export const ProjectsWithBadgeAndActions: Story = {
       ))}
     </ContentStackedList>
   ),
+  play: async ({ canvas }) => {
+    // Each repeated link names its project for screen readers. `hidden`: the
+    // link only shows from `sm` up, wider than the test viewport.
+    for (const p of PROJECTS) {
+      const name = new RegExp(`^View project\\s*, ${p.name}$`);
+      await expect(canvas.getByRole('link', { name, hidden: true })).toBeInTheDocument();
+    }
+  },
 };
 
 // ── Variants ─────────────────────────────────────────────────────────────────
