@@ -9,8 +9,10 @@
  *              dark       .dark — neutral black/gray dark theme
  *              deep-blue  .deep-blue — navy dark theme
  *   accent → data-accent="indigo" etc. — no attribute means blue
+ *   font   → data-font="inter" etc. — no attribute means Outfit
+ *   text   → data-text-size="sm" | "lg" | "xl" — no attribute means normal
  *
- *   <html class="sand" data-accent="teal">
+ *   <html class="sand" data-accent="teal" data-font="inter" data-text-size="lg">
  *
  * Themes and accents redefine Tailwind's palette variables (--color-white,
  * --color-gray-*, --color-brand-*), so components styled with bg-white /
@@ -340,6 +342,93 @@
   --color-brand-800: #014b1f;
   --color-brand-900: #003915;
   --color-brand-950: #00280d;
+}
+
+/* ── Fonts ─────────────────────────────────────────────────────────────────
+ * data-font swaps the sans-serif family; no attribute keeps Outfit. Each
+ * font loads from its own subpath (@sckyzo/cosmos-theme/fonts/inter, …), so
+ * an app only ships the ones it offers; `system` uses the platform's UI font
+ * and loads nothing. The mono font stays JetBrains Mono.
+ *
+ * font-family is set here too: plain text inherits the family <html>
+ * computed, so an element below <html> with data-font needs its own
+ * font-family to switch. In the base layer, so font-mono on the same element
+ * still wins. */
+@layer base {
+  [data-font] {
+    font-family: var(--font-sans);
+  }
+}
+
+[data-font='inter'] {
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+}
+
+[data-font='plex'] {
+  --font-sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
+}
+
+[data-font='montserrat'] {
+  --font-sans: 'Montserrat Variable', system-ui, sans-serif;
+}
+
+[data-font='open-sans'] {
+  --font-sans: 'Open Sans Variable', system-ui, sans-serif;
+}
+
+[data-font='system'] {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── Text size ─────────────────────────────────────────────────────────────
+ * data-text-size scales every text-* size: sm 93.75%, lg 112.5%, xl 125%;
+ * no attribute keeps 100%. Spacing stays the same, so layouts keep their
+ * density, and line heights follow (they are ratios). Sizes written in
+ * pixels, such as text-[9px], don't scale.
+ *
+ * The sizes are declared again here, not scaled in the @theme block: a
+ * custom property resolves var() on the element that declares it, so a
+ * --text-sm declared on :root would ignore an attribute set below <html>.
+ * Same values as Tailwind's, plus text-2xs and text-3xs. */
+[data-text-size] {
+  --text-3xs: calc(0.625rem * var(--cosmos-text-scale, 1));
+  --text-2xs: calc(0.6875rem * var(--cosmos-text-scale, 1));
+  --text-xs: calc(0.75rem * var(--cosmos-text-scale, 1));
+  --text-sm: calc(0.875rem * var(--cosmos-text-scale, 1));
+  --text-base: calc(1rem * var(--cosmos-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--cosmos-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--cosmos-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--cosmos-text-scale, 1));
+  --text-3xl: calc(1.875rem * var(--cosmos-text-scale, 1));
+  --text-4xl: calc(2.25rem * var(--cosmos-text-scale, 1));
+  --text-5xl: calc(3rem * var(--cosmos-text-scale, 1));
+  --text-6xl: calc(3.75rem * var(--cosmos-text-scale, 1));
+  --text-7xl: calc(4.5rem * var(--cosmos-text-scale, 1));
+  --text-8xl: calc(6rem * var(--cosmos-text-scale, 1));
+  --text-9xl: calc(8rem * var(--cosmos-text-scale, 1));
+}
+
+[data-text-size='sm'] {
+  --cosmos-text-scale: 0.9375;
+}
+
+[data-text-size='lg'] {
+  --cosmos-text-scale: 1.125;
+}
+
+[data-text-size='xl'] {
+  --cosmos-text-scale: 1.25;
+}
+
+/* Text without a text-* class: body under <html data-text-size>, or the
+   element carrying the attribute below <html>. Not <html> itself, whose
+   font size sets rem and would scale the spacing too. In the base layer, so
+   a text-* class on the same element still wins. */
+@layer base {
+  [data-text-size] body,
+  [data-text-size]:not(:root) {
+    font-size: var(--text-base);
+  }
 }
 
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class

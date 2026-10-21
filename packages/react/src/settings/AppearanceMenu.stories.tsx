@@ -5,7 +5,14 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from '../layout/Topbar';
 import { portalDocsParams } from '../storybook-helpers';
 import { AppearanceMenu } from './AppearanceMenu';
-import { applyAppearance, type CosmosAccent, type CosmosTheme } from './appearance';
+import {
+  applyAppearance,
+  type CosmosAccent,
+  type CosmosAppearance,
+  type CosmosFont,
+  type CosmosTextSize,
+  type CosmosTheme,
+} from './appearance';
 
 const meta = {
   title: 'Settings/Appearance Menu',
@@ -47,11 +54,23 @@ const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string })
   </button>
 );
 
-/** In a `Topbar`, applying the choice to the page. Starts from the toolbar's values. */
+/**
+ * In a `Topbar`, applying the choice to the page, font and text size
+ * included. Starts from the toolbar's values.
+ */
 export const InTopbar: Story = {
   render: (_args, { globals }) => {
-    const [theme, setTheme] = useState((globals.theme || 'dark') as CosmosTheme);
-    const [accent, setAccent] = useState((globals.accent || 'blue') as CosmosAccent);
+    const [appearance, setAppearance] = useState<CosmosAppearance>({
+      theme: (globals.theme || 'dark') as CosmosTheme,
+      accent: (globals.accent || 'blue') as CosmosAccent,
+      font: (globals.font || 'outfit') as CosmosFont,
+      textSize: (globals.textSize || 'md') as CosmosTextSize,
+    });
+    const update = (patch: Partial<CosmosAppearance>) => {
+      const next = { ...appearance, ...patch };
+      setAppearance(next);
+      applyAppearance(next);
+    };
     return (
       <Topbar
         pageTitle="Analytics Dashboard"
@@ -59,16 +78,11 @@ export const InTopbar: Story = {
           <>
             <IconButton icon={Bell} label="Notifications" />
             <AppearanceMenu
-              theme={theme}
-              accent={accent}
-              onThemeChange={(next) => {
-                setTheme(next);
-                applyAppearance({ theme: next, accent });
-              }}
-              onAccentChange={(next) => {
-                setAccent(next);
-                applyAppearance({ theme, accent: next });
-              }}
+              {...appearance}
+              onThemeChange={(theme) => update({ theme })}
+              onAccentChange={(accent) => update({ accent })}
+              onFontChange={(font) => update({ font })}
+              onTextSizeChange={(textSize) => update({ textSize })}
             />
             <IconButton icon={User} label="Profile" />
           </>
@@ -132,5 +146,33 @@ export const EscapeClosesPanel: Story = {
       expect(within(document.body).queryByRole('dialog', { name: 'Appearance' })).toBeNull()
     );
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+export const PanelShowsFontAndTextSize: Story = {
+  tags: ['!autodocs'],
+  args: { onFontChange: fn(), onTextSizeChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    await userEvent.click(within(panel()).getByRole('button', { name: 'Montserrat' }));
+    await userEvent.click(within(panel()).getByRole('button', { name: 'Small' }));
+    await expect(args.onFontChange).toHaveBeenCalledWith('montserrat');
+    await expect(args.onTextSizeChange).toHaveBeenCalledWith('sm');
+  },
+};
+
+/** With every group, the panel is taller than a short screen: it scrolls instead. */
+export const TallPanelFitsTheScreen: Story = {
+  tags: ['!autodocs'],
+  args: { onFontChange: fn(), onTextSizeChange: fn() },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    await expect(panel().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+    // The last group can still be reached.
+    const large = within(panel()).getByRole('button', { name: 'Extra large' });
+    large.scrollIntoView();
+    await userEvent.click(large);
   },
 };

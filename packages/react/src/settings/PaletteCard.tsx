@@ -83,7 +83,7 @@ export const PaletteCard = ({ meta, active = false, onClick, className }: Palett
           {meta.label}
         </span>
         {meta.desc && (
-          <span className="block text-[10px]" style={{ color: meta.preview.text ?? '#9ca3af' }}>
+          <span className="text-3xs block" style={{ color: meta.preview.text ?? '#9ca3af' }}>
             {meta.desc}
           </span>
         )}

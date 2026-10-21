@@ -201,7 +201,8 @@ const APP_CSS = `/* app.css */
 
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';
-@import '@sckyzo/cosmos-theme/fonts';`;
+@import '@sckyzo/cosmos-theme/fonts';
+/* Other fonts, for data-font: fonts/inter, fonts/plex, fonts/montserrat, fonts/open-sans */`;
 
 const APP_TSX = `// App.tsx
 import { Button } from '@sckyzo/cosmos-react';
@@ -322,22 +323,28 @@ const PkgCard = ({
 // The Welcome page itself
 // ---------------------------------------------------------------------------
 
-// The picker drives the same <html> class and data-accent as the toolbar menus,
+// The picker drives the same <html> class and attributes as the toolbar menus,
 // so the whole page, live preview included, follows it. It starts from the
 // toolbar's values and remounts when they change.
-const ThemesShowcase = ({ theme: initialTheme, accent: initialAccent }: CosmosAppearance) => {
-  const [theme, setTheme] = useState(initialTheme);
-  const [accent, setAccent] = useState(initialAccent);
+const ThemesShowcase = (initial: CosmosAppearance) => {
+  const [appearance, setAppearance] = useState(initial);
+  const update = (patch: Partial<CosmosAppearance>) => {
+    const next = { ...appearance, ...patch };
+    setAppearance(next);
+    applyAppearance(next);
+  };
   return (
     <div className="grid gap-6 rounded-lg border border-gray-200 bg-white p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] dark:border-gray-800 dark:bg-gray-900">
       <div className="space-y-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          4 themes × 12 accent colors, with WCAG AA tokens in every pair.
+          4 themes × 12 accent colors, with WCAG AA tokens in every pair. Plus six fonts and four
+          text sizes.
         </p>
         <p>
-          The theme is one class on <code>&lt;html&gt;</code> and the accent a{' '}
-          <code>data-accent</code> attribute. Every component follows: pick one here and this page
-          changes with it.
+          The theme is one class on <code>&lt;html&gt;</code>; the accent, the font and the text
+          size are the <code>data-accent</code>, <code>data-font</code> and{' '}
+          <code>data-text-size</code> attributes. Every component follows: pick one here and this
+          page changes with it.
         </p>
         <p>
           Ship the picker with <code>AppearanceSettings</code> on a settings page, or{' '}
@@ -359,16 +366,11 @@ const ThemesShowcase = ({ theme: initialTheme, accent: initialAccent }: CosmosAp
         </p>
       </div>
       <AppearanceSettings
-        theme={theme}
-        accent={accent}
-        onThemeChange={(next) => {
-          setTheme(next);
-          applyAppearance({ theme: next, accent });
-        }}
-        onAccentChange={(next) => {
-          setAccent(next);
-          applyAppearance({ theme, accent: next });
-        }}
+        {...appearance}
+        onThemeChange={(theme) => update({ theme })}
+        onAccentChange={(accent) => update({ accent })}
+        onFontChange={(font) => update({ font })}
+        onTextSizeChange={(textSize) => update({ textSize })}
       />
     </div>
   );
@@ -408,12 +410,12 @@ const WelcomePage = ({
       </a>
     </div>
 
-    {/* Themes & accents */}
+    {/* Appearance */}
     <section className="mt-12">
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
-        Themes & accents
+        Appearance
       </h2>
-      <ThemesShowcase key={`${appearance.theme}-${appearance.accent}`} {...appearance} />
+      <ThemesShowcase key={Object.values(appearance).join('-')} {...appearance} />
     </section>
 
     {/* Live preview */}
@@ -681,6 +683,8 @@ export const Default: Story = {
       appearance={{
         theme: globals.theme || 'dark',
         accent: globals.accent || 'blue',
+        font: globals.font || 'outfit',
+        textSize: globals.textSize || 'md',
       }}
     />
   ),

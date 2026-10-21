@@ -18,6 +18,12 @@
   --font-sans: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
+  /* Sizes under text-xs (12px) for dense labels: 11px and 10px. Without a
+     --line-height they set only font-size, like text-[11px] would, and the
+     text size setting in css-vars.css can scale them. */
+  --text-2xs: 0.6875rem;
+  --text-3xs: 0.625rem;
+
   /* ── Status colors — health indicators, badges, alerts ─────────────────── */
   --color-status-ok: #10b981;
   --color-status-warn: #f59e0b;

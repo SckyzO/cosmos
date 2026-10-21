@@ -1,12 +1,19 @@
 import { clsx } from 'clsx';
 import { useId } from 'react';
 import { AccentPicker } from './AccentPicker';
+import { OptionPicker } from './OptionPicker';
 import { PalettePicker } from './PalettePicker';
 import {
   COSMOS_ACCENTS,
+  COSMOS_FONTS,
+  COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
   type CosmosAccent,
   type CosmosAccentMeta,
+  type CosmosFont,
+  type CosmosFontMeta,
+  type CosmosTextSize,
+  type CosmosTextSizeMeta,
   type CosmosTheme,
   type CosmosThemeMeta,
 } from './appearance';
@@ -28,12 +35,32 @@ export type AppearanceSettingsProps = {
   accents?: CosmosAccentMeta[];
   /** Columns of the theme grid. Default 4; use 2 in narrow containers. */
   themeColumns?: number;
+  /** Selected font. Default `'outfit'`. */
+  font?: CosmosFont;
+  /** Shows the font group. */
+  onFontChange?: (font: CosmosFont) => void;
+  /** Selected text size. Default `'md'`. */
+  textSize?: CosmosTextSize;
+  /** Shows the text size group. */
+  onTextSizeChange?: (textSize: CosmosTextSize) => void;
+  /** Heading of the font group. Default `'Font'`. */
+  fontLabel?: string;
+  /** Heading of the text size group. Default `'Text size'`. */
+  textSizeLabel?: string;
+  /**
+   * Fonts to offer. Default: all of `COSMOS_FONTS`. Offer only the fonts whose
+   * CSS the app imports (`@sckyzo/cosmos-theme/fonts/<id>`).
+   */
+  fonts?: CosmosFontMeta[];
+  /** Text sizes to offer. Default: all of `COSMOS_TEXT_SIZES`. */
+  textSizes?: CosmosTextSizeMeta[];
   className?: string;
 };
 
 /**
  * AppearanceSettings — theme and accent pickers for the Cosmos themes, built
- * on `<PalettePicker>` and `<AccentPicker>`. Controlled: pass the result to
+ * on `<PalettePicker>` and `<AccentPicker>`, plus font and text size pickers
+ * when their `on…Change` handlers are set. Controlled: pass the result to
  * `applyAppearance` (or your own theme switcher) to update the page.
  */
 export const AppearanceSettings = ({
@@ -46,10 +73,20 @@ export const AppearanceSettings = ({
   themes = COSMOS_THEMES,
   accents = COSMOS_ACCENTS,
   themeColumns = 4,
+  font = 'outfit',
+  onFontChange,
+  textSize = 'md',
+  onTextSizeChange,
+  fontLabel = 'Font',
+  textSizeLabel = 'Text size',
+  fonts = COSMOS_FONTS,
+  textSizes = COSMOS_TEXT_SIZES,
   className,
 }: AppearanceSettingsProps) => {
   const themeHeadingId = useId();
   const accentHeadingId = useId();
+  const fontHeadingId = useId();
+  const textSizeHeadingId = useId();
   return (
     <div className={clsx('space-y-6', className)}>
       <div role="group" aria-labelledby={themeHeadingId}>
@@ -77,6 +114,63 @@ export const AppearanceSettings = ({
           cols={6}
         />
       </div>
+      {onFontChange && (
+        <div role="group" aria-labelledby={fontHeadingId}>
+          <p id={fontHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {fontLabel}
+          </p>
+          <OptionPicker
+            className="mt-3"
+            cols={3}
+            value={font}
+            // ids come from `fonts`, so they are CosmosFont values.
+            onChange={(id) => onFontChange(id as CosmosFont)}
+            options={fonts.map((f) => ({
+              id: f.id,
+              label: f.label,
+              preview: (
+                <span
+                  aria-hidden
+                  style={{ fontFamily: f.family }}
+                  className="text-xl text-gray-900 dark:text-gray-100"
+                >
+                  Aa
+                </span>
+              ),
+            }))}
+          />
+        </div>
+      )}
+      {onTextSizeChange && (
+        <div role="group" aria-labelledby={textSizeHeadingId}>
+          <p
+            id={textSizeHeadingId}
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {textSizeLabel}
+          </p>
+          <OptionPicker
+            className="mt-3"
+            cols={4}
+            value={textSize}
+            onChange={(id) => onTextSizeChange(id as CosmosTextSize)}
+            options={textSizes.map((t) => ({
+              id: t.id,
+              label: t.label,
+              // Pixel sizes, so the previews don't scale with the setting.
+              preview: (
+                <span
+                  aria-hidden
+                  style={{ fontSize: `${16 * t.scale}px` }}
+                  className="text-gray-900 dark:text-gray-100"
+                >
+                  Aa
+                </span>
+              ),
+            }))}
+          />
+        </div>
+      )}
     </div>
   );
 };

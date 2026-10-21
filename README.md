@@ -27,15 +27,19 @@ portals, and rackscope itself eventually).
 
 ## Themes and accents
 
-Two settings on the `<html>` element restyle every component:
+Settings on the `<html>` element restyle every component:
 
 - the **theme**, one class: none for `light`, `sand`, `dark` (neutral black/gray) or
   `deep-blue` (navy);
 - the **accent**, a `data-accent` attribute: none for `blue`, or `indigo`, `violet`,
-  `purple`, `rose`, `teal`, `cyan`, `graphite`, `red`, `orange`, `amber`, `green`.
+  `purple`, `rose`, `teal`, `cyan`, `graphite`, `red`, `orange`, `amber`, `green`;
+- the **font**, a `data-font` attribute: none for Outfit, or `inter`, `plex`,
+  `montserrat`, `open-sans`, `system`;
+- the **text size**, a `data-text-size` attribute: none for the default, or `sm`, `lg`,
+  `xl`. It scales the text, not the spacing.
 
 ```html
-<html class="sand" data-accent="teal"></html>
+<html class="sand" data-accent="teal" data-font="inter" data-text-size="lg"></html>
 ```
 
 The theme tokens meet WCAG AA in every theme and accent pair (body text, links, white
@@ -43,7 +47,7 @@ text on the accent), and `scripts/check-contrast.mjs` in the theme package check
 every CI run. Some components still fall short of AA, tracked in #151.
 `@sckyzo/cosmos-react` ships the pickers
 (`AppearanceSettings`, and `AppearanceMenu` for a top bar) and `applyAppearance` to set
-both. Details in the [theme README](packages/theme#themes--accents).
+them. Details in the [theme README](packages/theme#themes--accents).
 
 ## Apps
 

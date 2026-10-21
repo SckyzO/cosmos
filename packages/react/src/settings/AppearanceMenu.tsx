@@ -47,8 +47,13 @@ export const AppearanceMenu = ({
         <Palette className={icon} aria-hidden />
       </Popover.Trigger>
       <Popover.Content align="end" width="w-96" aria-label={label}>
-        {/* Two columns: four 78px cards are too narrow for "Deep Blue" plus its check. */}
-        <AppearanceSettings themeColumns={2} {...settings} />
+        {/* Scrolls when taller than the screen (all four groups are), keeping the
+            panel's padding around the scroll area. The panel opens under a top
+            bar, so 6rem is left for the bar and a margin. */}
+        <div className="-m-4 max-h-[calc(100dvh-6rem)] overflow-y-auto p-4">
+          {/* Two columns: four 78px cards are too narrow for "Deep Blue" plus its check. */}
+          <AppearanceSettings themeColumns={2} {...settings} />
+        </div>
       </Popover.Content>
     </Popover>
   );

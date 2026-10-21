@@ -45,7 +45,7 @@ export const ColorSwatch = ({
     </span>
     <span
       className={clsx(
-        'text-[10px] leading-none font-medium',
+        'text-3xs leading-none font-medium',
         active ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'
       )}
     >

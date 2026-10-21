@@ -52,7 +52,7 @@ export const Ribbon = ({
     return (
       <span
         className={clsx(
-          'absolute z-10 w-40 px-2 py-1 text-center text-[11px] font-bold tracking-wide uppercase shadow-md',
+          'text-2xs absolute z-10 w-40 px-2 py-1 text-center font-bold tracking-wide uppercase shadow-md',
           INTENT_BG[intent],
           ANGLED_POSITION[position],
           className
@@ -65,7 +65,7 @@ export const Ribbon = ({
   return (
     <span
       className={clsx(
-        'absolute z-10 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow',
+        'text-2xs absolute z-10 px-2.5 py-1 font-bold tracking-wide uppercase shadow',
         INTENT_BG[intent],
         FLAT_POSITION[position],
         className

@@ -10,7 +10,7 @@ export type KbdProps = {
 };
 
 const SIZE: Record<KbdSize, string> = {
-  sm: 'h-5 min-w-[20px] px-1.5 text-[10px]',
+  sm: 'h-5 min-w-[20px] px-1.5 text-3xs',
   md: 'h-6 min-w-[24px] px-2 text-xs',
 };
 

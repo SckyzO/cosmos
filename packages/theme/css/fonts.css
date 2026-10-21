@@ -1,5 +1,6 @@
-/* Cosmos fonts — self-hosted via @fontsource (no internet required at runtime).
-   Consumers must install @fontsource/outfit and @fontsource/jetbrains-mono as deps. */
+/* Cosmos default fonts, Outfit and JetBrains Mono, self-hosted via @fontsource
+   (no network needed at runtime). The @fontsource packages are dependencies of
+   this package. The other data-font choices load from fonts/<name>.css. */
 
 @import '@fontsource/outfit/300.css';
 @import '@fontsource/outfit/400.css';

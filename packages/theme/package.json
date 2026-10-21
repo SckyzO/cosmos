@@ -18,6 +18,10 @@
     "./tailwind": "./css/tailwind-tokens.css",
     "./vars": "./css/css-vars.css",
     "./fonts": "./css/fonts.css",
+    "./fonts/inter": "./css/fonts/inter.css",
+    "./fonts/plex": "./css/fonts/plex.css",
+    "./fonts/montserrat": "./css/fonts/montserrat.css",
+    "./fonts/open-sans": "./css/fonts/open-sans.css",
     "./package.json": "./package.json"
   },
   "files": [
@@ -34,6 +38,10 @@
     "build": "echo 'CSS-only package, no build step needed'"
   },
   "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource-variable/open-sans": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/outfit": "^5.3.0"
   },

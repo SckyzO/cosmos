@@ -177,7 +177,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       {badge !== undefined && (
         <span
           className={clsx(
-            'ms-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold',
+            'text-3xs ms-auto rounded-full px-1.5 py-0.5 font-bold',
             isActive
               ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
               : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
