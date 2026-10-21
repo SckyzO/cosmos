@@ -208,6 +208,25 @@ const groupColumns: ColumnDef<Group>[] = [
   },
 ];
 
+// Same setup as the cosmos-react README ("Set up the styles").
+const INSTALL = 'pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react';
+
+const APP_CSS = `/* app.css */
+@import 'tailwindcss';
+
+/* Required: let Tailwind scan the components for their classes.
+   The path is relative to this file. */
+@source '../node_modules/@sckyzo/cosmos-react/dist/**/*.{js,cjs}';
+
+@import '@sckyzo/cosmos-theme/tailwind';
+@import '@sckyzo/cosmos-theme/vars';
+@import '@sckyzo/cosmos-theme/fonts';`;
+
+const APP_TSX = `// App.tsx
+import { Button } from '@sckyzo/cosmos-react';
+
+export default () => <Button>Hello Cosmos</Button>;`;
+
 // ---------------------------------------------------------------------------
 // Building blocks
 // ---------------------------------------------------------------------------
@@ -536,18 +555,16 @@ const WelcomePage = ({
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         Get started
       </h2>
-      <pre className="mb-3 overflow-x-auto rounded-md border border-gray-200 bg-white p-4 font-mono text-sm leading-relaxed dark:border-gray-800 dark:bg-gray-900">
-        {`pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react`}
-      </pre>
-      <pre className="mb-3 overflow-x-auto rounded-md border border-gray-200 bg-white p-4 font-mono text-sm leading-relaxed dark:border-gray-800 dark:bg-gray-900">
-        {`// app.css
-@import '@sckyzo/cosmos-theme/tailwind';
-
-// App.tsx
-import { Button } from '@sckyzo/cosmos-react';
-
-export default () => <Button variant="primary">Hello Cosmos</Button>;`}
-      </pre>
+      <div className="mb-3 space-y-3">
+        <CodeBlock language="bash" code={INSTALL} />
+        <CodeBlock language="css" code={APP_CSS} />
+        <CodeBlock language="tsx" code={APP_TSX} />
+      </div>
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+        Without the <code>@source</code> line Tailwind generates none of the classes the components
+        use, and they render unstyled. With <code>@sckyzo/cosmos-charts</code>, add a second{' '}
+        <code>@source</code> line for its <code>dist</code>.
+      </p>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         The theme is a class on <code>&lt;html&gt;</code> (none for light, <code>sand</code>,{' '}
         <code>dark</code> or <code>deep-blue</code>) and the accent a <code>data-accent</code>{' '}
