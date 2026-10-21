@@ -62,6 +62,9 @@ const config: StorybookConfig = {
         host: '0.0.0.0',
         allowedHosts: ['storybook', 'localhost', '127.0.0.1'],
         cors: true,
+        // `storybook build` writes storybook-static/ inside the watched root:
+        // without this, each static build (make ci) reloaded every open tab.
+        watch: { ignored: ['**/storybook-static/**'] },
         // HMR config:
         //  - Browser on host accesses via localhost:6006 (port-forwarded from container).
         //  - Playwright in compose network accesses via http://storybook:6006.
