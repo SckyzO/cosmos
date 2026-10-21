@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { CreditCard, KeyRound, LogOut, Settings, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { Topbar } from '../layout/Topbar';
 import { portalDocsParams } from '../storybook-helpers';
 import { UserMenu } from './UserMenu';
 
@@ -21,10 +22,30 @@ const SAMPLE_AVATAR =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-       <rect width="64" height="64" fill="%236366f1"/>
+       <rect width="64" height="64" fill="#6366f1"/>
        <text x="50%" y="58%" font-family="sans-serif" font-size="28" fill="white" text-anchor="middle">JD</text>
      </svg>`
   );
+
+// The menu where it lives: at the end of an app's top bar, with room under it
+// for the open panel. `side="left"` puts the trigger before the page title.
+const InTopbar = ({
+  children,
+  height = 340,
+  side = 'right',
+}: {
+  children: ReactNode;
+  height?: number;
+  side?: 'left' | 'right';
+}) => (
+  <div className="bg-[var(--color-bg-base)]" style={{ minHeight: height }}>
+    <Topbar
+      pageTitle="Dashboard"
+      leftActions={side === 'left' ? children : undefined}
+      rightActions={side === 'right' ? children : undefined}
+    />
+  </div>
+);
 
 // ── Stories ──────────────────────────────────────────────────────────────────
 
@@ -37,7 +58,7 @@ export const Open: Story = {
       onSignOut: () => void;
     };
     return (
-      <div className="flex h-[320px] items-start justify-end">
+      <InTopbar>
         <UserMenu defaultOpen>
           <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
           <UserMenu.Content>
@@ -59,7 +80,7 @@ export const Open: Story = {
             </UserMenu.Items>
           </UserMenu.Content>
         </UserMenu>
-      </div>
+      </InTopbar>
     );
   },
   args: {
@@ -72,17 +93,17 @@ export const Open: Story = {
 
 export const Closed: Story = {
   render: () => (
-    <div className="flex h-32 items-start justify-end">
+    <InTopbar height={120}>
       <UserMenu>
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
 };
 
 export const WithoutAvatar: Story = {
   render: () => (
-    <div className="flex h-[320px] items-start justify-end">
+    <InTopbar>
       <UserMenu defaultOpen>
         <UserMenu.Trigger name="John Doe" />
         <UserMenu.Content>
@@ -97,13 +118,13 @@ export const WithoutAvatar: Story = {
           </UserMenu.Items>
         </UserMenu.Content>
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
 };
 
 export const WithoutHeader: Story = {
   render: () => (
-    <div className="flex h-[260px] items-start justify-end">
+    <InTopbar height={300}>
       <UserMenu defaultOpen>
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
@@ -118,23 +139,23 @@ export const WithoutHeader: Story = {
           </UserMenu.Items>
         </UserMenu.Content>
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
 };
 
 export const HideNameOnTrigger: Story = {
   render: () => (
-    <div className="flex h-32 items-start justify-end">
+    <InTopbar height={120}>
       <UserMenu>
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} hideName />
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
 };
 
 export const AlignLeft: Story = {
   render: () => (
-    <div className="flex h-[320px] items-start justify-start">
+    <InTopbar side="left">
       <UserMenu defaultOpen align="left">
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
@@ -149,7 +170,7 @@ export const AlignLeft: Story = {
           </UserMenu.Items>
         </UserMenu.Content>
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
 };
 
@@ -160,7 +181,7 @@ export const AlignLeft: Story = {
 export const TriggerOpensMenu: Story = {
   tags: ['!autodocs'],
   render: () => (
-    <div className="flex h-[320px] items-start justify-end">
+    <InTopbar>
       <UserMenu>
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
@@ -169,7 +190,7 @@ export const TriggerOpensMenu: Story = {
           </UserMenu.Items>
         </UserMenu.Content>
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: /user menu for john doe/i });
@@ -185,7 +206,7 @@ export const ItemClickFiresHandler: Story = {
   render: (args) => {
     const extra = args as unknown as { onProfile: () => void; onSignOut: () => void };
     return (
-      <div className="flex h-[320px] items-start justify-end">
+      <InTopbar>
         <UserMenu>
           <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
           <UserMenu.Content>
@@ -199,7 +220,7 @@ export const ItemClickFiresHandler: Story = {
             </UserMenu.Items>
           </UserMenu.Content>
         </UserMenu>
-      </div>
+      </InTopbar>
     );
   },
   args: { onProfile: fn(), onSignOut: fn() } as never,
@@ -220,7 +241,7 @@ export const ItemClickFiresHandler: Story = {
 export const EscapeCloses: Story = {
   tags: ['!autodocs'],
   render: () => (
-    <div className="flex h-[320px] items-start justify-end">
+    <InTopbar>
       <UserMenu>
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
@@ -229,7 +250,7 @@ export const EscapeCloses: Story = {
           </UserMenu.Items>
         </UserMenu.Content>
       </UserMenu>
-    </div>
+    </InTopbar>
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /user menu for/i }));
