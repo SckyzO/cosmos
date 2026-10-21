@@ -10,3 +10,13 @@ packages:
 # and pulled within hours. For an urgent security fix, lift it for that one
 # command: pnpm up --config.minimum-release-age=0 <package>.
 minimumReleaseAge: 1440
+
+# Refuse a version published with weaker evidence (provenance, trusted
+# publisher) than an earlier one, the mark of a hijacked account. Versions
+# older than 30 days are not checked: some old releases predate provenance
+# (chokidar 4.0.3, semver 6.3.1 in this tree).
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200
+
+# No git or tarball sources below the direct dependencies.
+blockExoticSubdeps: true

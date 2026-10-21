@@ -82,6 +82,10 @@ one command:
 ./devctl run pnpm up -r --config.minimum-release-age=0 '<package>@<version>'
 ```
 
+pnpm also refuses a version published with weaker evidence (provenance, trusted publisher) than
+an earlier one (`ERR_PNPM_TRUST_DOWNGRADE`), and dependencies pulled from git or a tarball below
+the direct ones.
+
 Dependabot merges minor and patch npm updates on its own once CI passes. Majors, GitHub Actions
 and Docker updates, and any update where the package changed maintainers wait for a review.
 

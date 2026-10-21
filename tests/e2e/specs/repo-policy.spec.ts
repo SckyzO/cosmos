@@ -77,3 +77,9 @@ test('new releases wait before pnpm or Dependabot adopt them', () => {
     expect(days * 1440, `${block.split('\n')[0].trim()} cooldown`).toBeGreaterThanOrEqual(age);
   }
 });
+
+test('pnpm refuses trust downgrades and exotic subdependencies', () => {
+  const workspace = read('pnpm-workspace.yaml');
+  expect(workspace).toMatch(/^trustPolicy: no-downgrade$/m);
+  expect(workspace).toMatch(/^blockExoticSubdeps: true$/m);
+});
