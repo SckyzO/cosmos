@@ -36,13 +36,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '2d ago',
     comments: 24,
-    commenters: [
-      placeholderAvatar('Aiden Park', 64),
-      placeholderAvatar('Mei Tanaka', 64),
-      placeholderAvatar('Olivier Dubois', 64),
-      placeholderAvatar('Priya Singh', 64),
-      placeholderAvatar('Ben', 64),
-    ],
+    commenters: ['Aiden Park', 'Mei Tanaka', 'Olivier Dubois', 'Priya Singh', 'Marcus Bell'],
     href: '#',
   },
   {
@@ -51,11 +45,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '5h ago',
     comments: 8,
-    commenters: [
-      placeholderAvatar('Mei Tanaka', 64),
-      placeholderAvatar('Aiden Park', 64),
-      placeholderAvatar('Olivier Dubois', 64),
-    ],
+    commenters: ['Mei Tanaka', 'Aiden Park', 'Olivier Dubois'],
     href: '#',
   },
   {
@@ -64,7 +54,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '1w ago',
     comments: 3,
-    commenters: [placeholderAvatar('Olivier Dubois', 64), placeholderAvatar('Mei Tanaka', 64)],
+    commenters: ['Olivier Dubois', 'Mei Tanaka'],
     href: '#',
   },
 ];
@@ -106,14 +96,14 @@ const STATUS_VARIANT = {
 // ── Stories — Pattern 3 (avatar group + count, issue/discussion list) ───────
 
 // Hidden on phones, where it would squeeze the issue title into a narrow column.
-const AvatarGroup = ({ urls }: { urls: string[] }) => (
+const AvatarGroup = ({ names }: { names: string[] }) => (
   <div className="hidden -space-x-0.5 sm:flex">
     <dt className="sr-only">Commenters</dt>
-    {urls.map((src) => (
-      <dd key={src}>
+    {names.map((name) => (
+      <dd key={name}>
         <img
-          alt=""
-          src={src}
+          alt={name}
+          src={placeholderAvatar(name, 64)}
           className="size-6 rounded-full bg-gray-50 ring-2 ring-white dark:ring-gray-900"
         />
       </dd>
@@ -147,7 +137,7 @@ export const IssuesWithAvatarGroup: Story = {
           ]}
           trailing={
             <dl className="flex items-center gap-x-6 sm:gap-x-8">
-              <AvatarGroup urls={i.commenters} />
+              <AvatarGroup names={i.commenters} />
               <CommentCount count={i.comments} />
             </dl>
           }
