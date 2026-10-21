@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks-history scans every commit
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.13'
@@ -39,3 +41,7 @@ jobs:
       # --all-files; they gate real commits, not a bulk file scan.
       - name: Run hooks
         run: pre-commit run --all-files --show-diff-on-failure --color=always
+      # The gitleaks hook above scans staged changes, and a CI checkout has
+      # none: scan the history instead, the PR's commits included.
+      - name: Scan the git history for secrets
+        run: pre-commit run --hook-stage manual gitleaks-history --all-files --color=always

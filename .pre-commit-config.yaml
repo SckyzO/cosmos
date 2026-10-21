@@ -23,7 +23,15 @@ repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:
+      # Staged changes only: guards local commits.
       - id: gitleaks
+      # The whole history, for CI (pre-commit.yml): a CI checkout has nothing
+      # staged, so the hook above scans nothing there.
+      - id: gitleaks
+        alias: gitleaks-history
+        name: Detect hardcoded secrets in the git history
+        entry: gitleaks git --redact --verbose
+        stages: [manual]
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.4

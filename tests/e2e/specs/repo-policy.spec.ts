@@ -83,3 +83,14 @@ test('pnpm refuses trust downgrades and exotic subdependencies', () => {
   expect(workspace).toMatch(/^trustPolicy: no-downgrade$/m);
   expect(workspace).toMatch(/^blockExoticSubdeps: true$/m);
 });
+
+test('CI scans the whole git history for secrets', () => {
+  // The upstream gitleaks hook scans staged changes, and a CI checkout has
+  // none: it passed with a token committed in the PR.
+  expect(read('.pre-commit-config.yaml')).toMatch(
+    /alias: gitleaks-history[\s\S]*?entry: gitleaks git\b/
+  );
+  const workflow = read('.github/workflows/pre-commit.yml');
+  expect(workflow).toMatch(/fetch-depth: 0\b/);
+  expect(workflow).toMatch(/pre-commit run --hook-stage manual gitleaks-history\b/);
+});
