@@ -88,5 +88,10 @@ bumps the minor version (`bump-minor-pre-major`).
 
 ## Merge strategy
 
-`gh pr merge --merge --delete-branch` (preserves signatures, creates a merge commit).
+`gh pr merge --merge --delete-branch --body ''` (preserves signatures, creates a merge commit).
 Do NOT use `--rebase` or `--squash` (GitHub rebuilds commits server-side, losing signatures).
+
+`--body ''` leaves the merge commit body empty. GitHub fills it with the PR title by default, and
+release-please splits a commit message at every blank line followed by a conventional header, so
+it counted the merge commit as a second copy of the PR's `feat` or `fix` and listed it twice in the
+changelog.
