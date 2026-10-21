@@ -207,7 +207,10 @@ export const TodayAndClear: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const ClickOpensCalendar: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Pick' },
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: /pick/i });
@@ -219,6 +222,7 @@ export const ClickOpensCalendar: Story = {
 };
 
 export const EscapeCloses: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Pick' },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /pick/i }));
