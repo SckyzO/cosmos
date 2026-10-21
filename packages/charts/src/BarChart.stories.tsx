@@ -1,22 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import { BarChart } from './BarChart';
+import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
-
-const meta = {
-  title: 'Charts/Bar Chart',
-  component: BarChart,
-  parameters: { layout: 'padded' },
-  tags: ['autodocs'],
-  // Storybook 10 requires `args` when `component` is set and the props have
-  // required fields. Stories below override via `render`; these defaults
-  // just satisfy the type contract and feed Controls.
-  args: { categories: MONTHS, series: [{ name: 'Sample', data: [1, 2, 3] }] },
-} satisfies Meta<typeof BarChart>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
+const SERVICES = [
+  'api-gateway',
+  'auth-service',
+  'billing-service',
+  'catalog-service',
+  'checkout-service',
+  'inventory-service',
+  'notification-service',
+  'order-service',
+  'payment-service',
+  'search-service',
+  'shipping-service',
+  'user-profile-service',
+];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -24,128 +26,173 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+const meta = {
+  title: 'Charts/Bar & Column',
+  component: BarChart,
+  parameters: { layout: 'padded' },
+  tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <Wrap>
+        <Story />
+      </Wrap>
+    ),
+  ],
+} satisfies Meta<typeof BarChart>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
 // ── Stories ──────────────────────────────────────────────────────────────────
 
+/** Vertical columns, one series. */
 export const SingleSeries: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        categories={MONTHS}
-        series={[{ name: 'Incidents', data: [12, 18, 14, 22, 28, 19, 24, 31, 16] }]}
-      />
-    </Wrap>
-  ),
+  args: {
+    categories: MONTHS,
+    series: [{ name: 'Incidents', data: [12, 18, 14, 22, 28, 19, 24, 31, 16] }],
+  },
 };
 
+/** Two series or more are grouped side by side, with a legend. */
 export const MultiSeries: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        categories={MONTHS}
-        series={[
-          { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
-          { name: 'WARN', data: [9, 14, 12, 16, 23, 15, 17, 22, 11] },
-        ]}
-      />
-    </Wrap>
-  ),
+  args: {
+    categories: MONTHS,
+    series: [
+      { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
+      { name: 'WARN', data: [9, 14, 12, 16, 23, 15, 17, 22, 11] },
+    ],
+  },
 };
 
+/** `stacked` piles the series on each other. */
 export const Stacked: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        categories={MONTHS}
-        stacked
-        series={[
-          { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
-          { name: 'WARN', data: [9, 14, 12, 16, 23, 15, 17, 22, 11] },
-          { name: 'INFO', data: [4, 2, 5, 7, 4, 6, 3, 5, 4] },
-        ]}
-      />
-    </Wrap>
-  ),
+  args: {
+    categories: MONTHS,
+    stacked: true,
+    series: [
+      { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
+      { name: 'WARN', data: [9, 14, 12, 16, 23, 15, 17, 22, 11] },
+      { name: 'INFO', data: [4, 2, 5, 7, 4, 6, 3, 5, 4] },
+    ],
+  },
 };
 
+/** Columns below zero grow downward from the axis. */
+export const NegativeValues: Story = {
+  args: {
+    categories: MONTHS,
+    series: [{ name: 'Net rack change', data: [6, 4, -3, 8, -5, 2, -7, 5, 3] }],
+  },
+};
+
+/** Long category labels rotate when they don't fit under their column. */
+export const ManyCategories: Story = {
+  args: {
+    categories: SERVICES,
+    series: [{ name: 'Errors (24 h)', data: [182, 64, 23, 41, 137, 58, 12, 96, 151, 37, 44, 19] }],
+  },
+};
+
+/** `orientation="horizontal"` draws bars rightward. */
 export const Horizontal: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        orientation="horizontal"
-        categories={DCS}
-        series={[{ name: 'Active racks', data: [42, 38, 26, 19] }]}
-      />
-    </Wrap>
-  ),
+  args: {
+    orientation: 'horizontal',
+    categories: DCS,
+    series: [{ name: 'Active racks', data: [42, 38, 26, 19] }],
+  },
 };
 
 export const HorizontalMultiSeries: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        orientation="horizontal"
-        categories={DCS}
-        series={[
-          { name: 'In use', data: [42, 38, 26, 19] },
-          { name: 'Available', data: [8, 12, 14, 21] },
-        ]}
-      />
-    </Wrap>
-  ),
+  args: {
+    orientation: 'horizontal',
+    categories: DCS,
+    series: [
+      { name: 'In use', data: [42, 38, 26, 19] },
+      { name: 'Available', data: [8, 12, 14, 21] },
+    ],
+  },
 };
 
 export const HorizontalStacked: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        orientation="horizontal"
-        stacked
-        categories={DCS}
-        series={[
-          { name: 'In use', data: [42, 38, 26, 19] },
-          { name: 'Available', data: [8, 12, 14, 21] },
-        ]}
-      />
-    </Wrap>
-  ),
+  args: {
+    orientation: 'horizontal',
+    stacked: true,
+    categories: DCS,
+    series: [
+      { name: 'In use', data: [42, 38, 26, 19] },
+      { name: 'Available', data: [8, 12, 14, 21] },
+    ],
+  },
+};
+
+/**
+ * Stacked bars with one series below zero face each other across the axis.
+ * `formatValue` drops the sign from the axis and the tooltip.
+ */
+export const HorizontalNegativeStacked: Story = {
+  args: {
+    orientation: 'horizontal',
+    stacked: true,
+    categories: DCS,
+    formatValue: (v) => `${Math.abs(v)} Gb/s`,
+    series: [
+      { name: 'Outbound', data: [-31, -27, -19, -12] },
+      { name: 'Inbound', data: [42, 35, 28, 16] },
+    ],
+  },
 };
 
 export const FormattedValues: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        categories={MONTHS}
-        formatValue={(v) => `${v} k€`}
-        series={[{ name: 'Revenue', data: [120, 145, 132, 168, 195, 178, 210, 234, 198] }]}
-      />
-    </Wrap>
-  ),
+  args: {
+    categories: MONTHS,
+    formatValue: (v) => `${v} k€`,
+    series: [{ name: 'Revenue', data: [120, 145, 132, 168, 195, 178, 210, 234, 198] }],
+  },
 };
 
 export const CustomColors: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        categories={MONTHS}
-        colors={['#10b981', '#f59e0b', '#ef4444']}
-        series={[
-          { name: 'OK', data: [80, 78, 82, 75, 70, 72, 68, 65, 70] },
-          { name: 'WARN', data: [12, 14, 12, 16, 20, 18, 22, 25, 20] },
-          { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
-        ]}
-      />
-    </Wrap>
-  ),
+  args: {
+    categories: MONTHS,
+    colors: ['#10b981', '#f59e0b', '#ef4444'],
+    series: [
+      { name: 'OK', data: [80, 78, 82, 75, 70, 72, 68, 65, 70] },
+      { name: 'WARN', data: [12, 14, 12, 16, 20, 18, 22, 25, 20] },
+      { name: 'CRIT', data: [3, 4, 2, 6, 5, 4, 7, 9, 5] },
+    ],
+  },
 };
 
 export const ShortHeight: Story = {
-  render: () => (
-    <Wrap>
-      <BarChart
-        height={200}
-        categories={MONTHS}
-        series={[{ name: 'Compact', data: [12, 18, 14, 22, 28, 19, 24, 31, 16] }]}
-      />
-    </Wrap>
-  ),
+  args: {
+    height: 200,
+    categories: MONTHS,
+    series: [{ name: 'Compact', data: [12, 18, 14, 22, 28, 19, 24, 31, 16] }],
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/** The legend and the tooltip are HTML: series names and categories show as text. */
+export const HtmlInLabelsRendersAsText: Story = {
+  tags: ['!autodocs'],
+  args: {
+    series: [
+      { name: HOSTILE, data: [3, 5, 2] },
+      { name: 'Normal', data: [4, 1, 6] },
+    ],
+    categories: [HOSTILE, 'B', 'C'],
+  },
+  play: async ({ canvasElement }) => {
+    // Legends render on mount: the name must show up as literal text.
+    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
+    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+
+    // Tooltips render on hover: the title is the category.
+    await waitFor(() => {
+      hover(canvasElement.querySelector('.apexcharts-bar-area') as Element);
+      expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
+    });
+    await expectNoInjectedImage(canvasElement);
+  },
 };
