@@ -249,6 +249,30 @@ export const DescriptionTriggersRichLayout: Story = {
   },
 };
 
+// Alpha channel of a computed CSS colour: `rgba(…, a)`, `oklab(… / a)` or opaque.
+const alphaOf = (color: string) => {
+  const slash = color.match(/\/\s*([\d.]+)(%?)\s*\)$/);
+  if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
+  const rgba = color.match(/^rgba\(.*,\s*([\d.]+)\)$/);
+  return rgba ? Number(rgba[1]) : 1;
+};
+
+/** A sticky header must be opaque in dark themes, or the rows scrolling under it show through. */
+export const StickyHeaderIsOpaqueInDarkThemes: Story = {
+  globals: { theme: 'dark' },
+  render: () => (
+    <NarrowStackedList>
+      <NarrowStackedList.Header sticky>A</NarrowStackedList.Header>
+      <NarrowStackedList.Item title="Aiden Park" subtitle="aiden.park@example.com" />
+    </NarrowStackedList>
+  ),
+  play: async ({ canvas }) => {
+    await expect(document.documentElement).toHaveClass('dark');
+    const header = canvas.getByText('A');
+    await expect(alphaOf(getComputedStyle(header).backgroundColor)).toBe(1);
+  },
+};
+
 export const HeaderRendersWithBackgroundAndStickyClass: Story = {
   render: () => (
     <NarrowStackedList>
