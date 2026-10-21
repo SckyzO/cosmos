@@ -1,5 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Bell, KeyRound, Settings as SettingsIcon, User } from 'lucide-react';
+import {
+  Archive,
+  Bell,
+  FileText,
+  ImageIcon,
+  KeyRound,
+  Settings as SettingsIcon,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { expect, userEvent } from 'storybook/test';
 import { Tabs } from './Tabs';
@@ -117,6 +125,117 @@ export const Vertical: Story = {
   },
 };
 
+type FileRow = { name: string; size: string; modified: string };
+
+const FILES: Record<'documents' | 'images' | 'archives', FileRow[]> = {
+  documents: [
+    { name: 'capacity-plan-2026.pdf', size: '2.4 MB', modified: 'Oct 18' },
+    { name: 'runbook-failover.md', size: '18 KB', modified: 'Oct 12' },
+    { name: 'rack-inventory.xlsx', size: '640 KB', modified: 'Sep 30' },
+  ],
+  images: [
+    { name: 'room-a-floorplan.png', size: '1.1 MB', modified: 'Oct 2' },
+    { name: 'rack-12-front.jpg', size: '3.8 MB', modified: 'Sep 21' },
+  ],
+  archives: [{ name: 'logs-2026-q3.tar.gz', size: '412 MB', modified: 'Oct 1' }],
+};
+
+const FileList = ({ files }: { files: FileRow[] }) => (
+  <ul className="divide-y divide-[var(--color-border)] text-sm">
+    {files.map((f) => (
+      <li
+        key={f.name}
+        className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+      >
+        <span className="truncate font-medium text-[var(--color-text-primary)]">{f.name}</span>
+        <span className="shrink-0 text-xs text-[var(--color-text-secondary)]">
+          {f.size} · {f.modified}
+        </span>
+      </li>
+    ))}
+  </ul>
+);
+
+// The folder panel draws its own border and background: no SectionCard around it.
+export const Folder: Story = {
+  render: () => {
+    const [tab, setTab] = useState('documents');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab} variant="folder">
+          <Tabs.List>
+            <Tabs.Trigger value="documents" icon={FileText} badge={FILES.documents.length}>
+              Documents
+            </Tabs.Trigger>
+            <Tabs.Trigger value="images" icon={ImageIcon} badge={FILES.images.length}>
+              Images
+            </Tabs.Trigger>
+            <Tabs.Trigger value="archives" icon={Archive}>
+              Archives
+            </Tabs.Trigger>
+            <Tabs.Trigger value="shared" disabled>
+              Shared
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="documents">
+            <FileList files={FILES.documents} />
+          </Tabs.Panel>
+          <Tabs.Panel value="images">
+            <FileList files={FILES.images} />
+          </Tabs.Panel>
+          <Tabs.Panel value="archives">
+            <FileList files={FILES.archives} />
+          </Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+};
+
+export const FolderVertical: Story = {
+  render: () => {
+    const [tab, setTab] = useState('account');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab} orientation="vertical" variant="folder">
+          <Tabs.List className="w-44">
+            <Tabs.Trigger value="account" icon={User}>
+              Account
+            </Tabs.Trigger>
+            <Tabs.Trigger value="security" icon={KeyRound}>
+              Security
+            </Tabs.Trigger>
+            <Tabs.Trigger value="notifications" icon={Bell} badge="3">
+              Notifications
+            </Tabs.Trigger>
+            <Tabs.Trigger value="locked" disabled>
+              Billing
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="account">
+            <h3 className="mb-2 text-sm font-semibold">Account</h3>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Manage your username, profile picture and display name.
+            </p>
+          </Tabs.Panel>
+          <Tabs.Panel value="security">
+            <h3 className="mb-2 text-sm font-semibold">Security</h3>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Change your password and review active sessions.
+            </p>
+          </Tabs.Panel>
+          <Tabs.Panel value="notifications">
+            <h3 className="mb-2 text-sm font-semibold">Notifications</h3>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Pick which alerts reach you and through which channels.
+            </p>
+          </Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SwitchesPanelOnTabClick: Story = {
@@ -203,5 +322,77 @@ export const VerticalAriaOrientation: Story = {
     await expect(tablist).toHaveAttribute('aria-orientation', 'vertical');
     await userEvent.click(canvas.getByRole('tab', { name: 'Two' }));
     await expect(canvas.getByTestId('panel')).toHaveTextContent('two-content');
+  },
+};
+
+const FolderTrio = () => {
+  const [tab, setTab] = useState('documents');
+  return (
+    <Tabs value={tab} onChange={setTab} variant="folder">
+      <Tabs.List>
+        <Tabs.Trigger value="documents">Documents</Tabs.Trigger>
+        <Tabs.Trigger value="images">Images</Tabs.Trigger>
+        <Tabs.Trigger value="archives">Archives</Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Panel value="documents">
+        <p>documents-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="images">
+        <p>images-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="archives">
+        <p>archives-panel-content</p>
+      </Tabs.Panel>
+    </Tabs>
+  );
+};
+
+export const FolderSwitchesPanel: Story = {
+  render: () => <FolderTrio />,
+  play: async ({ canvas }) => {
+    const documents = canvas.getByRole('tab', { name: 'Documents' });
+    const images = canvas.getByRole('tab', { name: 'Images' });
+    const archives = canvas.getByRole('tab', { name: 'Archives' });
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('documents-panel-content');
+    // Click "Images" → panel switches and aria-selected moves
+    await userEvent.click(images);
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('images-panel-content');
+    await expect(images).toHaveAttribute('aria-selected', 'true');
+    await expect(documents).toHaveAttribute('aria-selected', 'false');
+    // Keyboard: Tab reaches the next trigger, Enter selects it
+    await userEvent.tab();
+    await expect(archives).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('archives-panel-content');
+    await expect(archives).toHaveAttribute('aria-selected', 'true');
+    await expect(images).toHaveAttribute('aria-selected', 'false');
+  },
+};
+
+export const FolderActiveTabJoinsPanel: Story = {
+  render: () => <FolderTrio />,
+  play: async ({ canvas }) => {
+    const active = canvas.getByRole('tab', { name: 'Documents' });
+    const inactive = canvas.getByRole('tab', { name: 'Images' });
+    const panel = canvas.getByRole('tabpanel');
+    const listBottom = canvas.getByRole('tablist').getBoundingClientRect().bottom;
+    // The list's bottom border is the panel's top edge
+    await expect(panel.getBoundingClientRect().top).toBeCloseTo(listBottom, 0);
+    // The active tab covers that border with the panel's background: no line under it
+    await expect(active.getBoundingClientRect().bottom).toBeCloseTo(listBottom, 0);
+    await expect(getComputedStyle(active).borderBottomColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(active).backgroundColor).toBe(
+      getComputedStyle(panel).backgroundColor
+    );
+    // Inactive tabs are lower, on another background, with the border under them
+    await expect(inactive.getBoundingClientRect().top).toBeGreaterThan(
+      active.getBoundingClientRect().top
+    );
+    await expect(getComputedStyle(inactive).backgroundColor).not.toBe(
+      getComputedStyle(panel).backgroundColor
+    );
+    await expect(getComputedStyle(inactive).borderBottomColor).toBe(
+      getComputedStyle(panel).borderLeftColor
+    );
   },
 };
