@@ -20,4 +20,13 @@ test.describe('Storybook smoke test', () => {
     const frame = page.frameLocator('iframe#storybook-preview-iframe');
     await expect(frame.locator('#storybook-root')).not.toBeEmpty({ timeout: 20_000 });
   });
+
+  // Storybook's onboarding guide (a sidebar checklist titled "Get started",
+  // then "Level up", then "Become an expert") is turned off in main.ts.
+  test('Manager shows no onboarding checklist', async ({ page }) => {
+    await page.goto('/?path=/story/welcome--default');
+    const frame = page.frameLocator('iframe#storybook-preview-iframe');
+    await expect(frame.locator('#storybook-root')).not.toBeEmpty({ timeout: 20_000 });
+    await expect(page.getByText(/^(Get started|Level up|Become an expert)$/)).toHaveCount(0);
+  });
 });
