@@ -105,8 +105,9 @@ const STATUS_VARIANT = {
 
 // ── Stories — Pattern 3 (avatar group + count, issue/discussion list) ───────
 
+// Hidden on phones, where it would squeeze the issue title into a narrow column.
 const AvatarGroup = ({ urls }: { urls: string[] }) => (
-  <div className="flex -space-x-0.5">
+  <div className="hidden -space-x-0.5 sm:flex">
     <dt className="sr-only">Commenters</dt>
     {urls.map((src) => (
       <dd key={src}>
