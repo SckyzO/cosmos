@@ -31,6 +31,7 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 | Chart                             | Notes                                             |
 | --------------------------------- | ------------------------------------------------- |
 | `BarChart`                        | Vertical or horizontal bars                       |
+| `RangeBarChart`                   | Time ranges per row on a datetime axis (timeline) |
 | `LineAreaChart`                   | Smooth area + gradient fill                       |
 | `RealtimeChart`                   | Live updates with WARN/CRIT threshold annotations |
 | `RadialBarChart`                  | Multi-series radial gauge                         |
