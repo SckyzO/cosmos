@@ -12,7 +12,8 @@ import {
   Settings,
   UserRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { expect, within } from 'storybook/test';
 import {
   AppearanceSettings,
   applyAppearance,
@@ -44,170 +45,142 @@ import themePkg from '../../../packages/theme/package.json';
 // which is why this used to be Welcome.mdx and broke the dark/light toggle.
 // ---------------------------------------------------------------------------
 
-type Group = {
-  id: string;
-  name: string;
-  count: number;
-  contains: string;
+// ---------------------------------------------------------------------------
+// Catalog: the sidebar groups, read from Storybook's own index so the counts
+// and the entries can't drift from the stories.
+// ---------------------------------------------------------------------------
+
+type IndexEntry = { id: string; title: string; type: 'story' | 'docs' };
+
+type CatalogEntry = { name: string; href: string };
+type CatalogGroup = { name: string; href: string; entries: CatalogEntry[] };
+
+// index.json lists the entries already in sidebar order (storySort), so the
+// groups and their entries keep it.
+const catalogGroups = (entries: IndexEntry[]): CatalogGroup[] => {
+  const byTitle = new Map<string, { docs?: string; story?: string }>();
+  for (const e of entries) {
+    if (e.title === 'Welcome') continue;
+    const ids = byTitle.get(e.title) ?? {};
+    if (e.type === 'docs') ids.docs ??= e.id;
+    else ids.story ??= e.id;
+    byTitle.set(e.title, ids);
+  }
+  const groups = new Map<string, CatalogGroup>();
+  for (const [title, ids] of byTitle) {
+    const [groupName, ...rest] = title.split('/');
+    const href = ids.docs ? `./?path=/docs/${ids.docs}` : `./?path=/story/${ids.story}`;
+    const group = groups.get(groupName) ?? { name: groupName, href, entries: [] };
+    group.entries.push({ name: rest.join(' / ') || groupName, href });
+    groups.set(groupName, group);
+  }
+  return [...groups.values()];
 };
 
-const groupRows: Group[] = [
-  {
-    id: 'pages',
-    name: 'Pages',
-    count: 19,
-    contains:
-      'Dashboard, Profile, SettingsScreen, Calendar, Activity, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
-  },
-  {
-    id: 'typography',
-    name: 'Typography',
-    count: 10,
-    contains:
-      'Headings (H1-H6 + decorations), Paragraphs (lead, drop cap, columns), Text utilities (italic/bold/mark/code/abbr/small/gradient), Blockquote (plain/solid/icon/testimonial), Kbd, Figure (image+caption), Link, Lists (List + List.Item), Description List, HR (Divider with 8 patterns)',
-  },
-  {
-    id: 'atoms',
-    name: 'Atoms',
-    count: 15,
-    contains:
-      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Ribbon, SectionLabel, SelectInput, Spinner, Clipboard, ThemeToggle, ThemeToggleTri, BackToTopFab',
-  },
-  {
-    id: 'forms',
-    name: 'Forms',
-    count: 25,
-    contains:
-      'Input, Select, Combobox, Toggle, Checkbox, Radio, NumberInput, StepperInput, SearchInput, PasswordInput, OtpInput, Textarea, DatePicker (single + range), TimePicker, Calendar, FileInput, Dropzone, AvatarUploader, FilterPills, SegmentedControl, ZoomBar, FormRow, FormFooter, ActionPanel, PasswordPolicyChecker',
-  },
-  {
-    id: 'data',
-    name: 'Data',
-    count: 10,
-    contains:
-      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, MiniCalendar, EventCalendar',
-  },
-  { id: 'status', name: 'Status', count: 3, contains: 'HealthBadge, HealthDot, StatusBadge' },
-  {
-    id: 'feedback',
-    name: 'Feedback',
-    count: 10,
-    contains:
-      'AlertBanner, NotificationCard, Toaster, Tooltip, AnnouncementBar, CookieBanner, EmptyState, ErrorState, LoadingState, Skeleton',
-  },
-  {
-    id: 'overlays',
-    name: 'Overlays',
-    count: 9,
-    contains:
-      'Modal, Drawer, Dropdown, Popover, CommandPalette, HelpOverlay, ConfirmationModal, NotificationsPanel, UserMenu',
-  },
-  {
-    id: 'navigation',
-    name: 'Navigation',
-    count: 10,
-    contains:
-      'Tabs, Breadcrumb, PageBreadcrumb, Pagination, Stepper, ProgressBar, Navbar, VerticalNavigation, StickyScrollNav',
-  },
-  {
-    id: 'actions',
-    name: 'Actions',
-    count: 5,
-    contains:
-      'PageActionButton, RefreshButton, RowActionButton, StatefulSaveButton, UnsavedIndicator',
-  },
-  {
-    id: 'layout',
-    name: 'Layout',
-    count: 9,
-    contains:
-      'Shell, Sidebar, Topbar, PageHeader, SectionCard, Card, ContentNarrow, ColBox, MediaObject',
-  },
-  {
-    id: 'lists',
-    name: 'Lists',
-    count: 9,
-    contains:
-      'StackedList, ContentStackedList, StackedListInCard, NarrowStackedList, ActivityFeed, GridList, SimpleRow, ClickableRow, StatusRow',
-  },
-  {
-    id: 'tables',
-    name: 'Tables',
-    count: 1,
-    contains: 'DataTable (sortable, filterable, paginated, with selection + bulk actions)',
-  },
-  {
-    id: 'settings',
-    name: 'Settings',
-    count: 3,
-    contains: 'AccentPicker, OptionPicker, PalettePicker',
-  },
-  {
-    id: 'charts',
-    name: 'Charts',
-    count: 7,
-    contains:
-      'LineAreaChart, BarChart, DonutChart, RadialBarChart + GradientRadial + SemiCircleGauge + StrokedGauge, RealtimeChart, Sparkline + SparklineGroup, TreemapChart (@sckyzo/cosmos-charts)',
-  },
-];
-
-const groupLinks: Record<string, string> = {
-  pages: 'pages-dashboard--docs',
-  typography: 'typography-headings--docs',
-  atoms: 'atoms-button--docs',
-  forms: 'forms-input--docs',
-  data: 'data-kpi-card--docs',
-  status: 'status-status-badge--docs',
-  feedback: 'feedback-toast--docs',
-  overlays: 'overlays-modal--docs',
-  navigation: 'navigation-tabs--docs',
-  actions: 'actions-page-action-button--docs',
-  layout: 'layout-shell--docs',
-  lists: 'lists-stacked-list--docs',
-  tables: 'tables-datatable--docs',
-  settings: 'settings-accent-picker--docs',
-  charts: 'charts-bar-column--docs',
-};
-
-const groupColumns: ColumnDef<Group>[] = [
+const catalogColumns: ColumnDef<CatalogGroup>[] = [
   {
     key: 'name',
     label: 'Group',
-    width: '14%',
+    width: '6.5rem',
     sortable: true,
-    sortValue: (r) => r.name,
-    filterable: true,
-    filterValue: (r) => r.name,
-    render: (r) => (
-      <a
-        href={`./?path=/docs/${groupLinks[r.id]}`}
-        className="font-semibold text-brand-600 dark:text-brand-400 hover:underline"
-      >
-        {r.name}
-      </a>
+    sortValue: (g) => g.name,
+    render: (g) => (
+      <div className="flex flex-col">
+        <a href={g.href} className="text-brand-600 dark:text-brand-400 font-semibold hover:underline">
+          {g.name}
+        </a>
+        <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+          {g.entries.length} {g.entries.length === 1 ? 'entry' : 'entries'}
+        </span>
+      </div>
     ),
   },
   {
-    key: 'count',
-    label: 'Count',
-    width: '8%',
-    align: 'right',
-    sortable: true,
-    sortValue: (r) => r.count,
-    render: (r) => (
-      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{r.count}</span>
+    key: 'entries',
+    label: 'Entries',
+    searchValue: (g) => `${g.name} ${g.entries.map((e) => e.name).join(' ')}`,
+    render: (g) => (
+      <span className="text-sm leading-relaxed">
+        {g.entries.map((e, i) => (
+          <Fragment key={e.href}>
+            {i > 0 && ', '}
+            <a
+              href={e.href}
+              className="hover:text-brand-600 dark:hover:text-brand-400 text-gray-700 hover:underline dark:text-gray-300"
+            >
+              {e.name}
+            </a>
+          </Fragment>
+        ))}
+      </span>
     ),
-  },
-  {
-    key: 'contains',
-    label: 'Components',
-    sortable: false,
-    filterable: true,
-    filterValue: (r) => r.contains,
-    searchValue: (r) => `${r.name} ${r.contains}`,
-    render: (r) => <span className="text-sm leading-snug">{r.contains}</span>,
   },
 ];
+
+/** `entries` is `null` while loading and `'error'` when the index couldn't be read. */
+const CatalogTable = ({ entries }: { entries: IndexEntry[] | null | 'error' }) => {
+  if (entries === null)
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading the story index…</p>;
+  if (entries === 'error')
+    return (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        The story index (<code>index.json</code>) couldn&apos;t be loaded, so the groups can&apos;t
+        be listed here. The sidebar has them all.
+      </p>
+    );
+  const groups = catalogGroups(entries);
+  const titles = groups.reduce((n, g) => n + g.entries.length, 0);
+  const stories = entries.filter((e) => e.type === 'story' && e.title !== 'Welcome').length;
+  return (
+    <>
+      <p className="mb-3.5 text-sm text-gray-500 dark:text-gray-400">
+        Stories are grouped by <strong>responsibility</strong>, not by file location, following
+        Storybook&apos;s{' '}
+        <a
+          href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
+          target="_blank"
+          rel="noreferrer"
+          className="text-brand-600 dark:text-brand-400 hover:underline"
+        >
+          story-hierarchy convention
+        </a>
+        : <strong>{titles}</strong> entries and <strong>{stories}</strong> stories across{' '}
+        <strong>{groups.length}</strong> groups.
+      </p>
+      <DataTable<CatalogGroup>
+        rows={groups}
+        columns={catalogColumns}
+        rowKey={(g) => g.name}
+        pageSize={30}
+        defaultSearchValue=""
+        onSearchChange={() => {}}
+        searchPlaceholder="Filter groups or entries…"
+      />
+    </>
+  );
+};
+
+// The preview iframe and index.json sit side by side, in dev and in the
+// static build (GitHub Pages serves it under /cosmos/).
+const useStoryIndex = () => {
+  const [entries, setEntries] = useState<IndexEntry[] | null | 'error'>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('./index.json')
+      .then((res) => {
+        if (!res.ok) throw new Error(`index.json: HTTP ${res.status}`);
+        return res.json() as Promise<{ entries: Record<string, IndexEntry> }>;
+      })
+      .then((index) => !cancelled && setEntries(Object.values(index.entries)))
+      .catch(() => !cancelled && setEntries('error'));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return entries;
+};
+
+const Catalog = () => <CatalogTable entries={useStoryIndex()} />;
 
 // Same setup as the cosmos-react README ("Set up the styles").
 const INSTALL = 'pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react';
@@ -642,34 +615,12 @@ const WelcomePage = ({
       </ul>
     </section>
 
-    {/* All sidebar groups (DataTable) */}
+    {/* All sidebar groups */}
     <section className="mt-12">
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         All sidebar groups
       </h2>
-      <div className="mb-3.5 text-sm text-gray-500 dark:text-gray-400">
-        Stories are grouped by <strong>responsibility</strong>, not by file location — mirroring the
-        Storybook{' '}
-        <a
-          href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
-          target="_blank"
-          rel="noreferrer"
-          className="text-brand-600 dark:text-brand-400 hover:underline"
-        >
-          story-hierarchy convention
-        </a>
-        . Total: <strong>{groupRows.reduce((s, g) => s + g.count, 0)}</strong> components across{' '}
-        <strong>{groupRows.length}</strong> groups.
-      </div>
-      <DataTable<Group>
-        rows={groupRows}
-        columns={groupColumns}
-        rowKey={(r) => r.id}
-        pageSize={20}
-        defaultSearchValue=""
-        onSearchChange={() => {}}
-        searchPlaceholder="Filter groups or components…"
-      />
+      <Catalog />
     </section>
   </div>
 );
@@ -697,4 +648,48 @@ export const Default: Story = {
       }}
     />
   ),
+};
+
+// A fixed index, so the test doesn't depend on the stories that exist.
+const FIXTURE: IndexEntry[] = [
+  { id: 'welcome--default', title: 'Welcome', type: 'story' },
+  { id: 'pages-dashboard--docs', title: 'Pages/Dashboard', type: 'docs' },
+  { id: 'pages-dashboard--default', title: 'Pages/Dashboard', type: 'story' },
+  { id: 'atoms-button--docs', title: 'Atoms/Button', type: 'docs' },
+  { id: 'atoms-button--variants', title: 'Atoms/Button', type: 'story' },
+  { id: 'atoms-button--states', title: 'Atoms/Button', type: 'story' },
+  { id: 'atoms-badge--default', title: 'Atoms/Badge', type: 'story' },
+];
+
+/** The catalog groups the index in sidebar order and links each entry. Test only. */
+export const CatalogFromIndex: Story = {
+  tags: ['!dev'],
+  render: () => <CatalogTable entries={FIXTURE} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvasElement.querySelector('p')).toHaveTextContent(
+      '3 entries and 4 stories across 2 groups'
+    );
+    const groups = canvas.getAllByRole('link', { name: /^(Pages|Atoms|Welcome)$/ });
+    await expect(groups.map((a) => a.textContent)).toEqual(['Pages', 'Atoms']);
+    // An entry links its docs page, or its first story when it has none.
+    await expect(canvas.getByRole('link', { name: 'Button' })).toHaveAttribute(
+      'href',
+      './?path=/docs/atoms-button--docs'
+    );
+    await expect(canvas.getByRole('link', { name: 'Badge' })).toHaveAttribute(
+      'href',
+      './?path=/story/atoms-badge--default'
+    );
+    await expect(canvas.getByText('2 entries')).toBeVisible();
+  },
+};
+
+/** Without the index, the catalog says so instead of showing an empty table. Test only. */
+export const CatalogWithoutIndex: Story = {
+  tags: ['!dev'],
+  render: () => <CatalogTable entries="error" />,
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByText(/couldn.t be loaded/)).toBeVisible();
+  },
 };
