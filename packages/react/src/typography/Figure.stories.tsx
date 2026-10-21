@@ -1,14 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Figure } from './Figure';
 
+// Photo by Benjamin Voros on Unsplash (Unsplash License):
+// https://unsplash.com/photos/snow-mountain-under-stars-phIFdC6lA4E
+// `new URL(…, import.meta.url)` lets Vite emit it as an asset, base path included.
+const PHOTO = new URL('../storybook-assets/snow-mountain-under-stars.jpg', import.meta.url).href;
+
 const meta = {
   title: 'Typography/Figure',
   component: Figure,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: {
-    src: 'https://api.dicebear.com/9.x/glass/svg?seed=cosmos&backgroundColor=6366f1,a855f7',
-    alt: 'Cosmos abstract pattern',
+    src: PHOTO,
+    alt: 'Snow-covered mountains under a starry night sky',
   },
 } satisfies Meta<typeof Figure>;
 
@@ -22,7 +27,7 @@ export const Default: Story = {
 export const WithCaption: Story = {
   args: {
     size: 'md',
-    caption: 'Cosmos design system — abstract pattern generated procedurally.',
+    caption: 'Photo by Benjamin Voros on Unsplash.',
   },
 };
 
