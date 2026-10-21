@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ComponentType, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 
 // ─── Internal context ─────────────────────────────────────────────────────────
@@ -31,6 +31,12 @@ export type SidebarProps = {
   children: ReactNode;
   /** Footer content (sticks to bottom — e.g. user profile + collapse btn). */
   footer?: ReactNode;
+  /**
+   * Renders a collapse button at the very bottom, under `footer`, and fires
+   * with the next state when it is clicked. Leave it out when the control
+   * lives elsewhere (e.g. the Topbar hamburger).
+   */
+  onCollapsedChange?: (collapsed: boolean) => void;
   /** Optional className override. */
   className?: string;
 };
@@ -49,6 +55,7 @@ const SidebarRoot = ({
   collapsedWidth = 72,
   children,
   footer,
+  onCollapsedChange,
   className,
 }: SidebarProps) => (
   <SidebarContext.Provider value={{ collapsed }}>
@@ -67,9 +74,35 @@ const SidebarRoot = ({
           {footer}
         </div>
       )}
+      {onCollapsedChange && (
+        <CollapseButton collapsed={collapsed} onClick={() => onCollapsedChange(!collapsed)} />
+      )}
     </nav>
   </SidebarContext.Provider>
 );
+
+// Bottom row: "Collapse" with its icon, or the expand icon alone when collapsed.
+const CollapseButton = ({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) => {
+  const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
+  return (
+    <div className="shrink-0 border-t border-[var(--color-border)] py-2">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-expanded={!collapsed}
+        title={collapsed ? 'Expand sidebar' : undefined}
+        className={clsx(
+          'focus-visible:ring-brand-500 mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 dark:hover:bg-white/5',
+          collapsed ? 'justify-center px-2' : 'px-3'
+        )}
+      >
+        <Icon className="h-5 w-5 shrink-0" aria-hidden />
+        {!collapsed && <span>Collapse</span>}
+      </button>
+    </div>
+  );
+};
 
 // ─── Sidebar.Brand ────────────────────────────────────────────────────────────
 // Header row at the top of the sidebar — logo + product name + optional subtitle.
