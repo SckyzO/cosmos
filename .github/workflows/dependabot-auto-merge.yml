@@ -7,6 +7,11 @@
 # apexcharts 6.7.0 to 8.3.1, and the auto-merge armed for the minor merged the
 # major unreviewed. The workflow re-runs on every push to the PR, so it now
 # disarms auto-merge whenever the update is no longer minor or patch.
+#
+# npm only, and only when the package kept its maintainers: GitHub Actions and
+# Docker bumps change code that runs in publish.yml next to the npm OIDC
+# token, and a new maintainer is how a hijacked package shows up. Those always
+# get a human review.
 name: dependabot-auto-merge
 
 on: pull_request
@@ -23,14 +28,22 @@ jobs:
     steps:
       - id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-      - name: Enable auto-merge for minor and patch updates
-        if: ${{ steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch' }}
+      - name: Enable auto-merge for minor and patch npm updates
+        if: >-
+          ${{ steps.meta.outputs.package-ecosystem == 'npm_and_yarn'
+          && steps.meta.outputs.maintainer-changes != 'true'
+          && (steps.meta.outputs.update-type == 'version-update:semver-minor'
+          || steps.meta.outputs.update-type == 'version-update:semver-patch') }}
         run: gh pr merge --auto --merge "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Disable auto-merge for anything else
-        if: ${{ steps.meta.outputs.update-type != 'version-update:semver-minor' && steps.meta.outputs.update-type != 'version-update:semver-patch' }}
+        if: >-
+          ${{ !(steps.meta.outputs.package-ecosystem == 'npm_and_yarn'
+          && steps.meta.outputs.maintainer-changes != 'true'
+          && (steps.meta.outputs.update-type == 'version-update:semver-minor'
+          || steps.meta.outputs.update-type == 'version-update:semver-patch')) }}
         run: |
           if [ "$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')" = "true" ]; then
             gh pr merge --disable-auto "$PR_URL"

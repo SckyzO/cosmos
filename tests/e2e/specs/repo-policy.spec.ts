@@ -1,0 +1,64 @@
+import { readFileSync } from 'node:fs';
+import { test, expect } from '@playwright/test';
+
+// Checks on the repo's supply-chain settings. They guard what reaches npm
+// through publish.yml, and nothing else fails when one of them is dropped.
+
+const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
+
+type Outputs = Record<string, string>;
+
+/**
+ * The `if:` of the workflow step named `step`, as a function of the
+ * fetch-metadata outputs. Handles a one-line `if: ${{ … }}` and a folded
+ * `if: >-` block; only the operators the workflow uses (== != && || ! and
+ * parentheses) are translated.
+ */
+const condition = (workflow: string, step: string): ((outputs: Outputs) => boolean) => {
+  const lines = workflow.split('\n');
+  const start = lines.findIndex((l) => l.includes(`name: ${step}`));
+  const at = lines.findIndex((l, i) => i > start && /^\s+if:/.test(l));
+  const indent = lines[at].search(/\S/);
+  let expr = lines[at].replace(/^\s+if:\s*/, '');
+  if (expr === '>-') {
+    const block = [];
+    for (let i = at + 1; i < lines.length && lines[i].search(/\S/) > indent; i++)
+      block.push(lines[i]);
+    expr = block.join(' ');
+  }
+  const js = expr
+    .trim()
+    .replace(/^\$\{\{|\}\}$/g, '')
+    .replace(/steps\.meta\.outputs\.([\w-]+)/g, "o['$1']")
+    .replace(/([!=])=/g, '$1==');
+  // Only those tokens reach the Function constructor, so the file can't run
+  // anything else.
+  const rest = js.replace(/o\['[\w-]+'\]|'[\w:.-]*'|===|!==|&&|\|\||[!()\s]/g, '');
+  if (rest !== '') throw new Error(`unexpected tokens in the ${step} condition: ${rest}`);
+  return new Function('o', `return (${js});`) as (outputs: Outputs) => boolean;
+};
+
+test('Dependabot auto-merges minor and patch npm updates only', () => {
+  const workflow = read('.github/workflows/dependabot-auto-merge.yml');
+  const enable = condition(workflow, 'Enable auto-merge');
+  const disable = condition(workflow, 'Disable auto-merge');
+  const update = (ecosystem: string, type: string, maintainerChanges = 'false'): Outputs => ({
+    'package-ecosystem': ecosystem,
+    'update-type': `version-update:semver-${type}`,
+    'maintainer-changes': maintainerChanges,
+  });
+
+  const cases: [string, Outputs, boolean][] = [
+    ['npm minor', update('npm_and_yarn', 'minor'), true],
+    ['npm patch', update('npm_and_yarn', 'patch'), true],
+    ['npm major', update('npm_and_yarn', 'major'), false],
+    ['npm minor, new maintainer', update('npm_and_yarn', 'minor', 'true'), false],
+    // Actions and images run in publish.yml, next to the npm OIDC token.
+    ['GitHub Actions patch', update('github_actions', 'patch'), false],
+    ['Docker minor', update('docker', 'minor'), false],
+  ];
+  for (const [name, outputs, merges] of cases) {
+    expect(enable(outputs), `${name}: enable`).toBe(merges);
+    expect(disable(outputs), `${name}: disable`).toBe(!merges);
+  }
+});
