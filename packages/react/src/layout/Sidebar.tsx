@@ -149,7 +149,7 @@ export type SidebarItemProps = {
   label: string;
   /** Whether the item is active (highlighted). */
   active?: boolean;
-  /** Link target — renders an <a> if set, otherwise a <button>. */
+  /** Link target — renders an `<a>` if set, otherwise a `<button>`. */
   href?: string;
   /** Click handler (if not using href). */
   onClick?: () => void;
