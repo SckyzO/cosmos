@@ -38,7 +38,7 @@ const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeade
       <li
         ref={ref}
         className={clsx(
-          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800/60 dark:text-white',
+          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
           sticky && 'sticky top-0 z-10',
           className
         )}
