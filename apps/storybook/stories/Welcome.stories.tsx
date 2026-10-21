@@ -144,8 +144,9 @@ const groupRows: Group[] = [
   {
     id: 'charts',
     name: 'Charts',
-    count: 2,
-    contains: 'BarChart, Gallery (@sckyzo/cosmos-charts)',
+    count: 7,
+    contains:
+      'LineAreaChart, BarChart, DonutChart, RadialBarChart + GradientRadial + SemiCircleGauge + StrokedGauge, RealtimeChart, Sparkline + SparklineGroup, TreemapChart (@sckyzo/cosmos-charts)',
   },
 ];
 
@@ -164,7 +165,7 @@ const groupLinks: Record<string, string> = {
   lists: 'lists-stacked-list--docs',
   tables: 'tables-datatable--docs',
   settings: 'settings-accent-picker--docs',
-  charts: 'charts-bar-chart--docs',
+  charts: 'charts-bar-column--docs',
 };
 
 const groupColumns: ColumnDef<Group>[] = [
@@ -595,7 +596,7 @@ export default () => <Button variant="primary">Hello Cosmos</Button>;`}
             { href: '#get-started', label: 'Quick start' },
             { href: './?path=/docs/atoms-button--docs', label: 'Atoms catalog' },
             { href: './?path=/docs/forms-input--docs', label: 'Forms & Tables' },
-            { href: './?path=/docs/charts-bar-chart--docs', label: 'Charts gallery' },
+            { href: './?path=/docs/charts-bar-column--docs', label: 'Charts catalog' },
           ]}
         />
         <IntentCol
