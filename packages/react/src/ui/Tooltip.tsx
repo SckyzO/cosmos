@@ -42,6 +42,8 @@ export type TooltipProps = {
   maxWidth?: string;
   /** Keys shown after the content, e.g. `['⌘', 'S']`. */
   shortcut?: string[];
+  /** Bold first line; `content` then reads as its explanation. */
+  title?: ReactNode;
 };
 
 /**
@@ -56,6 +58,7 @@ export const Tooltip = ({
   variant = 'dark',
   maxWidth = 'max-w-xs',
   shortcut,
+  title,
 }: TooltipProps) => {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -100,7 +103,8 @@ export const Tooltip = ({
           VARIANT_BOX[variant]
         )}
       >
-        {content}
+        {title && <span className="block font-semibold">{title}</span>}
+        {title ? <span className="mt-0.5 block opacity-80">{content}</span> : content}
         {shortcut && (
           <span className="ml-2 inline-flex gap-0.5 align-middle">
             {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
