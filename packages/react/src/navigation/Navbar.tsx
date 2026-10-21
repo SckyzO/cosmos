@@ -36,9 +36,11 @@ import {
 
 export type NavbarTheme = 'light' | 'dark';
 
+// The light bar follows the page theme, so the page's text colour suits it. The
+// dark bar stays dark on light pages: it sets its own text colour.
 const ROOT_BG: Record<NavbarTheme, string> = {
   light: 'bg-white shadow-sm border-b border-gray-200 dark:bg-gray-800 dark:border-white/10',
-  dark: 'bg-gray-800',
+  dark: 'bg-gray-800 text-white',
 };
 
 const ITEM_BASE: Record<NavbarTheme, string> = {
