@@ -30,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **react:** nest Sidebar sub-menus and indent them automatically ([478b553](https://github.com/SckyzO/cosmos/commit/478b553f2202d32be282c434b01f7cc23f8dd726)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
 * **react:** open collapsed Sidebar sub-menus in a side panel ([51fe834](https://github.com/SckyzO/cosmos/commit/51fe834574686b71cff0e51cb2fac91eedeb933e)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
 * **react:** show keyboard shortcuts in Tooltip ([a3b8e32](https://github.com/SckyzO/cosmos/commit/a3b8e32077f709a1f6debf196c813683665c363d)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
-* **storybook:** make the manager and docs chrome follow the theme ([b7514bb](https://github.com/SckyzO/cosmos/commit/b7514bbc352a276ebb6b9c9bd47a9ab6f65844d6))
 
 
 ### Bug Fixes
