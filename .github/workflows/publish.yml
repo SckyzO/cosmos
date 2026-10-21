@@ -1,11 +1,9 @@
 name: Publish to npm
 
+# Run on main, one package at a time, theme first:
+#   gh workflow run publish.yml -f package=cosmos-theme
+# The npm-publish environment only accepts main and waits for approval.
 on:
-  push:
-    tags:
-      - '@sckyzo/cosmos-theme@*'
-      - '@sckyzo/cosmos-react@*'
-      - '@sckyzo/cosmos-charts@*'
   workflow_dispatch:
     inputs:
       package:
@@ -17,28 +15,82 @@ on:
           - cosmos-react
           - cosmos-charts
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-${{ inputs.package }}
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Publish ${{ inputs.package || 'tagged' }} to npm
+  # Install, build and pack without the npm OIDC token: code that runs here
+  # (dependencies, their install scripts, the build tools) can't publish.
+  build:
+    name: Build ${{ inputs.package }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: npm-publish
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         # No `version:` — `packageManager: pnpm@X.Y.Z` in package.json is the
         # single source of truth. Setting both errors with
         # "Multiple versions of pnpm specified".
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        # No `cache:`: the pnpm store cache is written by every workflow on
+        # main, so a dependency compromised in another one could plant files
+        # in the package built here.
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      # npm doesn't understand the pnpm `workspace:*` protocol, so
+      # cosmos-react's theme dependency is rewritten to the real version
+      # before packing. theme and charts have no workspace dependencies.
+      - name: Pack
+        env:
+          PKG: ${{ inputs.package }} # cosmos-theme
+        run: |
+          short="${PKG##*cosmos-}" # theme
+          cd "packages/$short"
+          if [ "$short" = "react" ]; then
+            npm pkg set "dependencies.@sckyzo/cosmos-theme=^$(node -p "require('../theme/package.json').version")"
+          fi
+          mkdir -p "$RUNNER_TEMP/package"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/package"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: ${{ runner.temp }}/package/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  # Holds the npm OIDC token and runs nothing but npm: no checkout, no install.
+  publish:
+    name: Publish ${{ inputs.package }} to npm
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm-publish
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: package
 
       - name: Setup Node
         # Node 24 ships npm 11.12+ (>= 11.5.1, required for OIDC trusted
@@ -51,52 +103,19 @@ jobs:
         # reading an empty NODE_AUTH_TOKEN and falling through to OIDC. v6 is the
         # version that published 0.0.3; revisit v7 only once a real publish
         # confirms the OIDC fallthrough still works. Dependabot: do not bump.
-        #
-        # No `cache:`: the pnpm store cache is written by every workflow on
-        # main, so a dependency compromised in a less privileged one could
-        # plant files that this job, holding the npm OIDC token, would use.
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
       # Tokenless via OIDC trusted publishing — no NPM_TOKEN. Each package must
       # have a trusted publisher configured on npmjs.com (repo SckyzO/cosmos,
       # workflow publish.yml, env npm-publish).
       #
-      # We run `npm publish` from the package DIRECTORY (not a tarball): OIDC
-      # trusted publishing only engages on a directory publish, not on
-      # `npm publish <tarball>`. npm doesn't understand the pnpm `workspace:*`
-      # protocol, so cosmos-react's theme dependency is rewritten to the real
-      # version just before publishing. theme/charts have no workspace deps.
-      - name: Publish (tagged)
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_REF: ${{ github.ref }}
+      # OIDC trusted publishing only engages on a directory publish, not on
+      # `npm publish <tarball>`: publish the unpacked tarball's directory.
+      - name: Publish
         run: |
-          tag="${GH_REF#refs/tags/}"      # @sckyzo/cosmos-theme@0.0.2
-          name="${tag%@*}"                # @sckyzo/cosmos-theme
-          short="${name##*cosmos-}"       # theme
-          cd "packages/$short"
-          if [ "$short" = "react" ]; then
-            npm pkg set "dependencies.@sckyzo/cosmos-theme=^$(node -p "require('../theme/package.json').version")"
-          fi
-          npm publish --provenance --access public
-
-      - name: Publish (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PKG: ${{ inputs.package }} # cosmos-theme
-        run: |
-          short="${PKG##*cosmos-}"        # theme
-          cd "packages/$short"
-          if [ "$short" = "react" ]; then
-            npm pkg set "dependencies.@sckyzo/cosmos-theme=^$(node -p "require('../theme/package.json').version")"
-          fi
-          npm publish --provenance --access public
+          tar -xzf package/*.tgz -C package
+          cd package/package
+          npm publish --provenance --access public --ignore-scripts

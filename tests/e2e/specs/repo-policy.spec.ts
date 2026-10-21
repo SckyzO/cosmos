@@ -104,3 +104,16 @@ test('the publish job restores no cache', () => {
   // OIDC token.
   expect(read('.github/workflows/publish.yml')).not.toMatch(/^\s*cache:/m);
 });
+
+test('only the publish job holds the npm OIDC token, and it runs nothing but npm', () => {
+  const workflow = read('.github/workflows/publish.yml');
+  expect(workflow, 'workflow-level permissions').toMatch(/^permissions: \{\}$/m);
+  const jobs = workflow
+    .slice(workflow.indexOf('\njobs:'))
+    .split(/^ {2}(?=[\w-]+:\s*$)/m)
+    .slice(1);
+  const withToken = jobs.filter((job) => /id-token: write/.test(job));
+  expect(withToken.map((job) => job.split(':')[0])).toEqual(['publish']);
+  // Install, build and checkout run in the job without the token.
+  expect(withToken[0]).not.toMatch(/pnpm |actions\/checkout|cache:/);
+});
