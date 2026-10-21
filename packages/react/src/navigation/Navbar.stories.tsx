@@ -243,3 +243,43 @@ export const PartsInheritNavbarTheme: Story = {
     );
   },
 };
+
+// Resolves a computed CSS colour (rgb(), oklch()…) to sRGB through a canvas pixel.
+const toRgb = (color: string) => {
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) throw new Error('No 2D canvas context');
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 1, 1);
+  return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3));
+};
+
+// WCAG 2 contrast ratio between two CSS colours.
+const contrast = (a: string, b: string) => {
+  const luminance = (color: string) => {
+    const [red, green, blue] = toRgb(color).map((v) => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+// A dark Navbar sets its own text colour: content without one (a plain brand
+// name here) stays readable when the page around the bar has dark text.
+export const DarkNavbarSetsTextColor: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="bg-white text-gray-900">
+      <Navbar theme="dark" aria-label="Main">
+        <Navbar.Brand>Acme</Navbar.Brand>
+      </Navbar>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = getComputedStyle(canvas.getByRole('navigation', { name: 'Main' }));
+    const brand = getComputedStyle(canvas.getByText('Acme'));
+    await expect(contrast(brand.color, bar.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  },
+};
