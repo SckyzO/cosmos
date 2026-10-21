@@ -3,6 +3,10 @@ version: 2
 # stream of PRs that each replayed CI and conflicted on pnpm-lock.yaml. The
 # schedule only drives version updates; security updates still open as soon
 # as an advisory lands.
+#
+# Version updates also wait 3 days after a release (cooldown), longer than
+# pnpm's minimumReleaseAge (pnpm-workspace.yaml), so Dependabot never proposes
+# a version pnpm refuses. Security updates don't wait.
 updates:
   # ---------------------------------------------------------------------------
   # npm via pnpm — root + all workspaces
@@ -12,6 +16,8 @@ updates:
     schedule:
       interval: 'monthly'
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: 'chore(deps)'
       prefix-development: 'chore(deps-dev)'
@@ -84,6 +90,8 @@ updates:
     schedule:
       interval: 'monthly'
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: 'chore(ci)'
       include: 'scope'
@@ -104,6 +112,8 @@ updates:
     schedule:
       interval: 'monthly'
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: 'chore(docker)'
       include: 'scope'

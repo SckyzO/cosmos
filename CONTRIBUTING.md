@@ -71,6 +71,24 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
 - [ ] Public API changes : update package README
 - [ ] Breaking changes : add `BREAKING CHANGE:` footer to commit
 
+## Dependencies
+
+pnpm only installs versions published at least a day ago (`minimumReleaseAge` in
+`pnpm-workspace.yaml`), and Dependabot waits 3 days before it proposes one: most hijacked
+releases are found and pulled within hours. For an urgent security fix, lift the delay for that
+one command:
+
+```bash
+./devctl run pnpm up -r --config.minimum-release-age=0 '<package>@<version>'
+```
+
+pnpm also refuses a version published with weaker evidence (provenance, trusted publisher) than
+an earlier one (`ERR_PNPM_TRUST_DOWNGRADE`), and dependencies pulled from git or a tarball below
+the direct ones.
+
+Dependabot merges minor and patch npm updates on its own once CI passes. Majors, GitHub Actions
+and Docker updates, and any update where the package changed maintainers wait for a review.
+
 ## Releases
 
 [release-please](https://github.com/googleapis/release-please) keeps a release PR open on
