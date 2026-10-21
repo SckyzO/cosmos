@@ -246,6 +246,15 @@ export const CircularIconOnly: Story = {
       </SectionCard>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    for (const button of canvas.getAllByRole('button', { name: 'Add' })) {
+      const box = button.getBoundingClientRect();
+      await expect(box.width).toBe(box.height);
+      // The size's horizontal padding must not squeeze the icon.
+      const icon = button.querySelector('svg')!.getBoundingClientRect();
+      await expect(icon.width).toBe(icon.height);
+    }
+  },
 };
 
 // ── Interaction tests for new props ──────────────────────────────────────────
