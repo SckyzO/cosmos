@@ -79,7 +79,7 @@ const gradientImage = (from: string, to: string, label: string) =>
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
        <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
-       <rect width="640" height="360" fill="url(%23g)"/>
+       <rect width="640" height="360" fill="url(#g)"/>
        <text x="50%" y="55%" font-family="sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle" opacity="0.9">${label}</text>
      </svg>`
   );
@@ -88,7 +88,7 @@ export const WithImage: Story = {
   render: () => (
     <Wrap>
       <Card padding="none" className="max-w-sm">
-        <Card.Image src={gradientImage('%236366f1', '%23a855f7', 'Cosmos')} alt="Cosmos cover" />
+        <Card.Image src={gradientImage('#6366f1', '#a855f7', 'Cosmos')} alt="Cosmos cover" />
         <Card.Body>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Design system v1</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -105,7 +105,7 @@ export const Horizontal: Story = {
     <Wrap>
       <Card padding="none" className="flex max-w-2xl flex-row">
         <Card.Image
-          src={gradientImage('%2310b981', '%2306b6d4', 'Server')}
+          src={gradientImage('#10b981', '#06b6d4', 'Server')}
           alt="Server cover"
           aspectRatio="aspect-square"
           wrapperClassName="w-40 shrink-0"
@@ -177,9 +177,9 @@ export const Interactive: Story = {
 export const ImageGallery: Story = {
   render: () => {
     const data = [
-      { from: '%236366f1', to: '%23a855f7', title: 'Cosmos' },
-      { from: '%2310b981', to: '%2306b6d4', title: 'Servers' },
-      { from: '%23f59e0b', to: '%23ef4444', title: 'Alerts' },
+      { from: '#6366f1', to: '#a855f7', title: 'Cosmos' },
+      { from: '#10b981', to: '#06b6d4', title: 'Servers' },
+      { from: '#f59e0b', to: '#ef4444', title: 'Alerts' },
     ];
     return (
       <Wrap>
@@ -206,7 +206,7 @@ export const ImageGallery: Story = {
 export const ImageRendersImg: Story = {
   render: () => (
     <Card padding="none">
-      <Card.Image src={gradientImage('%236366f1', '%23a855f7', 'X')} alt="cover" />
+      <Card.Image src={gradientImage('#6366f1', '#a855f7', 'X')} alt="cover" />
     </Card>
   ),
   play: async ({ canvas }) => {
