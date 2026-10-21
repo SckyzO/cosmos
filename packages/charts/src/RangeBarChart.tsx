@@ -4,6 +4,7 @@ import 'apexcharts/features/legend';
 import ReactApexChart from 'react-apexcharts/core';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
+import { tooltipHtml } from './tooltip';
 import type { ChartSize } from './types';
 
 export type RangeBarPoint = {
@@ -53,8 +54,8 @@ export const RangeBarChart = ({
   const lanes = groupRows ? 1 : series.length;
 
   // ApexCharts builds the range bar tooltip itself and writes it with
-  // innerHTML, so this one replaces it: same layout as the other Cosmos
-  // tooltips, with the row, the series name and the dates escaped.
+  // innerHTML, so this one replaces it. tooltipHtml escapes the row, the
+  // series name and the dates.
   const tooltip = ({
     seriesIndex,
     dataPointIndex,
@@ -62,20 +63,18 @@ export const RangeBarChart = ({
     seriesIndex: number;
     dataPointIndex: number;
   }) => {
-    const { name, data } = series[seriesIndex] ?? {};
-    const point = data?.[dataPointIndex];
+    const s = series[seriesIndex];
+    const point = s?.data[dataPointIndex];
     if (!point) return '';
-    const color = seriesColors[seriesIndex % seriesColors.length];
     const [start, end] = point.y;
-    return (
-      `<div class="apexcharts-tooltip-title">${escapeHtml(point.x)}</div>` +
-      '<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex">' +
-      `<span class="apexcharts-tooltip-marker" style="background-color: ${escapeHtml(color)}; border-radius: 3px"></span>` +
-      '<div class="apexcharts-tooltip-text"><div class="apexcharts-tooltip-y-group">' +
-      `<span class="apexcharts-tooltip-text-y-label">${escapeHtml(name)}: </span>` +
-      `<span class="apexcharts-tooltip-text-y-value">${escapeHtml(formatDate(start))} – ${escapeHtml(formatDate(end))}</span>` +
-      '</div></div></div>'
-    );
+    return tooltipHtml({
+      title: point.x,
+      series: { name: s.name, color: seriesColors[seriesIndex % seriesColors.length] },
+      rows: [
+        ['Start', formatDate(start)],
+        ['End', formatDate(end)],
+      ],
+    });
   };
 
   const options: ApexOptions = {
