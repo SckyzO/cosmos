@@ -34,20 +34,31 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
 };
 
 const SIZE_CLASS: Record<ButtonSize, string> = {
-  xs: 'h-7 px-2 text-xs gap-1',
-  sm: 'h-8 px-3 text-xs gap-1.5',
-  md: 'h-9 px-3.5 text-sm gap-2',
-  lg: 'h-11 px-5 text-base gap-2',
-  xl: 'h-12 px-6 text-base gap-2.5',
+  xs: 'h-7 text-xs gap-1',
+  sm: 'h-8 text-xs gap-1.5',
+  md: 'h-9 text-sm gap-2',
+  lg: 'h-11 text-base gap-2',
+  xl: 'h-12 text-base gap-2.5',
 };
 
-// Square padding when shape='circle' — overrides horizontal px from SIZE_CLASS.
+// Horizontal padding, for every shape but `circle`. Kept apart from SIZE_CLASS:
+// clsx doesn't dedupe, and a `px-0` next to it lost in the CSS order, which
+// squeezed circle icons.
+const PADDING_X: Record<ButtonSize, string> = {
+  xs: 'px-2',
+  sm: 'px-3',
+  md: 'px-3.5',
+  lg: 'px-5',
+  xl: 'px-6',
+};
+
+// Square size when shape='circle', with no horizontal padding.
 const CIRCLE_SQUARE: Record<ButtonSize, string> = {
-  xs: 'w-7 px-0',
-  sm: 'w-8 px-0',
-  md: 'w-9 px-0',
-  lg: 'w-11 px-0',
-  xl: 'w-12 px-0',
+  xs: 'w-7',
+  sm: 'w-8',
+  md: 'w-9',
+  lg: 'w-11',
+  xl: 'w-12',
 };
 
 const SHAPE_CLASS: Record<ButtonShape, string> = {
@@ -85,7 +96,7 @@ export const Button = ({
       VARIANT_CLASS[variant],
       SIZE_CLASS[size],
       SHAPE_CLASS[shape],
-      shape === 'circle' && CIRCLE_SQUARE[size],
+      shape === 'circle' ? CIRCLE_SQUARE[size] : PADDING_X[size],
       className
     )}
     {...rest}
