@@ -59,7 +59,7 @@ export type PageHeaderMetaItemProps = {
  */
 const MetaItem = ({ icon: Icon, children }: PageHeaderMetaItemProps) => (
   <div className="flex items-center">
-    {Icon && <Icon className="mr-1.5 size-5 text-[var(--color-text-muted)]" aria-hidden />}
+    {Icon && <Icon className="mr-1.5 size-5 shrink-0 text-[var(--color-text-muted)]" aria-hidden />}
     {children}
   </div>
 );
