@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { Bell, Plus } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Navbar } from './Navbar';
@@ -194,5 +194,52 @@ export const MobileMenuButtonHasLabel: Story = {
   play: async ({ canvasElement }) => {
     const btn = canvasElement.querySelector('button[aria-label="Toggle menu"]');
     await expect(btn).not.toBeNull();
+  },
+};
+
+// An Item or MobileMenuButton without a `theme` prop takes the theme of its
+// Navbar: inside a dark bar it must render exactly like an explicit dark one.
+export const PartsInheritNavbarTheme: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <>
+      <Navbar theme="dark" aria-label="Explicit">
+        <Navbar.Brand>
+          <Navbar.MobileMenuButton theme="dark" />
+          <Navbar.Items>
+            <Navbar.Item theme="dark" active href="#">
+              Dashboard
+            </Navbar.Item>
+            <Navbar.Item theme="dark" href="#">
+              Team
+            </Navbar.Item>
+          </Navbar.Items>
+        </Navbar.Brand>
+      </Navbar>
+      <Navbar theme="dark" aria-label="Inherited">
+        <Navbar.Brand>
+          <Navbar.MobileMenuButton />
+          <Navbar.Items>
+            <Navbar.Item active href="#">
+              Dashboard
+            </Navbar.Item>
+            <Navbar.Item href="#">Team</Navbar.Item>
+          </Navbar.Items>
+        </Navbar.Brand>
+      </Navbar>
+    </>
+  ),
+  play: async ({ canvas }) => {
+    const explicit = within(canvas.getByRole('navigation', { name: 'Explicit' }));
+    const inherited = within(canvas.getByRole('navigation', { name: 'Inherited' }));
+    // The items show from `md` up and the menu button below it: whatever the
+    // viewport, one of them is hidden, so query by text and label, which
+    // include hidden elements.
+    for (const label of ['Dashboard', 'Team']) {
+      await expect(inherited.getByText(label).className).toBe(explicit.getByText(label).className);
+    }
+    await expect(inherited.getByLabelText('Toggle menu').className).toBe(
+      explicit.getByLabelText('Toggle menu').className
+    );
   },
 };
