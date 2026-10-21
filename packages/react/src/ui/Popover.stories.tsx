@@ -155,7 +155,10 @@ export const Controlled: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensCloses: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
@@ -178,6 +181,7 @@ export const TriggerOpensCloses: Story = {
 };
 
 export const EscapeCloses: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
@@ -197,6 +201,7 @@ export const EscapeCloses: Story = {
 };
 
 export const AlignEndIsFlushWithTrigger: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-48 items-start justify-end p-6">
       <Popover>
@@ -221,6 +226,7 @@ export const AlignEndIsFlushWithTrigger: Story = {
 };
 
 export const AlignEndFollowsTriggerResize: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-48 items-start justify-end p-6">
       <Popover>
@@ -253,6 +259,7 @@ export const AlignEndFollowsTriggerResize: Story = {
 };
 
 export const OnOpenChangeFires: Story = {
+  tags: ['!autodocs'],
   render: (args) => (
     <div className="flex h-48 items-center justify-center">
       <Popover onOpenChange={args.onOpenChange as (o: boolean) => void}>

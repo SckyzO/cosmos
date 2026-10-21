@@ -83,7 +83,10 @@ const standaloneDecorator = [
   (Story: () => React.ReactNode) => <div className="mx-auto max-w-sm p-12">{Story()}</div>,
 ];
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const SubmitDisabledUntilValid: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ args, canvas }) => {
@@ -108,6 +111,7 @@ export const SubmitDisabledUntilValid: Story = {
 };
 
 export const PolicyDisplaysOnTyping: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
@@ -118,6 +122,7 @@ export const PolicyDisplaysOnTyping: Story = {
 };
 
 export const WeakPasswordKeepsSubmitDisabled: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {

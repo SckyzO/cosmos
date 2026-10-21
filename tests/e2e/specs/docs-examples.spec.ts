@@ -36,3 +36,66 @@ for (const c of cases) {
     }
   });
 }
+
+// A story that takes focus, from a play function that clicks or types or from
+// an autoFocus field, makes the browser scroll the docs page to it: the page
+// jumps down on its own while the reader is at the top. Listed: the docs pages
+// that embed stories in iframes (portalDocsParams) and have play functions,
+// plus OTP Input, whose autoFocus stories render inline. Interaction tests
+// that take focus carry `!autodocs`; autoFocus focuses without scrolling.
+const docsPagesTakingFocus = [
+  'data-carousel--docs',
+  'feedback-cookie-banner--docs',
+  'forms-date-picker--docs',
+  'forms-otp-input--docs',
+  'overlays-command-palette--docs',
+  'overlays-confirmation-modal--docs',
+  'overlays-drawer--docs',
+  'overlays-help-overlay--docs',
+  'overlays-modal--docs',
+  'overlays-notifications-panel--docs',
+  'overlays-popover--docs',
+  'overlays-user-menu--docs',
+  'pages-activity--docs',
+  'pages-auth-layout--docs',
+  'pages-calendar--docs',
+  'pages-reset-password-form--docs',
+  'pages-sign-in-form--docs',
+  'pages-sign-up-form--docs',
+  'pages-social-auth-buttons--docs',
+  'pages-two-step-verification-form--docs',
+  'settings-appearance-menu--docs',
+];
+
+for (const id of docsPagesTakingFocus) {
+  test(`docs: ${id} stays at the top while its stories run`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto(`/iframe.html?viewMode=docs&id=${id}`);
+    // Stories render either in iframes or inline; wait for the first of them.
+    await expect(
+      page.locator('.sbdocs-content').locator('iframe, [id^="story--"]').first()
+    ).toBeAttached({ timeout: 20_000 });
+    const iframes = page.locator('.sbdocs-content iframe');
+    const count = await iframes.count();
+    if (count > 0) {
+      // The iframes load lazily, so how far down the page gets depends on
+      // timing. Load them all at once, the worst case for a reader at the top.
+      await iframes.evaluateAll((all) => all.forEach((f) => f.setAttribute('loading', 'eager')));
+      await expect
+        .poll(() => page.frames().filter((f) => f.url().includes('viewMode=story')).length, {
+          timeout: 20_000,
+        })
+        .toBe(count);
+      for (const frame of page.frames().filter((f) => f.url().includes('viewMode=story'))) {
+        await storyFinished(frame);
+      }
+    } else {
+      // Inline stories: once every one has rendered, their mount effects ran.
+      await page.waitForFunction(() => {
+        const roots = [...document.querySelectorAll('.sbdocs-content [id^="story--"]')];
+        return roots.length > 0 && roots.every((r) => r.childElementCount > 0);
+      });
+    }
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+}

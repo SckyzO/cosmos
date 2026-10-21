@@ -90,7 +90,10 @@ const standaloneDecorator = [
   (Story: () => React.ReactNode) => <div className="mx-auto max-w-sm p-12">{Story()}</div>,
 ];
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const AutoSubmitOnComplete: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), sentTo: 'john@example.com', length: 4 },
   play: async ({ args, canvas }) => {
@@ -105,6 +108,7 @@ export const AutoSubmitOnComplete: Story = {
 };
 
 export const ManualSubmitDisabledUntilFilled: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: {
     onSubmit: fn(),
@@ -128,6 +132,7 @@ export const ManualSubmitDisabledUntilFilled: Story = {
 };
 
 export const ResendFiresHandler: Story = {
+  tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), onResend: fn(), sentTo: 'john@example.com' },
   play: async ({ args, canvas }) => {

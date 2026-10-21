@@ -80,7 +80,10 @@ export const InTopbar: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensPanel: Story = {
+  tags: ['!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -93,6 +96,7 @@ export const TriggerOpensPanel: Story = {
 };
 
 export const PanelIsFlushWithTrigger: Story = {
+  tags: ['!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await userEvent.click(trigger);
@@ -105,6 +109,7 @@ export const PanelIsFlushWithTrigger: Story = {
 };
 
 export const PickingKeepsPanelOpen: Story = {
+  tags: ['!autodocs'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
     await waitFor(() => expect(panel()).toBeVisible());
@@ -117,6 +122,7 @@ export const PickingKeepsPanelOpen: Story = {
 };
 
 export const EscapeClosesPanel: Story = {
+  tags: ['!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await userEvent.click(trigger);

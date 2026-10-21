@@ -198,7 +198,10 @@ export const AlignLeft: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensPanel: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel defaultOpen={false} />
@@ -215,6 +218,7 @@ export const TriggerOpensPanel: Story = {
 };
 
 export const ItemClickFiresHandler: Story = {
+  tags: ['!autodocs'],
   render: (args) => {
     const extra = args as unknown as { onItemClick: (id: string) => void };
     return (
@@ -240,6 +244,7 @@ export const ItemClickFiresHandler: Story = {
 };
 
 export const EscapeKeyCloses: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel defaultOpen={false} />

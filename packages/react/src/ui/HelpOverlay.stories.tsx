@@ -127,7 +127,10 @@ export const CustomFooter: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
 export const HotkeyOpensOverlay: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
       <p className="text-sm text-gray-500">Press ? to open</p>
@@ -145,6 +148,7 @@ export const HotkeyOpensOverlay: Story = {
 };
 
 export const EscapeClosesOverlay: Story = {
+  tags: ['!autodocs'],
   render: () => {
     const [open, setOpen] = useState(true);
     return (
@@ -161,6 +165,7 @@ export const EscapeClosesOverlay: Story = {
 };
 
 export const CloseButtonClosesOverlay: Story = {
+  tags: ['!autodocs'],
   args: { onOpenChange: fn() } as never,
   render: (args) => (
     <HelpOverlay open onOpenChange={args.onOpenChange as (open: boolean) => void}>
@@ -179,6 +184,7 @@ export const CloseButtonClosesOverlay: Story = {
 };
 
 export const HotkeyIgnoredWhileTypingInInput: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <div className="flex h-screen items-center justify-center bg-gray-50 p-6 dark:bg-gray-950">
       <input
