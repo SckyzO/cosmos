@@ -409,7 +409,7 @@ const SidebarGroup = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="mx-2 flex w-[calc(100%-1rem)] items-center gap-2 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
+        className="text-3xs mx-2 flex w-[calc(100%-1rem)] items-center gap-2 px-3 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {label}
@@ -434,7 +434,7 @@ const SidebarSection = ({ label, collapsed: collapsedProp, children }: SidebarSe
   return (
     <div className="my-2 border-t border-[var(--color-border)] pt-2">
       {label && !collapsed && (
-        <p className="px-5 py-1.5 text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
+        <p className="text-3xs px-5 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
           {label}
         </p>
       )}

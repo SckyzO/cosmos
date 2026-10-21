@@ -46,7 +46,7 @@ export const StatusRow = ({
       </div>
       <span
         className={clsx(
-          'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold',
+          'text-3xs shrink-0 rounded-full px-2 py-0.5 font-bold',
           STATUS_CLASS[status]
         )}
       >

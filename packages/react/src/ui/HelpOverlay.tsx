@@ -67,7 +67,7 @@ const formatKey = (raw: string, isMac: boolean): string => {
 const Kbd = ({ children, className }: { children: ReactNode; className?: string }) => (
   <kbd
     className={clsx(
-      'inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 font-mono text-[11px] font-medium text-gray-700 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+      'text-2xs inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 font-mono font-medium text-gray-700 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
       className
     )}
   >
@@ -208,7 +208,7 @@ export type HelpOverlaySectionProps = {
 
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
-    <h3 className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+    <h3 className="text-2xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
       {title}
     </h3>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
@@ -241,7 +241,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
           return (
             <Fragment key={`${combo}-${idx}`}>
               {idx > 0 && (
-                <span className="px-0.5 text-[10px] text-gray-400 uppercase dark:text-gray-500">
+                <span className="text-3xs px-0.5 text-gray-400 uppercase dark:text-gray-500">
                   then
                 </span>
               )}

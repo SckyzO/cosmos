@@ -96,9 +96,7 @@ export const ProgressBar = ({
               )}
             >
               {showInsideLabel && (
-                <span className="px-2 text-[10px] leading-none font-bold text-white">
-                  {labelText}
-                </span>
+                <span className="text-3xs px-2 leading-none font-bold text-white">{labelText}</span>
               )}
             </div>
           )}

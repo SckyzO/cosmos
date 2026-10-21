@@ -94,7 +94,7 @@ export const ColumnHeader = ({
               )}
             >
               <Filter className="h-3 w-3" />
-              {filterCount > 0 && <span className="text-[10px]">{filterCount}</span>}
+              {filterCount > 0 && <span className="text-3xs">{filterCount}</span>}
             </button>
             {open && filterSelected && onFilterToggle && onFilterClear && (
               <ColumnFilterDropdown

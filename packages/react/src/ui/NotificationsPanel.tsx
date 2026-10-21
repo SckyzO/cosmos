@@ -423,13 +423,11 @@ const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelI
           {subtitle && (
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
-          {caption && (
-            <p className="mt-0.5 truncate font-mono text-[10px] text-gray-400">{caption}</p>
-          )}
+          {caption && <p className="text-3xs mt-0.5 truncate font-mono text-gray-400">{caption}</p>}
         </div>
         <span
           className={clsx(
-            'mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white',
+            'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold text-white',
             BADGE_BG[severity]
           )}
         >

@@ -36,7 +36,7 @@ const VARIANT_SOLID: Record<BadgeVariant, string> = {
 };
 
 const SIZE_CLASS: Record<BadgeSize, string> = {
-  sm: 'px-1.5 py-0.5 text-[10px] gap-1',
+  sm: 'px-1.5 py-0.5 text-3xs gap-1',
   md: 'px-2 py-0.5 text-xs gap-1.5',
 };
 

@@ -135,7 +135,7 @@ const CommandPaletteGroup = forwardRef<ElementRef<typeof Command.Group>, Command
       <Command.Group
         ref={ref}
         className={clsx(
-          'px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-400 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-500',
+          '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-400 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-500',
           className
         )}
         {...rest}
@@ -173,7 +173,7 @@ const CommandPaletteItem = forwardRef<ElementRef<typeof Command.Item>, CommandPa
         {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />}
         <span className="flex-1 truncate">{children}</span>
         {shortcut && (
-          <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+          <kbd className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
             {shortcut}
           </kbd>
         )}
@@ -237,7 +237,7 @@ export type CommandPaletteFooterProps = {
 const CommandPaletteFooter = ({ className, children }: CommandPaletteFooterProps) => (
   <div
     className={clsx(
-      'flex items-center justify-between border-t border-gray-100 px-4 py-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-400',
+      'text-2xs flex items-center justify-between border-t border-gray-100 px-4 py-2 text-gray-500 dark:border-gray-800 dark:text-gray-400',
       className
     )}
   >

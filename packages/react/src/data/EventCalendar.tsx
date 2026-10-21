@@ -240,7 +240,7 @@ export const EventCalendar = ({
         {WEEK_DAYS.map((d) => (
           <span
             key={d}
-            className="py-2 text-center text-[11px] font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+            className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
             {d}
           </span>
