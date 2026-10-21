@@ -118,9 +118,9 @@ const groupRows: Group[] = [
   {
     id: 'layout',
     name: 'Layout',
-    count: 10,
+    count: 9,
     contains:
-      'Shell, Sidebar, Topbar, PageHeader, PageCard, SectionCard, Card, ContentNarrow, ColBox, MediaObject',
+      'Shell, Sidebar, Topbar, PageHeader, SectionCard, Card, ContentNarrow, ColBox, MediaObject',
   },
   {
     id: 'lists',
