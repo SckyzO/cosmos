@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
-import { Briefcase, Calendar, DollarSign, MapPin, Plus, RefreshCw } from 'lucide-react';
+import { expect, within } from 'storybook/test';
+import { Clock, Cpu, MapPin, Plus, RefreshCw, Server } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { PageBreadcrumb } from './PageBreadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
@@ -66,24 +66,83 @@ export const WithActions: Story = {
 export const WithMetaAndActions: Story = {
   render: () => (
     <PageHeader
-      title="Back End Developer"
+      title="compute-042"
       meta={
         <>
-          <PageHeader.MetaItem icon={Briefcase}>Full-time</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={MapPin}>Remote</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={DollarSign}>$120k – $140k</PageHeader.MetaItem>
-          <PageHeader.MetaItem icon={Calendar}>Closing on January 9, 2020</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Server}>Rack R12, slot 14</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={MapPin}>Paris DC1</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Cpu}>64 cores, 512 GB</PageHeader.MetaItem>
+          <PageHeader.MetaItem icon={Clock}>Up 41 days</PageHeader.MetaItem>
         </>
       }
       actions={
         <>
+          <PageActionButton>Silence</PageActionButton>
           <PageActionButton>Edit</PageActionButton>
-          <PageActionButton>View</PageActionButton>
-          <PageActionButton variant="primary">Publish</PageActionButton>
+          <PageActionButton variant="primary">Drain</PageActionButton>
         </>
       }
     />
   ),
+};
+
+// At phone width (a 320px screen minus its page gutters) the actions don't fit
+// beside the title: they have to move under it rather than cover it.
+export const Narrow: Story = {
+  render: () => (
+    <div className="w-72">
+      <PageHeader
+        title="Production Dashboard"
+        breadcrumb={
+          <PageBreadcrumb
+            items={[
+              { label: 'Home', href: '#' },
+              { label: 'Monitoring', href: '#' },
+              { label: 'Production' },
+            ]}
+          />
+        }
+        meta={
+          <>
+            <PageHeader.MetaItem icon={Server}>128 nodes</PageHeader.MetaItem>
+            <PageHeader.MetaItem icon={Clock}>
+              Refreshed 12 seconds ago from prometheus-eu-west-1
+            </PageHeader.MetaItem>
+          </>
+        }
+        actions={
+          <>
+            <PageActionButton icon={RefreshCw}>Refresh</PageActionButton>
+            <PageActionButton icon={Plus} variant="primary">
+              New rule
+            </PageActionButton>
+          </>
+        }
+      />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Measure the title's text, not the h2 box: a squeezed h2 lets its words
+    // spill out of it.
+    const range = document.createRange();
+    range.selectNodeContents(canvas.getByRole('heading', { name: 'Production Dashboard' }));
+    const text = range.getBoundingClientRect();
+    for (const name of ['Refresh', 'New rule']) {
+      const button = canvas.getByRole('button', { name }).getBoundingClientRect();
+      const overlaps =
+        button.left < text.right &&
+        button.right > text.left &&
+        button.top < text.bottom &&
+        button.bottom > text.top;
+      await expect(overlaps).toBe(false);
+    }
+    // Meta icons keep their 20px, also beside text that wraps.
+    for (const label of ['128 nodes', /^Refreshed/]) {
+      const icon = canvas.getByText(label).querySelector('svg');
+      await expect(icon?.getBoundingClientRect().width).toBe(20);
+    }
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
