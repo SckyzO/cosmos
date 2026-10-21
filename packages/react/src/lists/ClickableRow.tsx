@@ -11,7 +11,7 @@ export type ClickableRowProps = {
   subtitle?: string;
   /** Click handler — renders a button */
   onClick?: () => void;
-  /** Or provide an href to render an <a> instead */
+  /** Or provide an href to render an `<a>` instead */
   href?: string;
   className?: string;
 };

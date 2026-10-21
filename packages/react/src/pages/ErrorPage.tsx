@@ -19,17 +19,18 @@ export type ErrorPageProps = {
  * `code`/`title` per scenario.
  *
  * Example (404):
- *   <ErrorPage
- *     code={404}
- *     title="Page not found"
- *     description="Sorry, the page you're looking for doesn't exist."
- *     actions={
- *       <>
- *         <Button as="a" href="/">Go home</Button>
- *         <Button variant="secondary" onClick={() => history.back()}>Back</Button>
- *       </>
- *     }
- *   />
+ *
+ *     <ErrorPage
+ *       code={404}
+ *       title="Page not found"
+ *       description="Sorry, the page you're looking for doesn't exist."
+ *       actions={
+ *         <>
+ *           <Button as="a" href="/">Go home</Button>
+ *           <Button variant="secondary" onClick={() => history.back()}>Back</Button>
+ *         </>
+ *       }
+ *     />
  */
 export const ErrorPage = ({
   code,

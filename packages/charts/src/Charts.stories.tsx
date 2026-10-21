@@ -132,7 +132,7 @@ export const Treemap: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /**
- * Charts re-read their colors when the theme or accent changes on <html>. The
+ * Charts re-read their colors when the theme or accent changes on `<html>`. The
  * y-axis labels used to come back empty after that update: LineAreaChart
  * shared one labels object between both axes and ApexCharts wrote the
  * category formatter onto it.
