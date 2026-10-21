@@ -5,6 +5,13 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.1.0...@sckyzo/cosmos-charts@0.1.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **charts:** escape series names, categories and labels in HTML output ([c0b7137](https://github.com/SckyzO/cosmos/commit/c0b71379b1ce6f5b449eb64e8198ad5dd1bde27e))
+
 ## [0.1.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.0.2...@sckyzo/cosmos-charts@0.1.0) (2026-10-20)
 
 
