@@ -152,6 +152,23 @@ const check = (theme, label, fg, bg, min) => {
 
 const rootVars = vars.get(':root');
 
+// Syntax highlighting tokens (--color-code-*), all read by CodeBlock + Shiki.
+const CODE_TOKENS = [
+  'foreground',
+  'token-keyword',
+  'token-string',
+  'token-comment',
+  'token-constant',
+  'token-function',
+  'token-parameter',
+  'token-string-expression',
+  'token-punctuation',
+  'token-link',
+  'token-inserted',
+  'token-deleted',
+  'token-changed',
+];
+
 for (const theme of THEMES) {
   const own = vars.get(theme.selector);
   if (!own) throw new Error(`No ${theme.selector} block in css-vars.css`);
@@ -184,6 +201,12 @@ for (const theme of THEMES) {
     }
     check(theme.id, 'card ↔ raised', color('gray-900'), color('gray-800'), 1.15);
     check(theme.id, 'border on card', color('gray-700'), color('gray-900'), 1.6);
+  }
+
+  // Code tokens on the CodeBlock surface (bg-gray-50, dark:bg-gray-900).
+  const codeSurface = color(theme.dark ? 'gray-900' : 'gray-50');
+  for (const token of CODE_TOKENS) {
+    check(theme.id, 'code token', color(`code-${token}`), codeSurface, 4.5);
   }
 
   for (const { id, brand: shades } of accents) {

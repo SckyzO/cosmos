@@ -37,6 +37,23 @@
   --color-text-secondary: #667085;
   --color-text-muted: #98a2b3;
 
+  /* ── Code ──────────────────────────────────────────────────────────────── */
+  /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
+   * CSS variables theme with variablePrefix '--color-code-'. */
+  --color-code-foreground: oklch(27.8% 0.033 256.848);
+  --color-code-token-keyword: #6d28d9;
+  --color-code-token-string: #15803d;
+  --color-code-token-comment: #5b6472;
+  --color-code-token-constant: #b45309;
+  --color-code-token-function: #1d4ed8;
+  --color-code-token-parameter: #c2410c;
+  --color-code-token-string-expression: #0f766e;
+  --color-code-token-punctuation: #4b5563;
+  --color-code-token-link: #1d4ed8;
+  --color-code-token-inserted: #15803d;
+  --color-code-token-deleted: #b91c1c;
+  --color-code-token-changed: #b45309;
+
   /* ── Accent ────────────────────────────────────────────────────────────── */
   --color-accent: var(--color-brand-500);
 }
@@ -54,6 +71,13 @@
   --color-text-primary: #1e1711;
   --color-text-secondary: #746656;
   --color-text-muted: #a39684;
+
+  /* ── Code ──────────────────────────────────────────────────────────────── */
+  /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
+   * CSS variables theme with variablePrefix '--color-code-'. */
+  --color-code-foreground: oklch(27.5% 0.02 60);
+  --color-code-token-comment: #6e5f4f;
+  --color-code-token-punctuation: #57493c;
 
   /* Warm gray scale — same lightness steps as Tailwind gray, beige hue. */
   --color-white: oklch(99.3% 0.008 85);
@@ -84,6 +108,23 @@
   --color-text-secondary: #a3a3a3;
   --color-text-muted: #8f8f8f;
 
+  /* ── Code ──────────────────────────────────────────────────────────────── */
+  /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
+   * CSS variables theme with variablePrefix '--color-code-'. */
+  --color-code-foreground: #e5e5e5;
+  --color-code-token-comment: #8f8f8f;
+  --color-code-token-punctuation: #a3a3a3;
+  --color-code-token-keyword: #c4b5fd;
+  --color-code-token-string: #86efac;
+  --color-code-token-constant: #fcd34d;
+  --color-code-token-function: #93c5fd;
+  --color-code-token-parameter: #fdba74;
+  --color-code-token-string-expression: #5eead4;
+  --color-code-token-link: #93c5fd;
+  --color-code-token-inserted: #86efac;
+  --color-code-token-deleted: #fca5a5;
+  --color-code-token-changed: #fcd34d;
+
   /* Neutral gray scale, softened near-black (no pure #000). */
   --color-gray-50: #fafafa;
   --color-gray-100: #f5f5f5;
@@ -113,6 +154,23 @@
   --color-text-primary: #fff;
   --color-text-secondary: #98a2b3;
   --color-text-muted: #667085;
+
+  /* ── Code ──────────────────────────────────────────────────────────────── */
+  /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
+   * CSS variables theme with variablePrefix '--color-code-'. */
+  --color-code-foreground: oklch(92.8% 0.006 264.531);
+  --color-code-token-comment: #98a2b3;
+  --color-code-token-punctuation: #b8c0cc;
+  --color-code-token-keyword: #c4b5fd;
+  --color-code-token-string: #86efac;
+  --color-code-token-constant: #fcd34d;
+  --color-code-token-function: #93c5fd;
+  --color-code-token-parameter: #fdba74;
+  --color-code-token-string-expression: #5eead4;
+  --color-code-token-link: #93c5fd;
+  --color-code-token-inserted: #86efac;
+  --color-code-token-deleted: #fca5a5;
+  --color-code-token-changed: #fcd34d;
 }
 
 /* ── Accents ───────────────────────────────────────────────────────────────
