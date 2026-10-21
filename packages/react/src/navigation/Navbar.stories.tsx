@@ -283,3 +283,25 @@ export const DarkNavbarSetsTextColor: Story = {
     await expect(contrast(brand.color, bar.backgroundColor)).toBeGreaterThanOrEqual(4.5);
   },
 };
+
+// The light menu button draws its keyboard focus ring in the accent colour,
+// like the rest of the library, so it follows the Accent toolbar menu.
+export const MenuButtonFocusRingFollowsAccent: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <Navbar>
+      <Navbar.Brand>
+        {/* The button hides from `md` up: keep it visible at any test viewport. */}
+        <Navbar.MobileMenuButton className="inline-flex!" />
+      </Navbar.Brand>
+    </Navbar>
+  ),
+  play: async ({ canvas, userEvent }) => {
+    const button = canvas.getByRole('button', { name: 'Toggle menu' });
+    await userEvent.tab();
+    await expect(button).toHaveFocus();
+    await expect(button.matches(':focus-visible')).toBe(true);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--color-brand-500');
+    await expect(toRgb(getComputedStyle(button).outlineColor)).toEqual(toRgb(accent));
+  },
+};
