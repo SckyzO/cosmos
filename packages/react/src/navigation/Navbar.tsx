@@ -43,10 +43,13 @@ const ROOT_BG: Record<NavbarTheme, string> = {
   dark: 'bg-gray-800 text-white',
 };
 
-const ITEM_BASE: Record<NavbarTheme, string> = {
-  light:
-    'rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
-  dark: 'rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white',
+const ITEM_BASE = 'rounded-md px-3 py-2 text-sm font-medium';
+
+// Idle and active styles are exclusive: an idle item's hover background would
+// otherwise repaint the active item under the pointer.
+const ITEM_IDLE: Record<NavbarTheme, string> = {
+  light: 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
+  dark: 'text-gray-300 hover:bg-gray-700 hover:text-white',
 };
 
 const ITEM_ACTIVE: Record<NavbarTheme, string> = {
@@ -119,7 +122,7 @@ const Item = ({ active = false, theme, className, children, ...rest }: NavbarIte
   return (
     <a
       aria-current={active ? 'page' : undefined}
-      className={clsx(ITEM_BASE[resolved], active && ITEM_ACTIVE[resolved], className)}
+      className={clsx(ITEM_BASE, active ? ITEM_ACTIVE[resolved] : ITEM_IDLE[resolved], className)}
       {...rest}
     >
       {children}
