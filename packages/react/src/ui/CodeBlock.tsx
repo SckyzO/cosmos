@@ -1,15 +1,29 @@
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 import { Clipboard } from './Clipboard';
 
 export type CodeBlockProps = {
   code: string;
   language?: string;
+  /**
+   * Turns `code` into highlighted nodes, rendered inside the block's `<code>`.
+   * Cosmos ships no highlighter: plug one in (the story wires Shiki to the
+   * `--color-code-*` theme tokens). Without it the code is plain text. The
+   * copy button always copies `code`.
+   */
+  highlight?: (code: string, language?: string) => ReactNode;
   /** Show the copy button (top-right, hover-revealed). Default `true`. */
   showCopy?: boolean;
   className?: string;
 };
 
-export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBlockProps) => (
+export const CodeBlock = ({
+  code,
+  language,
+  highlight,
+  showCopy = true,
+  className,
+}: CodeBlockProps) => (
   <div
     className={clsx(
       'group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900',
@@ -27,7 +41,7 @@ export const CodeBlock = ({ code, language, showCopy = true, className }: CodeBl
       </div>
     )}
     <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-gray-800 dark:text-gray-200">
-      <code>{code}</code>
+      <code>{highlight ? highlight(code, language) : code}</code>
     </pre>
     {/* Without a title bar there is nothing to anchor the button to, so we float
      *  it over the code in the top-right corner (hover-revealed via `group`). */}

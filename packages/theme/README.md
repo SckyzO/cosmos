@@ -83,6 +83,7 @@ Categories:
 - **Typography** : `--font-sans` (Outfit), `--font-mono` (JetBrains Mono)
 - **Shadows** : `--shadow-card`, `--shadow-card-hover`
 - **Layout vars** (theme-aware): `--color-bg-{base,panel,elevated}`, `--color-text-{base,primary,secondary,muted}`, `--color-border`, `--color-accent`
+- **Code highlighting** (theme-aware): `--color-code-foreground` and `--color-code-token-*` (keyword, string, comment, constant, function, parameter, string-expression, punctuation, link, inserted, deleted, changed). The names match Shiki's CSS variables theme with `variablePrefix: '--color-code-'`. Each one keeps 4.5:1 on CodeBlock's background in all four themes (checked by `pnpm test`).
 
 ## License
 
