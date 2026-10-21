@@ -228,6 +228,17 @@ export default () => <Button>Hello Cosmos</Button>;`;
 // Building blocks
 // ---------------------------------------------------------------------------
 
+// Links styled like Button: a <Button> inside an <a> nests two interactive
+// elements (invalid HTML, two tab stops per call to action).
+const CTA =
+  'inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-medium transition-colors hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40';
+const CTA_VARIANT = {
+  primary: 'bg-brand-500 text-white shadow-sm hover:bg-brand-600',
+  secondary:
+    'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+  ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5',
+};
+
 const PreviewCard = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex min-h-[110px] flex-col gap-2.5 rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900">
     <span className="font-mono text-[0.65rem] tracking-widest text-gray-500 uppercase dark:text-gray-400">
@@ -355,23 +366,26 @@ const WelcomePage = ({
       Cosmos design system
     </h1>
     <p className="max-w-prose text-base leading-relaxed text-gray-500 dark:text-gray-400">
-      Components, patterns and templates powering rackscope, monitoring-hub and the
-      monitoring-hub-website. One source of truth, three npm packages, zero visual drift across
-      surfaces.
+      React 19 components, a Tailwind 4 theme and ApexCharts wrappers, built for dashboards and
+      monitoring tools. Four themes and twelve accent colors, switched with a class and an
+      attribute on <code>&lt;html&gt;</code>.
     </p>
     <div className="mt-6 flex flex-wrap gap-2.5">
-      <a href="./?path=/docs/atoms-button--docs">
-        <Button variant="primary" icon={ArrowRight} iconPosition="right">
-          Explore components
-        </Button>
+      <a href="./?path=/docs/atoms-button--docs" className={`${CTA} ${CTA_VARIANT.primary}`}>
+        Explore components
+        <ArrowRight className="size-4" aria-hidden />
       </a>
-      <a href="#get-started">
-        <Button variant="secondary">Get started</Button>
+      <a href="#get-started" className={`${CTA} ${CTA_VARIANT.secondary}`}>
+        Get started
       </a>
-      <a href="https://github.com/SckyzO/cosmos" target="_blank" rel="noreferrer">
-        <Button variant="ghost" icon={ExternalLink}>
-          View on GitHub
-        </Button>
+      <a
+        href="https://github.com/SckyzO/cosmos"
+        target="_blank"
+        rel="noreferrer"
+        className={`${CTA} ${CTA_VARIANT.ghost}`}
+      >
+        <ExternalLink className="size-4" aria-hidden />
+        View on GitHub
       </a>
     </div>
 
