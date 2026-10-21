@@ -101,8 +101,9 @@ bumps the minor version (`bump-minor-pre-major`).
    GitHub releases.
 3. Publish to npm from `main`, theme first:
    `gh workflow run publish.yml -f package=cosmos-theme`, then `cosmos-react`, then
-   `cosmos-charts`. Each run waits for approval in the `npm-publish` environment. Don't
-   run it on a tag: both publish steps would run and the second one fails.
+   `cosmos-charts`. Each run builds and packs the package in one job, then publishes the
+   tarball from a second job that alone holds the npm OIDC token. The `npm-publish`
+   environment only accepts `main` and waits for approval.
 
 ## Merge strategy
 
