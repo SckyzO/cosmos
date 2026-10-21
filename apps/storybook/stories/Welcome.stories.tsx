@@ -365,17 +365,8 @@ const WelcomePage = ({
   appearance?: CosmosAppearance;
 }) => (
   <div className="mx-auto max-w-[1180px] px-5 pb-16">
-    {/* Hero: status bar */}
-    <div className="mt-6 flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-white px-3.5 py-2 font-mono text-xs dark:border-gray-800 dark:bg-gray-900">
-      <span className="font-bold tracking-[0.18em] text-gray-900 dark:text-gray-100">COSMOS</span>
-      <span className="text-gray-500 dark:text-gray-400">
-        <span className="mr-1.5 inline-block size-[7px] animate-pulse rounded-full bg-emerald-500" />
-        v{reactPkg.version} · 130+ components · 960+ stories · build live
-      </span>
-    </div>
-
     {/* Hero: title + lead + CTAs */}
-    <h1 className="mt-3 mb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">
+    <h1 className="mt-8 mb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">
       Cosmos design system
     </h1>
     <p className="max-w-prose text-base leading-relaxed text-gray-500 dark:text-gray-400">
