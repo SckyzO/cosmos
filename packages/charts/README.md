@@ -28,22 +28,24 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 
 ## Charts shipped
 
-| Chart                             | Notes                                             |
-| --------------------------------- | ------------------------------------------------- |
-| `BarChart`                        | Vertical or horizontal bars                       |
-| `LineAreaChart`                   | Smooth area + gradient fill                       |
-| `RealtimeChart`                   | Live updates with WARN/CRIT threshold annotations |
-| `RadialBarChart`                  | Multi-series radial gauge                         |
-| `GradientRadial`                  | Single gradient radial                            |
-| `SemiCircleGauge`                 | Half-donut gauge                                  |
-| `StrokedGauge`                    | Dashed-stroke radial                              |
-| `DonutChart` / `DonutRightLegend` | Donut with bottom or right legend                 |
-| `Sparkline` / `SparklineGroup`    | Mini sparklines + KPI grid                        |
-| `TreemapChart`                    | Repartition treemap                               |
-| `HeatmapChart`                    | Rows × columns colored by value buckets or ranges |
-| `RadarChart`                      | One polygon per series over named axes            |
-| `ScatterChart` / `BubbleChart`    | Numeric x/y points; bubble size as a 3rd measure  |
-| `BoxPlotChart`                    | Min/quartiles/max boxes, vertical or horizontal   |
+| Chart                             | Notes                                                  |
+| --------------------------------- | ------------------------------------------------------ |
+| `BarChart`                        | Vertical or horizontal bars                            |
+| `RangeBarChart`                   | Time ranges per row on a datetime axis (timeline)      |
+| `MixedChart`                      | Columns and lines on one chart, optional second y axis |
+| `LineAreaChart`                   | Smooth area + gradient fill                            |
+| `RealtimeChart`                   | Live updates with WARN/CRIT threshold annotations      |
+| `RadialBarChart`                  | Multi-series radial gauge                              |
+| `GradientRadial`                  | Single gradient radial                                 |
+| `SemiCircleGauge`                 | Half-donut gauge                                       |
+| `StrokedGauge`                    | Dashed-stroke radial                                   |
+| `DonutChart` / `DonutRightLegend` | Donut with bottom or right legend                      |
+| `Sparkline` / `SparklineGroup`    | Mini sparklines + KPI grid                             |
+| `TreemapChart`                    | Repartition treemap                                    |
+| `HeatmapChart`                    | Rows × columns colored by value buckets or ranges      |
+| `RadarChart`                      | One polygon per series over named axes                 |
+| `ScatterChart` / `BubbleChart`    | Numeric x/y points; bubble size as a 3rd measure       |
+| `BoxPlotChart`                    | Min/quartiles/max boxes, vertical or horizontal        |
 
 ## License
 
