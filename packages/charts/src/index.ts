@@ -15,3 +15,4 @@ export * from './RadarChart';
 export * from './ScatterChart';
 export * from './BoxPlotChart';
 export * from './RangeBarChart';
+export * from './MixedChart';
