@@ -1,12 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
+  Activity as ActivityIcon,
   AppWindow,
   ArrowRight,
   BookMarked,
+  CalendarDays,
   ExternalLink,
   FileText,
   LayoutDashboard,
   Mail,
+  Settings,
+  UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -506,25 +510,49 @@ const WelcomePage = ({
           href="./?path=/docs/pages-dashboard--docs"
           icon={LayoutDashboard}
           title="Dashboard"
-          desc="KPI grid, charts, status rows. The default landing for monitoring apps."
+          desc="KPI cards, charts and status rows: the landing page of a monitoring app."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-calendar--docs"
+          icon={CalendarDays}
+          title="Calendar"
+          desc="Month view with colored events, a mini calendar and the next events."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-activity--docs"
+          icon={ActivityIcon}
+          title="Activity"
+          desc="Deploys, incidents and changes on an alternating timeline, grouped by day."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-settings-screen--docs"
+          icon={Settings}
+          title="Settings"
+          desc="Sections in tabs, each with its labels on the left and the form on the right."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-profile--docs"
+          icon={UserRound}
+          title="Profile"
+          desc="Account details, username and password, appearance and local storage."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-doc-page--docs"
+          icon={BookMarked}
+          title="Doc page"
+          desc="Documentation with a sidebar nav, the article and a table of contents."
         />
         <TemplateCard
           href="./?path=/docs/pages-blog-index--docs"
           icon={FileText}
           title="Blog"
-          desc="Article index + single post layouts (5 variants). Used by the website."
-        />
-        <TemplateCard
-          href="./?path=/docs/pages-doc-page--docs"
-          icon={BookMarked}
-          title="DocPage"
-          desc="RTFM-style technical documentation layout with sticky nav and code blocks."
+          desc="Five blog section layouts for a landing page, with a matching post page."
         />
         <TemplateCard
           href="./?path=/docs/pages-stacked-shell--docs"
           icon={AppWindow}
-          title="App Shell"
-          desc="Sidebar + topbar + content area. The root layout for every page."
+          title="Stacked shell"
+          desc="Top navbar, no sidebar, full-width content under a page header."
         />
       </div>
     </section>
