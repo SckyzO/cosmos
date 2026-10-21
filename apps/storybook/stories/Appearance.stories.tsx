@@ -60,7 +60,7 @@ const AppearancePlayground = ({ initialTheme, initialAccent }: PlaygroundProps) 
 
 // Start from the toolbar's values; changing them remounts the playground.
 const renderPlayground: Story['render'] = (_args, { globals }) => {
-  const theme = (globals.theme || 'deep-blue') as CosmosTheme;
+  const theme = (globals.theme || 'dark') as CosmosTheme;
   const accent = (globals.accent || 'blue') as CosmosAccent;
   return (
     <AppearancePlayground key={`${theme}-${accent}`} initialTheme={theme} initialAccent={accent} />
@@ -78,7 +78,7 @@ export const PickingAppliesToDocument: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Sand' }));
     await userEvent.click(canvas.getByRole('button', { name: 'Teal' }));
     await expect(root).toHaveClass('sand');
-    await expect(root).not.toHaveClass('deep-blue');
+    await expect(root).not.toHaveClass('dark');
     await expect(root).toHaveAttribute('data-accent', 'teal');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Light' }));

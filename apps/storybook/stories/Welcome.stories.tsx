@@ -359,7 +359,7 @@ const ThemesShowcase = ({ theme: initialTheme, accent: initialAccent }: CosmosAp
 };
 
 const WelcomePage = ({
-  appearance = { theme: 'deep-blue', accent: 'blue' },
+  appearance = { theme: 'dark', accent: 'blue' },
 }: {
   appearance?: CosmosAppearance;
 }) => (
@@ -729,7 +729,7 @@ export const Default: Story = {
   render: (_args, { globals }) => (
     <WelcomePage
       appearance={{
-        theme: globals.theme || 'deep-blue',
+        theme: globals.theme || 'dark',
         accent: globals.accent || 'blue',
       }}
     />
