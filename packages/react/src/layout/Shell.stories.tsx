@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Shell } from './Shell';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
@@ -131,6 +132,48 @@ export const Default: Story = {
       />
     </Shell>
   ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Collapse button at the bottom of the sidebar
+//
+// `collapseControl="sidebar"` moves the control from the Topbar's hamburger to
+// a button under the sidebar's content.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CollapseButtonInSidebar: Story = {
+  render: () => (
+    <Shell
+      collapseControl="sidebar"
+      topbar={<Topbar pageTitle="Analytics Dashboard" rightActions={<ThemeToggle />} />}
+      sidebar={
+        <Sidebar>
+          <Sidebar.Brand
+            logo={<Box className="h-5 w-5" />}
+            title="Cosmos"
+            subtitle="Design system"
+          />
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent
+        title="Dashboard"
+        description="The collapse button sits at the bottom of the sidebar; the top bar has no hamburger."
+      />
+    </Shell>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    // One control only, in the sidebar.
+    const toggles = canvas.getAllByRole('button', { name: 'Collapse sidebar' });
+    await expect(toggles).toHaveLength(1);
+    await expect(within(nav).getByRole('button', { name: 'Collapse sidebar' })).toBe(toggles[0]);
+    await userEvent.click(toggles[0]);
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await userEvent.click(within(nav).getByRole('button', { name: 'Expand sidebar' }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

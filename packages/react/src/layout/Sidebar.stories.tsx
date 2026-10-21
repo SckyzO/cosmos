@@ -126,6 +126,37 @@ export const FullExample: Story = {
   },
 };
 
+/** `onCollapsedChange` adds a collapse button at the very bottom of the sidebar. */
+export const WithCollapseButton: Story = {
+  render: () => {
+    const [collapsed, setCollapsed] = useState(false);
+    return (
+      <Wrap>
+        <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed}>
+          <Sidebar.Brand
+            logo={<Box className="h-5 w-5" />}
+            title="Cosmos"
+            subtitle="Design system"
+          />
+          <Nav />
+        </Sidebar>
+        <main className="flex-1 p-6 text-[var(--color-text-secondary)]">
+          <p>The button at the bottom collapses and expands the sidebar.</p>
+        </main>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    const expand = canvas.getByRole('button', { name: 'Expand sidebar' });
+    await expect(expand).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(expand);
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+  },
+};
+
 /** Collapsed to 72 px, the footer's toggle stays inside the sidebar. */
 export const CollapsedFooterFits: Story = {
   tags: ['!autodocs'],
