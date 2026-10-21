@@ -42,6 +42,8 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 | `TreemapChart`                    | Repartition treemap                               |
 | `HeatmapChart`                    | Rows × columns colored by value buckets or ranges |
 | `RadarChart`                      | One polygon per series over named axes            |
+| `ScatterChart` / `BubbleChart`    | Numeric x/y points; bubble size as a 3rd measure  |
+| `BoxPlotChart`                    | Min/quartiles/max boxes, vertical or horizontal   |
 
 ## License
 
