@@ -1,21 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
+  Activity as ActivityIcon,
   AppWindow,
   ArrowRight,
   BookMarked,
-  Code2,
+  BookOpen,
+  CalendarDays,
+  CircleDot,
   ExternalLink,
   FileText,
+  FolderGit2,
   LayoutDashboard,
   Mail,
-  Palette,
-  Wrench,
+  Settings,
+  Tag,
+  UserRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { expect, within } from 'storybook/test';
 import {
   AppearanceSettings,
   applyAppearance,
-  Avatar,
   Button,
   CodeBlock,
   DataTable,
@@ -29,6 +34,7 @@ import {
 } from '../../../packages/react/src';
 import type { ColumnDef } from '../../../packages/react/src/table/types';
 // Versions come from the packages so the page can't drift from what's published.
+import { Sparkline } from '../../../packages/charts/src';
 import chartsPkg from '../../../packages/charts/package.json';
 import reactPkg from '../../../packages/react/package.json';
 import themePkg from '../../../packages/theme/package.json';
@@ -43,177 +49,217 @@ import themePkg from '../../../packages/theme/package.json';
 // which is why this used to be Welcome.mdx and broke the dark/light toggle.
 // ---------------------------------------------------------------------------
 
-type Group = {
-  id: string;
-  name: string;
-  count: number;
-  contains: string;
+// ---------------------------------------------------------------------------
+// Catalog: the sidebar groups, read from Storybook's own index so the counts
+// and the entries can't drift from the stories.
+// ---------------------------------------------------------------------------
+
+type IndexEntry = { id: string; title: string; type: 'story' | 'docs' };
+
+type CatalogEntry = { name: string; href: string };
+type CatalogGroup = { name: string; href: string; entries: CatalogEntry[] };
+
+// index.json lists the entries already in sidebar order (storySort), so the
+// groups and their entries keep it.
+const catalogGroups = (entries: IndexEntry[]): CatalogGroup[] => {
+  const byTitle = new Map<string, { docs?: string; story?: string }>();
+  for (const e of entries) {
+    if (e.title === 'Welcome') continue;
+    const ids = byTitle.get(e.title) ?? {};
+    if (e.type === 'docs') ids.docs ??= e.id;
+    else ids.story ??= e.id;
+    byTitle.set(e.title, ids);
+  }
+  const groups = new Map<string, CatalogGroup>();
+  for (const [title, ids] of byTitle) {
+    const [groupName, ...rest] = title.split('/');
+    const href = ids.docs ? `./?path=/docs/${ids.docs}` : `./?path=/story/${ids.story}`;
+    const group = groups.get(groupName) ?? { name: groupName, href, entries: [] };
+    group.entries.push({ name: rest.join(' / ') || groupName, href });
+    groups.set(groupName, group);
+  }
+  return [...groups.values()];
 };
 
-const groupRows: Group[] = [
-  {
-    id: 'pages',
-    name: 'Pages',
-    count: 19,
-    contains:
-      'Dashboard, Profile, SettingsScreen, Calendar, Activity, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
-  },
-  {
-    id: 'typography',
-    name: 'Typography',
-    count: 10,
-    contains:
-      'Headings (H1-H6 + decorations), Paragraphs (lead, drop cap, columns), Text utilities (italic/bold/mark/code/abbr/small/gradient), Blockquote (plain/solid/icon/testimonial), Kbd, Figure (image+caption), Link, Lists (List + List.Item), Description List, HR (Divider with 8 patterns)',
-  },
-  {
-    id: 'atoms',
-    name: 'Atoms',
-    count: 15,
-    contains:
-      'Button, ButtonGroup, Badge, Avatar, AlertBanner, Backdrop, IconBox, Ribbon, SectionLabel, SelectInput, Spinner, Clipboard, ThemeToggle, ThemeToggleTri, BackToTopFab',
-  },
-  {
-    id: 'forms',
-    name: 'Forms',
-    count: 25,
-    contains:
-      'Input, Select, Combobox, Toggle, Checkbox, Radio, NumberInput, StepperInput, SearchInput, PasswordInput, OtpInput, Textarea, DatePicker (single + range), TimePicker, Calendar, FileInput, Dropzone, AvatarUploader, FilterPills, SegmentedControl, ZoomBar, FormRow, FormFooter, ActionPanel, PasswordPolicyChecker',
-  },
-  {
-    id: 'data',
-    name: 'Data',
-    count: 10,
-    contains:
-      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, MiniCalendar, EventCalendar',
-  },
-  { id: 'status', name: 'Status', count: 3, contains: 'HealthBadge, HealthDot, StatusBadge' },
-  {
-    id: 'feedback',
-    name: 'Feedback',
-    count: 10,
-    contains:
-      'AlertBanner, NotificationCard, Toaster, Tooltip, AnnouncementBar, CookieBanner, EmptyState, ErrorState, LoadingState, Skeleton',
-  },
-  {
-    id: 'overlays',
-    name: 'Overlays',
-    count: 9,
-    contains:
-      'Modal, Drawer, Dropdown, Popover, CommandPalette, HelpOverlay, ConfirmationModal, NotificationsPanel, UserMenu',
-  },
-  {
-    id: 'navigation',
-    name: 'Navigation',
-    count: 10,
-    contains:
-      'Tabs, Breadcrumb, PageBreadcrumb, Pagination, Stepper, ProgressBar, Navbar, VerticalNavigation, StickyScrollNav',
-  },
-  {
-    id: 'actions',
-    name: 'Actions',
-    count: 5,
-    contains:
-      'PageActionButton, RefreshButton, RowActionButton, StatefulSaveButton, UnsavedIndicator',
-  },
-  {
-    id: 'layout',
-    name: 'Layout',
-    count: 9,
-    contains:
-      'Shell, Sidebar, Topbar, PageHeader, SectionCard, Card, ContentNarrow, ColBox, MediaObject',
-  },
-  {
-    id: 'lists',
-    name: 'Lists',
-    count: 9,
-    contains:
-      'StackedList, ContentStackedList, StackedListInCard, NarrowStackedList, ActivityFeed, GridList, SimpleRow, ClickableRow, StatusRow',
-  },
-  {
-    id: 'tables',
-    name: 'Tables',
-    count: 1,
-    contains: 'DataTable (sortable, filterable, paginated, with selection + bulk actions)',
-  },
-  {
-    id: 'settings',
-    name: 'Settings',
-    count: 3,
-    contains: 'AccentPicker, OptionPicker, PalettePicker',
-  },
-  {
-    id: 'charts',
-    name: 'Charts',
-    count: 7,
-    contains:
-      'LineAreaChart, BarChart, DonutChart, RadialBarChart + GradientRadial + SemiCircleGauge + StrokedGauge, RealtimeChart, Sparkline + SparklineGroup, TreemapChart (@sckyzo/cosmos-charts)',
-  },
-];
-
-const groupLinks: Record<string, string> = {
-  pages: 'pages-dashboard--docs',
-  typography: 'typography-headings--docs',
-  atoms: 'atoms-button--docs',
-  forms: 'forms-input--docs',
-  data: 'data-kpi-card--docs',
-  status: 'status-status-badge--docs',
-  feedback: 'feedback-toast--docs',
-  overlays: 'overlays-modal--docs',
-  navigation: 'navigation-tabs--docs',
-  actions: 'actions-page-action-button--docs',
-  layout: 'layout-shell--docs',
-  lists: 'lists-stacked-list--docs',
-  tables: 'tables-datatable--docs',
-  settings: 'settings-accent-picker--docs',
-  charts: 'charts-bar-column--docs',
-};
-
-const groupColumns: ColumnDef<Group>[] = [
+const catalogColumns: ColumnDef<CatalogGroup>[] = [
   {
     key: 'name',
     label: 'Group',
-    width: '14%',
+    width: '6.5rem',
     sortable: true,
-    sortValue: (r) => r.name,
-    filterable: true,
-    filterValue: (r) => r.name,
-    render: (r) => (
-      <a
-        href={`./?path=/docs/${groupLinks[r.id]}`}
-        className="font-semibold text-[var(--color-brand-500)] hover:underline"
-      >
-        {r.name}
-      </a>
+    sortValue: (g) => g.name,
+    render: (g) => (
+      <div className="flex flex-col">
+        <a
+          href={g.href}
+          className="text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+        >
+          {g.name}
+        </a>
+        <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+          {g.entries.length} {g.entries.length === 1 ? 'entry' : 'entries'}
+        </span>
+      </div>
     ),
   },
   {
-    key: 'count',
-    label: 'Count',
-    width: '8%',
-    align: 'right',
-    sortable: true,
-    sortValue: (r) => r.count,
-    render: (r) => (
-      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{r.count}</span>
+    key: 'entries',
+    label: 'Entries',
+    searchValue: (g) => `${g.name} ${g.entries.map((e) => e.name).join(' ')}`,
+    render: (g) => (
+      <span className="text-sm leading-relaxed">
+        {g.entries.map((e, i) => (
+          <Fragment key={e.href}>
+            {i > 0 && ', '}
+            <a
+              href={e.href}
+              className="hover:text-brand-600 dark:hover:text-brand-400 text-gray-700 hover:underline dark:text-gray-300"
+            >
+              {e.name}
+            </a>
+          </Fragment>
+        ))}
+      </span>
     ),
-  },
-  {
-    key: 'contains',
-    label: 'Components',
-    sortable: false,
-    filterable: true,
-    filterValue: (r) => r.contains,
-    searchValue: (r) => `${r.name} ${r.contains}`,
-    render: (r) => <span className="text-sm leading-snug">{r.contains}</span>,
   },
 ];
+
+/** `entries` is `null` while loading and `'error'` when the index couldn't be read. */
+const CatalogTable = ({ entries }: { entries: IndexEntry[] | null | 'error' }) => {
+  if (entries === null)
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading the story index…</p>;
+  if (entries === 'error')
+    return (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        The story index (<code>index.json</code>) couldn&apos;t be loaded, so the groups can&apos;t
+        be listed here. The sidebar has them all.
+      </p>
+    );
+  const groups = catalogGroups(entries);
+  const titles = groups.reduce((n, g) => n + g.entries.length, 0);
+  const stories = entries.filter((e) => e.type === 'story' && e.title !== 'Welcome').length;
+  return (
+    <>
+      <p className="mb-3.5 text-sm text-gray-500 dark:text-gray-400">
+        Stories are grouped by <strong>responsibility</strong>, not by file location, following
+        Storybook&apos;s{' '}
+        <a
+          href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
+          target="_blank"
+          rel="noreferrer"
+          className="text-brand-600 dark:text-brand-400 hover:underline"
+        >
+          story-hierarchy convention
+        </a>
+        : <strong>{titles}</strong> entries and <strong>{stories}</strong> stories across{' '}
+        <strong>{groups.length}</strong> groups.
+      </p>
+      <DataTable<CatalogGroup>
+        rows={groups}
+        columns={catalogColumns}
+        rowKey={(g) => g.name}
+        pageSize={30}
+        defaultSearchValue=""
+        onSearchChange={() => {}}
+        searchPlaceholder="Filter groups or entries…"
+      />
+    </>
+  );
+};
+
+// The preview iframe and index.json sit side by side, in dev and in the
+// static build (GitHub Pages serves it under /cosmos/).
+const useStoryIndex = () => {
+  const [entries, setEntries] = useState<IndexEntry[] | null | 'error'>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('./index.json')
+      .then((res) => {
+        if (!res.ok) throw new Error(`index.json: HTTP ${res.status}`);
+        return res.json() as Promise<{ entries: Record<string, IndexEntry> }>;
+      })
+      .then((index) => !cancelled && setEntries(Object.values(index.entries)))
+      .catch(() => !cancelled && setEntries('error'));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return entries;
+};
+
+const Catalog = () => <CatalogTable entries={useStoryIndex()} />;
+
+// Same setup as the cosmos-react README ("Set up the styles").
+const INSTALL = 'pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react';
+
+const APP_CSS = `/* app.css */
+@import 'tailwindcss';
+
+/* Required: let Tailwind scan the components for their classes.
+   The path is relative to this file. */
+@source '../node_modules/@sckyzo/cosmos-react/dist/**/*.{js,cjs}';
+
+@import '@sckyzo/cosmos-theme/tailwind';
+@import '@sckyzo/cosmos-theme/vars';
+@import '@sckyzo/cosmos-theme/fonts';`;
+
+const APP_TSX = `// App.tsx
+import { Button } from '@sckyzo/cosmos-react';
+
+export default () => <Button>Hello Cosmos</Button>;`;
 
 // ---------------------------------------------------------------------------
 // Building blocks
 // ---------------------------------------------------------------------------
 
+// Links styled like Button: a <Button> inside an <a> nests two interactive
+// elements (invalid HTML, two tab stops per call to action).
+const CTA =
+  'inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-medium transition-colors hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40';
+const CTA_VARIANT = {
+  primary: 'bg-brand-500 text-white shadow-sm hover:bg-brand-600',
+  secondary:
+    'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+  ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5',
+};
+
+// lucide ships no brand icons, so no GitHub logo.
+const RESOURCES = [
+  {
+    href: 'https://github.com/SckyzO/cosmos',
+    icon: FolderGit2,
+    label: 'GitHub repo',
+    desc: 'Source code and pull requests.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/blob/main/CONTRIBUTING.md',
+    icon: BookOpen,
+    label: 'Contributing',
+    desc: 'Setup, commit rules, theming rules and the PR checklist.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/issues',
+    icon: CircleDot,
+    label: 'Issues',
+    desc: 'Report a bug or ask for a component.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/releases',
+    icon: Tag,
+    label: 'Releases',
+    desc: 'Each package release with its changelog.',
+  },
+];
+
+const REQUESTS = [1820, 1940, 1880, 2050, 2210, 2140, 2290, 2380, 2310, 2420, 2390, 2460];
+
+const AutoRefreshToggle = () => {
+  const [on, setOn] = useState(true);
+  return <Toggle checked={on} onChange={setOn} label="Auto-refresh" />;
+};
+
 const PreviewCard = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex min-h-[110px] flex-col gap-2.5 rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900">
+  <div className="flex min-h-[110px] min-w-0 flex-col gap-2.5 rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900">
     <span className="font-mono text-[0.65rem] tracking-widest text-gray-500 uppercase dark:text-gray-400">
       {label}
     </span>
@@ -241,41 +287,10 @@ const TemplateCard = ({
     </span>
     <span className="text-base font-semibold">{title}</span>
     <span className="flex-1 text-sm leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
-    <span className="font-mono text-[0.7rem] tracking-wide text-[var(--color-brand-500)] uppercase">
+    <span className="text-brand-600 dark:text-brand-400 font-mono text-[0.7rem] tracking-wide uppercase">
       Open template →
     </span>
   </a>
-);
-
-const IntentCol = ({
-  icon: Icon,
-  title,
-  items,
-}: {
-  icon: React.ElementType;
-  title: string;
-  items: Array<{ href: string; label: string; external?: boolean }>;
-}) => (
-  <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-    <div className="mb-2.5 flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-100">
-      <Icon size={16} className="text-[var(--color-brand-500)]" />
-      {title}
-    </div>
-    <ul className="m-0 list-none p-0">
-      {items.map((item) => (
-        <li key={item.label} className="py-1 text-sm">
-          <a
-            href={item.href}
-            target={item.external ? '_blank' : undefined}
-            rel={item.external ? 'noreferrer' : undefined}
-            className="text-[var(--color-brand-500)] hover:underline"
-          >
-            {item.label}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
 );
 
 const PkgCard = ({
@@ -365,37 +380,31 @@ const WelcomePage = ({
   appearance?: CosmosAppearance;
 }) => (
   <div className="mx-auto max-w-[1180px] px-5 pb-16">
-    {/* Hero: status bar */}
-    <div className="mt-6 flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-white px-3.5 py-2 font-mono text-xs dark:border-gray-800 dark:bg-gray-900">
-      <span className="font-bold tracking-[0.18em] text-gray-900 dark:text-gray-100">COSMOS</span>
-      <span className="text-gray-500 dark:text-gray-400">
-        <span className="mr-1.5 inline-block size-[7px] animate-pulse rounded-full bg-emerald-500" />
-        v{reactPkg.version} · 130+ components · 960+ stories · build live
-      </span>
-    </div>
-
     {/* Hero: title + lead + CTAs */}
-    <h1 className="mt-3 mb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">
+    <h1 className="mt-8 mb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">
       Cosmos design system
     </h1>
     <p className="max-w-prose text-base leading-relaxed text-gray-500 dark:text-gray-400">
-      Components, patterns and templates powering rackscope, monitoring-hub and the
-      monitoring-hub-website. One source of truth, three npm packages, zero visual drift across
-      surfaces.
+      React 19 components, a Tailwind 4 theme and ApexCharts wrappers, built for dashboards and
+      monitoring tools. Four themes and twelve accent colors, switched with a class and an attribute
+      on <code>&lt;html&gt;</code>.
     </p>
     <div className="mt-6 flex flex-wrap gap-2.5">
-      <a href="./?path=/docs/atoms-button--docs">
-        <Button variant="primary" icon={ArrowRight} iconPosition="right">
-          Explore components
-        </Button>
+      <a href="./?path=/docs/atoms-button--docs" className={`${CTA} ${CTA_VARIANT.primary}`}>
+        Explore components
+        <ArrowRight className="size-4" aria-hidden />
       </a>
-      <a href="#get-started">
-        <Button variant="secondary">Get started</Button>
+      <a href="#get-started" className={`${CTA} ${CTA_VARIANT.secondary}`}>
+        Get started
       </a>
-      <a href="https://github.com/SckyzO/cosmos" target="_blank" rel="noreferrer">
-        <Button variant="ghost" icon={ExternalLink}>
-          View on GitHub
-        </Button>
+      <a
+        href="https://github.com/SckyzO/cosmos"
+        target="_blank"
+        rel="noreferrer"
+        className={`${CTA} ${CTA_VARIANT.ghost}`}
+      >
+        <ExternalLink className="size-4" aria-hidden />
+        View on GitHub
       </a>
     </div>
 
@@ -429,14 +438,12 @@ const WelcomePage = ({
           </Button>
         </PreviewCard>
         <PreviewCard label="CodeBlock">
-          {/* Dev snippet — signature "made for engineers". Replaces the Badge
-           *  card which doubled up visually with StatusBadge (row 2). */}
           <div className="w-full">
-            <CodeBlock language="bash" code="$ docker pull sckyzo/cosmos:0.1.0" />
+            <CodeBlock language="bash" code="$ pnpm add @sckyzo/cosmos-react" />
           </div>
         </PreviewCard>
         <PreviewCard label="Toggle">
-          <Toggle checked onChange={() => {}} label="Auto-refresh" />
+          <AutoRefreshToggle />
         </PreviewCard>
 
         {/* Row 2 — Status / monitoring DNA */}
@@ -484,19 +491,13 @@ const WelcomePage = ({
             </Button>
           </div>
         </PreviewCard>
-        <PreviewCard label="Avatar">
-          {/* Size scale (xs → xl) — baseline-aligned so the progression reads
-           *  like a typography ramp. Initials only so the comparison stays
-           *  about size, not identity. */}
-          <div className="flex flex-wrap items-end gap-3">
-            {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
-              <div key={s} className="flex flex-col items-center gap-1">
-                <Avatar size={s} name="JD" />
-                <span className="font-mono text-[10px] tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                  {s}
-                </span>
-              </div>
-            ))}
+        <PreviewCard label="Sparkline">
+          <div className="w-full">
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-300">Requests/s</span>
+              <span className="font-mono text-gray-500 dark:text-gray-400">2.4k</span>
+            </div>
+            <Sparkline data={REQUESTS} height={48} />
           </div>
         </PreviewCard>
         <PreviewCard label="KpiCard">
@@ -517,25 +518,49 @@ const WelcomePage = ({
           href="./?path=/docs/pages-dashboard--docs"
           icon={LayoutDashboard}
           title="Dashboard"
-          desc="KPI grid, charts, status rows. The default landing for monitoring apps."
+          desc="KPI cards, charts and status rows: the landing page of a monitoring app."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-calendar--docs"
+          icon={CalendarDays}
+          title="Calendar"
+          desc="Month view with colored events, a mini calendar and the next events."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-activity--docs"
+          icon={ActivityIcon}
+          title="Activity"
+          desc="Deploys, incidents and changes on an alternating timeline, grouped by day."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-settings-screen--docs"
+          icon={Settings}
+          title="Settings"
+          desc="Sections in tabs, each with its labels on the left and the form on the right."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-profile--docs"
+          icon={UserRound}
+          title="Profile"
+          desc="Account details, username and password, appearance and local storage."
+        />
+        <TemplateCard
+          href="./?path=/docs/pages-doc-page--docs"
+          icon={BookMarked}
+          title="Doc page"
+          desc="Documentation with a sidebar nav, the article and a table of contents."
         />
         <TemplateCard
           href="./?path=/docs/pages-blog-index--docs"
           icon={FileText}
           title="Blog"
-          desc="Article index + single post layouts (5 variants). Used by the website."
-        />
-        <TemplateCard
-          href="./?path=/docs/pages-doc-page--docs"
-          icon={BookMarked}
-          title="DocPage"
-          desc="RTFM-style technical documentation layout with sticky nav and code blocks."
+          desc="Five blog section layouts for a landing page, with a matching post page."
         />
         <TemplateCard
           href="./?path=/docs/pages-stacked-shell--docs"
           icon={AppWindow}
-          title="App Shell"
-          desc="Sidebar + topbar + content area. The root layout for every page."
+          title="Stacked shell"
+          desc="Top navbar, no sidebar, full-width content under a page header."
         />
       </div>
     </section>
@@ -545,18 +570,16 @@ const WelcomePage = ({
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         Get started
       </h2>
-      <pre className="mb-3 overflow-x-auto rounded-md border border-gray-200 bg-white p-4 font-mono text-sm leading-relaxed dark:border-gray-800 dark:bg-gray-900">
-        {`pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react`}
-      </pre>
-      <pre className="mb-3 overflow-x-auto rounded-md border border-gray-200 bg-white p-4 font-mono text-sm leading-relaxed dark:border-gray-800 dark:bg-gray-900">
-        {`// app.css
-@import '@sckyzo/cosmos-theme/tailwind';
-
-// App.tsx
-import { Button } from '@sckyzo/cosmos-react';
-
-export default () => <Button variant="primary">Hello Cosmos</Button>;`}
-      </pre>
+      <div className="mb-3 space-y-3">
+        <CodeBlock language="bash" code={INSTALL} />
+        <CodeBlock language="css" code={APP_CSS} />
+        <CodeBlock language="tsx" code={APP_TSX} />
+      </div>
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+        Without the <code>@source</code> line Tailwind generates none of the classes the components
+        use, and they render unstyled. With <code>@sckyzo/cosmos-charts</code>, add a second{' '}
+        <code>@source</code> line for its <code>dist</code>.
+      </p>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         The theme is a class on <code>&lt;html&gt;</code> (none for light, <code>sand</code>,{' '}
         <code>dark</code> or <code>deep-blue</code>) and the accent a <code>data-accent</code>{' '}
@@ -571,57 +594,6 @@ export default () => <Button variant="primary">Hello Cosmos</Button>;`}
         </a>{' '}
         lets you try every combination from one page.
       </p>
-    </section>
-
-    {/* Where to next? */}
-    <section className="mt-12">
-      <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
-        Where to next?
-      </h2>
-      <div className="grid gap-4 md:grid-cols-3">
-        <IntentCol
-          icon={Palette}
-          title="I'm a designer"
-          items={[
-            { href: './?path=/docs/pages-dashboard--docs', label: 'Pages templates' },
-            { href: './?path=/docs/settings-accent-picker--docs', label: 'Color tokens' },
-            { href: './?path=/docs/atoms-badge--docs', label: 'Status & tones' },
-            { href: './?path=/docs/layout-card--docs', label: 'Layout primitives' },
-          ]}
-        />
-        <IntentCol
-          icon={Code2}
-          title="I'm a developer"
-          items={[
-            { href: '#get-started', label: 'Quick start' },
-            { href: './?path=/docs/atoms-button--docs', label: 'Atoms catalog' },
-            { href: './?path=/docs/forms-input--docs', label: 'Forms & Tables' },
-            { href: './?path=/docs/charts-bar-column--docs', label: 'Charts catalog' },
-          ]}
-        />
-        <IntentCol
-          icon={Wrench}
-          title="I want to contribute"
-          items={[
-            { href: 'https://github.com/SckyzO/cosmos', label: 'Repo layout', external: true },
-            {
-              href: 'https://github.com/SckyzO/cosmos/blob/main/.claude/CLAUDE.md',
-              label: 'Repo conventions',
-              external: true,
-            },
-            {
-              href: 'https://github.com/SckyzO/cosmos/blob/main/README.md',
-              label: 'Running tests',
-              external: true,
-            },
-            {
-              href: 'https://github.com/SckyzO/cosmos/issues',
-              label: 'Open an issue',
-              external: true,
-            },
-          ]}
-        />
-      </div>
     </section>
 
     {/* Packages */}
@@ -656,58 +628,35 @@ export default () => <Button variant="primary">Hello Cosmos</Button>;`}
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         Resources
       </h2>
-      <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-sm">
-        {[
-          ['https://github.com/SckyzO/cosmos', 'GitHub repo'],
-          ['https://github.com/SckyzO/cosmos/issues', 'Issues'],
-          ['https://github.com/SckyzO/cosmos/releases', 'Releases'],
-          ['https://tailwindui.com/components', 'Tailwind UI (inspiration)'],
-          ['https://flowbite.com/docs/components/', 'Flowbite (inspiration)'],
-          ['https://storybook.js.org/docs', 'Storybook docs'],
-        ].map(([href, label], i, arr) => (
-          <li key={label}>
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[var(--color-brand-500)] hover:underline"
-            >
-              {label}
-            </a>
-            {i < arr.length - 1 && <span className="ml-5 text-gray-400">·</span>}
-          </li>
+      <div className="grid gap-3.5 sm:grid-cols-2 md:grid-cols-4">
+        {RESOURCES.map(({ href, icon: Icon, label, desc }) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3.5 transition hover:border-[var(--color-brand-500)] hover:no-underline dark:border-gray-800 dark:bg-gray-900"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--color-brand-500)_12%,transparent)] text-[var(--color-brand-500)]">
+              <Icon size={16} aria-hidden />
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <span className="text-brand-600 dark:text-brand-400 text-sm font-semibold group-hover:underline">
+                {label}
+              </span>
+              <span className="text-xs leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
+            </span>
+          </a>
         ))}
-      </ul>
+      </div>
     </section>
 
-    {/* All sidebar groups (DataTable) */}
+    {/* All sidebar groups */}
     <section className="mt-12">
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         All sidebar groups
       </h2>
-      <div className="mb-3.5 text-sm text-gray-500 dark:text-gray-400">
-        Stories are grouped by <strong>responsibility</strong>, not by file location — mirroring the
-        Storybook{' '}
-        <a
-          href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
-          target="_blank"
-          rel="noreferrer"
-          className="text-[var(--color-brand-500)] hover:underline"
-        >
-          story-hierarchy convention
-        </a>
-        . Total: <strong>{groupRows.reduce((s, g) => s + g.count, 0)}</strong> components across{' '}
-        <strong>{groupRows.length}</strong> groups.
-      </div>
-      <DataTable<Group>
-        rows={groupRows}
-        columns={groupColumns}
-        rowKey={(r) => r.id}
-        pageSize={20}
-        defaultSearchValue=""
-        onSearchChange={() => {}}
-        searchPlaceholder="Filter groups or components…"
-      />
+      <Catalog />
     </section>
   </div>
 );
@@ -735,4 +684,48 @@ export const Default: Story = {
       }}
     />
   ),
+};
+
+// A fixed index, so the test doesn't depend on the stories that exist.
+const FIXTURE: IndexEntry[] = [
+  { id: 'welcome--default', title: 'Welcome', type: 'story' },
+  { id: 'pages-dashboard--docs', title: 'Pages/Dashboard', type: 'docs' },
+  { id: 'pages-dashboard--default', title: 'Pages/Dashboard', type: 'story' },
+  { id: 'atoms-button--docs', title: 'Atoms/Button', type: 'docs' },
+  { id: 'atoms-button--variants', title: 'Atoms/Button', type: 'story' },
+  { id: 'atoms-button--states', title: 'Atoms/Button', type: 'story' },
+  { id: 'atoms-badge--default', title: 'Atoms/Badge', type: 'story' },
+];
+
+/** The catalog groups the index in sidebar order and links each entry. Test only. */
+export const CatalogFromIndex: Story = {
+  tags: ['!dev'],
+  render: () => <CatalogTable entries={FIXTURE} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvasElement.querySelector('p')).toHaveTextContent(
+      '3 entries and 4 stories across 2 groups'
+    );
+    const groups = canvas.getAllByRole('link', { name: /^(Pages|Atoms|Welcome)$/ });
+    await expect(groups.map((a) => a.textContent)).toEqual(['Pages', 'Atoms']);
+    // An entry links its docs page, or its first story when it has none.
+    await expect(canvas.getByRole('link', { name: 'Button' })).toHaveAttribute(
+      'href',
+      './?path=/docs/atoms-button--docs'
+    );
+    await expect(canvas.getByRole('link', { name: 'Badge' })).toHaveAttribute(
+      'href',
+      './?path=/story/atoms-badge--default'
+    );
+    await expect(canvas.getByText('2 entries')).toBeVisible();
+  },
+};
+
+/** Without the index, the catalog says so instead of showing an empty table. Test only. */
+export const CatalogWithoutIndex: Story = {
+  tags: ['!dev'],
+  render: () => <CatalogTable entries="error" />,
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByText(/couldn.t be loaded/)).toBeVisible();
+  },
 };
