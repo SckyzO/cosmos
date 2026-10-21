@@ -4,12 +4,16 @@ import {
   AppWindow,
   ArrowRight,
   BookMarked,
+  BookOpen,
   CalendarDays,
+  CircleDot,
   ExternalLink,
   FileText,
+  FolderGit2,
   LayoutDashboard,
   Mail,
   Settings,
+  Tag,
   UserRound,
 } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
@@ -218,6 +222,34 @@ const CTA_VARIANT = {
     'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
   ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5',
 };
+
+// lucide ships no brand icons, so no GitHub logo.
+const RESOURCES = [
+  {
+    href: 'https://github.com/SckyzO/cosmos',
+    icon: FolderGit2,
+    label: 'GitHub repo',
+    desc: 'Source code and pull requests.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/blob/main/CONTRIBUTING.md',
+    icon: BookOpen,
+    label: 'Contributing',
+    desc: 'Setup, commit rules, theming rules and the PR checklist.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/issues',
+    icon: CircleDot,
+    label: 'Issues',
+    desc: 'Report a bug or ask for a component.',
+  },
+  {
+    href: 'https://github.com/SckyzO/cosmos/releases',
+    icon: Tag,
+    label: 'Releases',
+    desc: 'Each package release with its changelog.',
+  },
+];
 
 const REQUESTS = [1820, 1940, 1880, 2050, 2210, 2140, 2290, 2380, 2310, 2420, 2390, 2460];
 
@@ -596,26 +628,27 @@ const WelcomePage = ({
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
         Resources
       </h2>
-      <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-sm">
-        {[
-          ['https://github.com/SckyzO/cosmos', 'GitHub repo'],
-          ['https://github.com/SckyzO/cosmos/blob/main/CONTRIBUTING.md', 'Contributing'],
-          ['https://github.com/SckyzO/cosmos/issues', 'Issues'],
-          ['https://github.com/SckyzO/cosmos/releases', 'Releases'],
-        ].map(([href, label], i, arr) => (
-          <li key={label}>
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="text-brand-600 dark:text-brand-400 hover:underline"
-            >
-              {label}
-            </a>
-            {i < arr.length - 1 && <span className="ml-5 text-gray-400">·</span>}
-          </li>
+      <div className="grid gap-3.5 sm:grid-cols-2 md:grid-cols-4">
+        {RESOURCES.map(({ href, icon: Icon, label, desc }) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3.5 transition hover:border-[var(--color-brand-500)] hover:no-underline dark:border-gray-800 dark:bg-gray-900"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--color-brand-500)_12%,transparent)] text-[var(--color-brand-500)]">
+              <Icon size={16} aria-hidden />
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <span className="text-brand-600 dark:text-brand-400 text-sm font-semibold group-hover:underline">
+                {label}
+              </span>
+              <span className="text-xs leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
+            </span>
+          </a>
         ))}
-      </ul>
+      </div>
     </section>
 
     {/* All sidebar groups */}
