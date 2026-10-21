@@ -4,7 +4,7 @@ import { cloneElement, isValidElement, useEffect, useId, useState, type ReactNod
 import { Kbd } from '../typography/Kbd';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
-export type TooltipVariant = 'dark' | 'white' | 'brand';
+export type TooltipVariant = 'dark' | 'white' | 'brand' | 'success' | 'warning' | 'danger';
 
 const BOX_POS: Record<TooltipPosition, string> = {
   top: 'bottom-full left-1/2 -translate-x-1/2 mb-2.5',
@@ -25,12 +25,19 @@ const VARIANT_BOX: Record<TooltipVariant, string> = {
   white:
     'bg-white text-gray-700 border border-gray-200 shadow-[0_0_20px_rgba(0,0,0,0.15)] dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
   brand: 'bg-brand-500 text-white shadow-[0_0_20px_rgba(0,0,0,0.25)]',
+  // Shades picked for 4.5:1 text contrast; amber is too light for white text.
+  success: 'bg-green-700 text-white shadow-[0_0_20px_rgba(0,0,0,0.25)]',
+  warning: 'bg-amber-400 text-gray-900 shadow-[0_0_20px_rgba(0,0,0,0.25)]',
+  danger: 'bg-red-600 text-white shadow-[0_0_20px_rgba(0,0,0,0.25)]',
 };
 
 const VARIANT_ARROW: Record<TooltipVariant, string> = {
   dark: 'bg-gray-900 dark:bg-gray-700',
   white: 'bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700',
   brand: 'bg-brand-500',
+  success: 'bg-green-700',
+  warning: 'bg-amber-400',
+  danger: 'bg-red-600',
 };
 
 export type TooltipProps = {
