@@ -15,14 +15,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const PALETTES = [
-  ['%236366f1', '%23a855f7'],
-  ['%2310b981', '%2306b6d4'],
-  ['%23f59e0b', '%23ef4444'],
-  ['%23ec4899', '%238b5cf6'],
-  ['%2306b6d4', '%233b82f6'],
-  ['%2384cc16', '%2310b981'],
-  ['%23f97316', '%23ef4444'],
-  ['%238b5cf6', '%23ec4899'],
+  ['#6366f1', '#a855f7'],
+  ['#10b981', '#06b6d4'],
+  ['#f59e0b', '#ef4444'],
+  ['#ec4899', '#8b5cf6'],
+  ['#06b6d4', '#3b82f6'],
+  ['#84cc16', '#10b981'],
+  ['#f97316', '#ef4444'],
+  ['#8b5cf6', '#ec4899'],
 ];
 
 const gradient = (i: number) => {
@@ -32,7 +32,7 @@ const gradient = (i: number) => {
     encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
-         <rect width="400" height="400" fill="url(%23g)"/>
+         <rect width="400" height="400" fill="url(#g)"/>
          <text x="50%" y="55%" font-family="sans-serif" font-size="64" font-weight="700" fill="white" text-anchor="middle" opacity="0.85">${i + 1}</text>
        </svg>`
     )
