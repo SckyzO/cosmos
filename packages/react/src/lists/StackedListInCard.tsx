@@ -32,6 +32,11 @@ const ITEM_INSET_CLASS = 'px-4 sm:px-6';
 const isStackedListItem = (node: ReactNode): node is ReactElement<StackedListItemProps> =>
   isValidElement(node) && node.type === StackedList.Item;
 
+/**
+ * A `StackedList` on a card surface (ring, shadow, rounded from `sm` up). Each
+ * `StackedList.Item` child gets horizontal padding so its content clears the
+ * card edge; other children render unchanged.
+ */
 export const StackedListInCard = forwardRef<HTMLDivElement, StackedListInCardProps>(
   function StackedListInCard({ className, children, ...rest }, ref) {
     const insetChildren = Children.map(children, (child) => {

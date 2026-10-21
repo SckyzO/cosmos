@@ -9,6 +9,12 @@ export type NarrowStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'chi
   children: ReactNode;
 };
 
+/**
+ * Divided list for narrow columns (sidebars, panels). An item shows an avatar
+ * with a title and subtitle, plus an optional trailing action; with
+ * `timestamp` or `description` it switches to a two-row layout.
+ * `NarrowStackedList.Header` adds letter headings between groups.
+ */
 const NarrowStackedListRoot = forwardRef<HTMLUListElement, NarrowStackedListProps>(
   function NarrowStackedListRoot({ className, children, ...rest }, ref) {
     return (
@@ -32,13 +38,17 @@ export type NarrowStackedListHeaderProps = Omit<LiHTMLAttributes<HTMLLIElement>,
   children: ReactNode;
 };
 
+/**
+ * Group heading, rendered as an `<li>` among the items of the same list. With
+ * `sticky` it stays pinned to the top of the scrolling container.
+ */
 const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeaderProps>(
   function NarrowStackedListHeader({ sticky, className, children, ...rest }, ref) {
     return (
       <li
         ref={ref}
         className={clsx(
-          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800/60 dark:text-white',
+          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
           sticky && 'sticky top-0 z-10',
           className
         )}
@@ -73,6 +83,7 @@ const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeade
 //          </div>
 //          <p class="line-clamp-2">{description}</p>
 //        </div>
+//        {trailing — optional, vertically centred}
 //      </li>
 
 export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
@@ -84,7 +95,7 @@ export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   subtitle?: ReactNode;
   /** Optional right-of-title timestamp (Pattern 13). When set, an extra layout row is used. */
   timestamp?: ReactNode;
-  /** Optional second body line (Pattern 13). Auto line-clamped to 2. */
+  /** Optional second body line (Pattern 13). Auto line-clamped to 2. Replaces `subtitle`. */
   description?: ReactNode;
   /** Optional right-aligned trailing slot — action button, link (Pattern 12). */
   trailing?: ReactNode;
@@ -117,6 +128,7 @@ const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemPro
               <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
             )}
           </div>
+          {trailing && <div className="flex flex-none items-center">{trailing}</div>}
         </li>
       );
     }

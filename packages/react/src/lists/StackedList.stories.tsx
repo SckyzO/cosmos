@@ -139,7 +139,13 @@ export const WithActionsMenu: Story = {
           avatar={<Avatar src={s.avatar} />}
           title={s.name}
           subtitle={s.email}
-          meta={<MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? '—'} />}
+          meta={
+            s.online ? (
+              <MetaWithStatus role={s.role} />
+            ) : (
+              <MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? ''} />
+            )
+          }
           trailing={
             <button
               type="button"
@@ -173,7 +179,13 @@ export const NoAvatar: Story = {
           key={s.email}
           title={s.name}
           subtitle={s.email}
-          meta={<MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? '—'} />}
+          meta={
+            s.online ? (
+              <MetaWithStatus role={s.role} />
+            ) : (
+              <MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? ''} />
+            )
+          }
         />
       ))}
     </StackedList>
@@ -245,6 +257,40 @@ export const HrefMakesRowLinkAndChevronShows: Story = {
     // chevron icon (ChevronRight from lucide) renders as svg with class size-5
     const svg = li?.querySelector('svg.size-5');
     await expect(svg).not.toBeNull();
+  },
+};
+
+/** On a linked row the full-row overlay must leave the trailing actions clickable. */
+export const TrailingStaysClickableOnLinkedRow: Story = {
+  render: () => (
+    <StackedList>
+      <StackedList.Item
+        href="/users/aiden.park"
+        avatar={<Avatar src={SERVICES[0]!.avatar} />}
+        title="Aiden Park"
+        subtitle="aiden.park@example.com"
+        trailing={
+          <button
+            type="button"
+            aria-label="Actions for Aiden Park"
+            className="flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-gray-200"
+          >
+            <MoreVertical className="size-5" aria-hidden />
+          </button>
+        }
+      />
+    </StackedList>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const hitAt = (el: Element) => {
+      const { left, top, width, height } = el.getBoundingClientRect();
+      return canvasElement.ownerDocument.elementFromPoint(left + width / 2, top + height / 2);
+    };
+    const button = canvas.getByRole('button', { name: 'Actions for Aiden Park' });
+    await expect(button.contains(hitAt(button))).toBe(true);
+    // The rest of the row still goes to the link.
+    const link = canvas.getByRole('link', { name: 'Aiden Park' });
+    await expect(link.contains(hitAt(canvas.getByText('aiden.park@example.com')))).toBe(true);
   },
 };
 

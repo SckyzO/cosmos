@@ -16,6 +16,12 @@ export type ContentStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'ch
   children: ReactNode;
 };
 
+/**
+ * Divided list of content rows (issues, projects, discussions): a title, which
+ * can be a link, with an inline badge, a line of meta items separated by dots,
+ * and a right-aligned trailing slot. No avatar column: for people, use
+ * `StackedList`.
+ */
 const ContentStackedListRoot = forwardRef<HTMLUListElement, ContentStackedListProps>(
   function ContentStackedListRoot({ className, children, ...rest }, ref) {
     return (
@@ -63,7 +69,10 @@ export type ContentStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   href?: string;
   /** Optional inline badge rendered next to the title (pattern 5). */
   badge?: ReactNode;
-  /** Inline meta items separated by a dot. Pass an array of ReactNodes. */
+  /**
+   * Inline meta items separated by a dot. Pass an array of ReactNodes. Each item
+   * stays on one line; the last one truncates when the row runs out of room.
+   */
   meta?: ReactNode[];
   /** Right-aligned slot — typically an AvatarGroup (pattern 3) or a button + actions menu (pattern 5). */
   trailing?: ReactNode;
@@ -95,10 +104,13 @@ const ContentStackedListItem = forwardRef<HTMLLIElement, ContentStackedListItemP
           </div>
           {hasMeta && (
             <div className="mt-1 flex items-center gap-x-2 text-xs/5 text-gray-500 dark:text-gray-400">
-              {Children.toArray(metaItems).map((item, i) => (
+              {Children.toArray(metaItems).map((item, i, items) => (
                 <Fragment key={i}>
                   {i > 0 && <Dot />}
-                  {item}
+                  {/* One line per item; the last one truncates when the row runs out of room. */}
+                  <span className={i === items.length - 1 ? 'truncate' : 'whitespace-nowrap'}>
+                    {item}
+                  </span>
                 </Fragment>
               ))}
             </div>

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Fragment } from 'react';
 import { expect } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import { NarrowStackedList } from './NarrowStackedList';
@@ -125,21 +126,27 @@ export const StickyHeadings: Story = {
     <div className="max-h-96 max-w-md overflow-y-auto bg-white dark:bg-gray-900">
       <NarrowStackedList>
         {Object.entries(PEOPLE_GROUPED).map(([letter, group]) => (
-          <NarrowStackedList key={letter} className="contents">
+          <Fragment key={letter}>
             <NarrowStackedList.Header sticky>{letter}</NarrowStackedList.Header>
             {group.map((p) => (
               <NarrowStackedList.Item
                 key={p.email}
+                className="px-3"
                 avatar={<Avatar src={p.av} />}
                 title={p.name}
                 subtitle={p.email}
               />
             ))}
-          </NarrowStackedList>
+          </Fragment>
         ))}
       </NarrowStackedList>
     </div>
   ),
+  play: async ({ canvas }) => {
+    // One list whose children are all list items, headers included.
+    const items = Array.from(canvas.getByRole('list').children);
+    await expect(items.map((el) => el.tagName)).toEqual(items.map(() => 'LI'));
+  },
 };
 
 export const WithActions: Story = {
@@ -157,7 +164,7 @@ export const WithActions: Story = {
                 href={`/users/${encodeURIComponent(p.email)}`}
                 className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
-                View
+                View<span className="sr-only">, {p.name}</span>
               </a>
             }
           />
@@ -165,6 +172,13 @@ export const WithActions: Story = {
       </NarrowStackedList>
     </div>
   ),
+  play: async ({ canvas }) => {
+    // Each View link names its person for screen readers.
+    for (const p of PEOPLE) {
+      const name = new RegExp(`^View\\s*, ${p.name}$`);
+      await expect(canvas.getByRole('link', { name })).toBeInTheDocument();
+    }
+  },
 };
 
 export const WithTruncatedDescription: Story = {
@@ -246,6 +260,58 @@ export const DescriptionTriggersRichLayout: Story = {
     const li = canvasElement.querySelector('[data-testid="li"]');
     await expect(li?.querySelector('.line-clamp-2')).not.toBeNull();
     await expect(li?.querySelector('time')).not.toBeNull();
+  },
+};
+
+/** `trailing` still renders when `timestamp` or `description` switches to the two-row layout. */
+export const TrailingRendersWithDescription: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <NarrowStackedList>
+        <NarrowStackedList.Item
+          avatar={<Avatar src={NOTES[1]!.av} />}
+          title={NOTES[1]!.name}
+          timestamp={<time>{NOTES[1]!.ago}</time>}
+          description={NOTES[1]!.body}
+          trailing={
+            <button
+              type="button"
+              className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
+            >
+              Reply
+            </button>
+          }
+        />
+      </NarrowStackedList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(NOTES[1]!.body)).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Reply' })).toBeVisible();
+  },
+};
+
+// Alpha channel of a computed CSS colour: `rgba(…, a)`, `oklab(… / a)` or opaque.
+const alphaOf = (color: string) => {
+  const slash = color.match(/\/\s*([\d.]+)(%?)\s*\)$/);
+  if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
+  const rgba = color.match(/^rgba\(.*,\s*([\d.]+)\)$/);
+  return rgba ? Number(rgba[1]) : 1;
+};
+
+/** A sticky header must be opaque in dark themes, or the rows scrolling under it show through. */
+export const StickyHeaderIsOpaqueInDarkThemes: Story = {
+  globals: { theme: 'dark' },
+  render: () => (
+    <NarrowStackedList>
+      <NarrowStackedList.Header sticky>A</NarrowStackedList.Header>
+      <NarrowStackedList.Item title="Aiden Park" subtitle="aiden.park@example.com" />
+    </NarrowStackedList>
+  ),
+  play: async ({ canvas }) => {
+    await expect(document.documentElement).toHaveClass('dark');
+    const header = canvas.getByText('A');
+    await expect(alphaOf(getComputedStyle(header).backgroundColor)).toBe(1);
   },
 };
 

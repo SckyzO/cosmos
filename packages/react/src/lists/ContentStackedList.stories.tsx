@@ -36,13 +36,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '2d ago',
     comments: 24,
-    commenters: [
-      placeholderAvatar('Aiden Park', 64),
-      placeholderAvatar('Mei Tanaka', 64),
-      placeholderAvatar('Olivier Dubois', 64),
-      placeholderAvatar('Priya Singh', 64),
-      placeholderAvatar('Ben', 64),
-    ],
+    commenters: ['Aiden Park', 'Mei Tanaka', 'Olivier Dubois', 'Priya Singh', 'Marcus Bell'],
     href: '#',
   },
   {
@@ -51,11 +45,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '5h ago',
     comments: 8,
-    commenters: [
-      placeholderAvatar('Mei Tanaka', 64),
-      placeholderAvatar('Aiden Park', 64),
-      placeholderAvatar('Olivier Dubois', 64),
-    ],
+    commenters: ['Mei Tanaka', 'Aiden Park', 'Olivier Dubois'],
     href: '#',
   },
   {
@@ -64,7 +54,7 @@ const ISSUES: Issue[] = [
     authorHref: '#',
     ago: '1w ago',
     comments: 3,
-    commenters: [placeholderAvatar('Olivier Dubois', 64), placeholderAvatar('Mei Tanaka', 64)],
+    commenters: ['Olivier Dubois', 'Mei Tanaka'],
     href: '#',
   },
 ];
@@ -105,14 +95,15 @@ const STATUS_VARIANT = {
 
 // ── Stories — Pattern 3 (avatar group + count, issue/discussion list) ───────
 
-const AvatarGroup = ({ urls }: { urls: string[] }) => (
-  <div className="flex -space-x-0.5">
+// Hidden on phones, where it would squeeze the issue title into a narrow column.
+const AvatarGroup = ({ names }: { names: string[] }) => (
+  <div className="hidden -space-x-0.5 sm:flex">
     <dt className="sr-only">Commenters</dt>
-    {urls.map((src) => (
-      <dd key={src}>
+    {names.map((name) => (
+      <dd key={name}>
         <img
-          alt=""
-          src={src}
+          alt={name}
+          src={placeholderAvatar(name, 64)}
           className="size-6 rounded-full bg-gray-50 ring-2 ring-white dark:ring-gray-900"
         />
       </dd>
@@ -146,7 +137,7 @@ export const IssuesWithAvatarGroup: Story = {
           ]}
           trailing={
             <dl className="flex items-center gap-x-6 sm:gap-x-8">
-              <AvatarGroup urls={i.commenters} />
+              <AvatarGroup names={i.commenters} />
               <CommentCount count={i.comments} />
             </dl>
           }
@@ -188,7 +179,7 @@ export const ProjectsWithBadgeAndActions: Story = {
                 href="#"
                 className="hidden rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 sm:block dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
               >
-                View project
+                View project<span className="sr-only">, {p.name}</span>
               </a>
               <ActionsMenuButton name={p.name} />
             </>
@@ -197,6 +188,14 @@ export const ProjectsWithBadgeAndActions: Story = {
       ))}
     </ContentStackedList>
   ),
+  play: async ({ canvas }) => {
+    // Each repeated link names its project for screen readers. `hidden`: the
+    // link only shows from `sm` up, wider than the test viewport.
+    for (const p of PROJECTS) {
+      const name = new RegExp(`^View project\\s*, ${p.name}$`);
+      await expect(canvas.getByRole('link', { name, hidden: true })).toBeInTheDocument();
+    }
+  },
 };
 
 // ── Variants ─────────────────────────────────────────────────────────────────
@@ -222,15 +221,22 @@ export const TitleOnlyNoMeta: Story = {
   ),
 };
 
+/** A single meta item gets no dot separator. */
 export const SingleMetaItem: Story = {
   render: () => (
     <ContentStackedList>
       <ContentStackedList.Item
-        title="Single meta item — no dot separator should appear"
+        title="Rotate the Grafana service account token"
         meta={[<time key="t">just now</time>]}
+        data-testid="li"
       />
     </ContentStackedList>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('just now')).toBeVisible();
+    const dots = canvas.getByTestId('li').querySelectorAll('svg[viewBox="0 0 2 2"]');
+    await expect(dots).toHaveLength(0);
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -273,6 +279,42 @@ export const BadgeRendersInsideTitleRow: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('My project')).toBeInTheDocument();
     await expect(canvas.getByText('Complete')).toBeInTheDocument();
+  },
+};
+
+/**
+ * At phone width the meta items keep one line each: the last one truncates
+ * instead of every item breaking in the middle around the dots.
+ */
+export const MetaItemsStayOnOneLineWhenNarrow: Story = {
+  render: () => (
+    <div style={{ width: 320 }}>
+      <ContentStackedList>
+        <ContentStackedList.Item
+          title={PROJECTS[2]!.name}
+          meta={[
+            <span key="d">
+              Due on <time>{PROJECTS[2]!.due}</time>
+            </span>,
+            <span key="c">Created by {PROJECTS[2]!.createdBy}</span>,
+          ]}
+          trailing={<ActionsMenuButton name={PROJECTS[2]!.name} />}
+          data-testid="li"
+        />
+      </ContentStackedList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const items = [
+      canvas.getByText(PROJECTS[2]!.due).parentElement!,
+      canvas.getByText(`Created by ${PROJECTS[2]!.createdBy}`),
+    ];
+    for (const item of items) {
+      // text-xs/5: a line is 20px tall
+      await expect(item.getBoundingClientRect().height).toBeLessThanOrEqual(20);
+    }
+    const li = canvas.getByTestId('li');
+    await expect(li.scrollWidth).toBeLessThanOrEqual(li.clientWidth);
   },
 };
 
