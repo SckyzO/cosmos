@@ -16,6 +16,12 @@ export type ContentStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'ch
   children: ReactNode;
 };
 
+/**
+ * Divided list of content rows (issues, projects, discussions): a title, which
+ * can be a link, with an inline badge, a line of meta items separated by dots,
+ * and a right-aligned trailing slot. No avatar column: for people, use
+ * `StackedList`.
+ */
 const ContentStackedListRoot = forwardRef<HTMLUListElement, ContentStackedListProps>(
   function ContentStackedListRoot({ className, children, ...rest }, ref) {
     return (

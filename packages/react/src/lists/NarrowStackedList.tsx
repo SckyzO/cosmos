@@ -9,6 +9,12 @@ export type NarrowStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'chi
   children: ReactNode;
 };
 
+/**
+ * Divided list for narrow columns (sidebars, panels). An item shows an avatar
+ * with a title and subtitle, plus an optional trailing action; with
+ * `timestamp` or `description` it switches to a two-row layout.
+ * `NarrowStackedList.Header` adds letter headings between groups.
+ */
 const NarrowStackedListRoot = forwardRef<HTMLUListElement, NarrowStackedListProps>(
   function NarrowStackedListRoot({ className, children, ...rest }, ref) {
     return (
@@ -32,6 +38,10 @@ export type NarrowStackedListHeaderProps = Omit<LiHTMLAttributes<HTMLLIElement>,
   children: ReactNode;
 };
 
+/**
+ * Group heading, rendered as an `<li>` among the items of the same list. With
+ * `sticky` it stays pinned to the top of the scrolling container.
+ */
 const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeaderProps>(
   function NarrowStackedListHeader({ sticky, className, children, ...rest }, ref) {
     return (
@@ -85,7 +95,7 @@ export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   subtitle?: ReactNode;
   /** Optional right-of-title timestamp (Pattern 13). When set, an extra layout row is used. */
   timestamp?: ReactNode;
-  /** Optional second body line (Pattern 13). Auto line-clamped to 2. */
+  /** Optional second body line (Pattern 13). Auto line-clamped to 2. Replaces `subtitle`. */
   description?: ReactNode;
   /** Optional right-aligned trailing slot — action button, link (Pattern 12). */
   trailing?: ReactNode;

@@ -41,13 +41,21 @@ const COLS_CLASS: Record<GridListCols, string> = {
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export type GridListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
-  /** Number of columns at the widest viewport. Responsive defaults below. */
+  /**
+   * Maximum number of columns. The grid starts at one column on phones and adds
+   * one at `sm`, `lg` and `xl` until it reaches this count.
+   */
   cols?: GridListCols;
   /** Gap class (Tailwind). Default `gap-6` (24px). */
   gapClassName?: string;
   children: ReactNode;
 };
 
+/**
+ * Responsive grid of cards, as a `<ul>`. `GridList.Card` is one `<li>`; a
+ * `GridList.Footer` of `GridList.FooterAction` links closes a card with a split
+ * action row.
+ */
 const Root = forwardRef<HTMLUListElement, GridListProps>(function GridListRoot(
   { cols = 3, gapClassName = 'gap-6', className, children, ...rest },
   ref
@@ -68,6 +76,10 @@ const Root = forwardRef<HTMLUListElement, GridListProps>(function GridListRoot(
 
 export type GridListCardProps = HTMLAttributes<HTMLLIElement>;
 
+/**
+ * One card of the grid. Its direct children are separated by a divider, so wrap
+ * the card body in a single element and put the `GridList.Footer` after it.
+ */
 const Card = forwardRef<HTMLLIElement, GridListCardProps>(function GridListCard(
   { className, children, ...rest },
   ref
@@ -90,6 +102,10 @@ const Card = forwardRef<HTMLLIElement, GridListCardProps>(function GridListCard(
 
 export type GridListFooterProps = HTMLAttributes<HTMLDivElement>;
 
+/**
+ * Split action row at the bottom of a card. `className` styles the inner flex
+ * row; `ref` and the other props go to the outer wrapper.
+ */
 const Footer = forwardRef<HTMLDivElement, GridListFooterProps>(function GridListFooter(
   { className, children, ...rest },
   ref
@@ -110,6 +126,7 @@ export type GridListFooterActionProps = AnchorHTMLAttributes<HTMLAnchorElement> 
   index?: number;
 };
 
+/** One link of the footer row. The first and last cells round the card's bottom corners. */
 const FooterAction = forwardRef<HTMLAnchorElement, GridListFooterActionProps>(
   function GridListFooterAction({ index = 0, className, children, ...rest }, ref) {
     return (

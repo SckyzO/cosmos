@@ -10,6 +10,15 @@ export type StackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'
   children: ReactNode;
 };
 
+/**
+ * Divided list of rows: avatar, title and subtitle on the left; a meta column
+ * (hidden on phones), a trailing slot and a chevron on the right. An item with
+ * `href` is a link across the whole row.
+ *
+ * Related: `StackedListInCard` puts these rows in a card, `NarrowStackedList`
+ * suits narrow columns (timestamps, letter headings), `ContentStackedList`
+ * shows content rows with a badge and dotted meta instead of people.
+ */
 const StackedListRoot = forwardRef<HTMLUListElement, StackedListProps>(function StackedListRoot(
   { className, children, ...rest },
   ref
