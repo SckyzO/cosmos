@@ -113,11 +113,12 @@ export type GridListFooterActionProps = AnchorHTMLAttributes<HTMLAnchorElement> 
 const FooterAction = forwardRef<HTMLAnchorElement, GridListFooterActionProps>(
   function GridListFooterAction({ index = 0, className, children, ...rest }, ref) {
     return (
-      <div className={clsx('flex w-0 flex-1', index > 0 && '-ml-px')}>
+      // The cell's position picks the card corner it rounds: first bottom-left, last bottom-right.
+      <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ml-px')}>
         <a
           ref={ref}
           className={clsx(
-            'relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-bl-lg border border-transparent py-4 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5',
+            'relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent py-4 text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 dark:text-white dark:hover:bg-white/5',
             className
           )}
           {...rest}
