@@ -49,8 +49,10 @@ export const OtpInput = ({
 }: OtpInputProps) => {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
 
+  // Focus without scrolling: a field focused on mount shouldn't yank the page
+  // (or a docs page embedding it) down to where it sits.
   useEffect(() => {
-    if (autoFocus) refs.current[0]?.focus();
+    if (autoFocus) refs.current[0]?.focus({ preventScroll: true });
   }, [autoFocus]);
 
   const setCell = (idx: number, char: string) => {
