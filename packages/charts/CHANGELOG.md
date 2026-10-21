@@ -5,6 +5,18 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.1.1...@sckyzo/cosmos-charts@0.2.0) (2026-10-21)
+
+
+### Features
+
+* **charts:** add BoxPlotChart ([83e812e](https://github.com/SckyzO/cosmos/commit/83e812e7f42e5ce0117be5080a06a7a70d3cf76e)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **charts:** add HeatmapChart ([eb7f363](https://github.com/SckyzO/cosmos/commit/eb7f363c0c958f6d7ec49ed6eee6a8354fc4b579)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **charts:** add MixedChart ([9657c84](https://github.com/SckyzO/cosmos/commit/9657c84d83c9cd8b0f82444b61fe1b499ad241f0)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **charts:** add RadarChart ([8f97184](https://github.com/SckyzO/cosmos/commit/8f9718421613d4e448826e3bc627986cfa772bae)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **charts:** add RangeBarChart ([a58030a](https://github.com/SckyzO/cosmos/commit/a58030a8e8324c549ac780141931f3405cd22f57)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **charts:** add ScatterChart and BubbleChart ([0ce481b](https://github.com/SckyzO/cosmos/commit/0ce481be8e062088f979f076a21eba874ad84be2)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+
 ## [0.1.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.1.0...@sckyzo/cosmos-charts@0.1.1) (2026-10-21)
 
 
