@@ -37,3 +37,13 @@ test('Fonts page loads every font it samples', async ({ page }) => {
       .toBe(true);
   }
 });
+
+// The docs chrome read the toolbar theme from the page's first story, and fell
+// back to the default (dark) on a page without one, whatever the toolbar said.
+test('Fonts page follows the theme in the URL', async ({ page }) => {
+  await page.goto(`${PAGE}&globals=theme:sand`);
+  const title = page.locator('.sbdocs-content h1');
+  await expect(title).toHaveText('Fonts', { timeout: 20_000 });
+  // Sand's text color (#1e1711), from cosmos-theme.ts.
+  await expect(title).toHaveCSS('color', 'rgb(30, 23, 17)');
+});
