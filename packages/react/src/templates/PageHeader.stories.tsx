@@ -137,6 +137,11 @@ export const Narrow: Story = {
         button.bottom > text.top;
       await expect(overlaps).toBe(false);
     }
+    // Meta icons keep their 20px, also beside text that wraps.
+    for (const label of ['128 nodes', /^Refreshed/]) {
+      const icon = canvas.getByText(label).querySelector('svg');
+      await expect(icon?.getBoundingClientRect().width).toBe(20);
+    }
   },
 };
 
