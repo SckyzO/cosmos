@@ -333,9 +333,11 @@ export const StepperRoot = ({
   const effectiveOrientation: StepperOrientation =
     variant === 'indicators' ? orientation : 'horizontal';
 
+  // Panels: dividers only when stacked; side by side, each panel's chevron
+  // separates it from the next, and a divider would sit right after it.
   const rootClass =
     variant === 'panels'
-      ? 'divide-y divide-gray-200 overflow-hidden rounded-md border border-gray-300 md:flex md:divide-x md:divide-y-0 dark:divide-white/10 dark:border-white/10'
+      ? 'divide-y divide-gray-200 overflow-hidden rounded-md border border-gray-300 md:flex md:divide-y-0 dark:divide-white/10 dark:border-white/10'
       : variant === 'bars'
         ? 'space-y-4 md:flex md:space-y-0 md:space-x-8'
         : effectiveOrientation === 'horizontal'
