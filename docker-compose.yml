@@ -21,8 +21,11 @@ services:
       - ./:/workspace
     environment:
       HOME: /home/node
+    # Loopback only: the dev server serves the repo's files and writes story
+    # files back, so it must not be reachable from the network. Playwright
+    # reaches it over the compose network (http://storybook:6006).
     ports:
-      - '6006:6006'
+      - '127.0.0.1:6006:6006'
     command: pnpm --filter '@cosmos/storybook' dev
     healthcheck:
       test: ['CMD-SHELL', 'curl -sf http://localhost:6006/ > /dev/null || exit 1']

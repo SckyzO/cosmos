@@ -67,7 +67,10 @@ const config: StorybookConfig = {
       server: {
         host: '0.0.0.0',
         allowedHosts: ['storybook', 'localhost', '127.0.0.1'],
-        cors: true,
+        // No `cors`: Vite's default answers cross-origin requests from
+        // localhost only. The manager and the preview share one origin, so
+        // nothing here needs more, and `cors: true` let any website read the
+        // files the dev server serves.
         // `storybook build` writes storybook-static/ inside the watched root:
         // without this, each static build (make ci) reloaded every open tab.
         watch: { ignored: ['**/storybook-static/**'] },

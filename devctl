@@ -10,7 +10,7 @@ HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
 DOCKER_RUN="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node"
 DOCKER_RUN_IT="docker run -it --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node"
-DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node -p 6006:6006"
+DOCKER_RUN_SB="docker run --rm -v $(pwd):${WORKSPACE} -w ${WORKSPACE} -u ${HOST_UID}:${HOST_GID} -e HOME=/home/node -p 127.0.0.1:6006:6006"
 
 ensure_image() {
   if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
