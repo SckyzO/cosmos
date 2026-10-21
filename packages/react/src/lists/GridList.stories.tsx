@@ -21,11 +21,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const PEOPLE = [
-  { name: 'Aiden Park', role: 'SRE Lead', img: placeholderAvatar('Aiden Park', 96) },
+  { name: 'Aiden Park', role: 'SRE Lead', img: placeholderAvatar('Aiden Park', 96), admin: true },
   { name: 'Mei Tanaka', role: 'Platform Engineer', img: placeholderAvatar('Mei Tanaka', 96) },
   { name: 'Olivier Dubois', role: 'Observability', img: placeholderAvatar('Olivier Dubois', 96) },
   { name: 'Priya Singh', role: 'Backend Engineer', img: placeholderAvatar('Priya Singh', 96) },
-  { name: 'Marcus Bell', role: 'Security', img: placeholderAvatar('Marcus Bell', 96) },
+  { name: 'Marcus Bell', role: 'Security', img: placeholderAvatar('Marcus Bell', 96), admin: true },
   { name: 'Aubrey Pham', role: 'Frontend Engineer', img: placeholderAvatar('Aubrey Pham', 96) },
 ];
 
@@ -42,9 +42,11 @@ export const ContactCardsWithSmallPortraits: Story = {
                 <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">
                   {p.name}
                 </h3>
-                <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
-                  Admin
-                </span>
+                {p.admin && (
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
+                    Admin
+                  </span>
+                )}
               </div>
               <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
             </div>
