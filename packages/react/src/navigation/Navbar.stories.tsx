@@ -142,7 +142,11 @@ export const Light: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The interaction tests below stay off the docs page (`!autodocs`): they render
+// bare fixtures (a lone "x", a menu button hidden from `md` up) that read as
+// broken examples there.
 export const RootIsNavWithThemeAttribute: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <Navbar theme="dark" data-testid="n">
       <Navbar.Brand>x</Navbar.Brand>
@@ -157,6 +161,7 @@ export const RootIsNavWithThemeAttribute: Story = {
 };
 
 export const ActiveItemSetsAriaCurrent: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <Navbar theme="dark">
       <Navbar.Items>
@@ -178,6 +183,7 @@ export const ActiveItemSetsAriaCurrent: Story = {
 };
 
 export const MobileMenuButtonHasLabel: Story = {
+  tags: ['!autodocs'],
   render: () => (
     <Navbar theme="dark">
       <Navbar.Brand>
