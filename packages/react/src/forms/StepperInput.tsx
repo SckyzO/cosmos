@@ -37,13 +37,14 @@ export const StepperInput = ({
 }: StepperInputProps) => {
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const arrowBtn =
-    'flex flex-1 items-center justify-center px-1.5 transition-colors hover:bg-gray-50 dark:hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40';
+    'flex flex-1 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200 dark:active:bg-white/15';
 
   return (
     <div
       className={clsx(
         fullWidth ? 'flex w-full' : 'inline-flex',
-        'h-9 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+        // dark:focus-within: is explicit, dark:border-gray-700 would win otherwise.
+        'focus-within:border-brand-500 dark:focus-within:border-brand-500 h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
         disabled && 'opacity-50',
         className
       )}
@@ -60,16 +61,18 @@ export const StepperInput = ({
         max={max}
         step={step}
         className={clsx(
-          'h-full [appearance:textfield] bg-transparent pr-1 pl-3 text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+          // min-w-0: in a narrower container the input gives way, not the arrows.
+          'h-full min-w-0 [appearance:textfield] bg-transparent pr-1 pl-3 text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
           fullWidth ? 'flex-1' : width
         )}
       />
       {unit && (
-        <span className="flex items-center pr-1.5 text-xs text-gray-400 select-none dark:text-gray-500">
+        <span className="flex shrink-0 items-center pr-1.5 text-xs text-gray-400 select-none dark:text-gray-500">
           {unit}
         </span>
       )}
-      <div className="flex flex-col border-l border-gray-200 dark:border-gray-700">
+      {/* Fixed width keeps the chevrons clear of the rounded corner. */}
+      <div className="flex w-7 shrink-0 flex-col border-l border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={() => onChange(clamp(value + step))}
@@ -78,7 +81,7 @@ export const StepperInput = ({
           aria-label="Increase"
           className={arrowBtn}
         >
-          <ChevronUp className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" strokeWidth={2.5} />
+          <ChevronUp className="h-3 w-3" strokeWidth={2.25} aria-hidden />
         </button>
         <button
           type="button"
@@ -88,7 +91,7 @@ export const StepperInput = ({
           aria-label="Decrease"
           className={clsx('border-t border-gray-200 dark:border-gray-700', arrowBtn)}
         >
-          <ChevronDown className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" strokeWidth={2.5} />
+          <ChevronDown className="h-3 w-3" strokeWidth={2.25} aria-hidden />
         </button>
       </div>
     </div>

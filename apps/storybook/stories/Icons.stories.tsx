@@ -14,14 +14,16 @@ const DEFAULT_CAP = 240;
 
 const meta = {
   title: 'Foundations/Icons',
+  tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component:
-          'Cosmos ships icons from lucide-react. Pass any icon to a component’s ' +
-          '`icon` prop (e.g. `<Button icon={Plus} />`) or render it directly ' +
-          '(`<Activity className="h-4 w-4" />`).',
+          'Cosmos ships icons from [lucide-react](https://lucide.dev/icons/). Pass any icon ' +
+          'to a component’s `icon` prop (e.g. `<Button icon={Plus} />`) or render it ' +
+          'directly (`<Activity className="h-4 w-4" />`). Click a tile in the gallery to ' +
+          'copy its import.',
       },
     },
   },
@@ -52,24 +54,9 @@ const IconGallery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
+    <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-2xl font-bold tracking-tight">Icons</h1>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-          Powered by{' '}
-          <a
-            href="https://lucide.dev/icons/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-brand-600 dark:text-brand-400 font-medium hover:underline"
-          >
-            lucide-react
-          </a>
-          . Pass any icon to a component’s <code className="text-xs">icon</code> prop or render it
-          directly. Click a tile to copy its import.
-        </p>
-
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="w-full max-w-sm">
             <SearchInput
               value={query}
@@ -135,10 +122,9 @@ const SizeScale = () => {
   const { Rocket, Activity, Bell, Settings } = icons;
   const demo: LucideIcon[] = [Rocket, Activity, Bell, Settings];
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
+    <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-bold tracking-tight">Icon sizes</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Size icons with Tailwind <code className="text-xs">h-* w-*</code> utilities. Cosmos
           components apply the right size automatically when you pass the{' '}
           <code className="text-xs">icon</code> prop.

@@ -11,6 +11,7 @@ import {
 
 const meta = {
   title: 'Foundations/Appearance',
+  tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
@@ -72,6 +73,8 @@ export const Default: Story = { render: renderPlayground };
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const PickingAppliesToDocument: Story = {
+  // A test: it rewrites the theme on <html>, so keep it out of the docs page.
+  tags: ['!autodocs'],
   render: renderPlayground,
   play: async ({ canvas }) => {
     const root = document.documentElement;

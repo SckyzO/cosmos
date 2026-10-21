@@ -60,3 +60,19 @@ export const ClickDecreaseFiresOnChange: Story = {
     await expect(args.onChange).toHaveBeenCalledWith(5);
   },
 };
+
+/**
+ * A width set through `className` narrows the input, never the arrows: the
+ * input used to keep its `w-20` and push the arrows under the rounded border.
+ */
+export const NarrowWidthKeepsArrowsInside: Story = {
+  args: { value: 60, min: 5, max: 3600, step: 5, unit: 's', className: 'w-28' },
+  play: async ({ canvas }) => {
+    const increase = canvas.getByRole('button', { name: 'Increase' });
+    const control = increase.closest('div')?.parentElement as HTMLElement;
+    await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+    await expect(increase.getBoundingClientRect().right).toBeLessThanOrEqual(
+      control.getBoundingClientRect().right
+    );
+  },
+};
