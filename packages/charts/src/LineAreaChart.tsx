@@ -1,6 +1,7 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import ReactApexChart from 'react-apexcharts/core';
+import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -38,7 +39,17 @@ export const LineAreaChart = ({
     },
     yaxis: { labels: { ...axisLabels } },
     legend: { show: false },
-    tooltip: { theme: 'dark' },
+    // The tooltip is HTML: escape the category and the series name. ApexCharts
+    // hands the x formatter the point's position on the axis (1, 2, …), not
+    // its category, so read the category back by index.
+    tooltip: {
+      theme: 'dark',
+      x: {
+        formatter: (v, opts) =>
+          escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),
+      },
+      y: { title: { formatter: (name) => `${escapeHtml(name)}: ` } },
+    },
   };
   return (
     <ReactApexChart type="area" options={options} series={series} height={height} width={width} />
