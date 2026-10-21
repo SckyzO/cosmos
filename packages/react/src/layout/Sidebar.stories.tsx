@@ -4,6 +4,8 @@ import { useState } from 'react';
 import {
   Bell,
   Box,
+  Building2,
+  Cpu,
   FileText,
   Globe,
   LayoutDashboard,
@@ -16,7 +18,7 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Sidebar } from './Sidebar';
 
 const meta = {
@@ -202,4 +204,69 @@ export const SubMenuExpanded: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+// Three levels: Infrastructure › Datacenters › Paris-1. Nested Sidebar.SubMenu
+// and Sidebar.Item indent from their nesting, no `depth` prop needed.
+const ThreeLevelNav = ({ onPick }: { onPick?: (label: string) => void }) => (
+  <div className="py-3">
+    <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
+    <Sidebar.SubMenu icon={Network} label="Infrastructure" defaultOpen>
+      <Sidebar.SubMenu icon={Building2} label="Datacenters" defaultOpen>
+        <Sidebar.Item icon={Server} label="Paris-1" active onClick={() => onPick?.('Paris-1')} />
+        <Sidebar.Item icon={Server} label="Frankfurt-2" onClick={() => onPick?.('Frankfurt-2')} />
+      </Sidebar.SubMenu>
+      <Sidebar.SubMenu icon={Cpu} label="Clusters">
+        <Sidebar.Item icon={Box} label="prod-eu" onClick={() => onPick?.('prod-eu')} />
+        <Sidebar.Item icon={Box} label="staging" onClick={() => onPick?.('staging')} />
+      </Sidebar.SubMenu>
+      <Sidebar.Item icon={Globe} label="DNS zones" onClick={() => onPick?.('DNS zones')} />
+    </Sidebar.SubMenu>
+    <Sidebar.Item icon={Settings} label="Settings" />
+  </div>
+);
+
+/** Sub-menus nest up to three levels: each level indents, with a guide line. */
+export const ThreeLevelMenu: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <ThreeLevelNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const left = (name: string) =>
+      canvas.getByRole('button', { name }).querySelector('svg')!.getBoundingClientRect().left;
+    // Each level sits one step (20 px) further right.
+    await expect(left('Datacenters') - left('Infrastructure')).toBe(20);
+    await expect(left('Paris-1') - left('Datacenters')).toBe(20);
+    // A closed sub-menu opens on click, its items one level in.
+    await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
+    await expect(left('prod-eu') - left('Clusters')).toBe(20);
+  },
+};
+
+/** Collapsed, a sub-menu opens its whole tree in a panel to its right. */
+export const CollapsedSubMenuOpensFlyout: Story = {
+  tags: ['!autodocs'],
+  args: { onPick: fn() } as never,
+  render: (args) => (
+    <Wrap>
+      <Sidebar collapsed>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+        <ThreeLevelNav onPick={(args as unknown as { onPick: (l: string) => void }).onPick} />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Infrastructure' }));
+    const body = within(canvasElement.ownerDocument.body);
+    const panel = within(body.getByRole('dialog', { name: 'Infrastructure' }));
+    // The tree shows expanded, with labels, from the top level.
+    await userEvent.click(panel.getByRole('button', { name: 'Paris-1' }));
+    await expect((args as unknown as { onPick: unknown }).onPick).toHaveBeenCalledWith('Paris-1');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
 };
