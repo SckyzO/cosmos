@@ -249,6 +249,34 @@ export const DescriptionTriggersRichLayout: Story = {
   },
 };
 
+/** `trailing` still renders when `timestamp` or `description` switches to the two-row layout. */
+export const TrailingRendersWithDescription: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <NarrowStackedList>
+        <NarrowStackedList.Item
+          avatar={<Avatar src={NOTES[1]!.av} />}
+          title={NOTES[1]!.name}
+          timestamp={<time>{NOTES[1]!.ago}</time>}
+          description={NOTES[1]!.body}
+          trailing={
+            <button
+              type="button"
+              className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-white/10 dark:hover:bg-gray-700"
+            >
+              Reply
+            </button>
+          }
+        />
+      </NarrowStackedList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(NOTES[1]!.body)).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Reply' })).toBeVisible();
+  },
+};
+
 // Alpha channel of a computed CSS colour: `rgba(…, a)`, `oklab(… / a)` or opaque.
 const alphaOf = (color: string) => {
   const slash = color.match(/\/\s*([\d.]+)(%?)\s*\)$/);
