@@ -3,13 +3,10 @@ import {
   AppWindow,
   ArrowRight,
   BookMarked,
-  Code2,
   ExternalLink,
   FileText,
   LayoutDashboard,
   Mail,
-  Palette,
-  Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -264,37 +261,6 @@ const TemplateCard = ({
       Open template →
     </span>
   </a>
-);
-
-const IntentCol = ({
-  icon: Icon,
-  title,
-  items,
-}: {
-  icon: React.ElementType;
-  title: string;
-  items: Array<{ href: string; label: string; external?: boolean }>;
-}) => (
-  <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-    <div className="mb-2.5 flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-100">
-      <Icon size={16} className="text-[var(--color-brand-500)]" />
-      {title}
-    </div>
-    <ul className="m-0 list-none p-0">
-      {items.map((item) => (
-        <li key={item.label} className="py-1 text-sm">
-          <a
-            href={item.href}
-            target={item.external ? '_blank' : undefined}
-            rel={item.external ? 'noreferrer' : undefined}
-            className="text-[var(--color-brand-500)] hover:underline"
-          >
-            {item.label}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
 );
 
 const PkgCard = ({
@@ -581,57 +547,6 @@ const WelcomePage = ({
       </p>
     </section>
 
-    {/* Where to next? */}
-    <section className="mt-12">
-      <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
-        Where to next?
-      </h2>
-      <div className="grid gap-4 md:grid-cols-3">
-        <IntentCol
-          icon={Palette}
-          title="I'm a designer"
-          items={[
-            { href: './?path=/docs/pages-dashboard--docs', label: 'Pages templates' },
-            { href: './?path=/docs/settings-accent-picker--docs', label: 'Color tokens' },
-            { href: './?path=/docs/atoms-badge--docs', label: 'Status & tones' },
-            { href: './?path=/docs/layout-card--docs', label: 'Layout primitives' },
-          ]}
-        />
-        <IntentCol
-          icon={Code2}
-          title="I'm a developer"
-          items={[
-            { href: '#get-started', label: 'Quick start' },
-            { href: './?path=/docs/atoms-button--docs', label: 'Atoms catalog' },
-            { href: './?path=/docs/forms-input--docs', label: 'Forms & Tables' },
-            { href: './?path=/docs/charts-bar-column--docs', label: 'Charts catalog' },
-          ]}
-        />
-        <IntentCol
-          icon={Wrench}
-          title="I want to contribute"
-          items={[
-            { href: 'https://github.com/SckyzO/cosmos', label: 'Repo layout', external: true },
-            {
-              href: 'https://github.com/SckyzO/cosmos/blob/main/.claude/CLAUDE.md',
-              label: 'Repo conventions',
-              external: true,
-            },
-            {
-              href: 'https://github.com/SckyzO/cosmos/blob/main/README.md',
-              label: 'Running tests',
-              external: true,
-            },
-            {
-              href: 'https://github.com/SckyzO/cosmos/issues',
-              label: 'Open an issue',
-              external: true,
-            },
-          ]}
-        />
-      </div>
-    </section>
-
     {/* Packages */}
     <section className="mt-12">
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
@@ -667,11 +582,9 @@ const WelcomePage = ({
       <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-sm">
         {[
           ['https://github.com/SckyzO/cosmos', 'GitHub repo'],
+          ['https://github.com/SckyzO/cosmos/blob/main/CONTRIBUTING.md', 'Contributing'],
           ['https://github.com/SckyzO/cosmos/issues', 'Issues'],
           ['https://github.com/SckyzO/cosmos/releases', 'Releases'],
-          ['https://tailwindui.com/components', 'Tailwind UI (inspiration)'],
-          ['https://flowbite.com/docs/components/', 'Flowbite (inspiration)'],
-          ['https://storybook.js.org/docs', 'Storybook docs'],
         ].map(([href, label], i, arr) => (
           <li key={label}>
             <a
