@@ -98,3 +98,9 @@ test('CI scans the whole git history for secrets', () => {
 test('SECURITY.md points to private vulnerability reporting', () => {
   expect(read('SECURITY.md')).toContain('https://github.com/SckyzO/cosmos/security/advisories/new');
 });
+
+test('the publish job restores no cache', () => {
+  // Caches are written by every workflow on main; this job holds the npm
+  // OIDC token.
+  expect(read('.github/workflows/publish.yml')).not.toMatch(/^\s*cache:/m);
+});
