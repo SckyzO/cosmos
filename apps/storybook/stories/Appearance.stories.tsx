@@ -197,3 +197,24 @@ export const TextSizeAttributeScales: Story = {
     await expect(own.paddingTop).toBe('16px');
   },
 };
+
+/** applyAppearance sets and clears data-font and data-text-size, and leaves them when omitted. */
+export const ApplyAppearanceFontAndTextSize: Story = {
+  tags: ['!autodocs'],
+  render: () => <p>applyAppearance on a detached element.</p>,
+  play: async () => {
+    const el = document.createElement('div');
+    applyAppearance({ theme: 'dark', accent: 'teal', font: 'inter', textSize: 'lg' }, el);
+    await expect(el.dataset).toMatchObject({ accent: 'teal', font: 'inter', textSize: 'lg' });
+
+    // Theme and accent only: the font and text size stay as they were.
+    applyAppearance({ theme: 'sand', accent: 'blue' }, el);
+    await expect(el).toHaveAttribute('data-font', 'inter');
+    await expect(el).toHaveAttribute('data-text-size', 'lg');
+
+    // The defaults remove the attributes.
+    applyAppearance({ theme: 'sand', accent: 'blue', font: 'outfit', textSize: 'md' }, el);
+    await expect(el).not.toHaveAttribute('data-font');
+    await expect(el).not.toHaveAttribute('data-text-size');
+  },
+};
