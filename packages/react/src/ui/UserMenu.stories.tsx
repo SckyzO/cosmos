@@ -22,7 +22,7 @@ const SAMPLE_AVATAR =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-       <rect width="64" height="64" fill="%236366f1"/>
+       <rect width="64" height="64" fill="#6366f1"/>
        <text x="50%" y="58%" font-family="sans-serif" font-size="28" fill="white" text-anchor="middle">JD</text>
      </svg>`
   );
