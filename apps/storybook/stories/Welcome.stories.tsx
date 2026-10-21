@@ -177,7 +177,7 @@ const groupColumns: ColumnDef<Group>[] = [
     render: (r) => (
       <a
         href={`./?path=/docs/${groupLinks[r.id]}`}
-        className="font-semibold text-[var(--color-brand-500)] hover:underline"
+        className="font-semibold text-brand-600 dark:text-brand-400 hover:underline"
       >
         {r.name}
       </a>
@@ -268,7 +268,7 @@ const TemplateCard = ({
     </span>
     <span className="text-base font-semibold">{title}</span>
     <span className="flex-1 text-sm leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
-    <span className="font-mono text-[0.7rem] tracking-wide text-[var(--color-brand-500)] uppercase">
+    <span className="font-mono text-[0.7rem] tracking-wide text-brand-600 dark:text-brand-400 uppercase">
       Open template →
     </span>
   </a>
@@ -605,7 +605,7 @@ const WelcomePage = ({
               href={href}
               target="_blank"
               rel="noreferrer"
-              className="text-[var(--color-brand-500)] hover:underline"
+              className="text-brand-600 dark:text-brand-400 hover:underline"
             >
               {label}
             </a>
@@ -627,7 +627,7 @@ const WelcomePage = ({
           href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
           target="_blank"
           rel="noreferrer"
-          className="text-[var(--color-brand-500)] hover:underline"
+          className="text-brand-600 dark:text-brand-400 hover:underline"
         >
           story-hierarchy convention
         </a>
