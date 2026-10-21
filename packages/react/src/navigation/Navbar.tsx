@@ -156,7 +156,7 @@ const MobileMenuButton = ({ theme, className, children, ...rest }: NavbarMobileM
         'relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
         resolved === 'dark'
           ? 'text-gray-400 hover:bg-gray-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'
-          : 'focus-visible:outline-brand-500 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2',
+          : 'focus-visible:outline-brand-500 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
         className
       )}
       {...rest}
