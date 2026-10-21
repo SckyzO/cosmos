@@ -11,3 +11,4 @@ export * from './Sparkline';
 export * from './TreemapChart';
 export * from './BarChart';
 export * from './HeatmapChart';
+export * from './RadarChart';

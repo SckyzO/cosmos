@@ -41,6 +41,7 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 | `Sparkline` / `SparklineGroup`    | Mini sparklines + KPI grid                        |
 | `TreemapChart`                    | Repartition treemap                               |
 | `HeatmapChart`                    | Rows × columns colored by value buckets or ranges |
+| `RadarChart`                      | One polygon per series over named axes            |
 
 ## License
 
