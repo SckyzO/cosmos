@@ -44,28 +44,37 @@ export const Sides: Story = {
             </Button>
           </div>
         </SectionCard>
-        <Drawer open={side !== null} onClose={() => setSide(null)} side={side ?? 'right'}>
-          <Drawer.Header
-            title="Server details"
-            icon={SlidersHorizontal}
-            description="Inspect and configure"
+        {/* One drawer per side: a drawer's side is fixed, so switching it while
+            the panel slides would send it in or out by the wrong edge. */}
+        {(['left', 'right'] as const).map((drawerSide) => (
+          <Drawer
+            key={drawerSide}
+            open={side === drawerSide}
             onClose={() => setSide(null)}
-          />
-          <Drawer.Body>
-            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
-              <p>This drawer slides in from the {side ?? 'right'}.</p>
-              <p>Use it for inspectors, filters, or supplementary forms.</p>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button variant="secondary" size="sm" onClick={() => setSide(null)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={() => setSide(null)}>
-              Apply
-            </Button>
-          </Drawer.Footer>
-        </Drawer>
+            side={drawerSide}
+          >
+            <Drawer.Header
+              title="Server details"
+              icon={SlidersHorizontal}
+              description="Inspect and configure"
+              onClose={() => setSide(null)}
+            />
+            <Drawer.Body>
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+                <p>This drawer slides in from the {drawerSide}.</p>
+                <p>Use it for inspectors, filters, or supplementary forms.</p>
+              </div>
+            </Drawer.Body>
+            <Drawer.Footer>
+              <Button variant="secondary" size="sm" onClick={() => setSide(null)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={() => setSide(null)}>
+                Apply
+              </Button>
+            </Drawer.Footer>
+          </Drawer>
+        ))}
       </Wrap>
     );
   },
