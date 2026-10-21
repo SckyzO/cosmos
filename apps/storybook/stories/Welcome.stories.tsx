@@ -54,9 +54,9 @@ const groupRows: Group[] = [
   {
     id: 'pages',
     name: 'Pages',
-    count: 17,
+    count: 18,
     contains:
-      'Dashboard, Profile, SettingsScreen, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
+      'Dashboard, Profile, SettingsScreen, Calendar, AuthLayout, SignIn/Up/Reset/2FA, BlogIndex, BlogPost, DocPage, HomeScreen, DetailScreen, ErrorPage, FormElements, StackedShell, SocialAuthButtons',
   },
   {
     id: 'typography',
@@ -82,9 +82,9 @@ const groupRows: Group[] = [
   {
     id: 'data',
     name: 'Data',
-    count: 9,
+    count: 10,
     contains:
-      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, MiniCalendar',
+      'KpiCard, CodeBlock, Accordion, Carousel, ImageGrid, VideoEmbed, IntegrationCard, Timeline, MiniCalendar, EventCalendar',
   },
   { id: 'status', name: 'Status', count: 3, contains: 'HealthBadge, HealthDot, StatusBadge' },
   {
