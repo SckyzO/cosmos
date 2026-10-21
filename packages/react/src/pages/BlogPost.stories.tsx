@@ -321,23 +321,30 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
       </div>
     )}
 
-    {/* Header — kicker + title + lead + meta + share */}
-    <ContentNarrow maxWidth={760} className="px-6 pt-12 pb-8">
-      {/* Kicker (date + tag) above the title */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
-        <Badge variant="brand" size="sm">
-          {POST.tag}
-        </Badge>
-        <span aria-hidden>·</span>
-        <time dateTime={POST.date}>{POST.dateLabel}</time>
-      </div>
-      <h1 className="mt-4 text-4xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-5xl">
-        {POST.title}
-      </h1>
-      <p className="mt-5 text-xl leading-relaxed text-[var(--color-text-secondary)]">{POST.lead}</p>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-y-3">
-        <ArticleMeta author={POST.author.name} date={POST.dateLabel} readTime={POST.readTime} />
-        <ShareRow />
+    {/* Header — kicker + title + lead + meta + share. Same grid as the body
+        below, so the title lines up with the article column, not the page. */}
+    <ContentNarrow maxWidth={1152} className="px-6 pt-12 pb-8">
+      <div className="grid grid-cols-12 gap-x-8">
+        <div className="col-span-12 lg:col-span-8">
+          {/* Kicker (date + tag) above the title */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
+            <Badge variant="brand" size="sm">
+              {POST.tag}
+            </Badge>
+            <span aria-hidden>·</span>
+            <time dateTime={POST.date}>{POST.dateLabel}</time>
+          </div>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-5xl">
+            {POST.title}
+          </h1>
+          <p className="mt-5 text-xl leading-relaxed text-[var(--color-text-secondary)]">
+            {POST.lead}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-y-3">
+            <ArticleMeta author={POST.author.name} date={POST.dateLabel} readTime={POST.readTime} />
+            <ShareRow />
+          </div>
+        </div>
       </div>
     </ContentNarrow>
   </article>
