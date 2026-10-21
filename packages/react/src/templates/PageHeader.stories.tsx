@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { Clock, Cpu, MapPin, Plus, RefreshCw, Server } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { PageBreadcrumb } from './PageBreadcrumb';
@@ -84,6 +84,60 @@ export const WithMetaAndActions: Story = {
       }
     />
   ),
+};
+
+// At phone width (a 320px screen minus its page gutters) the actions don't fit
+// beside the title: they have to move under it rather than cover it.
+export const Narrow: Story = {
+  render: () => (
+    <div className="w-72">
+      <PageHeader
+        title="Production Dashboard"
+        breadcrumb={
+          <PageBreadcrumb
+            items={[
+              { label: 'Home', href: '#' },
+              { label: 'Monitoring', href: '#' },
+              { label: 'Production' },
+            ]}
+          />
+        }
+        meta={
+          <>
+            <PageHeader.MetaItem icon={Server}>128 nodes</PageHeader.MetaItem>
+            <PageHeader.MetaItem icon={Clock}>
+              Refreshed 12 seconds ago from prometheus-eu-west-1
+            </PageHeader.MetaItem>
+          </>
+        }
+        actions={
+          <>
+            <PageActionButton icon={RefreshCw}>Refresh</PageActionButton>
+            <PageActionButton icon={Plus} variant="primary">
+              New rule
+            </PageActionButton>
+          </>
+        }
+      />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Measure the title's text, not the h2 box: a squeezed h2 lets its words
+    // spill out of it.
+    const range = document.createRange();
+    range.selectNodeContents(canvas.getByRole('heading', { name: 'Production Dashboard' }));
+    const text = range.getBoundingClientRect();
+    for (const name of ['Refresh', 'New rule']) {
+      const button = canvas.getByRole('button', { name }).getBoundingClientRect();
+      const overlaps =
+        button.left < text.right &&
+        button.right > text.left &&
+        button.top < text.bottom &&
+        button.bottom > text.top;
+      await expect(overlaps).toBe(false);
+    }
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
