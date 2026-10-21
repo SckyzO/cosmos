@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import {
+  createContext,
   forwardRef,
+  useContext,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
@@ -34,15 +36,20 @@ import {
 
 export type NavbarTheme = 'light' | 'dark';
 
+// The light bar follows the page theme, so the page's text colour suits it. The
+// dark bar stays dark on light pages: it sets its own text colour.
 const ROOT_BG: Record<NavbarTheme, string> = {
   light: 'bg-white shadow-sm border-b border-gray-200 dark:bg-gray-800 dark:border-white/10',
-  dark: 'bg-gray-800',
+  dark: 'bg-gray-800 text-white',
 };
 
-const ITEM_BASE: Record<NavbarTheme, string> = {
-  light:
-    'rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
-  dark: 'rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white',
+const ITEM_BASE = 'rounded-md px-3 py-2 text-sm font-medium';
+
+// Idle and active styles are exclusive: an idle item's hover background would
+// otherwise repaint the active item under the pointer.
+const ITEM_IDLE: Record<NavbarTheme, string> = {
+  light: 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5',
+  dark: 'text-gray-300 hover:bg-gray-700 hover:text-white',
 };
 
 const ITEM_ACTIVE: Record<NavbarTheme, string> = {
@@ -50,9 +57,18 @@ const ITEM_ACTIVE: Record<NavbarTheme, string> = {
   dark: 'bg-gray-900 text-white',
 };
 
+// Parts without a `theme` prop take the theme of their `<Navbar>` (`light`
+// when rendered outside one).
+const NavbarThemeContext = createContext<NavbarTheme>('light');
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export type NavbarProps = HTMLAttributes<HTMLElement> & {
+  /**
+   * `light` follows the page theme (white, gray-800 in the dark themes);
+   * `dark` stays dark in every theme. Also the default theme of the parts.
+   * Default `light`.
+   */
   theme?: NavbarTheme;
   /** Constrain inner content to a max width container. Default `7xl`. */
   maxWidth?: 'none' | '7xl';
@@ -68,7 +84,9 @@ const RootCmp = forwardRef<HTMLElement, NavbarProps>(function NavbarRoot(
   return (
     <nav ref={ref} className={clsx(ROOT_BG[theme], className)} data-theme={theme} {...rest}>
       <div className={clsx('px-4 sm:px-6 lg:px-8', maxWidth === '7xl' && 'mx-auto max-w-7xl')}>
-        <div className={clsx('flex items-center justify-between', heightClassName)}>{children}</div>
+        <div className={clsx('flex items-center justify-between', heightClassName)}>
+          <NavbarThemeContext.Provider value={theme}>{children}</NavbarThemeContext.Provider>
+        </div>
       </div>
     </nav>
   );
@@ -94,25 +112,23 @@ const Items = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement>)
 
 export type NavbarItemProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   active?: boolean;
-  /** Resolve theme from the parent `<Navbar>` data attribute. Defaults to `light`. */
+  /** Defaults to the theme of the parent `<Navbar>`. */
   theme?: NavbarTheme;
 };
 
-const Item = ({
-  active = false,
-  theme = 'light',
-  className,
-  children,
-  ...rest
-}: NavbarItemProps) => (
-  <a
-    aria-current={active ? 'page' : undefined}
-    className={clsx(ITEM_BASE[theme], active && ITEM_ACTIVE[theme], className)}
-    {...rest}
-  >
-    {children}
-  </a>
-);
+const Item = ({ active = false, theme, className, children, ...rest }: NavbarItemProps) => {
+  const inherited = useContext(NavbarThemeContext);
+  const resolved = theme ?? inherited;
+  return (
+    <a
+      aria-current={active ? 'page' : undefined}
+      className={clsx(ITEM_BASE, active ? ITEM_ACTIVE[resolved] : ITEM_IDLE[resolved], className)}
+      {...rest}
+    >
+      {children}
+    </a>
+  );
+};
 
 // ── Actions (right-aligned slot for notifications, avatar, quick action) ───
 
@@ -125,45 +141,45 @@ const Actions = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement
 // ── MobileMenuButton (hamburger for narrow viewports) ──────────────────────
 
 export type NavbarMobileMenuButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  /** Defaults to the theme of the parent `<Navbar>`. */
   theme?: NavbarTheme;
 };
 
-const MobileMenuButton = ({
-  theme = 'light',
-  className,
-  children,
-  ...rest
-}: NavbarMobileMenuButtonProps) => (
-  <button
-    type="button"
-    aria-label="Toggle menu"
-    className={clsx(
-      'relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
-      theme === 'dark'
-        ? 'text-gray-400 hover:bg-gray-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500',
-      className
-    )}
-    {...rest}
-  >
-    {children ?? (
-      <svg
-        className="size-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="1.5"
-        stroke="currentColor"
-        aria-hidden
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-        />
-      </svg>
-    )}
-  </button>
-);
+const MobileMenuButton = ({ theme, className, children, ...rest }: NavbarMobileMenuButtonProps) => {
+  const inherited = useContext(NavbarThemeContext);
+  const resolved = theme ?? inherited;
+  return (
+    <button
+      type="button"
+      aria-label="Toggle menu"
+      className={clsx(
+        'relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
+        resolved === 'dark'
+          ? 'text-gray-400 hover:bg-gray-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'
+          : 'focus-visible:outline-brand-500 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+        className
+      )}
+      {...rest}
+    >
+      {children ?? (
+        <svg
+          className="size-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          aria-hidden
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+          />
+        </svg>
+      )}
+    </button>
+  );
+};
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
