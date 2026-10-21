@@ -1,6 +1,14 @@
 import { clsx } from 'clsx';
 import { HelpCircle } from 'lucide-react';
-import { cloneElement, isValidElement, useEffect, useId, useState, type ReactNode } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Kbd } from '../typography/Kbd';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
@@ -51,6 +59,10 @@ export type TooltipProps = {
   shortcut?: string[];
   /** Bold first line; `content` then reads as its explanation. */
   title?: ReactNode;
+  /** Draw the small arrow pointing at the trigger. Default `true`. */
+  arrow?: boolean;
+  /** Milliseconds to wait before showing on hover or focus. Default `0`. */
+  delay?: number;
 };
 
 /**
@@ -66,22 +78,43 @@ export const Tooltip = ({
   maxWidth = 'max-w-xs',
   shortcut,
   title,
+  arrow = true,
+  delay = 0,
 }: TooltipProps) => {
   const id = useId();
   const [open, setOpen] = useState(false);
+  // Pointer over or focus inside, shown or still waiting for `delay`.
+  const [engaged, setEngaged] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const show = () => {
+    setEngaged(true);
+    clearTimeout(timer.current);
+    if (delay > 0) timer.current = setTimeout(() => setOpen(true), delay);
+    else setOpen(true);
+  };
+  const hide = () => {
+    setEngaged(false);
+    clearTimeout(timer.current);
+    setOpen(false);
+  };
 
   // Escape closes it wherever focus is, even when it was opened by the pointer
-  // (WCAG 1.4.13). Capture phase, so a surrounding modal doesn't also close.
+  // (WCAG 1.4.13), and cancels a pending show. Capture phase, so a surrounding
+  // modal doesn't also close.
   useEffect(() => {
-    if (!open) return;
+    if (!engaged) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      e.stopPropagation();
+      if (open) e.stopPropagation();
+      clearTimeout(timer.current);
+      setEngaged(false);
       setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [open]);
+  }, [engaged, open]);
   const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
     ? cloneElement(children, {
         'aria-describedby': [children.props['aria-describedby'], id].filter(Boolean).join(' '),
@@ -93,10 +126,10 @@ export const Tooltip = ({
     // on the trigger rather than on the parent cell.
     <span
       className="relative inline-block w-fit align-middle"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
     >
       {trigger}
       <span
@@ -122,14 +155,16 @@ export const Tooltip = ({
             ))}
           </span>
         )}
-        <span
-          aria-hidden
-          className={clsx(
-            'absolute h-2 w-2 rotate-45',
-            ARROW_POS[position],
-            VARIANT_ARROW[variant]
-          )}
-        />
+        {arrow && (
+          <span
+            aria-hidden
+            className={clsx(
+              'absolute h-2 w-2 rotate-45',
+              ARROW_POS[position],
+              VARIANT_ARROW[variant]
+            )}
+          />
+        )}
       </span>
     </span>
   );
