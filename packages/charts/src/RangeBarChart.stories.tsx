@@ -148,14 +148,15 @@ export const HtmlInLabelsRendersAsText: Story = {
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
     await expectNoInjectedImage(canvasElement);
 
-    // Tooltips render on hover: the title is the row, then the series name.
+    // Tooltips render on hover: the title is the row, then the series name
+    // and the dates.
     // The chart redraws once after mount and rebuilds an empty tooltip, so
     // hover again until both show.
     await waitFor(() => {
       hover(canvasElement.querySelector('.apexcharts-rangebar-series path') as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        `${HOSTILE}: `
+        HOSTILE
       );
     });
     await expectNoInjectedImage(canvasElement);
