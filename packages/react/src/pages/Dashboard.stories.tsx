@@ -241,7 +241,7 @@ const Nav = () => (
 
 // Lightweight inline charts — the Cosmos charts are dynamic and would slow
 // the dashboard story start. Use small SVG mock placeholders that look
-// realistic at a glance. Real charts are showcased under Charts/Gallery.
+// realistic at a glance. Real charts are showcased in the Charts group.
 const MiniChart = ({
   variant,
   height = 120,
