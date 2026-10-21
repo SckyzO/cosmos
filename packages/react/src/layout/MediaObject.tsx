@@ -33,12 +33,24 @@ const ALIGN_CLASS: Record<MediaObjectAlign, string> = {
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export type MediaObjectProps = HTMLAttributes<HTMLDivElement> & {
+  /**
+   * Where the media sits against the body: `start` (top), `center`, `bottom`,
+   * or `stretch` (the media slot takes the body's height; size the media
+   * `h-full`). Default `start`.
+   */
   align?: MediaObjectAlign;
+  /** Side of the body the media sits on. `right` reverses the row. Default `left`. */
   mediaPosition?: MediaObjectPosition;
   /** Gap between the media and the body. Default `gap-x-4` (16px). */
   gapClassName?: string;
 };
 
+/**
+ * MediaObject — an image or icon beside a block of text: a comment, a
+ * notification, a list row. Compose `MediaObject.Image` (the media, kept at
+ * its size) with `MediaObject.Body` (takes the remaining width);
+ * `MediaObject.Title` and `MediaObject.Description` are optional helpers.
+ */
 const Root = forwardRef<HTMLDivElement, MediaObjectProps>(function MediaObjectRoot(
   {
     align = 'start',
@@ -100,6 +112,10 @@ const Body = forwardRef<HTMLDivElement, MediaObjectBodyProps>(function MediaObje
 
 // ── Title + Description shortcuts (optional helpers) ────────────────────────
 
+/**
+ * Optional title. Renders an `<h4>`: where that level doesn't fit the page
+ * outline, put your own heading in `MediaObject.Body` instead.
+ */
 const Title = ({
   className,
   children,
