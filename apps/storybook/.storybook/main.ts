@@ -9,6 +9,12 @@ const config: StorybookConfig = {
   core: {
     allowedHosts: ['storybook', '127.0.0.1'],
   },
+  // No onboarding guide: the sidebar checklist ("Get started", "Level up"…)
+  // and its menu link are for people new to Storybook, not for this reference.
+  features: {
+    sidebarOnboardingChecklist: false,
+    menuOnboardingChecklist: false,
+  },
   stories: [
     '../stories/**/*.mdx',
     '../stories/**/*.stories.@(js|jsx|ts|tsx)',
