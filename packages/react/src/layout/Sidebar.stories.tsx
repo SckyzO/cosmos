@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Sidebar } from './Sidebar';
 
 const meta = {
@@ -114,6 +115,20 @@ export const FullExample: Story = {
         </main>
       </Wrap>
     );
+  },
+};
+
+/** Collapsed to 72 px, the footer's toggle stays inside the sidebar. */
+export const CollapsedFooterFits: Story = {
+  tags: ['!autodocs'],
+  render: FullExample.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.click(canvas.getByRole('button', { name: /collapse|expand/i }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    const toggle = canvas.getByRole('button', { name: /collapse|expand/i }).getBoundingClientRect();
+    // The nav's right edge is its 1px border.
+    await expect(toggle.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);
   },
 };
 
