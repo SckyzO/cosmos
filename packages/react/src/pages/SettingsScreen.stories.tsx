@@ -15,6 +15,7 @@ import { FormFooter } from '../forms/FormFooter';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Accordion } from '../ui/Accordion';
 import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Settings Screens" — typical user settings page
@@ -59,22 +60,24 @@ const SettingsForm = () => {
             helperText="JPG, GIF or PNG. 1MB max."
           />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="First name" />
-          <Input label="Last name" />
+        {/* Spacing lives on the group: Input's className goes to the <input> itself. */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input label="First name" />
+            <Input label="Last name" />
+          </div>
+          <Input label="Email address" type="email" />
+          <Input label="Username" prefix="example.com/" placeholder="janesmith" />
+          <Select
+            label="Timezone"
+            options={[
+              { value: 'pst', label: 'Pacific Standard Time' },
+              { value: 'cst', label: 'Central Standard Time' },
+              { value: 'est', label: 'Eastern Standard Time' },
+            ]}
+            defaultValue="pst"
+          />
         </div>
-        <Input label="Email address" type="email" className="mt-4" />
-        <Input label="Username" prefix="example.com/" placeholder="janesmith" className="mt-4" />
-        <Select
-          label="Timezone"
-          className="mt-4"
-          options={[
-            { value: 'pst', label: 'Pacific Standard Time' },
-            { value: 'cst', label: 'Central Standard Time' },
-            { value: 'est', label: 'Eastern Standard Time' },
-          ]}
-          defaultValue="pst"
-        />
       </SettingsSection>
 
       <SettingsSection
@@ -120,6 +123,32 @@ const SettingsForm = () => {
     </div>
   );
 };
+
+// Page padding keeps the tabs and the card off the sidebar and the top bar.
+const SettingsContent = ({
+  tab,
+  onTabChange,
+}: {
+  tab: string;
+  onTabChange: (value: string) => void;
+}) => (
+  <div className="p-6 lg:p-8">
+    <ContentNarrow maxWidth={960} className="space-y-6">
+      <Tabs value={tab} onChange={onTabChange}>
+        <Tabs.List>
+          {TABS.map((t) => (
+            <Tabs.Trigger key={t.value} value={t.value}>
+              {t.label}
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
+      </Tabs>
+      <Card padding="lg">
+        <SettingsForm />
+      </Card>
+    </ContentNarrow>
+  </div>
+);
 
 const SettingsSection = ({
   title,
@@ -193,24 +222,7 @@ export const Sidebar_: Story = {
           </Sidebar>
         }
       >
-        <div className="bg-[var(--color-bg-base)]">
-          <div className="border-b border-[var(--color-border)] bg-[var(--color-bg-panel)]">
-            <ContentNarrow maxWidth={896} className="py-3">
-              <Tabs value={tab} onChange={setTab}>
-                <Tabs.List>
-                  {TABS.map((t) => (
-                    <Tabs.Trigger key={t.value} value={t.value}>
-                      {t.label}
-                    </Tabs.Trigger>
-                  ))}
-                </Tabs.List>
-              </Tabs>
-            </ContentNarrow>
-          </div>
-          <ContentNarrow maxWidth={896} className="py-10">
-            <SettingsForm />
-          </ContentNarrow>
-        </div>
+        <SettingsContent tab={tab} onTabChange={setTab} />
       </Shell>
     );
   },
@@ -255,24 +267,7 @@ export const Stacked: Story = {
           ) as never
         }
       >
-        <div className="bg-[var(--color-bg-base)]">
-          <div className="border-b border-[var(--color-border)] bg-[var(--color-bg-panel)]">
-            <ContentNarrow maxWidth={896} className="py-3">
-              <Tabs value={tab} onChange={setTab}>
-                <Tabs.List>
-                  {TABS.map((t) => (
-                    <Tabs.Trigger key={t.value} value={t.value}>
-                      {t.label}
-                    </Tabs.Trigger>
-                  ))}
-                </Tabs.List>
-              </Tabs>
-            </ContentNarrow>
-          </div>
-          <ContentNarrow maxWidth={896} className="py-10">
-            <SettingsForm />
-          </ContentNarrow>
-        </div>
+        <SettingsContent tab={tab} onTabChange={setTab} />
       </Shell>
     );
   },
