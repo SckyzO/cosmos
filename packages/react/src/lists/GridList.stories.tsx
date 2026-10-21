@@ -76,9 +76,12 @@ export const SimpleTwoColumn: Story = {
     <div className="bg-gray-50 p-8 dark:bg-gray-950">
       <GridList cols={2}>
         {PEOPLE.slice(0, 4).map((p) => (
-          <GridList.Card key={p.name} className="p-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{p.name}</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
+          <GridList.Card key={p.name}>
+            {/* One section: the card draws a divider between its direct children. */}
+            <div className="p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{p.name}</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
+            </div>
           </GridList.Card>
         ))}
       </GridList>
