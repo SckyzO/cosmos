@@ -139,7 +139,13 @@ export const WithActionsMenu: Story = {
           avatar={<Avatar src={s.avatar} />}
           title={s.name}
           subtitle={s.email}
-          meta={<MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? '—'} />}
+          meta={
+            s.online ? (
+              <MetaWithStatus role={s.role} />
+            ) : (
+              <MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? ''} />
+            )
+          }
           trailing={
             <button
               type="button"
@@ -173,7 +179,13 @@ export const NoAvatar: Story = {
           key={s.email}
           title={s.name}
           subtitle={s.email}
-          meta={<MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? '—'} />}
+          meta={
+            s.online ? (
+              <MetaWithStatus role={s.role} />
+            ) : (
+              <MetaWithTimestamp role={s.role} lastSeen={s.lastSeen ?? ''} />
+            )
+          }
         />
       ))}
     </StackedList>
