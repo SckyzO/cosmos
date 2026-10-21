@@ -19,17 +19,43 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Neutral placeholder square — mirrors the dashed-frame TUI demo art.
+// Neutral placeholder — mirrors the dashed-frame TUI demo art. It fills the
+// box it is given instead of keeping its square ratio (strokes stay 2px), so
+// in the Stretched story it grows with the body like a cover image would.
 const Placeholder = ({ className = '' }: { className?: string }) => (
   <svg
     className={`text-gray-300 dark:text-gray-700 ${className}`}
     viewBox="0 0 64 64"
+    preserveAspectRatio="none"
     fill="none"
     aria-hidden
   >
-    <rect width="64" height="64" rx="4" stroke="currentColor" strokeWidth="2" />
-    <line x1="0" y1="0" x2="64" y2="64" stroke="currentColor" strokeWidth="2" />
-    <line x1="64" y1="0" x2="0" y2="64" stroke="currentColor" strokeWidth="2" />
+    <rect
+      width="64"
+      height="64"
+      rx="4"
+      stroke="currentColor"
+      strokeWidth="2"
+      vectorEffect="non-scaling-stroke"
+    />
+    <line
+      x1="0"
+      y1="0"
+      x2="64"
+      y2="64"
+      stroke="currentColor"
+      strokeWidth="2"
+      vectorEffect="non-scaling-stroke"
+    />
+    <line
+      x1="64"
+      y1="0"
+      x2="0"
+      y2="64"
+      stroke="currentColor"
+      strokeWidth="2"
+      vectorEffect="non-scaling-stroke"
+    />
   </svg>
 );
 
