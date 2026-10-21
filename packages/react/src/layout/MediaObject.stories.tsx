@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { MediaObject } from './MediaObject';
 
 const meta = {
@@ -138,8 +138,8 @@ export const RootIsFlexRow: Story = {
     </MediaObject>
   ),
   play: async ({ canvasElement }) => {
-    const root = canvasElement.querySelector('[data-testid="mo"]');
-    await expect(root?.className ?? '').toMatch(/^|\sflex\s|$/);
+    const root = within(canvasElement).getByTestId('mo');
+    await expect(root).toHaveStyle({ display: 'flex', flexDirection: 'row' });
   },
 };
 
