@@ -2,3 +2,11 @@ packages:
   - 'packages/*'
   - 'apps/*'
   - 'tests/*'
+
+# Supply chain. These apply when pnpm resolves versions (pnpm add or update,
+# Dependabot's lockfile updates), not on a frozen install of the lockfile.
+
+# Only versions published at least a day ago: most hijacked releases are found
+# and pulled within hours. For an urgent security fix, lift it for that one
+# command: pnpm up --config.minimum-release-age=0 <package>.
+minimumReleaseAge: 1440

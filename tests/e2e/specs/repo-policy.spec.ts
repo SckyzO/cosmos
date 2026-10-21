@@ -62,3 +62,18 @@ test('Dependabot auto-merges minor and patch npm updates only', () => {
     expect(disable(outputs), `${name}: disable`).toBe(!merges);
   }
 });
+
+test('new releases wait before pnpm or Dependabot adopt them', () => {
+  const age = Number(/^minimumReleaseAge:\s*(\d+)/m.exec(read('pnpm-workspace.yaml'))?.[1] ?? 0);
+  expect(age, 'pnpm minimumReleaseAge, in minutes').toBeGreaterThanOrEqual(1440);
+
+  // Dependabot must not propose a version pnpm would refuse.
+  const ecosystems = read('.github/dependabot.yml')
+    .split(/^\s*- package-ecosystem:/m)
+    .slice(1);
+  expect(ecosystems.length).toBeGreaterThan(0);
+  for (const block of ecosystems) {
+    const days = Number(/cooldown:\s*\n\s*default-days:\s*(\d+)/.exec(block)?.[1] ?? 0);
+    expect(days * 1440, `${block.split('\n')[0].trim()} cooldown`).toBeGreaterThanOrEqual(age);
+  }
+});
