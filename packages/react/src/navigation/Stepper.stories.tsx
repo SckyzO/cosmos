@@ -301,3 +301,33 @@ export const PanelsWrapsInBorderedOl: Story = {
     await expect(ol?.className ?? '').toMatch(/border/);
   },
 };
+
+// Side by side (md and up), the chevron is the only separator between two
+// panels: the list also drew a straight divider right after each chevron.
+// Locked to the desktop viewport for that layout, and kept off the docs page,
+// whose width the story can't pick.
+export const PanelsSeparatedByChevronsOnly: Story = {
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  tags: ['!autodocs'],
+  render: () => (
+    <Stepper current={1} variant="panels">
+      <Stepper.Step>Job details</Stepper.Step>
+      <Stepper.Step>Application form</Stepper.Step>
+      <Stepper.Step>Preview</Stepper.Step>
+    </Stepper>
+  ),
+  play: async ({ canvas }) => {
+    const steps = canvas.getAllByRole('listitem');
+    for (const [i, step] of steps.entries()) {
+      const chevron = step.querySelector<HTMLElement>(':scope > [aria-hidden="true"]');
+      if (i < steps.length - 1) {
+        await expect(chevron).not.toBeNull();
+        await expect(getComputedStyle(chevron!).display).not.toBe('none');
+      } else {
+        await expect(chevron).toBeNull();
+      }
+      await expect(getComputedStyle(step).borderLeftWidth).toBe('0px');
+      await expect(getComputedStyle(step).borderRightWidth).toBe('0px');
+    }
+  },
+};
