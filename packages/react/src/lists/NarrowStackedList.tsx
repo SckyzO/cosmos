@@ -73,6 +73,7 @@ const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeade
 //          </div>
 //          <p class="line-clamp-2">{description}</p>
 //        </div>
+//        {trailing — optional, vertically centred}
 //      </li>
 
 export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
@@ -117,6 +118,7 @@ const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemPro
               <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
             )}
           </div>
+          {trailing && <div className="flex flex-none items-center">{trailing}</div>}
         </li>
       );
     }
