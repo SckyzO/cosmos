@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ComponentType, type ReactNode } from 'react';
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Popover } from '../ui/Popover';
 
 // ─── Internal context ─────────────────────────────────────────────────────────
 // Threads the `collapsed` state from <Sidebar> down to all subcomponents
@@ -248,6 +249,7 @@ const SidebarItem = ({
         className={baseClass}
         style={style}
         aria-current={active ? 'page' : undefined}
+        data-sidebar-item=""
       >
         {content}
       </a>
@@ -261,6 +263,7 @@ const SidebarItem = ({
       className={clsx(baseClass, 'w-[calc(100%-1rem)] text-left')}
       style={style}
       aria-current={active ? 'page' : undefined}
+      data-sidebar-item=""
     >
       {content}
     </button>
@@ -270,8 +273,8 @@ const SidebarItem = ({
 // ─── Sidebar.SubMenu ──────────────────────────────────────────────────────────
 // Expandable menu — clicking the trigger toggles a list of nested items. Sub-
 // menus nest (up to three levels reads well): each level indents its rows and
-// draws a guide line under them. In collapsed mode the trigger renders
-// icon-only and the children are hidden.
+// draws a guide line under them. In collapsed mode the trigger is icon-only and
+// opens the whole tree in a panel to its right.
 
 export type SidebarSubMenuProps = {
   icon: ComponentType<{ className?: string }>;
@@ -308,17 +311,39 @@ const SidebarSubMenu = ({
   const collapsed = useSidebarCollapsed(collapsedProp);
   const depth = useContext(SidebarDepthContext);
   const [open, setOpen] = useState(defaultOpen || active);
+  const [flyoutOpen, setFlyoutOpen] = useState(false);
 
-  // Collapsed mode: render as a centered icon-only button, no children.
+  // Collapsed mode: an icon-only trigger opening the tree in a panel to its
+  // right, rendered expanded and from the top level. Picking an item closes it.
   if (collapsed) {
     return (
-      <button
-        type="button"
-        title={label}
-        className={clsx(SUBMENU_ROW(active), 'justify-center px-2')}
-      >
-        <Icon className="h-5 w-5 shrink-0" />
-      </button>
+      <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
+        <Popover.Trigger
+          title={label}
+          aria-label={label}
+          className={clsx(SUBMENU_ROW(active), 'justify-center px-2')}
+        >
+          <Icon className="h-5 w-5 shrink-0" />
+        </Popover.Trigger>
+        <Popover.Content position="right" aria-label={label} width="w-64" className="p-2!">
+          <SidebarContext.Provider value={{ collapsed: false }}>
+            <SidebarDepthContext.Provider value={0}>
+              <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
+                {label}
+              </p>
+              <div
+                className="-mx-2 space-y-0.5"
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest('[data-sidebar-item]'))
+                    setFlyoutOpen(false);
+                }}
+              >
+                {children}
+              </div>
+            </SidebarDepthContext.Provider>
+          </SidebarContext.Provider>
+        </Popover.Content>
+      </Popover>
     );
   }
 
