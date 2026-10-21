@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
 import { portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
@@ -44,30 +44,65 @@ export const Sides: Story = {
             </Button>
           </div>
         </SectionCard>
-        <Drawer open={side !== null} onClose={() => setSide(null)} side={side ?? 'right'}>
-          <Drawer.Header
-            title="Server details"
-            icon={SlidersHorizontal}
-            description="Inspect and configure"
+        {/* One drawer per side: a drawer's side is fixed, so switching it while
+            the panel slides would send it in or out by the wrong edge. */}
+        {(['left', 'right'] as const).map((drawerSide) => (
+          <Drawer
+            key={drawerSide}
+            open={side === drawerSide}
             onClose={() => setSide(null)}
-          />
-          <Drawer.Body>
-            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
-              <p>This drawer slides in from the {side ?? 'right'}.</p>
-              <p>Use it for inspectors, filters, or supplementary forms.</p>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button variant="secondary" size="sm" onClick={() => setSide(null)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={() => setSide(null)}>
-              Apply
-            </Button>
-          </Drawer.Footer>
-        </Drawer>
+            side={drawerSide}
+          >
+            <Drawer.Header
+              title="Server details"
+              icon={SlidersHorizontal}
+              description="Inspect and configure"
+              onClose={() => setSide(null)}
+            />
+            <Drawer.Body>
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+                <p>This drawer slides in from the {drawerSide}.</p>
+                <p>Use it for inspectors, filters, or supplementary forms.</p>
+              </div>
+            </Drawer.Body>
+            <Drawer.Footer>
+              <Button variant="secondary" size="sm" onClick={() => setSide(null)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={() => setSide(null)}>
+                Apply
+              </Button>
+            </Drawer.Footer>
+          </Drawer>
+        ))}
       </Wrap>
     );
+  },
+};
+
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+/** The left drawer enters and leaves by the left edge, never the right. */
+export const LeftDrawerStaysOnTheLeft: Story = {
+  tags: ['!autodocs'],
+  render: Sides.render,
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(canvas.getByRole('button', { name: 'Open left' }));
+    const panel = body
+      .getByText('This drawer slides in from the left.')
+      .closest('[role="dialog"]')!;
+    const left = () => panel.getBoundingClientRect().left;
+
+    // A frame into the slide, the panel is still coming in from off-screen left.
+    await nextFrame();
+    await expect(left()).toBeLessThan(0);
+    await waitFor(() => expect(left()).toBe(0));
+
+    await userEvent.click(within(panel as HTMLElement).getByRole('button', { name: 'Cancel' }));
+    await nextFrame();
+    await expect(left()).toBeLessThanOrEqual(0);
+    await waitFor(() => expect(left()).toBe(-panel.getBoundingClientRect().width));
   },
 };
 
