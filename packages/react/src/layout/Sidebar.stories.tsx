@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { clsx } from 'clsx';
 import { useState } from 'react';
 import {
   Bell,
@@ -7,13 +8,15 @@ import {
   Globe,
   LayoutDashboard,
   Layers,
-  List,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   Server,
   Settings,
   ShieldCheck,
   User,
 } from 'lucide-react';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Sidebar } from './Sidebar';
 
 const meta = {
@@ -68,8 +71,9 @@ const Nav = () => (
   </div>
 );
 
+// Collapsed, the 72 px sidebar only fits one column: the toggle goes under the avatar.
 const Footer = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => (
-  <div className="flex items-center gap-2">
+  <div className={clsx('flex items-center gap-2', collapsed && 'flex-col')}>
     <span className="bg-brand-500/10 text-brand-500 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
       <User className="h-4 w-4" />
     </span>
@@ -81,11 +85,16 @@ const Footer = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => v
     )}
     <button
       type="button"
-      aria-label="Toggle collapse"
+      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-expanded={!collapsed}
       onClick={onToggle}
       className="rounded-md p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
     >
-      <List className="h-4 w-4" />
+      {collapsed ? (
+        <PanelLeftOpen className="h-4 w-4" aria-hidden />
+      ) : (
+        <PanelLeftClose className="h-4 w-4" aria-hidden />
+      )}
     </button>
   </div>
 );
@@ -108,12 +117,26 @@ export const FullExample: Story = {
         </Sidebar>
         <main className="flex-1 p-6 text-[var(--color-text-secondary)]">
           <p>
-            Click the <List className="inline h-3 w-3" /> button in the sidebar footer to toggle
-            collapsed mode. Children re-render automatically via React context.
+            Click the <PanelLeftClose className="inline h-3 w-3" /> button in the sidebar footer to
+            toggle collapsed mode. Children re-render automatically via React context.
           </p>
         </main>
       </Wrap>
     );
+  },
+};
+
+/** Collapsed to 72 px, the footer's toggle stays inside the sidebar. */
+export const CollapsedFooterFits: Story = {
+  tags: ['!autodocs'],
+  render: FullExample.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.click(canvas.getByRole('button', { name: /collapse|expand/i }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    const toggle = canvas.getByRole('button', { name: /collapse|expand/i }).getBoundingClientRect();
+    // The nav's right edge is its 1px border.
+    await expect(toggle.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);
   },
 };
 
