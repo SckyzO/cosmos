@@ -17,3 +17,15 @@ test('dev server listens on every interface of its container', () => {
   };
   expect(scripts.dev).toMatch(/--host 0\.0\.0\.0\b/);
 });
+
+test('dev server ports are published on loopback only', () => {
+  // `- '6006:6006'` publishes on every interface, reachable from the LAN.
+  const compose = [
+    ...read('docker-compose.yml').matchAll(/^\s*-\s*['"]?((?:[\d.]+:)?\d+:\d+)['"]?\s*$/gm),
+  ].map((m) => m[1]);
+  const devctl = [...read('devctl').matchAll(/\s-p\s+(\S+)/g)].map((m) => m[1]);
+
+  expect(compose.length, 'port mappings in docker-compose.yml').toBeGreaterThan(0);
+  expect(devctl.length, '-p flags in devctl').toBeGreaterThan(0);
+  for (const mapping of [...compose, ...devctl]) expect(mapping).toMatch(/^127\.0\.0\.1:/);
+});
