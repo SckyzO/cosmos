@@ -86,7 +86,10 @@ const catalogColumns: ColumnDef<CatalogGroup>[] = [
     sortValue: (g) => g.name,
     render: (g) => (
       <div className="flex flex-col">
-        <a href={g.href} className="text-brand-600 dark:text-brand-400 font-semibold hover:underline">
+        <a
+          href={g.href}
+          className="text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+        >
           {g.name}
         </a>
         <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
@@ -252,7 +255,7 @@ const TemplateCard = ({
     </span>
     <span className="text-base font-semibold">{title}</span>
     <span className="flex-1 text-sm leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
-    <span className="font-mono text-[0.7rem] tracking-wide text-brand-600 dark:text-brand-400 uppercase">
+    <span className="text-brand-600 dark:text-brand-400 font-mono text-[0.7rem] tracking-wide uppercase">
       Open template →
     </span>
   </a>
@@ -351,8 +354,8 @@ const WelcomePage = ({
     </h1>
     <p className="max-w-prose text-base leading-relaxed text-gray-500 dark:text-gray-400">
       React 19 components, a Tailwind 4 theme and ApexCharts wrappers, built for dashboards and
-      monitoring tools. Four themes and twelve accent colors, switched with a class and an
-      attribute on <code>&lt;html&gt;</code>.
+      monitoring tools. Four themes and twelve accent colors, switched with a class and an attribute
+      on <code>&lt;html&gt;</code>.
     </p>
     <div className="mt-6 flex flex-wrap gap-2.5">
       <a href="./?path=/docs/atoms-button--docs" className={`${CTA} ${CTA_VARIANT.primary}`}>
