@@ -1,0 +1,51 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { FontSamples, FontTable, TextSizeTable } from './FontsBlocks';
+
+<Meta title="Foundations/Fonts" />
+
+# Fonts
+
+Cosmos sets text in Outfit and code in JetBrains Mono. An app can let people pick another sans-serif
+font with `data-font` on `<html>`, and a larger or smaller text size with `data-text-size`. The
+**Font** and **Text size** menus in the toolbar set both attributes on every story, and
+`AppearanceSettings` offers them to your users.
+
+## Loading the fonts
+
+The fonts are self-hosted through Fontsource, so nothing is fetched from a font CDN at runtime.
+`@sckyzo/cosmos-theme/fonts` loads Outfit and JetBrains Mono. Each other font has its own import, so
+an app ships only the fonts it offers:
+
+```css
+@import '@sckyzo/cosmos-theme/fonts';
+/* Only the fonts your app offers: */
+@import '@sckyzo/cosmos-theme/fonts/inter';
+@import '@sckyzo/cosmos-theme/fonts/plex';
+```
+
+<FontTable />
+
+Only offer a font whose CSS your app imports: without it, the browser falls back to `system-ui`.
+
+## The fonts
+
+Each sample uses the sizes most components use, from dense labels (`text-2xs`, 11px) to page titles
+(`text-3xl`, 30px).
+
+<FontSamples />
+
+## Text size
+
+`data-text-size` scales every `text-*` size: `sm`, `lg` and `xl`, with no attribute for the default.
+Spacing stays the same, so layouts keep their density, and line heights follow because they are
+ratios. Sizes written in pixels, such as `text-[9px]`, don't scale: use `text-2xs` (11px) and
+`text-3xs` (10px) for small labels.
+
+<TextSizeTable />
+
+```html
+<html data-font="inter" data-text-size="lg"></html>
+```
+
+In React, `applyAppearance` takes a `font` and a `textSize` next to the theme and the accent. It sets
+the attributes and removes each one for its default.
