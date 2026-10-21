@@ -27,8 +27,11 @@ export type PageHeaderProps = {
  * the breadcrumb wins (description is hidden — they're alternatives).
  */
 const Root = ({ title, description, breadcrumb, meta, actions, className }: PageHeaderProps) => (
-  <div className={`flex items-start justify-between gap-4 ${className ?? ''}`}>
-    <div className="min-w-0">
+  // The title column asks for 16rem: when that and the actions don't both fit
+  // (a phone, a narrow pane), the actions wrap under the title instead of
+  // squeezing it until its words run under the buttons.
+  <div className={`flex flex-wrap items-start justify-between gap-4 ${className ?? ''}`}>
+    <div className="min-w-0 grow basis-64">
       <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{title}</h2>
       {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
       {!breadcrumb && description && (
