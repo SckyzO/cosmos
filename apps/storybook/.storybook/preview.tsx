@@ -1,6 +1,7 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
 
+import { COSMOS_FONTS, COSMOS_TEXT_SIZES } from '../../../packages/react/src';
 import { CosmosDocsContainer } from './CosmosDocsContainer';
 import { DEFAULT_THEME } from './cosmos-theme';
 
@@ -14,6 +15,11 @@ import '@fontsource/outfit/800.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/700.css';
+// The other fonts of the Font menu (the default, Outfit, is above).
+import '@sckyzo/cosmos-theme/fonts/inter';
+import '@sckyzo/cosmos-theme/fonts/plex';
+import '@sckyzo/cosmos-theme/fonts/montserrat';
+import '@sckyzo/cosmos-theme/fonts/open-sans';
 
 // Tailwind 4 + Cosmos tokens (loaded via the @tailwindcss/vite plugin)
 import './preview.css';
@@ -60,17 +66,24 @@ const ACCENTS = [
   { value: 'green', title: 'Green' },
 ];
 
-/**
- * Apply the `accent` toolbar global as `data-accent` on <html>. Blue is the
- * theme default, so it removes the attribute. Set before the story renders so
- * charts read the right --color-brand-500 on mount. Not a second addon-themes
- * decorator: that would share the `theme` global with the class switcher.
- */
-const withAccent: Decorator = (Story, ctx) => {
-  const accent = ctx.globals.accent as string | undefined;
+/** Sets `data-<key>` on <html>, or removes it for the theme's default value. */
+const setRootData = (key: 'accent' | 'font' | 'textSize', value: unknown, byDefault: string) => {
   const root = document.documentElement;
-  if (!accent || accent === 'blue') delete root.dataset.accent;
-  else root.dataset.accent = accent;
+  if (!value || value === byDefault) delete root.dataset[key];
+  else root.dataset[key] = String(value);
+};
+
+/**
+ * Apply the `accent`, `font` and `textSize` toolbar globals as data-accent,
+ * data-font and data-text-size on <html>; each default (blue, Outfit, md)
+ * removes its attribute. Set before the story renders so charts read the right
+ * --color-brand-500 on mount. Not a second addon-themes decorator: that would
+ * share the `theme` global with the class switcher.
+ */
+const withAppearanceAttributes: Decorator = (Story, ctx) => {
+  setRootData('accent', ctx.globals.accent, 'blue');
+  setRootData('font', ctx.globals.font, 'outfit');
+  setRootData('textSize', ctx.globals.textSize, 'md');
   return <Story />;
 };
 
@@ -106,9 +119,25 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    font: {
+      description: 'Font',
+      toolbar: {
+        title: 'Font',
+        items: COSMOS_FONTS.map((f) => ({ value: f.id, title: f.label })),
+        dynamicTitle: true,
+      },
+    },
+    textSize: {
+      description: 'Text size',
+      toolbar: {
+        title: 'Text size',
+        items: COSMOS_TEXT_SIZES.map((t) => ({ value: t.id, title: t.label })),
+        dynamicTitle: true,
+      },
+    },
   },
   // `theme` set here so stories and the manager always read a value.
-  initialGlobals: { accent: 'blue', theme: DEFAULT_THEME },
+  initialGlobals: { accent: 'blue', theme: DEFAULT_THEME, font: 'outfit', textSize: 'md' },
   parameters: {
     controls: {
       matchers: {
@@ -153,7 +182,7 @@ const preview: Preview = {
   },
   decorators: [
     withCosmosSurface,
-    withAccent,
+    withAppearanceAttributes,
     // The manager and the docs chrome follow the same global (manager.ts,
     // CosmosDocsContainer.tsx).
     withThemeByClassName({
