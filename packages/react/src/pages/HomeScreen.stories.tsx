@@ -16,6 +16,7 @@ import { Topbar } from '../layout/Topbar';
 import { StackedList } from '../lists/StackedList';
 import { HealthDot } from '../status/HealthDot';
 import { Badge } from '../ui/Badge';
+import { Card } from '../ui/Card';
 import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Home Screens" — sidebar shell with a list of
@@ -157,16 +158,17 @@ export const Sidebar_: Story = {
         </Sidebar>
       }
       secondary={
-        <div>
-          <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+        <div className="p-6">
+          {/* py-3 + text-base: level with the Deployments card header. */}
+          <div className="flex items-center justify-between py-3">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               Activity feed
             </h3>
-            <a href="#" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+            <a href="#" className="text-brand-600 dark:text-brand-400 text-sm font-semibold">
               View all
             </a>
           </div>
-          <div className="px-6 py-4">
+          <div className="mt-4">
             <StackedList>
               {FEED.map((f) => (
                 <StackedList.Item
@@ -181,34 +183,40 @@ export const Sidebar_: Story = {
           </div>
         </div>
       }
-      secondaryWidthClassName="w-96"
+      // The feed column only fits from xl; below that the list takes the width.
+      secondaryWidthClassName="hidden w-96 xl:block"
     >
-      <div className="bg-[var(--color-bg-base)]">
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
-          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Deployments</h2>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-          >
-            Sort by
-          </button>
-        </div>
-        <ul role="list" className="divide-y divide-[var(--color-border)]">
-          {DEPLOYMENTS.map((d) => (
-            <li key={d.org + d.repo} className="flex items-center gap-x-4 px-6 py-4">
-              <HealthDot status={d.status} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                  {d.org} <span className="text-[var(--color-text-muted)]">/</span> {d.repo}
-                </p>
-                <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-                  Deploys from GitHub · {d.meta}
-                </p>
-              </div>
-              <Badge variant={d.badge === 'Production' ? 'success' : 'neutral'}>{d.badge}</Badge>
-            </li>
-          ))}
-        </ul>
+      {/* Page padding keeps the card off the sidebar and the top bar. */}
+      <div className="p-6">
+        <Card padding="none">
+          <Card.Header>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+              Deployments
+            </h2>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+            >
+              Sort by
+            </button>
+          </Card.Header>
+          <ul role="list" className="divide-y divide-[var(--color-border)]">
+            {DEPLOYMENTS.map((d) => (
+              <li key={d.org + d.repo} className="flex items-center gap-x-4 px-4 py-4">
+                <HealthDot status={d.status} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {d.org} <span className="text-[var(--color-text-muted)]">/</span> {d.repo}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+                    Deploys from GitHub · {d.meta}
+                  </p>
+                </div>
+                <Badge variant={d.badge === 'Production' ? 'success' : 'neutral'}>{d.badge}</Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
     </Shell>
   ),
