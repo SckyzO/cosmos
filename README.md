@@ -1,13 +1,15 @@
 # Cosmos
 
-Design system for sckyzo's projects — React 19 + Tailwind 4 + Storybook 10.
+Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 components and
+ApexCharts wrappers, documented in Storybook 10.
 
-**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/) — 135+ components across 16 groups, 960+ stories, four themes and twelve accent colors.
+**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/): every component with its docs and
+stories (more than 1,000), in four themes and twelve accent colors.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/images/welcome-light.png">
-  <img alt="Cosmos welcome page — hero status bar, live component preview, page templates, sidebar group catalog" src="docs/images/welcome-dark.png">
+  <img alt="Cosmos welcome page: theme and accent picker, live component preview, page templates, setup snippets and the catalog of sidebar groups" src="docs/images/welcome-dark.png">
 </picture>
 
 Cosmos provides a shared CSS theme and a library of React components extracted
@@ -17,11 +19,11 @@ portals, and rackscope itself eventually).
 
 ## Packages
 
-| Package                                    | Description                                                    | npm                                                                                                               |
-| ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, 4 themes, 12 accents  | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
-| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — 135+ components, ESM + CJS + DTS  | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
-| [`@sckyzo/cosmos-charts`](packages/charts) | Opinionated ApexCharts wrappers themed for Cosmos (separately) | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
+| Package                                    | Description                                                                | npm                                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, 4 themes, 12 accents              | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
+| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — ESM + CJS + DTS                               | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
+| [`@sckyzo/cosmos-charts`](packages/charts) | ApexCharts wrappers that follow the theme and accent, published separately | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
 
 ## Themes and accents
 
@@ -50,8 +52,8 @@ both. Details in the [theme README](packages/theme#themes--accents).
 | [`apps/storybook`](apps/storybook) | Component showcase + visual testing + a11y + MCP | <https://sckyzo.github.io/cosmos/> |
 
 The Storybook is the canonical reference — every component has at least one
-story, autodocs is enabled, and the **Welcome** page indexes every group via
-a searchable `DataTable`.
+story, autodocs is enabled, and the **Welcome** page lists every group and entry,
+read from Storybook's story index so it stays in sync.
 
 ## Sidebar groups
 
@@ -66,10 +68,11 @@ Welcome → Pages → Foundations → Typography → Atoms → Forms → Data �
 
 Notable groups:
 
-- **Pages** — 17 full-page templates (Dashboard, Auth, Blog, DocPage, …)
+- **Pages** — full-page templates (Dashboard, Calendar, Activity, Settings, Profile, sign-in forms, Blog, Doc Page, …)
 - **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, Lists, Description List, HR
 - **Forms** — 25 controls (Input, Select, Combobox, DatePicker single + range, …)
-- **Charts** — `@sckyzo/cosmos-charts` (BarChart, LineArea, Donut, Sparkline, Realtime, gauges)
+- **Charts** — `@sckyzo/cosmos-charts`, one entry per chart type: line & area, bar & column, donut, radial gauges,
+  realtime, sparkline, treemap, heatmap, radar, scatter & bubble, box plot, range bar, mixed
 
 ## Development (everything in Docker)
 
