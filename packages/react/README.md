@@ -66,9 +66,10 @@ function Example() {
 
 ## Themes and accents
 
-The theme is a class on `<html>` and the accent a `data-accent` attribute, see
-the [theme README](../theme#themes--accents). `AppearanceSettings` renders a
-picker for each, and `applyAppearance` sets them on the document:
+The theme is a class on `<html>`; the accent, the font and the text size are
+the `data-accent`, `data-font` and `data-text-size` attributes, see the
+[theme README](../theme#themes--accents). `AppearanceSettings` renders a picker
+for each, and `applyAppearance` sets them on the document:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -78,21 +79,29 @@ function Appearance() {
   const [appearance, setAppearance] = useState<CosmosAppearance>({
     theme: 'light',
     accent: 'blue',
+    font: 'outfit',
+    textSize: 'md',
   });
   useEffect(() => applyAppearance(appearance), [appearance]);
+  const update = (patch: Partial<CosmosAppearance>) => setAppearance((a) => ({ ...a, ...patch }));
   return (
     <AppearanceSettings
-      theme={appearance.theme}
-      accent={appearance.accent}
-      onThemeChange={(theme) => setAppearance((a) => ({ ...a, theme }))}
-      onAccentChange={(accent) => setAppearance((a) => ({ ...a, accent }))}
+      {...appearance}
+      onThemeChange={(theme) => update({ theme })}
+      onAccentChange={(accent) => update({ accent })}
+      onFontChange={(font) => update({ font })}
+      onTextSizeChange={(textSize) => update({ textSize })}
     />
   );
 }
 ```
 
-For a top bar, `AppearanceMenu` takes the same props and puts the two pickers
-in a panel behind an icon button, for example in `Topbar`'s `rightActions`.
+The font and text size groups show only when their handlers are set. Pass
+`fonts` to offer only the fonts whose CSS the app imports
+(`@sckyzo/cosmos-theme/fonts/<name>`).
+
+For a top bar, `AppearanceMenu` takes the same props and puts the pickers in a
+panel behind an icon button, for example in `Topbar`'s `rightActions`.
 
 Saving the choice (local storage, user profile) is left to the app.
 
