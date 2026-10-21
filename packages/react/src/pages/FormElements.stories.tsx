@@ -52,10 +52,11 @@ import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
   title: 'Pages/Form Elements',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

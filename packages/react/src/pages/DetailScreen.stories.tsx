@@ -18,13 +18,14 @@ import { Badge } from '../ui/Badge';
 import { HealthDot } from '../status/HealthDot';
 import { KpiCard } from '../data/KpiCard';
 import { ContentNarrow } from '../templates/ContentNarrow';
+import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Detail Screens" — sub-nav tabs + header with
 // repo title/status + KPIs row + activity table. Built from Cosmos primitives.
 
 const meta = {
   title: 'Pages/Detail Screen',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

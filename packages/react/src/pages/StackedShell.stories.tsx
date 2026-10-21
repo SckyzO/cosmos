@@ -5,6 +5,7 @@ import { Navbar } from '../navigation/Navbar';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Button } from '../ui/Button';
 import { PageHeader } from '../templates/PageHeader';
+import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Application Shells / Stacked" — top navbar with horizontal nav,
 // no sidebar, full-width main content beneath. Builds on Cosmos `Shell` by
@@ -13,7 +14,7 @@ import { PageHeader } from '../templates/PageHeader';
 
 const meta = {
   title: 'Pages/Stacked Shell',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 
