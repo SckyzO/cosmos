@@ -161,3 +161,18 @@ export const PanelShowsFontAndTextSize: Story = {
     await expect(args.onTextSizeChange).toHaveBeenCalledWith('sm');
   },
 };
+
+/** With every group, the panel is taller than a short screen: it scrolls instead. */
+export const TallPanelFitsTheScreen: Story = {
+  tags: ['!autodocs'],
+  args: { onFontChange: fn(), onTextSizeChange: fn() },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    await expect(panel().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+    // The last group can still be reached.
+    const large = within(panel()).getByRole('button', { name: 'Extra large' });
+    large.scrollIntoView();
+    await userEvent.click(large);
+  },
+};
