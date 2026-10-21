@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import config from '../../../apps/storybook/.storybook/main';
 
 // Checks on the Storybook dev server's config, not on a running server. The
 // dev server serves the repo's files and writes story files back (saving
@@ -28,4 +29,11 @@ test('dev server ports are published on loopback only', () => {
   expect(compose.length, 'port mappings in docker-compose.yml').toBeGreaterThan(0);
   expect(devctl.length, '-p flags in devctl').toBeGreaterThan(0);
   for (const mapping of [...compose, ...devctl]) expect(mapping).toMatch(/^127\.0\.0\.1:/);
+});
+
+test('dev server answers cross-origin requests from localhost only', async () => {
+  // Vite's default CORS policy allows localhost origins only; `cors: true`
+  // let any website read the files the dev server serves.
+  const vite = await config.viteFinal!({}, { configType: 'DEVELOPMENT' } as never);
+  expect(vite.server?.cors).toBeUndefined();
 });
