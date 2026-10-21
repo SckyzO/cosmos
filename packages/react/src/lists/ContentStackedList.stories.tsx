@@ -223,15 +223,22 @@ export const TitleOnlyNoMeta: Story = {
   ),
 };
 
+/** A single meta item gets no dot separator. */
 export const SingleMetaItem: Story = {
   render: () => (
     <ContentStackedList>
       <ContentStackedList.Item
-        title="Single meta item — no dot separator should appear"
+        title="Rotate the Grafana service account token"
         meta={[<time key="t">just now</time>]}
+        data-testid="li"
       />
     </ContentStackedList>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('just now')).toBeVisible();
+    const dots = canvas.getByTestId('li').querySelectorAll('svg[viewBox="0 0 2 2"]');
+    await expect(dots).toHaveLength(0);
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
