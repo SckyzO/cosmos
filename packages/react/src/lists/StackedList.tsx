@@ -55,7 +55,8 @@ export type StackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   /**
    * If set, the entire row becomes a navigable link via a full-row overlay
    * (TUI pattern: `<a><span class="absolute inset-x-0 -top-px bottom-0"></span></a>`).
-   * The overlay sits above the title text — other inner anchors stay on top via z-index.
+   * `trailing` is lifted above the overlay so its actions stay clickable; give
+   * any other interactive element (in `subtitle` or `meta`) `position: relative`.
    */
   href?: string;
   /** When `href` is set, also append a chevron-right icon to indicate navigation. */
@@ -99,7 +100,13 @@ const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function
       {(meta || trailing || (isLinked && chevron)) && (
         <div className="flex shrink-0 items-center gap-x-4">
           {meta && <div className="hidden sm:flex sm:flex-col sm:items-end">{meta}</div>}
-          {trailing}
+          {/* Positioned after the overlay in tree order, so it paints above it. */}
+          {trailing &&
+            (isLinked ? (
+              <div className="relative flex items-center gap-x-4">{trailing}</div>
+            ) : (
+              trailing
+            ))}
           {isLinked && chevron && (
             <ChevronRight
               className="size-5 flex-none text-gray-400 dark:text-gray-500"
