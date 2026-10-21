@@ -6,6 +6,9 @@ import {
   Button,
   applyAppearance,
   type CosmosAccent,
+  type CosmosAppearance,
+  type CosmosFont,
+  type CosmosTextSize,
   type CosmosTheme,
 } from '../../../packages/react/src';
 
@@ -16,8 +19,9 @@ const meta = {
     docs: {
       description: {
         component:
-          'Pick a theme and an accent: `applyAppearance` sets them on `<html>`, so the ' +
-          'whole page follows. The toolbar menus reset the page to their own values.',
+          'Pick a theme, an accent, a font and a text size: `applyAppearance` sets them on ' +
+          '`<html>`, so the whole page follows. The toolbar menus reset the page to their own ' +
+          'values.',
       },
     },
   },
@@ -26,20 +30,19 @@ const meta = {
 export default meta;
 type Story = StoryObj;
 
-type PlaygroundProps = { initialTheme: CosmosTheme; initialAccent: CosmosAccent };
-
-const AppearancePlayground = ({ initialTheme, initialAccent }: PlaygroundProps) => {
-  const [theme, setTheme] = useState(initialTheme);
-  const [accent, setAccent] = useState(initialAccent);
-  useEffect(() => applyAppearance({ theme, accent }), [theme, accent]);
+const AppearancePlayground = ({ initial }: { initial: CosmosAppearance }) => {
+  const [appearance, setAppearance] = useState(initial);
+  useEffect(() => applyAppearance(appearance), [appearance]);
+  const update = (patch: Partial<CosmosAppearance>) => setAppearance((a) => ({ ...a, ...patch }));
 
   return (
     <div className="max-w-3xl space-y-8">
       <AppearanceSettings
-        theme={theme}
-        accent={accent}
-        onThemeChange={setTheme}
-        onAccentChange={setAccent}
+        {...appearance}
+        onThemeChange={(theme) => update({ theme })}
+        onAccentChange={(accent) => update({ accent })}
+        onFontChange={(font) => update({ font })}
+        onTextSizeChange={(textSize) => update({ textSize })}
       />
       <section aria-label="Sample" className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -61,11 +64,13 @@ const AppearancePlayground = ({ initialTheme, initialAccent }: PlaygroundProps) 
 
 // Start from the toolbar's values; changing them remounts the playground.
 const renderPlayground: Story['render'] = (_args, { globals }) => {
-  const theme = (globals.theme || 'dark') as CosmosTheme;
-  const accent = (globals.accent || 'blue') as CosmosAccent;
-  return (
-    <AppearancePlayground key={`${theme}-${accent}`} initialTheme={theme} initialAccent={accent} />
-  );
+  const initial: CosmosAppearance = {
+    theme: (globals.theme || 'dark') as CosmosTheme,
+    accent: (globals.accent || 'blue') as CosmosAccent,
+    font: (globals.font || 'outfit') as CosmosFont,
+    textSize: (globals.textSize || 'md') as CosmosTextSize,
+  };
+  return <AppearancePlayground key={Object.values(initial).join('-')} initial={initial} />;
 };
 
 export const Default: Story = { render: renderPlayground };
@@ -84,10 +89,19 @@ export const PickingAppliesToDocument: Story = {
     await expect(root).not.toHaveClass('dark');
     await expect(root).toHaveAttribute('data-accent', 'teal');
 
+    await userEvent.click(canvas.getByRole('button', { name: 'Inter' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Large' }));
+    await expect(root).toHaveAttribute('data-font', 'inter');
+    await expect(root).toHaveAttribute('data-text-size', 'lg');
+
     await userEvent.click(canvas.getByRole('button', { name: 'Light' }));
     await userEvent.click(canvas.getByRole('button', { name: 'Blue' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Outfit' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Default' }));
     await expect(root).not.toHaveClass('sand');
     await expect(root).not.toHaveAttribute('data-accent');
+    await expect(root).not.toHaveAttribute('data-font');
+    await expect(root).not.toHaveAttribute('data-text-size');
   },
 };
 
