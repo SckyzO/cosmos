@@ -16,10 +16,6 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = { args: { message: 'Failed to load data.' } };
 
 export const WithRetry: Story = {
-  args: { message: 'Failed to load data.', onRetry: () => {} },
-};
-
-export const RetryFiresHandler: Story = {
   args: { message: 'Failed to load data.', onRetry: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Try again/i }));
