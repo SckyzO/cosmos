@@ -33,59 +33,55 @@ const PEOPLE = [
 // contact cards with split Email/Call footer.
 export const ContactCardsWithSmallPortraits: Story = {
   render: () => (
-    <div className="bg-gray-50 p-8 dark:bg-gray-950">
-      <GridList cols={3}>
-        {PEOPLE.map((p) => (
-          <GridList.Card key={p.name}>
-            <div className="flex w-full items-center justify-between gap-x-6 p-6">
-              <div className="min-w-0 flex-1 truncate">
-                <div className="flex items-center gap-x-3">
-                  <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                    {p.name}
-                  </h3>
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
-                    Admin
-                  </span>
-                </div>
-                <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
+    <GridList cols={3}>
+      {PEOPLE.map((p) => (
+        <GridList.Card key={p.name}>
+          <div className="flex w-full items-center justify-between gap-x-6 p-6">
+            <div className="min-w-0 flex-1 truncate">
+              <div className="flex items-center gap-x-3">
+                <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                  {p.name}
+                </h3>
+                <span className="inline-flex shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30">
+                  Admin
+                </span>
               </div>
-              <img alt="" src={p.img} className="size-10 shrink-0 rounded-full bg-gray-300" />
+              <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
             </div>
-            <GridList.Footer>
-              <GridList.FooterAction
-                href={`mailto:${p.name.toLowerCase().replace(' ', '.')}@example.com`}
-              >
-                <Mail className="size-5 text-gray-400" aria-hidden />
-                Email
-              </GridList.FooterAction>
-              <GridList.FooterAction index={1} href={`tel:+33000000000`}>
-                <Phone className="size-5 text-gray-400" aria-hidden />
-                Call
-              </GridList.FooterAction>
-            </GridList.Footer>
-          </GridList.Card>
-        ))}
-      </GridList>
-    </div>
+            <img alt="" src={p.img} className="size-10 shrink-0 rounded-full bg-gray-300" />
+          </div>
+          <GridList.Footer>
+            <GridList.FooterAction
+              href={`mailto:${p.name.toLowerCase().replace(' ', '.')}@example.com`}
+            >
+              <Mail className="size-5 text-gray-400" aria-hidden />
+              Email
+            </GridList.FooterAction>
+            <GridList.FooterAction index={1} href={`tel:+33000000000`}>
+              <Phone className="size-5 text-gray-400" aria-hidden />
+              Call
+            </GridList.FooterAction>
+          </GridList.Footer>
+        </GridList.Card>
+      ))}
+    </GridList>
   ),
 };
 
 // Simple 2-column grid without footer.
 export const SimpleTwoColumn: Story = {
   render: () => (
-    <div className="bg-gray-50 p-8 dark:bg-gray-950">
-      <GridList cols={2}>
-        {PEOPLE.slice(0, 4).map((p) => (
-          <GridList.Card key={p.name}>
-            {/* One section: the card draws a divider between its direct children. */}
-            <div className="p-6">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{p.name}</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
-            </div>
-          </GridList.Card>
-        ))}
-      </GridList>
-    </div>
+    <GridList cols={2}>
+      {PEOPLE.slice(0, 4).map((p) => (
+        <GridList.Card key={p.name}>
+          {/* One section: the card draws a divider between its direct children. */}
+          <div className="p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{p.name}</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{p.role}</p>
+          </div>
+        </GridList.Card>
+      ))}
+    </GridList>
   ),
 };
 
