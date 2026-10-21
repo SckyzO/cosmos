@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { MONTHS, isoDate, isoWeekday, sameDay } from './calendar-dates';
 
 export type MiniCalendarProps = {
   today?: Date;
@@ -12,28 +13,6 @@ export type MiniCalendarProps = {
 };
 
 const WEEK_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-const isoDate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
 
 /**
  * MiniCalendar — compact ISO-week month picker with optional event dots.
@@ -51,8 +30,7 @@ export const MiniCalendar = ({
   const cells = useMemo(() => {
     const firstOfMonth = new Date(view.getFullYear(), view.getMonth(), 1);
     const daysInMonth = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
-    // Monday-first offset (JS: 0=Sun..6=Sat → ISO: 0=Mon..6=Sun)
-    const isoOffset = (firstOfMonth.getDay() + 6) % 7;
+    const isoOffset = isoWeekday(firstOfMonth);
     const arr: (Date | null)[] = Array(isoOffset).fill(null);
     for (let d = 1; d <= daysInMonth; d++)
       arr.push(new Date(view.getFullYear(), view.getMonth(), d));
