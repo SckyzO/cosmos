@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Fragment } from 'react';
 import { expect } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import { NarrowStackedList } from './NarrowStackedList';
@@ -125,7 +126,7 @@ export const StickyHeadings: Story = {
     <div className="max-h-96 max-w-md overflow-y-auto bg-white dark:bg-gray-900">
       <NarrowStackedList>
         {Object.entries(PEOPLE_GROUPED).map(([letter, group]) => (
-          <NarrowStackedList key={letter} className="contents">
+          <Fragment key={letter}>
             <NarrowStackedList.Header sticky>{letter}</NarrowStackedList.Header>
             {group.map((p) => (
               <NarrowStackedList.Item
@@ -135,11 +136,16 @@ export const StickyHeadings: Story = {
                 subtitle={p.email}
               />
             ))}
-          </NarrowStackedList>
+          </Fragment>
         ))}
       </NarrowStackedList>
     </div>
   ),
+  play: async ({ canvas }) => {
+    // One list whose children are all list items, headers included.
+    const items = Array.from(canvas.getByRole('list').children);
+    await expect(items.map((el) => el.tagName)).toEqual(items.map(() => 'LI'));
+  },
 };
 
 export const WithActions: Story = {
