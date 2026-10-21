@@ -28,6 +28,12 @@ export type ShellProps = {
   sidebarCollapsed?: boolean;
   /** Fired whenever the collapsed state toggles. */
   onSidebarToggle?: (collapsed: boolean) => void;
+  /**
+   * Where the collapse control lives. `topbar` (default): the Topbar's
+   * hamburger. `sidebar`: a button at the bottom of the Sidebar, and the
+   * Topbar shows no hamburger.
+   */
+  collapseControl?: 'topbar' | 'sidebar';
   /** Optional className override on the root element. */
   className?: string;
 };
@@ -57,6 +63,7 @@ export const Shell = ({
   defaultSidebarCollapsed = false,
   sidebarCollapsed: controlledCollapsed,
   onSidebarToggle,
+  collapseControl = 'topbar',
   className,
 }: ShellProps) => {
   const [internalCollapsed, setInternalCollapsed] = useState(defaultSidebarCollapsed);
@@ -71,17 +78,27 @@ export const Shell = ({
   // Inject collapsed state into the children — keep the consumer-supplied
   // props as overrides so a story can opt out (e.g. `sidebarCollapsed={null}`
   // on the Topbar to hide the hamburger).
+  const inSidebar = collapseControl === 'sidebar';
   const enhancedTopbar =
     topbar && sidebar
-      ? cloneElement(topbar, {
-          sidebarCollapsed: topbar.props.sidebarCollapsed ?? collapsed,
-          onToggleSidebar: topbar.props.onToggleSidebar ?? handleToggle,
-        })
+      ? cloneElement(
+          topbar,
+          inSidebar
+            ? // The control moved to the sidebar: no hamburger unless asked for.
+              { sidebarCollapsed: topbar.props.sidebarCollapsed ?? null }
+            : {
+                sidebarCollapsed: topbar.props.sidebarCollapsed ?? collapsed,
+                onToggleSidebar: topbar.props.onToggleSidebar ?? handleToggle,
+              }
+        )
       : topbar;
 
   const enhancedSidebar = sidebar
     ? cloneElement(sidebar, {
         collapsed: sidebar.props.collapsed ?? collapsed,
+        ...(inSidebar && {
+          onCollapsedChange: sidebar.props.onCollapsedChange ?? handleToggle,
+        }),
       })
     : sidebar;
 
