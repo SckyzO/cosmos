@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { HelpCircle } from 'lucide-react';
 import { cloneElement, isValidElement, useEffect, useId, useState, type ReactNode } from 'react';
+import { Kbd } from '../typography/Kbd';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 export type TooltipVariant = 'dark' | 'white' | 'brand';
@@ -39,6 +40,8 @@ export type TooltipProps = {
   variant?: TooltipVariant;
   /** Tailwind max-width class — default `max-w-xs` (320px) */
   maxWidth?: string;
+  /** Keys shown after the content, e.g. `['⌘', 'S']`. */
+  shortcut?: string[];
 };
 
 /**
@@ -52,6 +55,7 @@ export const Tooltip = ({
   position = 'top',
   variant = 'dark',
   maxWidth = 'max-w-xs',
+  shortcut,
 }: TooltipProps) => {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -97,6 +101,16 @@ export const Tooltip = ({
         )}
       >
         {content}
+        {shortcut && (
+          <span className="ml-2 inline-flex gap-0.5 align-middle">
+            {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
+            {shortcut.map((key, i) => (
+              <Kbd key={i} size="sm">
+                {key}
+              </Kbd>
+            ))}
+          </span>
+        )}
         <span
           aria-hidden
           className={clsx(
