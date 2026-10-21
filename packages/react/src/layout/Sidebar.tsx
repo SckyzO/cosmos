@@ -18,6 +18,15 @@ const useSidebarCollapsed = (override?: boolean): boolean => {
   return override ?? ctx.collapsed;
 };
 
+// Nesting level: each Sidebar.SubMenu gives its children its own depth + 1, so
+// nested items indent without a `depth` prop.
+const SidebarDepthContext = createContext(0);
+
+// Left padding of a row at `depth`, and where the guide line of its children
+// sits (under the centre of the row's 20 px icon, inside the 8 px row margin).
+const rowPadding = (depth: number) => 12 + depth * 20;
+const guideLeft = (depth: number) => 8 + rowPadding(depth) + 10;
+
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
 export type SidebarProps = {
@@ -190,7 +199,10 @@ export type SidebarItemProps = {
   badge?: ReactNode;
   /** Override the inherited collapsed state. */
   collapsed?: boolean;
-  /** Indentation depth (for nested items inside groups). Default: 0. */
+  /**
+   * Indentation depth. Defaults to the nesting level: 0 at the top, one more
+   * inside each Sidebar.SubMenu.
+   */
   depth?: number;
 };
 
@@ -202,9 +214,11 @@ const SidebarItem = ({
   onClick,
   badge,
   collapsed: collapsedProp,
-  depth = 0,
+  depth: depthProp,
 }: SidebarItemProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const contextDepth = useContext(SidebarDepthContext);
+  const depth = depthProp ?? contextDepth;
   const baseClass = clsx(
     'group mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
     collapsed ? 'justify-center px-2' : 'px-3',
@@ -212,7 +226,7 @@ const SidebarItem = ({
       ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
       : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
   );
-  const style = !collapsed && depth > 0 ? { paddingLeft: 12 + depth * 20 } : undefined;
+  const style = !collapsed && depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined;
 
   const content = (
     <>
@@ -254,9 +268,10 @@ const SidebarItem = ({
 };
 
 // ─── Sidebar.SubMenu ──────────────────────────────────────────────────────────
-// Expandable menu — clicking the trigger toggles a list of nested items.
-// In collapsed mode, the trigger renders icon-only and the children are
-// hidden completely (chevron + nested items don't appear).
+// Expandable menu — clicking the trigger toggles a list of nested items. Sub-
+// menus nest (up to three levels reads well): each level indents its rows and
+// draws a guide line under them. In collapsed mode the trigger renders
+// icon-only and the children are hidden.
 
 export type SidebarSubMenuProps = {
   icon: ComponentType<{ className?: string }>;
@@ -269,9 +284,17 @@ export type SidebarSubMenuProps = {
   active?: boolean;
   /** Optional badge shown right of label (hidden when collapsed). */
   badge?: ReactNode;
-  /** Nested items — typically `Sidebar.Item` with `depth={1}`. */
+  /** Nested items: Sidebar.Item, or another Sidebar.SubMenu for a deeper level. */
   children: ReactNode;
 };
+
+const SUBMENU_ROW = (active: boolean) =>
+  clsx(
+    'group mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg py-2 text-sm font-medium transition-colors',
+    active
+      ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+      : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
+  );
 
 const SidebarSubMenu = ({
   icon: Icon,
@@ -283,6 +306,7 @@ const SidebarSubMenu = ({
   children,
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const depth = useContext(SidebarDepthContext);
   const [open, setOpen] = useState(defaultOpen || active);
 
   // Collapsed mode: render as a centered icon-only button, no children.
@@ -291,12 +315,7 @@ const SidebarSubMenu = ({
       <button
         type="button"
         title={label}
-        className={clsx(
-          'group mx-2 flex w-[calc(100%-1rem)] items-center justify-center rounded-lg px-2 py-2 text-sm font-medium transition-colors',
-          active
-            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-            : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
-        )}
+        className={clsx(SUBMENU_ROW(active), 'justify-center px-2')}
       >
         <Icon className="h-5 w-5 shrink-0" />
       </button>
@@ -309,12 +328,8 @@ const SidebarSubMenu = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={clsx(
-          'group mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors',
-          active
-            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-            : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
-        )}
+        className={clsx(SUBMENU_ROW(active), 'gap-3 px-3 text-left')}
+        style={depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined}
       >
         <Icon className="h-5 w-5 shrink-0" />
         <span className="flex-1 truncate">{label}</span>
@@ -326,7 +341,16 @@ const SidebarSubMenu = ({
           )}
         />
       </button>
-      {open && <div className="mt-0.5 space-y-0.5">{children}</div>}
+      {open && (
+        <div className="relative mt-0.5 space-y-0.5">
+          <span
+            aria-hidden
+            className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
+            style={{ left: guideLeft(depth) }}
+          />
+          <SidebarDepthContext.Provider value={depth + 1}>{children}</SidebarDepthContext.Provider>
+        </div>
+      )}
     </div>
   );
 };
