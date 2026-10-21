@@ -126,8 +126,11 @@ export const Controlled: Story = {
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
+// The two closing tests stay off the docs page: their play function also runs
+// there and would leave an empty example once the banner has closed.
 
 export const ClickAcceptFiresHandlerAndCloses: Story = {
+  tags: ['!autodocs'],
   render: (args) => (
     <div className="relative h-72">
       <CookieBanner message={sampleMessage} onAccept={args.onAccept as () => void} />
@@ -142,6 +145,7 @@ export const ClickAcceptFiresHandlerAndCloses: Story = {
 };
 
 export const ClickDenyFiresHandlerAndCloses: Story = {
+  tags: ['!autodocs'],
   render: (args) => (
     <div className="relative h-72">
       <CookieBanner
