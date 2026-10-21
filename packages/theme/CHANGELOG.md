@@ -5,6 +5,16 @@ All notable changes to `@sckyzo/cosmos-theme` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.1.0...@sckyzo/cosmos-theme@0.2.0) (2026-10-21)
+
+
+### Features
+
+* **theme:** add a data-font setting with five more fonts ([6135b66](https://github.com/SckyzO/cosmos/commit/6135b6681f669bdcd178b113fb7b0cbf82aef5d0)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **theme:** add a data-text-size setting ([cd6ed5c](https://github.com/SckyzO/cosmos/commit/cd6ed5c07b15a9df12b56a3638ff0ca477cf1392)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+* **theme:** add syntax highlighting tokens ([8589ef1](https://github.com/SckyzO/cosmos/commit/8589ef1434fafdd20e7ae042372ff89a534a30f3))
+* **theme:** add the text-2xs and text-3xs sizes ([57decb3](https://github.com/SckyzO/cosmos/commit/57decb3bc301ec65ce9966c84b8412cd9791b32a)), closes [#157](https://github.com/SckyzO/cosmos/issues/157)
+
 ## [0.1.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.0.2...@sckyzo/cosmos-theme@0.1.0) (2026-10-20)
 
 
