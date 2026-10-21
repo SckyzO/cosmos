@@ -144,3 +144,19 @@ export const BackspaceMovesBack: Story = {
     await waitFor(() => expect(cells[2]).toHaveFocus());
   },
 };
+
+/** autoFocus focuses the first cell without scrolling the page to it. */
+export const AutoFocusDoesNotScroll: Story = {
+  tags: ['!autodocs'],
+  render: (args) => (
+    <div>
+      <div style={{ height: 2000 }} />
+      <OtpInput {...args} autoFocus />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const first = canvas.getAllByRole('textbox')[0];
+    await waitFor(() => expect(first).toHaveFocus());
+    await expect(window.scrollY).toBe(0);
+  },
+};
