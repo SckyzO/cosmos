@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
 import { portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
@@ -68,6 +68,32 @@ export const Sides: Story = {
         </Drawer>
       </Wrap>
     );
+  },
+};
+
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+/** The left drawer enters and leaves by the left edge, never the right. */
+export const LeftDrawerStaysOnTheLeft: Story = {
+  tags: ['!autodocs'],
+  render: Sides.render,
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(canvas.getByRole('button', { name: 'Open left' }));
+    const panel = body
+      .getByText('This drawer slides in from the left.')
+      .closest('[role="dialog"]')!;
+    const left = () => panel.getBoundingClientRect().left;
+
+    // A frame into the slide, the panel is still coming in from off-screen left.
+    await nextFrame();
+    await expect(left()).toBeLessThan(0);
+    await waitFor(() => expect(left()).toBe(0));
+
+    await userEvent.click(within(panel as HTMLElement).getByRole('button', { name: 'Cancel' }));
+    await nextFrame();
+    await expect(left()).toBeLessThanOrEqual(0);
+    await waitFor(() => expect(left()).toBe(-panel.getBoundingClientRect().width));
   },
 };
 
