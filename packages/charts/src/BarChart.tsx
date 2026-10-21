@@ -2,6 +2,7 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/bar';
 import 'apexcharts/features/legend';
 import ReactApexChart from 'react-apexcharts/core';
+import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -82,10 +83,16 @@ export const BarChart = ({
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
+      formatter: (name) => escapeHtml(name),
     },
+    // Tooltips and the legend are HTML: escape names, categories and values.
     tooltip: {
       theme: 'dark',
-      y: { formatter: (v) => valueFormatter(Number(v)) },
+      x: { formatter: (v) => escapeHtml(v) },
+      y: {
+        formatter: (v) => escapeHtml(valueFormatter(Number(v))),
+        title: { formatter: (name) => `${escapeHtml(name)}: ` },
+      },
     },
     fill: { opacity: 1 },
     stroke: { show: false },

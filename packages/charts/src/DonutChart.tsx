@@ -2,6 +2,7 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/donut';
 import 'apexcharts/features/legend';
 import ReactApexChart from 'react-apexcharts/core';
+import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -24,7 +25,9 @@ export const DonutChart = ({
     chart: { type: 'donut', fontFamily: 'inherit' },
     colors: palette,
     labels,
-    legend: { position: rightLegend ? 'right' : 'bottom' },
+    // The legend and the tooltip are HTML: escape the labels.
+    legend: { position: rightLegend ? 'right' : 'bottom', formatter: (name) => escapeHtml(name) },
+    tooltip: { y: { title: { formatter: (name) => `${escapeHtml(name)}: ` } } },
     dataLabels: { enabled: false },
     plotOptions: {
       pie: {

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
+import { BarChart } from './BarChart';
 import { LineAreaChart } from './LineAreaChart';
 import { RealtimeChart } from './RealtimeChart';
 import { RadialBarChart } from './RadialBarChart';
@@ -159,5 +160,87 @@ export const AccentSwitchKeepsYAxisLabels: Story = {
       if (previous) root.dataset.accent = previous;
       else delete root.dataset.accent;
     }
+  },
+};
+
+// Series names, categories and labels are data, not markup. ApexCharts writes
+// legends and tooltips with innerHTML, so the wrappers escape what goes there.
+const HOSTILE = '<img src=x onerror="window.__cosmosChartInjected=1">';
+
+const expectNoInjectedImage = async (root: HTMLElement) => {
+  await expect(root.querySelector('img')).toBeNull();
+  await expect(
+    (window as { __cosmosChartInjected?: number }).__cosmosChartInjected
+  ).toBeUndefined();
+};
+
+// ApexCharts picks the hovered point from the pointer coordinates.
+const hover = (el: Element, xRatio = 0.5) => {
+  const { left, top, width, height } = el.getBoundingClientRect();
+  el.dispatchEvent(
+    new MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: left + width * xRatio,
+      clientY: top + height / 2,
+    })
+  );
+};
+
+const chartOf = (root: HTMLElement, seriesSelector: string) =>
+  root.querySelector(seriesSelector)?.closest('.apexcharts-canvas') as HTMLElement;
+
+export const HtmlInLabelsRendersAsText: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card title="BarChart">
+        <BarChart
+          series={[
+            { name: HOSTILE, data: [3, 5, 2] },
+            { name: 'Normal', data: [4, 1, 6] },
+          ]}
+          categories={[HOSTILE, 'B', 'C']}
+        />
+      </Card>
+      <Card title="DonutChart">
+        <DonutChart series={[40, 60]} labels={[HOSTILE, 'Normal']} />
+      </Card>
+      <Card title="LineAreaChart">
+        <LineAreaChart
+          series={[{ name: HOSTILE, data: [3, 5, 2] }]}
+          categories={[HOSTILE, 'B', 'C']}
+        />
+      </Card>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.apexcharts-legend-text').length).toBeGreaterThan(2)
+    );
+    // Legends render on mount: the name must show up as literal text.
+    const legendTexts = [...canvasElement.querySelectorAll('.apexcharts-legend-text')].map(
+      (el) => el.textContent
+    );
+    await expect(legendTexts).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+
+    // Tooltips render on hover: title (category) and series name.
+    const barChart = chartOf(canvasElement, '.apexcharts-bar-series');
+    hover(barChart.querySelector('.apexcharts-bar-area') as Element);
+    await waitFor(() =>
+      expect(barChart.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE)
+    );
+    await expectNoInjectedImage(canvasElement);
+
+    // Same for the area chart, whose first point sits at the left edge of the
+    // plot. The title is the category, not the point's position on the axis.
+    const areaChart = chartOf(canvasElement, '.apexcharts-area-series');
+    hover(areaChart.querySelector('.apexcharts-grid') as Element, 0.05);
+    await waitFor(() =>
+      expect(areaChart.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE)
+    );
+    await expect(areaChart.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
+      `${HOSTILE}: `
+    );
+    await expectNoInjectedImage(canvasElement);
   },
 };
