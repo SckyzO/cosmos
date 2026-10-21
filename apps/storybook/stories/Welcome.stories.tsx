@@ -12,7 +12,6 @@ import { useState } from 'react';
 import {
   AppearanceSettings,
   applyAppearance,
-  Avatar,
   Button,
   CodeBlock,
   DataTable,
@@ -26,6 +25,7 @@ import {
 } from '../../../packages/react/src';
 import type { ColumnDef } from '../../../packages/react/src/table/types';
 // Versions come from the packages so the page can't drift from what's published.
+import { Sparkline } from '../../../packages/charts/src';
 import chartsPkg from '../../../packages/charts/package.json';
 import reactPkg from '../../../packages/react/package.json';
 import themePkg from '../../../packages/theme/package.json';
@@ -239,8 +239,15 @@ const CTA_VARIANT = {
   ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5',
 };
 
+const REQUESTS = [1820, 1940, 1880, 2050, 2210, 2140, 2290, 2380, 2310, 2420, 2390, 2460];
+
+const AutoRefreshToggle = () => {
+  const [on, setOn] = useState(true);
+  return <Toggle checked={on} onChange={setOn} label="Auto-refresh" />;
+};
+
 const PreviewCard = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex min-h-[110px] flex-col gap-2.5 rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900">
+  <div className="flex min-h-[110px] min-w-0 flex-col gap-2.5 rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900">
     <span className="font-mono text-[0.65rem] tracking-widest text-gray-500 uppercase dark:text-gray-400">
       {label}
     </span>
@@ -419,14 +426,12 @@ const WelcomePage = ({
           </Button>
         </PreviewCard>
         <PreviewCard label="CodeBlock">
-          {/* Dev snippet — signature "made for engineers". Replaces the Badge
-           *  card which doubled up visually with StatusBadge (row 2). */}
           <div className="w-full">
-            <CodeBlock language="bash" code="$ docker pull sckyzo/cosmos:0.1.0" />
+            <CodeBlock language="bash" code="$ pnpm add @sckyzo/cosmos-react" />
           </div>
         </PreviewCard>
         <PreviewCard label="Toggle">
-          <Toggle checked onChange={() => {}} label="Auto-refresh" />
+          <AutoRefreshToggle />
         </PreviewCard>
 
         {/* Row 2 — Status / monitoring DNA */}
@@ -474,19 +479,13 @@ const WelcomePage = ({
             </Button>
           </div>
         </PreviewCard>
-        <PreviewCard label="Avatar">
-          {/* Size scale (xs → xl) — baseline-aligned so the progression reads
-           *  like a typography ramp. Initials only so the comparison stays
-           *  about size, not identity. */}
-          <div className="flex flex-wrap items-end gap-3">
-            {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
-              <div key={s} className="flex flex-col items-center gap-1">
-                <Avatar size={s} name="JD" />
-                <span className="font-mono text-[10px] tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                  {s}
-                </span>
-              </div>
-            ))}
+        <PreviewCard label="Sparkline">
+          <div className="w-full">
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-300">Requests/s</span>
+              <span className="font-mono text-gray-500 dark:text-gray-400">2.4k</span>
+            </div>
+            <Sparkline data={REQUESTS} height={48} />
           </div>
         </PreviewCard>
         <PreviewCard label="KpiCard">
