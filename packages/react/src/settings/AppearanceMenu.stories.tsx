@@ -50,7 +50,7 @@ const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string })
 /** In a `Topbar`, applying the choice to the page. Starts from the toolbar's values. */
 export const InTopbar: Story = {
   render: (_args, { globals }) => {
-    const [theme, setTheme] = useState((globals.theme || 'deep-blue') as CosmosTheme);
+    const [theme, setTheme] = useState((globals.theme || 'dark') as CosmosTheme);
     const [accent, setAccent] = useState((globals.accent || 'blue') as CosmosAccent);
     return (
       <Topbar

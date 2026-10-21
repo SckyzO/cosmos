@@ -1,7 +1,8 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
 
-import { cosmosDarkTheme } from './cosmos-theme';
+import { CosmosDocsContainer } from './CosmosDocsContainer';
+import { DEFAULT_THEME } from './cosmos-theme';
 
 // Fonts (npm-distributed CSS via @fontsource — Vite handles @fontsource/*/x.css natively)
 import '@fontsource/outfit/300.css';
@@ -25,9 +26,9 @@ import './preview.css';
  * ErrorPage…) bypass the wrapper so they can paint the whole iframe
  * themselves.
  *
- * This complements `parameters.docs.theme` (which themes the docs page
- * chrome) by ensuring the embedded story surface itself follows the
- * Cosmos palette regardless of where it's rendered.
+ * This complements the docs container (which themes the docs page chrome)
+ * by ensuring the embedded story surface itself follows the Cosmos palette
+ * regardless of where it's rendered.
  */
 const withCosmosSurface: Decorator = (Story, ctx) => {
   const layout = ctx.parameters?.layout as string | undefined;
@@ -106,7 +107,8 @@ const preview: Preview = {
       },
     },
   },
-  initialGlobals: { accent: 'blue' },
+  // `theme` set here so stories and the manager always read a value.
+  initialGlobals: { accent: 'blue', theme: DEFAULT_THEME },
   parameters: {
     controls: {
       matchers: {
@@ -119,12 +121,8 @@ const preview: Preview = {
       defaultViewport: 'reset',
     },
     a11y: { test: 'error' },
-    // Restore the dark docs chrome that was here before — removing it made every
-    // autodocs page (prop tables, code blocks) light by default, which broke the
-    // visual consistency users were relying on. The Welcome page no longer needs
-    // the toggle to flow through here because it lives in a story iframe now
-    // (Welcome.stories.tsx), so `withThemeByClassName` reaches it natively.
-    docs: { theme: cosmosDarkTheme },
+    // Docs pages (prose, prop tables, code blocks) follow the toolbar theme.
+    docs: { container: CosmosDocsContainer },
     options: {
       // `Pages/Dashboard` is the landing — the first story Storybook opens
       // when the user arrives. Then `Welcome` (intro doc), then the rest
@@ -156,11 +154,11 @@ const preview: Preview = {
   decorators: [
     withCosmosSurface,
     withAccent,
-    // deep-blue by default: it keeps the navy look that matches the docs
-    // chrome (cosmosDarkTheme).
+    // The manager and the docs chrome follow the same global (manager.ts,
+    // CosmosDocsContainer.tsx).
     withThemeByClassName({
       themes: { light: '', sand: 'sand', dark: 'dark', 'deep-blue': 'deep-blue' },
-      defaultTheme: 'deep-blue',
+      defaultTheme: DEFAULT_THEME,
       parentSelector: 'html',
     }),
   ],

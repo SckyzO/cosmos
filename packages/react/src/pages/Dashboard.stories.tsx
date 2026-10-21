@@ -330,7 +330,7 @@ export const Default: Story = {
               <IconButton icon={Bell} label="Notifications" />
               <HeaderAppearance
                 key={`${globals.theme}-${globals.accent}`}
-                theme={(globals.theme || 'deep-blue') as CosmosTheme}
+                theme={(globals.theme || 'dark') as CosmosTheme}
                 accent={(globals.accent || 'blue') as CosmosAccent}
               />
               <IconButton icon={User} label="User profile" />
