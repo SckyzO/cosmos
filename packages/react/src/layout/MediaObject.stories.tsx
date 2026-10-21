@@ -33,11 +33,15 @@ const Placeholder = ({ className = '' }: { className?: string }) => (
   </svg>
 );
 
+// The layout stories share one body, long enough to wrap over four lines in a
+// `max-w-xs` row: taller than the 64px media, so each `align` value puts the
+// media somewhere visibly different.
+
 // TUI Plus pattern "Basic" — media left, body right, top-aligned.
 export const Basic: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject>
+      <MediaObject className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="size-16" />
         </MediaObject.Image>
@@ -53,18 +57,19 @@ export const Basic: Story = {
   ),
 };
 
-// TUI Plus pattern "Aligned to center".
+// TUI Plus pattern "Aligned to center" — the media sits halfway down the body.
 export const AlignedToCenter: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject align="center">
+      <MediaObject align="center" className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="size-16" />
         </MediaObject.Image>
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
           <MediaObject.Description>
-            Body text is vertically centered with the media.
+            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+            voluptatem. Minus quidem ipsam quia iusto.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>
@@ -72,17 +77,20 @@ export const AlignedToCenter: Story = {
   ),
 };
 
-// TUI Plus pattern "Aligned to bottom".
+// TUI Plus pattern "Aligned to bottom" — the media lines up with the last line.
 export const AlignedToBottom: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject align="bottom">
+      <MediaObject align="bottom" className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="size-16" />
         </MediaObject.Image>
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
-          <MediaObject.Description>Bottom-aligned content.</MediaObject.Description>
+          <MediaObject.Description>
+            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+            voluptatem. Minus quidem ipsam quia iusto.
+          </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>
     </div>
@@ -93,15 +101,15 @@ export const AlignedToBottom: Story = {
 export const Stretched: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject align="stretch">
+      <MediaObject align="stretch" className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="h-full w-16" />
         </MediaObject.Image>
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
           <MediaObject.Description>
-            Media takes the full body height via `align='stretch'` and a media element sized with
-            `h-full`.
+            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+            voluptatem. Minus quidem ipsam quia iusto.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>
@@ -113,14 +121,15 @@ export const Stretched: Story = {
 export const MediaOnRight: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject mediaPosition="right">
+      <MediaObject mediaPosition="right" className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="size-16" />
         </MediaObject.Image>
         <MediaObject.Body>
           <MediaObject.Title>Lorem ipsum</MediaObject.Title>
           <MediaObject.Description>
-            Reversed row — media now sits on the right via `mediaPosition='right'`.
+            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+            voluptatem. Minus quidem ipsam quia iusto.
           </MediaObject.Description>
         </MediaObject.Body>
       </MediaObject>
