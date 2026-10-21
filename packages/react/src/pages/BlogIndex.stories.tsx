@@ -5,13 +5,14 @@ import { Navbar } from '../navigation/Navbar';
 import { placeholderAvatar, placeholderCover } from '../storybook-avatars';
 import { ContentNarrow } from '../templates/ContentNarrow';
 import { Badge } from '../ui/Badge';
+import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus marketing/blog-sections — 5 variants for Cosmos consumption.
 // Each story is a self-contained "From the blog" page section.
 
 const meta = {
   title: 'Pages/Blog Index',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

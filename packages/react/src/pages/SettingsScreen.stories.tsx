@@ -15,6 +15,7 @@ import { FormFooter } from '../forms/FormFooter';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Accordion } from '../ui/Accordion';
 import { Button } from '../ui/Button';
+import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Settings Screens" — typical user settings page
 // with a horizontal sub-nav (Account / Notifications / Billing / Teams /
@@ -24,7 +25,7 @@ import { Button } from '../ui/Button';
 
 const meta = {
   title: 'Pages/Settings Screen',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

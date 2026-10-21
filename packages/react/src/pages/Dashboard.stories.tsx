@@ -52,10 +52,11 @@ import { Pagination } from '../navigation/Pagination';
 import { Avatar } from '../ui/Avatar';
 import type { ColumnDef } from '../table/types';
 import type { HealthStatus } from '../status/types';
+import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
   title: 'Pages/Dashboard',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

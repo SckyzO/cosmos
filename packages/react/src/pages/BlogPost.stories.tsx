@@ -11,6 +11,7 @@ import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
 import { CookieBanner } from '../ui/CookieBanner';
 import { GridList } from '../lists/GridList';
+import { portalDocsParams } from '../storybook-helpers';
 
 // Pages/BlogPost — refined article reading template.
 // Composed exclusively from Cosmos primitives + tokens.
@@ -19,7 +20,7 @@ import { GridList } from '../lists/GridList';
 
 const meta = {
   title: 'Pages/Blog Post',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

@@ -40,10 +40,11 @@ import { SectionLabel } from '../ui/SectionLabel';
 import { StatefulSaveButton, type SaveState } from '../ui/StatefulSaveButton';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { UserMenu } from '../ui/UserMenu';
+import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
   title: 'Pages/Profile',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

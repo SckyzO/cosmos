@@ -29,6 +29,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
 import { IconBox } from '../ui/IconBox';
+import { portalDocsParams } from '../storybook-helpers';
 
 // Pages/DocPage — component documentation template (RTFM).
 // Style: Stripe Docs × Linear Docs × Tailwind Docs, dressed in Cosmos tokens.
@@ -36,7 +37,7 @@ import { IconBox } from '../ui/IconBox';
 
 const meta = {
   title: 'Pages/Doc Page',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 

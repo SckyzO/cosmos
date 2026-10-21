@@ -16,6 +16,7 @@ import { Topbar } from '../layout/Topbar';
 import { StackedList } from '../lists/StackedList';
 import { HealthDot } from '../status/HealthDot';
 import { Badge } from '../ui/Badge';
+import { portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Home Screens" — sidebar shell with a list of
 // items in the main column and an activity feed in the secondary panel.
@@ -23,7 +24,7 @@ import { Badge } from '../ui/Badge';
 
 const meta = {
   title: 'Pages/Home Screen',
-  parameters: { layout: 'fullscreen' },
+  parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
 
