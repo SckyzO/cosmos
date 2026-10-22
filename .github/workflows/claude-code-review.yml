@@ -20,9 +20,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write # the inline review comments
       issues: read
-      id-token: write
     steps:
       # The default branch, never the PR head: this job holds the Claude token,
       # and a PR could ship its own .claude/ settings or hooks. The review
@@ -34,6 +33,9 @@ jobs:
       - uses: anthropics/claude-code-action@db77d4d3c98f3f6380e7cd45ffba2342a3dbde3c # v1.0.254
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The job's own token, scoped by `permissions` above. Without it the action trades an
+          # OIDC token for a write token of the Claude app.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.issue.number }}'

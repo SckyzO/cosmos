@@ -147,3 +147,13 @@ test('claude.yml starts a runner only for the owner, members and collaborators',
   // `assigned` never fires without `assignee_trigger`.
   expect(workflow).not.toMatch(/assigned/);
 });
+
+test('the Claude review uses the job token, not the Claude app token', () => {
+  const review = read('.github/workflows/claude-code-review.yml');
+  // Without github_token the action exchanges an OIDC token for a write token
+  // of the Claude GitHub app; a review only needs to comment on the PR.
+  expect(review).toMatch(/github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/);
+  expect(review).not.toMatch(/id-token:/);
+  expect(review).toMatch(/^\s+contents: read$/m);
+  expect(review).toMatch(/^\s+pull-requests: write\b/m);
+});
