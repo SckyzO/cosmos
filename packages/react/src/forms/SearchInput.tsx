@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { Search } from 'lucide-react';
+import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
-export type SearchInputProps = {
+export type SearchInputProps = FieldA11yProps & {
+  name?: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
@@ -13,15 +15,22 @@ export const SearchInput = ({
   onChange,
   placeholder = 'Search…',
   className,
-}: SearchInputProps) => (
-  <div className={clsx('relative inline-flex h-9 w-full items-center', className)}>
-    <Search aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-3 pl-9 text-sm transition-colors focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-    />
-  </div>
-);
+  name,
+  ...a11y
+}: SearchInputProps) => {
+  const fieldA11y = useFieldA11y(a11y);
+  return (
+    <div className={clsx('relative inline-flex h-9 w-full items-center', className)}>
+      <Search aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
+      <input
+        type="text"
+        name={name}
+        {...fieldA11y}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-3 pl-9 text-sm transition-colors focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+      />
+    </div>
+  );
+};

@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { ElementType } from 'react';
+import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
 export type SegmentOption<T extends string> = {
   label: string;
@@ -7,7 +8,7 @@ export type SegmentOption<T extends string> = {
   icon?: ElementType;
 };
 
-export type SegmentedControlProps<T extends string> = {
+export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   options: SegmentOption<T>[];
   value: T;
   onChange: (v: T) => void;
@@ -19,33 +20,39 @@ export const SegmentedControl = <T extends string>({
   value,
   onChange,
   className,
-}: SegmentedControlProps<T>) => (
-  <div
-    className={clsx(
-      'inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
-      className
-    )}
-  >
-    {options.map((opt, i) => {
-      const Icon = opt.icon;
-      const isActive = opt.value === value;
-      return (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className={clsx(
-            'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',
-            i > 0 && 'border-l border-gray-200 dark:border-gray-700',
-            isActive
-              ? 'bg-brand-500 text-white'
-              : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
-          )}
-        >
-          {Icon && <Icon className="h-4 w-4" />}
-          {opt.label}
-        </button>
-      );
-    })}
-  </div>
-);
+  ...a11y
+}: SegmentedControlProps<T>) => {
+  const fieldA11y = useFieldA11y(a11y);
+  return (
+    <div
+      role="group"
+      {...fieldA11y}
+      className={clsx(
+        'inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
+        className
+      )}
+    >
+      {options.map((opt, i) => {
+        const Icon = opt.icon;
+        const isActive = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',
+              i > 0 && 'border-l border-gray-200 dark:border-gray-700',
+              isActive
+                ? 'bg-brand-500 text-white'
+                : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
+            )}
+          >
+            {Icon && <Icon className="h-4 w-4" />}
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
