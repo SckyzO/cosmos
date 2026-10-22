@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 
@@ -73,4 +74,27 @@ export const FastShortWindow: Story = {
 export const CompactHeight: Story = {
   args: { height: 140 },
   render: (args) => <Replay {...args} trace={CPU} />,
+};
+
+// ApexCharts hides an annotation group with this class until its first
+// animation ends.
+const visibleThresholdLines = (root: HTMLElement) =>
+  [...root.querySelectorAll('.apexcharts-yaxis-annotations')]
+    .filter((group) => !group.closest('.apexcharts-element-hidden'))
+    .flatMap((group) => [...group.querySelectorAll('line')]).length;
+
+/**
+ * Samples that arrive while ApexCharts still runs its first render must not
+ * drop the threshold lines.
+ */
+export const ThresholdsSurviveEarlyUpdates: Story = {
+  tags: ['!dev'],
+  args: { intervalMs: 50 },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(canvasElement.querySelector('.apexcharts-line')).not.toBeNull());
+    // Let the first animation (and the updates racing it) settle.
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await waitFor(() => expect(visibleThresholdLines(canvasElement)).toBe(2), { timeout: 2000 });
+  },
 };
