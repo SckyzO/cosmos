@@ -1,5 +1,6 @@
 export * from './types';
 export * from './DataTable';
+export * from './Table';
 export * from './ColumnHeader';
 export * from './ColumnFilterDropdown';
 export * from './ActiveFiltersBar';
