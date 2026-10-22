@@ -97,7 +97,7 @@ export const MultipleDividers: Story = {
 
 /**
  * a11y: the trigger advertises a popup (aria-haspopup + aria-expanded), the
- * panel is a real menu (role=menu / role=menuitem), opening moves focus to the
+ * panel is a real menu (role=menu / role=menuitemradio), opening moves focus to the
  * first item, and ArrowDown roves between items.
  */
 export const MenuSemanticsAndKeyboard: Story = {
@@ -129,7 +129,7 @@ export const MenuSemanticsAndKeyboard: Story = {
 
     const menu = await scope.findByRole('menu');
     await expect(menu).toBeInTheDocument();
-    const items = within(menu).getAllByRole('menuitem');
+    const items = within(menu).getAllByRole('menuitemradio');
     await expect(items).toHaveLength(3);
 
     // Opening focuses the first item; ArrowDown moves to the second.
@@ -141,5 +141,43 @@ export const MenuSemanticsAndKeyboard: Story = {
     await userEvent.keyboard('{Escape}');
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await expect(document.activeElement).toBe(trigger);
+  },
+};
+
+export const SelectedItemIsChecked: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [v, setV] = useState('settings');
+    return (
+      <Wrap>
+        <Dropdown
+          label="Actions"
+          value={v}
+          onChange={setV}
+          options={[
+            { value: 'profile', label: 'Profile' },
+            { value: 'settings', label: 'Settings' },
+          ]}
+        />
+      </Wrap>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const scope = within(canvasElement);
+    await userEvent.click(scope.getByRole('button', { name: 'Settings' }));
+    const menu = within(await scope.findByRole('menu'));
+    await expect(
+      menu.getByRole('menuitemradio', { name: 'Settings', checked: true })
+    ).toBeVisible();
+    await expect(
+      menu.getByRole('menuitemradio', { name: 'Profile', checked: false })
+    ).toBeVisible();
+
+    await userEvent.click(menu.getByRole('menuitemradio', { name: 'Profile' }));
+    await userEvent.click(scope.getByRole('button', { name: 'Profile' }));
+    const reopened = within(await scope.findByRole('menu'));
+    await expect(
+      reopened.getByRole('menuitemradio', { name: 'Profile', checked: true })
+    ).toBeVisible();
   },
 };
