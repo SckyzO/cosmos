@@ -43,8 +43,7 @@ export const StepperInput = ({
     <div
       className={clsx(
         fullWidth ? 'flex w-full' : 'inline-flex',
-        // dark:focus-within: is explicit, dark:border-gray-700 would win otherwise.
-        'focus-within:border-brand-500 dark:focus-within:border-brand-500 h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
+        'focus-within:border-brand-500 h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
         disabled && 'opacity-50',
         className
       )}

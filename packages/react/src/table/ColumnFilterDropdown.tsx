@@ -41,7 +41,7 @@ export const ColumnFilterDropdown = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search…"
-            className="focus:border-brand-400 h-7 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+            className="focus:border-brand-500 h-7 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
           />
         </div>
       )}
