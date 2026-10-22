@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo, useState } from 'react';
 import { expect, userEvent } from 'storybook/test';
+import { expectTextContrast } from '../storybook-helpers';
 import { PasswordInput } from './PasswordInput';
 import {
   PasswordPolicyChecker,
@@ -96,3 +97,17 @@ export const LiveCheckUpdatesOnTyping: Story = {
     await expect(items[4]).toHaveClass(/text-gray/); // symbol: not yet
   },
 };
+
+// Unmet rules (gray-400) fell under 4.5:1 on light and sand (#151).
+const unmetRuleContrastIn = (theme: string): Story => ({
+  args: { rules: allOff },
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  play: async ({ canvas }) => {
+    for (const item of canvas.getAllByRole('listitem')) expectTextContrast(item);
+  },
+});
+
+export const UnmetRuleContrastInLight = unmetRuleContrastIn('light');
+export const UnmetRuleContrastInSand = unmetRuleContrastIn('sand');
+export const UnmetRuleContrastInDeepBlue = unmetRuleContrastIn('deep-blue');
