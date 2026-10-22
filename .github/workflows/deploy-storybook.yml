@@ -14,10 +14,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Read-only by default. Only the deploy job gets the Pages write and OIDC
+# permissions, so the job that installs and builds holds neither.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Cancel an in-flight deploy when a fresh commit lands on main, but
 # don't let preview/build jobs cancel each other across branches.
@@ -30,6 +30,9 @@ jobs:
     name: Build Storybook (static)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read # configure-pages reads the site settings
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -68,6 +71,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -157,3 +157,18 @@ test('the Claude review uses the job token, not the Claude app token', () => {
   expect(review).toMatch(/^\s+contents: read$/m);
   expect(review).toMatch(/^\s+pull-requests: write\b/m);
 });
+
+test('only the Storybook deploy job can write Pages or fetch an OIDC token', () => {
+  const workflow = read('.github/workflows/deploy-storybook.yml');
+  const jobsAt = workflow.indexOf('\njobs:');
+  expect(workflow.slice(0, jobsAt), 'workflow-level permissions').not.toMatch(
+    /pages: write|id-token:/
+  );
+  const jobs = workflow
+    .slice(jobsAt)
+    .split(/^ {2}(?=[\w-]+:\s*$)/m)
+    .slice(1);
+  const names = (re: RegExp) => jobs.filter((job) => re.test(job)).map((job) => job.split(':')[0]);
+  expect(names(/pages: write/)).toEqual(['deploy']);
+  expect(names(/id-token: write/)).toEqual(['deploy']);
+});
