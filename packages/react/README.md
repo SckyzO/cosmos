@@ -64,6 +64,48 @@ function Example() {
 }
 ```
 
+## Tables
+
+`DataTable` sorts, filters, searches and paginates its rows. For a short
+read-only table, compose the table primitives instead: `Table`, `TableCaption`,
+`TableHead`, `TableBody`, `TableFoot`, `TableRow`, `TableHeaderCell` and
+`TableCell` render the native elements with the Cosmos styling and no logic.
+
+```tsx
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@sckyzo/cosmos-react';
+
+<Table striped>
+  <TableCaption>Nodes</TableCaption>
+  <TableHead>
+    <TableRow>
+      <TableHeaderCell>Name</TableHeaderCell>
+      <TableHeaderCell numeric>CPU</TableHeaderCell>
+    </TableRow>
+  </TableHead>
+  <TableBody>
+    <TableRow>
+      <TableCell>node-101</TableCell>
+      <TableCell numeric>42%</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>;
+```
+
+`Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
+`striped` and `stickyHeader` (give the wrapper a height with
+`containerClassName`, e.g. `max-h-80`). Cells take `align` and `numeric`
+(right-aligned, tabular figures). `TableHeaderCell` sets `scope` to `col` in the
+head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
+stays inside the page on small screens.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are
