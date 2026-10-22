@@ -221,7 +221,7 @@ export const AllTimeShowsOlderMonths: Story = {
     const groups = () => canvas.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
     await expect(groups()).toEqual(['Today', 'Yesterday', 'Earlier this month']);
 
-    await userEvent.click(canvas.getByRole('button', { name: 'All time' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'All time' }));
     await expect(groups()).toEqual([
       'Today',
       'Yesterday',
@@ -231,7 +231,7 @@ export const AllTimeShowsOlderMonths: Story = {
     ]);
     await expect(canvas.getByText('Project Cosmos created')).toBeVisible();
 
-    await userEvent.click(canvas.getByRole('button', { name: 'This month' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'This month' }));
     await expect(canvas.queryByText('Project Cosmos created')).toBeNull();
   },
 };

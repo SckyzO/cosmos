@@ -89,11 +89,12 @@ export const AppearanceSettings = ({
   const textSizeHeadingId = useId();
   return (
     <div className={clsx('space-y-6', className)}>
-      <div role="group" aria-labelledby={themeHeadingId}>
+      <div>
         <p id={themeHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {themeLabel}
         </p>
         <PalettePicker
+          aria-labelledby={themeHeadingId}
           className="mt-3"
           palettes={themes}
           value={theme}
@@ -102,11 +103,12 @@ export const AppearanceSettings = ({
           onChange={(id) => onThemeChange(id as CosmosTheme)}
         />
       </div>
-      <div role="group" aria-labelledby={accentHeadingId}>
+      <div>
         <p id={accentHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {accentLabel}
         </p>
         <AccentPicker
+          aria-labelledby={accentHeadingId}
           className="mt-3"
           colors={accents}
           value={accent}
@@ -115,11 +117,12 @@ export const AppearanceSettings = ({
         />
       </div>
       {onFontChange && (
-        <div role="group" aria-labelledby={fontHeadingId}>
+        <div>
           <p id={fontHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {fontLabel}
           </p>
           <OptionPicker
+            aria-labelledby={fontHeadingId}
             className="mt-3"
             cols={3}
             value={font}
@@ -142,7 +145,7 @@ export const AppearanceSettings = ({
         </div>
       )}
       {onTextSizeChange && (
-        <div role="group" aria-labelledby={textSizeHeadingId}>
+        <div>
           <p
             id={textSizeHeadingId}
             className="text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -150,6 +153,7 @@ export const AppearanceSettings = ({
             {textSizeLabel}
           </p>
           <OptionPicker
+            aria-labelledby={textSizeHeadingId}
             className="mt-3"
             cols={4}
             value={textSize}

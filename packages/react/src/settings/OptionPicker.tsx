@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
+import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
+import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { OptionCard, type OptionCardProps } from './OptionCard';
 
 export type OptionItem = Pick<OptionCardProps, 'id' | 'label' | 'desc' | 'preview'>;
 
-export type OptionPickerProps = {
+export type OptionPickerProps = FieldA11yProps & {
   options: OptionItem[];
   value: string;
   onChange: (id: string) => void;
@@ -22,21 +24,30 @@ export const OptionPicker = ({
   onChange,
   cols = 5,
   className,
-}: OptionPickerProps) => (
-  <div
-    className={clsx('grid gap-2', className)}
-    style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-  >
-    {options.map((o) => (
-      <OptionCard
-        key={o.id}
-        id={o.id}
-        label={o.label}
-        desc={o.desc}
-        preview={o.preview}
-        active={o.id === value}
-        onClick={() => onChange(o.id)}
-      />
-    ))}
-  </div>
-);
+  ...a11y
+}: OptionPickerProps) => {
+  const fieldA11y = useFieldA11y(a11y);
+  const anyChecked = options.some((item) => item.id === value);
+  return (
+    <div
+      role="radiogroup"
+      {...fieldA11y}
+      onKeyDown={onRadioGroupKeyDown}
+      className={clsx('grid gap-2', className)}
+      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+    >
+      {options.map((o, i) => (
+        <OptionCard
+          key={o.id}
+          id={o.id}
+          label={o.label}
+          desc={o.desc}
+          preview={o.preview}
+          active={o.id === value}
+          onClick={() => onChange(o.id)}
+          tabIndex={radioTabIndex(o.id === value, i, anyChecked)}
+        />
+      ))}
+    </div>
+  );
+};

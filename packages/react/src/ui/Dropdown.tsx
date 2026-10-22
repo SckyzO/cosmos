@@ -57,7 +57,9 @@ export const Dropdown = ({
   // Move focus to the first item when the menu opens (ARIA menu pattern).
   useEffect(() => {
     if (!open) return;
-    const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)');
+    const first = menuRef.current?.querySelector<HTMLElement>(
+      '[role="menuitemradio"]:not(:disabled)'
+    );
     first?.focus();
   }, [open]);
 
@@ -74,7 +76,7 @@ export const Dropdown = ({
       return;
     }
     const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? []
+      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]:not(:disabled)') ?? []
     );
     if (items.length === 0) return;
     const currentIndex = items.indexOf(document.activeElement as HTMLElement);
@@ -144,7 +146,8 @@ export const Dropdown = ({
                 <button
                   key={opt.value}
                   type="button"
-                  role="menuitem"
+                  role="menuitemradio"
+                  aria-checked={isSelected}
                   disabled={opt.disabled}
                   onClick={() => {
                     onChange?.(opt.value);

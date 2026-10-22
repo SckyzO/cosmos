@@ -52,7 +52,61 @@ export const Controlled: Story = {
 export const ClickFiresOnChange: Story = {
   args: { options: VIEWS as unknown as never, value: 'list', onChange: fn() },
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Grid' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Grid' }));
     await expect(args.onChange).toHaveBeenCalledWith('grid');
+  },
+};
+
+export const SelectedSegmentIsChecked: Story = {
+  tags: ['!dev'],
+  args: { options: VIEWS as unknown as never, value: 'grid', 'aria-label': 'View' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('radiogroup', { name: 'View' })).toBeInTheDocument();
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
+    await expect(canvas.getByRole('radio', { name: 'List', checked: false })).toHaveAttribute(
+      'tabindex',
+      '-1'
+    );
+  },
+};
+
+const ControlledView = () => {
+  const [v, setV] = useState<'list' | 'grid' | 'map'>('list');
+  return (
+    <SegmentedControl
+      aria-label="View"
+      options={VIEWS as unknown as never}
+      value={v}
+      onChange={setV}
+    />
+  );
+};
+
+export const ArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledView />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'List' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await expect(canvas.getByRole('radio', { name: 'Map', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+  },
+};
+
+// Browser shortcuts such as Alt+ArrowLeft (back) must reach the browser.
+export const ModifiedArrowKeysAreIgnored: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledView />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}{Control>}{ArrowRight}{/Control}');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
   },
 };

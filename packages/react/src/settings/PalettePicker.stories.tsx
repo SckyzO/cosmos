@@ -123,7 +123,7 @@ export const UnevenLabelsFillCards: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    const cards = canvas.getAllByRole('button');
+    const cards = canvas.getAllByRole('radio');
     const heights = new Set(cards.map((c) => c.getBoundingClientRect().height));
     await expect(heights.size).toBe(1);
     for (const card of cards) {

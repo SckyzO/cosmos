@@ -30,6 +30,8 @@ export type PaletteCardProps = {
   meta: PaletteMeta;
   active?: boolean;
   onClick?: () => void;
+  /** Roving tab stop, set by the picker's radio group. */
+  tabIndex?: number;
   className?: string;
 };
 
@@ -38,11 +40,19 @@ export type PaletteCardProps = {
  * of a palette plus its label. Use inside `<PalettePicker>` to let the
  * user pick a light/dark theme palette.
  */
-export const PaletteCard = ({ meta, active = false, onClick, className }: PaletteCardProps) => (
+export const PaletteCard = ({
+  meta,
+  active = false,
+  onClick,
+  tabIndex,
+  className,
+}: PaletteCardProps) => (
   <button
     type="button"
     onClick={onClick}
-    aria-pressed={active}
+    role="radio"
+    aria-checked={active}
+    tabIndex={tabIndex}
     aria-label={meta.label}
     className={clsx(
       'group relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',

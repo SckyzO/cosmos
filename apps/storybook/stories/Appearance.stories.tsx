@@ -83,21 +83,21 @@ export const PickingAppliesToDocument: Story = {
   render: renderPlayground,
   play: async ({ canvas }) => {
     const root = document.documentElement;
-    await userEvent.click(canvas.getByRole('button', { name: 'Sand' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Teal' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Sand' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Teal' }));
     await expect(root).toHaveClass('sand');
     await expect(root).not.toHaveClass('dark');
     await expect(root).toHaveAttribute('data-accent', 'teal');
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Inter' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Large' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Inter' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Large' }));
     await expect(root).toHaveAttribute('data-font', 'inter');
     await expect(root).toHaveAttribute('data-text-size', 'lg');
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Light' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Blue' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Outfit' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Default' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Light' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Blue' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Outfit' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Default' }));
     await expect(root).not.toHaveClass('sand');
     await expect(root).not.toHaveAttribute('data-accent');
     await expect(root).not.toHaveAttribute('data-font');
