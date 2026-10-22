@@ -106,6 +106,31 @@ import {
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
 
+## Chat
+
+Building blocks for a conversation view: `ChatThread` (a `role="log"` live
+region that stays scrolled to the newest message), `ChatMessage`,
+`ChatDaySeparator`, `ChatTypingIndicator`, `ChatComposer` (Enter sends,
+Shift+Enter adds a line) and `ChatConversationList` for a two-pane layout.
+Message text is always rendered as text, never HTML; http(s) URLs become links.
+
+`Chatbot` is a floating widget built on them: a launcher at the bottom right
+opens a panel (full-screen under 480px). It has no network code, the app owns
+the messages and answers `onSend`:
+
+```tsx
+<Chatbot
+  messages={messages}
+  onSend={(text) => ask(text)}
+  typing={waiting}
+  suggestions={['Show my alerts']}
+  error={failed ? 'The assistant could not be reached.' : undefined}
+  onRetry={retry}
+/>
+```
+
+A bot message with `streaming: true` shows a caret while its text grows.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are

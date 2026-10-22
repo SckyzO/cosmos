@@ -172,6 +172,7 @@ const preview: Preview = {
           'Actions',
           'Layout',
           'Lists',
+          'Chat',
           'Tables',
           'Settings',
           'Charts',
