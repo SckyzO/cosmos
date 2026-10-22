@@ -99,7 +99,7 @@ const CommandPaletteInput = forwardRef<ElementRef<typeof Command.Input>, Command
         <Command.Input
           ref={ref}
           className={clsx(
-            'flex h-12 w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-white',
+            'flex h-12 w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400',
             className
           )}
           {...rest}

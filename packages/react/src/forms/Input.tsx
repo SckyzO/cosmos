@@ -75,7 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             id={inputId}
             {...fieldA11y}
             className={clsx(
-              'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
+              'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white dark:placeholder:text-gray-400',
               className
             )}
             {...rest}
@@ -99,7 +99,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             id={inputId}
             {...fieldA11y}
             className={clsx(
-              'h-full w-full rounded-lg border bg-white text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+              'h-full w-full rounded-lg border bg-white text-sm transition-colors placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400',
               Icon ? 'pl-9' : 'pl-3',
               rightSlot ? 'pr-16' : 'pr-3',
               error

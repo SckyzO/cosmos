@@ -244,7 +244,7 @@ export const DatePicker = (props: DatePickerProps) => {
       <span
         className={clsx(
           'flex-1 truncate',
-          date ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'
+          date ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
         )}
       >
         {date ? format(date) : placeholder}
