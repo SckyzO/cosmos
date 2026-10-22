@@ -151,7 +151,13 @@ export const FocusManagement: Story = {
 
     // The close button does the same.
     await userEvent.keyboard('{Enter}');
-    await userEvent.click(await body.findByRole('button', { name: 'Close chat' }));
+    // The panel ignores the pointer until its enter transition starts, a frame
+    // after opening; focus on the composer means it is shown.
+    const reopened = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await waitFor(() =>
+      expect(within(reopened).getByRole('textbox', { name: 'Message' })).toHaveFocus()
+    );
+    await userEvent.click(within(reopened).getByRole('button', { name: 'Close chat' }));
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
     await expect(launcher).toHaveFocus();
   },
