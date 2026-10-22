@@ -30,6 +30,9 @@ const ALIGN_CLASS = {
   center: 'text-center',
 } as const;
 
+// No filter applied yet: the column still opens, with nothing checked.
+const NO_SELECTION: Set<string> = new Set();
+
 export const ColumnHeader = ({
   label,
   align = 'left',
@@ -38,14 +41,14 @@ export const ColumnHeader = ({
   sortDir = null,
   onSortToggle,
   filterValues = [],
-  filterSelected,
+  filterSelected = NO_SELECTION,
   onFilterToggle,
   onFilterClear,
   density = 'default',
   className,
 }: ColumnHeaderProps) => {
   const [open, setOpen] = useState(false);
-  const filterCount = filterSelected?.size ?? 0;
+  const filterCount = filterSelected.size;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,7 +99,7 @@ export const ColumnHeader = ({
               <Filter className="h-3 w-3" />
               {filterCount > 0 && <span className="text-3xs">{filterCount}</span>}
             </button>
-            {open && filterSelected && onFilterToggle && onFilterClear && (
+            {open && onFilterToggle && onFilterClear && (
               <ColumnFilterDropdown
                 values={filterValues}
                 selected={filterSelected}
