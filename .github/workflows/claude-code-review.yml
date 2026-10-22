@@ -33,3 +33,21 @@ jobs:
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+
+      # The plugin's first step may decide a PR needs no review and stop
+      # without posting anything, and the job still passes. Fail instead, so a
+      # green check always means a review was posted; re-run with
+      # `@claude review`.
+      - name: Fail when no review was posted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          posted=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.user.login == "claude[bot]")] | length')
+          inline=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/comments" --paginate \
+            --jq '[.[] | select(.user.login == "claude[bot]")] | length')
+          if [ "$posted" -eq 0 ] && [ "$inline" -eq 0 ]; then
+            echo "::error::The review skipped this PR without posting a comment. Comment '@claude review' to run it."
+            exit 1
+          fi

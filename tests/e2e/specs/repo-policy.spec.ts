@@ -117,3 +117,12 @@ test('only the publish job holds the npm OIDC token, and it runs nothing but npm
   // Install, build and checkout run in the job without the token.
   expect(withToken[0]).not.toMatch(/pnpm |actions\/checkout|cache:/);
 });
+
+test('the Claude review fails when it posts nothing', () => {
+  const workflow = read('.github/workflows/claude-code-review.yml');
+  const action = workflow.indexOf('anthropics/claude-code-action@');
+  const check = workflow.indexOf('name: Fail when no review was posted');
+  expect(action).toBeGreaterThan(-1);
+  expect(check).toBeGreaterThan(action);
+  expect(workflow.slice(check)).toMatch(/exit 1/);
+});
