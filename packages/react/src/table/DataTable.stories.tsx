@@ -3,6 +3,7 @@ import { Archive, Download, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectFocusBorder } from '../storybook-helpers';
+import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
 import type { ColumnDef, DataTableDensity } from './types';
 import { StatusBadge } from '../status/StatusBadge';
@@ -545,5 +546,25 @@ export const SearchFocusShowsAccentBorderInDark: Story = {
   ),
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('searchbox', { name: 'Search rows' }));
+  },
+};
+
+export const ColumnFilterSearchFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <div className="relative h-72">
+        <ColumnFilterDropdown
+          values={['critical', 'warning', 'info']}
+          selected={new Set()}
+          onToggle={() => {}}
+          onClear={() => {}}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByPlaceholderText('Search…'));
   },
 };

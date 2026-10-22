@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { StepperInput } from './StepperInput';
 
 const meta = {
@@ -74,5 +75,16 @@ export const NarrowWidthKeepsArrowsInside: Story = {
     await expect(increase.getBoundingClientRect().right).toBeLessThanOrEqual(
       control.getBoundingClientRect().right
     );
+  },
+};
+
+// The inner input drops its outline: the wrapper shows focus with its border (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { value: 5 },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await expectFocusBorder(input, { border: input.closest('.rounded-lg') as HTMLElement });
   },
 };

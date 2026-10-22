@@ -138,3 +138,12 @@ export const FocusShowsAccentBorderInDark: Story = {
     await expectFocusBorder(canvas.getByRole('combobox'));
   },
 };
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { options: PEOPLE, error: 'Pick someone' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('combobox'), { token: '--color-red-500' });
+  },
+};
