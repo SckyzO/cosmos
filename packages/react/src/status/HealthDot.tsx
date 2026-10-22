@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { type HealthStatus, STATUS_COLOR } from './types';
+import { type HealthStatus, STATUS_DOT } from './types';
 
 export type HealthDotProps = {
   status: HealthStatus;
@@ -18,13 +18,12 @@ export const HealthDot = ({ status, pulse = false, className }: HealthDotProps) 
   <span className={clsx('relative flex h-2.5 w-2.5 shrink-0', className)}>
     {pulse && (
       <span
-        className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
-        style={{ backgroundColor: STATUS_COLOR[status] }}
+        className={clsx(
+          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
+          STATUS_DOT[status]
+        )}
       />
     )}
-    <span
-      className="relative inline-flex h-2.5 w-2.5 rounded-full"
-      style={{ backgroundColor: STATUS_COLOR[status] }}
-    />
+    <span className={clsx('relative inline-flex h-2.5 w-2.5 rounded-full', STATUS_DOT[status])} />
   </span>
 );
