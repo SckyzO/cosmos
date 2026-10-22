@@ -27,8 +27,7 @@
     "browsers:install": "pnpm --filter '@cosmos/e2e' exec playwright install chromium && pnpm --filter '@cosmos/storybook' exec playwright install chromium",
     "build": "pnpm -r build",
     "storybook": "pnpm --filter '@cosmos/storybook' dev",
-    "storybook:build": "pnpm --filter '@cosmos/storybook' build",
-    "ci": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+    "storybook:build": "pnpm --filter '@cosmos/storybook' build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
