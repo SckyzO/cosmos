@@ -79,7 +79,7 @@ export const MiniCalendar = ({
         {WEEK_DAYS.map((d) => (
           <span
             key={d}
-            className="text-3xs py-1 font-semibold tracking-wider text-gray-400 uppercase"
+            className="text-3xs py-1 font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
             {d}
           </span>
