@@ -231,3 +231,36 @@ export const EscapeCloses: Story = {
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
   },
 };
+
+/** Opening from the keyboard moves focus into the calendar; Escape brings it back. */
+export const KeyboardFocusManagement: Story = {
+  tags: ['!autodocs'],
+  args: { label: 'Pick' },
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /pick/i });
+    const dialog = () => document.querySelector('[role="dialog"]');
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(dialog()).not.toBeNull());
+    await waitFor(() => expect(dialog()!.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+  },
+};
+
+/** In range mode, focus goes back to the trigger that opened the calendar. */
+export const RangeRestoresFocusToOpeningTrigger: Story = {
+  tags: ['!autodocs'],
+  args: { mode: 'range', label: 'Stay' },
+  play: async ({ canvas }) => {
+    const to = canvas.getByRole('button', { name: /end date/i });
+    const dialog = () => document.querySelector('[role="dialog"]');
+    to.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(dialog()?.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(to);
+  },
+};

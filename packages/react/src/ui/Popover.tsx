@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { usePortalFocus } from './overlayA11y';
 
 export type PopoverPosition = 'top' | 'bottom' | 'left' | 'right';
 /** Horizontal alignment with the trigger, for `top` / `bottom` positions. */
@@ -84,15 +85,6 @@ const PopoverRoot = ({
       observer.disconnect();
     };
   }, [open, refreshRect]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, setOpen]);
 
   return (
     <PopoverContext.Provider value={{ open, setOpen, triggerRef, triggerRect, refreshRect }}>
@@ -244,17 +236,24 @@ const PopoverContent = ({
   className,
   children,
 }: PopoverContentProps) => {
-  const { open, setOpen, triggerRect } = useCtx();
+  const { open, setOpen, triggerRef, triggerRect } = useCtx();
+  const panelRef = usePortalFocus<HTMLDivElement>({
+    open,
+    onClose: () => setOpen(false),
+    triggerRef,
+  });
   if (!open || !triggerRect) return null;
   return createPortal(
     <>
       <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
       <div
+        ref={panelRef}
         role="dialog"
+        tabIndex={-1}
         aria-label={ariaLabel}
         style={positionStyle(position, align, triggerRect, offset)}
         className={clsx(
-          'fixed z-[9999] rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
+          'fixed z-[9999] rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
           width,
           className
         )}

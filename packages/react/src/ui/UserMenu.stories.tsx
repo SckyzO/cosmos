@@ -259,3 +259,60 @@ export const EscapeCloses: Story = {
     await waitFor(() => expect(document.querySelector('[role="menu"]')).toBeNull());
   },
 };
+
+/** WAI-ARIA menu button: arrows move between items, Tab and Escape leave the menu. */
+export const KeyboardMenuNavigation: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <InTopbar>
+      <UserMenu>
+        <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+        <UserMenu.Content>
+          <UserMenu.Items>
+            <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+            <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
+            <UserMenu.Item icon={LogOut} variant="danger">
+              Sign Out
+            </UserMenu.Item>
+          </UserMenu.Items>
+        </UserMenu.Content>
+      </UserMenu>
+      <button type="button">After</button>
+    </InTopbar>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /user menu for/i });
+    const menu = () => document.querySelector('[role="menu"]');
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(menu()).not.toBeNull());
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Profile'));
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Settings');
+    await userEvent.keyboard('{End}');
+    await expect(document.activeElement).toHaveTextContent('Sign Out');
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Profile');
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(document.activeElement).toHaveTextContent('Sign Out');
+    await userEvent.keyboard('{Home}');
+    await expect(document.activeElement).toHaveTextContent('Profile');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+    // ArrowUp on the trigger opens the menu on its last item.
+    await userEvent.keyboard('{ArrowUp}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Sign Out'));
+    // Tab closes the menu and moves on to the next element after the trigger.
+    await userEvent.tab();
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+    // Same from the first item: Tab skips the tabIndex -1 items and leaves.
+    trigger.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Profile'));
+    await userEvent.tab();
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+  },
+};

@@ -257,3 +257,26 @@ export const EscapeKeyCloses: Story = {
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
   },
 };
+
+/** Opening from the keyboard moves focus into the panel; Escape brings it back. */
+export const KeyboardFocusManagement: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-[420px] items-start justify-end">
+      <FullPanel defaultOpen={false} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /^notifications$/i });
+    const dialog = () => document.querySelector('[role="dialog"]');
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(dialog()).not.toBeNull());
+    await waitFor(() => expect(dialog()!.contains(document.activeElement)).toBe(true));
+    await userEvent.tab();
+    await expect(dialog()!.contains(document.activeElement)).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+  },
+};

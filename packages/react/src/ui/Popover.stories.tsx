@@ -277,3 +277,68 @@ export const OnOpenChangeFires: Story = {
     await expect(extra.onOpenChange).toHaveBeenCalledWith(true);
   },
 };
+
+/** Panels open on mount don't take focus, so they don't close each other. */
+export const DefaultOpenPanelsStayOpen: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-48 items-center justify-center gap-24">
+      {['One', 'Two'].map((name) => (
+        <Popover key={name} defaultOpen>
+          <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">{name}</Popover.Trigger>
+          <Popover.Content aria-label={name}>
+            <button type="button">Inside {name}</button>
+          </Popover.Content>
+        </Popover>
+      ))}
+    </div>
+  ),
+  play: async () => {
+    await waitFor(() => expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(2));
+    await expect(document.activeElement).toBe(document.body);
+  },
+};
+
+/** Keyboard users land in the panel, can Tab out of it, and get back to the trigger. */
+export const KeyboardFocusManagement: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-48 items-center justify-center gap-4">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Open</Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <button type="button">First</button>
+          <button type="button">Second</button>
+        </Popover.Content>
+      </Popover>
+      <button type="button">After</button>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Open' });
+    const dialog = () => document.querySelector('[role="dialog"]');
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(dialog()).not.toBeNull());
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('First'));
+    await userEvent.tab();
+    await expect(document.activeElement).toHaveTextContent('Second');
+    // Tab past the last item: the panel closes and focus continues after the trigger.
+    await userEvent.tab();
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+    // Escape closes and returns focus to the trigger.
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('First'));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+    // Shift+Tab from the first item goes back to the trigger.
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('First'));
+    await userEvent.tab({ shift: true });
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+  },
+};

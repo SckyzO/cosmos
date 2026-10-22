@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { usePortalFocus } from '../ui/overlayA11y';
 import { Calendar } from './Calendar';
 
 export type DateRange = {
@@ -88,6 +89,8 @@ export const DatePicker = (props: DatePickerProps) => {
   const fieldId = useId();
   const fromRef = useRef<HTMLButtonElement>(null);
   const toRef = useRef<HTMLButtonElement>(null);
+  // The trigger that opened the calendar: focus goes back to it on close.
+  const openerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
@@ -128,6 +131,7 @@ export const DatePicker = (props: DatePickerProps) => {
 
   const toggle = (next: boolean, side: 'from' | 'to' = 'from') => {
     if (next) {
+      openerRef.current = side === 'to' ? toRef.current : fromRef.current;
       anchor(side);
       setMonth(initialMonth);
     }
@@ -137,18 +141,19 @@ export const DatePicker = (props: DatePickerProps) => {
   useEffect(() => {
     if (!open) return;
     const refresh = () => anchor('from');
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
     window.addEventListener('resize', refresh);
     window.addEventListener('scroll', refresh, true);
-    document.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('resize', refresh);
       window.removeEventListener('scroll', refresh, true);
-      document.removeEventListener('keydown', onKey);
     };
   }, [open, anchor]);
+
+  const panelRef = usePortalFocus<HTMLDivElement>({
+    open,
+    onClose: () => setOpen(false),
+    triggerRef: openerRef,
+  });
 
   // ── Selection commit ────────────────────────────────────────────────────────
   const commitSingle = (date: Date | undefined) => {
@@ -225,9 +230,6 @@ export const DatePicker = (props: DatePickerProps) => {
       disabled={disabled}
       aria-haspopup="dialog"
       aria-expanded={open}
-      // `react-hooks/refs` flags this because `toggle → anchor → ref.current`,
-      // but the chain only runs in the click callback, never during render.
-      // eslint-disable-next-line react-hooks/refs
       onClick={() => toggle(!open, side)}
       className={clsx(
         fullWidth
@@ -307,10 +309,12 @@ export const DatePicker = (props: DatePickerProps) => {
           <>
             <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
             <div
+              ref={panelRef}
               role="dialog"
+              tabIndex={-1}
               aria-label={label ? `${label} calendar` : 'Calendar'}
               style={{ top: anchorRect.bottom + 6, left: anchorRect.left }}
-              className="fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+              className="fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900"
             >
               {isRange ? (
                 <Calendar
