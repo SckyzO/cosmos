@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 // Checks on the repo's supply-chain settings. They guard what reaches npm
@@ -171,4 +171,21 @@ test('only the Storybook deploy job can write Pages or fetch an OIDC token', () 
   const names = (re: RegExp) => jobs.filter((job) => re.test(job)).map((job) => job.split(':')[0]);
   expect(names(/pages: write/)).toEqual(['deploy']);
   expect(names(/id-token: write/)).toEqual(['deploy']);
+});
+
+test('no checkout leaves the GITHUB_TOKEN in the repo config', () => {
+  // A later step (a build script, an agent) could read the persisted token.
+  // None of the workflows pushes with the checkout's credentials.
+  const workflows = readdirSync(new URL('../../../.github/workflows/', import.meta.url)).filter(
+    (name) => name.endsWith('.yml')
+  );
+  expect(workflows.length).toBeGreaterThan(0);
+  for (const name of workflows) {
+    const lines = read(`.github/workflows/${name}`).split('\n');
+    lines.forEach((line, i) => {
+      if (!line.includes('uses: actions/checkout@')) return;
+      const step = lines.slice(i, i + 6).join('\n');
+      expect(step, `${name}:${i + 1}`).toMatch(/persist-credentials: false/);
+    });
+  }
 });
