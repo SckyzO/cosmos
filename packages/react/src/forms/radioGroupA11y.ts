@@ -13,9 +13,11 @@ export const radioTabIndex = (checked: boolean, index: number, anyChecked: boole
 /**
  * Arrow keys move focus to the next or previous radio of the group, wrapping,
  * and check it by clicking it; Home and End go to the first and last radio.
- * Set it as the `onKeyDown` of the `role="radiogroup"` element.
+ * Set it as the `onKeyDown` of the `role="radiogroup"` element. Keys with a
+ * modifier are left alone: Alt+ArrowLeft is the browser's Back.
  */
 export const onRadioGroupKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
   const radios = Array.from(
     e.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]:not(:disabled)')
   );
