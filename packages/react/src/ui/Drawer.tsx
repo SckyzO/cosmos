@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
@@ -14,18 +14,22 @@ const SIZE_CLASS: Record<DrawerSize, string> = {
   lg: 'w-[28rem]',
 };
 
-// Close-outside button offset = panel width. Used to position the X exactly
-// next to the panel edge, on the backdrop.
-const OUTSIDE_OFFSET_RIGHT: Record<DrawerSize, string> = {
-  sm: 'right-72',
-  md: 'right-96',
-  lg: 'right-[28rem]',
+// The close-outside button lives inside the panel (so the focus trap covers
+// it) and sits just past its inner edge, on the backdrop.
+const OUTSIDE_POSITION: Record<DrawerSide, string> = {
+  left: 'left-full',
+  right: 'right-full',
 };
-const OUTSIDE_OFFSET_LEFT: Record<DrawerSize, string> = {
-  sm: 'left-72',
-  md: 'left-96',
-  lg: 'left-[28rem]',
-};
+
+// The portal needs `document`: render nothing on the server and during
+// hydration, then portal once on the client.
+const noopSubscribe = () => () => {};
+const useIsClient = () =>
+  useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  );
 
 const SIDE_CLASS: Record<DrawerSide, string> = {
   left: 'left-0 border-r',
@@ -44,8 +48,9 @@ export type DrawerProps = {
   size?: DrawerSize;
   /**
    * Render a translucent overlay behind the panel that closes on click.
-   * Default `true`. Set `false` for the TUI "Empty" slide-over pattern
-   * where the page stays interactive behind the panel.
+   * Default `true`, which makes the drawer a modal dialog (`aria-modal`).
+   * Set `false` for the TUI "Empty" slide-over pattern where the page stays
+   * interactive behind the panel; the drawer is then a non-modal dialog.
    */
   withBackdrop?: boolean;
   /**
@@ -79,6 +84,14 @@ const Root = ({
 }: DrawerProps) => {
   const titleId = useId();
   const trapRef = useFocusTrap<HTMLElement>(open);
+  const isClient = useIsClient();
+  // `hidden` turns true once the slide-out ends, false as soon as it reopens.
+  const [hidden, setHidden] = useState(!open);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setHidden(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -89,10 +102,16 @@ const Root = ({
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
+  if (!isClient) return null;
+
   // Portal into document.body so the drawer escapes any clipping ancestor
   // (cards, sidebars, overflow:hidden containers). Without this, calling
   // Drawer from inside e.g. a SectionCard or modal renders it in a
   // confined coordinate space and the panel never appears.
+  //
+  // A closed drawer stays mounted so it can slide out, but it is `inert`
+  // at once and turns `invisible` when the slide ends, so its content leaves
+  // the tab order and the accessibility tree.
   return createPortal(
     <>
       {withBackdrop && (
@@ -105,37 +124,44 @@ const Root = ({
           aria-hidden
         />
       )}
-      {withBackdrop && closeOutside && (
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close drawer"
-          className={clsx(
-            'fixed top-4 z-50 flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-            // Position close button adjacent to the panel edge, on the backdrop.
-            side === 'right' ? OUTSIDE_OFFSET_RIGHT[size] : OUTSIDE_OFFSET_LEFT[size],
-            open ? 'opacity-100' : 'pointer-events-none opacity-0'
-          )}
-        >
-          <X className="size-6" aria-hidden />
-        </button>
-      )}
       <aside
         ref={trapRef}
         tabIndex={-1}
+        inert={!open}
+        aria-hidden={open ? undefined : true}
+        onTransitionEnd={(e) => {
+          if (!open && e.target === e.currentTarget && e.propertyName === 'transform') {
+            setHidden(true);
+          }
+        }}
         className={clsx(
           'fixed top-0 bottom-0 z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
           SIDE_CLASS[side],
           SIZE_CLASS[size],
           open ? SIDE_TRANSFORM[side].open : SIDE_TRANSFORM[side].closed,
+          hidden && 'invisible',
           className
         )}
         role="dialog"
-        aria-modal="true"
+        aria-modal={withBackdrop ? true : undefined}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabel ? undefined : titleId}
       >
         <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+        {withBackdrop && closeOutside && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close drawer"
+            className={clsx(
+              'absolute top-4 flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+              OUTSIDE_POSITION[side],
+              open ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            <X className="size-6" aria-hidden />
+          </button>
+        )}
       </aside>
     </>,
     document.body

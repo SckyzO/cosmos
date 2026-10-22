@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Modal } from './Modal';
 
 // ── Hotkey matcher ───────────────────────────────────────────────────────────
 // Lightweight matcher mirroring CommandPalette — kept inline to avoid
@@ -116,7 +117,7 @@ const HelpOverlayRoot = ({
     onOpenChange?.(next);
   };
 
-  // Hotkey toggles open/close; Esc always closes (handled while open).
+  // Hotkey toggles open/close; Esc is handled by Modal while open.
   useEffect(() => {
     if (!hotkey) return;
     const handler = (e: KeyboardEvent) => {
@@ -132,69 +133,45 @@ const HelpOverlayRoot = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotkey, open, isControlled, onOpenChange]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setOpen(false);
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  if (!open) return null;
-
+  // Modal brings the portal, the focus trap with focus restore, Escape and
+  // the backdrop click.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={typeof title === 'string' ? title : 'Keyboard shortcuts'}
+    <Modal
+      open={open}
+      onClose={() => setOpen(false)}
+      size="xl"
+      ariaLabel={typeof title === 'string' ? title : 'Keyboard shortcuts'}
+      className={clsx('flex max-h-[80vh] flex-col', className)}
     >
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => setOpen(false)}
-        aria-hidden
-      />
-      <div
-        className={clsx(
-          'relative flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900',
-          className
-        )}
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-            {description && (
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Close keyboard shortcuts"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          {description && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+          )}
         </div>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 overflow-y-auto px-5 py-5 sm:grid-cols-2">
-          {children}
-        </div>
-        {(footer ?? true) && (
-          <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400">
-            {footer ?? (
-              <>
-                Press <Kbd>Esc</Kbd> to close
-              </>
-            )}
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Close keyboard shortcuts"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
-    </div>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 overflow-y-auto px-5 py-5 sm:grid-cols-2">
+        {children}
+      </div>
+      {(footer ?? true) && (
+        <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400">
+          {footer ?? (
+            <>
+              Press <Kbd>Esc</Kbd> to close
+            </>
+          )}
+        </div>
+      )}
+    </Modal>
   );
 };
 
