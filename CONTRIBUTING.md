@@ -57,8 +57,9 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
   per-theme classes or hardcoded hex colors.
 - Accent-colored text (links, active labels) is `text-brand-600 dark:text-brand-400`.
   `text-brand-500` drops under 4.5:1 on the sand theme.
-- In dark themes `dark:border-gray-700` wins over `focus:border-brand-500`; add an explicit
-  `dark:focus:` variant when a component shows focus with its border.
+- The `dark:` variant has zero specificity (`:where()`), so `focus:border-brand-500` and
+  `hover:` styles win over a plain `dark:` class in the dark themes. A state that needs its own
+  dark color still takes `dark:hover:` or `dark:focus:`.
 - After a change in `packages/theme/css/`, run `./devctl run pnpm --filter @sckyzo/cosmos-theme test`:
   it fails on the first theme × accent pair under its WCAG threshold.
 - Check visual changes in the four themes with the Storybook toolbar (Theme and Accent menus).

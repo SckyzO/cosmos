@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { Combobox } from './Combobox';
 
 const meta = {
@@ -125,5 +126,24 @@ export const TypingFiltersAndPickingFires: Story = {
     await userEvent.keyboard('{Enter}');
     const out = canvasElement.querySelector('[data-testid="value"]');
     await expect(out?.textContent).toBe('tom');
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { options: PEOPLE },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('combobox'));
+  },
+};
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { options: PEOPLE, error: 'Pick someone' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('combobox'), { token: '--color-red-500' });
   },
 };

@@ -1,3 +1,5 @@
+import { expect, waitFor } from 'storybook/test';
+
 /**
  * Storybook docs parameters preset for components that render via portals
  * (Modal, Drawer, Popover, NotificationsPanel, UserMenu, DatePicker,
@@ -59,3 +61,35 @@ fn.lg = () => buildParams(640);
 fn.full = () => buildParams(800);
 
 export const portalDocsParams = fn;
+
+// Canvas round-trip: turns any CSS colour (oklch, color-mix, hex…) into RGBA bytes.
+const toRgba = (color: string) => {
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) throw new Error('No 2D canvas context');
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 1, 1);
+  return Array.from(ctx.getImageData(0, 0, 1, 1).data);
+};
+
+/**
+ * Play-function assertion for form controls that show focus with their border:
+ * focuses `target`, waits for the border of `border` (the control itself, or the
+ * wrapper that uses `focus-within:`) to turn to `token` (the accent by default),
+ * and checks the unfocused border was another colour.
+ *
+ * Run it under `globals: { theme: 'dark' }`: the dark themes are where the
+ * `dark:` border used to win over `focus:`.
+ */
+export const expectFocusBorder = async (
+  target: HTMLElement,
+  { border = target, token = '--color-brand-500' }: { border?: HTMLElement; token?: string } = {}
+) => {
+  const read = () => toRgba(getComputedStyle(border).borderTopColor);
+  const expected = toRgba(getComputedStyle(document.documentElement).getPropertyValue(token));
+  // Some controls take focus on mount (autoFocus): read their idle border first.
+  target.blur();
+  await waitFor(() => expect(read()).not.toEqual(expected));
+  target.focus();
+  await expect(target).toHaveFocus();
+  await waitFor(() => expect(read()).toEqual(expected));
+};

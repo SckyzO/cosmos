@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { SearchInput } from './SearchInput';
 
 const meta = {
@@ -38,5 +39,14 @@ export const TypingFiresOnChange: Story = {
     const input = canvas.getByPlaceholderText('Search…');
     await userEvent.type(input, 'cosmos');
     await expect(args.onChange).toHaveBeenCalled();
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox'));
   },
 };

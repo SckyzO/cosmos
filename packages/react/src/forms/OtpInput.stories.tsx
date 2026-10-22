@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { OtpInput } from './OtpInput';
 
 const meta = {
@@ -158,5 +159,23 @@ export const AutoFocusDoesNotScroll: Story = {
     const first = canvas.getAllByRole('textbox')[0];
     await waitFor(() => expect(first).toHaveFocus());
     await expect(window.scrollY).toBe(0);
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getAllByRole('textbox')[0]);
+  },
+};
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { error: true },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getAllByRole('textbox')[0], { token: '--color-red-500' });
   },
 };

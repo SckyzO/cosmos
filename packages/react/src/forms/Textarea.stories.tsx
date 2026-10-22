@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { Textarea } from './Textarea';
 
 const meta = {
@@ -96,5 +97,24 @@ export const CounterUpdatesAsYouType: Story = {
     const ta = canvas.getByLabelText('Note');
     await userEvent.type(ta, 'hello');
     await expect(canvas.getByText('5 / 50')).toBeInTheDocument();
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Message' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox'));
+  },
+};
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Message', error: 'Required' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox'), { token: '--color-red-500' });
   },
 };

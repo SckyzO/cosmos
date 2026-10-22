@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fireEvent, fn } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { FileInput } from './FileInput';
 
 const meta = {
@@ -88,5 +89,28 @@ export const MultipleShowsCount: Story = {
     const f3 = new File(['ccc'], 'c.txt', { type: 'text/plain' });
     fireEvent.change(input, { target: { files: [f1, f2, f3] } });
     await expect(canvas.getByText(/3 files/)).toBeInTheDocument();
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvasElement }) => {
+    const button = canvasElement.querySelector('button') as HTMLElement;
+    await expectFocusBorder(button, { border: button.parentElement as HTMLElement });
+  },
+};
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { error: 'File too large' },
+  play: async ({ canvasElement }) => {
+    const button = canvasElement.querySelector('button') as HTMLElement;
+    await expectFocusBorder(button, {
+      border: button.parentElement as HTMLElement,
+      token: '--color-red-500',
+    });
   },
 };

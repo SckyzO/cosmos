@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { NumberInput } from './NumberInput';
 
 const meta = {
@@ -48,5 +49,16 @@ export const MinusFiresOnChange: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Decrease' }));
     await expect(args.onChange).toHaveBeenCalledWith(5);
+  },
+};
+
+// The inner input drops its outline: the wrapper shows focus with its border (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { value: 5 },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await expectFocusBorder(input, { border: input.closest('.rounded-lg') as HTMLElement });
   },
 };
