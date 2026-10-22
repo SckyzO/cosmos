@@ -15,9 +15,9 @@ export const StrokedGauge = ({
   height = 280,
   width = '100%',
 }: StrokedGaugeProps) => {
-  const { brand } = useChartTheme();
+  const { brand, text } = useChartTheme();
   const options: ApexOptions = {
-    chart: { type: 'radialBar', fontFamily: 'inherit' },
+    chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: [brand],
     stroke: { lineCap: 'round', dashArray: 4 },
     plotOptions: {

@@ -17,9 +17,14 @@ export const SemiCircleGauge = ({
   height = 200,
   width = '100%',
 }: SemiCircleGaugeProps) => {
-  const { brand } = useChartTheme();
+  const { brand, text } = useChartTheme();
   const options: ApexOptions = {
-    chart: { type: 'radialBar', fontFamily: 'inherit', sparkline: { enabled: true } },
+    chart: {
+      type: 'radialBar',
+      fontFamily: 'inherit',
+      foreColor: text,
+      sparkline: { enabled: true },
+    },
     colors: [color ?? brand],
     plotOptions: {
       radialBar: {

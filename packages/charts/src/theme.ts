@@ -52,6 +52,9 @@ const readChartColors = () => {
     axis: dark
       ? readCssVar('--color-gray-400', '#9ca3af')
       : readCssVar('--color-gray-500', '#6b7280'),
+    // Text on the card: legends, center values, secondary labels.
+    text: readCssVar('--color-text-primary', dark ? '#fff' : '#101828'),
+    textMuted: readCssVar('--color-text-secondary', dark ? '#98a2b3' : '#667085'),
   };
 };
 
@@ -86,7 +89,7 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * Returns ApexCharts grid + axis options and colors matching the Cosmos
  * design tokens for the current theme and accent: `brandScale` is a
  * sequential scale (five brand steps, low to high) and `surface` the card
- * background.
+ * background. `text` and `textMuted` are the primary and secondary text colors.
  */
 export const useChartTheme = () => {
   const {
@@ -96,6 +99,8 @@ export const useChartTheme = () => {
     surface,
     grid: gridColor,
     axis,
+    text,
+    textMuted,
   } = useHtmlAppearance(readChartColors);
   const grid: ApexOptions['grid'] = {
     borderColor: gridColor,
@@ -115,6 +120,8 @@ export const useChartTheme = () => {
     brand,
     brandScale,
     surface,
+    text,
+    textMuted,
     palette: [brand, ...COSMOS_PALETTE.slice(1)],
   };
 };
