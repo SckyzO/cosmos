@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { Input } from './Input';
 
 const meta = {
@@ -135,5 +136,47 @@ export const PrefixTypingFiresOnChange: Story = {
     const input = canvas.getByPlaceholderText('example');
     await userEvent.type(input, 'abc');
     await expect(args.onChange).toHaveBeenCalledTimes(3);
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Email' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox'));
+  },
+};
+
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Endpoint URL', error: 'Must start with https://' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox'), { token: '--color-red-500' });
+  },
+};
+
+export const PrefixGroupFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Endpoint URL', prefix: 'https://' },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox');
+    await expectFocusBorder(input, { border: input.parentElement as HTMLElement });
+  },
+};
+
+export const PrefixGroupErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Endpoint URL', prefix: 'https://', error: 'Must start with https://' },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox');
+    await expectFocusBorder(input, {
+      border: input.parentElement as HTMLElement,
+      token: '--color-red-500',
+    });
   },
 };

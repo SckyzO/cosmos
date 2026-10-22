@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectFocusBorder, portalDocsParams } from '../storybook-helpers';
 import { Calendar } from './Calendar';
 import { DatePicker, type DateRange } from './DatePicker';
 
@@ -262,5 +262,24 @@ export const RangeRestoresFocusToOpeningTrigger: Story = {
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(dialog()).toBeNull());
     await expect(document.activeElement).toBe(to);
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const TriggerFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Pick a date' },
+  play: async ({ canvasElement }) => {
+    const trigger = canvasElement.querySelector<HTMLElement>('[aria-haspopup="dialog"]');
+    await expectFocusBorder(trigger as HTMLElement);
+  },
+};
+
+export const TriggerErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Pick a date', error: 'Required' },
+  play: async ({ canvasElement }) => {
+    const trigger = canvasElement.querySelector<HTMLElement>('[aria-haspopup="dialog"]');
+    await expectFocusBorder(trigger as HTMLElement, { token: '--color-red-500' });
   },
 };

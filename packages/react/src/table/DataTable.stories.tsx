@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Archive, Download, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { DataTable } from './DataTable';
 import type { ColumnDef, DataTableDensity } from './types';
 import { StatusBadge } from '../status/StatusBadge';
@@ -530,5 +531,19 @@ export const ComfortableRowsAreTaller: Story = {
       await expect(Math.abs(offset)).toBeLessThanOrEqual(1);
       await expect(offset).toBeCloseTo(standardOffsets[i], 0);
     }
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const SearchFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultSearchValue="" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('searchbox', { name: 'Search rows' }));
   },
 };

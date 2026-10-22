@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusBorder } from '../storybook-helpers';
 import { SelectInput } from './SelectInput';
 
 const meta = {
@@ -45,5 +46,20 @@ export const ChangingValueFiresOnChange: Story = {
     const select = canvas.getByRole('combobox');
     await userEvent.selectOptions(select, '60');
     await expect(args.onChange).toHaveBeenCalledWith('60');
+  },
+};
+
+// In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
+export const FocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: {
+    options: [
+      { value: 'a', label: 'Alpha' },
+      { value: 'b', label: 'Beta' },
+    ],
+  },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('combobox'));
   },
 };
