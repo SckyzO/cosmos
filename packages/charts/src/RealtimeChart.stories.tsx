@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
+import { contrastRatio, expectTooltipFollowsTheme } from './storybook-helpers';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -96,5 +97,102 @@ export const ThresholdsSurviveEarlyUpdates: Story = {
     // Let the first animation (and the updates racing it) settle.
     await new Promise((resolve) => setTimeout(resolve, 2500));
     await waitFor(() => expect(visibleThresholdLines(canvasElement)).toBe(2), { timeout: 2000 });
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-grid')
+    );
+  },
+};
+
+/** The WARN and CRIT labels read on their amber and red backgrounds. */
+export const ThresholdLabelsReadOnTheirColor: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    const labelFill = (text: string) =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotation-label')]
+        .find((el) => el.textContent === text)
+        ?.getAttribute('fill');
+    await waitFor(() => expect(labelFill('WARN')).toBeTruthy());
+    expect(contrastRatio(labelFill('WARN')!, '#f59e0b')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(labelFill('CRIT')!, '#ef4444')).toBeGreaterThanOrEqual(4.5);
+  },
+};
+
+// The line is a smooth path: one `C` command per segment, so one more point
+// than segments.
+const pointCount = (root: HTMLElement) => {
+  const d = root.querySelector('.apexcharts-line')?.getAttribute('d') ?? '';
+  return d ? (d.match(/C/g) ?? []).length + 1 : 0;
+};
+
+// y of the line's first point.
+const firstPointY = (root: HTMLElement) =>
+  Number(
+    /^M\s*[\d.]+[\s,]+([\d.]+)/.exec(
+      root.querySelector('.apexcharts-line')?.getAttribute('d') ?? ''
+    )?.[1]
+  );
+
+/**
+ * Two charts on the default generator both start their walk at 50: the walk
+ * used to be module state, so the second chart continued the first one's.
+ */
+export const DefaultGeneratorIsPerInstance: Story = {
+  tags: ['!dev', '!autodocs'],
+  // Every step of the walk goes up: a second chart that continued the first
+  // one's walk would start at the 95 ceiling.
+  beforeEach: () => {
+    const random = Math.random;
+    Math.random = () => 1;
+    return () => {
+      Math.random = random;
+    };
+  },
+  render: () => (
+    <>
+      <div data-chart="a">
+        <RealtimeChart />
+      </div>
+      <div data-chart="b">
+        <RealtimeChart />
+      </div>
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) => canvasElement.querySelector<HTMLElement>(`[data-chart="${id}"]`)!;
+    await waitFor(() => expect(pointCount(chart('b'))).toBe(30));
+    expect(firstPointY(chart('b'))).toBeCloseTo(firstPointY(chart('a')), 1);
+  },
+};
+
+/** `windowSize` is read after the first render too: the window shrinks and grows with it. */
+export const WindowSizeChanges: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => {
+    const [windowSize, setWindowSize] = useState(12);
+    return (
+      <>
+        <button onClick={() => setWindowSize(6)}>Shorter</button>
+        <button onClick={() => setWindowSize(18)}>Longer</button>
+        <Replay {...args} trace={CPU} windowSize={windowSize} />
+      </>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(12));
+    await userEvent.click(canvas.getByRole('button', { name: 'Shorter' }));
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(6));
+    await userEvent.click(canvas.getByRole('button', { name: 'Longer' }));
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(18));
   },
 };

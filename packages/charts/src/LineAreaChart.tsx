@@ -20,7 +20,7 @@ export const LineAreaChart = ({
   width = '100%',
   showLegend,
 }: LineAreaChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const options: ApexOptions = {
     chart: {
@@ -55,7 +55,7 @@ export const LineAreaChart = ({
     // name. ApexCharts hands the x formatter the point's position on the axis
     // (1, 2, …), not its category, so read the category back by index.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       x: {
         formatter: (v, opts) =>
           escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),

@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { LineAreaChart } from './LineAreaChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  expectTooltipFollowsTheme,
+  hover,
+  legendTexts,
+} from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
 const WEEKS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
@@ -184,5 +190,17 @@ export const HtmlInLabelsRendersAsText: Story = {
       );
     });
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { categories: HOURS, series: [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }] },
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-grid')
+    );
   },
 };

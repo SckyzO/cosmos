@@ -95,7 +95,7 @@ export const HeatmapChart = ({
   height = 320,
   width = '100%',
 }: HeatmapChartProps) => {
-  const { axisLabels, brandScale, surface } = useChartTheme();
+  const { axisLabels, brandScale, surface, tooltipTheme } = useChartTheme();
   const valueFormatter = formatValue ?? ((v: number) => String(v));
 
   const colorRanges = (
@@ -156,7 +156,7 @@ export const HeatmapChart = ({
     // The tooltip and the legend are HTML: escape row names, categories,
     // range names and values. The title is the hovered column's category.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       x: {
         show: true,
         formatter: (v, opts) =>

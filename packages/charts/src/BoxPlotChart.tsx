@@ -46,7 +46,7 @@ export const BoxPlotChart = ({
   height = 320,
   width = '100%',
 }: BoxPlotChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const seriesColors = colors ?? palette;
   const valueFormatter = formatValue ?? ((v: number) => String(v));
@@ -99,7 +99,7 @@ export const BoxPlotChart = ({
     // ApexCharts' own box plot tooltip prints the values raw. This one is
     // HTML too: tooltipHtml escapes the category, the series name and values.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       custom: ({ seriesIndex, dataPointIndex }) => {
         const { name, data } = series[seriesIndex];
         const summary = data[dataPointIndex];

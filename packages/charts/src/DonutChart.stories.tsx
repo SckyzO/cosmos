@@ -6,6 +6,7 @@ import {
   HOSTILE,
   expectNoInjectedImage,
   expectTextFollowsTheme,
+  expectTooltipFollowsTheme,
   legendTexts,
 } from './storybook-helpers';
 
@@ -105,5 +106,17 @@ export const TextFollowsTheme: Story = {
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement).length).toBe(3));
     await expectTextFollowsTheme(canvasElement, 'sand');
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { series: [44, 23, 18], labels: ['CRIT', 'WARN', 'OK'] },
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-pie-area')
+    );
   },
 };

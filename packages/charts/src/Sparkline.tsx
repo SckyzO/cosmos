@@ -17,7 +17,7 @@ export const Sparkline = ({
   height = 60,
   width = '100%',
 }: SparklineProps) => {
-  const { brand } = useChartTheme();
+  const { brand, tooltipTheme } = useChartTheme();
   const options: ApexOptions = {
     chart: { sparkline: { enabled: true }, fontFamily: 'inherit', type: variant },
     colors: [color ?? brand],
@@ -26,7 +26,12 @@ export const Sparkline = ({
       variant === 'area'
         ? { type: 'gradient', gradient: { opacityFrom: 0.45, opacityTo: 0.05 } }
         : undefined,
-    tooltip: { fixed: { enabled: false }, x: { show: false }, marker: { show: false } },
+    tooltip: {
+      theme: tooltipTheme,
+      fixed: { enabled: false },
+      x: { show: false },
+      marker: { show: false },
+    },
   };
   return (
     <ReactApexChart
