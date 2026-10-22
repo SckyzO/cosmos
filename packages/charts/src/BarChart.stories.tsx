@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { BarChart } from './BarChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  loadLateFont,
+  xAxisLayout,
+} from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -194,5 +201,31 @@ export const HtmlInLabelsRendersAsText: Story = {
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
     });
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+const LATE_FONT = 'CosmosLateFont';
+
+/**
+ * A web font that loads after the first render: the labels are measured again
+ * in that font, so their rotation and the plot area fit it.
+ */
+export const RemeasuresAfterFontLoad: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ManyCategories.args,
+  render: (args) => (
+    <div style={{ fontFamily: `'${LATE_FONT}', serif` }}>
+      <BarChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.apexcharts-xaxis-label')).toHaveLength(
+        SERVICES.length
+      )
+    );
+    const fallbackLayout = xAxisLayout(canvasElement);
+    await loadLateFont(LATE_FONT, 'JetBrains Mono');
+    await waitFor(() => expect(xAxisLayout(canvasElement)).not.toBe(fallbackLayout));
   },
 };

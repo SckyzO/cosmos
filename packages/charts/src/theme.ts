@@ -59,21 +59,31 @@ const readChartColors = () => {
 };
 
 /**
- * Returns `read()` and calls it again whenever `<html>` changes theme or
- * accent (the Cosmos convention: a theme class and `data-accent`). `read`
- * must be stable.
+ * Returns `read()` and calls it again whenever `<html>` changes theme, accent
+ * or font (the Cosmos convention: a theme class, `data-accent`, `data-font`)
+ * and whenever a web font finishes loading. `read` must be stable.
+ *
+ * ApexCharts measures its labels when it draws. A font that arrives after the
+ * first draw (fonts load lazily) or a `data-font` switch leaves widths and
+ * rotation computed for the old font: a new value re-renders the wrapper,
+ * whose new options make ApexCharts draw and measure again.
  */
 const useHtmlAppearance = <T>(read: () => T): T => {
   const [value, setValue] = useState(read);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const observer = new MutationObserver(() => setValue(read));
+    const update = () => setValue(read);
+    const observer = new MutationObserver(update);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class', 'data-accent'],
+      attributeFilter: ['class', 'data-accent', 'data-font'],
     });
-    return () => observer.disconnect();
+    document.fonts?.addEventListener('loadingdone', update);
+    return () => {
+      observer.disconnect();
+      document.fonts?.removeEventListener('loadingdone', update);
+    };
   }, [read]);
 
   return value;
