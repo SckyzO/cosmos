@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ElementType } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
+import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 
 export type SegmentOption<T extends string> = {
   label: string;
@@ -23,10 +24,12 @@ export const SegmentedControl = <T extends string>({
   ...a11y
 }: SegmentedControlProps<T>) => {
   const fieldA11y = useFieldA11y(a11y);
+  const anyChecked = options.some((opt) => opt.value === value);
   return (
     <div
-      role="group"
+      role="radiogroup"
       {...fieldA11y}
+      onKeyDown={onRadioGroupKeyDown}
       className={clsx(
         'inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
         className
@@ -39,6 +42,9 @@ export const SegmentedControl = <T extends string>({
           <button
             key={opt.value}
             type="button"
+            role="radio"
+            aria-checked={isActive}
+            tabIndex={radioTabIndex(isActive, i, anyChecked)}
             onClick={() => onChange(opt.value)}
             className={clsx(
               'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',
