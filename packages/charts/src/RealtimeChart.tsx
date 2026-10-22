@@ -3,7 +3,7 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import ReactApexChart from 'react-apexcharts/core';
-import { useChartTheme } from './theme';
+import { readableOn, useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
 export type RealtimeChartProps = ChartSize & {
@@ -15,6 +15,9 @@ export type RealtimeChartProps = ChartSize & {
   warnThreshold?: number;
   critThreshold?: number;
 };
+
+const WARN_COLOR = '#f59e0b';
+const CRIT_COLOR = '#ef4444';
 
 const defaultGenerator = (() => {
   let last = 50;
@@ -87,13 +90,13 @@ export const RealtimeChart = ({
       yaxis: [
         {
           y: warnThreshold,
-          borderColor: '#f59e0b',
-          label: { text: 'WARN', style: { color: '#fff', background: '#f59e0b' } },
+          borderColor: WARN_COLOR,
+          label: { text: 'WARN', style: { color: readableOn(WARN_COLOR), background: WARN_COLOR } },
         },
         {
           y: critThreshold,
-          borderColor: '#ef4444',
-          label: { text: 'CRIT', style: { color: '#fff', background: '#ef4444' } },
+          borderColor: CRIT_COLOR,
+          label: { text: 'CRIT', style: { color: readableOn(CRIT_COLOR), background: CRIT_COLOR } },
         },
       ],
     },
