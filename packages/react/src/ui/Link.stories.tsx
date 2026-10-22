@@ -116,3 +116,20 @@ export const ExternalIconHidden: Story = {
     await expect(link.querySelector('svg')).toBeNull();
   },
 };
+
+export const ExternalKeepsSafeRelWithCustomRel: Story = {
+  args: { external: true, rel: 'nofollow noopener', href: 'https://example.com', children: 'Ext' },
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: /ext/i });
+    // The caller's tokens are added, the duplicate is dropped, nothing safe is lost.
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer nofollow');
+  },
+};
+
+export const InternalKeepsCallerRel: Story = {
+  args: { rel: 'nofollow', href: '#', children: 'Internal' },
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: /internal/i });
+    await expect(link).toHaveAttribute('rel', 'nofollow');
+  },
+};

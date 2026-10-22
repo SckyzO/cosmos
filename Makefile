@@ -10,8 +10,11 @@ DEV_IMAGE := cosmos-dev:latest
 WORKSPACE := /workspace
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
-DOCKER_RUN := docker run --rm -v $(PWD):$(WORKSPACE) -w $(WORKSPACE) -u $(HOST_UID):$(HOST_GID) -e HOME=/home/node
-DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -w $(WORKSPACE) -u $(HOST_UID):$(HOST_GID) -e HOME=/home/node
+# .git is mounted read-only on top of the workspace: code running in the
+# container (install scripts, dev dependencies) could otherwise write
+# .git/hooks or .git/config, which git runs on the host.
+DOCKER_RUN := docker run --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WORKSPACE)/.git:ro -w $(WORKSPACE) -u $(HOST_UID):$(HOST_GID) -e HOME=/home/node
+DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WORKSPACE)/.git:ro -w $(WORKSPACE) -u $(HOST_UID):$(HOST_GID) -e HOME=/home/node
 
 # Compose env passed to docker compose (UID/GID for service users).
 export UID := $(HOST_UID)
