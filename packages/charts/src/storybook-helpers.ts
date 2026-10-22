@@ -94,6 +94,18 @@ const expectThemeText = (root: HTMLElement) => {
   for (const color of colors) expect(color).toBe(themeTextColor());
 };
 
+/** Switches `<html>` to the `theme` class ('' for light); returns the undo. */
+const switchTheme = (theme: string) => {
+  const { classList } = document.documentElement;
+  const previous = [...classList];
+  classList.remove(...previous);
+  if (theme) classList.add(theme);
+  return () => {
+    classList.remove(...classList);
+    classList.add(...previous);
+  };
+};
+
 /**
  * Asserts the legend texts and the center values use the theme text color,
  * then switches `<html>` to the `theme` class ('' for light) and asserts they
@@ -101,14 +113,41 @@ const expectThemeText = (root: HTMLElement) => {
  */
 export const expectTextFollowsTheme = async (root: HTMLElement, theme: string) => {
   await waitFor(() => expectThemeText(root));
-  const { classList } = document.documentElement;
-  const previous = [...classList];
-  classList.remove(...previous);
-  if (theme) classList.add(theme);
+  const restore = switchTheme(theme);
   try {
     await waitFor(() => expectThemeText(root));
   } finally {
-    classList.remove(...classList);
-    classList.add(...previous);
+    restore();
+  }
+};
+
+/**
+ * Hovers `target()` until the tooltip shows with the `expected` ApexCharts
+ * theme class. `target` is called again on every try: a theme change redraws
+ * the chart.
+ */
+const expectTooltipTheme = (root: HTMLElement, target: () => Element | null, expected: string) =>
+  waitFor(() => {
+    const el = target();
+    expect(el).not.toBeNull();
+    hover(el as Element);
+    const tooltip = root.querySelector('.apexcharts-tooltip');
+    expect(tooltip?.classList.contains(`apexcharts-theme-${expected}`)).toBe(true);
+  });
+
+/**
+ * Asserts the tooltip is dark in a dark theme (the story's global), then
+ * switches `<html>` to the light theme and asserts it turns light.
+ */
+export const expectTooltipFollowsTheme = async (
+  root: HTMLElement,
+  target: () => Element | null
+) => {
+  await expectTooltipTheme(root, target, 'dark');
+  const restore = switchTheme('');
+  try {
+    await expectTooltipTheme(root, target, 'light');
+  } finally {
+    restore();
   }
 };

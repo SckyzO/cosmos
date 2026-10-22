@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
+import { expectTooltipFollowsTheme } from './storybook-helpers';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -96,5 +97,17 @@ export const ThresholdsSurviveEarlyUpdates: Story = {
     // Let the first animation (and the updates racing it) settle.
     await new Promise((resolve) => setTimeout(resolve, 2500));
     await waitFor(() => expect(visibleThresholdLines(canvasElement)).toBe(2), { timeout: 2000 });
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-grid')
+    );
   },
 };

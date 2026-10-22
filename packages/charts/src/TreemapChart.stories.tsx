@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TreemapChart } from './TreemapChart';
+import { expectTooltipFollowsTheme } from './storybook-helpers';
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -65,5 +66,26 @@ export const MultipleSeries: Story = {
         ],
       },
     ],
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: {
+    series: [
+      {
+        data: [
+          { x: 'DC1', y: 218 },
+          { x: 'DC2', y: 152 },
+        ],
+      },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-treemap-rect')
+    );
   },
 };
