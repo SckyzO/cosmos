@@ -37,12 +37,18 @@ export const RealtimeChart = ({
   const { grid, axisLabels, brand } = useChartTheme();
   const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generator()));
 
+  // ApexCharts hides the threshold annotations until its mount animation
+  // ends, and a series update during that animation cancels the reveal: the
+  // lines stayed hidden for good. Samples only start once the chart is drawn.
+  const [drawn, setDrawn] = useState(false);
+
   useEffect(() => {
+    if (!drawn) return;
     const id = setInterval(() => {
       setSeries((current) => [...current.slice(1), generator()]);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [generator, intervalMs]);
+  }, [drawn, generator, intervalMs]);
 
   const options: ApexOptions = {
     chart: {
@@ -51,6 +57,13 @@ export const RealtimeChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      events: {
+        animationEnd: () => setDrawn(true),
+        // No mount animation (reduced motion, hidden container): nothing to wait for.
+        mounted: (_chart, opts) => {
+          if (opts?.w.globals.animationEnded) setDrawn(true);
+        },
+      },
     },
     colors: [brand],
     stroke: { curve: 'smooth', width: 2 },
