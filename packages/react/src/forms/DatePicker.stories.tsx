@@ -262,6 +262,8 @@ export const RangeRestoresFocusToOpeningTrigger: Story = {
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(dialog()).toBeNull());
     await expect(document.activeElement).toBe(to);
+  },
+};
 
 // In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
 export const TriggerFocusShowsAccentBorderInDark: Story = {
