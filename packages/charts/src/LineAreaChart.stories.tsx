@@ -178,10 +178,11 @@ export const HtmlInLabelsRendersAsText: Story = {
     await waitFor(() => {
       hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.05);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
+      // The shared tooltip fills its series rows after the title.
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
+        `${HOSTILE}: `
+      );
     });
-    await expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-      `${HOSTILE}: `
-    );
     await expectNoInjectedImage(canvasElement);
   },
 };
