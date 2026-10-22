@@ -150,7 +150,7 @@ export const DatePicker = (props: DatePickerProps) => {
   }, [open, anchor]);
 
   const panelRef = usePortalFocus<HTMLDivElement>({
-    active: open && !!anchorRect,
+    open,
     onClose: () => setOpen(false),
     triggerRef: openerRef,
   });

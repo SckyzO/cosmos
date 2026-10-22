@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -67,8 +67,8 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean): RefObject<
 const isVisible = (el: HTMLElement) => el.getClientRects().length > 0;
 
 export type PortalFocusOptions = {
-  /** Panel is open and rendered. */
-  active: boolean;
+  /** Panel is open. Focus moves in once the panel element is mounted. */
+  open: boolean;
   /** Closes the panel (Escape, Tab out, focus moved elsewhere). */
   onClose: () => void;
   /** The button that opened the panel: focus returns to it on close. */
@@ -80,7 +80,7 @@ export type PortalFocusOptions = {
 /**
  * Focus management for non-modal panels portaled to the end of `<body>`
  * (popovers, menus, pickers). Without it, keyboard users would Tab through the
- * whole page before reaching the panel. While `active`:
+ * whole page before reaching the panel. While open:
  * - moves focus into the panel when it opens (not when it is open on mount,
  *   so `defaultOpen` panels don't steal focus from the page),
  * - Escape closes it and returns focus to the trigger,
@@ -94,13 +94,15 @@ export type PortalFocusOptions = {
  * take focus when it holds no focusable children.
  */
 export function usePortalFocus<T extends HTMLElement>({
-  active,
+  open,
   onClose,
   triggerRef,
   initialFocus,
-}: PortalFocusOptions): RefObject<T | null> {
-  const ref = useRef<T>(null);
-  const openOnMount = useRef(active);
+}: PortalFocusOptions): (node: T | null) => void {
+  // A callback ref held in state: the panel can mount a render after `open`
+  // turns true (it waits for the trigger's rect), and the effect must see it.
+  const [panel, setPanel] = useState<T | null>(null);
+  const openOnMount = useRef(open);
   // Latest callbacks, so a new inline `onClose` doesn't re-run the effect
   // (which would move focus back to the first item on every render).
   const latest = useRef({ onClose, initialFocus });
@@ -109,11 +111,10 @@ export function usePortalFocus<T extends HTMLElement>({
   });
 
   useEffect(() => {
-    if (!active) {
+    if (!open) {
       openOnMount.current = false;
       return;
     }
-    const panel = ref.current;
     if (!panel) return;
     const close = () => latest.current.onClose();
     const focusables = () =>
@@ -177,9 +178,9 @@ export function usePortalFocus<T extends HTMLElement>({
         triggerRef.current?.focus();
       }
     };
-  }, [active, triggerRef]);
+  }, [open, panel, triggerRef]);
 
-  return ref;
+  return setPanel;
 }
 
 /**

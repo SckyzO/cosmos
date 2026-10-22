@@ -178,7 +178,7 @@ export type UserMenuContentProps = {
 const UserMenuContent = ({ width = 'w-56', className, children }: UserMenuContentProps) => {
   const { open, setOpen, triggerRef, triggerRect, align, initialItemRef } = useCtx();
   const menuRef = usePortalFocus<HTMLDivElement>({
-    active: open && !!triggerRect,
+    open,
     onClose: () => setOpen(false),
     triggerRef,
     initialFocus: (menu) => {

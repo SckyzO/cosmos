@@ -217,7 +217,7 @@ const NotificationsPanelContent = ({
 }: NotificationsPanelContentProps) => {
   const { open, setOpen, triggerRef, triggerRect, align } = useCtx();
   const panelRef = usePortalFocus<HTMLDivElement>({
-    active: open && !!triggerRect,
+    open,
     onClose: () => setOpen(false),
     triggerRef,
   });

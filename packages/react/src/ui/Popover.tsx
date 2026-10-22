@@ -238,7 +238,7 @@ const PopoverContent = ({
 }: PopoverContentProps) => {
   const { open, setOpen, triggerRef, triggerRect } = useCtx();
   const panelRef = usePortalFocus<HTMLDivElement>({
-    active: open && !!triggerRect,
+    open,
     onClose: () => setOpen(false),
     triggerRef,
   });
