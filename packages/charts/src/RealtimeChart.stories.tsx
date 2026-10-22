@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
-import { expectTooltipFollowsTheme } from './storybook-helpers';
+import { contrastRatio, expectTooltipFollowsTheme } from './storybook-helpers';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -109,5 +109,20 @@ export const TooltipFollowsTheme: Story = {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-grid')
     );
+  },
+};
+
+/** The WARN and CRIT labels read on their amber and red backgrounds. */
+export const ThresholdLabelsReadOnTheirColor: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    const labelFill = (text: string) =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotation-label')]
+        .find((el) => el.textContent === text)
+        ?.getAttribute('fill');
+    await waitFor(() => expect(labelFill('WARN')).toBeTruthy());
+    expect(contrastRatio(labelFill('WARN')!, '#f59e0b')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(labelFill('CRIT')!, '#ef4444')).toBeGreaterThanOrEqual(4.5);
   },
 };
