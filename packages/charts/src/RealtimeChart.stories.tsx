@@ -173,3 +173,26 @@ export const DefaultGeneratorIsPerInstance: Story = {
     expect(firstPointY(chart('b'))).toBeCloseTo(firstPointY(chart('a')), 1);
   },
 };
+
+/** `windowSize` is read after the first render too: the window shrinks and grows with it. */
+export const WindowSizeChanges: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => {
+    const [windowSize, setWindowSize] = useState(12);
+    return (
+      <>
+        <button onClick={() => setWindowSize(6)}>Shorter</button>
+        <button onClick={() => setWindowSize(18)}>Longer</button>
+        <Replay {...args} trace={CPU} windowSize={windowSize} />
+      </>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(12));
+    await userEvent.click(canvas.getByRole('button', { name: 'Shorter' }));
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(6));
+    await userEvent.click(canvas.getByRole('button', { name: 'Longer' }));
+    await waitFor(() => expect(pointCount(canvasElement)).toBe(18));
+  },
+};
