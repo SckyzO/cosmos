@@ -112,7 +112,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
           className={clsx(
             'flex min-w-0 flex-1 items-center px-3 text-sm',
             files.length === 0
-              ? 'text-gray-400 dark:text-gray-500'
+              ? 'text-gray-500 dark:text-gray-400'
               : 'text-gray-900 dark:text-white'
           )}
         >

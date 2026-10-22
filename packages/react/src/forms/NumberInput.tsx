@@ -87,7 +87,7 @@ export const NumberInput = ({
             width
           )}
         />
-        {unit && <span className="pr-1.5 text-xs text-gray-400 dark:text-gray-500">{unit}</span>}
+        {unit && <span className="pr-1.5 text-xs text-gray-500 dark:text-gray-400">{unit}</span>}
       </div>
       <button
         type="button"

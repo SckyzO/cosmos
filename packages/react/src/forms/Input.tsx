@@ -110,7 +110,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             {...rest}
           />
           {rightSlot && (
-            <span className="pointer-events-none absolute right-3 text-xs text-gray-400">
+            <span className="pointer-events-none absolute right-3 text-xs text-gray-500 dark:text-gray-400">
               {rightSlot}
             </span>
           )}

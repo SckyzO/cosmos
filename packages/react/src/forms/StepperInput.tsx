@@ -73,7 +73,7 @@ export const StepperInput = ({
         )}
       />
       {unit && (
-        <span className="flex shrink-0 items-center pr-1.5 text-xs text-gray-400 select-none dark:text-gray-500">
+        <span className="flex shrink-0 items-center pr-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
           {unit}
         </span>
       )}
