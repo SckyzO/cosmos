@@ -13,3 +13,4 @@ export * from './table';
 export * from './pages';
 export * from './settings';
 export * from './typography';
+export * from './chat';
