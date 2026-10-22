@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
+import { expectTextFollowsTheme } from './storybook-helpers';
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -101,4 +103,26 @@ export const Stroked: Story = {
       <StrokedGauge value={92} label="Uptime" />
     </Card>
   ),
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/** Every wrapper's center value uses the theme text color and follows theme changes. */
+export const TextFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'deep-blue' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RadialBarChart series={[78, 62]} labels={['CPU', 'Mem']} />
+      <GradientRadial value={84} label="Health" />
+      <SemiCircleGauge value={67} label="Load" />
+      <StrokedGauge value={92} label="Uptime" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.apexcharts-datalabel-value').length).toBe(4)
+    );
+    await expectTextFollowsTheme(canvasElement, '');
+  },
 };

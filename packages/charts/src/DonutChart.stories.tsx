@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, waitFor } from 'storybook/test';
 import { DonutChart, DonutRightLegend } from './DonutChart';
-import { HOSTILE, expectNoInjectedImage, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  expectTextFollowsTheme,
+  legendTexts,
+} from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
 const REGIONS = ['eu-west', 'eu-central', 'us-east', 'us-west', 'ap-south'];
@@ -89,5 +94,16 @@ export const HtmlInLabelsRendersAsText: Story = {
     await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** The legend and the center value use the theme text color and follow theme changes. */
+export const TextFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { series: [44, 23, 18], labels: ['CRIT', 'WARN', 'OK'] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(legendTexts(canvasElement).length).toBe(3));
+    await expectTextFollowsTheme(canvasElement, 'sand');
   },
 };
