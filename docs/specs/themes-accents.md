@@ -224,7 +224,7 @@ Add a "Themes & accents" section: the list of 4 themes and 12 accents, the `<htm
 ## 2. Storybook — `apps/storybook`
 
 - `.storybook/preview.tsx`:
-  - `withThemeByClassName({ themes: { light: '', sand: 'sand', dark: 'dark', 'deep-blue': 'deep-blue' }, defaultTheme: 'deep-blue', parentSelector: 'html' })`. `deep-blue` by default, to keep the current look and stay consistent with `cosmosDarkTheme` (navy docs chrome). _Changed after 0.1.0: the default is `dark`, and the manager and docs chrome follow the Theme global (#157)._
+  - `withThemeByClassName({ themes: { light: '', sand: 'sand', dark: 'dark', 'deep-blue': 'deep-blue' }, defaultTheme: 'deep-blue', parentSelector: 'html' })`. `deep-blue` by default, to keep the current look and stay consistent with `cosmosDarkTheme` (navy docs chrome). _Changed after 0.1.0: the default is `dark`, and the manager and docs chrome follow the Theme global (#157). Later replaced by a `theme` globalType and a `withThemeClass` decorator in `preview.tsx` (same classes and removal), so the toolbar item reads "Theme: Dark"; `@storybook/addon-themes` is gone._
   - Add an `accent` global to the toolbar: `globalTypes.accent` (`paintbrush` icon, `dynamicTitle: true`, the 12 accents in the § 1.4 order) + `initialGlobals: { accent: 'blue' }`, and a decorator that sets `document.documentElement.dataset.accent` (removes the attribute for `blue`). Don't use a second `@storybook/addon-themes` decorator: it would share the `theme` global.
 - `.storybook/preview.css`: update the comment (`:root + .sand + .dark + .deep-blue + [data-accent]`).
 - `stories/Welcome.stories.tsx`: the sentence "Dark mode toggles automatically via the `data-theme` attribute…" is wrong. Replace it with the theme class + `data-accent` explanation.

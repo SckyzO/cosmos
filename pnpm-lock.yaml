@@ -78,9 +78,6 @@ importers:
       '@storybook/addon-mcp':
         specifier: ^0.7.0
         version: 0.7.0(@storybook/addon-vitest@10.6.3(@vitest/browser-playwright@4.1.12)(@vitest/browser@4.1.12)(react@19.3.1)(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(vitest@4.1.12))(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(typescript@6.0.3)
-      '@storybook/addon-themes':
-        specifier: ^10.6.3
-        version: 10.6.3(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))
       '@storybook/addon-vitest':
         specifier: ^10.6.3
         version: 10.6.3(@vitest/browser-playwright@4.1.12)(@vitest/browser@4.1.12)(react@19.3.1)(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(vitest@4.1.12)
@@ -1669,11 +1666,6 @@ packages:
     peerDependenciesMeta:
       '@storybook/addon-vitest':
         optional: true
-
-  '@storybook/addon-themes@10.6.3':
-    resolution: {integrity: sha512-6LGpeMMg06qpynKhOiCR10l7tkLL/LpBdJxf+9JEjfMohbgGZj1ukR8hVDgMNJAx2RN45Ovz78/HlwMM5PCa4g==}
-    peerDependencies:
-      storybook: ^10.6.3
 
   '@storybook/addon-vitest@10.6.3':
     resolution: {integrity: sha512-ANz0SHAi9OTtrZt+YmcQvP7tcUZrTSm8Gq/nI7p9ZRyHAUOTdGoCex2cPyLc3mEqZTCBnaYXR6ZhURlpGsh9dQ==}
@@ -4849,11 +4841,6 @@ snapshots:
     transitivePeerDependencies:
       - '@tmcp/auth'
       - typescript
-
-  '@storybook/addon-themes@10.6.3(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))':
-    dependencies:
-      storybook: 10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1)
-      ts-dedent: 2.3.0
 
   '@storybook/addon-vitest@10.6.3(@vitest/browser-playwright@4.1.12)(@vitest/browser@4.1.12)(react@19.3.1)(storybook@10.6.3(@types/react@19.3.0)(prettier@3.9.6)(react@19.3.1))(vitest@4.1.12)':
     dependencies:
