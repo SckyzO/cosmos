@@ -41,7 +41,7 @@ import themePkg from '../../../packages/theme/package.json';
 
 // ---------------------------------------------------------------------------
 // Welcome page rendered as a regular story (not MDX) so that the preview
-// decorators (`withCosmosSurface` + `withThemeByClassName`) actually apply
+// decorators (`withCosmosSurface` + `withThemeClass`) actually apply
 // and the toolbar theme toggle drives both backgrounds AND every Cosmos
 // component rendered inside (KpiCard, Button, DataTable, …).
 //

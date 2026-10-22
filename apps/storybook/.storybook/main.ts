@@ -52,7 +52,6 @@ const config: StorybookConfig = {
   addons: [
     '@storybook/addon-docs',
     '@storybook/addon-a11y',
-    '@storybook/addon-themes',
     // viewport is built into Storybook 10 core (no longer a separate addon since SB 9).
     // Use parameters.viewport in preview.ts to configure breakpoints.
     '@storybook/addon-mcp',

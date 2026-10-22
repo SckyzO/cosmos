@@ -1,9 +1,8 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { withThemeByClassName } from '@storybook/addon-themes';
 
 import { COSMOS_FONTS, COSMOS_TEXT_SIZES } from '../../../packages/react/src';
 import { CosmosDocsContainer } from './CosmosDocsContainer';
-import { DEFAULT_THEME } from './cosmos-theme';
+import { DEFAULT_THEME, type CosmosThemeName } from './cosmos-theme';
 
 // Fonts (npm-distributed CSS via @fontsource — Vite handles @fontsource/*/x.css natively)
 import '@fontsource/outfit/300.css';
@@ -66,6 +65,39 @@ const ACCENTS = [
   { value: 'green', title: 'Green' },
 ];
 
+/** The Theme menu: the class each theme puts on <html> (none for light). */
+const THEMES: { value: CosmosThemeName; title: string; className: string }[] = [
+  { value: 'light', title: 'Light', className: '' },
+  { value: 'sand', title: 'Sand', className: 'sand' },
+  { value: 'dark', title: 'Dark', className: 'dark' },
+  { value: 'deep-blue', title: 'Deep blue', className: 'deep-blue' },
+];
+
+/**
+ * Put the `theme` global's class on <html>, as addon-themes'
+ * withThemeByClassName did: remove the classes of the other themes, then add
+ * the selected one; classes that are not theme classes stay. Unlike the addon
+ * (an effect after render), it runs before the story renders, like
+ * withAppearanceAttributes, so components read the right theme on mount.
+ */
+const withThemeClass: Decorator = (Story, ctx) => {
+  const selected = (ctx.globals.theme as string | undefined) || DEFAULT_THEME;
+  const root = document.documentElement;
+  for (const t of THEMES) {
+    if (t.value !== selected && t.className) root.classList.remove(t.className);
+  }
+  const current = THEMES.find((t) => t.value === selected)?.className;
+  if (current) root.classList.add(current);
+  return <Story />;
+};
+
+/**
+ * Toolbar items titled `<menu>: <value>`: with `dynamicTitle` the button shows
+ * the selected item's title, so the menu name stays visible once picked.
+ */
+const menuItems = (menu: string, items: { value: string; title: string }[]) =>
+  items.map(({ value, title }) => ({ value, title: `${menu}: ${title}` }));
+
 /** Sets `data-<key>` on <html>, or removes it for the theme's default value. */
 const setRootData = (key: 'accent' | 'font' | 'textSize', value: unknown, byDefault: string) => {
   const root = document.documentElement;
@@ -77,8 +109,7 @@ const setRootData = (key: 'accent' | 'font' | 'textSize', value: unknown, byDefa
  * Apply the `accent`, `font` and `textSize` toolbar globals as data-accent,
  * data-font and data-text-size on <html>; each default (blue, Outfit, md)
  * removes its attribute. Set before the story renders so charts read the right
- * --color-brand-500 on mount. Not a second addon-themes decorator: that would
- * share the `theme` global with the class switcher.
+ * --color-brand-500 on mount.
  */
 const withAppearanceAttributes: Decorator = (Story, ctx) => {
   setRootData('accent', ctx.globals.accent, 'blue');
@@ -110,28 +141,45 @@ const deviceViewports = {
 
 const preview: Preview = {
   globalTypes: {
+    theme: {
+      description: 'Color theme',
+      toolbar: {
+        title: 'Theme',
+        icon: 'contrast',
+        items: menuItems('Theme', THEMES),
+        dynamicTitle: true,
+      },
+    },
     accent: {
       description: 'Accent color',
       toolbar: {
         title: 'Accent',
         icon: 'paintbrush',
-        items: ACCENTS,
+        items: menuItems('Accent', ACCENTS),
         dynamicTitle: true,
       },
     },
     font: {
-      description: 'Font',
+      description: 'Font family',
       toolbar: {
         title: 'Font',
-        items: COSMOS_FONTS.map((f) => ({ value: f.id, title: f.label })),
+        icon: 'paragraph',
+        items: menuItems(
+          'Font',
+          COSMOS_FONTS.map((f) => ({ value: f.id, title: f.label }))
+        ),
         dynamicTitle: true,
       },
     },
     textSize: {
       description: 'Text size',
       toolbar: {
-        title: 'Text size',
-        items: COSMOS_TEXT_SIZES.map((t) => ({ value: t.id, title: t.label })),
+        title: 'Size',
+        icon: 'zoom',
+        items: menuItems(
+          'Size',
+          COSMOS_TEXT_SIZES.map((t) => ({ value: t.id, title: t.label }))
+        ),
         dynamicTitle: true,
       },
     },
@@ -186,11 +234,7 @@ const preview: Preview = {
     withAppearanceAttributes,
     // The manager and the docs chrome follow the same global (manager.ts,
     // CosmosDocsContainer.tsx).
-    withThemeByClassName({
-      themes: { light: '', sand: 'sand', dark: 'dark', 'deep-blue': 'deep-blue' },
-      defaultTheme: DEFAULT_THEME,
-      parentSelector: 'html',
-    }),
+    withThemeClass,
   ],
 };
 
