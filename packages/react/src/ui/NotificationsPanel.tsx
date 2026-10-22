@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { usePortalFocus } from './overlayA11y';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,16 +124,6 @@ const NotificationsPanelRoot = ({
     };
   }, [open, refreshRect]);
 
-  // Escape closes
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, setOpen]);
-
   return (
     <NotificationsPanelContext.Provider
       value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align }}
@@ -224,7 +215,12 @@ const NotificationsPanelContent = ({
   className,
   children,
 }: NotificationsPanelContentProps) => {
-  const { open, setOpen, triggerRect, align } = useCtx();
+  const { open, setOpen, triggerRef, triggerRect, align } = useCtx();
+  const panelRef = usePortalFocus<HTMLDivElement>({
+    active: open && !!triggerRect,
+    onClose: () => setOpen(false),
+    triggerRef,
+  });
   if (!open || !triggerRect) return null;
 
   const top = triggerRect.bottom + 8;
@@ -237,11 +233,13 @@ const NotificationsPanelContent = ({
     <>
       <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
       <div
+        ref={panelRef}
         role="dialog"
+        tabIndex={-1}
         aria-label="Notifications"
         style={positionStyle}
         className={clsx(
-          'fixed z-[9999] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900',
+          'fixed z-[9999] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900',
           width,
           className
         )}

@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { usePortalFocus } from './overlayA11y';
 import { Avatar } from './Avatar';
 
 // ── Context ──────────────────────────────────────────────────────────────────
@@ -24,7 +25,13 @@ type Ctx = {
   triggerRect: DOMRect | null;
   refreshRect: () => void;
   align: 'left' | 'right';
+  /** Item to focus when the menu opens: `last` after ArrowUp on the trigger. */
+  initialItemRef: React.MutableRefObject<'first' | 'last'>;
 };
+
+const ITEM_SELECTOR = '[role="menuitem"]:not([disabled])';
+const menuItems = (menu: HTMLElement) =>
+  Array.from(menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR));
 
 const UserMenuContext = createContext<Ctx | null>(null);
 const useCtx = (): Ctx => {
@@ -56,6 +63,7 @@ const UserMenuRoot = ({
   const open = isControlled ? openProp : internalOpen;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+  const initialItemRef = useRef<'first' | 'last'>('first');
 
   const refreshRect = useCallback(() => {
     if (triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect());
@@ -81,18 +89,9 @@ const UserMenuRoot = ({
     };
   }, [open, refreshRect]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, setOpen]);
-
   return (
     <UserMenuContext.Provider
-      value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align }}
+      value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align, initialItemRef }}
     >
       {children}
     </UserMenuContext.Provider>
@@ -118,7 +117,7 @@ const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
     { name, avatarSrc, hideName = false, className, ...rest },
     forwardedRef
   ) {
-    const { open, setOpen, triggerRef, refreshRect } = useCtx();
+    const { open, setOpen, triggerRef, refreshRect, initialItemRef } = useCtx();
     const setRef = (node: HTMLButtonElement | null) => {
       (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
       if (typeof forwardedRef === 'function') forwardedRef(node);
@@ -132,8 +131,19 @@ const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
         ref={setRef}
         type="button"
         aria-label={`User menu for ${name}`}
+        aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          initialItemRef.current = 'first';
+          setOpen(!open);
+        }}
+        // Menu button pattern: ArrowDown opens on the first item, ArrowUp on the last.
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          initialItemRef.current = e.key === 'ArrowUp' ? 'last' : 'first';
+          setOpen(true);
+        }}
         className={clsx(
           'flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
           className
@@ -166,7 +176,16 @@ export type UserMenuContentProps = {
 };
 
 const UserMenuContent = ({ width = 'w-56', className, children }: UserMenuContentProps) => {
-  const { open, setOpen, triggerRect, align } = useCtx();
+  const { open, setOpen, triggerRef, triggerRect, align, initialItemRef } = useCtx();
+  const menuRef = usePortalFocus<HTMLDivElement>({
+    active: open && !!triggerRect,
+    onClose: () => setOpen(false),
+    triggerRef,
+    initialFocus: (menu) => {
+      const items = menuItems(menu);
+      return initialItemRef.current === 'last' ? items[items.length - 1] : items[0];
+    },
+  });
   if (!open || !triggerRect) return null;
   const top = triggerRect.bottom + 8;
   const positionStyle =
@@ -177,11 +196,34 @@ const UserMenuContent = ({ width = 'w-56', className, children }: UserMenuConten
     <>
       <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
       <div
+        ref={menuRef}
         role="menu"
+        tabIndex={-1}
         aria-label="User menu"
+        onKeyDown={(e) => {
+          // Items are out of the tab order (Tab leaves the menu); arrows,
+          // Home and End move between them, wrapping at both ends.
+          const items = menuItems(e.currentTarget);
+          if (items.length === 0) return;
+          const i = items.indexOf(document.activeElement as HTMLElement);
+          const n = items.length;
+          const next =
+            e.key === 'ArrowDown'
+              ? items[(i + 1) % n]
+              : e.key === 'ArrowUp'
+                ? items[(i - 1 + n) % n]
+                : e.key === 'Home'
+                  ? items[0]
+                  : e.key === 'End'
+                    ? items[n - 1]
+                    : undefined;
+          if (!next) return;
+          e.preventDefault();
+          next.focus();
+        }}
         style={positionStyle}
         className={clsx(
-          'fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900',
+          'fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg outline-none dark:border-gray-700 dark:bg-gray-900',
           width,
           className
         )}
@@ -246,15 +288,16 @@ const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function U
       ref={ref}
       type="button"
       role="menuitem"
+      tabIndex={-1}
       onClick={(e) => {
         onClick?.(e);
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
       className={clsx(
-        'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors',
+        'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus:outline-none',
         variant === 'danger'
-          ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
-          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5',
+          ? 'text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus-visible:bg-red-500/10'
+          : 'text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',
         className
       )}
       {...rest}
