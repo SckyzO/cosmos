@@ -1,5 +1,5 @@
 # On-demand Claude Code agent: mention @claude in an issue, a PR comment or a
-# review and it answers, or implements the request on a branch and opens a PR.
+# review and it answers (except `@claude review` on a PR: claude-code-review.yml), or implements the request on a branch and opens a PR.
 #
 # Auth is the maintainer's Claude subscription (CLAUDE_CODE_OAUTH_TOKEN, made by
 # `/install-github-app`), so every run draws on that plan's usage limits.
@@ -21,7 +21,7 @@ on:
 jobs:
   claude:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && !startsWith(github.event.comment.body, '@claude review')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
