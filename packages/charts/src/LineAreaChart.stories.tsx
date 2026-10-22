@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { LineAreaChart } from './LineAreaChart';
-import { HOSTILE, expectNoInjectedImage, hover } from './storybook-helpers';
+import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
 const WEEKS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
@@ -41,8 +41,8 @@ export const Basic: Story = {
 };
 
 /**
- * Several series overlap, drawn in palette order. The wrapper hides the
- * legend: the series names show in the tooltip.
+ * Several series overlap, drawn in palette order. With two or more series the
+ * legend shows above the plot; `showLegend` forces it on or off.
  */
 export const MultiSeries: Story = {
   args: {
@@ -98,6 +98,31 @@ export const CompactHeight: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+/** A multi-series chart shows one legend entry per series, in order. */
+export const LegendListsEverySeries: Story = {
+  tags: ['!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(legendTexts(canvasElement)).toEqual([
+        'p50 latency (ms)',
+        'p95 latency (ms)',
+        'p99 latency (ms)',
+      ])
+    );
+  },
+};
+
+/** A single series has nothing to tell apart: no legend unless forced. */
+export const SingleSeriesHasNoLegend: Story = {
+  tags: ['!autodocs'],
+  args: Basic.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(canvasElement.querySelector('.apexcharts-series')).not.toBeNull());
+    await expect(legendTexts(canvasElement)).toEqual([]);
+  },
+};
+
 /**
  * Charts re-read their colors when the theme or accent changes on `<html>`. The
  * y-axis labels used to come back empty after that update: LineAreaChart
@@ -132,16 +157,24 @@ export const AccentSwitchKeepsYAxisLabels: Story = {
 };
 
 /**
- * The tooltip is HTML. Its title is the category, not the point's position on
- * the axis, and the first point sits at the left edge of the plot.
+ * The legend and the tooltip are HTML. The tooltip title is the category, not
+ * the point's position on the axis, and the first point sits at the left edge
+ * of the plot.
  */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
-    series: [{ name: HOSTILE, data: [3, 5, 2] }],
+    series: [
+      { name: HOSTILE, data: [3, 5, 2] },
+      { name: 'B', data: [1, 2, 4] },
+    ],
     categories: [HOSTILE, 'B', 'C'],
   },
   play: async ({ canvasElement }) => {
+    // Legends render on mount: the name must show up as literal text.
+    await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await expectNoInjectedImage(canvasElement);
+
     await waitFor(() => {
       hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.05);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
