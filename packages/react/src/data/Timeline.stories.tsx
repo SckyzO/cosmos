@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Bell, CheckCircle2, Database, Rocket, Server, Wrench } from 'lucide-react';
 import { expect, within } from 'storybook/test';
+import { expectTextContrast } from '../storybook-helpers';
 import { Timeline, type TimelineItem } from './Timeline';
 
 const meta = {
@@ -185,3 +186,17 @@ export const RepeatedGroupStartsNewHeader: Story = {
     await expect(headings).toEqual(['Pinned', 'Recent', 'Pinned']);
   },
 };
+
+// The 10px gray-400 timestamps fell under 4.5:1 on light and sand (#151).
+const timeContrastIn = (theme: string): Story => ({
+  ...Dot,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getAllByText('5m ago')[0]);
+  },
+});
+
+export const TimeContrastInLight = timeContrastIn('light');
+export const TimeContrastInSand = timeContrastIn('sand');
+export const TimeContrastInDeepBlue = timeContrastIn('deep-blue');
