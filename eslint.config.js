@@ -23,6 +23,10 @@ export default tseslint.config(
       '**/test-results/**',
       '**/coverage/**',
       '**/*.d.ts',
+      // Throwaway Playwright helpers (screenshots, scraping, visual diffs) run
+      // by hand inside the playwright container; only the specs are code.
+      'tests/e2e/*.mjs',
+      'tests/e2e/scripts/**',
     ],
   },
   js.configs.recommended,
