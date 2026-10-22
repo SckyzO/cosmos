@@ -125,6 +125,8 @@ test('the Claude review only runs on an `@claude review` comment from a maintain
   expect(on).not.toMatch(/pull_request(_target)?:/);
   expect(review).toMatch(/startsWith\(github\.event\.comment\.body, '@claude review'\)/);
   expect(review).toMatch(/author_association/);
+  // It holds a token: never check out the PR head (a PR could ship .claude/ hooks).
+  expect(review).not.toMatch(/ref:|refs\/pull/);
   // claude.yml must not answer the same comment.
   expect(read('.github/workflows/claude.yml')).toMatch(
     /!startsWith\(github\.event\.comment\.body, '@claude review'\)/
