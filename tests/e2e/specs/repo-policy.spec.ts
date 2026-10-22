@@ -132,3 +132,18 @@ test('the Claude review only runs on an `@claude review` comment from a maintain
     /!startsWith\(github\.event\.comment\.body, '@claude review'\)/
   );
 });
+
+test('claude.yml starts a runner only for the owner, members and collaborators', () => {
+  const workflow = read('.github/workflows/claude.yml');
+  const condition = workflow.slice(workflow.indexOf('    if: |'), workflow.indexOf('    runs-on'));
+  // One clause per event, and every clause checks who wrote the mention.
+  const clauses = condition.split('\n').filter((l) => l.includes('github.event_name =='));
+  expect(clauses.length).toBe(4);
+  for (const clause of clauses) {
+    expect(clause).toMatch(
+      /contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.(comment|review|issue)\.author_association\)/
+    );
+  }
+  // `assigned` never fires without `assignee_trigger`.
+  expect(workflow).not.toMatch(/assigned/);
+});
