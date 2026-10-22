@@ -17,7 +17,7 @@ export const SemiCircleGauge = ({
   height = 200,
   width = '100%',
 }: SemiCircleGaugeProps) => {
-  const { brand, text } = useChartTheme();
+  const { brand, text, textMuted } = useChartTheme();
   const options: ApexOptions = {
     chart: {
       type: 'radialBar',
@@ -32,7 +32,7 @@ export const SemiCircleGauge = ({
         endAngle: 90,
         track: { background: 'rgba(150,150,150,0.15)', strokeWidth: '100%' },
         dataLabels: {
-          name: { offsetY: -10, fontSize: '12px' },
+          name: { offsetY: -10, fontSize: '12px', color: textMuted },
           value: { offsetY: -45, fontSize: '24px', fontWeight: 700, formatter: (v) => `${v}%` },
         },
       },
