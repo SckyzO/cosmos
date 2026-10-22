@@ -42,6 +42,13 @@ export const RealtimeChart = ({
   // lines stayed hidden for good. Samples only start once the chart is drawn.
   const [drawn, setDrawn] = useState(false);
 
+  // Fallback in case neither chart event reports the end of the mount
+  // animation: a stalled live chart is worse than a hidden threshold.
+  useEffect(() => {
+    const id = setTimeout(() => setDrawn(true), 2000);
+    return () => clearTimeout(id);
+  }, []);
+
   useEffect(() => {
     if (!drawn) return;
     const id = setInterval(() => {
