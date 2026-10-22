@@ -66,6 +66,8 @@ export const Combobox = ({
 }: ComboboxProps) => {
   const id = useId();
   const listboxId = `${id}-listbox`;
+  const descId = `${id}-desc`;
+  const hasDesc = !!(helperText || error);
   const selected = options.find((o) => o.value === value);
   const [query, setQuery] = useState(selected?.label ?? '');
   const [open, setOpen] = useState(false);
@@ -132,6 +134,8 @@ export const Combobox = ({
           aria-expanded={open}
           aria-controls={listboxId}
           aria-autocomplete="list"
+          aria-describedby={hasDesc ? descId : undefined}
+          aria-invalid={error ? true : undefined}
           aria-activedescendant={
             open && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined
           }
@@ -213,8 +217,9 @@ export const Combobox = ({
           </ul>
         )}
       </div>
-      {(helperText || error) && (
+      {hasDesc && (
         <p
+          id={descId}
           className={clsx(
             'mt-1.5 text-xs',
             error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'

@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import type { SelectHTMLAttributes } from 'react';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
@@ -16,18 +16,26 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   { options, label, description, error, className, id, ...rest },
   ref
 ) {
-  const selectId = id ?? rest.name;
+  const generatedId = useId();
+  const selectId = id ?? rest.name ?? generatedId;
+  const descId = `${selectId}-desc`;
+  const hasDesc = !!(error || description);
   return (
-    <label htmlFor={selectId} className="block">
+    <div className="block">
       {label && (
-        <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={selectId}
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           {label}
-        </span>
+        </label>
       )}
       <div className="relative">
         <select
           ref={ref}
           id={selectId}
+          aria-describedby={hasDesc ? descId : undefined}
+          aria-invalid={error ? true : undefined}
           className={clsx(
             'h-9 w-full appearance-none rounded-lg border bg-white pr-9 pl-3 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
             error
@@ -45,8 +53,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         </select>
         <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
       </div>
-      {(error || description) && (
+      {hasDesc && (
         <span
+          id={descId}
           className={clsx(
             'mt-1 block text-xs',
             error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
@@ -55,6 +64,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           {error ?? description}
         </span>
       )}
-    </label>
+    </div>
   );
 });

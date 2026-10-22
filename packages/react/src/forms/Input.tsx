@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import type { ElementType, InputHTMLAttributes, ReactNode } from 'react';
 
 export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
@@ -34,19 +34,29 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   },
   ref
 ) {
-  const inputId = id ?? rest.name;
+  const generatedId = useId();
+  const inputId = id ?? rest.name ?? generatedId;
+  const descId = `${inputId}-desc`;
+  const hasDesc = !!(error || description);
+  const fieldA11y = {
+    'aria-describedby': hasDesc ? descId : undefined,
+    'aria-invalid': error ? true : undefined,
+  };
   const hasGroup = prefix !== undefined || suffix !== undefined;
   const borderClass = error
     ? 'border-red-400 focus-within:border-red-500 dark:border-red-500/60'
     : 'border-gray-200 focus-within:border-brand-500 dark:border-gray-700';
 
   return (
-    <label htmlFor={inputId} className="block">
+    <div className="block">
       {label && (
-        <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={inputId}
+          className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           {label}
           {labelTrailing}
-        </span>
+        </label>
       )}
       {hasGroup ? (
         <div
@@ -63,6 +73,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           <input
             ref={ref}
             id={inputId}
+            {...fieldA11y}
             className={clsx(
               'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
               className
@@ -86,6 +97,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           <input
             ref={ref}
             id={inputId}
+            {...fieldA11y}
             className={clsx(
               'h-full w-full rounded-lg border bg-white text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
               Icon ? 'pl-9' : 'pl-3',
@@ -104,8 +116,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           )}
         </div>
       )}
-      {(error || description) && (
+      {hasDesc && (
         <span
+          id={descId}
           className={clsx(
             'mt-1 block text-xs',
             error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
@@ -114,6 +127,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           {error ?? description}
         </span>
       )}
-    </label>
+    </div>
   );
 });

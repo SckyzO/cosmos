@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
+import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
 
 export type SelectInputOption = { label: string; value: string };
 
-export type SelectInputProps = {
+export type SelectInputProps = FieldA11yProps & {
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectInputOption[];
@@ -25,27 +27,34 @@ export const SelectInput = ({
   placeholder,
   disabled = false,
   className,
-}: SelectInputProps) => (
-  <div className={clsx('relative inline-block', className)}>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className={clsx(
-        'focus:border-brand-500 h-9 appearance-none rounded-lg border border-gray-200 bg-white pr-9 pl-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
-      )}
-    >
-      {placeholder && (
-        <option value="" disabled>
-          {placeholder}
-        </option>
-      )}
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-    <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
-  </div>
-);
+  name,
+  ...a11y
+}: SelectInputProps) => {
+  const fieldA11y = useFieldA11y(a11y);
+  return (
+    <div className={clsx('relative inline-block', className)}>
+      <select
+        name={name}
+        {...fieldA11y}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={clsx(
+          'focus:border-brand-500 h-9 appearance-none rounded-lg border border-gray-200 bg-white pr-9 pl-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+        )}
+      >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    </div>
+  );
+};

@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
+import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
-export type NumberInputProps = {
+export type NumberInputProps = FieldA11yProps & {
+  name?: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
@@ -35,7 +37,10 @@ export const NumberInput = ({
   fullWidth = false,
   disabled = false,
   className,
+  name,
+  ...a11y
 }: NumberInputProps) => {
+  const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const btn =
     'flex h-full items-center justify-center px-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300';
@@ -66,6 +71,8 @@ export const NumberInput = ({
       <div className="flex items-center">
         <input
           type="number"
+          name={name}
+          {...fieldA11y}
           value={value}
           onChange={(e) => {
             const n = parseFloat(e.target.value);

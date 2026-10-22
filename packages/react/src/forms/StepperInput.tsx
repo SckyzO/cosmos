@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
-export type StepperInputProps = {
+export type StepperInputProps = FieldA11yProps & {
+  name?: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
@@ -34,7 +36,10 @@ export const StepperInput = ({
   fullWidth = false,
   disabled = false,
   className,
+  name,
+  ...a11y
 }: StepperInputProps) => {
+  const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const arrowBtn =
     'flex flex-1 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200 dark:active:bg-white/15';
@@ -50,6 +55,8 @@ export const StepperInput = ({
     >
       <input
         type="number"
+        name={name}
+        {...fieldA11y}
         value={value}
         onChange={(e) => {
           const n = parseFloat(e.target.value);

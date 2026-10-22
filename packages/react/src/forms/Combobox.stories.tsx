@@ -147,3 +147,23 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
     await expectFocusBorder(canvas.getByRole('combobox'), { token: '--color-red-500' });
   },
 };
+
+export const ErrorIsLinkedAsDescription: Story = {
+  tags: ['!dev'],
+  args: { label: 'Assigned to', options: PEOPLE, error: 'Pick someone' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Assigned to' });
+    await expect(field).toHaveAccessibleDescription('Pick someone');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+export const DescriptionIsLinked: Story = {
+  tags: ['!dev'],
+  args: { label: 'Assigned to', options: PEOPLE, helperText: 'Owner of the ticket.' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Assigned to' });
+    await expect(field).toHaveAccessibleDescription('Owner of the ticket.');
+    await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
