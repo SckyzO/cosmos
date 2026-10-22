@@ -100,6 +100,7 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * design tokens for the current theme and accent: `brandScale` is a
  * sequential scale (five brand steps, low to high) and `surface` the card
  * background. `text` and `textMuted` are the primary and secondary text colors.
+ * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
  */
 export const useChartTheme = () => {
   const {
@@ -123,6 +124,7 @@ export const useChartTheme = () => {
       fontFamily: 'inherit',
     },
   };
+  const tooltipTheme: 'dark' | 'light' = dark ? 'dark' : 'light';
   return {
     dark,
     grid,
@@ -132,6 +134,7 @@ export const useChartTheme = () => {
     surface,
     text,
     textMuted,
+    tooltipTheme,
     palette: [brand, ...COSMOS_PALETTE.slice(1)],
   };
 };

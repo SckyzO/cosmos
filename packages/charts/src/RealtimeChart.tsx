@@ -34,7 +34,7 @@ export const RealtimeChart = ({
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, brand } = useChartTheme();
+  const { grid, axisLabels, brand, tooltipTheme } = useChartTheme();
   const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generator()));
 
   // ApexCharts hides the threshold annotations until its mount animation
@@ -97,7 +97,7 @@ export const RealtimeChart = ({
         },
       ],
     },
-    tooltip: { theme: 'dark' },
+    tooltip: { theme: tooltipTheme },
   };
 
   return (

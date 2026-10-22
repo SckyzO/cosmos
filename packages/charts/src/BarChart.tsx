@@ -37,7 +37,7 @@ export const BarChart = ({
   height = 320,
   width = '100%',
 }: BarChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
 
@@ -87,7 +87,7 @@ export const BarChart = ({
     },
     // Tooltips and the legend are HTML: escape names, categories and values.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       x: { formatter: (v) => escapeHtml(v) },
       y: {
         formatter: (v) => escapeHtml(valueFormatter(Number(v))),

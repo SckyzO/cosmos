@@ -11,11 +11,12 @@ export type TreemapChartProps = ChartSize & {
 };
 
 export const TreemapChart = ({ series, height = 320, width = '100%' }: TreemapChartProps) => {
-  const { palette } = useChartTheme();
+  const { palette, tooltipTheme } = useChartTheme();
   const options: ApexOptions = {
     chart: { type: 'treemap', fontFamily: 'inherit', toolbar: { show: false } },
     colors: palette,
     legend: { show: false },
+    tooltip: { theme: tooltipTheme },
     dataLabels: { enabled: true, style: { fontSize: '12px' } },
     plotOptions: { treemap: { distributed: true, enableShades: false } },
   };
