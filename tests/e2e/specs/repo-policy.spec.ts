@@ -201,3 +201,21 @@ test('the dev image pins what it installs as root', () => {
   expect(code, 'playwright version').toMatch(/playwright@\d+\.\d+\.\d+ install-deps/);
   expect(code).not.toMatch(/@latest\b/);
 });
+
+test('the dev container cannot write the repo metadata', () => {
+  // Code running in the container could otherwise plant a hook in .git that
+  // git runs on the host.
+  for (const file of ['Makefile', 'devctl']) {
+    const runs = read(file)
+      .split('\n')
+      .filter((line) => /^\s*DOCKER_RUN\w* ?[:=]/.test(line));
+    expect(runs.length, `${file}: docker run lines`).toBeGreaterThan(0);
+    for (const line of runs)
+      expect(line, file).toMatch(/\/\.git:\$[({]?WORKSPACE[)}]?\/\.git:ro\b/);
+  }
+  const compose = read('docker-compose.yml');
+  const workspace = compose.match(/- \.\/:\/workspace$/gm) ?? [];
+  const metadata = compose.match(/- \.\/\.git:\/workspace\/\.git:ro$/gm) ?? [];
+  expect(workspace.length).toBeGreaterThan(0);
+  expect(metadata.length).toBe(workspace.length);
+});
