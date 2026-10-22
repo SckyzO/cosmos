@@ -43,6 +43,18 @@ export const RealtimeChart = ({
   const generate = generator ?? defaultGenerator;
   const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generate()));
 
+  // A new windowSize trims the oldest samples or prepends new ones. Adjusted
+  // while rendering, which React redoes at once without painting the old window.
+  const [sizedFor, setSizedFor] = useState(windowSize);
+  if (sizedFor !== windowSize) {
+    setSizedFor(windowSize);
+    setSeries(
+      series.length > windowSize
+        ? series.slice(series.length - windowSize)
+        : [...Array.from({ length: windowSize - series.length }, () => generate()), ...series]
+    );
+  }
+
   // ApexCharts hides the threshold annotations until its mount animation
   // ends, and a series update during that animation cancels the reveal: the
   // lines stayed hidden for good. Samples only start once the chart is drawn.
