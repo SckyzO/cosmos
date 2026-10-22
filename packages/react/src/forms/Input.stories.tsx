@@ -190,3 +190,23 @@ export const ErrorTextContrastInLight: Story = {
     expectTextContrast(canvas.getByText('Must start with https://'));
   },
 };
+
+export const ErrorIsLinkedAsDescription: Story = {
+  tags: ['!dev'],
+  args: { label: 'Endpoint URL', error: 'Must start with https://' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Endpoint URL' });
+    await expect(field).toHaveAccessibleDescription('Must start with https://');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+export const DescriptionIsLinked: Story = {
+  tags: ['!dev'],
+  args: { label: 'Endpoint URL', description: 'Full URL of the server.' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Endpoint URL' });
+    await expect(field).toHaveAccessibleDescription('Full URL of the server.');
+    await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};

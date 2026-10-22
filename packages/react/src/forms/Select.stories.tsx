@@ -80,3 +80,23 @@ export const ErrorTextContrastInLight: Story = {
     expectTextContrast(canvas.getByText('Region not available in your plan.'));
   },
 };
+
+export const ErrorIsLinkedAsDescription: Story = {
+  tags: ['!dev'],
+  args: { label: 'Region', options: REGIONS, error: 'Region not available in your plan.' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    await expect(field).toHaveAccessibleDescription('Region not available in your plan.');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+export const DescriptionIsLinked: Story = {
+  tags: ['!dev'],
+  args: { label: 'Region', options: REGIONS, description: 'Where to deploy the agent.' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    await expect(field).toHaveAccessibleDescription('Where to deploy the agent.');
+    await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
