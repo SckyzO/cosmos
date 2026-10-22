@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
-import { createContext, useContext } from 'react';
-import type { ElementType, ReactNode } from 'react';
+import { createContext, useContext, useId } from 'react';
+import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 
 export type TabsOrientation = 'horizontal' | 'vertical';
 
@@ -19,6 +19,8 @@ type TabsContextValue = {
   onChange: (value: string) => void;
   orientation: TabsOrientation;
   variant: TabsVariant;
+  /** Prefix for the tab and panel ids that link them through ARIA. */
+  baseId: string;
 };
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -28,6 +30,10 @@ const useTabs = () => {
   if (!ctx) throw new Error('Tabs.* must be used inside <Tabs>');
   return ctx;
 };
+
+// Tab values may hold characters an id reference can't (spaces split IDREF lists).
+const tabId = (baseId: string, value: string) => `${baseId}-tab-${encodeURIComponent(value)}`;
+const panelId = (baseId: string, value: string) => `${baseId}-panel-${encodeURIComponent(value)}`;
 
 // ── Class maps (variant × orientation) ───────────────────────────────────────
 
@@ -118,26 +124,55 @@ const Root = ({
   variant = 'underline',
   children,
   className,
-}: TabsProps) => (
-  <TabsContext.Provider value={{ value, onChange, orientation, variant }}>
-    <div
-      className={clsx(
-        // Folder tabs touch their panel, so no gap between list and panel.
-        orientation === 'vertical' && (variant === 'folder' ? 'flex' : 'flex gap-6'),
-        className
-      )}
-    >
-      {children}
-    </div>
-  </TabsContext.Provider>
-);
+}: TabsProps) => {
+  const baseId = useId();
+  return (
+    <TabsContext.Provider value={{ value, onChange, orientation, variant, baseId }}>
+      <div
+        className={clsx(
+          // Folder tabs touch their panel, so no gap between list and panel.
+          orientation === 'vertical' && (variant === 'folder' ? 'flex' : 'flex gap-6'),
+          className
+        )}
+      >
+        {children}
+      </div>
+    </TabsContext.Provider>
+  );
+};
 
 const List = ({ children, className }: { children: ReactNode; className?: string }) => {
   const { orientation, variant } = useTabs();
+  // WAI-ARIA APG tabs with automatic activation: the arrow keys of the list's
+  // orientation move focus to the previous/next enabled tab (wrapping), Home
+  // and End to the first/last, and the focused tab is selected.
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const [prev, next] =
+      orientation === 'vertical' ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
+    if (![prev, next, 'Home', 'End'].includes(event.key)) return;
+    const tabs = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)')
+    );
+    const current = tabs.indexOf(event.target as HTMLButtonElement);
+    if (current === -1) return;
+    event.preventDefault();
+    const last = tabs.length - 1;
+    const target =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? last
+          : event.key === next
+            ? (current + 1) % tabs.length
+            : (current - 1 + tabs.length) % tabs.length;
+    tabs[target].focus();
+    tabs[target].click();
+  };
   return (
     <div
       role="tablist"
       aria-orientation={orientation}
+      onKeyDown={onKeyDown}
       className={clsx(LIST_CLASSES[variant][orientation], className)}
     >
       {children}
@@ -155,14 +190,18 @@ export type TabProps = {
 };
 
 const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: TabProps) => {
-  const { value: active, onChange, orientation, variant } = useTabs();
+  const { value: active, onChange, orientation, variant, baseId } = useTabs();
   const isActive = value === active;
   const styles = TRIGGER_CLASSES[variant][orientation];
   return (
     <button
       type="button"
       role="tab"
+      id={tabId(baseId, value)}
       aria-selected={isActive}
+      // Only the selected panel is rendered: point at it from its own tab only.
+      aria-controls={isActive ? panelId(baseId, value) : undefined}
+      tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(
@@ -199,10 +238,16 @@ const Panel = ({
   children: ReactNode;
   className?: string;
 }) => {
-  const { value: active, orientation, variant } = useTabs();
+  const { value: active, orientation, variant, baseId } = useTabs();
   if (value !== active) return null;
   return (
-    <div role="tabpanel" className={clsx(PANEL_CLASSES[variant][orientation], className)}>
+    <div
+      role="tabpanel"
+      id={panelId(baseId, value)}
+      aria-labelledby={tabId(baseId, value)}
+      tabIndex={0}
+      className={clsx(PANEL_CLASSES[variant][orientation], className)}
+    >
       {children}
     </div>
   );
