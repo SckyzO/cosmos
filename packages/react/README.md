@@ -39,7 +39,15 @@ In your main CSS file:
 
 /* Optional: the Outfit + JetBrains Mono webfonts. */
 @import '@sckyzo/cosmos-theme/fonts';
+
+/* Only if you use Calendar, DatePicker or a component built on them. */
+@import '@sckyzo/cosmos-react/calendar.css';
 ```
+
+`Calendar` and `DatePicker` wrap [react-day-picker](https://daypicker.dev), whose
+structural styles are not bundled in the JS, so the package stays loadable with
+`require` in Node and Jest. `calendar.css` is the explicit export that loads them;
+without it the calendar grid renders unstyled. Import it once, after Tailwind.
 
 If you also use `@sckyzo/cosmos-charts`, add a second `@source` line for its
 `dist` the same way.

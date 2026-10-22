@@ -1,8 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker, getDefaultClassNames, type DayPickerProps } from 'react-day-picker';
-// react-day-picker base structural styles. Override via `classNames` below.
-import 'react-day-picker/style.css';
 
 export type CalendarProps = DayPickerProps & {
   className?: string;
@@ -13,6 +11,10 @@ export type CalendarProps = DayPickerProps & {
  * props are accepted (see https://daypicker.dev). Cosmos applies its own
  * Tailwind class names on top of the defaults so the calendar matches the
  * rest of the design system.
+ *
+ * react-day-picker's structural styles are not imported here (a CSS import in
+ * the bundle breaks `require` in Node): load `@sckyzo/cosmos-react/calendar.css`
+ * once in your app.
  */
 export const Calendar = ({ classNames, components, className, ...rest }: CalendarProps) => {
   const def = getDefaultClassNames();

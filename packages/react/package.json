@@ -21,10 +21,15 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./calendar.css": "./calendar.css",
     "./package.json": "./package.json"
   },
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
     "dist/",
+    "calendar.css",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"

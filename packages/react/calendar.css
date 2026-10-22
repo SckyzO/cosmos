@@ -1,0 +1,4 @@
+/* react-day-picker's structural styles, used by <Calendar> and <DatePicker>.
+   Import this once, after Tailwind:
+     @import '@sckyzo/cosmos-react/calendar.css'; */
+@import 'react-day-picker/style.css';
