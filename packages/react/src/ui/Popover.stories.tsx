@@ -278,6 +278,27 @@ export const OnOpenChangeFires: Story = {
   },
 };
 
+/** Panels open on mount don't take focus, so they don't close each other. */
+export const DefaultOpenPanelsStayOpen: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-48 items-center justify-center gap-24">
+      {['One', 'Two'].map((name) => (
+        <Popover key={name} defaultOpen>
+          <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">{name}</Popover.Trigger>
+          <Popover.Content aria-label={name}>
+            <button type="button">Inside {name}</button>
+          </Popover.Content>
+        </Popover>
+      ))}
+    </div>
+  ),
+  play: async () => {
+    await waitFor(() => expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(2));
+    await expect(document.activeElement).toBe(document.body);
+  },
+};
+
 /** Keyboard users land in the panel, can Tab out of it, and get back to the trigger. */
 export const KeyboardFocusManagement: Story = {
   tags: ['!autodocs'],
