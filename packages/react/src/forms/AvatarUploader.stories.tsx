@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fireEvent, fn, userEvent } from 'storybook/test';
 import { AvatarUploader } from './AvatarUploader';
+import { expectTextContrast } from '../storybook-helpers';
 
 const SAMPLE_AVATAR =
   'data:image/svg+xml;utf8,' +
@@ -114,5 +115,15 @@ export const DisabledBlocksUpload: Story = {
     await expect(removeBtn).toBeDisabled();
     await userEvent.click(removeBtn);
     await expect(args.onRemove).not.toHaveBeenCalled();
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...WithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Upload failed — please retry.'));
   },
 };
