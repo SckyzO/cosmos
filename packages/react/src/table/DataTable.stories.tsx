@@ -198,6 +198,21 @@ export const SortByName: Story = {
   },
 };
 
+export const ColumnFilterOpensBeforeAnyFilter: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    // No filter is applied yet: the first click on a filter icon must still
+    // open the dropdown with its options.
+    const [firstFilter] = canvas.getAllByRole('button', { name: 'Filter column' });
+    await userEvent.click(firstFilter);
+    await expect(canvas.getByPlaceholderText('Search…')).toBeInTheDocument();
+    const [firstOption] = canvas.getAllByRole('checkbox');
+    await userEvent.click(firstOption);
+    await expect(canvas.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
+  },
+};
+
 // ── New: Selection + Bulk actions + Global search ────────────────────────────
 
 export const WithSelection: Story = {
