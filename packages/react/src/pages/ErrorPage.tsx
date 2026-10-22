@@ -47,8 +47,13 @@ export const ErrorPage = ({
     )}
   >
     {illustration}
-    <p className="text-brand-100 dark:text-brand-500/20 mt-2 text-8xl font-black">{code}</p>
-    <h1 className="-mt-4 text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+    <p aria-hidden className="text-brand-100 dark:text-brand-500/20 mt-2 text-8xl font-black">
+      {code}
+    </p>
+    <h1 className="-mt-4 text-2xl font-bold text-gray-900 dark:text-white">
+      <span className="sr-only">{code}: </span>
+      {title}
+    </h1>
     {description && (
       <p className="mt-3 max-w-sm text-sm text-gray-500 dark:text-gray-400">{description}</p>
     )}
