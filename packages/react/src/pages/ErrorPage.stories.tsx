@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Home } from 'lucide-react';
+import { expect } from 'storybook/test';
 import { ErrorPage } from './ErrorPage';
 import { Button } from '../ui/Button';
 
@@ -44,5 +45,15 @@ export const Maintenance: Story = {
     code: 503,
     title: 'Scheduled maintenance',
     description: "We're upgrading the cluster. Back online in approximately 15 minutes.",
+  },
+};
+
+// The big code is a 1.22:1 decoration: AT reads it once, inside the heading (#151).
+export const BigCodeIsDecorative: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { code: 404, title: 'Page not found' },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvasElement.querySelector('p[aria-hidden="true"]')).toHaveTextContent('404');
+    await expect(canvas.getByRole('heading', { name: '404: Page not found' })).toBeInTheDocument();
   },
 };
