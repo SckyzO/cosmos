@@ -150,7 +150,7 @@ export const Combobox = ({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           className={clsx(
-            'w-full rounded-md border bg-white py-1.5 pr-10 pl-3 text-sm shadow-sm focus:ring-2 focus:outline-none dark:bg-gray-900 dark:text-white',
+            'w-full rounded-md border bg-white py-1.5 pr-10 pl-3 text-sm shadow-sm placeholder:text-gray-500 focus:ring-2 focus:outline-none dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-400',
             error
               ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30 dark:border-red-500/60'
               : 'focus:border-brand-500 focus:ring-brand-500/30 border-gray-300 dark:border-white/10',

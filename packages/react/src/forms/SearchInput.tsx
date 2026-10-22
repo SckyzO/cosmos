@@ -29,7 +29,7 @@ export const SearchInput = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-3 pl-9 text-sm transition-colors focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+        className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-3 pl-9 text-sm transition-colors placeholder:text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectGraphicContrast, inEachTheme } from '../storybook-helpers';
 import { Toggle } from './Toggle';
 
 const meta = {
@@ -82,5 +83,15 @@ export const DisabledBlocksInteraction: Story = {
     const sw = canvas.getByRole('switch');
     await userEvent.click(sw);
     await expect(args.onChange).not.toHaveBeenCalled();
+  },
+};
+
+// The off track (gray-200 on the page, 1.2:1) was nearly invisible (#151).
+export const OffTrackContrastInEveryTheme: Story = {
+  ...Off,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const track = canvas.getByRole('switch');
+    inEachTheme(() => expectGraphicContrast(track, 'backgroundColor'));
   },
 };
