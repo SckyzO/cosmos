@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Checkbox, CheckboxGroup } from './Checkbox';
+import { expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Checkbox',
@@ -194,5 +195,15 @@ export const GroupTogglesValue: Story = {
     await expect((args as { onChange: ReturnType<typeof fn> }).onChange).toHaveBeenLastCalledWith([
       'b',
     ]);
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...GroupWithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Select at least one permission.'));
   },
 };

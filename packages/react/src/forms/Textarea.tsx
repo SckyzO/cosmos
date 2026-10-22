@@ -92,7 +92,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           id={descId}
           className={clsx(
             'block min-h-[1rem] text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description ?? ''}
@@ -102,7 +102,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
             aria-live="polite"
             className={clsx(
               'shrink-0 font-mono text-xs tabular-nums',
-              overLimit ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
+              overLimit ? 'text-red-700 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'
             )}
           >
             {currentValue.length}

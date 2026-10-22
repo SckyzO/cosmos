@@ -3,6 +3,7 @@ import { ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fireEvent, waitFor } from 'storybook/test';
 import { Dropzone } from './Dropzone';
+import { expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Dropzone',
@@ -141,5 +142,15 @@ export const RejectsByMaxSize: Story = {
     const big = new File(['hello world'], 'big.txt', { type: 'text/plain' });
     fireEvent.change(input, { target: { files: [big] } });
     await expect(canvas.getByText(/exceeds/i)).toBeInTheDocument();
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...WithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Could not upload — please retry.'));
   },
 };

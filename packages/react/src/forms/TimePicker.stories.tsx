@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
 import { TimePicker } from './TimePicker';
 
 const meta = {
@@ -105,5 +105,15 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
   args: { error: 'Outside business hours' },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByLabelText('Time'), { token: '--color-red-500' });
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...WithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Time must be in the future.'));
   },
 };

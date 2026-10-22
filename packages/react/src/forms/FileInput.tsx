@@ -135,7 +135,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
         <p
           className={clsx(
             'mt-1 text-xs',
-            error ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? description}

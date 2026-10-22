@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
+import { expectTextContrast } from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -281,5 +282,15 @@ export const CircleShapeMakesSquare: Story = {
     const btn = canvas.getByRole('button', { name: 'Add' });
     await expect(btn.className).toMatch(/rounded-full/);
     await expect(btn.className).toMatch(/w-9/); // default md size: w-9 h-9
+  },
+};
+
+// White on red-500 fell under 4.5:1 (#151).
+export const DangerContrastInLight: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: { variant: 'danger', children: 'Delete' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByRole('button', { name: 'Delete' }));
   },
 };

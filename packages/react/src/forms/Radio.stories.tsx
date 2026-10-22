@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Radio, RadioGroup } from './Radio';
+import { expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Radio',
@@ -157,5 +158,15 @@ export const DisabledBlocksClick: Story = {
     await expect(r).toBeDisabled();
     await userEvent.click(r).catch(() => undefined);
     await expect(args.onChange).not.toHaveBeenCalled();
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...GroupWithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Please select an option.'));
   },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder, portalDocsParams } from '../storybook-helpers';
+import { expectFocusBorder, expectTextContrast, portalDocsParams } from '../storybook-helpers';
 import { Calendar } from './Calendar';
 import { DatePicker, type DateRange } from './DatePicker';
 
@@ -283,5 +283,15 @@ export const TriggerErrorFocusShowsRedBorderInDark: Story = {
   play: async ({ canvasElement }) => {
     const trigger = canvasElement.querySelector<HTMLElement>('[aria-haspopup="dialog"]');
     await expectFocusBorder(trigger as HTMLElement, { token: '--color-red-500' });
+  },
+};
+
+// red-500 error text fell under 4.5:1 (#151).
+export const ErrorTextContrastInLight: Story = {
+  ...WithError,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Date must be in the future.'));
   },
 };

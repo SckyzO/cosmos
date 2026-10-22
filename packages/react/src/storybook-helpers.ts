@@ -93,3 +93,32 @@ export const expectFocusBorder = async (
   await expect(target).toHaveFocus();
   await waitFor(() => expect(read()).toEqual(expected));
 };
+
+// WCAG 2.x relative luminance of RGBA bytes (alpha ignored).
+const luminance = ([r, g, b]: number[]) => {
+  const [lr, lg, lb] = [r, g, b].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+};
+
+// Closest opaque background behind `el`, its own included.
+const backgroundOf = (el: Element) => {
+  for (let node: Element | null = el; node; node = node.parentElement) {
+    const bg = toRgba(getComputedStyle(node).backgroundColor);
+    if (bg[3] === 255) return bg;
+  }
+  return [255, 255, 255, 255];
+};
+
+/**
+ * Play-function assertion: the computed text colour of `el` against the closest
+ * opaque background behind it reaches `min` (WCAG AA for normal text by default).
+ */
+export const expectTextContrast = (el: Element, min = 4.5) => {
+  const fg = luminance(toRgba(getComputedStyle(el).color));
+  const bg = luminance(backgroundOf(el));
+  const ratio = (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+  expect(ratio).toBeGreaterThanOrEqual(min);
+};

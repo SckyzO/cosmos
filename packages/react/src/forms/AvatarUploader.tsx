@@ -156,7 +156,7 @@ export const AvatarUploader = ({
           )}
         </div>
         {error ? (
-          <p className="flex items-center gap-1 text-xs text-red-500">
+          <p className="flex items-center gap-1 text-xs text-red-700 dark:text-red-400">
             <AlertCircle className="h-3 w-3" /> {error}
           </p>
         ) : (
