@@ -85,6 +85,14 @@ export const Combobox = ({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, query]);
 
+  // Arrow keys step over disabled options and stay put at either end.
+  const moveActive = (step: 1 | -1) =>
+    setActiveIndex((i) => {
+      let next = i + step;
+      while (filtered[next]?.disabled) next += step;
+      return filtered[next] ? next : i;
+    });
+
   // Close on outside click.
   useEffect(() => {
     if (!open) return;
@@ -106,22 +114,28 @@ export const Combobox = ({
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setOpen(true);
-      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+      moveActive(1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
+      moveActive(-1);
     } else if (e.key === 'Enter') {
       if (open && filtered[activeIndex]) {
         e.preventDefault();
         pick(filtered[activeIndex]);
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' || e.key === 'Tab') {
       setOpen(false);
     }
   };
 
   return (
-    <div ref={wrapperRef} className={clsx('w-full', className)}>
+    <div
+      ref={wrapperRef}
+      className={clsx('w-full', className)}
+      onBlur={(e) => {
+        if (!wrapperRef.current?.contains(e.relatedTarget)) setOpen(false);
+      }}
+    >
       {label && (
         <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
           {label}
