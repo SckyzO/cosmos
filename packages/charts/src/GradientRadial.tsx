@@ -35,6 +35,7 @@ export const GradientRadial = ({
     plotOptions: {
       radialBar: {
         hollow: { size: '70%' },
+        track: { background: 'rgba(150,150,150,0.15)' },
         dataLabels: {
           name: { fontSize: '12px', offsetY: -10, color: textMuted },
           value: { fontSize: '32px', fontWeight: 700, formatter: (v) => `${v}%` },
