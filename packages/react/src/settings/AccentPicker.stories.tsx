@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expectTextContrast } from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 
 const meta = {
@@ -43,3 +44,22 @@ export const TenAccents: Story = {
     );
   },
 };
+
+// Inactive swatch labels (gray-400, 10px) fell under 4.5:1 (#151).
+const swatchLabelContrastIn = (theme: string): Story => ({
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  render: () => (
+    <Wrap>
+      <AccentPicker colors={ACCENTS} value="brand" onChange={() => {}} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Sky'));
+  },
+});
+
+export const SwatchLabelContrastInLight = swatchLabelContrastIn('light');
+export const SwatchLabelContrastInSand = swatchLabelContrastIn('sand');
+export const SwatchLabelContrastInDark = swatchLabelContrastIn('dark');
+export const SwatchLabelContrastInDeepBlue = swatchLabelContrastIn('deep-blue');

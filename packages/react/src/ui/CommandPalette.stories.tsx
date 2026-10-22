@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectTextContrast, portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 
@@ -338,3 +338,19 @@ export const HotkeyOpensPalette: Story = {
     await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
   },
 };
+
+// Group headings (gray-400, 11px) fell under 4.5:1 (#151).
+const headingContrastIn = (theme: string): Story => ({
+  ...Open,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  play: async () => {
+    await waitFor(() => expect(document.querySelector('[cmdk-group-heading]')).not.toBeNull());
+    expectTextContrast(document.querySelector('[cmdk-group-heading]') as HTMLElement);
+  },
+});
+
+export const GroupHeadingContrastInLight = headingContrastIn('light');
+export const GroupHeadingContrastInSand = headingContrastIn('sand');
+export const GroupHeadingContrastInDark = headingContrastIn('dark');
+export const GroupHeadingContrastInDeepBlue = headingContrastIn('deep-blue');
