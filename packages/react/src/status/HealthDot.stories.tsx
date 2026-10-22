@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { HealthDot } from './HealthDot';
 import type { HealthStatus } from './types';
 
@@ -19,6 +20,40 @@ export const Crit: Story = { args: { status: 'CRIT' } };
 export const Pulsing: Story = { args: { status: 'CRIT', pulse: true } };
 
 const STATUSES: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'INFO', 'UNKNOWN'];
+
+const PALETTE_500: Record<HealthStatus, string> = {
+  OK: 'bg-green-500',
+  WARN: 'bg-amber-500',
+  CRIT: 'bg-red-500',
+  INFO: 'bg-blue-500',
+  UNKNOWN: 'bg-gray-500',
+};
+
+// Each dot must paint the theme's 500 step of its status hue, the palette the
+// status pills use, not a fixed hex from another Tailwind version.
+export const MatchesThemePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-4">
+      {STATUSES.map((s) => (
+        <div key={s} data-status={s} className="flex items-center gap-2">
+          <HealthDot status={s} />
+          <span data-probe className={`h-2.5 w-2.5 ${PALETTE_500[s]}`} />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const s of STATUSES) {
+      const row = canvasElement.querySelector(`[data-status="${s}"]`)!;
+      const dot = row.querySelector('.rounded-full')!;
+      const probe = row.querySelector('[data-probe]')!;
+      await expect(`${s} ${getComputedStyle(dot).backgroundColor}`).toBe(
+        `${s} ${getComputedStyle(probe).backgroundColor}`
+      );
+    }
+  },
+};
 
 export const StaticVsPulse: Story = {
   render: () => (
