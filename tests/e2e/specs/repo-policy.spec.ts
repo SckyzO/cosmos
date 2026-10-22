@@ -189,3 +189,15 @@ test('no checkout leaves the GITHUB_TOKEN in the repo config', () => {
     });
   }
 });
+
+test('the dev image pins what it installs as root', () => {
+  const dockerfile = read('config/docker/Dockerfile.dev');
+  expect(dockerfile, 'base image by digest').toMatch(/^FROM \S+@sha256:[0-9a-f]{64}$/m);
+  const code = dockerfile
+    .split('\n')
+    .filter((line) => !line.startsWith('#'))
+    .join('\n');
+  expect(code, 'corepack version').toMatch(/corepack@\d+\.\d+\.\d+/);
+  expect(code, 'playwright version').toMatch(/playwright@\d+\.\d+\.\d+ install-deps/);
+  expect(code).not.toMatch(/@latest\b/);
+});
