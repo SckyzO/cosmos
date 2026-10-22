@@ -126,3 +126,50 @@ export const ThresholdLabelsReadOnTheirColor: Story = {
     expect(contrastRatio(labelFill('CRIT')!, '#ef4444')).toBeGreaterThanOrEqual(4.5);
   },
 };
+
+// The line is a smooth path: one `C` command per segment, so one more point
+// than segments.
+const pointCount = (root: HTMLElement) => {
+  const d = root.querySelector('.apexcharts-line')?.getAttribute('d') ?? '';
+  return d ? (d.match(/C/g) ?? []).length + 1 : 0;
+};
+
+// y of the line's first point.
+const firstPointY = (root: HTMLElement) =>
+  Number(
+    /^M\s*[\d.]+[\s,]+([\d.]+)/.exec(
+      root.querySelector('.apexcharts-line')?.getAttribute('d') ?? ''
+    )?.[1]
+  );
+
+/**
+ * Two charts on the default generator both start their walk at 50: the walk
+ * used to be module state, so the second chart continued the first one's.
+ */
+export const DefaultGeneratorIsPerInstance: Story = {
+  tags: ['!dev', '!autodocs'],
+  // Every step of the walk goes up: a second chart that continued the first
+  // one's walk would start at the 95 ceiling.
+  beforeEach: () => {
+    const random = Math.random;
+    Math.random = () => 1;
+    return () => {
+      Math.random = random;
+    };
+  },
+  render: () => (
+    <>
+      <div data-chart="a">
+        <RealtimeChart />
+      </div>
+      <div data-chart="b">
+        <RealtimeChart />
+      </div>
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) => canvasElement.querySelector<HTMLElement>(`[data-chart="${id}"]`)!;
+    await waitFor(() => expect(pointCount(chart('b'))).toBe(30));
+    expect(firstPointY(chart('b'))).toBeCloseTo(firstPointY(chart('a')), 1);
+  },
+};
