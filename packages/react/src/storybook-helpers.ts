@@ -143,6 +143,21 @@ export const expectPlaceholderContrast = (field: Element, min = 4.5) => {
   expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(min);
 };
 
+/**
+ * Play-function assertion for a graphic with no text (icon, switch track): WCAG
+ * 1.4.11 asks 3:1 against what surrounds it. `color` is the icon colour against
+ * the background behind `el`; `backgroundColor` is the fill of `el` against the
+ * background behind its parent.
+ */
+export const expectGraphicContrast = (
+  el: Element,
+  property: 'color' | 'backgroundColor',
+  min = 3
+) => {
+  const behind = backgroundOf(property === 'color' ? el : (el.parentElement ?? el));
+  expect(contrastRatio(toRgba(getComputedStyle(el)[property]), behind)).toBeGreaterThanOrEqual(min);
+};
+
 const THEME_CLASSES = ['sand', 'dark', 'deep-blue'];
 
 /**
