@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { HTMLAttributeReferrerPolicy } from 'react';
 
 export type VideoEmbedAspect = '16:9' | '4:3' | '1:1' | '21:9' | (string & {});
 
@@ -14,6 +15,17 @@ export type VideoEmbedProps = {
   type?: 'iframe' | 'video';
   /** Pass-through to the underlying element (iframe `allow`, video `muted`/`autoPlay`/`loop`/`controls`/`poster`). */
   allow?: string;
+  /**
+   * iframe `sandbox` tokens. The default lets the usual players run (scripts, their own origin,
+   * fullscreen presentation, popups) and nothing else: no top-level navigation, forms or
+   * downloads. Pass `''` for the strictest sandbox. Only applies to `type="iframe"`.
+   */
+  sandbox?: string;
+  /**
+   * iframe `referrerpolicy`. The default sends the origin only, which YouTube and Vimeo need to
+   * accept the embed. Only applies to `type="iframe"`.
+   */
+  referrerPolicy?: HTMLAttributeReferrerPolicy;
   muted?: boolean;
   autoPlay?: boolean;
   loop?: boolean;
@@ -29,6 +41,9 @@ const ASPECT_PRESETS: Record<'16:9' | '4:3' | '1:1' | '21:9', string> = {
   '21:9': 'aspect-[21/9]',
 };
 
+const DEFAULT_SANDBOX =
+  'allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox';
+
 const resolveAspect = (a: VideoEmbedAspect): string => {
   if (a in ASPECT_PRESETS) return ASPECT_PRESETS[a as keyof typeof ASPECT_PRESETS];
   // assume the consumer passed a Tailwind class
@@ -42,6 +57,8 @@ export const VideoEmbed = ({
   rounded = true,
   type = 'iframe',
   allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+  sandbox = DEFAULT_SANDBOX,
+  referrerPolicy = 'strict-origin-when-cross-origin',
   muted,
   autoPlay,
   loop,
@@ -62,6 +79,8 @@ export const VideoEmbed = ({
         src={src}
         title={title}
         allow={allow}
+        sandbox={sandbox}
+        referrerPolicy={referrerPolicy}
         allowFullScreen
         loading="lazy"
         className="h-full w-full border-0"
