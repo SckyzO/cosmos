@@ -176,3 +176,27 @@ export const NameLabelsUseMutedText: Story = {
     }
   },
 };
+
+/** `GradientRadial` draws its empty arc in the same track color as the other radial wrappers. */
+export const GradientTrackMatchesOtherWrappers: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="reference">
+        <StrokedGauge value={92} label="Uptime" />
+      </div>
+      <div data-testid="gradient">
+        <GradientRadial value={84} label="Health" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const trackColor = (id: string) =>
+      canvasElement
+        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
+        ?.getAttribute('stroke');
+    await waitFor(() => expect(trackColor('reference')).toBeTruthy());
+    await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
+  },
+};
