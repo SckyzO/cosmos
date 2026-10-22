@@ -104,8 +104,10 @@ export const TriggerOpensPanel: Story = {
     await userEvent.click(trigger);
     await waitFor(() => expect(panel()).toBeVisible());
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await expect(within(panel()).getByRole('group', { name: 'Theme' })).toBeInTheDocument();
-    await expect(within(panel()).getByRole('group', { name: 'Accent color' })).toBeInTheDocument();
+    await expect(within(panel()).getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
+    await expect(
+      within(panel()).getByRole('radiogroup', { name: 'Accent color' })
+    ).toBeInTheDocument();
   },
 };
 
@@ -127,8 +129,8 @@ export const PickingKeepsPanelOpen: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
     await waitFor(() => expect(panel()).toBeVisible());
-    await userEvent.click(within(panel()).getByRole('button', { name: 'Sand' }));
-    await userEvent.click(within(panel()).getByRole('button', { name: 'Teal' }));
+    await userEvent.click(within(panel()).getByRole('radio', { name: 'Sand' }));
+    await userEvent.click(within(panel()).getByRole('radio', { name: 'Teal' }));
     await expect(args.onThemeChange).toHaveBeenCalledWith('sand');
     await expect(args.onAccentChange).toHaveBeenCalledWith('teal');
     await expect(panel()).toBeVisible();
@@ -155,8 +157,8 @@ export const PanelShowsFontAndTextSize: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
     await waitFor(() => expect(panel()).toBeVisible());
-    await userEvent.click(within(panel()).getByRole('button', { name: 'Montserrat' }));
-    await userEvent.click(within(panel()).getByRole('button', { name: 'Small' }));
+    await userEvent.click(within(panel()).getByRole('radio', { name: 'Montserrat' }));
+    await userEvent.click(within(panel()).getByRole('radio', { name: 'Small' }));
     await expect(args.onFontChange).toHaveBeenCalledWith('montserrat');
     await expect(args.onTextSizeChange).toHaveBeenCalledWith('sm');
   },
@@ -171,7 +173,7 @@ export const TallPanelFitsTheScreen: Story = {
     await waitFor(() => expect(panel()).toBeVisible());
     await expect(panel().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
     // The last group can still be reached.
-    const large = within(panel()).getByRole('button', { name: 'Extra large' });
+    const large = within(panel()).getByRole('radio', { name: 'Extra large' });
     large.scrollIntoView();
     await userEvent.click(large);
   },

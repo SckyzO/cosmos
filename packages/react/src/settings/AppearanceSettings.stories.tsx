@@ -92,12 +92,12 @@ export const Controlled: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-export const GroupsAreLabelled: Story = {
+export const GroupsAreRadioGroups: Story = {
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
-    await expect(canvas.getByRole('group', { name: 'Accent color' })).toBeInTheDocument();
-    await expect(canvas.getByRole('button', { name: 'Light' })).toHaveAttribute(
-      'aria-pressed',
+    await expect(canvas.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
+    await expect(canvas.getByRole('radiogroup', { name: 'Accent color' })).toBeInTheDocument();
+    await expect(canvas.getByRole('radio', { name: 'Light' })).toHaveAttribute(
+      'aria-checked',
       'true'
     );
   },
@@ -105,7 +105,7 @@ export const GroupsAreLabelled: Story = {
 
 export const ClickSandFiresThemeChange: Story = {
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Sand' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Sand' }));
     await expect(args.onThemeChange).toHaveBeenCalledWith('sand');
     await expect(args.onAccentChange).not.toHaveBeenCalled();
   },
@@ -113,7 +113,7 @@ export const ClickSandFiresThemeChange: Story = {
 
 export const ClickTealFiresAccentChange: Story = {
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Teal' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Teal' }));
     await expect(args.onAccentChange).toHaveBeenCalledWith('teal');
     await expect(args.onThemeChange).not.toHaveBeenCalled();
   },
@@ -123,8 +123,8 @@ export const ClickTealFiresAccentChange: Story = {
 export const FontAndTextSizeNeedHandlers: Story = {
   tags: ['!autodocs'],
   play: async ({ canvas }) => {
-    await expect(canvas.queryByRole('group', { name: 'Font' })).toBeNull();
-    await expect(canvas.queryByRole('group', { name: 'Text size' })).toBeNull();
+    await expect(canvas.queryByRole('radiogroup', { name: 'Font' })).toBeNull();
+    await expect(canvas.queryByRole('radiogroup', { name: 'Text size' })).toBeNull();
   },
 };
 
@@ -133,18 +133,43 @@ export const PickingFontAndTextSize: Story = {
   args: { onFontChange: fn(), onTextSizeChange: fn() },
   play: async ({ args, canvas }) => {
     // Outfit and the default size are selected when nothing is passed.
-    await expect(canvas.getByRole('button', { name: 'Outfit' })).toHaveAttribute(
-      'aria-pressed',
+    await expect(canvas.getByRole('radio', { name: 'Outfit' })).toHaveAttribute(
+      'aria-checked',
       'true'
     );
-    await expect(canvas.getByRole('button', { name: 'Default' })).toHaveAttribute(
-      'aria-pressed',
+    await expect(canvas.getByRole('radio', { name: 'Default' })).toHaveAttribute(
+      'aria-checked',
       'true'
     );
-    await userEvent.click(canvas.getByRole('button', { name: 'Inter' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Inter' }));
     await expect(args.onFontChange).toHaveBeenCalledWith('inter');
-    await userEvent.click(canvas.getByRole('button', { name: 'Large' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Large' }));
     await expect(args.onTextSizeChange).toHaveBeenCalledWith('lg');
     await expect(args.onThemeChange).not.toHaveBeenCalled();
+  },
+};
+
+export const ArrowKeysRoveAndPick: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { accent: 'teal', onFontChange: fn(), onTextSizeChange: fn() },
+  play: async ({ args, canvas }) => {
+    // Each group is one tab stop, on its checked radio.
+    await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveAttribute('tabindex', '-1');
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveFocus();
+    await expect(args.onThemeChange).toHaveBeenCalledWith('sand');
+
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Teal', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'Cyan' })).toHaveFocus();
+    await expect(args.onAccentChange).toHaveBeenCalledWith('cyan');
+
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Outfit', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(args.onFontChange).toHaveBeenCalledWith('inter');
   },
 };
