@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder, expectTextContrast, portalDocsParams } from '../storybook-helpers';
+import {
+  expectFocusBorder,
+  expectTextContrast,
+  inEachTheme,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Calendar } from './Calendar';
 import { DatePicker, type DateRange } from './DatePicker';
 
@@ -293,5 +298,15 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Date must be in the future.'));
+  },
+};
+
+// The empty trigger's placeholder text sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const placeholder = canvas.getByRole('button').querySelector('span')!;
+    inEachTheme(() => expectTextContrast(placeholder));
   },
 };

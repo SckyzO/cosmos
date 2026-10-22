@@ -12,7 +12,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectTextContrast, portalDocsParams } from '../storybook-helpers';
+import {
+  expectPlaceholderContrast,
+  expectTextContrast,
+  inEachTheme,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 
@@ -354,3 +359,14 @@ export const GroupHeadingContrastInLight = headingContrastIn('light');
 export const GroupHeadingContrastInSand = headingContrastIn('sand');
 export const GroupHeadingContrastInDark = headingContrastIn('dark');
 export const GroupHeadingContrastInDeepBlue = headingContrastIn('deep-blue');
+
+// The search field's placeholder (gray-400) sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    await waitFor(() => expect(document.querySelector('[cmdk-input]')).not.toBeNull());
+    const input = document.querySelector<HTMLElement>('[cmdk-input]')!;
+    inEachTheme(() => expectPlaceholderContrast(input));
+  },
+};
