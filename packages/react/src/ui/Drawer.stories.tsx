@@ -184,7 +184,80 @@ export const NoBackdropOmitsOverlay: Story = {
   play: async () => {
     const aside = document.body.querySelector('aside[role="dialog"]');
     await expect(aside).not.toBeNull();
+    // Without a backdrop the page stays interactive: the drawer is not modal.
+    await expect(aside).not.toHaveAttribute('aria-modal');
     const backdrop = document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]');
     await expect(backdrop).toBeNull();
+  },
+};
+
+const inDialog = (el: Element | null) => !!el?.closest('[role="dialog"]');
+
+/**
+ * A closed drawer stays out of the tab order, and closing it hands focus back
+ * to the button that opened it.
+ */
+export const ClosedDrawerIsNotFocusable: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <Button onClick={() => setOpen(true)}>Open drawer</Button>
+        <Button variant="secondary">After</Button>
+        <Drawer open={open} onClose={() => setOpen(false)}>
+          <Drawer.Header title="Panel" onClose={() => setOpen(false)} />
+          <Drawer.Footer>
+            <Button size="sm" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+          </Drawer.Footer>
+        </Drawer>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const after = canvas.getByRole('button', { name: 'After' });
+    after.focus();
+    await userEvent.tab();
+    await expect(inDialog(document.activeElement)).toBe(false);
+
+    const trigger = canvas.getByRole('button', { name: 'Open drawer' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(inDialog(document.activeElement)).toBe(true));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+
+    // Once the slide-out has run, the panel is still out of reach.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    after.focus();
+    await userEvent.tab();
+    await expect(inDialog(document.activeElement)).toBe(false);
+  },
+};
+
+/** Tab cycles inside the open drawer, the outside close button included. */
+export const FocusTrapIncludesCloseOutside: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <Wrap>
+      <Button variant="secondary">Page button</Button>
+      <Drawer open onClose={() => {}} closeOutside>
+        <Drawer.Header title="Panel" />
+        <Drawer.Footer>
+          <Button size="sm">Apply</Button>
+        </Drawer.Footer>
+      </Drawer>
+    </Wrap>
+  ),
+  play: async () => {
+    await waitFor(() => expect(inDialog(document.activeElement)).toBe(true));
+    const reached = new Set<string>();
+    for (let i = 0; i < 4; i++) {
+      await userEvent.tab();
+      await expect(inDialog(document.activeElement)).toBe(true);
+      reached.add(document.activeElement?.getAttribute('aria-label') ?? '');
+    }
+    await expect(reached.has('Close drawer')).toBe(true);
   },
 };

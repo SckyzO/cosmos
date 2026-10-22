@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { HelpOverlay } from './HelpOverlay';
@@ -137,7 +137,8 @@ export const HotkeyOpensOverlay: Story = {
       <HelpOverlay>{SAMPLE_SHORTCUTS}</HelpOverlay>
     </div>
   ),
-  play: async ({ canvas }) => {
+  play: async () => {
+    const canvas = within(document.body);
     // Send `?` at the document level (the hotkey listener is on document).
     await userEvent.keyboard('?');
     await waitFor(() => {
@@ -157,7 +158,8 @@ export const EscapeClosesOverlay: Story = {
       </HelpOverlay>
     );
   },
-  play: async ({ canvas }) => {
+  play: async () => {
+    const canvas = within(document.body);
     await waitFor(() => expect(canvas.getByRole('dialog')).toBeInTheDocument());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(canvas.queryByRole('dialog')).not.toBeInTheDocument());
@@ -172,7 +174,8 @@ export const CloseButtonClosesOverlay: Story = {
       {SAMPLE_SHORTCUTS}
     </HelpOverlay>
   ),
-  play: async ({ args, canvas }) => {
+  play: async ({ args }) => {
+    const canvas = within(document.body);
     const closeBtn = canvas.getByRole('button', { name: /close keyboard shortcuts/i });
     await userEvent.click(closeBtn);
     await waitFor(() =>
@@ -201,7 +204,28 @@ export const HotkeyIgnoredWhileTypingInInput: Story = {
     await userEvent.click(input);
     await userEvent.keyboard('?');
     // Focused input → hotkey skipped → no dialog rendered.
-    expect(canvas.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(within(document.body).queryByRole('dialog')).not.toBeInTheDocument();
     expect(input).toHaveValue('?');
+  },
+};
+
+/** Focus moves into the open overlay and Tab cannot leave it. */
+export const FocusIsTrapped: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="p-6">
+      <Button variant="secondary">Page button</Button>
+      <HelpOverlay open onOpenChange={() => undefined}>
+        {SAMPLE_SHORTCUTS}
+      </HelpOverlay>
+    </div>
+  ),
+  play: async () => {
+    const dialog = within(document.body).getByRole('dialog');
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    for (let i = 0; i < 3; i++) {
+      await userEvent.tab();
+      await expect(dialog.contains(document.activeElement)).toBe(true);
+    }
   },
 };
