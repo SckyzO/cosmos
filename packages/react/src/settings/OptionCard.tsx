@@ -13,6 +13,8 @@ export type OptionCardProps = {
   preview?: ReactNode;
   active?: boolean;
   onClick?: () => void;
+  /** Roving tab stop, set by the picker's radio group. */
+  tabIndex?: number;
   className?: string;
 };
 
@@ -27,12 +29,15 @@ export const OptionCard = ({
   preview,
   active = false,
   onClick,
+  tabIndex,
   className,
 }: OptionCardProps) => (
   <button
     type="button"
     onClick={onClick}
-    aria-pressed={active}
+    role="radio"
+    aria-checked={active}
+    tabIndex={tabIndex}
     aria-label={label}
     className={clsx(
       'relative flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 transition-all',

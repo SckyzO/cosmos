@@ -9,6 +9,8 @@ export type ColorSwatchProps = {
   /** Whether this swatch is currently selected. */
   active?: boolean;
   onClick?: () => void;
+  /** Roving tab stop, set by the picker's radio group. */
+  tabIndex?: number;
   className?: string;
 };
 
@@ -21,6 +23,7 @@ export const ColorSwatch = ({
   label,
   active = false,
   onClick,
+  tabIndex,
   className,
 }: ColorSwatchProps) => (
   <button
@@ -28,7 +31,9 @@ export const ColorSwatch = ({
     onClick={onClick}
     title={label}
     aria-label={label}
-    aria-pressed={active}
+    role="radio"
+    aria-checked={active}
+    tabIndex={tabIndex}
     className={clsx(
       'relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-2.5 transition-all',
       active

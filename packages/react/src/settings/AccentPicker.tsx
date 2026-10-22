@@ -1,4 +1,6 @@
 import { clsx } from 'clsx';
+import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
+import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { ColorSwatch } from './ColorSwatch';
 
 export type AccentColor = {
@@ -10,7 +12,7 @@ export type AccentColor = {
   hex: string;
 };
 
-export type AccentPickerProps = {
+export type AccentPickerProps = FieldA11yProps & {
   /** Available accent colours. */
   colors: AccentColor[];
   /** Currently selected colour id. */
@@ -34,22 +36,31 @@ export const AccentPicker = ({
   cols = 5,
   smCols = 10,
   className,
-}: AccentPickerProps) => (
-  <div
-    className={clsx('grid gap-1.5', className)}
-    style={{
-      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-    }}
-    data-sm-cols={smCols}
-  >
-    {colors.map((c) => (
-      <ColorSwatch
-        key={c.id}
-        hex={c.hex}
-        label={c.label}
-        active={c.id === value}
-        onClick={() => onChange(c.id)}
-      />
-    ))}
-  </div>
-);
+  ...a11y
+}: AccentPickerProps) => {
+  const fieldA11y = useFieldA11y(a11y);
+  const anyChecked = colors.some((item) => item.id === value);
+  return (
+    <div
+      role="radiogroup"
+      {...fieldA11y}
+      onKeyDown={onRadioGroupKeyDown}
+      className={clsx('grid gap-1.5', className)}
+      style={{
+        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+      }}
+      data-sm-cols={smCols}
+    >
+      {colors.map((c, i) => (
+        <ColorSwatch
+          key={c.id}
+          hex={c.hex}
+          label={c.label}
+          active={c.id === value}
+          onClick={() => onChange(c.id)}
+          tabIndex={radioTabIndex(c.id === value, i, anyChecked)}
+        />
+      ))}
+    </div>
+  );
+};
