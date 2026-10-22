@@ -57,7 +57,7 @@ export const OptionCard = ({
       >
         {label}
       </p>
-      {desc && <p className="text-3xs text-gray-400 dark:text-gray-500">{desc}</p>}
+      {desc && <p className="text-3xs text-gray-500 dark:text-gray-400">{desc}</p>}
     </div>
     {active && (
       <span className="bg-brand-500 absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full">

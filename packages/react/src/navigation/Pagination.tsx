@@ -110,7 +110,7 @@ export const Pagination = ({
                 key={`ellipsis-${i}`}
                 aria-hidden
                 className={clsx(
-                  'inline-flex items-center justify-center text-gray-400',
+                  'inline-flex items-center justify-center text-gray-500 dark:text-gray-400',
                   SIZE_BTN[size]
                 )}
               >

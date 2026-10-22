@@ -61,7 +61,7 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         months_dropdown: '',
         years_dropdown: '',
         weekdays: clsx(def.weekdays, ''),
-        weekday: 'h-8 w-8 text-center text-2xs font-medium text-gray-400 dark:text-gray-500',
+        weekday: 'h-8 w-8 text-center text-2xs font-medium text-gray-500 dark:text-gray-400',
         week: clsx(def.week, ''),
         day: 'h-8 w-8 p-0 text-center align-middle',
         day_button:

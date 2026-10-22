@@ -3,6 +3,7 @@ import { Box, Cog, Mail, Rocket, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Button } from '../ui/Button';
+import { expectTextContrast } from '../storybook-helpers';
 import { Stepper } from './Stepper';
 
 const meta = {
@@ -331,3 +332,17 @@ export const PanelsSeparatedByChevronsOnly: Story = {
     }
   },
 };
+
+// Pending step labels (gray-400) fell under 4.5:1 on light and sand (#151).
+const pendingLabelContrastIn = (theme: string): Story => ({
+  ...FirstStep,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  play: async ({ canvas }) => {
+    expectTextContrast(canvas.getByText('Deploy'));
+  },
+});
+
+export const PendingLabelContrastInLight = pendingLabelContrastIn('light');
+export const PendingLabelContrastInSand = pendingLabelContrastIn('sand');
+export const PendingLabelContrastInDeepBlue = pendingLabelContrastIn('deep-blue');

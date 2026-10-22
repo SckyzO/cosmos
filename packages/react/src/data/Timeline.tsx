@@ -109,7 +109,11 @@ const Body = ({ item }: { item: TimelineItem }) => (
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
     )}
     <Meta meta={item.meta} />
-    {item.time && <p className="text-3xs mt-0.5 font-mono text-gray-400 uppercase">{item.time}</p>}
+    {item.time && (
+      <p className="text-3xs mt-0.5 font-mono text-gray-500 uppercase dark:text-gray-400">
+        {item.time}
+      </p>
+    )}
   </div>
 );
 
@@ -150,7 +154,7 @@ const TimelineList = ({
                 <Meta meta={item.meta} />
               </div>
               {item.time && (
-                <span className="text-3xs shrink-0 font-mono text-gray-400 uppercase">
+                <span className="text-3xs shrink-0 font-mono text-gray-500 uppercase dark:text-gray-400">
                   {item.time}
                 </span>
               )}
@@ -196,7 +200,7 @@ const TimelineList = ({
                   )}
                   <Meta meta={item.meta} />
                   {item.time && (
-                    <p className="text-3xs mt-2 font-mono text-gray-400 uppercase md:hidden">
+                    <p className="text-3xs mt-2 font-mono text-gray-500 uppercase md:hidden dark:text-gray-400">
                       {item.time}
                     </p>
                   )}
@@ -205,7 +209,7 @@ const TimelineList = ({
               {item.time && (
                 <p
                   className={clsx(
-                    'text-3xs row-start-1 hidden pt-3 font-mono text-gray-400 uppercase md:block',
+                    'text-3xs row-start-1 hidden pt-3 font-mono text-gray-500 uppercase md:block dark:text-gray-400',
                     left ? 'md:col-start-3' : 'md:col-start-1 md:text-right'
                   )}
                 >

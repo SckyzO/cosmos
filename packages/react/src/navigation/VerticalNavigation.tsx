@@ -89,7 +89,7 @@ export type VerticalNavigationSectionProps = HTMLAttributes<HTMLLIElement> & {
 
 const Section = ({ label, children, className, ...rest }: VerticalNavigationSectionProps) => (
   <li className={clsx('mt-4 first:mt-0', className)} {...rest}>
-    <div className="px-2 text-xs/6 font-semibold text-gray-400 dark:text-gray-500">{label}</div>
+    <div className="px-2 text-xs/6 font-semibold text-gray-500 dark:text-gray-400">{label}</div>
     <ul role="list" className="-mx-2 mt-1 space-y-1">
       {children}
     </ul>

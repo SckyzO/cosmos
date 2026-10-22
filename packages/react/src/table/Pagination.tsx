@@ -93,7 +93,7 @@ export const Pagination = ({
                 p === '...' ? (
                   <span
                     key={`e-${i}`}
-                    className="flex h-9 w-9 items-center justify-center text-sm text-gray-400"
+                    className="flex h-9 w-9 items-center justify-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     …
                   </span>

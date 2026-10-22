@@ -261,7 +261,7 @@ export const EventCalendar = ({
             isToday
               ? 'bg-brand-500 text-white'
               : outside
-                ? 'text-gray-400 dark:text-gray-500'
+                ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-700 dark:text-gray-200'
           );
           return (

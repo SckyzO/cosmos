@@ -65,13 +65,13 @@ const STATUS_INDICATOR: Record<StepStatus, string> = {
   active:
     'border-brand-500 text-brand-600 bg-white ring-4 ring-brand-500/15 dark:bg-gray-900 dark:text-brand-400',
   pending:
-    'border-gray-300 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500',
+    'border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400',
 };
 
 const STATUS_LABEL: Record<StepStatus, string> = {
   done: 'text-gray-700 dark:text-gray-200',
   active: 'text-gray-900 dark:text-white font-semibold',
-  pending: 'text-gray-400 dark:text-gray-500',
+  pending: 'text-gray-500 dark:text-gray-400',
 };
 
 const StepperStep = ({
