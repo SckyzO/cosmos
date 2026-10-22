@@ -10,11 +10,11 @@ export const STATUS_PILL: Record<HealthStatus, string> = {
   INFO: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
-/** Raw color hex per status — used for HealthDot pulse animation. */
-export const STATUS_COLOR: Record<HealthStatus, string> = {
-  OK: '#10b981',
-  WARN: '#f59e0b',
-  CRIT: '#ef4444',
-  UNKNOWN: '#6b7280',
-  INFO: '#3b82f6',
+/** Tailwind background class per status — the HealthDot fill, same hues as the pills. */
+export const STATUS_DOT: Record<HealthStatus, string> = {
+  OK: 'bg-green-500',
+  WARN: 'bg-amber-500',
+  CRIT: 'bg-red-500',
+  UNKNOWN: 'bg-gray-500',
+  INFO: 'bg-blue-500',
 };

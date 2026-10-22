@@ -199,6 +199,32 @@ export const ClickShowsToast: Story = {
   },
 };
 
+// The test browser reports `prefers-color-scheme: light`, so the toaster must
+// take dark from the `.dark` class on <html>, then follow a switch to sand.
+export const FollowsCosmosTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <>
+      <Button onClick={() => toast('Themed')}>Trigger</Button>
+      <Toaster />
+    </>
+  ),
+  play: async ({ canvas }) => {
+    await expect(window.matchMedia('(prefers-color-scheme: dark)').matches).toBe(false);
+    await userEvent.click(canvas.getByRole('button', { name: 'Trigger' }));
+    const toaster = () => document.querySelector('[data-sonner-toaster]');
+    await waitFor(() => expect(toaster()).toHaveAttribute('data-sonner-theme', 'dark'));
+    const root = document.documentElement;
+    root.classList.replace('dark', 'sand');
+    try {
+      await waitFor(() => expect(toaster()).toHaveAttribute('data-sonner-theme', 'light'));
+    } finally {
+      root.classList.replace('sand', 'dark');
+    }
+  },
+};
+
 export const ActionFiresHandler: Story = {
   render: (args) => {
     const extra = args as unknown as { onUndo: () => void };

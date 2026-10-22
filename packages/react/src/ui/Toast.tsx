@@ -1,4 +1,5 @@
 import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
+import { useCosmosTheme } from '../settings/useCosmosTheme';
 
 /**
  * Cosmos toast — thin wrapper around sonner.
@@ -6,7 +7,8 @@ import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
  * Mount the `<Toaster />` once at the app root. Trigger toasts from anywhere
  * with `toast(...)`, `toast.success(...)`, `toast.error(...)`, `toast.promise(...)`.
  *
- * Cosmos defaults: bottom-right, system theme, rich-colors on, close button on.
+ * Cosmos defaults: bottom-right, light or dark from the Cosmos theme class on
+ * `<html>` (not the OS setting), rich-colors on, close button on.
  * Override per-instance by passing props.
  */
 
@@ -15,7 +17,7 @@ export type CosmosToasterProps = ToasterProps;
 export const Toaster = (props: CosmosToasterProps) => (
   <SonnerToaster
     position="bottom-right"
-    theme="system"
+    theme={useCosmosTheme()}
     richColors
     closeButton
     duration={4000}
