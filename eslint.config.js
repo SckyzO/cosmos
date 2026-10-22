@@ -52,20 +52,15 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      // eslint-plugin-react-hooks 7.x adds new strict-mode rules:
-      //  - react-hooks/immutability flags refs declared as `let` / mutated
-      //    locals (forces a `*Ref` rename convention)
-      //  - react-hooks/set-state-in-effect flags every `setState` reached
-      //    synchronously from a `useEffect`/`useLayoutEffect`, even the
-      //    legitimate "derive state from props" pattern
-      //
-      // Both are noisy on the current codebase without surfacing real bugs.
-      // Demote them to warnings so the lint run stays green while we iterate
-      // on the components themselves — re-enable as `error` once each file
-      // has been migrated to the recommended pattern.
-      'react-hooks/immutability': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
     },
+  },
+  {
+    // The packages are component libraries: compound components
+    // (`Object.assign(Root, { Item })`) and their companion exports live in one
+    // file by design, which this Fast Refresh rule flags. It only matters for
+    // app code, so keep it for the Storybook app and the e2e tooling.
+    files: ['packages/*/src/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
     // Storybook stories use `render: (args) => { ... useState ... }` and

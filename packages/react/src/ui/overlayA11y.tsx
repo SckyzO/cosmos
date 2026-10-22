@@ -176,6 +176,7 @@ export function usePortalFocus<T extends HTMLElement>({
       // By now the panel is unmounted: focus left inside it fell back to <body>.
       const focused = document.activeElement;
       if (!focused || focused === document.body || panel.contains(focused)) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- the trigger as it is now, not at open
         triggerRef.current?.focus();
       }
     };

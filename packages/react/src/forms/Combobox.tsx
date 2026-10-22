@@ -75,9 +75,14 @@ export const Combobox = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Keep input mirror of external selection.
-  useEffect(() => {
-    if (!open) setQuery(selected?.label ?? '');
-  }, [selected?.label, open]);
+  // Adjusted during render rather than in an effect: it only re-syncs while the
+  // list is closed, when the selected label or the open state changes.
+  const mirrorKey = open ? null : (selected?.label ?? '');
+  const [lastMirrorKey, setLastMirrorKey] = useState(mirrorKey);
+  if (mirrorKey !== lastMirrorKey) {
+    setLastMirrorKey(mirrorKey);
+    if (mirrorKey !== null) setQuery(mirrorKey);
+  }
 
   const filtered = useMemo(() => {
     if (!query) return options;

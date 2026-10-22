@@ -14,6 +14,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
+import { mergeRefs } from './mergeRefs';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -154,11 +155,6 @@ const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPan
   ) {
     const { open, setOpen, triggerRef, refreshRect } = useCtx();
     // Merge refs
-    const setRef = (node: HTMLButtonElement | null) => {
-      (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      if (typeof forwardedRef === 'function') forwardedRef(node);
-      else if (forwardedRef) forwardedRef.current = node;
-    };
     // If the panel starts open (defaultOpen / controlled open), the rect
     // must be computed once after the trigger button mounts; otherwise
     // <Content> stays null because triggerRect is still null.
@@ -171,7 +167,7 @@ const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPan
     const display = count > 9999 ? '9999+' : String(count);
     return (
       <button
-        ref={setRef}
+        ref={mergeRefs(triggerRef, forwardedRef)}
         type="button"
         aria-label={muted ? 'Notifications (muted)' : 'Notifications'}
         aria-expanded={open}
