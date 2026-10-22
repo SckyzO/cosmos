@@ -126,3 +126,77 @@ export const TextFollowsTheme: Story = {
     await expectTextFollowsTheme(canvasElement, '');
   },
 };
+
+// A CSS color as a canvas normalizes it, so '#fff' and 'rgb(255, 255, 255)' compare equal.
+const normalizeColor = (color: string) => {
+  const context = document.createElement('canvas').getContext('2d')!;
+  context.fillStyle = '#000';
+  context.fillStyle = color;
+  return context.fillStyle;
+};
+
+const themeMutedText = () =>
+  normalizeColor(
+    getComputedStyle(document.documentElement).getPropertyValue('--color-text-secondary').trim()
+  );
+
+const expectNameLabelsMuted = (root: HTMLElement) => {
+  const labels = [...root.querySelectorAll('.apexcharts-datalabel-label')];
+  expect(labels.length).toBe(3);
+  for (const label of labels) {
+    expect(normalizeColor(label.getAttribute('fill') ?? '')).toBe(themeMutedText());
+  }
+};
+
+/**
+ * The series name under the center value uses the theme's muted text color,
+ * not the series color (brand-500 text fails contrast), in light and dark themes.
+ */
+export const NameLabelsUseMutedText: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <GradientRadial value={84} label="Health" />
+      <SemiCircleGauge value={67} label="Load" />
+      <StrokedGauge value={92} label="Uptime" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expectNameLabelsMuted(canvasElement));
+    const { classList } = document.documentElement;
+    const previous = [...classList];
+    classList.remove(...previous);
+    classList.add('dark');
+    try {
+      await waitFor(() => expectNameLabelsMuted(canvasElement));
+    } finally {
+      classList.remove(...classList);
+      classList.add(...previous);
+    }
+  },
+};
+
+/** `GradientRadial` draws its empty arc in the same track color as the other radial wrappers. */
+export const GradientTrackMatchesOtherWrappers: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="reference">
+        <StrokedGauge value={92} label="Uptime" />
+      </div>
+      <div data-testid="gradient">
+        <GradientRadial value={84} label="Health" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const trackColor = (id: string) =>
+      canvasElement
+        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
+        ?.getAttribute('stroke');
+    await waitFor(() => expect(trackColor('reference')).toBeTruthy());
+    await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
+  },
+};

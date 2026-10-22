@@ -25,7 +25,7 @@ export const RadialBarChart = ({
       radialBar: {
         track: { background: 'rgba(150,150,150,0.15)' },
         dataLabels: {
-          name: { fontSize: '12px' },
+          name: { fontSize: '12px', color: textMuted },
           value: { fontSize: '14px', formatter: (v) => `${v}%` },
           total: {
             show: true,
