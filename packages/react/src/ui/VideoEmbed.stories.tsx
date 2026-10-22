@@ -114,3 +114,26 @@ export const NativeRendersVideo: Story = {
     await expect(canvasElement.querySelector('iframe')).toBeNull();
   },
 };
+
+export const IframeIsSandboxedByDefault: Story = {
+  args: { src: 'about:blank', title: 'Sandbox sample' },
+  play: async ({ canvasElement }) => {
+    const iframe = canvasElement.querySelector('iframe');
+    const tokens = iframe?.getAttribute('sandbox')?.split(' ') ?? [];
+    await expect(tokens).toContain('allow-scripts');
+    // The embed can't navigate the page, submit forms or download.
+    await expect(tokens).not.toContain('allow-top-navigation');
+    await expect(tokens).not.toContain('allow-forms');
+    await expect(tokens).not.toContain('allow-downloads');
+    await expect(iframe).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  },
+};
+
+export const IframeSandboxAndReferrerPolicyOverride: Story = {
+  args: { src: 'about:blank', title: 'Strict sample', sandbox: '', referrerPolicy: 'no-referrer' },
+  play: async ({ canvasElement }) => {
+    const iframe = canvasElement.querySelector('iframe');
+    await expect(iframe).toHaveAttribute('sandbox', '');
+    await expect(iframe).toHaveAttribute('referrerpolicy', 'no-referrer');
+  },
+};
