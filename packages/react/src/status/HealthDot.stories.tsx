@@ -77,3 +77,12 @@ export const StaticVsPulse: Story = {
     </div>
   ),
 };
+
+// Color alone told sighted users the status; assistive tech got nothing (#151).
+export const StatusIsAvailableAsText: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { status: 'CRIT' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('CRIT')).toHaveClass('sr-only');
+  },
+};
