@@ -10,8 +10,11 @@
  */
 
 /* Tailwind dark variant: respond to the .dark / .deep-blue class set by the consumer's
-   ThemeContext, instead of (or in addition to) prefers-color-scheme. */
-@custom-variant dark (&:is(.dark, .dark *, .deep-blue, .deep-blue *));
+   ThemeContext, instead of (or in addition to) prefers-color-scheme.
+   `:where()` keeps the variant at zero specificity, as Tailwind documents it: with `:is()` it
+   weighed as much as `focus:` or `hover:` and, emitted later, `dark:border-gray-700` beat
+   `focus:border-brand-500`, so form controls lost their focus border in the dark themes. */
+@custom-variant dark (&:where(.dark, .dark *, .deep-blue, .deep-blue *));
 
 @theme {
   /* ── Typography ─────────────────────────────────────────────────────────── */
