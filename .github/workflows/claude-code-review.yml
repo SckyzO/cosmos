@@ -24,10 +24,12 @@ jobs:
       issues: read
       id-token: write
     steps:
+      # The default branch, never the PR head: this job holds the Claude token,
+      # and a PR could ship its own .claude/ settings or hooks. The review
+      # reads the PR through `gh pr diff` and `gh pr view`.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
-          ref: refs/pull/${{ github.event.issue.number }}/head
 
       - uses: anthropics/claude-code-action@db77d4d3c98f3f6380e7cd45ffba2342a3dbde3c # v1.0.254
         with:
