@@ -13,7 +13,7 @@ export type SectionLabelProps = {
 export const SectionLabel = ({ children, className }: SectionLabelProps) => (
   <p
     className={clsx(
-      'text-3xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-600',
+      'text-3xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400',
       className
     )}
   >

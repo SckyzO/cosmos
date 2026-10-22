@@ -135,7 +135,7 @@ const CommandPaletteGroup = forwardRef<ElementRef<typeof Command.Group>, Command
       <Command.Group
         ref={ref}
         className={clsx(
-          '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-400 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-500',
+          '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-500 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-400',
           className
         )}
         {...rest}
