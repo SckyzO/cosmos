@@ -359,10 +359,9 @@ export const FolderSwitchesPanel: Story = {
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('images-panel-content');
     await expect(images).toHaveAttribute('aria-selected', 'true');
     await expect(documents).toHaveAttribute('aria-selected', 'false');
-    // Keyboard: Tab reaches the next trigger, Enter selects it
-    await userEvent.tab();
+    // Keyboard: the arrow key moves focus to the next tab and selects it
+    await userEvent.keyboard('{ArrowRight}');
     await expect(archives).toHaveFocus();
-    await userEvent.keyboard('{Enter}');
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('archives-panel-content');
     await expect(archives).toHaveAttribute('aria-selected', 'true');
     await expect(images).toHaveAttribute('aria-selected', 'false');
@@ -394,5 +393,107 @@ export const FolderActiveTabJoinsPanel: Story = {
     await expect(getComputedStyle(inactive).borderBottomColor).toBe(
       getComputedStyle(panel).borderLeftColor
     );
+  },
+};
+
+const KeyboardTabs = ({ orientation }: { orientation?: 'horizontal' | 'vertical' }) => {
+  const [tab, setTab] = useState('overview');
+  return (
+    <Tabs value={tab} onChange={setTab} orientation={orientation}>
+      <Tabs.List>
+        <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+        <Tabs.Trigger value="soon" disabled>
+          Soon
+        </Tabs.Trigger>
+        <Tabs.Trigger value="metrics">Metrics</Tabs.Trigger>
+        <Tabs.Trigger value="logs">Logs</Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Panel value="overview">
+        <p>overview-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="metrics">
+        <p>metrics-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="logs">
+        <p>logs-panel-content</p>
+      </Tabs.Panel>
+    </Tabs>
+  );
+};
+
+export const ArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <KeyboardTabs />,
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const metrics = canvas.getByRole('tab', { name: 'Metrics' });
+    const logs = canvas.getByRole('tab', { name: 'Logs' });
+    // Only the selected tab is in the tab sequence
+    await expect(overview).toHaveAttribute('tabindex', '0');
+    await expect(metrics).toHaveAttribute('tabindex', '-1');
+    await expect(logs).toHaveAttribute('tabindex', '-1');
+    await userEvent.tab();
+    await expect(overview).toHaveFocus();
+    // ArrowRight skips the disabled tab, focuses and selects the next one
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(metrics).toHaveFocus();
+    await expect(metrics).toHaveAttribute('aria-selected', 'true');
+    await expect(metrics).toHaveAttribute('tabindex', '0');
+    await expect(overview).toHaveAttribute('tabindex', '-1');
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('metrics-panel-content');
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(logs).toHaveFocus();
+    // Wraps from the last tab to the first, and back
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(overview).toHaveFocus();
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('overview-panel-content');
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(logs).toHaveFocus();
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('logs-panel-content');
+    // Home and End jump to the first and last tabs
+    await userEvent.keyboard('{Home}');
+    await expect(overview).toHaveFocus();
+    await expect(overview).toHaveAttribute('aria-selected', 'true');
+    await userEvent.keyboard('{End}');
+    await expect(logs).toHaveFocus();
+    await expect(logs).toHaveAttribute('aria-selected', 'true');
+  },
+};
+
+export const VerticalArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <KeyboardTabs orientation="vertical" />,
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const metrics = canvas.getByRole('tab', { name: 'Metrics' });
+    const logs = canvas.getByRole('tab', { name: 'Logs' });
+    await userEvent.tab();
+    await expect(overview).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(metrics).toHaveFocus();
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('metrics-panel-content');
+    await userEvent.keyboard('{ArrowUp}');
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(logs).toHaveFocus();
+    await expect(logs).toHaveAttribute('aria-selected', 'true');
+  },
+};
+
+export const TabAndPanelAreLinked: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <KeyboardTabs />,
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const panel = canvas.getByRole('tabpanel');
+    await expect(overview.id).not.toBe('');
+    await expect(panel.id).not.toBe('');
+    await expect(overview).toHaveAttribute('aria-controls', panel.id);
+    await expect(panel).toHaveAttribute('aria-labelledby', overview.id);
+    await expect(canvas.getByRole('tabpanel', { name: 'Overview' })).toBe(panel);
+    // Tab from the selected tab goes to the panel, not to the next tab
+    await userEvent.tab();
+    await expect(overview).toHaveFocus();
+    await userEvent.tab();
+    await expect(panel).toHaveFocus();
   },
 };
