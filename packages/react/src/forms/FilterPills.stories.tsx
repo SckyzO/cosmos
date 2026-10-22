@@ -47,7 +47,43 @@ export const Controlled: Story = {
 export const ClickPillFiresOnChange: Story = {
   args: { options: SEVERITY, value: 'all', onChange: fn() },
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'CRIT' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'CRIT' }));
     await expect(args.onChange).toHaveBeenCalledWith('crit');
+  },
+};
+
+export const SelectedPillIsChecked: Story = {
+  tags: ['!dev'],
+  args: { options: SEVERITY, value: 'warn', 'aria-label': 'Severity' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('radiogroup', { name: 'Severity' })).toBeInTheDocument();
+    await expect(canvas.getByRole('radio', { name: 'WARN', checked: true })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
+    await expect(canvas.getByRole('radio', { name: 'All', checked: false })).toHaveAttribute(
+      'tabindex',
+      '-1'
+    );
+  },
+};
+
+const ControlledSeverity = () => {
+  const [v, setV] = useState('all');
+  return <FilterPills aria-label="Severity" options={SEVERITY} value={v} onChange={setV} />;
+};
+
+export const ArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledSeverity />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'All' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('radio', { name: 'CRIT', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(canvas.getByRole('radio', { name: 'OK', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'All', checked: true })).toHaveFocus();
   },
 };

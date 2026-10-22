@@ -118,7 +118,7 @@ export const NamesAndDescribesItsControl: Story = {
       [canvas.getByRole('spinbutton', { name: 'Timeout' }), 'Seconds per request'],
       [canvas.getByRole('textbox', { name: 'Filter' }), 'Match on host name'],
       [canvas.getByRole('combobox', { name: 'Default interval' }), 'Time between refreshes'],
-      [canvas.getByRole('group', { name: 'View' }), 'Layout of the room'],
+      [canvas.getByRole('radiogroup', { name: 'View' }), 'Layout of the room'],
     ] as const;
     for (const [control, description] of cases) {
       await expect(control).toHaveAccessibleDescription(description);
