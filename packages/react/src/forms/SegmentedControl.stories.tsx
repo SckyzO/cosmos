@@ -99,3 +99,14 @@ export const ArrowKeysMoveSelection: Story = {
     await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
   },
 };
+
+// Browser shortcuts such as Alt+ArrowLeft (back) must reach the browser.
+export const ModifiedArrowKeysAreIgnored: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledView />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}{Control>}{ArrowRight}{/Control}');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+  },
+};
