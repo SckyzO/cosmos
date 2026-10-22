@@ -72,6 +72,20 @@ const resolveColor = (color: string) => {
   return colorContext.fillStyle;
 };
 
+const luminanceOf = (color: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const channel = parseInt(resolveColor(color).slice(i, i + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/** The WCAG contrast ratio between two opaque CSS colors. */
+export const contrastRatio = (a: string, b: string) => {
+  const [light, dark] = [luminanceOf(a), luminanceOf(b)].sort((x, y) => y - x);
+  return (light + 0.05) / (dark + 0.05);
+};
+
 /** The theme's primary text color (`--color-text-primary` on `<html>`). */
 const themeTextColor = () =>
   resolveColor(

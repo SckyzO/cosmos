@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TreemapChart } from './TreemapChart';
-import { expectTooltipFollowsTheme } from './storybook-helpers';
+import { expect, waitFor } from 'storybook/test';
+import { contrastRatio, expectTooltipFollowsTheme } from './storybook-helpers';
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -87,5 +88,24 @@ export const TooltipFollowsTheme: Story = {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-treemap-rect')
     );
+  },
+};
+
+/** Each tile label reads on its tile: white on the green or amber was under 3:1. */
+export const LabelsReadOnTiles: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: Distributed.args,
+  play: async ({ canvasElement }) => {
+    const labelled = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-treemap-rect')].flatMap((rect) => {
+        const label = rect.nextElementSibling?.querySelector('text');
+        const fill = rect.getAttribute('fill');
+        const text = label?.getAttribute('fill');
+        return fill && text ? [{ fill, text }] : [];
+      });
+    await waitFor(() => expect(labelled().length).toBeGreaterThanOrEqual(5));
+    for (const { fill, text } of labelled()) {
+      expect(contrastRatio(text, fill)).toBeGreaterThanOrEqual(4.5);
+    }
   },
 };
