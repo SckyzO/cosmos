@@ -307,5 +307,12 @@ export const KeyboardMenuNavigation: Story = {
     await userEvent.tab();
     await waitFor(() => expect(menu()).toBeNull());
     await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+    // Same from the first item: Tab skips the tabIndex -1 items and leaves.
+    trigger.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Profile'));
+    await userEvent.tab();
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
   },
 };
