@@ -352,3 +352,27 @@ export const AccessibleNameAndInitialFocus: Story = {
     await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   },
 };
+
+// Without a `Modal.Header` title, `aria-labelledby` pointed at an id that was never rendered (#151).
+export const UntitledDialogHasNoDanglingLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Body>No heading here.</Modal.Body>
+    </Modal>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await expect(dialog).not.toHaveAttribute('aria-labelledby');
+  },
+};
+
+export const AlertIsAnAlertDialog: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Modal.Alert open onClose={() => {}} intent="danger" title="Delete it?" />,
+  play: async () => {
+    await expect(
+      await within(document.body).findByRole('alertdialog', { name: 'Delete it?' })
+    ).toBeInTheDocument();
+  },
+};
