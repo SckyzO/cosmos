@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { expectFocusBorder } from '../storybook-helpers';
 import { Combobox } from './Combobox';
 
@@ -165,5 +165,59 @@ export const DescriptionIsLinked: Story = {
     const field = canvas.getByRole('combobox', { name: 'Assigned to' });
     await expect(field).toHaveAccessibleDescription('Owner of the ticket.');
     await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
+
+// Tab and a blur used to leave the listbox open over the next field (#151).
+const WithNeighbour = (props: { options: typeof PEOPLE }) => (
+  <div>
+    <Combobox label="Assigned to" {...props} />
+    <button type="button">After</button>
+  </div>
+);
+
+export const ClosesOnTab: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WithNeighbour options={PEOPLE} />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox');
+    await userEvent.click(input);
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.tab();
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+export const ClosesWhenFocusLeaves: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WithNeighbour options={PEOPLE} />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox');
+    await userEvent.click(input);
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+    canvas.getByRole('button', { name: 'After' }).focus();
+    await waitFor(() => expect(input).toHaveAttribute('aria-expanded', 'false'));
+  },
+};
+
+export const ArrowKeysSkipDisabledOptions: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Assigned to',
+    options: [
+      { value: 'a', label: 'Alice' },
+      { value: 'b', label: 'Bob', disabled: true },
+      { value: 'c', label: 'Carol' },
+    ],
+  },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.keyboard('{ArrowDown}');
+    const active = input.getAttribute('aria-activedescendant') ?? '';
+    await expect(document.getElementById(active)).toHaveTextContent('Carol');
+    await userEvent.keyboard('{ArrowUp}');
+    const back = input.getAttribute('aria-activedescendant') ?? '';
+    await expect(document.getElementById(back)).toHaveTextContent('Alice');
   },
 };
