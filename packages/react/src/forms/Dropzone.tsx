@@ -185,7 +185,7 @@ export const Dropzone = ({
           onChange={(e) => handleFiles(Array.from(e.target.files ?? []))}
         />
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-700 dark:text-red-400">{error}</p>}
       {!hideFileList && files.length > 0 && (
         <ul className="mt-3 space-y-2">
           {files.map((f, idx) => (
