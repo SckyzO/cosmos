@@ -148,7 +148,7 @@ export const SocialAuthButtons = ({
   const dividerNode = (
     <div className="my-4 flex items-center gap-3">
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-      <span className="text-xs tracking-wide text-gray-400 uppercase dark:text-gray-500">
+      <span className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
         {dividerLabel}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />

@@ -421,7 +421,11 @@ const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelI
           {subtitle && (
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
-          {caption && <p className="text-3xs mt-0.5 truncate font-mono text-gray-400">{caption}</p>}
+          {caption && (
+            <p className="text-3xs mt-0.5 truncate font-mono text-gray-500 dark:text-gray-400">
+              {caption}
+            </p>
+          )}
         </div>
         <span
           className={clsx(
@@ -452,7 +456,7 @@ const NotificationsPanelEmpty = ({
   <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
     <Icon className="h-8 w-8 text-gray-300 dark:text-gray-700" />
     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-    <p className="text-xs text-gray-400 dark:text-gray-600">{subtitle}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
   </div>
 );
 

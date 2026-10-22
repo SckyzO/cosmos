@@ -90,7 +90,7 @@ export const RefreshButton = ({
         <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
         <span>Refresh</span>
         {isAutoActive && (
-          <span className="flex items-center gap-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
             {currentLabel}
           </span>

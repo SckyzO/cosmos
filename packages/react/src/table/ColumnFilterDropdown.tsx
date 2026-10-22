@@ -47,7 +47,7 @@ export const ColumnFilterDropdown = ({
       )}
       <div className="max-h-52 overflow-y-auto py-1">
         {visible.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-gray-400">No results</p>
+          <p className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">No results</p>
         ) : (
           visible.map((val) => (
             <label

@@ -33,7 +33,7 @@ export const ActiveFiltersBar = ({
         className
       )}
     >
-      <span className="text-xs text-gray-400">Active filters:</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">Active filters:</span>
       {filters.map((f) => (
         <span
           key={f.key}
@@ -55,7 +55,7 @@ export const ActiveFiltersBar = ({
       <button
         type="button"
         onClick={onClearAll}
-        className="ml-1 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        className="ml-1 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Clear all
       </button>

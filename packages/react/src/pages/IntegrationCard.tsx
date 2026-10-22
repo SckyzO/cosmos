@@ -70,7 +70,7 @@ export const IntegrationCard = ({
     </div>
     <div className="mt-4 min-w-0 flex-1">
       {category && (
-        <p className="text-3xs font-mono tracking-wide text-gray-400 uppercase dark:text-gray-500">
+        <p className="text-3xs font-mono tracking-wide text-gray-500 uppercase dark:text-gray-400">
           {category}
         </p>
       )}
