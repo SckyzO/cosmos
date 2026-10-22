@@ -141,13 +141,14 @@ export function usePortalFocus<T extends HTMLElement>({
     };
     const onPanelKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      const items = focusables();
-      const first = items[0];
-      const last = items[items.length - 1];
+      // Only elements Tab can reach: menu items with tabIndex -1 are focused
+      // with the arrow keys, and Tab from one of them goes to the next
+      // tabbable element after it, or leaves the panel when there is none.
+      const tabbable = focusables().filter((el) => el.tabIndex >= 0);
       const current = document.activeElement;
-      const leaving = e.shiftKey
-        ? items.length === 0 || current === first || current === panel
-        : items.length === 0 || current === last;
+      const side = e.shiftKey ? Node.DOCUMENT_POSITION_PRECEDING : Node.DOCUMENT_POSITION_FOLLOWING;
+      const leaving =
+        !current || !tabbable.some((el) => current.compareDocumentPosition(el) & side);
       if (!leaving) return;
       e.preventDefault();
       const trigger = triggerRef.current;
