@@ -15,9 +15,10 @@ export const RadialBarChart = ({
   height = 320,
   width = '100%',
 }: RadialBarChartProps) => {
-  const { palette } = useChartTheme();
+  const { palette, text, textMuted } = useChartTheme();
   const options: ApexOptions = {
-    chart: { type: 'radialBar', fontFamily: 'inherit' },
+    // foreColor colors the center value (ApexCharts defaults to dark gray).
+    chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: palette,
     labels,
     plotOptions: {
@@ -29,6 +30,7 @@ export const RadialBarChart = ({
           total: {
             show: true,
             label: 'Avg',
+            color: textMuted,
             formatter: () => `${Math.round(series.reduce((a, b) => a + b, 0) / series.length)}%`,
           },
         },

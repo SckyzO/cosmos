@@ -20,9 +20,10 @@ export const DonutChart = ({
   height = 280,
   width = '100%',
 }: DonutChartProps) => {
-  const { palette } = useChartTheme();
+  const { palette, text, textMuted } = useChartTheme();
   const options: ApexOptions = {
-    chart: { type: 'donut', fontFamily: 'inherit' },
+    // foreColor colors the legend and the center value (ApexCharts defaults to dark gray).
+    chart: { type: 'donut', fontFamily: 'inherit', foreColor: text },
     colors: palette,
     labels,
     // The legend and the tooltip are HTML: escape the labels.
@@ -31,7 +32,10 @@ export const DonutChart = ({
     dataLabels: { enabled: false },
     plotOptions: {
       pie: {
-        donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Total' } } },
+        donut: {
+          size: '68%',
+          labels: { show: true, total: { show: true, label: 'Total', color: textMuted } },
+        },
       },
     },
   };

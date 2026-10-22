@@ -15,9 +15,9 @@ export const GradientRadial = ({
   height = 280,
   width = '100%',
 }: GradientRadialProps) => {
-  const { brand } = useChartTheme();
+  const { brand, text } = useChartTheme();
   const options: ApexOptions = {
-    chart: { type: 'radialBar', fontFamily: 'inherit' },
+    chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: [brand],
     fill: {
       type: 'gradient',
