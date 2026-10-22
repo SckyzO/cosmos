@@ -1,5 +1,40 @@
 import { expect, waitFor } from 'storybook/test';
 
+/**
+ * Loads the woff2 of an `@font-face` rule already on the page (`sourceFamily`)
+ * under a new `family` name, after the chart rendered with the fallback: a web
+ * font arriving late.
+ */
+export const loadLateFont = async (family: string, sourceFamily: string) => {
+  const rule = [...document.styleSheets]
+    .flatMap((sheet) => [...sheet.cssRules])
+    .find(
+      (r): r is CSSFontFaceRule =>
+        r instanceof CSSFontFaceRule &&
+        r.style.getPropertyValue('font-family').replace(/['"]/g, '') === sourceFamily
+    );
+  if (!rule) throw new Error(`No @font-face for ${sourceFamily}`);
+  const url = /url\(["']?([^"')]+\.woff2)/.exec(rule.style.getPropertyValue('src'))?.[1];
+  if (!url) throw new Error(`No woff2 source for ${sourceFamily}`);
+  const face = new FontFace(family, `url(${url})`);
+  document.fonts.add(face);
+  await face.load();
+};
+
+/**
+ * The x-axis layout ApexCharts computed from its text measurements: label
+ * positions and rotation, and the plot area left for them. The browser redraws
+ * glyphs in a new font by itself; these attributes change only when ApexCharts
+ * measures again.
+ */
+export const xAxisLayout = (root: HTMLElement) =>
+  JSON.stringify([
+    root.querySelector('.apexcharts-inner')?.getAttribute('transform'),
+    [...root.querySelectorAll('.apexcharts-xaxis-label')].map((el) =>
+      ['x', 'y', 'transform'].map((a) => el.getAttribute(a))
+    ),
+  ]);
+
 // Series names, categories and labels are data, not markup. ApexCharts writes
 // legends and tooltips with innerHTML, so the wrappers escape what goes there.
 // Each wrapper's HtmlInLabelsRendersAsText story feeds it this string.
