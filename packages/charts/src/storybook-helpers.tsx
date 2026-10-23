@@ -166,6 +166,16 @@ export const expectTooltipFollowsTheme = async (
   } finally {
     restore();
   }
+  // End with the tooltip closed, like every other story: axe runs after the
+  // play function, and a tooltip caught mid-fade has no visible text, so it
+  // fails aria-tooltip-name at random.
+  await waitFor(() => {
+    for (const el of [target(), root.querySelector('.apexcharts-svg')]) {
+      el?.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
+      el?.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    }
+    expect(root.querySelector('.apexcharts-tooltip.apexcharts-active')).toBeNull();
+  });
 };
 
 /** Copies arrays and plain objects, keeps functions: equal props, new identities. */

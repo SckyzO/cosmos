@@ -12,7 +12,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
  * - `storybook`: browser mode via Playwright. Runs all `*.stories.tsx` as
  *   component tests using the Storybook addon-vitest plugin. The plugin
  *   discovers stories from this app's storybook config and executes them in a
- *   headless Chromium browser instance.
+ *   headless Chromium browser instance, then runs axe on each, behind the
+ *   todo list of `.storybook/a11y-gate.ts`.
  * - `node`: plain Node, no browser and no DOM. Runs the `*.test.ts` unit tests
  *   of the packages' pure logic. Vitest is a dependency of this app only, so
  *   the packages' tests run from here (and `tsconfig.json` maps `vitest` for
@@ -39,6 +40,10 @@ export default defineConfig({
             storybookScript: 'pnpm dev --ci',
           }),
         ],
+        // Only vitest.setup.ts imports addon-a11y's preview: pre-bundle it, or
+        // Vite discovers it mid-run, reloads, and the files already loading
+        // fail with "Failed to fetch dynamically imported module".
+        optimizeDeps: { include: ['@storybook/addon-a11y/preview'] },
         test: {
           name: 'storybook',
           browser: {

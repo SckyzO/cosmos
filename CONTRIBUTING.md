@@ -25,7 +25,8 @@ make ci                   # Full CI before pushing
   Node, no browser and no DOM: the `node` project of `apps/storybook/vitest.config.ts`. They are for
   pure logic (helpers, formatting, pagination, filtering, appearance), and take milliseconds.
 - **Component tests** — the stories, run by Vitest in a headless Chromium (the `storybook`
-  project). They cover what needs a real DOM: rendering, focus, interaction, theming.
+  project). They cover what needs a real DOM: rendering, focus, interaction, theming, and
+  accessibility (see [Accessibility](#accessibility)).
 - **E2E** — Playwright against Storybook, in `tests/e2e`.
 
 `pnpm --filter '@cosmos/storybook' test` runs both Vitest projects, so `make test`, `make ci` and
@@ -46,6 +47,68 @@ to a module of its own first, in a separate `refactor` commit that changes nothi
 `*.test.ts` files stay out of the published packages (tsup bundles from `src/index.ts` only) and
 are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
 its `tsconfig.json` because the packages do not depend on it.
+
+### Accessibility
+
+Every story test runs axe (addon-a11y) once the story has rendered and its play function has
+finished, and any violation fails the test. The exceptions are listed in
+`apps/storybook/.storybook/a11y-todo.json`, the burn-down list of #151: story id → the axe rules it
+still violates. A listed story runs in the addon's `todo` mode, so its violations are warnings in
+the Storybook Accessibility panel, but it must violate exactly the rules of its entry:
+
+- a listed rule that stops firing fails the test until it is removed from the entry, and a story
+  with no violation left fails until its entry is deleted;
+- a rule that is not listed fails the test as well: an entry never grows, and a new story never
+  goes on the list. Fix the violation.
+
+The gate is wired in `apps/storybook/.storybook/a11y-gate.ts`. axe only sees the default `dark`
+theme: check contrast in the other themes with the Theme menu and the Accessibility panel.
+
+After fixing a story, edit its entry by hand as the failure message says, in the same commit as the
+fix. After a change that fixes many stories at once (a theme token, a shared component), rewrite
+the list instead:
+
+```bash
+./devctl run pnpm --filter '@cosmos/storybook' a11y:todo
+```
+
+It runs every story and writes the stories that violate a rule today, sorted by id and
+prettier-formatted. It exits non-zero when the list was out of date, since those stories failed
+during the run, and writes nothing after a filtered run (a file or `-t`). Its diff should only
+remove lines: an added story or rule is a regression to fix, not to list.
+
+To see what a story violates, open it in Storybook (`make storybook`), Accessibility panel. Entries
+are keyed by story id, so `grep '"forms-dropzone--' apps/storybook/.storybook/a11y-todo.json` lists
+a component's.
+
+### Visual review
+
+Screenshots are for a person to look at: they assert nothing and never gate a PR. `make screenshots`
+captures every story (test-only `!dev` stories excluded) in each theme of the Storybook toolbar,
+into `screenshots/<theme>/<story-id>.png`. It needs the `storybook` compose service. Narrow a run
+with comma-separated substrings:
+
+```bash
+make screenshots                                  # every story, every theme
+STORIES=overlays-,forms-select THEMES=dark make screenshots
+```
+
+Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`
+and chart animations off, so two runs of an unchanged story give the same image. A story that ends
+in the wrong theme is still captured; one that can't be captured is skipped. Both are listed in
+`screenshots/problems.txt`.
+
+The `Visual captures` workflow runs the same capture on the first day of each month, or from the
+Actions tab with the same two filters, and uploads `screenshots/` as an artifact kept 90 days. A
+complete run (no filter) is named `story-captures` and compared with the previous complete run by
+`.github/scripts/visual-diff.sh`. The captures that changed, appeared or disappeared are listed in
+the run summary and in the issue "Visual review: story changes since the last capture", created or
+updated by the run. The `story-changes` artifact holds the before, after and diff images. The same
+script compares two local runs:
+
+```bash
+.github/scripts/visual-diff.sh <previous-screenshots> screenshots /tmp/visual-diff
+```
 
 ## Branch model
 
@@ -97,6 +160,7 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
 - [ ] `make ci` passes locally
 - [ ] New components have a Storybook story
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
+- [ ] `a11y-todo.json` only lost lines: no story or rule added (see [Accessibility](#accessibility))
 - [ ] Visual changes : screenshot in PR description, checked in the four themes
 - [ ] Public API changes : update package README
 - [ ] Breaking changes : add `BREAKING CHANGE:` footer to commit

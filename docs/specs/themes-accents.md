@@ -209,6 +209,8 @@ Checked thresholds (≥ 4.5 unless stated otherwise):
 - For each accent: white text (the theme's `--color-white`, cream `oklch(99.3% 0.008 85)` on `sand`) on `brand-500`.
 - `dark` structure (non-WCAG thresholds, so surfaces don't blend into each other): card ↔ raised ≥ 1.15; `gray-700` on card ≥ 1.6.
 
+Before the contrast checks, the script reads `packages/react/src/settings/appearance.ts` as text and **fails** when it disagrees with the CSS: every theme and accent of `COSMOS_THEMES` / `COSMOS_ACCENTS` must exist in the CSS and vice versa, a theme's `dark` flag must match the classes the `dark:` variant of `tailwind-tokens.css` covers, and an accent's `hex` must equal its `brand-500`. A theme is `:root` or a class block of `css-vars.css` that sets `--color-bg-base`.
+
 Do **not** check `--color-text-muted` or `gray-400` on light themes, nor `muted` on `deep-blue` (known debt, separate PR).
 
 Expected reference values (worst case): white on `brand-500` between 4.61 and 5.16; `brand-600` on Sand subtle ≥ 5.21; `brand-400` on `deep-blue` raised ≥ 4.67; `dark`: `gray-500` on raised 4.80, card ↔ raised 1.19, `gray-700` on card 1.70.
