@@ -7,11 +7,16 @@ import { fileURLToPath } from 'node:url';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Vitest config for the Storybook app — browser mode via Playwright.
+ * Vitest config for the Storybook app, two projects:
  *
- * Runs all `*.stories.tsx` as component tests using the Storybook addon-vitest
- * plugin. The plugin discovers stories from this app's storybook config and
- * executes them in a headless Chromium browser instance.
+ * - `storybook`: browser mode via Playwright. Runs all `*.stories.tsx` as
+ *   component tests using the Storybook addon-vitest plugin. The plugin
+ *   discovers stories from this app's storybook config and executes them in a
+ *   headless Chromium browser instance.
+ * - `node`: plain Node, no browser and no DOM. Runs the `*.test.ts` unit tests
+ *   of the packages' pure logic. Vitest is a dependency of this app only, so
+ *   the packages' tests run from here (and `tsconfig.json` maps `vitest` for
+ *   their typecheck).
  *
  * Run from the workspace root:
  *   pnpm --filter @cosmos/storybook test
@@ -43,6 +48,13 @@ export default defineConfig({
             instances: [{ browser: 'chromium' }],
           },
           setupFiles: ['./.storybook/vitest.setup.ts'],
+        },
+      },
+      {
+        test: {
+          name: 'node',
+          environment: 'node',
+          include: ['../../packages/*/src/**/*.test.ts'],
         },
       },
     ],

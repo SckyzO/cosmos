@@ -9,6 +9,7 @@ import { LoadingState } from '../feedback/LoadingState';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
+import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
@@ -159,63 +160,23 @@ export const DataTable = <T,>({
   };
 
   // Build filter values per column (unique values currently present)
-  const columnFilterValues = useMemo(() => {
-    const out: Record<string, string[]> = {};
-    for (const col of columns) {
-      if (!col.filterable) continue;
-      const vals = new Set<string>();
-      for (const row of rows) {
-        const v = col.filterValue ? col.filterValue(row) : '';
-        if (v) vals.add(v);
-      }
-      out[col.key] = Array.from(vals).sort();
-    }
-    return out;
-  }, [rows, columns]);
+  const filterValues = useMemo(() => columnFilterValues(rows, columns), [rows, columns]);
 
   // Pipeline: search → column filters → sort.
-  const searchedRows = useMemo(() => {
-    if (!searchEnabled || searchValue.trim().length === 0) return rows;
-    const needle = searchValue.trim().toLowerCase();
-    return rows.filter((row) =>
-      columns.some((col) => {
-        const haystack = col.searchValue
-          ? col.searchValue(row)
-          : col.filterValue
-            ? col.filterValue(row)
-            : '';
-        return haystack.toLowerCase().includes(needle);
-      })
-    );
-  }, [rows, columns, searchEnabled, searchValue]);
+  const searchedRows = useMemo(
+    () => (searchEnabled ? searchRows(rows, columns, searchValue) : rows),
+    [rows, columns, searchEnabled, searchValue]
+  );
 
-  const filteredRows = useMemo(() => {
-    if (Object.keys(filters).length === 0) return searchedRows;
-    return searchedRows.filter((row) =>
-      columns.every((col) => {
-        const sel = filters[col.key];
-        if (!sel || sel.size === 0) return true;
-        const v = col.filterValue ? col.filterValue(row) : '';
-        return sel.has(v);
-      })
-    );
-  }, [searchedRows, columns, filters]);
+  const filteredRows = useMemo(
+    () => filterRows(searchedRows, columns, filters),
+    [searchedRows, columns, filters]
+  );
 
-  const sortedRows = useMemo(() => {
-    if (!sortKey) return filteredRows;
-    const col = columns.find((c) => c.key === sortKey);
-    if (!col?.sortValue) return filteredRows;
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return [...filteredRows].sort((a, b) => {
-      const av = col.sortValue!(a);
-      const bv = col.sortValue!(b);
-      if (av === null || av === undefined) return 1;
-      if (bv === null || bv === undefined) return -1;
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
-      return 0;
-    });
-  }, [filteredRows, columns, sortKey, sortDir]);
+  const sortedRows = useMemo(
+    () => sortRows(filteredRows, columns, sortKey, sortDir),
+    [filteredRows, columns, sortKey, sortDir]
+  );
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -373,7 +334,7 @@ export const DataTable = <T,>({
                     filterable={col.filterable}
                     sortDir={sortKey === col.key ? sortDir : null}
                     onSortToggle={() => handleSortToggle(col.key)}
-                    filterValues={columnFilterValues[col.key]}
+                    filterValues={filterValues[col.key]}
                     filterSelected={filters[col.key]}
                     onFilterToggle={(v) => handleFilterToggle(col.key, v)}
                     onFilterClear={() => clearFilter(col.key)}
