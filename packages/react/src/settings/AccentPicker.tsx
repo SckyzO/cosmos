@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { CSSProperties } from 'react';
 import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { ColorSwatch } from './ColorSwatch';
@@ -20,7 +21,7 @@ export type AccentPickerProps = FieldA11yProps & {
   onChange: (id: string) => void;
   /** Number of columns on small screens (default 5). */
   cols?: number;
-  /** Number of columns from `sm:` breakpoint (default 10). */
+  /** Number of columns from the `sm:` breakpoint (640px) up (default: the value of `cols`). */
   smCols?: number;
   className?: string;
 };
@@ -34,7 +35,7 @@ export const AccentPicker = ({
   value,
   onChange,
   cols = 5,
-  smCols = 10,
+  smCols = cols,
   className,
   ...a11y
 }: AccentPickerProps) => {
@@ -45,11 +46,18 @@ export const AccentPicker = ({
       role="radiogroup"
       {...fieldA11y}
       onKeyDown={onRadioGroupKeyDown}
-      className={clsx('grid gap-1.5', className)}
-      style={{
-        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-      }}
-      data-sm-cols={smCols}
+      // Whole class names, so Tailwind finds them; the counts reach them as
+      // variables (an inline `grid-template-columns` would beat the `sm:` one).
+      className={clsx(
+        'grid grid-cols-[repeat(var(--accent-picker-cols),minmax(0,1fr))] gap-1.5 sm:grid-cols-[repeat(var(--accent-picker-sm-cols),minmax(0,1fr))]',
+        className
+      )}
+      style={
+        {
+          '--accent-picker-cols': cols,
+          '--accent-picker-sm-cols': smCols,
+        } as CSSProperties
+      }
     >
       {colors.map((c, i) => (
         <ColorSwatch
