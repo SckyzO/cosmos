@@ -1,6 +1,7 @@
 import { setProjectAnnotations } from '@storybook/react-vite';
-import { beforeAll } from 'vitest';
+import { afterEach, beforeAll } from 'vitest';
 
+import { a11yGateAnnotations, recordA11yViolations } from './a11y-gate';
 import * as projectAnnotations from './preview';
 
 // Silence Vite HMR client noise in browser test mode.
@@ -33,6 +34,16 @@ if (typeof window !== 'undefined') {
 // detects this call, but the auto-provisioning currently does NOT wire
 // renderToCanvas — without this explicit call every story fails with
 // `TypeError: context.renderToCanvas is not a function`.
-const project = setProjectAnnotations([projectAnnotations.default]);
+//
+// Skipping the provisioning also drops the addons' preview annotations, so
+// addon-a11y's is listed here: without it axe never runs in the story tests.
+// `a11y-gate.ts` wraps its afterEach to give each story its `a11y.test` mode
+// from one list, `a11y-todo.json`, rather than a parameter in each story file
+// (a story edit under packages/ counts as a release of the package). It goes
+// before preview: parameters merge left to right, as in Storybook, so
+// preview's `a11y: { test: 'error' }` overrides the addon's default `'todo'`.
+const project = setProjectAnnotations([a11yGateAnnotations, projectAnnotations.default]);
 
 beforeAll(project.beforeAll);
+// Hands the rules each story violates to `pnpm a11y:todo` (task meta).
+afterEach(recordA11yViolations);
