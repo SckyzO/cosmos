@@ -165,10 +165,27 @@ describe('matchesHotkey', () => {
       expect(matchesHotkey(press('p'), 'shift+p')).toBe(false);
     });
 
-    it('must match for a digit', () => {
-      expect(matchesHotkey(press('1', { shiftKey: true }), '1')).toBe(false);
+    it('is ignored for a digit, which AZERTY types with Shift', () => {
+      // On AZERTY the key arrives as '1' with Shift held; on QWERTY as '1' without.
+      expect(matchesHotkey(press('1', { shiftKey: true }), '1')).toBe(true);
       expect(matchesHotkey(press('1'), '1')).toBe(true);
       expect(matchesHotkey(press('1', { shiftKey: true }), 'shift+1')).toBe(true);
+    });
+
+    it('is ignored for a digit in mod+1, the other modifiers still counting', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('1', { ctrlKey: true, shiftKey: true }), 'mod+1')).toBe(true);
+      expect(matchesHotkey(press('1', { ctrlKey: true }), 'mod+1')).toBe(true);
+      expect(matchesHotkey(press('1', { ctrlKey: true, altKey: true }), 'mod+1')).toBe(false);
+      expect(matchesHotkey(press('1', { shiftKey: true }), 'mod+1')).toBe(false);
+      onPlatform('MacIntel');
+      expect(matchesHotkey(press('1', { metaKey: true, shiftKey: true }), 'mod+1')).toBe(true);
+    });
+
+    it('does not turn the QWERTY Shift+1 into a 1', () => {
+      // The key arrives as '!', which is not the digit, Shift or not.
+      expect(matchesHotkey(press('!', { shiftKey: true }), '1')).toBe(false);
+      expect(matchesHotkey(press('!', { shiftKey: true }), 'mod+1')).toBe(false);
     });
 
     it.each(['Enter', 'ArrowUp', 'Escape', 'Tab'])('must match for %s', (key) => {
