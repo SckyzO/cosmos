@@ -6,9 +6,10 @@
  * The modifiers must match exactly: Ctrl, Meta and Alt are held when the
  * hotkey names them and only then, so `k` does not fire on Ctrl+K and
  * `mod+p` does not fire on Mod+Shift+P. Shift is held exactly when the
- * hotkey names it too, except for a key that is a single character, neither
- * a letter nor a digit (`?`, `/`): many layouts type those with Shift, so
- * Shift is ignored for them, named or not.
+ * hotkey names it too, except for a key that is a single character other
+ * than a letter (`?`, `/`, `1`): many layouts type those with Shift (AZERTY
+ * types the digits that way), so Shift is ignored for them, named or not.
+ * A layout whose Shift+1 gives `!` never matches `1`: the key is not `1`.
  */
 export const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
   const parts = hotkey.toLowerCase().split('+');
@@ -22,7 +23,7 @@ export const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
   const expectCtrl = parts.includes('ctrl') || (expectMod && !isMac);
 
   if (e.metaKey !== expectMeta || e.ctrlKey !== expectCtrl || e.altKey !== expectAlt) return false;
-  const shiftIsFree = /^[^\p{L}\p{N}]$/u.test(key);
+  const shiftIsFree = /^[^\p{L}]$/u.test(key);
   if (!shiftIsFree && e.shiftKey !== expectShift) return false;
   return e.key.toLowerCase() === key;
 };
