@@ -10,6 +10,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];
@@ -115,6 +116,22 @@ export const HtmlInLabelsRendersAsText: Story = {
       );
     });
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** The polygons take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-radar[fill="none"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
   },
 };
 

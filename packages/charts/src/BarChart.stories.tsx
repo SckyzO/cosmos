@@ -13,6 +13,7 @@ import {
   loadLateFont,
   xAxisLayout,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -243,6 +244,22 @@ export const TooltipFollowsTheme: Story = {
   play: async ({ canvasElement }) => {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-bar-area')
+    );
+  },
+};
+
+/** The bars take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
     );
   },
 };

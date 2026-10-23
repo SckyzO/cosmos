@@ -14,6 +14,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -169,6 +170,19 @@ export const TooltipFollowsTheme: Story = {
   play: async ({ canvasElement }) => {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-pie-area')
+    );
+  },
+};
+
+/** The slices take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [5, 4, 3, 2, 1], labels: ['a', 'b', 'c', 'd', 'e'] },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-pie-area')].map((el) =>
+        el.getAttribute('fill')
+      )
     );
   },
 };

@@ -12,6 +12,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -264,6 +265,22 @@ export const TooltipFollowsTheme: Story = {
   play: async ({ canvasElement }) => {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-grid')
+    );
+  },
+};
+
+/** The lines take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-area[fill="none"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
     );
   },
 };

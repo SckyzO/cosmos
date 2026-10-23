@@ -10,6 +10,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
@@ -201,6 +202,46 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
       { timeout: 3000 }
     );
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+// The first marker drawn for each series, by series index: ApexCharts draws two
+// per point, and the legend has its own.
+const markerColors = (root: HTMLElement) => {
+  const byIndex = new Map<string, string | null>();
+  for (const el of root.querySelectorAll('.apexcharts-marker[index]')) {
+    const index = el.getAttribute('index') ?? '';
+    if (!el.classList.contains('apexcharts-legend-marker') && !byIndex.has(index)) {
+      byIndex.set(index, el.getAttribute('fill'));
+    }
+  }
+  return [...byIndex.values()];
+};
+
+/** The markers take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: ['a', 'b', 'c', 'd', 'e'].map((name, i) => ({ name, data: [{ x: i, y: 5 - i }] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() => markerColors(canvasElement));
+  },
+};
+
+/** The bubbles take the default palette of the theme. */
+export const BubblePaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <BubbleChart
+      series={['a', 'b', 'c', 'd', 'e'].map((name, i) => ({
+        name,
+        data: [{ x: i, y: 5 - i, z: 3 }],
+      }))}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() => markerColors(canvasElement));
   },
 };
 

@@ -74,6 +74,19 @@ export const resolveColor = (color: string) => {
   return colorContext.fillStyle;
 };
 
+/** A theme custom property on `<html>` (`--color-success-500`), as a resolved color. */
+export const themeColor = (token: string) =>
+  resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+
+/**
+ * `color` resolved, without its alpha: ApexCharts draws a hex color at its fill
+ * opacity, as `rgba(…, 0.85)`.
+ */
+export const opaqueColor = (color: string) => {
+  const rgba = /^rgba\((\d+), (\d+), (\d+), [\d.]+\)$/.exec(resolveColor(color));
+  return rgba ? resolveColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`) : resolveColor(color);
+};
+
 const luminanceOf = (color: string) => {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const channel = parseInt(resolveColor(color).slice(i, i + 2), 16) / 255;
@@ -111,7 +124,7 @@ const expectThemeText = (root: HTMLElement) => {
 };
 
 /** Switches `<html>` to the `theme` class ('' for light); returns the undo. */
-const switchTheme = (theme: string) => {
+export const switchTheme = (theme: string) => {
   const { classList } = document.documentElement;
   const previous = [...classList];
   classList.remove(...previous);
@@ -134,6 +147,74 @@ export const expectTextFollowsTheme = async (root: HTMLElement, theme: string) =
     await waitFor(() => expectThemeText(root));
   } finally {
     restore();
+  }
+};
+
+/** A color for a token redefined on `<html>`, unlike any theme color. */
+const REDEFINED = '#7c3aed';
+
+/**
+ * Asserts the colors `drawn()` finds are `expected`, in order: a theme custom
+ * property (`--color-success-500`) or a color of its own. Then redefines the
+ * `redefined` property on `<html>` and switches to the sand theme, which the
+ * charts read again, and asserts its color follows.
+ */
+export const expectColorsFromTokens = async (
+  drawn: () => (string | null | undefined)[],
+  expected: string[],
+  redefined: string
+) => {
+  const resolved = () => drawn().map((color) => opaqueColor(color ?? ''));
+  const color = (value: string) =>
+    value.startsWith('--') ? themeColor(value) : resolveColor(value);
+  await waitFor(() => expect(resolved()).toEqual(expected.map(color)));
+  const { style } = document.documentElement;
+  style.setProperty(redefined, REDEFINED);
+  const restore = switchTheme('sand');
+  try {
+    await waitFor(() =>
+      expect(resolved()[expected.indexOf(redefined)]).toBe(resolveColor(REDEFINED))
+    );
+  } finally {
+    restore();
+    style.removeProperty(redefined);
+  }
+};
+
+/** The default series colors, in order: theme tokens, and the violet that has none. */
+const PALETTE = [
+  '--color-brand-500',
+  '--color-success-500',
+  '--color-warning-500',
+  '--color-error-500',
+  '#8b5cf6',
+];
+
+/**
+ * Asserts the series colors `drawn()` finds are the default palette of the
+ * theme, then that a redefined success color reaches the chart.
+ */
+export const expectPaletteFromTheme = (drawn: () => (string | null | undefined)[]) =>
+  expectColorsFromTokens(drawn, PALETTE, '--color-success-500');
+
+/**
+ * Asserts `drawn()` is the color of `tokens[theme]` after switching `<html>` to
+ * each of the themes in turn ('' for light).
+ */
+export const expectColorInThemes = async (
+  drawn: () => string | null | undefined,
+  tokens: Record<string, string>
+) => {
+  for (const [theme, token] of Object.entries(tokens)) {
+    const restore = switchTheme(theme);
+    try {
+      await waitFor(() => {
+        expect(drawn()).toBeTruthy();
+        expect(opaqueColor(drawn() as string), theme || 'light').toBe(themeColor(token));
+      });
+    } finally {
+      restore();
+    }
   }
 };
 

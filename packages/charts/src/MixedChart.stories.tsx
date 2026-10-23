@@ -10,6 +10,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
 } from './storybook-helpers';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
@@ -161,6 +162,33 @@ export const HtmlInLabelsRendersAsText: Story = {
       expect(yLabels()).toContain(`${HOSTILE}: `);
     });
     await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** The columns and the lines take the default palette of the theme, in series order. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', type: 'column', data: [3, 5, 4] },
+      { name: 'b', type: 'column', data: [3, 5, 4] },
+      { name: 'c', type: 'line', data: [3, 5, 4] },
+      { name: 'd', type: 'line', data: [3, 5, 4] },
+      { name: 'e', type: 'column', data: [3, 5, 4] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() => {
+      const byIndex = new Map<number, string | null>();
+      for (const el of canvasElement.querySelectorAll(
+        '.apexcharts-line[index], .apexcharts-bar-area[index]'
+      )) {
+        const index = Number(el.getAttribute('index'));
+        if (!byIndex.has(index)) byIndex.set(index, el.getAttribute('stroke'));
+      }
+      return [...byIndex.entries()].sort(([a], [b]) => a - b).map(([, color]) => color);
+    });
   },
 };
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 import {
   contrastRatio,
+  expectColorsFromTokens,
   expectTooltipFollowsTheme,
   hover,
   Rerender,
@@ -148,18 +149,50 @@ export const FormatValueFormatsLabels: Story = {
   },
 };
 
+// The WARN and CRIT labels: the text, and the rectangle drawn behind it.
+const thresholdLabel = (root: HTMLElement, text: string) =>
+  [...root.querySelectorAll('.apexcharts-yaxis-annotation-label')].find(
+    (el) => el.textContent === text
+  );
+const labelFill = (root: HTMLElement, text: string) =>
+  thresholdLabel(root, text)?.getAttribute('fill');
+const labelBackground = (root: HTMLElement, text: string) =>
+  thresholdLabel(root, text)?.previousElementSibling?.getAttribute('fill');
+
 /** The WARN and CRIT labels read on their amber and red backgrounds. */
 export const ThresholdLabelsReadOnTheirColor: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    const labelFill = (text: string) =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotation-label')]
-        .find((el) => el.textContent === text)
-        ?.getAttribute('fill');
-    await waitFor(() => expect(labelFill('WARN')).toBeTruthy());
-    expect(contrastRatio(labelFill('WARN')!, '#f59e0b')).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(labelFill('CRIT')!, '#ef4444')).toBeGreaterThanOrEqual(4.5);
+    await waitFor(() => expect(labelBackground(canvasElement, 'CRIT')).toBeTruthy());
+    for (const text of ['WARN', 'CRIT']) {
+      expect(
+        contrastRatio(labelFill(canvasElement, text)!, labelBackground(canvasElement, text)!),
+        text
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  },
+};
+
+/** The WARN and CRIT lines and labels take the theme's warning and error colors. */
+export const ThresholdColorsFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    const tokens = ['--color-warning-500', '--color-error-500'];
+    await expectColorsFromTokens(
+      () =>
+        [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotations line')].map((el) =>
+          el.getAttribute('stroke')
+        ),
+      tokens,
+      '--color-warning-500'
+    );
+    await expectColorsFromTokens(
+      () => [labelBackground(canvasElement, 'WARN'), labelBackground(canvasElement, 'CRIT')],
+      tokens,
+      '--color-error-500'
+    );
   },
 };
 
