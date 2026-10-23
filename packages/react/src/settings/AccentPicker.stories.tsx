@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, fn, userEvent } from 'storybook/test';
 import { expectTextContrast } from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 
@@ -63,3 +64,120 @@ export const SwatchLabelContrastInLight = swatchLabelContrastIn('light');
 export const SwatchLabelContrastInSand = swatchLabelContrastIn('sand');
 export const SwatchLabelContrastInDark = swatchLabelContrastIn('dark');
 export const SwatchLabelContrastInDeepBlue = swatchLabelContrastIn('deep-blue');
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+// The picker is controlled: keep the value here and report each pick to `onChange`.
+const ControlledAccents = ({
+  initial,
+  onChange,
+}: {
+  initial: string;
+  onChange: (id: string) => void;
+}) => {
+  const [value, setValue] = useState(initial);
+  return (
+    <Wrap>
+      <AccentPicker
+        aria-label="Accent colour"
+        colors={ACCENTS}
+        value={value}
+        onChange={(id) => {
+          onChange(id);
+          setValue(id);
+        }}
+      />
+    </Wrap>
+  );
+};
+
+/** Clicking a swatch reports its id and moves the checked state to it. */
+export const ClickSelectsASwatch: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledAccents initial="brand" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('radiogroup', { name: 'Accent colour' })).toBeVisible();
+    await expect(canvas.getAllByRole('radio')).toHaveLength(ACCENTS.length);
+    await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('radio', { name: 'Emerald' }));
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('emerald');
+    await expect(canvas.getByRole('radio', { name: 'Emerald', checked: true })).toBeVisible();
+    await expect(canvas.getByRole('radio', { name: 'Brand', checked: false })).toBeVisible();
+    await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);
+  },
+};
+
+/** Only the checked swatch is a tab stop; arrows, Home and End move and check, wrapping. */
+export const ArrowKeysMoveTheSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledAccents initial="brand" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'Sky' })).toHaveAttribute('tabindex', '-1');
+
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'Sky', checked: true })).toHaveFocus();
+    await expect(args.onChange).toHaveBeenLastCalledWith('sky');
+    // The tab stop follows the selection.
+    await expect(canvas.getByRole('radio', { name: 'Sky' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveAttribute('tabindex', '-1');
+
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await expect(canvas.getByRole('radio', { name: 'Slate', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(canvas.getByRole('radio', { name: 'Slate', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toHaveFocus();
+  },
+};
+
+/** With no swatch checked, Tab lands on the first one, and Space or Enter check a focused one. */
+export const NothingCheckedEntersOnTheFirstSwatch: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledAccents initial="" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.queryByRole('radio', { checked: true })).toBeNull();
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Brand', checked: false })).toHaveFocus();
+
+    const teal = canvas.getByRole('radio', { name: 'Teal' });
+    teal.focus();
+    await userEvent.keyboard(' ');
+    await expect(args.onChange).toHaveBeenLastCalledWith('teal');
+    await expect(canvas.getByRole('radio', { name: 'Teal', checked: true })).toHaveFocus();
+
+    canvas.getByRole('radio', { name: 'Amber' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith('amber');
+    await expect(canvas.getByRole('radio', { name: 'Amber', checked: true })).toHaveFocus();
+  },
+};
+
+/** `cols` sets the number of grid columns. */
+export const ColsSetsTheGridColumns: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <AccentPicker
+        aria-label="Accent colour"
+        colors={ACCENTS}
+        value="brand"
+        onChange={() => {}}
+        cols={4}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Accent colour' });
+    await expect(getComputedStyle(group).gridTemplateColumns.split(' ')).toHaveLength(4);
+  },
+};

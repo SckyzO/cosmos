@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
 import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
@@ -259,6 +259,79 @@ export const FocusTrapIncludesCloseOutside: Story = {
       reached.add(document.activeElement?.getAttribute('aria-label') ?? '');
     }
     await expect(reached.has('Close drawer')).toBe(true);
+  },
+};
+
+/** Shift+Tab from the first control wraps to the last one, and Tab from the last back to the first. */
+export const ShiftTabWrapsInsideTheDrawer: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Button variant="secondary">Page button</Button>
+      <Drawer open onClose={() => {}}>
+        <Drawer.Header title="Panel" onClose={() => {}} />
+        <Drawer.Footer>
+          <Button size="sm" variant="secondary">
+            Cancel
+          </Button>
+          <Button size="sm">Apply</Button>
+        </Drawer.Footer>
+      </Drawer>
+    </Wrap>
+  ),
+  play: async () => {
+    const dialog = within(await within(document.body).findByRole('dialog', { name: 'Panel' }));
+    // Focus starts on the first control, the header's close icon.
+    await waitFor(() => expect(dialog.getByRole('button', { name: 'Close drawer' })).toHaveFocus());
+    await userEvent.tab({ shift: true });
+    await expect(dialog.getByRole('button', { name: 'Apply' })).toHaveFocus();
+    await userEvent.tab();
+    await expect(dialog.getByRole('button', { name: 'Close drawer' })).toHaveFocus();
+  },
+};
+
+/** The backdrop, the header's close icon and Escape each call `onClose`. */
+export const CloseTriggers: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args}>
+      <Drawer.Header title="Panel" onClose={args.onClose} />
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await body.findByRole('dialog');
+    // The backdrop is the dimmed layer behind the panel.
+    await userEvent.click(document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]')!);
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+    await userEvent.click(body.getByRole('button', { name: 'Close drawer' }));
+    await expect(args.onClose).toHaveBeenCalledTimes(2);
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onClose).toHaveBeenCalledTimes(3);
+  },
+};
+
+/** The title names the dialog; `ariaLabel` names one that has none. A backdrop makes it modal. */
+export const DrawerIsANamedModalDialog: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <Drawer open onClose={() => {}} side="left">
+        <Drawer.Header title="Server details" />
+      </Drawer>
+      <Drawer open onClose={() => {}} ariaLabel="Filters" withBackdrop={false}>
+        <Drawer.Body>No header here.</Drawer.Body>
+      </Drawer>
+    </>
+  ),
+  play: async () => {
+    const body = within(document.body);
+    await expect(await body.findByRole('dialog', { name: 'Server details' })).toHaveAttribute(
+      'aria-modal',
+      'true'
+    );
+    await expect(body.getByRole('dialog', { name: 'Filters' })).not.toHaveAttribute('aria-modal');
   },
 };
 
