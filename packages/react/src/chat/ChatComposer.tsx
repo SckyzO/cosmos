@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { SendHorizontal } from 'lucide-react';
 import { forwardRef, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { mergeRefs } from '../ui/mergeRefs';
 
 export type ChatComposerProps = {
   /** Called with the trimmed text when the user sends a non-empty message. */
@@ -62,11 +63,7 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
       >
         {attachment}
         <textarea
-          ref={(node) => {
-            inner.current = node;
-            if (typeof forwardedRef === 'function') forwardedRef(node);
-            else if (forwardedRef) forwardedRef.current = node;
-          }}
+          ref={mergeRefs(inner, forwardedRef)}
           rows={1}
           aria-label={label}
           placeholder={placeholder}

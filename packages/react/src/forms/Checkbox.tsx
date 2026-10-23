@@ -10,6 +10,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from 'react';
+import { mergeRefs } from '../ui/mergeRefs';
 
 export type CheckboxSize = 'sm' | 'md';
 
@@ -50,11 +51,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
   const innerRef = useRef<HTMLInputElement>(null);
-  const setRef = (node: HTMLInputElement | null) => {
-    innerRef.current = node;
-    if (typeof forwardedRef === 'function') forwardedRef(node);
-    else if (forwardedRef) forwardedRef.current = node;
-  };
   const isControlled = checked !== undefined;
   const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
   const isChecked = isControlled ? !!checked : internalChecked;
@@ -78,7 +74,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     >
       <span className="relative inline-flex shrink-0 items-center justify-center">
         <input
-          ref={setRef}
+          ref={mergeRefs(innerRef, forwardedRef)}
           id={fieldId}
           type="checkbox"
           checked={isControlled ? isChecked : undefined}
