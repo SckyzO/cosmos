@@ -2,7 +2,6 @@ import { clsx } from 'clsx';
 import { AlertTriangle, Bell, BellOff, CheckCircle2, Info, XCircle } from 'lucide-react';
 import {
   createContext,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -11,6 +10,7 @@ import {
   type ButtonHTMLAttributes,
   type ComponentType,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
@@ -137,7 +137,7 @@ const NotificationsPanelRoot = ({
 // ── Trigger ──────────────────────────────────────────────────────────────────
 
 export type NotificationsPanelTriggerProps = Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
+  ComponentPropsWithRef<'button'>,
   'onClick' | 'children'
 > & {
   /** Number to show in the badge. 0 hides the badge. Values > 9999 render as "9999+". */
@@ -148,54 +148,56 @@ export type NotificationsPanelTriggerProps = Omit<
   ping?: boolean;
 };
 
-const NotificationsPanelTrigger = forwardRef<HTMLButtonElement, NotificationsPanelTriggerProps>(
-  function NotificationsPanelTrigger(
-    { count = 0, muted = false, ping, className, ...rest },
-    forwardedRef
-  ) {
-    const { open, setOpen, triggerRef, refreshRect } = useCtx();
-    // Merge refs
-    // If the panel starts open (defaultOpen / controlled open), the rect
-    // must be computed once after the trigger button mounts; otherwise
-    // <Content> stays null because triggerRect is still null.
-    useEffect(() => {
-      if (open) refreshRect();
-      // We intentionally only react to mount + open transitions here.
-    }, [open, refreshRect]);
-    const showPing = ping ?? (count > 0 && !muted);
-    const Icon = muted ? BellOff : Bell;
-    const display = count > 9999 ? '9999+' : String(count);
-    return (
-      <button
-        ref={mergeRefs(triggerRef, forwardedRef)}
-        type="button"
-        aria-label={muted ? 'Notifications (muted)' : 'Notifications'}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        className={clsx(
-          'relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors',
-          muted
-            ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
-            : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-          className
-        )}
-        {...rest}
-      >
-        <Icon className="h-5 w-5" />
-        {count > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex min-w-[16px] items-center justify-center">
-            {showPing && (
-              <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25" />
-            )}
-            <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] leading-none font-bold text-white">
-              {display}
-            </span>
+function NotificationsPanelTrigger({
+  count = 0,
+  muted = false,
+  ping,
+  className,
+  ref,
+  ...rest
+}: NotificationsPanelTriggerProps) {
+  const { open, setOpen, triggerRef, refreshRect } = useCtx();
+  // Merge refs
+  // If the panel starts open (defaultOpen / controlled open), the rect
+  // must be computed once after the trigger button mounts; otherwise
+  // <Content> stays null because triggerRect is still null.
+  useEffect(() => {
+    if (open) refreshRect();
+    // We intentionally only react to mount + open transitions here.
+  }, [open, refreshRect]);
+  const showPing = ping ?? (count > 0 && !muted);
+  const Icon = muted ? BellOff : Bell;
+  const display = count > 9999 ? '9999+' : String(count);
+  return (
+    <button
+      ref={mergeRefs(triggerRef, ref)}
+      type="button"
+      aria-label={muted ? 'Notifications (muted)' : 'Notifications'}
+      aria-expanded={open}
+      onClick={() => setOpen(!open)}
+      className={clsx(
+        'relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors',
+        muted
+          ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
+          : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+        className
+      )}
+      {...rest}
+    >
+      <Icon className="h-5 w-5" />
+      {count > 0 && (
+        <span className="absolute top-0.5 right-0.5 flex min-w-[16px] items-center justify-center">
+          {showPing && (
+            <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25" />
+          )}
+          <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] leading-none font-bold text-white">
+            {display}
           </span>
-        )}
-      </button>
-    );
-  }
-);
+        </span>
+      )}
+    </button>
+  );
+}
 
 // ── Content (portal panel) ───────────────────────────────────────────────────
 
@@ -305,15 +307,18 @@ const NotificationsPanelCounters = ({ crit, warn, info }: NotificationsPanelCoun
 
 // ── HeaderAction (mute / settings shortcut) ──────────────────────────────────
 
-export type NotificationsPanelHeaderActionProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type NotificationsPanelHeaderActionProps = ComponentPropsWithRef<'button'> & {
   icon: ComponentType<{ className?: string }>;
   active?: boolean;
 };
 
-const NotificationsPanelHeaderAction = forwardRef<
-  HTMLButtonElement,
-  NotificationsPanelHeaderActionProps
->(function NotificationsPanelHeaderAction({ icon: Icon, active, className, ...rest }, ref) {
+function NotificationsPanelHeaderAction({
+  icon: Icon,
+  active,
+  className,
+  ref,
+  ...rest
+}: NotificationsPanelHeaderActionProps) {
   return (
     <button
       ref={ref}
@@ -330,7 +335,7 @@ const NotificationsPanelHeaderAction = forwardRef<
       <Icon className="h-4 w-4" />
     </button>
   );
-});
+}
 
 // ── List ─────────────────────────────────────────────────────────────────────
 
@@ -359,7 +364,7 @@ const NotificationsPanelList = ({
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type NotificationsPanelItemProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type NotificationsPanelItemProps = ComponentPropsWithRef<'button'> & {
   severity: NotificationSeverity;
   title: string;
   subtitle?: string;
@@ -371,70 +376,66 @@ export type NotificationsPanelItemProps = ButtonHTMLAttributes<HTMLButtonElement
   closeOnClick?: boolean;
 };
 
-const NotificationsPanelItem = forwardRef<HTMLButtonElement, NotificationsPanelItemProps>(
-  function NotificationsPanelItem(
-    {
-      severity,
-      title,
-      subtitle,
-      caption,
-      badgeLabel,
-      closeOnClick = true,
-      onClick,
-      className,
-      ...rest
-    },
-    ref
-  ) {
-    const { setOpen } = useCtx();
-    const meta = SEVERITY_META[severity];
-    const Icon = meta.icon;
-    const defaultLabel = severity === 'success' ? 'OK' : severity.toUpperCase();
-    return (
-      <button
-        ref={ref}
-        type="button"
-        onClick={(e) => {
-          onClick?.(e);
-          if (closeOnClick && !e.defaultPrevented) setOpen(false);
-        }}
+function NotificationsPanelItem({
+  severity,
+  title,
+  subtitle,
+  caption,
+  badgeLabel,
+  closeOnClick = true,
+  onClick,
+  className,
+  ref,
+  ...rest
+}: NotificationsPanelItemProps) {
+  const { setOpen } = useCtx();
+  const meta = SEVERITY_META[severity];
+  const Icon = meta.icon;
+  const defaultLabel = severity === 'success' ? 'OK' : severity.toUpperCase();
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={(e) => {
+        onClick?.(e);
+        if (closeOnClick && !e.defaultPrevented) setOpen(false);
+      }}
+      className={clsx(
+        'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
+        className
+      )}
+      {...rest}
+    >
+      <div
         className={clsx(
-          'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
-          className
+          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+          meta.chipBg
         )}
-        {...rest}
       >
-        <div
-          className={clsx(
-            'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-            meta.chipBg
-          )}
-        >
-          <Icon className={clsx('h-4 w-4', meta.color)} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
-          {subtitle && (
-            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
-          )}
-          {caption && (
-            <p className="text-3xs mt-0.5 truncate font-mono text-gray-500 dark:text-gray-400">
-              {caption}
-            </p>
-          )}
-        </div>
-        <span
-          className={clsx(
-            'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold text-white',
-            BADGE_BG[severity]
-          )}
-        >
-          {badgeLabel ?? defaultLabel}
-        </span>
-      </button>
-    );
-  }
-);
+        <Icon className={clsx('h-4 w-4', meta.color)} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
+        {subtitle && (
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+        )}
+        {caption && (
+          <p className="text-3xs mt-0.5 truncate font-mono text-gray-500 dark:text-gray-400">
+            {caption}
+          </p>
+        )}
+      </div>
+      <span
+        className={clsx(
+          'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold text-white',
+          BADGE_BG[severity]
+        )}
+      >
+        {badgeLabel ?? defaultLabel}
+      </span>
+    </button>
+  );
+}
 
 // ── Empty ────────────────────────────────────────────────────────────────────
 

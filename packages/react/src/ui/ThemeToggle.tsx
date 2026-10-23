@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
 import { Moon, Sun } from 'lucide-react';
-import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
 export type ThemeToggleSize = 'sm' | 'md';
 
-export type ThemeToggleProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+export type ThemeToggleProps = Omit<ComponentPropsWithRef<'button'>, 'onClick'> & {
   /** Current theme state. `true` = dark mode active (Sun shown to switch back to light). */
   isDark: boolean;
   /** Called when the user toggles the theme. */
@@ -21,18 +21,16 @@ const SIZE_CLASS: Record<ThemeToggleSize, { box: string; icon: string }> = {
   md: { box: 'h-10 w-10', icon: 'h-5 w-5' },
 };
 
-export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(function ThemeToggle(
-  {
-    isDark,
-    onToggle,
-    size = 'md',
-    lightLabel = 'Switch to light mode',
-    darkLabel = 'Switch to dark mode',
-    className,
-    ...rest
-  },
-  ref
-) {
+export function ThemeToggle({
+  isDark,
+  onToggle,
+  size = 'md',
+  lightLabel = 'Switch to light mode',
+  darkLabel = 'Switch to dark mode',
+  className,
+  ref,
+  ...rest
+}: ThemeToggleProps) {
   const Icon = isDark ? Sun : Moon;
   const label = isDark ? lightLabel : darkLabel;
   const { box, icon } = SIZE_CLASS[size];
@@ -54,4 +52,4 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(funct
       <Icon className={icon} aria-hidden />
     </button>
   );
-});
+}

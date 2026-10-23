@@ -1,14 +1,11 @@
 import { clsx } from 'clsx';
 import { Moon, MoonStar, Sun } from 'lucide-react';
-import { forwardRef, type ButtonHTMLAttributes, type ComponentType } from 'react';
+import type { ComponentType, ComponentPropsWithRef } from 'react';
 
 export type ThemeToggleTriSize = 'sm' | 'md';
 export type ThemeMode = 'light' | 'dark' | 'deep-blue';
 
-export type ThemeToggleTriProps = Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  'onClick' | 'onChange'
-> & {
+export type ThemeToggleTriProps = Omit<ComponentPropsWithRef<'button'>, 'onClick' | 'onChange'> & {
   /** Current theme. */
   theme: ThemeMode;
   /** Called with the next theme in the cycle (light → dark → deep-blue → light). */
@@ -48,41 +45,37 @@ const ICON_FOR: Record<ThemeMode, ComponentType<{ className?: string }>> = {
  * else, so apply the theme there (for example with `applyAppearance`). To
  * offer all four themes, sand included, use `AppearanceSettings`.
  */
-export const ThemeToggleTri = forwardRef<HTMLButtonElement, ThemeToggleTriProps>(
-  function ThemeToggleTri(
-    {
-      theme,
-      onChange,
-      size = 'md',
-      lightLabel = 'Switch to light mode',
-      darkLabel = 'Switch to dark mode',
-      deepBlueLabel = 'Switch to deep blue mode',
-      className,
-      ...rest
-    },
-    ref
-  ) {
-    const next = nextInCycle(theme);
-    const label = next === 'light' ? lightLabel : next === 'dark' ? darkLabel : deepBlueLabel;
-    const Icon = ICON_FOR[theme];
-    const { box, icon } = SIZE_CLASS[size];
-    return (
-      <button
-        ref={ref}
-        type="button"
-        onClick={() => onChange(next)}
-        title={label}
-        aria-label={label}
-        data-theme={theme}
-        className={clsx(
-          'flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-          box,
-          className
-        )}
-        {...rest}
-      >
-        <Icon className={icon} aria-hidden />
-      </button>
-    );
-  }
-);
+export function ThemeToggleTri({
+  theme,
+  onChange,
+  size = 'md',
+  lightLabel = 'Switch to light mode',
+  darkLabel = 'Switch to dark mode',
+  deepBlueLabel = 'Switch to deep blue mode',
+  className,
+  ref,
+  ...rest
+}: ThemeToggleTriProps) {
+  const next = nextInCycle(theme);
+  const label = next === 'light' ? lightLabel : next === 'dark' ? darkLabel : deepBlueLabel;
+  const Icon = ICON_FOR[theme];
+  const { box, icon } = SIZE_CLASS[size];
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={() => onChange(next)}
+      title={label}
+      aria-label={label}
+      data-theme={theme}
+      className={clsx(
+        'flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+        box,
+        className
+      )}
+      {...rest}
+    >
+      <Icon className={icon} aria-hidden />
+    </button>
+  );
+}

@@ -1,12 +1,12 @@
 import { clsx } from 'clsx';
 import { ChevronRight } from 'lucide-react';
-import { forwardRef, type HTMLAttributes, type LiHTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 // TUI reference: <ul role="list" class="divide-y divide-gray-100">
 //                light pattern; dark variant uses divide-white/5
 
-export type StackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
+export type StackedListProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   children: ReactNode;
 };
 
@@ -19,10 +19,7 @@ export type StackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'
  * suits narrow columns (timestamps, letter headings), `ContentStackedList`
  * shows content rows with a badge and dotted meta instead of people.
  */
-const StackedListRoot = forwardRef<HTMLUListElement, StackedListProps>(function StackedListRoot(
-  { className, children, ...rest },
-  ref
-) {
+function StackedListRoot({ className, children, ref, ...rest }: StackedListProps) {
   return (
     <ul
       ref={ref}
@@ -33,7 +30,7 @@ const StackedListRoot = forwardRef<HTMLUListElement, StackedListProps>(function 
       {children}
     </ul>
   );
-});
+}
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 // TUI reference (Simple, row markup):
@@ -50,7 +47,7 @@ const StackedListRoot = forwardRef<HTMLUListElement, StackedListProps>(function 
 //     </div>
 //   </li>
 
-export type StackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
+export type StackedListItemProps = ComponentPropsWithRef<'li'> & {
   /** Leading slot — typically an `<img>` (size-12, rounded-full) or `<Avatar>`. */
   avatar?: ReactNode;
   /** Primary text. */
@@ -72,10 +69,18 @@ export type StackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   chevron?: boolean;
 };
 
-const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function StackedListItem(
-  { avatar, title, subtitle, meta, trailing, href, chevron, className, ...rest },
-  ref
-) {
+function StackedListItem({
+  avatar,
+  title,
+  subtitle,
+  meta,
+  trailing,
+  href,
+  chevron,
+  className,
+  ref,
+  ...rest
+}: StackedListItemProps) {
   // The full-row link overlay needs the <li> to be `relative`.
   const isLinked = Boolean(href);
 
@@ -126,7 +131,7 @@ const StackedListItem = forwardRef<HTMLLIElement, StackedListItemProps>(function
       )}
     </li>
   );
-});
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 

@@ -1,11 +1,11 @@
 import { clsx } from 'clsx';
-import { forwardRef, type HTMLAttributes, type LiHTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 // TUI reference (Pattern 10 — "Narrow"):
 //   <ul role="list" class="divide-y divide-gray-100">
 
-export type NarrowStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
+export type NarrowStackedListProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   children: ReactNode;
 };
 
@@ -15,24 +15,22 @@ export type NarrowStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'chi
  * `timestamp` or `description` it switches to a two-row layout.
  * `NarrowStackedList.Header` adds letter headings between groups.
  */
-const NarrowStackedListRoot = forwardRef<HTMLUListElement, NarrowStackedListProps>(
-  function NarrowStackedListRoot({ className, children, ...rest }, ref) {
-    return (
-      <ul
-        ref={ref}
-        role="list"
-        className={clsx('divide-y divide-gray-100 dark:divide-white/5', className)}
-        {...rest}
-      >
-        {children}
-      </ul>
-    );
-  }
-);
+function NarrowStackedListRoot({ className, children, ref, ...rest }: NarrowStackedListProps) {
+  return (
+    <ul
+      ref={ref}
+      role="list"
+      className={clsx('divide-y divide-gray-100 dark:divide-white/5', className)}
+      {...rest}
+    >
+      {children}
+    </ul>
+  );
+}
 
 // ── Header (TUI Pattern 11 — sticky group headings) ─────────────────────────
 
-export type NarrowStackedListHeaderProps = Omit<LiHTMLAttributes<HTMLLIElement>, 'children'> & {
+export type NarrowStackedListHeaderProps = Omit<ComponentPropsWithRef<'li'>, 'children'> & {
   /** Render with `position: sticky` so the header stays pinned while scrolling. */
   sticky?: boolean;
   children: ReactNode;
@@ -42,23 +40,27 @@ export type NarrowStackedListHeaderProps = Omit<LiHTMLAttributes<HTMLLIElement>,
  * Group heading, rendered as an `<li>` among the items of the same list. With
  * `sticky` it stays pinned to the top of the scrolling container.
  */
-const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeaderProps>(
-  function NarrowStackedListHeader({ sticky, className, children, ...rest }, ref) {
-    return (
-      <li
-        ref={ref}
-        className={clsx(
-          'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
-          sticky && 'sticky top-0 z-10',
-          className
-        )}
-        {...rest}
-      >
-        {children}
-      </li>
-    );
-  }
-);
+function NarrowStackedListHeader({
+  sticky,
+  className,
+  children,
+  ref,
+  ...rest
+}: NarrowStackedListHeaderProps) {
+  return (
+    <li
+      ref={ref}
+      className={clsx(
+        'border-t border-b border-t-gray-200 border-b-gray-200 bg-gray-50 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
+        sticky && 'sticky top-0 z-10',
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </li>
+  );
+}
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 // Three layout shapes depending on which props are passed:
@@ -86,7 +88,7 @@ const NarrowStackedListHeader = forwardRef<HTMLLIElement, NarrowStackedListHeade
 //        {trailing — optional, vertically centred}
 //      </li>
 
-export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
+export type NarrowStackedListItemProps = ComponentPropsWithRef<'li'> & {
   /** Leading slot — typically `<img class="size-12 rounded-full" />`. */
   avatar?: ReactNode;
   /** Primary text. */
@@ -101,74 +103,77 @@ export type NarrowStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   trailing?: ReactNode;
 };
 
-const NarrowStackedListItem = forwardRef<HTMLLIElement, NarrowStackedListItemProps>(
-  function NarrowStackedListItem(
-    { avatar, title, subtitle, timestamp, description, trailing, className, ...rest },
-    ref
-  ) {
-    const hasRichBody = Boolean(timestamp || description);
+function NarrowStackedListItem({
+  avatar,
+  title,
+  subtitle,
+  timestamp,
+  description,
+  trailing,
+  className,
+  ref,
+  ...rest
+}: NarrowStackedListItemProps) {
+  const hasRichBody = Boolean(timestamp || description);
 
-    if (hasRichBody) {
-      return (
-        <li ref={ref} className={clsx('flex gap-x-4 py-5', className)} {...rest}>
-          {avatar}
-          <div className="min-w-0 flex-auto">
-            <div className="flex items-baseline justify-between gap-x-4">
-              <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
-              {timestamp && (
-                <p className="flex-none text-xs/5 text-gray-600 dark:text-gray-400">{timestamp}</p>
-              )}
-            </div>
-            {description && (
-              <p className="mt-1 line-clamp-2 text-sm/6 text-gray-600 dark:text-gray-400">
-                {description}
-              </p>
-            )}
-            {!description && subtitle && (
-              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
-            )}
-          </div>
-          {trailing && <div className="flex flex-none items-center">{trailing}</div>}
-        </li>
-      );
-    }
-
-    if (trailing) {
-      return (
-        <li
-          ref={ref}
-          className={clsx('flex items-center justify-between gap-x-6 py-5', className)}
-          {...rest}
-        >
-          <div className="flex min-w-0 gap-x-4">
-            {avatar}
-            <div className="min-w-0 flex-auto">
-              <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
-              {subtitle && (
-                <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-          {trailing}
-        </li>
-      );
-    }
-
+  if (hasRichBody) {
     return (
       <li ref={ref} className={clsx('flex gap-x-4 py-5', className)} {...rest}>
         {avatar}
-        <div className="min-w-0">
-          <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
-          {subtitle && (
+        <div className="min-w-0 flex-auto">
+          <div className="flex items-baseline justify-between gap-x-4">
+            <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
+            {timestamp && (
+              <p className="flex-none text-xs/5 text-gray-600 dark:text-gray-400">{timestamp}</p>
+            )}
+          </div>
+          {description && (
+            <p className="mt-1 line-clamp-2 text-sm/6 text-gray-600 dark:text-gray-400">
+              {description}
+            </p>
+          )}
+          {!description && subtitle && (
             <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
         </div>
+        {trailing && <div className="flex flex-none items-center">{trailing}</div>}
       </li>
     );
   }
-);
+
+  if (trailing) {
+    return (
+      <li
+        ref={ref}
+        className={clsx('flex items-center justify-between gap-x-6 py-5', className)}
+        {...rest}
+      >
+        <div className="flex min-w-0 gap-x-4">
+          {avatar}
+          <div className="min-w-0 flex-auto">
+            <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
+            {subtitle && (
+              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        {trailing}
+      </li>
+    );
+  }
+
+  return (
+    <li ref={ref} className={clsx('flex gap-x-4 py-5', className)} {...rest}>
+      {avatar}
+      <div className="min-w-0">
+        <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
+        {subtitle && (
+          <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
+        )}
+      </div>
+    </li>
+  );
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 

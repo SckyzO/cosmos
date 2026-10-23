@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { forwardRef, type AnchorHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Contact cards with small portraits"):
 //   <ul role="list" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -40,7 +40,7 @@ const COLS_CLASS: Record<GridListCols, string> = {
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type GridListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
+export type GridListProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   /**
    * Maximum number of columns. The grid starts at one column on phones and adds
    * one at `sm`, `lg` and `xl` until it reaches this count.
@@ -56,10 +56,14 @@ export type GridListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> &
  * `GridList.Footer` of `GridList.FooterAction` links closes a card with a split
  * action row.
  */
-const Root = forwardRef<HTMLUListElement, GridListProps>(function GridListRoot(
-  { cols = 3, gapClassName = 'gap-6', className, children, ...rest },
-  ref
-) {
+function GridListRoot({
+  cols = 3,
+  gapClassName = 'gap-6',
+  className,
+  children,
+  ref,
+  ...rest
+}: GridListProps) {
   return (
     <ul
       ref={ref}
@@ -70,20 +74,17 @@ const Root = forwardRef<HTMLUListElement, GridListProps>(function GridListRoot(
       {children}
     </ul>
   );
-});
+}
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 
-export type GridListCardProps = HTMLAttributes<HTMLLIElement>;
+export type GridListCardProps = ComponentPropsWithRef<'li'>;
 
 /**
  * One card of the grid. Its direct children are separated by a divider, so wrap
  * the card body in a single element and put the `GridList.Footer` after it.
  */
-const Card = forwardRef<HTMLLIElement, GridListCardProps>(function GridListCard(
-  { className, children, ...rest },
-  ref
-) {
+function GridListCard({ className, children, ref, ...rest }: GridListCardProps) {
   return (
     <li
       ref={ref}
@@ -96,20 +97,17 @@ const Card = forwardRef<HTMLLIElement, GridListCardProps>(function GridListCard(
       {children}
     </li>
   );
-});
+}
 
 // ── Footer (split actions row, divided vertically) ──────────────────────────
 
-export type GridListFooterProps = HTMLAttributes<HTMLDivElement>;
+export type GridListFooterProps = ComponentPropsWithRef<'div'>;
 
 /**
  * Split action row at the bottom of a card. `className` styles the inner flex
  * row; `ref` and the other props go to the outer wrapper.
  */
-const Footer = forwardRef<HTMLDivElement, GridListFooterProps>(function GridListFooter(
-  { className, children, ...rest },
-  ref
-) {
+function GridListFooter({ className, children, ref, ...rest }: GridListFooterProps) {
   return (
     <div ref={ref} {...rest}>
       <div className={clsx('-mt-px flex divide-x divide-gray-200 dark:divide-white/10', className)}>
@@ -117,40 +115,44 @@ const Footer = forwardRef<HTMLDivElement, GridListFooterProps>(function GridList
       </div>
     </div>
   );
-});
+}
 
 // ── FooterAction (one cell of the split footer) ─────────────────────────────
 
-export type GridListFooterActionProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+export type GridListFooterActionProps = ComponentPropsWithRef<'a'> & {
   /** Index in the footer row — only used to apply `-ml-px` on cells after the first. */
   index?: number;
 };
 
 /** One link of the footer row. The first and last cells round the card's bottom corners. */
-const FooterAction = forwardRef<HTMLAnchorElement, GridListFooterActionProps>(
-  function GridListFooterAction({ index = 0, className, children, ...rest }, ref) {
-    return (
-      // The cell's position picks the card corner it rounds: first bottom-left, last bottom-right.
-      <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ml-px')}>
-        <a
-          ref={ref}
-          className={clsx(
-            'relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent py-4 text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 dark:text-white dark:hover:bg-white/5',
-            className
-          )}
-          {...rest}
-        >
-          {children}
-        </a>
-      </div>
-    );
-  }
-);
+function GridListFooterAction({
+  index = 0,
+  className,
+  children,
+  ref,
+  ...rest
+}: GridListFooterActionProps) {
+  return (
+    // The cell's position picks the card corner it rounds: first bottom-left, last bottom-right.
+    <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ml-px')}>
+      <a
+        ref={ref}
+        className={clsx(
+          'relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent py-4 text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 dark:text-white dark:hover:bg-white/5',
+          className
+        )}
+        {...rest}
+      >
+        {children}
+      </a>
+    </div>
+  );
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const GridList = Object.assign(Root, {
-  Card,
-  Footer,
-  FooterAction,
+export const GridList = Object.assign(GridListRoot, {
+  Card: GridListCard,
+  Footer: GridListFooter,
+  FooterAction: GridListFooterAction,
 });

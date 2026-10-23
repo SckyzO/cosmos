@@ -1,20 +1,10 @@
 import { clsx } from 'clsx';
 import { Paperclip } from 'lucide-react';
-import {
-  forwardRef,
-  useId,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type InputHTMLAttributes,
-} from 'react';
+import { useId, useRef, useState, type ChangeEvent, type ComponentPropsWithRef } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
 import { formatBytes } from './formatBytes';
 
-export type FileInputProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  'type' | 'onChange' | 'value'
-> & {
+export type FileInputProps = Omit<ComponentPropsWithRef<'input'>, 'type' | 'onChange' | 'value'> & {
   label?: string;
   description?: string;
   error?: string;
@@ -38,25 +28,23 @@ const summarizeFiles = (files: File[], showSize: boolean): string => {
   return showSize ? `${files.length} files — ${formatBytes(total)} total` : `${files.length} files`;
 };
 
-export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function FileInput(
-  {
-    label,
-    description,
-    error,
-    onChange,
-    buttonLabel = 'Browse',
-    placeholder = 'No file chosen',
-    showSize = true,
-    multiple,
-    accept,
-    disabled,
-    id,
-    name,
-    className,
-    ...rest
-  },
-  forwardedRef
-) {
+export function FileInput({
+  label,
+  description,
+  error,
+  onChange,
+  buttonLabel = 'Browse',
+  placeholder = 'No file chosen',
+  showSize = true,
+  multiple,
+  accept,
+  disabled,
+  id,
+  name,
+  className,
+  ref,
+  ...rest
+}: FileInputProps) {
   const generatedId = useId();
   const fieldId = id ?? name ?? generatedId;
   const innerRef = useRef<HTMLInputElement>(null);
@@ -109,7 +97,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
           <span className="truncate">{summary || placeholder}</span>
         </span>
         <input
-          ref={mergeRefs(innerRef, forwardedRef)}
+          ref={mergeRefs(innerRef, ref)}
           id={fieldId}
           name={name}
           type="file"
@@ -133,4 +121,4 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
       )}
     </div>
   );
-});
+}
