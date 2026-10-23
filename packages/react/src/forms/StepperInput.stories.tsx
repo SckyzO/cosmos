@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
 import { StepperInput, type StepperInputProps } from './StepperInput';
 
 const meta = {
@@ -159,5 +159,18 @@ export const BlurClampsOrRestores: Story = {
     await userEvent.clear(input);
     await userEvent.tab();
     await expect(input).toHaveValue(100);
+  },
+};
+
+const stepperRef = createRef<HTMLInputElement>();
+
+/** The ref gets the number `<input>`, not an arrow button, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <StepperInput ref={stepperRef} value={1} onChange={() => {}} aria-label="Quantity" />
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(stepperRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
   },
 };

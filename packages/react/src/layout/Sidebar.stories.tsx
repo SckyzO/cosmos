@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { clsx } from 'clsx';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import {
   Bell,
   Box,
@@ -19,6 +19,7 @@ import {
   User,
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { Sidebar } from './Sidebar';
 
 const meta = {
@@ -413,5 +414,37 @@ export const CollapsedItemsAreIconOnly: Story = {
     await expect(canvas.getByRole('button', { name: 'Notifications' }).textContent).toBe('');
     await expect(canvas.queryByText('Account')).toBeNull();
     await expect(canvas.getByText('Cosmos')).not.toBeVisible();
+  },
+};
+
+const brandLinkRef = createRef<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>();
+const brandButtonRef = createRef<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>();
+const brandPlainRef = createRef<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>();
+const itemLinkRef = createRef<HTMLAnchorElement | HTMLButtonElement>();
+const itemButtonRef = createRef<HTMLAnchorElement | HTMLButtonElement>();
+
+/**
+ * The refs get the root of Brand and Item: an `<a>` with `href`, a `<button>`
+ * with `onClick`, and for a Brand with neither a plain `<div>`.
+ */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Sidebar>
+      <Sidebar.Brand ref={brandLinkRef} title="Linked brand" href="#brand" />
+      <Sidebar.Brand ref={brandButtonRef} title="Pressed brand" onClick={() => {}} />
+      <Sidebar.Brand ref={brandPlainRef} title="Plain brand" />
+      <Sidebar.Item ref={itemLinkRef} icon={Server} label="Linked item" href="#item" />
+      <Sidebar.Item ref={itemButtonRef} icon={Server} label="Pressed item" onClick={() => {}} />
+    </Sidebar>
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(brandLinkRef, canvas.getByRole('link', { name: /Linked brand/ }));
+    await expectRefFocuses(brandButtonRef, canvas.getByRole('button', { name: /Pressed brand/ }));
+    // The plain Brand is a <div>: not focusable, so only the element is checked.
+    await expect(brandPlainRef.current).toBeInstanceOf(HTMLDivElement);
+    await expect(brandPlainRef.current).toContainElement(canvas.getByText('Plain brand'));
+    await expectRefFocuses(itemLinkRef, canvas.getByRole('link', { name: /Linked item/ }));
+    await expectRefFocuses(itemButtonRef, canvas.getByRole('button', { name: /Pressed item/ }));
   },
 };

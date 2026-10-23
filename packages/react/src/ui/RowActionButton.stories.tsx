@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { RowActionButton } from './RowActionButton';
 
 const meta = {
@@ -22,5 +24,16 @@ export const ClickFiresOnClick: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /View/ }));
     await expect(args.onClick).toHaveBeenCalled();
+  },
+};
+
+const buttonRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the `<button>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <RowActionButton ref={buttonRef} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: /View/ }));
   },
 };

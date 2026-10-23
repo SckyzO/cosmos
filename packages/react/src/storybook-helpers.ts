@@ -94,6 +94,22 @@ export const expectFocusBorder = async (
   await waitFor(() => expect(read()).toEqual(expected));
 };
 
+/**
+ * Play-function assertion for a component's `ref`: `ref.current` is the
+ * `expected` element, and focusing it through the ref moves focus there (the
+ * element is blurred first, so a control that took focus on mount doesn't pass
+ * for free).
+ */
+export const expectRefFocuses = async (
+  ref: { current: HTMLElement | null },
+  expected: HTMLElement
+) => {
+  await expect(ref.current).toBe(expected);
+  expected.blur();
+  ref.current?.focus();
+  await expect(expected).toHaveFocus();
+};
+
 // WCAG 2.x relative luminance of RGBA bytes (alpha ignored).
 const luminance = ([r, g, b]: number[]) => {
   const [lr, lg, lb] = [r, g, b].map((v) => {

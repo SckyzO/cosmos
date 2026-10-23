@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
 import { NumberInput, type NumberInputProps } from './NumberInput';
 
 const meta = {
@@ -133,5 +133,16 @@ export const BlurClampsOrRestores: Story = {
     await userEvent.clear(input);
     await userEvent.tab();
     await expect(input).toHaveValue(100);
+  },
+};
+
+const numberRef = createRef<HTMLInputElement>();
+
+/** The ref gets the number `<input>`, not a − / + button, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <NumberInput ref={numberRef} value={1} onChange={() => {}} aria-label="Quantity" />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(numberRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
   },
 };

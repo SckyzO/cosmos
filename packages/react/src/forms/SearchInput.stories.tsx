@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectPlaceholderContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectFocusBorder,
+  expectPlaceholderContrast,
+  expectRefFocuses,
+  inEachTheme,
+} from '../storybook-helpers';
 import { SearchInput } from './SearchInput';
 
 const meta = {
@@ -58,5 +63,16 @@ export const PlaceholderContrastInEveryTheme: Story = {
   play: async ({ canvas }) => {
     const input = canvas.getByRole('textbox');
     inEachTheme(() => expectPlaceholderContrast(input));
+  },
+};
+
+const searchRef = createRef<HTMLInputElement>();
+
+/** The ref gets the `<input>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SearchInput ref={searchRef} value="" onChange={() => {}} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(searchRef, canvas.getByPlaceholderText('Search…'));
   },
 };

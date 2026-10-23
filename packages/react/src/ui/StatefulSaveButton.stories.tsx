@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { StatefulSaveButton, type SaveState } from './StatefulSaveButton';
 
 const meta = {
@@ -55,5 +56,16 @@ export const SavedDoesNotFireOnClick: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button'));
     await expect(args.onClick).not.toHaveBeenCalled();
+  },
+};
+
+const saveRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the `<button>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <StatefulSaveButton ref={saveRef} state="idle" onClick={() => {}} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(saveRef, canvas.getByRole('button', { name: 'Save Changes' }));
   },
 };

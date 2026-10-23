@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
+import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
 const meta = {
@@ -235,5 +237,16 @@ export const ColsSetsTheGridColumns: Story = {
   play: async ({ canvas }) => {
     const group = canvas.getByRole('radiogroup', { name: 'View mode' });
     await expect(getComputedStyle(group).gridTemplateColumns.split(' ')).toHaveLength(4);
+  },
+};
+
+const cardRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the card's `<button role="radio">`, and focusing through it works. */
+export const OptionCardForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OptionCard ref={cardRef} id="soft" label="Soft" />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Soft' }));
   },
 };

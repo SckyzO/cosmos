@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
+import { ColorSwatch } from './ColorSwatch';
 
 const meta = {
   title: 'Settings/Accent Picker',
@@ -227,3 +228,14 @@ export const ColsStillAppliesBelowSm = columnsAt(
 
 /** Without `smCols`, the grid keeps `cols` columns from `sm` up. */
 export const SmColsDefaultsToCols = columnsAt('tw-sm', { cols: 4 }, { sm: true, columns: 4 });
+
+const swatchRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the swatch's `<button role="radio">`, and focusing through it works. */
+export const ColorSwatchForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ColorSwatch ref={swatchRef} hex="#465fff" label="Brand" />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(swatchRef, canvas.getByRole('radio', { name: 'Brand' }));
+  },
+};

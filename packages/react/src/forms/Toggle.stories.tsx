@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectGraphicContrast, inEachTheme } from '../storybook-helpers';
+import { expectGraphicContrast, expectRefFocuses, inEachTheme } from '../storybook-helpers';
 import { Toggle } from './Toggle';
 
 const meta = {
@@ -93,5 +93,18 @@ export const OffTrackContrastInEveryTheme: Story = {
   play: async ({ canvas }) => {
     const track = canvas.getByRole('switch');
     inEachTheme(() => expectGraphicContrast(track, 'backgroundColor'));
+  },
+};
+
+const toggleRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the switch `<button>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Toggle ref={toggleRef} checked={false} onChange={() => {}} label="Notifications" />
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(toggleRef, canvas.getByRole('switch', { name: 'Notifications' }));
   },
 };
