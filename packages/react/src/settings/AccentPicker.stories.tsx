@@ -181,3 +181,49 @@ export const ColsSetsTheGridColumns: Story = {
     await expect(getComputedStyle(group).gridTemplateColumns.split(' ')).toHaveLength(4);
   },
 };
+
+// `smCols` is a `sm:` (640px) breakpoint class: the story picks a viewport on
+// each side of it, and the test checks the viewport it got before the columns.
+const columnsOf = (group: HTMLElement) => getComputedStyle(group).gridTemplateColumns.split(' ');
+
+const columnsAt = (
+  viewport: 'mobile' | 'tw-sm',
+  props: Partial<React.ComponentProps<typeof AccentPicker>>,
+  expected: { sm: boolean; columns: number }
+): Story => ({
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: viewport, isRotated: false } },
+  render: () => (
+    <Wrap>
+      <AccentPicker
+        aria-label="Accent colour"
+        colors={ACCENTS}
+        value="brand"
+        onChange={() => {}}
+        {...props}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(window.matchMedia('(min-width: 640px)').matches).toBe(expected.sm);
+    const group = canvas.getByRole('radiogroup', { name: 'Accent colour' });
+    await expect(columnsOf(group)).toHaveLength(expected.columns);
+  },
+});
+
+/** From the `sm` breakpoint up, `smCols` sets the number of grid columns. */
+export const SmColsSetsTheColumnsFromSm = columnsAt(
+  'tw-sm',
+  { cols: 4, smCols: 6 },
+  { sm: true, columns: 6 }
+);
+
+/** Below `sm`, `cols` still sets the number of grid columns, whatever `smCols` is. */
+export const ColsStillAppliesBelowSm = columnsAt(
+  'mobile',
+  { cols: 4, smCols: 6 },
+  { sm: false, columns: 4 }
+);
+
+/** Without `smCols`, the grid keeps `cols` columns from `sm` up. */
+export const SmColsDefaultsToCols = columnsAt('tw-sm', { cols: 4 }, { sm: true, columns: 4 });
