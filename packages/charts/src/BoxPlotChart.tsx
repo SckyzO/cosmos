@@ -6,7 +6,7 @@ import { useStableCallback, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps, ChartLegendProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
@@ -14,6 +14,7 @@ export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 export type BoxPlotSummary = [min: number, q1: number, median: number, q3: number, max: number];
 
 export type BoxPlotChartProps = ChartBaseProps &
+  ChartEmptyProps &
   ChartLegendProps & {
     /** One summary per category, in the order of `categories`. */
     series: { name: string; data: BoxPlotSummary[] }[];
@@ -49,6 +50,7 @@ export const BoxPlotChart = ({
   formatValue,
   showLegend,
   legendPosition = 'top',
+  emptyMessage,
   ariaLabel,
   height = 320,
   width = '100%',
@@ -133,6 +135,7 @@ export const BoxPlotChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };

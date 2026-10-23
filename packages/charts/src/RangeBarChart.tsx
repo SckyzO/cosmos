@@ -6,7 +6,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps, ChartLegendProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -16,6 +16,7 @@ export type RangeBarPoint = {
 };
 
 export type RangeBarChartProps = ChartBaseProps &
+  ChartEmptyProps &
   ChartLegendProps & {
     /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
     series: { name: string; data: RangeBarPoint[] }[];
@@ -48,6 +49,7 @@ export const RangeBarChart = ({
   formatDate = defaultFormatDate,
   showLegend,
   legendPosition = 'top',
+  emptyMessage,
   ariaLabel,
   height = 320,
   width = '100%',
@@ -127,6 +129,7 @@ export const RangeBarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };

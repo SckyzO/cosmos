@@ -4,25 +4,27 @@ import 'apexcharts/radialBar';
 import { ApexChart } from './ApexChart';
 import { percent, useStableCallback, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps } from './types';
 
-export type RadialBarChartProps = ChartBaseProps & {
-  series: number[];
-  labels: string[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the ring values and their average, on the 0–100 scale of the rings. Default: `78%`.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-};
+export type RadialBarChartProps = ChartBaseProps &
+  ChartEmptyProps & {
+    series: number[];
+    labels: string[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the ring values and their average, on the 0–100 scale of the rings. Default: `78%`.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+  };
 
 export const RadialBarChart = ({
   series,
   labels,
   colors,
   formatValue = percent,
+  emptyMessage,
   ariaLabel,
   height = 320,
   width = '100%',
@@ -64,6 +66,7 @@ export const RadialBarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };

@@ -10,7 +10,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml, type TooltipRow } from './tooltip';
-import type { ChartBaseProps, ChartLegendProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -25,6 +25,7 @@ export type BubblePoint = ScatterPoint & {
 };
 
 type XYChartProps = ChartBaseProps &
+  ChartEmptyProps &
   ChartLegendProps & {
     /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
     xTitle?: string;
@@ -180,6 +181,7 @@ const useXYOptions = <P extends ScatterPoint>(
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
 export const ScatterChart = ({
+  emptyMessage,
   ariaLabel,
   height = 320,
   width = '100%',
@@ -199,6 +201,7 @@ export const ScatterChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };
@@ -207,6 +210,7 @@ export const ScatterChart = ({
 export const BubbleChart = ({
   sizeTitle = 'Size',
   formatSize = formatNumber,
+  emptyMessage,
   ariaLabel,
   height = 320,
   width = '100%',
@@ -235,6 +239,7 @@ export const BubbleChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };

@@ -5,9 +5,10 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartLegendProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type LineAreaChartProps = ChartBaseProps &
+  ChartEmptyProps &
   ChartLegendProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
@@ -27,6 +28,7 @@ export const LineAreaChart = ({
   categories,
   colors,
   formatValue,
+  emptyMessage,
   ariaLabel,
   height = 280,
   width = '100%',
@@ -82,6 +84,7 @@ export const LineAreaChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };

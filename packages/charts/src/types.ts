@@ -14,6 +14,16 @@ export type ChartAccessibility = {
   ariaLabel?: string;
 };
 
+/** Props of the charts that can have no data to draw. */
+export type ChartEmptyProps = {
+  /**
+   * Text drawn in place of the plot when the chart has no series, or only
+   * empty ones. Default `No data`; an empty string draws nothing. It is drawn
+   * as plain text: markup in it shows as written.
+   */
+  emptyMessage?: string;
+};
+
 export type ChartLegendPosition = 'top' | 'right' | 'bottom' | 'left';
 
 /** Props of the charts that draw a legend. */

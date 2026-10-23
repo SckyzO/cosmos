@@ -6,9 +6,10 @@ import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartLegendProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type DonutChartProps = ChartBaseProps &
+  ChartEmptyProps &
   ChartLegendProps & {
     series: number[];
     labels: string[];
@@ -27,6 +28,7 @@ export const DonutChart = ({
   colors,
   formatValue,
   legendPosition = 'bottom',
+  emptyMessage,
   ariaLabel,
   height = 280,
   width = '100%',
@@ -72,6 +74,7 @@ export const DonutChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
     />
   );
 };
