@@ -94,6 +94,104 @@ describe('matchesHotkey', () => {
     onPlatform('Win32');
     expect(matchesHotkey(press('o', { ctrlKey: true, shiftKey: true }), 'mod+shift+p')).toBe(false);
   });
+
+  describe('modifiers the hotkey does not list', () => {
+    it.each([
+      ['Ctrl', { ctrlKey: true }],
+      ['Meta', { metaKey: true }],
+      ['Alt', { altKey: true }],
+    ] as [string, Mods][])('rejects %s on a bare key', (_name, mods) => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('k', mods), 'k')).toBe(false);
+      expect(matchesHotkey(press('/', mods), '/')).toBe(false);
+      expect(matchesHotkey(press('?', mods), '?')).toBe(false);
+    });
+
+    it('lets a bare key through when no modifier is held', () => {
+      expect(matchesHotkey(press('k'), 'k')).toBe(true);
+    });
+
+    it.each([
+      ['Win32', { ctrlKey: true, shiftKey: true }],
+      ['MacIntel', { metaKey: true, shiftKey: true }],
+    ] as [string, Mods][])('rejects Shift on mod+p on %s', (platform, mods) => {
+      onPlatform(platform);
+      expect(matchesHotkey(press('P', mods), 'mod+p')).toBe(false);
+    });
+
+    it('rejects the other primary modifier next to mod', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('k', { ctrlKey: true, metaKey: true }), 'mod+k')).toBe(false);
+      onPlatform('MacIntel');
+      expect(matchesHotkey(press('k', { metaKey: true, ctrlKey: true }), 'mod+k')).toBe(false);
+    });
+
+    it('rejects Alt next to mod', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('k', { ctrlKey: true, altKey: true }), 'mod+k')).toBe(false);
+    });
+
+    it('accepts an explicit modifier that mod would also ask for', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('k', { ctrlKey: true }), 'mod+ctrl+k')).toBe(true);
+      onPlatform('MacIntel');
+      expect(matchesHotkey(press('k', { metaKey: true }), 'mod+cmd+k')).toBe(true);
+    });
+
+    it('needs both modifiers when mod joins the other primary one', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('k', { ctrlKey: true, metaKey: true }), 'mod+meta+k')).toBe(true);
+      expect(matchesHotkey(press('k', { ctrlKey: true }), 'mod+meta+k')).toBe(false);
+    });
+
+    it.each([
+      ['ctrl+s', { ctrlKey: true }, { metaKey: true }],
+      ['ctrl+s', { ctrlKey: true }, { altKey: true }],
+      ['ctrl+s', { ctrlKey: true }, { shiftKey: true }],
+      ['meta+s', { metaKey: true }, { ctrlKey: true }],
+      ['alt+s', { altKey: true }, { ctrlKey: true }],
+      ['alt+s', { altKey: true }, { shiftKey: true }],
+    ] as [string, Mods, Mods][])('rejects an extra modifier on %s', (hotkey, held, extra) => {
+      expect(matchesHotkey(press('s', held), hotkey)).toBe(true);
+      expect(matchesHotkey(press('s', { ...held, ...extra }), hotkey)).toBe(false);
+    });
+  });
+
+  describe('Shift', () => {
+    it('must be held for a letter only when the hotkey asks for it', () => {
+      expect(matchesHotkey(press('P', { shiftKey: true }), 'p')).toBe(false);
+      expect(matchesHotkey(press('P', { shiftKey: true }), 'shift+p')).toBe(true);
+      expect(matchesHotkey(press('p'), 'p')).toBe(true);
+      expect(matchesHotkey(press('p'), 'shift+p')).toBe(false);
+    });
+
+    it('must match for a digit', () => {
+      expect(matchesHotkey(press('1', { shiftKey: true }), '1')).toBe(false);
+      expect(matchesHotkey(press('1'), '1')).toBe(true);
+      expect(matchesHotkey(press('1', { shiftKey: true }), 'shift+1')).toBe(true);
+    });
+
+    it.each(['Enter', 'ArrowUp', 'Escape', 'Tab'])('must match for %s', (key) => {
+      expect(matchesHotkey(press(key, { shiftKey: true }), key)).toBe(false);
+      expect(matchesHotkey(press(key), key)).toBe(true);
+      expect(matchesHotkey(press(key, { shiftKey: true }), `shift+${key}`)).toBe(true);
+      expect(matchesHotkey(press(key), `shift+${key}`)).toBe(false);
+    });
+
+    it.each(['?', '/', '!', '>'])('is ignored for the character %s', (key) => {
+      // Shift is how many layouts type these: the key arrives with Shift held.
+      expect(matchesHotkey(press(key, { shiftKey: true }), key)).toBe(true);
+      expect(matchesHotkey(press(key), key)).toBe(true);
+    });
+
+    it('is ignored for mod+/ as well, the other modifiers still counting', () => {
+      onPlatform('Win32');
+      expect(matchesHotkey(press('/', { ctrlKey: true, shiftKey: true }), 'mod+/')).toBe(true);
+      expect(matchesHotkey(press('/', { ctrlKey: true }), 'mod+/')).toBe(true);
+      expect(matchesHotkey(press('/', { ctrlKey: true, altKey: true }), 'mod+/')).toBe(false);
+      expect(matchesHotkey(press('/', { shiftKey: true }), 'mod+/')).toBe(false);
+    });
+  });
 });
 
 describe('isTypingTarget', () => {
