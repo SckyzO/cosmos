@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
-import { contrastRatio, expectTooltipFollowsTheme } from './storybook-helpers';
+import {
+  contrastRatio,
+  expectTooltipFollowsTheme,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -195,4 +201,19 @@ export const WindowSizeChanges: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Longer' }));
     await waitFor(() => expect(pointCount(canvasElement)).toBe(18));
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Basic.args, intervalMs: 60_000 },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <RealtimeChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

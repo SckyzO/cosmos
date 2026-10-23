@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sparkline, SparklineGroup } from './Sparkline';
+import { Rerender, expectNoRedrawOnRerender, freshCopy } from './storybook-helpers';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
 const SERVICES = [
@@ -123,4 +124,17 @@ export const InTable: Story = {
       </table>
     </Card>
   ),
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Area.args },
+  render: (args) => (
+    <Rerender>{(grown) => <Sparkline {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

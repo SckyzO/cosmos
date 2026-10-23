@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { BubbleChart, ScatterChart, type BubblePoint, type ScatterPoint } from './ScatterChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
 const noise = (i: number) => (Math.sin(i * 12.9898) * 43758.5453) % 1;
@@ -193,4 +201,19 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
     );
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...LatencyVsLoad.args, formatX: (v) => `${v} rps`, formatY: (v) => `${v} ms` },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <ScatterChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { BoxPlotChart } from './BoxPlotChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -155,4 +163,19 @@ export const HtmlInLabelsRendersAsText: Story = {
     );
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ResponseTimes.args, formatValue: (v) => `${v} ms` },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <BoxPlotChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

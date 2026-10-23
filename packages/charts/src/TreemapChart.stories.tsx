@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TreemapChart } from './TreemapChart';
 import { expect, waitFor } from 'storybook/test';
-import { contrastRatio, expectTooltipFollowsTheme } from './storybook-helpers';
+import {
+  contrastRatio,
+  expectTooltipFollowsTheme,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -108,4 +114,19 @@ export const LabelsReadOnTiles: Story = {
       expect(contrastRatio(text, fill)).toBeGreaterThanOrEqual(4.5);
     }
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Distributed.args },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <TreemapChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

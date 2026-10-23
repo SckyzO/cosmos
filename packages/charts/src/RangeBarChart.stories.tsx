@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { RangeBarChart } from './RangeBarChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
 const at = (day: number, hour: number, minute = 0) => Date.UTC(2026, 9, day, hour, minute);
@@ -161,4 +169,19 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MaintenanceWindows.args, formatDate: (t) => new Date(t).toISOString() },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <RangeBarChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

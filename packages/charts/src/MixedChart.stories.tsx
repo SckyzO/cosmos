@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { MixedChart } from './MixedChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
 const EVERY_4H = ['00h', '04h', '08h', '12h', '16h', '20h'];
@@ -153,4 +161,21 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...RequestsAndLatency.args,
+    formatValue: (v) => `${v} rps`,
+    formatRightValue: (v) => `${v} ms`,
+  },
+  render: (args) => (
+    <Rerender>{(grown) => <MixedChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };
