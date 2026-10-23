@@ -1,10 +1,14 @@
 #!/usr/bin/env node
-/* Contrast guard for the Cosmos themes and accents.
+/* Contrast and metadata guard for the Cosmos themes and accents.
  *
  * Reads css/css-vars.css and css/tailwind-tokens.css, resolves each theme's
  * surfaces and text colors, and checks the WCAG 2.x ratios listed in
  * docs/specs/themes-accents.md § 1.6. Exits 1 on the first pair below its
  * threshold. No dependencies: hex and oklch() are converted by hand.
+ *
+ * Before that, it checks that the themes and accents of the CSS are the ones
+ * COSMOS_THEMES and COSMOS_ACCENTS list in react/src/settings/appearance.ts
+ * (read as text), with the same `dark` flag and the same brand-500 as `hex`.
  *
  *   node scripts/check-contrast.mjs
  */
@@ -31,13 +35,6 @@ const TAILWIND_GRAYS = {
   white: '#fff',
 };
 
-const THEMES = [
-  { id: 'light', selector: ':root', dark: false },
-  { id: 'sand', selector: '.sand', dark: false },
-  { id: 'dark', selector: '.dark', dark: true },
-  { id: 'deep-blue', selector: '.deep-blue', dark: true },
-];
-
 // ── CSS parsing ───────────────────────────────────────────────────────────
 
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -60,8 +57,10 @@ const blocks = (css) =>
     ])
   );
 
-const vars = blocks(readFileSync(join(cssDir, 'css-vars.css'), 'utf8'));
-const tokens = blocks(readFileSync(join(cssDir, 'tailwind-tokens.css'), 'utf8'));
+const varsCss = readFileSync(join(cssDir, 'css-vars.css'), 'utf8');
+const tokensCss = readFileSync(join(cssDir, 'tailwind-tokens.css'), 'utf8');
+const vars = blocks(varsCss);
+const tokens = blocks(tokensCss);
 
 const themeTokens = tokens.get('@theme');
 if (!themeTokens) throw new Error('No @theme block in tailwind-tokens.css');
@@ -79,6 +78,100 @@ for (const [sel, decls] of vars) {
   const m = sel.match(/^\[data-accent='([\w-]+)'\]$/);
   if (m) accents.push(accent(m[1], decls));
 }
+
+// `light` is :root. Any other theme is a class block of css-vars.css that sets
+// the page surface (--color-bg-base). The dark ones are the classes the
+// `dark:` variant of tailwind-tokens.css covers: `.dark *`, `.deep-blue *`.
+const darkClasses = new Set(
+  [
+    ...(
+      stripComments(tokensCss).match(/@custom-variant\s+dark\s*\(([^;]*)\)\s*;/)?.[1] ?? ''
+    ).matchAll(/\.([\w-]+)\s+\*/g),
+  ].map(([, cls]) => cls)
+);
+const THEMES = [{ id: 'light', selector: ':root', dark: false }];
+for (const [sel, decls] of vars) {
+  const m = sel.match(/^\.([\w-]+)$/);
+  if (m && decls['bg-base']) THEMES.push({ id: m[1], selector: sel, dark: darkClasses.has(m[1]) });
+}
+
+// ── Metadata drift ────────────────────────────────────────────────────────
+
+// The same themes and accents are listed in COSMOS_THEMES and COSMOS_ACCENTS.
+// Read as text: this script has no dependencies, and appearance.ts is TypeScript.
+const appearancePath = join(cssDir, '..', '..', 'react', 'src', 'settings', 'appearance.ts');
+const appearance = readFileSync(appearancePath, 'utf8');
+
+/** The `{ id: '…', … }` entries of `export const <name>: … = [ … ];`, by id. */
+const metaEntries = (name) => {
+  const body = appearance.match(
+    new RegExp(`export const ${name}\\b[^=]*=\\s*\\[([\\s\\S]*?)\\n\\];`)
+  )?.[1];
+  if (!body) throw new Error(`No ${name} array in appearance.ts`);
+  return new Map(
+    [...body.matchAll(/\bid:\s*'([\w-]+)'([\s\S]*?)(?=\bid:\s*'|$)/g)].map(([, id, rest]) => [
+      id,
+      rest,
+    ])
+  );
+};
+
+const drift = [];
+
+const metaThemes = metaEntries('COSMOS_THEMES');
+for (const { id, selector, dark } of THEMES) {
+  const meta = metaThemes.get(id);
+  if (meta === undefined) {
+    drift.push(`theme '${id}' is in css-vars.css (${selector}) but not in COSMOS_THEMES`);
+    continue;
+  }
+  const listed = meta.match(/\bdark:\s*(true|false)/)?.[1];
+  if (listed !== String(dark)) {
+    drift.push(
+      `theme '${id}': COSMOS_THEMES has dark: ${listed ?? 'nothing'}, ` +
+        `but the dark: variant of tailwind-tokens.css ${dark ? 'covers' : 'does not cover'} .${id}`
+    );
+  }
+}
+for (const id of metaThemes.keys()) {
+  if (!THEMES.some((t) => t.id === id)) {
+    drift.push(`theme '${id}' is in COSMOS_THEMES but has no theme block in css-vars.css`);
+  }
+}
+
+const metaAccents = metaEntries('COSMOS_ACCENTS');
+for (const { id, brand } of accents) {
+  const meta = metaAccents.get(id);
+  if (meta === undefined) {
+    drift.push(`accent '${id}' is in the CSS but not in COSMOS_ACCENTS`);
+    continue;
+  }
+  const hex = meta.match(/\bhex:\s*'([^']+)'/)?.[1];
+  if (hex?.toLowerCase() !== brand['500'].toLowerCase()) {
+    drift.push(
+      `accent '${id}': COSMOS_ACCENTS has hex ${hex ?? 'nothing'}, but its brand-500 is ${brand['500']}`
+    );
+  }
+}
+for (const id of metaAccents.keys()) {
+  if (!accents.some((a) => a.id === id)) {
+    drift.push(
+      `accent '${id}' is in COSMOS_ACCENTS but has no [data-accent='${id}'] block in css-vars.css`
+    );
+  }
+}
+
+if (drift.length) {
+  console.error(
+    `\nThe theme metadata and the CSS disagree (packages/react/src/settings/appearance.ts vs packages/theme/css):\n` +
+      drift.map((d) => `  - ${d}`).join('\n') +
+      `\n\nUpdate appearance.ts or the CSS so that both list the same themes and accents.`
+  );
+  process.exit(1);
+}
+console.log(
+  `ok   metadata   ${THEMES.length} themes and ${accents.length} accents match appearance.ts`
+);
 
 // ── Color math ────────────────────────────────────────────────────────────
 

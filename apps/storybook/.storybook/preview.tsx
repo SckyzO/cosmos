@@ -1,8 +1,13 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
 
-import { COSMOS_FONTS, COSMOS_TEXT_SIZES } from '../../../packages/react/src';
+import {
+  COSMOS_ACCENTS,
+  COSMOS_FONTS,
+  COSMOS_TEXT_SIZES,
+  COSMOS_THEMES,
+} from '../../../packages/react/src';
 import { CosmosDocsContainer } from './CosmosDocsContainer';
-import { DEFAULT_THEME, type CosmosThemeName } from './cosmos-theme';
+import { DEFAULT_THEME } from './cosmos-theme';
 
 // Fonts (npm-distributed CSS via @fontsource — Vite handles @fontsource/*/x.css natively)
 import '@fontsource/outfit/300.css';
@@ -46,32 +51,10 @@ const withCosmosSurface: Decorator = (Story, ctx) => {
 };
 
 /**
- * Accent colors, in the order a picker shows them: red, orange, amber and
- * green look like the status colors, so they come last. Mirrors the
- * [data-accent] blocks in @sckyzo/cosmos-theme/vars.
+ * The class each theme puts on <html>: none for light, its id otherwise (the
+ * rule `applyAppearance` follows).
  */
-const ACCENTS = [
-  { value: 'blue', title: 'Blue' },
-  { value: 'indigo', title: 'Indigo' },
-  { value: 'violet', title: 'Violet' },
-  { value: 'purple', title: 'Purple' },
-  { value: 'rose', title: 'Rose' },
-  { value: 'teal', title: 'Teal' },
-  { value: 'cyan', title: 'Cyan' },
-  { value: 'graphite', title: 'Graphite' },
-  { value: 'red', title: 'Red' },
-  { value: 'orange', title: 'Orange' },
-  { value: 'amber', title: 'Amber' },
-  { value: 'green', title: 'Green' },
-];
-
-/** The Theme menu: the class each theme puts on <html> (none for light). */
-const THEMES: { value: CosmosThemeName; title: string; className: string }[] = [
-  { value: 'light', title: 'Light', className: '' },
-  { value: 'sand', title: 'Sand', className: 'sand' },
-  { value: 'dark', title: 'Dark', className: 'dark' },
-  { value: 'deep-blue', title: 'Deep blue', className: 'deep-blue' },
-];
+const THEMES = COSMOS_THEMES.map(({ id }) => ({ id, className: id === 'light' ? '' : id }));
 
 /**
  * Put the `theme` global's class on <html>, as addon-themes'
@@ -84,19 +67,20 @@ const withThemeClass: Decorator = (Story, ctx) => {
   const selected = (ctx.globals.theme as string | undefined) || DEFAULT_THEME;
   const root = document.documentElement;
   for (const t of THEMES) {
-    if (t.value !== selected && t.className) root.classList.remove(t.className);
+    if (t.id !== selected && t.className) root.classList.remove(t.className);
   }
-  const current = THEMES.find((t) => t.value === selected)?.className;
+  const current = THEMES.find((t) => t.id === selected)?.className;
   if (current) root.classList.add(current);
   return <Story />;
 };
 
 /**
- * Toolbar items titled `<menu>: <value>`: with `dynamicTitle` the button shows
- * the selected item's title, so the menu name stays visible once picked.
+ * Toolbar items from the appearance metadata (`COSMOS_THEMES` and the like),
+ * titled `<menu>: <label>`: with `dynamicTitle` the button shows the selected
+ * item's title, so the menu name stays visible once picked.
  */
-const menuItems = (menu: string, items: { value: string; title: string }[]) =>
-  items.map(({ value, title }) => ({ value, title: `${menu}: ${title}` }));
+const menuItems = (menu: string, items: { id: string; label: string }[]) =>
+  items.map(({ id, label }) => ({ value: id, title: `${menu}: ${label}` }));
 
 /** Sets `data-<key>` on <html>, or removes it for the theme's default value. */
 const setRootData = (key: 'accent' | 'font' | 'textSize', value: unknown, byDefault: string) => {
@@ -146,7 +130,7 @@ const preview: Preview = {
       toolbar: {
         title: 'Theme',
         icon: 'contrast',
-        items: menuItems('Theme', THEMES),
+        items: menuItems('Theme', COSMOS_THEMES),
         dynamicTitle: true,
       },
     },
@@ -155,7 +139,7 @@ const preview: Preview = {
       toolbar: {
         title: 'Accent',
         icon: 'paintbrush',
-        items: menuItems('Accent', ACCENTS),
+        items: menuItems('Accent', COSMOS_ACCENTS),
         dynamicTitle: true,
       },
     },
@@ -164,10 +148,7 @@ const preview: Preview = {
       toolbar: {
         title: 'Font',
         icon: 'paragraph',
-        items: menuItems(
-          'Font',
-          COSMOS_FONTS.map((f) => ({ value: f.id, title: f.label }))
-        ),
+        items: menuItems('Font', COSMOS_FONTS),
         dynamicTitle: true,
       },
     },
@@ -176,10 +157,7 @@ const preview: Preview = {
       toolbar: {
         title: 'Size',
         icon: 'zoom',
-        items: menuItems(
-          'Size',
-          COSMOS_TEXT_SIZES.map((t) => ({ value: t.id, title: t.label }))
-        ),
+        items: menuItems('Size', COSMOS_TEXT_SIZES),
         dynamicTitle: true,
       },
     },
