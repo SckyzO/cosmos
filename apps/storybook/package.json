@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "a11y:todo": "vitest run --project=storybook --reporter=default --reporter=./.storybook/a11y-todo-reporter.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
