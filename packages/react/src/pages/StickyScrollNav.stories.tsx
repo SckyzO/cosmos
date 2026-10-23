@@ -115,13 +115,15 @@ export const ButtonScrollsInsideAScrollContainer: Story = {
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation');
     const alerts = canvas.getByRole('region', { name: 'Alerts' });
-    const startTop = topOf(nav);
+    // Stuck from the start: inside the container's padding, `topOffset` px below its content edge.
+    const stuckTop = topOf(nav);
 
     await userEvent.click(canvas.getByRole('button', { name: 'Alerts' }));
     await expectLandedBelow(nav, alerts, canvas.getByRole('heading', { name: 'Alerts' }));
-    // The nav sticks `topOffset` px below the top of the container, which it did not at the start.
-    await expect(topOf(nav)).toBeLessThan(startTop);
+    // The container scrolled, not the page, and the nav stayed put.
+    await expect(nav.parentElement?.scrollTop).toBeGreaterThan(0);
     await expect(window.scrollY).toBe(0);
+    await expect(topOf(nav)).toBeCloseTo(stuckTop, 0);
   },
 };
 
