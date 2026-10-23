@@ -9,6 +9,7 @@ import {
   type InputHTMLAttributes,
 } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
+import { formatBytes } from './formatBytes';
 
 export type FileInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -25,13 +26,6 @@ export type FileInputProps = Omit<
   placeholder?: string;
   /** Show file size next to the name. Default true. */
   showSize?: boolean;
-};
-
-const formatBytes = (n: number): string => {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 };
 
 const summarizeFiles = (files: File[], showSize: boolean): string => {
