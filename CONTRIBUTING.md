@@ -15,9 +15,37 @@ make install              # pnpm install + Playwright browsers, inside the conta
 
 ```bash
 make storybook            # http://localhost:6006 — component playground
-make test                 # Story tests (Vitest browser mode), e2e and the theme contrast check
+make test                 # Unit tests (Vitest, Node), story tests (Vitest browser mode), e2e and the theme contrast check
 make ci                   # Full CI before pushing
 ```
+
+## Tests
+
+- **Unit tests** — `packages/*/src/**/*.test.ts`, next to the module they cover. Vitest in plain
+  Node, no browser and no DOM: the `node` project of `apps/storybook/vitest.config.ts`. They are for
+  pure logic (helpers, formatting, pagination, filtering, appearance), and take milliseconds.
+- **Component tests** — the stories, run by Vitest in a headless Chromium (the `storybook`
+  project). They cover what needs a real DOM: rendering, focus, interaction, theming.
+- **E2E** — Playwright against Storybook, in `tests/e2e`.
+
+`pnpm --filter '@cosmos/storybook' test` runs both Vitest projects, so `make test`, `make ci` and
+the CI workflow run the unit tests with the rest. To run only them, or only some of them:
+
+```bash
+./devctl run pnpm --filter '@cosmos/storybook' exec vitest run --project=node
+./devctl run pnpm --filter '@cosmos/storybook' exec vitest run --project=node pageList
+./devctl run pnpm --filter '@cosmos/storybook' exec vitest run --project=node -t 'test name'
+./devctl run pnpm --filter '@cosmos/storybook' exec vitest --project=node   # watch mode
+```
+
+Test only a function that already is pure. A function that reads `document` or `getComputedStyle`
+belongs to a story, unless it can take the element as a parameter (as `applyAppearance` does); a
+stand-in object with the few members it touches is enough in Node. Logic buried in a component moves
+to a module of its own first, in a separate `refactor` commit that changes nothing else.
+
+`*.test.ts` files stay out of the published packages (tsup bundles from `src/index.ts` only) and
+are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
+its `tsconfig.json` because the packages do not depend on it.
 
 ## Branch model
 
@@ -68,6 +96,7 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
 
 - [ ] `make ci` passes locally
 - [ ] New components have a Storybook story
+- [ ] New or changed pure logic has a unit test (see [Tests](#tests))
 - [ ] Visual changes : screenshot in PR description, checked in the four themes
 - [ ] Public API changes : update package README
 - [ ] Breaking changes : add `BREAKING CHANGE:` footer to commit
