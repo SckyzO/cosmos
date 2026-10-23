@@ -53,8 +53,16 @@ test('capture stories', async ({ context, page }) => {
   test.setTimeout(0);
   // Each step still gets a bound: a stuck page is reported, not waited on forever.
   context.setDefaultTimeout(30_000);
-  // Charts animate their first draw: capture the final state.
+  // Same day and same "random" data on every run, so comparing two months shows
+  // the stories that changed, not the calendar. Time still flows from there.
+  await context.clock.install({ time: new Date('2026-01-15T10:00:00Z') });
   await context.addInitScript(() => {
+    let seed = 42;
+    Math.random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    // Charts animate their first draw: capture the final state.
     (window as unknown as { Apex: object }).Apex = { chart: { animations: { enabled: false } } };
   });
 
