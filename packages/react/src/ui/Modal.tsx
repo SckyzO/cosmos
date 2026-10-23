@@ -54,9 +54,10 @@ const Dialog = ({
   }, [open, onClose]);
 
   // Only point `aria-labelledby` at the title once a `Modal.Header` rendered it.
+  // A Header comes and goes with `children`, so re-check when they change.
   useLayoutEffect(() => {
     setHasTitle(!!trapRef.current?.querySelector(`[id="${titleId}"]`));
-  });
+  }, [open, children, titleId, trapRef]);
 
   if (!open) return null;
 
