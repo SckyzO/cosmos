@@ -550,6 +550,45 @@ export const ComfortableRowsAreTaller: Story = {
   },
 };
 
+/**
+ * The selection and action cells centre their content whatever the font: an
+ * inline checkbox or button sat on the text baseline, so a fallback font,
+ * shown while the web font loads, moved it off centre.
+ */
+export const CellsStayCentredWithAnyFont: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div style={{ fontFamily: 'serif', fontSize: 28 }}>
+        <DataTable
+          rows={members.slice(0, 1)}
+          columns={memberColumns}
+          rowKey={(m) => m.id}
+          renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+          selectable
+          density="comfortable"
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const [header, firstRow] = within(canvas.getByRole('table')).getAllByRole('row');
+    const centre = (el: Element) => {
+      const box = el.getBoundingClientRect();
+      return box.top + box.height / 2;
+    };
+    const row = within(firstRow);
+    for (const el of [
+      row.getByLabelText('Select row m-1').closest('label')!,
+      row.getByRole('button', { name: 'Edit' }),
+    ]) {
+      await expect(Math.abs(centre(el) - centre(firstRow))).toBeLessThanOrEqual(1);
+    }
+    const selectAll = within(header).getByLabelText('Select all rows').closest('label')!;
+    await expect(Math.abs(centre(selectAll) - centre(header))).toBeLessThanOrEqual(1);
+  },
+};
+
 // In the dark themes `dark:border-*` used to win over `focus:border-*` (#151).
 export const SearchFocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
