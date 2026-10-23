@@ -1,6 +1,7 @@
 import ApexCharts from 'apexcharts/core';
 import { useState, type ReactNode } from 'react';
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
+import type { ChartLegendPosition } from './types';
 
 /**
  * Loads the woff2 of an `@font-face` rule already on the page (`sourceFamily`)
@@ -315,6 +316,54 @@ export const expectNoRedrawOnRerender = async ({
   } finally {
     updateOptions.mockRestore();
     updateSeries.mockRestore();
+  }
+};
+
+const LEGEND_SIDES: ChartLegendPosition[] = ['top', 'right', 'bottom', 'left'];
+
+/** `children(side)` once per `legendPosition`, each chart in an element `data-side`. */
+export const LegendSides = ({
+  children,
+}: {
+  children: (side: ChartLegendPosition) => ReactNode;
+}) => (
+  <div className="grid gap-4 md:grid-cols-2">
+    {LEGEND_SIDES.map((side) => (
+      <div key={side} data-side={side}>
+        {children(side)}
+      </div>
+    ))}
+  </div>
+);
+
+/**
+ * Play function for a story rendering a wrapper in `LegendSides`: each legend
+ * sits on its side of the plot, outside of it.
+ */
+export const expectLegendsOnTheirSide = async ({
+  canvasElement,
+}: {
+  canvasElement: HTMLElement;
+}) => {
+  for (const side of LEGEND_SIDES) {
+    const chart = canvasElement.querySelector(`[data-side="${side}"]`);
+    await waitFor(() => {
+      const legend = chart?.querySelector('.apexcharts-legend');
+      const plot = chart?.querySelector('.apexcharts-inner');
+      expect(legend?.querySelector('.apexcharts-legend-series'), side).toBeTruthy();
+      expect(plot, side).toBeTruthy();
+      const l = (legend as Element).getBoundingClientRect();
+      const p = (plot as Element).getBoundingClientRect();
+      const outside = {
+        top: l.bottom <= p.top + 1,
+        bottom: l.top >= p.bottom - 1,
+        left: l.right <= p.left + 1,
+        right: l.left >= p.right - 1,
+      };
+      expect(outside[side], `${side}: legend ${JSON.stringify(l)}, plot ${JSON.stringify(p)}`).toBe(
+        true
+      );
+    });
   }
 };
 

@@ -11,6 +11,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
@@ -189,6 +191,23 @@ export const PaletteFromTheme: Story = {
       )
     );
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      { name: 'a', data: [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }] },
+      { name: 'b', data: [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <RangeBarChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

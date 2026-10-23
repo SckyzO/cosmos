@@ -14,6 +14,8 @@ import {
   xAxisLayout,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -262,6 +264,24 @@ export const PaletteFromTheme: Story = {
       )
     );
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', data: [3, 5, 4] },
+      { name: 'b', data: [4, 2, 5] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <BarChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

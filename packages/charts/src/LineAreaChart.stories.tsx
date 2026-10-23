@@ -13,6 +13,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -283,6 +285,24 @@ export const PaletteFromTheme: Story = {
       )
     );
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', data: [3, 5, 4] },
+      { name: 'b', data: [4, 2, 5] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <LineAreaChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

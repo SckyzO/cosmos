@@ -11,6 +11,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
@@ -190,6 +192,24 @@ export const PaletteFromTheme: Story = {
       return [...byIndex.entries()].sort(([a], [b]) => a - b).map(([, color]) => color);
     });
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', type: 'column', data: [3, 5, 4] },
+      { name: 'b', type: 'line', data: [4, 2, 5] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <MixedChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

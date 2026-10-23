@@ -15,6 +15,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -184,6 +186,18 @@ export const PaletteFromTheme: Story = {
       )
     );
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

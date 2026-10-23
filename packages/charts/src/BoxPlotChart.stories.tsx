@@ -11,6 +11,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
@@ -184,6 +186,36 @@ export const PaletteFromTheme: Story = {
       ),
     ]);
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B'],
+    series: [
+      {
+        name: 'a',
+        data: [
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+        ],
+      },
+      {
+        name: 'b',
+        data: [
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+        ],
+      },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <BoxPlotChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**
