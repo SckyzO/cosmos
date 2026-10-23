@@ -9,6 +9,7 @@ import {
   type ElementType,
   type ReactNode,
 } from 'react';
+import { isTypingTarget, matchesHotkey } from './hotkey';
 
 // ── Root (wraps cmdk's Command.Dialog) ───────────────────────────────────────
 
@@ -21,31 +22,6 @@ export type CommandPaletteProps = ComponentPropsWithoutRef<typeof Command.Dialog
    */
   hotkey?: 'mod+k' | 'mod+/' | '/' | string | null;
 };
-
-const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
-  // Lightweight matcher: lowercase, split on '+', check each modifier + key.
-  const parts = hotkey.toLowerCase().split('+');
-  const expectMod = parts.includes('mod');
-  const expectMeta = parts.includes('meta') || parts.includes('cmd');
-  const expectCtrl = parts.includes('ctrl');
-  const expectShift = parts.includes('shift');
-  const expectAlt = parts.includes('alt') || parts.includes('option');
-  const key = parts[parts.length - 1];
-
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
-  const modPressed = isMac ? e.metaKey : e.ctrlKey;
-
-  if (expectMod && !modPressed) return false;
-  if (expectMeta && !e.metaKey) return false;
-  if (expectCtrl && !e.ctrlKey) return false;
-  if (expectShift && !e.shiftKey) return false;
-  if (expectAlt && !e.altKey) return false;
-  return e.key.toLowerCase() === key;
-};
-
-const isTypingTarget = (target: EventTarget | null): boolean =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 
 const CommandPaletteRoot = ({
   hotkey = 'mod+k',

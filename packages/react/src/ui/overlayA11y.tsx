@@ -9,6 +9,18 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+/** Calls `onEscape` when Escape is pressed anywhere in the document while `active`. */
+export function useEscapeKey(active: boolean, onEscape: () => void) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onEscape();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [active, onEscape]);
+}
+
 /**
  * Focus management for modal overlays. While `active`:
  * - moves focus to the first focusable element inside the container (or the

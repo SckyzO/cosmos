@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useEffect, useId, useState, useSyncExternalStore } from 'react';
+import { useId, useState, useSyncExternalStore } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
+import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
 
 export type DrawerSide = 'left' | 'right';
 export type DrawerSize = 'sm' | 'md' | 'lg';
@@ -93,14 +93,7 @@ const Root = ({
     if (open) setHidden(false);
   }
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  useEscapeKey(open, onClose);
 
   if (!isClient) return null;
 

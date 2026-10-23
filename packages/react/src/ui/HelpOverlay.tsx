@@ -1,39 +1,8 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { isTypingTarget, matchesHotkey } from './hotkey';
 import { Modal } from './Modal';
-
-// ── Hotkey matcher ───────────────────────────────────────────────────────────
-// Lightweight matcher mirroring CommandPalette — kept inline to avoid
-// cross-component coupling. Lowercase, split on '+', match modifiers + key.
-
-const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
-  const parts = hotkey.toLowerCase().split('+');
-  const expectMod = parts.includes('mod');
-  const expectMeta = parts.includes('meta') || parts.includes('cmd');
-  const expectCtrl = parts.includes('ctrl');
-  const expectShift = parts.includes('shift');
-  const expectAlt = parts.includes('alt') || parts.includes('option');
-  const key = parts[parts.length - 1];
-
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
-  const modPressed = isMac ? e.metaKey : e.ctrlKey;
-
-  if (expectMod && !modPressed) return false;
-  if (expectMeta && !e.metaKey) return false;
-  if (expectCtrl && !e.ctrlKey) return false;
-  if (expectShift && !e.shiftKey) return false;
-  if (expectAlt && !e.altKey) return false;
-  return e.key.toLowerCase() === key;
-};
-
-// Skip the hotkey when the user is typing in a form control — opening the
-// help overlay while typing "?" in a textarea would surprise the user.
-const isTypingInFormControl = (target: EventTarget | null): boolean => {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
-};
 
 // ── Key rendering ────────────────────────────────────────────────────────────
 
@@ -121,7 +90,8 @@ const HelpOverlayRoot = ({
   useEffect(() => {
     if (!hotkey) return;
     const handler = (e: KeyboardEvent) => {
-      if (isTypingInFormControl(e.target)) return;
+      // Opening the overlay while typing "?" in a textarea would surprise the user.
+      if (isTypingTarget(e.target)) return;
       if (matchesHotkey(e, hotkey)) {
         e.preventDefault();
         setOpen(!open);

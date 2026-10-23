@@ -8,6 +8,7 @@ import {
   type ChangeEvent,
   type InputHTMLAttributes,
 } from 'react';
+import { mergeRefs } from '../ui/mergeRefs';
 
 export type FileInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -65,11 +66,6 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
   const generatedId = useId();
   const fieldId = id ?? name ?? generatedId;
   const innerRef = useRef<HTMLInputElement>(null);
-  const setRef = (node: HTMLInputElement | null) => {
-    innerRef.current = node;
-    if (typeof forwardedRef === 'function') forwardedRef(node);
-    else if (forwardedRef) forwardedRef.current = node;
-  };
   const [files, setFiles] = useState<File[]>([]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +115,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function F
           <span className="truncate">{summary || placeholder}</span>
         </span>
         <input
-          ref={setRef}
+          ref={mergeRefs(innerRef, forwardedRef)}
           id={fieldId}
           name={name}
           type="file"

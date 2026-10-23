@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
-import { useEffect, useId, useLayoutEffect, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, type ButtonVariant } from './Button';
-import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
+import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -44,14 +44,7 @@ const Dialog = ({
   const [hasTitle, setHasTitle] = useState(false);
   const trapRef = useFocusTrap<HTMLDivElement>(open);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  useEscapeKey(open, onClose);
 
   // Only point `aria-labelledby` at the title once a `Modal.Header` rendered it.
   // A Header comes and goes with `children`, so re-check when they change.
