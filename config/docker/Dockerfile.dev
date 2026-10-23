@@ -15,7 +15,9 @@
 #     --build-arg USER_GID=$(id -g) \
 #     -t cosmos-dev:latest -f config/docker/Dockerfile.dev .
 
-FROM node:26-bookworm-slim
+# Pinned by digest: the tag moves, and this image runs install scripts as root.
+# Dependabot (docker ecosystem) bumps the tag and the digest together.
+FROM node:26-bookworm-slim@sha256:28147155d47dc31abe0a46e0d12b59b2fb3d0a2dcc5dc65fce76a074180b16fe
 
 # --- Root: minimal utilities + corepack -------------------------------------
 # DL3008 (pin apt versions) is intentionally ignored: on Debian bookworm-slim,
@@ -30,11 +32,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Enable pnpm via corepack (version pinned in repo via package.json packageManager field).
 # Node 25+ no longer bundles corepack, so install it from npm rather than pinning pnpm
 # here — that keeps `packageManager` in package.json the single source of truth.
-RUN npm install -g corepack@latest \
+# corepack itself is pinned: it runs as root at build time.
+RUN npm install -g corepack@0.36.0 \
  && corepack enable
 
 # --- Root: install Playwright system deps (most accurate list comes from playwright itself)
-RUN npx -y playwright@latest install-deps chromium \
+# Same version as the workspace's playwright / @playwright/test (see the lockfile).
+RUN npx -y playwright@1.64.1 install-deps chromium \
  && rm -rf /var/lib/apt/lists/*
 
 # --- UID/GID matching host (default 1000:1000 if not passed) ----------------

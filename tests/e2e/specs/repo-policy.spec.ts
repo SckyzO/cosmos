@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 // Checks on the repo's supply-chain settings. They guard what reaches npm
@@ -131,4 +131,91 @@ test('the Claude review only runs on an `@claude review` comment from a maintain
   expect(read('.github/workflows/claude.yml')).toMatch(
     /!startsWith\(github\.event\.comment\.body, '@claude review'\)/
   );
+});
+
+test('claude.yml starts a runner only for the owner, members and collaborators', () => {
+  const workflow = read('.github/workflows/claude.yml');
+  const condition = workflow.slice(workflow.indexOf('    if: |'), workflow.indexOf('    runs-on'));
+  // One clause per event, and every clause checks who wrote the mention.
+  const clauses = condition.split('\n').filter((l) => l.includes('github.event_name =='));
+  expect(clauses.length).toBe(4);
+  for (const clause of clauses) {
+    expect(clause).toMatch(
+      /contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.(comment|review|issue)\.author_association\)/
+    );
+  }
+  // `assigned` never fires without `assignee_trigger`.
+  expect(workflow).not.toMatch(/assigned/);
+});
+
+test('the Claude review uses the job token, not the Claude app token', () => {
+  const review = read('.github/workflows/claude-code-review.yml');
+  // Without github_token the action exchanges an OIDC token for a write token
+  // of the Claude GitHub app; a review only needs to comment on the PR.
+  expect(review).toMatch(/github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/);
+  expect(review).not.toMatch(/id-token:/);
+  expect(review).toMatch(/^\s+contents: read$/m);
+  expect(review).toMatch(/^\s+pull-requests: write\b/m);
+});
+
+test('only the Storybook deploy job can write Pages or fetch an OIDC token', () => {
+  const workflow = read('.github/workflows/deploy-storybook.yml');
+  const jobsAt = workflow.indexOf('\njobs:');
+  expect(workflow.slice(0, jobsAt), 'workflow-level permissions').not.toMatch(
+    /pages: write|id-token:/
+  );
+  const jobs = workflow
+    .slice(jobsAt)
+    .split(/^ {2}(?=[\w-]+:\s*$)/m)
+    .slice(1);
+  const names = (re: RegExp) => jobs.filter((job) => re.test(job)).map((job) => job.split(':')[0]);
+  expect(names(/pages: write/)).toEqual(['deploy']);
+  expect(names(/id-token: write/)).toEqual(['deploy']);
+});
+
+test('no checkout leaves the GITHUB_TOKEN in the repo config', () => {
+  // A later step (a build script, an agent) could read the persisted token.
+  // None of the workflows pushes with the checkout's credentials.
+  const workflows = readdirSync(new URL('../../../.github/workflows/', import.meta.url)).filter(
+    (name) => name.endsWith('.yml')
+  );
+  expect(workflows.length).toBeGreaterThan(0);
+  for (const name of workflows) {
+    const lines = read(`.github/workflows/${name}`).split('\n');
+    lines.forEach((line, i) => {
+      if (!line.includes('uses: actions/checkout@')) return;
+      const step = lines.slice(i, i + 6).join('\n');
+      expect(step, `${name}:${i + 1}`).toMatch(/persist-credentials: false/);
+    });
+  }
+});
+
+test('the dev image pins what it installs as root', () => {
+  const dockerfile = read('config/docker/Dockerfile.dev');
+  expect(dockerfile, 'base image by digest').toMatch(/^FROM \S+@sha256:[0-9a-f]{64}$/m);
+  const code = dockerfile
+    .split('\n')
+    .filter((line) => !line.startsWith('#'))
+    .join('\n');
+  expect(code, 'corepack version').toMatch(/corepack@\d+\.\d+\.\d+/);
+  expect(code, 'playwright version').toMatch(/playwright@\d+\.\d+\.\d+ install-deps/);
+  expect(code).not.toMatch(/@latest\b/);
+});
+
+test('the dev container cannot write the repo metadata', () => {
+  // Code running in the container could otherwise plant a hook in .git that
+  // git runs on the host.
+  for (const file of ['Makefile', 'devctl']) {
+    const runs = read(file)
+      .split('\n')
+      .filter((line) => /^\s*DOCKER_RUN\w* ?[:=]/.test(line));
+    expect(runs.length, `${file}: docker run lines`).toBeGreaterThan(0);
+    for (const line of runs)
+      expect(line, file).toMatch(/\/\.git:\$[({]?WORKSPACE[)}]?\/\.git:ro\b/);
+  }
+  const compose = read('docker-compose.yml');
+  const workspace = compose.match(/- \.\/:\/workspace$/gm) ?? [];
+  const metadata = compose.match(/- \.\/\.git:\/workspace\/\.git:ro$/gm) ?? [];
+  expect(workspace.length).toBeGreaterThan(0);
+  expect(metadata.length).toBe(workspace.length);
 });

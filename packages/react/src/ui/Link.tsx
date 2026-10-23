@@ -6,7 +6,10 @@ export type LinkVariant = 'colored' | 'underline' | 'opacity' | 'opacity-hover' 
 
 export type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   variant?: LinkVariant;
-  /** When true, opens in a new tab with safe rel attrs and renders an external icon. */
+  /**
+   * When true, opens in a new tab with `rel="noopener noreferrer"` and renders an external
+   * icon. A `rel` you pass is added to those tokens, never replaces them.
+   */
   external?: boolean;
   /** Hide the auto-added external icon when `external` is true. */
   hideExternalIcon?: boolean;
@@ -22,6 +25,10 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
   subtle: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
 };
 
+// A caller's rel adds to the safe tokens, it never replaces them.
+const mergeRel = (rel?: string): string =>
+  [...new Set(['noopener', 'noreferrer', ...(rel?.split(/\s+/).filter(Boolean) ?? [])])].join(' ');
+
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
   {
     variant = 'colored',
@@ -36,7 +43,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
   ref
 ) {
   const finalTarget = external ? (target ?? '_blank') : target;
-  const finalRel = external ? (rel ?? 'noopener noreferrer') : rel;
+  const finalRel = external ? mergeRel(rel) : rel;
   return (
     <a
       ref={ref}

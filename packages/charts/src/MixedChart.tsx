@@ -45,7 +45,7 @@ export const MixedChart = ({
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const formatters = { left: formatValue, right: formatRightValue };
 
@@ -98,7 +98,7 @@ export const MixedChart = ({
     // values. ApexCharts hands the x formatter the point's position on a line
     // chart's axis, not its category, so read the category back by index.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       x: {
         formatter: (v, opts) =>
           escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),

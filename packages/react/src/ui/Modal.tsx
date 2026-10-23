@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, type ButtonVariant } from './Button';
 import { DialogTitleProvider, useDialogTitleId, useFocusTrap } from './overlayA11y';
@@ -29,8 +29,19 @@ export type ModalProps = {
   children: ReactNode;
 };
 
-const Root = ({ open, onClose, size = 'md', className, ariaLabel, children }: ModalProps) => {
+type DialogRole = 'dialog' | 'alertdialog';
+
+const Dialog = ({
+  open,
+  onClose,
+  size = 'md',
+  className,
+  ariaLabel,
+  role = 'dialog',
+  children,
+}: ModalProps & { role?: DialogRole }) => {
   const titleId = useId();
+  const [hasTitle, setHasTitle] = useState(false);
   const trapRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
@@ -41,6 +52,11 @@ const Root = ({ open, onClose, size = 'md', className, ariaLabel, children }: Mo
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
+
+  // Only point `aria-labelledby` at the title once a `Modal.Header` rendered it.
+  useLayoutEffect(() => {
+    setHasTitle(!!trapRef.current?.querySelector(`[id="${titleId}"]`));
+  });
 
   if (!open) return null;
 
@@ -56,10 +72,10 @@ const Root = ({ open, onClose, size = 'md', className, ariaLabel, children }: Mo
         'fixed inset-0 z-50 flex',
         isFull ? 'items-stretch justify-stretch' : 'items-center justify-center p-4'
       )}
-      role="dialog"
+      role={role}
       aria-modal="true"
       aria-label={ariaLabel}
-      aria-labelledby={ariaLabel ? undefined : titleId}
+      aria-labelledby={!ariaLabel && hasTitle ? titleId : undefined}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -80,6 +96,8 @@ const Root = ({ open, onClose, size = 'md', className, ariaLabel, children }: Mo
     document.body
   );
 };
+
+const Root = (props: ModalProps) => <Dialog {...props} />;
 
 export type ModalHeaderProps = {
   title?: ReactNode;
@@ -114,7 +132,7 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" />
         </button>
@@ -217,7 +235,7 @@ const Alert = ({
 
   if (layout === 'horizontal') {
     return (
-      <Root open={open} onClose={onClose} size="lg" ariaLabel={title}>
+      <Dialog open={open} onClose={onClose} size="lg" ariaLabel={title} role="alertdialog">
         <div className="bg-white sm:flex sm:items-start sm:p-6 dark:bg-gray-900">
           <div
             className={clsx(
@@ -249,12 +267,12 @@ const Alert = ({
             {confirmLabel}
           </Button>
         </div>
-      </Root>
+      </Dialog>
     );
   }
 
   return (
-    <Root open={open} onClose={onClose} size="sm" ariaLabel={title}>
+    <Dialog open={open} onClose={onClose} size="sm" ariaLabel={title} role="alertdialog">
       <div className="p-6 text-center">
         <div
           className={clsx(
@@ -293,7 +311,7 @@ const Alert = ({
           </Button>
         </div>
       </div>
-    </Root>
+    </Dialog>
   );
 };
 

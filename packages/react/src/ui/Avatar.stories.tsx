@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Avatar } from './Avatar';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -42,4 +44,37 @@ export const InitialsAndImage: Story = {
       </div>
     </Wrap>
   ),
+};
+
+const BROKEN = 'data:image/png;base64,broken';
+// 1x1 transparent GIF.
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+export const NamedAvatarIsAnImage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { name: 'Jane Doe' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img', { name: 'Jane Doe' })).toBeInTheDocument();
+  },
+};
+
+export const RetriesWhenSrcChanges: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [src, setSrc] = useState(BROKEN);
+    return (
+      <div>
+        <Avatar src={src} name="Jane Doe" />
+        <button type="button" onClick={() => setSrc(PIXEL)}>
+          Fix
+        </button>
+      </div>
+    );
+  },
+  play: async ({ canvasElement, canvas }) => {
+    // The broken source fails, so the initials stand in.
+    await waitFor(() => expect(canvas.getByText('JD')).toBeInTheDocument());
+    await userEvent.click(canvas.getByRole('button', { name: 'Fix' }));
+    await waitFor(() => expect(canvasElement.querySelector('img')).not.toBeNull());
+  },
 };

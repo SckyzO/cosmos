@@ -112,13 +112,78 @@ const backgroundOf = (el: Element) => {
   return [255, 255, 255, 255];
 };
 
+const contrastRatio = (fg: number[], bg: number[]) => {
+  const [hi, lo] = [luminance(fg), luminance(bg)].sort((a, b) => b - a);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+// `fg` laid over the opaque `bg` when it is translucent.
+const over = (fg: number[], bg: number[]) =>
+  fg[3] === 255
+    ? fg
+    : [0, 1, 2].map((i) => Math.round((fg[i] * fg[3] + bg[i] * (255 - fg[3])) / 255));
+
 /**
  * Play-function assertion: the computed text colour of `el` against the closest
  * opaque background behind it reaches `min` (WCAG AA for normal text by default).
  */
 export const expectTextContrast = (el: Element, min = 4.5) => {
-  const fg = luminance(toRgba(getComputedStyle(el).color));
-  const bg = luminance(backgroundOf(el));
-  const ratio = (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
-  expect(ratio).toBeGreaterThanOrEqual(min);
+  expect(
+    contrastRatio(toRgba(getComputedStyle(el).color), backgroundOf(el))
+  ).toBeGreaterThanOrEqual(min);
+};
+
+/**
+ * Same for the native placeholder of an input or textarea, read from its
+ * `::placeholder` pseudo-element (translucent colours are laid over the field).
+ */
+export const expectPlaceholderContrast = (field: Element, min = 4.5) => {
+  const bg = backgroundOf(field);
+  const fg = over(toRgba(getComputedStyle(field, '::placeholder').color), bg);
+  expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(min);
+};
+
+/**
+ * Play-function assertion for a graphic with no text (icon, switch track): WCAG
+ * 1.4.11 asks 3:1 against what surrounds it. `color` is the icon colour against
+ * the background behind `el`; `backgroundColor` is the fill of `el` against the
+ * background behind its parent.
+ */
+export const expectGraphicContrast = (
+  el: Element,
+  property: 'color' | 'backgroundColor',
+  min = 3
+) => {
+  const behind = backgroundOf(property === 'color' ? el : (el.parentElement ?? el));
+  expect(contrastRatio(toRgba(getComputedStyle(el)[property]), behind)).toBeGreaterThanOrEqual(min);
+};
+
+const THEME_CLASSES = ['sand', 'dark', 'deep-blue'];
+
+/**
+ * Run `check` once under each Cosmos theme (light, sand, dark, deep-blue) by
+ * switching the class on <html>, then put the original classes back. Colour
+ * transitions are switched off meanwhile, or the check would read a colour
+ * halfway between two themes. A failure names its theme.
+ */
+export const inEachTheme = (check: () => void) => {
+  const root = document.documentElement;
+  const saved = root.className;
+  const noTransitions = document.createElement('style');
+  noTransitions.textContent = '*, *::before, *::after { transition: none !important; }';
+  document.head.append(noTransitions);
+  try {
+    for (const theme of ['light', ...THEME_CLASSES]) {
+      root.classList.remove(...THEME_CLASSES);
+      if (theme !== 'light') root.classList.add(theme);
+      try {
+        check();
+      } catch (error) {
+        throw new Error(`[${theme}] ${(error as Error).message}`, { cause: error });
+      }
+    }
+  } finally {
+    root.className = saved;
+    noTransitions.remove();
+  }
 };

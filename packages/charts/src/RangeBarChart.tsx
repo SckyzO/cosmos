@@ -48,7 +48,7 @@ export const RangeBarChart = ({
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const seriesColors = colors ?? palette;
   const legendVisible = showLegend ?? series.length > 1;
   const lanes = groupRows ? 1 : series.length;
@@ -115,7 +115,7 @@ export const RangeBarChart = ({
       markers: { size: 5 },
       formatter: (name) => escapeHtml(name),
     },
-    tooltip: { theme: 'dark', custom: tooltip },
+    tooltip: { theme: tooltipTheme, custom: tooltip },
     fill: { opacity: 1 },
   };
 

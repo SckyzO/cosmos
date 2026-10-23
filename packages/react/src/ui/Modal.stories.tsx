@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -350,5 +350,44 @@ export const AccessibleNameAndInitialFocus: Story = {
     await expect(heading?.textContent).toBe('Delete workspace');
     // Focus moves inside the dialog on open, from an effect: wait for it.
     await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+  },
+};
+
+// Without a `Modal.Header` title, `aria-labelledby` pointed at an id that was never rendered (#151).
+export const UntitledDialogHasNoDanglingLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Body>No heading here.</Modal.Body>
+    </Modal>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await expect(dialog).not.toHaveAttribute('aria-labelledby');
+  },
+};
+
+export const AlertIsAnAlertDialog: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Modal.Alert open onClose={() => {}} intent="danger" title="Delete it?" />,
+  play: async () => {
+    await expect(
+      await within(document.body).findByRole('alertdialog', { name: 'Delete it?' })
+    ).toBeInTheDocument();
+  },
+};
+
+// The close icon (gray-400) was under 3:1 against the dialog (#151).
+export const CloseButtonContrastInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Header title="Delete workspace" onClose={() => {}} />
+      <Modal.Body>This cannot be undone.</Modal.Body>
+    </Modal>
+  ),
+  play: async () => {
+    const close = await within(document.body).findByRole('button', { name: 'Close modal' });
+    inEachTheme(() => expectGraphicContrast(close, 'color'));
   },
 };

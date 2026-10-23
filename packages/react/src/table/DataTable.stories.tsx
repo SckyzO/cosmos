@@ -204,7 +204,7 @@ export const ColumnFilterOpensBeforeAnyFilter: Story = {
   play: async ({ canvas }) => {
     // No filter is applied yet: the first click on a filter icon must still
     // open the dropdown with its options.
-    const [firstFilter] = canvas.getAllByRole('button', { name: 'Filter column' });
+    const [firstFilter] = canvas.getAllByRole('button', { name: /^Filter / });
     await userEvent.click(firstFilter);
     await expect(canvas.getByPlaceholderText('Search…')).toBeInTheDocument();
     const [firstOption] = canvas.getAllByRole('checkbox');
@@ -581,5 +581,29 @@ export const ColumnFilterSearchFocusShowsAccentBorderInDark: Story = {
   ),
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByPlaceholderText('Search…'));
+  },
+};
+
+export const SortableHeadersExposeAriaSort: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    const header = canvas.getByRole('columnheader', { name: /Name/ });
+    await expect(header).toHaveAttribute('aria-sort', 'none');
+    await userEvent.click(within(header).getByRole('button', { name: /Name/ }));
+    await expect(header).toHaveAttribute('aria-sort', 'ascending');
+    await userEvent.click(within(header).getByRole('button', { name: /Name/ }));
+    await expect(header).toHaveAttribute('aria-sort', 'descending');
+  },
+};
+
+export const FilterButtonsAreNamedAfterTheirColumn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    const filters = canvas.getAllByRole('button', { name: /^Filter / });
+    const names = filters.map((b) => b.getAttribute('aria-label'));
+    await expect(new Set(names).size).toBe(names.length);
+    await expect(canvas.getByRole('button', { name: 'Filter Severity' })).toBeInTheDocument();
   },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectPlaceholderContrast, inEachTheme } from '../storybook-helpers';
 import { SearchInput } from './SearchInput';
 
 const meta = {
@@ -48,5 +48,15 @@ export const FocusShowsAccentBorderInDark: Story = {
   globals: { theme: 'dark' },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('textbox'));
+  },
+};
+
+// Native placeholders sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox');
+    inEachTheme(() => expectPlaceholderContrast(input));
   },
 };
