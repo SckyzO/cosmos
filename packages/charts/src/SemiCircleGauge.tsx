@@ -31,7 +31,7 @@ export const SemiCircleGauge = ({
   height = 200,
   width = '100%',
 }: SemiCircleGaugeProps) => {
-  const { brand, text, textMuted } = useChartTheme();
+  const { brand, text, textMuted, track } = useChartTheme();
   const format = useValueFormat(formatValue);
   const options: ApexOptions = {
     chart: {
@@ -49,7 +49,7 @@ export const SemiCircleGauge = ({
         // hands the formatter the value itself.
         min,
         max,
-        track: { background: 'rgba(150,150,150,0.15)', strokeWidth: '100%' },
+        track: { background: track, strokeWidth: '100%' },
         dataLabels: {
           name: { offsetY: -10, fontSize: '12px', color: textMuted },
           value: { offsetY: -45, fontSize: '24px', fontWeight: 700, formatter: format.axis },

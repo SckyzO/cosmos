@@ -22,9 +22,6 @@ export type RealtimeChartProps = ChartBaseProps & {
   formatValue?: (value: number) => string;
 };
 
-const WARN_COLOR = '#f59e0b';
-const CRIT_COLOR = '#ef4444';
-
 // One walk per chart: a module-level one made every instance continue the last.
 const createDefaultGenerator = () => {
   let last = 50;
@@ -46,7 +43,7 @@ export const RealtimeChart = ({
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, brand, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, brand, warning, error, tooltipTheme } = useChartTheme();
   const format = useOptionalValueFormat(formatValue);
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
@@ -122,13 +119,13 @@ export const RealtimeChart = ({
       yaxis: [
         {
           y: warnThreshold,
-          borderColor: WARN_COLOR,
-          label: { text: 'WARN', style: { color: readableOn(WARN_COLOR), background: WARN_COLOR } },
+          borderColor: warning,
+          label: { text: 'WARN', style: { color: readableOn(warning), background: warning } },
         },
         {
           y: critThreshold,
-          borderColor: CRIT_COLOR,
-          label: { text: 'CRIT', style: { color: readableOn(CRIT_COLOR), background: CRIT_COLOR } },
+          borderColor: error,
+          label: { text: 'CRIT', style: { color: readableOn(error), background: error } },
         },
       ],
     },

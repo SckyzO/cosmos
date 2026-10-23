@@ -3,7 +3,22 @@ import { useEffect, useState } from 'react';
 
 /** Default brand color (the blue accent). Prefer `useChartTheme().brand`, which follows the accent. */
 export const COSMOS_BRAND = '#465fff';
-export const COSMOS_PALETTE = ['#465fff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+// What the colors below are when the theme CSS isn't loaded or during SSR. With
+// the theme, `useChartTheme()` reads the status colors from its tokens instead
+// (`--color-success-500`, `--color-warning-500`, `--color-error-500`).
+const SUCCESS = '#10b981';
+const WARNING = '#f59e0b';
+const ERROR = '#ef4444';
+// The theme has no violet token: the fifth color of the palette stays this hex.
+const VIOLET = '#8b5cf6';
+
+/**
+ * The palette used without the theme CSS. With it, `useChartTheme().palette` is
+ * the brand color of the accent followed by the theme's success, warning and
+ * error colors and a violet.
+ */
+export const COSMOS_PALETTE = [COSMOS_BRAND, SUCCESS, WARNING, ERROR, VIOLET];
 
 // Theme classes that enable the dark variant (see @sckyzo/cosmos-theme).
 const DARK_THEME_CLASSES = ['dark', 'deep-blue'];
@@ -75,6 +90,13 @@ const readChartColors = () => {
     // Text on the card: legends, center values, secondary labels.
     text: readCssVar('--color-text-primary', dark ? '#fff' : '#101828'),
     textMuted: readCssVar('--color-text-secondary', dark ? '#98a2b3' : '#667085'),
+    success: readCssVar('--color-success-500', SUCCESS),
+    warning: readCssVar('--color-warning-500', WARNING),
+    error: readCssVar('--color-error-500', ERROR),
+    // The empty part of a radial arc, a soft step of the gray scale on the card.
+    track: dark
+      ? readCssVar('--color-gray-800', '#1f2937')
+      : readCssVar('--color-gray-100', '#f3f4f6'),
   };
 };
 
@@ -111,6 +133,9 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * design tokens for the current theme and accent: `brandScale` is a
  * sequential scale (five brand steps, low to high) and `surface` the card
  * background. `text` and `textMuted` are the primary and secondary text colors.
+ * `success`, `warning` and `error` are the theme's status colors, `track` the
+ * empty part of a radial arc, and `palette` the default series colors: the
+ * brand color followed by the status colors and a violet.
  * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
  */
 export const useChartTheme = () => {
@@ -123,6 +148,10 @@ export const useChartTheme = () => {
     axis,
     text,
     textMuted,
+    success,
+    warning,
+    error,
+    track,
   } = useHtmlAppearance(readChartColors);
   const grid: ApexOptions['grid'] = {
     borderColor: gridColor,
@@ -145,7 +174,11 @@ export const useChartTheme = () => {
     surface,
     text,
     textMuted,
+    success,
+    warning,
+    error,
+    track,
     tooltipTheme,
-    palette: [brand, ...COSMOS_PALETTE.slice(1)],
+    palette: [brand, success, warning, error, VIOLET],
   };
 };

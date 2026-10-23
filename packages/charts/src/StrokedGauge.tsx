@@ -29,7 +29,7 @@ export const StrokedGauge = ({
   height = 280,
   width = '100%',
 }: StrokedGaugeProps) => {
-  const { brand, text, textMuted } = useChartTheme();
+  const { brand, text, textMuted, track } = useChartTheme();
   const format = useValueFormat(formatValue);
   const options: ApexOptions = {
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
@@ -42,7 +42,7 @@ export const StrokedGauge = ({
         min,
         max,
         hollow: { size: '70%' },
-        track: { background: 'rgba(150,150,150,0.15)', strokeWidth: '100%' },
+        track: { background: track, strokeWidth: '100%' },
         dataLabels: {
           name: { fontSize: '12px', offsetY: -10, color: textMuted },
           value: { fontSize: '32px', fontWeight: 700, formatter: format.axis },

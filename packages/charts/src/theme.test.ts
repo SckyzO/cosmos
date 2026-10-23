@@ -15,6 +15,11 @@ const contrast = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
+// The defaults of `--color-success-500`, `--color-warning-500` and
+// `--color-error-500` in packages/theme/css/tailwind-tokens.css: the colors
+// `useChartTheme()` reads in place of the fallbacks of the palette.
+const THEME_STATUS = ['#12b76a', '#f79009', '#f04438'];
+
 describe('readableOn', () => {
   it('is white on a dark background and black on a light one', () => {
     expect(readableOn('#000000')).toBe('#ffffff');
@@ -32,6 +37,19 @@ describe('readableOn', () => {
   it('reaches 4.5:1 on every color of the chart palette', () => {
     for (const color of COSMOS_PALETTE) {
       expect(contrast(color, readableOn(color)), color).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('reaches 4.5:1 on the status colors of the theme', () => {
+    for (const color of THEME_STATUS) {
+      expect(contrast(color, readableOn(color)), color).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('is black on the theme green, amber and red, where white drops under 4:1', () => {
+    for (const color of THEME_STATUS) {
+      expect(readableOn(color), color).toBe('#000000');
+      expect(contrast(color, '#ffffff'), color).toBeLessThan(4);
     }
   });
 

@@ -27,7 +27,7 @@ export const RadialBarChart = ({
   height = 320,
   width = '100%',
 }: RadialBarChartProps) => {
-  const { palette, text, textMuted } = useChartTheme();
+  const { palette, text, textMuted, track } = useChartTheme();
   const format = useValueFormat(formatValue);
   // Reads the series, which ApexCharts also gets: a new series redraws the
   // chart, which then calls the latest `mean`.
@@ -42,7 +42,7 @@ export const RadialBarChart = ({
     labels,
     plotOptions: {
       radialBar: {
-        track: { background: 'rgba(150,150,150,0.15)' },
+        track: { background: track },
         dataLabels: {
           name: { fontSize: '12px', color: textMuted },
           value: { fontSize: '14px', formatter: format.axis },

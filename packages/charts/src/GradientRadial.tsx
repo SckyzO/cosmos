@@ -29,7 +29,7 @@ export const GradientRadial = ({
   height = 280,
   width = '100%',
 }: GradientRadialProps) => {
-  const { brand, text, textMuted } = useChartTheme();
+  const { brand, success, text, textMuted, track } = useChartTheme();
   const format = useValueFormat(formatValue);
   const options: ApexOptions = {
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
@@ -40,7 +40,7 @@ export const GradientRadial = ({
         shade: 'dark',
         type: 'horizontal',
         shadeIntensity: 0.5,
-        gradientToColors: ['#10b981'],
+        gradientToColors: [success],
         inverseColors: false,
         opacityFrom: 1,
         opacityTo: 1,
@@ -54,7 +54,7 @@ export const GradientRadial = ({
         min,
         max,
         hollow: { size: '70%' },
-        track: { background: 'rgba(150,150,150,0.15)' },
+        track: { background: track },
         dataLabels: {
           name: { fontSize: '12px', offsetY: -10, color: textMuted },
           value: { fontSize: '32px', fontWeight: 700, formatter: format.axis },
