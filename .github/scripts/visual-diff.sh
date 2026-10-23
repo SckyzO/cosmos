@@ -18,7 +18,12 @@ fuzz=${VISUAL_DIFF_FUZZ:-1%}
 max_listed=${VISUAL_DIFF_MAX_LISTED:-200}
 
 mkdir -p "$out"
-list() { (cd "$1" && find . -name '*.png' | sed 's|^\./||' | LC_ALL=C sort); }
+# Only <theme>/<story-id>.png paths: anything else is ignored, so a file name
+# can't inject Markdown into the report.
+list() {
+  (cd "$1" && find . -name '*.png' | sed 's|^\./||' \
+    | grep -E '^[a-z0-9-]+/[a-z0-9._-]+\.png$' | LC_ALL=C sort) || true
+}
 LC_ALL=C comm -13 <(list "$prev") <(list "$cur") >"$out/new.txt"
 LC_ALL=C comm -23 <(list "$prev") <(list "$cur") >"$out/removed.txt"
 LC_ALL=C comm -12 <(list "$prev") <(list "$cur") >"$out/common.txt"

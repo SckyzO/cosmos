@@ -96,20 +96,29 @@ jobs:
           name: story-captures
           path: current
 
+      # The baseline comes only from this workflow's own runs on main, which only
+      # the schedule and maintainers (workflow_dispatch) can start. An artifact
+      # name alone proves nothing: any run, a fork's pull request included, can
+      # upload a `story-captures` artifact.
       - name: Download the previous full capture
         id: previous
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ github.run_id }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=story-captures&per_page=20" \
-            --jq "[.artifacts[] | select(.expired | not) | select(.workflow_run.id != $RUN_ID)] | sort_by(.created_at) | last | .workflow_run.id // empty")
-          if [ -z "$run" ]; then
-            echo 'No previous full capture to compare with.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          gh run download "$run" --name story-captures --dir previous
-          echo "run=$run" >> "$GITHUB_OUTPUT"
+          runs=$(gh run list --workflow visual-captures.yml --branch "$DEFAULT_BRANCH" \
+            --status success --limit 30 --json databaseId,event \
+            --jq ".[] | select(.event == \"schedule\" or .event == \"workflow_dispatch\")
+                      | select(.databaseId != $RUN_ID) | .databaseId")
+          # The latest one with a complete capture (a filtered run has none).
+          for run in $runs; do
+            if gh run download "$run" --name story-captures --dir previous 2>/dev/null; then
+              echo "run=$run" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo 'No previous full capture to compare with.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Compare
         if: steps.previous.outputs.run
