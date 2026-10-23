@@ -52,6 +52,7 @@ export const BoxPlotChart = ({
   legendPosition = 'top',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: BoxPlotChartProps) => {
@@ -135,6 +136,7 @@ export const BoxPlotChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

@@ -44,6 +44,7 @@ export const BarChart = ({
   borderRadius = 4,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: BarChartProps) => {
@@ -116,6 +117,7 @@ export const BarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

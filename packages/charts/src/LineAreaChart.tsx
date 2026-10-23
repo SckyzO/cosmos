@@ -30,6 +30,7 @@ export const LineAreaChart = ({
   formatValue,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 280,
   width = '100%',
   showLegend,
@@ -84,6 +85,7 @@ export const LineAreaChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

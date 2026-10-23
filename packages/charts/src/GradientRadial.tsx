@@ -26,6 +26,7 @@ export const GradientRadial = ({
   max = 100,
   formatValue = percent,
   ariaLabel,
+  apexOptions,
   height = 280,
   width = '100%',
 }: GradientRadialProps) => {
@@ -71,6 +72,7 @@ export const GradientRadial = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       keyboard={false}
     />
   );

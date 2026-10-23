@@ -26,6 +26,7 @@ export const StrokedGauge = ({
   max = 100,
   formatValue = percent,
   ariaLabel,
+  apexOptions,
   height = 280,
   width = '100%',
 }: StrokedGaugeProps) => {
@@ -59,6 +60,7 @@ export const StrokedGauge = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       keyboard={false}
     />
   );

@@ -54,6 +54,7 @@ export const MixedChart = ({
   legendPosition = 'top',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
@@ -131,6 +132,7 @@ export const MixedChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

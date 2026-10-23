@@ -26,6 +26,7 @@ export const RadialBarChart = ({
   formatValue = percent,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: RadialBarChartProps) => {
@@ -66,6 +67,7 @@ export const RadialBarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

@@ -17,6 +17,7 @@ export const Sparkline = ({
   variant = 'area',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 60,
   width = '100%',
 }: SparklineProps) => {
@@ -44,6 +45,7 @@ export const Sparkline = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
       keyboard={false}
     />

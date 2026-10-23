@@ -183,6 +183,7 @@ const useXYOptions = <P extends ScatterPoint>(
 export const ScatterChart = ({
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
   ...props
@@ -201,6 +202,7 @@ export const ScatterChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );
@@ -212,6 +214,7 @@ export const BubbleChart = ({
   formatSize = formatNumber,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
   ...props
@@ -239,6 +242,7 @@ export const BubbleChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

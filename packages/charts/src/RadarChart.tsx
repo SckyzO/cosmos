@@ -37,6 +37,7 @@ export const RadarChart = ({
   max,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 340,
   width = '100%',
 }: RadarChartProps) => {
@@ -103,6 +104,7 @@ export const RadarChart = ({
       width={width}
       ariaLabel={ariaLabel}
       emptyMessage={emptyMessage}
+      apexOptions={apexOptions}
     />
   );
 };

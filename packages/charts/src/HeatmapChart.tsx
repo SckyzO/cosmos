@@ -101,6 +101,7 @@ export const HeatmapChart = ({
   legendPosition = 'top',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: HeatmapChartProps) => {
@@ -180,6 +181,7 @@ export const HeatmapChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

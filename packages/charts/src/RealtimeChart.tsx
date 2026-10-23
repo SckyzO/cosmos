@@ -40,6 +40,7 @@ export const RealtimeChart = ({
   critThreshold = 85,
   formatValue,
   ariaLabel,
+  apexOptions,
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
@@ -141,6 +142,7 @@ export const RealtimeChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
     />
   );
 };

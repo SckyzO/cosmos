@@ -51,6 +51,7 @@ export const RangeBarChart = ({
   legendPosition = 'top',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
@@ -129,6 +130,7 @@ export const RangeBarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

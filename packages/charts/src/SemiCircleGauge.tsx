@@ -28,6 +28,7 @@ export const SemiCircleGauge = ({
   max = 100,
   formatValue = percent,
   ariaLabel,
+  apexOptions,
   height = 200,
   width = '100%',
 }: SemiCircleGaugeProps) => {
@@ -66,6 +67,7 @@ export const SemiCircleGauge = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       keyboard={false}
     />
   );

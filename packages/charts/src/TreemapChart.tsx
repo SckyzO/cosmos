@@ -25,6 +25,7 @@ export const TreemapChart = ({
   formatValue,
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: TreemapChartProps) => {
@@ -60,6 +61,7 @@ export const TreemapChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );

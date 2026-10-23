@@ -30,6 +30,7 @@ export const DonutChart = ({
   legendPosition = 'bottom',
   emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 280,
   width = '100%',
 }: DonutChartProps) => {
@@ -74,6 +75,7 @@ export const DonutChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
       emptyMessage={emptyMessage}
     />
   );
