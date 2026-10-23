@@ -160,8 +160,8 @@ const dropzoneRef = createRef<HTMLDivElement>();
 /** The ref gets the drop area (`role="button"`), not the hidden file input, and focusing through it works. */
 export const ForwardsRef: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <Dropzone ref={dropzoneRef} />,
+  render: () => <Dropzone ref={dropzoneRef} label="Upload files" />,
   play: async ({ canvas }) => {
-    await expectRefFocuses(dropzoneRef, canvas.getByRole('button', { name: 'Upload files' }));
+    await expectRefFocuses(dropzoneRef, canvas.getByRole('button', { name: /Upload files/ }));
   },
 };
