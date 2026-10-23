@@ -229,9 +229,9 @@ describe('sortRows', () => {
       let compare: ((a: Person, b: Person) => number) | undefined;
       vi.spyOn(Array.prototype, 'sort').mockImplementation(function (
         this: unknown[],
-        fn?: (a: never, b: never) => number
+        fn?: (a: unknown, b: unknown) => number
       ) {
-        compare = fn as unknown as typeof compare;
+        compare = fn;
         return sort.call(this, fn);
       });
       sortRows(rows, columns, sortKey, sortDir);
