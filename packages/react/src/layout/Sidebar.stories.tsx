@@ -270,3 +270,129 @@ export const CollapsedSubMenuOpensFlyout: Story = {
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
   },
 };
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/** A sub-menu's trigger opens and closes its items, by click or keyboard, and says which. */
+export const SubMenuTogglesItsItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Nav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const library = canvas.getByRole('button', { name: 'Library' });
+    const monitoring = canvas.getByRole('button', { name: 'Monitoring' });
+    // Library starts open (`defaultOpen`), Monitoring closed.
+    await expect(library).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('button', { name: 'Tokens' })).toBeVisible();
+    await expect(monitoring).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.queryByRole('button', { name: 'Servers' })).toBeNull();
+
+    await userEvent.click(monitoring);
+    await expect(monitoring).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('button', { name: 'Servers' })).toBeVisible();
+    await userEvent.click(library);
+    await expect(library).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.queryByRole('button', { name: 'Tokens' })).toBeNull();
+
+    // Enter and Space work too.
+    library.focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(library).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('button', { name: 'Tokens' })).toBeVisible();
+    await userEvent.keyboard(' ');
+    await expect(library).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+// Two groups: Workspace starts open (the default), Archive closed.
+const GroupedNav = ({ collapsed }: { collapsed?: boolean }) => (
+  <Wrap>
+    <Sidebar collapsed={collapsed}>
+      <Sidebar.Group label="Workspace">
+        <Sidebar.Item icon={Server} label="Servers" />
+      </Sidebar.Group>
+      <Sidebar.Group label="Archive" defaultOpen={false}>
+        <Sidebar.Item icon={FileText} label="Old reports" />
+      </Sidebar.Group>
+    </Sidebar>
+  </Wrap>
+);
+
+/** A group's header shows and hides its items. */
+export const GroupTogglesItsItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <GroupedNav />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Servers' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Old reports' })).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Archive' }));
+    await expect(canvas.getByRole('button', { name: 'Old reports' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Workspace' }));
+    await expect(canvas.queryByRole('button', { name: 'Servers' })).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Workspace' }));
+    await expect(canvas.getByRole('button', { name: 'Servers' })).toBeVisible();
+  },
+};
+
+/** Collapsed, the group headers go and their items stay, whether the group was open or not. */
+export const CollapsedGroupsShowTheirItemsFlat: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <GroupedNav collapsed />,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'Workspace' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Archive' })).toBeNull();
+    // Even the group that starts closed: its items are all one tap away.
+    await expect(canvas.getByRole('button', { name: 'Servers' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Old reports' })).toBeVisible();
+  },
+};
+
+/** `active` sets `aria-current` on the item, a link when it has an `href`, a button otherwise. */
+export const ActiveItemIsTheCurrentPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onPick: fn() } as never,
+  render: (args) => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Item icon={LayoutDashboard} label="Dashboard" href="#dashboard" active />
+        <Sidebar.Item icon={Server} label="Servers" href="#servers" />
+        <Sidebar.Item
+          icon={Settings}
+          label="Settings"
+          onClick={(args as unknown as { onPick: () => void }).onPick}
+        />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const current = canvas.getByRole('link', { name: 'Dashboard' });
+    await expect(current).toHaveAttribute('href', '#dashboard');
+    await expect(current).toHaveAttribute('aria-current', 'page');
+    await expect(canvas.getByRole('link', { name: 'Servers' })).not.toHaveAttribute('aria-current');
+    const settings = canvas.getByRole('button', { name: 'Settings' });
+    await expect(settings).not.toHaveAttribute('aria-current');
+    await userEvent.click(settings);
+    await expect((args as unknown as { onPick: unknown }).onPick).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Collapsed, an item keeps its name as a tooltip and drops its label, badge and the brand text. */
+export const CollapsedItemsAreIconOnly: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Collapsed.render,
+  play: async ({ canvas }) => {
+    const dashboard = canvas.getByRole('button', { name: 'Dashboard' });
+    await expect(dashboard).toHaveAttribute('title', 'Dashboard');
+    await expect(dashboard.textContent).toBe('');
+    // The Notifications badge and the Account section label leave with the text.
+    await expect(canvas.getByRole('button', { name: 'Notifications' }).textContent).toBe('');
+    await expect(canvas.queryByText('Account')).toBeNull();
+    await expect(canvas.getByText('Cosmos')).not.toBeVisible();
+  },
+};
