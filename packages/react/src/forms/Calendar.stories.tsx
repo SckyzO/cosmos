@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import type { DateRange, Matcher } from 'react-day-picker';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Calendar } from './Calendar';
 
 const meta = {
@@ -194,6 +194,28 @@ export const MonthNavigation: Story = {
     await expect(previous).toHaveAttribute('aria-disabled', 'true');
     await userEvent.click(previous);
     await expect(canvas.getByRole('grid', { name: 'April 2026' })).toBeVisible();
+  },
+};
+
+/** At its limit a chevron is `aria-disabled`, not `disabled`: the dimming has to follow it. */
+export const LimitChevronIsDimmed: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PickADay startMonth={new Date(2026, 3)} endMonth={MAY} />,
+  play: async ({ canvas }) => {
+    const previous = () => canvas.getByRole('button', { name: 'Go to the Previous Month' });
+    const next = () => canvas.getByRole('button', { name: 'Go to the Next Month' });
+    const opacity = (el: HTMLElement) => getComputedStyle(el).opacity;
+
+    // May is the last month: Next is at its limit and dimmed, Previous is not.
+    await expect(next()).toHaveAttribute('aria-disabled', 'true');
+    await waitFor(() => expect(opacity(next())).toBe('0.3'));
+    await expect(opacity(previous())).toBe('1');
+
+    // April is the first: the dimming moves to Previous.
+    await userEvent.click(previous());
+    await expect(canvas.getByRole('grid', { name: 'April 2026' })).toBeVisible();
+    await waitFor(() => expect(opacity(previous())).toBe('0.3'));
+    await expect(opacity(next())).toBe('1');
   },
 };
 

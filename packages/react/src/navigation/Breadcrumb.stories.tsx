@@ -99,6 +99,17 @@ export const AncestorsAreLinksAndTheLastIsText: Story = {
   },
 };
 
+/** The last item is the current page, said as such to assistive technology; no other item is. */
+export const LastItemIsTheCurrentPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: PATH },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(within(nav).getByText('Breadcrumb')).toHaveAttribute('aria-current', 'page');
+    await expect(nav.querySelectorAll('[aria-current]')).toHaveLength(1);
+  },
+};
+
 /** An item with `onClick` is a button that calls it; an `href` alone, or nothing, makes a link. */
 export const ClickHandlersMakeButtons: Story = {
   tags: ['!dev', '!autodocs'],

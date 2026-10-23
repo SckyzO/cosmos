@@ -409,6 +409,7 @@ const SidebarGroup = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
         className="text-3xs mx-2 flex w-[calc(100%-1rem)] items-center gap-2 px-3 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
