@@ -8,6 +8,9 @@ import {
   expectTextFollowsTheme,
   expectTooltipFollowsTheme,
   legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -119,4 +122,17 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-pie-area')
     );
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...BottomLegend.args },
+  render: (args) => (
+    <Rerender>{(grown) => <DonutChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

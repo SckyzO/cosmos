@@ -1,6 +1,6 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -34,7 +34,7 @@ export const Sparkline = ({
     },
   };
   return (
-    <ReactApexChart
+    <ApexChart
       type={variant}
       options={options}
       series={[{ name: 'value', data }]}

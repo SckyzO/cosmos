@@ -3,8 +3,11 @@ import { expect, waitFor } from 'storybook/test';
 import { BarChart } from './BarChart';
 import {
   HOSTILE,
+  Rerender,
+  expectNoRedrawOnRerender,
   expectNoInjectedImage,
   expectTooltipFollowsTheme,
+  freshCopy,
   hover,
   legendTexts,
   loadLateFont,
@@ -241,4 +244,17 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-bar-area')
     );
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...SingleSeries.args, formatValue: (v) => `${v} kW` },
+  render: (args) => (
+    <Rerender>{(grown) => <BarChart {...freshCopy(args)} height={grown ? 360 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

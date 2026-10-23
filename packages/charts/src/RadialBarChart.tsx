@@ -1,6 +1,7 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/radialBar';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { percent, useStableCallback } from './formatters';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -16,6 +17,9 @@ export const RadialBarChart = ({
   width = '100%',
 }: RadialBarChartProps) => {
   const { palette, text, textMuted } = useChartTheme();
+  const average = useStableCallback(
+    () => `${Math.round(series.reduce((a, b) => a + b, 0) / series.length)}%`
+  );
   const options: ApexOptions = {
     // foreColor colors the center value (ApexCharts defaults to dark gray).
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
@@ -26,24 +30,18 @@ export const RadialBarChart = ({
         track: { background: 'rgba(150,150,150,0.15)' },
         dataLabels: {
           name: { fontSize: '12px', color: textMuted },
-          value: { fontSize: '14px', formatter: (v) => `${v}%` },
+          value: { fontSize: '14px', formatter: percent },
           total: {
             show: true,
             label: 'Avg',
             color: textMuted,
-            formatter: () => `${Math.round(series.reduce((a, b) => a + b, 0) / series.length)}%`,
+            formatter: average,
           },
         },
       },
     },
   };
   return (
-    <ReactApexChart
-      type="radialBar"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-    />
+    <ApexChart type="radialBar" options={options} series={series} height={height} width={width} />
   );
 };

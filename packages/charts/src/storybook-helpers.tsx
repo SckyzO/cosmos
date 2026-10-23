@@ -1,4 +1,6 @@
-import { expect, waitFor } from 'storybook/test';
+import ApexCharts from 'apexcharts/core';
+import { useState, type ReactNode } from 'react';
+import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
 
 /**
  * Loads the woff2 of an `@font-face` rule already on the page (`sourceFamily`)
@@ -163,5 +165,70 @@ export const expectTooltipFollowsTheme = async (
     await expectTooltipTheme(root, target, 'light');
   } finally {
     restore();
+  }
+};
+
+/** Copies arrays and plain objects, keeps functions: equal props, new identities. */
+export const freshCopy = <T,>(value: T): T => {
+  if (Array.isArray(value)) return value.map(freshCopy) as T;
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, freshCopy(v)])) as T;
+  }
+  return value;
+};
+
+/**
+ * A parent that re-renders: "Re-render" draws `children(false)` again, with the
+ * story passing fresh copies of equal props; "Grow" draws `children(true)`,
+ * where the story passes a new height.
+ */
+export const Rerender = ({ children }: { children: (grown: boolean) => ReactNode }) => {
+  const [renders, setRenders] = useState(1);
+  const [grown, setGrown] = useState(false);
+  return (
+    <div>
+      <button type="button" onClick={() => setRenders((n) => n + 1)}>
+        Re-render
+      </button>
+      <button type="button" onClick={() => setGrown(true)}>
+        Grow
+      </button>
+      <output aria-label="Renders">{renders}</output>
+      {children(grown)}
+    </div>
+  );
+};
+
+// React runs the chart's update effect after the commit: wait a frame past it.
+const afterEffects = () =>
+  new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
+
+/**
+ * Play function for a story rendering a wrapper in `Rerender`. ApexCharts
+ * compares functions in the options by identity: a formatter made during render
+ * redrew the whole chart on every parent render. Equal props must not redraw,
+ * and a new height still must, which shows the spies see the updates.
+ */
+export const expectNoRedrawOnRerender = async ({
+  canvasElement,
+}: {
+  canvasElement: HTMLElement;
+}) => {
+  const canvas = within(canvasElement);
+  await waitFor(() => expect(canvasElement.querySelector('.apexcharts-svg')).not.toBeNull());
+  const updateOptions = spyOn(ApexCharts.prototype, 'updateOptions');
+  const updateSeries = spyOn(ApexCharts.prototype, 'updateSeries');
+  try {
+    await userEvent.click(canvas.getByRole('button', { name: 'Re-render' }));
+    await expect(canvas.getByRole('status', { name: 'Renders' })).toHaveTextContent('2');
+    await afterEffects();
+    await expect(updateOptions).not.toHaveBeenCalled();
+    await expect(updateSeries).not.toHaveBeenCalled();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Grow' }));
+    await waitFor(() => expect(updateOptions).toHaveBeenCalled());
+  } finally {
+    updateOptions.mockRestore();
+    updateSeries.mockRestore();
   }
 };

@@ -7,6 +7,9 @@ import {
   expectTooltipFollowsTheme,
   hover,
   legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -203,4 +206,19 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-grid')
     );
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Basic.args },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <LineAreaChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

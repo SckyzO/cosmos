@@ -1,7 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/boxPlot';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { useStableCallback, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
@@ -20,7 +21,10 @@ export type BoxPlotChartProps = ChartSize & {
   orientation?: BoxPlotChartOrientation;
   /** Override the default Cosmos palette, one color per series. */
   colors?: string[];
-  /** Format the value axis labels and the tooltip values. */
+  /**
+   * Format the value axis labels and the tooltip values.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatValue?: (value: number) => string;
   /** Show the legend (auto-true when 2+ series). */
   showLegend?: boolean;
@@ -49,15 +53,29 @@ export const BoxPlotChart = ({
   const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const seriesColors = colors ?? palette;
-  const valueFormatter = formatValue ?? ((v: number) => String(v));
+  const format = useValueFormat(formatValue);
 
   // One labels object per axis: ApexCharts writes formatters onto them.
   // Axis labels are SVG text and stay unescaped.
   const categoryLabels = () => ({ ...axisLabels });
-  const valueLabels = () => ({
-    ...axisLabels,
-    formatter: (value: string | number) => valueFormatter(Number(value)),
-  });
+  const valueLabels = () => ({ ...axisLabels, formatter: format.axis });
+
+  // ApexCharts' own box plot tooltip prints the values raw. This one is
+  // HTML too: tooltipHtml escapes the category, the series name and values.
+  const tooltip = useStableCallback(
+    ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
+      const { name, data } = series[seriesIndex];
+      const summary = data[dataPointIndex];
+      return tooltipHtml({
+        title: categories[dataPointIndex],
+        series:
+          series.length > 1
+            ? { name, color: seriesColors[seriesIndex % seriesColors.length] }
+            : undefined,
+        rows: ROWS.map(([label, index]) => [label, format.axis(summary[index])]),
+      });
+    }
+  );
 
   const options: ApexOptions = {
     chart: {
@@ -94,25 +112,9 @@ export const BoxPlotChart = ({
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
-    // ApexCharts' own box plot tooltip prints the values raw. This one is
-    // HTML too: tooltipHtml escapes the category, the series name and values.
-    tooltip: {
-      theme: tooltipTheme,
-      custom: ({ seriesIndex, dataPointIndex }) => {
-        const { name, data } = series[seriesIndex];
-        const summary = data[dataPointIndex];
-        return tooltipHtml({
-          title: categories[dataPointIndex],
-          series:
-            series.length > 1
-              ? { name, color: seriesColors[seriesIndex % seriesColors.length] }
-              : undefined,
-          rows: ROWS.map(([label, index]) => [label, valueFormatter(summary[index])]),
-        });
-      },
-    },
+    tooltip: { theme: tooltipTheme, custom: tooltip },
   };
 
   const chartSeries = series.map(({ name, data }) => ({
@@ -121,7 +123,7 @@ export const BoxPlotChart = ({
   }));
 
   return (
-    <ReactApexChart
+    <ApexChart
       type="boxPlot"
       options={options}
       series={chartSeries}

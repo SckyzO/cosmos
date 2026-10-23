@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { RadarChart } from './RadarChart';
-import { HOSTILE, expectNoInjectedImage, hover, legendTexts } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectNoInjectedImage,
+  hover,
+  legendTexts,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];
 const RESOURCES = ['CPU', 'Memory', 'Storage', 'Network', 'Power', 'Cooling'];
@@ -107,4 +115,17 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...SingleSeries.args, formatValue: (v) => `${v}%` },
+  render: (args) => (
+    <Rerender>{(grown) => <RadarChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

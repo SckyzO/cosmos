@@ -2,7 +2,8 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/bar';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
@@ -24,9 +25,15 @@ export type MixedChartProps = ChartSize & {
   categories: (string | number)[];
   /** Override the default Cosmos palette. */
   colors?: string[];
-  /** Format the left axis labels and the tooltip values of its series. */
+  /**
+   * Format the left axis labels and the tooltip values of its series.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatValue?: (value: number) => string;
-  /** Format the right axis labels and the tooltip values of its series. */
+  /**
+   * Format the right axis labels and the tooltip values of its series.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatRightValue?: (value: number) => string;
   /** Show the legend (auto-true when 2+ series). */
   showLegend?: boolean;
@@ -48,6 +55,14 @@ export const MixedChart = ({
   const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const formatters = { left: formatValue, right: formatRightValue };
+  const categoryTitle = useCategoryTitle(categories);
+  // Each value in the format of its series' axis. Read on hover: a stable
+  // function, so a parent render does not redraw the chart.
+  const tooltipValue = useStableCallback((v: number, opts?: { seriesIndex: number }) => {
+    const s = opts && series[opts.seriesIndex];
+    const format = (s && formatters[axisOf(s)]) ?? String;
+    return escapeHtml(format(Number(v)));
+  });
 
   const usedSides = SIDES.filter((side) => series.some((s) => axisOf(s) === side));
   const sides = usedSides.length > 0 ? usedSides : SIDES.slice(0, 1);
@@ -92,30 +107,16 @@ export const MixedChart = ({
       // ApexCharts stacks the series of each y axis in a column of their own:
       // keep one row, like the other charts.
       clusterGroupedSeries: false,
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
-    // The tooltip is HTML: escape the category, the series names and the
-    // values. ApexCharts hands the x formatter the point's position on a line
-    // chart's axis, not its category, so read the category back by index.
+    // The tooltip is HTML: escape the category, the series names and the values.
     tooltip: {
       theme: tooltipTheme,
-      x: {
-        formatter: (v, opts) =>
-          escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),
-      },
-      y: {
-        formatter: (v, opts) => {
-          const s = opts && series[opts.seriesIndex];
-          const format = (s && formatters[axisOf(s)]) ?? String;
-          return escapeHtml(format(Number(v)));
-        },
-        title: { formatter: (name) => `${escapeHtml(name)}: ` },
-      },
+      x: { formatter: categoryTitle },
+      y: { formatter: tooltipValue, title: { formatter: seriesTitle } },
     },
     fill: { opacity: 1 },
   };
 
-  return (
-    <ReactApexChart type="line" options={options} series={series} height={height} width={width} />
-  );
+  return <ApexChart type="line" options={options} series={series} height={height} width={width} />;
 };

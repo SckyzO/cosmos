@@ -4,7 +4,12 @@ import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
-import { expectTextFollowsTheme } from './storybook-helpers';
+import {
+  expectTextFollowsTheme,
+  Rerender,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -199,4 +204,19 @@ export const GradientTrackMatchesOtherWrappers: Story = {
     await waitFor(() => expect(trackColor('reference')).toBeTruthy());
     await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
   },
+};
+
+/**
+ * A parent render with equal props leaves the chart as drawn; a new height
+ * still redraws it.
+ */
+export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Overview.args },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <RadialBarChart {...freshCopy(args)} height={grown ? 400 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
 };

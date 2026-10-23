@@ -1,6 +1,7 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/radialBar';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { percent } from './formatters';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -38,19 +39,13 @@ export const GradientRadial = ({
         track: { background: 'rgba(150,150,150,0.15)' },
         dataLabels: {
           name: { fontSize: '12px', offsetY: -10, color: textMuted },
-          value: { fontSize: '32px', fontWeight: 700, formatter: (v) => `${v}%` },
+          value: { fontSize: '32px', fontWeight: 700, formatter: percent },
         },
       },
     },
     labels: [label],
   };
   return (
-    <ReactApexChart
-      type="radialBar"
-      options={options}
-      series={[value]}
-      height={height}
-      width={width}
-    />
+    <ApexChart type="radialBar" options={options} series={[value]} height={height} width={width} />
   );
 };
