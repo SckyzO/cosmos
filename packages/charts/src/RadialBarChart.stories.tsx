@@ -12,6 +12,9 @@ import {
   expectAccessibleChart,
 } from './storybook-helpers';
 
+const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const points = (v: number) => `${v} pts`;
+
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <p className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -62,6 +65,33 @@ export const Overview: Story = {
 export const MultipleSeries: Story = {
   render: (args) => (
     <Card title="Node usage">
+      <RadialBarChart {...args} />
+    </Card>
+  ),
+};
+
+/** `colors` overrides the palette, one color per ring. */
+export const CustomColors: Story = {
+  args: { colors: RING_COLORS },
+  render: (args) => (
+    <Card title="Node usage">
+      <RadialBarChart {...args} />
+    </Card>
+  ),
+};
+
+/**
+ * `formatValue` replaces the percent in the ring values and the average. It
+ * gets the series value, on the 0–100 scale of the rings.
+ */
+export const FormattedValues: Story = {
+  args: {
+    series: [92, 78, 64, 85],
+    labels: ['Security', 'Reliability', 'Performance', 'Cost'],
+    formatValue: points,
+  },
+  render: (args) => (
+    <Card title="Audit scores">
       <RadialBarChart {...args} />
     </Card>
   ),
@@ -183,6 +213,39 @@ export const NameLabelsUseMutedText: Story = {
   },
 };
 
+/** Each ring takes the color of its index in `colors`. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: CustomColors.args,
+  play: async ({ canvasElement }) => {
+    // The ring colors without their opacity: ApexCharts draws them at 0.85.
+    const strokes = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-radial-series path')].map((el) =>
+        normalizeColor(
+          (el.getAttribute('stroke') ?? '').replace(/^rgba\((.*),\s*[\d.]+\)$/, 'rgb($1)')
+        )
+      );
+    await waitFor(() => expect(strokes()).toEqual(RING_COLORS));
+  },
+};
+
+/** `formatValue` formats the average and the value of the hovered ring. */
+export const FormatValueFormatsLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: FormattedValues.args,
+  play: async ({ canvasElement }) => {
+    const value = () => canvasElement.querySelector('.apexcharts-datalabel-value')?.textContent;
+    // The average of 92, 78, 64 and 85, rounded.
+    await waitFor(() => expect(value()).toBe('80 pts'));
+    await waitFor(() => {
+      canvasElement
+        .querySelector('.apexcharts-radial-series path')
+        ?.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(value()).toBe('92 pts');
+    });
+  },
+};
+
 /** `GradientRadial` draws its empty arc in the same track color as the other radial wrappers. */
 export const GradientTrackMatchesOtherWrappers: Story = {
   tags: ['!dev', '!autodocs'],
@@ -213,7 +276,7 @@ export const GradientTrackMatchesOtherWrappers: Story = {
  */
 export const RerenderWithEqualPropsDoesNotRedraw: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...Overview.args },
+  args: { ...Overview.args, colors: RING_COLORS, formatValue: points },
   render: (args) => (
     <Rerender>
       {(grown) => <RadialBarChart {...freshCopy(args)} height={grown ? 400 : 320} />}
