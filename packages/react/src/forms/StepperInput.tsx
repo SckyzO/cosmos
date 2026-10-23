@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
+import { useNumberDraft } from './numberDraft';
 
 export type StepperInputProps = FieldA11yProps & {
   name?: string;
@@ -24,6 +25,9 @@ export type StepperInputProps = FieldA11yProps & {
 /**
  * StepperInput — number field with stacked ↑ / ↓ arrows embedded inside the
  * right edge. Compact alternative to NumberInput for settings panels.
+ *
+ * Typing can pass through an empty field or a value outside `min`…`max`;
+ * only valid values reach `onChange`, and leaving the field clamps.
  */
 export const StepperInput = ({
   value,
@@ -41,6 +45,7 @@ export const StepperInput = ({
 }: StepperInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  const draft = useNumberDraft({ value, onChange, min, max });
   const arrowBtn =
     'flex flex-1 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200 dark:active:bg-white/15';
 
@@ -57,11 +62,7 @@ export const StepperInput = ({
         type="number"
         name={name}
         {...fieldA11y}
-        value={value}
-        onChange={(e) => {
-          const n = parseFloat(e.target.value);
-          if (!isNaN(n)) onChange(clamp(n));
-        }}
+        {...draft}
         disabled={disabled}
         min={min}
         max={max}

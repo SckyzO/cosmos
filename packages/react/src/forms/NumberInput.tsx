@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
+import { useNumberDraft } from './numberDraft';
 
 export type NumberInputProps = FieldA11yProps & {
   name?: string;
@@ -25,6 +26,9 @@ export type NumberInputProps = FieldA11yProps & {
  * NumberInput — number field with `−` / `+` buttons on the outside edges.
  * Replaces native `<input type="number">` spinners for cross-browser
  * consistency.
+ *
+ * Typing can pass through an empty field or a value outside `min`…`max`;
+ * only valid values reach `onChange`, and leaving the field clamps.
  */
 export const NumberInput = ({
   value,
@@ -42,6 +46,7 @@ export const NumberInput = ({
 }: NumberInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  const draft = useNumberDraft({ value, onChange, min, max });
   const btn =
     'flex h-full items-center justify-center px-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300';
 
@@ -73,11 +78,7 @@ export const NumberInput = ({
           type="number"
           name={name}
           {...fieldA11y}
-          value={value}
-          onChange={(e) => {
-            const n = parseFloat(e.target.value);
-            if (!isNaN(n)) onChange(clamp(n));
-          }}
+          {...draft}
           disabled={disabled}
           min={min}
           max={max}
