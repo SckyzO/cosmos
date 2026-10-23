@@ -63,7 +63,10 @@ export const Breadcrumb = ({ items, separator = 'chevron', className }: Breadcru
         <div key={label} className="flex items-center gap-1">
           {i > 0 && renderSeparator(separator)}
           {isLast ? (
-            <span className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]">
+            <span
+              aria-current="page"
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
+            >
               {Icon && <Icon className="text-brand-500 h-4 w-4" />}
               {label}
             </span>

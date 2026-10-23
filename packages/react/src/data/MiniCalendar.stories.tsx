@@ -50,7 +50,7 @@ export const NextMonthFiresOnSelect: Story = {
   play: async ({ args, canvas }) => {
     // Click the "Next month" arrow → June, then click day 10
     await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
-    const cell = canvas.getByRole('button', { name: '10' });
+    const cell = canvas.getByRole('button', { name: 'Wednesday, June 10, 2026' });
     await userEvent.click(cell);
     await expect(args.onSelect).toHaveBeenCalled();
   },
@@ -66,12 +66,46 @@ export const DayClickReportsTheDate: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...FIXED_DAY, onSelect: fn() },
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: '10' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Sunday, May 10, 2026' }));
     await expect(args.onSelect).toHaveBeenLastCalledWith(new Date(2026, 4, 10));
     await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
-    await userEvent.click(canvas.getByRole('button', { name: '10' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Wednesday, June 10, 2026' }));
     await expect(args.onSelect).toHaveBeenLastCalledWith(new Date(2026, 5, 10));
     await expect(args.onSelect).toHaveBeenCalledTimes(2);
+  },
+};
+
+/** A day is named by its full date, and says whether it is the selected day or today. */
+export const DaysExposeSelectionAndToday: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { today: new Date(2026, 4, 7), selected: new Date(2026, 4, 12), onSelect: fn() },
+  render: (args) => {
+    const [selected, setSelected] = useState(args.selected);
+    return <MiniCalendar {...args} selected={selected} onSelect={setSelected} />;
+  },
+  play: async ({ canvas }) => {
+    const today = canvas.getByRole('button', { name: 'Thursday, May 7, 2026' });
+    const selected = canvas.getByRole('button', { name: 'Tuesday, May 12, 2026' });
+    const other = canvas.getByRole('button', { name: 'Wednesday, May 13, 2026' });
+
+    // The visible text stays the bare day number.
+    await expect(today).toHaveTextContent(/^7$/);
+    await expect(selected).toHaveTextContent(/^12$/);
+
+    await expect(selected).toHaveAttribute('aria-pressed', 'true');
+    await expect(today).toHaveAttribute('aria-pressed', 'false');
+    await expect(other).toHaveAttribute('aria-pressed', 'false');
+    await expect(today).toHaveAttribute('aria-current', 'date');
+    await expect(selected).not.toHaveAttribute('aria-current');
+    await expect(other).not.toHaveAttribute('aria-current');
+    await expect(canvas.getAllByRole('button', { pressed: true })).toHaveLength(1);
+
+    // Picking another day moves the pressed state; today stays the current date.
+    await userEvent.click(other);
+    await expect(other).toHaveAttribute('aria-pressed', 'true');
+    await expect(selected).toHaveAttribute('aria-pressed', 'false');
+    await expect(canvas.getAllByRole('button', { pressed: true })).toHaveLength(1);
+    await expect(today).toHaveAttribute('aria-current', 'date');
   },
 };
 
@@ -80,19 +114,20 @@ export const MonthNavigation: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...FIXED_DAY, onSelect: fn() },
   play: async ({ canvas }) => {
-    const days = () => canvas.getAllByRole('button', { name: /^\d+$/ });
+    const days = (month: string, year: number) =>
+      canvas.getAllByRole('button', { name: new RegExp(`, ${month} \\d+, ${year}$`) });
     await expect(canvas.getByRole('button', { name: 'May 2026' })).toBeVisible();
-    await expect(days()).toHaveLength(31);
+    await expect(days('May', 2026)).toHaveLength(31);
 
     await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
     await expect(canvas.getByRole('button', { name: 'June 2026' })).toBeVisible();
-    await expect(days()).toHaveLength(30);
+    await expect(days('June', 2026)).toHaveLength(30);
 
     // Back past the start of the year.
     for (let i = 0; i < 6; i++)
       await userEvent.click(canvas.getByRole('button', { name: 'Previous month' }));
     await expect(canvas.getByRole('button', { name: 'December 2025' })).toBeVisible();
-    await expect(days()).toHaveLength(31);
+    await expect(days('December', 2025)).toHaveLength(31);
 
     await userEvent.click(canvas.getByRole('button', { name: 'December 2025' }));
     await expect(canvas.getByRole('button', { name: 'May 2026' })).toBeVisible();
@@ -105,15 +140,15 @@ export const WeeksStartOnMonday: Story = {
   args: { ...FIXED_DAY, onSelect: fn() },
   play: async ({ canvas }) => {
     const left = (el: HTMLElement) => el.getBoundingClientRect().left;
-    await expect(left(canvas.getByRole('button', { name: '1' }))).toBeCloseTo(
+    await expect(left(canvas.getByRole('button', { name: 'Friday, May 1, 2026' }))).toBeCloseTo(
       left(canvas.getByText('Fr')),
       0
     );
-    await expect(left(canvas.getByRole('button', { name: '3' }))).toBeCloseTo(
+    await expect(left(canvas.getByRole('button', { name: 'Sunday, May 3, 2026' }))).toBeCloseTo(
       left(canvas.getByText('Su')),
       0
     );
-    await expect(left(canvas.getByRole('button', { name: '4' }))).toBeCloseTo(
+    await expect(left(canvas.getByRole('button', { name: 'Monday, May 4, 2026' }))).toBeCloseTo(
       left(canvas.getByText('Mo')),
       0
     );

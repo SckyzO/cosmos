@@ -43,10 +43,12 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
           def.nav,
           'pointer-events-none absolute inset-x-0 top-1 flex items-center justify-between px-1'
         ),
+        // At its first or last month react-day-picker sets `aria-disabled`, not
+        // `disabled`: the dimming has to follow both.
         button_previous:
-          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
         button_next:
-          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
         // Caption dropdowns (when `captionLayout="dropdown"` etc.)
         // The `dropdown` key targets the actual `<select>` element. `appearance-none`
         // hides the browser-native chevron; we layer a Lucide ChevronDown via a

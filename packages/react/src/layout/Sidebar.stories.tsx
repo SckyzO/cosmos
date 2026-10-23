@@ -340,6 +340,25 @@ export const GroupTogglesItsItems: Story = {
   },
 };
 
+/** A group's header says whether its items are shown, as a sub-menu's trigger does. */
+export const GroupHeaderExposesItsState: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <GroupedNav />,
+  play: async ({ canvas }) => {
+    const workspace = canvas.getByRole('button', { name: 'Workspace' });
+    const archive = canvas.getByRole('button', { name: 'Archive' });
+    // Workspace starts open (the default), Archive closed.
+    await expect(workspace).toHaveAttribute('aria-expanded', 'true');
+    await expect(archive).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(archive);
+    await expect(archive).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(workspace);
+    await expect(workspace).toHaveAttribute('aria-expanded', 'false');
+    await expect(archive).toHaveAttribute('aria-expanded', 'true');
+  },
+};
+
 /** Collapsed, the group headers go and their items stay, whether the group was open or not. */
 export const CollapsedGroupsShowTheirItemsFlat: Story = {
   tags: ['!dev', '!autodocs'],
