@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, userEvent } from 'storybook/test';
 import { Backdrop } from './Backdrop';
 
 const meta = {
@@ -32,5 +33,32 @@ export const ClickToToggle: Story = {
         {show && <Backdrop onClick={() => setShow(false)} />}
       </div>
     );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/** The backdrop covers the viewport above the page, and a click on it calls `onClick`. */
+export const ClickDismissesIt: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: ClickToToggle.render,
+  play: async ({ canvas, canvasElement }) => {
+    const backdrop = () => canvasElement.querySelector<HTMLElement>('div[aria-hidden]');
+    await expect(backdrop()).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Show backdrop' }));
+    const layer = backdrop();
+    await expect(layer).not.toBeNull();
+    const { top, left, width, height } = layer!.getBoundingClientRect();
+    await expect([top, left, width, height]).toEqual([
+      0,
+      0,
+      document.documentElement.clientWidth,
+      window.innerHeight,
+    ]);
+    await expect(getComputedStyle(layer!).zIndex).toBe('30');
+
+    await userEvent.click(layer!);
+    await expect(backdrop()).toBeNull();
   },
 };
