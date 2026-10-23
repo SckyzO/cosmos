@@ -230,16 +230,15 @@ export const PaletteFromTheme: Story = {
 };
 
 /** The bubbles take the default palette of the theme. */
-export const BubblePaletteFromTheme: Story = {
+export const BubblePaletteFromTheme: BubbleStory = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <BubbleChart
-      series={['a', 'b', 'c', 'd', 'e'].map((name, i) => ({
-        name,
-        data: [{ x: i, y: 5 - i, z: 3 }],
-      }))}
-    />
-  ),
+  args: {
+    series: ['a', 'b', 'c', 'd', 'e'].map((name, i) => ({
+      name,
+      data: [{ x: i, y: 5 - i, z: 3 }],
+    })),
+  },
+  render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
     await expectPaletteFromTheme(() => markerColors(canvasElement));
   },
