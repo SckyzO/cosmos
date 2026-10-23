@@ -354,12 +354,14 @@ export const DataTable = <T,>({
                       'dark:bg-gray-800'
                     )}
                   >
-                    <Checkbox
-                      aria-label="Select all rows"
-                      checked={allVisibleSelected}
-                      indeterminate={someVisibleSelected}
-                      onChange={toggleAllVisible}
-                    />
+                    <div className="flex items-center">
+                      <Checkbox
+                        aria-label="Select all rows"
+                        checked={allVisibleSelected}
+                        indeterminate={someVisibleSelected}
+                        onChange={toggleAllVisible}
+                      />
+                    </div>
                   </th>
                 )}
                 {columns.map((col) => (
@@ -405,11 +407,15 @@ export const DataTable = <T,>({
                   >
                     {selectable && (
                       <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
-                        <Checkbox
-                          aria-label={`Select row ${key}`}
-                          checked={isSelected}
-                          onChange={() => toggleRow(key)}
-                        />
+                        {/* A flex box centres the checkbox; inline, it sat on the
+                            text baseline and moved with the font metrics. */}
+                        <div className="flex items-center">
+                          <Checkbox
+                            aria-label={`Select row ${key}`}
+                            checked={isSelected}
+                            onChange={() => toggleRow(key)}
+                          />
+                        </div>
                       </td>
                     )}
                     {columns.map((col) => (
@@ -426,8 +432,8 @@ export const DataTable = <T,>({
                       </td>
                     ))}
                     {renderRowAction && (
-                      <td className={clsx('px-4', BODY_CELL_PADDING[density], 'text-right')}>
-                        {renderRowAction(row)}
+                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                        <div className="flex items-center justify-end">{renderRowAction(row)}</div>
                       </td>
                     )}
                   </tr>
