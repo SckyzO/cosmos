@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { MONTHS, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 
 export type MiniCalendarProps = {
   today?: Date;
@@ -9,18 +9,15 @@ export type MiniCalendarProps = {
   onSelect: (date: Date) => void;
   /** Set of ISO date strings (YYYY-MM-DD) marking days with events. */
   eventDays?: Set<string>;
+  /**
+   * BCP 47 language tag (`'fr-FR'`) for the weekday names, the month title and the
+   * accessible name of each day. Defaults to the browser's locale. The grid itself
+   * stays Gregorian, weeks starting on Monday, whatever the locale. The button
+   * labels (Previous month, Next month) stay English. An invalid tag throws a
+   * `RangeError`.
+   */
+  locale?: string;
   className?: string;
-};
-
-const WEEK_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
-// The accessible name of a day button, in the default locale: "Thursday, May 7,
-// 2026" in en-US. The visible text stays the bare day number.
-const DAY_NAME: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
 };
 
 /**
@@ -32,6 +29,7 @@ export const MiniCalendar = ({
   selected,
   onSelect,
   eventDays,
+  locale,
   className,
 }: MiniCalendarProps) => {
   const [view, setView] = useState(() => new Date(selected.getFullYear(), selected.getMonth(), 1));
@@ -47,7 +45,9 @@ export const MiniCalendar = ({
     return arr;
   }, [view]);
 
-  const dayName = useMemo(() => new Intl.DateTimeFormat(undefined, DAY_NAME), []);
+  // The accessible name of a day button is its full date, "Thursday, May 7, 2026"
+  // in en-US. The visible text stays the bare day number.
+  const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const goPrev = () => setView((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1));
   const goNext = () => setView((v) => new Date(v.getFullYear(), v.getMonth() + 1, 1));
@@ -74,7 +74,7 @@ export const MiniCalendar = ({
           onClick={goToday}
           className="hover:text-brand-600 dark:hover:text-brand-400 text-sm font-semibold text-gray-900 dark:text-gray-100"
         >
-          {MONTHS[view.getMonth()]} {view.getFullYear()}
+          {fmt.monthYear(view)}
         </button>
         <button
           type="button"
@@ -87,9 +87,9 @@ export const MiniCalendar = ({
       </div>
 
       <div className="grid grid-cols-7 gap-0.5 text-center">
-        {WEEK_DAYS.map((d) => (
+        {fmt.weekdays.map((d, i) => (
           <span
-            key={d}
+            key={i}
             className="text-3xs py-1 font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
             {d}
@@ -105,7 +105,7 @@ export const MiniCalendar = ({
               type="button"
               key={d.toISOString()}
               onClick={() => onSelect(d)}
-              aria-label={dayName.format(d)}
+              aria-label={fmt.fullDate(d)}
               aria-pressed={isSelected}
               aria-current={isToday ? 'date' : undefined}
               className={clsx(
@@ -117,7 +117,7 @@ export const MiniCalendar = ({
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
               )}
             >
-              {d.getDate()}
+              {fmt.dayNumber(d)}
               {hasEvent && (
                 <span
                   className={clsx(
