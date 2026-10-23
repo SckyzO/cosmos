@@ -375,6 +375,27 @@ export const expectNoData =
       expect(canvasElement.querySelector('.apexcharts-text-nodata')?.textContent).toBe(text)
     );
 
+/**
+ * Play function for a story rendering a wrapper in `Rerender` with a function
+ * made during render in its props: the new identity redraws the chart, which is
+ * what the docs warn about.
+ */
+export const expectRedrawOnRerender = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const canvas = within(canvasElement);
+  await waitFor(() => expect(canvasElement.querySelector('.apexcharts-svg')).not.toBeNull());
+  const updateOptions = spyOn(ApexCharts.prototype, 'updateOptions');
+  try {
+    await userEvent.click(canvas.getByRole('button', { name: 'Re-render' }));
+    await waitFor(() =>
+      expect(
+        updateOptions.mock.calls.filter(([options]) => Object.keys(options).length > 0)
+      ).not.toEqual([])
+    );
+  } finally {
+    updateOptions.mockRestore();
+  }
+};
+
 // What a screen reader hears for the focused point: the tooltip, a polite live
 // region, or ApexCharts' status region on a chart without one (radial bars).
 const announcement = (root: HTMLElement) =>

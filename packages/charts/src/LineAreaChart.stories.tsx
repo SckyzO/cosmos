@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+// The toolbar is an ApexCharts feature the charts do not load.
+import 'apexcharts/features/toolbar';
 import { expect, waitFor } from 'storybook/test';
 import { LineAreaChart } from './LineAreaChart';
 import {
@@ -16,6 +18,7 @@ import {
   LegendSides,
   expectLegendsOnTheirSide,
   expectNoData,
+  expectRedrawOnRerender,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -148,6 +151,31 @@ export const EmptyWithMessage: Story = {
     emptyMessage: 'No samples in the last hour',
   },
   play: expectNoData('No samples in the last hour'),
+};
+
+/**
+ * `apexOptions` merges raw ApexCharts options over the chart's own, last: here
+ * the toolbar, and the grid color, which keeps the dashes the chart sets. The
+ * toolbar is one of the ApexCharts features the charts do not load: this file
+ * imports `apexcharts/features/toolbar`.
+ */
+export const RawApexOptions: Story = {
+  args: {
+    series: [{ name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }],
+    categories: HOURS,
+    apexOptions: { chart: { toolbar: { show: true } }, grid: { borderColor: '#f59e0b' } },
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.apexcharts-menu-icon')).not.toBeNull()
+    );
+    const gridlines = () => [...canvasElement.querySelectorAll('.apexcharts-gridline')];
+    await waitFor(() => expect(gridlines().length).toBeGreaterThan(0));
+    for (const line of gridlines()) {
+      expect(resolveColor(line.getAttribute('stroke') ?? '')).toBe(resolveColor('#f59e0b'));
+      expect(line.getAttribute('stroke-dasharray')).toBe('4');
+    }
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -320,6 +348,90 @@ export const LegendOnEachSide: Story = {
     </LegendSides>
   ),
   play: expectLegendsOnTheirSide,
+};
+
+/** An `apexOptions` that does not override the formatters leaves the escaping of the chart in place. */
+export const ApexOptionsKeepLabelsEscaped: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...HtmlInLabelsRendersAsText.args,
+    apexOptions: {
+      chart: { toolbar: { show: true } },
+      legend: { fontSize: '16px' },
+      tooltip: { x: { show: true } },
+    },
+  },
+  play: HtmlInLabelsRendersAsText.play,
+};
+
+/** A function in `apexOptions` replaces the chart's own, here the y-axis label formatter. */
+export const ApexOptionsReplaceAFormatter: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: HOURS,
+    series: [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }],
+    apexOptions: { yaxis: { labels: { formatter: ms } } },
+  },
+  play: async ({ canvasElement }) => {
+    const labels = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
+    await waitFor(() => {
+      expect(labels().length).toBeGreaterThan(1);
+      for (const label of labels()) expect(label).toMatch(/ ms$/);
+    });
+  },
+};
+
+const RAW_SERIES = [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }];
+
+const RAW_OPTIONS = {
+  chart: { toolbar: { show: true } },
+  grid: { borderColor: '#f59e0b' },
+  colors: ['#7c3aed'],
+  xaxis: { labels: { rotate: -45 } },
+  yaxis: { labels: { formatter: ms } },
+};
+
+/**
+ * Equal `apexOptions` on a parent render leave the chart as drawn, a copy of it
+ * as well as the same object: ApexCharts compares the options deeply, the
+ * functions in them by identity.
+ */
+export const RerenderWithEqualApexOptionsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: HOURS, series: RAW_SERIES, apexOptions: RAW_OPTIONS },
+  render: (args) => (
+    <Rerender>
+      {(grown) => <LineAreaChart {...freshCopy(args)} height={grown ? 360 : 320} />}
+    </Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
+};
+
+export const RerenderWithTheSameApexOptionsDoesNotRedraw: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: HOURS, series: RAW_SERIES, apexOptions: RAW_OPTIONS },
+  render: (args) => (
+    <Rerender>{(grown) => <LineAreaChart {...args} height={grown ? 360 : 320} />}</Rerender>
+  ),
+  play: expectNoRedrawOnRerender,
+};
+
+/** A function made during render in `apexOptions` redraws the chart on every render, like `formatValue`. */
+export const InlineFunctionInApexOptionsRedraws: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: HOURS, series: RAW_SERIES },
+  render: (args) => (
+    <Rerender>
+      {() => (
+        <LineAreaChart
+          {...freshCopy(args)}
+          apexOptions={{ yaxis: { labels: { formatter: (value: number) => `${value} ms` } } }}
+        />
+      )}
+    </Rerender>
+  ),
+  play: expectRedrawOnRerender,
 };
 
 /**
