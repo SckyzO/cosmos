@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, waitFor } from 'storybook/test';
-import { DonutChart, DonutRightLegend } from './DonutChart';
+import { DonutChart } from './DonutChart';
 import {
   HOSTILE,
   expectNoInjectedImage,
@@ -36,7 +36,6 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 const meta = {
   title: 'Charts/Donut',
   component: DonutChart,
-  subcomponents: { DonutRightLegend },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   decorators: [
@@ -58,9 +57,9 @@ export const BottomLegend: Story = {
   args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
 };
 
-/** `rightLegend` (or `DonutRightLegend`) moves the legend beside the donut. */
+/** `legendPosition="right"` moves the legend beside the donut. */
 export const RightLegend: Story = {
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, rightLegend: true },
+  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, legendPosition: 'right' },
 };
 
 export const TwoSlices: Story = {

@@ -5,21 +5,22 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartLegendProps } from './types';
 
-export type LineAreaChartProps = ChartBaseProps & {
-  series: { name: string; data: number[] }[];
-  categories: (string | number)[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the y-axis labels and the tooltip values.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-};
+export type LineAreaChartProps = ChartBaseProps &
+  ChartLegendProps & {
+    series: { name: string; data: number[] }[];
+    categories: (string | number)[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the y-axis labels and the tooltip values.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+  };
 
 export const LineAreaChart = ({
   series,
@@ -30,6 +31,7 @@ export const LineAreaChart = ({
   height = 280,
   width = '100%',
   showLegend,
+  legendPosition = 'top',
 }: LineAreaChartProps) => {
   const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
@@ -58,7 +60,7 @@ export const LineAreaChart = ({
     yaxis: { labels: { ...axisLabels, formatter: format.axis } },
     legend: {
       show: legendVisible,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },

@@ -6,28 +6,27 @@ import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartLegendProps } from './types';
 
-export type DonutChartProps = ChartBaseProps & {
-  series: number[];
-  labels: string[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the slice values in the center and the tooltip, and the total.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Whether to show the right-side legend (default: bottom). */
-  rightLegend?: boolean;
-};
+export type DonutChartProps = ChartBaseProps &
+  ChartLegendProps & {
+    series: number[];
+    labels: string[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the slice values in the center and the tooltip, and the total.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+  };
 
 export const DonutChart = ({
   series,
   labels,
   colors,
   formatValue,
-  rightLegend = false,
+  legendPosition = 'bottom',
   ariaLabel,
   height = 280,
   width = '100%',
@@ -46,7 +45,7 @@ export const DonutChart = ({
     colors: colors ?? palette,
     labels,
     // The legend and the tooltip are HTML: escape the labels and the values.
-    legend: { position: rightLegend ? 'right' : 'bottom', formatter: escapeHtml },
+    legend: { position: legendPosition, formatter: escapeHtml },
     tooltip: {
       theme: tooltipTheme,
       y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
@@ -76,7 +75,3 @@ export const DonutChart = ({
     />
   );
 };
-
-export const DonutRightLegend = (props: Omit<DonutChartProps, 'rightLegend'>) => (
-  <DonutChart {...props} rightLegend />
-);

@@ -5,7 +5,7 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartLegendProps } from './types';
 
 export type HeatmapColorRange = {
   /** Lowest value of the range, inclusive. */
@@ -17,31 +17,32 @@ export type HeatmapColorRange = {
   name?: string;
 };
 
-export type HeatmapChartProps = ChartBaseProps & {
-  /** One row per series, drawn top to bottom; one value per category. */
-  series: { name: string; data: number[] }[];
-  categories: (string | number)[];
-  /**
-   * Color steps, low to high, spread over the data range in buckets with
-   * round bounds. Default: five brand steps of the current theme and accent.
-   */
-  colors?: string[];
-  /**
-   * Explicit color ranges (thresholds such as OK / WARN / CRIT), which take
-   * precedence over `colors`. Cover every value: a cell outside all ranges
-   * falls back to a series color.
-   */
-  ranges?: HeatmapColorRange[];
-  /**
-   * Format the values in the tooltip, the legend and the cells.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Print each value inside its cell. */
-  showValues?: boolean;
-  /** Show the color legend. Default true. */
-  showLegend?: boolean;
-};
+export type HeatmapChartProps = ChartBaseProps &
+  ChartLegendProps & {
+    /** One row per series, drawn top to bottom; one value per category. */
+    series: { name: string; data: number[] }[];
+    categories: (string | number)[];
+    /**
+     * Color steps, low to high, spread over the data range in buckets with
+     * round bounds. Default: five brand steps of the current theme and accent.
+     */
+    colors?: string[];
+    /**
+     * Explicit color ranges (thresholds such as OK / WARN / CRIT), which take
+     * precedence over `colors`. Cover every value: a cell outside all ranges
+     * falls back to a series color.
+     */
+    ranges?: HeatmapColorRange[];
+    /**
+     * Format the values in the tooltip, the legend and the cells.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /** Print each value inside its cell. */
+    showValues?: boolean;
+    /** Show the color legend. Default true. */
+    showLegend?: boolean;
+  };
 
 // Round bucket sizes, × 10^n. Finer than 1-2-5 so that the buckets fit the
 // data instead of leaving the top colors unused.
@@ -96,6 +97,7 @@ export const HeatmapChart = ({
   formatValue,
   showValues = false,
   showLegend = true,
+  legendPosition = 'top',
   ariaLabel,
   height = 320,
   width = '100%',
@@ -152,7 +154,7 @@ export const HeatmapChart = ({
     yaxis: { reversed: true, labels: { ...axisLabels } },
     legend: {
       show: showLegend,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       // The default stroke outlines the swatches in white, glaring in dark themes.

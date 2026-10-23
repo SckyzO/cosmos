@@ -28,28 +28,30 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 
 Most charts take `colors`, which overrides the Cosmos palette, and `formatValue`, which formats the values in their labels and tooltips (a unit, a precision). Define `formatValue` outside the component or wrap it in `useCallback`: a new function redraws the chart. The gauges (`GradientRadial`, `SemiCircleGauge`, `StrokedGauge`) also take `min` and `max` (default 0 and 100), and show a percent unless given a `formatValue`.
 
+The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`.
+
 Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, ApexCharts builds a generic name from the chart type and series names. Tab reaches a chart, and the arrow keys move from point to point and announce each one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
 
 ## Charts shipped
 
-| Chart                             | Notes                                                  |
-| --------------------------------- | ------------------------------------------------------ |
-| `BarChart`                        | Vertical or horizontal bars                            |
-| `RangeBarChart`                   | Time ranges per row on a datetime axis (timeline)      |
-| `MixedChart`                      | Columns and lines on one chart, optional second y axis |
-| `LineAreaChart`                   | Smooth area + gradient fill, legend when 2+ series     |
-| `RealtimeChart`                   | Live updates with WARN/CRIT threshold annotations      |
-| `RadialBarChart`                  | Multi-series radial gauge                              |
-| `GradientRadial`                  | Single gradient radial                                 |
-| `SemiCircleGauge`                 | Half-donut gauge                                       |
-| `StrokedGauge`                    | Dashed-stroke radial                                   |
-| `DonutChart` / `DonutRightLegend` | Donut with bottom or right legend                      |
-| `Sparkline` / `SparklineGroup`    | Mini sparklines + KPI grid                             |
-| `TreemapChart`                    | Repartition treemap                                    |
-| `HeatmapChart`                    | Rows × columns colored by value buckets or ranges      |
-| `RadarChart`                      | One polygon per series over named axes                 |
-| `ScatterChart` / `BubbleChart`    | Numeric x/y points; bubble size as a 3rd measure       |
-| `BoxPlotChart`                    | Min/quartiles/max boxes, vertical or horizontal        |
+| Chart                          | Notes                                                  |
+| ------------------------------ | ------------------------------------------------------ |
+| `BarChart`                     | Vertical or horizontal bars                            |
+| `RangeBarChart`                | Time ranges per row on a datetime axis (timeline)      |
+| `MixedChart`                   | Columns and lines on one chart, optional second y axis |
+| `LineAreaChart`                | Smooth area + gradient fill, legend when 2+ series     |
+| `RealtimeChart`                | Live updates with WARN/CRIT threshold annotations      |
+| `RadialBarChart`               | Multi-series radial gauge                              |
+| `GradientRadial`               | Single gradient radial                                 |
+| `SemiCircleGauge`              | Half-donut gauge                                       |
+| `StrokedGauge`                 | Dashed-stroke radial                                   |
+| `DonutChart`                   | Donut, legend below by default                         |
+| `Sparkline` / `SparklineGroup` | Mini sparklines + KPI grid                             |
+| `TreemapChart`                 | Repartition treemap                                    |
+| `HeatmapChart`                 | Rows × columns colored by value buckets or ranges      |
+| `RadarChart`                   | One polygon per series over named axes                 |
+| `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure       |
+| `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal        |
 
 ## License
 
