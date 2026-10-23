@@ -1,7 +1,7 @@
 import { AlertTriangle, Loader2, Save, X } from 'lucide-react';
-import { useEffect, useId } from 'react';
+import { useId } from 'react';
 import { createPortal } from 'react-dom';
-import { useFocusTrap } from './overlayA11y';
+import { useEscapeKey, useFocusTrap } from './overlayA11y';
 
 export type ConfirmationModalProps = {
   open: boolean;
@@ -43,14 +43,7 @@ export const ConfirmationModal = ({
   const titleId = useId();
   const trapRef = useFocusTrap<HTMLDivElement>(open);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onStay();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onStay]);
+  useEscapeKey(open, onStay);
 
   if (!open) return null;
 
