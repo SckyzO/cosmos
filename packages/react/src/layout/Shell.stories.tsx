@@ -12,7 +12,7 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Shell } from './Shell';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
@@ -260,4 +260,102 @@ export const Minimal: Story = {
       />
     </Shell>
   ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interaction tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The Topbar's hamburger collapses the sidebar to its icons and gives the width to the content. */
+export const HamburgerCollapsesAndExpandsTheSidebar: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Default.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const main = canvas.getByRole('main');
+    await expect(nav.getBoundingClientRect().width).toBe(264);
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
+    const mainWidth = main.getBoundingClientRect().width;
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    // Labels leave, the items keep their name as a tooltip.
+    await expect(within(nav).queryByText('Dashboard')).toBeNull();
+    await expect(within(nav).getByRole('button', { name: 'Dashboard' })).toHaveAttribute(
+      'title',
+      'Dashboard'
+    );
+    await waitFor(() => expect(main.getBoundingClientRect().width).toBeCloseTo(mainWidth + 192, 0));
+
+    // From the keyboard, the same button expands it again.
+    canvas.getByRole('button', { name: 'Expand sidebar' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
+  },
+};
+
+export const StartsCollapsedExpandsOnToggle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: StartsCollapsed.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.getBoundingClientRect().width).toBe(72);
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+  },
+};
+
+/** Controlled, Shell reports the toggle but shows only what `sidebarCollapsed` says. */
+export const ControlledShellFollowsItsProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSidebarToggle: fn() },
+  render: (args) => (
+    <Shell
+      sidebarCollapsed={false}
+      onSidebarToggle={args.onSidebarToggle}
+      topbar={<Topbar pageTitle="Frozen" />}
+      sidebar={
+        <Sidebar>
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent title="Frozen" description="The host never updates its state." />
+    </Shell>
+  ),
+  play: async ({ args, canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onSidebarToggle).toHaveBeenCalledTimes(1);
+    await expect(args.onSidebarToggle).toHaveBeenCalledWith(true);
+    await expect(nav.getBoundingClientRect().width).toBe(264);
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+  },
+};
+
+/** When the host applies the reported state, the sidebar follows. */
+export const ControlledHostOwnsTheState: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Controlled.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(canvas.getByText(/collapsed = false/)).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(canvas.getByText(/collapsed = true/)).toBeVisible();
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+  },
+};
+
+/** Without a sidebar there is nothing to collapse: no navigation, no hamburger. */
+export const NoSidebarHasNoHamburger: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: NoSidebar.render,
+  play: async ({ canvas }) => {
+    const topbar = within(canvas.getByRole('banner'));
+    await expect(topbar.getByRole('heading', { name: 'Documentation' })).toBeVisible();
+    await expect(canvas.queryByRole('navigation')).toBeNull();
+    await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
+  },
 };

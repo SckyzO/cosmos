@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Bell, Search, Sun, User } from 'lucide-react';
+import { expect, fn, userEvent } from 'storybook/test';
 import { Topbar } from './Topbar';
 
 const meta = {
@@ -90,4 +91,88 @@ export const WithoutHamburger: Story = {
       </p>
     </Wrap>
   ),
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+/** The hamburger calls `onToggleSidebar` by click, Enter and Space, and its label follows the state. */
+export const HamburgerFiresOnToggleSidebar: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onToggleSidebar: fn() },
+  render: function Render(args) {
+    const [collapsed, setCollapsed] = useState(false);
+    return (
+      <Topbar
+        {...args}
+        pageTitle="Servers"
+        sidebarCollapsed={collapsed}
+        onToggleSidebar={() => {
+          args.onToggleSidebar?.();
+          setCollapsed((v) => !v);
+        }}
+      />
+    );
+  },
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(1);
+    const expand = canvas.getByRole('button', { name: 'Expand sidebar' });
+    await expect(expand).toHaveAttribute('title', 'Expand sidebar');
+
+    expand.focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(2);
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
+    await userEvent.keyboard(' ');
+    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(3);
+    await expect(canvas.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+  },
+};
+
+/** The hamburger needs both a `sidebarCollapsed` state and an `onToggleSidebar`; `null` hides it. */
+export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Topbar pageTitle="No state" onToggleSidebar={() => {}} />
+      <Topbar pageTitle="State is null" sidebarCollapsed={null} onToggleSidebar={() => {}} />
+      <Topbar pageTitle="No handler" sidebarCollapsed={false} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(3);
+    await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
+  },
+};
+
+/** Keyboard order follows the layout: hamburger, left actions, center, right actions. */
+export const SlotsFollowTheLayoutOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Topbar
+        sidebarCollapsed={false}
+        onToggleSidebar={() => {}}
+        leftActions={<IconBtn icon={Search} label="Left action" />}
+        pageTitle="Servers"
+        center={<input aria-label="Center search" />}
+        rightActions={<IconBtn icon={User} label="Right action" />}
+      />
+    </Wrap>
+  ),
+  play: async () => {
+    const reached: (string | null | undefined)[] = [];
+    for (let i = 0; i < 4; i++) {
+      await userEvent.tab();
+      reached.push(document.activeElement?.getAttribute('aria-label'));
+    }
+    await expect(reached).toEqual([
+      'Collapse sidebar',
+      'Left action',
+      'Center search',
+      'Right action',
+    ]);
+  },
 };

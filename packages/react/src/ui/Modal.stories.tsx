@@ -417,3 +417,75 @@ export const EscapeClosesOnce: Story = {
     await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
+
+// A trigger, a button after it and a modal with three controls, so the tests
+// can tell the dialog from the page and see where focus goes back to.
+const OpenFromButton = () => {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  return (
+    <Wrap>
+      <Button onClick={() => setOpen(true)}>Open modal</Button>
+      <Button variant="secondary">After</Button>
+      <Modal open={open} onClose={close}>
+        <Modal.Header title="Delete workspace" onClose={close} />
+        <Modal.Body>This cannot be undone.</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={close}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={close}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Wrap>
+  );
+};
+
+/** Tab and Shift+Tab cycle through the modal's controls and never reach the page behind it. */
+export const TabStaysInsideTheModal: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    canvas.getByRole('button', { name: 'Open modal' }).focus();
+    await userEvent.keyboard('{Enter}');
+    const dialog = within(await body.findByRole('dialog', { name: 'Delete workspace' }));
+
+    await waitFor(() => expect(dialog.getByRole('button', { name: 'Close modal' })).toHaveFocus());
+    for (const name of ['Cancel', 'Delete', 'Close modal']) {
+      await userEvent.tab();
+      await expect(dialog.getByRole('button', { name })).toHaveFocus();
+    }
+    // Backwards from the first control, it wraps to the last.
+    await userEvent.tab({ shift: true });
+    await expect(dialog.getByRole('button', { name: 'Delete' })).toHaveFocus();
+    await expect(canvas.getByRole('button', { name: 'After' })).not.toHaveFocus();
+  },
+};
+
+/** However the modal closes, focus goes back to the button that opened it. */
+export const FocusReturnsToTheTrigger: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    const trigger = canvas.getByRole('button', { name: 'Open modal' });
+    const closers = [
+      () => userEvent.keyboard('{Escape}'),
+      () => userEvent.click(body.getByRole('button', { name: 'Close modal' })),
+      () => userEvent.click(body.getByRole('button', { name: 'Cancel' })),
+      // The backdrop is the dialog's first child.
+      () => userEvent.click(body.getByRole('dialog').firstElementChild as HTMLElement),
+    ];
+    for (const close of closers) {
+      trigger.focus();
+      await userEvent.keyboard('{Enter}');
+      await body.findByRole('dialog');
+      await close();
+      await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+      await waitFor(() => expect(trigger).toHaveFocus());
+    }
+  },
+};
