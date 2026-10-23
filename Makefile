@@ -70,8 +70,8 @@ storybook-build: ## Build Storybook static site
 test-e2e: ## Run Playwright e2e (auto-starts storybook via compose)
 	docker compose run --rm playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm test"
 
-screenshots: ## Capture story screenshots into screenshots/ (not in CI). Filter: STORIES=<id substring>
-	docker compose run --rm -e STORIES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm screenshots"
+screenshots: ## Capture every story in each theme into screenshots/<theme>/ (not in CI). Filters: STORIES=<id substring> THEMES=<theme>
+	docker compose run --rm -e STORIES -e THEMES -e CAPTURE_PAGES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm screenshots"
 
 build: ## Build all packages
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm build
@@ -89,7 +89,7 @@ compose-down: ## Stop and remove all compose services
 	docker compose down
 
 clean: ## Remove node_modules, dist, build artifacts, screenshots
-	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "rm -rf node_modules packages/*/node_modules apps/*/node_modules tests/*/node_modules packages/*/dist apps/*/storybook-static playwright-report test-results coverage screenshots/*.png"
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "rm -rf node_modules packages/*/node_modules apps/*/node_modules tests/*/node_modules packages/*/dist apps/*/storybook-static playwright-report test-results coverage screenshots/*/ screenshots/problems.txt"
 
 ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every push)
 	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "set -e; \
