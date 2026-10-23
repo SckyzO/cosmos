@@ -7,6 +7,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
@@ -129,4 +130,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Distributed.args, ariaLabel: 'Racks per datacenter' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

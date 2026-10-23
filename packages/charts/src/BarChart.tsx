@@ -6,11 +6,11 @@ import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
-export type BarChartProps = ChartSize & {
+export type BarChartProps = ChartBaseProps & {
   series: { name: string; data: number[] }[];
   categories: (string | number)[];
   /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
@@ -39,6 +39,7 @@ export const BarChart = ({
   formatValue,
   showLegend,
   borderRadius = 4,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: BarChartProps) => {
@@ -103,5 +104,14 @@ export const BarChart = ({
     stroke: { show: false },
   };
 
-  return <ApexChart type="bar" options={options} series={series} height={height} width={width} />;
+  return (
+    <ApexChart
+      type="bar"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
+  );
 };

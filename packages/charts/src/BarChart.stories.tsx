@@ -12,6 +12,7 @@ import {
   legendTexts,
   loadLateFont,
   xAxisLayout,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -257,4 +258,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     <Rerender>{(grown) => <BarChart {...freshCopy(args)} height={grown ? 360 : 320} />}</Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...SingleSeries.args, ariaLabel: 'Incidents per month' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

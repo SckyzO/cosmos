@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
@@ -184,4 +185,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MaintenanceWindows.args, ariaLabel: 'Maintenance windows' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

@@ -10,6 +10,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -221,4 +222,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Basic.args, ariaLabel: 'CPU usage per hour' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

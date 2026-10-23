@@ -1,6 +1,17 @@
 import type ApexCharts from 'apexcharts';
 import { useEffect, useRef, type ComponentProps } from 'react';
+import 'apexcharts/features/keyboard';
 import ReactApexChart from 'react-apexcharts/core';
+import type { ChartAccessibility } from './types';
+
+type ApexChartProps = ComponentProps<typeof ReactApexChart> &
+  ChartAccessibility & {
+    /**
+     * Tab reaches the chart and the arrow keys walk its points (default). Off,
+     * the chart is an image out of the tab order: right for a single value.
+     */
+    keyboard?: boolean;
+  };
 
 /**
  * `ReactApexChart`, drawn again when a web font finishes loading or `<html>`
@@ -8,8 +19,12 @@ import ReactApexChart from 'react-apexcharts/core';
  * that arrives after the first draw (fonts load lazily) left widths and
  * rotation computed for the old one. Equal options never redraw on their own,
  * since react-apexcharts compares them deeply.
+ *
+ * `ariaLabel` and `keyboard` set `chart.accessibility`. ApexCharts makes the
+ * SVG an `application` whenever keyboard navigation is on in the options, even
+ * without the keyboard feature that handles the keys: both go together here.
  */
-export const ApexChart = (props: ComponentProps<typeof ReactApexChart>) => {
+export const ApexChart = ({ ariaLabel, keyboard = true, options, ...props }: ApexChartProps) => {
   const chartRef = useRef<ApexCharts | null>(null);
 
   useEffect(() => {
@@ -27,5 +42,13 @@ export const ApexChart = (props: ComponentProps<typeof ReactApexChart>) => {
     };
   }, []);
 
-  return <ReactApexChart {...props} chartRef={chartRef} />;
+  const accessible = {
+    ...options,
+    chart: {
+      ...options?.chart,
+      accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
+    },
+  };
+
+  return <ReactApexChart {...props} options={accessible} chartRef={chartRef} />;
 };
