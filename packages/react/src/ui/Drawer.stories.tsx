@@ -225,11 +225,17 @@ export const ClosedDrawerIsNotFocusable: Story = {
     const trigger = canvas.getByRole('button', { name: 'Open drawer' });
     await userEvent.click(trigger);
     await waitFor(() => expect(inDialog(document.activeElement)).toBe(true));
+
+    // Let the slide-in finish first: closing a panel that has not moved yet
+    // runs no slide-out at all.
+    const panel = within(document.body).getByRole('dialog');
+    const transitionsEnd = () => Promise.all(panel.getAnimations().map((a) => a.finished));
+    await transitionsEnd();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(document.activeElement).toBe(trigger));
 
     // Once the slide-out has run, the panel is still out of reach.
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await transitionsEnd();
     after.focus();
     await userEvent.tab();
     await expect(inDialog(document.activeElement)).toBe(false);
