@@ -35,7 +35,8 @@ const relativeLuminance = (hex: string): number => {
 /**
  * The text color, white or black, that reads best on `background`, a
  * `#rrggbb` color (white when it is not one). White text drops under 3:1 on
- * the palette's green and amber, and black text passes 4.5:1 on all five.
+ * the palette's green and amber, and black text drops to 4.34:1 on the brand
+ * blue, where white gets 4.84:1: the pick reaches 4.5:1 on all five colors.
  */
 export const readableOn = (background: string): string => {
   if (!/^#[0-9a-f]{6}$/i.test(background)) return '#ffffff';

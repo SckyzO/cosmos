@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import type { ColumnDef } from './types';
 
@@ -207,6 +207,57 @@ describe('sortRows', () => {
     const rows = [person(10, 'Unknown', 'x', 'x', null), ada, linus, grace];
     expect(ids(sortRows(rows, columns, 'age', 'asc'))).toEqual([1, 3, 2, 10]);
     expect(ids(sortRows(rows, columns, 'age', 'desc'))).toEqual([2, 3, 1, 10]);
+  });
+
+  it('keeps rows with an empty value in their original order, last in both directions', () => {
+    const unknown = (id: number) => person(id, `Unknown ${id}`, 'x', 'x', null);
+    const rows = [unknown(10), ada, unknown(11), grace, unknown(12)];
+    expect(ids(sortRows(rows, columns, 'age', 'asc'))).toEqual([1, 2, 10, 11, 12]);
+    expect(ids(sortRows(rows, columns, 'age', 'desc'))).toEqual([2, 1, 10, 11, 12]);
+  });
+
+  describe('comparator', () => {
+    // The engine decides how it calls the comparator, so a wrong answer for a
+    // pair it never asks about goes unseen: capture the comparator and judge
+    // it on every pair.
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const captureComparator = (rows: Person[], sortKey: string, sortDir: 'asc' | 'desc') => {
+      const sort = Array.prototype.sort;
+      let compare: ((a: Person, b: Person) => number) | undefined;
+      vi.spyOn(Array.prototype, 'sort').mockImplementation(function (
+        this: unknown[],
+        fn?: (a: unknown, b: unknown) => number
+      ) {
+        compare = fn;
+        return sort.call(this, fn);
+      });
+      sortRows(rows, columns, sortKey, sortDir);
+      if (!compare) throw new Error('sortRows did not sort with a comparator');
+      return compare;
+    };
+
+    const unknown = (id: number) => person(id, `Unknown ${id}`, 'x', 'x', null);
+
+    it.each(['asc', 'desc'] as const)('finds two empty values equal, %s', (dir) => {
+      const rows = [unknown(10), unknown(11), ada];
+      const compare = captureComparator(rows, 'age', dir);
+      expect(compare(rows[0], rows[1])).toBe(0);
+      expect(compare(rows[1], rows[0])).toBe(0);
+      expect(compare(rows[0], rows[0])).toBe(0);
+    });
+
+    it.each(['asc', 'desc'] as const)('is antisymmetric on every pair, %s', (dir) => {
+      const rows = [unknown(10), unknown(11), ada, grace, person(12, 'Newborn', 'x', 'x', 0)];
+      const compare = captureComparator(rows, 'age', dir);
+      for (const a of rows) {
+        for (const b of rows) {
+          expect(Math.sign(compare(a, b)) + Math.sign(compare(b, a))).toBe(0);
+        }
+      }
+    });
   });
 
   it('treats 0 as a value, not as a missing one', () => {

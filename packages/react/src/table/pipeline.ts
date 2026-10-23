@@ -75,8 +75,9 @@ export const sortRows = <T>(
   return [...rows].sort((a, b) => {
     const av = col.sortValue!(a);
     const bv = col.sortValue!(b);
-    if (av === null || av === undefined) return 1;
-    if (bv === null || bv === undefined) return -1;
+    const aEmpty = av === null || av === undefined;
+    const bEmpty = bv === null || bv === undefined;
+    if (aEmpty || bEmpty) return aEmpty === bEmpty ? 0 : aEmpty ? 1 : -1;
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
     return 0;
