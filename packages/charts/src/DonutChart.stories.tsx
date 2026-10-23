@@ -17,6 +17,7 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  expectNoData,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -102,6 +103,12 @@ export const UpdatingSeries: Story = {
       </div>
     );
   },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], labels: [] },
+  play: expectNoData('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────

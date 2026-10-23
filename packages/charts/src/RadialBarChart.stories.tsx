@@ -13,6 +13,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectNoData,
 } from './storybook-helpers';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -167,6 +168,12 @@ export const CustomRange: Story = {
       </Card>
     </div>
   ),
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], labels: [] },
+  play: expectNoData('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────

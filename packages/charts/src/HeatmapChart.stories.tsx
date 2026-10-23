@@ -12,6 +12,7 @@ import {
   expectAccessibleChart,
   LegendSides,
   expectLegendsOnTheirSide,
+  expectNoData,
 } from './storybook-helpers';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
@@ -128,6 +129,12 @@ export const CustomColors: Story = {
       { name: 'ceph-osd-05', data: [7, 9, 8, 10, 13, 4, 4] },
     ],
   },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], categories: [] },
+  play: expectNoData('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────

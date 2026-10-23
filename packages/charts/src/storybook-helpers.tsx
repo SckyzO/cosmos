@@ -367,6 +367,14 @@ export const expectLegendsOnTheirSide = async ({
   }
 };
 
+/** Play function for a story with no data: the chart draws `text` in place of the plot. */
+export const expectNoData =
+  (text: string) =>
+  ({ canvasElement }: { canvasElement: HTMLElement }) =>
+    waitFor(() =>
+      expect(canvasElement.querySelector('.apexcharts-text-nodata')?.textContent).toBe(text)
+    );
+
 // What a screen reader hears for the focused point: the tooltip, a polite live
 // region, or ApexCharts' status region on a chart without one (radial bars).
 const announcement = (root: HTMLElement) =>

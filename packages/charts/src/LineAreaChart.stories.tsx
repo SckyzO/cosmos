@@ -15,6 +15,7 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  expectNoData,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -131,6 +132,22 @@ export const FormattedValues: Story = {
     series: [{ name: 'p95 latency', data: [118, 124, 131, 172, 160, 141, 150, 184, 137] }],
     categories: HOURS,
   },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], categories: [] },
+  play: expectNoData('No data'),
+};
+
+/** `emptyMessage` says why there is nothing to draw. */
+export const EmptyWithMessage: Story = {
+  args: {
+    series: [{ name: 'CPU', data: [] }],
+    categories: [],
+    emptyMessage: 'No samples in the last hour',
+  },
+  play: expectNoData('No samples in the last hour'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import {
   expectAccessibleChart,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectNoData,
 } from './storybook-helpers';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
@@ -82,6 +83,17 @@ export const CustomColor: Story = {
       <Sparkline {...args} />
     </Card>
   ),
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { data: [] },
+  render: (args) => (
+    <Card title="Requests/s">
+      <Sparkline {...args} />
+    </Card>
+  ),
+  play: expectNoData('No data'),
 };
 
 /** `SparklineGroup` lays out KPI cards: label, value and a sparkline each. */

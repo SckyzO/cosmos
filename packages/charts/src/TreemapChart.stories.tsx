@@ -11,6 +11,7 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  expectNoData,
 } from './storybook-helpers';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
@@ -178,6 +179,12 @@ export const FormatValueFormatsTooltip: Story = {
       );
     });
   },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [] },
+  play: expectNoData('No data'),
 };
 
 /** The tiles take the default palette of the theme. */
