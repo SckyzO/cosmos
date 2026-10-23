@@ -81,6 +81,15 @@ export const Empty: Story = {
   args: { events: [] },
 };
 
+/**
+ * `locale` (a BCP 47 tag) sets the language of the weekday names, the month title and the date in
+ * each day's accessible name. Omit it to follow the browser's. The grid stays Gregorian, Monday
+ * first, and the button labels stay English.
+ */
+export const French: Story = {
+  args: { locale: 'fr-FR' },
+};
+
 /** Without `onEventClick` and `onDayClick`, chips and day numbers are plain text. */
 export const ReadOnly: Story = {
   args: { onEventClick: undefined, onDayClick: undefined },
@@ -167,5 +176,77 @@ export const MonthNavigation: Story = {
     await userEvent.click(todayButton);
     await expect(canvas.getByRole('heading', { name: 'May 2026' })).toBeVisible();
     await expect(args.onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 4, 1));
+  },
+};
+
+/** `locale="fr-FR"`: French weekday names, month title and day names; the grid does not move. */
+export const LocaleNamesTheDatesInFrench: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { locale: 'fr-FR' },
+  play: async ({ args, canvas, canvasElement }) => {
+    // The abbreviations carry a trailing dot in CLDR: `lun.`.
+    for (const name of ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'])
+      await expect(canvas.getByText(new RegExp(`^${name}\\.?$`))).toBeVisible();
+    await expect(canvas.queryByText('Mon')).toBeNull();
+
+    await expect(canvas.getByRole('heading', { name: 'mai 2026' })).toBeVisible();
+    // Still Monday first: the same 35 days as in English, from April 27th to May 31st.
+    const days = canvas.getAllByRole('group');
+    await expect(days).toHaveLength(35);
+    await expect(days[0]).toHaveAccessibleName('lundi 27 avril 2026');
+    await expect(days[34]).toHaveAccessibleName('dimanche 31 mai 2026');
+    const today = canvas.getByRole('button', { name: 'jeudi 7 mai 2026' });
+    await expect(today).toHaveTextContent(/^7$/);
+    await expect(today).toHaveAttribute('aria-current', 'date');
+
+    // The date inside the "+N more" label and in the list it opens.
+    const day = within(canvas.getByRole('group', { name: 'jeudi 7 mai 2026' }));
+    await userEvent.click(day.getByRole('button', { name: '+2 more on jeudi 7 mai 2026' }));
+    const body = within(canvasElement.ownerDocument.body);
+    const dialog = within(body.getByRole('dialog', { name: 'Events on jeudi 7 mai 2026' }));
+    await expect(dialog.getByText('jeudi 7 mai 2026')).toBeVisible();
+    await userEvent.click(dialog.getByRole('button', { name: 'Backup audit' }));
+    await expect(args.onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'backup' }));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('heading', { name: 'juin 2026' })).toBeVisible();
+    await expect(canvas.getAllByRole('group')[0]).toHaveAccessibleName('lundi 1 juin 2026');
+  },
+};
+
+// The default locale as the runtime resolves it, to build what the component must show.
+const browserFormat = (options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(new Intl.DateTimeFormat().resolvedOptions().locale, {
+    ...options,
+    calendar: 'gregory',
+  });
+
+/** Without `locale`, the names follow the browser's locale, whatever it is. */
+export const DefaultLocaleFollowsTheBrowser: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The stories pin en-US: lift it, the default is what this story is about.
+  args: { locale: undefined },
+  play: async ({ args, canvas }) => {
+    await expect(args.locale).toBeUndefined();
+    const monday = new Date(2026, 3, 27);
+    await expect(
+      canvas.getByText(browserFormat({ weekday: 'short' }).format(monday))
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('heading', {
+        name: browserFormat({ month: 'long', year: 'numeric' }).format(TODAY),
+      })
+    ).toBeVisible();
+    const fullDate = browserFormat({
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    await expect(canvas.getAllByRole('group')[0]).toHaveAccessibleName(fullDate.format(monday));
+    await expect(canvas.getByRole('button', { name: fullDate.format(TODAY) })).toHaveAttribute(
+      'aria-current',
+      'date'
+    );
   },
 };

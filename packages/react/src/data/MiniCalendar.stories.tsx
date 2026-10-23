@@ -28,6 +28,15 @@ export const WithEventDots: Story = {
   },
 };
 
+/**
+ * `locale` (a BCP 47 tag) sets the language of the weekday names, the month title and the
+ * accessible name of each day. Omit it to follow the browser's. The grid stays Gregorian, Monday
+ * first, and the button labels stay English.
+ */
+export const French: Story = {
+  args: { today: new Date(2026, 4, 7), selected: new Date(2026, 4, 7), locale: 'fr-FR' },
+};
+
 export const Controlled: Story = {
   render: () => {
     const [selected, setSelected] = useState(new Date(2026, 4, 7));
@@ -153,5 +162,69 @@ export const WeeksStartOnMonday: Story = {
       left(canvas.getByText('Mon')),
       0
     );
+  },
+};
+
+/** `locale="fr-FR"`: French weekday names, month title and day names; the grid does not move. */
+export const LocaleNamesTheDatesInFrench: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...FIXED_DAY, onSelect: fn(), locale: 'fr-FR' },
+  play: async ({ canvas }) => {
+    // The abbreviations carry a trailing dot in CLDR: `lun.`.
+    for (const name of ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'])
+      await expect(canvas.getByText(new RegExp(`^${name}\\.?$`))).toBeVisible();
+    await expect(canvas.queryByText('Mon')).toBeNull();
+
+    await expect(canvas.getByRole('button', { name: 'mai 2026' })).toBeVisible();
+    const today = canvas.getByRole('button', { name: 'jeudi 7 mai 2026' });
+    await expect(today).toHaveTextContent(/^7$/);
+    await expect(today).toHaveAttribute('aria-current', 'date');
+    await expect(canvas.queryByRole('button', { name: 'Thursday, May 7, 2026' })).toBeNull();
+
+    // Still Monday first: the 1st of May 2026 is a Friday, under the fifth weekday.
+    const left = (el: HTMLElement) => el.getBoundingClientRect().left;
+    await expect(left(canvas.getByRole('button', { name: 'vendredi 1 mai 2026' }))).toBeCloseTo(
+      left(canvas.getByText(/^ven\.?$/)),
+      0
+    );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('button', { name: 'juin 2026' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'mercredi 10 juin 2026' })).toBeVisible();
+  },
+};
+
+// The default locale as the runtime resolves it, to build what the component must show.
+const browserFormat = (options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(new Intl.DateTimeFormat().resolvedOptions().locale, {
+    ...options,
+    calendar: 'gregory',
+  });
+
+/** Without `locale`, the names follow the browser's locale, whatever it is. */
+export const DefaultLocaleFollowsTheBrowser: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The stories pin en-US: lift it, the default is what this story is about.
+  args: { ...FIXED_DAY, onSelect: fn(), locale: undefined },
+  play: async ({ args, canvas }) => {
+    await expect(args.locale).toBeUndefined();
+    const monday = new Date(2026, 4, 4);
+    await expect(
+      canvas.getByText(browserFormat({ weekday: 'short' }).format(monday))
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('button', {
+        name: browserFormat({ month: 'long', year: 'numeric' }).format(FIXED_DAY.today),
+      })
+    ).toBeVisible();
+    const fullDate = browserFormat({
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    await expect(
+      canvas.getByRole('button', { name: fullDate.format(FIXED_DAY.today) })
+    ).toHaveAttribute('aria-current', 'date');
   },
 };
