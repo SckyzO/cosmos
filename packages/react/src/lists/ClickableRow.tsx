@@ -1,4 +1,4 @@
-import { type ComponentType } from 'react';
+import { type ComponentType, type Ref } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -14,6 +14,8 @@ export type ClickableRowProps = {
   /** Or provide an href to render an `<a>` instead */
   href?: string;
   className?: string;
+  /** Ref to the row's root: an `<a>` when `href` is set, a `<button>` otherwise. */
+  ref?: Ref<HTMLAnchorElement | HTMLButtonElement>;
 };
 
 /**
@@ -29,6 +31,7 @@ export const ClickableRow = ({
   onClick,
   href,
   className,
+  ref,
 }: ClickableRowProps) => {
   const inner = (
     <>
@@ -51,13 +54,18 @@ export const ClickableRow = ({
   );
   if (href) {
     return (
-      <a href={href} className={baseClass}>
+      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
         {inner}
       </a>
     );
   }
   return (
-    <button type="button" onClick={onClick} className={baseClass}>
+    <button
+      ref={ref as Ref<HTMLButtonElement>}
+      type="button"
+      onClick={onClick}
+      className={baseClass}
+    >
       {inner}
     </button>
   );

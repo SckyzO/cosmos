@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 
@@ -20,6 +21,8 @@ export type StepperInputProps = FieldA11yProps & {
   fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
+  /** Ref to the number `<input>`, not to the ↑ / ↓ buttons. */
+  ref?: Ref<HTMLInputElement>;
 };
 
 /**
@@ -41,6 +44,7 @@ export const StepperInput = ({
   disabled = false,
   className,
   name,
+  ref,
   ...a11y
 }: StepperInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
@@ -59,6 +63,7 @@ export const StepperInput = ({
       )}
     >
       <input
+        ref={ref}
         type="number"
         name={name}
         {...fieldA11y}

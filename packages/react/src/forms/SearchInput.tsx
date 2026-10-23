@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { Search } from 'lucide-react';
+import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
 export type SearchInputProps = FieldA11yProps & {
@@ -8,6 +9,8 @@ export type SearchInputProps = FieldA11yProps & {
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
+  /** Ref to the text `<input>`. */
+  ref?: Ref<HTMLInputElement>;
 };
 
 export const SearchInput = ({
@@ -16,6 +19,7 @@ export const SearchInput = ({
   placeholder = 'Search…',
   className,
   name,
+  ref,
   ...a11y
 }: SearchInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
@@ -23,6 +27,7 @@ export const SearchInput = ({
     <div className={clsx('relative inline-flex h-9 w-full items-center', className)}>
       <Search aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
       <input
+        ref={ref}
         type="text"
         name={name}
         {...fieldA11y}

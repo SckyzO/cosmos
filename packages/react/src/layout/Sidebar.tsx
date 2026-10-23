@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, type ComponentType, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
@@ -131,6 +138,11 @@ export type SidebarBrandProps = {
   onClick?: () => void;
   /** Override the inherited collapsed state (defaults to `useContext`). */
   collapsed?: boolean;
+  /**
+   * Ref to the brand's root: an `<a>` when `href` is set, a `<button>` with
+   * `onClick`, otherwise a plain `<div>` (not focusable).
+   */
+  ref?: Ref<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>;
 };
 
 const SidebarBrand = ({
@@ -140,6 +152,7 @@ const SidebarBrand = ({
   href,
   onClick,
   collapsed: collapsedProp,
+  ref,
 }: SidebarBrandProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   const inner = (
@@ -168,19 +181,28 @@ const SidebarBrand = ({
 
   if (href) {
     return (
-      <a href={href} className={baseClass}>
+      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
         {inner}
       </a>
     );
   }
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={clsx(baseClass, 'w-full text-left')}>
+      <button
+        ref={ref as Ref<HTMLButtonElement>}
+        type="button"
+        onClick={onClick}
+        className={clsx(baseClass, 'w-full text-left')}
+      >
         {inner}
       </button>
     );
   }
-  return <div className={baseClass}>{inner}</div>;
+  return (
+    <div ref={ref as Ref<HTMLDivElement>} className={baseClass}>
+      {inner}
+    </div>
+  );
 };
 
 // ─── Sidebar.Item ─────────────────────────────────────────────────────────────
@@ -205,6 +227,8 @@ export type SidebarItemProps = {
    * inside each Sidebar.SubMenu.
    */
   depth?: number;
+  /** Ref to the item's root: an `<a>` when `href` is set, a `<button>` otherwise. */
+  ref?: Ref<HTMLAnchorElement | HTMLButtonElement>;
 };
 
 const SidebarItem = ({
@@ -216,6 +240,7 @@ const SidebarItem = ({
   badge,
   collapsed: collapsedProp,
   depth: depthProp,
+  ref,
 }: SidebarItemProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   const contextDepth = useContext(SidebarDepthContext);
@@ -244,6 +269,7 @@ const SidebarItem = ({
   if (href) {
     return (
       <a
+        ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         title={collapsed ? label : undefined}
         className={baseClass}
@@ -257,6 +283,7 @@ const SidebarItem = ({
   }
   return (
     <button
+      ref={ref as Ref<HTMLButtonElement>}
       type="button"
       onClick={onClick}
       title={collapsed ? label : undefined}

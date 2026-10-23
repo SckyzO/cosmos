@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
+import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
 
 export type SelectInputOption = { label: string; value: string };
@@ -12,6 +13,8 @@ export type SelectInputProps = FieldA11yProps & {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Ref to the native `<select>`. */
+  ref?: Ref<HTMLSelectElement>;
 };
 
 /**
@@ -28,12 +31,14 @@ export const SelectInput = ({
   disabled = false,
   className,
   name,
+  ref,
   ...a11y
 }: SelectInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
   return (
     <div className={clsx('relative inline-block', className)}>
       <select
+        ref={ref}
         name={name}
         {...fieldA11y}
         value={value}

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ButtonHTMLAttributes, ElementType, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ElementType, ReactNode, Ref } from 'react';
 
 export type PageActionVariant = 'outline' | 'primary' | 'brand-outline' | 'danger-outline';
 
@@ -18,6 +18,8 @@ export type PageActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: ElementType;
   variant?: PageActionVariant;
   children?: ReactNode;
+  /** Ref to the `<button>`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export const PageActionButton = ({
@@ -26,9 +28,11 @@ export const PageActionButton = ({
   className,
   children,
   type = 'button',
+  ref,
   ...rest
 }: PageActionButtonProps) => (
   <button
+    ref={ref}
     type={type}
     className={clsx(
       'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
@@ -48,6 +52,8 @@ export type PageActionIconButtonProps = Omit<
 > & {
   icon: ElementType;
   variant?: PageActionVariant;
+  /** Ref to the `<button>`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export const PageActionIconButton = ({
@@ -55,9 +61,11 @@ export const PageActionIconButton = ({
   variant = 'outline',
   className,
   type = 'button',
+  ref,
   ...rest
 }: PageActionIconButtonProps) => (
   <button
+    ref={ref}
     type={type}
     className={clsx(
       'flex items-center justify-center rounded-lg border p-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50',

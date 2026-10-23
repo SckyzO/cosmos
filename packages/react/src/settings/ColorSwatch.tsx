@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
+import type { Ref } from 'react';
 
 export type ColorSwatchProps = {
   /** Color hex (e.g. `#465fff`). */
@@ -12,6 +13,8 @@ export type ColorSwatchProps = {
   /** Roving tab stop, set by the picker's radio group. */
   tabIndex?: number;
   className?: string;
+  /** Ref to the `<button role="radio">`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /**
@@ -25,8 +28,10 @@ export const ColorSwatch = ({
   onClick,
   tabIndex,
   className,
+  ref,
 }: ColorSwatchProps) => (
   <button
+    ref={ref}
     type="button"
     onClick={onClick}
     title={label}

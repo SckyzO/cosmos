@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 export type OptionCardProps = {
   /** Stable identifier (used as React key + value). */
@@ -16,6 +16,8 @@ export type OptionCardProps = {
   /** Roving tab stop, set by the picker's radio group. */
   tabIndex?: number;
   className?: string;
+  /** Ref to the `<button role="radio">`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /**
@@ -31,8 +33,10 @@ export const OptionCard = ({
   onClick,
   tabIndex,
   className,
+  ref,
 }: OptionCardProps) => (
   <button
+    ref={ref}
     type="button"
     onClick={onClick}
     role="radio"
