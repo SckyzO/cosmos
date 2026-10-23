@@ -63,7 +63,19 @@ const LongPage = ({
 
 const topOf = (el: HTMLElement) => el.getBoundingClientRect().top;
 
-/** A button scrolls its section to the top of the page, by click or keyboard, and the nav stays put. */
+// The scroll is smooth: wait until the top of the section sits on the bottom
+// edge of the nav, then check that its heading is clear of the nav and on screen.
+const expectLandedBelow = async (nav: HTMLElement, section: HTMLElement, heading: HTMLElement) => {
+  await waitFor(
+    () => expect(Math.abs(topOf(section) - nav.getBoundingClientRect().bottom)).toBeLessThan(1),
+    { timeout: 3000 }
+  );
+  const navBottom = nav.getBoundingClientRect().bottom;
+  await expect(topOf(heading)).toBeGreaterThanOrEqual(navBottom - 1);
+  await expect(heading.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+};
+
+/** A button scrolls its section just below the sticky nav, by click or keyboard, and the nav stays put. */
 export const ButtonScrollsToItsSection: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <LongPage topOffset={16} />,
@@ -73,16 +85,43 @@ export const ButtonScrollsToItsSection: Story = {
     const alerts = canvas.getByRole('region', { name: 'Alerts' });
     await expect(topOf(metrics)).toBeGreaterThan(window.innerHeight);
 
-    // The scroll is smooth: wait for it to land.
     await userEvent.click(canvas.getByRole('button', { name: 'Metrics' }));
-    await waitFor(() => expect(Math.abs(topOf(metrics))).toBeLessThan(1), { timeout: 3000 });
+    await expectLandedBelow(nav, metrics, canvas.getByRole('heading', { name: 'Metrics' }));
     // The nav stays pinned `topOffset` px from the top while the page scrolls.
     await expect(topOf(nav)).toBeCloseTo(16, 0);
 
     canvas.getByRole('button', { name: 'Alerts' }).focus();
     await userEvent.keyboard('{Enter}');
-    await waitFor(() => expect(Math.abs(topOf(alerts))).toBeLessThan(1), { timeout: 3000 });
+    await expectLandedBelow(nav, alerts, canvas.getByRole('heading', { name: 'Alerts' }));
     await expect(topOf(nav)).toBeCloseTo(16, 0);
+  },
+};
+
+/** In a scroll container of its own, the section lands below the nav too. */
+export const ButtonScrollsInsideAScrollContainer: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="bg-[var(--color-bg-base)] p-6">
+      <div className="h-[420px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <StickyScrollNav sections={SECTIONS} topOffset={8} />
+        {SECTIONS.map(({ id, label }) => (
+          <section key={id} id={id} aria-label={label} className="h-[600px] pt-6">
+            <h2 className="text-lg font-semibold">{label}</h2>
+          </section>
+        ))}
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const alerts = canvas.getByRole('region', { name: 'Alerts' });
+    const startTop = topOf(nav);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Alerts' }));
+    await expectLandedBelow(nav, alerts, canvas.getByRole('heading', { name: 'Alerts' }));
+    // The nav sticks `topOffset` px below the top of the container, which it did not at the start.
+    await expect(topOf(nav)).toBeLessThan(startTop);
+    await expect(window.scrollY).toBe(0);
   },
 };
 
