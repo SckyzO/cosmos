@@ -328,7 +328,8 @@ export const ControlledShellFollowsItsProp: Story = {
   play: async ({ args, canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await expect(args.onSidebarToggle).toHaveBeenCalledExactlyOnceWith(true);
+    await expect(args.onSidebarToggle).toHaveBeenCalledTimes(1);
+    await expect(args.onSidebarToggle).toHaveBeenCalledWith(true);
     await expect(nav.getBoundingClientRect().width).toBe(264);
     await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
   },

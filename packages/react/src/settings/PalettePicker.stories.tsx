@@ -172,7 +172,8 @@ export const ClickSelectsAPalette: Story = {
     await expect(canvas.getByRole('radio', { name: 'Pure', checked: true })).toBeVisible();
 
     await userEvent.click(canvas.getByRole('radio', { name: 'Cool' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('cool');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('cool');
     await expect(canvas.getByRole('radio', { name: 'Cool', checked: true })).toBeVisible();
     await expect(canvas.getByRole('radio', { name: 'Pure', checked: false })).toBeVisible();
     await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);

@@ -102,7 +102,8 @@ export const ClickSelectsASwatch: Story = {
     await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toBeVisible();
 
     await userEvent.click(canvas.getByRole('radio', { name: 'Emerald' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('emerald');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('emerald');
     await expect(canvas.getByRole('radio', { name: 'Emerald', checked: true })).toBeVisible();
     await expect(canvas.getByRole('radio', { name: 'Brand', checked: false })).toBeVisible();
     await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);

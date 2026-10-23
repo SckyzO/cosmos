@@ -165,7 +165,8 @@ export const ClickSelectsAnOption: Story = {
     await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toBeVisible();
 
     await userEvent.click(canvas.getByRole('radio', { name: 'Map' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('map');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('map');
     await expect(canvas.getByRole('radio', { name: 'Map', checked: true })).toBeVisible();
     await expect(canvas.getByRole('radio', { name: 'Grid', checked: false })).toBeVisible();
     await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);
