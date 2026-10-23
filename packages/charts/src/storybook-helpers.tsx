@@ -218,15 +218,19 @@ export const expectNoRedrawOnRerender = async ({
   await waitFor(() => expect(canvasElement.querySelector('.apexcharts-svg')).not.toBeNull());
   const updateOptions = spyOn(ApexCharts.prototype, 'updateOptions');
   const updateSeries = spyOn(ApexCharts.prototype, 'updateSeries');
+  // A web font finishing to load redraws with empty options (ApexChart): that
+  // redraw is wanted, only calls with new options count.
+  const newOptions = () =>
+    updateOptions.mock.calls.filter(([options]) => Object.keys(options).length > 0);
   try {
     await userEvent.click(canvas.getByRole('button', { name: 'Re-render' }));
     await expect(canvas.getByRole('status', { name: 'Renders' })).toHaveTextContent('2');
     await afterEffects();
-    await expect(updateOptions).not.toHaveBeenCalled();
+    await expect(newOptions()).toEqual([]);
     await expect(updateSeries).not.toHaveBeenCalled();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Grow' }));
-    await waitFor(() => expect(updateOptions).toHaveBeenCalled());
+    await waitFor(() => expect(newOptions()).not.toEqual([]));
   } finally {
     updateOptions.mockRestore();
     updateSeries.mockRestore();
