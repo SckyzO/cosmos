@@ -75,6 +75,40 @@ export const DayClickReportsTheDate: Story = {
   },
 };
 
+/** A day is named by its full date, and says whether it is the selected day or today. */
+export const DaysExposeSelectionAndToday: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { today: new Date(2026, 4, 7), selected: new Date(2026, 4, 12), onSelect: fn() },
+  render: (args) => {
+    const [selected, setSelected] = useState(args.selected);
+    return <MiniCalendar {...args} selected={selected} onSelect={setSelected} />;
+  },
+  play: async ({ canvas }) => {
+    const today = canvas.getByRole('button', { name: 'Thursday, May 7, 2026' });
+    const selected = canvas.getByRole('button', { name: 'Tuesday, May 12, 2026' });
+    const other = canvas.getByRole('button', { name: 'Wednesday, May 13, 2026' });
+
+    // The visible text stays the bare day number.
+    await expect(today).toHaveTextContent(/^7$/);
+    await expect(selected).toHaveTextContent(/^12$/);
+
+    await expect(selected).toHaveAttribute('aria-pressed', 'true');
+    await expect(today).toHaveAttribute('aria-pressed', 'false');
+    await expect(other).toHaveAttribute('aria-pressed', 'false');
+    await expect(today).toHaveAttribute('aria-current', 'date');
+    await expect(selected).not.toHaveAttribute('aria-current');
+    await expect(other).not.toHaveAttribute('aria-current');
+    await expect(canvas.getAllByRole('button', { pressed: true })).toHaveLength(1);
+
+    // Picking another day moves the pressed state; today stays the current date.
+    await userEvent.click(other);
+    await expect(other).toHaveAttribute('aria-pressed', 'true');
+    await expect(selected).toHaveAttribute('aria-pressed', 'false');
+    await expect(canvas.getAllByRole('button', { pressed: true })).toHaveLength(1);
+    await expect(today).toHaveAttribute('aria-current', 'date');
+  },
+};
+
 /** The arrows step through the months and years; the title goes back to today's month. */
 export const MonthNavigation: Story = {
   tags: ['!dev', '!autodocs'],
