@@ -59,12 +59,22 @@ make screenshots                                  # every story, every theme
 STORIES=overlays-,forms-select THEMES=dark make screenshots
 ```
 
-Chart animations are turned off for the capture. A story that ends in the wrong theme is still
-captured; one that can't be captured is skipped. Both are listed in `screenshots/problems.txt`.
+Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`
+and chart animations off, so two runs of an unchanged story give the same image. A story that ends
+in the wrong theme is still captured; one that can't be captured is skipped. Both are listed in
+`screenshots/problems.txt`.
 
 The `Visual captures` workflow runs the same capture on the first day of each month, or from the
-Actions tab with the same two filters, and uploads `screenshots/` as the `story-captures` artifact
-(kept 90 days).
+Actions tab with the same two filters, and uploads `screenshots/` as an artifact kept 90 days. A
+complete run (no filter) is named `story-captures` and compared with the previous complete run by
+`.github/scripts/visual-diff.sh`. The captures that changed, appeared or disappeared are listed in
+the run summary and in the issue "Visual review: story changes since the last capture", created or
+updated by the run. The `story-changes` artifact holds the before, after and diff images. The same
+script compares two local runs:
+
+```bash
+.github/scripts/visual-diff.sh <previous-screenshots> screenshots /tmp/visual-diff
+```
 
 ## Branch model
 
