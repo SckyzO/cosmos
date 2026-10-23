@@ -29,4 +29,12 @@ describe('formatBytes', () => {
     expect(formatBytes(1.25 * GB)).toBe('1.25 GB');
     expect(formatBytes(3 * 1024 * GB)).toBe('3072.00 GB');
   });
+
+  it('moves up a unit when rounding reaches 1024', () => {
+    // 1023.95 KB would print as 1024.0 KB.
+    expect(formatBytes(MB - 1)).toBe('1.0 MB');
+    expect(formatBytes(Math.ceil(1023.95 * KB))).toBe('1.0 MB');
+    expect(formatBytes(Math.floor(1023.94 * KB))).toBe('1023.9 KB');
+    expect(formatBytes(GB - 1)).toBe('1.00 GB');
+  });
 });
