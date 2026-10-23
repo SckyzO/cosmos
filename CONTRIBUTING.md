@@ -47,6 +47,25 @@ to a module of its own first, in a separate `refactor` commit that changes nothi
 are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
 its `tsconfig.json` because the packages do not depend on it.
 
+### Visual review
+
+Screenshots are for a person to look at: they assert nothing and never gate a PR. `make screenshots`
+captures every story (test-only `!dev` stories excluded) in each theme of the Storybook toolbar,
+into `screenshots/<theme>/<story-id>.png`. It needs the `storybook` compose service. Narrow a run
+with comma-separated substrings:
+
+```bash
+make screenshots                                  # every story, every theme
+STORIES=overlays-,forms-select THEMES=dark make screenshots
+```
+
+Chart animations are turned off for the capture. A story that ends in the wrong theme is still
+captured; one that can't be captured is skipped. Both are listed in `screenshots/problems.txt`.
+
+The `Visual captures` workflow runs the same capture on the first day of each month, or from the
+Actions tab with the same two filters, and uploads `screenshots/` as the `story-captures` artifact
+(kept 90 days).
+
 ## Branch model
 
 - `main` — protected: signed commits, changes through a PR with green CI
