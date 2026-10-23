@@ -1,7 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { seriesTitle, useCategoryTitle } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
@@ -22,6 +23,7 @@ export const LineAreaChart = ({
 }: LineAreaChartProps) => {
   const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
+  const categoryTitle = useCategoryTitle(categories);
   const options: ApexOptions = {
     chart: {
       type: 'area',
@@ -49,21 +51,14 @@ export const LineAreaChart = ({
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
-    // The tooltip and the legend are HTML: escape the category and the series
-    // name. ApexCharts hands the x formatter the point's position on the axis
-    // (1, 2, …), not its category, so read the category back by index.
+    // The tooltip and the legend are HTML: escape the category and the series name.
     tooltip: {
       theme: tooltipTheme,
-      x: {
-        formatter: (v, opts) =>
-          escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),
-      },
-      y: { title: { formatter: (name) => `${escapeHtml(name)}: ` } },
+      x: { formatter: categoryTitle },
+      y: { title: { formatter: seriesTitle } },
     },
   };
-  return (
-    <ReactApexChart type="area" options={options} series={series} height={height} width={width} />
-  );
+  return <ApexChart type="area" options={options} series={series} height={height} width={width} />;
 };

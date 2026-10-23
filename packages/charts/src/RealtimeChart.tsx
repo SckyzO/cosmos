@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
 import { readableOn, useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -75,6 +75,19 @@ export const RealtimeChart = ({
     return () => clearInterval(id);
   }, [drawn, generate, intervalMs]);
 
+  // Stable, so a new sample updates the series instead of redrawing the chart
+  // with new options: ApexCharts compares the functions in them by identity.
+  const events = useMemo<NonNullable<ApexOptions['chart']>['events']>(
+    () => ({
+      animationEnd: () => setDrawn(true),
+      // No mount animation (reduced motion, hidden container): nothing to wait for.
+      mounted: (_chart, opts) => {
+        if (opts?.w.globals.animationEnded) setDrawn(true);
+      },
+    }),
+    []
+  );
+
   const options: ApexOptions = {
     chart: {
       type: 'line',
@@ -82,13 +95,7 @@ export const RealtimeChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
-      events: {
-        animationEnd: () => setDrawn(true),
-        // No mount animation (reduced motion, hidden container): nothing to wait for.
-        mounted: (_chart, opts) => {
-          if (opts?.w.globals.animationEnded) setDrawn(true);
-        },
-      },
+      events,
     },
     colors: [brand],
     stroke: { curve: 'smooth', width: 2 },
@@ -119,7 +126,7 @@ export const RealtimeChart = ({
   };
 
   return (
-    <ReactApexChart
+    <ApexChart
       type="line"
       options={options}
       series={[{ name: 'value', data: series }]}

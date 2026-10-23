@@ -1,7 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/heatmap';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
@@ -31,7 +32,10 @@ export type HeatmapChartProps = ChartSize & {
    * falls back to a series color.
    */
   ranges?: HeatmapColorRange[];
-  /** Format the values in the tooltip, the legend and the cells. */
+  /**
+   * Format the values in the tooltip, the legend and the cells.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatValue?: (value: number) => string;
   /** Print each value inside its cell. */
   showValues?: boolean;
@@ -96,7 +100,8 @@ export const HeatmapChart = ({
   width = '100%',
 }: HeatmapChartProps) => {
   const { axisLabels, brandScale, surface, tooltipTheme } = useChartTheme();
-  const valueFormatter = formatValue ?? ((v: number) => String(v));
+  const format = useValueFormat(formatValue);
+  const categoryTitle = useCategoryTitle(categories);
 
   const colorRanges = (
     ranges ??
@@ -106,7 +111,7 @@ export const HeatmapChart = ({
     )
   ).map((range) => ({
     ...range,
-    name: range.name ?? `${valueFormatter(range.from)} – ${valueFormatter(range.to)}`,
+    name: range.name ?? `${format.axis(range.from)} – ${format.axis(range.to)}`,
     foreColor: textColorOn(range.color),
   }));
 
@@ -118,7 +123,7 @@ export const HeatmapChart = ({
     },
     dataLabels: {
       enabled: showValues,
-      formatter: (v) => valueFormatter(Number(v)),
+      formatter: format.axis,
       style: { fontSize: '11px', fontWeight: 500 },
     },
     plotOptions: {
@@ -151,31 +156,18 @@ export const HeatmapChart = ({
       labels: { colors: axisLabels.style.colors },
       // The default stroke outlines the swatches in white, glaring in dark themes.
       markers: { size: 5, strokeWidth: 0 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
     // The tooltip and the legend are HTML: escape row names, categories,
     // range names and values. The title is the hovered column's category.
     tooltip: {
       theme: tooltipTheme,
-      x: {
-        show: true,
-        formatter: (v, opts) =>
-          escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),
-      },
-      y: {
-        formatter: (v) => escapeHtml(valueFormatter(Number(v))),
-        title: { formatter: (name) => `${escapeHtml(name)}: ` },
-      },
+      x: { show: true, formatter: categoryTitle },
+      y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
     },
   };
 
   return (
-    <ReactApexChart
-      type="heatmap"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-    />
+    <ApexChart type="heatmap" options={options} series={series} height={height} width={width} />
   );
 };

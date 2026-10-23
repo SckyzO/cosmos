@@ -1,8 +1,10 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/bar';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+
+import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
+import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -17,7 +19,10 @@ export type BarChartProps = ChartSize & {
   stacked?: boolean;
   /** Override the default Cosmos palette. */
   colors?: string[];
-  /** Format the numeric axis labels (and tooltip values). */
+  /**
+   * Format the numeric axis labels (and tooltip values).
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatValue?: (value: number) => string;
   /** Show the legend (auto-true when 2+ series). */
   showLegend?: boolean;
@@ -41,7 +46,7 @@ export const BarChart = ({
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
 
-  const valueFormatter = formatValue ?? ((v: number) => String(v));
+  const format = useValueFormat(formatValue);
 
   const options: ApexOptions = {
     chart: {
@@ -66,7 +71,7 @@ export const BarChart = ({
       categories,
       labels: {
         ...axisLabels,
-        formatter: horizontal ? (val) => valueFormatter(Number(val)) : undefined,
+        formatter: horizontal ? format.axis : undefined,
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -74,7 +79,7 @@ export const BarChart = ({
     yaxis: {
       labels: {
         ...axisLabels,
-        formatter: horizontal ? undefined : (val) => valueFormatter(Number(val)),
+        formatter: horizontal ? undefined : format.axis,
       },
     },
     legend: {
@@ -83,22 +88,20 @@ export const BarChart = ({
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
     // Tooltips and the legend are HTML: escape names, categories and values.
     tooltip: {
       theme: tooltipTheme,
-      x: { formatter: (v) => escapeHtml(v) },
+      x: { formatter: escapeHtml },
       y: {
-        formatter: (v) => escapeHtml(valueFormatter(Number(v))),
-        title: { formatter: (name) => `${escapeHtml(name)}: ` },
+        formatter: format.tooltip,
+        title: { formatter: seriesTitle },
       },
     },
     fill: { opacity: 1 },
     stroke: { show: false },
   };
 
-  return (
-    <ReactApexChart type="bar" options={options} series={series} height={height} width={width} />
-  );
+  return <ApexChart type="bar" options={options} series={series} height={height} width={width} />;
 };

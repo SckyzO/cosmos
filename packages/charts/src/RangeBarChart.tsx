@@ -1,7 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/rangeBar';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
@@ -56,26 +57,22 @@ export const RangeBarChart = ({
   // ApexCharts builds the range bar tooltip itself and writes it with
   // innerHTML, so this one replaces it. tooltipHtml escapes the row, the
   // series name and the dates.
-  const tooltip = ({
-    seriesIndex,
-    dataPointIndex,
-  }: {
-    seriesIndex: number;
-    dataPointIndex: number;
-  }) => {
-    const s = series[seriesIndex];
-    const point = s?.data[dataPointIndex];
-    if (!point) return '';
-    const [start, end] = point.y;
-    return tooltipHtml({
-      title: point.x,
-      series: { name: s.name, color: seriesColors[seriesIndex % seriesColors.length] },
-      rows: [
-        ['Start', formatDate(start)],
-        ['End', formatDate(end)],
-      ],
-    });
-  };
+  const tooltip = useStableCallback(
+    ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
+      const s = series[seriesIndex];
+      const point = s?.data[dataPointIndex];
+      if (!point) return '';
+      const [start, end] = point.y;
+      return tooltipHtml({
+        title: point.x,
+        series: { name: s.name, color: seriesColors[seriesIndex % seriesColors.length] },
+        rows: [
+          ['Start', formatDate(start)],
+          ['End', formatDate(end)],
+        ],
+      });
+    }
+  );
 
   const options: ApexOptions = {
     chart: {
@@ -113,19 +110,13 @@ export const RangeBarChart = ({
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
     tooltip: { theme: tooltipTheme, custom: tooltip },
     fill: { opacity: 1 },
   };
 
   return (
-    <ReactApexChart
-      type="rangeBar"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-    />
+    <ApexChart type="rangeBar" options={options} series={series} height={height} width={width} />
   );
 };

@@ -1,7 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/radar';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
+import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
@@ -13,7 +14,10 @@ export type RadarChartProps = ChartSize & {
   categories: string[];
   /** Override the default Cosmos palette. */
   colors?: string[];
-  /** Format the scale labels and the tooltip values. */
+  /**
+   * Format the scale labels and the tooltip values.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatValue?: (value: number) => string;
   /** Show the legend (auto-true when 2+ series). */
   showLegend?: boolean;
@@ -33,7 +37,8 @@ export const RadarChart = ({
 }: RadarChartProps) => {
   const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
-  const valueFormatter = formatValue ?? ((v: number) => String(v));
+  const format = useValueFormat(formatValue);
+  const categoryTitle = useCategoryTitle(categories);
 
   const options: ApexOptions = {
     chart: {
@@ -64,7 +69,7 @@ export const RadarChart = ({
     xaxis: { categories, labels: { ...axisLabels } },
     yaxis: {
       max,
-      labels: { ...axisLabels, formatter: (val) => valueFormatter(Number(val)) },
+      labels: { ...axisLabels, formatter: format.axis },
     },
     legend: {
       show: legendVisible,
@@ -73,24 +78,16 @@ export const RadarChart = ({
       labels: { colors: axisLabels.style.colors },
       // The default stroke outlines the swatches in white, glaring in dark themes.
       markers: { size: 5, strokeWidth: 0 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
     // The tooltip and the legend are HTML: escape names, categories and
     // values. The title is the hovered axis.
     tooltip: {
       theme: tooltipTheme,
-      x: {
-        formatter: (v, opts) =>
-          escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),
-      },
-      y: {
-        formatter: (v) => escapeHtml(valueFormatter(Number(v))),
-        title: { formatter: (name) => `${escapeHtml(name)}: ` },
-      },
+      x: { formatter: categoryTitle },
+      y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
     },
   };
 
-  return (
-    <ReactApexChart type="radar" options={options} series={series} height={height} width={width} />
-  );
+  return <ApexChart type="radar" options={options} series={series} height={height} width={width} />;
 };

@@ -1,8 +1,9 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/donut';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
+import { seriesTitle } from './formatters';
 import { useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
@@ -27,10 +28,10 @@ export const DonutChart = ({
     colors: palette,
     labels,
     // The legend and the tooltip are HTML: escape the labels.
-    legend: { position: rightLegend ? 'right' : 'bottom', formatter: (name) => escapeHtml(name) },
+    legend: { position: rightLegend ? 'right' : 'bottom', formatter: escapeHtml },
     tooltip: {
       theme: tooltipTheme,
-      y: { title: { formatter: (name) => `${escapeHtml(name)}: ` } },
+      y: { title: { formatter: seriesTitle } },
     },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -42,9 +43,7 @@ export const DonutChart = ({
       },
     },
   };
-  return (
-    <ReactApexChart type="donut" options={options} series={series} height={height} width={width} />
-  );
+  return <ApexChart type="donut" options={options} series={series} height={height} width={width} />;
 };
 
 export const DonutRightLegend = (props: Omit<DonutChartProps, 'rightLegend'>) => (

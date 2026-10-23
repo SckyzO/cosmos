@@ -4,7 +4,9 @@ import type { ApexOptions } from 'apexcharts';
 // other line-family wrappers, keeps a single copy of the engine in a bundle.
 import 'apexcharts/line';
 import 'apexcharts/features/legend';
-import ReactApexChart from 'react-apexcharts/core';
+import { useMemo } from 'react';
+import { ApexChart } from './ApexChart';
+import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml, type TooltipRow } from './tooltip';
@@ -29,9 +31,15 @@ type XYChartProps = ChartSize & {
   yTitle?: string;
   /** Override the default Cosmos palette, one color per series. */
   colors?: string[];
-  /** Format the x-axis labels and the tooltip's x value (default: at most two decimals). */
+  /**
+   * Format the x-axis labels and the tooltip's x value (default: at most two decimals).
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatX?: (value: number) => string;
-  /** Format the y-axis labels and the tooltip's y value (default: at most two decimals). */
+  /**
+   * Format the y-axis labels and the tooltip's y value (default: at most two decimals).
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
   formatY?: (value: number) => string;
   /** Show the legend (auto-true when 2+ series). */
   showLegend?: boolean;
@@ -75,8 +83,7 @@ const niceAxis = (values: number[], pad = 0, ticks = 5) => {
   return { min: niceMin, max: niceMax, tickAmount: Math.round((niceMax - niceMin) / step) };
 };
 
-const xyOptions = <P extends ScatterPoint>(
-  { grid, axisLabels, palette, tooltipTheme }: ReturnType<typeof useChartTheme>,
+const useXYOptions = <P extends ScatterPoint>(
   {
     series,
     xTitle,
@@ -88,7 +95,33 @@ const xyOptions = <P extends ScatterPoint>(
   }: XYChartProps & { series: { name: string; data: P[] }[] },
   { pad = 0, extraRows = () => [] }: { pad?: number; extraRows?: (point: P) => TooltipRow[] } = {}
 ): ApexOptions => {
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const seriesColors = colors ?? palette;
+  const axisFormat = useMemo(
+    () => ({
+      x: (value: string | number) => formatX(Number(value)),
+      y: (value: number) => formatY(value),
+    }),
+    [formatX, formatY]
+  );
+  // The tooltip is HTML: tooltipHtml escapes the label, the series name and
+  // the values. Read on hover: a stable function, so a parent render does not
+  // redraw the chart.
+  const tooltip = useStableCallback(
+    ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
+      const { name, data } = series[seriesIndex];
+      const point = data[dataPointIndex];
+      return tooltipHtml({
+        title: point.label,
+        series: { name, color: seriesColors[seriesIndex % seriesColors.length] },
+        rows: [
+          [xTitle ?? 'x', formatX(point.x)],
+          [yTitle ?? 'y', formatY(point.y)],
+          ...extraRows(point),
+        ],
+      });
+    }
+  );
   const points = series.flatMap(({ data }) => data);
   const axisTitle = (text: string | undefined) =>
     text === undefined
@@ -117,7 +150,7 @@ const xyOptions = <P extends ScatterPoint>(
         pad
       ),
       title: axisTitle(xTitle),
-      labels: { ...axisLabels, formatter: (value) => formatX(Number(value)) },
+      labels: { ...axisLabels, formatter: axisFormat.x },
       axisBorder: { show: false },
       axisTicks: { show: false },
       // The x-axis tooltip is HTML and repeats the x value of the tooltip.
@@ -129,7 +162,7 @@ const xyOptions = <P extends ScatterPoint>(
         pad
       ),
       title: axisTitle(yTitle),
-      labels: { ...axisLabels, formatter: (value) => formatY(value) },
+      labels: { ...axisLabels, formatter: axisFormat.y },
     },
     legend: {
       show: showLegend ?? series.length > 1,
@@ -137,39 +170,22 @@ const xyOptions = <P extends ScatterPoint>(
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
-      formatter: (name) => escapeHtml(name),
+      formatter: escapeHtml,
     },
-    // The tooltip is HTML: tooltipHtml escapes the label, the series name and
-    // the values.
-    tooltip: {
-      theme: tooltipTheme,
-      custom: ({ seriesIndex, dataPointIndex }) => {
-        const { name, data } = series[seriesIndex];
-        const point = data[dataPointIndex];
-        return tooltipHtml({
-          title: point.label,
-          series: { name, color: seriesColors[seriesIndex % seriesColors.length] },
-          rows: [
-            [xTitle ?? 'x', formatX(point.x)],
-            [yTitle ?? 'y', formatY(point.y)],
-            ...extraRows(point),
-          ],
-        });
-      },
-    },
+    tooltip: { theme: tooltipTheme, custom: tooltip },
   };
 };
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
 export const ScatterChart = ({ height = 320, width = '100%', ...props }: ScatterChartProps) => {
-  const base = xyOptions(useChartTheme(), props);
+  const base = useXYOptions(props);
   const options: ApexOptions = {
     ...base,
     chart: { ...base.chart, type: 'scatter' },
     markers: { size: 6, strokeWidth: 0, hover: { sizeOffset: 2 } },
   };
   return (
-    <ReactApexChart
+    <ApexChart
       type="scatter"
       options={options}
       series={props.series}
@@ -187,8 +203,8 @@ export const BubbleChart = ({
   width = '100%',
   ...props
 }: BubbleChartProps) => {
-  const theme = useChartTheme();
-  const base = xyOptions(theme, props, {
+  const { palette } = useChartTheme();
+  const base = useXYOptions(props, {
     // Room for the bubbles at the edges of the plot.
     pad: 0.08,
     extraRows: (point) => [[sizeTitle, formatSize(point.z)]],
@@ -200,10 +216,10 @@ export const BubbleChart = ({
     // Translucent bubbles, outlined in their own color (ApexCharts' white
     // outline glares on the dark themes), keep the overlapping ones readable.
     fill: { opacity: 0.55 },
-    markers: { strokeWidth: 1, strokeColors: props.colors ?? theme.palette },
+    markers: { strokeWidth: 1, strokeColors: props.colors ?? palette },
   };
   return (
-    <ReactApexChart
+    <ApexChart
       type="bubble"
       options={options}
       series={props.series}
