@@ -5,6 +5,9 @@
  *   page near start: 1 2 3 4 5 ... N
  *   page near end:   1 ... N-4 N-3 N-2 N-1 N
  *   middle:          1 ... p-1 p p+1 ... N
+ * Pages are 1-indexed and, from 8 pages on, the list always has 7 entries.
+ * table/pageList is not a copy of it: it is 0-indexed and gets shorter near
+ * the edges, so the two are not interchangeable.
  */
 export const buildRange = (page: number, total: number): number[] => {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
