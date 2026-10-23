@@ -1,7 +1,7 @@
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/treemap';
 import { ApexChart } from './ApexChart';
-import { useStableCallback } from './formatters';
+import { useStableCallback, useValueFormat } from './formatters';
 import { readableOn, useChartTheme } from './theme';
 import type { ChartBaseProps } from './types';
 
@@ -9,24 +9,36 @@ export type TreemapDatum = { x: string; y: number };
 
 export type TreemapChartProps = ChartBaseProps & {
   series: { name?: string; data: TreemapDatum[] }[];
+  /** Override the default Cosmos palette. */
+  colors?: string[];
+  /**
+   * Format the tooltip values.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
+  formatValue?: (value: number) => string;
 };
 
 export const TreemapChart = ({
   series,
+  colors,
+  formatValue,
   ariaLabel,
   height = 320,
   width = '100%',
 }: TreemapChartProps) => {
   const { palette, tooltipTheme } = useChartTheme();
-  // A tile's label color, from the palette also passed as `colors`.
+  const tileColors = colors ?? palette;
+  const format = useValueFormat(formatValue);
+  // A tile's label color, from the colors also passed as `colors`.
   const tileLabelColor = useStableCallback(({ dataPointIndex }: { dataPointIndex: number }) =>
-    readableOn(palette[dataPointIndex % palette.length])
+    readableOn(tileColors[dataPointIndex % tileColors.length])
   );
   const options: ApexOptions = {
     chart: { type: 'treemap', fontFamily: 'inherit', toolbar: { show: false } },
-    colors: palette,
+    colors: tileColors,
     legend: { show: false },
-    tooltip: { theme: tooltipTheme },
+    // The tooltip is HTML: escape the formatted value.
+    tooltip: { theme: tooltipTheme, y: { formatter: format.tooltip } },
     dataLabels: {
       enabled: true,
       style: {

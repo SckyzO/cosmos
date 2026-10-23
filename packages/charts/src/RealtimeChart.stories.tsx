@@ -5,6 +5,7 @@ import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 import {
   contrastRatio,
   expectTooltipFollowsTheme,
+  hover,
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
@@ -22,6 +23,7 @@ const DISK = [
   81, 79, 78, 78, 77, 76,
 ];
 const QUEUE = [22, 31, 45, 38, 52, 67, 74, 88, 81, 63, 49, 36, 28, 25, 33, 41];
+const pct = (v: number) => `${v}%`;
 
 /** RealtimeChart fed from `trace`, from the start on every mount. */
 const Replay = ({ trace, ...props }: RealtimeChartProps & { trace: number[] }) => {
@@ -84,6 +86,12 @@ export const CompactHeight: Story = {
   render: (args) => <Replay {...args} trace={CPU} />,
 };
 
+/** `formatValue` formats the y-axis labels and the tooltip values. */
+export const FormattedValues: Story = {
+  args: { formatValue: pct },
+  render: (args) => <Replay {...args} trace={CPU} />,
+};
+
 // ApexCharts hides an annotation group with this class until its first
 // animation ends.
 const visibleThresholdLines = (root: HTMLElement) =>
@@ -116,6 +124,27 @@ export const TooltipFollowsTheme: Story = {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-grid')
     );
+  },
+};
+
+/** `formatValue` formats the y-axis labels and the tooltip value. */
+export const FormatValueFormatsLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  // No new sample during the test: the first point stays CPU[0].
+  args: { formatValue: pct, intervalMs: 60_000 },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    const yLabels = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
+    await waitFor(() => expect(yLabels().length).toBeGreaterThan(1));
+    for (const label of yLabels()) expect(label).toMatch(/^\d+%$/);
+
+    await waitFor(() => {
+      hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.01);
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
+        pct(CPU[0])
+      );
+    });
   },
 };
 
@@ -210,7 +239,7 @@ export const WindowSizeChanges: Story = {
  */
 export const RerenderWithEqualPropsDoesNotRedraw: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...Basic.args, intervalMs: 60_000 },
+  args: { ...Basic.args, intervalMs: 60_000, formatValue: pct },
   render: (args) => (
     <Rerender>
       {(grown) => <RealtimeChart {...freshCopy(args)} height={grown ? 400 : 320} />}

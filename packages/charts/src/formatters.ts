@@ -43,6 +43,18 @@ export const useValueFormat = (formatValue?: (value: number) => string) =>
   }, [formatValue]);
 
 /**
+ * `useValueFormat` for an xy chart whose y labels used ApexCharts' own number
+ * format before it took `formatValue`: without one, both formatters are
+ * `undefined` and the labels stay as ApexCharts writes them (`String` would
+ * drop the decimals it pads, such as `2.50`). Only for options whose ApexCharts
+ * default is `undefined`: an `undefined` replaces a default function.
+ */
+export const useOptionalValueFormat = (formatValue?: (value: number) => string) => {
+  const format = useValueFormat(formatValue);
+  return formatValue ? format : { axis: undefined, tooltip: undefined };
+};
+
+/**
  * Tooltip title for a category axis. ApexCharts hands the x formatter the
  * point's position on the axis (1, 2, …), not its category, so read the
  * category back by index. Escaped: the tooltip is HTML.

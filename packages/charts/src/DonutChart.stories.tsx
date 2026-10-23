@@ -7,7 +7,9 @@ import {
   expectNoInjectedImage,
   expectTextFollowsTheme,
   expectTooltipFollowsTheme,
+  hover,
   legendTexts,
+  resolveColor,
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
@@ -21,6 +23,8 @@ const REQUESTS_BY_RANGE = {
   'Last 24 h': [96000, 81000, 74000, 42000, 21000],
 };
 type Range = keyof typeof REQUESTS_BY_RANGE;
+const STATUS_COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+const gib = (v: number) => `${v} GiB`;
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -60,6 +64,16 @@ export const RightLegend: Story = {
 
 export const TwoSlices: Story = {
   args: { series: [732, 268], labels: ['Used (GiB)', 'Free (GiB)'] },
+};
+
+/** `colors` overrides the palette, here with the status colors. */
+export const CustomColors: Story = {
+  args: { series: [71, 21, 8], labels: ['OK', 'WARN', 'CRIT'], colors: STATUS_COLORS },
+};
+
+/** `formatValue` formats the total, the value of the hovered slice and the tooltip. */
+export const FormattedValues: Story = {
+  args: { series: [732, 268], labels: ['Used', 'Free'], formatValue: gib },
 };
 
 /** New `series` animate the slices to their new size. */
@@ -102,6 +116,40 @@ export const HtmlInLabelsRendersAsText: Story = {
   },
 };
 
+/** Each slice takes the color of its index in `colors`. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: CustomColors.args,
+  play: async ({ canvasElement }) => {
+    const fills = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-pie-area')].map((el) =>
+        resolveColor(el.getAttribute('fill') ?? '')
+      );
+    await waitFor(() => expect(fills()).toEqual(STATUS_COLORS));
+  },
+};
+
+/** `formatValue` formats the total, the value of the hovered slice and the tooltip value. */
+export const FormatValueFormatsLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: FormattedValues.args,
+  play: async ({ canvasElement }) => {
+    const center = () => canvasElement.querySelector('.apexcharts-datalabel-value')?.textContent;
+    await waitFor(() => expect(center()).toBe('1000 GiB'));
+    const slice = () => canvasElement.querySelector('.apexcharts-pie-area') as Element;
+    await waitFor(() => {
+      slice().dispatchEvent(new MouseEvent('mouseenter'));
+      expect(center()).toBe('732 GiB');
+    });
+    await waitFor(() => {
+      hover(slice());
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
+        '732 GiB'
+      );
+    });
+  },
+};
+
 /** The legend and the center value use the theme text color and follow theme changes. */
 export const TextFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -131,7 +179,7 @@ export const TooltipFollowsTheme: Story = {
  */
 export const RerenderWithEqualPropsDoesNotRedraw: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...BottomLegend.args },
+  args: { ...BottomLegend.args, colors: STATUS_COLORS, formatValue: gib },
   render: (args) => (
     <Rerender>{(grown) => <DonutChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
   ),

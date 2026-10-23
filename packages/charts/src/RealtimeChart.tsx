@@ -3,6 +3,7 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import { ApexChart } from './ApexChart';
+import { useOptionalValueFormat } from './formatters';
 import { readableOn, useChartTheme } from './theme';
 import type { ChartBaseProps } from './types';
 
@@ -14,6 +15,11 @@ export type RealtimeChartProps = ChartBaseProps & {
   windowSize?: number;
   warnThreshold?: number;
   critThreshold?: number;
+  /**
+   * Format the y-axis labels and the tooltip values.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
+  formatValue?: (value: number) => string;
 };
 
 const WARN_COLOR = '#f59e0b';
@@ -35,11 +41,13 @@ export const RealtimeChart = ({
   windowSize = 30,
   warnThreshold = 70,
   critThreshold = 85,
+  formatValue,
   ariaLabel,
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
   const { grid, axisLabels, brand, tooltipTheme } = useChartTheme();
+  const format = useOptionalValueFormat(formatValue);
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
   const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generate()));
@@ -108,7 +116,8 @@ export const RealtimeChart = ({
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { min: 0, max: 100, labels: axisLabels },
+    // One labels object per axis: ApexCharts mutates them.
+    yaxis: { min: 0, max: 100, labels: { ...axisLabels, formatter: format.axis } },
     annotations: {
       yaxis: [
         {
@@ -123,7 +132,8 @@ export const RealtimeChart = ({
         },
       ],
     },
-    tooltip: { theme: tooltipTheme },
+    // The tooltip is HTML: escape the formatted value.
+    tooltip: { theme: tooltipTheme, y: { formatter: format.tooltip } },
   };
 
   return (
