@@ -22,7 +22,8 @@ permissions:
 
 jobs:
   auto-merge:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    # The PR must be Dependabot's own, and Dependabot must have triggered this run.
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -38,9 +39,11 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # always(): if fetch-metadata fails, its outputs are empty and an auto-merge
+      # armed by an earlier run must still be disarmed.
       - name: Disable auto-merge for anything else
         if: >-
-          ${{ !(steps.meta.outputs.package-ecosystem == 'npm_and_yarn'
+          ${{ always() && !(steps.meta.outputs.package-ecosystem == 'npm_and_yarn'
           && steps.meta.outputs.maintainer-changes != 'true'
           && (steps.meta.outputs.update-type == 'version-update:semver-minor'
           || steps.meta.outputs.update-type == 'version-update:semver-patch')) }}
