@@ -20,3 +20,13 @@ trustPolicyIgnoreAfter: 43200
 
 # No git or tarball sources below the direct dependencies.
 blockExoticSubdeps: true
+
+# Dependency build scripts: a package with an install script fails the install
+# until it is reviewed here, so a new one can't run on a dependency bump
+# unnoticed. esbuild is the only one; its postinstall only checks the binary
+# that its platform package ships. (pnpm 10.33 fails strictDepBuilds on a
+# package set to false or in ignoredBuiltDependencies too, so a refusal can't
+# be recorded here.)
+strictDepBuilds: true
+allowBuilds:
+  esbuild: true
