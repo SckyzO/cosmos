@@ -2,6 +2,7 @@
   "name": "cosmos",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Design system for sckyzo's projects (React 19 + Tailwind 4 + Storybook 10)",
   "license": "MIT",
   "author": "SckyzO",
@@ -16,7 +17,7 @@
   },
   "packageManager": "pnpm@10.33.4",
   "scripts": {
-    "lint": "pnpm -r lint",
+    "lint": "pnpm -r lint --max-warnings 0",
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -26,8 +27,7 @@
     "browsers:install": "pnpm --filter '@cosmos/e2e' exec playwright install chromium && pnpm --filter '@cosmos/storybook' exec playwright install chromium",
     "build": "pnpm -r build",
     "storybook": "pnpm --filter '@cosmos/storybook' dev",
-    "storybook:build": "pnpm --filter '@cosmos/storybook' build",
-    "ci": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+    "storybook:build": "pnpm --filter '@cosmos/storybook' build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

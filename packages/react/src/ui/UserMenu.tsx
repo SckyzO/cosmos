@@ -15,6 +15,7 @@ import {
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
 import { Avatar } from './Avatar';
+import { mergeRefs } from './mergeRefs';
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -118,17 +119,12 @@ const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
     forwardedRef
   ) {
     const { open, setOpen, triggerRef, refreshRect, initialItemRef } = useCtx();
-    const setRef = (node: HTMLButtonElement | null) => {
-      (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      if (typeof forwardedRef === 'function') forwardedRef(node);
-      else if (forwardedRef) forwardedRef.current = node;
-    };
     useEffect(() => {
       if (open) refreshRect();
     }, [open, refreshRect]);
     return (
       <button
-        ref={setRef}
+        ref={mergeRefs(triggerRef, forwardedRef)}
         type="button"
         aria-label={`User menu for ${name}`}
         aria-haspopup="menu"

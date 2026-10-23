@@ -2,7 +2,13 @@ import { clsx } from 'clsx';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 
 type EmblaApi = UseEmblaCarouselType[1];
 
@@ -12,7 +18,7 @@ type Ctx = {
   emblaRef: UseEmblaCarouselType[0];
   api: EmblaApi;
   selectedIndex: number;
-  scrollSnaps: number[];
+  snapCount: number;
   scrollPrev: () => void;
   scrollNext: () => void;
   scrollTo: (i: number) => void;
@@ -58,24 +64,32 @@ export const CarouselRoot = ({
       ]
     : [];
   const [emblaRef, api] = useEmblaCarousel(options, plugins);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!api) return () => {};
+      api.on('select', onChange);
+      api.on('reInit', onChange);
+      return () => {
+        api.off('select', onChange);
+        api.off('reInit', onChange);
+      };
+    },
+    [api]
+  );
+  const selectedIndex = useSyncExternalStore(
+    subscribe,
+    () => api?.selectedScrollSnap() ?? 0,
+    () => 0
+  );
+  const snapCount = useSyncExternalStore(
+    subscribe,
+    () => api?.scrollSnapList().length ?? 0,
+    () => 0
+  );
 
   const scrollPrev = useCallback(() => api?.scrollPrev(), [api]);
   const scrollNext = useCallback(() => api?.scrollNext(), [api]);
   const scrollTo = useCallback((i: number) => api?.scrollTo(i), [api]);
-
-  useEffect(() => {
-    if (!api) return;
-    const onSelect = () => setSelectedIndex(api.selectedScrollSnap());
-    setScrollSnaps(api.scrollSnapList());
-    onSelect();
-    api.on('select', onSelect);
-    api.on('reInit', () => {
-      setScrollSnaps(api.scrollSnapList());
-      onSelect();
-    });
-  }, [api]);
 
   const canScrollPrev = api?.canScrollPrev() ?? false;
   const canScrollNext = api?.canScrollNext() ?? false;
@@ -86,7 +100,7 @@ export const CarouselRoot = ({
         emblaRef,
         api,
         selectedIndex,
-        scrollSnaps,
+        snapCount,
         scrollPrev,
         scrollNext,
         scrollTo,
@@ -197,10 +211,10 @@ const CarouselControls = ({
 export type CarouselIndicatorsProps = { className?: string };
 
 const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
-  const { scrollSnaps, selectedIndex, scrollTo } = useCtx();
+  const { snapCount, selectedIndex, scrollTo } = useCtx();
   return (
     <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
-      {scrollSnaps.map((_, i) => {
+      {Array.from({ length: snapCount }, (_, i) => {
         const active = i === selectedIndex;
         return (
           <button
