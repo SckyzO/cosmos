@@ -73,6 +73,10 @@ const readCssVar = (name: string, fallback: string): string => {
 
 const readChartColors = () => {
   const dark = detectDark();
+  // Grid lines, and the empty part of a radial arc: a soft step of the gray scale.
+  const line = dark
+    ? readCssVar('--color-gray-800', '#1f2937')
+    : readCssVar('--color-gray-200', '#e5e7eb');
   return {
     dark,
     brand: readCssVar('--color-brand-500', COSMOS_BRAND),
@@ -81,9 +85,7 @@ const readChartColors = () => {
     ),
     // The card background (`bg-white dark:bg-gray-900`).
     surface: dark ? readCssVar('--color-gray-900', '#111827') : readCssVar('--color-white', '#fff'),
-    grid: dark
-      ? readCssVar('--color-gray-800', '#1f2937')
-      : readCssVar('--color-gray-200', '#e5e7eb'),
+    grid: line,
     axis: dark
       ? readCssVar('--color-gray-400', '#9ca3af')
       : readCssVar('--color-gray-500', '#6b7280'),
@@ -93,10 +95,7 @@ const readChartColors = () => {
     success: readCssVar('--color-success-500', SUCCESS),
     warning: readCssVar('--color-warning-500', WARNING),
     error: readCssVar('--color-error-500', ERROR),
-    // The empty part of a radial arc, a soft step of the gray scale on the card.
-    track: dark
-      ? readCssVar('--color-gray-800', '#1f2937')
-      : readCssVar('--color-gray-100', '#f3f4f6'),
+    track: line,
   };
 };
 
