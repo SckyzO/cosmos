@@ -41,7 +41,9 @@ export const PageBreadcrumb = ({ items, className }: PageBreadcrumbProps) => (
               <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden />
             )}
             {isLast ? (
-              <span className="font-medium text-[var(--color-text-primary)]">{item.label}</span>
+              <span aria-current="page" className="font-medium text-[var(--color-text-primary)]">
+                {item.label}
+              </span>
             ) : item.onClick ? (
               <button type="button" onClick={item.onClick} className={linkClass}>
                 {renderInner}
