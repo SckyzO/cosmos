@@ -1,0 +1,70 @@
+name: Visual captures
+
+# Every story in every theme, captured once a month and on demand, for a visual
+# review of the whole catalogue (#134). The PNGs are uploaded as an artifact;
+# nothing is compared or asserted, and this is never a required check.
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+    inputs:
+      stories:
+        description: Story id substrings, comma-separated (empty for every story)
+        required: false
+        default: ''
+      themes:
+        description: Themes, comma-separated (empty for every theme)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  captures:
+    name: Capture every story
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        # The version comes from `packageManager` in package.json (see ci.yml).
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Storybook
+        run: pnpm storybook:build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
+
+      # With CI set, Playwright serves storybook-static, as in ci.yml.
+      - name: Capture
+        env:
+          STORIES: ${{ inputs.stories }}
+          THEMES: ${{ inputs.themes }}
+        run: pnpm --filter @cosmos/e2e screenshots
+
+      - name: Upload captures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: story-captures
+          path: screenshots/
+          retention-days: 90
+          if-no-files-found: error
