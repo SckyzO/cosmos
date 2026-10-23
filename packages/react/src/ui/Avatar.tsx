@@ -29,8 +29,9 @@ const initialsOf = (name?: string): string => {
 };
 
 export const Avatar = ({ src, alt, name, size = 'md', className }: AvatarProps) => {
-  const [failed, setFailed] = useState(false);
-  const showImage = src && !failed;
+  // Remember which `src` failed, so a new `src` gets a fresh attempt.
+  const [failedSrc, setFailedSrc] = useState<string>();
+  const showImage = src && src !== failedSrc;
   return (
     <span
       className={clsx(
@@ -38,13 +39,14 @@ export const Avatar = ({ src, alt, name, size = 'md', className }: AvatarProps) 
         SIZE_CLASS[size],
         className
       )}
+      role="img"
       aria-label={alt ?? name}
     >
       {showImage ? (
         <img
           src={src}
           alt={alt ?? name ?? ''}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src)}
           className="h-full w-full object-cover"
         />
       ) : (

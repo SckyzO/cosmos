@@ -360,6 +360,34 @@ export const GroupHeadingContrastInSand = headingContrastIn('sand');
 export const GroupHeadingContrastInDark = headingContrastIn('dark');
 export const GroupHeadingContrastInDeepBlue = headingContrastIn('deep-blue');
 
+// A bare-key hotkey like `/` opened the palette while typing in a field (#151).
+export const BareHotkeyIgnoredWhileTyping: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <div>
+        <input aria-label="Notes" />
+        <CommandPalette open={open} onOpenChange={setOpen} hotkey="/">
+          <CommandPalette.Input placeholder="…" />
+          <CommandPalette.List>
+            <CommandPalette.Item value="hello">Hello</CommandPalette.Item>
+          </CommandPalette.List>
+        </CommandPalette>
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.type(canvas.getByRole('textbox', { name: 'Notes' }), 'a/b');
+    await expect(canvas.getByRole('textbox', { name: 'Notes' })).toHaveValue('a/b');
+    await expect(document.querySelector('[cmdk-dialog]')).toBeNull();
+    // Outside a field the same key still opens it.
+    await userEvent.click(document.body);
+    await userEvent.keyboard('/');
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+  },
+};
+
 // The search field's placeholder (gray-400) sat under 4.5:1 on light and sand (#151).
 export const PlaceholderContrastInEveryTheme: Story = {
   ...Open,

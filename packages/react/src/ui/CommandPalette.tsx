@@ -43,6 +43,10 @@ const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
   return e.key.toLowerCase() === key;
 };
 
+const isTypingTarget = (target: EventTarget | null): boolean =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+
 const CommandPaletteRoot = ({
   hotkey = 'mod+k',
   open,
@@ -56,7 +60,10 @@ const CommandPaletteRoot = ({
 }: CommandPaletteProps) => {
   useEffect(() => {
     if (!hotkey) return;
+    // A bare key (`/`) is a character: leave it to whatever field is being typed in.
+    const bareKey = !/\b(mod|meta|cmd|ctrl|alt|option)\b/i.test(hotkey);
     const handler = (e: KeyboardEvent) => {
+      if (bareKey && isTypingTarget(e.target)) return;
       if (matchesHotkey(e, hotkey)) {
         e.preventDefault();
         onOpenChange?.(!open);

@@ -25,5 +25,6 @@ export const HealthDot = ({ status, pulse = false, className }: HealthDotProps) 
       />
     )}
     <span className={clsx('relative inline-flex h-2.5 w-2.5 rounded-full', STATUS_DOT[status])} />
+    <span className="sr-only">{status}</span>
   </span>
 );

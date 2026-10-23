@@ -30,6 +30,8 @@ const ALIGN_CLASS = {
   center: 'text-center',
 } as const;
 
+const ARIA_SORT = { asc: 'ascending', desc: 'descending', none: 'none' } as const;
+
 // No filter applied yet: the column still opens, with nothing checked.
 const NO_SELECTION: Set<string> = new Set();
 
@@ -62,6 +64,7 @@ export const ColumnHeader = ({
 
   return (
     <th
+      aria-sort={sortable ? ARIA_SORT[sortDir ?? 'none'] : undefined}
       className={clsx(
         'bg-gray-50 px-4',
         HEADER_CELL_PADDING[density],
@@ -90,7 +93,7 @@ export const ColumnHeader = ({
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              aria-label="Filter column"
+              aria-label={typeof label === 'string' ? `Filter ${label}` : 'Filter column'}
               className={clsx(
                 'flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
                 filterCount > 0 && 'text-brand-600 dark:text-brand-400'
