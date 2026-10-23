@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { createRef, useState } from 'react';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Checkbox, CheckboxGroup } from './Checkbox';
 import { expectTextContrast } from '../storybook-helpers';
 
@@ -205,5 +205,26 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Select at least one permission.'));
+  },
+};
+
+const checkboxRef = createRef<HTMLInputElement>();
+const checkboxNodes: (HTMLInputElement | null)[] = [];
+
+/** An object ref and a callback ref both get the input, and `indeterminate` still reaches it. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-2">
+      <Checkbox ref={checkboxRef} label="Select all" indeterminate />
+      <Checkbox ref={(node) => void checkboxNodes.push(node)} label="Archive" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const selectAll = canvas.getByRole('checkbox', { name: 'Select all' });
+    await expect(checkboxRef.current).toBe(selectAll);
+    await expect(selectAll).toHaveProperty('indeterminate', true);
+    await expect(checkboxNodes.at(-1)).toBe(canvas.getByRole('checkbox', { name: 'Archive' }));
   },
 };

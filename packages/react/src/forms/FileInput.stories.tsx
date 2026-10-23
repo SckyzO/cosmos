@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { expect, fireEvent, fn } from 'storybook/test';
+import { createRef, useState } from 'react';
+import { expect, fireEvent, fn, spyOn, userEvent } from 'storybook/test';
 import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
 import { FileInput } from './FileInput';
 
@@ -122,5 +122,26 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('File must be smaller than 2 MB.'));
+  },
+};
+
+const fileInputRef = createRef<HTMLInputElement>();
+
+/** The ref gets the file input, and the button still opens it. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Doc' },
+  render: (args) => <FileInput {...args} ref={fileInputRef} />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByLabelText('Doc') as HTMLInputElement;
+    await expect(fileInputRef.current).toBe(input);
+    // A real click opens the file chooser: count it instead.
+    const click = spyOn(input, 'click').mockImplementation(() => {});
+    try {
+      await userEvent.click(canvas.getByRole('button'));
+      await expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      click.mockRestore();
+    }
   },
 };

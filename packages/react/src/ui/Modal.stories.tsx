@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
@@ -389,5 +389,31 @@ export const CloseButtonContrastInEveryTheme: Story = {
   play: async () => {
     const close = await within(document.body).findByRole('button', { name: 'Close modal' });
     inEachTheme(() => expectGraphicContrast(close, 'color'));
+  },
+};
+
+/** Escape closes the modal; once closed, Escape no longer reaches it. */
+export const EscapeClosesOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Modal open={open} onClose={close}>
+        <Modal.Body>Press Escape.</Modal.Body>
+      </Modal>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await body.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };

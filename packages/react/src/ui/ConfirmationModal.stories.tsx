@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
@@ -73,5 +73,27 @@ export const StayClosesModal: Story = {
     const stay = within(document.body).getByRole('button', { name: 'Stay' });
     await userEvent.click(stay);
     await expect(args.onStay).toHaveBeenCalled();
+  },
+};
+
+/** Escape means Stay; once closed, Escape no longer reaches it. */
+export const EscapeStaysOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onStay: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const stay = () => {
+      args.onStay();
+      setOpen(false);
+    };
+    return <ConfirmationModal open={open} onStay={stay} onDiscard={() => {}} />;
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await body.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onStay).toHaveBeenCalledTimes(1);
   },
 };

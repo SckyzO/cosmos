@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Paperclip } from 'lucide-react';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
@@ -208,6 +208,17 @@ export const ShiftEnterAddsNewline: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
     await expect(log.childElementCount).toBe(before + 1);
     await expect(log.lastElementChild).toHaveTextContent('line one line two');
+  },
+};
+
+const composerRef = createRef<HTMLTextAreaElement>();
+
+/** The ref gets the textarea (ShiftEnterAddsNewline covers its own ref, which sizes it). */
+export const ComposerForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatComposer ref={composerRef} onSend={() => {}} />,
+  play: async ({ canvas }) => {
+    await expect(composerRef.current).toBe(canvas.getByRole('textbox', { name: 'Message' }));
   },
 };
 
