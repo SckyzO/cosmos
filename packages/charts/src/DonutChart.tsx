@@ -1,15 +1,23 @@
+import { useMemo } from 'react';
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/donut';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
-import { seriesTitle } from './formatters';
+import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps } from './types';
 
 export type DonutChartProps = ChartBaseProps & {
   series: number[];
   labels: string[];
+  /** Override the default Cosmos palette. */
+  colors?: string[];
+  /**
+   * Format the slice values in the center and the tooltip, and the total.
+   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+   */
+  formatValue?: (value: number) => string;
   /** Whether to show the right-side legend (default: bottom). */
   rightLegend?: boolean;
 };
@@ -17,29 +25,42 @@ export type DonutChartProps = ChartBaseProps & {
 export const DonutChart = ({
   series,
   labels,
+  colors,
+  formatValue,
   rightLegend = false,
   ariaLabel,
   height = 280,
   width = '100%',
 }: DonutChartProps) => {
   const { palette, text, textMuted, tooltipTheme } = useChartTheme();
+  const format = useValueFormat(formatValue);
+  // ApexCharts' default total, the sum of the visible slices, formatted.
+  const total = useMemo(
+    () => (w: { globals: { seriesTotals: number[] } }) =>
+      format.axis(w.globals.seriesTotals.reduce((a, b) => a + b, 0)),
+    [format]
+  );
   const options: ApexOptions = {
     // foreColor colors the legend and the center value (ApexCharts defaults to dark gray).
     chart: { type: 'donut', fontFamily: 'inherit', foreColor: text },
-    colors: palette,
+    colors: colors ?? palette,
     labels,
-    // The legend and the tooltip are HTML: escape the labels.
+    // The legend and the tooltip are HTML: escape the labels and the values.
     legend: { position: rightLegend ? 'right' : 'bottom', formatter: escapeHtml },
     tooltip: {
       theme: tooltipTheme,
-      y: { title: { formatter: seriesTitle } },
+      y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
     },
     dataLabels: { enabled: false },
     plotOptions: {
       pie: {
         donut: {
           size: '68%',
-          labels: { show: true, total: { show: true, label: 'Total', color: textMuted } },
+          labels: {
+            show: true,
+            value: { formatter: format.axis },
+            total: { show: true, label: 'Total', color: textMuted, formatter: total },
+          },
         },
       },
     },

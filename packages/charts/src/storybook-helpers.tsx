@@ -68,7 +68,7 @@ export const hover = (el: Element, xRatio = 0.5) => {
 // compare equal. Not a probe element: waitFor reruns its callback on every DOM
 // mutation, and adding one would loop forever.
 const colorContext = document.createElement('canvas').getContext('2d')!;
-const resolveColor = (color: string) => {
+export const resolveColor = (color: string) => {
   colorContext.fillStyle = '#000';
   colorContext.fillStyle = color;
   return colorContext.fillStyle;
