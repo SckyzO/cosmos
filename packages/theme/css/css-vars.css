@@ -37,7 +37,7 @@
   --color-text-base: #101828;
   --color-text-primary: #101828;
   --color-text-secondary: #667085;
-  --color-text-muted: #98a2b3;
+  --color-text-muted: #677185;
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
@@ -72,7 +72,7 @@
   --color-text-base: #1e1711;
   --color-text-primary: #1e1711;
   --color-text-secondary: #746656;
-  --color-text-muted: #a39684;
+  --color-text-muted: #7a6c5b;
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
@@ -155,7 +155,7 @@
   --color-text-base: #e4e7ec;
   --color-text-primary: #fff;
   --color-text-secondary: #98a2b3;
-  --color-text-muted: #667085;
+  --color-text-muted: #8792a5;
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's

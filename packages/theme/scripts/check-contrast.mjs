@@ -195,10 +195,13 @@ for (const theme of THEMES) {
     }
   }
 
+  // --color-text-muted on the page, panel and elevated surfaces of every theme.
+  for (const surface of ['bg-base', 'bg-panel', 'bg-elevated']) {
+    check(theme.id, 'muted text', color('text-muted'), color(surface), 4.5);
+  }
+
   if (theme.id === 'dark') {
-    for (const text of ['gray-500', 'text-muted']) {
-      for (const surface of surfaces) check(theme.id, 'muted text', color(text), surface, 4.5);
-    }
+    for (const surface of surfaces) check(theme.id, 'muted text', color('gray-500'), surface, 4.5);
     check(theme.id, 'card ↔ raised', color('gray-900'), color('gray-800'), 1.15);
     check(theme.id, 'border on card', color('gray-700'), color('gray-900'), 1.6);
   }

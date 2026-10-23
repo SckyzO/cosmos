@@ -30,7 +30,7 @@ export const Toggle = ({
         className={clsx(
           'relative h-6 w-11 shrink-0 rounded-full transition-colors',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-          checked ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700'
+          checked ? 'bg-brand-500' : 'bg-gray-500 dark:bg-gray-400'
         )}
       >
         <span

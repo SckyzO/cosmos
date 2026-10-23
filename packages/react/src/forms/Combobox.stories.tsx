@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectPlaceholderContrast, inEachTheme } from '../storybook-helpers';
 import { Combobox } from './Combobox';
 
 const meta = {
@@ -219,5 +219,15 @@ export const ArrowKeysSkipDisabledOptions: Story = {
     await userEvent.keyboard('{ArrowUp}');
     const back = input.getAttribute('aria-activedescendant') ?? '';
     await expect(document.getElementById(back)).toHaveTextContent('Alice');
+  },
+};
+
+// Native placeholders sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Combobox label="Person" options={PEOPLE} placeholder="Find a person…" />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox');
+    inEachTheme(() => expectPlaceholderContrast(input));
   },
 };

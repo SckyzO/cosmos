@@ -31,7 +31,7 @@ export const RadarChart = ({
   height = 340,
   width = '100%',
 }: RadarChartProps) => {
-  const { grid, axisLabels, palette } = useChartTheme();
+  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const valueFormatter = formatValue ?? ((v: number) => String(v));
 
@@ -78,7 +78,7 @@ export const RadarChart = ({
     // The tooltip and the legend are HTML: escape names, categories and
     // values. The title is the hovered axis.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       x: {
         formatter: (v, opts) =>
           escapeHtml(opts === undefined ? v : (categories[opts.dataPointIndex] ?? v)),

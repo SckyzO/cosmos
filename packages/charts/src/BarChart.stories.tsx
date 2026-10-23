@@ -4,6 +4,7 @@ import { BarChart } from './BarChart';
 import {
   HOSTILE,
   expectNoInjectedImage,
+  expectTooltipFollowsTheme,
   hover,
   legendTexts,
   loadLateFont,
@@ -227,5 +228,17 @@ export const RemeasuresAfterFontLoad: Story = {
     const fallbackLayout = xAxisLayout(canvasElement);
     await loadLateFont(LATE_FONT, 'JetBrains Mono');
     await waitFor(() => expect(xAxisLayout(canvasElement)).not.toBe(fallbackLayout));
+  },
+};
+
+/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
+export const TooltipFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { categories: MONTHS, series: [{ name: 'Revenue', data: [120, 145, 132, 168] }] },
+  play: async ({ canvasElement }) => {
+    await expectTooltipFollowsTheme(canvasElement, () =>
+      canvasElement.querySelector('.apexcharts-bar-area')
+    );
   },
 };

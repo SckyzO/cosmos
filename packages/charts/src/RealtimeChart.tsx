@@ -3,7 +3,7 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import ReactApexChart from 'react-apexcharts/core';
-import { useChartTheme } from './theme';
+import { readableOn, useChartTheme } from './theme';
 import type { ChartSize } from './types';
 
 export type RealtimeChartProps = ChartSize & {
@@ -16,17 +16,21 @@ export type RealtimeChartProps = ChartSize & {
   critThreshold?: number;
 };
 
-const defaultGenerator = (() => {
+const WARN_COLOR = '#f59e0b';
+const CRIT_COLOR = '#ef4444';
+
+// One walk per chart: a module-level one made every instance continue the last.
+const createDefaultGenerator = () => {
   let last = 50;
   return () => {
     last += (Math.random() - 0.5) * 8;
     last = Math.max(20, Math.min(95, last));
     return Math.round(last);
   };
-})();
+};
 
 export const RealtimeChart = ({
-  generator = defaultGenerator,
+  generator,
   intervalMs = 2000,
   windowSize = 30,
   warnThreshold = 70,
@@ -34,8 +38,22 @@ export const RealtimeChart = ({
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, brand } = useChartTheme();
-  const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generator()));
+  const { grid, axisLabels, brand, tooltipTheme } = useChartTheme();
+  const [defaultGenerator] = useState(createDefaultGenerator);
+  const generate = generator ?? defaultGenerator;
+  const [series, setSeries] = useState(() => Array.from({ length: windowSize }, () => generate()));
+
+  // A new windowSize trims the oldest samples or prepends new ones. Adjusted
+  // while rendering, which React redoes at once without painting the old window.
+  const [sizedFor, setSizedFor] = useState(windowSize);
+  if (sizedFor !== windowSize) {
+    setSizedFor(windowSize);
+    setSeries(
+      series.length > windowSize
+        ? series.slice(series.length - windowSize)
+        : [...Array.from({ length: windowSize - series.length }, () => generate()), ...series]
+    );
+  }
 
   // ApexCharts hides the threshold annotations until its mount animation
   // ends, and a series update during that animation cancels the reveal: the
@@ -52,10 +70,10 @@ export const RealtimeChart = ({
   useEffect(() => {
     if (!drawn) return;
     const id = setInterval(() => {
-      setSeries((current) => [...current.slice(1), generator()]);
+      setSeries((current) => [...current.slice(1), generate()]);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [drawn, generator, intervalMs]);
+  }, [drawn, generate, intervalMs]);
 
   const options: ApexOptions = {
     chart: {
@@ -87,17 +105,17 @@ export const RealtimeChart = ({
       yaxis: [
         {
           y: warnThreshold,
-          borderColor: '#f59e0b',
-          label: { text: 'WARN', style: { color: '#fff', background: '#f59e0b' } },
+          borderColor: WARN_COLOR,
+          label: { text: 'WARN', style: { color: readableOn(WARN_COLOR), background: WARN_COLOR } },
         },
         {
           y: critThreshold,
-          borderColor: '#ef4444',
-          label: { text: 'CRIT', style: { color: '#fff', background: '#ef4444' } },
+          borderColor: CRIT_COLOR,
+          label: { text: 'CRIT', style: { color: readableOn(CRIT_COLOR), background: CRIT_COLOR } },
         },
       ],
     },
-    tooltip: { theme: 'dark' },
+    tooltip: { theme: tooltipTheme },
   };
 
   return (

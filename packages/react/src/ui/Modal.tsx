@@ -132,7 +132,7 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" />
         </button>

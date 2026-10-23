@@ -76,7 +76,7 @@ const niceAxis = (values: number[], pad = 0, ticks = 5) => {
 };
 
 const xyOptions = <P extends ScatterPoint>(
-  { grid, axisLabels, palette }: ReturnType<typeof useChartTheme>,
+  { grid, axisLabels, palette, tooltipTheme }: ReturnType<typeof useChartTheme>,
   {
     series,
     xTitle,
@@ -142,7 +142,7 @@ const xyOptions = <P extends ScatterPoint>(
     // The tooltip is HTML: tooltipHtml escapes the label, the series name and
     // the values.
     tooltip: {
-      theme: 'dark',
+      theme: tooltipTheme,
       custom: ({ seriesIndex, dataPointIndex }) => {
         const { name, data } = series[seriesIndex];
         const point = data[dataPointIndex];

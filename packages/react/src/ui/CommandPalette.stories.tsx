@@ -12,7 +12,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectTextContrast, portalDocsParams } from '../storybook-helpers';
+import {
+  expectPlaceholderContrast,
+  expectTextContrast,
+  inEachTheme,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 
@@ -380,5 +385,16 @@ export const BareHotkeyIgnoredWhileTyping: Story = {
     await userEvent.click(document.body);
     await userEvent.keyboard('/');
     await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+  },
+};
+
+// The search field's placeholder (gray-400) sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    await waitFor(() => expect(document.querySelector('[cmdk-input]')).not.toBeNull());
+    const input = document.querySelector<HTMLElement>('[cmdk-input]')!;
+    inEachTheme(() => expectPlaceholderContrast(input));
   },
 };

@@ -19,6 +19,8 @@ services:
     working_dir: /workspace
     volumes:
       - ./:/workspace
+      # Read-only: see the DOCKER_RUN note in the Makefile.
+      - ./.git:/workspace/.git:ro
     environment:
       HOME: /home/node
     # Loopback only: the dev server serves the repo's files and writes story
@@ -45,6 +47,8 @@ services:
     working_dir: /workspace/tests/e2e
     volumes:
       - ./:/workspace
+      # Read-only: see the DOCKER_RUN note in the Makefile.
+      - ./.git:/workspace/.git:ro
     environment:
       HOME: /home/node
       PLAYWRIGHT_BASE_URL: http://storybook:6006

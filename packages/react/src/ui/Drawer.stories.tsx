@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -259,5 +259,20 @@ export const FocusTrapIncludesCloseOutside: Story = {
       reached.add(document.activeElement?.getAttribute('aria-label') ?? '');
     }
     await expect(reached.has('Close drawer')).toBe(true);
+  },
+};
+
+// The close icon (gray-400, gray-500 in dark) was under 3:1 against the panel (#151).
+export const CloseButtonContrastInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Drawer open onClose={() => {}}>
+      <Drawer.Header title="Panel" onClose={() => {}} />
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async () => {
+    const close = await within(document.body).findByRole('button', { name: 'Close drawer' });
+    inEachTheme(() => expectGraphicContrast(close, 'color'));
   },
 };

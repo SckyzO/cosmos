@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
+import {
+  expectFocusBorder,
+  expectPlaceholderContrast,
+  expectTextContrast,
+  inEachTheme,
+} from '../storybook-helpers';
 import { Textarea } from './Textarea';
 
 const meta = {
@@ -126,5 +131,15 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Comment cannot be empty.'));
+  },
+};
+
+// Native placeholders sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByLabelText('Message');
+    inEachTheme(() => expectPlaceholderContrast(field));
   },
 };

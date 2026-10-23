@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
+import {
+  expectFocusBorder,
+  expectPlaceholderContrast,
+  expectTextContrast,
+  inEachTheme,
+} from '../storybook-helpers';
 import { Input } from './Input';
 
 const meta = {
@@ -208,5 +213,20 @@ export const DescriptionIsLinked: Story = {
     const field = canvas.getByRole('textbox', { name: 'Endpoint URL' });
     await expect(field).toHaveAccessibleDescription('Full URL of the server.');
     await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
+
+// Native placeholders sat under 4.5:1 on light and sand (#151).
+export const PlaceholderContrastInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <Input label="Plain" placeholder="user@example.com" />
+      <Input label="With prefix" prefix="https://" placeholder="prom.example.com" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const fields = [canvas.getByLabelText('Plain'), canvas.getByLabelText('With prefix')];
+    inEachTheme(() => fields.forEach((field) => expectPlaceholderContrast(field)));
   },
 };
