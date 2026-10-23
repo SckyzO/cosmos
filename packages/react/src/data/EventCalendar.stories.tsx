@@ -67,6 +67,8 @@ const meta = {
     onEventClick: fn(),
     onDayClick: fn(),
     onMonthChange: fn(),
+    // The stories read English names: pin the locale rather than follow the browser's.
+    locale: 'en-US',
   },
 } satisfies Meta<typeof EventCalendar>;
 
@@ -84,7 +86,7 @@ export const ReadOnly: Story = {
   args: { onEventClick: undefined, onDayClick: undefined },
   play: async ({ canvas }) => {
     await expect(canvas.getAllByText('Grafana upgrade')[0].closest('button')).toBeNull();
-    await expect(canvas.queryByRole('button', { name: 'Thursday 14 May 2026' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Thursday, May 14, 2026' })).toBeNull();
   },
 };
 
@@ -93,9 +95,9 @@ export const WeeksStartOnMonday: Story = {
     const days = canvas.getAllByRole('group');
     // May 2026 starts on a Friday and ends on a Sunday: five full ISO weeks.
     await expect(days).toHaveLength(35);
-    await expect(days[0]).toHaveAccessibleName('Monday 27 April 2026');
-    await expect(days[34]).toHaveAccessibleName('Sunday 31 May 2026');
-    const today = canvas.getByRole('button', { name: 'Thursday 7 May 2026' });
+    await expect(days[0]).toHaveAccessibleName('Monday, April 27, 2026');
+    await expect(days[34]).toHaveAccessibleName('Sunday, May 31, 2026');
+    const today = canvas.getByRole('button', { name: 'Thursday, May 7, 2026' });
     await expect(today).toHaveAttribute('aria-current', 'date');
   },
 };
@@ -104,10 +106,10 @@ export const MultiDayEventRepeats: Story = {
   play: async ({ canvas }) => {
     // Saturday to Tuesday, across a week boundary.
     for (const day of [
-      'Saturday 9 May 2026',
-      'Sunday 10 May 2026',
-      'Monday 11 May 2026',
-      'Tuesday 12 May 2026',
+      'Saturday, May 9, 2026',
+      'Sunday, May 10, 2026',
+      'Monday, May 11, 2026',
+      'Tuesday, May 12, 2026',
     ]) {
       const cell = within(canvas.getByRole('group', { name: day }));
       await expect(cell.getByText('KubeCon trip')).toBeVisible();
@@ -115,7 +117,7 @@ export const MultiDayEventRepeats: Story = {
     await expect(canvas.getAllByText('KubeCon trip')).toHaveLength(4);
     // Starts in April: shown on the greyed days before the 1st too.
     await expect(
-      within(canvas.getByRole('group', { name: 'Wednesday 29 April 2026' })).getByText(
+      within(canvas.getByRole('group', { name: 'Wednesday, April 29, 2026' })).getByText(
         'Datacenter migration'
       )
     ).toBeVisible();
@@ -124,13 +126,13 @@ export const MultiDayEventRepeats: Story = {
 
 export const BusyDayOpensMore: Story = {
   play: async ({ args, canvas, canvasElement }) => {
-    const day = within(canvas.getByRole('group', { name: 'Thursday 7 May 2026' }));
+    const day = within(canvas.getByRole('group', { name: 'Thursday, May 7, 2026' }));
     await expect(day.getAllByRole('listitem')).toHaveLength(3);
     await expect(day.queryByText('Vendor call')).toBeNull();
 
-    await userEvent.click(day.getByRole('button', { name: '+2 more on Thursday 7 May 2026' }));
+    await userEvent.click(day.getByRole('button', { name: '+2 more on Thursday, May 7, 2026' }));
     const body = within(canvasElement.ownerDocument.body);
-    const dialog = within(body.getByRole('dialog', { name: 'Events on Thursday 7 May 2026' }));
+    const dialog = within(body.getByRole('dialog', { name: 'Events on Thursday, May 7, 2026' }));
     await expect(dialog.getAllByRole('listitem')).toHaveLength(5);
 
     await userEvent.click(dialog.getByRole('button', { name: 'Backup audit' }));
@@ -141,7 +143,7 @@ export const BusyDayOpensMore: Story = {
 
 export const ClicksFireCallbacks: Story = {
   play: async ({ args, canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Thursday 14 May 2026' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Thursday, May 14, 2026' }));
     await expect(args.onDayClick).toHaveBeenCalledWith(new Date(2026, 4, 14));
     await userEvent.click(canvas.getByRole('button', { name: 'Grafana upgrade' }));
     await expect(args.onEventClick).toHaveBeenCalledWith(
@@ -160,7 +162,7 @@ export const MonthNavigation: Story = {
     await expect(canvas.getByRole('heading', { name: 'June 2026' })).toBeVisible();
     await expect(args.onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 5, 1));
     // June 2026 starts on a Monday: no greyed days before the 1st.
-    await expect(canvas.getAllByRole('group')[0]).toHaveAccessibleName('Monday 1 June 2026');
+    await expect(canvas.getAllByRole('group')[0]).toHaveAccessibleName('Monday, June 1, 2026');
 
     await userEvent.click(todayButton);
     await expect(canvas.getByRole('heading', { name: 'May 2026' })).toBeVisible();

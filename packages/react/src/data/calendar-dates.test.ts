@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isoDate, isoWeekday, MONTHS, sameDay } from './calendar-dates';
+import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 
 // Every date here is built from local components, like the helpers read them,
 // so the tests do not depend on the machine's time zone.
@@ -42,14 +42,94 @@ describe('isoWeekday', () => {
   });
 });
 
-describe('MONTHS', () => {
-  it('lists the twelve months, January first', () => {
-    expect(MONTHS).toHaveLength(12);
-    expect(MONTHS[0]).toBe('January');
-    expect(MONTHS[11]).toBe('December');
+describe('createCalendarFormats', () => {
+  const thursday = new Date(2026, 4, 7);
+
+  it('formats in en-US', () => {
+    const fmt = createCalendarFormats('en-US');
+    expect(fmt.weekdays).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    expect(fmt.monthYear(thursday)).toBe('May 2026');
+    expect(fmt.fullDate(thursday)).toBe('Thursday, May 7, 2026');
+    expect(fmt.dayNumber(thursday)).toBe('7');
   });
 
-  it('is indexed like Date#getMonth', () => {
-    expect(MONTHS[new Date(2024, 8, 15).getMonth()]).toBe('September');
+  it('formats in fr-FR', () => {
+    const fmt = createCalendarFormats('fr-FR');
+    // The abbreviations carry a trailing dot in CLDR: `lun.`.
+    expect(fmt.weekdays.map((name) => name.replace(/\.$/, ''))).toEqual([
+      'lun',
+      'mar',
+      'mer',
+      'jeu',
+      'ven',
+      'sam',
+      'dim',
+    ]);
+    expect(fmt.monthYear(thursday)).toBe('mai 2026');
+    expect(fmt.fullDate(thursday)).toBe('jeudi 7 mai 2026');
+    expect(fmt.dayNumber(thursday)).toBe('7');
+  });
+
+  it('starts the weekdays on Monday whatever the locale', () => {
+    // 2024-01-01 is a Monday; en-US puts Sunday first in its own calendars.
+    expect(createCalendarFormats('en-US').weekdays[0]).toBe('Mon');
+    expect(createCalendarFormats('fr-FR').weekdays[0]).toMatch(/^lun/);
+    expect(createCalendarFormats('de-DE').weekdays[6]).toMatch(/^So/);
+  });
+
+  it('is local time: the last minute of a day stays that day', () => {
+    const fmt = createCalendarFormats('en-US');
+    expect(fmt.fullDate(new Date(2026, 4, 7, 23, 59, 59))).toBe('Thursday, May 7, 2026');
+    expect(fmt.fullDate(new Date(2026, 4, 8, 0, 0, 0))).toBe('Friday, May 8, 2026');
+  });
+
+  it('follows the runtime default locale when none is given', () => {
+    const runtime = new Intl.DateTimeFormat().resolvedOptions().locale;
+    const fmt = createCalendarFormats();
+    const same = createCalendarFormats(runtime);
+    expect(fmt.weekdays).toEqual(same.weekdays);
+    expect(fmt.monthYear(thursday)).toBe(same.monthYear(thursday));
+    expect(fmt.fullDate(thursday)).toBe(same.fullDate(thursday));
+    expect(fmt.dayNumber(thursday)).toBe(same.dayNumber(thursday));
+  });
+
+  it('keeps the Gregorian calendar of the grid in locales that default to another', () => {
+    // th-TH counts years from the Buddhist era (2569), fa-IR uses the Persian calendar.
+    expect(createCalendarFormats('th-TH').monthYear(thursday)).toContain('2026');
+    expect(createCalendarFormats('th-TH').monthYear(thursday)).not.toContain('2569');
+    const persian = createCalendarFormats('fa-IR');
+    expect(persian.fullDate(thursday)).toContain('۲۰۲۶');
+    expect(persian.fullDate(thursday)).not.toContain('۱۴۰۵');
+    expect(persian.dayNumber(thursday)).toBe('۷');
+  });
+
+  it('ignores a calendar asked for in the locale tag', () => {
+    expect(createCalendarFormats('en-u-ca-buddhist').monthYear(thursday)).toBe('May 2026');
+    expect(createCalendarFormats('en-u-ca-persian').fullDate(thursday)).toBe(
+      'Thursday, May 7, 2026'
+    );
+  });
+
+  describe('dayNumber', () => {
+    it('is the bare number, unpadded', () => {
+      const fmt = createCalendarFormats('en-US');
+      expect(fmt.dayNumber(new Date(2026, 4, 1))).toBe('1');
+      expect(fmt.dayNumber(new Date(2026, 4, 31))).toBe('31');
+    });
+
+    it('drops the day suffix some locales add', () => {
+      // `Intl` formats a lone day as `7日` in Japanese.
+      expect(new Intl.DateTimeFormat('ja-JP', { day: 'numeric' }).format(thursday)).toBe('7日');
+      expect(createCalendarFormats('ja-JP').dayNumber(thursday)).toBe('7');
+    });
+
+    it('uses the digits of the locale', () => {
+      expect(createCalendarFormats('ar-EG').dayNumber(thursday)).toBe('٧');
+      expect(createCalendarFormats('en-u-nu-arab').dayNumber(new Date(2026, 4, 12))).toBe('١٢');
+    });
+  });
+
+  it('throws a RangeError on an invalid tag', () => {
+    expect(() => createCalendarFormats('not a locale')).toThrow(RangeError);
   });
 });

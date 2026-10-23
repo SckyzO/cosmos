@@ -8,7 +8,8 @@ const meta = {
   component: MiniCalendar,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-  args: { selected: new Date(2026, 4, 7), onSelect: () => {} },
+  // The stories read English names: pin the locale rather than follow the browser's.
+  args: { selected: new Date(2026, 4, 7), onSelect: () => {}, locale: 'en-US' },
 } satisfies Meta<typeof MiniCalendar>;
 
 export default meta;
@@ -141,15 +142,15 @@ export const WeeksStartOnMonday: Story = {
   play: async ({ canvas }) => {
     const left = (el: HTMLElement) => el.getBoundingClientRect().left;
     await expect(left(canvas.getByRole('button', { name: 'Friday, May 1, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Fr')),
+      left(canvas.getByText('Fri')),
       0
     );
     await expect(left(canvas.getByRole('button', { name: 'Sunday, May 3, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Su')),
+      left(canvas.getByText('Sun')),
       0
     );
     await expect(left(canvas.getByRole('button', { name: 'Monday, May 4, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Mo')),
+      left(canvas.getByText('Mon')),
       0
     );
   },

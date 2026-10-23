@@ -236,7 +236,7 @@ export const PickingADayUpdatesUpcoming: Story = {
 
     // Clicking a day in the month view updates the list too.
     await userEvent.click(canvas.getByRole('button', { name: 'Today' }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Thursday 21 May 2026' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Thursday, May 21, 2026' }));
     await expect(upcoming().getAllByRole('listitem')[0]).toHaveTextContent('On-call handover');
   },
 };

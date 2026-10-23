@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Popover } from '../ui/Popover';
-import { MONTHS, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 
 export type EventCalendarTone = 'brand' | 'success' | 'warning' | 'danger' | 'info' | 'violet';
 
@@ -32,19 +32,16 @@ export type EventCalendarProps = {
   onEventClick?: (event: CalendarEvent) => void;
   /** Makes each day number a button. */
   onDayClick?: (date: Date) => void;
+  /**
+   * BCP 47 language tag (`'fr-FR'`) for the weekday names, the month title and the
+   * date in the accessible name of each day and of its "+N more" list. Defaults to
+   * the browser's locale. The grid itself stays Gregorian, weeks starting on
+   * Monday, whatever the locale. The button labels (Today, Previous month, Next
+   * month, "+N more") stay English. An invalid tag throws a `RangeError`.
+   */
+  locale?: string;
   className?: string;
 };
-
-const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const WEEK_DAYS_LONG = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
 
 // Chips beyond this go behind the "+N more" button.
 const MAX_CHIPS = 3;
@@ -81,9 +78,6 @@ const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-b
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-
-const dayLabel = (d: Date) =>
-  `${WEEK_DAYS_LONG[isoWeekday(d)]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 
 /** Monday on or before the 1st through the Sunday on or after the last day. */
 const monthGrid = (month: Date) => {
@@ -172,11 +166,13 @@ export const EventCalendar = ({
   today = new Date(),
   onEventClick,
   onDayClick,
+  locale,
   className,
 }: EventCalendarProps) => {
   const [internalMonth, setInternalMonth] = useState(() => startOfMonth(defaultMonth ?? today));
   const [openDay, setOpenDay] = useState<string | null>(null);
   const shown = startOfMonth(month ?? internalMonth);
+  const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const { days, byDay } = useMemo(() => {
     const grid = monthGrid(month ?? internalMonth);
@@ -199,7 +195,7 @@ export const EventCalendar = ({
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <h3 aria-live="polite" className="text-base font-semibold text-[var(--color-text-primary)]">
-          {MONTHS[shown.getMonth()]} {shown.getFullYear()}
+          {fmt.monthYear(shown)}
         </h3>
         <div className="flex items-center gap-1">
           <Button
@@ -237,9 +233,9 @@ export const EventCalendar = ({
       </div>
 
       <div className="grid grid-cols-7 border-y border-gray-200 dark:border-gray-800" aria-hidden>
-        {WEEK_DAYS.map((d) => (
+        {fmt.weekdays.map((d, i) => (
           <span
-            key={d}
+            key={i}
             className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
             {d}
@@ -251,7 +247,7 @@ export const EventCalendar = ({
       <div className="-mb-px grid grid-cols-7">
         {days.map((day, i) => {
           const key = isoDate(day);
-          const label = dayLabel(day);
+          const label = fmt.fullDate(day);
           const dayEvents = byDay.get(key) ?? [];
           const hidden = dayEvents.length - MAX_CHIPS;
           const outside = day.getMonth() !== shown.getMonth();
@@ -287,7 +283,7 @@ export const EventCalendar = ({
                     FOCUS_RING
                   )}
                 >
-                  {day.getDate()}
+                  {fmt.dayNumber(day)}
                 </button>
               ) : (
                 <time
@@ -295,7 +291,7 @@ export const EventCalendar = ({
                   aria-current={isToday ? 'date' : undefined}
                   className={numberClass}
                 >
-                  {day.getDate()}
+                  {fmt.dayNumber(day)}
                 </time>
               )}
 
