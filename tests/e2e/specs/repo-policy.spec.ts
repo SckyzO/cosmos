@@ -12,7 +12,7 @@ type Outputs = Record<string, string>;
  * The `if:` of the workflow step named `step`, as a function of the
  * fetch-metadata outputs. Handles a one-line `if: ${{ … }}` and a folded
  * `if: >-` block; only the operators the workflow uses (== != && || ! and
- * parentheses) are translated.
+ * parentheses) and `always()` are translated.
  */
 const condition = (workflow: string, step: string): ((outputs: Outputs) => boolean) => {
   const lines = workflow.split('\n');
@@ -30,10 +30,11 @@ const condition = (workflow: string, step: string): ((outputs: Outputs) => boole
     .trim()
     .replace(/^\$\{\{|\}\}$/g, '')
     .replace(/steps\.meta\.outputs\.([\w-]+)/g, "o['$1']")
+    .replace(/\balways\(\)/g, 'true')
     .replace(/([!=])=/g, '$1==');
   // Only those tokens reach the Function constructor, so the file can't run
   // anything else.
-  const rest = js.replace(/o\['[\w-]+'\]|'[\w:.-]*'|===|!==|&&|\|\||[!()\s]/g, '');
+  const rest = js.replace(/o\['[\w-]+'\]|'[\w:.-]*'|\btrue\b|===|!==|&&|\|\||[!()\s]/g, '');
   if (rest !== '') throw new Error(`unexpected tokens in the ${step} condition: ${rest}`);
   return new Function('o', `return (${js});`) as (outputs: Outputs) => boolean;
 };
@@ -56,11 +57,19 @@ test('Dependabot auto-merges minor and patch npm updates only', () => {
     // Actions and images run in publish.yml, next to the npm OIDC token.
     ['GitHub Actions patch', update('github_actions', 'patch'), false],
     ['Docker minor', update('docker', 'minor'), false],
+    // fetch-metadata failed: no outputs, so disarm.
+    ['no metadata', {}, false],
   ];
   for (const [name, outputs, merges] of cases) {
     expect(enable(outputs), `${name}: enable`).toBe(merges);
     expect(disable(outputs), `${name}: disable`).toBe(!merges);
   }
+  // Without a status function GitHub adds success(), and the disarm step would
+  // be skipped after a failed fetch-metadata, leaving an earlier arming on.
+  expect(workflow).toMatch(/name: Disable auto-merge[^\n]*\n\s+if: >-\n\s+\$\{\{ always\(\) && /);
+  // Only on Dependabot's own PRs, in a run Dependabot triggered.
+  expect(workflow).toMatch(/github\.event\.pull_request\.user\.login == 'dependabot\[bot\]'/);
+  expect(workflow).toMatch(/github\.actor == 'dependabot\[bot\]'/);
 });
 
 test('new releases wait before pnpm or Dependabot adopt them', () => {
