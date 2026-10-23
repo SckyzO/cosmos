@@ -6,7 +6,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -15,7 +15,7 @@ export type RangeBarPoint = {
   y: [number, number];
 };
 
-export type RangeBarChartProps = ChartSize & {
+export type RangeBarChartProps = ChartBaseProps & {
   /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
   series: { name: string; data: RangeBarPoint[] }[];
   /** Draw every series of a row on one lane, instead of one lane per series. */
@@ -46,6 +46,7 @@ export const RangeBarChart = ({
   colors,
   formatDate = defaultFormatDate,
   showLegend,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
@@ -117,6 +118,13 @@ export const RangeBarChart = ({
   };
 
   return (
-    <ApexChart type="rangeBar" options={options} series={series} height={height} width={width} />
+    <ApexChart
+      type="rangeBar"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
   );
 };

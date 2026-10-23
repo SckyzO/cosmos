@@ -3,9 +3,9 @@ import 'apexcharts/radialBar';
 import { ApexChart } from './ApexChart';
 import { percent } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type SemiCircleGaugeProps = ChartSize & {
+export type SemiCircleGaugeProps = ChartBaseProps & {
   value: number;
   label?: string;
   color?: string;
@@ -15,6 +15,7 @@ export const SemiCircleGauge = ({
   value,
   label = '',
   color,
+  ariaLabel,
   height = 200,
   width = '100%',
 }: SemiCircleGaugeProps) => {
@@ -41,6 +42,14 @@ export const SemiCircleGauge = ({
     labels: [label],
   };
   return (
-    <ApexChart type="radialBar" options={options} series={[value]} height={height} width={width} />
+    <ApexChart
+      type="radialBar"
+      options={options}
+      series={[value]}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+      keyboard={false}
+    />
   );
 };

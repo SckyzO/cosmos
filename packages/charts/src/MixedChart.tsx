@@ -6,7 +6,7 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type MixedChartAxis = 'left' | 'right';
 
@@ -19,7 +19,7 @@ export type MixedChartSeries = {
   axis?: MixedChartAxis;
 };
 
-export type MixedChartProps = ChartSize & {
+export type MixedChartProps = ChartBaseProps & {
   /** Lines and columns on one category axis. Names must be unique: each y axis finds its series by name. */
   series: MixedChartSeries[];
   categories: (string | number)[];
@@ -49,6 +49,7 @@ export const MixedChart = ({
   formatValue,
   formatRightValue,
   showLegend,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
@@ -118,5 +119,14 @@ export const MixedChart = ({
     fill: { opacity: 1 },
   };
 
-  return <ApexChart type="line" options={options} series={series} height={height} width={width} />;
+  return (
+    <ApexChart
+      type="line"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
+  );
 };

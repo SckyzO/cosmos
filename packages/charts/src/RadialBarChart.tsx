@@ -3,9 +3,9 @@ import 'apexcharts/radialBar';
 import { ApexChart } from './ApexChart';
 import { percent, useStableCallback } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type RadialBarChartProps = ChartSize & {
+export type RadialBarChartProps = ChartBaseProps & {
   series: number[];
   labels: string[];
 };
@@ -13,6 +13,7 @@ export type RadialBarChartProps = ChartSize & {
 export const RadialBarChart = ({
   series,
   labels,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: RadialBarChartProps) => {
@@ -42,6 +43,13 @@ export const RadialBarChart = ({
     },
   };
   return (
-    <ApexChart type="radialBar" options={options} series={series} height={height} width={width} />
+    <ApexChart
+      type="radialBar"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
   );
 };

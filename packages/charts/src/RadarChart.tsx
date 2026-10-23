@@ -5,9 +5,9 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type RadarChartProps = ChartSize & {
+export type RadarChartProps = ChartBaseProps & {
   /** One polygon per series; one value per category, in the same order. */
   series: { name: string; data: number[] }[];
   /** The axes, clockwise from the top. */
@@ -32,6 +32,7 @@ export const RadarChart = ({
   formatValue,
   showLegend,
   max,
+  ariaLabel,
   height = 340,
   width = '100%',
 }: RadarChartProps) => {
@@ -89,5 +90,14 @@ export const RadarChart = ({
     },
   };
 
-  return <ApexChart type="radar" options={options} series={series} height={height} width={width} />;
+  return (
+    <ApexChart
+      type="radar"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
+  );
 };

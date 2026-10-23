@@ -5,9 +5,9 @@ import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type DonutChartProps = ChartSize & {
+export type DonutChartProps = ChartBaseProps & {
   series: number[];
   labels: string[];
   /** Whether to show the right-side legend (default: bottom). */
@@ -18,6 +18,7 @@ export const DonutChart = ({
   series,
   labels,
   rightLegend = false,
+  ariaLabel,
   height = 280,
   width = '100%',
 }: DonutChartProps) => {
@@ -43,7 +44,16 @@ export const DonutChart = ({
       },
     },
   };
-  return <ApexChart type="donut" options={options} series={series} height={height} width={width} />;
+  return (
+    <ApexChart
+      type="donut"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
+  );
 };
 
 export const DonutRightLegend = (props: Omit<DonutChartProps, 'rightLegend'>) => (

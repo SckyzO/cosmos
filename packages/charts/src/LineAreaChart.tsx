@@ -5,9 +5,9 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type LineAreaChartProps = ChartSize & {
+export type LineAreaChartProps = ChartBaseProps & {
   series: { name: string; data: number[] }[];
   categories: (string | number)[];
   /** Show the legend (auto-true when 2+ series). */
@@ -17,6 +17,7 @@ export type LineAreaChartProps = ChartSize & {
 export const LineAreaChart = ({
   series,
   categories,
+  ariaLabel,
   height = 280,
   width = '100%',
   showLegend,
@@ -60,5 +61,14 @@ export const LineAreaChart = ({
       y: { title: { formatter: seriesTitle } },
     },
   };
-  return <ApexChart type="area" options={options} series={series} height={height} width={width} />;
+  return (
+    <ApexChart
+      type="area"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
+  );
 };
