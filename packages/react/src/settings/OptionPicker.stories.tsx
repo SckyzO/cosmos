@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
+import { expect, fn, userEvent } from 'storybook/test';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
 const meta = {
@@ -123,5 +124,115 @@ export const ViewModePicker: Story = {
         </p>
       </Wrap>
     );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+// The picker is controlled: keep the value here and report each pick to `onChange`.
+const ControlledViewModes = ({
+  initial,
+  onChange,
+}: {
+  initial: string;
+  onChange: (id: string) => void;
+}) => {
+  const [value, setValue] = useState(initial);
+  return (
+    <Wrap>
+      <OptionPicker
+        aria-label="View mode"
+        options={VIEW_MODES}
+        value={value}
+        onChange={(id) => {
+          onChange(id);
+          setValue(id);
+        }}
+        cols={4}
+      />
+    </Wrap>
+  );
+};
+
+/** Clicking an option reports its id and moves the checked state to it. */
+export const ClickSelectsAnOption: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledViewModes initial="grid" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('radiogroup', { name: 'View mode' })).toBeVisible();
+    await expect(canvas.getAllByRole('radio')).toHaveLength(VIEW_MODES.length);
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('radio', { name: 'Map' }));
+    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('map');
+    await expect(canvas.getByRole('radio', { name: 'Map', checked: true })).toBeVisible();
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: false })).toBeVisible();
+    await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);
+  },
+};
+
+/** Only the checked option is a tab stop; arrows, Home and End move and check, wrapping. */
+export const ArrowKeysMoveTheSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledViewModes initial="grid" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'List' })).toHaveAttribute('tabindex', '-1');
+
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+    await expect(args.onChange).toHaveBeenLastCalledWith('list');
+    // The tab stop follows the selection.
+    await expect(canvas.getByRole('radio', { name: 'List' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveAttribute('tabindex', '-1');
+
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await expect(canvas.getByRole('radio', { name: 'Box', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(canvas.getByRole('radio', { name: 'Box', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+
+    // Browser shortcuts such as Alt+ArrowLeft (back) are left alone.
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+  },
+};
+
+/** With no option checked, Tab lands on the first one, and Space or Enter check a focused one. */
+export const NothingCheckedEntersOnTheFirstOption: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <ControlledViewModes initial="" onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    await expect(canvas.queryByRole('radio', { checked: true })).toBeNull();
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: false })).toHaveFocus();
+
+    canvas.getByRole('radio', { name: 'Map' }).focus();
+    await userEvent.keyboard(' ');
+    await expect(args.onChange).toHaveBeenLastCalledWith('map');
+    await expect(canvas.getByRole('radio', { name: 'Map', checked: true })).toHaveFocus();
+
+    canvas.getByRole('radio', { name: 'List' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith('list');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+  },
+};
+
+/** `cols` sets the number of grid columns. */
+export const ColsSetsTheGridColumns: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledViewModes initial="grid" onChange={() => {}} />,
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'View mode' });
+    await expect(getComputedStyle(group).gridTemplateColumns.split(' ')).toHaveLength(4);
   },
 };
