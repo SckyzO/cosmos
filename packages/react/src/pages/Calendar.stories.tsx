@@ -230,7 +230,7 @@ export const PickingADayUpdatesUpcoming: Story = {
 
     // Picking a day in the side calendar moves the month view and the list.
     await userEvent.click(side.getByRole('button', { name: 'Next month' }));
-    await userEvent.click(side.getByRole('button', { name: '10' }));
+    await userEvent.click(side.getByRole('button', { name: 'Wednesday, June 10, 2026' }));
     await expect(canvas.getByRole('heading', { name: 'June 2026' })).toBeVisible();
     await expect(upcoming().getAllByRole('listitem')[0]).toHaveTextContent('Failover drill');
 

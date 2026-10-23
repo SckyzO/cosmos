@@ -14,6 +14,15 @@ export type MiniCalendarProps = {
 
 const WEEK_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
+// The accessible name of a day button, in the default locale: "Thursday, May 7,
+// 2026" in en-US. The visible text stays the bare day number.
+const DAY_NAME: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+};
+
 /**
  * MiniCalendar — compact ISO-week month picker with optional event dots.
  * Click the month title to jump back to today's month.
@@ -37,6 +46,8 @@ export const MiniCalendar = ({
     while (arr.length % 7 !== 0) arr.push(null);
     return arr;
   }, [view]);
+
+  const dayName = useMemo(() => new Intl.DateTimeFormat(undefined, DAY_NAME), []);
 
   const goPrev = () => setView((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1));
   const goNext = () => setView((v) => new Date(v.getFullYear(), v.getMonth() + 1, 1));
@@ -94,6 +105,9 @@ export const MiniCalendar = ({
               type="button"
               key={d.toISOString()}
               onClick={() => onSelect(d)}
+              aria-label={dayName.format(d)}
+              aria-pressed={isSelected}
+              aria-current={isToday ? 'date' : undefined}
               className={clsx(
                 'relative flex h-8 items-center justify-center rounded-md text-xs font-medium transition-colors',
                 isSelected
