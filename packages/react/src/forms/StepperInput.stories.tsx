@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { expectFocusBorder } from '../storybook-helpers';
-import { StepperInput } from './StepperInput';
+import { StepperInput, type StepperInputProps } from './StepperInput';
 
 const meta = {
   title: 'Forms/Stepper Input',
@@ -86,5 +86,78 @@ export const FocusShowsAccentBorderInDark: Story = {
   play: async ({ canvas }) => {
     const input = canvas.getByRole('spinbutton');
     await expectFocusBorder(input, { border: input.closest('.rounded-lg') as HTMLElement });
+  },
+};
+
+/** Owns the value, like an app does: what `onChange` reports comes back as `value`. */
+const Stateful = (props: StepperInputProps) => {
+  const [value, setValue] = useState(props.value);
+  return (
+    <StepperInput
+      {...props}
+      value={value}
+      onChange={(v) => {
+        setValue(v);
+        props.onChange(v);
+      }}
+    />
+  );
+};
+
+/**
+ * Typing passes through an empty field and values outside the range on the way
+ * to a valid one; only valid values reach `onChange` (#151).
+ */
+export const TypingPassesThroughInvalidValues: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 20, min: 10, max: 100, onChange: fn() },
+  render: (args) => <Stateful {...args} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await userEvent.clear(input);
+    await expect(input).toHaveValue(null);
+    await userEvent.type(input, '50');
+    await expect(input).toHaveValue(50);
+    await expect(args.onChange).toHaveBeenLastCalledWith(50);
+    await expect(args.onChange).not.toHaveBeenCalledWith(5);
+  },
+};
+
+/** A negative value can be typed sign first. */
+export const TypingANegativeValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 20, min: -10, max: 100, onChange: fn() },
+  render: (args) => <Stateful {...args} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await userEvent.clear(input);
+    await userEvent.type(input, '-3');
+    await expect(input).toHaveValue(-3);
+    await expect(args.onChange).toHaveBeenLastCalledWith(-3);
+  },
+};
+
+/** Leaving the field brings an out-of-range value into the range, and an empty field back to the value. */
+export const BlurClampsOrRestores: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 20, min: 10, max: 100, onChange: fn() },
+  render: (args) => <Stateful {...args} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await userEvent.clear(input);
+    await userEvent.type(input, '5');
+    await userEvent.tab();
+    await expect(input).toHaveValue(10);
+    await expect(args.onChange).toHaveBeenLastCalledWith(10);
+
+    await userEvent.clear(input);
+    await userEvent.type(input, '500');
+    await userEvent.tab();
+    await expect(input).toHaveValue(100);
+    await expect(args.onChange).toHaveBeenLastCalledWith(100);
+
+    await userEvent.clear(input);
+    await userEvent.tab();
+    await expect(input).toHaveValue(100);
   },
 };
