@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sparkline, SparklineGroup } from './Sparkline';
-import { Rerender, expectNoRedrawOnRerender, freshCopy } from './storybook-helpers';
+import {
+  Rerender,
+  expectAccessibleChart,
+  expectNoRedrawOnRerender,
+  freshCopy,
+} from './storybook-helpers';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
 const SERVICES = [
@@ -137,4 +142,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     <Rerender>{(grown) => <Sparkline {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** A sparkline is an image: screen readers read `ariaLabel`, and it stays out of the tab order. */
+export const NamedImage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ariaLabel: 'Requests per second, last hour' },
+  play: expectAccessibleChart({ keyboard: false }),
 };

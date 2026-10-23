@@ -26,6 +26,8 @@ import { LineAreaChart, RealtimeChart, useChartTheme } from '@sckyzo/cosmos-char
 
 The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the brand color to the current Cosmos theme and accent: it subscribes to the theme class (`dark` and `deep-blue` render dark charts) and `data-accent` on `<html>`, and reads `--color-brand-500` and the gray scale from the CSS. `COSMOS_BRAND` is the default blue; use `useChartTheme().brand` to follow the accent. `brandScale` is a sequential scale of five brand steps, low to high (pale to deep in light themes, dark to bright in dark ones), and `surface` the card background; `HeatmapChart` uses both.
 
+Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, ApexCharts builds a generic name from the chart type and series names. Tab reaches a chart, and the arrow keys move from point to point and announce each one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
+
 ## Charts shipped
 
 | Chart                             | Notes                                                  |

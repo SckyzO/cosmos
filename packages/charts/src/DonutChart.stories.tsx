@@ -11,6 +11,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -135,4 +136,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     <Rerender>{(grown) => <DonutChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...BottomLegend.args, ariaLabel: 'Alerts by severity' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

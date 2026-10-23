@@ -4,9 +4,9 @@ import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import { ApexChart } from './ApexChart';
 import { readableOn, useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type RealtimeChartProps = ChartSize & {
+export type RealtimeChartProps = ChartBaseProps & {
   /** Sample generator — defaults to a noisy walk between 30 and 80. */
   generator?: () => number;
   /** Interval in ms — defaults to 2000. */
@@ -35,6 +35,7 @@ export const RealtimeChart = ({
   windowSize = 30,
   warnThreshold = 70,
   critThreshold = 85,
+  ariaLabel,
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
@@ -132,6 +133,7 @@ export const RealtimeChart = ({
       series={[{ name: 'value', data: series }]}
       height={height}
       width={width}
+      ariaLabel={ariaLabel}
     />
   );
 };

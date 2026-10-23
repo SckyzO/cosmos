@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];
@@ -128,4 +129,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     <Rerender>{(grown) => <RadarChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...SingleSeries.args, ariaLabel: 'DC1 Paris scores' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

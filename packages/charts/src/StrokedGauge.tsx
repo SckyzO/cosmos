@@ -3,9 +3,9 @@ import 'apexcharts/radialBar';
 import { ApexChart } from './ApexChart';
 import { percent } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
-export type StrokedGaugeProps = ChartSize & {
+export type StrokedGaugeProps = ChartBaseProps & {
   value: number;
   label?: string;
 };
@@ -13,6 +13,7 @@ export type StrokedGaugeProps = ChartSize & {
 export const StrokedGauge = ({
   value,
   label = '',
+  ariaLabel,
   height = 280,
   width = '100%',
 }: StrokedGaugeProps) => {
@@ -34,6 +35,14 @@ export const StrokedGauge = ({
     labels: [label],
   };
   return (
-    <ApexChart type="radialBar" options={options} series={[value]} height={height} width={width} />
+    <ApexChart
+      type="radialBar"
+      options={options}
+      series={[value]}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+      keyboard={false}
+    />
   );
 };

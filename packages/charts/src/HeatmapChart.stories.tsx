@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
@@ -181,4 +182,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...RackTemperature.args, ariaLabel: 'Rack temperature per hour' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

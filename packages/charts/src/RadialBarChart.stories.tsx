@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -219,4 +220,40 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/**
+ * Screen readers read `ariaLabel` as the chart's name; Tab reaches the chart and
+ * ↓ walks its rings, one per series.
+ */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ariaLabel: 'Node usage' },
+  play: expectAccessibleChart({ keyboard: true, next: '{ArrowDown}' }),
+};
+
+/** A gauge shows one value: screen readers read `ariaLabel`, and it stays out of the tab order. */
+export const GaugesAreNamedImages: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-label="Health score">
+        <GradientRadial value={84} label="Health" ariaLabel="Health score" />
+      </div>
+      <div data-label="Cluster load">
+        <SemiCircleGauge value={67} label="Load" ariaLabel="Cluster load" />
+      </div>
+      <div data-label="Monthly uptime">
+        <StrokedGauge value={92} label="Uptime" ariaLabel="Monthly uptime" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-label]')) {
+      await expectAccessibleChart({ keyboard: false })({
+        canvasElement: gauge,
+        args: { ariaLabel: gauge.dataset.label },
+      });
+    }
+  },
 };

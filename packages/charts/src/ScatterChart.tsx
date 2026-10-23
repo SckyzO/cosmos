@@ -10,7 +10,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml, type TooltipRow } from './tooltip';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -24,7 +24,7 @@ export type BubblePoint = ScatterPoint & {
   z: number;
 };
 
-type XYChartProps = ChartSize & {
+type XYChartProps = ChartBaseProps & {
   /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
   xTitle?: string;
   /** Title beside the y-axis. Also labels the y value in the tooltip (default `y`). */
@@ -177,7 +177,12 @@ const useXYOptions = <P extends ScatterPoint>(
 };
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
-export const ScatterChart = ({ height = 320, width = '100%', ...props }: ScatterChartProps) => {
+export const ScatterChart = ({
+  ariaLabel,
+  height = 320,
+  width = '100%',
+  ...props
+}: ScatterChartProps) => {
   const base = useXYOptions(props);
   const options: ApexOptions = {
     ...base,
@@ -191,6 +196,7 @@ export const ScatterChart = ({ height = 320, width = '100%', ...props }: Scatter
       series={props.series}
       height={height}
       width={width}
+      ariaLabel={ariaLabel}
     />
   );
 };
@@ -199,6 +205,7 @@ export const ScatterChart = ({ height = 320, width = '100%', ...props }: Scatter
 export const BubbleChart = ({
   sizeTitle = 'Size',
   formatSize = formatNumber,
+  ariaLabel,
   height = 320,
   width = '100%',
   ...props
@@ -225,6 +232,7 @@ export const BubbleChart = ({
       series={props.series}
       height={height}
       width={width}
+      ariaLabel={ariaLabel}
     />
   );
 };

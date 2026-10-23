@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
@@ -216,4 +217,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     </Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...LatencyVsLoad.args, ariaLabel: 'Latency against CPU load' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

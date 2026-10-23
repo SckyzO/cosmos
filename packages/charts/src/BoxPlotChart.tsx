@@ -6,14 +6,14 @@ import { useStableCallback, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
 /** One box, the five-number summary of a distribution. */
 export type BoxPlotSummary = [min: number, q1: number, median: number, q3: number, max: number];
 
-export type BoxPlotChartProps = ChartSize & {
+export type BoxPlotChartProps = ChartBaseProps & {
   /** One summary per category, in the order of `categories`. */
   series: { name: string; data: BoxPlotSummary[] }[];
   categories: string[];
@@ -47,6 +47,7 @@ export const BoxPlotChart = ({
   colors,
   formatValue,
   showLegend,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: BoxPlotChartProps) => {
@@ -129,6 +130,7 @@ export const BoxPlotChart = ({
       series={chartSeries}
       height={height}
       width={width}
+      ariaLabel={ariaLabel}
     />
   );
 };

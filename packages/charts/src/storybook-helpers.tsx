@@ -236,3 +236,40 @@ export const expectNoRedrawOnRerender = async ({
     updateSeries.mockRestore();
   }
 };
+
+// What a screen reader hears for the focused point: the tooltip, a polite live
+// region, or ApexCharts' status region on a chart without one (radial bars).
+const announcement = (root: HTMLElement) =>
+  (
+    root.querySelector('.apexcharts-tooltip.apexcharts-active[aria-live]') ??
+    root.querySelector('.apexcharts-sr-status')
+  )?.textContent?.trim() ?? '';
+
+/**
+ * Play function for a story passing `ariaLabel`: screen readers read it as the
+ * chart's name. With `keyboard`, Tab reaches the chart, which announces the
+ * first point, and `next` (default →) announces another; without, the chart is
+ * an image, out of the tab order.
+ */
+export const expectAccessibleChart =
+  ({ keyboard, next = '{ArrowRight}' }: { keyboard: boolean; next?: string }) =>
+  async ({ canvasElement, args }: { canvasElement: HTMLElement; args: { ariaLabel?: string } }) => {
+    // Read again at each step: a redraw after mount replaces the SVG.
+    const svg = () => canvasElement.querySelector('.apexcharts-svg');
+    await waitFor(() => expect(svg()).toHaveAttribute('aria-label', args.ariaLabel));
+    if (!keyboard) {
+      await expect(svg()).toHaveAttribute('role', 'img');
+      await expect(svg()).not.toHaveAttribute('tabindex');
+      return;
+    }
+    await expect(svg()).toHaveAttribute('role', 'application');
+    await userEvent.tab();
+    await expect(svg()).toHaveFocus();
+    await waitFor(() => expect(announcement(canvasElement)).not.toBe(''));
+    const first = announcement(canvasElement);
+    await userEvent.keyboard(next);
+    await waitFor(() => {
+      expect(announcement(canvasElement)).not.toBe('');
+      expect(announcement(canvasElement)).not.toBe(first);
+    });
+  };

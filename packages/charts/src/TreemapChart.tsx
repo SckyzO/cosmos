@@ -3,15 +3,20 @@ import 'apexcharts/treemap';
 import { ApexChart } from './ApexChart';
 import { useStableCallback } from './formatters';
 import { readableOn, useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type TreemapDatum = { x: string; y: number };
 
-export type TreemapChartProps = ChartSize & {
+export type TreemapChartProps = ChartBaseProps & {
   series: { name?: string; data: TreemapDatum[] }[];
 };
 
-export const TreemapChart = ({ series, height = 320, width = '100%' }: TreemapChartProps) => {
+export const TreemapChart = ({
+  series,
+  ariaLabel,
+  height = 320,
+  width = '100%',
+}: TreemapChartProps) => {
   const { palette, tooltipTheme } = useChartTheme();
   // A tile's label color, from the palette also passed as `colors`.
   const tileLabelColor = useStableCallback(({ dataPointIndex }: { dataPointIndex: number }) =>
@@ -34,6 +39,13 @@ export const TreemapChart = ({ series, height = 320, width = '100%' }: TreemapCh
     plotOptions: { treemap: { distributed: true, enableShades: false } },
   };
   return (
-    <ApexChart type="treemap" options={options} series={series} height={height} width={width} />
+    <ApexChart
+      type="treemap"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
   );
 };

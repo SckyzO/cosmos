@@ -9,6 +9,7 @@ import {
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
+  expectAccessibleChart,
 } from './storybook-helpers';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
@@ -178,4 +179,11 @@ export const RerenderWithEqualPropsDoesNotRedraw: Story = {
     <Rerender>{(grown) => <MixedChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
   ),
   play: expectNoRedrawOnRerender,
+};
+
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+export const NamedAndKeyboardReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...RequestsAndLatency.args, ariaLabel: 'Requests and latency every two hours' },
+  play: expectAccessibleChart({ keyboard: true }),
 };

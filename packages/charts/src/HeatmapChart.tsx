@@ -5,7 +5,7 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartSize } from './types';
+import type { ChartBaseProps } from './types';
 
 export type HeatmapColorRange = {
   /** Lowest value of the range, inclusive. */
@@ -17,7 +17,7 @@ export type HeatmapColorRange = {
   name?: string;
 };
 
-export type HeatmapChartProps = ChartSize & {
+export type HeatmapChartProps = ChartBaseProps & {
   /** One row per series, drawn top to bottom; one value per category. */
   series: { name: string; data: number[] }[];
   categories: (string | number)[];
@@ -96,6 +96,7 @@ export const HeatmapChart = ({
   formatValue,
   showValues = false,
   showLegend = true,
+  ariaLabel,
   height = 320,
   width = '100%',
 }: HeatmapChartProps) => {
@@ -168,6 +169,13 @@ export const HeatmapChart = ({
   };
 
   return (
-    <ApexChart type="heatmap" options={options} series={series} height={height} width={width} />
+    <ApexChart
+      type="heatmap"
+      options={options}
+      series={series}
+      height={height}
+      width={width}
+      ariaLabel={ariaLabel}
+    />
   );
 };
