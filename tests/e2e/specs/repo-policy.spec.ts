@@ -93,6 +93,19 @@ test('pnpm refuses trust downgrades and exotic subdependencies', () => {
   expect(workspace).toMatch(/^blockExoticSubdeps: true$/m);
 });
 
+test('a dependency with an unreviewed install script fails the install', () => {
+  const workspace = read('pnpm-workspace.yaml');
+  expect(workspace).toMatch(/^strictDepBuilds: true$/m);
+  // Only esbuild has one; allowing another package is a review decision.
+  const allowed = /^allowBuilds:\n((?: {2}.+\n)+)/m.exec(workspace)?.[1] ?? '';
+  expect(
+    allowed
+      .trim()
+      .split('\n')
+      .map((l) => l.trim())
+  ).toEqual(['esbuild: true']);
+});
+
 test('CI scans the whole git history for secrets', () => {
   // The upstream gitleaks hook scans staged changes, and a CI checkout has
   // none: it passed with a token committed in the PR.

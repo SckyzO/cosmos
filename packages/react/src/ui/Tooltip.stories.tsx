@@ -222,16 +222,23 @@ export const WithTitle: Story = {
 export const DelayedWithoutArrow: Story = {
   render: () => (
     <Wrap>
-      <Tooltip content="Refresh the data" delay={300} arrow={false}>
-        <Button variant="secondary" size="sm">
-          Refresh
-        </Button>
-      </Tooltip>
+      <div className="flex gap-3">
+        <Tooltip content="Refresh the data" delay={300} arrow={false}>
+          <Button variant="secondary" size="sm">
+            Refresh
+          </Button>
+        </Tooltip>
+        <Tooltip content="Export as CSV" delay={300} arrow={false}>
+          <Button variant="secondary" size="sm">
+            Export
+          </Button>
+        </Tooltip>
+      </div>
     </Wrap>
   ),
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Refresh' });
-    const tip = canvas.getByRole('tooltip');
+    const tip = canvas.getByRole('tooltip', { name: /Refresh the data/ });
     await expect(tip.querySelector('[aria-hidden]')).toBeNull();
 
     // Shows only after the delay.
@@ -241,10 +248,16 @@ export const DelayedWithoutArrow: Story = {
     await userEvent.unhover(trigger);
     await waitFor(() => expect(tip).not.toBeVisible());
 
-    // Escape during the delay cancels the pending show.
+    // Escape during the delay cancels the pending show. A show that never
+    // comes can't be waited for, so race it against the second tooltip: it
+    // starts after the Escape with the same delay, so a show still pending on
+    // the first one would have fired before this one is visible. Focus, not
+    // the pointer, starts it: moving the pointer would cancel the first show
+    // on its own.
     await userEvent.hover(trigger);
     await userEvent.keyboard('{Escape}');
-    await new Promise((r) => setTimeout(r, 450));
+    canvas.getByRole('button', { name: 'Export' }).focus();
+    await waitFor(() => expect(canvas.getByRole('tooltip', { name: /Export/ })).toBeVisible());
     await expect(tip).not.toBeVisible();
   },
 };

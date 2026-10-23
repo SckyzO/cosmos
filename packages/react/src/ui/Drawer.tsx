@@ -123,7 +123,9 @@ const Root = ({
         inert={!open}
         aria-hidden={open ? undefined : true}
         onTransitionEnd={(e) => {
-          if (!open && e.target === e.currentTarget && e.propertyName === 'transform') {
+          // Tailwind 4 slides the panel with the `translate` property, so that
+          // is the one that ends, not `transform`.
+          if (!open && e.target === e.currentTarget && e.propertyName === 'translate') {
             setHidden(true);
           }
         }}

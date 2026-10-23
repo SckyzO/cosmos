@@ -1,13 +1,7 @@
 import { clsx } from 'clsx';
 import { File as FileIcon, Upload, X } from 'lucide-react';
 import { useCallback, useId, useRef, useState, type DragEvent, type ReactNode } from 'react';
-
-const formatBytes = (n: number): string => {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
-};
+import { formatBytes } from './formatBytes';
 
 export type DropzoneProps = {
   label?: string;

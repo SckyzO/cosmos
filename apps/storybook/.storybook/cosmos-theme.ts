@@ -1,7 +1,8 @@
 import { create } from 'storybook/theming';
 import type { ThemeVars } from 'storybook/theming';
+import type { CosmosTheme } from '../../../packages/react/src';
 
-/**
+/*
  * Storybook chrome themes — one per Cosmos theme, used for the **manager** UI
  * (sidebar + toolbar, switched live in `manager.ts`) and the **docs** pages
  * (`CosmosDocsContainer.tsx`). Both follow the toolbar's Theme global, so the
@@ -10,12 +11,12 @@ import type { ThemeVars } from 'storybook/theming';
  * Hex values mirror the semantic tokens of each theme block in
  * `@sckyzo/cosmos-theme/vars` (bg-base, bg-panel, bg-elevated, border,
  * text-*). Storybook runs some of them through color helpers that don't parse
- * `oklch()`, so they stay hex.
+ * `oklch()`, so they stay hex. `PALETTES` is keyed by `CosmosTheme`, so the
+ * compiler flags a theme added to that type without a palette here.
  */
-export type CosmosThemeName = 'light' | 'sand' | 'dark' | 'deep-blue';
 
 /** Theme the canvas and the chrome start on (`initialGlobals.theme`). */
-export const DEFAULT_THEME: CosmosThemeName = 'dark';
+export const DEFAULT_THEME: CosmosTheme = 'dark';
 
 type Palette = {
   base: 'light' | 'dark';
@@ -27,7 +28,7 @@ type Palette = {
   textSecondary: string;
 };
 
-const PALETTES: Record<CosmosThemeName, Palette> = {
+const PALETTES: Record<CosmosTheme, Palette> = {
   light: {
     base: 'light',
     bgBase: '#f9fafb',
@@ -101,10 +102,8 @@ const build = (p: Palette): ThemeVars =>
 
 const THEMES = Object.fromEntries(
   Object.entries(PALETTES).map(([name, palette]) => [name, build(palette)])
-) as Record<CosmosThemeName, ThemeVars>;
+) as Record<CosmosTheme, ThemeVars>;
 
 /** Chrome theme for a `theme` global value; unknown or unset → the default. */
 export const chromeThemeFor = (name: unknown): ThemeVars =>
-  typeof name === 'string' && name in THEMES
-    ? THEMES[name as CosmosThemeName]
-    : THEMES[DEFAULT_THEME];
+  typeof name === 'string' && name in THEMES ? THEMES[name as CosmosTheme] : THEMES[DEFAULT_THEME];

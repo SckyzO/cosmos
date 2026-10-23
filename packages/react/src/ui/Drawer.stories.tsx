@@ -225,14 +225,54 @@ export const ClosedDrawerIsNotFocusable: Story = {
     const trigger = canvas.getByRole('button', { name: 'Open drawer' });
     await userEvent.click(trigger);
     await waitFor(() => expect(inDialog(document.activeElement)).toBe(true));
+
+    // Let the slide-in finish first: closing a panel that has not moved yet
+    // runs no slide-out at all.
+    const panel = within(document.body).getByRole('dialog');
+    const transitionsEnd = () => Promise.all(panel.getAnimations().map((a) => a.finished));
+    await transitionsEnd();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(document.activeElement).toBe(trigger));
 
     // Once the slide-out has run, the panel is still out of reach.
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await transitionsEnd();
     after.focus();
     await userEvent.tab();
     await expect(inDialog(document.activeElement)).toBe(false);
+  },
+};
+
+/**
+ * Once its slide-out ends, a closed drawer is no longer painted (`invisible`),
+ * not just parked off-screen. The panel slides with the `translate` property,
+ * which is what Tailwind 4 animates, so the end of the slide has to be
+ * recognized by it.
+ */
+export const ClosedDrawerIsInvisible: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <Button onClick={() => setOpen(true)}>Open drawer</Button>
+        <Drawer open={open} onClose={() => setOpen(false)}>
+          <Drawer.Header title="Panel" onClose={() => setOpen(false)} />
+        </Drawer>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open drawer' }));
+    const panel = await within(document.body).findByRole('dialog');
+    const slideEnds = () => Promise.all(panel.getAnimations().map((a) => a.finished));
+    // Let the slide-in finish first: closing a panel that has not moved yet
+    // runs no slide-out at all.
+    await slideEnds();
+    await expect(panel).toBeVisible();
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Close drawer' }));
+    await slideEnds();
+    await waitFor(() => expect(panel).not.toBeVisible());
   },
 };
 
