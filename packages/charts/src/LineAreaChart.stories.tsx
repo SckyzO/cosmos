@@ -7,6 +7,7 @@ import {
   expectTooltipFollowsTheme,
   hover,
   legendTexts,
+  resolveColor,
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
@@ -16,6 +17,8 @@ import {
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
 const WEEKS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
 const HOURLY = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
+const STATUS_COLORS = ['#10b981', '#ef4444'];
+const ms = (v: number) => `${v} ms`;
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -106,6 +109,27 @@ export const CompactHeight: Story = {
   },
 };
 
+/** `colors` overrides the palette, here with the status colors. */
+export const CustomColors: Story = {
+  args: {
+    colors: STATUS_COLORS,
+    series: [
+      { name: 'Healthy nodes', data: [118, 120, 119, 112, 109, 114, 117, 120, 121] },
+      { name: 'Failed nodes', data: [4, 2, 3, 10, 13, 8, 5, 2, 1] },
+    ],
+    categories: HOURS,
+  },
+};
+
+/** `formatValue` formats the y-axis labels and the tooltip values. */
+export const FormattedValues: Story = {
+  args: {
+    formatValue: ms,
+    series: [{ name: 'p95 latency', data: [118, 124, 131, 172, 160, 141, 150, 184, 137] }],
+    categories: HOURS,
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** A multi-series chart shows one legend entry per series, in order. */
@@ -130,6 +154,41 @@ export const SingleSeriesHasNoLegend: Story = {
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(canvasElement.querySelector('.apexcharts-series')).not.toBeNull());
     await expect(legendTexts(canvasElement)).toEqual([]);
+  },
+};
+
+/** Each series line takes the color of its index in `colors`. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: CustomColors.args,
+  play: async ({ canvasElement }) => {
+    // Each series draws its gradient fill, then its line: an unfilled path.
+    const strokes = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-series')].map((series) =>
+        resolveColor(
+          series.querySelector('.apexcharts-area[fill="none"]')?.getAttribute('stroke') ?? ''
+        )
+      );
+    await waitFor(() => expect(strokes()).toEqual(STATUS_COLORS));
+  },
+};
+
+/** `formatValue` formats the y-axis labels and the tooltip values. */
+export const FormatValueFormatsLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: FormattedValues.args,
+  play: async ({ canvasElement }) => {
+    const yLabels = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
+    await waitFor(() => expect(yLabels().length).toBeGreaterThan(1));
+    for (const label of yLabels()) expect(label).toMatch(/^\d+ ms$/);
+
+    await waitFor(() => {
+      hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.05);
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
+        '118 ms'
+      );
+    });
   },
 };
 
@@ -215,7 +274,7 @@ export const TooltipFollowsTheme: Story = {
  */
 export const RerenderWithEqualPropsDoesNotRedraw: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...Basic.args },
+  args: { ...Basic.args, colors: STATUS_COLORS, formatValue: ms },
   render: (args) => (
     <Rerender>
       {(grown) => <LineAreaChart {...freshCopy(args)} height={grown ? 400 : 320} />}
