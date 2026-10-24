@@ -140,7 +140,8 @@ function NotificationsPanelTrigger({
     <button
       ref={mergeRefs(triggerRef, ref)}
       type="button"
-      aria-label={muted ? 'Notifications (muted)' : 'Notifications'}
+      // The badge is visible text, so the name has to contain it (`label-content-name-mismatch`).
+      aria-label={`${muted ? 'Notifications (muted)' : 'Notifications'}${count > 0 ? `, ${display}` : ''}`}
       aria-expanded={open}
       onClick={() => setOpen(!open)}
       className={clsx(
