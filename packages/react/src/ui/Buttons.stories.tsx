@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
-import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import { expectRefFocuses, expectTextContrast, inEachTheme } from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -293,6 +293,70 @@ export const DangerContrastInLight: Story = {
   args: { intent: 'danger', children: 'Delete' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByRole('button', { name: 'Delete' }));
+  },
+};
+
+// `variant` is the emphasis and `intent` the color: every pair of the two keeps one look.
+const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
+const INTENTS = ['brand', 'danger'] as const;
+
+export const IntentColorsEachVariant: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-3">
+        {INTENTS.map((intent) => (
+          <div key={intent} className="flex flex-wrap items-center gap-3">
+            {EMPHASES.map((variant) => (
+              <Button key={variant} variant={variant} intent={intent}>
+                {variant} {intent}
+              </Button>
+            ))}
+          </div>
+        ))}
+        <Button>default</Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const button = (name: string) => canvas.getByRole('button', { name });
+
+    // The accent: what each variant looked like before `intent` existed.
+    await expect(button('primary brand')).toHaveClass('bg-brand-500', 'text-white', 'shadow-sm');
+    await expect(button('secondary brand')).toHaveClass('bg-white', 'text-gray-700', 'border');
+    await expect(button('ghost brand')).toHaveClass('text-gray-600');
+    await expect(button('soft brand')).toHaveClass('bg-brand-50', 'text-brand-700');
+
+    // `variant="primary" intent="danger"` is the old `variant="danger"`.
+    await expect(button('primary danger')).toHaveClass(
+      'bg-red-600',
+      'hover:bg-red-700',
+      'text-white',
+      'shadow-sm',
+      'disabled:opacity-50'
+    );
+    await expect(button('primary danger')).not.toHaveClass('bg-brand-500');
+    // The other emphases get a red counterpart in their own style.
+    await expect(button('secondary danger')).toHaveClass(
+      'bg-white',
+      'border',
+      'border-red-200',
+      'text-red-700'
+    );
+    await expect(button('ghost danger')).toHaveClass('text-red-700', 'hover:bg-red-50');
+    await expect(button('ghost danger')).not.toHaveClass('border');
+    await expect(button('soft danger')).toHaveClass('bg-red-50', 'text-red-700');
+    await expect(button('soft danger')).not.toHaveClass('bg-brand-50');
+
+    // No intent is `brand`.
+    await expect(button('default').className).toBe(button('primary brand').className);
+
+    // Red text stays readable in every theme.
+    inEachTheme(() => {
+      for (const name of ['secondary danger', 'ghost danger', 'soft danger', 'primary danger']) {
+        expectTextContrast(button(name));
+      }
+    });
   },
 };
 

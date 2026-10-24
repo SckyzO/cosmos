@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { Tooltip, TooltipHelp } from './Tooltip';
+import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
 
@@ -155,6 +155,70 @@ export const HelpIconOpensOnFocus: Story = {
     await expect(help).toHaveFocus();
     await waitFor(() => expect(canvas.getByRole('tooltip')).toBeVisible());
     await expect(help).toHaveAccessibleDescription('Share of failed requests allowed this month.');
+  },
+};
+
+// ── Surface and intent ───────────────────────────────────────────────────────
+
+const BOXES: { label: string; props: Pick<TooltipProps, 'variant' | 'intent'> }[] = [
+  { label: 'dark', props: {} },
+  { label: 'white', props: { variant: 'white' } },
+  { label: 'brand', props: { intent: 'brand' } },
+  { label: 'success', props: { intent: 'success' } },
+  { label: 'warning', props: { intent: 'warning' } },
+  { label: 'danger', props: { intent: 'danger' } },
+  // The intent colors the tooltip over its surface.
+  { label: 'white danger', props: { variant: 'white', intent: 'danger' } },
+];
+
+/** `variant` is the surface and `intent` colors the tooltip over it: box and arrow, as the old variants did. */
+export const IntentColorsTheTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-6">
+        {BOXES.map(({ label, props }) => (
+          <Tooltip key={label} {...props} content={`${label} tip`}>
+            <Button variant="secondary" size="sm">
+              {label}
+            </Button>
+          </Tooltip>
+        ))}
+        <TooltipHelp text="help danger tip" intent="danger" />
+        <TooltipHelp text="help white tip" variant="white" />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const box = (label: string) => canvas.getByText(label);
+    const arrow = (label: string) => box(label).querySelector('[aria-hidden]')!;
+
+    await expect(box('dark tip')).toHaveClass('bg-gray-900', 'text-white');
+    await expect(arrow('dark tip')).toHaveClass('bg-gray-900');
+    await expect(box('white tip')).toHaveClass('bg-white', 'text-gray-700', 'border-gray-200');
+    await expect(arrow('white tip')).toHaveClass('bg-white', 'border-gray-200');
+
+    const intents = {
+      'brand tip': ['bg-brand-500', 'text-white'],
+      'success tip': ['bg-green-700', 'text-white'],
+      'warning tip': ['bg-amber-400', 'text-gray-900'],
+      'danger tip': ['bg-red-600', 'text-white'],
+    };
+    for (const [label, classes] of Object.entries(intents)) {
+      await expect(box(label)).toHaveClass(...classes);
+      await expect(box(label)).not.toHaveClass('bg-gray-900', 'bg-white');
+      await expect(arrow(label)).toHaveClass(classes[0]);
+    }
+
+    // With an intent, the surface is not drawn.
+    await expect(box('white danger tip')).toHaveClass('bg-red-600');
+    await expect(box('white danger tip')).not.toHaveClass('bg-white', 'border-gray-200');
+    await expect(arrow('white danger tip')).toHaveClass('bg-red-600');
+    await expect(arrow('white danger tip')).not.toHaveClass('bg-white');
+
+    // TooltipHelp forwards both.
+    await expect(box('help danger tip')).toHaveClass('bg-red-600');
+    await expect(box('help white tip')).toHaveClass('bg-white');
   },
 };
 

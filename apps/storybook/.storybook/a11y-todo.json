@@ -2,6 +2,7 @@
   "actions-stateful-save-button--all-states": ["color-contrast"],
   "actions-stateful-save-button--error-state": ["color-contrast"],
   "atoms-badge--appearance-matrix": ["color-contrast"],
+  "atoms-badge--intent-colors-the-solid-badge": ["color-contrast"],
   "atoms-badge--solid": ["color-contrast"],
   "atoms-badge--solid-with-icon": ["color-contrast"],
   "atoms-clipboard--api-keys-card": ["label"],
