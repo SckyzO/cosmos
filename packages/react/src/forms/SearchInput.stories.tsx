@@ -76,3 +76,31 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(searchRef, canvas.getByPlaceholderText('Search…'));
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="max-w-md space-y-3">
+      <SearchInput aria-label="Uncontrolled" defaultValue="rack" onChange={args.onChange} />
+      <SearchInput aria-label="Controlled" value="node" onChange={args.onChange} />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('textbox', { name: 'Uncontrolled' });
+    await expect(own).toHaveValue('rack');
+    await userEvent.type(own, '-1');
+    await expect(args.onChange).toHaveBeenLastCalledWith('rack-1');
+    await expect(own).toHaveValue('rack-1');
+
+    const held = canvas.getByRole('textbox', { name: 'Controlled' });
+    await userEvent.type(held, 's');
+    await expect(args.onChange).toHaveBeenLastCalledWith('nodes');
+    await expect(held).toHaveValue('node');
+  },
+};

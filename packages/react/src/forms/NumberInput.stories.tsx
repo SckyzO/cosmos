@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
 import { NumberInput, type NumberInputProps } from './NumberInput';
 
@@ -284,5 +284,45 @@ export const StackedForwardsRef: Story = {
   ),
   play: async ({ canvas }) => {
     await expectRefFocuses(stackedRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <div role="group" aria-label="Uncontrolled">
+        <NumberInput aria-label="Replicas" defaultValue={5} max={6} onChange={args.onChange} />
+      </div>
+      <div role="group" aria-label="Controlled">
+        <NumberInput aria-label="Replicas" value={10} onChange={args.onChange} />
+      </div>
+      <div role="group" aria-label="No default">
+        <NumberInput aria-label="Replicas" min={3} />
+      </div>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('group', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('spinbutton')).toHaveValue(5);
+    await userEvent.click(own.getByRole('button', { name: 'Increase' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith(6);
+    await expect(own.getByRole('spinbutton')).toHaveValue(6);
+    await expect(own.getByRole('button', { name: 'Increase' })).toBeDisabled();
+
+    const held = within(canvas.getByRole('group', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('button', { name: 'Increase' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith(11);
+    await expect(held.getByRole('spinbutton')).toHaveValue(10);
+
+    // Without a default, 0 brought within min…max.
+    const bare = within(canvas.getByRole('group', { name: 'No default' }));
+    await expect(bare.getByRole('spinbutton')).toHaveValue(3);
   },
 };

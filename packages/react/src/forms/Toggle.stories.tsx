@@ -108,3 +108,31 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(toggleRef, canvas.getByRole('switch', { name: 'Notifications' }));
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultCheckedOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <Toggle label="Uncontrolled" defaultChecked onChange={args.onChange} />
+      <Toggle label="Controlled" checked={false} onChange={args.onChange} />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('switch', { name: 'Uncontrolled' });
+    await expect(own).toBeChecked();
+    await userEvent.click(own);
+    await expect(args.onChange).toHaveBeenLastCalledWith(false);
+    await expect(own).not.toBeChecked();
+
+    const held = canvas.getByRole('switch', { name: 'Controlled' });
+    await userEvent.click(held);
+    await expect(args.onChange).toHaveBeenLastCalledWith(true);
+    await expect(held).not.toBeChecked();
+  },
+};
