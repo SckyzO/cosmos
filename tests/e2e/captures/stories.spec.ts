@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { test, type Page } from '@playwright/test';
 
 // Visual review: one PNG per story and theme, in screenshots/<theme>/<story-id>.png.
@@ -21,6 +21,11 @@ type Preview = {
 
 const matches = (value: string, filter: string | undefined) =>
   !filter || filter.split(',').some((part) => value.includes(part.trim()));
+
+// A story is captured once two frames taken this far apart (ms) are identical,
+// after at most this many frames.
+const SETTLE_PAUSE = 100;
+const SETTLE_FRAMES = 10;
 
 /**
  * Opens a story in a theme and waits for its render to end. `sb-show-main` on
@@ -47,6 +52,25 @@ const openStory = async (page: Page, id: string, theme: string, themes: string[]
     },
     [theme, themes] as const
   );
+};
+
+/**
+ * Screenshots the page until two consecutive frames are byte-identical. The
+ * render phase ends before everything has stopped moving (a carousel still
+ * scrolling, a chart redrawing, a panel finishing its transition), so a single
+ * frame differs from one run to the next. A page that never settles gives its
+ * last frame, flagged as not stable.
+ */
+const settledScreenshot = async (page: Page) => {
+  const shoot = () => page.screenshot({ fullPage: true, animations: 'disabled' });
+  let frame = await shoot();
+  for (let n = 1; n < SETTLE_FRAMES; n++) {
+    await page.waitForTimeout(SETTLE_PAUSE);
+    const next = await shoot();
+    if (next.equals(frame)) return { frame: next, stable: true };
+    frame = next;
+  }
+  return { frame, stable: false };
 };
 
 test('capture stories', async ({ context, page }) => {
@@ -86,13 +110,15 @@ test('capture stories', async ({ context, page }) => {
   });
   if (allThemes.length === 0) throw new Error('No Theme toolbar found in the Storybook preview');
   const themes = allThemes.filter((t) => matches(t, process.env.THEMES));
+  for (const theme of themes) mkdirSync(`../../screenshots/${theme}`, { recursive: true });
 
   // A few pages work through the queue side by side: ~1,100 stories × 4 themes.
   const queue = themes.flatMap((theme) => ids.map((id) => ({ id, theme })));
   const workers = Number(process.env.CAPTURE_PAGES ?? 4);
   const extra = await Promise.all(Array.from({ length: workers - 1 }, () => context.newPage()));
-  // A story that ends in the wrong theme is still captured, so the review shows
-  // it; one that can't be captured at all is skipped. Both are listed at the end.
+  // A story that ends in the wrong theme, or never stops moving, is still
+  // captured, so the review shows it; one that can't be captured at all is
+  // skipped. All are listed at the end.
   const problems: string[] = [];
   await Promise.all(
     [page, ...extra].map(async (p) => {
@@ -102,11 +128,9 @@ test('capture stories', async ({ context, page }) => {
           if (!(await openStory(p, job.id, job.theme, allThemes))) {
             problems.push(`${name}: not in its theme`);
           }
-          await p.screenshot({
-            path: `../../screenshots/${name}.png`,
-            fullPage: true,
-            animations: 'disabled',
-          });
+          const { frame, stable } = await settledScreenshot(p);
+          writeFileSync(`../../screenshots/${name}.png`, frame);
+          if (!stable) problems.push(`${name}: not stable`);
         } catch (error) {
           problems.push(`${name}: ${(error as Error).message.split('\n')[0]}`);
         }
