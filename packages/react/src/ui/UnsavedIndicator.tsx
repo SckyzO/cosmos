@@ -17,7 +17,7 @@ export const UnsavedIndicator = ({
 }: UnsavedIndicatorProps) => {
   if (!visible) return null;
   return (
-    <span className={clsx('text-xs font-medium text-amber-500 dark:text-amber-400', className)}>
+    <span className={clsx('text-xs font-medium text-amber-700 dark:text-amber-400', className)}>
       {label}
     </span>
   );
