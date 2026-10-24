@@ -52,7 +52,7 @@ its `tsconfig.json` because the packages do not depend on it.
 
 Every story test runs axe (addon-a11y) once the story has rendered and its play function has
 finished, and any violation fails the test. The exceptions are listed in
-`apps/storybook/.storybook/a11y-todo.json`, the burn-down list of #151: story id → the axe rules it
+`apps/storybook/.storybook/a11y-todo.json`, the burn-down list of #265: story id → the axe rules it
 still violates. A listed story runs in the addon's `todo` mode, so its violations are warnings in
 the Storybook Accessibility panel, but it must violate exactly the rules of its entry:
 
@@ -61,9 +61,9 @@ the Storybook Accessibility panel, but it must violate exactly the rules of its 
 - a rule that is not listed fails the test as well: an entry never grows. Fix the violation.
 
 A new story goes on the list only with rules its component's other entries already carry: a test
-story of a component with known debt (say, `nested-interactive` on every Dropzone story) inherits
-that debt instead of forcing its fix into an unrelated change. A rule the component doesn't have
-yet is a regression: fix it.
+story of a component with known debt (say, `label` on every NumberInput story) inherits that debt
+instead of forcing its fix into an unrelated change. A rule the component doesn't have yet is a
+regression: fix it.
 
 The gate is wired in `apps/storybook/.storybook/a11y-gate.ts`. axe only sees the default `dark`
 theme: check contrast in the other themes with the Theme menu and the Accessibility panel.
@@ -82,8 +82,8 @@ during the run, and writes nothing after a filtered run (a file or `-t`). Its di
 remove lines, apart from new stories carrying their component's known rules.
 
 To see what a story violates, open it in Storybook (`make storybook`), Accessibility panel. Entries
-are keyed by story id, so `grep '"forms-dropzone--' apps/storybook/.storybook/a11y-todo.json` lists
-a component's.
+are keyed by story id, so `grep '"forms-number-input--' apps/storybook/.storybook/a11y-todo.json`
+lists a component's.
 
 ### Visual review
 
@@ -228,9 +228,9 @@ The same prop means the same thing on every component.
   `useAnchorPosition` (`packages/react/src/hooks/`): a side, an alignment, an offset, re-measured
   on resize, on any scroll and when the trigger changes size. Build a new one on the internal
   `FloatingPanel` (`ui/FloatingPanel.tsx`), never `absolute` inside the component. There is no
-  collision handling: a panel opens where its placement says, even when the viewport cuts it.
-  Its stories set `parameters: portalDocsParams.lg()` (or another size) when they show it open
-  in the docs, and query it from `document.body`, not the canvas.
+  collision handling yet (#269): a panel opens where its placement says, even when the viewport
+  cuts it. Its stories set `parameters: portalDocsParams.lg()` (or another size) when they show it
+  open in the docs, and query it from `document.body`, not the canvas.
 - **One outside-click mechanism.** A mousedown outside the panel and its trigger closes it:
   `useOutsideClick` (`ui/overlayA11y.tsx`), a document listener that lets the click through to
   what is under the pointer. No full-screen click-catcher, no listener of the component's own.
@@ -289,7 +289,8 @@ bumps the minor version (`bump-minor-pre-major`).
 
 ## Merge strategy
 
-`gh pr merge --merge --delete-branch --body ''` (preserves signatures, creates a merge commit).
+`gh pr merge --merge --body ''` (preserves signatures, creates a merge commit). The repository
+deletes the head branch once it is merged.
 Do NOT use `--rebase` or `--squash` (GitHub rebuilds commits server-side, losing signatures).
 
 `--body ''` leaves the merge commit body empty. GitHub fills it with the PR title by default, and
