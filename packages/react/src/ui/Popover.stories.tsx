@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
+import { Dropdown } from './Dropdown';
 import { Popover, type PopoverPosition } from './Popover';
 
 const meta = {
@@ -332,6 +333,45 @@ export const OutsideClickClosesAndGoesThrough: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
     await waitFor(() => expect(dialog()).toBeNull());
     await expect(extra.onOutsideClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+/**
+ * A menu opened from the panel renders in its own portal, outside the panel: taking focus
+ * there or clicking one of its items doesn't count as leaving the panel.
+ */
+export const NestedMenuKeepsThePanelOpen: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-48 items-center justify-center">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Filters</Popover.Trigger>
+        <Popover.Content aria-label="Filters">
+          <Dropdown
+            label="Project"
+            options={[
+              { value: 'web', label: 'Website' },
+              { value: 'api', label: 'Public API' },
+            ]}
+          />
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const page = within(document.body);
+    await userEvent.click(canvas.getByRole('button', { name: 'Filters' }));
+    const panel = await page.findByRole('dialog', { name: 'Filters' });
+    await userEvent.click(within(panel).getByRole('button', { name: 'Project' }));
+    const menu = await page.findByRole('menu', { name: 'Project' });
+    await expect(panel.contains(menu)).toBe(false);
+    await waitFor(() =>
+      expect(within(menu).getByRole('menuitemradio', { name: 'Website' })).toHaveFocus()
+    );
+    await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Public API' }));
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    await expect(page.getByRole('dialog', { name: 'Filters' })).toBeVisible();
+    await expect(within(panel).getByRole('button', { name: 'Public API' })).toHaveFocus();
   },
 };
 

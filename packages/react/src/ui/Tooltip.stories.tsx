@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expectOutsideClip, scrollAnchor } from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -366,5 +367,62 @@ export const OpenStateDefaultOrControlled: Story = {
     await userEvent.hover(canvas.getByRole('button', { name: 'Held' }));
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
     await expect(held).not.toBeVisible();
+  },
+};
+
+// ── Floating tooltip (#151) ──────────────────────────────────────────────────
+// The tooltip renders in a portal: no `overflow: hidden` ancestor clips it, and
+// it follows its trigger while the page scrolls.
+
+/** A toolbar that clips its content no longer cuts the tooltip off. */
+export const TooltipEscapesOverflowHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div
+        data-testid="clip"
+        className="flex h-12 items-center overflow-hidden rounded-lg border px-3"
+      >
+        <Tooltip content="Deletes the selected rows" defaultOpen>
+          <Button variant="secondary" size="sm">
+            Delete
+          </Button>
+        </Tooltip>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tip = page.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    expectOutsideClip(tip, canvas.getByTestId('clip'));
+  },
+};
+
+/** The tooltip stays 10px under its trigger, centered, while the page scrolls. */
+export const TooltipFollowsTriggerOnScroll: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-64 overflow-y-auto">
+      <div className="p-6 pb-[600px]">
+        <Tooltip content="Deletes the selected rows" position="bottom" defaultOpen>
+          <Button variant="secondary" size="sm">
+            Delete
+          </Button>
+        </Tooltip>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // The tooltip is anchored on the wrapper around its trigger.
+    const anchor = canvas.getByRole('button', { name: 'Delete' }).parentElement!;
+    const tip = page.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    await scrollAnchor(canvas.getByTestId('scroller'), anchor);
+    await waitFor(() => {
+      const a = anchor.getBoundingClientRect();
+      const t = tip.getBoundingClientRect();
+      expect(t.top).toBeCloseTo(a.bottom + 10, 0);
+      expect((t.left + t.right) / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+    });
   },
 };

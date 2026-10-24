@@ -12,7 +12,12 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectFocusRing } from '../storybook-helpers';
+import {
+  expectBelow,
+  expectFocusRing,
+  expectOutsideClip,
+  scrollAnchor,
+} from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -302,4 +307,78 @@ export const MenuItemFocusShowsRingInDark: Story = {
 export const MenuItemFocusShowsRingInLight: Story = {
   ...MenuItemFocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+// ── Floating menu (#151) ─────────────────────────────────────────────────────
+// The menu renders in a portal: no `overflow: hidden` ancestor clips it, and it
+// follows its trigger while the page scrolls.
+
+/** A card that clips its content no longer cuts the menu off. */
+export const MenuEscapesOverflowHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div data-testid="clip" className="h-16 overflow-hidden rounded-lg border p-3">
+        <Dropdown label="Actions" options={ACCOUNT} />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    expectOutsideClip(await page.findByRole('menu'), canvas.getByTestId('clip'));
+  },
+};
+
+/** The menu follows its trigger on scroll; Escape and an outside click close it. */
+export const MenuFollowsTriggerAndCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-64 overflow-y-auto">
+      <div className="flex flex-col items-end gap-4 p-6 pb-[600px]">
+        <Dropdown label="Actions" options={ACCOUNT} align="right" />
+        <button type="button">Outside</button>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    await userEvent.click(trigger);
+    const menu = await page.findByRole('menu');
+    await scrollAnchor(canvas.getByTestId('scroller'), trigger);
+    await waitFor(() => expectBelow(menu, trigger, { offset: 4, align: 'end' }));
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveFocus();
+
+    await userEvent.click(trigger);
+    await page.findByRole('menu');
+    await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+  },
+};
+
+/** Tab past the last item closes the menu and moves on to the element after the trigger. */
+export const TabLeavesTheMenu: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex gap-3">
+        <Dropdown label="Actions" options={ACCOUNT} />
+        <button type="button">After</button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    const [first, last] = await page.findAllByRole('menuitemradio');
+    await waitFor(() => expect(first).toHaveFocus());
+    await userEvent.tab();
+    await expect(last).toHaveFocus();
+    await userEvent.tab();
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+  },
 };

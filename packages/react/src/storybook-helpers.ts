@@ -62,6 +62,59 @@ fn.full = () => buildParams(800);
 
 export const portalDocsParams = fn;
 
+// ── Floating panels ─────────────────────────────────────────────────────────
+
+/**
+ * Play-function assertion for a floating panel opened inside `box`, an `overflow: hidden`
+ * container: the panel's center lies outside the box, and the panel is really drawn there
+ * (the topmost element at that point belongs to it). A panel the box clips is not
+ * hit-testable outside it. A tooltip lets the pointer through, so the check lifts its
+ * `pointer-events: none` for the hit test.
+ */
+export const expectOutsideClip = (panel: HTMLElement, box: HTMLElement) => {
+  const p = panel.getBoundingClientRect();
+  const b = box.getBoundingClientRect();
+  const x = p.left + p.width / 2;
+  const y = p.top + p.height / 2;
+  const inBox = x >= b.left && x <= b.right && y >= b.top && y <= b.bottom;
+  expect(inBox, "the panel's center lies inside the box: make the box smaller").toBe(false);
+  const pointerEvents = panel.style.pointerEvents;
+  panel.style.pointerEvents = 'auto';
+  try {
+    const hit = document.elementFromPoint(x, y);
+    expect(hit && panel.contains(hit), 'the box clips the panel').toBe(true);
+  } finally {
+    panel.style.pointerEvents = pointerEvents;
+  }
+};
+
+/**
+ * Play-function assertion: `panel` sits `offset` px under `anchor`, flush with its left edge
+ * (`start`) or its right edge (`end`). Wrap it in `waitFor` after a scroll: the panel follows
+ * on the scroll event.
+ */
+export const expectBelow = (
+  panel: Element,
+  anchor: Element,
+  { offset, align }: { offset: number; align: 'start' | 'end' }
+) => {
+  const p = panel.getBoundingClientRect();
+  const a = anchor.getBoundingClientRect();
+  expect(p.top).toBeCloseTo(a.bottom + offset, 0);
+  if (align === 'start') expect(p.left).toBeCloseTo(a.left, 0);
+  else expect(p.right).toBeCloseTo(a.right, 0);
+};
+
+/**
+ * Scrolls `scroller` by `by` px and checks `anchor` moved with it, so a test that then
+ * expects a panel to follow its anchor can't pass on a scroll that did nothing.
+ */
+export const scrollAnchor = async (scroller: HTMLElement, anchor: Element, by = 30) => {
+  const top = anchor.getBoundingClientRect().top;
+  scroller.scrollTop += by;
+  await expect(anchor.getBoundingClientRect().top).toBeCloseTo(top - by, 0);
+};
+
 // Canvas round-trip: turns any CSS colour (oklch, color-mix, hex…) into RGBA bytes.
 const toRgba = (color: string) => {
   const ctx = document.createElement('canvas').getContext('2d');
