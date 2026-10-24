@@ -4,11 +4,11 @@ import type { ComponentPropsWithRef } from 'react';
 
 export type ThemeToggleSize = 'sm' | 'md';
 
-export type ThemeToggleProps = Omit<ComponentPropsWithRef<'button'>, 'onClick'> & {
+export type ThemeToggleProps = Omit<ComponentPropsWithRef<'button'>, 'onClick' | 'onChange'> & {
   /** Current theme state. `true` = dark mode active (Sun shown to switch back to light). */
   isDark: boolean;
-  /** Called when the user toggles the theme. */
-  onToggle: () => void;
+  /** Called when the user toggles the theme, with the next value of `isDark`. */
+  onChange: (isDark: boolean) => void;
   /** Visual size. `md` (default) = 40px, `sm` = 32px. */
   size?: ThemeToggleSize;
   /** Override the button title (also used as aria-label). */
@@ -23,7 +23,7 @@ const SIZE_CLASS: Record<ThemeToggleSize, { box: string; icon: string }> = {
 
 export function ThemeToggle({
   isDark,
-  onToggle,
+  onChange,
   size = 'md',
   lightLabel = 'Switch to light mode',
   darkLabel = 'Switch to dark mode',
@@ -38,7 +38,7 @@ export function ThemeToggle({
     <button
       ref={ref}
       type="button"
-      onClick={onToggle}
+      onClick={() => onChange(!isDark)}
       title={label}
       aria-label={label}
       aria-pressed={isDark}

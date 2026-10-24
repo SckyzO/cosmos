@@ -442,8 +442,8 @@ const ProfileShell = ({ children }: { children: ReactNode }) => {
             <>
               <ThemeToggle
                 isDark={isDark}
-                onToggle={() => {
-                  setIsDark((d) => !d);
+                onChange={(next) => {
+                  setIsDark(next);
                   document.documentElement.classList.toggle('dark');
                 }}
               />
