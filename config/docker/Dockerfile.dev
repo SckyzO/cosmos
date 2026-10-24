@@ -41,6 +41,14 @@ RUN npm install -g corepack@0.36.0 \
 RUN npx -y playwright@1.64.1 install-deps chromium \
  && rm -rf /var/lib/apt/lists/*
 
+# --- Root: ImageMagick, for `make visual-diff` ------------------------------
+# tests/e2e/captures/visual-diff.sh compares two captures with `compare` and
+# `identify`. A layer of its own keeps the Playwright layer above in the cache.
+# DL3008 is ignored for the reason given on the first apt-get above.
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends imagemagick \
+ && rm -rf /var/lib/apt/lists/*
+
 # --- UID/GID matching host (default 1000:1000 if not passed) ----------------
 ARG USER_UID=1000
 ARG USER_GID=1000
