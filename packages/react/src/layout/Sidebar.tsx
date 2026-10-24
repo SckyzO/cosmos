@@ -10,6 +10,7 @@ import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
 import { useControllableState } from '../hooks/useControllableState';
+import { useShell } from './shellContext';
 
 // ─── Internal context ─────────────────────────────────────────────────────────
 // Threads the `collapsed` state from <Sidebar> down to all subcomponents
@@ -86,9 +87,12 @@ const SidebarRoot = ({
     onChange: onCollapsedChange,
     name: 'Sidebar.collapsed',
   });
+  // In a Shell, the nav carries the id its SidebarToggles name in `aria-controls`.
+  const shell = useShell();
   return (
     <SidebarContext.Provider value={{ collapsed }}>
       <nav
+        id={shell?.navId}
         aria-label="Main navigation"
         style={{ width: collapsed ? collapsedWidth : width }}
         className={clsx(

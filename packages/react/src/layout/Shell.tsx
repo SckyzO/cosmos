@@ -1,6 +1,7 @@
-import { cloneElement, type ReactElement, type ReactNode } from 'react';
+import { cloneElement, useId, useMemo, type ReactElement, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { useControllableState } from '../hooks/useControllableState';
+import { ShellContext } from './shellContext';
 import type { TopbarProps } from './Topbar';
 import type { SidebarProps } from './Sidebar';
 
@@ -74,6 +75,12 @@ export const Shell = ({
     onChange: onCollapsedChange,
     name: 'Shell.sidebarCollapsed',
   });
+  const navId = useId();
+  // What every SidebarToggle in the Shell reads, a custom header's included.
+  const shell = useMemo(
+    () => ({ collapsed, setCollapsed: handleCollapsedChange, navId, collapseControl }),
+    [collapsed, handleCollapsedChange, navId, collapseControl]
+  );
 
   // Inject collapsed state into the children — keep the consumer-supplied
   // props as overrides so a story can opt out (e.g. `sidebarCollapsed={null}`
@@ -103,29 +110,31 @@ export const Shell = ({
     : sidebar;
 
   return (
-    <div
-      className={clsx(
-        'flex h-screen w-screen overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-base)]',
-        className
-      )}
-    >
-      {enhancedSidebar && <aside className="shrink-0">{enhancedSidebar}</aside>}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {enhancedTopbar && <div className="shrink-0">{enhancedTopbar}</div>}
-        <div className="flex min-h-0 flex-1">
-          <main className="min-w-0 flex-1 overflow-auto">{children}</main>
-          {secondary && (
-            <aside
-              className={clsx(
-                'shrink-0 overflow-auto border-l border-[var(--color-border)]',
-                secondaryWidthClassName
-              )}
-            >
-              {secondary}
-            </aside>
-          )}
+    <ShellContext.Provider value={sidebar ? shell : null}>
+      <div
+        className={clsx(
+          'flex h-screen w-screen overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-base)]',
+          className
+        )}
+      >
+        {enhancedSidebar && <aside className="shrink-0">{enhancedSidebar}</aside>}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {enhancedTopbar && <div className="shrink-0">{enhancedTopbar}</div>}
+          <div className="flex min-h-0 flex-1">
+            <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+            {secondary && (
+              <aside
+                className={clsx(
+                  'shrink-0 overflow-auto border-l border-[var(--color-border)]',
+                  secondaryWidthClassName
+                )}
+              >
+                {secondary}
+              </aside>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </ShellContext.Provider>
   );
 };

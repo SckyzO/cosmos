@@ -22,3 +22,4 @@ export {
   type SidebarGroupProps,
   type SidebarSectionProps,
 } from './Sidebar';
+export { SidebarToggle, type SidebarToggleProps, type SidebarToggleVariant } from './SidebarToggle';
