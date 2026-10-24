@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { expect } from 'storybook/test';
 import { FormRow } from './FormRow';
 import { Toggle } from './Toggle';
-import { SelectInput } from '../ui/SelectInput';
+import { Select } from './Select';
 import { NumberInput } from './NumberInput';
 import { SearchInput } from './SearchInput';
 import { SegmentedControl } from './SegmentedControl';
@@ -52,9 +52,10 @@ export const Stacked: Story = {
         </div>
         <div className="py-3">
           <FormRow label="Default interval" description="Time between refreshes">
-            <SelectInput
+            <Select
               value={interval}
-              onChange={setInterval}
+              onChange={(e) => setInterval(e.target.value)}
+              fullWidth={false}
               options={[
                 { label: '15s', value: '15' },
                 { label: '30s', value: '30' },
@@ -96,7 +97,7 @@ export const NamesAndDescribesItsControl: Story = {
         <SearchInput value="" onChange={() => {}} />
       </FormRow>
       <FormRow label="Default interval" description="Time between refreshes">
-        <SelectInput value="30" onChange={() => {}} options={INTERVALS} />
+        <Select value="30" onChange={() => {}} options={INTERVALS} fullWidth={false} />
       </FormRow>
       <FormRow label="View" description="Layout of the room">
         <SegmentedControl
