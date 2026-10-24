@@ -46,7 +46,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Sarah Chen',
     time: '14:32',
     icon: Rocket,
-    tone: 'success',
+    intent: 'success',
   },
   {
     id: 'alert-rule',
@@ -56,7 +56,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Marcus Lee',
     time: '11:05',
     icon: Bell,
-    tone: 'warning',
+    intent: 'warning',
   },
   {
     id: 'resolved',
@@ -66,7 +66,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Priya Patel',
     time: '09:20',
     icon: CheckCircle2,
-    tone: 'success',
+    intent: 'success',
   },
   {
     id: 'incident',
@@ -76,7 +76,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Alertmanager',
     time: '22:47',
     icon: AlertTriangle,
-    tone: 'danger',
+    intent: 'danger',
   },
   {
     id: 'scale',
@@ -86,7 +86,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Autoscaler',
     time: '18:10',
     icon: Server,
-    tone: 'brand',
+    intent: 'brand',
   },
   {
     id: 'grafana',
@@ -95,7 +95,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Marcus Lee',
     time: 'May 4',
     icon: Wrench,
-    tone: 'neutral',
+    intent: 'neutral',
   },
   {
     id: 'member',
@@ -105,7 +105,7 @@ const THIS_MONTH: TimelineItem[] = [
     meta: 'by Sarah Chen',
     time: 'May 2',
     icon: UserPlus,
-    tone: 'brand',
+    intent: 'brand',
   },
 ];
 
@@ -118,7 +118,7 @@ const OLDER: TimelineItem[] = [
     meta: 'by Sarah Chen',
     time: 'Apr 22',
     icon: Database,
-    tone: 'neutral',
+    intent: 'neutral',
   },
   {
     id: 'kubernetes',
@@ -128,7 +128,7 @@ const OLDER: TimelineItem[] = [
     meta: 'by Marcus Lee',
     time: 'Apr 9',
     icon: CheckCircle2,
-    tone: 'success',
+    intent: 'success',
   },
   {
     id: 'created',
@@ -138,7 +138,7 @@ const OLDER: TimelineItem[] = [
     meta: 'by Sarah Chen',
     time: 'Mar 14',
     icon: Rocket,
-    tone: 'brand',
+    intent: 'brand',
   },
 ];
 
@@ -173,7 +173,7 @@ const ActivityPage = () => (
     topbar={
       <Topbar
         sidebarCollapsed={false}
-        onToggleSidebar={() => {}}
+        onCollapsedChange={() => {}}
         rightActions={
           <>
             <button

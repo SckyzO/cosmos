@@ -9,8 +9,12 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, type ElementType, type ReactNode } from 'react';
+import type { Intent } from './intent';
 
-export type AnnouncementBarIntent = 'info' | 'success' | 'warning' | 'danger' | 'brand';
+export type AnnouncementBarIntent = Extract<
+  Intent,
+  'info' | 'success' | 'warning' | 'danger' | 'brand'
+>;
 
 export type AnnouncementBarProps = {
   intent?: AnnouncementBarIntent;

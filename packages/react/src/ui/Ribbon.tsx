@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import type { Intent } from './intent';
 
 export type RibbonPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-export type RibbonIntent = 'brand' | 'success' | 'warning' | 'danger' | 'neutral';
+export type RibbonIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'neutral'>;
 export type RibbonShape = 'flat' | 'angled';
 
 export type RibbonProps = {

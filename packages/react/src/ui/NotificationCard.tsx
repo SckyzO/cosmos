@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
-import { CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { Intent } from './intent';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <div class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5">
@@ -27,18 +28,20 @@ import type { ReactNode } from 'react';
 //     </div></div>
 //   </div>
 
-export type NotificationIntent = 'success' | 'info' | 'error';
+export type NotificationIntent = Extract<Intent, 'success' | 'info' | 'warning' | 'danger'>;
 
 const INTENT_ICON: Record<NotificationIntent, LucideIcon> = {
   success: CheckCircle2,
   info: Info,
-  error: XCircle,
+  warning: AlertTriangle,
+  danger: XCircle,
 };
 
 const INTENT_COLOR: Record<NotificationIntent, string> = {
   success: 'text-green-400',
   info: 'text-blue-400',
-  error: 'text-red-400',
+  warning: 'text-amber-400',
+  danger: 'text-red-400',
 };
 
 // ── Simple variant ───────────────────────────────────────────────────────────

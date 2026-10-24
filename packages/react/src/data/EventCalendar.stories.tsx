@@ -10,43 +10,43 @@ const EVENTS: CalendarEvent[] = [
     title: 'Datacenter migration',
     start: new Date(2026, 3, 29),
     end: new Date(2026, 4, 1),
-    tone: 'violet',
+    intent: 'violet',
   },
   { id: 'planning', title: 'Sprint planning', start: new Date(2026, 4, 4) },
   {
     id: 'patching',
     title: 'Kernel patching, rack A',
     start: new Date(2026, 4, 5),
-    tone: 'warning',
+    intent: 'warning',
   },
-  { id: 'release', title: 'Release 2.4', start: new Date(2026, 4, 7, 9), tone: 'success' },
+  { id: 'release', title: 'Release 2.4', start: new Date(2026, 4, 7, 9), intent: 'success' },
   {
     id: 'postmortem',
     title: 'Postmortem: API latency',
     start: new Date(2026, 4, 7, 11),
-    tone: 'danger',
+    intent: 'danger',
   },
-  { id: 'one-on-one', title: '1:1 with Sarah', start: new Date(2026, 4, 7, 14), tone: 'violet' },
-  { id: 'vendor', title: 'Vendor call', start: new Date(2026, 4, 7, 15), tone: 'info' },
-  { id: 'backup', title: 'Backup audit', start: new Date(2026, 4, 7, 16), tone: 'warning' },
+  { id: 'one-on-one', title: '1:1 with Sarah', start: new Date(2026, 4, 7, 14), intent: 'violet' },
+  { id: 'vendor', title: 'Vendor call', start: new Date(2026, 4, 7, 15), intent: 'info' },
+  { id: 'backup', title: 'Backup audit', start: new Date(2026, 4, 7, 16), intent: 'warning' },
   {
     id: 'kubecon',
     title: 'KubeCon trip',
     start: new Date(2026, 4, 9),
     end: new Date(2026, 4, 12),
-    tone: 'info',
+    intent: 'info',
   },
   { id: 'grafana', title: 'Grafana upgrade', start: new Date(2026, 4, 14) },
   { id: 'capacity', title: 'Capacity review', start: new Date(2026, 4, 19) },
-  { id: 'handover', title: 'On-call handover', start: new Date(2026, 4, 21), tone: 'violet' },
+  { id: 'handover', title: 'On-call handover', start: new Date(2026, 4, 21), intent: 'violet' },
   {
     id: 'pentest',
     title: 'Pen test window',
     start: new Date(2026, 4, 25),
     end: new Date(2026, 4, 26),
-    tone: 'danger',
+    intent: 'danger',
   },
-  { id: 'report', title: 'Quarterly report', start: new Date(2026, 4, 28), tone: 'success' },
+  { id: 'report', title: 'Quarterly report', start: new Date(2026, 4, 28), intent: 'success' },
 ];
 
 const meta = {
@@ -247,6 +247,43 @@ export const DefaultLocaleFollowsTheBrowser: Story = {
     await expect(canvas.getByRole('button', { name: fullDate.format(TODAY) })).toHaveAttribute(
       'aria-current',
       'date'
+    );
+  },
+};
+
+const CHIP_COLORS = {
+  brand: ['bg-brand-50', 'bg-brand-500'],
+  success: ['bg-green-50', 'bg-green-500'],
+  warning: ['bg-amber-50', 'bg-amber-500'],
+  danger: ['bg-red-50', 'bg-red-500'],
+  info: ['bg-blue-50', 'bg-blue-500'],
+  violet: ['bg-violet-50', 'bg-violet-500'],
+} as const;
+
+/** `intent` colors an event's chip and dot, `brand` by default; `violet` is a category color. */
+export const IntentColorsTheEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    // One event a day, so that no day folds its chips behind "+N more".
+    events: [
+      ...(Object.keys(CHIP_COLORS) as (keyof typeof CHIP_COLORS)[]).map((intent, i) => ({
+        id: intent,
+        title: `${intent} event`,
+        start: new Date(2026, 4, 4 + i),
+        intent,
+      })),
+      { id: 'default', title: 'default event', start: new Date(2026, 4, 11) },
+    ],
+  },
+  play: async ({ canvas }) => {
+    const chip = (title: string) => canvas.getByTitle(title);
+    for (const [intent, [bg, dot]] of Object.entries(CHIP_COLORS)) {
+      await expect(chip(`${intent} event`)).toHaveClass(bg);
+      await expect(chip(`${intent} event`).querySelector('span[aria-hidden]')).toHaveClass(dot);
+    }
+    await expect(chip('default event')).toHaveClass('bg-brand-50');
+    await expect(chip('default event').querySelector('span[aria-hidden]')).toHaveClass(
+      'bg-brand-500'
     );
   },
 };

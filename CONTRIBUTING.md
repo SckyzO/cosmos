@@ -159,10 +159,37 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
   it fails on the first theme × accent pair under its WCAG threshold.
 - Check visual changes in the four themes with the Storybook toolbar (Theme and Accent menus).
 
+## Component API
+
+The same prop means the same thing on every component.
+
+- **`intent` is meaning, `variant` is structure.** `intent` is a color that carries a meaning, from
+  one vocabulary: `neutral | brand | info | success | warning | danger`, the shared `Intent` type of
+  `packages/react/src/ui/intent.ts`. There are no synonyms: `error` and `crit` are `danger`, `warn`
+  is `warning`. A component may accept a documented subset, written as an `Extract<Intent, …>` (a
+  `Button` takes `brand | danger`). `variant` only describes structure or emphasis (`primary`,
+  `ghost`, `outline`, a layout), never a meaning: a destructive button is
+  `variant="primary" intent="danger"`, not a `danger` variant. A component that mixes a surface and
+  a meaning splits them in two props, as `Tooltip` does with `variant` (`dark | white`) and
+  `intent`. Two things stay out of this: the monitoring `status` of the health components (`OK`,
+  `WARN`, `CRIT`…), which is data and not a color, and decorative color names such as
+  `SectionCard.iconTone`. A color with no meaning of its own (`violet` in `EventCalendar`) is
+  documented as a category color next to the `Intent` values.
+- **Change callbacks follow the control.** A wrapper of a native field (Input, PasswordInput,
+  Textarea, Select, Checkbox, Radio, TimePicker) passes the native event: `onChange(event)`, and
+  `onChange(value, event)` for Checkbox, Radio and TimePicker. A custom widget passes the value:
+  `onChange(value)`, `onCollapsedChange(collapsed)`, `onChange(isDark)`. A callback that reports a
+  state change carries the state to move to, never a bare `onToggle()` that makes the host work it
+  out.
+- **Refs are props.** React 19 passes `ref` like any other prop, so no component uses `forwardRef`.
+  A component whose root is focusable (a button, a link, a field) takes `ref` and attaches it to
+  that element.
+
 ## PR checklist
 
 - [ ] `make ci` passes locally
 - [ ] New components have a Storybook story
+- [ ] New or changed props follow the [Component API](#component-api) rules
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
 - [ ] `a11y-todo.json` only lost lines: no story or rule added (see [Accessibility](#accessibility))
 - [ ] Visual changes : screenshot in PR description, checked in the four themes

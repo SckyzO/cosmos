@@ -476,7 +476,7 @@ const DashboardOverlaysDemo = () => {
           </Button>
         </Tooltip>
         <Tooltip content="Confirmation pattern with destructive intent">
-          <Button size="sm" variant="danger" onClick={() => setOpenConfirm(true)}>
+          <Button size="sm" intent="danger" onClick={() => setOpenConfirm(true)}>
             Delete rack…
           </Button>
         </Tooltip>

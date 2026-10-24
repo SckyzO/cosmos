@@ -1,13 +1,14 @@
 import { clsx } from 'clsx';
 import type { ElementType, ReactNode } from 'react';
+import type { Intent } from './intent';
 
-export type BadgeVariant = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info';
 export type BadgeSize = 'sm' | 'md';
 export type BadgeAppearance = 'light' | 'solid';
 
 export type BadgeProps = {
   children: ReactNode;
-  variant?: BadgeVariant;
+  /** Color of the badge. Default `neutral`. */
+  intent?: Intent;
   size?: BadgeSize;
   /** Visual style. `light` (default) = soft tinted bg + colored text. `solid` = filled bg + white text. */
   appearance?: BadgeAppearance;
@@ -17,7 +18,7 @@ export type BadgeProps = {
   className?: string;
 };
 
-const VARIANT_LIGHT: Record<BadgeVariant, string> = {
+const INTENT_LIGHT: Record<Intent, string> = {
   neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   brand: 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-400',
   success: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400',
@@ -26,7 +27,7 @@ const VARIANT_LIGHT: Record<BadgeVariant, string> = {
   info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
-const VARIANT_SOLID: Record<BadgeVariant, string> = {
+const INTENT_SOLID: Record<Intent, string> = {
   neutral: 'bg-gray-600 text-white dark:bg-gray-500',
   brand: 'bg-brand-500 text-white',
   success: 'bg-green-500 text-white',
@@ -47,20 +48,20 @@ const ICON_SIZE: Record<BadgeSize, string> = {
 
 export const Badge = ({
   children,
-  variant = 'neutral',
+  intent = 'neutral',
   size = 'md',
   appearance = 'light',
   icon: Icon,
   iconPosition = 'left',
   className,
 }: BadgeProps) => {
-  const variantMap = appearance === 'solid' ? VARIANT_SOLID : VARIANT_LIGHT;
+  const intentMap = appearance === 'solid' ? INTENT_SOLID : INTENT_LIGHT;
   const iconClass = ICON_SIZE[size];
   return (
     <span
       className={clsx(
         'inline-flex items-center rounded-full font-semibold',
-        variantMap[variant],
+        intentMap[intent],
         SIZE_CLASS[size],
         className
       )}

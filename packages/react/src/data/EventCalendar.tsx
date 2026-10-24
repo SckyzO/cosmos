@@ -2,10 +2,16 @@ import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
+import type { Intent } from '../ui/intent';
 import { Popover } from '../ui/Popover';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 
-export type EventCalendarTone = 'brand' | 'success' | 'warning' | 'danger' | 'info' | 'violet';
+/**
+ * An event's color: an `Intent`, or `violet`, a category color that carries no meaning of
+ * its own.
+ */
+export type EventCalendarIntent =
+  Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'info'> | 'violet';
 
 export type CalendarEvent = {
   id: string;
@@ -15,7 +21,7 @@ export type CalendarEvent = {
   /** Last day, inclusive. Omit for a one-day event. */
   end?: Date;
   /** Dot and chip colour. Defaults to `brand`. */
-  tone?: EventCalendarTone;
+  intent?: EventCalendarIntent;
 };
 
 export type EventCalendarProps = {
@@ -46,7 +52,7 @@ export type EventCalendarProps = {
 // Chips beyond this go behind the "+N more" button.
 const MAX_CHIPS = 3;
 
-const TONE_DOT: Record<EventCalendarTone, string> = {
+const INTENT_DOT: Record<EventCalendarIntent, string> = {
   brand: 'bg-brand-500',
   success: 'bg-green-500',
   warning: 'bg-amber-500',
@@ -55,7 +61,7 @@ const TONE_DOT: Record<EventCalendarTone, string> = {
   violet: 'bg-violet-500',
 };
 
-const TONE_CHIP: Record<EventCalendarTone, string> = {
+const INTENT_CHIP: Record<EventCalendarIntent, string> = {
   brand: 'bg-brand-50 dark:bg-brand-500/15',
   success: 'bg-green-50 dark:bg-green-500/15',
   warning: 'bg-amber-50 dark:bg-amber-500/15',
@@ -64,7 +70,7 @@ const TONE_CHIP: Record<EventCalendarTone, string> = {
   violet: 'bg-violet-50 dark:bg-violet-500/15',
 };
 
-const TONE_CHIP_HOVER: Record<EventCalendarTone, string> = {
+const INTENT_CHIP_HOVER: Record<EventCalendarIntent, string> = {
   brand: 'hover:bg-brand-100 dark:hover:bg-brand-500/25',
   success: 'hover:bg-green-100 dark:hover:bg-green-500/25',
   warning: 'hover:bg-amber-100 dark:hover:bg-amber-500/25',
@@ -117,16 +123,16 @@ const EventChip = ({
   /** In a day cell: below `sm` only the dot shows, the title stays for screen readers. */
   compact?: boolean;
 }) => {
-  const tone = event.tone ?? 'brand';
+  const intent = event.intent ?? 'brand';
   const content = (
     <>
-      <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', TONE_DOT[tone])} />
+      <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', INTENT_DOT[intent])} />
       <span className={clsx('truncate', compact && 'max-sm:sr-only')}>{event.title}</span>
     </>
   );
   const className = clsx(
     'flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-xs text-gray-700 dark:text-gray-200',
-    TONE_CHIP[tone],
+    INTENT_CHIP[intent],
     compact ? 'max-sm:bg-transparent max-sm:px-1 sm:w-full max-sm:dark:bg-transparent' : 'w-full'
   );
   if (!onClick) {
@@ -141,7 +147,7 @@ const EventChip = ({
       type="button"
       title={event.title}
       onClick={() => onClick(event)}
-      className={clsx(className, TONE_CHIP_HOVER[tone], FOCUS_RING)}
+      className={clsx(className, INTENT_CHIP_HOVER[intent], FOCUS_RING)}
     >
       {content}
     </button>
@@ -151,7 +157,7 @@ const EventChip = ({
 /**
  * EventCalendar — month view of events, with ISO weeks (Monday first).
  *
- * Each day shows up to three event chips (a tone dot and the title) and a
+ * Each day shows up to three event chips (a color dot and the title) and a
  * "+N more" button that lists the whole day. An event with an `end` repeats on
  * every day it covers. Below `sm` the chips shrink to their dots.
  *

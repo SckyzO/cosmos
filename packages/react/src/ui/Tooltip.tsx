@@ -10,9 +10,13 @@ import {
   type ReactNode,
 } from 'react';
 import { Kbd } from '../typography/Kbd';
+import type { Intent } from './intent';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
-export type TooltipVariant = 'dark' | 'white' | 'brand' | 'success' | 'warning' | 'danger';
+/** Surface of the tooltip. */
+export type TooltipVariant = 'dark' | 'white';
+/** Meaning of the tooltip: colors it over its surface. */
+export type TooltipIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
 
 const BOX_POS: Record<TooltipPosition, string> = {
   top: 'bottom-full left-1/2 -translate-x-1/2 mb-2.5',
@@ -32,6 +36,9 @@ const VARIANT_BOX: Record<TooltipVariant, string> = {
   dark: 'bg-gray-900 text-white shadow-[0_0_20px_rgba(0,0,0,0.35)] dark:bg-gray-700',
   white:
     'bg-white text-gray-700 border border-gray-200 shadow-[0_0_20px_rgba(0,0,0,0.15)] dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
+};
+
+const INTENT_BOX: Record<TooltipIntent, string> = {
   brand: 'bg-brand-500 text-white shadow-[0_0_20px_rgba(0,0,0,0.25)]',
   // Shades picked for 4.5:1 text contrast; amber is too light for white text.
   success: 'bg-green-700 text-white shadow-[0_0_20px_rgba(0,0,0,0.25)]',
@@ -42,6 +49,9 @@ const VARIANT_BOX: Record<TooltipVariant, string> = {
 const VARIANT_ARROW: Record<TooltipVariant, string> = {
   dark: 'bg-gray-900 dark:bg-gray-700',
   white: 'bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700',
+};
+
+const INTENT_ARROW: Record<TooltipIntent, string> = {
   brand: 'bg-brand-500',
   success: 'bg-green-700',
   warning: 'bg-amber-400',
@@ -52,7 +62,10 @@ export type TooltipProps = {
   content: ReactNode;
   children: ReactNode;
   position?: TooltipPosition;
+  /** Surface: `dark` (default) or `white`. Ignored while `intent` is set. */
   variant?: TooltipVariant;
+  /** Colors the tooltip by meaning, over `variant`. Unset (default) keeps the plain surface. */
+  intent?: TooltipIntent;
   /** Tailwind max-width class — default `max-w-xs` (320px) */
   maxWidth?: string;
   /** Keys shown after the content, e.g. `['⌘', 'S']`. */
@@ -75,6 +88,7 @@ export const Tooltip = ({
   children,
   position = 'top',
   variant = 'dark',
+  intent,
   maxWidth = 'max-w-xs',
   shortcut,
   title,
@@ -140,7 +154,7 @@ export const Tooltip = ({
           open ? 'opacity-100' : 'opacity-0',
           maxWidth,
           BOX_POS[position],
-          VARIANT_BOX[variant]
+          intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
         )}
       >
         {title && <span className="block font-semibold">{title}</span>}
@@ -161,7 +175,7 @@ export const Tooltip = ({
             className={clsx(
               'absolute h-2 w-2 rotate-45',
               ARROW_POS[position],
-              VARIANT_ARROW[variant]
+              intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
             )}
           />
         )}
@@ -174,12 +188,20 @@ export const TooltipHelp = ({
   text,
   position = 'top',
   variant = 'dark',
+  intent,
 }: {
   text: string;
   position?: TooltipPosition;
   variant?: TooltipVariant;
+  intent?: TooltipIntent;
 }) => (
-  <Tooltip content={text} position={position} variant={variant} maxWidth="max-w-[260px]">
+  <Tooltip
+    content={text}
+    position={position}
+    variant={variant}
+    intent={intent}
+    maxWidth="max-w-[260px]"
+  >
     {/* A button, so keyboard users can reach it and open the tooltip. */}
     <button
       type="button"

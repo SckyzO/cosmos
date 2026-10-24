@@ -73,7 +73,7 @@ export const SignInForm = ({
 
       {error && (
         <div className="mb-4">
-          <AlertBanner variant="error">{error}</AlertBanner>
+          <AlertBanner intent="danger">{error}</AlertBanner>
         </div>
       )}
 

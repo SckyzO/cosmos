@@ -43,7 +43,7 @@ export const SimpleErrorIntent: Story = {
   render: () => (
     <div className="flex justify-end p-6">
       <NotificationCard.Simple
-        intent="error"
+        intent="danger"
         title="Failed to save"
         description="The remote endpoint returned a 503. We will retry in 30 seconds."
         onDismiss={() => {}}
@@ -113,5 +113,33 @@ export const CondensedRendersActionLink: Story = {
       const root = canvasElement.querySelector('[role="status"]');
       await expect(root?.className ?? '').toMatch(/bg-gray-900/);
     });
+  },
+};
+
+/** Each `intent` colors the leading icon; `danger` is the old `error`, `warning` is new, `success` the default. */
+export const IntentColorsTheIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3 p-6">
+      <NotificationCard.Simple intent="success" title="success card" />
+      <NotificationCard.Simple intent="info" title="info card" />
+      <NotificationCard.Simple intent="warning" title="warning card" />
+      <NotificationCard.Simple intent="danger" title="danger card" />
+      <NotificationCard.Simple title="default card" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const icon = (title: string) =>
+      canvas.getByText(title).closest('[role="status"]')!.querySelector('svg')!;
+    await expect(icon('success card')).toHaveClass('text-green-400');
+    await expect(icon('info card')).toHaveClass('text-blue-400');
+    await expect(icon('warning card')).toHaveClass('text-amber-400');
+    await expect(icon('danger card')).toHaveClass('text-red-400');
+    await expect(icon('default card')).toHaveClass('text-green-400');
+    // Four intents, four glyphs.
+    const glyphs = new Set(
+      ['success', 'info', 'warning', 'danger'].map((i) => icon(`${i} card`).innerHTML)
+    );
+    await expect(glyphs.size).toBe(4);
   },
 };
