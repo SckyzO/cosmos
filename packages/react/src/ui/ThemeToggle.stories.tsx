@@ -8,7 +8,7 @@ const meta = {
   component: ThemeToggle,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-  args: { isDark: false, onToggle: fn() },
+  args: { isDark: false, onChange: fn() },
 } satisfies Meta<typeof ThemeToggle>;
 
 export default meta;
@@ -24,7 +24,7 @@ export const Controlled: Story = {
     const [dark, setDark] = useState(args.isDark);
     return (
       <div className="space-y-2">
-        <ThemeToggle isDark={dark} onToggle={() => setDark((d) => !d)} />
+        <ThemeToggle isDark={dark} onChange={setDark} />
         <p className="text-xs text-[var(--color-text-muted)]">
           Current: <code>{dark ? 'dark' : 'light'}</code>
         </p>
@@ -35,22 +35,53 @@ export const Controlled: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-export const ClickFiresToggle: Story = {
-  args: { isDark: false, onToggle: fn() },
+export const ClickFiresOnChange: Story = {
+  args: { isDark: false, onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to dark mode/i });
     await expect(button).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(button);
-    await expect(args.onToggle).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith(true);
   },
 };
 
-export const DarkClickFiresToggle: Story = {
-  args: { isDark: true, onToggle: fn() },
+export const DarkClickFiresOnChange: Story = {
+  args: { isDark: true, onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to light mode/i });
     await expect(button).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(button);
-    await expect(args.onToggle).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith(false);
+  },
+};
+
+/** Click, Enter and Space each call `onChange` with the next value of `isDark`. */
+export const EveryActivationPassesTheNextValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { isDark: false, onChange: fn() },
+  render: (args) => {
+    const [dark, setDark] = useState(args.isDark);
+    return (
+      <ThemeToggle
+        isDark={dark}
+        onChange={(next) => {
+          args.onChange(next);
+          setDark(next);
+        }}
+      />
+    );
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /switch to dark mode/i }));
+    await expect(args.onChange).toHaveBeenLastCalledWith(true);
+
+    canvas.getByRole('button', { name: /switch to light mode/i }).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith(false);
+    await userEvent.keyboard(' ');
+    await expect(args.onChange).toHaveBeenLastCalledWith(true);
+    await expect(args.onChange).toHaveBeenCalledTimes(3);
   },
 };

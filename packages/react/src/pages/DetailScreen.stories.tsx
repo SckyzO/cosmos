@@ -88,7 +88,7 @@ export const Sidebar_: Story = {
         topbar={
           <Topbar
             sidebarCollapsed={false}
-            onToggleSidebar={() => {}}
+            onCollapsedChange={() => {}}
             center={
               <div className="relative max-w-md">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -153,7 +153,7 @@ export const Sidebar_: Story = {
                   Planetaria <span className="text-[var(--color-text-muted)]">/</span> mobile-api
                 </h1>
               </div>
-              <Badge variant="success">Production</Badge>
+              <Badge intent="success">Production</Badge>
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
               Deploys from GitHub via main branch
@@ -201,7 +201,7 @@ export const Sidebar_: Story = {
                       </td>
                       <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
                         <span className="font-mono">{row.commit}</span>{' '}
-                        <Badge variant="neutral" size="sm">
+                        <Badge intent="neutral" size="sm">
                           main
                         </Badge>
                       </td>

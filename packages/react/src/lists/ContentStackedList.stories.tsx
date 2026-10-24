@@ -87,7 +87,7 @@ const PROJECTS: Project[] = [
   },
 ];
 
-const STATUS_VARIANT = {
+const STATUS_INTENT = {
   Complete: 'success' as const,
   'In progress': 'info' as const,
   Archived: 'neutral' as const,
@@ -166,7 +166,7 @@ export const ProjectsWithBadgeAndActions: Story = {
         <ContentStackedList.Item
           key={p.name}
           title={p.name}
-          badge={<Badge variant={STATUS_VARIANT[p.status]}>{p.status}</Badge>}
+          badge={<Badge intent={STATUS_INTENT[p.status]}>{p.status}</Badge>}
           meta={[
             <span key="d">
               Due on <time>{p.due}</time>
@@ -272,7 +272,7 @@ export const BadgeRendersInsideTitleRow: Story = {
     <ContentStackedList>
       <ContentStackedList.Item
         title="My project"
-        badge={<Badge variant="success">Complete</Badge>}
+        badge={<Badge intent="success">Complete</Badge>}
       />
     </ContentStackedList>
   ),

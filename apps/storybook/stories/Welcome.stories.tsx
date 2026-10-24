@@ -434,7 +434,7 @@ const WelcomePage = ({
           <Button variant="secondary" size="sm">
             Secondary
           </Button>
-          <Button variant="danger" size="sm">
+          <Button intent="danger" size="sm">
             Danger
           </Button>
         </PreviewCard>

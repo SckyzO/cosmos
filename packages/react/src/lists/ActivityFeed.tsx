@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import type { Intent } from '../ui/intent';
 
 // TUI Plus reference (Pattern 1 — "Simple with icons"):
 //   <ul role="list" class="-mb-8">
@@ -35,7 +36,10 @@ import {
 // the canonical headless-ui-pro demo (the docs page itself shows solid
 // `bg-gray-200`).
 
-export type ActivityFeedIntent = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+export type ActivityFeedIntent = Extract<
+  Intent,
+  'neutral' | 'info' | 'success' | 'warning' | 'danger'
+>;
 
 const INTENT_BG: Record<ActivityFeedIntent, string> = {
   neutral: 'bg-gray-400 dark:bg-gray-600',

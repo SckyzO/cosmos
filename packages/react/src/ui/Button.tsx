@@ -1,7 +1,11 @@
 import { clsx } from 'clsx';
 import type { ButtonHTMLAttributes, ElementType, ReactNode, Ref } from 'react';
+import type { Intent } from './intent';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'soft';
+/** Emphasis: how loud the button is. Its color is the `intent`. */
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'soft';
+/** Meaning: the accent (`brand`, default) or a destructive action (`danger`). */
+export type ButtonIntent = Extract<Intent, 'brand' | 'danger'>;
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 /**
  * Corner radius shape. Default `rounded` (TUI default `rounded-md`).
@@ -11,7 +15,13 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type ButtonShape = 'rounded' | 'pill' | 'circle';
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  /** Emphasis. Default `primary`. */
   variant?: ButtonVariant;
+  /**
+   * Meaning. Default `brand`: the accent on `primary` and `soft`, the neutral gray on
+   * `secondary` and `ghost`. `danger` turns any variant red.
+   */
+  intent?: ButtonIntent;
   size?: ButtonSize;
   shape?: ButtonShape;
   icon?: ElementType;
@@ -22,17 +32,32 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   ref?: Ref<HTMLButtonElement>;
 };
 
-const VARIANT_CLASS: Record<ButtonVariant, string> = {
-  primary:
-    'bg-brand-500 hover:bg-brand-600 text-white shadow-sm disabled:bg-brand-500/50 disabled:cursor-not-allowed',
-  secondary:
-    'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed',
-  ghost:
-    'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed',
-  danger:
-    'bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
+const VARIANT_CLASS: Record<ButtonVariant, Record<ButtonIntent, string>> = {
+  primary: {
+    brand:
+      'bg-brand-500 hover:bg-brand-600 text-white shadow-sm disabled:bg-brand-500/50 disabled:cursor-not-allowed',
+    danger:
+      'bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
+  },
+  secondary: {
+    brand:
+      'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed',
+    danger:
+      'bg-white text-red-700 border border-red-200 hover:bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-500/30 dark:hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
+  },
+  ghost: {
+    brand:
+      'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed',
+    danger:
+      'text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
+  },
   // TUI Plus "Soft buttons" — tinted background, no border, matching text.
-  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20',
+  soft: {
+    brand:
+      'bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20',
+    danger:
+      'bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20',
+  },
 };
 
 const SIZE_CLASS: Record<ButtonSize, string> = {
@@ -79,6 +104,7 @@ const ICON_SIZE: Record<ButtonSize, string> = {
 
 export const Button = ({
   variant = 'primary',
+  intent = 'brand',
   size = 'md',
   shape = 'rounded',
   icon: Icon,
@@ -97,7 +123,7 @@ export const Button = ({
     disabled={disabled || loading}
     className={clsx(
       'focus-visible:ring-brand-500/40 inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus-visible:ring-2',
-      VARIANT_CLASS[variant],
+      VARIANT_CLASS[variant][intent],
       SIZE_CLASS[size],
       SHAPE_CLASS[shape],
       shape === 'circle' ? CIRCLE_SQUARE[size] : PADDING_X[size],

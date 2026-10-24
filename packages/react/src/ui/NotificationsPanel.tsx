@@ -14,22 +14,23 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
+import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type NotificationSeverity = 'crit' | 'warn' | 'info' | 'success';
+export type NotificationsPanelIntent = Extract<Intent, 'danger' | 'warning' | 'info' | 'success'>;
 
-const SEVERITY_META: Record<
-  NotificationSeverity,
+const INTENT_META: Record<
+  NotificationsPanelIntent,
   { icon: ComponentType<{ className?: string }>; color: string; chipBg: string }
 > = {
-  crit: {
+  danger: {
     icon: XCircle,
     color: 'text-red-500 dark:text-red-400',
     chipBg: 'bg-red-500/15 dark:bg-red-500/20',
   },
-  warn: {
+  warning: {
     icon: AlertTriangle,
     color: 'text-amber-500 dark:text-amber-400',
     chipBg: 'bg-amber-500/15 dark:bg-amber-500/20',
@@ -46,11 +47,19 @@ const SEVERITY_META: Record<
   },
 };
 
-const BADGE_BG: Record<NotificationSeverity, string> = {
-  crit: 'bg-red-500',
-  warn: 'bg-amber-500',
+const BADGE_BG: Record<NotificationsPanelIntent, string> = {
+  danger: 'bg-red-500',
+  warning: 'bg-amber-500',
   info: 'bg-blue-500',
   success: 'bg-green-500',
+};
+
+// Monitoring vocabulary on the badge: the label is data-facing, the prop is not.
+const BADGE_LABEL: Record<NotificationsPanelIntent, string> = {
+  danger: 'CRIT',
+  warning: 'WARN',
+  info: 'INFO',
+  success: 'OK',
 };
 
 // ── Context ──────────────────────────────────────────────────────────────────
@@ -365,19 +374,20 @@ const NotificationsPanelList = ({
 // ── Item ─────────────────────────────────────────────────────────────────────
 
 export type NotificationsPanelItemProps = ComponentPropsWithRef<'button'> & {
-  severity: NotificationSeverity;
+  /** Color and icon of the item. */
+  intent: NotificationsPanelIntent;
   title: string;
   subtitle?: string;
   /** Small mono caption shown below the subtitle (e.g. check id, error code). */
   caption?: string;
-  /** Right-side badge label. If omitted, derived from severity (CRIT/WARN/INFO/OK). */
+  /** Right-side badge label. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
   badgeLabel?: string;
   /** When true, the panel auto-closes after the item is clicked. Default true. */
   closeOnClick?: boolean;
 };
 
 function NotificationsPanelItem({
-  severity,
+  intent,
   title,
   subtitle,
   caption,
@@ -389,9 +399,8 @@ function NotificationsPanelItem({
   ...rest
 }: NotificationsPanelItemProps) {
   const { setOpen } = useCtx();
-  const meta = SEVERITY_META[severity];
+  const meta = INTENT_META[intent];
   const Icon = meta.icon;
-  const defaultLabel = severity === 'success' ? 'OK' : severity.toUpperCase();
   return (
     <button
       ref={ref}
@@ -428,10 +437,10 @@ function NotificationsPanelItem({
       <span
         className={clsx(
           'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold text-white',
-          BADGE_BG[severity]
+          BADGE_BG[intent]
         )}
       >
-        {badgeLabel ?? defaultLabel}
+        {badgeLabel ?? BADGE_LABEL[intent]}
       </span>
     </button>
   );

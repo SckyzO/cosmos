@@ -188,7 +188,7 @@ export const Sidebar_: Story = {
         topbar={
           <Topbar
             sidebarCollapsed={false}
-            onToggleSidebar={() => {}}
+            onCollapsedChange={() => {}}
             center={
               <div className="relative max-w-md">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />

@@ -129,7 +129,7 @@ export const ThreeColumn: Story = {
                     <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                       {p.dateLabel}
                     </time>
-                    <Badge variant="neutral" size="sm">
+                    <Badge intent="neutral" size="sm">
                       {p.tag}
                     </Badge>
                   </div>
@@ -183,7 +183,7 @@ export const ThreeColumnWithImages: Story = {
                   <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                     {p.dateLabel}
                   </time>
-                  <Badge variant="neutral" size="sm">
+                  <Badge intent="neutral" size="sm">
                     {p.tag}
                   </Badge>
                 </div>
@@ -227,7 +227,7 @@ export const SingleColumn: Story = {
                   <time dateTime={p.date} className="text-[var(--color-text-secondary)]">
                     {p.dateLabel}
                   </time>
-                  <Badge variant="neutral" size="sm">
+                  <Badge intent="neutral" size="sm">
                     {p.tag}
                   </Badge>
                 </div>
@@ -297,7 +297,7 @@ export const WithFeaturedPost: Story = {
                   </div>
                 </a>
                 <div className="mt-6 flex items-center gap-x-3 text-xs">
-                  <Badge variant="brand" size="sm">
+                  <Badge intent="brand" size="sm">
                     Featured
                   </Badge>
                   <span className="text-[var(--color-text-muted)]">·</span>
@@ -413,7 +413,7 @@ export const WithPhotoAndList: Story = {
                   <time dateTime={hero.date} className="text-[var(--color-text-secondary)]">
                     {hero.dateLabel}
                   </time>
-                  <Badge variant="neutral" size="sm">
+                  <Badge intent="neutral" size="sm">
                     {hero.tag}
                   </Badge>
                 </div>

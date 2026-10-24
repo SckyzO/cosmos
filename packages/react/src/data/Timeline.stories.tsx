@@ -47,7 +47,7 @@ export const Dot: Story = {
 export const Avatar: Story = { args: { items, variant: 'avatar' } };
 export const Card: Story = { args: { items: items.slice(0, 3), variant: 'card' } };
 
-// Flowbite-style stepper timeline — large icon circles tinted per tone,
+// Flowbite-style stepper timeline — large icon circles tinted per intent,
 // useful for hero activity feeds or onboarding step-by-step views.
 const stepperItems: TimelineItem[] = [
   {
@@ -56,7 +56,7 @@ const stepperItems: TimelineItem[] = [
     description: 'CPU > 95% — auto-paged to on-call.',
     time: '5m ago',
     icon: AlertTriangle,
-    tone: 'danger',
+    intent: 'danger',
   },
   {
     id: '2',
@@ -64,7 +64,7 @@ const stepperItems: TimelineItem[] = [
     description: 'PagerDuty notified · Acked by sckyzo.',
     time: '12m ago',
     icon: Bell,
-    tone: 'warning',
+    intent: 'warning',
   },
   {
     id: '3',
@@ -72,7 +72,7 @@ const stepperItems: TimelineItem[] = [
     description: 'Health checks green for 60 consecutive seconds.',
     time: '1h ago',
     icon: CheckCircle2,
-    tone: 'success',
+    intent: 'success',
   },
   {
     id: '4',
@@ -80,7 +80,7 @@ const stepperItems: TimelineItem[] = [
     description: 'Scheduled by ops — 23h window.',
     time: '3h ago',
     icon: Wrench,
-    tone: 'brand',
+    intent: 'brand',
   },
 ];
 
@@ -96,7 +96,7 @@ const activity: TimelineItem[] = [
     meta: 'by Sarah Chen',
     time: '14:32',
     icon: Rocket,
-    tone: 'success',
+    intent: 'success',
   },
   {
     id: 'alert-rule',
@@ -106,7 +106,7 @@ const activity: TimelineItem[] = [
     meta: 'by Marcus Lee',
     time: '11:05',
     icon: Bell,
-    tone: 'warning',
+    intent: 'warning',
   },
   {
     id: 'incident',
@@ -116,7 +116,7 @@ const activity: TimelineItem[] = [
     meta: 'by Alertmanager',
     time: '22:47',
     icon: AlertTriangle,
-    tone: 'danger',
+    intent: 'danger',
   },
   {
     id: 'scale',
@@ -126,7 +126,7 @@ const activity: TimelineItem[] = [
     meta: 'by Autoscaler',
     time: '18:10',
     icon: Server,
-    tone: 'brand',
+    intent: 'brand',
   },
   {
     id: 'grafana',
@@ -135,7 +135,7 @@ const activity: TimelineItem[] = [
     meta: 'by Marcus Lee',
     time: 'May 4',
     icon: Wrench,
-    tone: 'neutral',
+    intent: 'neutral',
   },
 ];
 
@@ -200,3 +200,43 @@ const timeContrastIn = (theme: string): Story => ({
 export const TimeContrastInLight = timeContrastIn('light');
 export const TimeContrastInSand = timeContrastIn('sand');
 export const TimeContrastInDeepBlue = timeContrastIn('deep-blue');
+
+const INTENT_CIRCLES = {
+  brand: ['bg-brand-100', 'text-brand-700'],
+  success: ['bg-green-100', 'text-green-700'],
+  warning: ['bg-amber-100', 'text-amber-700'],
+  danger: ['bg-red-100', 'text-red-700'],
+  neutral: ['bg-gray-100', 'text-gray-700'],
+} as const;
+
+/** `intent` tints the icon circle of the `stepper` and `alternating` variants, `brand` by default. */
+export const IntentTintsTheIconCircle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const items: TimelineItem[] = [
+      ...(Object.keys(INTENT_CIRCLES) as (keyof typeof INTENT_CIRCLES)[]).map((intent) => ({
+        id: intent,
+        title: `${intent} step`,
+        icon: Bell,
+        intent,
+      })),
+      { id: 'default', title: 'default step', icon: Bell },
+    ];
+    return (
+      <div className="space-y-8">
+        <Timeline variant="stepper" items={items} />
+        <Timeline variant="alternating" items={[{ ...items[3], id: 'alt' }]} />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const circle = (title: string, index = 0) =>
+      canvas.getAllByText(title)[index].closest('li')!.querySelector('span.rounded-full')!;
+    for (const [intent, classes] of Object.entries(INTENT_CIRCLES)) {
+      await expect(circle(`${intent} step`)).toHaveClass(...classes);
+    }
+    await expect(circle('default step')).toHaveClass(...INTENT_CIRCLES.brand);
+    // The alternating variant reads it too: this one is the `danger` item.
+    await expect(circle('danger step', 1)).toHaveClass(...INTENT_CIRCLES.danger);
+  },
+};

@@ -2,7 +2,8 @@ import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 import { useId, useLayoutEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, type ButtonVariant } from './Button';
+import { Button, type ButtonIntent } from './Button';
+import type { Intent } from './intent';
 import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -152,7 +153,7 @@ const Footer = ({ children, className }: { children: ReactNode; className?: stri
 
 // ── Alert (convenience) ──────────────────────────────────────────────────────
 
-export type ModalAlertIntent = 'info' | 'warning' | 'danger' | 'success';
+export type ModalAlertIntent = Extract<Intent, 'info' | 'warning' | 'danger' | 'success'>;
 
 const ALERT_ICON: Record<ModalAlertIntent, LucideIcon> = {
   info: Info,
@@ -168,11 +169,12 @@ const ALERT_CHIP: Record<ModalAlertIntent, string> = {
   success: 'bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-400',
 };
 
-const ALERT_PRIMARY_VARIANT: Record<ModalAlertIntent, ButtonVariant> = {
-  info: 'primary',
-  warning: 'primary',
+// The confirm button is red for a danger alert, and the accent otherwise.
+const ALERT_BUTTON_INTENT: Record<ModalAlertIntent, ButtonIntent> = {
+  info: 'brand',
+  warning: 'brand',
   danger: 'danger',
-  success: 'primary',
+  success: 'brand',
 };
 
 export type ModalAlertLayout = 'centered' | 'horizontal';
@@ -223,7 +225,7 @@ const Alert = ({
   fullWidthAction = false,
 }: ModalAlertProps) => {
   const Icon = ALERT_ICON[intent];
-  const primaryVariant = ALERT_PRIMARY_VARIANT[intent];
+  const buttonIntent = ALERT_BUTTON_INTENT[intent];
   const handleConfirm = () => (onConfirm ? onConfirm() : onClose());
   const handleCancel = () => (onCancel ? onCancel() : onClose());
 
@@ -253,7 +255,7 @@ const Alert = ({
             </Button>
           )}
           <Button
-            variant={primaryVariant}
+            intent={buttonIntent}
             loading={loading}
             disabled={loading}
             onClick={handleConfirm}
@@ -295,7 +297,7 @@ const Alert = ({
             </Button>
           )}
           <Button
-            variant={primaryVariant}
+            intent={buttonIntent}
             loading={loading}
             disabled={loading}
             onClick={handleConfirm}

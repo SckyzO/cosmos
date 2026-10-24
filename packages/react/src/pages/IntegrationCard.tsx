@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Badge } from '../ui/Badge';
-import { Button, type ButtonVariant } from '../ui/Button';
+import type { Intent } from '../ui/intent';
+import { Button, type ButtonIntent, type ButtonVariant } from '../ui/Button';
 
 export type IntegrationStatus = 'connected' | 'available' | 'error' | 'pending';
 
@@ -15,7 +16,10 @@ export type IntegrationCardProps = {
   category?: string;
   /** Primary action button label. */
   actionLabel?: string;
+  /** Emphasis of the primary action button. Default `primary`. */
   actionVariant?: ButtonVariant;
+  /** Meaning of the primary action button: `danger` for a disconnect. Default `brand`. */
+  actionIntent?: ButtonIntent;
   onAction?: () => void;
   /** Secondary action button label. */
   secondaryLabel?: string;
@@ -31,7 +35,7 @@ const STATUS_LABEL: Record<IntegrationStatus, string> = {
   pending: 'Pending',
 };
 
-const STATUS_VARIANT: Record<IntegrationStatus, 'success' | 'neutral' | 'danger' | 'warning'> = {
+const STATUS_INTENT: Record<IntegrationStatus, Intent> = {
   connected: 'success',
   available: 'neutral',
   error: 'danger',
@@ -46,6 +50,7 @@ export const IntegrationCard = ({
   category,
   actionLabel,
   actionVariant = 'primary',
+  actionIntent = 'brand',
   onAction,
   secondaryLabel,
   onSecondary,
@@ -63,7 +68,7 @@ export const IntegrationCard = ({
         {logo}
       </div>
       {status && (
-        <Badge variant={STATUS_VARIANT[status]} appearance="light">
+        <Badge intent={STATUS_INTENT[status]} appearance="light">
           {STATUS_LABEL[status]}
         </Badge>
       )}
@@ -91,6 +96,7 @@ export const IntegrationCard = ({
         {actionLabel && (
           <Button
             variant={actionVariant}
+            intent={actionIntent}
             size="sm"
             onClick={onAction}
             loading={loading}
