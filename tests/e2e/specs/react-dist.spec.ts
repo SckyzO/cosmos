@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import { expectOwnTypesPerFormat } from './package-exports';
 
 // The published @sckyzo/cosmos-react bundles are plain JS: a CSS import in them
 // would break `require` in Node, Jest and any non-bundler consumer.
@@ -40,4 +41,21 @@ test('neither bundle imports CSS, and the Calendar stylesheet is an explicit exp
   expect(pkg.files).toContain('calendar.css');
   expect(pkg.sideEffects).toEqual(['*.css']);
   expect(existsSync(`${pkgDir}calendar.css`)).toBe(true);
+});
+
+test('import and require each resolve their own type declarations', () => {
+  expectOwnTypesPerFormat(pkgDir);
+});
+
+test('every JS file starts with the "use client" directive', () => {
+  // React Server Components bundlers read it to treat the components as client
+  // modules. tsup's Rollup pass drops it from the build, so the tsup config
+  // prepends it once the files are written.
+  const directive = '"use client";\n';
+  const files = readdirSync(`${pkgDir}dist`).filter((name) => /\.c?js$/.test(name));
+  expect(files).toEqual(expect.arrayContaining(['index.js', 'index.cjs']));
+  for (const name of files) {
+    const code = readFileSync(`${pkgDir}dist/${name}`, 'utf8');
+    expect(code.slice(0, directive.length), name).toBe(directive);
+  }
 });

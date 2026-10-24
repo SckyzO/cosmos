@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Options } from 'tsup';
+import { prependUseClient } from '../../config/tsup/use-client';
 
 type EsbuildPlugin = NonNullable<Options['esbuildPlugins']>[number];
 
@@ -42,7 +43,10 @@ export default defineConfig({
   treeshake: true,
   external: ['react', 'react-dom', 'apexcharts', 'react-apexcharts'],
   esbuildPlugins: [reexportBuiltModules],
-  esbuildOptions(options) {
-    options.banner = { js: '"use client";' };
+  // Every entry and chunk is a client module for React Server Components
+  // bundlers. After the build: Rollup, which `treeshake` runs, drops an
+  // esbuild banner.
+  async onSuccess() {
+    prependUseClient();
   },
 });
