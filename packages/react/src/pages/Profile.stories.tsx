@@ -198,7 +198,7 @@ const ClearCacheSection = () => {
           <p className="text-sm text-gray-700 dark:text-gray-300">
             API response cache (<code className="font-mono text-xs">cosmos.cache.*</code>)
           </p>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             Auth token, theme and dashboard layouts are preserved.
           </p>
         </div>

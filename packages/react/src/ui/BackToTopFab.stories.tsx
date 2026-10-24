@@ -91,7 +91,9 @@ export const ForceVisible: Story = {
   // (which doesn't scroll by default).
   render: () => (
     <div className="relative h-64 bg-gray-100 p-6 dark:bg-gray-800">
-      <p className="text-xs text-gray-500">Scroll the iframe to bring the FAB in.</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400">
+        Scroll the iframe to bring the FAB in.
+      </p>
       <BackToTopFab threshold={0} />
     </div>
   ),

@@ -135,7 +135,7 @@ export const HotkeyOpensOverlay: Story = {
   tags: ['!autodocs'],
   render: () => (
     <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <p className="text-sm text-gray-500">Press ? to open</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Press ? to open</p>
       <HelpOverlay>{SAMPLE_SHORTCUTS}</HelpOverlay>
     </div>
   ),

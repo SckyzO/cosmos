@@ -104,7 +104,7 @@ export const Open: Story = {
     const [open, setOpen] = useState(true);
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-gray-500">Palette opens above this text.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Palette opens above this text.</p>
         <SamplePanel open={open} onOpenChange={setOpen} />
       </div>
     );
@@ -130,7 +130,9 @@ export const HotkeyDisabled: Story = {
     const [open, setOpen] = useState(true);
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-gray-500">No global hotkey — open via button only.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No global hotkey — open via button only.
+        </p>
         <CommandPalette open={open} onOpenChange={setOpen} hotkey={null}>
           <CommandPalette.Input placeholder="Search…" />
           <CommandPalette.List>
@@ -359,7 +361,7 @@ export const HotkeyOpensPalette: Story = {
     const [open, setOpen] = useState(false);
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-gray-500" data-testid="hint">
+        <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="hint">
           Press Ctrl/Cmd+K
         </p>
         <CommandPalette open={open} onOpenChange={setOpen}>

@@ -37,7 +37,7 @@ const SHARED_ITEMS = (
               <Paperclip className="size-5 shrink-0 text-gray-400" aria-hidden />
               <div className="ml-4 flex min-w-0 flex-1 gap-2">
                 <span className="truncate font-medium">{f.name}</span>
-                <span className="shrink-0 text-gray-400">{f.size}</span>
+                <span className="shrink-0 text-gray-500 dark:text-gray-400">{f.size}</span>
               </div>
             </div>
             <div className="ml-4 shrink-0">

@@ -103,9 +103,9 @@ export const Colors: Story = {
       <p className="text-gray-700 dark:text-gray-300">Body — the default paragraph colour.</p>
       <p className="text-gray-500 dark:text-gray-400">Muted — captions, helper text, timestamps.</p>
       <p className="text-brand-600 dark:text-brand-400">Brand — links, accents, primary CTAs.</p>
-      <p className="text-emerald-600 dark:text-emerald-400">Success — positive state.</p>
-      <p className="text-amber-600 dark:text-amber-400">Warning — degraded state.</p>
-      <p className="text-red-600 dark:text-red-400">Danger — critical state, errors.</p>
+      <p className="text-emerald-700 dark:text-emerald-400">Success — positive state.</p>
+      <p className="text-amber-700 dark:text-amber-400">Warning — degraded state.</p>
+      <p className="text-red-700 dark:text-red-400">Danger — critical state, errors.</p>
     </div>
   ),
 };

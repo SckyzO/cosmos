@@ -437,7 +437,7 @@ const Trend = ({ value }: { value: number }) => {
   return (
     <span
       className={`inline-flex items-center gap-1 font-medium ${
-        up ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+        up ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'
       }`}
     >
       <Icon aria-hidden className="h-3.5 w-3.5" />

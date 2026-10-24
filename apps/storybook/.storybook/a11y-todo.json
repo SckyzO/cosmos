@@ -9,6 +9,5 @@
   "charts-radar--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
   "charts-range-bar--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
   "charts-scatter-bubble--bubble-html-in-labels-renders-as-text": ["label-content-name-mismatch"],
-  "charts-scatter-bubble--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
-  "overlays-command-palette--group-heading-contrast-in-deep-blue": ["color-contrast"]
+  "charts-scatter-bubble--html-in-labels-renders-as-text": ["label-content-name-mismatch"]
 }
