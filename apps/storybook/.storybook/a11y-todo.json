@@ -66,16 +66,7 @@
   "layout-card--with-link": ["color-contrast"],
   "layout-card--with-list": ["color-contrast"],
   "layout-card--with-tabs": ["color-contrast"],
-  "overlays-command-palette--group-heading-contrast-in-dark": ["aria-required-children"],
-  "overlays-command-palette--group-heading-contrast-in-deep-blue": [
-    "aria-required-children",
-    "color-contrast"
-  ],
-  "overlays-command-palette--group-heading-contrast-in-light": ["aria-required-children"],
-  "overlays-command-palette--group-heading-contrast-in-sand": ["aria-required-children"],
-  "overlays-command-palette--loading-state": ["aria-required-children"],
-  "overlays-command-palette--open": ["aria-required-children"],
-  "overlays-command-palette--placeholder-contrast-in-every-theme": ["aria-required-children"],
+  "overlays-command-palette--group-heading-contrast-in-deep-blue": ["color-contrast"],
   "overlays-help-overlay--custom-footer": ["color-contrast"],
   "overlays-modal--untitled-dialog-has-no-dangling-label": ["aria-dialog-name"],
   "overlays-notifications-panel--align-left": ["color-contrast"],

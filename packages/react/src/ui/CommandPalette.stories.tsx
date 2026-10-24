@@ -11,7 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectPlaceholderContrast,
   expectTextContrast,
@@ -208,6 +208,42 @@ export const LoadingState: Story = {
         </CommandPalette>
       </div>
     );
+  },
+};
+
+/**
+ * A listbox owns options and groups only: the progressbar of `Loading` sits right after it, and
+ * the separators between groups are hidden from assistive technology, and while searching.
+ */
+export const ListboxOwnsOnlyOptionsAndGroups: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <CommandPalette open hotkey={null} onOpenChange={() => {}}>
+      <CommandPalette.Input placeholder="Search…" />
+      <CommandPalette.List>
+        <CommandPalette.Loading progress={40}>Loading commands…</CommandPalette.Loading>
+        <CommandPalette.Group heading="Navigate">
+          <CommandPalette.Item value="home">Go home</CommandPalette.Item>
+        </CommandPalette.Group>
+        <CommandPalette.Separator />
+        <CommandPalette.Group heading="Actions">
+          <CommandPalette.Item value="new">New project</CommandPalette.Item>
+        </CommandPalette.Group>
+      </CommandPalette.List>
+    </CommandPalette>
+  ),
+  play: async () => {
+    const page = within(document.body);
+    const listbox = await page.findByRole('listbox');
+    const progressbar = page.getByRole('progressbar');
+    await expect(progressbar).toHaveAttribute('aria-valuenow', '40');
+    await expect(listbox.contains(progressbar)).toBe(false);
+
+    const separator = document.querySelector('[cmdk-separator]');
+    await expect(separator).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.queryByRole('separator')).toBeNull();
+    await userEvent.type(page.getByRole('combobox'), 'o');
+    await waitFor(() => expect(document.querySelector('[cmdk-separator]')).toBeNull());
   },
 };
 
