@@ -166,7 +166,6 @@
   "settings-palette-picker--palette-card-forwards-ref": ["color-contrast"],
   "settings-palette-picker--uneven-labels-fill-cards": ["color-contrast"],
   "tables-datatable--column-filter-opens-before-any-filter": ["label-content-name-mismatch"],
-  "tables-table--dashboard-cells": ["aria-progressbar-name"],
   "tables-table--sticky-header": ["scrollable-region-focusable"],
   "typography-description-list--left-aligned": ["color-contrast"],
   "typography-description-list--left-aligned-in-card": ["color-contrast"],

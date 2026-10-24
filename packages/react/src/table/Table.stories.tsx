@@ -402,6 +402,7 @@ export const DashboardCells: Story = {
                   size="xs"
                   intent={usageIntent(n.memory)}
                   label="outside"
+                  aria-label={`Memory used on ${n.name}`}
                 />
               </TableCell>
               <TableCell numeric>
