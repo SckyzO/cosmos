@@ -18,6 +18,24 @@ type ApexChartProps = ComponentProps<typeof ReactApexChart> &
   };
 
 /**
+ * Gives each legend item of the chart in `container` the name its visible text
+ * reads as: its `aria-label` starts with what the legend formatter returned
+ * (escaped, see `ApexChart`), and the text of the item is that string parsed as
+ * HTML. The rest of the label, the state and the key hint, is ApexCharts' own.
+ */
+const nameLegendItems = (container: Element) => {
+  for (const item of container.querySelectorAll('.apexcharts-legend-series[aria-label]')) {
+    const text = item.querySelector('.apexcharts-legend-text');
+    const label = item.getAttribute('aria-label') ?? '';
+    // ApexCharts keeps the formatted text on the element, URI-encoded.
+    const formatted = decodeURIComponent(text?.getAttribute('data:default-text') ?? '');
+    if (text?.textContent && formatted && label.startsWith(formatted)) {
+      item.setAttribute('aria-label', text.textContent + label.slice(formatted.length));
+    }
+  }
+};
+
+/**
  * `ReactApexChart`, drawn again when a web font finishes loading or `<html>`
  * switches `data-font`. ApexCharts measures its labels when it draws: a font
  * that arrives after the first draw (fonts load lazily) left widths and
@@ -27,6 +45,12 @@ type ApexChartProps = ComponentProps<typeof ReactApexChart> &
  * `ariaLabel` and `keyboard` set `chart.accessibility`. ApexCharts makes the
  * SVG an `application` whenever keyboard navigation is on in the options, even
  * without the keyboard feature that handles the keys: both go together here.
+ *
+ * ApexCharts names each legend item from the text its legend formatter returned.
+ * The wrappers escape it for innerHTML, so a screen reader would read `R&amp;D`,
+ * and a name with markup does not contain the text the item shows (axe
+ * `label-content-name-mismatch`): `nameLegendItems` names the items from that
+ * text instead, as ApexCharts itself does when an item is toggled.
  *
  * `emptyMessage` is the `noData` text ApexCharts draws, as SVG text, when there
  * is no series or only empty ones.
@@ -59,6 +83,17 @@ export const ApexChart = ({
       observer.disconnect();
       document.fonts?.removeEventListener('loadingdone', redraw);
     };
+  }, []);
+
+  useEffect(() => {
+    // `el`, the element the chart draws in, is not in ApexCharts' typings.
+    const container = (chartRef.current as { el?: HTMLElement } | null)?.el;
+    if (!container) return;
+    // ApexCharts builds the legend again on every update.
+    const observer = new MutationObserver(() => nameLegendItems(container));
+    observer.observe(container, { childList: true, subtree: true });
+    nameLegendItems(container);
+    return () => observer.disconnect();
   }, []);
 
   const own = {
