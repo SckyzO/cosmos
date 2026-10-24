@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { BoxPlotChart } from './BoxPlotChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -155,9 +156,10 @@ export const HtmlInLabelsRendersAsText: Story = {
     await expectNoInjectedImage(canvasElement);
 
     // Tooltips render on hover: the category as title, then the series.
+    const box = () => canvasElement.querySelector('.apexcharts-boxPlot-area');
     await waitFor(
       () => {
-        hover(canvasElement.querySelector('.apexcharts-boxPlot-area') as Element);
+        hover(box() as Element);
         expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
         expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
           HOSTILE
@@ -166,6 +168,7 @@ export const HtmlInLabelsRendersAsText: Story = {
       { timeout: 3000 }
     );
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, box);
   },
 };
 
