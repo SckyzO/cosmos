@@ -1,21 +1,20 @@
 import { clsx } from 'clsx';
 import { Check, Minus } from 'lucide-react';
 import {
-  forwardRef,
   useEffect,
   useId,
   useRef,
   useState,
   type ChangeEvent,
-  type InputHTMLAttributes,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
 
 export type CheckboxSize = 'sm' | 'md';
 
 export type CheckboxProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
+  ComponentPropsWithRef<'input'>,
   'size' | 'type' | 'onChange' | 'children'
 > & {
   label?: ReactNode;
@@ -32,22 +31,20 @@ const SIZE_CLASS: Record<CheckboxSize, { box: string; icon: string; label: strin
   md: { box: 'h-[18px] w-[18px]', icon: 'h-3.5 w-3.5', label: 'text-sm' },
 };
 
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
-  {
-    label,
-    description,
-    checked,
-    defaultChecked,
-    indeterminate = false,
-    onChange,
-    disabled,
-    size = 'md',
-    id,
-    className,
-    ...rest
-  },
-  forwardedRef
-) {
+export function Checkbox({
+  label,
+  description,
+  checked,
+  defaultChecked,
+  indeterminate = false,
+  onChange,
+  disabled,
+  size = 'md',
+  id,
+  className,
+  ref,
+  ...rest
+}: CheckboxProps) {
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
   const innerRef = useRef<HTMLInputElement>(null);
@@ -74,7 +71,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     >
       <span className="relative inline-flex shrink-0 items-center justify-center">
         <input
-          ref={mergeRefs(innerRef, forwardedRef)}
+          ref={mergeRefs(innerRef, ref)}
           id={fieldId}
           type="checkbox"
           checked={isControlled ? isChecked : undefined}
@@ -122,7 +119,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
       )}
     </label>
   );
-});
+}
 
 // ── CheckboxGroup ────────────────────────────────────────────────────────────
 

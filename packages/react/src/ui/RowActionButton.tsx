@@ -1,10 +1,12 @@
 import { clsx } from 'clsx';
 import { ChevronRight } from 'lucide-react';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 
 export type RowActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children?: ReactNode;
   hideChevron?: boolean;
+  /** Ref to the `<button>`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /**
@@ -16,9 +18,11 @@ export const RowActionButton = ({
   hideChevron = false,
   className,
   type = 'button',
+  ref,
   ...rest
 }: RowActionButtonProps) => (
   <button
+    ref={ref}
     type={type}
     className={clsx(
       'hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:border-brand-700/50 dark:hover:bg-brand-500/10 dark:hover:text-brand-400 inline-flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors dark:border-gray-700 dark:text-gray-400',

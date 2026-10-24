@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { AlertCircle, Check, Loader2, Save } from 'lucide-react';
-import type { ElementType } from 'react';
+import type { ElementType, Ref } from 'react';
 
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 
@@ -48,6 +48,8 @@ export type StatefulSaveButtonProps = {
   /** Override label for `saved` state. */
   savedLabel?: string;
   className?: string;
+  /** Ref to the `<button>`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /**
@@ -60,6 +62,7 @@ export const StatefulSaveButton = ({
   label,
   savedLabel,
   className,
+  ref,
 }: StatefulSaveButtonProps) => {
   const cfg = { ...STATE_CONFIG[state] };
   if (label && (state === 'idle' || state === 'dirty')) cfg.label = label;
@@ -69,6 +72,7 @@ export const StatefulSaveButton = ({
 
   return (
     <button
+      ref={ref}
       type="button"
       onClick={inactive ? undefined : onClick}
       disabled={inactive}

@@ -2,12 +2,11 @@ import { Command } from 'cmdk';
 import { clsx } from 'clsx';
 import { Search } from 'lucide-react';
 import {
-  forwardRef,
   useEffect,
   type ComponentPropsWithoutRef,
-  type ElementRef,
   type ElementType,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 
@@ -72,65 +71,59 @@ const CommandPaletteRoot = ({
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
-export type CommandPaletteInputProps = ComponentPropsWithoutRef<typeof Command.Input>;
+export type CommandPaletteInputProps = ComponentPropsWithRef<typeof Command.Input>;
 
-const CommandPaletteInput = forwardRef<ElementRef<typeof Command.Input>, CommandPaletteInputProps>(
-  function CommandPaletteInput({ className, ...rest }, ref) {
-    return (
-      <div className="flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
-        <Search className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-        <Command.Input
-          ref={ref}
-          className={clsx(
-            'flex h-12 w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400',
-            className
-          )}
-          {...rest}
-        />
-      </div>
-    );
-  }
-);
-
-// ── List ─────────────────────────────────────────────────────────────────────
-
-export type CommandPaletteListProps = ComponentPropsWithoutRef<typeof Command.List>;
-
-const CommandPaletteList = forwardRef<ElementRef<typeof Command.List>, CommandPaletteListProps>(
-  function CommandPaletteList({ className, ...rest }, ref) {
-    return (
-      <Command.List
-        ref={ref}
-        className={clsx('max-h-[420px] overflow-y-auto p-2', className)}
-        {...rest}
-      />
-    );
-  }
-);
-
-// ── Group ────────────────────────────────────────────────────────────────────
-
-export type CommandPaletteGroupProps = ComponentPropsWithoutRef<typeof Command.Group>;
-
-const CommandPaletteGroup = forwardRef<ElementRef<typeof Command.Group>, CommandPaletteGroupProps>(
-  function CommandPaletteGroup({ className, ...rest }, ref) {
-    return (
-      <Command.Group
+function CommandPaletteInput({ className, ref, ...rest }: CommandPaletteInputProps) {
+  return (
+    <div className="flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
+      <Search className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+      <Command.Input
         ref={ref}
         className={clsx(
-          '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-500 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-400',
+          'flex h-12 w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400',
           className
         )}
         {...rest}
       />
-    );
-  }
-);
+    </div>
+  );
+}
+
+// ── List ─────────────────────────────────────────────────────────────────────
+
+export type CommandPaletteListProps = ComponentPropsWithRef<typeof Command.List>;
+
+function CommandPaletteList({ className, ref, ...rest }: CommandPaletteListProps) {
+  return (
+    <Command.List
+      ref={ref}
+      className={clsx('max-h-[420px] overflow-y-auto p-2', className)}
+      {...rest}
+    />
+  );
+}
+
+// ── Group ────────────────────────────────────────────────────────────────────
+
+export type CommandPaletteGroupProps = ComponentPropsWithRef<typeof Command.Group>;
+
+function CommandPaletteGroup({ className, ref, ...rest }: CommandPaletteGroupProps) {
+  return (
+    <Command.Group
+      ref={ref}
+      className={clsx(
+        '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-500 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-400',
+        className
+      )}
+      {...rest}
+    />
+  );
+}
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
 export type CommandPaletteItemProps = Omit<
-  ComponentPropsWithoutRef<typeof Command.Item>,
+  ComponentPropsWithRef<typeof Command.Item>,
   'children'
 > & {
   icon?: ElementType;
@@ -139,38 +132,44 @@ export type CommandPaletteItemProps = Omit<
   children: ReactNode;
 };
 
-const CommandPaletteItem = forwardRef<ElementRef<typeof Command.Item>, CommandPaletteItemProps>(
-  function CommandPaletteItem({ icon: Icon, shortcut, children, className, ...rest }, ref) {
-    return (
-      <Command.Item
-        ref={ref}
-        className={clsx(
-          'flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm text-gray-700 transition-colors outline-none select-none',
-          'data-[selected=true]:bg-gray-100 data-[selected=true]:text-gray-900',
-          'dark:text-gray-200 dark:data-[selected=true]:bg-white/5 dark:data-[selected=true]:text-white',
-          'data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40',
-          className
-        )}
-        {...rest}
-      >
-        {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />}
-        <span className="flex-1 truncate">{children}</span>
-        {shortcut && (
-          <kbd className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
-            {shortcut}
-          </kbd>
-        )}
-      </Command.Item>
-    );
-  }
-);
+function CommandPaletteItem({
+  icon: Icon,
+  shortcut,
+  children,
+  className,
+  ref,
+  ...rest
+}: CommandPaletteItemProps) {
+  return (
+    <Command.Item
+      ref={ref}
+      className={clsx(
+        'flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm text-gray-700 transition-colors outline-none select-none',
+        'data-[selected=true]:bg-gray-100 data-[selected=true]:text-gray-900',
+        'dark:text-gray-200 dark:data-[selected=true]:bg-white/5 dark:data-[selected=true]:text-white',
+        'data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40',
+        className
+      )}
+      {...rest}
+    >
+      {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />}
+      <span className="flex-1 truncate">{children}</span>
+      {shortcut && (
+        <kbd className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+          {shortcut}
+        </kbd>
+      )}
+    </Command.Item>
+  );
+}
 
 // ── Separator ────────────────────────────────────────────────────────────────
 
-const CommandPaletteSeparator = forwardRef<
-  ElementRef<typeof Command.Separator>,
-  ComponentPropsWithoutRef<typeof Command.Separator>
->(function CommandPaletteSeparator({ className, ...rest }, ref) {
+function CommandPaletteSeparator({
+  className,
+  ref,
+  ...rest
+}: ComponentPropsWithRef<typeof Command.Separator>) {
   return (
     <Command.Separator
       ref={ref}
@@ -178,14 +177,15 @@ const CommandPaletteSeparator = forwardRef<
       {...rest}
     />
   );
-});
+}
 
 // ── Empty ────────────────────────────────────────────────────────────────────
 
-const CommandPaletteEmpty = forwardRef<
-  ElementRef<typeof Command.Empty>,
-  ComponentPropsWithoutRef<typeof Command.Empty>
->(function CommandPaletteEmpty({ className, ...rest }, ref) {
+function CommandPaletteEmpty({
+  className,
+  ref,
+  ...rest
+}: ComponentPropsWithRef<typeof Command.Empty>) {
   return (
     <Command.Empty
       ref={ref}
@@ -193,14 +193,15 @@ const CommandPaletteEmpty = forwardRef<
       {...rest}
     />
   );
-});
+}
 
 // ── Loading ──────────────────────────────────────────────────────────────────
 
-const CommandPaletteLoading = forwardRef<
-  ElementRef<typeof Command.Loading>,
-  ComponentPropsWithoutRef<typeof Command.Loading>
->(function CommandPaletteLoading({ className, ...rest }, ref) {
+function CommandPaletteLoading({
+  className,
+  ref,
+  ...rest
+}: ComponentPropsWithRef<typeof Command.Loading>) {
   return (
     <Command.Loading
       ref={ref}
@@ -208,7 +209,7 @@ const CommandPaletteLoading = forwardRef<
       {...rest}
     />
   );
-});
+}
 
 // ── Footer (Cosmos addition — keyboard hints) ────────────────────────────────
 

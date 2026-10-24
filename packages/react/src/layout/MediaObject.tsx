@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode, ComponentPropsWithRef } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Basic"):
 //   <div class="flex">
@@ -32,7 +32,7 @@ const ALIGN_CLASS: Record<MediaObjectAlign, string> = {
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type MediaObjectProps = HTMLAttributes<HTMLDivElement> & {
+export type MediaObjectProps = ComponentPropsWithRef<'div'> & {
   /**
    * Where the media sits against the body: `start` (top), `center`, `bottom`,
    * or `stretch` (the media slot takes the body's height; size the media
@@ -51,17 +51,15 @@ export type MediaObjectProps = HTMLAttributes<HTMLDivElement> & {
  * its size) with `MediaObject.Body` (takes the remaining width);
  * `MediaObject.Title` and `MediaObject.Description` are optional helpers.
  */
-const Root = forwardRef<HTMLDivElement, MediaObjectProps>(function MediaObjectRoot(
-  {
-    align = 'start',
-    mediaPosition = 'left',
-    gapClassName = 'gap-x-4',
-    className,
-    children,
-    ...rest
-  },
-  ref
-) {
+function MediaObjectRoot({
+  align = 'start',
+  mediaPosition = 'left',
+  gapClassName = 'gap-x-4',
+  className,
+  children,
+  ref,
+  ...rest
+}: MediaObjectProps) {
   return (
     <div
       ref={ref}
@@ -78,37 +76,31 @@ const Root = forwardRef<HTMLDivElement, MediaObjectProps>(function MediaObjectRo
       {children}
     </div>
   );
-});
+}
 
 // ── Media slot ──────────────────────────────────────────────────────────────
 
-export type MediaObjectImageProps = HTMLAttributes<HTMLDivElement>;
+export type MediaObjectImageProps = ComponentPropsWithRef<'div'>;
 
-const ImageSlot = forwardRef<HTMLDivElement, MediaObjectImageProps>(function MediaObjectImage(
-  { className, children, ...rest },
-  ref
-) {
+function MediaObjectImage({ className, children, ref, ...rest }: MediaObjectImageProps) {
   return (
     <div ref={ref} className={clsx('shrink-0', className)} {...rest}>
       {children}
     </div>
   );
-});
+}
 
 // ── Body slot ───────────────────────────────────────────────────────────────
 
-export type MediaObjectBodyProps = HTMLAttributes<HTMLDivElement>;
+export type MediaObjectBodyProps = ComponentPropsWithRef<'div'>;
 
-const Body = forwardRef<HTMLDivElement, MediaObjectBodyProps>(function MediaObjectBody(
-  { className, children, ...rest },
-  ref
-) {
+function MediaObjectBody({ className, children, ref, ...rest }: MediaObjectBodyProps) {
   return (
     <div ref={ref} className={clsx('min-w-0 flex-1', className)} {...rest}>
       {children}
     </div>
   );
-});
+}
 
 // ── Title + Description shortcuts (optional helpers) ────────────────────────
 
@@ -138,9 +130,9 @@ const Description = ({
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const MediaObject = Object.assign(Root, {
-  Image: ImageSlot,
-  Body,
+export const MediaObject = Object.assign(MediaObjectRoot, {
+  Image: MediaObjectImage,
+  Body: MediaObjectBody,
   Title,
   Description,
 });

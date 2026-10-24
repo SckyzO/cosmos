@@ -1,12 +1,10 @@
 import { clsx } from 'clsx';
 import {
   Children,
-  forwardRef,
   isValidElement,
   type ComponentType,
-  type HTMLAttributes,
-  type LiHTMLAttributes,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Simple with icons"):
@@ -49,7 +47,7 @@ const INTENT_BG: Record<ActivityFeedIntent, string> = {
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type ActivityFeedItemProps = LiHTMLAttributes<HTMLLIElement> & {
+export type ActivityFeedItemProps = ComponentPropsWithRef<'li'> & {
   /** Lucide icon rendered inside the circle indicator. */
   icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** Color of the circle indicator. Default `neutral`. */
@@ -62,10 +60,16 @@ export type ActivityFeedItemProps = LiHTMLAttributes<HTMLLIElement> & {
   /** @internal */ __isLast?: boolean;
 };
 
-const Item = forwardRef<HTMLLIElement, ActivityFeedItemProps>(function ActivityFeedItem(
-  { icon: Icon, intent = 'neutral', timestamp, children, className, __isLast = false, ...rest },
-  ref
-) {
+function ActivityFeedItem({
+  icon: Icon,
+  intent = 'neutral',
+  timestamp,
+  children,
+  className,
+  __isLast = false,
+  ref,
+  ...rest
+}: ActivityFeedItemProps) {
   return (
     <li ref={ref} className={className} {...rest}>
       <div className="relative pb-8">
@@ -100,18 +104,15 @@ const Item = forwardRef<HTMLLIElement, ActivityFeedItemProps>(function ActivityF
       </div>
     </li>
   );
-});
+}
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type ActivityFeedProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
+export type ActivityFeedProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   children: ReactNode;
 };
 
-const Root = forwardRef<HTMLUListElement, ActivityFeedProps>(function ActivityFeedRoot(
-  { className, children, ...rest },
-  ref
-) {
+function ActivityFeedRoot({ className, children, ref, ...rest }: ActivityFeedProps) {
   const items = Children.toArray(children).filter(isValidElement);
   return (
     <ul ref={ref} role="list" className={clsx('-mb-8', className)} {...rest}>
@@ -130,8 +131,8 @@ const Root = forwardRef<HTMLUListElement, ActivityFeedProps>(function ActivityFe
       })}
     </ul>
   );
-});
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const ActivityFeed = Object.assign(Root, { Item });
+export const ActivityFeed = Object.assign(ActivityFeedRoot, { Item: ActivityFeedItem });

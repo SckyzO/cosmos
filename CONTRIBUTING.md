@@ -58,8 +58,12 @@ the Storybook Accessibility panel, but it must violate exactly the rules of its 
 
 - a listed rule that stops firing fails the test until it is removed from the entry, and a story
   with no violation left fails until its entry is deleted;
-- a rule that is not listed fails the test as well: an entry never grows, and a new story never
-  goes on the list. Fix the violation.
+- a rule that is not listed fails the test as well: an entry never grows. Fix the violation.
+
+A new story goes on the list only with rules its component's other entries already carry: a test
+story of a component with known debt (say, `nested-interactive` on every Dropzone story) inherits
+that debt instead of forcing its fix into an unrelated change. A rule the component doesn't have
+yet is a regression: fix it.
 
 The gate is wired in `apps/storybook/.storybook/a11y-gate.ts`. axe only sees the default `dark`
 theme: check contrast in the other themes with the Theme menu and the Accessibility panel.
@@ -75,7 +79,7 @@ the list instead:
 It runs every story and writes the stories that violate a rule today, sorted by id and
 prettier-formatted. It exits non-zero when the list was out of date, since those stories failed
 during the run, and writes nothing after a filtered run (a file or `-t`). Its diff should only
-remove lines: an added story or rule is a regression to fix, not to list.
+remove lines, apart from new stories carrying their component's known rules.
 
 To see what a story violates, open it in Storybook (`make storybook`), Accessibility panel. Entries
 are keyed by story id, so `grep '"forms-dropzone--' apps/storybook/.storybook/a11y-todo.json` lists

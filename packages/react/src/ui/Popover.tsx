@@ -1,15 +1,14 @@
 import { clsx } from 'clsx';
 import {
   createContext,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
-  type ButtonHTMLAttributes,
   type CSSProperties,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
@@ -96,19 +95,16 @@ const PopoverRoot = ({
 
 // ── Trigger ──────────────────────────────────────────────────────────────────
 
-export type PopoverTriggerProps = ButtonHTMLAttributes<HTMLButtonElement>;
+export type PopoverTriggerProps = ComponentPropsWithRef<'button'>;
 
-const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(function PopoverTrigger(
-  { onClick, children, ...rest },
-  forwardedRef
-) {
+function PopoverTrigger({ onClick, children, ref, ...rest }: PopoverTriggerProps) {
   const { open, setOpen, triggerRef, refreshRect } = useCtx();
   useEffect(() => {
     if (open) refreshRect();
   }, [open, refreshRect]);
   return (
     <button
-      ref={mergeRefs(triggerRef, forwardedRef)}
+      ref={mergeRefs(triggerRef, ref)}
       type="button"
       aria-haspopup="dialog"
       aria-expanded={open}
@@ -121,7 +117,7 @@ const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(functi
       {children}
     </button>
   );
-});
+}
 
 // ── Content (portal) ─────────────────────────────────────────────────────────
 

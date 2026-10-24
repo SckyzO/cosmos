@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder, expectPlaceholderContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectFocusBorder,
+  expectPlaceholderContrast,
+  expectRefFocuses,
+  inEachTheme,
+} from '../storybook-helpers';
 import { Combobox } from './Combobox';
 
 const meta = {
@@ -229,5 +234,16 @@ export const PlaceholderContrastInEveryTheme: Story = {
   play: async ({ canvas }) => {
     const input = canvas.getByRole('combobox');
     inEachTheme(() => expectPlaceholderContrast(input));
+  },
+};
+
+const comboboxRef = createRef<HTMLInputElement>();
+
+/** The ref gets the combobox `<input>`, not the toggle button, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Combobox ref={comboboxRef} label="Assigned to" options={PEOPLE} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(comboboxRef, canvas.getByRole('combobox', { name: 'Assigned to' }));
   },
 };

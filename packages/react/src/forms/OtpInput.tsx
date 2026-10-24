@@ -5,7 +5,9 @@ import {
   type ChangeEvent,
   type ClipboardEvent,
   type KeyboardEvent,
+  type Ref,
 } from 'react';
+import { setRef } from '../ui/mergeRefs';
 
 export type OtpInputProps = {
   /** Number of cells. Default 6. */
@@ -26,6 +28,11 @@ export type OtpInputProps = {
   name?: string;
   className?: string;
   ariaLabel?: string;
+  /**
+   * Ref to the first cell's `<input>`, where focus belongs on a validation
+   * error. The other cells are not exposed.
+   */
+  ref?: Ref<HTMLInputElement>;
 };
 
 const sanitize = (raw: string, alphanumeric: boolean): string => {
@@ -46,6 +53,7 @@ export const OtpInput = ({
   name,
   className,
   ariaLabel = 'Verification code',
+  ref,
 }: OtpInputProps) => {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -137,6 +145,8 @@ export const OtpInput = ({
             key={i}
             ref={(el) => {
               refs.current[i] = el;
+              // The consumer's ref points at the first cell only.
+              if (i === 0) setRef(ref, el);
             }}
             type="text"
             inputMode={alphanumeric ? 'text' : 'numeric'}

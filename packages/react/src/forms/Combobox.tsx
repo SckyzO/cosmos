@@ -8,6 +8,7 @@ import {
   useState,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
@@ -50,6 +51,8 @@ export type ComboboxProps = {
   /** Error message — replaces helperText when set. */
   error?: string;
   className?: string;
+  /** Ref to the `<input role="combobox">`, not to the toggle button. */
+  ref?: Ref<HTMLInputElement>;
 };
 
 export const Combobox = ({
@@ -63,6 +66,7 @@ export const Combobox = ({
   helperText,
   error,
   className,
+  ref,
 }: ComboboxProps) => {
   const id = useId();
   const listboxId = `${id}-listbox`;
@@ -148,6 +152,7 @@ export const Combobox = ({
       )}
       <div className={clsx('relative', label && 'mt-2')}>
         <input
+          ref={ref}
           id={id}
           role="combobox"
           aria-expanded={open}

@@ -1,12 +1,12 @@
 import { clsx } from 'clsx';
 import {
   createContext,
-  forwardRef,
   useContext,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Simple dark with menu button on left"):
@@ -63,7 +63,7 @@ const NavbarThemeContext = createContext<NavbarTheme>('light');
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type NavbarProps = HTMLAttributes<HTMLElement> & {
+export type NavbarProps = ComponentPropsWithRef<'nav'> & {
   /**
    * `light` follows the page theme (white, gray-800 in the dark themes);
    * `dark` stays dark in every theme. Also the default theme of the parts.
@@ -77,10 +77,15 @@ export type NavbarProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
 };
 
-const RootCmp = forwardRef<HTMLElement, NavbarProps>(function NavbarRoot(
-  { theme = 'light', maxWidth = '7xl', heightClassName = 'h-16', className, children, ...rest },
-  ref
-) {
+function NavbarRoot({
+  theme = 'light',
+  maxWidth = '7xl',
+  heightClassName = 'h-16',
+  className,
+  children,
+  ref,
+  ...rest
+}: NavbarProps) {
   return (
     <nav ref={ref} className={clsx(ROOT_BG[theme], className)} data-theme={theme} {...rest}>
       <div className={clsx('px-4 sm:px-6 lg:px-8', maxWidth === '7xl' && 'mx-auto max-w-7xl')}>
@@ -90,7 +95,7 @@ const RootCmp = forwardRef<HTMLElement, NavbarProps>(function NavbarRoot(
       </div>
     </nav>
   );
-});
+}
 
 // ── Brand ────────────────────────────────────────────────────────────────────
 
@@ -183,7 +188,7 @@ const MobileMenuButton = ({ theme, className, children, ...rest }: NavbarMobileM
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const Navbar = Object.assign(RootCmp, {
+export const Navbar = Object.assign(NavbarRoot, {
   Brand,
   Items,
   Item,

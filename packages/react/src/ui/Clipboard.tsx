@@ -1,18 +1,11 @@
 import { clsx } from 'clsx';
 import { Check, Copy } from 'lucide-react';
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ButtonHTMLAttributes,
-} from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentPropsWithRef } from 'react';
 
 export type ClipboardVariant = 'icon' | 'button';
 export type ClipboardSize = 'sm' | 'md';
 
-export type ClipboardProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onCopy'> & {
+export type ClipboardProps = Omit<ComponentPropsWithRef<'button'>, 'onCopy'> & {
   /** Text written to the clipboard on click. */
   value: string;
   /** `icon` (default) → square icon-only button. `button` → icon + label. */
@@ -43,22 +36,20 @@ const SIZE_BUTTON: Record<ClipboardSize, string> = {
   md: 'h-9 px-3 text-sm gap-2',
 };
 
-export const Clipboard = forwardRef<HTMLButtonElement, ClipboardProps>(function Clipboard(
-  {
-    value,
-    variant = 'icon',
-    size = 'sm',
-    copyLabel = 'Copy',
-    copiedLabel = 'Copied!',
-    duration = 1500,
-    onCopy,
-    floating = false,
-    className,
-    onClick,
-    ...rest
-  },
-  ref
-) {
+export function Clipboard({
+  value,
+  variant = 'icon',
+  size = 'sm',
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied!',
+  duration = 1500,
+  onCopy,
+  floating = false,
+  className,
+  onClick,
+  ref,
+  ...rest
+}: ClipboardProps) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -131,4 +122,4 @@ export const Clipboard = forwardRef<HTMLButtonElement, ClipboardProps>(function 
       {label}
     </button>
   );
-});
+}

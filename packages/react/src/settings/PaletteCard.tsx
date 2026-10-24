@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
+import type { Ref } from 'react';
 
 export type PalettePreview = {
   /** Page background. */
@@ -33,6 +34,8 @@ export type PaletteCardProps = {
   /** Roving tab stop, set by the picker's radio group. */
   tabIndex?: number;
   className?: string;
+  /** Ref to the `<button role="radio">`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /**
@@ -46,8 +49,10 @@ export const PaletteCard = ({
   onClick,
   tabIndex,
   className,
+  ref,
 }: PaletteCardProps) => (
   <button
+    ref={ref}
     type="button"
     onClick={onClick}
     role="radio"

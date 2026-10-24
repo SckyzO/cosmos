@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Pencil, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { PageActionButton, PageActionIconButton } from './PageActionButton';
 
 const meta = {
@@ -39,4 +41,22 @@ export const IconOnly: Story = {
       <PageActionIconButton icon={Trash2} title="Delete" variant="danger-outline" />
     </div>
   ),
+};
+
+const buttonRef = createRef<HTMLButtonElement>();
+const iconButtonRef = createRef<HTMLButtonElement>();
+
+/** Each ref gets its `<button>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex items-center gap-2">
+      <PageActionButton ref={buttonRef}>Configure</PageActionButton>
+      <PageActionIconButton ref={iconButtonRef} icon={Plus} title="Add" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: 'Configure' }));
+    await expectRefFocuses(iconButtonRef, canvas.getByRole('button', { name: 'Add' }));
+  },
 };

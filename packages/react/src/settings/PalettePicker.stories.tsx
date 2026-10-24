@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
+import { PaletteCard, type PaletteMeta } from './PaletteCard';
 import { PalettePicker } from './PalettePicker';
-import type { PaletteMeta } from './PaletteCard';
 
 const meta = {
   title: 'Settings/Palette Picker',
@@ -228,5 +229,16 @@ export const NothingCheckedEntersOnTheFirstPalette: Story = {
     await userEvent.keyboard('{Enter}');
     await expect(args.onChange).toHaveBeenLastCalledWith('warm');
     await expect(canvas.getByRole('radio', { name: 'Warm', checked: true })).toHaveFocus();
+  },
+};
+
+const cardRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the card's `<button role="radio">`, and focusing through it works. */
+export const PaletteCardForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PaletteCard ref={cardRef} meta={LIGHT_THEMES[0]} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Pure' }));
   },
 };

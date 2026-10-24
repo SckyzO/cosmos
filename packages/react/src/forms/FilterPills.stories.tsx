@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { Filter } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { FilterPills } from './FilterPills';
 
 const meta = {
@@ -85,5 +86,32 @@ export const ArrowKeysMoveSelection: Story = {
     await expect(canvas.getByRole('radio', { name: 'OK', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowRight}');
     await expect(canvas.getByRole('radio', { name: 'All', checked: true })).toHaveFocus();
+  },
+};
+
+const tabStopRef = createRef<HTMLButtonElement>();
+
+/**
+ * The ref gets the pill the group's Tab stop is on, the first one while none is
+ * selected, and it follows the selection.
+ */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [v, setV] = useState('');
+    return (
+      <FilterPills
+        ref={tabStopRef}
+        options={SEVERITY}
+        value={v}
+        onChange={setV}
+        aria-label="Severity"
+      />
+    );
+  },
+  play: async ({ canvas }) => {
+    await expectRefFocuses(tabStopRef, canvas.getByRole('radio', { name: 'All' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'WARN' }));
+    await expectRefFocuses(tabStopRef, canvas.getByRole('radio', { name: 'WARN' }));
   },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
 import { SelectInput } from './SelectInput';
 
 const meta = {
@@ -61,5 +61,24 @@ export const FocusShowsAccentBorderInDark: Story = {
   },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('combobox'));
+  },
+};
+
+const selectRef = createRef<HTMLSelectElement>();
+
+/** The ref gets the native `<select>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <SelectInput
+      ref={selectRef}
+      value="15"
+      onChange={() => {}}
+      options={OPTIONS}
+      aria-label="Interval"
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(selectRef, canvas.getByRole('combobox', { name: 'Interval' }));
   },
 };

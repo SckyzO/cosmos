@@ -1,10 +1,9 @@
 import { clsx } from 'clsx';
 import {
-  forwardRef,
-  type AnchorHTMLAttributes,
   type ComponentType,
   type HTMLAttributes,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
@@ -25,7 +24,7 @@ import {
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type VerticalNavigationItemProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+export type VerticalNavigationItemProps = ComponentPropsWithRef<'a'> & {
   /** Leading icon (lucide-react component). */
   icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** Trailing badge content (count, "new", etc.). */
@@ -33,10 +32,15 @@ export type VerticalNavigationItemProps = AnchorHTMLAttributes<HTMLAnchorElement
   active?: boolean;
 };
 
-const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function Item(
-  { icon: Icon, badge, active = false, className, children, ...rest },
-  ref
-) {
+function Item({
+  icon: Icon,
+  badge,
+  active = false,
+  className,
+  children,
+  ref,
+  ...rest
+}: VerticalNavigationItemProps) {
   return (
     <li>
       <a
@@ -78,7 +82,7 @@ const Item = forwardRef<HTMLAnchorElement, VerticalNavigationItemProps>(function
       </a>
     </li>
   );
-});
+}
 
 // ── Section heading (between item groups) ───────────────────────────────────
 
@@ -98,16 +102,19 @@ const Section = ({ label, children, className, ...rest }: VerticalNavigationSect
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type VerticalNavigationProps = HTMLAttributes<HTMLElement> & {
+export type VerticalNavigationProps = ComponentPropsWithRef<'nav'> & {
   /** Tighter padding (TUI "On gray" pattern), useful inside a gray-bg surface. */
   variant?: 'default' | 'on-gray';
   children: ReactNode;
 };
 
-const Root = forwardRef<HTMLElement, VerticalNavigationProps>(function VerticalNavigationRoot(
-  { variant = 'default', className, children, ...rest },
-  ref
-) {
+function VerticalNavigationRoot({
+  variant = 'default',
+  className,
+  children,
+  ref,
+  ...rest
+}: VerticalNavigationProps) {
   return (
     <nav
       ref={ref}
@@ -124,8 +131,8 @@ const Root = forwardRef<HTMLElement, VerticalNavigationProps>(function VerticalN
       </ul>
     </nav>
   );
-});
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const VerticalNavigation = Object.assign(Root, { Item, Section });
+export const VerticalNavigation = Object.assign(VerticalNavigationRoot, { Item, Section });

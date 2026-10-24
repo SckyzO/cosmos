@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ButtonHTMLAttributes, ElementType, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ElementType, ReactNode, Ref } from 'react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'soft';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -18,6 +18,8 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   iconPosition?: 'left' | 'right';
   loading?: boolean;
   children?: ReactNode;
+  /** Ref to the `<button>`. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
@@ -86,9 +88,11 @@ export const Button = ({
   className,
   children,
   type = 'button',
+  ref,
   ...rest
 }: ButtonProps) => (
   <button
+    ref={ref}
     type={type}
     disabled={disabled || loading}
     className={clsx(

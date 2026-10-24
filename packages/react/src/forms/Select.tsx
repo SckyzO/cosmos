@@ -1,21 +1,26 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
-import { forwardRef, useId } from 'react';
-import type { SelectHTMLAttributes } from 'react';
+import { useId, type ComponentPropsWithRef } from 'react';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
-export type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> & {
+export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'children'> & {
   options: SelectOption[];
   label?: string;
   description?: string;
   error?: string;
 };
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { options, label, description, error, className, id, ...rest },
-  ref
-) {
+export function Select({
+  options,
+  label,
+  description,
+  error,
+  className,
+  id,
+  ref,
+  ...rest
+}: SelectProps) {
   const generatedId = useId();
   const selectId = id ?? rest.name ?? generatedId;
   const descId = `${selectId}-desc`;
@@ -66,4 +71,4 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       )}
     </div>
   );
-});
+}

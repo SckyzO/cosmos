@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Left-aligned"):
 //   <div>
@@ -23,17 +23,14 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type DescriptionListItemProps = HTMLAttributes<HTMLDivElement> & {
+export type DescriptionListItemProps = ComponentPropsWithRef<'div'> & {
   /** Label (`<dt>`). */
   label: ReactNode;
   /** Value (`<dd>`). */
   children: ReactNode;
 };
 
-const Item = forwardRef<HTMLDivElement, DescriptionListItemProps>(function Item(
-  { label, children, className, ...rest },
-  ref
-) {
+function Item({ label, children, className, ref, ...rest }: DescriptionListItemProps) {
   return (
     <div
       ref={ref}
@@ -46,11 +43,11 @@ const Item = forwardRef<HTMLDivElement, DescriptionListItemProps>(function Item(
       </dd>
     </div>
   );
-});
+}
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type DescriptionListProps = HTMLAttributes<HTMLDListElement> & {
+export type DescriptionListProps = ComponentPropsWithRef<'dl'> & {
   /** Optional header title (rendered above the list). */
   title?: ReactNode;
   /** Optional header description (rendered below the title). */
@@ -68,10 +65,16 @@ export type DescriptionListProps = HTMLAttributes<HTMLDListElement> & {
   children: ReactNode;
 };
 
-const RootCmp = forwardRef<HTMLDListElement, DescriptionListProps>(function DescriptionListRoot(
-  { title, description, inCard = false, striped = false, className, children, ...rest },
-  ref
-) {
+function DescriptionListRoot({
+  title,
+  description,
+  inCard = false,
+  striped = false,
+  className,
+  children,
+  ref,
+  ...rest
+}: DescriptionListProps) {
   const dl = (
     <dl
       ref={ref}
@@ -118,8 +121,8 @@ const RootCmp = forwardRef<HTMLDListElement, DescriptionListProps>(function Desc
       </div>
     </div>
   );
-});
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 
-export const DescriptionList = Object.assign(RootCmp, { Item });
+export const DescriptionList = Object.assign(DescriptionListRoot, { Item });

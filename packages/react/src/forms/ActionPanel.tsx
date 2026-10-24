@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <div class="bg-white shadow-sm sm:rounded-lg">
@@ -20,7 +20,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 export type ActionPanelLayout = 'stacked' | 'inline';
 
-export type ActionPanelProps = HTMLAttributes<HTMLDivElement> & {
+export type ActionPanelProps = ComponentPropsWithRef<'div'> & {
   /** Section title (rendered as `<h3>`). */
   title: ReactNode;
   /** Body text shown under the title. */
@@ -38,10 +38,17 @@ export type ActionPanelProps = HTMLAttributes<HTMLDivElement> & {
   well?: boolean;
 };
 
-export const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(function ActionPanel(
-  { title, description, action, layout = 'stacked', well = false, className, children, ...rest },
-  ref
-) {
+export function ActionPanel({
+  title,
+  description,
+  action,
+  layout = 'stacked',
+  well = false,
+  className,
+  children,
+  ref,
+  ...rest
+}: ActionPanelProps) {
   const surface = well
     ? 'rounded-lg bg-gray-50 dark:bg-gray-800/60'
     : 'bg-white shadow-sm sm:rounded-lg dark:bg-gray-900 dark:ring-1 dark:ring-white/10';
@@ -84,4 +91,4 @@ export const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(function
       </div>
     </div>
   );
-});
+}

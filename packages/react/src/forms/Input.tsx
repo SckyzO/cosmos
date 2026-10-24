@@ -1,8 +1,8 @@
 import { clsx } from 'clsx';
-import { forwardRef, useId } from 'react';
-import type { ElementType, InputHTMLAttributes, ReactNode } from 'react';
+import { useId } from 'react';
+import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
 
-export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
+export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   label?: string;
   description?: string;
   error?: string;
@@ -18,22 +18,20 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   suffix?: ReactNode;
 };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  {
-    label,
-    description,
-    error,
-    icon: Icon,
-    rightSlot,
-    labelTrailing,
-    prefix,
-    suffix,
-    className,
-    id,
-    ...rest
-  },
-  ref
-) {
+export function Input({
+  label,
+  description,
+  error,
+  icon: Icon,
+  rightSlot,
+  labelTrailing,
+  prefix,
+  suffix,
+  className,
+  id,
+  ref,
+  ...rest
+}: InputProps) {
   const generatedId = useId();
   const inputId = id ?? rest.name ?? generatedId;
   const descId = `${inputId}-desc`;
@@ -129,4 +127,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
     </div>
   );
-});
+}

@@ -1,4 +1,4 @@
-import { type ComponentType } from 'react';
+import { type ComponentType, type Ref } from 'react';
 import { clsx } from 'clsx';
 import { type HealthStatus } from '../status/types';
 
@@ -10,6 +10,8 @@ export type StatusRowProps = {
   onClick?: () => void;
   href?: string;
   className?: string;
+  /** Ref to the row's root: an `<a>` when `href` is set, a `<button>` otherwise. */
+  ref?: Ref<HTMLAnchorElement | HTMLButtonElement>;
 };
 
 // Inlined here too (Tailwind scanner doesn't follow imports from constants).
@@ -32,6 +34,7 @@ export const StatusRow = ({
   onClick,
   href,
   className,
+  ref,
 }: StatusRowProps) => {
   const inner = (
     <>
@@ -61,13 +64,18 @@ export const StatusRow = ({
   );
   if (href) {
     return (
-      <a href={href} className={baseClass}>
+      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
         {inner}
       </a>
     );
   }
   return (
-    <button type="button" onClick={onClick} className={baseClass}>
+    <button
+      ref={ref as Ref<HTMLButtonElement>}
+      type="button"
+      onClick={onClick}
+      className={baseClass}
+    >
       {inner}
     </button>
   );

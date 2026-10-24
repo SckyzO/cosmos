@@ -2,15 +2,14 @@ import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import {
   createContext,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
-  type ButtonHTMLAttributes,
   type ComponentType,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
@@ -101,10 +100,7 @@ const UserMenuRoot = ({
 
 // ── Trigger ──────────────────────────────────────────────────────────────────
 
-export type UserMenuTriggerProps = Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  'onClick' | 'children'
-> & {
+export type UserMenuTriggerProps = Omit<ComponentPropsWithRef<'button'>, 'onClick' | 'children'> & {
   /** Display name shown next to the avatar. Also used for initials fallback. */
   name: string;
   /** Avatar image URL. Falls back to initials of `name`. */
@@ -113,54 +109,56 @@ export type UserMenuTriggerProps = Omit<
   hideName?: boolean;
 };
 
-const UserMenuTrigger = forwardRef<HTMLButtonElement, UserMenuTriggerProps>(
-  function UserMenuTrigger(
-    { name, avatarSrc, hideName = false, className, ...rest },
-    forwardedRef
-  ) {
-    const { open, setOpen, triggerRef, refreshRect, initialItemRef } = useCtx();
-    useEffect(() => {
-      if (open) refreshRect();
-    }, [open, refreshRect]);
-    return (
-      <button
-        ref={mergeRefs(triggerRef, forwardedRef)}
-        type="button"
-        aria-label={`User menu for ${name}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => {
-          initialItemRef.current = 'first';
-          setOpen(!open);
-        }}
-        // Menu button pattern: ArrowDown opens on the first item, ArrowUp on the last.
-        onKeyDown={(e) => {
-          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-          e.preventDefault();
-          initialItemRef.current = e.key === 'ArrowUp' ? 'last' : 'first';
-          setOpen(true);
-        }}
+function UserMenuTrigger({
+  name,
+  avatarSrc,
+  hideName = false,
+  className,
+  ref,
+  ...rest
+}: UserMenuTriggerProps) {
+  const { open, setOpen, triggerRef, refreshRect, initialItemRef } = useCtx();
+  useEffect(() => {
+    if (open) refreshRect();
+  }, [open, refreshRect]);
+  return (
+    <button
+      ref={mergeRefs(triggerRef, ref)}
+      type="button"
+      aria-label={`User menu for ${name}`}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={() => {
+        initialItemRef.current = 'first';
+        setOpen(!open);
+      }}
+      // Menu button pattern: ArrowDown opens on the first item, ArrowUp on the last.
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        initialItemRef.current = e.key === 'ArrowUp' ? 'last' : 'first';
+        setOpen(true);
+      }}
+      className={clsx(
+        'flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
+        className
+      )}
+      {...rest}
+    >
+      <Avatar src={avatarSrc} name={name} size="sm" />
+      {!hideName && (
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{name}</span>
+      )}
+      <ChevronDown
         className={clsx(
-          'flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
-          className
+          'h-4 w-4 shrink-0 text-gray-400 transition-transform',
+          open && 'rotate-180'
         )}
-        {...rest}
-      >
-        <Avatar src={avatarSrc} name={name} size="sm" />
-        {!hideName && (
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{name}</span>
-        )}
-        <ChevronDown
-          className={clsx(
-            'h-4 w-4 shrink-0 text-gray-400 transition-transform',
-            open && 'rotate-180'
-          )}
-          aria-hidden
-        />
-      </button>
-    );
-  }
-);
+        aria-hidden
+      />
+    </button>
+  );
+}
 
 // ── Content (portal) ─────────────────────────────────────────────────────────
 
@@ -267,17 +265,23 @@ const UserMenuItems = ({ children }: { children: ReactNode }) => (
 
 export type UserMenuItemVariant = 'default' | 'danger';
 
-export type UserMenuItemProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type UserMenuItemProps = ComponentPropsWithRef<'button'> & {
   icon?: ComponentType<{ className?: string }>;
   variant?: UserMenuItemVariant;
   /** Auto-close the menu after click. Default true. */
   closeOnClick?: boolean;
 };
 
-const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function UserMenuItem(
-  { icon: Icon, variant = 'default', closeOnClick = true, onClick, className, children, ...rest },
-  ref
-) {
+function UserMenuItem({
+  icon: Icon,
+  variant = 'default',
+  closeOnClick = true,
+  onClick,
+  className,
+  children,
+  ref,
+  ...rest
+}: UserMenuItemProps) {
   const { setOpen } = useCtx();
   return (
     <button
@@ -312,7 +316,7 @@ const UserMenuItem = forwardRef<HTMLButtonElement, UserMenuItemProps>(function U
       <span className="flex-1 truncate">{children}</span>
     </button>
   );
-});
+}
 
 // ── Separator ────────────────────────────────────────────────────────────────
 

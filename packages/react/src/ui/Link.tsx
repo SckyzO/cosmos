@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
 import { ExternalLink } from 'lucide-react';
-import { forwardRef, type AnchorHTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, ComponentPropsWithRef } from 'react';
 
 export type LinkVariant = 'colored' | 'underline' | 'opacity' | 'opacity-hover' | 'subtle';
 
-export type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+export type LinkProps = ComponentPropsWithRef<'a'> & {
   variant?: LinkVariant;
   /**
    * When true, opens in a new tab with `rel="noopener noreferrer"` and renders an external
@@ -29,19 +29,17 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
 const mergeRel = (rel?: string): string =>
   [...new Set(['noopener', 'noreferrer', ...(rel?.split(/\s+/).filter(Boolean) ?? [])])].join(' ');
 
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  {
-    variant = 'colored',
-    external = false,
-    hideExternalIcon = false,
-    target,
-    rel,
-    className,
-    children,
-    ...rest
-  },
-  ref
-) {
+export function Link({
+  variant = 'colored',
+  external = false,
+  hideExternalIcon = false,
+  target,
+  rel,
+  className,
+  children,
+  ref,
+  ...rest
+}: LinkProps) {
   const finalTarget = external ? (target ?? '_blank') : target;
   const finalRel = external ? mergeRel(rel) : rel;
   return (
@@ -62,4 +60,4 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       )}
     </a>
   );
-});
+}

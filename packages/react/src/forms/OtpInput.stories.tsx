@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
 import { OtpInput } from './OtpInput';
 
 const meta = {
@@ -177,5 +177,16 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
   args: { error: true },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getAllByRole('textbox')[0], { token: '--color-red-500' });
+  },
+};
+
+const otpRef = createRef<HTMLInputElement>();
+
+/** The ref gets the first cell's `<input>` only, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OtpInput ref={otpRef} value="" onChange={() => {}} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(otpRef, canvas.getByLabelText('Verification code digit 1'));
   },
 };

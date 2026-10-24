@@ -2,11 +2,10 @@ import { clsx } from 'clsx';
 import {
   Children,
   cloneElement,
-  forwardRef,
   isValidElement,
-  type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 import { StackedList, type StackedListItemProps } from './StackedList';
 
@@ -22,7 +21,7 @@ import { StackedList, type StackedListItemProps } from './StackedList';
 // edge whitespace that pattern 1 relies on. We achieve this by cloning each
 // <StackedList.Item> child with an extra className.
 
-export type StackedListInCardProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
+export type StackedListInCardProps = Omit<ComponentPropsWithRef<'div'>, 'children'> & {
   /** Children must be `<StackedList.Item>` elements. */
   children: ReactNode;
 };
@@ -37,26 +36,24 @@ const isStackedListItem = (node: ReactNode): node is ReactElement<StackedListIte
  * `StackedList.Item` child gets horizontal padding so its content clears the
  * card edge; other children render unchanged.
  */
-export const StackedListInCard = forwardRef<HTMLDivElement, StackedListInCardProps>(
-  function StackedListInCard({ className, children, ...rest }, ref) {
-    const insetChildren = Children.map(children, (child) => {
-      if (!isStackedListItem(child)) return child;
-      return cloneElement(child, {
-        className: clsx(ITEM_INSET_CLASS, child.props.className),
-      });
+export function StackedListInCard({ className, children, ref, ...rest }: StackedListInCardProps) {
+  const insetChildren = Children.map(children, (child) => {
+    if (!isStackedListItem(child)) return child;
+    return cloneElement(child, {
+      className: clsx(ITEM_INSET_CLASS, child.props.className),
     });
+  });
 
-    return (
-      <div
-        ref={ref}
-        className={clsx(
-          'overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-md dark:bg-gray-900 dark:ring-white/10',
-          className
-        )}
-        {...rest}
-      >
-        <StackedList>{insetChildren}</StackedList>
-      </div>
-    );
-  }
-);
+  return (
+    <div
+      ref={ref}
+      className={clsx(
+        'overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-md dark:bg-gray-900 dark:ring-white/10',
+        className
+      )}
+      {...rest}
+    >
+      <StackedList>{insetChildren}</StackedList>
+    </div>
+  );
+}

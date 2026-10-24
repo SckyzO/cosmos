@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ImageIcon } from 'lucide-react';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fireEvent, waitFor } from 'storybook/test';
 import { Dropzone } from './Dropzone';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Dropzone',
@@ -152,5 +152,16 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Could not upload — please retry.'));
+  },
+};
+
+const dropzoneRef = createRef<HTMLDivElement>();
+
+/** The ref gets the drop area (`role="button"`), not the hidden file input, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Dropzone ref={dropzoneRef} label="Upload files" />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(dropzoneRef, canvas.getByRole('button', { name: /Upload files/ }));
   },
 };

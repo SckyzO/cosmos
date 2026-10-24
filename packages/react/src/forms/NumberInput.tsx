@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 
@@ -20,6 +21,8 @@ export type NumberInputProps = FieldA11yProps & {
   fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
+  /** Ref to the number `<input>`, not to the `−` / `+` buttons. */
+  ref?: Ref<HTMLInputElement>;
 };
 
 /**
@@ -42,6 +45,7 @@ export const NumberInput = ({
   disabled = false,
   className,
   name,
+  ref,
   ...a11y
 }: NumberInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
@@ -75,6 +79,7 @@ export const NumberInput = ({
       </button>
       <div className="flex items-center">
         <input
+          ref={ref}
           type="number"
           name={name}
           {...fieldA11y}

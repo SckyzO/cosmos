@@ -6,6 +6,7 @@ import {
   useState,
   type ButtonHTMLAttributes,
   type ComponentType,
+  type Ref,
 } from 'react';
 
 export type BackToTopFabPosition = 'bottom-right' | 'bottom-left';
@@ -27,6 +28,8 @@ export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'o
   /** Distance from the viewport edges in px. Default `24`. */
   offset?: number;
   ariaLabel?: string;
+  /** Ref to the `<button>`. It is in the DOM even while faded out. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 const POSITION_CLASS: Record<BackToTopFabPosition, string> = {
@@ -51,6 +54,7 @@ export const BackToTopFab = ({
   ariaLabel = 'Back to top',
   className,
   style,
+  ref,
   ...rest
 }: BackToTopFabProps) => {
   const [visible, setVisible] = useState(false);
@@ -78,6 +82,7 @@ export const BackToTopFab = ({
 
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={ariaLabel}
       aria-hidden={!visible || undefined}

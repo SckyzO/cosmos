@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
+import { setRef } from '../ui/mergeRefs';
 import { usePortalFocus } from '../ui/overlayA11y';
 import { Calendar } from './Calendar';
 
@@ -58,6 +59,11 @@ type CommonProps = {
   /** Stretch the trigger(s) to fill the parent. */
   fullWidth?: boolean;
   className?: string;
+  /**
+   * Ref to the trigger `<button>` the label points at: the only one in `single`
+   * mode, the start date's in `range` mode.
+   */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export type DatePickerProps = (SingleProps | RangeProps) & CommonProps;
@@ -83,12 +89,21 @@ export const DatePicker = (props: DatePickerProps) => {
     calendarFooter,
     fullWidth = false,
     className,
+    ref,
   } = props;
 
   const isRange = props.mode === 'range';
   const fieldId = useId();
   const fromRef = useRef<HTMLButtonElement>(null);
   const toRef = useRef<HTMLButtonElement>(null);
+  // The consumer's `ref` gets the same trigger as `fromRef`, the one the label points at.
+  const setFromTrigger = useCallback(
+    (node: HTMLButtonElement | null) => {
+      fromRef.current = node;
+      setRef(ref, node);
+    },
+    [ref]
+  );
   // The trigger that opened the calendar: focus goes back to it on close.
   const openerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -217,14 +232,13 @@ export const DatePicker = (props: DatePickerProps) => {
   );
 
   const renderTrigger = (
-    ref: React.RefObject<HTMLButtonElement | null>,
     id: string | undefined,
     side: 'from' | 'to',
     date: Date | undefined,
     placeholder: string
   ) => (
     <button
-      ref={ref}
+      ref={side === 'from' ? setFromTrigger : toRef}
       id={id}
       type="button"
       disabled={disabled}
@@ -267,7 +281,6 @@ export const DatePicker = (props: DatePickerProps) => {
       {isRange ? (
         <div className={clsx('flex items-center gap-2', !fullWidth && 'w-fit')}>
           {renderTrigger(
-            fromRef,
             fieldId,
             'from',
             selectedRange.from,
@@ -275,7 +288,6 @@ export const DatePicker = (props: DatePickerProps) => {
           )}
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">to</span>
           {renderTrigger(
-            toRef,
             undefined,
             'to',
             selectedRange.to,
@@ -284,7 +296,6 @@ export const DatePicker = (props: DatePickerProps) => {
         </div>
       ) : (
         renderTrigger(
-          fromRef,
           fieldId,
           'from',
           selectedSingle,

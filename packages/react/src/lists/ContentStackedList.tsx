@@ -1,18 +1,11 @@
 import { clsx } from 'clsx';
-import {
-  Children,
-  Fragment,
-  forwardRef,
-  type HTMLAttributes,
-  type LiHTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { Children, Fragment, type ReactNode, type ComponentPropsWithRef } from 'react';
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 // TUI reference (patterns 3 / 5):
 //   <ul role="list" class="divide-y divide-gray-100">
 
-export type ContentStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'children'> & {
+export type ContentStackedListProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   children: ReactNode;
 };
 
@@ -22,20 +15,18 @@ export type ContentStackedListProps = Omit<HTMLAttributes<HTMLUListElement>, 'ch
  * and a right-aligned trailing slot. No avatar column: for people, use
  * `StackedList`.
  */
-const ContentStackedListRoot = forwardRef<HTMLUListElement, ContentStackedListProps>(
-  function ContentStackedListRoot({ className, children, ...rest }, ref) {
-    return (
-      <ul
-        ref={ref}
-        role="list"
-        className={clsx('divide-y divide-gray-100 dark:divide-white/5', className)}
-        {...rest}
-      >
-        {children}
-      </ul>
-    );
-  }
-);
+function ContentStackedListRoot({ className, children, ref, ...rest }: ContentStackedListProps) {
+  return (
+    <ul
+      ref={ref}
+      role="list"
+      className={clsx('divide-y divide-gray-100 dark:divide-white/5', className)}
+      {...rest}
+    >
+      {children}
+    </ul>
+  );
+}
 
 // ── Dot separator (TUI: <svg viewBox="0 0 2 2"><circle r=1 /></svg>) ─────────
 
@@ -62,7 +53,7 @@ const Dot = () => (
 //     </div>
 //   </li>
 
-export type ContentStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
+export type ContentStackedListItemProps = ComponentPropsWithRef<'li'> & {
   /** Primary text (heading-like). Becomes a link if `href` is set. */
   title: ReactNode;
   /** Make the title a link. */
@@ -78,49 +69,56 @@ export type ContentStackedListItemProps = LiHTMLAttributes<HTMLLIElement> & {
   trailing?: ReactNode;
 };
 
-const ContentStackedListItem = forwardRef<HTMLLIElement, ContentStackedListItemProps>(
-  function ContentStackedListItem({ title, href, badge, meta, trailing, className, ...rest }, ref) {
-    const titleEl = href ? (
-      <a href={href} className="text-gray-900 hover:underline dark:text-white">
-        {title}
-      </a>
-    ) : (
-      title
-    );
+function ContentStackedListItem({
+  title,
+  href,
+  badge,
+  meta,
+  trailing,
+  className,
+  ref,
+  ...rest
+}: ContentStackedListItemProps) {
+  const titleEl = href ? (
+    <a href={href} className="text-gray-900 hover:underline dark:text-white">
+      {title}
+    </a>
+  ) : (
+    title
+  );
 
-    const metaItems = meta ?? [];
-    const hasMeta = metaItems.length > 0;
+  const metaItems = meta ?? [];
+  const hasMeta = metaItems.length > 0;
 
-    return (
-      <li
-        ref={ref}
-        className={clsx('flex items-center justify-between gap-x-6 py-5', className)}
-        {...rest}
-      >
-        <div className="min-w-0">
-          <div className="flex items-start gap-x-3">
-            <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{titleEl}</p>
-            {badge}
-          </div>
-          {hasMeta && (
-            <div className="mt-1 flex items-center gap-x-2 text-xs/5 text-gray-500 dark:text-gray-400">
-              {Children.toArray(metaItems).map((item, i, items) => (
-                <Fragment key={i}>
-                  {i > 0 && <Dot />}
-                  {/* One line per item; the last one truncates when the row runs out of room. */}
-                  <span className={i === items.length - 1 ? 'truncate' : 'whitespace-nowrap'}>
-                    {item}
-                  </span>
-                </Fragment>
-              ))}
-            </div>
-          )}
+  return (
+    <li
+      ref={ref}
+      className={clsx('flex items-center justify-between gap-x-6 py-5', className)}
+      {...rest}
+    >
+      <div className="min-w-0">
+        <div className="flex items-start gap-x-3">
+          <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{titleEl}</p>
+          {badge}
         </div>
-        {trailing && <div className="flex flex-none items-center gap-x-4">{trailing}</div>}
-      </li>
-    );
-  }
-);
+        {hasMeta && (
+          <div className="mt-1 flex items-center gap-x-2 text-xs/5 text-gray-500 dark:text-gray-400">
+            {Children.toArray(metaItems).map((item, i, items) => (
+              <Fragment key={i}>
+                {i > 0 && <Dot />}
+                {/* One line per item; the last one truncates when the row runs out of room. */}
+                <span className={i === items.length - 1 ? 'truncate' : 'whitespace-nowrap'}>
+                  {item}
+                </span>
+              </Fragment>
+            ))}
+          </div>
+        )}
+      </div>
+      {trailing && <div className="flex flex-none items-center gap-x-4">{trailing}</div>}
+    </li>
+  );
+}
 
 // ── Compound export ──────────────────────────────────────────────────────────
 

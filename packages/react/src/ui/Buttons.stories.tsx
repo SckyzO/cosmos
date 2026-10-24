@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -292,5 +293,16 @@ export const DangerContrastInLight: Story = {
   args: { variant: 'danger', children: 'Delete' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByRole('button', { name: 'Delete' }));
+  },
+};
+
+const buttonRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the `<button>`, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Button ref={buttonRef}>Save</Button>,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: 'Save' }));
   },
 };

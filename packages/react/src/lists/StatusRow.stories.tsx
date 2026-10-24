@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Cpu, Database, HardDrive, Server } from 'lucide-react';
+import { createRef } from 'react';
+import { expectRefFocuses } from '../storybook-helpers';
 import { StatusRow } from './StatusRow';
 
 const meta = {
@@ -27,4 +29,22 @@ export const Mixed: Story = {
       <StatusRow icon={Cpu} title="hpc-node-04" subtitle="DC Toulouse" status="OK" />
     </div>
   ),
+};
+
+const linkRef = createRef<HTMLAnchorElement | HTMLButtonElement>();
+const buttonRef = createRef<HTMLAnchorElement | HTMLButtonElement>();
+
+/** The ref gets the row's root, an `<a>` with `href` and a `<button>` without, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="max-w-md">
+      <StatusRow ref={linkRef} title="Linked" status="OK" href="#linked" />
+      <StatusRow ref={buttonRef} title="Pressed" status="WARN" onClick={() => {}} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(linkRef, canvas.getByRole('link', { name: /Linked/ }));
+    await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: /Pressed/ }));
+  },
 };

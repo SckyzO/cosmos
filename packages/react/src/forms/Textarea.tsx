@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
-import { forwardRef, useId, useState, type ReactNode, type TextareaHTMLAttributes } from 'react';
+import { useId, useState, type ReactNode, type ComponentPropsWithRef } from 'react';
 
 export type TextareaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
-export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+export type TextareaProps = ComponentPropsWithRef<'textarea'> & {
   label?: string;
   description?: string;
   error?: string;
@@ -22,25 +22,23 @@ const RESIZE_CLASS: Record<TextareaResize, string> = {
   both: 'resize',
 };
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  {
-    label,
-    description,
-    error,
-    labelTrailing,
-    resize = 'vertical',
-    showCount,
-    rows = 4,
-    maxLength,
-    className,
-    id,
-    value,
-    defaultValue,
-    onChange,
-    ...rest
-  },
-  ref
-) {
+export function Textarea({
+  label,
+  description,
+  error,
+  labelTrailing,
+  resize = 'vertical',
+  showCount,
+  rows = 4,
+  maxLength,
+  className,
+  id,
+  value,
+  defaultValue,
+  onChange,
+  ref,
+  ...rest
+}: TextareaProps) {
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
   const isControlled = value !== undefined;
@@ -112,4 +110,4 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
       </div>
     </div>
   );
-});
+}

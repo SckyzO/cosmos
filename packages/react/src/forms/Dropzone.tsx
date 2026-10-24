@@ -1,6 +1,14 @@
 import { clsx } from 'clsx';
 import { File as FileIcon, Upload, X } from 'lucide-react';
-import { useCallback, useId, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  type DragEvent,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { formatBytes } from './formatBytes';
 
 export type DropzoneProps = {
@@ -23,6 +31,8 @@ export type DropzoneProps = {
   /** Hide the file list rendered below the drop area. Default `false`. */
   hideFileList?: boolean;
   className?: string;
+  /** Ref to the drop area (`<div role="button">`), the focusable element, not the hidden file input. */
+  ref?: Ref<HTMLDivElement>;
 };
 
 const matchesAccept = (file: File, accept: string): boolean => {
@@ -50,6 +60,7 @@ export const Dropzone = ({
   children,
   hideFileList = false,
   className,
+  ref,
 }: DropzoneProps) => {
   const fieldId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -118,6 +129,7 @@ export const Dropzone = ({
         </label>
       )}
       <div
+        ref={ref}
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-label={label ? undefined : 'Upload files'}

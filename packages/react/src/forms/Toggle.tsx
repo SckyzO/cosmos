@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 
 export type ToggleProps = FieldA11yProps & {
@@ -7,6 +8,8 @@ export type ToggleProps = FieldA11yProps & {
   disabled?: boolean;
   label?: string;
   description?: string;
+  /** Ref to the switch `<button role="switch">`, the element to focus on a validation error. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export const Toggle = ({
@@ -15,12 +18,14 @@ export const Toggle = ({
   disabled = false,
   label,
   description,
+  ref,
   ...a11y
 }: ToggleProps) => {
   const fieldA11y = useFieldA11y(a11y, { ownLabel: !!label });
   return (
     <label className={clsx('flex items-center gap-3', disabled && 'opacity-50')}>
       <button
+        ref={ref}
         type="button"
         role="switch"
         aria-checked={checked}

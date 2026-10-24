@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 import { Clock } from 'lucide-react';
-import { forwardRef, useId, type ChangeEvent, type InputHTMLAttributes } from 'react';
+import { useId, type ChangeEvent, type ComponentPropsWithRef } from 'react';
 
 export type TimePickerProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
+  ComponentPropsWithRef<'input'>,
   'type' | 'value' | 'onChange'
 > & {
   label?: string;
@@ -27,26 +27,24 @@ export type TimePickerProps = Omit<
   fullWidth?: boolean;
 };
 
-export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function TimePicker(
-  {
-    label,
-    description,
-    error,
-    value,
-    defaultValue,
-    onChange,
-    step,
-    min,
-    max,
-    disabled,
-    id,
-    name,
-    fullWidth = false,
-    className,
-    ...rest
-  },
-  ref
-) {
+export function TimePicker({
+  label,
+  description,
+  error,
+  value,
+  defaultValue,
+  onChange,
+  step,
+  min,
+  max,
+  disabled,
+  id,
+  name,
+  fullWidth = false,
+  className,
+  ref,
+  ...rest
+}: TimePickerProps) {
   const generatedId = useId();
   const fieldId = id ?? name ?? generatedId;
   const stepSeconds = step !== undefined ? step * 60 : undefined;
@@ -104,4 +102,4 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(function
       )}
     </div>
   );
-});
+}

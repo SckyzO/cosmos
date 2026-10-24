@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronUp, Rocket } from 'lucide-react';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expectRefFocuses } from '../storybook-helpers';
 import { BackToTopFab } from './BackToTopFab';
 
 const meta = {
@@ -217,5 +218,16 @@ export const OnActivateOverride: Story = {
     } finally {
       restore();
     }
+  },
+};
+
+const fabRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the `<button>`, there while the FAB is still faded out, and focusing through it works. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <BackToTopFab ref={fabRef} />,
+  play: async ({ canvas }) => {
+    await expectRefFocuses(fabRef, canvas.getByLabelText('Back to top'));
   },
 };

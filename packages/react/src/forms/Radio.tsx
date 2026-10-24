@@ -1,17 +1,16 @@
 import { clsx } from 'clsx';
 import {
-  forwardRef,
   useId,
   useState,
   type ChangeEvent,
-  type InputHTMLAttributes,
   type ReactNode,
+  type ComponentPropsWithRef,
 } from 'react';
 
 export type RadioSize = 'sm' | 'md';
 
 export type RadioProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
+  ComponentPropsWithRef<'input'>,
   'size' | 'type' | 'onChange' | 'children'
 > & {
   label?: ReactNode;
@@ -26,21 +25,19 @@ const SIZE_CLASS: Record<RadioSize, { box: string; dot: string; label: string }>
   md: { box: 'h-[18px] w-[18px]', dot: 'h-2 w-2', label: 'text-sm' },
 };
 
-export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
-  {
-    label,
-    description,
-    checked,
-    defaultChecked,
-    onChange,
-    disabled,
-    size = 'md',
-    id,
-    className,
-    ...rest
-  },
-  forwardedRef
-) {
+export function Radio({
+  label,
+  description,
+  checked,
+  defaultChecked,
+  onChange,
+  disabled,
+  size = 'md',
+  id,
+  className,
+  ref,
+  ...rest
+}: RadioProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const isControlled = checked !== undefined;
@@ -59,7 +56,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
     >
       <span className="relative inline-flex shrink-0 items-center justify-center">
         <input
-          ref={forwardedRef}
+          ref={ref}
           id={fieldId}
           type="radio"
           checked={isControlled ? isChecked : undefined}
@@ -97,7 +94,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
       )}
     </label>
   );
-});
+}
 
 // ── RadioGroup ───────────────────────────────────────────────────────────────
 

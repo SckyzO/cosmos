@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ElementType } from 'react';
+import type { ElementType, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 
@@ -14,6 +14,11 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   value: T;
   onChange: (v: T) => void;
   className?: string;
+  /**
+   * Ref to the segment `<button>` that is the group's tab stop: the selected
+   * one, or the first when none is. It follows the selection.
+   */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export const SegmentedControl = <T extends string>({
@@ -21,6 +26,7 @@ export const SegmentedControl = <T extends string>({
   value,
   onChange,
   className,
+  ref,
   ...a11y
 }: SegmentedControlProps<T>) => {
   const fieldA11y = useFieldA11y(a11y);
@@ -38,13 +44,15 @@ export const SegmentedControl = <T extends string>({
       {options.map((opt, i) => {
         const Icon = opt.icon;
         const isActive = opt.value === value;
+        const tabIndex = radioTabIndex(isActive, i, anyChecked);
         return (
           <button
             key={opt.value}
+            ref={tabIndex === 0 ? ref : undefined}
             type="button"
             role="radio"
             aria-checked={isActive}
-            tabIndex={radioTabIndex(isActive, i, anyChecked)}
+            tabIndex={tabIndex}
             onClick={() => onChange(opt.value)}
             className={clsx(
               'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',

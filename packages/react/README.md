@@ -72,6 +72,27 @@ function Example() {
 }
 ```
 
+## Refs
+
+`ref` is a regular prop (React 19), so no component needs `forwardRef`. Fields,
+buttons and custom controls point it at the element you would focus, for
+instance to put the focus on the first invalid field:
+
+```tsx
+import { useRef } from 'react';
+import { Input } from '@sckyzo/cosmos-react';
+
+const emailRef = useRef<HTMLInputElement>(null);
+
+<Input ref={emailRef} label="Email" />;
+// on a validation error: emailRef.current?.focus()
+```
+
+The `ref` prop of each component says what it points to: the native `<input>`
+for text, number and search fields, the switch `<button>` for `Toggle`, the first
+cell for `OtpInput`, the trigger for `DatePicker`, and the segment you would Tab
+to for `SegmentedControl` and `FilterPills` (the selected one, else the first).
+
 ## Tables
 
 `DataTable` sorts, filters, searches and paginates its rows. For a short

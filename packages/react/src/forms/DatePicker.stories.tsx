@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import {
   expectFocusBorder,
+  expectRefFocuses,
   expectTextContrast,
   inEachTheme,
   portalDocsParams,
@@ -308,5 +309,23 @@ export const PlaceholderContrastInEveryTheme: Story = {
   play: async ({ canvas }) => {
     const placeholder = canvas.getByRole('button').querySelector('span')!;
     inEachTheme(() => expectTextContrast(placeholder));
+  },
+};
+
+const singleRef = createRef<HTMLButtonElement>();
+const rangeRef = createRef<HTMLButtonElement>();
+
+/** The ref gets the labelled trigger `<button>`: the only one, or the start date's in `range` mode. */
+export const ForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <DatePicker ref={singleRef} label="Departure" />
+      <DatePicker ref={rangeRef} mode="range" label="Stay" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(singleRef, canvas.getByLabelText('Departure'));
+    await expectRefFocuses(rangeRef, canvas.getByLabelText('Stay'));
   },
 };
