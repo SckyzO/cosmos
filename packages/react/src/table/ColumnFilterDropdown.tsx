@@ -11,8 +11,10 @@ export type ColumnFilterDropdownProps = {
 };
 
 /**
- * ColumnFilterDropdown — popover with multi-select checkboxes for filtering
- * a column. Optional search input filters the visible options.
+ * ColumnFilterDropdown — the body of a column's filter popover: multi-select
+ * checkboxes, an optional search input that narrows them, and a Clear button.
+ * It doesn't position itself: `ColumnHeader` floats it under the header in a
+ * portal, and rendered on its own it sits in the flow.
  */
 export const ColumnFilterDropdown = ({
   values,
@@ -30,7 +32,7 @@ export const ColumnFilterDropdown = ({
   return (
     <div
       className={clsx(
-        'absolute top-full left-0 z-50 mt-1 min-w-[200px] rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900',
+        'min-w-[200px] rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900',
         className
       )}
     >

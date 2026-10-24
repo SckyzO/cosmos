@@ -1,4 +1,14 @@
-import { createContext, useContext, useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent as ReactFocusEvent,
+  type MouseEvent as ReactMouseEvent,
+  type RefObject,
+} from 'react';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -19,6 +29,58 @@ export function useEscapeKey(active: boolean, onEscape: () => void) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [active, onEscape]);
+}
+
+export type OutsideClickOptions = {
+  /** Panel is open: listen while true. */
+  open: boolean;
+  /** Called on a mousedown outside the panel and `insideRefs`. */
+  onOutsideClick: () => void;
+  /**
+   * The parts of the widget outside the panel, its trigger first: a mousedown on them is not
+   * outside, so the trigger's own click can toggle the panel.
+   */
+  insideRefs: ReadonlyArray<RefObject<HTMLElement | null>>;
+};
+
+/**
+ * Outside click for floating panels: calls `onOutsideClick` on a mousedown anywhere but the
+ * panel and `insideRefs`. A document listener, not a click-catching backdrop, so the click
+ * still reaches what is under the pointer, and the panel needs no layer of its own.
+ *
+ * Spread the returned `onMouseDownCapture` on the panel. It marks the events that start in
+ * the panel's React tree, which the document listener then skips: a panel nested in this one
+ * and portaled elsewhere (a menu opened from a popover) counts as inside, as React events do.
+ */
+export function useOutsideClick<T extends HTMLElement>({
+  open,
+  onOutsideClick,
+  insideRefs,
+}: OutsideClickOptions): { onMouseDownCapture: (e: ReactMouseEvent<T>) => void } {
+  // The last mousedown seen inside the React tree: compared, never reset, so an event a
+  // handler stopped before the document can't leave a stale flag behind.
+  const inside = useRef<Event | null>(null);
+  const latest = useRef({ onOutsideClick, insideRefs });
+  useEffect(() => {
+    latest.current = { onOutsideClick, insideRefs };
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (e === inside.current) return;
+      const target = e.target as Node;
+      if (latest.current.insideRefs.some((ref) => ref.current?.contains(target))) return;
+      latest.current.onOutsideClick();
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [open]);
+
+  const onMouseDownCapture = useCallback((e: ReactMouseEvent<T>) => {
+    inside.current = e.nativeEvent;
+  }, []);
+  return { onMouseDownCapture };
 }
 
 /**
@@ -89,6 +151,11 @@ export type PortalFocusOptions = {
   initialFocus?: (panel: HTMLElement) => HTMLElement | null | undefined;
 };
 
+export type PortalFocusProps<T extends HTMLElement> = {
+  ref: (node: T | null) => void;
+  onFocusCapture: (e: ReactFocusEvent<T>) => void;
+};
+
 /**
  * Focus management for non-modal panels portaled to the end of `<body>`
  * (popovers, menus, pickers). Without it, keyboard users would Tab through the
@@ -99,18 +166,20 @@ export type PortalFocusOptions = {
  * - Tab past the last element moves on to the element after the trigger, and
  *   Shift+Tab before the first one goes back to the trigger: the panel sits
  *   in the tab order right after its trigger, and closes on the way out,
- * - closes when focus moves anywhere else outside the panel,
+ * - closes when focus moves from the panel to anywhere else but the trigger,
  * - on close, puts focus back on the trigger if it was left inside the panel.
  *
- * Attach the returned ref to the panel and give it `tabIndex={-1}` so it can
- * take focus when it holds no focusable children.
+ * Spread the returned props on the panel and give it `tabIndex={-1}` so it can
+ * take focus when it holds no focusable children. `onFocusCapture` tells focus
+ * moving within the panel's React tree, a nested panel portaled elsewhere
+ * included, from focus leaving it.
  */
 export function usePortalFocus<T extends HTMLElement>({
   open,
   onClose,
   triggerRef,
   initialFocus,
-}: PortalFocusOptions): (node: T | null) => void {
+}: PortalFocusOptions): PortalFocusProps<T> {
   // A callback ref held in state: the panel can mount a render after `open`
   // turns true (it waits for the trigger's rect), and the effect must see it.
   const [panel, setPanel] = useState<T | null>(null);
@@ -121,6 +190,13 @@ export function usePortalFocus<T extends HTMLElement>({
   useEffect(() => {
     latest.current = { onClose, initialFocus };
   });
+  // The last focus event seen in the panel's React tree, and whether focus is
+  // in that tree: set by `onFocusCapture`, which runs before the document's
+  // focusin listener.
+  const focus = useRef<{ event: Event | null; inside: boolean }>({ event: null, inside: false });
+  const onFocusCapture = useCallback((e: ReactFocusEvent<T>) => {
+    focus.current = { event: e.nativeEvent, inside: true };
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -137,6 +213,7 @@ export function usePortalFocus<T extends HTMLElement>({
       target.focus();
     }
     openOnMount.current = false;
+    if (panel.contains(document.activeElement)) focus.current.inside = true;
 
     // Next tabbable element after the trigger in the page, outside the panel.
     const afterTrigger = (): HTMLElement | null => {
@@ -165,26 +242,31 @@ export function usePortalFocus<T extends HTMLElement>({
       e.preventDefault();
       const trigger = triggerRef.current;
       const next = e.shiftKey ? trigger : (afterTrigger() ?? trigger);
-      // Focusing the trigger doesn't count as leaving (see onFocusOut), so
-      // close explicitly; any other target closes through focusout.
+      // Focusing the trigger doesn't count as leaving (see onFocusIn), so
+      // close explicitly; any other target closes through focusin.
       if (next === trigger) close();
       next?.focus();
     };
-    const onFocusOut = (e: FocusEvent) => {
-      const to = e.relatedTarget as Node | null;
-      // null: focus went to nothing (window blur, click on a non-focusable
-      // spot). The trigger: its own click handler toggles the panel.
-      if (!to || panel.contains(to) || to === triggerRef.current) return;
+    const onFocusIn = (e: FocusEvent) => {
+      const state = focus.current;
+      if (e === state.event) return;
+      const wasInside = state.inside;
+      state.inside = false;
+      // Focus came from outside the panel: not ours to close. It went to the
+      // trigger: its own click handler toggles the panel. Focus going to
+      // nothing (window blur, click on a non-focusable spot) fires no focusin.
+      if (!wasInside || e.target === triggerRef.current) return;
       close();
     };
 
     document.addEventListener('keydown', onDocKeyDown);
+    document.addEventListener('focusin', onFocusIn);
     panel.addEventListener('keydown', onPanelKeyDown);
-    panel.addEventListener('focusout', onFocusOut);
     return () => {
       document.removeEventListener('keydown', onDocKeyDown);
+      document.removeEventListener('focusin', onFocusIn);
       panel.removeEventListener('keydown', onPanelKeyDown);
-      panel.removeEventListener('focusout', onFocusOut);
+      focus.current.inside = false;
       // By now the panel is unmounted: focus left inside it fell back to <body>.
       const focused = document.activeElement;
       if (!focused || focused === document.body || panel.contains(focused)) {
@@ -194,7 +276,7 @@ export function usePortalFocus<T extends HTMLElement>({
     };
   }, [open, panel, triggerRef]);
 
-  return setPanel;
+  return { ref: setPanel, onFocusCapture };
 }
 
 /**

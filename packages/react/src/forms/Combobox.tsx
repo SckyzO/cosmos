@@ -1,7 +1,6 @@
 import { clsx } from 'clsx';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import {
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -10,6 +9,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
@@ -106,6 +106,8 @@ export const Combobox = ({
   };
   const [activeIndex, setActiveIndex] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // The input and its toggle button: the listbox opens under it, as wide.
+  const fieldRef = useRef<HTMLDivElement>(null);
 
   // Keep input mirror of external selection.
   // Adjusted during render rather than in an effect: it only re-syncs while the
@@ -130,16 +132,6 @@ export const Combobox = ({
       while (filtered[next]?.disabled) next += step;
       return filtered[next] ? next : i;
     });
-
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpenState(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open, setOpenState]);
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
@@ -179,7 +171,7 @@ export const Combobox = ({
           {label}
         </label>
       )}
-      <div className={clsx('relative', label && 'mt-2')}>
+      <div ref={fieldRef} className={clsx('relative', label && 'mt-2')}>
         <input
           ref={ref}
           id={id}
@@ -219,57 +211,67 @@ export const Combobox = ({
         >
           <ChevronsUpDown className="size-5" aria-hidden />
         </button>
-        {open && (
-          <ul
-            id={listboxId}
-            role="listbox"
-            className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
-          >
-            {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</li>
-            ) : (
-              filtered.map((opt, i) => {
-                const isActive = i === activeIndex;
-                const isSelected = opt.value === value;
-                return (
-                  <li
-                    id={`${id}-opt-${i}`}
-                    key={opt.value}
-                    role="option"
-                    aria-selected={isSelected}
-                    onMouseEnter={() => setActiveIndex(i)}
-                    onMouseDown={(e) => {
-                      // mousedown fires before input blur — prevents losing focus
-                      // race with the listbox unmount.
-                      e.preventDefault();
-                      pick(opt);
-                    }}
-                    className={clsx(
-                      'flex cursor-pointer items-center gap-2 px-3 py-2 select-none',
-                      isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
-                      opt.disabled && 'cursor-not-allowed opacity-50'
-                    )}
-                  >
-                    {opt.leading && <span className="shrink-0">{opt.leading}</span>}
-                    <span className="flex-1 truncate">{opt.label}</span>
-                    {opt.secondary && (
-                      <span
-                        className={clsx(
-                          'shrink-0 text-xs',
-                          isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
-                        )}
-                      >
-                        {opt.secondary}
-                      </span>
-                    )}
-                    {isSelected && <Check className="size-4 shrink-0" aria-hidden />}
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        )}
       </div>
+      {/* Focus stays in the input (aria-activedescendant), which handles Escape
+          and Tab; a mousedown anywhere in the field, its label or its help text
+          is not outside. */}
+      <FloatingPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        triggerRef={wrapperRef}
+        anchorRef={fieldRef}
+        placement={{ side: 'bottom', align: 'start', offset: 4, matchWidth: true }}
+        moveFocus={false}
+      >
+        <ul
+          id={listboxId}
+          role="listbox"
+          className="max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
+        >
+          {filtered.length === 0 ? (
+            <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</li>
+          ) : (
+            filtered.map((opt, i) => {
+              const isActive = i === activeIndex;
+              const isSelected = opt.value === value;
+              return (
+                <li
+                  id={`${id}-opt-${i}`}
+                  key={opt.value}
+                  role="option"
+                  aria-selected={isSelected}
+                  onMouseEnter={() => setActiveIndex(i)}
+                  onMouseDown={(e) => {
+                    // mousedown fires before input blur — prevents losing focus
+                    // race with the listbox unmount.
+                    e.preventDefault();
+                    pick(opt);
+                  }}
+                  className={clsx(
+                    'flex cursor-pointer items-center gap-2 px-3 py-2 select-none',
+                    isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
+                    opt.disabled && 'cursor-not-allowed opacity-50'
+                  )}
+                >
+                  {opt.leading && <span className="shrink-0">{opt.leading}</span>}
+                  <span className="flex-1 truncate">{opt.label}</span>
+                  {opt.secondary && (
+                    <span
+                      className={clsx(
+                        'shrink-0 text-xs',
+                        isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                      )}
+                    >
+                      {opt.secondary}
+                    </span>
+                  )}
+                  {isSelected && <Check className="size-4 shrink-0" aria-hidden />}
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </FloatingPanel>
       {hasDesc && (
         <p
           id={descId}

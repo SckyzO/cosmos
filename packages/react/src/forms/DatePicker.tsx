@@ -2,7 +2,6 @@ import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import {
   useCallback,
-  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -10,9 +9,8 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { createPortal } from 'react-dom';
+import { FloatingPanel } from '../ui/FloatingPanel';
 import { setRef } from '../ui/mergeRefs';
-import { usePortalFocus } from '../ui/overlayA11y';
 import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -126,15 +124,16 @@ export const DatePicker = (props: DatePickerProps) => {
     },
     [ref]
   );
-  // The trigger that opened the calendar: focus goes back to it on close.
+  // The trigger that opened the calendar: focus goes back to it on close, and the
+  // calendar stays anchored under it.
   const openerRef = useRef<HTMLButtonElement | null>(null);
+  const [openerSide, setOpenerSide] = useState<'from' | 'to'>('from');
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
     onChange: onOpenChange,
     name: 'DatePicker.open',
   });
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   // ── Value plumbing (controlled vs uncontrolled) ─────────────────────────────
   // One state per mode: each only reads the props of its own mode.
@@ -166,16 +165,11 @@ export const DatePicker = (props: DatePickerProps) => {
   const [month, setMonth] = useState<Date>(initialMonth);
 
   // ── Popover open/close ──────────────────────────────────────────────────────
-  const anchor = useCallback((side: 'from' | 'to' = 'from') => {
-    const r = side === 'to' ? toRef.current : fromRef.current;
-    if (r) setAnchorRect(r.getBoundingClientRect());
-  }, []);
-
   // What opening does: remember the trigger focus goes back to, anchor the panel
   // to it and show the month of the selection.
   const prepareOpen = (side: 'from' | 'to') => {
     openerRef.current = side === 'to' ? toRef.current : fromRef.current;
-    anchor(side);
+    setOpenerSide(side);
     setMonth(initialMonth);
   };
   // Whether this opening is set up, by a trigger click or below.
@@ -199,23 +193,6 @@ export const DatePicker = (props: DatePickerProps) => {
     if (preparedRef.current) return;
     preparedRef.current = true;
     prepareOpen('from');
-  });
-
-  useEffect(() => {
-    if (!open) return;
-    const refresh = () => anchor('from');
-    window.addEventListener('resize', refresh);
-    window.addEventListener('scroll', refresh, true);
-    return () => {
-      window.removeEventListener('resize', refresh);
-      window.removeEventListener('scroll', refresh, true);
-    };
-  }, [open, anchor]);
-
-  const panelRef = usePortalFocus<HTMLDivElement>({
-    open,
-    onClose: () => setOpen(false),
-    triggerRef: openerRef,
   });
 
   // ── Selection commit ────────────────────────────────────────────────────────
@@ -360,64 +337,61 @@ export const DatePicker = (props: DatePickerProps) => {
         </p>
       )}
 
-      {open &&
-        anchorRect &&
-        createPortal(
-          <>
-            <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-            <div
-              ref={panelRef}
-              role="dialog"
-              tabIndex={-1}
-              aria-label={label ? `${label} calendar` : 'Calendar'}
-              style={{ top: anchorRect.bottom + 6, left: anchorRect.left }}
-              className="fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900"
-            >
-              {isRange ? (
-                <Calendar
-                  mode="range"
-                  selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
-                  onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
-                  month={month}
-                  onMonthChange={setMonth}
-                  captionLayout={captionLayout}
-                  startMonth={startMonth}
-                  endMonth={endMonth}
-                  disabled={
-                    fromDate || toDate
-                      ? [
-                          ...(fromDate ? [{ before: fromDate }] : []),
-                          ...(toDate ? [{ after: toDate }] : []),
-                        ]
-                      : undefined
-                  }
-                  footer={rangeFooter}
-                />
-              ) : (
-                <Calendar
-                  mode="single"
-                  selected={selectedSingle}
-                  onSelect={commitSingle}
-                  month={month}
-                  onMonthChange={setMonth}
-                  captionLayout={captionLayout}
-                  startMonth={startMonth}
-                  endMonth={endMonth}
-                  disabled={
-                    fromDate || toDate
-                      ? [
-                          ...(fromDate ? [{ before: fromDate }] : []),
-                          ...(toDate ? [{ after: toDate }] : []),
-                        ]
-                      : undefined
-                  }
-                  footer={singleFooter}
-                />
-              )}
-            </div>
-          </>,
-          document.body
+      {/* Kept under the trigger that opened it while the page scrolls or resizes. A
+          ref object per side, so switching sides re-measures. */}
+      <FloatingPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        triggerRef={openerRef}
+        anchorRef={openerSide === 'to' ? toRef : fromRef}
+        placement={{ side: 'bottom', align: 'start', offset: 6 }}
+        role="dialog"
+        tabIndex={-1}
+        aria-label={label ? `${label} calendar` : 'Calendar'}
+        className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900"
+      >
+        {isRange ? (
+          <Calendar
+            mode="range"
+            selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
+            onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
+            month={month}
+            onMonthChange={setMonth}
+            captionLayout={captionLayout}
+            startMonth={startMonth}
+            endMonth={endMonth}
+            disabled={
+              fromDate || toDate
+                ? [
+                    ...(fromDate ? [{ before: fromDate }] : []),
+                    ...(toDate ? [{ after: toDate }] : []),
+                  ]
+                : undefined
+            }
+            footer={rangeFooter}
+          />
+        ) : (
+          <Calendar
+            mode="single"
+            selected={selectedSingle}
+            onSelect={commitSingle}
+            month={month}
+            onMonthChange={setMonth}
+            captionLayout={captionLayout}
+            startMonth={startMonth}
+            endMonth={endMonth}
+            disabled={
+              fromDate || toDate
+                ? [
+                    ...(fromDate ? [{ before: fromDate }] : []),
+                    ...(toDate ? [{ after: toDate }] : []),
+                  ]
+                : undefined
+            }
+            footer={singleFooter}
+          />
         )}
+      </FloatingPanel>
     </div>
   );
 };

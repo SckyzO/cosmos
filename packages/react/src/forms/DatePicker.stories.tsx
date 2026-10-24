@@ -377,6 +377,38 @@ export const ControlledOpenOnlyReports: Story = {
   },
 };
 
+/**
+ * Opened from the end date, the calendar stays under that trigger when its
+ * container scrolls: the refresh used to move it under the start date.
+ */
+export const RangeStaysUnderTheTriggerThatOpenedIt: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-64 overflow-y-auto">
+      <div className="pt-8 pb-[600px]">
+        <DatePicker mode="range" label="Stay" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const to = canvas.getByRole('button', { name: /end date/i });
+    await userEvent.click(to);
+    await waitFor(() => expect(calendarDialog()).not.toBeNull());
+    const scroller = canvas.getByTestId('scroller');
+    const before = to.getBoundingClientRect().top;
+    scroller.scrollTop = 40;
+    await expect(to.getBoundingClientRect().top).toBeCloseTo(before - 40, 0);
+    await waitFor(() => {
+      const t = to.getBoundingClientRect();
+      const panel = calendarDialog()!.getBoundingClientRect();
+      expect(panel.left).toBeCloseTo(t.left, 0);
+      expect(panel.top).toBeCloseTo(t.bottom + 6, 0);
+    });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+  },
+};
+
 /** Held closed, a click on the trigger reports an open and nothing opens. */
 export const ControlledClosedOnlyReports: Story = {
   tags: ['!dev', '!autodocs'],

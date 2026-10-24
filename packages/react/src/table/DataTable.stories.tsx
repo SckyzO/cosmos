@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Archive, Download, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusBorder } from '../storybook-helpers';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import {
+  expectBelow,
+  expectFocusBorder,
+  expectOutsideClip,
+  scrollAnchor,
+} from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
 import type { ColumnDef, DataTableDensity } from './types';
@@ -207,10 +212,12 @@ export const ColumnFilterOpensBeforeAnyFilter: Story = {
     // open the dropdown with its options.
     const [firstFilter] = canvas.getAllByRole('button', { name: /^Filter / });
     await userEvent.click(firstFilter);
-    await expect(canvas.getByPlaceholderText('Search…')).toBeInTheDocument();
-    const [firstOption] = canvas.getAllByRole('checkbox');
+    // The dropdown is queried from the whole page, wherever it renders.
+    const page = within(document.body);
+    await expect(page.getByPlaceholderText('Search…')).toBeInTheDocument();
+    const [firstOption] = page.getAllByRole('checkbox');
     await userEvent.click(firstOption);
-    await expect(canvas.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
+    await expect(page.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
   },
 };
 
@@ -645,5 +652,67 @@ export const FilterButtonsAreNamedAfterTheirColumn: Story = {
     const names = filters.map((b) => b.getAttribute('aria-label'));
     await expect(new Set(names).size).toBe(names.length);
     await expect(canvas.getByRole('button', { name: 'Filter Severity' })).toBeInTheDocument();
+  },
+};
+
+// ── Floating column filter (#151) ────────────────────────────────────────────
+// The filter dropdown renders in a portal: the table's scrolling body no longer
+// clips it, and it follows its header while the page scrolls.
+
+/** A box cut just under the header row clips the table, not the dropdown. */
+export const ColumnFilterEscapesTheTable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="clip" className="overflow-hidden">
+      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const filter = canvas.getByRole('button', { name: 'Filter Severity' });
+    const clip = canvas.getByTestId('clip');
+    const bottom = filter.getBoundingClientRect().bottom - clip.getBoundingClientRect().top;
+    clip.style.height = `${bottom + 8}px`;
+    await userEvent.click(filter);
+    const search = await within(document.body).findByPlaceholderText('Search…');
+    expectOutsideClip(search.closest<HTMLElement>('.rounded-xl')!, clip);
+  },
+};
+
+/**
+ * The dropdown stays under its header on scroll, focus in its search field; Escape and
+ * an outside click close it, Escape returning focus to the filter button.
+ */
+export const ColumnFilterFollowsAndCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-96 overflow-y-auto">
+      <div className="space-y-4 p-6 pb-[600px]">
+        <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.id} />
+        <button type="button">Outside</button>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const page = within(document.body);
+    const filter = canvas.getByRole('button', { name: 'Filter Severity' });
+    // The label and the filter button: what the dropdown is placed against.
+    const header = filter.parentElement!;
+    await userEvent.click(filter);
+    await expect(filter).toHaveAttribute('aria-expanded', 'true');
+    const search = await page.findByPlaceholderText('Search…');
+    await waitFor(() => expect(search).toHaveFocus());
+    const dropdown = search.closest<HTMLElement>('.rounded-xl')!;
+    await scrollAnchor(canvas.getByTestId('scroller'), header);
+    await waitFor(() => expectBelow(dropdown, header, { offset: 4, align: 'start' }));
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByPlaceholderText('Search…')).toBeNull());
+    await expect(filter).toHaveFocus();
+    await expect(filter).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(filter);
+    await page.findByPlaceholderText('Search…');
+    await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(page.queryByPlaceholderText('Search…')).toBeNull());
   },
 };

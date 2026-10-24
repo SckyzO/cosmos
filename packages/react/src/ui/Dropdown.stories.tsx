@@ -12,7 +12,12 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectFocusRing } from '../storybook-helpers';
+import {
+  expectBelow,
+  expectFocusRing,
+  expectOutsideClip,
+  scrollAnchor,
+} from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -26,6 +31,9 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+// The open menu: queried from the whole page, wherever the menu renders.
+const page = within(document.body);
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
@@ -128,7 +136,7 @@ export const MenuSemanticsAndKeyboard: Story = {
     await userEvent.click(trigger);
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
-    const menu = await scope.findByRole('menu');
+    const menu = await page.findByRole('menu');
     await expect(menu).toBeInTheDocument();
     const items = within(menu).getAllByRole('menuitemradio');
     await expect(items).toHaveLength(3);
@@ -166,7 +174,7 @@ export const SelectedItemIsChecked: Story = {
   play: async ({ canvasElement }) => {
     const scope = within(canvasElement);
     await userEvent.click(scope.getByRole('button', { name: 'Settings' }));
-    const menu = within(await scope.findByRole('menu'));
+    const menu = within(await page.findByRole('menu'));
     await expect(
       menu.getByRole('menuitemradio', { name: 'Settings', checked: true })
     ).toBeVisible();
@@ -176,7 +184,7 @@ export const SelectedItemIsChecked: Story = {
 
     await userEvent.click(menu.getByRole('menuitemradio', { name: 'Profile' }));
     await userEvent.click(scope.getByRole('button', { name: 'Profile' }));
-    const reopened = within(await scope.findByRole('menu'));
+    const reopened = within(await page.findByRole('menu'));
     await expect(
       reopened.getByRole('menuitemradio', { name: 'Profile', checked: true })
     ).toBeVisible();
@@ -209,12 +217,12 @@ export const DefaultValueOrControlled: Story = {
     const [own, held] = scope.getAllByRole('button', { name: 'Settings' });
 
     await userEvent.click(own);
-    await userEvent.click(scope.getByRole('menuitemradio', { name: 'Profile' }));
+    await userEvent.click(page.getByRole('menuitemradio', { name: 'Profile' }));
     await expect(args.onChange).toHaveBeenLastCalledWith('profile');
     await expect(own).toHaveTextContent('Profile');
 
     await userEvent.click(held);
-    await userEvent.click(scope.getByRole('menuitemradio', { name: 'Profile' }));
+    await userEvent.click(page.getByRole('menuitemradio', { name: 'Profile' }));
     await expect(args.onChange).toHaveBeenLastCalledWith('profile');
     await expect(args.onChange).toHaveBeenCalledTimes(2);
     await expect(held).toHaveTextContent('Settings');
@@ -238,13 +246,13 @@ export const DefaultOpenClosesOnItsOwn: Story = {
     const scope = within(canvasElement);
     const trigger = scope.getByRole('button', { name: 'Account' });
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await expect(await scope.findByRole('menu', { name: 'Account' })).toBeVisible();
+    await expect(await page.findByRole('menu', { name: 'Account' })).toBeVisible();
 
     await userEvent.keyboard('{Escape}');
     await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
     await expect(args.onOpenChange).toHaveBeenCalledWith(false);
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    await expect(scope.queryByRole('menu')).toBeNull();
+    await expect(page.queryByRole('menu')).toBeNull();
   },
 };
 
@@ -258,11 +266,11 @@ export const ControlledOpenOnlyReports: Story = {
   ),
   play: async ({ args, canvasElement }) => {
     const scope = within(canvasElement);
-    const menu = await scope.findByRole('menu', { name: 'Account' });
+    const menu = await page.findByRole('menu', { name: 'Account' });
     await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Profile' }));
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(false);
     // The host keeps it open.
-    await expect(scope.getByRole('menu', { name: 'Account' })).toBeVisible();
+    await expect(page.getByRole('menu', { name: 'Account' })).toBeVisible();
     await expect(scope.getByRole('button', { name: 'Profile' })).toHaveAttribute(
       'aria-expanded',
       'true'
@@ -287,10 +295,10 @@ export const MenuItemFocusShowsRingInDark: Story = {
       />
     </Wrap>
   ),
-  play: async ({ canvas }) => {
+  play: async () => {
     await userEvent.tab();
     await userEvent.keyboard('{Enter}');
-    const item = await canvas.findByRole('menuitemradio', { name: 'Profile' });
+    const item = await page.findByRole('menuitemradio', { name: 'Profile' });
     await waitFor(() => expect(item).toHaveFocus());
     await expectFocusRing(item, { inset: true });
   },
@@ -299,4 +307,78 @@ export const MenuItemFocusShowsRingInDark: Story = {
 export const MenuItemFocusShowsRingInLight: Story = {
   ...MenuItemFocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+// ── Floating menu (#151) ─────────────────────────────────────────────────────
+// The menu renders in a portal: no `overflow: hidden` ancestor clips it, and it
+// follows its trigger while the page scrolls.
+
+/** A card that clips its content no longer cuts the menu off. */
+export const MenuEscapesOverflowHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div data-testid="clip" className="h-16 overflow-hidden rounded-lg border p-3">
+        <Dropdown label="Actions" options={ACCOUNT} />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    expectOutsideClip(await page.findByRole('menu'), canvas.getByTestId('clip'));
+  },
+};
+
+/** The menu follows its trigger on scroll; Escape and an outside click close it. */
+export const MenuFollowsTriggerAndCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-64 overflow-y-auto">
+      <div className="flex flex-col items-end gap-4 p-6 pb-[600px]">
+        <Dropdown label="Actions" options={ACCOUNT} align="right" />
+        <button type="button">Outside</button>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    await userEvent.click(trigger);
+    const menu = await page.findByRole('menu');
+    await scrollAnchor(canvas.getByTestId('scroller'), trigger);
+    await waitFor(() => expectBelow(menu, trigger, { offset: 4, align: 'end' }));
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveFocus();
+
+    await userEvent.click(trigger);
+    await page.findByRole('menu');
+    await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+  },
+};
+
+/** Tab past the last item closes the menu and moves on to the element after the trigger. */
+export const TabLeavesTheMenu: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex gap-3">
+        <Dropdown label="Actions" options={ACCOUNT} />
+        <button type="button">After</button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    const [first, last] = await page.findAllByRole('menuitemradio');
+    await waitFor(() => expect(first).toHaveFocus());
+    await userEvent.tab();
+    await expect(last).toHaveFocus();
+    await userEvent.tab();
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+  },
 };

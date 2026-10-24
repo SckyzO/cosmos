@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { ElementType, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { FloatingPanel } from './FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
 
 export type DropdownOption = {
@@ -66,42 +67,18 @@ export const Dropdown = ({
     onChange: onOpenChange,
     name: 'Dropdown.open',
   });
-  const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open, setOpen]);
-
-  // Move focus to the first item when the menu opens (ARIA menu pattern).
-  useEffect(() => {
-    if (!open) return;
-    const first = menuRef.current?.querySelector<HTMLElement>(
-      '[role="menuitemradio"]:not(:disabled)'
-    );
-    first?.focus();
-  }, [open]);
 
   const closeAndRefocus = () => {
     setOpen(false);
     triggerRef.current?.focus();
   };
 
-  // Roving focus between menu items; Escape closes and returns focus to trigger.
+  // Roving focus between menu items. The panel moves focus to the first item on
+  // open (ARIA menu pattern), and Escape closes it and returns focus to the trigger.
   const onMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closeAndRefocus();
-      return;
-    }
     const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]:not(:disabled)') ?? []
+      e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]:not(:disabled)')
     );
     if (items.length === 0) return;
     const currentIndex = items.indexOf(document.activeElement as HTMLElement);
@@ -119,7 +96,7 @@ export const Dropdown = ({
   const displayLabel = selected?.label ?? placeholder ?? label ?? 'Select…';
 
   return (
-    <div ref={ref} className={clsx('relative inline-block', className)}>
+    <div className={clsx('relative inline-block', className)}>
       <button
         ref={triggerRef}
         type="button"
@@ -142,58 +119,54 @@ export const Dropdown = ({
         />
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div
-            ref={menuRef}
-            role="menu"
-            aria-label={label}
-            onKeyDown={onMenuKeyDown}
-            className={clsx(
-              'absolute top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800',
-              align === 'right' ? 'right-0' : 'left-0'
-            )}
-          >
-            {options.map((opt, idx) => {
-              if (isDivider(opt)) {
-                return (
-                  <div
-                    key={`divider-${idx}`}
-                    role="separator"
-                    className="my-1 border-t border-gray-100 dark:border-gray-800"
-                  />
-                );
-              }
-              const Icon = opt.icon;
-              const isSelected = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={isSelected}
-                  disabled={opt.disabled}
-                  onClick={() => {
-                    setValue(opt.value);
-                    closeAndRefocus();
-                  }}
-                  className={clsx(
-                    'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
-                    isSelected
-                      ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
-                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
-                  )}
-                >
-                  {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" />}
-                  <span className="flex-1 truncate">{opt.label}</span>
-                  {isSelected && <Check className="text-brand-500 h-3.5 w-3.5 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+      <FloatingPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        triggerRef={triggerRef}
+        placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 4 }}
+        role="menu"
+        tabIndex={-1}
+        aria-label={label}
+        onKeyDown={onMenuKeyDown}
+        className="min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg outline-none dark:border-gray-700 dark:bg-gray-800"
+      >
+        {options.map((opt, idx) => {
+          if (isDivider(opt)) {
+            return (
+              <div
+                key={`divider-${idx}`}
+                role="separator"
+                className="my-1 border-t border-gray-100 dark:border-gray-800"
+              />
+            );
+          }
+          const Icon = opt.icon;
+          const isSelected = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="menuitemradio"
+              aria-checked={isSelected}
+              disabled={opt.disabled}
+              onClick={() => {
+                setValue(opt.value);
+                closeAndRefocus();
+              }}
+              className={clsx(
+                'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
+                isSelected
+                  ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
+                  : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+              )}
+            >
+              {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" />}
+              <span className="flex-1 truncate">{opt.label}</span>
+              {isSelected && <Check className="text-brand-500 h-3.5 w-3.5 shrink-0" />}
+            </button>
+          );
+        })}
+      </FloatingPanel>
     </div>
   );
 };

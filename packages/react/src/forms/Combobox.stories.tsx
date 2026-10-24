@@ -1,11 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  expectBelow,
   expectFocusBorder,
+  expectOutsideClip,
   expectPlaceholderContrast,
   expectRefFocuses,
   inEachTheme,
+  scrollAnchor,
 } from '../storybook-helpers';
 import { Combobox } from './Combobox';
 
@@ -312,6 +315,78 @@ export const OpenStateDefaultOrControlled: Story = {
     await userEvent.click(held);
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
     await expect(held).toHaveAttribute('aria-expanded', 'false');
-    await expect(canvas.queryByRole('listbox')).toBeNull();
+    await expect(within(document.body).queryByRole('listbox')).toBeNull();
+  },
+};
+
+// ── Floating listbox (#151) ──────────────────────────────────────────────────
+// The listbox renders in a portal: no `overflow: hidden` ancestor clips it, and
+// it follows its field while the page scrolls.
+
+const page = within(document.body);
+
+/** A card that clips its content no longer cuts the listbox off. */
+export const ListboxEscapesOverflowHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="clip" className="h-28 max-w-md overflow-hidden rounded-lg border p-3">
+      <Combobox label="Assigned to" options={PEOPLE} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('combobox'));
+    expectOutsideClip(await page.findByRole('listbox'), canvas.getByTestId('clip'));
+  },
+};
+
+/** The listbox follows its field on scroll, as wide; Escape and an outside click close it. */
+export const ListboxFollowsFieldAndCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-64 overflow-y-auto">
+      <div className="max-w-md space-y-4 p-6 pb-[600px]">
+        <Combobox label="Assigned to" options={PEOPLE} />
+        <button type="button">Outside</button>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox');
+    const field = input.parentElement!;
+    await userEvent.click(input);
+    const listbox = await page.findByRole('listbox');
+    await scrollAnchor(canvas.getByTestId('scroller'), field);
+    await waitFor(() => expectBelow(listbox, field, { offset: 4, align: 'start' }));
+    await expect(listbox.getBoundingClientRect().width).toBeCloseTo(
+      field.getBoundingClientRect().width,
+      0
+    );
+
+    await userEvent.keyboard('{Escape}');
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.queryByRole('listbox')).toBeNull();
+    await expect(input).toHaveFocus();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle options' }));
+    await page.findByRole('listbox');
+    await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.queryByRole('listbox')).toBeNull();
+  },
+};
+
+/** A click on an option picks it: the listbox in its portal is still part of the field. */
+export const ClickOnAnOptionPicks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => <Combobox label="Assigned to" options={PEOPLE} onChange={args.onChange} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.click(await page.findByRole('option', { name: 'Tom Cook' }));
+    await expect(args.onChange).toHaveBeenCalledWith('tom');
+    await expect(input).toHaveValue('Tom Cook');
+    await expect(input).toHaveFocus();
+    await expect(page.queryByRole('listbox')).toBeNull();
   },
 };

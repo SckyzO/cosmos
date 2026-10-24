@@ -281,6 +281,39 @@ export const KeyboardFocusManagement: Story = {
   },
 };
 
+/** In a scrolling container, the open panel stays under its trigger, flush with its right edge. */
+export const StaysUnderTriggerOnScroll: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-80 overflow-y-auto">
+      <div className="flex justify-end px-6 pt-6 pb-[600px]">
+        <NotificationsPanel>
+          <NotificationsPanel.Trigger />
+          <NotificationsPanel.Content>
+            <NotificationsPanel.Empty />
+          </NotificationsPanel.Content>
+        </NotificationsPanel>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /^notifications$/i });
+    await userEvent.click(trigger);
+    const panel = await waitFor(() => document.querySelector<HTMLElement>('[role="dialog"]')!);
+    const before = trigger.getBoundingClientRect().top;
+    canvas.getByTestId('scroller').scrollTop = 30;
+    await expect(trigger.getBoundingClientRect().top).toBeCloseTo(before - 30, 0);
+    await waitFor(() => {
+      const t = trigger.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      expect(p.top).toBeCloseTo(t.bottom + 8, 0);
+      expect(p.right).toBeCloseTo(t.right, 0);
+    });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+  },
+};
+
 /** Each `intent` gives the item its icon color, chip and badge; the badge label stays CRIT, WARN, INFO, OK. */
 export const ItemIntentsKeepTheirLook: Story = {
   tags: ['!dev', '!autodocs'],

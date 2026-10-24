@@ -317,6 +317,39 @@ export const KeyboardMenuNavigation: Story = {
   },
 };
 
+/** In a scrolling container, the open menu stays under its trigger, flush with its right edge. */
+export const StaysUnderTriggerOnScroll: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="scroller" className="h-80 overflow-y-auto">
+      <div className="flex justify-end px-6 pt-6 pb-[600px]">
+        <UserMenu>
+          <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+          <UserMenu.Content>
+            <UserMenu.Items>
+              <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+            </UserMenu.Items>
+          </UserMenu.Content>
+        </UserMenu>
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /user menu for/i });
+    await userEvent.click(trigger);
+    const menu = await waitFor(() => document.querySelector<HTMLElement>('[role="menu"]')!);
+    const before = trigger.getBoundingClientRect().top;
+    canvas.getByTestId('scroller').scrollTop = 30;
+    await expect(trigger.getBoundingClientRect().top).toBeCloseTo(before - 30, 0);
+    await waitFor(() => {
+      const t = trigger.getBoundingClientRect();
+      const m = menu.getBoundingClientRect();
+      expect(m.top).toBeCloseTo(t.bottom + 8, 0);
+      expect(m.right).toBeCloseTo(t.right, 0);
+    });
+  },
+};
+
 /** `intent="danger"` colors an item and its icon red; a neutral item stays gray. */
 export const DangerIntentColorsTheItem: Story = {
   tags: ['!dev', '!autodocs'],

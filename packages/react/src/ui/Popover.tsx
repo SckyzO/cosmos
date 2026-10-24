@@ -1,17 +1,13 @@
 import { clsx } from 'clsx';
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useRef,
-  useState,
   type CSSProperties,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { usePortalFocus } from './overlayA11y';
+import { FloatingPanel } from './FloatingPanel';
 import { mergeRefs } from './mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -25,8 +21,6 @@ type Ctx = {
   open: boolean;
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  triggerRect: DOMRect | null;
-  refreshRect: () => void;
 };
 
 const PopoverContext = createContext<Ctx | null>(null);
@@ -51,46 +45,16 @@ const PopoverRoot = ({
   onOpenChange,
   children,
 }: PopoverProps) => {
-  const [open, setOpenState] = useControllableState({
+  const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
     onChange: onOpenChange,
     name: 'Popover.open',
   });
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-
-  const refreshRect = useCallback(() => {
-    if (triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect());
-  }, []);
-
-  const setOpen = useCallback(
-    (v: boolean) => {
-      if (v) refreshRect();
-      setOpenState(v);
-    },
-    [setOpenState, refreshRect]
-  );
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = () => refreshRect();
-    window.addEventListener('resize', handler);
-    window.addEventListener('scroll', handler, true);
-    // The trigger can change size while open (web font swap, new label or
-    // padding), which would leave the panel and its arrow aligned to a stale
-    // rect. border-box: the default content box misses padding changes.
-    const observer = new ResizeObserver(handler);
-    if (triggerRef.current) observer.observe(triggerRef.current, { box: 'border-box' });
-    return () => {
-      window.removeEventListener('resize', handler);
-      window.removeEventListener('scroll', handler, true);
-      observer.disconnect();
-    };
-  }, [open, refreshRect]);
 
   return (
-    <PopoverContext.Provider value={{ open, setOpen, triggerRef, triggerRect, refreshRect }}>
+    <PopoverContext.Provider value={{ open, setOpen, triggerRef }}>
       {children}
     </PopoverContext.Provider>
   );
@@ -101,10 +65,7 @@ const PopoverRoot = ({
 export type PopoverTriggerProps = ComponentPropsWithRef<'button'>;
 
 function PopoverTrigger({ onClick, className, children, ref, ...rest }: PopoverTriggerProps) {
-  const { open, setOpen, triggerRef, refreshRect } = useCtx();
-  useEffect(() => {
-    if (open) refreshRect();
-  }, [open, refreshRect]);
+  const { open, setOpen, triggerRef } = useCtx();
   return (
     <button
       ref={mergeRefs(triggerRef, ref)}
@@ -125,56 +86,7 @@ function PopoverTrigger({ onClick, className, children, ref, ...rest }: PopoverT
 
 // ── Content (portal) ─────────────────────────────────────────────────────────
 
-// Smallest gap kept between an `end`-aligned panel and the left of the screen.
-const VIEWPORT_MARGIN = 16;
-
-const positionStyle = (
-  position: PopoverPosition,
-  align: PopoverAlign,
-  rect: DOMRect,
-  offset: number
-): CSSProperties => {
-  // `end`: the panel's right edge sits exactly on the trigger's right edge, and
-  // its width is capped so it keeps a margin from the left of the screen.
-  const left = align === 'end' ? rect.right : rect.left + rect.width / 2;
-  const shiftX = align === 'end' ? '-100%' : '-50%';
-  const maxWidth = align === 'end' ? rect.right - VIEWPORT_MARGIN : undefined;
-  switch (position) {
-    case 'top':
-      return {
-        top: rect.top - offset,
-        left,
-        maxWidth,
-        transform: `translate(${shiftX}, -100%)`,
-      };
-    case 'right':
-      return {
-        top: rect.top + rect.height / 2,
-        left: rect.right + offset,
-        transform: 'translateY(-50%)',
-      };
-    case 'left':
-      return {
-        top: rect.top + rect.height / 2,
-        left: rect.left - offset,
-        transform: 'translate(-100%, -50%)',
-      };
-    case 'bottom':
-    default:
-      return {
-        top: rect.bottom + offset,
-        left,
-        maxWidth,
-        transform: `translateX(${shiftX})`,
-      };
-  }
-};
-
-const arrowStyle = (
-  position: PopoverPosition,
-  align: PopoverAlign,
-  rect: DOMRect
-): CSSProperties => {
+const arrowStyle = (position: PopoverPosition, align: PopoverAlign): CSSProperties => {
   // 8px square rotated 45° → diamond, clipped half by the content panel.
   const base: CSSProperties = {
     position: 'absolute',
@@ -182,11 +94,12 @@ const arrowStyle = (
     height: 8,
     transform: 'rotate(45deg)',
   };
-  // With `end`, keep pointing at the trigger's center, not the panel's. `right`
-  // is measured from the panel's padding box, 1px inside its border.
+  // With `end`, keep pointing at the trigger's center, not the panel's: half the
+  // trigger's width (`--anchor-width`, set by the anchoring) from the right, and
+  // `right` is measured from the panel's padding box, 1px inside its border.
   const x: CSSProperties =
     align === 'end'
-      ? { right: rect.width / 2 - 1, marginRight: -4 }
+      ? { right: 'calc(var(--anchor-width) / 2 - 1px)', marginRight: -4 }
       : { left: '50%', marginLeft: -4 };
   switch (position) {
     case 'top':
@@ -232,39 +145,31 @@ const PopoverContent = ({
   className,
   children,
 }: PopoverContentProps) => {
-  const { open, setOpen, triggerRef, triggerRect } = useCtx();
-  const panelRef = usePortalFocus<HTMLDivElement>({
-    open,
-    onClose: () => setOpen(false),
-    triggerRef,
-  });
-  if (!open || !triggerRect) return null;
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-      <div
-        ref={panelRef}
-        role="dialog"
-        tabIndex={-1}
-        aria-label={ariaLabel}
-        style={positionStyle(position, align, triggerRect, offset)}
-        className={clsx(
-          'fixed z-[9999] rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
-          width,
-          className
-        )}
-      >
-        {arrow && (
-          <span
-            aria-hidden
-            style={arrowStyle(position, align, triggerRect)}
-            className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
-          />
-        )}
-        <div className="relative">{children}</div>
-      </div>
-    </>,
-    document.body
+  const { open, setOpen, triggerRef } = useCtx();
+  return (
+    <FloatingPanel
+      open={open}
+      onClose={() => setOpen(false)}
+      triggerRef={triggerRef}
+      placement={{ side: position, align, offset }}
+      role="dialog"
+      tabIndex={-1}
+      aria-label={ariaLabel}
+      className={clsx(
+        'rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
+        width,
+        className
+      )}
+    >
+      {arrow && (
+        <span
+          aria-hidden
+          style={arrowStyle(position, align)}
+          className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+        />
+      )}
+      <div className="relative">{children}</div>
+    </FloatingPanel>
   );
 };
 

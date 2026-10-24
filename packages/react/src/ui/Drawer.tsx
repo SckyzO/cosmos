@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useId, useState, useSyncExternalStore } from 'react';
+import { useId, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
+import { useIsClient } from '../hooks/useIsClient';
 
 export type DrawerSide = 'left' | 'right';
 export type DrawerSize = 'sm' | 'md' | 'lg';
@@ -22,14 +23,7 @@ const OUTSIDE_POSITION: Record<DrawerSide, string> = {
 };
 
 // The portal needs `document`: render nothing on the server and during
-// hydration, then portal once on the client.
-const noopSubscribe = () => () => {};
-const useIsClient = () =>
-  useSyncExternalStore(
-    noopSubscribe,
-    () => true,
-    () => false
-  );
+// hydration, then portal once on the client (`useIsClient`).
 
 const SIDE_CLASS: Record<DrawerSide, string> = {
   left: 'left-0 border-r',

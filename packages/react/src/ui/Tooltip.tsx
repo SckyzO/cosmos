@@ -7,11 +7,16 @@ import {
   useId,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Kbd } from '../typography/Kbd';
+import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
+import { useAnchorPosition } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
+import { useIsClient } from '../hooks/useIsClient';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 /** Surface of the tooltip. */
@@ -19,12 +24,12 @@ export type TooltipVariant = 'dark' | 'white';
 /** Meaning of the tooltip: colors it over its surface. */
 export type TooltipIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
 
-const BOX_POS: Record<TooltipPosition, string> = {
-  top: 'bottom-full left-1/2 -translate-x-1/2 mb-2.5',
-  bottom: 'top-full left-1/2 -translate-x-1/2 mt-2.5',
-  left: 'right-full top-1/2 -translate-y-1/2 mr-2.5',
-  right: 'left-full top-1/2 -translate-y-1/2 ml-2.5',
-};
+// Gap between the trigger and the box, room for the arrow.
+const OFFSET = 10;
+
+// Where a tooltip never shown yet waits, invisible: it has no position before
+// its trigger is first measured, and must exist for `aria-describedby`.
+const UNPLACED: CSSProperties = { top: 0, left: 0 };
 
 const ARROW_POS: Record<TooltipPosition, string> = {
   top: 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2',
@@ -106,6 +111,8 @@ export const Tooltip = ({
   onOpenChange,
 }: TooltipProps) => {
   const id = useId();
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const isClient = useIsClient();
   const [open, setOpenState] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -150,6 +157,11 @@ export const Tooltip = ({
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [engaged, open, setOpenState]);
+  const anchored = useAnchorPosition(anchorRef, open, {
+    side: position,
+    align: 'center',
+    offset: OFFSET,
+  });
   const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
     ? cloneElement(children, {
         'aria-describedby': [children.props['aria-describedby'], id].filter(Boolean).join(' '),
@@ -157,9 +169,10 @@ export const Tooltip = ({
     : children;
   return (
     // `inline-block w-fit` keeps the wrapper exactly the size of the children even
-    // inside grid/flex parents, so the absolute-positioned tooltip stays anchored
-    // on the trigger rather than on the parent cell.
+    // inside grid/flex parents, so the tooltip stays anchored on the trigger rather
+    // than on the parent cell.
     <span
+      ref={anchorRef}
       className="relative inline-block w-fit align-middle"
       onMouseEnter={show}
       onMouseLeave={hide}
@@ -167,40 +180,48 @@ export const Tooltip = ({
       onBlur={hide}
     >
       {trigger}
-      <span
-        id={id}
-        role="tooltip"
-        className={clsx(
-          'pointer-events-none absolute z-50 block w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal transition-opacity duration-150',
-          open ? 'opacity-100' : 'opacity-0',
-          maxWidth,
-          BOX_POS[position],
-          intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
-        )}
-      >
-        {title && <span className="block font-semibold">{title}</span>}
-        {title ? <span className="mt-0.5 block opacity-80">{content}</span> : content}
-        {shortcut && (
-          <span className="ml-2 inline-flex gap-0.5 align-middle">
-            {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
-            {shortcut.map((key, i) => (
-              <Kbd key={i} size="sm">
-                {key}
-              </Kbd>
-            ))}
-          </span>
-        )}
-        {arrow && (
+      {/* Portaled, so no `overflow: hidden` ancestor clips it, and kept mounted
+          while hidden: `aria-describedby` points at it. Client-side only, as
+          portals are. */}
+      {isClient &&
+        createPortal(
           <span
-            aria-hidden
+            id={id}
+            role="tooltip"
+            style={anchored ?? UNPLACED}
             className={clsx(
-              'absolute h-2 w-2 rotate-45',
-              ARROW_POS[position],
-              intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
+              'pointer-events-none fixed block w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal transition-opacity duration-150',
+              TOOLTIP_Z,
+              open ? 'opacity-100' : 'opacity-0',
+              maxWidth,
+              intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
             )}
-          />
+          >
+            {title && <span className="block font-semibold">{title}</span>}
+            {title ? <span className="mt-0.5 block opacity-80">{content}</span> : content}
+            {shortcut && (
+              <span className="ml-2 inline-flex gap-0.5 align-middle">
+                {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
+                {shortcut.map((key, i) => (
+                  <Kbd key={i} size="sm">
+                    {key}
+                  </Kbd>
+                ))}
+              </span>
+            )}
+            {arrow && (
+              <span
+                aria-hidden
+                className={clsx(
+                  'absolute h-2 w-2 rotate-45',
+                  ARROW_POS[position],
+                  intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
+                )}
+              />
+            )}
+          </span>,
+          document.body
         )}
-      </span>
     </span>
   );
 };
