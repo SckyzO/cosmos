@@ -275,6 +275,8 @@ for (const theme of THEMES) {
   const surfaces = theme.dark
     ? [color('bg-base'), color('gray-900'), color('gray-800')]
     : [color('bg-base'), color('white'), color('gray-100')];
+  // Surfaces a control can sit on: the three above, the panel and elevated layers.
+  const focusSurfaces = [...surfaces, color('bg-panel'), color('bg-elevated')];
   const texts = theme.dark
     ? ['white', 'gray-200', 'gray-300', 'gray-400']
     : ['gray-900', 'gray-700', 'gray-600', 'gray-500'];
@@ -315,6 +317,11 @@ for (const theme of THEMES) {
       }
     }
     check(theme.id, 'white on accent', color('white'), brand('500'), 4.5);
+    // The focus indicator (a field's border, the ring of any other control) is
+    // brand-500 against what surrounds it: WCAG 1.4.11 asks 3:1.
+    for (const surface of focusSurfaces) {
+      check(theme.id, 'focus indicator', brand('500'), surface, 3);
+    }
   }
 }
 
