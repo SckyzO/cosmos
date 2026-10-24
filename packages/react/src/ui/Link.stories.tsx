@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { expectFocusRing } from '../storybook-helpers';
 import { Link, type LinkVariant } from './Link';
 
 const meta = {
@@ -132,4 +133,17 @@ export const InternalKeepsCallerRel: Story = {
     const link = canvas.getByRole('link', { name: /internal/i });
     await expect(link).toHaveAttribute('rel', 'nofollow');
   },
+};
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('link', { name: 'Read the docs' }));
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

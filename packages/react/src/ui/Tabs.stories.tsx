@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, userEvent } from 'storybook/test';
+import { expectFocusRing } from '../storybook-helpers';
 import { Tabs } from './Tabs';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -496,4 +497,31 @@ export const TabAndPanelAreLinked: Story = {
     await userEvent.tab();
     await expect(panel).toHaveFocus();
   },
+};
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => {
+    const [tab, setTab] = useState('overview');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab}>
+          <Tabs.List>
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            <Tabs.Trigger value="metrics">Metrics</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Overview' }), { inset: true });
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

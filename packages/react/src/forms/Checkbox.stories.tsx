@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Checkbox, CheckboxGroup } from './Checkbox';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectFocusRing, expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Checkbox',
@@ -227,4 +227,21 @@ export const ForwardsRef: Story = {
     await expect(selectAll).toHaveProperty('indeterminate', true);
     await expect(checkboxNodes.at(-1)).toBe(canvas.getByRole('checkbox', { name: 'Archive' }));
   },
+};
+
+// The input is visually hidden: the box next to it draws the ring.
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Subscribe to newsletter', defaultChecked: true },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('checkbox');
+    await expectFocusRing(input, { ring: input.nextElementSibling as HTMLElement });
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

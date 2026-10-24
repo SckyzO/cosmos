@@ -158,7 +158,8 @@ const expectHalo = (el: Element, token: string) => {
  * keyboard (Tab, so `:focus-visible` matches), it draws a 2px ring of `token`
  * (the accent by default) and the halo; unfocused, it draws neither. `ring` is
  * the element that draws them (the control itself, the box next to a hidden
- * input, the wrapper of a `has-focus-visible:` card). `inset` for `ring-inset`.
+ * input, the wrapper of a `has-focus-visible:` card). `inset` for `ring-inset`;
+ * `halo: false` for the white ring of an accent-filled control, which has none.
  *
  * A control that moves focus onto itself (a menu item) is focused already: the
  * check starts from there.
@@ -169,7 +170,8 @@ export const expectFocusRing = async (
     ring = target,
     token = '--color-brand-500',
     inset = false,
-  }: { ring?: HTMLElement; token?: string; inset?: boolean } = {}
+    halo = true,
+  }: { ring?: HTMLElement; token?: string; inset?: boolean; halo?: boolean } = {}
 ) => {
   if (document.activeElement !== target) {
     (document.activeElement as HTMLElement | null)?.blur();
@@ -184,15 +186,16 @@ export const expectFocusRing = async (
     expect(solid!.alpha).toBeGreaterThan(0.99);
     expect(closeTo(solid!.rgb, tokenRgb(token))).toBe(true);
     expect(solid!.inset).toBe(inset);
-    expectHalo(ring, token);
+    if (halo) expectHalo(ring, token);
+    else expect(spreadLayer(ring, 4)).toBeUndefined();
   });
 };
 
 /**
  * Play-function assertion for form controls that show focus with their border:
  * focuses `target`, waits for the border of `border` (the control itself, or the
- * wrapper that uses `focus-within:`) to turn to `token` (the accent by default),
- * and checks the unfocused border was another colour.
+ * wrapper that uses `focus-within:`) to turn to `token` (the accent by default)
+ * and for the 4px halo to appear, and checks the unfocused control had neither.
  *
  * Run it under `globals: { theme: 'dark' }`: the dark themes are where the
  * `dark:` border used to win over `focus:`.
@@ -205,10 +208,16 @@ export const expectFocusBorder = async (
   const expected = toRgba(getComputedStyle(document.documentElement).getPropertyValue(token));
   // Some controls take focus on mount (autoFocus): read their idle border first.
   target.blur();
-  await waitFor(() => expect(read()).not.toEqual(expected));
+  await waitFor(() => {
+    expect(read()).not.toEqual(expected);
+    expect(spreadLayer(border, 4)).toBeUndefined();
+  });
   target.focus();
   await expect(target).toHaveFocus();
-  await waitFor(() => expect(read()).toEqual(expected));
+  await waitFor(() => {
+    expect(read()).toEqual(expected);
+    expectHalo(border, token);
+  });
 };
 
 /**

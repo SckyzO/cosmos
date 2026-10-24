@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Radio, RadioGroup } from './Radio';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectFocusRing, expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Radio',
@@ -169,4 +169,19 @@ export const ErrorTextContrastInLight: Story = {
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Please select an option.'));
   },
+};
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { label: 'Option A', name: 'focus-demo', defaultChecked: true },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('radio');
+    await expectFocusRing(input, { ring: input.nextElementSibling as HTMLElement });
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

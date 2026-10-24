@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
 import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
@@ -249,4 +249,25 @@ export const OptionCardForwardsRef: Story = {
   play: async ({ canvas }) => {
     await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Soft' }));
   },
+};
+
+// No descriptions: in light, text-gray-500 on the checked card is 4.33:1, which is debt of its own.
+const FOCUS_OPTIONS: OptionItem[] = VIEW_MODES.map(({ desc: _desc, ...option }) => option);
+
+export const CardFocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <OptionPicker options={FOCUS_OPTIONS} value="grid" onChange={() => {}} cols={4} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('radio', { checked: true }));
+  },
+};
+
+export const CardFocusShowsRingInLight: Story = {
+  ...CardFocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

@@ -163,6 +163,16 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
   },
 };
 
+export const FocusShowsAccentBorderInLight: Story = {
+  ...FocusShowsAccentBorderInDark,
+  globals: { theme: 'light' },
+};
+
+export const ErrorFocusShowsRedBorderInLight: Story = {
+  ...ErrorFocusShowsRedBorderInDark,
+  globals: { theme: 'light' },
+};
+
 export const PrefixGroupFocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },

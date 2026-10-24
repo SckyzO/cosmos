@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sparkles } from 'lucide-react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { expectFocusRing } from '../storybook-helpers';
 import { AnnouncementBar, type AnnouncementBarIntent } from './AnnouncementBar';
 import { Link } from './Link';
 
@@ -116,4 +117,23 @@ export const NotDismissibleHasNoCloseBtn: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /dismiss/i })).toBeNull();
   },
+};
+
+// The brand bar is brand-500: the ring of its dismiss button is white, with no halo.
+
+export const BrandDismissFocusShowsWhiteRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { intent: 'brand', message: 'New: AI-powered alerts now in beta.', dismissible: true },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('button', { name: 'Dismiss announcement' }), {
+      token: '--color-white',
+      halo: false,
+    });
+  },
+};
+
+export const BrandDismissFocusShowsWhiteRingInLight: Story = {
+  ...BrandDismissFocusShowsWhiteRingInDark,
+  globals: { theme: 'light' },
 };
