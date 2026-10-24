@@ -25,25 +25,25 @@ const LIGHT_THEMES: PaletteMeta[] = [
     id: 'pure',
     label: 'Pure',
     desc: 'White surfaces',
-    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb' },
+    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb', text: '#667085' },
   },
   {
     id: 'warm',
     label: 'Warm',
     desc: 'Cream tone',
-    preview: { bg: '#fefcf8', surface: '#fffaf0', border: '#f3e8d0' },
+    preview: { bg: '#fefcf8', surface: '#fffaf0', border: '#f3e8d0', text: '#667085' },
   },
   {
     id: 'cool',
     label: 'Cool',
     desc: 'Blue tint',
-    preview: { bg: '#f3f6fc', surface: '#ffffff', border: '#dbe5f5' },
+    preview: { bg: '#f3f6fc', surface: '#ffffff', border: '#dbe5f5', text: '#667085' },
   },
   {
     id: 'paper',
     label: 'Paper',
     desc: 'Slight grain',
-    preview: { bg: '#f4f3ee', surface: '#fafaf7', border: '#dad8d0' },
+    preview: { bg: '#f4f3ee', surface: '#fafaf7', border: '#dad8d0', text: '#667085' },
   },
 ];
 
@@ -52,25 +52,25 @@ const DARK_THEMES: PaletteMeta[] = [
     id: 'cosmos',
     label: 'Cosmos',
     desc: 'Default deep blue',
-    preview: { bg: '#0c111d', surface: '#101828', border: '#1f2937' },
+    preview: { bg: '#0c111d', surface: '#101828', border: '#1f2937', text: '#a3a3a3' },
   },
   {
     id: 'void',
     label: 'Void',
     desc: 'NOC near-black',
-    preview: { bg: '#000000', surface: '#0a0a0a', border: '#262626' },
+    preview: { bg: '#000000', surface: '#0a0a0a', border: '#262626', text: '#a3a3a3' },
   },
   {
     id: 'slate',
     label: 'Slate',
     desc: 'Neutral grey',
-    preview: { bg: '#1f2937', surface: '#293241', border: '#3a4659' },
+    preview: { bg: '#1f2937', surface: '#293241', border: '#3a4659', text: '#a3a3a3' },
   },
   {
     id: 'midnight',
     label: 'Midnight',
     desc: 'Indigo wash',
-    preview: { bg: '#10162b', surface: '#1a2240', border: '#2d3563' },
+    preview: { bg: '#10162b', surface: '#1a2240', border: '#2d3563', text: '#a3a3a3' },
   },
 ];
 
@@ -103,6 +103,33 @@ export const DarkThemes: Story = {
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
+
+/**
+ * Palettes without `preview.text`: each label takes a gray that reads on its
+ * own surface, dark on the light ones and light on the dark ones, active or
+ * not. axe checks the contrast.
+ */
+export const LabelsWithoutTextReadOnTheirSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const withoutText = [LIGHT_THEMES[0], LIGHT_THEMES[1], DARK_THEMES[0], DARK_THEMES[2]].map(
+      (palette) => ({ ...palette, preview: { ...palette.preview, text: undefined } })
+    );
+    return (
+      <Wrap>
+        <PalettePicker palettes={withoutText} value="cosmos" onChange={() => {}} />
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const labelColor = (name: string) =>
+      getComputedStyle(canvas.getByText(name)).getPropertyValue('color');
+    await expect(labelColor('Pure')).toBe('rgb(75, 85, 99)');
+    await expect(labelColor('Warm')).toBe('rgb(75, 85, 99)');
+    await expect(labelColor('Cosmos')).toBe('rgb(209, 213, 219)');
+    await expect(labelColor('Slate')).toBe('rgb(209, 213, 219)');
+  },
+};
 
 /**
  * In a narrow grid a long label wraps and stretches its row: every card's
