@@ -359,3 +359,58 @@ export const NoSidebarHasNoHamburger: Story = {
     await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
   },
 };
+
+/** Uncontrolled, Shell reports the state it moved to: `true` on collapse, `false` on expand. */
+export const UncontrolledReportsEachNextState: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Shell
+      {...args}
+      topbar={<Topbar pageTitle="Servers" />}
+      sidebar={
+        <Sidebar>
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent title="Servers" description="Shell owns the collapsed state." />
+    </Shell>
+  ),
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(3);
+  },
+};
+
+/** With `collapseControl="sidebar"`, the Sidebar's own button reports the next state the same way. */
+export const SidebarButtonReportsEachNextState: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn(), collapseControl: 'sidebar' },
+  render: (args) => (
+    <Shell
+      {...args}
+      topbar={<Topbar pageTitle="Servers" />}
+      sidebar={
+        <Sidebar>
+          <NavItems />
+        </Sidebar>
+      }
+    >
+      <PageContent title="Servers" description="The control lives in the sidebar." />
+    </Shell>
+  ),
+  play: async ({ args, canvas }) => {
+    // One button: the Topbar shows no hamburger.
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(2);
+  },
+};

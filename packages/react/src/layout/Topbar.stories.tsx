@@ -182,3 +182,25 @@ export const SlotsFollowTheLayoutOrder: Story = {
     ]);
   },
 };
+
+/** An expanded sidebar: the hamburger passes `true`, the state to move to, whatever the host does with it. */
+export const HamburgerCollapsesAnExpandedSidebar: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { pageTitle: 'Servers', sidebarCollapsed: false, onCollapsedChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
+    await expect(args.onCollapsedChange).toHaveBeenCalledWith(true);
+  },
+};
+
+/** A collapsed sidebar: the hamburger passes `false`. */
+export const HamburgerExpandsACollapsedSidebar: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { pageTitle: 'Servers', sidebarCollapsed: true, onCollapsedChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
+    await expect(args.onCollapsedChange).toHaveBeenCalledWith(false);
+  },
+};

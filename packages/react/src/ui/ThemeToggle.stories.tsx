@@ -56,3 +56,32 @@ export const DarkClickFiresOnChange: Story = {
     await expect(args.onChange).toHaveBeenCalledWith(false);
   },
 };
+
+/** Click, Enter and Space each call `onChange` with the next value of `isDark`. */
+export const EveryActivationPassesTheNextValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { isDark: false, onChange: fn() },
+  render: (args) => {
+    const [dark, setDark] = useState(args.isDark);
+    return (
+      <ThemeToggle
+        isDark={dark}
+        onChange={(next) => {
+          args.onChange(next);
+          setDark(next);
+        }}
+      />
+    );
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /switch to dark mode/i }));
+    await expect(args.onChange).toHaveBeenLastCalledWith(true);
+
+    canvas.getByRole('button', { name: /switch to light mode/i }).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith(false);
+    await userEvent.keyboard(' ');
+    await expect(args.onChange).toHaveBeenLastCalledWith(true);
+    await expect(args.onChange).toHaveBeenCalledTimes(3);
+  },
+};
