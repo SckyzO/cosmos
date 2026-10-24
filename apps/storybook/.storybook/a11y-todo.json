@@ -121,7 +121,6 @@
   "pages-blog-index--three-column-with-images": ["link-name"],
   "pages-blog-index--with-featured-post": ["link-name"],
   "pages-blog-index--with-photo-and-list": ["link-name"],
-  "pages-detail-screen--sidebar": ["aria-valid-attr-value", "heading-order"],
   "pages-error-page--big-code-is-decorative": ["color-contrast"],
   "pages-error-page--maintenance": ["color-contrast"],
   "pages-error-page--not-found": ["color-contrast"],
@@ -134,8 +133,6 @@
     "image-redundant-alt",
     "label-content-name-mismatch"
   ],
-  "pages-settings-screen--sidebar": ["aria-valid-attr-value"],
-  "pages-settings-screen--stacked": ["aria-valid-attr-value"],
   "settings-palette-picker--arrow-keys-move-the-selection": ["color-contrast"],
   "settings-palette-picker--click-selects-a-palette": ["color-contrast"],
   "settings-palette-picker--dark-themes": ["color-contrast"],
