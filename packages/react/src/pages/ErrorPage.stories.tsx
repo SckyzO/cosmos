@@ -49,11 +49,15 @@ export const Maintenance: Story = {
 };
 
 // The big code is a 1.22:1 decoration: AT reads it once, inside the heading (#151).
+// CSS draws it from `data-code`, so it is no text node for axe's contrast check.
 export const BigCodeIsDecorative: Story = {
   tags: ['!dev', '!autodocs'],
   args: { code: 404, title: 'Page not found' },
   play: async ({ canvas, canvasElement }) => {
-    await expect(canvasElement.querySelector('p[aria-hidden="true"]')).toHaveTextContent('404');
+    const watermark = canvasElement.querySelector('p[aria-hidden="true"]');
+    await expect(watermark).toHaveAttribute('data-code', '404');
+    await expect(watermark).toBeEmptyDOMElement();
+    await expect(getComputedStyle(watermark!, '::before').content).toBe('"404"');
     await expect(canvas.getByRole('heading', { name: '404: Page not found' })).toBeInTheDocument();
   },
 };
