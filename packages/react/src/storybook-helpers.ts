@@ -385,9 +385,7 @@ export const inEachTheme = (check: () => void) => {
 
 /**
  * Clicks the Topbar hamburger of a `Shell` story twice and checks the sidebar
- * collapses to its rail, then expands back. A page story that pins the
- * Topbar's `sidebarCollapsed` overrides what Shell wires, and the button then
- * does nothing.
+ * collapses to its rail, then expands back.
  */
 export const expectHamburgerTogglesSidebar = async (canvas: {
   getByRole: (role: string, options: { name: string }) => HTMLElement;
