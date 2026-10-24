@@ -140,11 +140,19 @@ export const HamburgerFiresOnCollapsedChange: Story = {
 /** The hamburger needs both a `sidebarCollapsed` state and an `onCollapsedChange`; `null` hides it. */
 export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
   tags: ['!dev', '!autodocs'],
+  // A Topbar is a page's banner and a page has one: each of the three sits in a named
+  // section, which keeps its <header> from counting as a second banner.
   render: () => (
     <Wrap>
-      <Topbar pageTitle="No state" onCollapsedChange={() => {}} />
-      <Topbar pageTitle="State is null" sidebarCollapsed={null} onCollapsedChange={() => {}} />
-      <Topbar pageTitle="No handler" sidebarCollapsed={false} />
+      <section aria-label="No state">
+        <Topbar pageTitle="No state" onCollapsedChange={() => {}} />
+      </section>
+      <section aria-label="State is null">
+        <Topbar pageTitle="State is null" sidebarCollapsed={null} onCollapsedChange={() => {}} />
+      </section>
+      <section aria-label="No handler">
+        <Topbar pageTitle="No handler" sidebarCollapsed={false} />
+      </section>
     </Wrap>
   ),
   play: async ({ canvas }) => {
