@@ -5,6 +5,7 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectBelow,
   expectFocusBorder,
+  expectFocusRing,
   expectOutsideClip,
   scrollAnchor,
 } from '../storybook-helpers';
@@ -218,6 +219,135 @@ export const ColumnFilterOpensBeforeAnyFilter: Story = {
     const [firstOption] = page.getAllByRole('checkbox');
     await userEvent.click(firstOption);
     await expect(page.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
+  },
+};
+
+// ── Scrolling rows ───────────────────────────────────────────────────────────
+
+/** Rows that scroll take the focus, as a region named by `aria-label`; rows that fit do not. */
+export const ScrollingRowsAreFocusableOnesThatFitAreNot: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        <DataTable
+          aria-label="Scrolling alerts"
+          className="max-h-72"
+          rows={rows.slice(0, 30)}
+          columns={columns}
+          rowKey={(r) => r.id}
+          pageSize={30}
+        />
+        <DataTable
+          aria-label="Short alerts"
+          rows={rows.slice(0, 2)}
+          columns={columns}
+          rowKey={(r) => r.id}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'Scrolling alerts' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+    // The name is the label alone, not the text of the cells.
+    await expect(region).toHaveAccessibleName('Scrolling alerts');
+    await expect(canvas.getByRole('table', { name: 'Scrolling alerts' })).toBeVisible();
+    await expect(region.scrollHeight).toBeGreaterThan(region.clientHeight);
+    await expectFocusRing(region, { inset: true });
+
+    // The other table fits: no tab stop, no region, but still a named table.
+    const fitting = canvas.getByRole('table', { name: 'Short alerts' }).parentElement!;
+    await expect(fitting).not.toHaveAttribute('tabindex');
+    await expect(fitting).not.toHaveAttribute('role');
+    await expect(fitting).not.toHaveAttribute('aria-label');
+    await expect(canvas.queryByRole('region', { name: 'Short alerts' })).toBeNull();
+  },
+};
+
+/** With no label the scrolling rows have no name to give: focusable, but not a region. */
+export const ScrollingRowsWithoutLabelAreFocusableNotARegion: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        className="max-h-72"
+        rows={rows.slice(0, 30)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={30}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const scroller = canvas.getByRole('table').parentElement!;
+    await waitFor(() => expect(scroller).toHaveAttribute('tabindex', '0'));
+    await expect(scroller.scrollHeight).toBeGreaterThan(scroller.clientHeight);
+    // Not named after the table's content either: that would read out every cell.
+    await expect(scroller).not.toHaveAttribute('role');
+    await expect(scroller).not.toHaveAttribute('aria-label');
+    await expect(scroller).not.toHaveAttribute('aria-labelledby');
+    await expect(canvas.queryByRole('region')).toBeNull();
+    await expectFocusRing(scroller, { inset: true });
+  },
+};
+
+/** `aria-labelledby` names the table and its scrolling area after a heading on the page. */
+export const ScrollingRowsNamedByAHeading: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <h2 id="alerts-title" className="mb-3 text-lg font-semibold">
+        Open alerts
+      </h2>
+      <DataTable
+        aria-labelledby="alerts-title"
+        className="max-h-72"
+        rows={rows.slice(0, 30)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={30}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'Open alerts' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('table', { name: 'Open alerts' })).toBeVisible();
+  },
+};
+
+/**
+ * The scrolling area follows what it holds: when a search leaves nothing, the empty state fits
+ * and the tab stop goes; when the search is cleared, the rows come back and so does the tab stop.
+ */
+export const ScrollingAreaFollowsItsContent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        aria-label="Searchable alerts"
+        className="h-72"
+        defaultSearchValue=""
+        rows={rows.slice(0, 30)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={30}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'Searchable alerts' });
+    const search = canvas.getByRole('searchbox', { name: 'Search rows' });
+
+    await userEvent.type(search, 'no such node');
+    await waitFor(() => expect(region).not.toHaveAttribute('tabindex'));
+    await expect(region).not.toHaveAttribute('role');
+    await expect(canvas.queryByRole('region', { name: 'Searchable alerts' })).toBeNull();
+
+    await userEvent.clear(search);
+    await waitFor(() => expect(region).toHaveAttribute('tabindex', '0'));
+    await expect(canvas.getByRole('region', { name: 'Searchable alerts' })).toBe(region);
   },
 };
 
@@ -652,6 +782,25 @@ export const FilterButtonsAreNamedAfterTheirColumn: Story = {
     const names = filters.map((b) => b.getAttribute('aria-label'));
     await expect(new Set(names).size).toBe(names.length);
     await expect(canvas.getByRole('button', { name: 'Filter Severity' })).toBeInTheDocument();
+  },
+};
+
+/** The filter button shows how many values are checked, and its name says it too (WCAG 2.5.3). */
+export const FilterButtonNameHoldsTheCheckedCount: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Filter Severity' }));
+    // The dropdown is queried from the whole page, wherever it renders.
+    const page = within(document.body);
+    const [first, second] = page.getAllByRole('checkbox');
+    await userEvent.click(first);
+    const one = canvas.getByRole('button', { name: 'Filter Severity, 1 selected' });
+    await expect(one).toHaveTextContent('1');
+    await userEvent.click(second);
+    await expect(
+      canvas.getByRole('button', { name: 'Filter Severity, 2 selected' })
+    ).toHaveTextContent('2');
   },
 };
 

@@ -1,16 +1,53 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DayPicker, getDefaultClassNames, type DayPickerProps } from 'react-day-picker';
+import type { ReactNode } from 'react';
+import {
+  Day,
+  DayButton,
+  DayPicker,
+  getDefaultClassNames,
+  type DayButtonProps,
+  type DayPickerProps,
+  type DayProps,
+} from 'react-day-picker';
+import { dayButtonName } from './calendarLabels';
 
 export type CalendarProps = DayPickerProps & {
   className?: string;
 };
+
+// A day shows its number and is named by the full date of the calendar's locale.
+// The number goes in front of that name when the date holds it only as part of a
+// word ("1st"), so the visible text is in the name (WCAG 2.5.3). The cell of a
+// calendar with no `mode` is named too, and holds the number as text; one with a
+// `mode` holds a button, named by `NamedDayButton`.
+const nameOfDay = (label: string | undefined, content: ReactNode) =>
+  typeof content === 'string' || typeof content === 'number'
+    ? dayButtonName(label, String(content))
+    : label;
+
+const NamedDayButton = ({ children, ...props }: DayButtonProps) => (
+  <DayButton {...props} aria-label={nameOfDay(props['aria-label'], children)}>
+    {children}
+  </DayButton>
+);
+
+const NamedDay = ({ children, ...props }: DayProps) => (
+  <Day {...props} aria-label={nameOfDay(props['aria-label'], children)}>
+    {children}
+  </Day>
+);
 
 /**
  * Thin Cosmos wrapper around react-day-picker's `<DayPicker>`. All DayPicker
  * props are accepted (see https://daypicker.dev). Cosmos applies its own
  * Tailwind class names on top of the defaults so the calendar matches the
  * rest of the design system.
+ *
+ * A day is named by the full date in the calendar's `locale`, prefixed with the
+ * number it shows when the date writes it as an ordinal ("1, Thursday, October
+ * 1st, 2026"), so a voice user can say "click 1". Pass your own `components.Day`
+ * and `components.DayButton` to name the days yourself.
  *
  * react-day-picker's structural styles are not imported here (a CSS import in
  * the bundle breaks `require` in Node): load `@sckyzo/cosmos-react/calendar.css`
@@ -83,6 +120,8 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         ...classNames,
       }}
       components={{
+        Day: NamedDay,
+        DayButton: NamedDayButton,
         Chevron: ({ orientation }) =>
           orientation === 'left' ? (
             <ChevronLeft className="h-4 w-4" />

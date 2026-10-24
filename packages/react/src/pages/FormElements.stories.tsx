@@ -17,7 +17,7 @@ import {
   Upload,
   User,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { ActionPanel } from '../forms/ActionPanel';
 import { AvatarUploader } from '../forms/AvatarUploader';
 import { Calendar } from '../forms/Calendar';
@@ -427,10 +427,13 @@ const AvatarUploaderInline = () => {
 
 const NumberInputCell = () => {
   const [n, setN] = useState(1);
+  const labelId = useId();
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Quantity</p>
-      <NumberInput value={n} onChange={setN} min={0} max={99} fullWidth />
+      <p id={labelId} className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+        Quantity
+      </p>
+      <NumberInput aria-labelledby={labelId} value={n} onChange={setN} min={0} max={99} fullWidth />
     </div>
   );
 };
@@ -483,10 +486,21 @@ const SegmentedControlCell = () => {
 
 const StackedNumberInputCell = () => {
   const [n, setN] = useState(3);
+  const labelId = useId();
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Replicas</p>
-      <NumberInput controls="stacked" value={n} onChange={setN} min={1} max={20} unit="replicas" />
+      <p id={labelId} className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+        Replicas
+      </p>
+      <NumberInput
+        aria-labelledby={labelId}
+        controls="stacked"
+        value={n}
+        onChange={setN}
+        min={1}
+        max={20}
+        unit="replicas"
+      />
     </div>
   );
 };
