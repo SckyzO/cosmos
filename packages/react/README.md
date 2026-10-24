@@ -163,6 +163,27 @@ the messages and answers `onSend`:
 
 A bot message with `streaming: true` shows a caret while its text grows.
 
+## Application shell
+
+`Shell` lays out a `Topbar`, a `Sidebar` and the page, and owns the sidebar's
+collapsed state: `defaultSidebarCollapsed`, or `sidebarCollapsed` and
+`onCollapsedChange` to control it. The Topbar shows the toggle, or the bottom of
+the Sidebar does with `collapseControl="sidebar"`.
+
+`SidebarToggle` is that toggle, to place anywhere else in the Shell (a header of
+your own, the Topbar's `leftActions`, the Sidebar's `footer`) with no props: it
+reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass it
+`collapsed` and `onCollapsedChange`.
+
+```tsx
+<Shell
+  topbar={<Topbar pageTitle="Servers" />}
+  sidebar={<Sidebar footer={<SidebarToggle variant="panel" />}>{/* items */}</Sidebar>}
+>
+  {/* page */}
+</Shell>
+```
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are
