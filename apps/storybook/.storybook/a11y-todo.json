@@ -164,7 +164,7 @@
   "pages-error-page--not-found": ["color-contrast"],
   "pages-error-page--server-error": ["color-contrast"],
   "pages-form-elements--default": ["label", "nested-interactive"],
-  "pages-form-elements--only-forms": ["label", "label-content-name-mismatch", "nested-interactive"],
+  "pages-form-elements--only-forms": ["label", "label-content-name-mismatch"],
   "pages-profile--content-only": ["color-contrast"],
   "pages-profile--default": ["image-redundant-alt", "label-content-name-mismatch"],
   "pages-profile--with-auth-disabled-banner": [
