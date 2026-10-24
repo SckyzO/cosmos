@@ -20,7 +20,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WOR
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots visual-diff build storybook storybook-build clean shell ci compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -78,6 +78,9 @@ screenshots: ## Capture every story in each theme into screenshots/<theme>/ (not
 
 visual-diff: ## Visual diff of some stories, BASE (default main) vs the working tree: STORIES=<id substrings> [THEMES=<themes>] [BASE=<ref>]
 	@tests/e2e/captures/visual-review.sh
+
+audit-captures: ## Captures for the visual audit, into ../cosmos-references/cosmos: [REFERENCES=<path>] [THEMES=<themes>] [STORIES=…] [MOBILE_STORIES=…]
+	@tests/e2e/captures/audit-captures.sh
 
 build: ## Build all packages
 	$(DOCKER_RUN) $(DEV_IMAGE) pnpm build
