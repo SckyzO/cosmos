@@ -99,38 +99,62 @@ lists a component's.
 
 ### Visual review
 
-Screenshots are for a person to look at: they assert nothing and never gate a PR. `make screenshots`
-captures every story (test-only `!dev` stories excluded) in each theme of the Storybook toolbar,
-into `screenshots/<theme>/<story-id>.png`. It needs the `storybook` compose service. Narrow a run
-with comma-separated substrings:
+Screenshots are for a person to look at: they assert nothing, and nothing visual runs in CI. Every
+story in four themes is 4,680 images, more than anyone reads, so the review is local and per
+component. Before you open a PR that changes how a component looks, run the visual diff on the
+components you touched, open the report, check that every change is one you meant to make, and say
+so in the PR:
 
 ```bash
-make screenshots                                  # every story, every theme
+make visual-diff STORIES=layout-sidebar
+make visual-diff STORIES=forms-select,overlays-modal THEMES=dark BASE=origin/main
+```
+
+- `STORIES` is required: comma-separated substrings of story ids (`layout-sidebar` is every story
+  of `Layout/Sidebar`). A run over every story is not offered.
+- `THEMES` narrows the themes (`dark`, `light,sand`…); every theme by default.
+- `BASE` is the git ref to compare with, `main` by default. It can be a branch, a tag or a SHA.
+
+The run captures the matching stories as they are at `BASE` and as they are in your working tree,
+uncommitted changes included, into `screenshots/base/` and `screenshots/head/`. `BASE` is checked
+out in a temporary worktree under `.cache/visual-diff`, installed from a pnpm store kept in
+`.cache/pnpm-store` (the first run downloads the packages, the next ones find them there) and built
+with its own Storybook; the worktree is removed afterwards. Both builds are captured by the spec of
+your working tree, so a change of the capture code is not a visual change. The run ends by printing
+the path of the report, `screenshots/diff/index.html`: one self-contained page you open in a
+browser.
+
+The report starts with how many stories changed, appeared and disappeared. Then comes one row per
+changed story, with the before, after and diff images of each theme side by side; click an image
+to open it full size, and look for the red pixels in the diff (a story whose size changed has no
+diff image, its two sizes are shown instead). Stories that did not change are only counted. The
+stories that appeared or disappeared are listed at the end, and so are the captures that had a
+problem, which can explain a difference that is not a change (see below). A change you did not make
+is a bug to fix, or a theme token that moved: find out before the PR.
+
+`make visual-diff` needs the `cosmos-dev` image to carry ImageMagick (`make build-image`, once, after
+pulling this change) and `make install`.
+
+`make screenshots` is the raw tool underneath: it captures every story (test-only `!dev` stories
+excluded) in each theme of the Storybook toolbar, into `screenshots/<theme>/<story-id>.png`,
+without comparing anything. It needs the `storybook` compose service. Narrow a run with the same
+two variables:
+
+```bash
 STORIES=overlays-,forms-select THEMES=dark make screenshots
 ```
 
 Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`
 and chart animations off, so two runs of an unchanged story give the same image. A capture waits
-for a stable frame: the page is screenshotted, 100 ms apart, until two consecutive frames are
-byte-identical (ten at most), because a carousel, a panel or a chart can still be moving when the
-story's render ends. Requests to any origin but Storybook's are cut (a third-party frame gets a
-plain gray page), so a story never shows what the network returned that day: use the local
-placeholders of `storybook-avatars.ts` for images. A story whose picture depends on how long it
-has been running (a demo that ticks, or that loads after a delay) takes the `no-capture` tag and is
-skipped. A story that ends in the wrong theme, or whose frame never settles, is still captured; one
-that can't be captured is skipped. All three are listed in `screenshots/problems.txt`.
-
-The `Visual captures` workflow runs the same capture on the first day of each month, or from the
-Actions tab with the same two filters, and uploads `screenshots/` as an artifact kept 90 days. A
-complete run (no filter) is named `story-captures` and compared with the previous complete run by
-`.github/scripts/visual-diff.sh`. The captures that changed, appeared or disappeared are listed in
-the run summary and in the issue "Visual review: story changes since the last capture", created or
-updated by the run. The `story-changes` artifact holds the before, after and diff images. The same
-script compares two local runs:
-
-```bash
-.github/scripts/visual-diff.sh <previous-screenshots> screenshots /tmp/visual-diff
-```
+for a stable frame: the viewport is screenshotted, 100 ms apart, until two consecutive frames are
+byte-identical (five at most), then the full page is screenshotted once, because a carousel, a
+panel or a chart can still be moving when the story's render ends. Requests to any origin but
+Storybook's are cut (a third-party frame gets a plain gray page), so a story never shows what the
+network returned that day: use the local placeholders of `storybook-avatars.ts` for images. A story
+whose picture depends on how long it has been running (a demo that ticks, or that loads after a
+delay) takes the `no-capture` tag and is skipped. A story that ends in the wrong theme, or whose
+frame never settles, is still captured; one that can't be captured is skipped. All three are listed
+in `problems.txt`, next to the captures it describes.
 
 ## Branch model
 
@@ -281,7 +305,7 @@ The same prop means the same thing on every component.
 - [ ] New or changed props follow the [Component API](#component-api) rules
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
 - [ ] `a11y-todo.json` only lost lines: no story or rule added (see [Accessibility](#accessibility))
-- [ ] Visual changes : screenshot in PR description, checked in the four themes
+- [ ] Visual changes : `make visual-diff STORIES=<component>` run on what you touched, every change in the report is intended (see [Visual review](#visual-review)), screenshot in PR description
 - [ ] Public API changes : update package README
 - [ ] Breaking changes : add `BREAKING CHANGE:` footer to commit
 
