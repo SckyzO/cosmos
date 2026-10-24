@@ -46,9 +46,9 @@ export const WithLighterPageHeader: Story = {
     <Shell
       topbar={
         // Type-casted via `as never` because <Navbar> doesn't share the
-        // TopbarProps shape — this is intentional: Shell only injects sidebar
-        // collapsed-state into the topbar element when both topbar + sidebar
-        // are present. Here sidebar is omitted so the cast is harmless.
+        // TopbarProps shape the `topbar` slot is typed with. Shell passes the
+        // topbar no props (a Topbar reads the sidebar state from its context),
+        // so the cast is harmless.
         (
           <Navbar theme="dark">
             <Navbar.Brand>

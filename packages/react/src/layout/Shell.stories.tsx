@@ -95,9 +95,9 @@ const NavItems = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 // Story 1: Default — Shell owns the sidebar collapsed state
 //
-// Shell automatically threads `sidebarCollapsed` + `onCollapsedChange` into the
-// Topbar (built-in hamburger) and `collapsed` into the Sidebar. The consumer
-// only writes the markup, no plumbing.
+// Shell shares the collapsed state through a context: the Topbar's built-in
+// hamburger and the Sidebar read it, as would any SidebarToggle placed in the
+// Shell. The consumer only writes the markup, no plumbing.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Default: Story = {
