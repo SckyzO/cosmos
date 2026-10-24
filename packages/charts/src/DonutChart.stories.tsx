@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, waitFor } from 'storybook/test';
-import { DonutChart, DonutRightLegend } from './DonutChart';
+import { DonutChart } from './DonutChart';
 import {
   HOSTILE,
   expectNoInjectedImage,
@@ -14,6 +14,10 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
+  expectNoData,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -35,7 +39,6 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 const meta = {
   title: 'Charts/Donut',
   component: DonutChart,
-  subcomponents: { DonutRightLegend },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   decorators: [
@@ -57,9 +60,9 @@ export const BottomLegend: Story = {
   args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
 };
 
-/** `rightLegend` (or `DonutRightLegend`) moves the legend beside the donut. */
+/** `legendPosition="right"` moves the legend beside the donut. */
 export const RightLegend: Story = {
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, rightLegend: true },
+  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, legendPosition: 'right' },
 };
 
 export const TwoSlices: Story = {
@@ -100,6 +103,12 @@ export const UpdatingSeries: Story = {
       </div>
     );
   },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], labels: [] },
+  play: expectNoData('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -171,6 +180,31 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-pie-area')
     );
   },
+};
+
+/** The slices take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [5, 4, 3, 2, 1], labels: ['a', 'b', 'c', 'd', 'e'] },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-pie-area')].map((el) =>
+        el.getAttribute('fill')
+      )
+    );
+  },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

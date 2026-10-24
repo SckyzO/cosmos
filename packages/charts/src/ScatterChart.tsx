@@ -10,7 +10,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml, type TooltipRow } from './tooltip';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -24,26 +24,28 @@ export type BubblePoint = ScatterPoint & {
   z: number;
 };
 
-type XYChartProps = ChartBaseProps & {
-  /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
-  xTitle?: string;
-  /** Title beside the y-axis. Also labels the y value in the tooltip (default `y`). */
-  yTitle?: string;
-  /** Override the default Cosmos palette, one color per series. */
-  colors?: string[];
-  /**
-   * Format the x-axis labels and the tooltip's x value (default: at most two decimals).
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatX?: (value: number) => string;
-  /**
-   * Format the y-axis labels and the tooltip's y value (default: at most two decimals).
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatY?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-};
+type XYChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
+    xTitle?: string;
+    /** Title beside the y-axis. Also labels the y value in the tooltip (default `y`). */
+    yTitle?: string;
+    /** Override the default Cosmos palette, one color per series. */
+    colors?: string[];
+    /**
+     * Format the x-axis labels and the tooltip's x value (default: at most two decimals).
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatX?: (value: number) => string;
+    /**
+     * Format the y-axis labels and the tooltip's y value (default: at most two decimals).
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatY?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+  };
 
 export type ScatterChartProps = XYChartProps & {
   series: { name: string; data: ScatterPoint[] }[];
@@ -92,6 +94,7 @@ const useXYOptions = <P extends ScatterPoint>(
     formatX = formatNumber,
     formatY = formatNumber,
     showLegend,
+    legendPosition = 'top',
   }: XYChartProps & { series: { name: string; data: P[] }[] },
   { pad = 0, extraRows = () => [] }: { pad?: number; extraRows?: (point: P) => TooltipRow[] } = {}
 ): ApexOptions => {
@@ -166,7 +169,7 @@ const useXYOptions = <P extends ScatterPoint>(
     },
     legend: {
       show: showLegend ?? series.length > 1,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
@@ -178,7 +181,9 @@ const useXYOptions = <P extends ScatterPoint>(
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
 export const ScatterChart = ({
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
   ...props
@@ -197,6 +202,8 @@ export const ScatterChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };
@@ -205,7 +212,9 @@ export const ScatterChart = ({
 export const BubbleChart = ({
   sizeTitle = 'Size',
   formatSize = formatNumber,
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
   ...props
@@ -233,6 +242,8 @@ export const BubbleChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

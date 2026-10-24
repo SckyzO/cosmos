@@ -2,10 +2,14 @@ import type ApexCharts from 'apexcharts';
 import { useEffect, useRef, type ComponentProps } from 'react';
 import 'apexcharts/features/keyboard';
 import ReactApexChart from 'react-apexcharts/core';
-import type { ChartAccessibility } from './types';
+import { mergeOptions } from './mergeOptions';
+import { useChartTheme } from './theme';
+import type { ChartAccessibility, ChartEmptyProps, ChartRawOptions } from './types';
 
 type ApexChartProps = ComponentProps<typeof ReactApexChart> &
-  ChartAccessibility & {
+  ChartAccessibility &
+  ChartEmptyProps &
+  ChartRawOptions & {
     /**
      * Tab reaches the chart and the arrow keys walk its points (default). Off,
      * the chart is an image out of the tab order: right for a single value.
@@ -23,9 +27,24 @@ type ApexChartProps = ComponentProps<typeof ReactApexChart> &
  * `ariaLabel` and `keyboard` set `chart.accessibility`. ApexCharts makes the
  * SVG an `application` whenever keyboard navigation is on in the options, even
  * without the keyboard feature that handles the keys: both go together here.
+ *
+ * `emptyMessage` is the `noData` text ApexCharts draws, as SVG text, when there
+ * is no series or only empty ones.
+ *
+ * `apexOptions` is merged over all of it last, so it can override anything the
+ * wrapper or this component set. `mergeOptions` copies it: ApexCharts writes to
+ * the options it gets, which would otherwise change the consumer's object.
  */
-export const ApexChart = ({ ariaLabel, keyboard = true, options, ...props }: ApexChartProps) => {
+export const ApexChart = ({
+  ariaLabel,
+  keyboard = true,
+  emptyMessage = 'No data',
+  apexOptions,
+  options,
+  ...props
+}: ApexChartProps) => {
   const chartRef = useRef<ApexCharts | null>(null);
+  const { textMuted } = useChartTheme();
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -42,13 +61,15 @@ export const ApexChart = ({ ariaLabel, keyboard = true, options, ...props }: Ape
     };
   }, []);
 
-  const accessible = {
+  const own = {
     ...options,
     chart: {
       ...options?.chart,
       accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
     },
+    noData: { text: emptyMessage, style: { color: textMuted } },
   };
+  const merged = apexOptions ? mergeOptions(own, apexOptions) : own;
 
-  return <ReactApexChart {...props} options={accessible} chartRef={chartRef} />;
+  return <ReactApexChart {...props} options={merged} chartRef={chartRef} />;
 };

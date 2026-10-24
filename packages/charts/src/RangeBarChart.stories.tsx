@@ -10,6 +10,9 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
@@ -170,6 +173,41 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/** The bars take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({
+      name,
+      data: [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }],
+    })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-rangebar-area')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
+  },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      { name: 'a', data: [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }] },
+      { name: 'b', data: [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <RangeBarChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

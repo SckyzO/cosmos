@@ -3,26 +3,29 @@ import 'apexcharts/treemap';
 import { ApexChart } from './ApexChart';
 import { useStableCallback, useValueFormat } from './formatters';
 import { readableOn, useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps } from './types';
 
 export type TreemapDatum = { x: string; y: number };
 
-export type TreemapChartProps = ChartBaseProps & {
-  series: { name?: string; data: TreemapDatum[] }[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the tooltip values.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-};
+export type TreemapChartProps = ChartBaseProps &
+  ChartEmptyProps & {
+    series: { name?: string; data: TreemapDatum[] }[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the tooltip values.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+  };
 
 export const TreemapChart = ({
   series,
   colors,
   formatValue,
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: TreemapChartProps) => {
@@ -58,6 +61,8 @@ export const TreemapChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

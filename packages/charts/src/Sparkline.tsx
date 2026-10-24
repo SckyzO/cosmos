@@ -2,19 +2,22 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import { ApexChart } from './ApexChart';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps } from './types';
 
-export type SparklineProps = ChartBaseProps & {
-  data: number[];
-  color?: string;
-  variant?: 'line' | 'area';
-};
+export type SparklineProps = ChartBaseProps &
+  ChartEmptyProps & {
+    data: number[];
+    color?: string;
+    variant?: 'line' | 'area';
+  };
 
 export const Sparkline = ({
   data,
   color,
   variant = 'area',
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 60,
   width = '100%',
 }: SparklineProps) => {
@@ -42,6 +45,8 @@ export const Sparkline = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
       keyboard={false}
     />
   );

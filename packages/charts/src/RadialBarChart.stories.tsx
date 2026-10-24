@@ -5,11 +5,15 @@ import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
 import {
+  expectColorInThemes,
+  expectColorsFromTokens,
+  expectPaletteFromTheme,
   expectTextFollowsTheme,
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectNoData,
 } from './storybook-helpers';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -166,6 +170,12 @@ export const CustomRange: Story = {
   ),
 };
 
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], labels: [] },
+  play: expectNoData('No data'),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** Every wrapper's center value uses the theme text color and follows theme changes. */
@@ -292,6 +302,79 @@ export const GradientTrackMatchesOtherWrappers: Story = {
         ?.getAttribute('stroke');
     await waitFor(() => expect(trackColor('reference')).toBeTruthy());
     await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
+  },
+};
+
+/** The rings take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [92, 78, 64, 85, 40],
+    labels: ['CPU', 'RAM', 'Disk', 'Net', 'GPU'],
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
+  },
+};
+
+/** The empty part of every radial arc is the theme's grid gray. */
+export const TrackFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="radialbar">
+        <RadialBarChart series={[40, 60]} labels={['CPU', 'RAM']} />
+      </div>
+      <div data-testid="gradient">
+        <GradientRadial value={84} label="Health" />
+      </div>
+      <div data-testid="semicircle">
+        <SemiCircleGauge value={42} label="CPU" />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={92} label="Uptime" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const track = (id: string) => () =>
+      canvasElement
+        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
+        ?.getAttribute('stroke');
+    for (const id of ['radialbar', 'gradient', 'semicircle', 'stroked']) {
+      await expectColorInThemes(track(id), {
+        dark: '--color-gray-800',
+        '': '--color-gray-200',
+        sand: '--color-gray-200',
+        'deep-blue': '--color-gray-800',
+      });
+    }
+  },
+};
+
+/** `GradientRadial` fades from the accent to the theme's success color. */
+export const GradientFadesToSuccess: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <GradientRadial value={84} label="Health" />,
+  play: async ({ canvasElement }) => {
+    // The arc is stroked with a gradient: its first and last colors.
+    const stops = () => {
+      const arc = canvasElement.querySelector('.apexcharts-radialbar-area[j]');
+      const id = /url\(#(.+)\)/.exec(arc?.getAttribute('stroke') ?? '')?.[1];
+      return [...canvasElement.querySelectorAll(`[id="${id}"] stop`)]
+        .map((el) => el.getAttribute('stop-color'))
+        .filter((_, index, all) => index === 0 || index === all.length - 1);
+    };
+    await expectColorsFromTokens(
+      stops,
+      ['--color-brand-500', '--color-success-500'],
+      '--color-success-500'
+    );
   },
 };
 

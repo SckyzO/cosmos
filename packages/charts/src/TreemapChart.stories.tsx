@@ -10,6 +10,8 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  expectNoData,
 } from './storybook-helpers';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
@@ -176,6 +178,27 @@ export const FormatValueFormatsTooltip: Story = {
         '218 TB'
       );
     });
+  },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [] },
+  play: expectNoData('No data'),
+};
+
+/** The tiles take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [{ data: ['a', 'b', 'c', 'd', 'e'].map((x, i) => ({ x, y: 5 - i })) }],
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-treemap-rect')].map((el) =>
+        el.getAttribute('fill')
+      )
+    );
   },
 };
 

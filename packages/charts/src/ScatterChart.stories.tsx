@@ -10,6 +10,9 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
@@ -202,6 +205,103 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
     );
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+// The first marker drawn for each series, by series index: ApexCharts draws two
+// per point, and the legend has its own.
+const markerColors = (root: HTMLElement) => {
+  const byIndex = new Map<string, string | null>();
+  for (const el of root.querySelectorAll('.apexcharts-marker[index]')) {
+    const index = el.getAttribute('index') ?? '';
+    if (!el.classList.contains('apexcharts-legend-marker') && !byIndex.has(index)) {
+      byIndex.set(index, el.getAttribute('fill'));
+    }
+  }
+  return [...byIndex.values()];
+};
+
+/** The markers take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: ['a', 'b', 'c', 'd', 'e'].map((name, i) => ({ name, data: [{ x: i, y: 5 - i }] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() => markerColors(canvasElement));
+  },
+};
+
+/** The bubbles take the default palette of the theme. */
+export const BubblePaletteFromTheme: BubbleStory = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: ['a', 'b', 'c', 'd', 'e'].map((name, i) => ({
+      name,
+      data: [{ x: i, y: 5 - i, z: 3 }],
+    })),
+  },
+  render: (args) => <BubbleChart {...args} />,
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() => markerColors(canvasElement));
+  },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      {
+        name: 'a',
+        data: [
+          { x: 1, y: 2 },
+          { x: 2, y: 4 },
+        ],
+      },
+      {
+        name: 'b',
+        data: [
+          { x: 1, y: 3 },
+          { x: 2, y: 1 },
+        ],
+      },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <ScatterChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const BubbleLegendOnEachSide: BubbleStory = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      {
+        name: 'a',
+        data: [
+          { x: 1, y: 2, z: 3 },
+          { x: 2, y: 4, z: 5 },
+        ],
+      },
+      {
+        name: 'b',
+        data: [
+          { x: 1, y: 3, z: 4 },
+          { x: 2, y: 1, z: 2 },
+        ],
+      },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <BubbleChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

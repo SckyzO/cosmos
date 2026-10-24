@@ -6,29 +6,31 @@ import { useStableCallback, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
 /** One box, the five-number summary of a distribution. */
 export type BoxPlotSummary = [min: number, q1: number, median: number, q3: number, max: number];
 
-export type BoxPlotChartProps = ChartBaseProps & {
-  /** One summary per category, in the order of `categories`. */
-  series: { name: string; data: BoxPlotSummary[] }[];
-  categories: string[];
-  /** `vertical` (default) draws boxes upward; `horizontal` draws them rightward. */
-  orientation?: BoxPlotChartOrientation;
-  /** Override the default Cosmos palette, one color per series. */
-  colors?: string[];
-  /**
-   * Format the value axis labels and the tooltip values.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-};
+export type BoxPlotChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    /** One summary per category, in the order of `categories`. */
+    series: { name: string; data: BoxPlotSummary[] }[];
+    categories: string[];
+    /** `vertical` (default) draws boxes upward; `horizontal` draws them rightward. */
+    orientation?: BoxPlotChartOrientation;
+    /** Override the default Cosmos palette, one color per series. */
+    colors?: string[];
+    /**
+     * Format the value axis labels and the tooltip values.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+  };
 
 // Top to bottom, the way a vertical box reads.
 const ROWS = [
@@ -47,7 +49,10 @@ export const BoxPlotChart = ({
   colors,
   formatValue,
   showLegend,
+  legendPosition = 'top',
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: BoxPlotChartProps) => {
@@ -109,7 +114,7 @@ export const BoxPlotChart = ({
     responsive: horizontal ? [{ breakpoint: 640, options: { xaxis: { tickAmount: 2 } } }] : [],
     legend: {
       show: showLegend ?? series.length > 1,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
@@ -131,6 +136,8 @@ export const BoxPlotChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

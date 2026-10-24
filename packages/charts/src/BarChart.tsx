@@ -6,29 +6,31 @@ import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
-export type BarChartProps = ChartBaseProps & {
-  series: { name: string; data: number[] }[];
-  categories: (string | number)[];
-  /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
-  orientation?: BarChartOrientation;
-  /** Stack multi-series bars instead of grouping them side-by-side. */
-  stacked?: boolean;
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the numeric axis labels (and tooltip values).
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-  /** Tailwind border-radius applied to bar tops. Default 4. */
-  borderRadius?: number;
-};
+export type BarChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    series: { name: string; data: number[] }[];
+    categories: (string | number)[];
+    /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
+    orientation?: BarChartOrientation;
+    /** Stack multi-series bars instead of grouping them side-by-side. */
+    stacked?: boolean;
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the numeric axis labels (and tooltip values).
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+    /** Tailwind border-radius applied to bar tops. Default 4. */
+    borderRadius?: number;
+  };
 
 export const BarChart = ({
   series,
@@ -38,8 +40,11 @@ export const BarChart = ({
   colors,
   formatValue,
   showLegend,
+  legendPosition = 'top',
   borderRadius = 4,
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: BarChartProps) => {
@@ -85,7 +90,7 @@ export const BarChart = ({
     },
     legend: {
       show: legendVisible,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
@@ -112,6 +117,8 @@ export const BarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

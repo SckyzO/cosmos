@@ -6,7 +6,7 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type MixedChartAxis = 'left' | 'right';
 
@@ -19,25 +19,27 @@ export type MixedChartSeries = {
   axis?: MixedChartAxis;
 };
 
-export type MixedChartProps = ChartBaseProps & {
-  /** Lines and columns on one category axis. Names must be unique: each y axis finds its series by name. */
-  series: MixedChartSeries[];
-  categories: (string | number)[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the left axis labels and the tooltip values of its series.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /**
-   * Format the right axis labels and the tooltip values of its series.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatRightValue?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-};
+export type MixedChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    /** Lines and columns on one category axis. Names must be unique: each y axis finds its series by name. */
+    series: MixedChartSeries[];
+    categories: (string | number)[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the left axis labels and the tooltip values of its series.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /**
+     * Format the right axis labels and the tooltip values of its series.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatRightValue?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+  };
 
 const SIDES: MixedChartAxis[] = ['left', 'right'];
 const axisOf = (s: MixedChartSeries): MixedChartAxis => s.axis ?? 'left';
@@ -49,7 +51,10 @@ export const MixedChart = ({
   formatValue,
   formatRightValue,
   showLegend,
+  legendPosition = 'top',
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
@@ -101,7 +106,7 @@ export const MixedChart = ({
     yaxis,
     legend: {
       show: legendVisible,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
@@ -127,6 +132,8 @@ export const MixedChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

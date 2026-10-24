@@ -6,7 +6,7 @@ import { useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -15,18 +15,20 @@ export type RangeBarPoint = {
   y: [number, number];
 };
 
-export type RangeBarChartProps = ChartBaseProps & {
-  /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
-  series: { name: string; data: RangeBarPoint[] }[];
-  /** Draw every series of a row on one lane, instead of one lane per series. */
-  groupRows?: boolean;
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /** Format the start and end times in the tooltip. Default: `14 Oct, 02:00`, in UTC like the axis. */
-  formatDate?: (timestamp: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-};
+export type RangeBarChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
+    series: { name: string; data: RangeBarPoint[] }[];
+    /** Draw every series of a row on one lane, instead of one lane per series. */
+    groupRows?: boolean;
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /** Format the start and end times in the tooltip. Default: `14 Oct, 02:00`, in UTC like the axis. */
+    formatDate?: (timestamp: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+  };
 
 // The axis labels are UTC (`datetimeUTC`), so the default tooltip is too.
 const UTC_DATE_TIME = new Intl.DateTimeFormat('en-GB', {
@@ -46,7 +48,10 @@ export const RangeBarChart = ({
   colors,
   formatDate = defaultFormatDate,
   showLegend,
+  legendPosition = 'top',
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
@@ -107,7 +112,7 @@ export const RangeBarChart = ({
     yaxis: { labels: { ...axisLabels } },
     legend: {
       show: legendVisible,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       markers: { size: 5 },
@@ -125,6 +130,8 @@ export const RangeBarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      apexOptions={apexOptions}
+      emptyMessage={emptyMessage}
     />
   );
 };

@@ -10,6 +10,9 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
@@ -164,6 +167,55 @@ export const HtmlInLabelsRendersAsText: Story = {
     );
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/** The boxes take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A'],
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [[1, 2, 3, 4, 5]] })),
+  },
+  play: async ({ canvasElement }) => {
+    // Each box is two paths, one per half.
+    await expectPaletteFromTheme(() => [
+      ...new Set(
+        [...canvasElement.querySelectorAll('.apexcharts-boxPlot-area')].map((el) =>
+          el.getAttribute('stroke')
+        )
+      ),
+    ]);
+  },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B'],
+    series: [
+      {
+        name: 'a',
+        data: [
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+        ],
+      },
+      {
+        name: 'b',
+        data: [
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+        ],
+      },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <BoxPlotChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

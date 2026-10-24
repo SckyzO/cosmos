@@ -10,6 +10,9 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  LegendSides,
+  expectLegendsOnTheirSide,
+  expectNoData,
 } from './storybook-helpers';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
@@ -128,6 +131,12 @@ export const CustomColors: Story = {
   },
 };
 
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], categories: [] },
+  play: expectNoData('No data'),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /**
@@ -167,6 +176,24 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
   },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', data: [3, 5, 4] },
+      { name: 'b', data: [4, 2, 5] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <HeatmapChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**

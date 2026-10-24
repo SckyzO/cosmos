@@ -1,6 +1,7 @@
 import ApexCharts from 'apexcharts/core';
 import { useState, type ReactNode } from 'react';
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
+import type { ChartLegendPosition } from './types';
 
 /**
  * Loads the woff2 of an `@font-face` rule already on the page (`sourceFamily`)
@@ -74,6 +75,19 @@ export const resolveColor = (color: string) => {
   return colorContext.fillStyle;
 };
 
+/** A theme custom property on `<html>` (`--color-success-500`), as a resolved color. */
+export const themeColor = (token: string) =>
+  resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+
+/**
+ * `color` resolved, without its alpha: ApexCharts draws a hex color at its fill
+ * opacity, as `rgba(…, 0.85)`.
+ */
+export const opaqueColor = (color: string) => {
+  const rgba = /^rgba\((\d+), (\d+), (\d+), [\d.]+\)$/.exec(resolveColor(color));
+  return rgba ? resolveColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`) : resolveColor(color);
+};
+
 const luminanceOf = (color: string) => {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const channel = parseInt(resolveColor(color).slice(i, i + 2), 16) / 255;
@@ -111,7 +125,7 @@ const expectThemeText = (root: HTMLElement) => {
 };
 
 /** Switches `<html>` to the `theme` class ('' for light); returns the undo. */
-const switchTheme = (theme: string) => {
+export const switchTheme = (theme: string) => {
   const { classList } = document.documentElement;
   const previous = [...classList];
   classList.remove(...previous);
@@ -134,6 +148,74 @@ export const expectTextFollowsTheme = async (root: HTMLElement, theme: string) =
     await waitFor(() => expectThemeText(root));
   } finally {
     restore();
+  }
+};
+
+/** A color for a token redefined on `<html>`, unlike any theme color. */
+const REDEFINED = '#7c3aed';
+
+/**
+ * Asserts the colors `drawn()` finds are `expected`, in order: a theme custom
+ * property (`--color-success-500`) or a color of its own. Then redefines the
+ * `redefined` property on `<html>` and switches to the sand theme, which the
+ * charts read again, and asserts its color follows.
+ */
+export const expectColorsFromTokens = async (
+  drawn: () => (string | null | undefined)[],
+  expected: string[],
+  redefined: string
+) => {
+  const resolved = () => drawn().map((color) => opaqueColor(color ?? ''));
+  const color = (value: string) =>
+    value.startsWith('--') ? themeColor(value) : resolveColor(value);
+  await waitFor(() => expect(resolved()).toEqual(expected.map(color)));
+  const { style } = document.documentElement;
+  style.setProperty(redefined, REDEFINED);
+  const restore = switchTheme('sand');
+  try {
+    await waitFor(() =>
+      expect(resolved()[expected.indexOf(redefined)]).toBe(resolveColor(REDEFINED))
+    );
+  } finally {
+    restore();
+    style.removeProperty(redefined);
+  }
+};
+
+/** The default series colors, in order: theme tokens, and the violet that has none. */
+const PALETTE = [
+  '--color-brand-500',
+  '--color-success-500',
+  '--color-warning-500',
+  '--color-error-500',
+  '#8b5cf6',
+];
+
+/**
+ * Asserts the series colors `drawn()` finds are the default palette of the
+ * theme, then that a redefined success color reaches the chart.
+ */
+export const expectPaletteFromTheme = (drawn: () => (string | null | undefined)[]) =>
+  expectColorsFromTokens(drawn, PALETTE, '--color-success-500');
+
+/**
+ * Asserts `drawn()` is the color of `tokens[theme]` after switching `<html>` to
+ * each of the themes in turn ('' for light).
+ */
+export const expectColorInThemes = async (
+  drawn: () => string | null | undefined,
+  tokens: Record<string, string>
+) => {
+  for (const [theme, token] of Object.entries(tokens)) {
+    const restore = switchTheme(theme);
+    try {
+      await waitFor(() => {
+        expect(drawn()).toBeTruthy();
+        expect(opaqueColor(drawn() as string), theme || 'light').toBe(themeColor(token));
+      });
+    } finally {
+      restore();
+    }
   }
 };
 
@@ -244,6 +326,83 @@ export const expectNoRedrawOnRerender = async ({
   } finally {
     updateOptions.mockRestore();
     updateSeries.mockRestore();
+  }
+};
+
+const LEGEND_SIDES: ChartLegendPosition[] = ['top', 'right', 'bottom', 'left'];
+
+/** `children(side)` once per `legendPosition`, each chart in an element `data-side`. */
+export const LegendSides = ({
+  children,
+}: {
+  children: (side: ChartLegendPosition) => ReactNode;
+}) => (
+  <div className="grid gap-4 md:grid-cols-2">
+    {LEGEND_SIDES.map((side) => (
+      <div key={side} data-side={side}>
+        {children(side)}
+      </div>
+    ))}
+  </div>
+);
+
+/**
+ * Play function for a story rendering a wrapper in `LegendSides`: each legend
+ * sits on its side of the plot, outside of it.
+ */
+export const expectLegendsOnTheirSide = async ({
+  canvasElement,
+}: {
+  canvasElement: HTMLElement;
+}) => {
+  for (const side of LEGEND_SIDES) {
+    const chart = canvasElement.querySelector(`[data-side="${side}"]`);
+    await waitFor(() => {
+      const legend = chart?.querySelector('.apexcharts-legend');
+      const plot = chart?.querySelector('.apexcharts-inner');
+      expect(legend?.querySelector('.apexcharts-legend-series'), side).toBeTruthy();
+      expect(plot, side).toBeTruthy();
+      const l = (legend as Element).getBoundingClientRect();
+      const p = (plot as Element).getBoundingClientRect();
+      const outside = {
+        top: l.bottom <= p.top + 1,
+        bottom: l.top >= p.bottom - 1,
+        left: l.right <= p.left + 1,
+        right: l.left >= p.right - 1,
+      };
+      expect(outside[side], `${side}: legend ${JSON.stringify(l)}, plot ${JSON.stringify(p)}`).toBe(
+        true
+      );
+    });
+  }
+};
+
+/** Play function for a story with no data: the chart draws `text` in place of the plot. */
+export const expectNoData =
+  (text: string) =>
+  ({ canvasElement }: { canvasElement: HTMLElement }) =>
+    waitFor(() =>
+      expect(canvasElement.querySelector('.apexcharts-text-nodata')?.textContent).toBe(text)
+    );
+
+/**
+ * Play function for a story rendering a wrapper in `Rerender` with a function
+ * made during render in its props: the new identity redraws the chart, which is
+ * what the docs warn about.
+ */
+export const expectRedrawOnRerender = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const canvas = within(canvasElement);
+  await waitFor(() => expect(canvasElement.querySelector('.apexcharts-svg')).not.toBeNull());
+  const updateOptions = spyOn(ApexCharts.prototype, 'updateOptions');
+  try {
+    await userEvent.click(canvas.getByRole('button', { name: 'Re-render' }));
+    await waitFor(() =>
+      expect(
+        updateOptions.mock.calls.filter(([options]) => Object.keys(options).length > 0)
+      ).not.toEqual([])
+    );
+  } finally {
+    updateOptions.mockRestore();
   }
 };
 

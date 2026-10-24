@@ -5,25 +5,27 @@ import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { escapeHtml } from './escape';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
-export type RadarChartProps = ChartBaseProps & {
-  /** One polygon per series; one value per category, in the same order. */
-  series: { name: string; data: number[] }[];
-  /** The axes, clockwise from the top. */
-  categories: string[];
-  /** Override the default Cosmos palette. */
-  colors?: string[];
-  /**
-   * Format the scale labels and the tooltip values.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-  /** Show the legend (auto-true when 2+ series). */
-  showLegend?: boolean;
-  /** Top of the scale, e.g. 100 for scores. Default: rounded up from the data. */
-  max?: number;
-};
+export type RadarChartProps = ChartBaseProps &
+  ChartEmptyProps &
+  ChartLegendProps & {
+    /** One polygon per series; one value per category, in the same order. */
+    series: { name: string; data: number[] }[];
+    /** The axes, clockwise from the top. */
+    categories: string[];
+    /** Override the default Cosmos palette. */
+    colors?: string[];
+    /**
+     * Format the scale labels and the tooltip values.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+    /** Show the legend (auto-true when 2+ series). */
+    showLegend?: boolean;
+    /** Top of the scale, e.g. 100 for scores. Default: rounded up from the data. */
+    max?: number;
+  };
 
 export const RadarChart = ({
   series,
@@ -31,8 +33,11 @@ export const RadarChart = ({
   colors,
   formatValue,
   showLegend,
+  legendPosition = 'top',
   max,
+  emptyMessage,
   ariaLabel,
+  apexOptions,
   height = 340,
   width = '100%',
 }: RadarChartProps) => {
@@ -74,7 +79,7 @@ export const RadarChart = ({
     },
     legend: {
       show: legendVisible,
-      position: 'top',
+      position: legendPosition,
       horizontalAlign: 'right',
       labels: { colors: axisLabels.style.colors },
       // The default stroke outlines the swatches in white, glaring in dark themes.
@@ -98,6 +103,8 @@ export const RadarChart = ({
       height={height}
       width={width}
       ariaLabel={ariaLabel}
+      emptyMessage={emptyMessage}
+      apexOptions={apexOptions}
     />
   );
 };

@@ -13,6 +13,9 @@ import {
   loadLateFont,
   xAxisLayout,
   expectAccessibleChart,
+  expectPaletteFromTheme,
+  LegendSides,
+  expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -245,6 +248,40 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-bar-area')
     );
   },
+};
+
+/** The bars take the default palette of the theme. */
+export const PaletteFromTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
+  },
+};
+
+/** `legendPosition` puts the legend on each side of the plot. */
+export const LegendOnEachSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: [
+      { name: 'a', data: [3, 5, 4] },
+      { name: 'b', data: [4, 2, 5] },
+    ],
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <BarChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: expectLegendsOnTheirSide,
 };
 
 /**
