@@ -380,7 +380,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
               onRemove={() => setAvatar(null)}
             />
             {withAuthBanner && (
-              <AlertBanner variant="info">
+              <AlertBanner intent="info">
                 Authentication is disabled — credential changes are saved but not enforced. Enable
                 auth in <strong>Settings → Security</strong> to protect the UI with a password.
               </AlertBanner>

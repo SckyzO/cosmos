@@ -1,10 +1,11 @@
 import { clsx } from 'clsx';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import type { ElementType, ReactNode } from 'react';
+import type { Intent } from './intent';
 
-export type AlertVariant = 'success' | 'error' | 'warning' | 'info';
+export type AlertBannerIntent = Extract<Intent, 'success' | 'danger' | 'warning' | 'info'>;
 
-type VariantConfig = {
+type IntentConfig = {
   border: string;
   bg: string;
   icon: ElementType;
@@ -12,7 +13,7 @@ type VariantConfig = {
   text: string;
 };
 
-const VARIANT_CONFIG: Record<AlertVariant, VariantConfig> = {
+const INTENT_CONFIG: Record<AlertBannerIntent, IntentConfig> = {
   success: {
     border: 'border-green-200 dark:border-green-500/20',
     bg: 'bg-green-50 dark:bg-green-500/10',
@@ -20,7 +21,7 @@ const VARIANT_CONFIG: Record<AlertVariant, VariantConfig> = {
     iconCls: 'text-green-500',
     text: 'text-green-700 dark:text-green-400',
   },
-  error: {
+  danger: {
     border: 'border-red-200 dark:border-red-500/20',
     bg: 'bg-red-50 dark:bg-red-500/10',
     icon: AlertCircle,
@@ -44,13 +45,14 @@ const VARIANT_CONFIG: Record<AlertVariant, VariantConfig> = {
 };
 
 export type AlertBannerProps = {
-  variant?: AlertVariant;
+  /** Color and icon of the banner. Default `info`. */
+  intent?: AlertBannerIntent;
   children: ReactNode;
   className?: string;
 };
 
-export const AlertBanner = ({ variant = 'info', children, className }: AlertBannerProps) => {
-  const v = VARIANT_CONFIG[variant];
+export const AlertBanner = ({ intent = 'info', children, className }: AlertBannerProps) => {
+  const v = INTENT_CONFIG[intent];
   const Icon = v.icon;
   return (
     <div

@@ -66,7 +66,7 @@ export const TwoStepVerificationForm = ({
 
       {error && (
         <div className="mt-4">
-          <AlertBanner variant="error">{error}</AlertBanner>
+          <AlertBanner intent="danger">{error}</AlertBanner>
         </div>
       )}
 
