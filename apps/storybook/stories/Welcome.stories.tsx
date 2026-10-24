@@ -147,7 +147,7 @@ const CatalogTable = ({ entries }: { entries: IndexEntry[] | null | 'error' }) =
           href="https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy"
           target="_blank"
           rel="noreferrer"
-          className="text-brand-600 dark:text-brand-400 hover:underline"
+          className="text-brand-600 dark:text-brand-400 underline underline-offset-2"
         >
           story-hierarchy convention
         </a>
@@ -474,7 +474,7 @@ const WelcomePage = ({
               <span className="text-gray-600 dark:text-gray-300">CPU utilization</span>
               <span className="font-mono text-gray-500 dark:text-gray-400">78%</span>
             </div>
-            <ProgressBar value={78} intent="warning" />
+            <ProgressBar value={78} intent="warning" aria-label="CPU utilization" />
           </div>
         </PreviewCard>
 
@@ -589,7 +589,7 @@ const WelcomePage = ({
         and{' '}
         <a
           href="./?path=/story/foundations-appearance--default"
-          className="text-brand-600 dark:text-brand-400 hover:underline"
+          className="text-brand-600 dark:text-brand-400 underline underline-offset-2"
         >
           Foundations/Appearance
         </a>{' '}

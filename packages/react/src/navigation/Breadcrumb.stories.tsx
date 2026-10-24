@@ -62,7 +62,7 @@ export const SeparatorMatrix: Story = {
           <span className="w-16 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
             {sep}
           </span>
-          <Breadcrumb items={PATH} separator={sep} />
+          <Breadcrumb items={PATH} separator={sep} aria-label={`Breadcrumb, ${sep} separator`} />
         </div>
       ))}
     </div>
@@ -96,6 +96,16 @@ export const AncestorsAreLinksAndTheLastIsText: Story = {
     const slashes = within(nav).getAllByText('/');
     await expect(slashes).toHaveLength(PATH.length - 1);
     for (const slash of slashes) await expect(slash).toHaveAttribute('aria-hidden', 'true');
+  },
+};
+
+/** `aria-label` renames the landmark, so several breadcrumbs on a page stay distinguishable. */
+export const AriaLabelNamesTheLandmark: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: PATH, 'aria-label': 'You are here' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'You are here' })).toBeInTheDocument();
+    await expect(canvas.queryByRole('navigation', { name: 'Breadcrumb' })).toBeNull();
   },
 };
 

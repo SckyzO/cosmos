@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { expect } from 'storybook/test';
 import { ProgressBar, type ProgressBarIntent, type ProgressBarSize } from './ProgressBar';
 
@@ -8,7 +8,7 @@ const meta = {
   component: ProgressBar,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-  args: { value: 42, max: 100 },
+  args: { value: 42, max: 100, 'aria-label': 'Upload progress' },
 } satisfies Meta<typeof ProgressBar>;
 
 export default meta;
@@ -22,7 +22,7 @@ export const Sizes: Story = {
       {(['xs', 'sm', 'md', 'lg'] as ProgressBarSize[]).map((s) => (
         <div key={s} className="flex items-center gap-3">
           <span className="w-6 font-mono text-[10px] text-gray-400 uppercase">{s}</span>
-          <ProgressBar value={62} size={s} className="flex-1" />
+          <ProgressBar value={62} size={s} aria-label={`Size ${s}`} className="flex-1" />
         </div>
       ))}
     </div>
@@ -35,7 +35,7 @@ export const Intents: Story = {
       {(['brand', 'success', 'warning', 'danger'] as ProgressBarIntent[]).map((i) => (
         <div key={i} className="flex items-center gap-3">
           <span className="w-16 font-mono text-[10px] text-gray-400 uppercase">{i}</span>
-          <ProgressBar value={75} intent={i} className="flex-1" />
+          <ProgressBar value={75} intent={i} aria-label={`${i} progress`} className="flex-1" />
         </div>
       ))}
     </div>
@@ -96,7 +96,7 @@ export const Animated: Story = {
     }, []);
     return (
       <div className="space-y-3">
-        <ProgressBar value={value} intent="brand" label="outside" />
+        <ProgressBar value={value} intent="brand" label="outside" aria-label="Upload progress" />
         <p className="text-xs text-[var(--color-text-muted)]">
           Updates every 600 ms with a smooth width transition.
         </p>
@@ -105,32 +105,50 @@ export const Animated: Story = {
   },
 };
 
+// The visible label names the bar: `aria-labelledby` points at it.
+const QuotaRow = ({
+  label,
+  usage,
+  value,
+  intent,
+}: {
+  label: string;
+  usage: string;
+  value: number;
+  intent: ProgressBarIntent;
+}) => {
+  const labelId = useId();
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between">
+        <span id={labelId} className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          {label}
+        </span>
+        <span className="text-xs text-gray-500">{usage}</span>
+      </div>
+      <ProgressBar value={value} intent={intent} aria-labelledby={labelId} />
+    </div>
+  );
+};
+
 export const QuotaUsage: Story = {
   render: () => (
     <div className="max-w-sm space-y-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Storage</span>
-          <span className="text-xs text-gray-500">3.4 / 10 GB</span>
-        </div>
-        <ProgressBar value={34} intent="brand" />
-      </div>
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">API requests</span>
-          <span className="text-xs text-gray-500">9 200 / 10 000</span>
-        </div>
-        <ProgressBar value={92} intent="warning" />
-      </div>
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Bandwidth</span>
-          <span className="text-xs text-gray-500">490 / 500 MB</span>
-        </div>
-        <ProgressBar value={98} intent="danger" />
-      </div>
+      <QuotaRow label="Storage" usage="3.4 / 10 GB" value={34} intent="brand" />
+      <QuotaRow label="API requests" usage="9 200 / 10 000" value={92} intent="warning" />
+      <QuotaRow label="Bandwidth" usage="490 / 500 MB" value={98} intent="danger" />
     </div>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('progressbar', { name: 'Storage' })).toHaveAttribute(
+      'aria-valuenow',
+      '34'
+    );
+    await expect(canvas.getByRole('progressbar', { name: 'Bandwidth' })).toHaveAttribute(
+      'aria-valuenow',
+      '98'
+    );
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -140,6 +158,7 @@ export const RoleProgressbar: Story = {
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar');
     await expect(bar).toHaveAttribute('aria-valuenow', '50');
+    await expect(bar).toHaveAccessibleName('Upload progress');
     await expect(bar).toHaveAttribute('aria-valuemin', '0');
     await expect(bar).toHaveAttribute('aria-valuemax', '100');
   },

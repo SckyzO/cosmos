@@ -130,102 +130,104 @@ export const Sidebar_: Story = {
           </Sidebar>
         }
       >
-        <div className="bg-[var(--color-bg-base)]">
+        <Tabs value={tab} onChange={setTab} className="bg-[var(--color-bg-base)]">
           {/* Sub-tab navigation */}
           <div className="border-b border-[var(--color-border)] bg-[var(--color-bg-panel)] px-6">
-            <Tabs value={tab} onChange={setTab}>
-              <Tabs.List className="border-0">
-                {TABS.map((t) => (
-                  <Tabs.Trigger key={t.value} value={t.value}>
-                    {t.label}
-                  </Tabs.Trigger>
-                ))}
-              </Tabs.List>
-            </Tabs>
+            <Tabs.List className="border-0">
+              {TABS.map((t) => (
+                <Tabs.Trigger key={t.value} value={t.value}>
+                  {t.label}
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
           </div>
 
-          {/* Header block */}
-          <div className="border-b border-[var(--color-border)] px-6 py-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <HealthDot status="OK" />
-                <h1 className="text-base font-semibold text-[var(--color-text-primary)]">
-                  Planetaria <span className="text-[var(--color-text-muted)]">/</span> mobile-api
-                </h1>
+          {/* The panel of the selected tab is the rest of the page: every tab needs one to
+              control. The demo shows the same page whichever tab is selected. */}
+          <Tabs.Panel value={tab} className="pt-0!">
+            {/* Header block */}
+            <div className="border-b border-[var(--color-border)] px-6 py-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <HealthDot status="OK" />
+                  <h1 className="text-base font-semibold text-[var(--color-text-primary)]">
+                    Planetaria <span className="text-[var(--color-text-muted)]">/</span> mobile-api
+                  </h1>
+                </div>
+                <Badge intent="success">Production</Badge>
               </div>
-              <Badge intent="success">Production</Badge>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Deploys from GitHub via main branch
+              </p>
             </div>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Deploys from GitHub via main branch
-            </p>
-          </div>
 
-          {/* KPI row */}
-          <div className="grid grid-cols-1 gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Number of deploys" value="405" />
-            <KpiCard label="Average deploy time" value="3.65 mins" />
-            <KpiCard label="Number of servers" value="3" />
-            <KpiCard label="Success rate" value="98.5%" />
-          </div>
+            {/* KPI row */}
+            <div className="grid grid-cols-1 gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-4">
+              <KpiCard label="Number of deploys" value="405" />
+              <KpiCard label="Average deploy time" value="3.65 mins" />
+              <KpiCard label="Number of servers" value="3" />
+              <KpiCard label="Success rate" value="98.5%" />
+            </div>
 
-          {/* Latest activity */}
-          <ContentNarrow maxWidth={9999} className="px-6 pb-10">
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-              Latest activity
-            </h3>
-            <div className="mt-4 overflow-hidden ring-1 ring-[var(--color-border)] sm:rounded-md">
-              <table className="min-w-full divide-y divide-[var(--color-border)]">
-                <thead className="bg-[var(--color-bg-panel)]">
-                  <tr>
-                    {['User', 'Commit', 'Status', 'Duration', 'Deployed at'].map((h) => (
-                      <th
-                        key={h}
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-bg-base)]">
-                  {ACTIVITY.map((row) => (
-                    <tr key={row.commit}>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={row.user} />
-                          <span className="font-medium text-[var(--color-text-primary)]">
-                            {row.user}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        <span className="font-mono">{row.commit}</span>{' '}
-                        <Badge intent="neutral" size="sm">
-                          main
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <HealthDot status={row.status} />
-                          <span className="text-[var(--color-text-primary)]">
-                            {row.status === 'CRIT' ? 'Error' : 'Completed'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        {row.duration}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-[var(--color-text-secondary)]">
-                        {row.when}
-                      </td>
+            {/* Latest activity */}
+            <ContentNarrow maxWidth={9999} className="px-6 pb-10">
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                Latest activity
+              </h2>
+              <div className="mt-4 overflow-hidden ring-1 ring-[var(--color-border)] sm:rounded-md">
+                <table className="min-w-full divide-y divide-[var(--color-border)]">
+                  <thead className="bg-[var(--color-bg-panel)]">
+                    <tr>
+                      {['User', 'Commit', 'Status', 'Duration', 'Deployed at'].map((h) => (
+                        <th
+                          key={h}
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase"
+                        >
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </ContentNarrow>
-        </div>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-bg-base)]">
+                    {ACTIVITY.map((row) => (
+                      <tr key={row.commit}>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={row.user} />
+                            <span className="font-medium text-[var(--color-text-primary)]">
+                              {row.user}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+                          <span className="font-mono">{row.commit}</span>{' '}
+                          <Badge intent="neutral" size="sm">
+                            main
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <HealthDot status={row.status} />
+                            <span className="text-[var(--color-text-primary)]">
+                              {row.status === 'CRIT' ? 'Error' : 'Completed'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+                          {row.duration}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-[var(--color-text-secondary)]">
+                          {row.when}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ContentNarrow>
+          </Tabs.Panel>
+        </Tabs>
       </Shell>
     );
   },

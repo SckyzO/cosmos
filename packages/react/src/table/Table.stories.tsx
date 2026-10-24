@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
+import { expectFocusRing } from '../storybook-helpers';
 
 const meta = {
   title: 'Tables/Table',
@@ -142,6 +143,7 @@ export const StickyHeader: Story = {
   render: (args) => (
     <Wrap>
       <Table {...args}>
+        <TableCaption>All compute nodes</TableCaption>
         <NodeHead />
         <TableBody>
           {MANY_NODES.map((n) => (
@@ -151,6 +153,81 @@ export const StickyHeader: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The rows overflow the container: it is a focusable region, named by the caption.
+    const region = await canvas.findByRole('region', { name: 'All compute nodes' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+  },
+};
+
+/** A table that scrolls takes the focus, as a region named by its caption; one that fits does not. */
+export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        <Table stickyHeader containerClassName="max-h-32">
+          <TableCaption>Scrolls</TableCaption>
+          <NodeHead />
+          <TableBody>
+            {MANY_NODES.map((n) => (
+              <NodeRow key={n.name} node={n} />
+            ))}
+          </TableBody>
+        </Table>
+        <Table>
+          <TableCaption>Fits</TableCaption>
+          <NodeHead />
+          <TableBody>
+            {NODES.slice(0, 2).map((n) => (
+              <NodeRow key={n.name} node={n} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'Scrolls' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+    // The name is the caption's text alone, not the text of the cells.
+    await expect(region).toHaveAccessibleName('Scrolls');
+    await expect(region.scrollHeight).toBeGreaterThan(region.clientHeight);
+    await expectFocusRing(region, { inset: true });
+
+    // The other table fits: no tab stop, no region.
+    const fitting = canvas.getByRole('table', { name: 'Fits' }).parentElement;
+    await expect(fitting).not.toHaveAttribute('tabindex');
+    await expect(fitting).not.toHaveAttribute('role');
+    await expect(canvas.queryByRole('region', { name: 'Fits' })).toBeNull();
+  },
+};
+
+/** With no caption a scrolling table has no name to give: focusable, but not a region. */
+export const ScrollingTableWithoutCaptionIsFocusableNotARegion: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Table stickyHeader containerClassName="max-h-32">
+        <NodeHead />
+        <TableBody>
+          {MANY_NODES.map((n) => (
+            <NodeRow key={n.name} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const container = canvas.getByRole('table').parentElement!;
+    await waitFor(() => expect(container).toHaveAttribute('tabindex', '0'));
+    await expect(container.scrollHeight).toBeGreaterThan(container.clientHeight);
+    // Not labelled by the table either: that would name it after every cell.
+    await expect(container).not.toHaveAttribute('role');
+    await expect(container).not.toHaveAttribute('aria-labelledby');
+    await expect(canvas.queryByRole('region')).toBeNull();
+    await expectFocusRing(container, { inset: true });
+  },
 };
 
 export const FooterTotals: Story = {
@@ -402,6 +479,7 @@ export const DashboardCells: Story = {
                   size="xs"
                   intent={usageIntent(n.memory)}
                   label="outside"
+                  aria-label={`Memory used on ${n.name}`}
                 />
               </TableCell>
               <TableCell numeric>
