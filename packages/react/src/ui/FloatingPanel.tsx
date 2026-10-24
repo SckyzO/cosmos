@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import type { ComponentPropsWithoutRef, CSSProperties, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useAnchorPosition, type AnchorPlacement } from '../hooks/useAnchorPosition';
-import { usePortalFocus, type PortalFocusOptions } from './overlayA11y';
+import { useOutsideClick, usePortalFocus, type PortalFocusOptions } from './overlayA11y';
 
 // Internal to the package: the floating panel shared by Popover, UserMenu,
 // NotificationsPanel and DatePicker. Not exported from the barrel.
@@ -13,14 +13,14 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style'> 
    * panel open on mount (which doesn't take focus) from one opened later.
    */
   open: boolean;
-  /** Closes the panel: a click outside it, Escape, focus leaving it. */
+  /** Closes the panel: a mousedown outside it, Escape, focus leaving it. */
   onClose: () => void;
   /**
-   * The control that opens the panel. Focus goes back to it on close, and the panel is placed
-   * against it unless `anchorRef` says otherwise.
+   * The control that opens the panel. Focus goes back to it on close, a mousedown on it is
+   * not outside, and the panel is placed against it unless `anchorRef` says otherwise.
    */
   triggerRef: RefObject<HTMLElement | null>;
-  /** What the panel is placed against, when it isn't the trigger itself. */
+  /** What the panel is placed against, when it isn't the trigger itself. Not outside either. */
   anchorRef?: RefObject<HTMLElement | null>;
   placement: AnchorPlacement;
   /** Element to focus on open. Default: the first focusable element, else the panel. */
@@ -32,7 +32,8 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style'> 
 /**
  * A non-modal panel portaled to the end of `<body>`, so no `overflow: hidden` ancestor clips
  * it, kept next to its anchor in fixed position (`useAnchorPosition`), with the focus handling
- * of `usePortalFocus`. Renders nothing while closed or before the anchor is measured.
+ * of `usePortalFocus` and the outside click of `useOutsideClick`. Renders nothing while closed
+ * or before the anchor is measured.
  */
 export function FloatingPanel({
   open,
@@ -46,18 +47,21 @@ export function FloatingPanel({
   ...rest
 }: FloatingPanelProps) {
   const anchored = useAnchorPosition(anchorRef, open, placement);
-  const panelRef = usePortalFocus<HTMLDivElement>({ open, onClose, triggerRef, initialFocus });
+  const focusProps = usePortalFocus<HTMLDivElement>({ open, onClose, triggerRef, initialFocus });
+  const outsideProps = useOutsideClick<HTMLDivElement>({
+    open,
+    onOutsideClick: onClose,
+    insideRefs: [triggerRef, anchorRef],
+  });
   if (!open || !anchored) return null;
   return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={onClose} />
-      <div
-        {...rest}
-        ref={panelRef}
-        style={{ ...anchored, ...style }}
-        className={clsx('fixed z-[9999]', className)}
-      />
-    </>,
+    <div
+      {...rest}
+      {...focusProps}
+      {...outsideProps}
+      style={{ ...anchored, ...style }}
+      className={clsx('fixed z-[9999]', className)}
+    />,
     document.body
   );
 }

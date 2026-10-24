@@ -99,7 +99,7 @@ export const Chatbot = ({
 
   const launcherRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
-  const panelRef = usePortalFocus<HTMLDivElement>({
+  const panelFocus = usePortalFocus<HTMLDivElement>({
     open,
     onClose: () => setOpen(false),
     triggerRef: launcherRef,
@@ -112,7 +112,7 @@ export const Chatbot = ({
     <>
       {(open || visible) && (
         <div
-          ref={panelRef}
+          {...panelFocus}
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
