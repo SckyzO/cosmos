@@ -655,6 +655,25 @@ export const FilterButtonsAreNamedAfterTheirColumn: Story = {
   },
 };
 
+/** The filter button shows how many values are checked, and its name says it too (WCAG 2.5.3). */
+export const FilterButtonNameHoldsTheCheckedCount: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Filter Severity' }));
+    // The dropdown is queried from the whole page, wherever it renders.
+    const page = within(document.body);
+    const [first, second] = page.getAllByRole('checkbox');
+    await userEvent.click(first);
+    const one = canvas.getByRole('button', { name: 'Filter Severity, 1 selected' });
+    await expect(one).toHaveTextContent('1');
+    await userEvent.click(second);
+    await expect(
+      canvas.getByRole('button', { name: 'Filter Severity, 2 selected' })
+    ).toHaveTextContent('2');
+  },
+};
+
 // ── Floating column filter (#151) ────────────────────────────────────────────
 // The filter dropdown renders in a portal: the table's scrolling body no longer
 // clips it, and it follows its header while the page scrolls.

@@ -52,6 +52,9 @@ export const ColumnHeader = ({
 }: ColumnHeaderProps) => {
   const [open, setOpen] = useState(false);
   const filterCount = filterSelected.size;
+  // The button shows how many values are checked; its name says so too, with the number as a
+  // word of its own (WCAG 2.5.3). A comma, not parentheses: those do not count in a name.
+  const filterName = typeof label === 'string' ? `Filter ${label}` : 'Filter column';
   // The label and the filter button: the dropdown opens under them, left-aligned.
   const anchorRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLButtonElement>(null);
@@ -89,7 +92,7 @@ export const ColumnHeader = ({
               type="button"
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
-              aria-label={typeof label === 'string' ? `Filter ${label}` : 'Filter column'}
+              aria-label={filterCount > 0 ? `${filterName}, ${filterCount} selected` : filterName}
               className={clsx(
                 'focus-visible:focus-indicator flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
                 filterCount > 0 && 'text-brand-600 dark:text-brand-400'
