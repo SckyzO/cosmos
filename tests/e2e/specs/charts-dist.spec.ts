@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 
@@ -44,6 +44,21 @@ test('each wrapper is a file of its own, importing only its own engines', () => 
         engines(read(source ?? ''))
       );
     }
+  }
+});
+
+test('every entry and chunk starts with the "use client" directive', () => {
+  // React Server Components bundlers read it to treat the charts as client
+  // modules. tsup's Rollup pass drops it from the build, so the tsup config
+  // prepends it once the files are written.
+  const directive = '"use client";\n';
+  const files = readdirSync(dist).filter((name) => /\.c?js$/.test(name));
+  expect(files).toEqual(
+    expect.arrayContaining(modules.flatMap((name) => [`${name}.js`, `${name}.cjs`]))
+  );
+  expect(files.filter((name) => name.startsWith('chunk-')).length).toBeGreaterThan(0);
+  for (const name of files) {
+    expect(read(`${dist}${name}`).slice(0, directive.length), name).toBe(directive);
   }
 });
 
