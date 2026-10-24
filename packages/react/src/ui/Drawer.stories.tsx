@@ -182,10 +182,10 @@ export const NoBackdropOmitsOverlay: Story = {
   // own canvas wrapper since both share document.body, so check the absence
   // of the backdrop class directly instead.
   play: async () => {
-    const aside = document.body.querySelector('aside[role="dialog"]');
-    await expect(aside).not.toBeNull();
+    const drawer = document.body.querySelector('[role="dialog"]');
+    await expect(drawer).not.toBeNull();
     // Without a backdrop the page stays interactive: the drawer is not modal.
-    await expect(aside).not.toHaveAttribute('aria-modal');
+    await expect(drawer).not.toHaveAttribute('aria-modal');
     const backdrop = document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]');
     await expect(backdrop).toBeNull();
   },

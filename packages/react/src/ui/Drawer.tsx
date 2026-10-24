@@ -77,7 +77,7 @@ const Root = ({
   children,
 }: DrawerProps) => {
   const titleId = useId();
-  const trapRef = useFocusTrap<HTMLElement>(open);
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
   const isClient = useIsClient();
   // `hidden` turns true once the slide-out ends, false as soon as it reopens.
   const [hidden, setHidden] = useState(!open);
@@ -111,7 +111,8 @@ const Root = ({
           aria-hidden
         />
       )}
-      <aside
+      {/* A `div`, not an `aside`: the `complementary` role of an `aside` forbids `dialog`. */}
+      <div
         ref={trapRef}
         tabIndex={-1}
         inert={!open}
@@ -151,7 +152,7 @@ const Root = ({
             <X className="size-6" aria-hidden />
           </button>
         )}
-      </aside>
+      </div>
     </>,
     document.body
   );
