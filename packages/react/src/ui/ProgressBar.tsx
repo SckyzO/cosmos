@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import type { Intent } from './intent';
 
 export type ProgressBarSize = 'xs' | 'sm' | 'md' | 'lg';
-export type ProgressBarIntent = 'brand' | 'success' | 'warning' | 'danger';
+export type ProgressBarIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
 export type ProgressBarLabel = 'none' | 'inside' | 'outside';
 
 export type ProgressBarProps = {

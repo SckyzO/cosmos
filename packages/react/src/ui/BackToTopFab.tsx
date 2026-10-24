@@ -8,9 +8,10 @@ import {
   type ComponentType,
   type Ref,
 } from 'react';
+import type { Intent } from './intent';
 
 export type BackToTopFabPosition = 'bottom-right' | 'bottom-left';
-export type BackToTopFabIntent = 'brand' | 'neutral';
+export type BackToTopFabIntent = Extract<Intent, 'brand' | 'neutral'>;
 
 export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   /** Pixels of vertical scroll before the FAB fades in. Default `300`. */
