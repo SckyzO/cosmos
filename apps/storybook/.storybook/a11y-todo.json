@@ -37,8 +37,6 @@
   "forms-calendar--range-fills-the-days-between": ["label-content-name-mismatch"],
   "forms-calendar--single-select": ["label-content-name-mismatch"],
   "forms-calendar--with-footer": ["label-content-name-mismatch"],
-  "forms-combobox--error-focus-shows-red-border-in-dark": ["label", "label-title-only"],
-  "forms-combobox--focus-shows-accent-border-in-dark": ["label"],
   "forms-date-picker--click-opens-calendar": ["label-content-name-mismatch"],
   "forms-date-picker--controlled-open-only-reports": ["label-content-name-mismatch"],
   "forms-date-picker--inline-calendar": ["label-content-name-mismatch"],
