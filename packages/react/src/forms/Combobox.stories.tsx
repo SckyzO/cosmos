@@ -227,6 +227,15 @@ export const ArrowKeysSkipDisabledOptions: Story = {
     await userEvent.keyboard('{ArrowUp}');
     const back = input.getAttribute('aria-activedescendant') ?? '';
     await expect(document.getElementById(back)).toHaveTextContent('Alice');
+    // Announced as unavailable, and its dimmed text exempt from axe's contrast check.
+    const options = within(document.body);
+    await expect(options.getByRole('option', { name: 'Bob' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+    await expect(options.getByRole('option', { name: 'Alice' })).not.toHaveAttribute(
+      'aria-disabled'
+    );
   },
 };
 
