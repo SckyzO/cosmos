@@ -319,8 +319,15 @@ const SidebarItem = ({
 export type SidebarSubMenuProps = {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  /** Initial open state. */
+  /**
+   * Open state of the nested list, when controlled. The panel the collapsed
+   * sidebar opens beside the icon keeps its own state.
+   */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`, or `true` when `active`. */
   defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
   /** Override the inherited collapsed state. */
   collapsed?: boolean;
   /** Whether any child item is active. */
@@ -342,7 +349,9 @@ const SUBMENU_ROW = (active: boolean) =>
 const SidebarSubMenu = ({
   icon: Icon,
   label,
+  open: openProp,
   defaultOpen = false,
+  onOpenChange,
   collapsed: collapsedProp,
   active = false,
   badge,
@@ -350,7 +359,12 @@ const SidebarSubMenu = ({
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   const depth = useContext(SidebarDepthContext);
-  const [open, setOpen] = useState(defaultOpen || active);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen || active,
+    onChange: onOpenChange,
+    name: 'Sidebar.SubMenu.open',
+  });
   const [flyoutOpen, setFlyoutOpen] = useState(false);
 
   // Collapsed mode: an icon-only trigger opening the tree in a panel to its
@@ -426,19 +440,31 @@ const SidebarSubMenu = ({
 
 export type SidebarGroupProps = {
   label: string;
+  /** Open state of the group, when controlled. */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `true`. */
   defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
   collapsed?: boolean;
   children: ReactNode;
 };
 
 const SidebarGroup = ({
   label,
+  open: openProp,
   defaultOpen = true,
+  onOpenChange,
   collapsed: collapsedProp,
   children,
 }: SidebarGroupProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Sidebar.Group.open',
+  });
 
   if (collapsed) {
     return <div className="my-1">{children}</div>;

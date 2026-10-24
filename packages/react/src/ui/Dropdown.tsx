@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ElementType, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -31,6 +31,12 @@ export type DropdownProps = {
   align?: 'left' | 'right';
   disabled?: boolean;
   className?: string;
+  /** Open state of the menu, when controlled. */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
 };
 
 export const Dropdown = ({
@@ -44,6 +50,9 @@ export const Dropdown = ({
   align = 'left',
   disabled = false,
   className,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
 }: DropdownProps) => {
   const [value, setValue] = useControllableState({
     value: valueProp,
@@ -51,7 +60,12 @@ export const Dropdown = ({
     onChange,
     name: 'Dropdown.value',
   });
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Dropdown.open',
+  });
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,7 +77,7 @@ export const Dropdown = ({
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [open, setOpen]);
 
   // Move focus to the first item when the menu opens (ARIA menu pattern).
   useEffect(() => {

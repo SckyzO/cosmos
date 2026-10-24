@@ -1,6 +1,15 @@
 import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { setRef } from '../ui/mergeRefs';
 import { usePortalFocus } from '../ui/overlayA11y';
@@ -61,6 +70,15 @@ type CommonProps = {
   fullWidth?: boolean;
   className?: string;
   /**
+   * Open state of the calendar, when controlled. Opened this way, it anchors to the
+   * trigger the label points at, as a click on it does.
+   */
+  open?: boolean;
+  /** Initial open state of the calendar, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
+  /**
    * Ref to the trigger `<button>` the label points at: the only one in `single`
    * mode, the start date's in `range` mode.
    */
@@ -91,6 +109,9 @@ export const DatePicker = (props: DatePickerProps) => {
     fullWidth = false,
     className,
     ref,
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
   } = props;
 
   const isRange = props.mode === 'range';
@@ -107,7 +128,12 @@ export const DatePicker = (props: DatePickerProps) => {
   );
   // The trigger that opened the calendar: focus goes back to it on close.
   const openerRef = useRef<HTMLButtonElement | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'DatePicker.open',
+  });
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   // ── Value plumbing (controlled vs uncontrolled) ─────────────────────────────
@@ -145,14 +171,35 @@ export const DatePicker = (props: DatePickerProps) => {
     if (r) setAnchorRect(r.getBoundingClientRect());
   }, []);
 
+  // What opening does: remember the trigger focus goes back to, anchor the panel
+  // to it and show the month of the selection.
+  const prepareOpen = (side: 'from' | 'to') => {
+    openerRef.current = side === 'to' ? toRef.current : fromRef.current;
+    anchor(side);
+    setMonth(initialMonth);
+  };
+  // Whether this opening is set up, by a trigger click or below.
+  const preparedRef = useRef(false);
+
   const toggle = (next: boolean, side: 'from' | 'to' = 'from') => {
     if (next) {
-      openerRef.current = side === 'to' ? toRef.current : fromRef.current;
-      anchor(side);
-      setMonth(initialMonth);
+      prepareOpen(side);
+      preparedRef.current = true;
     }
     setOpen(next);
   };
+
+  // Opened without a trigger click (`open`, `defaultOpen`): set up as a click on
+  // the start trigger would.
+  useLayoutEffect(() => {
+    if (!open) {
+      preparedRef.current = false;
+      return;
+    }
+    if (preparedRef.current) return;
+    preparedRef.current = true;
+    prepareOpen('from');
+  });
 
   useEffect(() => {
     if (!open) return;

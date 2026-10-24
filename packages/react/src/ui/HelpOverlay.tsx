@@ -51,6 +51,8 @@ const Kbd = ({ children, className }: { children: ReactNode; className?: string 
 export type HelpOverlayProps = {
   /** Controlled open state. Omit to use the internal hotkey-driven state. */
   open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
   /** Called when the overlay opens or closes (controlled or uncontrolled). */
   onOpenChange?: (open: boolean) => void;
   /**
@@ -70,6 +72,7 @@ export type HelpOverlayProps = {
 
 const HelpOverlayRoot = ({
   open: controlledOpen,
+  defaultOpen = false,
   onOpenChange,
   hotkey = '?',
   title = 'Keyboard shortcuts',
@@ -80,7 +83,7 @@ const HelpOverlayRoot = ({
 }: HelpOverlayProps) => {
   const [open, setOpen] = useControllableState({
     value: controlledOpen,
-    defaultValue: false,
+    defaultValue: defaultOpen,
     onChange: onOpenChange,
     name: 'HelpOverlay.open',
   });

@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { Kbd } from '../typography/Kbd';
 import type { Intent } from './intent';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 /** Surface of the tooltip. */
@@ -76,6 +77,12 @@ export type TooltipProps = {
   arrow?: boolean;
   /** Milliseconds to wait before showing on hover or focus. Default `0`. */
   delay?: number;
+  /** Shown state, when controlled. Hover, focus and Escape then only report through `onOpenChange`. */
+  open?: boolean;
+  /** Initial shown state, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the shown state to move to. */
+  onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -94,9 +101,21 @@ export const Tooltip = ({
   title,
   arrow = true,
   delay = 0,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
 }: TooltipProps) => {
   const id = useId();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Tooltip.open',
+  });
+  // The pointer and focus both show it: only a change reaches `onOpenChange`.
+  const setOpen = (next: boolean) => {
+    if (next !== open) setOpenState(next);
+  };
   // Pointer over or focus inside, shown or still waiting for `delay`.
   const [engaged, setEngaged] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -115,20 +134,22 @@ export const Tooltip = ({
   };
 
   // Escape closes it wherever focus is, even when it was opened by the pointer
-  // (WCAG 1.4.13), and cancels a pending show. Capture phase, so a surrounding
-  // modal doesn't also close.
+  // or by the host (WCAG 1.4.13), and cancels a pending show. Capture phase, so
+  // a surrounding modal doesn't also close.
   useEffect(() => {
-    if (!engaged) return;
+    if (!engaged && !open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (open) e.stopPropagation();
       clearTimeout(timer.current);
       setEngaged(false);
-      setOpen(false);
+      if (open) {
+        e.stopPropagation();
+        setOpenState(false);
+      }
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [engaged, open]);
+  }, [engaged, open, setOpenState]);
   const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
     ? cloneElement(children, {
         'aria-describedby': [children.props['aria-describedby'], id].filter(Boolean).join(' '),
