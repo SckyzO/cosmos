@@ -144,6 +144,7 @@
   "overlays-user-menu--item-click-fires-handler": ["image-redundant-alt"],
   "overlays-user-menu--keyboard-menu-navigation": ["image-redundant-alt"],
   "overlays-user-menu--open": ["aria-required-children", "image-redundant-alt"],
+  "overlays-user-menu--stays-under-trigger-on-scroll": ["image-redundant-alt"],
   "overlays-user-menu--trigger-opens-menu": ["image-redundant-alt"],
   "overlays-user-menu--without-avatar": ["aria-required-children", "label-content-name-mismatch"],
   "overlays-user-menu--without-header": ["image-redundant-alt"],
