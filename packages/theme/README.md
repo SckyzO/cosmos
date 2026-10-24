@@ -74,17 +74,18 @@ the accent. `pnpm --filter @sckyzo/cosmos-theme test` runs the contrast check
 
 ## Focus indicator
 
-Three Tailwind utilities, shipped with `@sckyzo/cosmos-theme/tailwind`, give
+Four Tailwind utilities, shipped with `@sckyzo/cosmos-theme/tailwind`, give
 every control the same keyboard focus look: a **solid accent indicator** plus
 the `--shadow-focus-ring` halo (12% of the accent). The halo alone is too faint
 to count: the solid part is what reaches 3:1 against the surface (WCAG 1.4.11;
 `brand-500` is checked on every theme × accent pair by `pnpm test`).
 
-| Utility             | Paints                      | For                                                    |
-| ------------------- | --------------------------- | ------------------------------------------------------ |
-| `focus-indicator`   | 2px `brand-500` ring + halo | buttons, links, toggles, tabs, menu items, cards…      |
-| `field-focus`       | `brand-500` border + halo   | text inputs, textarea, select and their wrappers       |
-| `field-focus-error` | `red-500` border + red halo | the same fields in error (`--shadow-focus-ring-error`) |
+| Utility                     | Paints                      | For                                                                   |
+| --------------------------- | --------------------------- | --------------------------------------------------------------------- |
+| `focus-indicator`           | 2px `brand-500` ring + halo | buttons, links, toggles, tabs, menu items, cards…                     |
+| `field-focus`               | `brand-500` border + halo   | text inputs, textarea, select and their wrappers                      |
+| `field-focus-error`         | `red-500` border + red halo | the same fields in error (`--shadow-focus-ring-error`)                |
+| `focus-indicator-on-accent` | 2px white ring, no halo     | a control filled with `brand-500`, where the accent ring would vanish |
 
 They hold no state: put the variant that fits in front of them.
 

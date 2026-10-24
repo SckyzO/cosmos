@@ -103,6 +103,11 @@
  *   focus:field-focus                a text field: accent border + halo
  *   focus-within:field-focus         the same on a wrapper of the field
  *   focus:field-focus-error          the field in error: red border + red halo
+ *   focus-visible:focus-indicator-on-accent
+ *                                    a control filled with brand-500 (the active
+ *                                    segment, the selected day), where a brand
+ *                                    ring would vanish: a 2px white ring, no halo
+ *                                    (white on brand-500 is checked at 4.5:1)
  *
  * No ring offset. Add ring-inset where an ancestor clips (overflow-hidden) or a
  * neighbour hides the outer ring.
@@ -119,4 +124,8 @@
 
 @utility field-focus-error {
   @apply shadow-focus-ring-error border-red-500 outline-hidden;
+}
+
+@utility focus-indicator-on-accent {
+  @apply ring-2 ring-white outline-hidden;
 }
