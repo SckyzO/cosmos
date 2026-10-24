@@ -122,13 +122,6 @@
   "pages-blog-index--with-featured-post": ["link-name"],
   "pages-blog-index--with-photo-and-list": ["link-name"],
   "pages-detail-screen--sidebar": ["aria-valid-attr-value", "heading-order"],
-  "pages-doc-page--changelog": ["scrollable-region-focusable"],
-  "pages-doc-page--default": [
-    "heading-order",
-    "landmark-main-is-top-level",
-    "landmark-no-duplicate-main",
-    "landmark-unique"
-  ],
   "pages-error-page--big-code-is-decorative": ["color-contrast"],
   "pages-error-page--maintenance": ["color-contrast"],
   "pages-error-page--not-found": ["color-contrast"],
