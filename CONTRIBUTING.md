@@ -144,6 +144,15 @@ two variables:
 STORIES=overlays-,forms-select THEMES=dark make screenshots
 ```
 
+`make audit-captures` feeds the maintainer's visual audit, which compares the components with
+reference admin templates kept in the private `cosmos-references` repository. It builds the working
+tree's Storybook, captures every story at 1280px in `light` and `dark` and the shell-level stories
+(`layout-`, `navigation-`, `pages-`, `templates-`) at 375px in `light`, then replaces the `cosmos/`
+folder of the `cosmos-references` checkout with them, plus a `meta.json` naming the commit captured.
+`REFERENCES` points at the checkout (`../cosmos-references` by default), `THEMES` and `STORIES`
+narrow the 1280px pass and `MOBILE_STORIES` the 375px one. `CAPTURE_VIEWPORT=<width>x<height>`
+gives any capture another size than 1280x720.
+
 Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`
 and chart animations off, so two runs of an unchanged story give the same image. A capture waits
 for a stable frame: the viewport is screenshotted, 100 ms apart, until two consecutive frames are
