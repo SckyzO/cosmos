@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
+import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectOutsideClip, scrollAnchor } from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
+import { Modal } from './Modal';
 
 const meta = {
   title: 'Feedback/Tooltip',
@@ -143,6 +145,36 @@ export const EscapeClosesHoveredTooltip: Story = {
     await waitFor(() => expect(tip).toBeVisible());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(tip).not.toBeVisible());
+  },
+};
+
+/** In a modal, Escape hides the tooltip of the focused control and leaves the modal open. */
+export const EscapeInAModalHidesOnlyTheTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <Modal.Header title="Selected rows" />
+        <Modal.Body>
+          <Tooltip content="Deletes the selected rows">
+            <Button variant="secondary" size="sm">
+              Delete
+            </Button>
+          </Tooltip>
+        </Modal.Body>
+      </Modal>
+    );
+  },
+  play: async () => {
+    const tip = page.getByRole('tooltip');
+    // The modal moves focus to its first control, the tooltip's trigger.
+    await waitFor(() => expect(tip).toBeVisible());
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tip).not.toBeVisible());
+    await expect(page.getByRole('dialog', { name: 'Selected rows' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
   },
 };
 

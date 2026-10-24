@@ -5,6 +5,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import { Button } from './Button';
+import { Popover } from './Popover';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -349,6 +350,47 @@ export const CloseTriggers: Story = {
     await expect(args.onClose).toHaveBeenCalledTimes(2);
     await userEvent.keyboard('{Escape}');
     await expect(args.onClose).toHaveBeenCalledTimes(3);
+  },
+};
+
+/** Escape closes a popover open in the drawer first, and the drawer on the next press. */
+export const EscapeClosesThePopoverFirst: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Drawer open={open} onClose={close}>
+        <Drawer.Header title="Filters" />
+        <Drawer.Body>
+          <Popover>
+            <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Help</Popover.Trigger>
+            <Popover.Content aria-label="Filter help">
+              <p>Filters apply to every table.</p>
+            </Popover.Content>
+          </Popover>
+        </Drawer.Body>
+      </Drawer>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const drawer = within(await body.findByRole('dialog', { name: 'Filters' }));
+    await userEvent.click(drawer.getByRole('button', { name: 'Help' }));
+    await body.findByRole('dialog', { name: 'Filter help' });
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filter help' })).toBeNull());
+    await expect(body.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filters' })).toBeNull());
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
 

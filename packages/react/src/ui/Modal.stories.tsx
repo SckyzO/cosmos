@@ -4,6 +4,8 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { Dropdown } from './Dropdown';
+import { Combobox } from '../forms/Combobox';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -414,6 +416,61 @@ export const EscapeClosesOnce: Story = {
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
     await userEvent.keyboard('{Escape}');
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+const ACTIONS = [
+  { value: 'rename', label: 'Rename' },
+  { value: 'archive', label: 'Archive' },
+];
+const OWNERS = [
+  { value: 'leslie', label: 'Leslie Alexander' },
+  { value: 'michael', label: 'Michael Foster' },
+];
+
+/**
+ * Escape closes the innermost overlay only: a menu or a listbox open in the modal closes,
+ * and the modal stays until the next Escape.
+ */
+export const EscapeClosesTheInnermostOverlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Modal open={open} onClose={close}>
+        <Modal.Header title="Project settings" />
+        <Modal.Body className="space-y-4">
+          <Dropdown label="Actions" options={ACTIONS} />
+          <Combobox label="Owner" options={OWNERS} />
+        </Modal.Body>
+      </Modal>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const dialog = within(await body.findByRole('dialog', { name: 'Project settings' }));
+
+    await userEvent.click(dialog.getByRole('button', { name: 'Actions' }));
+    await body.findByRole('menu');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('menu')).toBeNull());
+    await expect(dialog.getByRole('button', { name: 'Actions' })).toHaveFocus();
+
+    await userEvent.click(dialog.getByRole('combobox', { name: 'Owner' }));
+    await body.findByRole('listbox');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('listbox')).toBeNull());
+
+    await expect(body.getByRole('dialog', { name: 'Project settings' })).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
     await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
