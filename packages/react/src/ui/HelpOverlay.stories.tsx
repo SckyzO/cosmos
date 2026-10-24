@@ -229,3 +229,30 @@ export const FocusIsTrapped: Story = {
     }
   },
 };
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const DefaultOpenClosesOnItsOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() } as never,
+  render: (args) => (
+    <HelpOverlay
+      defaultOpen
+      onOpenChange={(args as unknown as { onOpenChange: (open: boolean) => void }).onOpenChange}
+    >
+      {SAMPLE_SHORTCUTS}
+    </HelpOverlay>
+  ),
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await waitFor(() => expect(body.getByRole('dialog')).toBeInTheDocument());
+    await userEvent.keyboard('{Escape}');
+    await expect(
+      (args as unknown as { onOpenChange: ReturnType<typeof fn> }).onOpenChange
+    ).toHaveBeenCalledWith(false);
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};

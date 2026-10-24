@@ -219,3 +219,52 @@ export const DefaultValueOrControlled: Story = {
     await expect(held).toHaveTextContent('Settings');
   },
 };
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const DefaultOpenClosesOnItsOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Dropdown label="Account" options={ACCOUNT} defaultOpen onOpenChange={args.onOpenChange} />
+    </Wrap>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const scope = within(canvasElement);
+    const trigger = scope.getByRole('button', { name: 'Account' });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(await scope.findByRole('menu', { name: 'Account' })).toBeVisible();
+
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(scope.queryByRole('menu')).toBeNull();
+  },
+};
+
+export const ControlledOpenOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Dropdown label="Account" options={ACCOUNT} open onOpenChange={args.onOpenChange} />
+    </Wrap>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const scope = within(canvasElement);
+    const menu = await scope.findByRole('menu', { name: 'Account' });
+    await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Profile' }));
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(false);
+    // The host keeps it open.
+    await expect(scope.getByRole('menu', { name: 'Account' })).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Profile' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+  },
+};

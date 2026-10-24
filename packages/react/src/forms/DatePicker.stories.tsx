@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectFocusBorder,
   expectRefFocuses,
@@ -327,5 +327,66 @@ export const ForwardsRef: Story = {
   play: async ({ canvas }) => {
     await expectRefFocuses(singleRef, canvas.getByLabelText('Departure'));
     await expectRefFocuses(rangeRef, canvas.getByLabelText('Stay'));
+  },
+};
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+const calendarDialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
+
+/** Opened by `defaultOpen`, the calendar anchors under the trigger and closes on its own. */
+export const DefaultOpenClosesOnItsOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Due', defaultOpen: true, onOpenChange: fn() },
+  play: async ({ args, canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /due/i });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await waitFor(() => expect(calendarDialog()).not.toBeNull());
+    const top = trigger.getBoundingClientRect().bottom + 6;
+    await expect(calendarDialog()!.style.top).toBe(`${top}px`);
+
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+    await expect(trigger).toHaveFocus();
+  },
+};
+
+/** Held open, a pick and Escape report a close and the calendar stays. */
+export const ControlledOpenOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Due',
+    open: true,
+    defaultValue: new Date(2026, 4, 7),
+    onOpenChange: fn(),
+    onChange: fn(),
+  },
+  play: async ({ args }) => {
+    await waitFor(() => expect(calendarDialog()).not.toBeNull());
+    await userEvent.click(within(calendarDialog()!).getByRole('button', { name: /May 12/ }));
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(false);
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(2);
+    await expect(calendarDialog()).not.toBeNull();
+  },
+};
+
+/** Held closed, a click on the trigger reports an open and nothing opens. */
+export const ControlledClosedOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Due', open: false, onOpenChange: fn() },
+  play: async ({ args, canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /due/i });
+    await userEvent.click(trigger);
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(true);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(calendarDialog()).toBeNull();
   },
 };

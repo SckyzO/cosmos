@@ -280,3 +280,38 @@ export const DefaultValueOrControlled: Story = {
     await expect(held).toHaveValue('Tom Cook');
   },
 };
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const OpenStateDefaultOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <div className="max-w-md space-y-4">
+      <Combobox label="Own" options={PEOPLE} defaultOpen onOpenChange={args.onOpenChange} />
+      <div className="pt-64">
+        <Combobox label="Held" options={PEOPLE} open={false} onOpenChange={args.onOpenChange} />
+      </div>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('combobox', { name: 'Own' });
+    await expect(own).toHaveAttribute('aria-expanded', 'true');
+    // Focus asks to open a list already open: nothing to report.
+    await userEvent.click(own);
+    await expect(args.onOpenChange).not.toHaveBeenCalled();
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await expect(own).toHaveAttribute('aria-expanded', 'false');
+
+    const held = canvas.getByRole('combobox', { name: 'Held' });
+    await userEvent.click(held);
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
+    await expect(held).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.queryByRole('listbox')).toBeNull();
+  },
+};
