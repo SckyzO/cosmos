@@ -489,3 +489,46 @@ export const FocusReturnsToTheTrigger: Story = {
     }
   },
 };
+
+/** A danger alert confirms with the red button, `variant="primary" intent="danger"`. */
+export const AlertDangerConfirmIsRed: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal.Alert
+      open
+      onClose={() => {}}
+      intent="danger"
+      title="Delete it?"
+      confirmLabel="Delete"
+      cancelLabel="Keep"
+    />
+  ),
+  play: async () => {
+    const scope = within(document.body);
+    const confirm = await scope.findByRole('button', { name: 'Delete' });
+    await expect(confirm).toHaveClass('bg-red-600', 'text-white');
+    await expect(confirm).not.toHaveClass('bg-brand-500');
+    // The cancel button is the plain secondary one.
+    await expect(await scope.findByRole('button', { name: 'Keep' })).toHaveClass('bg-white');
+  },
+};
+
+/** The other intents keep the accent on the confirm button, in both layouts. */
+export const AlertOtherIntentsConfirmWithTheAccent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal.Alert
+      open
+      onClose={() => {}}
+      layout="horizontal"
+      intent="warning"
+      title="Careful"
+      confirmLabel="Continue"
+    />
+  ),
+  play: async () => {
+    const confirm = await within(document.body).findByRole('button', { name: 'Continue' });
+    await expect(confirm).toHaveClass('bg-brand-500', 'text-white');
+    await expect(confirm).not.toHaveClass('bg-red-600');
+  },
+};

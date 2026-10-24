@@ -142,3 +142,22 @@ export const SubmitInsideForm: Story = {
     await expect(submit).toBeInTheDocument();
   },
 };
+
+/** `submitIntent` colors the submit button: red for `danger`, the accent by default. */
+export const SubmitIntentColorsTheSubmit: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <FormFooter submitLabel="Delete account" submitIntent="danger" />
+      <FormFooter submitLabel="Delete soft" submitIntent="danger" submitVariant="soft" />
+      <FormFooter submitLabel="Save" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const submit = (name: string) => canvas.getByRole('button', { name });
+    await expect(submit('Delete account')).toHaveClass('bg-red-600', 'text-white');
+    await expect(submit('Delete account')).not.toHaveClass('bg-brand-500');
+    await expect(submit('Delete soft')).toHaveClass('bg-red-50', 'text-red-700');
+    await expect(submit('Save')).toHaveClass('bg-brand-500', 'text-white');
+  },
+};

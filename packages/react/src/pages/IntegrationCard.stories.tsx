@@ -271,3 +271,34 @@ export const LoadingDisablesActions: Story = {
     await expect(secondary).toBeDisabled();
   },
 };
+
+/** `actionIntent` colors the action button, and the status badge follows the status. */
+export const ActionIntentAndStatusColors: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
+      <IntegrationCard
+        logo={<Hash />}
+        name="Hash"
+        status="connected"
+        actionLabel="Disconnect"
+        actionIntent="danger"
+      />
+      <IntegrationCard logo={<Mail />} name="Mail" status="available" actionLabel="Connect" />
+      <IntegrationCard logo={<Video />} name="Video" status="error" />
+      <IntegrationCard logo={<Bell />} name="Bell" status="pending" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Disconnect' })).toHaveClass(
+      'bg-red-600',
+      'text-white'
+    );
+    await expect(canvas.getByRole('button', { name: 'Connect' })).toHaveClass('bg-brand-500');
+    const badge = (label: string) => canvas.getByText(label).parentElement!;
+    await expect(badge('Connected')).toHaveClass('bg-green-100', 'text-green-700');
+    await expect(badge('Available')).toHaveClass('bg-gray-100', 'text-gray-700');
+    await expect(badge('Error')).toHaveClass('bg-red-100', 'text-red-700');
+    await expect(badge('Pending')).toHaveClass('bg-amber-100', 'text-amber-700');
+  },
+};

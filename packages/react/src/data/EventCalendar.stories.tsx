@@ -250,3 +250,40 @@ export const DefaultLocaleFollowsTheBrowser: Story = {
     );
   },
 };
+
+const CHIP_COLORS = {
+  brand: ['bg-brand-50', 'bg-brand-500'],
+  success: ['bg-green-50', 'bg-green-500'],
+  warning: ['bg-amber-50', 'bg-amber-500'],
+  danger: ['bg-red-50', 'bg-red-500'],
+  info: ['bg-blue-50', 'bg-blue-500'],
+  violet: ['bg-violet-50', 'bg-violet-500'],
+} as const;
+
+/** `intent` colors an event's chip and dot, `brand` by default; `violet` is a category color. */
+export const IntentColorsTheEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    // One event a day, so that no day folds its chips behind "+N more".
+    events: [
+      ...(Object.keys(CHIP_COLORS) as (keyof typeof CHIP_COLORS)[]).map((intent, i) => ({
+        id: intent,
+        title: `${intent} event`,
+        start: new Date(2026, 4, 4 + i),
+        intent,
+      })),
+      { id: 'default', title: 'default event', start: new Date(2026, 4, 11) },
+    ],
+  },
+  play: async ({ canvas }) => {
+    const chip = (title: string) => canvas.getByTitle(title);
+    for (const [intent, [bg, dot]] of Object.entries(CHIP_COLORS)) {
+      await expect(chip(`${intent} event`)).toHaveClass(bg);
+      await expect(chip(`${intent} event`).querySelector('span[aria-hidden]')).toHaveClass(dot);
+    }
+    await expect(chip('default event')).toHaveClass('bg-brand-50');
+    await expect(chip('default event').querySelector('span[aria-hidden]')).toHaveClass(
+      'bg-brand-500'
+    );
+  },
+};

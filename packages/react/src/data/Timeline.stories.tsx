@@ -200,3 +200,43 @@ const timeContrastIn = (theme: string): Story => ({
 export const TimeContrastInLight = timeContrastIn('light');
 export const TimeContrastInSand = timeContrastIn('sand');
 export const TimeContrastInDeepBlue = timeContrastIn('deep-blue');
+
+const INTENT_CIRCLES = {
+  brand: ['bg-brand-100', 'text-brand-700'],
+  success: ['bg-green-100', 'text-green-700'],
+  warning: ['bg-amber-100', 'text-amber-700'],
+  danger: ['bg-red-100', 'text-red-700'],
+  neutral: ['bg-gray-100', 'text-gray-700'],
+} as const;
+
+/** `intent` tints the icon circle of the `stepper` and `alternating` variants, `brand` by default. */
+export const IntentTintsTheIconCircle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const items: TimelineItem[] = [
+      ...(Object.keys(INTENT_CIRCLES) as (keyof typeof INTENT_CIRCLES)[]).map((intent) => ({
+        id: intent,
+        title: `${intent} step`,
+        icon: Bell,
+        intent,
+      })),
+      { id: 'default', title: 'default step', icon: Bell },
+    ];
+    return (
+      <div className="space-y-8">
+        <Timeline variant="stepper" items={items} />
+        <Timeline variant="alternating" items={[{ ...items[3], id: 'alt' }]} />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const circle = (title: string, index = 0) =>
+      canvas.getAllByText(title)[index].closest('li')!.querySelector('span.rounded-full')!;
+    for (const [intent, classes] of Object.entries(INTENT_CIRCLES)) {
+      await expect(circle(`${intent} step`)).toHaveClass(...classes);
+    }
+    await expect(circle('default step')).toHaveClass(...INTENT_CIRCLES.brand);
+    // The alternating variant reads it too: this one is the `danger` item.
+    await expect(circle('danger step', 1)).toHaveClass(...INTENT_CIRCLES.danger);
+  },
+};
