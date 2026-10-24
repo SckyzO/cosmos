@@ -43,7 +43,7 @@ export const SimpleErrorIntent: Story = {
   render: () => (
     <div className="flex justify-end p-6">
       <NotificationCard.Simple
-        intent="error"
+        intent="danger"
         title="Failed to save"
         description="The remote endpoint returned a 503. We will retry in 30 seconds."
         onDismiss={() => {}}
