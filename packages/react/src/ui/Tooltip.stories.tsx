@@ -53,7 +53,7 @@ export const Variants: Story = {
               White
             </Button>
           </Tooltip>
-          <Tooltip content="Brand accent" variant="brand">
+          <Tooltip content="Brand accent" intent="brand">
             <Button variant="secondary" size="sm">
               Brand
             </Button>
@@ -63,17 +63,17 @@ export const Variants: Story = {
       <div className="mt-4">
         <SectionCard title="Status — explain a state">
           <div className="flex flex-wrap items-center gap-6">
-            <Tooltip content="All 12 checks passing" variant="success">
+            <Tooltip content="All 12 checks passing" intent="success">
               <Button variant="secondary" size="sm">
                 Success
               </Button>
             </Tooltip>
-            <Tooltip content="Disk 92% full" variant="warning">
+            <Tooltip content="Disk 92% full" intent="warning">
               <Button variant="secondary" size="sm">
                 Warning
               </Button>
             </Tooltip>
-            <Tooltip content="Node unreachable since 14:02" variant="danger">
+            <Tooltip content="Node unreachable since 14:02" intent="danger">
               <Button variant="secondary" size="sm">
                 Danger
               </Button>
