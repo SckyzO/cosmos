@@ -5,6 +5,7 @@ import type { ModalProps, ModalSize } from './Modal';
 import {
   DialogTitleProvider,
   OverlayLayerProvider,
+  PortalContainerProvider,
   useFocusTrap,
   useOverlayLayer,
 } from './overlayA11y';
@@ -50,6 +51,14 @@ export const Dialog = ({
     setHasTitle(!!trapRef.current?.querySelector(`[id="${titleId}"]`));
   }, [open, children, titleId, trapRef]);
 
+  // The floating panels opened in the dialog render into its element, once mounted:
+  // `aria-modal` tells assistive technology to skip everything outside it. Not
+  // transformed and fixed at `inset-0`, it places them as the viewport would.
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setContainer(open ? trapRef.current : null);
+  }, [open, trapRef]);
+
   if (!open) return null;
 
   const isFull = size === 'full';
@@ -84,7 +93,9 @@ export const Dialog = ({
         )}
       >
         <OverlayLayerProvider value={layer}>
-          <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          <PortalContainerProvider value={container}>
+            <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          </PortalContainerProvider>
         </OverlayLayerProvider>
       </div>
     </div>,

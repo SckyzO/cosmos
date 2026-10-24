@@ -71,6 +71,27 @@ export function useOverlayLayer(open: boolean, onEscape: () => void): OverlayLay
   return layer;
 }
 
+const PortalContainerContext = createContext<HTMLElement | null | undefined>(undefined);
+
+/**
+ * Gives the floating panels opened inside a modal dialog (Dialog, Drawer) the element to
+ * render into: the dialog itself, so `aria-modal` doesn't hide them from assistive technology.
+ * `null` while the dialog's element isn't mounted yet.
+ *
+ * The element must be the box the panels' fixed position is relative to, as
+ * `useAnchorPosition` places them against its origin: either the viewport itself, an element
+ * fixed at `inset-0` (Dialog), or an element with a transform (the Drawer panel, which slides
+ * with `translate`).
+ */
+export const PortalContainerProvider = PortalContainerContext.Provider;
+
+/**
+ * Where a floating panel renders: the element of the modal dialog it was opened in,
+ * `undefined` outside any (`<body>` then), `null` while that dialog isn't mounted yet
+ * (render nothing until it is).
+ */
+export const usePortalContainer = () => useContext(PortalContainerContext);
+
 export type OutsideClickOptions = {
   /** Panel is open: listen while true. */
   open: boolean;
@@ -151,7 +172,9 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean): RefObject<
     (focusables()[0] ?? node).focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      // A floating panel open in the container renders inside it and moves focus out of
+      // itself on Tab (`usePortalFocus`): leave a Tab it handled alone.
+      if (e.key !== 'Tab' || e.defaultPrevented) return;
       const items = focusables();
       if (items.length === 0) {
         e.preventDefault();

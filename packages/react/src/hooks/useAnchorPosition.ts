@@ -136,7 +136,9 @@ export function anchoredStyle(
   return withShift(style, shift);
 }
 
-type Measures = { anchor: AnchorRect; viewport: BoxSize; panel: BoxSize | null };
+type Point = { x: number; y: number };
+
+type Measures = { anchor: AnchorRect; viewport: BoxSize; panel: BoxSize | null; origin: Point };
 
 const sameSize = (a: BoxSize | null, b: BoxSize | null) =>
   a === b || (!!a && !!b && a.width === b.width && a.height === b.height);
@@ -147,7 +149,27 @@ const sameMeasures = (a: Measures | null, b: Measures) =>
   a.anchor.left === b.anchor.left &&
   sameSize(a.anchor, b.anchor) &&
   sameSize(a.viewport, b.viewport) &&
-  sameSize(a.panel, b.panel);
+  sameSize(a.panel, b.panel) &&
+  a.origin.x === b.origin.x &&
+  a.origin.y === b.origin.y;
+
+// The viewport point the fixed position of a panel in `container` is relative to: the
+// container's padding box (its border doesn't count), or the viewport's own origin.
+const originOf = (container: HTMLElement | undefined): Point => {
+  if (!container) return { x: 0, y: 0 };
+  const rect = container.getBoundingClientRect();
+  return { x: rect.left + container.clientLeft, y: rect.top + container.clientTop };
+};
+
+// `style`, placed in the viewport, moved to the same spot relative to `origin`.
+const fromOrigin = (style: CSSProperties, origin: Point): CSSProperties =>
+  origin.x || origin.y
+    ? {
+        ...style,
+        left: (style.left as number) - origin.x,
+        top: (style.top as number) - origin.y,
+      }
+    : style;
 
 export type AnchorPosition = {
   /** The panel's fixed-position style (see `anchoredStyle`), or `null` before the first measure. */
@@ -170,12 +192,17 @@ export type AnchorPosition = {
  * stays in place. It measures in a layout effect, so the panel is placed before the browser
  * paints it. Pass another ref object to anchor the panel to another element.
  *
+ * A panel rendered in `container`, the element of a modal dialog (`usePortalContainer`), is
+ * placed relative to that element's origin rather than the viewport's, which is what its
+ * fixed position means once the container has a transform (the sliding Drawer panel).
+ *
  * Internal to the package, not exported.
  */
 export function useAnchorPosition(
   anchorRef: RefObject<HTMLElement | null>,
   open: boolean,
-  placement: AnchorPlacement
+  placement: AnchorPlacement,
+  container?: HTMLElement | null
 ): AnchorPosition {
   const [measures, setMeasures] = useState<Measures | null>(null);
   const [panel, setPanel] = useState<HTMLElement | null>(null);
@@ -200,6 +227,7 @@ export function useAnchorPosition(
         },
         // Layout size, which the panel's own translate doesn't change.
         panel: panel && { width: panel.offsetWidth, height: panel.offsetHeight },
+        origin: originOf(container ?? undefined),
       };
       // Most scrolls happen in containers the anchor isn't in: don't re-render for nothing.
       setMeasures((prev) => (sameMeasures(prev, next) ? prev : next));
@@ -215,14 +243,14 @@ export function useAnchorPosition(
       window.removeEventListener('scroll', measure, true);
       observer.disconnect();
     };
-  }, [open, anchorRef, missed, panel]);
+  }, [open, anchorRef, missed, panel, container]);
 
   if (!measures) return { style: null, side: placement.side ?? 'bottom', panelRef: setPanel };
   const bounds = measures.panel
     ? { panel: measures.panel, viewport: measures.viewport }
     : undefined;
   return {
-    style: anchoredStyle(measures.anchor, placement, bounds),
+    style: fromOrigin(anchoredStyle(measures.anchor, placement, bounds), measures.origin),
     side: resolveSide(measures.anchor, placement, bounds),
     panelRef: setPanel,
   };

@@ -17,6 +17,7 @@ import {
   OverlayLayerProvider,
   useOutsideClick,
   useOverlayLayer,
+  usePortalContainer,
   usePortalFocus,
   type PortalFocusOptions,
 } from './overlayA11y';
@@ -27,9 +28,9 @@ import {
 
 /**
  * The z-index scale of floating panels. A panel sits above every page layer and above the
- * modal layer (`z-50`: Modal, Drawer), so a menu opened in a modal shows over it; a tooltip
- * sits one step higher, so it shows over the panel it was opened from. Panels that open from
- * one another stack in the order they open, at the same level.
+ * modal layer (`z-50`: Modal, Drawer); one opened in a modal renders inside it, above its
+ * content. A tooltip sits one step higher, so it shows over the panel it was opened from.
+ * Panels that open from one another stack in the order they open, at the same level.
  */
 export const FLOATING_PANEL_Z = 'z-[9999]';
 export const TOOLTIP_Z = 'z-[10000]';
@@ -72,11 +73,12 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' |
 
 /**
  * A non-modal panel portaled to the end of `<body>`, so no `overflow: hidden` ancestor clips
- * it, kept next to its anchor in fixed position (`useAnchorPosition`), with the focus handling
- * of `usePortalFocus`, the outside click of `useOutsideClick` and a place in the overlay stack
- * (`useOverlayLayer`). Renders nothing while closed or before the anchor is measured. It opens
- * where `placement` says, flipped to the other side or moved along the anchor when the
- * viewport would cut it there.
+ * it, or into the modal dialog it was opened in (`usePortalContainer`), where `aria-modal`
+ * keeps it reachable. Kept next to its anchor in fixed position (`useAnchorPosition`), with
+ * the focus handling of `usePortalFocus`, the outside click of `useOutsideClick` and a place
+ * in the overlay stack (`useOverlayLayer`). Renders nothing while closed or before the anchor
+ * is measured. It opens where `placement` says, flipped to the other side or moved along the
+ * anchor when the viewport would cut it there.
  */
 export function FloatingPanel({
   open,
@@ -91,7 +93,12 @@ export function FloatingPanel({
   children,
   ...rest
 }: FloatingPanelProps) {
-  const { style: anchored, side, panelRef } = useAnchorPosition(anchorRef, open, placement);
+  const container = usePortalContainer();
+  const {
+    style: anchored,
+    side,
+    panelRef,
+  } = useAnchorPosition(anchorRef, open, placement, container);
   const { ref: focusRef, onFocusCapture } = usePortalFocus<HTMLDivElement>({
     open: open && moveFocus,
     onClose,
@@ -106,7 +113,7 @@ export function FloatingPanel({
     insideRefs: [triggerRef, anchorRef],
   });
   const layer = useOverlayLayer(open, onClose);
-  if (!open || !anchored) return null;
+  if (!open || !anchored || container === null) return null;
   return createPortal(
     <OverlayLayerProvider value={layer}>
       <div
@@ -120,6 +127,6 @@ export function FloatingPanel({
         {typeof children === 'function' ? children(side) : children}
       </div>
     </OverlayLayerProvider>,
-    document.body
+    container ?? document.body
   );
 }

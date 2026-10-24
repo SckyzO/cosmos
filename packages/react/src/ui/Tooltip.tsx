@@ -14,7 +14,7 @@ import { createPortal } from 'react-dom';
 import { Kbd } from '../typography/Kbd';
 import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
-import { useOverlayLayer } from './overlayA11y';
+import { useOverlayLayer, usePortalContainer } from './overlayA11y';
 import { useAnchorPosition } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
@@ -158,15 +158,18 @@ export const Tooltip = ({
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [engaged]);
+  // Inside a modal dialog, rendered in it (see FloatingPanel).
+  const container = usePortalContainer();
   const {
     style: anchored,
     side,
     panelRef,
-  } = useAnchorPosition(anchorRef, open, {
-    side: position,
-    align: 'center',
-    offset: OFFSET,
-  });
+  } = useAnchorPosition(
+    anchorRef,
+    open,
+    { side: position, align: 'center', offset: OFFSET },
+    container
+  );
   const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
     ? cloneElement(children, {
         'aria-describedby': [children.props['aria-describedby'], id].filter(Boolean).join(' '),
@@ -187,8 +190,9 @@ export const Tooltip = ({
       {trigger}
       {/* Portaled, so no `overflow: hidden` ancestor clips it, and kept mounted
           while hidden: `aria-describedby` points at it. Client-side only, as
-          portals are. */}
+          portals are, and once the dialog it is in, if any, is mounted. */}
       {isClient &&
+        container !== null &&
         createPortal(
           <span
             ref={panelRef}
@@ -226,7 +230,7 @@ export const Tooltip = ({
               />
             )}
           </span>,
-          document.body
+          container ?? document.body
         )}
     </span>
   );

@@ -1,11 +1,12 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DialogTitleProvider,
   OverlayLayerProvider,
+  PortalContainerProvider,
   useDialogTitleId,
   useFocusTrap,
   useOverlayLayer,
@@ -96,6 +97,15 @@ const Root = ({
   // Escape closes the drawer, unless an overlay opened above it takes it.
   const layer = useOverlayLayer(open, onClose);
 
+  // The floating panels opened in the drawer render into the panel, once mounted:
+  // `aria-modal` tells assistive technology to skip everything outside it. Its
+  // `translate` makes it the box their fixed position is relative to, which
+  // `useAnchorPosition` accounts for; they slide with it.
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setContainer(isClient ? trapRef.current : null);
+  }, [isClient, trapRef]);
+
   if (!isClient) return null;
 
   // Portal into document.body so the drawer escapes any clipping ancestor
@@ -144,7 +154,9 @@ const Root = ({
         aria-labelledby={ariaLabel ? undefined : titleId}
       >
         <OverlayLayerProvider value={layer}>
-          <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          <PortalContainerProvider value={container}>
+            <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          </PortalContainerProvider>
         </OverlayLayerProvider>
         {withBackdrop && closeOutside && (
           <button
