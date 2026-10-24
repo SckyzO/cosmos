@@ -93,7 +93,8 @@ export const UncontrolledStartsFromDefault: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Set b' }));
     await expect(canvas.getByLabelText('Value')).toHaveTextContent('b');
     // The setter's extra arguments reach the callback.
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('b', 'set');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('b', 'set');
   },
 };
 
@@ -115,7 +116,8 @@ export const ControlledIgnoresItsOwnSet: Story = {
     await expect(canvas.getByLabelText('Mode')).toHaveTextContent('controlled');
     await userEvent.click(canvas.getByRole('button', { name: 'Set b' }));
     // The callback still fires, but the value stays the host's.
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('b', 'set');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('b', 'set');
     await expect(canvas.getByLabelText('Value')).toHaveTextContent('x');
   },
 };
@@ -125,7 +127,8 @@ export const ControlledReflectsTheProp: Story = {
   render: (args) => <Host initial="x" onChange={args.onChange} />,
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Set b' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('b', 'set');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('b', 'set');
     await expect(canvas.getByLabelText('Value')).toHaveTextContent('b');
     // A change made by the host alone shows too.
     await userEvent.click(canvas.getByRole('button', { name: 'Host sets c' }));
@@ -140,7 +143,8 @@ export const NullIsAControlledValue: Story = {
     await expect(canvas.getByLabelText('Value')).toHaveTextContent('null');
     await expect(canvas.getByLabelText('Mode')).toHaveTextContent('controlled');
     await userEvent.click(canvas.getByRole('button', { name: 'Set b' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('b', 'set');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('b', 'set');
     await expect(canvas.getByLabelText('Value')).toHaveTextContent('null');
   },
 };
@@ -169,7 +173,8 @@ export const SetterIsStableAndCallsTheLatestCallback: Story = {
     await userEvent.click(rerender);
     await userEvent.click(rerender);
     await userEvent.click(canvas.getByRole('button', { name: 'Set b' }));
-    await expect(args.onChange).toHaveBeenCalledExactlyOnceWith('b', 'set after 2');
+    await expect(args.onChange).toHaveBeenCalledTimes(1);
+    await expect(args.onChange).toHaveBeenCalledWith('b', 'set after 2');
     await expect(args.onSetterChange).toHaveBeenCalledTimes(1);
   },
 };
