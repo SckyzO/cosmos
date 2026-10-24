@@ -96,18 +96,24 @@ const arrowStyle = (position: PopoverPosition, align: PopoverAlign): CSSProperti
   };
   // With `end`, keep pointing at the trigger's center, not the panel's: half the
   // trigger's width (`--anchor-width`, set by the anchoring) from the right, and
-  // `right` is measured from the panel's padding box, 1px inside its border.
+  // `right` is measured from the panel's padding box, 1px inside its border. A
+  // panel moved along the trigger to stay on screen sets `--anchor-shift`, by how
+  // much: the arrow moves back by as much.
   const x: CSSProperties =
     align === 'end'
-      ? { right: 'calc(var(--anchor-width) / 2 - 1px)', marginRight: -4 }
-      : { left: '50%', marginLeft: -4 };
+      ? {
+          right: 'calc(var(--anchor-width) / 2 - 1px + var(--anchor-shift, 0px))',
+          marginRight: -4,
+        }
+      : { left: 'calc(50% - var(--anchor-shift, 0px))', marginLeft: -4 };
+  const y: CSSProperties = { top: 'calc(50% - var(--anchor-shift, 0px))', marginTop: -4 };
   switch (position) {
     case 'top':
       return { ...base, bottom: -4, ...x };
     case 'right':
-      return { ...base, left: -4, top: '50%', marginTop: -4 };
+      return { ...base, left: -4, ...y };
     case 'left':
-      return { ...base, right: -4, top: '50%', marginTop: -4 };
+      return { ...base, right: -4, ...y };
     case 'bottom':
     default:
       return { ...base, top: -4, ...x };
@@ -161,14 +167,18 @@ const PopoverContent = ({
         className
       )}
     >
-      {arrow && (
-        <span
-          aria-hidden
-          style={arrowStyle(position, align)}
-          className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
-        />
+      {(side) => (
+        <>
+          {arrow && (
+            <span
+              aria-hidden
+              style={arrowStyle(side, align)}
+              className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+            />
+          )}
+          <div className="relative">{children}</div>
+        </>
       )}
-      <div className="relative">{children}</div>
     </FloatingPanel>
   );
 };

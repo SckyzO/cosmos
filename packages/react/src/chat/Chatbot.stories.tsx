@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
+import { Modal } from '../ui/Modal';
 import { Chatbot, type ChatbotMessage } from './Chatbot';
 
 const meta = {
@@ -126,6 +127,39 @@ export const Playground: Story = {
         suggestions={messages.length === 1 ? ['Racks over 80% power?'] : undefined}
       />
     );
+  },
+};
+
+/** A modal open over the chat takes the first Escape; the chat closes on the next one. */
+export const EscapeClosesTheModalOverTheChatFirst: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { messages: history, defaultOpen: true },
+  render: function Render(args) {
+    const [modal, setModal] = useState(true);
+    return (
+      <>
+        <Chatbot {...args} />
+        <Modal open={modal} onClose={() => setModal(false)} ariaLabel="Confirm deletion">
+          <Modal.Body>Delete rack B4?</Modal.Body>
+        </Modal>
+      </>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await body.findByRole('dialog', { name: 'Confirm deletion' });
+    // The launcher tells whether the chat is open: a closed panel stays mounted while it fades out.
+    const launcher = body.getByRole('button', { name: 'Open chat' });
+    await expect(launcher).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(body.queryByRole('dialog', { name: 'Confirm deletion' })).toBeNull()
+    );
+    await expect(launcher).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(launcher).toHaveAttribute('aria-expanded', 'false'));
   },
 };
 

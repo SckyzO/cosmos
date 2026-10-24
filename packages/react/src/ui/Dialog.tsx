@@ -2,7 +2,13 @@ import { clsx } from 'clsx';
 import { useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ModalProps, ModalSize } from './Modal';
-import { DialogTitleProvider, useEscapeKey, useFocusTrap } from './overlayA11y';
+import {
+  DialogTitleProvider,
+  OverlayLayerProvider,
+  PortalContainerProvider,
+  useFocusTrap,
+  useOverlayLayer,
+} from './overlayA11y';
 
 // Internal to the package: the modal surface shared by Modal, Modal.Alert and
 // ConfirmationModal. Not exported from the barrel.
@@ -36,14 +42,22 @@ export const Dialog = ({
   const titleId = useId();
   const [hasTitle, setHasTitle] = useState(false);
   const trapRef = useFocusTrap<HTMLDivElement>(open);
-
-  useEscapeKey(open, onClose);
+  // Escape closes the dialog, unless an overlay opened above it takes it.
+  const layer = useOverlayLayer(open, onClose);
 
   // Only point `aria-labelledby` at the title once a `Modal.Header` rendered it.
   // A Header comes and goes with `children`, so re-check when they change.
   useLayoutEffect(() => {
     setHasTitle(!!trapRef.current?.querySelector(`[id="${titleId}"]`));
   }, [open, children, titleId, trapRef]);
+
+  // The floating panels opened in the dialog render into its element, once mounted:
+  // `aria-modal` tells assistive technology to skip everything outside it. Not
+  // transformed and fixed at `inset-0`, it places them as the viewport would.
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setContainer(open ? trapRef.current : null);
+  }, [open, trapRef]);
 
   if (!open) return null;
 
@@ -78,7 +92,11 @@ export const Dialog = ({
           className
         )}
       >
-        <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+        <OverlayLayerProvider value={layer}>
+          <PortalContainerProvider value={container}>
+            <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          </PortalContainerProvider>
+        </OverlayLayerProvider>
       </div>
     </div>,
     document.body

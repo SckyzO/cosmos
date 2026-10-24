@@ -201,6 +201,34 @@ export const EscapeCloses: Story = {
   },
 };
 
+/** At the bottom of the screen a `bottom` popover opens above its trigger, its arrow under it. */
+export const ArrowFollowsTheFlip: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-screen items-end justify-center p-2">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Low</Popover.Trigger>
+        <Popover.Content arrow aria-label="Flipped panel">
+          <p>Panel</p>
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Low' });
+    await userEvent.click(trigger);
+    const panel = await within(document.body).findByRole('dialog', { name: 'Flipped panel' });
+    const t = trigger.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    await expect(p.bottom).toBeCloseTo(t.top - 8, 0);
+    // The arrow straddles the panel's bottom edge (1px inside its border), under the
+    // trigger's center.
+    const arrow = panel.querySelector('[aria-hidden]')!.getBoundingClientRect();
+    await expect(arrow.top + arrow.height / 2).toBeCloseTo(p.bottom - 1, 0);
+    await expect(arrow.left + arrow.width / 2).toBeCloseTo((t.left + t.right) / 2, 0);
+  },
+};
+
 export const AlignEndIsFlushWithTrigger: Story = {
   tags: ['!autodocs'],
   render: () => (

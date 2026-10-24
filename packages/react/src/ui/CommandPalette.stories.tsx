@@ -11,7 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectPlaceholderContrast,
   expectTextContrast,
@@ -20,6 +20,7 @@ import {
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
+import { Modal } from './Modal';
 
 const meta = {
   title: 'Overlays/Command Palette',
@@ -341,6 +342,46 @@ export const HotkeyOpensPalette: Story = {
     // Trigger Ctrl+K
     await userEvent.keyboard('{Control>}k{/Control}');
     await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+  },
+};
+
+/** Opened over a modal, the palette closes on Escape and the modal stays until the next one. */
+export const EscapeOverAModalClosesOnlyThePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [modal, setModal] = useState(true);
+    const [palette, setPalette] = useState(false);
+    return (
+      <>
+        <Modal open={modal} onClose={() => setModal(false)}>
+          <Modal.Header title="Project settings" />
+          <Modal.Body>
+            <Button variant="secondary">Rename</Button>
+          </Modal.Body>
+        </Modal>
+        <CommandPalette open={palette} onOpenChange={setPalette}>
+          <CommandPalette.Input placeholder="Search" />
+          <CommandPalette.List>
+            <CommandPalette.Item value="hello">Hello</CommandPalette.Item>
+          </CommandPalette.List>
+        </CommandPalette>
+      </>
+    );
+  },
+  play: async () => {
+    const body = within(document.body);
+    await body.findByRole('dialog', { name: 'Project settings' });
+    await userEvent.keyboard('{Control>}k{/Control}');
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).toBeNull());
+    await expect(await body.findByRole('dialog', { name: 'Project settings' })).toBeVisible();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(body.queryByRole('dialog', { name: 'Project settings' })).toBeNull()
+    );
   },
 };
 
