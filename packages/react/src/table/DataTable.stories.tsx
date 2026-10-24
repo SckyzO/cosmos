@@ -207,10 +207,12 @@ export const ColumnFilterOpensBeforeAnyFilter: Story = {
     // open the dropdown with its options.
     const [firstFilter] = canvas.getAllByRole('button', { name: /^Filter / });
     await userEvent.click(firstFilter);
-    await expect(canvas.getByPlaceholderText('Search…')).toBeInTheDocument();
-    const [firstOption] = canvas.getAllByRole('checkbox');
+    // The dropdown is queried from the whole page, wherever it renders.
+    const page = within(document.body);
+    await expect(page.getByPlaceholderText('Search…')).toBeInTheDocument();
+    const [firstOption] = page.getAllByRole('checkbox');
     await userEvent.click(firstOption);
-    await expect(canvas.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
+    await expect(page.getByRole('button', { name: /Clear \(1 selected\)/ })).toBeInTheDocument();
   },
 };
 

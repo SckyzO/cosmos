@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectFocusBorder,
   expectPlaceholderContrast,
@@ -312,6 +312,6 @@ export const OpenStateDefaultOrControlled: Story = {
     await userEvent.click(held);
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
     await expect(held).toHaveAttribute('aria-expanded', 'false');
-    await expect(canvas.queryByRole('listbox')).toBeNull();
+    await expect(within(document.body).queryByRole('listbox')).toBeNull();
   },
 };

@@ -16,6 +16,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Tooltips are queried from the whole page, wherever they render.
+const page = within(document.body);
+
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-12 text-[var(--color-text-base)]">{children}</div>
 );
@@ -108,7 +111,7 @@ export const KeyboardFocusShowsTooltip: Story = {
   ),
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Delete' });
-    const tip = canvas.getByRole('tooltip');
+    const tip = page.getByRole('tooltip');
     await expect(tip).not.toBeVisible();
 
     await userEvent.tab();
@@ -134,7 +137,7 @@ export const EscapeClosesHoveredTooltip: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    const tip = canvas.getByRole('tooltip');
+    const tip = page.getByRole('tooltip');
     await userEvent.hover(canvas.getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(tip).toBeVisible());
     await userEvent.keyboard('{Escape}');
@@ -153,7 +156,7 @@ export const HelpIconOpensOnFocus: Story = {
     await userEvent.tab();
     const help = canvas.getByRole('button', { name: 'Help' });
     await expect(help).toHaveFocus();
-    await waitFor(() => expect(canvas.getByRole('tooltip')).toBeVisible());
+    await waitFor(() => expect(page.getByRole('tooltip')).toBeVisible());
     await expect(help).toHaveAccessibleDescription('Share of failed requests allowed this month.');
   },
 };
@@ -189,8 +192,8 @@ export const IntentColorsTheTooltip: Story = {
       </div>
     </Wrap>
   ),
-  play: async ({ canvas }) => {
-    const box = (label: string) => canvas.getByText(label);
+  play: async () => {
+    const box = (label: string) => page.getByText(label);
     const arrow = (label: string) => box(label).querySelector('[aria-hidden]')!;
 
     await expect(box('dark tip')).toHaveClass('bg-gray-900', 'text-white');
@@ -244,7 +247,7 @@ export const WithShortcut: Story = {
   play: async ({ canvas }) => {
     const save = canvas.getByRole('button', { name: 'Save' });
     await userEvent.hover(save);
-    const tip = canvas.getAllByRole('tooltip')[0];
+    const tip = page.getAllByRole('tooltip')[0];
     await waitFor(() => expect(tip).toBeVisible());
     const keys = [...tip.querySelectorAll('kbd')].map((k) => k.textContent);
     await expect(keys).toEqual(['⌘', 'S']);
@@ -269,10 +272,10 @@ export const WithTitle: Story = {
       </div>
     </Wrap>
   ),
-  play: async ({ canvas }) => {
+  play: async () => {
     await userEvent.tab();
-    const tip = within(canvas.getByRole('tooltip'));
-    await waitFor(() => expect(canvas.getByRole('tooltip')).toBeVisible());
+    const tip = within(page.getByRole('tooltip'));
+    await waitFor(() => expect(page.getByRole('tooltip')).toBeVisible());
     await expect(tip.getByText('Error budget')).toHaveClass('font-semibold');
   },
 };
@@ -302,7 +305,7 @@ export const DelayedWithoutArrow: Story = {
   ),
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Refresh' });
-    const tip = canvas.getByRole('tooltip', { name: /Refresh the data/ });
+    const tip = page.getByRole('tooltip', { name: /Refresh the data/ });
     await expect(tip.querySelector('[aria-hidden]')).toBeNull();
 
     // Shows only after the delay.
@@ -321,7 +324,7 @@ export const DelayedWithoutArrow: Story = {
     await userEvent.hover(trigger);
     await userEvent.keyboard('{Escape}');
     canvas.getByRole('button', { name: 'Export' }).focus();
-    await waitFor(() => expect(canvas.getByRole('tooltip', { name: /Export/ })).toBeVisible());
+    await waitFor(() => expect(page.getByRole('tooltip', { name: /Export/ })).toBeVisible());
     await expect(tip).not.toBeVisible();
   },
 };
@@ -351,7 +354,7 @@ export const OpenStateDefaultOrControlled: Story = {
     </Wrap>
   ),
   play: async ({ args, canvas }) => {
-    const own = canvas.getByRole('tooltip', { name: 'Own tip' });
+    const own = page.getByRole('tooltip', { name: 'Own tip' });
     await waitFor(() => expect(own).toBeVisible());
     // Escape dismisses a tooltip the pointer did not open (WCAG 1.4.13).
     await userEvent.keyboard('{Escape}');
@@ -359,7 +362,7 @@ export const OpenStateDefaultOrControlled: Story = {
     await expect(args.onOpenChange).toHaveBeenCalledWith(false);
     await waitFor(() => expect(own).not.toBeVisible());
 
-    const held = canvas.getByRole('tooltip', { name: 'Held tip' });
+    const held = page.getByRole('tooltip', { name: 'Held tip' });
     await userEvent.hover(canvas.getByRole('button', { name: 'Held' }));
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
     await expect(held).not.toBeVisible();
