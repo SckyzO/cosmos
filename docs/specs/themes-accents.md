@@ -207,7 +207,7 @@ Checked thresholds (≥ 4.5 unless stated otherwise):
 - For each accent × light theme: `brand-600` on the 3 surfaces and on `brand-50`.
 - For each accent × dark theme: `brand-400` on the 3 surfaces.
 - For each accent: white text (the theme's `--color-white`, cream `oklch(99.3% 0.008 85)` on `sand`) on `brand-500`.
-- For each accent × theme: `brand-500`, the focus indicator, on the 3 surfaces plus `--color-bg-panel` and `--color-bg-elevated`, ≥ 3 (WCAG 1.4.11). `violet`, `purple`, `rose` and `red` have a `brand-500` just light enough to clear 3:1 on `deep-blue` raised while white text stays above 4.8.
+- For each accent × theme: `brand-500`, the focus indicator, on the 3 surfaces plus `--color-bg-panel`, `--color-bg-elevated`, `gray-800` and `gray-900` (the dark grays that stay dark in a light theme, as a `Navbar` with `theme="dark"`), ≥ 3 (WCAG 1.4.11). `violet`, `purple`, `rose` and `red` have a `brand-500` just light enough to clear 3:1 on `deep-blue` raised while white text stays above 4.8.
 - `dark` structure (non-WCAG thresholds, so surfaces don't blend into each other): card ↔ raised ≥ 1.15; `gray-700` on card ≥ 1.6.
 
 Before the contrast checks, the script reads `packages/react/src/settings/appearance.ts` as text and **fails** when it disagrees with the CSS: every theme and accent of `COSMOS_THEMES` / `COSMOS_ACCENTS` must exist in the CSS and vice versa, a theme's `dark` flag must match the classes the `dark:` variant of `tailwind-tokens.css` covers, and an accent's `hex` must equal its `brand-500`. A theme is `:root` or a class block of `css-vars.css` that sets `--color-bg-base`.
