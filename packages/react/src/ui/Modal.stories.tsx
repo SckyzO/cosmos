@@ -72,7 +72,7 @@ export const Confirmation: Story = {
             <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" size="sm" onClick={() => setOpen(false)}>
+            <Button intent="danger" size="sm" onClick={() => setOpen(false)}>
               Delete
             </Button>
           </Modal.Footer>
@@ -167,7 +167,7 @@ export const AlertDanger: Story = {
     return (
       <Wrap>
         <SectionCard title="Danger alert (destructive)">
-          <Button variant="danger" onClick={() => setOpen(true)}>
+          <Button intent="danger" onClick={() => setOpen(true)}>
             Delete account
           </Button>
         </SectionCard>
@@ -234,7 +234,7 @@ export const AlertHorizontalDanger: Story = {
     return (
       <Wrap>
         <SectionCard title="Horizontal alert with gray footer">
-          <Button variant="danger" onClick={() => setOpen(true)}>
+          <Button intent="danger" onClick={() => setOpen(true)}>
             Deactivate account
           </Button>
         </SectionCard>
@@ -335,7 +335,7 @@ export const AccessibleNameAndInitialFocus: Story = {
       <Modal.Body>This cannot be undone.</Modal.Body>
       <Modal.Footer>
         <Button>Cancel</Button>
-        <Button variant="danger">Delete</Button>
+        <Button intent="danger">Delete</Button>
       </Modal.Footer>
     </Modal>
   ),
@@ -434,7 +434,7 @@ const OpenFromButton = () => {
           <Button variant="secondary" onClick={close}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={close}>
+          <Button intent="danger" onClick={close}>
             Delete
           </Button>
         </Modal.Footer>

@@ -25,7 +25,7 @@ export const DangerSubmit: Story = {
   args: {
     onCancel: fn(),
     submitLabel: 'Delete account',
-    submitVariant: 'danger',
+    submitIntent: 'danger',
   },
 };
 

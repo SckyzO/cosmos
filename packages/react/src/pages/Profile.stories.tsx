@@ -203,7 +203,8 @@ const ClearCacheSection = () => {
           </p>
         </div>
         <Button
-          variant={cleared ? 'secondary' : 'danger'}
+          variant={cleared ? 'secondary' : 'primary'}
+          intent={cleared ? 'brand' : 'danger'}
           icon={Trash2}
           onClick={() => setOpen(true)}
         >

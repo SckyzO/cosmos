@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
-import { Button, type ButtonVariant } from '../ui/Button';
+import { Button, type ButtonIntent, type ButtonVariant } from '../ui/Button';
 
 export type FormFooterAlign = 'right' | 'between';
 
@@ -14,8 +14,10 @@ export type FormFooterProps = {
   submitting?: boolean;
   /** Disable the submit button (e.g. form invalid / not dirty). */
   submitDisabled?: boolean;
-  /** Visual variant for the submit button. Default `primary`. */
+  /** Emphasis of the submit button. Default `primary`. */
   submitVariant?: ButtonVariant;
+  /** Meaning of the submit button. `danger` for a destructive submit. Default `brand`. */
+  submitIntent?: ButtonIntent;
   /** Form name attribute (used by submit when the button is outside the form). */
   formId?: string;
   /** Where to render the buttons. Default `right`. */
@@ -36,6 +38,7 @@ export const FormFooter = ({
   submitting = false,
   submitDisabled = false,
   submitVariant = 'primary',
+  submitIntent = 'brand',
   formId,
   align = 'right',
   bordered = true,
@@ -53,6 +56,7 @@ export const FormFooter = ({
       <Button
         type="submit"
         variant={submitVariant}
+        intent={submitIntent}
         loading={submitting}
         disabled={submitDisabled || submitting}
         form={formId}

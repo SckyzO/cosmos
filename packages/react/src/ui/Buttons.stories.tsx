@@ -40,7 +40,7 @@ export const Variants: Story = {
               <Button variant="ghost" size={size}>
                 Ghost
               </Button>
-              <Button variant="danger" size={size}>
+              <Button intent="danger" size={size}>
                 Danger
               </Button>
             </div>
@@ -63,7 +63,7 @@ export const WithIcons: Story = {
           <Button variant="ghost" icon={ArrowRight} iconPosition="right">
             Continue
           </Button>
-          <Button variant="danger" icon={Trash2}>
+          <Button intent="danger" icon={Trash2}>
             Delete
           </Button>
         </div>
@@ -290,7 +290,7 @@ export const CircleShapeMakesSquare: Story = {
 export const DangerContrastInLight: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
-  args: { variant: 'danger', children: 'Delete' },
+  args: { intent: 'danger', children: 'Delete' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByRole('button', { name: 'Delete' }));
   },

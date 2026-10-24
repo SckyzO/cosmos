@@ -53,7 +53,7 @@ export const Connected: Story = {
     status: 'connected',
     category: 'Communication',
     actionLabel: 'Disconnect',
-    actionVariant: 'danger',
+    actionIntent: 'danger',
     secondaryLabel: 'Configure',
     onAction: fn(),
     onSecondary: fn(),
@@ -184,7 +184,7 @@ export const Grid: Story = {
             category={i.category}
             status={i.status}
             actionLabel={i.status === 'connected' ? 'Disconnect' : 'Connect'}
-            actionVariant={i.status === 'connected' ? 'danger' : 'primary'}
+            actionIntent={i.status === 'connected' ? 'danger' : 'brand'}
             secondaryLabel="Details"
             onAction={fn()}
             onSecondary={fn()}
@@ -208,7 +208,7 @@ export const Interactive: Story = {
           category="Communication"
           status={connected ? 'connected' : 'available'}
           actionLabel={connected ? 'Disconnect' : 'Connect'}
-          actionVariant={connected ? 'danger' : 'primary'}
+          actionIntent={connected ? 'danger' : 'brand'}
           loading={loading}
           onAction={() => {
             setLoading(true);

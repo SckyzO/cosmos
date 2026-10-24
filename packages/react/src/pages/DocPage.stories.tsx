@@ -332,7 +332,7 @@ const ButtonDocBody = () => {
                   <Button variant="secondary">Secondary</Button>
                   <Button variant="ghost">Ghost</Button>
                   <Button variant="soft">Soft</Button>
-                  <Button variant="danger">Danger</Button>
+                  <Button intent="danger">Danger</Button>
                 </PreviewBox>
               </div>
             </section>

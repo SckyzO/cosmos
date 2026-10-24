@@ -247,7 +247,7 @@ export const WithBulkActions: Story = {
             <Button variant="secondary" size="sm" icon={Archive}>
               Archive
             </Button>
-            <Button variant="danger" size="sm" icon={Trash2}>
+            <Button intent="danger" size="sm" icon={Trash2}>
               Delete
             </Button>
           </>
@@ -297,7 +297,7 @@ export const SelectionBulkSearchCombined: Story = {
                 <Button variant="ghost" size="sm" icon={Download}>
                   Export ({selected.length})
                 </Button>
-                <Button variant="danger" size="sm" icon={Trash2}>
+                <Button intent="danger" size="sm" icon={Trash2}>
                   Delete
                 </Button>
               </>
