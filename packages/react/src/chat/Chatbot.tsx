@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { MessageCircle, RotateCcw, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePortalFocus } from '../ui/overlayA11y';
+import { useOverlayLayer, usePortalFocus } from '../ui/overlayA11y';
 import { useControllableState } from '../hooks/useControllableState';
 import { ChatComposer } from './ChatComposer';
 import { ChatMessage, type ChatMessageStatus } from './ChatMessage';
@@ -105,6 +105,8 @@ export const Chatbot = ({
     triggerRef: launcherRef,
     initialFocus: (panel) => panel.querySelector('textarea'),
   });
+  // Escape closes it, unless an overlay opened above it takes it.
+  useOverlayLayer(open, () => setOpen(false));
 
   const unread = !open && unreadCount > 0;
 

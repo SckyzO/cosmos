@@ -13,7 +13,13 @@ import {
   type AnchorSide,
 } from '../hooks/useAnchorPosition';
 import { mergeRefs } from './mergeRefs';
-import { useOutsideClick, usePortalFocus, type PortalFocusOptions } from './overlayA11y';
+import {
+  OverlayLayerProvider,
+  useOutsideClick,
+  useOverlayLayer,
+  usePortalFocus,
+  type PortalFocusOptions,
+} from './overlayA11y';
 
 // Internal to the package: the floating panel of Popover, UserMenu,
 // NotificationsPanel, DatePicker, Dropdown, Combobox, the table column filter
@@ -39,7 +45,10 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' |
    * panel open on mount (which doesn't take focus) from one opened later.
    */
   open: boolean;
-  /** Closes the panel: a mousedown outside it, and unless `moveFocus` is off, Escape and focus leaving it. */
+  /**
+   * Closes the panel: Escape while it is the top overlay (`useOverlayLayer`), a mousedown
+   * outside it, and unless `moveFocus` is off, focus leaving it.
+   */
   onClose: () => void;
   /**
    * The control that opens the panel. Focus goes back to it on close, a mousedown on it is
@@ -52,7 +61,7 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' |
   /**
    * Focus moves into the panel on open and back to the trigger on close (`usePortalFocus`).
    * Default true; false for a panel whose trigger keeps focus, a combobox's listbox, which then
-   * handles Escape and Tab itself.
+   * handles Tab itself.
    */
   moveFocus?: boolean;
   /** Element to focus on open. Default: the first focusable element, else the panel. */
@@ -64,9 +73,10 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' |
 /**
  * A non-modal panel portaled to the end of `<body>`, so no `overflow: hidden` ancestor clips
  * it, kept next to its anchor in fixed position (`useAnchorPosition`), with the focus handling
- * of `usePortalFocus` and the outside click of `useOutsideClick`. Renders nothing while closed
- * or before the anchor is measured. It opens where `placement` says, flipped to the other side
- * or moved along the anchor when the viewport would cut it there.
+ * of `usePortalFocus`, the outside click of `useOutsideClick` and a place in the overlay stack
+ * (`useOverlayLayer`). Renders nothing while closed or before the anchor is measured. It opens
+ * where `placement` says, flipped to the other side or moved along the anchor when the
+ * viewport would cut it there.
  */
 export function FloatingPanel({
   open,
@@ -95,18 +105,21 @@ export function FloatingPanel({
     onOutsideClick: onClose,
     insideRefs: [triggerRef, anchorRef],
   });
+  const layer = useOverlayLayer(open, onClose);
   if (!open || !anchored) return null;
   return createPortal(
-    <div
-      {...rest}
-      ref={ref}
-      onFocusCapture={onFocusCapture}
-      {...outsideProps}
-      style={{ ...anchored, ...style }}
-      className={clsx('fixed', FLOATING_PANEL_Z, className)}
-    >
-      {typeof children === 'function' ? children(side) : children}
-    </div>,
+    <OverlayLayerProvider value={layer}>
+      <div
+        {...rest}
+        ref={ref}
+        onFocusCapture={onFocusCapture}
+        {...outsideProps}
+        style={{ ...anchored, ...style }}
+        className={clsx('fixed', FLOATING_PANEL_Z, className)}
+      >
+        {typeof children === 'function' ? children(side) : children}
+      </div>
+    </OverlayLayerProvider>,
     document.body
   );
 }

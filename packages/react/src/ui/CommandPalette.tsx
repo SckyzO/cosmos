@@ -48,6 +48,9 @@ const CommandPaletteRoot = ({
     return () => document.removeEventListener('keydown', handler);
   }, [hotkey, open, onOpenChange]);
 
+  // Escape: the Radix dialog under cmdk closes in the capture phase and prevents
+  // the default, which the overlay stack (`useOverlayLayer`) takes as handled, so
+  // one Escape closes the palette and leaves a modal under it open.
   return (
     <Command.Dialog
       open={open}

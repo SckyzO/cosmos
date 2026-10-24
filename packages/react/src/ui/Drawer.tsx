@@ -3,7 +3,13 @@ import { X } from 'lucide-react';
 import { useId, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
+import {
+  DialogTitleProvider,
+  OverlayLayerProvider,
+  useDialogTitleId,
+  useFocusTrap,
+  useOverlayLayer,
+} from './overlayA11y';
 import { useIsClient } from '../hooks/useIsClient';
 
 export type DrawerSide = 'left' | 'right';
@@ -87,7 +93,8 @@ const Root = ({
     if (open) setHidden(false);
   }
 
-  useEscapeKey(open, onClose);
+  // Escape closes the drawer, unless an overlay opened above it takes it.
+  const layer = useOverlayLayer(open, onClose);
 
   if (!isClient) return null;
 
@@ -136,7 +143,9 @@ const Root = ({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabel ? undefined : titleId}
       >
-        <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+        <OverlayLayerProvider value={layer}>
+          <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+        </OverlayLayerProvider>
         {withBackdrop && closeOutside && (
           <button
             type="button"

@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 import { Kbd } from '../typography/Kbd';
 import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
+import { useOverlayLayer } from './overlayA11y';
 import { useAnchorPosition } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
@@ -142,23 +143,21 @@ export const Tooltip = ({
     setOpen(false);
   };
 
-  // Escape closes it wherever focus is, even when it was opened by the pointer
-  // or by the host (WCAG 1.4.13), and cancels a pending show. Capture phase, so
-  // a surrounding modal doesn't also close.
+  // Escape hides it wherever focus is, even when it was opened by the pointer or
+  // by the host (WCAG 1.4.13). Shown, it is an overlay of the stack: a modal
+  // around it stays open, and an overlay opened above it closes first.
+  useOverlayLayer(open, () => setOpenState(false));
+  // Escape also cancels a show still waiting for `delay`.
   useEffect(() => {
-    if (!engaged && !open) return;
+    if (!engaged) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       clearTimeout(timer.current);
       setEngaged(false);
-      if (open) {
-        e.stopPropagation();
-        setOpenState(false);
-      }
     };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [engaged, open, setOpenState]);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [engaged]);
   const {
     style: anchored,
     side,
