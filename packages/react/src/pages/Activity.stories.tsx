@@ -22,7 +22,7 @@ import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { PageHeader } from '../templates/PageHeader';
 import { placeholderAvatar } from '../storybook-avatars';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-helpers';
 
 // Team activity log: an alternating Timeline grouped by day, with a toggle
 // between this month and the whole history. Composed from existing Cosmos
@@ -172,8 +172,6 @@ const ActivityPage = () => (
   <Shell
     topbar={
       <Topbar
-        sidebarCollapsed={false}
-        onCollapsedChange={() => {}}
         rightActions={
           <>
             <button
@@ -234,4 +232,12 @@ export const AllTimeShowsOlderMonths: Story = {
     await userEvent.click(canvas.getByRole('radio', { name: 'This month' }));
     await expect(canvas.queryByText('Project Cosmos created')).toBeNull();
   },
+};
+
+/** The Topbar hamburger collapses the sidebar and expands it again: Shell wires it. */
+export const HamburgerTogglesTheSidebar: Story = {
+  ...Default,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => expectHamburgerTogglesSidebar(canvas),
 };
