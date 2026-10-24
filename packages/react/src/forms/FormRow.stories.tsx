@@ -7,7 +7,6 @@ import { SelectInput } from '../ui/SelectInput';
 import { NumberInput } from './NumberInput';
 import { SearchInput } from './SearchInput';
 import { SegmentedControl } from './SegmentedControl';
-import { StepperInput } from './StepperInput';
 
 const meta = {
   title: 'Forms/Form Row',
@@ -91,7 +90,7 @@ export const NamesAndDescribesItsControl: Story = {
         <NumberInput value={3} onChange={() => {}} />
       </FormRow>
       <FormRow label="Timeout" description="Seconds per request">
-        <StepperInput value={5} onChange={() => {}} />
+        <NumberInput controls="stacked" value={5} onChange={() => {}} />
       </FormRow>
       <FormRow label="Filter" description="Match on host name">
         <SearchInput value="" onChange={() => {}} />
