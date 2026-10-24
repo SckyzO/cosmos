@@ -9,7 +9,9 @@ const meta = {
   component: NumberInput,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
-  args: { value: 0, onChange: () => {} },
+  // A bare NumberInput has no label of its own: the stories name it, as a form row or an
+  // `aria-label` does in an app.
+  args: { value: 0, onChange: () => {}, 'aria-label': 'Value' },
 } satisfies Meta<typeof NumberInput>;
 
 export default meta;
@@ -27,7 +29,15 @@ export const Controlled: Story = {
     const [v, setV] = useState(60);
     return (
       <div>
-        <NumberInput value={v} onChange={setV} min={1} max={3600} step={1} unit="s" />
+        <NumberInput
+          aria-label="Timeout"
+          value={v}
+          onChange={setV}
+          min={1}
+          max={3600}
+          step={1}
+          unit="s"
+        />
         <p className="mt-3 text-xs text-[var(--color-text-muted)]">
           Value: <code>{v}</code>
         </p>
@@ -79,6 +89,7 @@ export const StackedControlled: Story = {
     return (
       <div>
         <NumberInput
+          aria-label="Timeout"
           controls="stacked"
           value={v}
           onChange={setV}

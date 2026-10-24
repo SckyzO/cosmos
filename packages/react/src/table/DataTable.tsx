@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Search, X } from 'lucide-react';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { Pagination } from './Pagination';
@@ -11,6 +11,7 @@ import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
+import { useOverflows } from '../hooks/useOverflows';
 import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
@@ -49,6 +50,15 @@ export type DataTableProps<T> = {
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
 
+  /**
+   * Names the table ("Recent alerts"). While the rows scroll, the scrolling area is a region
+   * with the same name. Without a name (and without `aria-labelledby`) it is still focusable
+   * while it scrolls, but it is not a region: a region with no name is no landmark.
+   */
+  'aria-label'?: string;
+  /** Id of the element that names the table, in place of `aria-label`. */
+  'aria-labelledby'?: string;
+
   className?: string;
 };
 
@@ -62,7 +72,10 @@ const ALIGN_CELL = {
  * DataTable — opinionated data table with sticky header, per-column sort and
  * filter, active filter chips bar, pagination, integrated loading / error /
  * empty states, optional row selection with bulk actions, and an optional
- * global search bar.
+ * global search bar. Give the container a height (`className="max-h-96"`) to
+ * scroll the rows under the header: while they scroll, the scrolling area takes
+ * the keyboard focus, so the arrow keys scroll it even when no cell holds a
+ * control.
  */
 export const DataTable = <T,>({
   rows,
@@ -85,8 +98,14 @@ export const DataTable = <T,>({
   defaultSearchValue,
   onSearchChange,
   searchPlaceholder = 'Search…',
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   className,
 }: DataTableProps<T>) => {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scrolls = useOverflows(scrollerRef);
+  // A region needs a name to be a landmark, and the table's own content is no name for it.
+  const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
   const [filters, setFilters] = useState<Record<string, Set<string>>>({});
@@ -278,7 +297,16 @@ export const DataTable = <T,>({
         onClearAll={clearAllFilters}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollerRef}
+        // Focusable only while it scrolls: a scroll container with no control inside is out of
+        // reach of the keyboard, and one that fits would add a tab stop that does nothing.
+        tabIndex={scrolls ? 0 : undefined}
+        role={region ? 'region' : undefined}
+        aria-label={region ? ariaLabel : undefined}
+        aria-labelledby={region ? ariaLabelledBy : undefined}
+        className="focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset"
+      >
         {loading ? (
           <div className="flex h-full items-center justify-center py-10">
             <LoadingState />
@@ -292,7 +320,11 @@ export const DataTable = <T,>({
             <EmptyState title={emptyTitle} description={emptyDescription} />
           </div>
         ) : (
-          <table className="w-full table-fixed">
+          <table
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
+            className="w-full table-fixed"
+          >
             <colgroup>
               {selectable && <col style={{ width: '44px' }} />}
               {columns.map((c) => (

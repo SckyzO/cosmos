@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import type { DateRange, Matcher } from 'react-day-picker';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { fr, ja } from 'react-day-picker/locale';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Calendar } from './Calendar';
 
 const meta = {
@@ -133,6 +134,78 @@ const PickADay = ({
       footer={date ? `Selected: ${ymd(date)}` : 'Pick a day.'}
     />
   );
+};
+
+// The words of a name, as a screen reader or a voice command would take them.
+const wordsOf = (name: string) => name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+/**
+ * Every day button holds the number it shows as a word of its name (WCAG 2.5.3), with the full
+ * date of the calendar's locale after it: "click 15" works, and a screen reader still reads the
+ * weekday, the month and the year.
+ */
+export const DayNamesHoldTheVisibleNumber: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PickADay />,
+  play: async ({ canvas }) => {
+    const days = canvas.getAllByRole('button').filter((b) => /^\d+$/.test(b.textContent ?? ''));
+    await expect(days.length).toBeGreaterThanOrEqual(31);
+    for (const day of days) {
+      await expect(wordsOf(day.getAttribute('aria-label') ?? '')).toContain(day.textContent);
+    }
+    await expect(canvas.getByRole('button', { name: '15, Friday, May 15th, 2026' })).toBeVisible();
+    // Today keeps its own part of the name.
+    await expect(
+      canvas.getByRole('button', { name: '7, Today, Thursday, May 7th, 2026' })
+    ).toBeVisible();
+  },
+};
+
+/** With no `mode` the calendar only displays: its cells hold the number and are named the same way. */
+export const ReadOnlyDayNamesHoldTheVisibleNumber: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Calendar defaultMonth={MAY} today={TODAY} />,
+  play: async ({ canvas }) => {
+    const cells = canvas.getAllByRole('gridcell').filter((c) => /^\d+$/.test(c.textContent ?? ''));
+    await expect(cells).toHaveLength(31);
+    for (const cell of cells) {
+      await expect(wordsOf(cell.getAttribute('aria-label') ?? '')).toContain(cell.textContent);
+    }
+    await expect(
+      canvas.getByRole('gridcell', { name: '15, Friday, May 15th, 2026' })
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('gridcell', { name: '7, Today, Thursday, May 7th, 2026' })
+    ).toBeVisible();
+  },
+};
+
+/**
+ * The names follow the locale. A date that writes the number as a word of its own is left alone
+ * (French); one that glues it to other characters, as Japanese does, gets the number in front.
+ */
+export const DayNamesFollowTheLocale: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <div role="group" aria-label="Français">
+        <Calendar mode="single" locale={fr} defaultMonth={MAY} today={TODAY} />
+      </div>
+      <div role="group" aria-label="日本語">
+        <Calendar mode="single" locale={ja} defaultMonth={MAY} today={TODAY} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const french = within(canvas.getByRole('group', { name: 'Français' }));
+    await expect(french.getByRole('button', { name: 'vendredi 8 mai 2026' })).toBeVisible();
+    await expect(
+      french.getByRole('button', { name: "Aujourd'hui, jeudi 7 mai 2026" })
+    ).toBeVisible();
+
+    const japanese = within(canvas.getByRole('group', { name: '日本語' }));
+    await expect(japanese.getByRole('button', { name: '8, 2026年5月8日金曜日' })).toBeVisible();
+  },
 };
 
 /** A click on a day selects it, marks its cell and replaces the previous pick. */
