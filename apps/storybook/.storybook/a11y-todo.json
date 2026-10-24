@@ -67,7 +67,6 @@
   "layout-card--with-link": ["color-contrast"],
   "layout-card--with-list": ["color-contrast"],
   "layout-card--with-tabs": ["color-contrast"],
-  "lists-narrow-stacked-list--sticky-headings": ["scrollable-region-focusable"],
   "overlays-command-palette--group-heading-contrast-in-dark": ["aria-required-children"],
   "overlays-command-palette--group-heading-contrast-in-deep-blue": [
     "aria-required-children",

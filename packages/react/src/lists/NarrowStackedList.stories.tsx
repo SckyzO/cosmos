@@ -122,8 +122,15 @@ export const Narrow: Story = {
 };
 
 export const StickyHeadings: Story = {
+  // The list does not scroll: this wrapper does. Nothing in it takes focus, so the wrapper
+  // does, as a named region, to be scrolled from the keyboard.
   render: () => (
-    <div className="max-h-96 max-w-md overflow-y-auto bg-white dark:bg-gray-900">
+    <div
+      role="region"
+      aria-label="People"
+      tabIndex={0}
+      className="focus-visible:focus-indicator max-h-96 max-w-md overflow-y-auto bg-white focus-visible:ring-inset dark:bg-gray-900"
+    >
       <NarrowStackedList>
         {Object.entries(PEOPLE_GROUPED).map(([letter, group]) => (
           <Fragment key={letter}>
