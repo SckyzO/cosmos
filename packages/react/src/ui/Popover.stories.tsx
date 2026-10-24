@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { HelpCircle, MoreVertical } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { Popover, type PopoverPosition } from './Popover';
@@ -296,6 +296,42 @@ export const DefaultOpenPanelsStayOpen: Story = {
   play: async () => {
     await waitFor(() => expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(2));
     await expect(document.activeElement).toBe(document.body);
+  },
+};
+
+/**
+ * A mousedown outside closes the panel, and the click still reaches what is under the
+ * pointer: no backdrop swallows it. A click inside keeps the panel open.
+ */
+export const OutsideClickClosesAndGoesThrough: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOutsideClick: fn() } as never,
+  render: (args) => (
+    <div className="flex h-48 items-center justify-center gap-24">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Open</Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <button type="button">Inside</button>
+        </Popover.Content>
+      </Popover>
+      <button
+        type="button"
+        onClick={(args as unknown as { onOutsideClick: () => void }).onOutsideClick}
+      >
+        Outside
+      </button>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const extra = args as unknown as { onOutsideClick: ReturnType<typeof fn> };
+    const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
+    await userEvent.click(canvas.getByRole('button', { name: 'Open' }));
+    await waitFor(() => expect(dialog()).not.toBeNull());
+    await userEvent.click(within(dialog()!).getByRole('button', { name: 'Inside' }));
+    await expect(dialog()).not.toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(dialog()).toBeNull());
+    await expect(extra.onOutsideClick).toHaveBeenCalledTimes(1);
   },
 };
 
