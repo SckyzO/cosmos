@@ -26,8 +26,8 @@ export type ShellProps = {
    * component and `defaultSidebarCollapsed` is ignored.
    */
   sidebarCollapsed?: boolean;
-  /** Fired whenever the collapsed state toggles. */
-  onSidebarToggle?: (collapsed: boolean) => void;
+  /** Fired when the user collapses or expands the sidebar, with the new collapsed state. */
+  onCollapsedChange?: (collapsed: boolean) => void;
   /**
    * Where the collapse control lives. `topbar` (default): the Topbar's
    * hamburger. `sidebar`: a button at the bottom of the Sidebar, and the
@@ -47,7 +47,7 @@ export type ShellProps = {
  * Shell manages it internally.
  *
  * Composition is automatic: clone the topbar/sidebar elements you pass in
- * and inject `sidebarCollapsed` + `onToggleSidebar` / `collapsed` props.
+ * and inject `sidebarCollapsed` + `onCollapsedChange` / `collapsed` props.
  * You only need to write
  *
  *     <Shell topbar={<Topbar pageTitle="…" />} sidebar={<Sidebar>…</Sidebar>}>
@@ -62,17 +62,17 @@ export const Shell = ({
   secondaryWidthClassName = 'w-80',
   defaultSidebarCollapsed = false,
   sidebarCollapsed: controlledCollapsed,
-  onSidebarToggle,
+  onCollapsedChange,
   collapseControl = 'topbar',
   className,
 }: ShellProps) => {
   const [internalCollapsed, setInternalCollapsed] = useState(defaultSidebarCollapsed);
   const collapsed = controlledCollapsed ?? internalCollapsed;
 
-  const handleToggle = () => {
-    const next = !collapsed;
+  // The Topbar hamburger and the Sidebar button both pass the state to move to.
+  const handleCollapsedChange = (next: boolean) => {
     if (controlledCollapsed === undefined) setInternalCollapsed(next);
-    onSidebarToggle?.(next);
+    onCollapsedChange?.(next);
   };
 
   // Inject collapsed state into the children — keep the consumer-supplied
@@ -88,7 +88,7 @@ export const Shell = ({
               { sidebarCollapsed: topbar.props.sidebarCollapsed ?? null }
             : {
                 sidebarCollapsed: topbar.props.sidebarCollapsed ?? collapsed,
-                onToggleSidebar: topbar.props.onToggleSidebar ?? handleToggle,
+                onCollapsedChange: topbar.props.onCollapsedChange ?? handleCollapsedChange,
               }
         )
       : topbar;
@@ -97,7 +97,7 @@ export const Shell = ({
     ? cloneElement(sidebar, {
         collapsed: sidebar.props.collapsed ?? collapsed,
         ...(inSidebar && {
-          onCollapsedChange: sidebar.props.onCollapsedChange ?? handleToggle,
+          onCollapsedChange: sidebar.props.onCollapsedChange ?? handleCollapsedChange,
         }),
       })
     : sidebar;

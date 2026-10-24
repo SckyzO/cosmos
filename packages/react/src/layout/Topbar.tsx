@@ -5,13 +5,16 @@ export type TopbarProps = {
   /** Current page title (≠ site name — that lives in `Sidebar.Brand`). */
   pageTitle?: ReactNode;
   /**
-   * Whether the sidebar is currently collapsed. Pass alongside `onToggleSidebar`
+   * Whether the sidebar is currently collapsed. Pass alongside `onCollapsedChange`
    * to render a built-in hamburger button. Pass `null` to hide the button
    * entirely (e.g. for pages without a sidebar).
    */
   sidebarCollapsed?: boolean | null;
-  /** Callback fired when the built-in hamburger is clicked. */
-  onToggleSidebar?: () => void;
+  /**
+   * Fired when the built-in hamburger is clicked, with the collapsed state the
+   * sidebar should take: `!sidebarCollapsed`. Like `Sidebar.onCollapsedChange`.
+   */
+  onCollapsedChange?: (collapsed: boolean) => void;
   /** Extra slot rendered between the hamburger and the page title. */
   leftActions?: ReactNode;
   /** Center area — typically search, breadcrumb, or empty. */
@@ -37,7 +40,7 @@ export type TopbarProps = {
 export const Topbar = ({
   pageTitle,
   sidebarCollapsed = null,
-  onToggleSidebar,
+  onCollapsedChange,
   leftActions,
   center,
   rightActions,
@@ -51,10 +54,10 @@ export const Topbar = ({
     )}
   >
     {/* Built-in sidebar collapse/expand button — hidden if sidebarCollapsed is null. */}
-    {sidebarCollapsed !== null && onToggleSidebar && (
+    {sidebarCollapsed !== null && onCollapsedChange && (
       <button
         type="button"
-        onClick={onToggleSidebar}
+        onClick={() => onCollapsedChange(!sidebarCollapsed)}
         title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 dark:hover:bg-white/5"

@@ -35,7 +35,7 @@ export const WithHamburger: Story = {
       <Wrap>
         <Topbar
           sidebarCollapsed={collapsed}
-          onToggleSidebar={() => setCollapsed((v) => !v)}
+          onCollapsedChange={setCollapsed}
           pageTitle="Analytics Dashboard"
           rightActions={
             <>
@@ -60,7 +60,7 @@ export const WithCenterSearch: Story = {
       <Wrap>
         <Topbar
           sidebarCollapsed={collapsed}
-          onToggleSidebar={() => setCollapsed((v) => !v)}
+          onCollapsedChange={setCollapsed}
           pageTitle="Servers"
           center={
             <div className="mx-auto max-w-md">
@@ -95,10 +95,13 @@ export const WithoutHamburger: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** The hamburger calls `onToggleSidebar` by click, Enter and Space, and its label follows the state. */
-export const HamburgerFiresOnToggleSidebar: Story = {
+/**
+ * The hamburger calls `onCollapsedChange` with the next state by click, Enter and Space,
+ * and its label follows the state.
+ */
+export const HamburgerFiresOnCollapsedChange: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { onToggleSidebar: fn() },
+  args: { onCollapsedChange: fn() },
   render: function Render(args) {
     const [collapsed, setCollapsed] = useState(false);
     return (
@@ -106,9 +109,9 @@ export const HamburgerFiresOnToggleSidebar: Story = {
         {...args}
         pageTitle="Servers"
         sidebarCollapsed={collapsed}
-        onToggleSidebar={() => {
-          args.onToggleSidebar?.();
-          setCollapsed((v) => !v);
+        onCollapsedChange={(next) => {
+          args.onCollapsedChange?.(next);
+          setCollapsed(next);
         }}
       />
     );
@@ -117,27 +120,30 @@ export const HamburgerFiresOnToggleSidebar: Story = {
     await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(1);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
     const expand = canvas.getByRole('button', { name: 'Expand sidebar' });
     await expect(expand).toHaveAttribute('title', 'Expand sidebar');
 
     expand.focus();
     await userEvent.keyboard('{Enter}');
-    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(2);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(2);
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
     await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
     await userEvent.keyboard(' ');
-    await expect(args.onToggleSidebar).toHaveBeenCalledTimes(3);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(3);
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
     await expect(canvas.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
   },
 };
 
-/** The hamburger needs both a `sidebarCollapsed` state and an `onToggleSidebar`; `null` hides it. */
+/** The hamburger needs both a `sidebarCollapsed` state and an `onCollapsedChange`; `null` hides it. */
 export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
-      <Topbar pageTitle="No state" onToggleSidebar={() => {}} />
-      <Topbar pageTitle="State is null" sidebarCollapsed={null} onToggleSidebar={() => {}} />
+      <Topbar pageTitle="No state" onCollapsedChange={() => {}} />
+      <Topbar pageTitle="State is null" sidebarCollapsed={null} onCollapsedChange={() => {}} />
       <Topbar pageTitle="No handler" sidebarCollapsed={false} />
     </Wrap>
   ),
@@ -154,7 +160,7 @@ export const SlotsFollowTheLayoutOrder: Story = {
     <Wrap>
       <Topbar
         sidebarCollapsed={false}
-        onToggleSidebar={() => {}}
+        onCollapsedChange={() => {}}
         leftActions={<IconBtn icon={Search} label="Left action" />}
         pageTitle="Servers"
         center={<input aria-label="Center search" />}

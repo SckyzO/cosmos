@@ -173,7 +173,7 @@ const ActivityPage = () => (
     topbar={
       <Topbar
         sidebarCollapsed={false}
-        onToggleSidebar={() => {}}
+        onCollapsedChange={() => {}}
         rightActions={
           <>
             <button

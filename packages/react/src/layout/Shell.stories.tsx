@@ -95,7 +95,7 @@ const NavItems = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 // Story 1: Default — Shell owns the sidebar collapsed state
 //
-// Shell automatically threads `sidebarCollapsed` + `onToggleSidebar` into the
+// Shell automatically threads `sidebarCollapsed` + `onCollapsedChange` into the
 // Topbar (built-in hamburger) and `collapsed` into the Sidebar. The consumer
 // only writes the markup, no plumbing.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,7 +210,7 @@ export const Controlled: Story = {
     return (
       <Shell
         sidebarCollapsed={collapsed}
-        onSidebarToggle={setCollapsed}
+        onCollapsedChange={setCollapsed}
         topbar={<Topbar pageTitle="Controlled mode" rightActions={<ThemeToggle />} />}
         sidebar={
           <Sidebar>
@@ -310,11 +310,11 @@ export const StartsCollapsedExpandsOnToggle: Story = {
 /** Controlled, Shell reports the toggle but shows only what `sidebarCollapsed` says. */
 export const ControlledShellFollowsItsProp: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { onSidebarToggle: fn() },
+  args: { onCollapsedChange: fn() },
   render: (args) => (
     <Shell
       sidebarCollapsed={false}
-      onSidebarToggle={args.onSidebarToggle}
+      onCollapsedChange={args.onCollapsedChange}
       topbar={<Topbar pageTitle="Frozen" />}
       sidebar={
         <Sidebar>
@@ -328,8 +328,8 @@ export const ControlledShellFollowsItsProp: Story = {
   play: async ({ args, canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await expect(args.onSidebarToggle).toHaveBeenCalledTimes(1);
-    await expect(args.onSidebarToggle).toHaveBeenCalledWith(true);
+    await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
+    await expect(args.onCollapsedChange).toHaveBeenCalledWith(true);
     await expect(nav.getBoundingClientRect().width).toBe(264);
     await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
   },
