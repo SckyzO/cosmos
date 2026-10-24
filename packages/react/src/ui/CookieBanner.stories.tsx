@@ -96,12 +96,17 @@ export const NoIconNoTitle: Story = {
       <CookieBanner
         showIcon={false}
         title=""
+        ariaLabel="Cookie notice"
         message="Minimal banner — just the message and the Accept button."
         onAccept={args.onAccept as () => void}
       />
     </div>
   ),
   args: { onAccept: fn() } as never,
+  // With no title to name it, the dialog takes `ariaLabel`.
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('dialog', { name: 'Cookie notice' })).toBeInTheDocument();
+  },
 };
 
 export const Controlled: Story = {

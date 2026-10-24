@@ -226,23 +226,37 @@ The same prop means the same thing on every component.
 - **A floating panel renders in a portal.** A panel that opens next to its trigger (Popover,
   UserMenu, NotificationsPanel, DatePicker, Dropdown, Combobox, Tooltip, the column filter of
   ColumnHeader, RefreshButton's menu) renders at the end of `<body>`, so no `overflow: hidden`
-  ancestor clips it, in fixed position kept next to its trigger by the internal
-  `useAnchorPosition` (`packages/react/src/hooks/`): a side, an alignment, an offset, re-measured
-  on resize, on any scroll and when the trigger changes size. Build a new one on the internal
-  `FloatingPanel` (`ui/FloatingPanel.tsx`), never `absolute` inside the component. There is no
-  collision handling yet (#269): a panel opens where its placement says, even when the viewport
-  cuts it. Its stories set `parameters: portalDocsParams.lg()` (or another size) when they show it
-  open in the docs, and query it from `document.body`, not the canvas.
+  ancestor clips it, or inside the modal dialog it opens from (Modal, ConfirmationModal,
+  Drawer: `usePortalContainer` in `ui/overlayA11y.tsx`), so `aria-modal` doesn't hide it from
+  assistive technology. It sits in fixed position next to its trigger, kept there by the
+  internal `useAnchorPosition` (`packages/react/src/hooks/`): a side, an alignment, an offset,
+  re-measured on resize, on any scroll and when the trigger or the panel changes size. A panel
+  the viewport would cut on its side flips to the opposite one when that side has more room,
+  and one cut on the other axis moves back inside, 16px from the edge; a panel in view stays
+  where its placement puts it. A part that points at the trigger (an arrow) follows the side
+  the panel opened on (a function child of `FloatingPanel`) and subtracts `--anchor-shift`, how
+  far the panel moved. Build a new one on the internal `FloatingPanel` (`ui/FloatingPanel.tsx`),
+  never `absolute` inside the component. Its stories set `parameters: portalDocsParams.lg()` (or
+  another size) when they show it open in the docs, and query it from `document.body`, not the
+  canvas.
 - **One outside-click mechanism.** A mousedown outside the panel and its trigger closes it:
   `useOutsideClick` (`ui/overlayA11y.tsx`), a document listener that lets the click through to
   what is under the pointer. No full-screen click-catcher, no listener of the component's own.
   Focus leaving the panel closes it too (`usePortalFocus`). Both tell a panel nested in another
   and portaled elsewhere, a menu opened from a popover, from the outside: it is inside the
   React tree, so it stays inside.
+- **One Escape mechanism.** Escape closes the innermost open overlay only: a menu open in a
+  modal closes, and the modal stays until the next Escape. Every overlay (Modal,
+  ConfirmationModal, Drawer, HelpOverlay, the floating panels, Tooltip, Chatbot) joins the stack
+  of `useOverlayLayer` (`ui/overlayA11y.tsx`) while open, and gives its layer to its content
+  with `OverlayLayerProvider`, so the overlays opened from it stack above it. No Escape listener
+  of the component's own. A control that handles Escape itself prevents its default, and the
+  stack leaves that Escape alone, as it does for the Radix dialog under CommandPalette.
 - **One z-index scale for floating panels:** the panel at `z-[9999]`, above the page layers and
-  the modal layer (`z-50`: Modal, Drawer), so a menu opened in a modal shows over it; a tooltip
-  one step higher, at `z-[10000]`, so it shows over the panel it opens from. Both come from
-  `FLOATING_PANEL_Z` and `TOOLTIP_Z` in `ui/FloatingPanel.tsx`; don't write another value.
+  the modal layer (`z-50`: Modal, Drawer); a panel opened in a modal renders inside it, above
+  its content. A tooltip one step higher, at `z-[10000]`, so it shows over the panel it opens
+  from. Both come from `FLOATING_PANEL_Z` and `TOOLTIP_Z` in `ui/FloatingPanel.tsx`; don't
+  write another value.
 
 ## PR checklist
 

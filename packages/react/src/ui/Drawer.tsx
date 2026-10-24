@@ -1,9 +1,16 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { DialogTitleProvider, useDialogTitleId, useEscapeKey, useFocusTrap } from './overlayA11y';
+import {
+  DialogTitleProvider,
+  OverlayLayerProvider,
+  PortalContainerProvider,
+  useDialogTitleId,
+  useFocusTrap,
+  useOverlayLayer,
+} from './overlayA11y';
 import { useIsClient } from '../hooks/useIsClient';
 
 export type DrawerSide = 'left' | 'right';
@@ -77,7 +84,7 @@ const Root = ({
   children,
 }: DrawerProps) => {
   const titleId = useId();
-  const trapRef = useFocusTrap<HTMLElement>(open);
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
   const isClient = useIsClient();
   // `hidden` turns true once the slide-out ends, false as soon as it reopens.
   const [hidden, setHidden] = useState(!open);
@@ -87,7 +94,17 @@ const Root = ({
     if (open) setHidden(false);
   }
 
-  useEscapeKey(open, onClose);
+  // Escape closes the drawer, unless an overlay opened above it takes it.
+  const layer = useOverlayLayer(open, onClose);
+
+  // The floating panels opened in the drawer render into the panel, once mounted:
+  // `aria-modal` tells assistive technology to skip everything outside it. Its
+  // `translate` makes it the box their fixed position is relative to, which
+  // `useAnchorPosition` accounts for; they slide with it.
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setContainer(isClient ? trapRef.current : null);
+  }, [isClient, trapRef]);
 
   if (!isClient) return null;
 
@@ -111,7 +128,8 @@ const Root = ({
           aria-hidden
         />
       )}
-      <aside
+      {/* A `div`, not an `aside`: the `complementary` role of an `aside` forbids `dialog`. */}
+      <div
         ref={trapRef}
         tabIndex={-1}
         inert={!open}
@@ -136,7 +154,11 @@ const Root = ({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabel ? undefined : titleId}
       >
-        <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+        <OverlayLayerProvider value={layer}>
+          <PortalContainerProvider value={container}>
+            <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+          </PortalContainerProvider>
+        </OverlayLayerProvider>
         {withBackdrop && closeOutside && (
           <button
             type="button"
@@ -151,7 +173,7 @@ const Root = ({
             <X className="size-6" aria-hidden />
           </button>
         )}
-      </aside>
+      </div>
     </>,
     document.body
   );

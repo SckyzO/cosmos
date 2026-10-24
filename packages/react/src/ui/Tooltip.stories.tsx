@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
+import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectOutsideClip, scrollAnchor } from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
+import { Modal } from './Modal';
 
 const meta = {
   title: 'Feedback/Tooltip',
@@ -143,6 +145,36 @@ export const EscapeClosesHoveredTooltip: Story = {
     await waitFor(() => expect(tip).toBeVisible());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(tip).not.toBeVisible());
+  },
+};
+
+/** In a modal, Escape hides the tooltip of the focused control and leaves the modal open. */
+export const EscapeInAModalHidesOnlyTheTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <Modal.Header title="Selected rows" />
+        <Modal.Body>
+          <Tooltip content="Deletes the selected rows">
+            <Button variant="secondary" size="sm">
+              Delete
+            </Button>
+          </Tooltip>
+        </Modal.Body>
+      </Modal>
+    );
+  },
+  play: async () => {
+    const tip = page.getByRole('tooltip');
+    // The modal moves focus to its first control, the tooltip's trigger.
+    await waitFor(() => expect(tip).toBeVisible());
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tip).not.toBeVisible());
+    await expect(page.getByRole('dialog', { name: 'Selected rows' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
   },
 };
 
@@ -398,12 +430,46 @@ export const TooltipEscapesOverflowHidden: Story = {
   },
 };
 
+/**
+ * A `top` tooltip on a trigger at the top of the screen opens below it, arrow included; one
+ * the left edge would cut moves right, and its arrow still points at the trigger.
+ */
+export const TooltipFlipsAndStaysOnScreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div className="p-1">
+      <Tooltip content="Deletes every selected row, then empties the trash" defaultOpen>
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // The tooltip is anchored on the wrapper around its trigger.
+    const anchor = canvas.getByRole('button', { name: 'Delete' }).parentElement!;
+    const tip = page.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    const a = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    await expect(t.top).toBeCloseTo(a.bottom + 10, 0);
+    await expect(t.left).toBeCloseTo(16, 0);
+    // The arrow sits on the tooltip's top edge, under the trigger's center.
+    const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
+    await expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);
+    await expect(arrow.left + arrow.width / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+  },
+};
+
 /** The tooltip stays 10px under its trigger, centered, while the page scrolls. */
 export const TooltipFollowsTriggerOnScroll: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div data-testid="scroller" className="h-64 overflow-y-auto">
-      <div className="p-6 pb-[600px]">
+      {/* Far enough from the left edge for the centered tooltip to fit: one the viewport
+          cuts would move back inside (TooltipFlipsAndStaysOnScreen). */}
+      <div className="px-24 pt-6 pb-[600px]">
         <Tooltip content="Deletes the selected rows" position="bottom" defaultOpen>
           <Button variant="secondary" size="sm">
             Delete

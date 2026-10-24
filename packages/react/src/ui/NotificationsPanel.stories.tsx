@@ -147,12 +147,18 @@ export const Closed: Story = {
   ),
 };
 
+// The badge is visible text, so the trigger's accessible name contains it (Label in Name): the
+// count follows the name, and without a badge the name is the bare "Notifications".
 export const Empty: Story = {
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel alerts={[]} />
     </div>
   ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Notifications' });
+    await expect(trigger.textContent).toBe('');
+  },
 };
 
 export const Muted: Story = {
@@ -161,6 +167,11 @@ export const Muted: Story = {
       <FullPanel muted />
     </div>
   ),
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByRole('button', { name: 'Notifications (muted), 5' })
+    ).toHaveTextContent('5');
+  },
 };
 
 export const HighCount: Story = {
@@ -171,6 +182,11 @@ export const HighCount: Story = {
       </NotificationsPanel>
     </div>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Notifications, 9999+' })).toHaveTextContent(
+      '9999+'
+    );
+  },
 };
 
 export const AlignLeft: Story = {
@@ -208,7 +224,7 @@ export const TriggerOpensPanel: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    const trigger = canvas.getByRole('button', { name: /^notifications$/i });
+    const trigger = canvas.getByRole('button', { name: /^notifications/i });
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(trigger);
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
@@ -231,7 +247,7 @@ export const ItemClickFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     const extra = args as unknown as { onItemClick: ReturnType<typeof fn> };
     // Open the panel via the trigger to make rect computation deterministic.
-    await userEvent.click(canvas.getByRole('button', { name: /^notifications$/i }));
+    await userEvent.click(canvas.getByRole('button', { name: /^notifications/i }));
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     const dialog = document.querySelector('[role="dialog"]')!;
     // Find the first alert item (it has a badge text like "CRIT" / "WARN")
@@ -251,7 +267,7 @@ export const EscapeKeyCloses: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: /^notifications$/i }));
+    await userEvent.click(canvas.getByRole('button', { name: /^notifications/i }));
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
@@ -267,7 +283,7 @@ export const KeyboardFocusManagement: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    const trigger = canvas.getByRole('button', { name: /^notifications$/i });
+    const trigger = canvas.getByRole('button', { name: /^notifications/i });
     const dialog = () => document.querySelector('[role="dialog"]');
     trigger.focus();
     await userEvent.keyboard('{Enter}');
@@ -297,7 +313,7 @@ export const StaysUnderTriggerOnScroll: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    const trigger = canvas.getByRole('button', { name: /^notifications$/i });
+    const trigger = canvas.getByRole('button', { name: /^notifications/i });
     await userEvent.click(trigger);
     const panel = await waitFor(() => document.querySelector<HTMLElement>('[role="dialog"]')!);
     const before = trigger.getBoundingClientRect().top;

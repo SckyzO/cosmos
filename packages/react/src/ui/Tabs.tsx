@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { createContext, useContext, useId } from 'react';
+import { createContext, useCallback, useContext, useId, useLayoutEffect, useState } from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -22,6 +22,10 @@ type TabsContextValue = {
   variant: TabsVariant;
   /** Prefix for the tab and panel ids that link them through ARIA. */
   baseId: string;
+  /** The values that have a `Tabs.Panel` mounted, for a tab to point at its panel only if there is one. */
+  panels: ReadonlySet<string>;
+  /** Called by a `Tabs.Panel` while it is mounted; returns what unregisters it. */
+  registerPanel: (value: string) => () => void;
 };
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -132,6 +136,16 @@ const Root = ({
   className,
 }: TabsProps) => {
   const baseId = useId();
+  const [panels, setPanels] = useState<ReadonlySet<string>>(() => new Set());
+  const registerPanel = useCallback((panelValue: string) => {
+    setPanels((current) => new Set(current).add(panelValue));
+    return () =>
+      setPanels((current) => {
+        const next = new Set(current);
+        next.delete(panelValue);
+        return next;
+      });
+  }, []);
   const [value = '', onChange] = useControllableState({
     value: valueProp,
     defaultValue,
@@ -139,7 +153,9 @@ const Root = ({
     name: 'Tabs.value',
   });
   return (
-    <TabsContext.Provider value={{ value, onChange, orientation, variant, baseId }}>
+    <TabsContext.Provider
+      value={{ value, onChange, orientation, variant, baseId, panels, registerPanel }}
+    >
       <div
         className={clsx(
           // Folder tabs touch their panel, so no gap between list and panel.
@@ -202,7 +218,7 @@ export type TabProps = {
 };
 
 const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: TabProps) => {
-  const { value: active, onChange, orientation, variant, baseId } = useTabs();
+  const { value: active, onChange, orientation, variant, baseId, panels } = useTabs();
   const isActive = value === active;
   const styles = TRIGGER_CLASSES[variant][orientation];
   return (
@@ -211,8 +227,9 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       role="tab"
       id={tabId(baseId, value)}
       aria-selected={isActive}
-      // Only the selected panel is rendered: point at it from its own tab only.
-      aria-controls={isActive ? panelId(baseId, value) : undefined}
+      // Only the selected panel is rendered, and a set of tabs may have no panels at all
+      // (navigation tabs): point at the panel from its own tab, and only if it exists.
+      aria-controls={isActive && panels.has(value) ? panelId(baseId, value) : undefined}
       tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       onClick={() => onChange(value)}
@@ -250,7 +267,9 @@ const Panel = ({
   children: ReactNode;
   className?: string;
 }) => {
-  const { value: active, orientation, variant, baseId } = useTabs();
+  const { value: active, orientation, variant, baseId, registerPanel } = useTabs();
+  // Registered while mounted, active or not, and before paint: a tab never shows without its link.
+  useLayoutEffect(() => registerPanel(value), [registerPanel, value]);
   if (value !== active) return null;
   return (
     <div

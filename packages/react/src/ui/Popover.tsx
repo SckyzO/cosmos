@@ -96,18 +96,24 @@ const arrowStyle = (position: PopoverPosition, align: PopoverAlign): CSSProperti
   };
   // With `end`, keep pointing at the trigger's center, not the panel's: half the
   // trigger's width (`--anchor-width`, set by the anchoring) from the right, and
-  // `right` is measured from the panel's padding box, 1px inside its border.
+  // `right` is measured from the panel's padding box, 1px inside its border. A
+  // panel moved along the trigger to stay on screen sets `--anchor-shift`, by how
+  // much: the arrow moves back by as much.
   const x: CSSProperties =
     align === 'end'
-      ? { right: 'calc(var(--anchor-width) / 2 - 1px)', marginRight: -4 }
-      : { left: '50%', marginLeft: -4 };
+      ? {
+          right: 'calc(var(--anchor-width) / 2 - 1px + var(--anchor-shift, 0px))',
+          marginRight: -4,
+        }
+      : { left: 'calc(50% - var(--anchor-shift, 0px))', marginLeft: -4 };
+  const y: CSSProperties = { top: 'calc(50% - var(--anchor-shift, 0px))', marginTop: -4 };
   switch (position) {
     case 'top':
       return { ...base, bottom: -4, ...x };
     case 'right':
-      return { ...base, left: -4, top: '50%', marginTop: -4 };
+      return { ...base, left: -4, ...y };
     case 'left':
-      return { ...base, right: -4, top: '50%', marginTop: -4 };
+      return { ...base, right: -4, ...y };
     case 'bottom':
     default:
       return { ...base, top: -4, ...x };
@@ -123,8 +129,10 @@ export type PopoverContentProps = {
    * from the left of the screen. Ignored for `left` / `right`.
    */
   align?: PopoverAlign;
-  /** Accessible name of the dialog. */
+  /** Accessible name of the dialog. Name it with this or `aria-labelledby`: a dialog needs a name. */
   'aria-label'?: string;
+  /** Id of an element inside the panel, a heading say, that names the dialog, instead of `aria-label`. */
+  'aria-labelledby'?: string;
   /** Distance from the trigger edge in px. Default 8. */
   offset?: number;
   /** Show a small arrow pointing to the trigger. Default false. */
@@ -139,6 +147,7 @@ const PopoverContent = ({
   position = 'bottom',
   align = 'center',
   'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   offset = 8,
   arrow = false,
   width = 'w-64',
@@ -155,20 +164,25 @@ const PopoverContent = ({
       role="dialog"
       tabIndex={-1}
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       className={clsx(
         'rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
         width,
         className
       )}
     >
-      {arrow && (
-        <span
-          aria-hidden
-          style={arrowStyle(position, align)}
-          className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
-        />
+      {(side) => (
+        <>
+          {arrow && (
+            <span
+              aria-hidden
+              style={arrowStyle(side, align)}
+              className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+            />
+          )}
+          <div className="relative">{children}</div>
+        </>
       )}
-      <div className="relative">{children}</div>
     </FloatingPanel>
   );
 };

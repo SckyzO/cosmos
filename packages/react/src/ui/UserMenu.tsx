@@ -8,11 +8,20 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
-import { Avatar } from './Avatar';
+import { Avatar, type AvatarProps } from './Avatar';
 import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
+
+// The avatar always sits next to the user's name, in the trigger and in the header, so it is
+// hidden from assistive technology: it would add a second image to read, with the name as its
+// alt text (`image-redundant-alt`). In the header it is also not a child a `menu` may have.
+const DecorativeAvatar = (props: AvatarProps) => (
+  <span aria-hidden className="flex shrink-0">
+    <Avatar {...props} />
+  </span>
+);
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -94,7 +103,6 @@ function UserMenuTrigger({
     <button
       ref={mergeRefs(triggerRef, ref)}
       type="button"
-      aria-label={`User menu for ${name}`}
       aria-haspopup="menu"
       aria-expanded={open}
       onClick={() => {
@@ -114,10 +122,17 @@ function UserMenuTrigger({
       )}
       {...rest}
     >
-      <Avatar src={avatarSrc} name={name} size="sm" />
-      {!hideName && (
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{name}</span>
-      )}
+      <DecorativeAvatar src={avatarSrc} name={name} size="sm" />
+      {/* Named by its content, "User menu for <name>", not by an `aria-label`: the visible text,
+          the initials of an avatar with no image included, is then part of the name. */}
+      <span className="sr-only">User menu for </span>
+      <span
+        className={clsx(
+          hideName ? 'sr-only' : 'text-sm font-medium text-gray-700 dark:text-gray-200'
+        )}
+      >
+        {name}
+      </span>
       <ChevronDown
         className={clsx(
           'h-4 w-4 shrink-0 text-gray-400 transition-transform',
@@ -201,7 +216,7 @@ const UserMenuHeader = ({ name, email, avatarSrc, className }: UserMenuHeaderPro
       className
     )}
   >
-    <Avatar src={avatarSrc} name={name} size="md" />
+    <DecorativeAvatar src={avatarSrc} name={name} size="md" />
     <div className="min-w-0 flex-1">
       <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
       {email && <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>}

@@ -153,7 +153,7 @@ export const Combobox = ({
         e.preventDefault();
         pick(filtered[activeIndex]);
       }
-    } else if (e.key === 'Escape' || e.key === 'Tab') {
+    } else if (e.key === 'Tab') {
       setOpen(false);
     }
   };
@@ -212,9 +212,10 @@ export const Combobox = ({
           <ChevronsUpDown className="size-5" aria-hidden />
         </button>
       </div>
-      {/* Focus stays in the input (aria-activedescendant), which handles Escape
-          and Tab; a mousedown anywhere in the field, its label or its help text
-          is not outside. */}
+      {/* Focus stays in the input (aria-activedescendant), which handles Tab;
+          Escape closes the listbox as the top overlay of the stack, so a modal
+          around it stays open. A mousedown anywhere in the field, its label or
+          its help text is not outside. */}
       <FloatingPanel
         open={open}
         onClose={() => setOpen(false)}

@@ -11,7 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectPlaceholderContrast,
   expectTextContrast,
@@ -20,6 +20,7 @@ import {
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
+import { Modal } from './Modal';
 
 const meta = {
   title: 'Overlays/Command Palette',
@@ -211,6 +212,42 @@ export const LoadingState: Story = {
   },
 };
 
+/**
+ * A listbox owns options and groups only: the progressbar of `Loading` sits right after it, and
+ * the separators between groups are hidden from assistive technology, and while searching.
+ */
+export const ListboxOwnsOnlyOptionsAndGroups: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <CommandPalette open hotkey={null} onOpenChange={() => {}}>
+      <CommandPalette.Input placeholder="Search…" />
+      <CommandPalette.List>
+        <CommandPalette.Loading progress={40}>Loading commands…</CommandPalette.Loading>
+        <CommandPalette.Group heading="Navigate">
+          <CommandPalette.Item value="home">Go home</CommandPalette.Item>
+        </CommandPalette.Group>
+        <CommandPalette.Separator />
+        <CommandPalette.Group heading="Actions">
+          <CommandPalette.Item value="new">New project</CommandPalette.Item>
+        </CommandPalette.Group>
+      </CommandPalette.List>
+    </CommandPalette>
+  ),
+  play: async () => {
+    const page = within(document.body);
+    const listbox = await page.findByRole('listbox');
+    const progressbar = page.getByRole('progressbar');
+    await expect(progressbar).toHaveAttribute('aria-valuenow', '40');
+    await expect(listbox.contains(progressbar)).toBe(false);
+
+    const separator = document.querySelector('[cmdk-separator]');
+    await expect(separator).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.queryByRole('separator')).toBeNull();
+    await userEvent.type(page.getByRole('combobox'), 'o');
+    await waitFor(() => expect(document.querySelector('[cmdk-separator]')).toBeNull());
+  },
+};
+
 export const Interactive: Story = {
   render: () => {
     const [open, setOpen] = useState(false);
@@ -341,6 +378,46 @@ export const HotkeyOpensPalette: Story = {
     // Trigger Ctrl+K
     await userEvent.keyboard('{Control>}k{/Control}');
     await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+  },
+};
+
+/** Opened over a modal, the palette closes on Escape and the modal stays until the next one. */
+export const EscapeOverAModalClosesOnlyThePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [modal, setModal] = useState(true);
+    const [palette, setPalette] = useState(false);
+    return (
+      <>
+        <Modal open={modal} onClose={() => setModal(false)}>
+          <Modal.Header title="Project settings" />
+          <Modal.Body>
+            <Button variant="secondary">Rename</Button>
+          </Modal.Body>
+        </Modal>
+        <CommandPalette open={palette} onOpenChange={setPalette}>
+          <CommandPalette.Input placeholder="Search" />
+          <CommandPalette.List>
+            <CommandPalette.Item value="hello">Hello</CommandPalette.Item>
+          </CommandPalette.List>
+        </CommandPalette>
+      </>
+    );
+  },
+  play: async () => {
+    const body = within(document.body);
+    await body.findByRole('dialog', { name: 'Project settings' });
+    await userEvent.keyboard('{Control>}k{/Control}');
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).not.toBeNull());
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(document.querySelector('[cmdk-dialog]')).toBeNull());
+    await expect(await body.findByRole('dialog', { name: 'Project settings' })).toBeVisible();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(body.queryByRole('dialog', { name: 'Project settings' })).toBeNull()
+    );
   },
 };
 
