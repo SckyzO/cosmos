@@ -13,11 +13,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Three jobs run side by side, then `ci` checks they all passed. `make ci` runs
+# the same commands one after the other in the dev container. Each job builds
+# what it tests: no artifact passes between jobs, so none can be swapped.
 jobs:
-  ci:
-    name: Lint + typecheck + test + build
+  static:
+    name: Lint + format + typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,29 +50,46 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Theme contrast and metadata
+        run: pnpm --filter @sckyzo/cosmos-theme test
+
+  build-e2e:
+    name: Build + e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Build packages
         run: pnpm build
 
       - name: Build Storybook
         run: pnpm storybook:build
 
-      # `pnpm test` is recursive across workspaces and `tests/e2e`'s test
-      # script invokes Playwright, so the browsers have to exist before we
-      # run it. Installing here covers both `Unit tests` (which actually
-      # contains the e2e suite via `pnpm -r test`) and downstream needs.
-      # Chromium only: it is the sole Playwright project and the engine the
-      # Vitest browser runner uses. Each package installs the revision its own
-      # Playwright pins: tests/e2e (`@playwright/test`) and apps/storybook
-      # (`playwright`, Vitest's provider). A patch bump can change the revision,
-      # and installing from e2e alone left Vitest unable to launch. Dependabot
-      # groups the two, so the second install is normally a no-op.
+      # Chromium only: the sole Playwright project. tests/e2e installs the
+      # revision its own `@playwright/test` pins.
       - name: Install Playwright browsers
-        run: |
-          pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
-          pnpm --filter @cosmos/storybook exec playwright install chromium
+        run: pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
 
-      - name: Unit + E2E tests
-        run: pnpm test
+      # With CI set, Playwright serves storybook-static: the dev server compiles
+      # pages on first visit and its dep optimizer reloads mid-test. The dist
+      # specs read the packages built above.
+      - name: E2E tests
+        run: pnpm --filter @cosmos/e2e test
 
       - name: Upload Playwright report
         if: failure()
@@ -78,3 +98,56 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  stories:
+    name: Unit + story tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Vitest's browser provider is apps/storybook's `playwright`, which pins
+      # its own revision (a patch bump of one package can change it).
+      - name: Install Playwright browsers
+        run: pnpm --filter @cosmos/storybook exec playwright install --with-deps chromium
+
+      # Both Vitest projects: the `node` unit tests and the stories in Chromium,
+      # axe included. They compile the packages from source: no build needed.
+      - name: Unit and story tests
+        run: pnpm --filter @cosmos/storybook test
+
+  ci:
+    # Branch protection requires this check name: keep it.
+    name: Lint + typecheck + test + build
+    needs: [static, build-e2e, stories]
+    # Runs when a job fails or is cancelled too, so the check never stays
+    # pending, and fails then.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require every job to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "A required job ended with: $result"
+              exit 1
+            fi
+          done

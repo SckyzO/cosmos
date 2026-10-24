@@ -47,7 +47,7 @@ function Item({
         ref={ref}
         aria-current={active ? 'page' : undefined}
         className={clsx(
-          'group flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
+          'group focus-visible:focus-indicator flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
           active
             ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-indigo-400'
             : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-indigo-400',

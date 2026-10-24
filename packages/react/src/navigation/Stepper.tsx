@@ -250,7 +250,7 @@ const StepperStep = ({
             onClick={handleClick}
             disabled={disabled}
             aria-current={__status === 'active' ? 'step' : undefined}
-            className="focus-visible:ring-brand-500/40 relative flex w-full flex-col items-center focus:outline-none focus-visible:rounded-md focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-visible:focus-indicator relative flex w-full flex-col items-center focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
           >
             {content}
           </button>
@@ -285,7 +285,7 @@ const StepperStep = ({
           onClick={handleClick}
           disabled={disabled}
           aria-current={__status === 'active' ? 'step' : undefined}
-          className="focus-visible:ring-brand-500/40 flex w-full items-start gap-3 text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus-visible:focus-indicator flex w-full items-start gap-3 text-left focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
         >
           {content}
         </button>

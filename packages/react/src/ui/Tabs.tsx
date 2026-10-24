@@ -217,7 +217,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(
-        'flex items-center gap-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'focus-visible:focus-indicator flex items-center gap-2 text-sm font-medium transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
         styles.base,
         isActive ? styles.active : styles.inactive,
         className
@@ -258,7 +258,11 @@ const Panel = ({
       id={panelId(baseId, value)}
       aria-labelledby={tabId(baseId, value)}
       tabIndex={0}
-      className={clsx(PANEL_CLASSES[variant][orientation], className)}
+      className={clsx(
+        'focus-visible:focus-indicator focus-visible:ring-inset',
+        PANEL_CLASSES[variant][orientation],
+        className
+      )}
     >
       {children}
     </div>

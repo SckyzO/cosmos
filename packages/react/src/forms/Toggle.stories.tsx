@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectGraphicContrast, expectRefFocuses, inEachTheme } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectGraphicContrast,
+  expectRefFocuses,
+  inEachTheme,
+} from '../storybook-helpers';
 import { Toggle } from './Toggle';
 
 const meta = {
@@ -135,4 +140,18 @@ export const DefaultCheckedOrControlled: Story = {
     await expect(args.onChange).toHaveBeenLastCalledWith(true);
     await expect(held).not.toBeChecked();
   },
+};
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { checked: true, label: 'Enable feature' },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('switch'));
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

@@ -72,6 +72,37 @@ Every theme × accent pair meets WCAG AA for body text, links and white text on
 the accent. `pnpm --filter @sckyzo/cosmos-theme test` runs the contrast check
 (`scripts/check-contrast.mjs`) against the CSS files.
 
+## Focus indicator
+
+Four Tailwind utilities, shipped with `@sckyzo/cosmos-theme/tailwind`, give
+every control the same keyboard focus look: a **solid accent indicator** plus
+the `--shadow-focus-ring` halo (12% of the accent). The halo alone is too faint
+to count: the solid part is what reaches 3:1 against the surface (WCAG 1.4.11;
+`brand-500` is checked on every theme × accent pair by `pnpm test`).
+
+| Utility                     | Paints                      | For                                                                   |
+| --------------------------- | --------------------------- | --------------------------------------------------------------------- |
+| `focus-indicator`           | 2px `brand-500` ring + halo | buttons, links, toggles, tabs, menu items, cards…                     |
+| `field-focus`               | `brand-500` border + halo   | text inputs, textarea, select and their wrappers                      |
+| `field-focus-error`         | `red-500` border + red halo | the same fields in error (`--shadow-focus-ring-error`)                |
+| `focus-indicator-on-accent` | 2px white ring, no halo     | a control filled with `brand-500`, where the accent ring would vanish |
+
+They hold no state: put the variant that fits in front of them.
+
+```html
+<button class="focus-visible:focus-indicator">Save</button>
+<input class="focus:field-focus border border-gray-200" />
+<div class="focus-within:field-focus border border-gray-200"><input /></div>
+<!-- a control drawn by a sibling of a visually hidden input -->
+<input type="checkbox" class="peer sr-only" />
+<span class="peer-focus-visible:focus-indicator"></span>
+```
+
+There is no ring offset. Add `ring-inset` where an ancestor clips with
+`overflow-hidden`, or a neighbour covers the outer ring. The utilities use
+`outline-hidden`, so the indicator survives forced-colors mode, where box
+shadows are not painted.
+
 ## Fonts & text size
 
 Two more settings on `<html>`, both optional:
@@ -109,7 +140,7 @@ Categories:
 - **Semantic colors** : `--color-success-*`, `--color-error-*`, `--color-warning-*`
 - **Status** : `--color-status-{ok,warn,crit,unknown}`
 - **Typography** : `--font-sans` (Outfit), `--font-mono` (JetBrains Mono), `--text-2xs` (11px), `--text-3xs` (10px)
-- **Shadows** : `--shadow-card`, `--shadow-card-hover`
+- **Shadows** : `--shadow-card`, `--shadow-card-hover`, `--shadow-focus-ring` and `--shadow-focus-ring-error` (the focus halos)
 - **Layout vars** (theme-aware): `--color-bg-{base,panel,elevated}`, `--color-text-{base,primary,secondary,muted}`, `--color-border`, `--color-accent`
 - **Code highlighting** (theme-aware): `--color-code-foreground` and `--color-code-token-*` (keyword, string, comment, constant, function, parameter, string-expression, punctuation, link, inserted, deleted, changed). The names match Shiki's CSS variables theme with `variablePrefix: '--color-code-'`. Each one keeps 4.5:1 on CodeBlock's background in all four themes (checked by `pnpm test`).
 

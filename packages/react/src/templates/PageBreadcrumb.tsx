@@ -28,7 +28,7 @@ export const PageBreadcrumb = ({ items, className }: PageBreadcrumbProps) => (
         const isFirst = i === 0;
         const isLast = i === items.length - 1;
         const linkClass =
-          'hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1 text-[var(--color-text-secondary)] transition-colors';
+          'hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1 rounded-sm text-[var(--color-text-secondary)] transition-colors focus-visible:focus-indicator';
         const renderInner: ReactNode = (
           <>
             {isFirst && <Home className="h-4 w-4" />}

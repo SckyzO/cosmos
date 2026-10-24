@@ -227,7 +227,7 @@ export const TooltipHelp = ({
     <button
       type="button"
       aria-label="Help"
-      className="focus-visible:ring-brand-500 inline-flex cursor-help rounded-full text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus-visible:ring-2 dark:text-gray-500 dark:hover:text-gray-300"
+      className="focus-visible:focus-indicator inline-flex cursor-help rounded-full text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
     >
       <HelpCircle className="h-3.5 w-3.5" aria-hidden />
     </button>

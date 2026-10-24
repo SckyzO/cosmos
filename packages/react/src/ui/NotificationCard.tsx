@@ -95,7 +95,7 @@ const SimpleVariant = ({
                 type="button"
                 onClick={onDismiss}
                 aria-label="Dismiss notification"
-                className="inline-flex rounded-md text-gray-400 hover:text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:hover:text-gray-300"
+                className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
               >
                 <X className="size-5" aria-hidden />
               </button>
@@ -141,7 +141,7 @@ const CondensedVariant = ({
       <button
         type="button"
         onClick={onAction}
-        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        className="focus-visible:focus-indicator text-sm font-medium text-indigo-400 hover:text-indigo-300"
       >
         {actionLabel}
       </button>
@@ -151,7 +151,7 @@ const CondensedVariant = ({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss notification"
-        className="inline-flex rounded-md text-gray-400 hover:text-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-200"
       >
         <X className="size-5" aria-hidden />
       </button>

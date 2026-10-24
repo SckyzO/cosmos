@@ -88,7 +88,7 @@ export function Checkbox({
         <span
           aria-hidden
           className={clsx(
-            'peer-focus-visible:ring-brand-500/40 relative flex items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2',
+            'peer-focus-visible:focus-indicator relative flex items-center justify-center rounded-md border transition-colors',
             sizes.box,
             showFilled
               ? 'border-brand-500 bg-brand-500'

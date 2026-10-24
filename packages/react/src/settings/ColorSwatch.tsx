@@ -40,7 +40,7 @@ export const ColorSwatch = ({
     aria-checked={active}
     tabIndex={tabIndex}
     className={clsx(
-      'relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-2.5 transition-all',
+      'focus-visible:focus-indicator relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-2.5 transition-all',
       active
         ? 'scale-105 border-gray-400 dark:border-gray-200'
         : 'border-transparent hover:scale-[1.02] hover:border-gray-200 dark:hover:border-gray-700',

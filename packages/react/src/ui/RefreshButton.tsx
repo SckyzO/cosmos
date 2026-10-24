@@ -85,7 +85,7 @@ export const RefreshButton = ({
         type="button"
         onClick={() => void onRefresh()}
         disabled={refreshing}
-        className="flex items-center gap-1.5 rounded-l-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+        className="focus-visible:focus-indicator flex items-center gap-1.5 rounded-l-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
       >
         <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
         <span>Refresh</span>
@@ -104,7 +104,7 @@ export const RefreshButton = ({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Choose refresh interval"
-          className="flex h-full items-center rounded-r-lg px-2 text-gray-400 transition-colors hover:bg-gray-50 dark:text-gray-500 dark:hover:bg-gray-700"
+          className="focus-visible:focus-indicator flex h-full items-center rounded-r-lg px-2 text-gray-400 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-500 dark:hover:bg-gray-700"
         >
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
@@ -122,7 +122,7 @@ export const RefreshButton = ({
                     setOpen(false);
                   }}
                   className={clsx(
-                    'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
+                    'focus-visible:focus-indicator flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5',
                     autoRefreshMs === opt.ms
                       ? 'text-brand-600 dark:text-brand-400 font-semibold'
                       : 'text-gray-700 dark:text-gray-300'

@@ -242,7 +242,7 @@ export const DatePicker = (props: DatePickerProps) => {
       <button
         type="button"
         onClick={handleToday}
-        className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 inline-flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors"
+        className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors"
       >
         Today
       </button>
@@ -255,14 +255,14 @@ export const DatePicker = (props: DatePickerProps) => {
       <button
         type="button"
         onClick={() => commitRange(EMPTY_RANGE)}
-        className="inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+        className="focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
       >
         Clear
       </button>
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="bg-brand-500 hover:bg-brand-600 inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-white transition-colors"
+        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-white transition-colors"
       >
         Done
       </button>
@@ -273,8 +273,8 @@ export const DatePicker = (props: DatePickerProps) => {
   const triggerClass = clsx(
     'h-9 items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800',
     error
-      ? 'border-red-400 focus:border-red-500 focus:outline-none dark:border-red-500/60'
-      : 'focus:border-brand-500 border-gray-200 focus:outline-none dark:border-gray-700'
+      ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
+      : 'focus:field-focus border-gray-200 dark:border-gray-700'
   );
 
   const renderTrigger = (

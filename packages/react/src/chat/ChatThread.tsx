@@ -47,7 +47,7 @@ export const ChatThread = ({ children, label = 'Conversation', className }: Chat
         stuck.current = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD;
       }}
       className={clsx(
-        'focus-visible:ring-brand-500/40 flex flex-col gap-1 overflow-y-auto p-4 focus:outline-none focus-visible:ring-2',
+        'focus-visible:focus-indicator flex flex-col gap-1 overflow-y-auto p-4 focus-visible:ring-inset',
         className
       )}
     >

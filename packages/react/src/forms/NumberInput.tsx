@@ -85,7 +85,7 @@ export const NumberInput = ({
         // `inline-flex` so the control sizes to its content by default; opt into
         // `flex w-full` via `fullWidth` for form grids that need the column.
         fullWidth ? 'flex w-full' : 'inline-flex',
-        'focus-within:border-brand-500 h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
+        'focus-within:field-focus h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
         disabled && 'opacity-50',
         className
       )}

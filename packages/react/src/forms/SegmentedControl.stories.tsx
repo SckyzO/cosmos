@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { LayoutDashboard, List, Map } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
 import { SegmentedControl } from './SegmentedControl';
 
 const meta = {
@@ -174,5 +174,37 @@ export const DefaultValueOrControlled: Story = {
     await userEvent.click(held.getByRole('radio', { name: 'Grid' }));
     await expect(args.onChange).toHaveBeenLastCalledWith('grid');
     await expect(held.getByRole('radio', { name: 'List' })).toBeChecked();
+
+// Roving tabindex puts focus on the checked segment, which is filled with the accent:
+// its ring is white and inside. Any other segment gets the accent ring.
+
+export const FocusShowsWhiteRingOnCheckedSegmentInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { options: VIEWS as unknown as never, value: 'list' },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('radio', { name: 'List' }), {
+      token: '--color-white',
+      inset: true,
+      halo: false,
+    });
+  },
+};
+
+export const FocusShowsWhiteRingOnCheckedSegmentInLight: Story = {
+  ...FocusShowsWhiteRingOnCheckedSegmentInDark,
+  globals: { theme: 'light' },
+};
+
+export const FocusShowsAccentRingOnOtherSegmentInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { options: VIEWS as unknown as never, value: 'list' },
+  play: async ({ canvas }) => {
+    // Tab first, so the keyboard is the last input and :focus-visible matches.
+    await userEvent.tab();
+    const grid = canvas.getByRole('radio', { name: 'Grid' });
+    grid.focus();
+    await expectFocusRing(grid, { inset: true });
   },
 };

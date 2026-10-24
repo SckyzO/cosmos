@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Tabs, type TabsProps } from './Tabs';
+import { expectFocusRing } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -542,4 +543,31 @@ export const DefaultValueOrControlled: Story = {
     await expect(args.onChange).toHaveBeenLastCalledWith('logs');
     await expect(held.getByRole('tabpanel')).toHaveTextContent('Overview panel');
   },
+};
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => {
+    const [tab, setTab] = useState('overview');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab}>
+          <Tabs.List>
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            <Tabs.Trigger value="metrics">Metrics</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Overview' }), { inset: true });
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

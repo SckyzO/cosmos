@@ -60,7 +60,7 @@ export const PaletteCard = ({
     tabIndex={tabIndex}
     aria-label={meta.label}
     className={clsx(
-      'group relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
+      'group focus-visible:focus-indicator relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
       active
         ? 'border-brand-500 shadow-sm'
         : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',

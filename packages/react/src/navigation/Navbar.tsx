@@ -43,7 +43,7 @@ const ROOT_BG: Record<NavbarTheme, string> = {
   dark: 'bg-gray-800 text-white',
 };
 
-const ITEM_BASE = 'rounded-md px-3 py-2 text-sm font-medium';
+const ITEM_BASE = 'rounded-md px-3 py-2 text-sm font-medium focus-visible:focus-indicator';
 
 // Idle and active styles are exclusive: an idle item's hover background would
 // otherwise repaint the active item under the pointer.
@@ -158,10 +158,10 @@ const MobileMenuButton = ({ theme, className, children, ...rest }: NavbarMobileM
       type="button"
       aria-label="Toggle menu"
       className={clsx(
-        'relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
+        'focus-visible:focus-indicator relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
         resolved === 'dark'
-          ? 'text-gray-400 hover:bg-gray-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'
-          : 'focus-visible:outline-brand-500 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+          ? 'text-gray-400 hover:bg-gray-700 hover:text-white'
+          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
         className
       )}
       {...rest}

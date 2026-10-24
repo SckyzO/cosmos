@@ -11,7 +11,8 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expectFocusRing } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -267,4 +268,34 @@ export const ControlledOpenOnlyReports: Story = {
       'true'
     );
   },
+
+// Opening the menu from the keyboard moves focus onto its first item.
+
+export const MenuItemFocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <Dropdown
+        label="Actions"
+        value=""
+        options={[
+          { value: 'profile', label: 'Profile', icon: User },
+          { value: 'logout', label: 'Sign out', icon: LogOut },
+        ]}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await userEvent.keyboard('{Enter}');
+    const item = await canvas.findByRole('menuitemradio', { name: 'Profile' });
+    await waitFor(() => expect(item).toHaveFocus());
+    await expectFocusRing(item, { inset: true });
+  },
+};
+
+export const MenuItemFocusShowsRingInLight: Story = {
+  ...MenuItemFocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

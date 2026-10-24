@@ -123,7 +123,7 @@ const CollapseButton = ({ collapsed, onClick }: { collapsed: boolean; onClick: (
         aria-expanded={!collapsed}
         title={collapsed ? 'Expand sidebar' : undefined}
         className={clsx(
-          'focus-visible:ring-brand-500 mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 dark:hover:bg-white/5',
+          'focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5',
           collapsed ? 'justify-center px-2' : 'px-3'
         )}
       >
@@ -190,7 +190,7 @@ const SidebarBrand = ({
   );
 
   const baseClass =
-    'flex h-[72px] shrink-0 items-center gap-3 px-4 border-b border-[var(--color-border)]';
+    'flex h-[72px] shrink-0 items-center gap-3 px-4 border-b border-[var(--color-border)] focus-visible:ring-inset focus-visible:focus-indicator';
 
   if (href) {
     return (
@@ -259,7 +259,7 @@ const SidebarItem = ({
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
   const baseClass = clsx(
-    'group mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
+    'group focus-visible:focus-indicator mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
     collapsed ? 'justify-center px-2' : 'px-3',
     active
       ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
@@ -340,7 +340,7 @@ export type SidebarSubMenuProps = {
 
 const SUBMENU_ROW = (active: boolean) =>
   clsx(
-    'group mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg py-2 text-sm font-medium transition-colors',
+    'group focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg py-2 text-sm font-medium transition-colors',
     active
       ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
       : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
@@ -476,7 +476,7 @@ const SidebarGroup = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-3xs mx-2 flex w-[calc(100%-1rem)] items-center gap-2 px-3 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
+        className="text-3xs focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {label}

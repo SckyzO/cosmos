@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Bell, Plus } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
+import { expectFocusRing } from '../storybook-helpers';
 import { Navbar } from './Navbar';
 import { Button } from '../ui/Button';
 
@@ -296,12 +297,7 @@ export const MenuButtonFocusRingFollowsAccent: Story = {
       </Navbar.Brand>
     </Navbar>
   ),
-  play: async ({ canvas, userEvent }) => {
-    const button = canvas.getByRole('button', { name: 'Toggle menu' });
-    await userEvent.tab();
-    await expect(button).toHaveFocus();
-    await expect(button.matches(':focus-visible')).toBe(true);
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--color-brand-500');
-    await expect(toRgb(getComputedStyle(button).outlineColor)).toEqual(toRgb(accent));
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('button', { name: 'Toggle menu' }));
   },
 };

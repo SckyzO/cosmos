@@ -82,8 +82,8 @@ export function Clipboard({
   const iconClass = clsx(SIZE_ICON[size].icon, copied && 'text-green-500');
 
   const baseClass = floating
-    ? 'border border-gray-200 bg-white/90 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800/90 dark:text-gray-400 dark:hover:text-gray-200'
-    : 'border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
+    ? 'border border-gray-200 bg-white/90 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-700 focus-visible:opacity-100 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800/90 dark:text-gray-400 dark:hover:text-gray-200'
+    : 'border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
 
   if (variant === 'icon') {
     return (

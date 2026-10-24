@@ -122,7 +122,7 @@ export const Button = ({
     type={type}
     disabled={disabled || loading}
     className={clsx(
-      'focus-visible:ring-brand-500/40 inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus-visible:ring-2',
+      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium transition-colors',
       VARIANT_CLASS[variant][intent],
       SIZE_CLASS[size],
       SHAPE_CLASS[shape],

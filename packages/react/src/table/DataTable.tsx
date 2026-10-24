@@ -235,7 +235,7 @@ export const DataTable = <T,>({
           <button
             type="button"
             onClick={clearSelection}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator rounded text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             Clear
           </button>
@@ -256,14 +256,14 @@ export const DataTable = <T,>({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label="Search rows"
-              className="focus:border-brand-500 h-full w-full rounded-lg border border-gray-200 bg-white pr-9 pl-9 text-sm transition-colors placeholder:text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+              className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white pr-9 pl-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
             />
             {searchValue && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
+                className="focus-visible:focus-indicator absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

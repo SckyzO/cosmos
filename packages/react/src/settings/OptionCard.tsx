@@ -44,7 +44,7 @@ export const OptionCard = ({
     tabIndex={tabIndex}
     aria-label={label}
     className={clsx(
-      'relative flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 transition-all',
+      'focus-visible:focus-indicator relative flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 transition-all',
       active
         ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
         : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',

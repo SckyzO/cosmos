@@ -23,7 +23,7 @@ export const MessageText = ({ text }: { text: string }) => {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="break-all underline underline-offset-2"
+        className="focus-visible:focus-indicator rounded-sm break-all underline underline-offset-2"
       >
         {url}
       </a>

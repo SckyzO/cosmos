@@ -144,7 +144,7 @@ function UserMenuTrigger({
         setOpen(true);
       }}
       className={clsx(
-        'flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
+        'focus-visible:focus-indicator flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
         className
       )}
       {...rest}
@@ -299,7 +299,7 @@ function UserMenuItem({
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
       className={clsx(
-        'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus:outline-none',
+        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset',
         intent === 'danger'
           ? 'text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus-visible:bg-red-500/10'
           : 'text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',

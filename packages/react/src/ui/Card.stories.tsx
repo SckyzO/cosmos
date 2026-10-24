@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, ArrowRight, Bell, Mail, MessageSquare, Server, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { expectFocusRing } from '../storybook-helpers';
 import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -435,4 +436,29 @@ export const WithTabs: Story = {
       </Wrap>
     );
   },
+};
+
+// An interactive card wraps its control: the card draws the ring, not the control.
+
+export const InteractiveFocusShowsRingOnTheCardInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <Card interactive padding="lg">
+        <a href="#report" className="text-sm font-medium">
+          Open the report
+        </a>
+      </Card>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: 'Open the report' });
+    await expectFocusRing(link, { ring: link.parentElement as HTMLElement });
+  },
+};
+
+export const InteractiveFocusShowsRingOnTheCardInLight: Story = {
+  ...InteractiveFocusShowsRingOnTheCardInDark,
+  globals: { theme: 'light' },
 };

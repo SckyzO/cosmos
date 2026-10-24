@@ -155,6 +155,28 @@ gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "cosmos sign
 - The `dark:` variant has zero specificity (`:where()`), so `focus:border-brand-500` and
   `hover:` styles win over a plain `dark:` class in the dark themes. A state that needs its own
   dark color still takes `dark:hover:` or `dark:focus:`.
+- **Focus.** Every focusable control shows one indicator: a solid accent one plus the
+  `--shadow-focus-ring` halo (12% of the accent, too faint to count on its own: never ship the halo,
+  or a `ring-brand-500/40`, as the only cue). The theme ships it as utilities that hold no state, so
+  the variant goes in front:
+  - a field (text input, textarea, select, number, OTP, search, combobox, a date or time trigger,
+    the dropzone): `focus:field-focus`, the accent border plus the halo; `focus-within:field-focus`
+    on the wrapper that draws the border; `field-focus-error` in place of it in the error state;
+  - everything else (button, link, toggle, checkbox, radio, segment, pill, tab, card, menu item,
+    row, sidebar item…): `focus-visible:focus-indicator`, a 2px `brand-500` ring plus the halo, so a
+    mouse click shows nothing. A control drawn by a sibling of a hidden input takes
+    `peer-focus-visible:focus-indicator`, a card that wraps a control `has-focus-visible:`.
+
+  There is no ring offset. Add `focus-visible:ring-inset` where an ancestor clips with
+  `overflow-hidden` or a neighbour covers the outer ring (segments, tabs, rows, menu items). Never
+  write `focus:outline-none` without one of these: the utilities already hide the browser outline
+  with `outline-hidden`, which keeps it in forced-colors mode. A control filled with `brand-500`
+  whose ring sits inside it (the active segment, a selected day) or on a `brand-500` surface (the
+  brand `AnnouncementBar`) would lose a brand ring: it takes `focus-visible:focus-indicator-on-accent`,
+  a white ring with no halo. Pick between the two classes, never both: their order in the CSS is
+  not guaranteed. Test it with `expectFocusBorder` (fields) or `expectFocusRing` (the rest) from
+  `storybook-helpers.ts`; both check the halo.
+
 - After a change in `packages/theme/css/`, run `./devctl run pnpm --filter @sckyzo/cosmos-theme test`:
   it fails on the first theme × accent pair under its WCAG threshold.
 - Check visual changes in the four themes with the Storybook toolbar (Theme and Accent menus).

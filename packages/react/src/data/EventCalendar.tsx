@@ -80,8 +80,6 @@ const INTENT_CHIP_HOVER: Record<EventCalendarIntent, string> = {
   violet: 'hover:bg-violet-100 dark:hover:bg-violet-500/25',
 };
 
-const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
-
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -148,7 +146,7 @@ const EventChip = ({
       type="button"
       title={event.title}
       onClick={() => onClick(event)}
-      className={clsx(className, INTENT_CHIP_HOVER[intent], FOCUS_RING)}
+      className={clsx(className, INTENT_CHIP_HOVER[intent], 'focus-visible:focus-indicator')}
     >
       {content}
     </button>
@@ -220,7 +218,7 @@ export const EventCalendar = ({
             aria-label="Previous month"
             className={clsx(
               'flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
-              FOCUS_RING
+              'focus-visible:focus-indicator'
             )}
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -231,7 +229,7 @@ export const EventCalendar = ({
             aria-label="Next month"
             className={clsx(
               'flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
-              FOCUS_RING
+              'focus-visible:focus-indicator'
             )}
           >
             <ChevronRight className="h-4 w-4" aria-hidden />
@@ -287,7 +285,7 @@ export const EventCalendar = ({
                   className={clsx(
                     numberClass,
                     !isToday && 'hover:bg-gray-100 dark:hover:bg-white/5',
-                    FOCUS_RING
+                    'focus-visible:focus-indicator'
                   )}
                 >
                   {fmt.dayNumber(day)}
@@ -321,7 +319,7 @@ export const EventCalendar = ({
                     aria-label={`+${hidden} more on ${label}`}
                     className={clsx(
                       'mt-0.5 rounded px-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
-                      FOCUS_RING
+                      'focus-visible:focus-indicator'
                     )}
                   >
                     +{hidden}

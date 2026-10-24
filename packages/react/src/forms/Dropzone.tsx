@@ -167,7 +167,10 @@ export const Dropzone = ({
           'flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors',
           disabled
             ? 'cursor-not-allowed opacity-50'
-            : 'focus-visible:ring-brand-500/40 cursor-pointer focus:outline-none focus-visible:ring-2',
+            : clsx(
+                'cursor-pointer',
+                error ? 'focus-visible:field-focus-error' : 'focus-visible:field-focus'
+              ),
           error
             ? 'border-red-300 bg-red-50/40 dark:border-red-500/40 dark:bg-red-500/5'
             : dragOver
@@ -229,7 +232,7 @@ export const Dropzone = ({
                   removeAt(idx);
                 }}
                 aria-label={`Remove ${f.name}`}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                className="focus-visible:focus-indicator flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               >
                 <X className="h-4 w-4" />
               </button>
