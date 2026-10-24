@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
@@ -278,5 +278,47 @@ export const KeyboardFocusManagement: Story = {
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(dialog()).toBeNull());
     await expect(document.activeElement).toBe(trigger);
+  },
+};
+
+/** Each `intent` gives the item its icon color, chip and badge; the badge label stays CRIT, WARN, INFO, OK. */
+export const ItemIntentsKeepTheirLook: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-[420px] items-start justify-end">
+      <NotificationsPanel defaultOpen>
+        <NotificationsPanel.Trigger />
+        <NotificationsPanel.Content>
+          <NotificationsPanel.Header title="Active Alerts" />
+          <NotificationsPanel.List>
+            <NotificationsPanel.Item intent="danger" title="danger item" />
+            <NotificationsPanel.Item intent="warning" title="warning item" />
+            <NotificationsPanel.Item intent="info" title="info item" />
+            <NotificationsPanel.Item intent="success" title="success item" />
+            <NotificationsPanel.Item intent="danger" title="custom item" badgeLabel="DOWN" />
+          </NotificationsPanel.List>
+        </NotificationsPanel.Content>
+      </NotificationsPanel>
+    </div>
+  ),
+  play: async () => {
+    const body = within(document.body);
+    const item = async (title: string) => (await body.findByText(title)).closest('button')!;
+    const cases = [
+      ['danger item', 'red', 'CRIT'],
+      ['warning item', 'amber', 'WARN'],
+      ['info item', 'blue', 'INFO'],
+      ['success item', 'green', 'OK'],
+    ] as const;
+    for (const [title, color, label] of cases) {
+      const row = await item(title);
+      await expect(row.querySelector('svg')).toHaveClass(
+        color === 'green' ? 'text-green-600' : `text-${color}-500`
+      );
+      await expect(row.querySelector('div.rounded-full')).toHaveClass(`bg-${color}-500/15`);
+      await expect(within(row).getByText(label)).toHaveClass(`bg-${color}-500`, 'text-white');
+    }
+    // The label is only a default.
+    await expect(within(await item('custom item')).getByText('DOWN')).toHaveClass('bg-red-500');
   },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { CreditCard, KeyRound, LogOut, Settings, User } from 'lucide-react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from '../layout/Topbar';
 import { portalDocsParams } from '../storybook-helpers';
 import { UserMenu } from './UserMenu';
@@ -314,5 +314,42 @@ export const KeyboardMenuNavigation: Story = {
     await userEvent.tab();
     await waitFor(() => expect(menu()).toBeNull());
     await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+  },
+};
+
+/** `intent="danger"` colors an item and its icon red; a neutral item stays gray. */
+export const DangerIntentColorsTheItem: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <InTopbar>
+      <UserMenu>
+        <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} hideName />
+        <UserMenu.Content>
+          <UserMenu.Items>
+            <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+            <UserMenu.Item icon={LogOut} intent="neutral">
+              Explicit neutral
+            </UserMenu.Item>
+            <UserMenu.Item icon={LogOut} intent="danger">
+              Sign Out
+            </UserMenu.Item>
+          </UserMenu.Items>
+        </UserMenu.Content>
+      </UserMenu>
+    </InTopbar>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /user menu for/i }));
+    const menu = within(await waitFor(() => document.querySelector<HTMLElement>('[role="menu"]')!));
+    const profile = menu.getByRole('menuitem', { name: 'Profile' });
+    const neutral = menu.getByRole('menuitem', { name: 'Explicit neutral' });
+    const danger = menu.getByRole('menuitem', { name: 'Sign Out' });
+
+    await expect(profile).toHaveClass('text-gray-700');
+    await expect(profile.querySelector('svg')).toHaveClass('text-gray-400');
+    await expect(neutral.className).toBe(profile.className);
+    await expect(danger).toHaveClass('text-red-600', 'hover:bg-red-50');
+    await expect(danger).not.toHaveClass('text-gray-700');
+    await expect(danger.querySelector('svg')).toHaveClass('text-red-500');
   },
 };

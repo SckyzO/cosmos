@@ -141,6 +141,7 @@
   "overlays-notifications-panel--escape-key-closes": ["label-content-name-mismatch"],
   "overlays-notifications-panel--high-count": ["color-contrast", "label-content-name-mismatch"],
   "overlays-notifications-panel--item-click-fires-handler": ["label-content-name-mismatch"],
+  "overlays-notifications-panel--item-intents-keep-their-look": ["color-contrast"],
   "overlays-notifications-panel--keyboard-focus-management": ["label-content-name-mismatch"],
   "overlays-notifications-panel--muted": ["color-contrast", "label-content-name-mismatch"],
   "overlays-notifications-panel--open": ["color-contrast", "label-content-name-mismatch"],

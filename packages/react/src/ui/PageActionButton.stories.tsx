@@ -60,3 +60,51 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(iconButtonRef, canvas.getByRole('button', { name: 'Add' }));
   },
 };
+
+/** `variant` is the emphasis and `intent` the color: an outline is neutral and a primary brand until told otherwise. */
+export const IntentColorsEachVariant: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex flex-wrap items-center gap-2">
+      <PageActionButton>outline</PageActionButton>
+      <PageActionButton intent="brand">outline brand</PageActionButton>
+      <PageActionButton intent="danger">outline danger</PageActionButton>
+      <PageActionButton variant="primary">primary</PageActionButton>
+      <PageActionButton variant="primary" intent="brand">
+        primary brand
+      </PageActionButton>
+      <PageActionButton variant="primary" intent="danger">
+        primary danger
+      </PageActionButton>
+      <PageActionIconButton icon={Trash2} title="icon danger" intent="danger" />
+      <PageActionIconButton icon={Plus} title="icon primary" variant="primary" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const button = (name: string) => canvas.getByRole('button', { name });
+
+    await expect(button('outline')).toHaveClass('border-gray-200', 'bg-white', 'text-gray-600');
+    // `brand-outline` and `danger-outline`, as they were.
+    await expect(button('outline brand')).toHaveClass(
+      'border-brand-200',
+      'bg-brand-50',
+      'text-brand-600'
+    );
+    await expect(button('outline danger')).toHaveClass(
+      'border-red-200',
+      'bg-white',
+      'text-red-600'
+    );
+    await expect(button('primary')).toHaveClass('border-transparent', 'bg-brand-500', 'text-white');
+    await expect(button('primary brand').className).toBe(button('primary').className);
+    await expect(button('primary danger')).toHaveClass(
+      'border-transparent',
+      'bg-red-600',
+      'text-white'
+    );
+    await expect(button('primary danger')).not.toHaveClass('bg-brand-500');
+
+    await expect(button('icon danger')).toHaveClass('border-red-200', 'text-red-600');
+    await expect(button('icon primary')).toHaveClass('bg-brand-500', 'text-white');
+  },
+};
