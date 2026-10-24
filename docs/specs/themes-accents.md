@@ -180,6 +180,8 @@ Replace the hardcoded blue:
 --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
 ```
 
+Since #151 the halo is drawn together with a solid indicator through the `focus-indicator`, `field-focus`, `field-focus-error` and `focus-indicator-on-accent` utilities of `tailwind-tokens.css` (documented in `packages/theme/README.md`); no component uses `--shadow-focus-ring` alone.
+
 ### 1.6 Contrast guard — `packages/theme/scripts/check-contrast.mjs`
 
 Dependency-free Node script, wired to the `test` script of `packages/theme/package.json` (replaces the `echo`). It reads `css/css-vars.css` and `css/tailwind-tokens.css`, converts colors (hex and `oklch()` → sRGB), computes WCAG 2.x ratios and **fails** when a threshold isn't met. Tailwind's default grays (used by `light` and `deep-blue`) are hardcoded in the script:
