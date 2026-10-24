@@ -2,13 +2,17 @@ import { clsx } from 'clsx';
 import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { OptionCard, type OptionCardProps } from './OptionCard';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type OptionItem = Pick<OptionCardProps, 'id' | 'label' | 'desc' | 'preview'>;
 
 export type OptionPickerProps = FieldA11yProps & {
   options: OptionItem[];
-  value: string;
-  onChange: (id: string) => void;
+  /** Selected option id, when controlled. */
+  value?: string;
+  /** First selected option id, when uncontrolled. None when omitted. */
+  defaultValue?: string;
+  onChange?: (id: string) => void;
   /** Number of grid columns. Default 5. */
   cols?: number;
   className?: string;
@@ -20,13 +24,20 @@ export type OptionPickerProps = FieldA11yProps & {
  */
 export const OptionPicker = ({
   options,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   cols = 5,
   className,
   ...a11y
 }: OptionPickerProps) => {
   const fieldA11y = useFieldA11y(a11y);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'OptionPicker.value',
+  });
   const anyChecked = options.some((item) => item.id === value);
   return (
     <div
@@ -44,7 +55,7 @@ export const OptionPicker = ({
           desc={o.desc}
           preview={o.preview}
           active={o.id === value}
-          onClick={() => onChange(o.id)}
+          onClick={() => setValue(o.id)}
           tabIndex={radioTabIndex(o.id === value, i, anyChecked)}
         />
       ))}

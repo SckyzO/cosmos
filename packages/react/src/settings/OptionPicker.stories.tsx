@@ -137,7 +137,7 @@ const ControlledViewModes = ({
   onChange,
 }: {
   initial: string;
-  onChange: (id: string) => void;
+  onChange?: (id: string) => void;
 }) => {
   const [value, setValue] = useState(initial);
   return (
@@ -147,7 +147,7 @@ const ControlledViewModes = ({
         options={VIEW_MODES}
         value={value}
         onChange={(id) => {
-          onChange(id);
+          onChange?.(id);
           setValue(id);
         }}
         cols={4}

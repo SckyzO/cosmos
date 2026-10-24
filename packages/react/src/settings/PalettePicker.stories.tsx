@@ -144,7 +144,7 @@ const ControlledPalettes = ({
   onChange,
 }: {
   initial: string;
-  onChange: (id: string) => void;
+  onChange?: (id: string) => void;
 }) => {
   const [value, setValue] = useState(initial);
   return (
@@ -154,7 +154,7 @@ const ControlledPalettes = ({
         palettes={LIGHT_THEMES}
         value={value}
         onChange={(id) => {
-          onChange(id);
+          onChange?.(id);
           setValue(id);
         }}
       />

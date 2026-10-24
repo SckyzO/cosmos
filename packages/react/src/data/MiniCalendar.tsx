@@ -2,11 +2,16 @@ import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type MiniCalendarProps = {
   today?: Date;
-  selected: Date;
-  onSelect: (date: Date) => void;
+  /** Selected day, when controlled. */
+  selected?: Date;
+  /** First selected day, when uncontrolled. None when omitted. */
+  defaultSelected?: Date;
+  /** Called with the day the user picks. */
+  onSelect?: (date: Date) => void;
   /** Set of ISO date strings (YYYY-MM-DD) marking days with events. */
   eventDays?: Set<string>;
   /**
@@ -26,13 +31,24 @@ export type MiniCalendarProps = {
  */
 export const MiniCalendar = ({
   today = new Date(),
-  selected,
+  selected: selectedProp,
+  defaultSelected,
   onSelect,
   eventDays,
   locale,
   className,
 }: MiniCalendarProps) => {
-  const [view, setView] = useState(() => new Date(selected.getFullYear(), selected.getMonth(), 1));
+  const [selected, select] = useControllableState({
+    value: selectedProp,
+    defaultValue: defaultSelected,
+    onChange: onSelect,
+    name: 'MiniCalendar.selected',
+  });
+  // Opens on the selected day's month, or today's when none is.
+  const [view, setView] = useState(() => {
+    const shown = selected ?? today;
+    return new Date(shown.getFullYear(), shown.getMonth(), 1);
+  });
 
   const cells = useMemo(() => {
     const firstOfMonth = new Date(view.getFullYear(), view.getMonth(), 1);
@@ -98,13 +114,13 @@ export const MiniCalendar = ({
         {cells.map((d, i) => {
           if (!d) return <span key={`e-${i}`} />;
           const isToday = sameDay(d, today);
-          const isSelected = sameDay(d, selected);
+          const isSelected = !!selected && sameDay(d, selected);
           const hasEvent = eventDays?.has(isoDate(d));
           return (
             <button
               type="button"
               key={d.toISOString()}
-              onClick={() => onSelect(d)}
+              onClick={() => select(d)}
               aria-label={fmt.fullDate(d)}
               aria-pressed={isSelected}
               aria-current={isToday ? 'date' : undefined}

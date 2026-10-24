@@ -8,6 +8,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type StepperOrientation = 'horizontal' | 'vertical';
 export type StepperSize = 'sm' | 'md';
@@ -303,20 +304,27 @@ const StepperStep = ({
 // ── Stepper root ─────────────────────────────────────────────────────────────
 
 export type StepperProps = {
-  /** Current step (0-indexed). Steps before are `done`, equal is `active`, after are `pending`. */
-  current: number;
+  /**
+   * Current step (0-indexed), when controlled. Steps before are `done`, equal is `active`,
+   * after are `pending`.
+   */
+  current?: number;
+  /** First current step, when uncontrolled. Default `0`. A click on a step moves to it. */
+  defaultCurrent?: number;
   orientation?: StepperOrientation;
   size?: StepperSize;
   variant?: StepperVariant;
   /** Make steps clickable for back-navigation. */
   clickable?: boolean;
+  /** Called with the index of the step clicked, the step to move to. */
   onStepClick?: (index: number) => void;
   className?: string;
   children: ReactNode;
 };
 
 export const StepperRoot = ({
-  current,
+  current: currentProp,
+  defaultCurrent = 0,
   orientation = 'horizontal',
   size = 'md',
   variant = 'indicators',
@@ -325,6 +333,12 @@ export const StepperRoot = ({
   className,
   children,
 }: StepperProps) => {
+  const [current, setCurrent] = useControllableState({
+    value: currentProp,
+    defaultValue: defaultCurrent,
+    onChange: onStepClick,
+    name: 'Stepper.current',
+  });
   const steps = Children.toArray(children).filter(
     isValidElement
   ) as ReactElement<StepperStepProps>[];
@@ -356,7 +370,7 @@ export const StepperRoot = ({
           __size: size,
           __variant: variant,
           __clickable: clickable,
-          __onClick: onStepClick,
+          __onClick: setCurrent,
           __isLast: i === steps.length - 1,
         });
       })}

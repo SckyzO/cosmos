@@ -74,7 +74,7 @@ const ControlledAccents = ({
   onChange,
 }: {
   initial: string;
-  onChange: (id: string) => void;
+  onChange?: (id: string) => void;
 }) => {
   const [value, setValue] = useState(initial);
   return (
@@ -84,7 +84,7 @@ const ControlledAccents = ({
         colors={ACCENTS}
         value={value}
         onChange={(id) => {
-          onChange(id);
+          onChange?.(id);
           setValue(id);
         }}
       />

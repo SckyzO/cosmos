@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useFieldA11y, type FieldA11yProps } from '../forms/fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { ColorSwatch } from './ColorSwatch';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type AccentColor = {
   /** Stable identifier (used as React key + value). */
@@ -16,9 +17,11 @@ export type AccentColor = {
 export type AccentPickerProps = FieldA11yProps & {
   /** Available accent colours. */
   colors: AccentColor[];
-  /** Currently selected colour id. */
-  value: string;
-  onChange: (id: string) => void;
+  /** Selected colour id, when controlled. */
+  value?: string;
+  /** First selected colour id, when uncontrolled. None when omitted. */
+  defaultValue?: string;
+  onChange?: (id: string) => void;
   /** Number of columns on small screens (default 5). */
   cols?: number;
   /** Number of columns from the `sm:` breakpoint (640px) up (default: the value of `cols`). */
@@ -32,7 +35,8 @@ export type AccentPickerProps = FieldA11yProps & {
  */
 export const AccentPicker = ({
   colors,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   cols = 5,
   smCols = cols,
@@ -40,6 +44,12 @@ export const AccentPicker = ({
   ...a11y
 }: AccentPickerProps) => {
   const fieldA11y = useFieldA11y(a11y);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'AccentPicker.value',
+  });
   const anyChecked = colors.some((item) => item.id === value);
   return (
     <div
@@ -65,7 +75,7 @@ export const AccentPicker = ({
           hex={c.hex}
           label={c.label}
           active={c.id === value}
-          onClick={() => onChange(c.id)}
+          onClick={() => setValue(c.id)}
           tabIndex={radioTabIndex(c.id === value, i, anyChecked)}
         />
       ))}
