@@ -44,7 +44,7 @@ export const RealtimeChart = ({
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, brand, warning, error, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, brand, statusWarn, statusCrit, tooltipTheme } = useChartTheme();
   const format = useOptionalValueFormat(formatValue);
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
@@ -120,13 +120,19 @@ export const RealtimeChart = ({
       yaxis: [
         {
           y: warnThreshold,
-          borderColor: warning,
-          label: { text: 'WARN', style: { color: readableOn(warning), background: warning } },
+          borderColor: statusWarn,
+          label: {
+            text: 'WARN',
+            style: { color: readableOn(statusWarn), background: statusWarn },
+          },
         },
         {
           y: critThreshold,
-          borderColor: error,
-          label: { text: 'CRIT', style: { color: readableOn(error), background: error } },
+          borderColor: statusCrit,
+          label: {
+            text: 'CRIT',
+            style: { color: readableOn(statusCrit), background: statusCrit },
+          },
         },
       ],
     },

@@ -174,24 +174,24 @@ export const ThresholdLabelsReadOnTheirColor: Story = {
   },
 };
 
-/** The WARN and CRIT lines and labels take the theme's warning and error colors. */
+/** The WARN and CRIT lines and labels take the theme's monitoring status colors. */
 export const ThresholdColorsFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    const tokens = ['--color-warning-500', '--color-error-500'];
+    const tokens = ['--color-status-warn', '--color-status-crit'];
     await expectColorsFromTokens(
       () =>
         [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotations line')].map((el) =>
           el.getAttribute('stroke')
         ),
       tokens,
-      '--color-warning-500'
+      '--color-status-warn'
     );
     await expectColorsFromTokens(
       () => [labelBackground(canvasElement, 'WARN'), labelBackground(canvasElement, 'CRIT')],
       tokens,
-      '--color-error-500'
+      '--color-status-crit'
     );
   },
 };
