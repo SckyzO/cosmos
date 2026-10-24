@@ -1,15 +1,17 @@
-import { useId, useMemo, type ReactElement, type ReactNode } from 'react';
+import { useId, useMemo, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { useControllableState } from '../hooks/useControllableState';
 import { ShellContext } from './shellContext';
-import type { TopbarProps } from './Topbar';
-import type { SidebarProps } from './Sidebar';
 
 export type ShellProps = {
-  /** Top header bar — typically `<Topbar />`. */
-  topbar?: ReactElement<TopbarProps>;
-  /** Left sidebar — typically `<Sidebar />`. */
-  sidebar?: ReactElement<SidebarProps>;
+  /**
+   * Top header bar: typically `<Topbar />`, or any header (a `<Navbar>`). Shell
+   * passes it no props: a Topbar or a `SidebarToggle` reads the sidebar state
+   * from Shell's context.
+   */
+  topbar?: ReactNode;
+  /** Left sidebar: typically `<Sidebar />`, which reads its collapsed state from Shell's context. */
+  sidebar?: ReactNode;
   /** Main content area. */
   children: ReactNode;
   /**
