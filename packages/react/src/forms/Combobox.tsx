@@ -241,6 +241,7 @@ export const Combobox = ({
                   key={opt.value}
                   role="option"
                   aria-selected={isSelected}
+                  aria-disabled={opt.disabled || undefined}
                   onMouseEnter={() => setActiveIndex(i)}
                   onMouseDown={(e) => {
                     // mousedown fires before input blur — prevents losing focus
