@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, type ReactNode } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { Modal } from './Modal';
 
@@ -77,14 +78,12 @@ const HelpOverlayRoot = ({
   className,
   children,
 }: HelpOverlayProps) => {
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = isControlled ? controlledOpen : internalOpen;
-
-  const setOpen = (next: boolean) => {
-    if (!isControlled) setInternalOpen(next);
-    onOpenChange?.(next);
-  };
+  const [open, setOpen] = useControllableState({
+    value: controlledOpen,
+    defaultValue: false,
+    onChange: onOpenChange,
+    name: 'HelpOverlay.open',
+  });
 
   // Hotkey toggles open/close; Esc is handled by Modal while open.
   useEffect(() => {
@@ -94,14 +93,12 @@ const HelpOverlayRoot = ({
       if (isTypingTarget(e.target)) return;
       if (matchesHotkey(e, hotkey)) {
         e.preventDefault();
-        setOpen(!open);
+        setOpen((wasOpen) => !wasOpen);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-    // setOpen is stable enough — depends only on isControlled/onOpenChange/open
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hotkey, open, isControlled, onOpenChange]);
+  }, [hotkey, setOpen]);
 
   // Modal brings the portal, the focus trap with focus restore, Escape and
   // the backdrop click.

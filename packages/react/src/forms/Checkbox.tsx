@@ -4,12 +4,12 @@ import {
   useEffect,
   useId,
   useRef,
-  useState,
   type ChangeEvent,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type CheckboxSize = 'sm' | 'md';
 
@@ -48,9 +48,13 @@ export function Checkbox({
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
   const innerRef = useRef<HTMLInputElement>(null);
-  const isControlled = checked !== undefined;
-  const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
-  const isChecked = isControlled ? !!checked : internalChecked;
+  const [checkedState, setChecked, isControlled] = useControllableState({
+    value: checked,
+    defaultValue: defaultChecked ?? false,
+    onChange,
+    name: 'Checkbox.checked',
+  });
+  const isChecked = !!checkedState;
   const showFilled = isChecked || indeterminate;
 
   // Sync the native indeterminate flag (no DOM API exposed via JSX).
@@ -77,10 +81,7 @@ export function Checkbox({
           checked={isControlled ? isChecked : undefined}
           defaultChecked={!isControlled ? defaultChecked : undefined}
           disabled={disabled}
-          onChange={(e) => {
-            if (!isControlled) setInternalChecked(e.target.checked);
-            onChange?.(e.target.checked, e);
-          }}
+          onChange={(e) => setChecked(e.target.checked, e)}
           className="peer sr-only"
           {...rest}
         />
@@ -158,15 +159,15 @@ export const CheckboxGroup = ({
   size = 'md',
   className,
 }: CheckboxGroupProps) => {
-  const isControlled = value !== undefined;
-  const [internalValue, setInternalValue] = useState<string[]>(defaultValue);
-  const current = isControlled ? value : internalValue;
+  const [current, setCurrent] = useControllableState({
+    value,
+    defaultValue,
+    onChange,
+    name: 'CheckboxGroup.value',
+  });
 
-  const toggle = (v: string) => {
-    const next = current.includes(v) ? current.filter((x) => x !== v) : [...current, v];
-    if (!isControlled) setInternalValue(next);
-    onChange?.(next);
-  };
+  const toggle = (v: string) =>
+    setCurrent((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
 
   return (
     <fieldset className={clsx('block', className)}>

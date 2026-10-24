@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
 import { Popover } from '../ui/Popover';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import { useControllableState } from '../hooks/useControllableState';
 
 /**
  * An event's color: an `Intent`, or `violet`, a category color that carries no meaning of
@@ -175,20 +176,20 @@ export const EventCalendar = ({
   locale,
   className,
 }: EventCalendarProps) => {
-  const [internalMonth, setInternalMonth] = useState(() => startOfMonth(defaultMonth ?? today));
+  const [current, goTo] = useControllableState({
+    value: month,
+    defaultValue: () => startOfMonth(defaultMonth ?? today),
+    onChange: onMonthChange,
+    name: 'EventCalendar.month',
+  });
   const [openDay, setOpenDay] = useState<string | null>(null);
-  const shown = startOfMonth(month ?? internalMonth);
+  const shown = startOfMonth(current);
   const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const { days, byDay } = useMemo(() => {
-    const grid = monthGrid(month ?? internalMonth);
+    const grid = monthGrid(current);
     return { days: grid, byDay: indexByDay(events, grid[0], grid[grid.length - 1]) };
-  }, [events, month, internalMonth]);
-
-  const goTo = (next: Date) => {
-    if (month === undefined) setInternalMonth(next);
-    onMonthChange?.(next);
-  };
+  }, [events, current]);
   const isTodayMonth =
     shown.getFullYear() === today.getFullYear() && shown.getMonth() === today.getMonth();
 

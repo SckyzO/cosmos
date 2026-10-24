@@ -1,11 +1,6 @@
 import { clsx } from 'clsx';
-import {
-  useId,
-  useState,
-  type ChangeEvent,
-  type ReactNode,
-  type ComponentPropsWithRef,
-} from 'react';
+import { useId, type ChangeEvent, type ReactNode, type ComponentPropsWithRef } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type RadioSize = 'sm' | 'md';
 
@@ -40,9 +35,13 @@ export function Radio({
 }: RadioProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
-  const isControlled = checked !== undefined;
-  const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
-  const isChecked = isControlled ? !!checked : internalChecked;
+  const [checkedState, setChecked, isControlled] = useControllableState({
+    value: checked,
+    defaultValue: defaultChecked ?? false,
+    onChange,
+    name: 'Radio.checked',
+  });
+  const isChecked = !!checkedState;
   const sizes = SIZE_CLASS[size];
 
   return (
@@ -62,10 +61,7 @@ export function Radio({
           checked={isControlled ? isChecked : undefined}
           defaultChecked={!isControlled ? defaultChecked : undefined}
           disabled={disabled}
-          onChange={(e) => {
-            if (!isControlled) setInternalChecked(e.target.checked);
-            onChange?.(e.target.checked, e);
-          }}
+          onChange={(e) => setChecked(e.target.checked, e)}
           className="peer sr-only"
           {...rest}
         />
@@ -135,14 +131,13 @@ export const RadioGroup = ({
 }: RadioGroupProps) => {
   const generatedName = useId();
   const groupName = name ?? generatedName;
-  const isControlled = value !== undefined;
-  const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue);
-  const current = isControlled ? value : internalValue;
-
-  const select = (v: string) => {
-    if (!isControlled) setInternalValue(v);
-    onChange?.(v);
-  };
+  // Empty until the first pick; `select` only ever passes a string.
+  const [current, select] = useControllableState<string | undefined>({
+    value,
+    defaultValue,
+    onChange: onChange as ((value: string | undefined) => void) | undefined,
+    name: 'RadioGroup.value',
+  });
 
   return (
     <fieldset className={clsx('block', className)}>

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Cookie } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 import { Button } from './Button';
 
 export type CookieBannerPosition = 'bottom' | 'top' | 'floating';
@@ -42,14 +43,12 @@ export const CookieBanner = ({
   showIcon = true,
   className,
 }: CookieBannerProps) => {
-  const isControlled = openProp !== undefined;
-  const [internalOpen, setInternalOpen] = useState(defaultOpen);
-  const open = isControlled ? openProp : internalOpen;
-
-  const setOpen = (v: boolean) => {
-    if (!isControlled) setInternalOpen(v);
-    onOpenChange?.(v);
-  };
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'CookieBanner.open',
+  });
 
   const handleAccept = () => {
     onAccept();

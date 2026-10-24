@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { setRef } from '../ui/mergeRefs';
 import { usePortalFocus } from '../ui/overlayA11y';
 import { Calendar } from './Calendar';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type DateRange = {
   from: Date | undefined;
@@ -110,24 +111,24 @@ export const DatePicker = (props: DatePickerProps) => {
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   // ── Value plumbing (controlled vs uncontrolled) ─────────────────────────────
-  const isControlled = props.value !== undefined;
-  const [internalSingle, setInternalSingle] = useState<Date | undefined>(
-    !isRange ? (props as SingleProps).defaultValue : undefined
-  );
-  const [internalRange, setInternalRange] = useState<DateRange>(
-    isRange ? ((props as RangeProps).defaultValue ?? EMPTY_RANGE) : EMPTY_RANGE
-  );
+  // One state per mode: each only reads the props of its own mode.
+  const single = isRange ? undefined : (props as SingleProps);
+  const range = isRange ? (props as RangeProps) : undefined;
+  const [singleState, setSingle] = useControllableState<Date | undefined>({
+    value: single?.value,
+    defaultValue: single?.defaultValue,
+    onChange: single?.onChange,
+    name: 'DatePicker.value',
+  });
+  const [rangeState, setRange] = useControllableState<DateRange>({
+    value: range?.value,
+    defaultValue: range?.defaultValue ?? EMPTY_RANGE,
+    onChange: range?.onChange,
+    name: 'DatePicker.value',
+  });
 
-  const selectedSingle = isRange
-    ? undefined
-    : isControlled
-      ? (props as SingleProps).value
-      : internalSingle;
-  const selectedRange = isRange
-    ? isControlled
-      ? ((props as RangeProps).value ?? EMPTY_RANGE)
-      : internalRange
-    : EMPTY_RANGE;
+  const selectedSingle = isRange ? undefined : singleState;
+  const selectedRange = isRange ? (rangeState ?? EMPTY_RANGE) : EMPTY_RANGE;
 
   // ── Calendar bounds ─────────────────────────────────────────────────────────
   const currentYear = new Date().getFullYear();
@@ -172,15 +173,13 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Selection commit ────────────────────────────────────────────────────────
   const commitSingle = (date: Date | undefined) => {
-    if (!isControlled) setInternalSingle(date);
-    (props as SingleProps).onChange?.(date);
+    setSingle(date);
     if (date) setOpen(false);
   };
 
-  const commitRange = (range: DateRange) => {
-    if (!isControlled) setInternalRange(range);
-    (props as RangeProps).onChange?.(range);
-    if (range.from && range.to) setOpen(false);
+  const commitRange = (next: DateRange) => {
+    setRange(next);
+    if (next.from && next.to) setOpen(false);
   };
 
   // ── Footer (single mode) ────────────────────────────────────────────────────

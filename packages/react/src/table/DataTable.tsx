@@ -10,6 +10,7 @@ import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
+import { useControllableState } from '../hooks/useControllableState';
 import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
@@ -92,33 +93,27 @@ export const DataTable = <T,>({
   const [page, setPage] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
-  // Selection state (controlled / uncontrolled).
-  const [internalSelection, setInternalSelection] = useState<Set<string | number>>(
-    defaultSelection ?? new Set()
-  );
-  const isSelectionControlled = selectionProp !== undefined;
-  const selection = isSelectionControlled ? selectionProp : internalSelection;
-  const updateSelection = useCallback(
-    (next: Set<string | number>) => {
-      if (!isSelectionControlled) setInternalSelection(next);
-      onSelectionChange?.(next);
-    },
-    [isSelectionControlled, onSelectionChange]
-  );
+  const [selection, updateSelection] = useControllableState<Set<string | number>>({
+    value: selectionProp,
+    defaultValue: () => defaultSelection ?? new Set(),
+    onChange: onSelectionChange,
+    name: 'DataTable.selection',
+  });
 
-  // Search state (controlled / uncontrolled).
-  const [internalSearch, setInternalSearch] = useState(defaultSearchValue ?? '');
-  const isSearchControlled = searchValueProp !== undefined;
+  const [searchValue, setSearchState, isSearchControlled] = useControllableState({
+    value: searchValueProp,
+    defaultValue: defaultSearchValue ?? '',
+    onChange: onSearchChange,
+    name: 'DataTable.searchValue',
+  });
   const searchEnabled =
     isSearchControlled || defaultSearchValue !== undefined || onSearchChange !== undefined;
-  const searchValue = isSearchControlled ? searchValueProp! : internalSearch;
   const setSearch = useCallback(
     (value: string) => {
-      if (!isSearchControlled) setInternalSearch(value);
-      onSearchChange?.(value);
+      setSearchState(value);
       setPage(0);
     },
-    [isSearchControlled, onSearchChange]
+    [setSearchState]
   );
 
   const handleSortToggle = (key: string) => {

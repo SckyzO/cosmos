@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
-import { useId, useState, type ReactNode, type ComponentPropsWithRef } from 'react';
+import { useId, type ChangeEvent, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type TextareaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
@@ -41,11 +42,13 @@ export function Textarea({
 }: TextareaProps) {
   const generatedId = useId();
   const fieldId = id ?? rest.name ?? generatedId;
-  const isControlled = value !== undefined;
-  const [internalValue, setInternalValue] = useState<string>(
-    typeof defaultValue === 'string' ? defaultValue : ''
-  );
-  const currentValue = isControlled ? String(value ?? '') : internalValue;
+  // Tracks the text for the counter; the native field keeps its own value and default.
+  const [currentValue, setCurrentValue] = useControllableState({
+    value: value === undefined ? undefined : String(value ?? ''),
+    defaultValue: typeof defaultValue === 'string' ? defaultValue : '',
+    onChange: (_text: string, e: ChangeEvent<HTMLTextAreaElement>) => onChange?.(e),
+    name: 'Textarea.value',
+  });
   const counterEnabled = showCount ?? maxLength !== undefined;
   const overLimit = maxLength !== undefined && currentValue.length > maxLength;
   const descId = `${fieldId}-desc`;
@@ -69,10 +72,7 @@ export function Textarea({
         maxLength={maxLength}
         value={value}
         defaultValue={defaultValue}
-        onChange={(e) => {
-          if (!isControlled) setInternalValue(e.target.value);
-          onChange?.(e);
-        }}
+        onChange={(e) => setCurrentValue(e.target.value, e)}
         aria-describedby={hasDesc ? descId : undefined}
         aria-invalid={error || overLimit ? true : undefined}
         className={clsx(
