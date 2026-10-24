@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { placeholderAvatar } from '../storybook-avatars';
 import { Blockquote } from './Blockquote';
 
 const meta = {
@@ -39,9 +40,8 @@ export const TestimonialWithAvatar: Story = {
     align: 'center',
     author: 'Jane Doe',
     role: 'Senior SRE · Platform Team',
-    // Stable image (using initials fallback would also work).
-    authorAvatar:
-      'https://api.dicebear.com/9.x/initials/svg?seed=Jane%20Doe&backgroundColor=6366f1',
+    // A local image: no network, the same picture on every run.
+    authorAvatar: placeholderAvatar('Jane Doe', 64),
   },
 };
 

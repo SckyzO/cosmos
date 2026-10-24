@@ -180,6 +180,8 @@ export const FlatList: Story = {
 };
 
 export const LoadingState: Story = {
+  // Loading, then loaded after 1.5 s: a capture would show either, depending on the page load.
+  tags: ['no-capture'],
   render: () => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(true);
