@@ -12,7 +12,7 @@ const meta = {
   // in autodocs so the dialog doesn't take over the Storybook docs page.
   parameters: portalDocsParams.md(),
   tags: ['autodocs'],
-  args: { open: false, onStay: () => {} },
+  args: { open: false, onClose: () => {} },
 } satisfies Meta<typeof ConfirmationModal>;
 
 export default meta;
@@ -21,7 +21,7 @@ type Story = StoryObj<typeof meta>;
 export const UnsavedChanges: Story = {
   args: {
     open: true,
-    onStay: () => {},
+    onClose: () => {},
     onDiscard: () => {},
     onSave: () => {},
   },
@@ -34,7 +34,7 @@ export const ConfirmDelete: Story = {
     message: 'This action cannot be undone.',
     discardLabel: 'Delete',
     hideSave: true,
-    onStay: () => {},
+    onClose: () => {},
     onDiscard: () => {},
   },
 };
@@ -43,7 +43,7 @@ export const SavingInProgress: Story = {
   args: {
     open: true,
     saving: true,
-    onStay: () => {},
+    onClose: () => {},
     onDiscard: () => {},
     onSave: () => {},
   },
@@ -57,7 +57,7 @@ export const TriggeredFromButton: Story = {
         <Button onClick={() => setOpen(true)}>Open confirmation</Button>
         <ConfirmationModal
           open={open}
-          onStay={() => setOpen(false)}
+          onClose={() => setOpen(false)}
           onDiscard={() => setOpen(false)}
           onSave={() => setOpen(false)}
         />
@@ -67,34 +67,34 @@ export const TriggeredFromButton: Story = {
 };
 
 export const StayClosesModal: Story = {
-  args: { open: true, onStay: fn(), onDiscard: () => {}, onSave: () => {} },
+  args: { open: true, onClose: fn(), onDiscard: () => {}, onSave: () => {} },
   play: async ({ args }) => {
-    // ConfirmationModal renders into the same DOM (no portal), use document
+    // ConfirmationModal portals into document.body: query the document.
     const stay = within(document.body).getByRole('button', { name: 'Stay' });
     await userEvent.click(stay);
-    await expect(args.onStay).toHaveBeenCalled();
+    await expect(args.onClose).toHaveBeenCalled();
   },
 };
 
 /** Escape means Stay; once closed, Escape no longer reaches it. */
 export const EscapeStaysOnce: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { onStay: fn() },
+  args: { onClose: fn() },
   render: function Render(args) {
     const [open, setOpen] = useState(true);
     const stay = () => {
-      args.onStay();
+      args.onClose();
       setOpen(false);
     };
-    return <ConfirmationModal open={open} onStay={stay} onDiscard={() => {}} />;
+    return <ConfirmationModal open={open} onClose={stay} onDiscard={() => {}} />;
   },
   play: async ({ args }) => {
     const body = within(document.body);
-    await body.findByRole('dialog');
+    await body.findByRole('alertdialog');
     await userEvent.keyboard('{Escape}');
-    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(body.queryByRole('alertdialog')).toBeNull());
     await userEvent.keyboard('{Escape}');
-    await expect(args.onStay).toHaveBeenCalledTimes(1);
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
 
@@ -109,7 +109,7 @@ const OpenFromButton = () => {
     <div className="p-6">
       <Button onClick={() => setOpen(true)}>Open confirmation</Button>
       <Button variant="secondary">After</Button>
-      <ConfirmationModal open={open} onStay={close} onDiscard={close} onSave={close} />
+      <ConfirmationModal open={open} onClose={close} onDiscard={close} onSave={close} />
     </div>
   );
 };
@@ -122,7 +122,7 @@ export const TabStaysInsideTheDialog: Story = {
     const body = within(document.body);
     canvas.getByRole('button', { name: 'Open confirmation' }).focus();
     await userEvent.keyboard('{Enter}');
-    const dialog = within(await body.findByRole('dialog', { name: 'Unsaved changes' }));
+    const dialog = within(await body.findByRole('alertdialog', { name: 'Unsaved changes' }));
 
     // Focus starts on the first control, the close icon.
     await waitFor(() => expect(dialog.getByRole('button', { name: 'Close' })).toHaveFocus());
@@ -153,9 +153,9 @@ export const FocusReturnsToTheTrigger: Story = {
     for (const close of closers) {
       trigger.focus();
       await userEvent.keyboard('{Enter}');
-      await body.findByRole('dialog');
+      await body.findByRole('alertdialog');
       await close();
-      await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+      await waitFor(() => expect(body.queryByRole('alertdialog')).toBeNull());
       await waitFor(() => expect(trigger).toHaveFocus());
     }
   },
@@ -164,29 +164,29 @@ export const FocusReturnsToTheTrigger: Story = {
 /** Each action calls its own handler; the backdrop and the close icon mean Stay. */
 export const ActionsCallTheirHandlers: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { open: true, onStay: fn(), onDiscard: fn(), onSave: fn() },
+  args: { open: true, onClose: fn(), onDiscard: fn(), onSave: fn() },
   play: async ({ args }) => {
     const body = within(document.body);
-    const dialog = await body.findByRole('dialog');
+    const dialog = await body.findByRole('alertdialog');
 
     await userEvent.click(body.getByRole('button', { name: 'Discard' }));
     await expect(args.onDiscard).toHaveBeenCalledTimes(1);
     await userEvent.click(body.getByRole('button', { name: 'Save & go' }));
     await expect(args.onSave).toHaveBeenCalledTimes(1);
-    await expect(args.onStay).not.toHaveBeenCalled();
+    await expect(args.onClose).not.toHaveBeenCalled();
 
     await userEvent.click(body.getByRole('button', { name: 'Close' }));
-    await expect(args.onStay).toHaveBeenCalledTimes(1);
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
     // The backdrop is the dialog's first child.
     await userEvent.click(dialog.firstElementChild as HTMLElement);
-    await expect(args.onStay).toHaveBeenCalledTimes(2);
+    await expect(args.onClose).toHaveBeenCalledTimes(2);
   },
 };
 
 /** While `saving`, Save is disabled and a click on it does nothing. */
 export const SavingDisablesTheSaveButton: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { open: true, onStay: fn(), onSave: fn(), saving: true },
+  args: { open: true, onClose: fn(), onSave: fn(), saving: true },
   play: async ({ args }) => {
     const save = await within(document.body).findByRole('button', { name: 'Save & go' });
     await expect(save).toBeDisabled();
@@ -198,10 +198,10 @@ export const SavingDisablesTheSaveButton: Story = {
 /** `hideSave` drops the Save button even when an `onSave` is passed. */
 export const HideSaveRemovesTheSaveButton: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { open: true, onStay: fn(), onSave: fn(), hideSave: true },
+  args: { open: true, onClose: fn(), onSave: fn(), hideSave: true },
   play: async () => {
     const body = within(document.body);
-    await body.findByRole('dialog');
+    await body.findByRole('alertdialog');
     await expect(body.queryByRole('button', { name: 'Save & go' })).toBeNull();
     await expect(body.getByRole('button', { name: 'Stay' })).toBeVisible();
   },

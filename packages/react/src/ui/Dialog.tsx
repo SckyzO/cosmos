@@ -17,7 +17,11 @@ const SIZE_CLASS: Record<ModalSize, string> = {
 
 export type DialogRole = 'dialog' | 'alertdialog';
 
-export type DialogProps = ModalProps & { role?: DialogRole };
+export type DialogProps = ModalProps & {
+  role?: DialogRole;
+  /** Id of the element holding the message, for `aria-describedby`. */
+  ariaDescribedBy?: string;
+};
 
 export const Dialog = ({
   open,
@@ -26,6 +30,7 @@ export const Dialog = ({
   className,
   ariaLabel,
   role = 'dialog',
+  ariaDescribedBy,
   children,
 }: DialogProps) => {
   const titleId = useId();
@@ -58,6 +63,7 @@ export const Dialog = ({
       aria-modal="true"
       aria-label={ariaLabel}
       aria-labelledby={!ariaLabel && hasTitle ? titleId : undefined}
+      aria-describedby={ariaDescribedBy}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"

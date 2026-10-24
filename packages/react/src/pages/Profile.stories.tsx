@@ -217,7 +217,7 @@ const ClearCacheSection = () => {
         message="API responses will be re-fetched on the next page load. Auth, theme and layout preferences are preserved."
         discardLabel="Clear cache"
         hideSave
-        onStay={() => setOpen(false)}
+        onClose={() => setOpen(false)}
         onDiscard={() => {
           setOpen(false);
           setCleared(true);

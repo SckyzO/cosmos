@@ -566,7 +566,7 @@ const DashboardOverlaysDemo = () => {
         open={openConfirm}
         title="Delete rack A01 ?"
         message="This action is permanent and cannot be undone."
-        onStay={() => setOpenConfirm(false)}
+        onClose={() => setOpenConfirm(false)}
         onDiscard={() => setOpenConfirm(false)}
         hideSave
         stayLabel="Cancel"
