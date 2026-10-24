@@ -67,7 +67,6 @@
   "layout-card--with-tabs": ["color-contrast"],
   "overlays-command-palette--group-heading-contrast-in-deep-blue": ["color-contrast"],
   "overlays-help-overlay--custom-footer": ["color-contrast"],
-  "overlays-modal--untitled-dialog-has-no-dangling-label": ["aria-dialog-name"],
   "overlays-notifications-panel--align-left": ["color-contrast"],
   "overlays-notifications-panel--high-count": ["color-contrast"],
   "overlays-notifications-panel--item-intents-keep-their-look": ["color-contrast"],

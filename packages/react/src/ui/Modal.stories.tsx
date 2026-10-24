@@ -354,15 +354,17 @@ export const AccessibleNameAndInitialFocus: Story = {
 };
 
 // Without a `Modal.Header` title, `aria-labelledby` pointed at an id that was never rendered (#151).
+// Such a dialog is named by `ariaLabel`: it has no title to point at, and an unnamed dialog is
+// an accessibility violation.
 export const UntitledDialogHasNoDanglingLabel: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Modal open onClose={() => {}}>
+    <Modal open onClose={() => {}} ariaLabel="Notes">
       <Modal.Body>No heading here.</Modal.Body>
     </Modal>
   ),
   play: async () => {
-    const dialog = await within(document.body).findByRole('dialog');
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Notes' });
     await expect(dialog).not.toHaveAttribute('aria-labelledby');
   },
 };
