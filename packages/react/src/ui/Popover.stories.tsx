@@ -29,7 +29,7 @@ export const Default: Story = {
         <Popover.Trigger className="bg-brand-500 hover:bg-brand-600 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors">
           Open popover
         </Popover.Trigger>
-        <Popover.Content>
+        <Popover.Content aria-label="Basic popover">
           <p>This is a basic popover.</p>
         </Popover.Content>
       </Popover>
@@ -48,7 +48,7 @@ export const Positions: Story = {
           <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
             {pos}
           </Popover.Trigger>
-          <Popover.Content position={pos} arrow width="w-40">
+          <Popover.Content position={pos} arrow width="w-40" aria-label={`Popover on the ${pos}`}>
             <p className="text-xs">Position: {pos}</p>
           </Popover.Content>
         </Popover>
@@ -65,7 +65,7 @@ export const AlignEnd: Story = {
         <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
           Settings
         </Popover.Trigger>
-        <Popover.Content align="end" arrow width="w-64">
+        <Popover.Content align="end" arrow width="w-64" aria-label="Settings">
           <p className="text-xs">Flush with the trigger&apos;s right edge.</p>
         </Popover.Content>
       </Popover>
@@ -77,11 +77,19 @@ export const RichContent: Story = {
   render: () => (
     <div className="flex h-72 items-center justify-center">
       <Popover>
-        <Popover.Trigger className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-          <HelpCircle className="h-5 w-5" />
+        <Popover.Trigger
+          aria-label="Help"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+        >
+          <HelpCircle className="h-5 w-5" aria-hidden />
         </Popover.Trigger>
-        <Popover.Content position="bottom" arrow width="w-72">
-          <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">Need help?</h4>
+        <Popover.Content position="bottom" arrow width="w-72" aria-labelledby="popover-help-title">
+          <h4
+            id="popover-help-title"
+            className="mb-1 text-sm font-semibold text-gray-900 dark:text-white"
+          >
+            Need help?
+          </h4>
           <p className="mb-3 text-xs text-gray-600 dark:text-gray-300">
             Read the docs or contact support — we usually reply within a few hours.
           </p>
@@ -103,10 +111,13 @@ export const ActionsMenu: Story = {
   render: () => (
     <div className="flex h-72 items-center justify-center">
       <Popover>
-        <Popover.Trigger className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-          <MoreVertical className="h-4 w-4" />
+        <Popover.Trigger
+          aria-label="More actions"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+        >
+          <MoreVertical className="h-4 w-4" aria-hidden />
         </Popover.Trigger>
-        <Popover.Content position="bottom" width="w-48" className="p-0">
+        <Popover.Content position="bottom" width="w-48" className="p-0" aria-label="Actions">
           <ul className="py-1">
             <li>
               <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">
@@ -142,7 +153,7 @@ export const Controlled: Story = {
           <Popover.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">
             Open ({open ? 'on' : 'off'})
           </Popover.Trigger>
-          <Popover.Content arrow>
+          <Popover.Content arrow aria-label="Controlled popover">
             <p className="text-xs">Externally controlled popover.</p>
           </Popover.Content>
         </Popover>
@@ -178,6 +189,29 @@ export const TriggerOpensCloses: Story = {
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
     await userEvent.click(trigger);
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+  },
+};
+
+/** `aria-labelledby` names the panel after a heading inside it, so the text isn't written twice. */
+export const NamedByItsHeading: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-48 items-center justify-center">
+      <Popover>
+        <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Help</Popover.Trigger>
+        <Popover.Content aria-labelledby="popover-named-by-heading">
+          <h4 id="popover-named-by-heading" className="font-semibold">
+            Need help?
+          </h4>
+          <p>Read the docs or contact support.</p>
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Help' }));
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Need help?' });
+    await expect(dialog).not.toHaveAttribute('aria-label');
   },
 };
 
@@ -232,7 +266,7 @@ export const AlignEndFollowsTriggerResize: Story = {
     <div className="flex h-48 items-start justify-end p-6">
       <Popover>
         <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Resize</Popover.Trigger>
-        <Popover.Content align="end" arrow>
+        <Popover.Content align="end" arrow aria-label="Panel">
           <p>Panel</p>
         </Popover.Content>
       </Popover>
@@ -265,7 +299,7 @@ export const OnOpenChangeFires: Story = {
     <div className="flex h-48 items-center justify-center">
       <Popover onOpenChange={args.onOpenChange as (o: boolean) => void}>
         <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Trigger</Popover.Trigger>
-        <Popover.Content>
+        <Popover.Content aria-label="Panel">
           <p>Panel</p>
         </Popover.Content>
       </Popover>
