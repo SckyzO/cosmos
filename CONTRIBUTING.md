@@ -181,6 +181,21 @@ The same prop means the same thing on every component.
   `onChange(value)`, `onCollapsedChange(collapsed)`, `onChange(isDark)`. A callback that reports a
   state change carries the state to move to, never a bare `onToggle()` that makes the host work it
   out.
+- **State the host may own comes in a controlled/uncontrolled pair.** The value (`value`,
+  `checked`, `page`, `collapsed`, `open`…), its default (`defaultValue`, `defaultChecked`,
+  `defaultPage`, `defaultCollapsed`, `defaultOpen`…) and its change callback. Only `undefined`
+  means uncontrolled: `null`, `false`, `0` and `''` are values the host controls, so an empty
+  controlled value is `''` (or `null` where the type allows it), never `undefined`. The callback
+  fires in both modes; a controlled component shows the new value once the host passes it back. A
+  component stays one or the other for its whole life, and logs a warning if the host switches.
+  Build it on the internal `useControllableState` (`packages/react/src/hooks/`), never a
+  hand-written `isControlled` branch.
+- **Who opens it picks the open-state props.** A dialog the host opens (Modal, Modal.Alert,
+  Drawer, ConfirmationModal) takes `open` + `onClose`: the host owns the state, and the component
+  calls `onClose` from its close button, the backdrop and Escape. A component that opens or closes
+  itself (Popover, Dropdown, Combobox, DatePicker, Tooltip, UserMenu, NotificationsPanel, Chatbot,
+  CookieBanner, Sidebar.SubMenu and Sidebar.Group, HelpOverlay and its hotkey) takes `open` /
+  `defaultOpen` / `onOpenChange(open)`, the pair above.
 - **Refs are props.** React 19 passes `ref` like any other prop, so no component uses `forwardRef`.
   A component whose root is focusable (a button, a link, a field) takes `ref` and attaches it to
   that element.
