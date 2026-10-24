@@ -499,6 +499,30 @@ export const TabAndPanelAreLinked: Story = {
   },
 };
 
+/**
+ * Tabs that navigate (the page below changes by itself) have no `Tabs.Panel`: a tab must not
+ * point at a panel that doesn't exist, which is an invalid ID reference.
+ */
+export const TabsWithoutPanelsHaveNoAriaControls: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Tabs value="overview" onChange={() => {}}>
+        <Tabs.List>
+          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+          <Tabs.Trigger value="logs">Logs</Tabs.Trigger>
+        </Tabs.List>
+      </Tabs>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tabs = canvas.getAllByRole('tab');
+    await expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    for (const tab of tabs) await expect(tab).not.toHaveAttribute('aria-controls');
+    await expect(canvas.queryByRole('tabpanel')).toBeNull();
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports
