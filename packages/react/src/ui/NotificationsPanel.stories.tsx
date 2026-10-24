@@ -4,7 +4,7 @@ import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
-import { NotificationsPanel, type NotificationSeverity } from './NotificationsPanel';
+import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
 const meta = {
   title: 'Overlays/Notifications Panel',
@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 type Alert = {
   id: string;
-  severity: NotificationSeverity;
+  intent: NotificationsPanelIntent;
   title: string;
   subtitle: string;
   caption?: string;
@@ -29,35 +29,35 @@ type Alert = {
 const SAMPLE_ALERTS: Alert[] = [
   {
     id: '1',
-    severity: 'crit',
+    intent: 'danger',
     title: 'rack-a07-srv03',
     subtitle: 'Rack A07 · Datacenter Paris',
     caption: 'cpu_temp_critical +2',
   },
   {
     id: '2',
-    severity: 'crit',
+    intent: 'danger',
     title: 'rack-b12-srv01',
     subtitle: 'Rack B12 · Datacenter Frankfurt',
     caption: 'disk_full',
   },
   {
     id: '3',
-    severity: 'warn',
+    intent: 'warning',
     title: 'rack-a03-srv11',
     subtitle: 'Rack A03 · Datacenter Paris',
     caption: 'memory_pressure',
   },
   {
     id: '4',
-    severity: 'warn',
+    intent: 'warning',
     title: 'rack-c02-srv05',
     subtitle: 'Rack C02 · Datacenter London',
     caption: 'fan_speed_low',
   },
   {
     id: '5',
-    severity: 'info',
+    intent: 'info',
     title: 'rack-a01-srv02',
     subtitle: 'Rack A01 · Datacenter Paris',
     caption: 'maintenance_scheduled',
@@ -80,9 +80,9 @@ const FullPanel = ({
   onMuteToggle?: () => void;
 }) => {
   const [isMuted, setMuted] = useState(muted);
-  const crit = alerts.filter((a) => a.severity === 'crit').length;
-  const warn = alerts.filter((a) => a.severity === 'warn').length;
-  const info = alerts.filter((a) => a.severity === 'info').length;
+  const crit = alerts.filter((a) => a.intent === 'danger').length;
+  const warn = alerts.filter((a) => a.intent === 'warning').length;
+  const info = alerts.filter((a) => a.intent === 'info').length;
   return (
     <NotificationsPanel defaultOpen={defaultOpen}>
       <NotificationsPanel.Trigger count={alerts.length} muted={isMuted} />
@@ -112,7 +112,7 @@ const FullPanel = ({
             {alerts.map((a) => (
               <NotificationsPanel.Item
                 key={a.id}
-                severity={a.severity}
+                intent={a.intent}
                 title={a.title}
                 subtitle={a.subtitle}
                 caption={a.caption}
@@ -184,7 +184,7 @@ export const AlignLeft: Story = {
             {SAMPLE_ALERTS.slice(0, 3).map((a) => (
               <NotificationsPanel.Item
                 key={a.id}
-                severity={a.severity}
+                intent={a.intent}
                 title={a.title}
                 subtitle={a.subtitle}
               />
@@ -234,7 +234,7 @@ export const ItemClickFiresHandler: Story = {
     await userEvent.click(canvas.getByRole('button', { name: /^notifications$/i }));
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     const dialog = document.querySelector('[role="dialog"]')!;
-    // Find the first severity item (it has a badge text like "CRIT" / "WARN")
+    // Find the first alert item (it has a badge text like "CRIT" / "WARN")
     const items = Array.from(dialog.querySelectorAll('button')).filter((b) =>
       b.textContent?.match(/CRIT|WARN|INFO|OK/)
     );

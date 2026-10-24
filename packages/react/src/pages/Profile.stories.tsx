@@ -66,19 +66,19 @@ const SAMPLE_AVATAR =
 const SAMPLE_ALERTS = [
   {
     id: '1',
-    severity: 'crit' as const,
+    intent: 'danger' as const,
     title: 'rack-a07-srv03',
     subtitle: 'Rack A07 · Datacenter Paris',
   },
   {
     id: '2',
-    severity: 'warn' as const,
+    intent: 'warning' as const,
     title: 'rack-c02-srv05',
     subtitle: 'Rack C02 · Datacenter London',
   },
   {
     id: '3',
-    severity: 'info' as const,
+    intent: 'info' as const,
     title: 'rack-a01-srv02',
     subtitle: 'Rack A01 · Datacenter Paris',
   },
@@ -452,16 +452,16 @@ const ProfileShell = ({ children }: { children: ReactNode }) => {
                 <NotificationsPanel.Content>
                   <NotificationsPanel.Header title="Active Alerts">
                     <NotificationsPanel.Counters
-                      crit={SAMPLE_ALERTS.filter((a) => a.severity === 'crit').length}
-                      warn={SAMPLE_ALERTS.filter((a) => a.severity === 'warn').length}
-                      info={SAMPLE_ALERTS.filter((a) => a.severity === 'info').length}
+                      crit={SAMPLE_ALERTS.filter((a) => a.intent === 'danger').length}
+                      warn={SAMPLE_ALERTS.filter((a) => a.intent === 'warning').length}
+                      info={SAMPLE_ALERTS.filter((a) => a.intent === 'info').length}
                     />
                   </NotificationsPanel.Header>
                   <NotificationsPanel.List>
                     {SAMPLE_ALERTS.map((a) => (
                       <NotificationsPanel.Item
                         key={a.id}
-                        severity={a.severity}
+                        intent={a.intent}
                         title={a.title}
                         subtitle={a.subtitle}
                       />
