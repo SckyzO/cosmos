@@ -95,7 +95,10 @@ to for `SegmentedControl` and `FilterPills` (the selected one, else the first).
 
 ## Tables
 
-`DataTable` sorts, filters, searches and paginates its rows. For a short
+`DataTable` sorts, filters, searches and paginates its rows. Give it a height
+(`className="max-h-96"`) and the rows scroll under the header, in an area the
+keyboard can focus and scroll while it overflows; `aria-label` or
+`aria-labelledby` names the table, and that area as a region. For a short
 read-only table, compose the table primitives instead: `Table`, `TableCaption`,
 `TableHead`, `TableBody`, `TableFoot`, `TableRow`, `TableHeaderCell` and
 `TableCell` render the native elements with the Cosmos styling and no logic.
