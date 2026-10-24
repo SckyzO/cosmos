@@ -70,8 +70,6 @@
   "forms-number-input--typing-passes-through-invalid-values": ["label"],
   "forms-toggle--disabled": ["color-contrast"],
   "forms-toggle--disabled-blocks-interaction": ["color-contrast"],
-  "foundations-appearance--default": ["link-in-text-block"],
-  "foundations-appearance--picking-applies-to-document": ["link-in-text-block"],
   "layout-card--with-link": ["color-contrast"],
   "layout-card--with-list": ["color-contrast"],
   "layout-card--with-tabs": ["color-contrast"],
@@ -172,7 +170,5 @@
   "typography-description-list--striped": ["color-contrast"],
   "typography-headings--with-badge": ["color-contrast"],
   "typography-paragraphs--inline-emphasis": ["color-contrast"],
-  "typography-text--colors": ["color-contrast"],
-  "welcome--catalog-from-index": ["link-in-text-block"],
-  "welcome--default": ["aria-progressbar-name", "link-in-text-block"]
+  "typography-text--colors": ["color-contrast"]
 }
