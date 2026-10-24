@@ -65,14 +65,14 @@ export const MiniCalendar = ({
           type="button"
           onClick={goPrev}
           aria-label="Previous month"
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
+          className="focus-visible:focus-indicator flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <button
           type="button"
           onClick={goToday}
-          className="hover:text-brand-600 dark:hover:text-brand-400 text-sm font-semibold text-gray-900 dark:text-gray-100"
+          className="hover:text-brand-600 dark:hover:text-brand-400 focus-visible:focus-indicator rounded text-sm font-semibold text-gray-900 dark:text-gray-100"
         >
           {fmt.monthYear(view)}
         </button>
@@ -80,7 +80,7 @@ export const MiniCalendar = ({
           type="button"
           onClick={goNext}
           aria-label="Next month"
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
+          className="focus-visible:focus-indicator flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -109,12 +109,12 @@ export const MiniCalendar = ({
               aria-pressed={isSelected}
               aria-current={isToday ? 'date' : undefined}
               className={clsx(
-                'relative flex h-8 items-center justify-center rounded-md text-xs font-medium transition-colors',
+                'relative flex h-8 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:ring-inset',
                 isSelected
-                  ? 'bg-brand-500 hover:bg-brand-600 text-white'
+                  ? 'bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator-on-accent text-white'
                   : isToday
-                    ? 'bg-brand-50 text-brand-600 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
+                    ? 'bg-brand-50 text-brand-600 hover:bg-brand-100 focus-visible:focus-indicator dark:bg-brand-500/15 dark:text-brand-400'
+                    : 'focus-visible:focus-indicator text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
               )}
             >
               {fmt.dayNumber(d)}

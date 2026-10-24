@@ -74,7 +74,7 @@ export const Breadcrumb = ({ items, separator = 'chevron', className }: Breadcru
             <button
               type="button"
               onClick={onClick}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
+              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
             >
               {Icon && <Icon className="h-4 w-4" />}
               {label}
@@ -82,7 +82,7 @@ export const Breadcrumb = ({ items, separator = 'chevron', className }: Breadcru
           ) : (
             <a
               href={href ?? '#'}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
+              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
             >
               {Icon && <Icon className="h-4 w-4" />}
               {label}

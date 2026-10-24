@@ -37,7 +37,7 @@ const Root = ({
         ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
         : 'rounded-2xl border border-gray-200 dark:border-gray-800',
       interactive &&
-        'focus-within:ring-brand-500/30 cursor-pointer transition-all focus-within:ring-2 hover:-translate-y-0.5 hover:shadow-md',
+        'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
       PADDING_CLASS[padding],
       className
     )}

@@ -72,7 +72,7 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
           'inline-flex h-8 w-8 items-center justify-center rounded-md text-sm text-gray-700 transition-colors hover:bg-gray-100 focus-visible:ring-inset focus-visible:focus-indicator dark:text-gray-200 dark:hover:bg-white/5',
         today: 'font-semibold text-brand-600 dark:text-brand-400',
         selected:
-          '[&_button]:bg-brand-500 [&_button]:text-white [&_button]:hover:bg-brand-600 dark:[&_button]:hover:bg-brand-400',
+          '[&_button]:bg-brand-500 [&_button]:text-white [&_button]:hover:bg-brand-600 dark:[&_button]:hover:bg-brand-400 [&_button:focus-visible]:ring-white',
         outside: 'text-gray-300 dark:text-gray-600',
         disabled: 'opacity-30',
         range_start: '[&_button]:rounded-r-none',

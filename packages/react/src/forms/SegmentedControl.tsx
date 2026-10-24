@@ -55,11 +55,11 @@ export const SegmentedControl = <T extends string>({
             tabIndex={tabIndex}
             onClick={() => onChange(opt.value)}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',
+              'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-inset',
               i > 0 && 'border-l border-gray-200 dark:border-gray-700',
               isActive
-                ? 'bg-brand-500 text-white'
-                : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
+                ? 'bg-brand-500 focus-visible:focus-indicator-on-accent text-white'
+                : 'focus-visible:focus-indicator text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
             )}
           >
             {Icon && <Icon className="h-4 w-4" />}

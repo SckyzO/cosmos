@@ -185,7 +185,7 @@ function NotificationsPanelTrigger({
       aria-expanded={open}
       onClick={() => setOpen(!open)}
       className={clsx(
-        'relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors',
+        'focus-visible:focus-indicator relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors',
         muted
           ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
           : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
@@ -333,7 +333,7 @@ function NotificationsPanelHeaderAction({
       ref={ref}
       type="button"
       className={clsx(
-        'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+        'focus-visible:focus-indicator flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
         active
           ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
           : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300',
@@ -410,7 +410,7 @@ function NotificationsPanelItem({
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
       className={clsx(
-        'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
+        'focus-visible:focus-indicator flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5',
         className
       )}
       {...rest}
@@ -491,7 +491,7 @@ const NotificationsPanelFooter = ({
           if (closeOnClick && !e.defaultPrevented) setOpen(false);
         }}
         className={clsx(
-          'text-brand-600 dark:text-brand-400 w-full rounded-lg py-2 text-center text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
+          'text-brand-600 dark:text-brand-400 focus-visible:focus-indicator w-full rounded-lg py-2 text-center text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5',
           className
         )}
         {...rest}

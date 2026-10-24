@@ -33,7 +33,7 @@ const ZoomBtn = ({
     onClick={onClick}
     title={title}
     className={clsx(
-      'flex items-center px-2.5 py-2 text-gray-500 transition-colors hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5',
+      'focus-visible:focus-indicator flex items-center px-2.5 py-2 text-gray-500 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/5',
       dividerLeft && 'border-l border-gray-200 dark:border-gray-700'
     )}
   >

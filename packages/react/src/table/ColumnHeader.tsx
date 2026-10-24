@@ -78,7 +78,7 @@ export const ColumnHeader = ({
           <button
             type="button"
             onClick={onSortToggle}
-            className="flex items-center gap-1 transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator flex items-center gap-1 rounded transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
             {label}
             {sortDir === 'asc' && <ChevronUp className="h-3 w-3" />}
@@ -95,7 +95,7 @@ export const ColumnHeader = ({
               onClick={() => setOpen((v) => !v)}
               aria-label={typeof label === 'string' ? `Filter ${label}` : 'Filter column'}
               className={clsx(
-                'flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
+                'focus-visible:focus-indicator flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
                 filterCount > 0 && 'text-brand-600 dark:text-brand-400'
               )}
             >

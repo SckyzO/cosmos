@@ -80,7 +80,10 @@ function ContentStackedListItem({
   ...rest
 }: ContentStackedListItemProps) {
   const titleEl = href ? (
-    <a href={href} className="text-gray-900 hover:underline dark:text-white">
+    <a
+      href={href}
+      className="focus-visible:focus-indicator rounded-sm text-gray-900 hover:underline dark:text-white"
+    >
       {title}
     </a>
   ) : (

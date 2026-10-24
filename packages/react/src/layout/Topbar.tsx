@@ -60,7 +60,7 @@ export const Topbar = ({
         onClick={() => onCollapsedChange(!sidebarCollapsed)}
         title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+        className="focus-visible:focus-indicator flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
       >
         {/* TailAdmin asymmetric hamburger — distinctive 3-line glyph */}
         <svg
