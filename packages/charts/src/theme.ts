@@ -95,6 +95,10 @@ const readChartColors = () => {
     success: readCssVar('--color-success-500', SUCCESS),
     warning: readCssVar('--color-warning-500', WARNING),
     error: readCssVar('--color-error-500', ERROR),
+    // Monitoring statuses (`--color-status-*`), for thresholds: a WARN or CRIT
+    // line is a status, not a series color.
+    statusWarn: readCssVar('--color-status-warn', WARNING),
+    statusCrit: readCssVar('--color-status-crit', ERROR),
     track: line,
   };
 };
@@ -132,7 +136,8 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * design tokens for the current theme and accent: `brandScale` is a
  * sequential scale (five brand steps, low to high) and `surface` the card
  * background. `text` and `textMuted` are the primary and secondary text colors.
- * `success`, `warning` and `error` are the theme's status colors, `track` the
+ * `success`, `warning` and `error` are the theme's status colors, and
+ * `statusWarn` and `statusCrit` its monitoring statuses (thresholds), `track` the
  * empty part of a radial arc, and `palette` the default series colors: the
  * brand color followed by the status colors and a violet.
  * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
@@ -150,6 +155,8 @@ export const useChartTheme = () => {
     success,
     warning,
     error,
+    statusWarn,
+    statusCrit,
     track,
   } = useHtmlAppearance(readChartColors);
   const grid: ApexOptions['grid'] = {
@@ -176,6 +183,8 @@ export const useChartTheme = () => {
     success,
     warning,
     error,
+    statusWarn,
+    statusCrit,
     track,
     tooltipTheme,
     palette: [brand, success, warning, error, VIOLET],
