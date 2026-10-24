@@ -245,3 +245,39 @@ export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };
+
+// What the cleanup-style ref below saw: attached, then cleaned up, never null.
+const refCalls: string[] = [];
+const cleanupRef = (node: HTMLInputElement | null) => {
+  refCalls.push(node ? 'attach' : 'null');
+  return () => {
+    refCalls.push('cleanup');
+  };
+};
+
+/**
+ * A React 19 callback ref that returns a cleanup gets it called once on
+ * unmount, through the ref Checkbox merges with its own, and is never called
+ * with null.
+ */
+export const RefCleanupRunsOnUnmount: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [shown, setShown] = useState(true);
+    return (
+      <>
+        <button type="button" onClick={() => setShown(false)}>
+          Remove
+        </button>
+        {shown && <Checkbox ref={cleanupRef} label="Notify me" />}
+      </>
+    );
+  },
+  play: async ({ canvas }) => {
+    refCalls.length = 0;
+    await userEvent.click(canvas.getByRole('button', { name: 'Remove' }));
+    await expect(canvas.queryByRole('checkbox')).toBeNull();
+    await expect(refCalls.slice(-1)).toEqual(['cleanup']);
+    await expect(refCalls).not.toContain('null');
+  },
+};

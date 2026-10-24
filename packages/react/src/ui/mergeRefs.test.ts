@@ -51,4 +51,24 @@ describe('mergeRefs', () => {
   it('merges nothing into a ref that does nothing', () => {
     expect(() => mergeRefs<object>()({})).not.toThrow();
   });
+
+  it('returns one cleanup that runs the cleanups the refs returned', () => {
+    const cleanup = vi.fn();
+    const ref = vi.fn(() => cleanup);
+    const detach = mergeRefs<object>(ref)({});
+    expect(cleanup).not.toHaveBeenCalled();
+    (detach as () => void)();
+    expect(cleanup).toHaveBeenCalledOnce();
+    // React 19 calls the cleanup instead of the ref with null: so must the merge.
+    expect(ref).toHaveBeenCalledOnce();
+  });
+
+  it('resets, on cleanup, the refs that returned none', () => {
+    const callback = vi.fn();
+    const object = objectRef<object>();
+    const detach = mergeRefs<object>(callback, object)({});
+    (detach as () => void)();
+    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(object.current).toBeNull();
+  });
 });
