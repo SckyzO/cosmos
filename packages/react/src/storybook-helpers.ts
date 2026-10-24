@@ -384,6 +384,15 @@ export const inEachTheme = (check: () => void) => {
 };
 
 /**
+ * Waits for the CSS transitions running on `el` to end. A size that animates
+ * (the sidebar's 300ms width) is checked once its transition has finished, not
+ * polled against `waitFor`'s 1s deadline: a loaded run, such as the contrast
+ * pass, stretched the transition past it and failed on a width caught midway.
+ */
+export const transitionsEnd = (el: Element) =>
+  Promise.all(el.getAnimations().map((animation) => animation.finished));
+
+/**
  * Clicks the Topbar hamburger of a `Shell` story twice and checks the sidebar
  * collapses to its rail, then expands back.
  */
@@ -393,7 +402,9 @@ export const expectHamburgerTogglesSidebar = async (canvas: {
   const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
   const expanded = nav.getBoundingClientRect().width;
   await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-  await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+  await transitionsEnd(nav);
+  await expect(nav.getBoundingClientRect().width).toBe(72);
   await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
-  await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(expanded));
+  await transitionsEnd(nav);
+  await expect(nav.getBoundingClientRect().width).toBe(expanded);
 };
