@@ -5,6 +5,27 @@ All notable changes to `@sckyzo/cosmos-theme` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.2.0...@sckyzo/cosmos-theme@0.3.0) (2026-10-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** Calendar and DatePicker no longer import react-day-picker's styles. Add @import '@sckyzo/cosmos-react/calendar.css'; to your stylesheet.
+* **theme:** dark: utilities no longer outweigh state variants. CSS that relied on a dark: class beating hover:, focus: or another state class now needs an explicit dark:<state>: variant.
+
+### Features
+
+* **theme:** add focus-indicator and field-focus utilities ([d0acee5](https://github.com/SckyzO/cosmos/commit/d0acee5181b41bee8155d8995dd0adc74ab4c4d4)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+* **theme:** add focus-indicator-on-accent for accent-filled controls ([725cab5](https://github.com/SckyzO/cosmos/commit/725cab5b86b420a118fb51ceb9e52a5698577e17)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+
+
+### Bug Fixes
+
+* **react:** ship the Calendar styles as a separate CSS export ([3abd2d1](https://github.com/SckyzO/cosmos/commit/3abd2d1ca1f2c4325e0bb319f7a7f94d90b0eab5)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+* **theme:** keep the dark variant at zero specificity ([9e0cd86](https://github.com/SckyzO/cosmos/commit/9e0cd86e85682ed6665665adae899182d2b1db5d)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+* **theme:** lift brand-500 to 3:1 on deep-blue for four accents ([e1ab5fd](https://github.com/SckyzO/cosmos/commit/e1ab5fdd5ca889750071e5fe188ab39d454b732c)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+* **theme:** raise text-muted to 4.5:1 in light, sand, deep-blue ([d6e064d](https://github.com/SckyzO/cosmos/commit/d6e064d2e7e8ecf79787ed7293b316a392363ba0)), closes [#151](https://github.com/SckyzO/cosmos/issues/151)
+
 ## [0.2.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.1.0...@sckyzo/cosmos-theme@0.2.0) (2026-10-21)
 
 
