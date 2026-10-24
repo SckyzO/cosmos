@@ -80,16 +80,32 @@ export function useControllableState<T, A extends unknown[] = [], D extends T | 
   return [current, setValue, isControlled];
 }
 
+// Typed here: the package depends on no Node types.
+declare const process: { env: { NODE_ENV?: string } };
+
+/**
+ * Whether the host app is a production build. Bundlers (Vite, webpack, Next) replace
+ * `process.env.NODE_ENV` at build time, as React's own warnings rely on; without a bundler
+ * `process` doesn't exist, and the ReferenceError means "not a production build".
+ */
+const isProductionBuild = (() => {
+  try {
+    return process.env.NODE_ENV === 'production';
+  } catch {
+    return false;
+  }
+})();
+
 /**
  * Warns once per component when its value goes from controlled to uncontrolled or back,
- * usually a host passing `undefined` for an empty value. Not limited to development builds:
- * the package has no build flag to strip it, and it only fires on a host bug.
+ * usually a host passing `undefined` for an empty value. Development builds only, like
+ * React's warnings.
  */
 function useModeSwitchWarning(isControlled: boolean, name: string) {
   const initial = useRef(isControlled);
   const warned = useRef(false);
   useEffect(() => {
-    if (warned.current || initial.current === isControlled) return;
+    if (isProductionBuild || warned.current || initial.current === isControlled) return;
     warned.current = true;
     const from = initial.current ? 'controlled' : 'uncontrolled';
     const to = isControlled ? 'controlled' : 'uncontrolled';
