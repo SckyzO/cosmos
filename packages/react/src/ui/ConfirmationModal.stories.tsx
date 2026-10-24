@@ -206,3 +206,39 @@ export const HideSaveRemovesTheSaveButton: Story = {
     await expect(body.getByRole('button', { name: 'Stay' })).toBeVisible();
   },
 };
+
+/** An alert dialog, modal, named by its title and described by its message. */
+export const IsAnAlertDialogNamedByItsTitle: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    open: true,
+    title: 'Delete this rack?',
+    message: 'This action cannot be undone.',
+    onClose: fn(),
+    onDiscard: fn(),
+  },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog', {
+      name: 'Delete this rack?',
+    });
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog).toHaveAccessibleDescription('This action cannot be undone.');
+  },
+};
+
+/** While `saving`, Save swaps its icon for a spinner; Stay and Discard still work. */
+export const SavingLeavesStayAndDiscard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn(), onDiscard: fn(), onSave: fn(), saving: true },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const save = await body.findByRole('button', { name: 'Save & go' });
+    await expect(save.querySelector('.animate-spin')).not.toBeNull();
+    await expect(save.querySelector('svg')).toBeNull();
+
+    await userEvent.click(body.getByRole('button', { name: 'Discard' }));
+    await expect(args.onDiscard).toHaveBeenCalledTimes(1);
+    await userEvent.click(body.getByRole('button', { name: 'Stay' }));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
