@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import { prependUseClient } from '../../config/tsup/use-client';
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -10,9 +11,8 @@ export default defineConfig({
   treeshake: true,
   external: ['react', 'react-dom', '@sckyzo/cosmos-theme'],
   // Mark the bundle as a client module for React Server Components bundlers.
-  esbuildOptions(options) {
-    options.banner = {
-      js: '"use client";',
-    };
+  // After the build: Rollup, which `treeshake` runs, drops an esbuild banner.
+  async onSuccess() {
+    prependUseClient();
   },
 });
