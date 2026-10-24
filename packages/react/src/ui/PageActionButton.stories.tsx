@@ -19,10 +19,10 @@ type Story = StoryObj<typeof meta>;
 export const Outline: Story = { args: { children: 'Configure', icon: SlidersHorizontal } };
 export const Primary: Story = { args: { children: 'New', variant: 'primary', icon: Plus } };
 export const BrandOutline: Story = {
-  args: { children: 'Edit layout', variant: 'brand-outline', icon: Pencil },
+  args: { children: 'Edit layout', intent: 'brand', icon: Pencil },
 };
 export const DangerOutline: Story = {
-  args: { children: 'Delete', variant: 'danger-outline', icon: Trash2 },
+  args: { children: 'Delete', intent: 'danger', icon: Trash2 },
 };
 
 export const ClickFiresOnClick: Story = {
@@ -38,7 +38,7 @@ export const IconOnly: Story = {
     <div className="flex items-center gap-2">
       <PageActionIconButton icon={SlidersHorizontal} title="Configure" />
       <PageActionIconButton icon={Plus} title="Add" variant="primary" />
-      <PageActionIconButton icon={Trash2} title="Delete" variant="danger-outline" />
+      <PageActionIconButton icon={Trash2} title="Delete" intent="danger" />
     </div>
   ),
 };
