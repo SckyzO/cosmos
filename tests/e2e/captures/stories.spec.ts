@@ -4,7 +4,9 @@ import { test, type Page } from '@playwright/test';
 // Visual review: one PNG per story and theme, in screenshots/<theme>/<story-id>.png.
 // The stories come from Storybook's own index and the themes from its Theme
 // toolbar, so neither list can go stale. Test-only stories (tagged `!dev`, so
-// hidden from the sidebar) are skipped. Narrow a run with id substrings:
+// hidden from the sidebar) and stories tagged `no-capture`, whose picture
+// depends on how long they have been running, are skipped. Narrow a run with
+// id substrings:
 //   STORIES=overlays- THEMES=dark make screenshots
 type IndexEntry = { id: string; type: 'story' | 'docs'; tags?: string[] };
 
@@ -73,7 +75,7 @@ const settledScreenshot = async (page: Page) => {
   return { frame, stable: false };
 };
 
-test('capture stories', async ({ context, page }) => {
+test('capture stories', async ({ context, page, baseURL }) => {
   test.setTimeout(0);
   // Each step still gets a bound: a stuck page is reported, not waited on forever.
   context.setDefaultTimeout(30_000);
@@ -89,12 +91,30 @@ test('capture stories', async ({ context, page }) => {
     // Charts animate their first draw: capture the final state.
     (window as unknown as { Apex: object }).Apex = { chart: { animations: { enabled: false } } };
   });
+  // Nothing comes from the network but Storybook: a third-party frame (the
+  // YouTube player of VideoEmbed) gets a plain gray page, and anything else
+  // from another origin fails, the same way on every run.
+  const storybook = new URL(baseURL ?? '').origin;
+  await context.route(
+    (url) => url.origin !== storybook,
+    (route) =>
+      route.request().resourceType() === 'document'
+        ? route.fulfill({
+            contentType: 'text/html',
+            body: '<body style="margin:0;background:#9ca3af"></body>',
+          })
+        : route.abort()
+  );
 
   const res = await page.request.get('/index.json');
   const { entries } = (await res.json()) as { entries: Record<string, IndexEntry> };
   const ids = Object.values(entries)
     .filter(
-      (e) => e.type === 'story' && e.tags?.includes('dev') && matches(e.id, process.env.STORIES)
+      (e) =>
+        e.type === 'story' &&
+        e.tags?.includes('dev') &&
+        !e.tags.includes('no-capture') &&
+        matches(e.id, process.env.STORIES)
     )
     .map((e) => e.id);
   if (ids.length === 0) throw new Error(`No story id matches STORIES=${process.env.STORIES}`);
