@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import {
   createContext,
+  useCallback,
   useContext,
   useId,
   useRef,
@@ -69,18 +70,25 @@ export type TableProps = ComponentProps<'table'> & {
 // The id of the caption of the table inside `containerRef`, if it has one. A read of the DOM,
 // hence a store: the caption is a direct child of the table, which the host's children add and
 // remove, and the container is not mounted yet during the first render.
-const useCaptionId = (containerRef: RefObject<HTMLElement | null>) =>
-  useSyncExternalStore(
-    (notify) => {
+const useCaptionId = (containerRef: RefObject<HTMLElement | null>) => {
+  const subscribe = useCallback(
+    (notify: () => void) => {
       const table = containerRef.current?.querySelector(':scope > table');
       if (!table) return () => {};
       const observer = new MutationObserver(notify);
       observer.observe(table, { childList: true });
       return () => observer.disconnect();
     },
-    () => containerRef.current?.querySelector(':scope > table')?.caption?.id || undefined,
-    () => undefined
+    [containerRef]
   );
+  const getSnapshot = useCallback(
+    () =>
+      containerRef.current?.querySelector<HTMLTableElement>(':scope > table')?.caption?.id ||
+      undefined,
+    [containerRef]
+  );
+  return useSyncExternalStore(subscribe, getSnapshot, () => undefined);
+};
 
 /**
  * Table — styled native `<table>` without any logic. The wrapper scrolls
