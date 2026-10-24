@@ -14,6 +14,7 @@ import {
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
 import { Avatar } from './Avatar';
+import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
 
 // ── Context ──────────────────────────────────────────────────────────────────
@@ -263,18 +264,19 @@ const UserMenuItems = ({ children }: { children: ReactNode }) => (
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type UserMenuItemVariant = 'default' | 'danger';
+export type UserMenuItemIntent = Extract<Intent, 'neutral' | 'danger'>;
 
 export type UserMenuItemProps = ComponentPropsWithRef<'button'> & {
   icon?: ComponentType<{ className?: string }>;
-  variant?: UserMenuItemVariant;
+  /** `danger` colors a destructive item (sign out, delete) red. Default `neutral`. */
+  intent?: UserMenuItemIntent;
   /** Auto-close the menu after click. Default true. */
   closeOnClick?: boolean;
 };
 
 function UserMenuItem({
   icon: Icon,
-  variant = 'default',
+  intent = 'neutral',
   closeOnClick = true,
   onClick,
   className,
@@ -295,7 +297,7 @@ function UserMenuItem({
       }}
       className={clsx(
         'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus:outline-none',
-        variant === 'danger'
+        intent === 'danger'
           ? 'text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus-visible:bg-red-500/10'
           : 'text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',
         className
@@ -306,7 +308,7 @@ function UserMenuItem({
         <Icon
           className={clsx(
             'h-4 w-4 shrink-0',
-            variant === 'danger'
+            intent === 'danger'
               ? 'text-red-500 dark:text-red-400'
               : 'text-gray-400 dark:text-gray-500'
           )}

@@ -74,7 +74,7 @@ export const Open: Story = {
                 Billing
               </UserMenu.Item>
               <UserMenu.Separator />
-              <UserMenu.Item icon={LogOut} variant="danger" onClick={extra.onSignOut}>
+              <UserMenu.Item icon={LogOut} intent="danger" onClick={extra.onSignOut}>
                 Sign Out
               </UserMenu.Item>
             </UserMenu.Items>
@@ -112,7 +112,7 @@ export const WithoutAvatar: Story = {
             <UserMenu.Item icon={User}>Profile</UserMenu.Item>
             <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
             <UserMenu.Separator />
-            <UserMenu.Item icon={LogOut} variant="danger">
+            <UserMenu.Item icon={LogOut} intent="danger">
               Sign Out
             </UserMenu.Item>
           </UserMenu.Items>
@@ -133,7 +133,7 @@ export const WithoutHeader: Story = {
             <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
             <UserMenu.Item icon={KeyRound}>Change password</UserMenu.Item>
             <UserMenu.Separator />
-            <UserMenu.Item icon={LogOut} variant="danger">
+            <UserMenu.Item icon={LogOut} intent="danger">
               Sign Out
             </UserMenu.Item>
           </UserMenu.Items>
@@ -164,7 +164,7 @@ export const AlignLeft: Story = {
             <UserMenu.Item icon={User}>Profile</UserMenu.Item>
             <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
             <UserMenu.Separator />
-            <UserMenu.Item icon={LogOut} variant="danger">
+            <UserMenu.Item icon={LogOut} intent="danger">
               Sign Out
             </UserMenu.Item>
           </UserMenu.Items>
@@ -214,7 +214,7 @@ export const ItemClickFiresHandler: Story = {
               <UserMenu.Item icon={User} onClick={extra.onProfile}>
                 Profile
               </UserMenu.Item>
-              <UserMenu.Item icon={LogOut} variant="danger" onClick={extra.onSignOut}>
+              <UserMenu.Item icon={LogOut} intent="danger" onClick={extra.onSignOut}>
                 Sign Out
               </UserMenu.Item>
             </UserMenu.Items>
@@ -271,7 +271,7 @@ export const KeyboardMenuNavigation: Story = {
           <UserMenu.Items>
             <UserMenu.Item icon={User}>Profile</UserMenu.Item>
             <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
-            <UserMenu.Item icon={LogOut} variant="danger">
+            <UserMenu.Item icon={LogOut} intent="danger">
               Sign Out
             </UserMenu.Item>
           </UserMenu.Items>

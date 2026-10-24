@@ -483,7 +483,7 @@ const ProfileShell = ({ children }: { children: ReactNode }) => {
                     <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
                     <UserMenu.Item icon={CreditCard}>Billing</UserMenu.Item>
                     <UserMenu.Separator />
-                    <UserMenu.Item icon={LogOut} variant="danger">
+                    <UserMenu.Item icon={LogOut} intent="danger">
                       Sign Out
                     </UserMenu.Item>
                   </UserMenu.Items>
