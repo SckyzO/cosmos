@@ -11,7 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectFocusRing } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
@@ -76,7 +76,7 @@ export const WithDivider: Story = {
 
 export const MultipleDividers: Story = {
   render: () => {
-    const [v, setV] = useState<string | undefined>();
+    const [v, setV] = useState('');
     const items: DropdownItem[] = [
       { value: 'all', label: 'All resources' },
       { divider: true },
@@ -180,6 +180,93 @@ export const SelectedItemIsChecked: Story = {
     await expect(
       reopened.getByRole('menuitemradio', { name: 'Profile', checked: true })
     ).toBeVisible();
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+const ACCOUNT = [
+  { value: 'profile', label: 'Profile' },
+  { value: 'settings', label: 'Settings' },
+];
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="flex gap-3">
+        <Dropdown label="Own" options={ACCOUNT} defaultValue="settings" onChange={args.onChange} />
+        <Dropdown label="Held" options={ACCOUNT} value="settings" onChange={args.onChange} />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const scope = within(canvasElement);
+    const [own, held] = scope.getAllByRole('button', { name: 'Settings' });
+
+    await userEvent.click(own);
+    await userEvent.click(scope.getByRole('menuitemradio', { name: 'Profile' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('profile');
+    await expect(own).toHaveTextContent('Profile');
+
+    await userEvent.click(held);
+    await userEvent.click(scope.getByRole('menuitemradio', { name: 'Profile' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('profile');
+    await expect(args.onChange).toHaveBeenCalledTimes(2);
+    await expect(held).toHaveTextContent('Settings');
+  },
+};
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const DefaultOpenClosesOnItsOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Dropdown label="Account" options={ACCOUNT} defaultOpen onOpenChange={args.onOpenChange} />
+    </Wrap>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const scope = within(canvasElement);
+    const trigger = scope.getByRole('button', { name: 'Account' });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(await scope.findByRole('menu', { name: 'Account' })).toBeVisible();
+
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(scope.queryByRole('menu')).toBeNull();
+  },
+};
+
+export const ControlledOpenOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Dropdown label="Account" options={ACCOUNT} open onOpenChange={args.onOpenChange} />
+    </Wrap>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const scope = within(canvasElement);
+    const menu = await scope.findByRole('menu', { name: 'Account' });
+    await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Profile' }));
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(false);
+    // The host keeps it open.
+    await expect(scope.getByRole('menu', { name: 'Account' })).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Profile' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
   },
 };
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { MiniCalendar } from './MiniCalendar';
 
 const meta = {
@@ -226,5 +226,60 @@ export const DefaultLocaleFollowsTheBrowser: Story = {
     await expect(
       canvas.getByRole('button', { name: fullDate.format(FIXED_DAY.today) })
     ).toHaveAttribute('aria-current', 'date');
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+const MAY_7 = new Date(2026, 4, 7);
+
+export const DefaultSelectedOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  render: (args) => (
+    <div className="flex flex-wrap gap-4">
+      <div role="group" aria-label="Uncontrolled" className="w-72">
+        <MiniCalendar
+          today={MAY_7}
+          locale="en-US"
+          defaultSelected={new Date(2026, 4, 12)}
+          onSelect={args.onSelect}
+        />
+      </div>
+      <div role="group" aria-label="Controlled" className="w-72">
+        <MiniCalendar today={MAY_7} locale="en-US" selected={MAY_7} onSelect={args.onSelect} />
+      </div>
+      <div role="group" aria-label="No selection" className="w-72">
+        <MiniCalendar today={MAY_7} locale="en-US" />
+      </div>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('group', { name: 'Uncontrolled' }));
+    const may12 = own.getByRole('button', { name: 'Tuesday, May 12, 2026' });
+    await expect(may12).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(own.getByRole('button', { name: 'Thursday, May 14, 2026' }));
+    await expect(args.onSelect).toHaveBeenLastCalledWith(new Date(2026, 4, 14));
+    await expect(own.getByRole('button', { name: 'Thursday, May 14, 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await expect(may12).toHaveAttribute('aria-pressed', 'false');
+
+    const held = within(canvas.getByRole('group', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('button', { name: 'Thursday, May 14, 2026' }));
+    await expect(args.onSelect).toHaveBeenLastCalledWith(new Date(2026, 4, 14));
+    await expect(held.getByRole('button', { name: 'Thursday, May 7, 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    // Nothing selected: it opens on today's month, no day pressed.
+    const bare = within(canvas.getByRole('group', { name: 'No selection' }));
+    await expect(bare.getByRole('button', { name: 'May 2026' })).toBeVisible();
+    await expect(bare.queryByRole('button', { pressed: true })).toBeNull();
   },
 };

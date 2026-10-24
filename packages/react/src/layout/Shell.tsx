@@ -1,5 +1,6 @@
-import { cloneElement, useState, type ReactElement, type ReactNode } from 'react';
+import { cloneElement, type ReactElement, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { useControllableState } from '../hooks/useControllableState';
 import type { TopbarProps } from './Topbar';
 import type { SidebarProps } from './Sidebar';
 
@@ -66,14 +67,13 @@ export const Shell = ({
   collapseControl = 'topbar',
   className,
 }: ShellProps) => {
-  const [internalCollapsed, setInternalCollapsed] = useState(defaultSidebarCollapsed);
-  const collapsed = controlledCollapsed ?? internalCollapsed;
-
   // The Topbar hamburger and the Sidebar button both pass the state to move to.
-  const handleCollapsedChange = (next: boolean) => {
-    if (controlledCollapsed === undefined) setInternalCollapsed(next);
-    onCollapsedChange?.(next);
-  };
+  const [collapsed, handleCollapsedChange] = useControllableState({
+    value: controlledCollapsed,
+    defaultValue: defaultSidebarCollapsed,
+    onChange: onCollapsedChange,
+    name: 'Shell.sidebarCollapsed',
+  });
 
   // Inject collapsed state into the children — keep the consumer-supplied
   // props as overrides so a story can opt out (e.g. `sidebarCollapsed={null}`

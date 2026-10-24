@@ -13,6 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from './overlayA11y';
 import { mergeRefs } from './mergeRefs';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type PopoverPosition = 'top' | 'bottom' | 'left' | 'right';
 /** Horizontal alignment with the trigger, for `top` / `bottom` positions. */
@@ -50,9 +51,12 @@ const PopoverRoot = ({
   onOpenChange,
   children,
 }: PopoverProps) => {
-  const [internalOpen, setInternalOpen] = useState(defaultOpen);
-  const isControlled = openProp !== undefined;
-  const open = isControlled ? openProp : internalOpen;
+  const [open, setOpenState] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Popover.open',
+  });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
@@ -63,10 +67,9 @@ const PopoverRoot = ({
   const setOpen = useCallback(
     (v: boolean) => {
       if (v) refreshRect();
-      if (!isControlled) setInternalOpen(v);
-      onOpenChange?.(v);
+      setOpenState(v);
     },
-    [isControlled, onOpenChange, refreshRect]
+    [setOpenState, refreshRect]
   );
 
   useEffect(() => {

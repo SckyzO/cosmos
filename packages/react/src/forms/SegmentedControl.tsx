@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import type { ElementType, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type SegmentOption<T extends string> = {
   label: string;
@@ -11,8 +12,11 @@ export type SegmentOption<T extends string> = {
 
 export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   options: SegmentOption<T>[];
-  value: T;
-  onChange: (v: T) => void;
+  /** Selected value, when controlled. */
+  value?: T;
+  /** Initial value, when uncontrolled. None selected when omitted. */
+  defaultValue?: T;
+  onChange?: (v: T) => void;
   className?: string;
   /**
    * Ref to the segment `<button>` that is the group's tab stop: the selected
@@ -23,13 +27,20 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
 
 export const SegmentedControl = <T extends string>({
   options,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   className,
   ref,
   ...a11y
 }: SegmentedControlProps<T>) => {
   const fieldA11y = useFieldA11y(a11y);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'SegmentedControl.value',
+  });
   const anyChecked = options.some((opt) => opt.value === value);
   return (
     <div
@@ -53,7 +64,7 @@ export const SegmentedControl = <T extends string>({
             role="radio"
             aria-checked={isActive}
             tabIndex={tabIndex}
-            onClick={() => onChange(opt.value)}
+            onClick={() => setValue(opt.value)}
             className={clsx(
               'flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-inset',
               i > 0 && 'border-l border-gray-200 dark:border-gray-700',

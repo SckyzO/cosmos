@@ -1,15 +1,19 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildRange } from './pageRange';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type PaginationVariant = 'text' | 'compact';
 export type PaginationSize = 'sm' | 'md';
 
 export type PaginationProps = {
-  /** 1-indexed current page. */
-  page: number;
+  /** 1-indexed current page, when controlled. */
+  page?: number;
+  /** 1-indexed first page, when uncontrolled. Default `1`. */
+  defaultPage?: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  /** Called with the page to go to. */
+  onPageChange?: (page: number) => void;
   /** Render "Showing X to Y of Z". Requires `pageSize` + `total`. */
   showInfo?: boolean;
   pageSize?: number;
@@ -26,7 +30,8 @@ const SIZE_BTN: Record<PaginationSize, string> = {
 };
 
 export const Pagination = ({
-  page,
+  page: pageProp,
+  defaultPage = 1,
   totalPages,
   onPageChange,
   showInfo = false,
@@ -36,10 +41,16 @@ export const Pagination = ({
   size = 'sm',
   className,
 }: PaginationProps) => {
+  const [page, setPage] = useControllableState({
+    value: pageProp,
+    defaultValue: defaultPage,
+    onChange: onPageChange,
+    name: 'Pagination.page',
+  });
   const safePage = Math.max(1, Math.min(page, Math.max(1, totalPages)));
   const goTo = (p: number) => {
     if (p < 1 || p > totalPages || p === safePage) return;
-    onPageChange(p);
+    setPage(p);
   };
   const isFirst = safePage <= 1;
   const isLast = safePage >= totalPages;

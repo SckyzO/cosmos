@@ -3,6 +3,7 @@ import { MessageCircle, RotateCcw, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalFocus } from '../ui/overlayA11y';
+import { useControllableState } from '../hooks/useControllableState';
 import { ChatComposer } from './ChatComposer';
 import { ChatMessage, type ChatMessageStatus } from './ChatMessage';
 import { ChatThread, ChatTypingIndicator } from './ChatThread';
@@ -76,12 +77,12 @@ export const Chatbot = ({
   unreadCount = 0,
   launcherLabel = 'Open chat',
 }: ChatbotProps) => {
-  const [openState, setOpenState] = useState(defaultOpen);
-  const open = openProp ?? openState;
-  const setOpen = (next: boolean) => {
-    if (openProp === undefined) setOpenState(next);
-    onOpenChange?.(next);
-  };
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Chatbot.open',
+  });
 
   // `visible` turns on a frame after opening, so the enter transition runs,
   // and off once the exit transition is over: the panel stays mounted meanwhile.

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { createContext, useContext, useId } from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type TabsOrientation = 'horizontal' | 'vertical';
 
@@ -103,8 +104,12 @@ const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
 };
 
 export type TabsProps = {
-  value: string;
-  onChange: (value: string) => void;
+  /** Active tab, when controlled. Pass this or `defaultValue`: with neither, no tab is active. */
+  value?: string;
+  /** First active tab, when uncontrolled. */
+  defaultValue?: string;
+  /** Called with the tab to activate. */
+  onChange?: (value: string) => void;
   /** Layout direction. `horizontal` (default) puts the tab list on top; `vertical` puts it on the left. */
   orientation?: TabsOrientation;
   /**
@@ -118,14 +123,21 @@ export type TabsProps = {
 };
 
 const Root = ({
-  value,
-  onChange,
+  value: valueProp,
+  defaultValue,
+  onChange: onChangeProp,
   orientation = 'horizontal',
   variant = 'underline',
   children,
   className,
 }: TabsProps) => {
   const baseId = useId();
+  const [value = '', onChange] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange: onChangeProp,
+    name: 'Tabs.value',
+  });
   return (
     <TabsContext.Provider value={{ value, onChange, orientation, variant, baseId }}>
       <div

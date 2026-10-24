@@ -1,10 +1,15 @@
 import { clsx } from 'clsx';
 import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type ToggleProps = FieldA11yProps & {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
+  /** Checked state, when controlled. */
+  checked?: boolean;
+  /** Initial checked state, when uncontrolled. Default `false`. */
+  defaultChecked?: boolean;
+  /** Called with the state to move to. */
+  onChange?: (checked: boolean) => void;
   disabled?: boolean;
   label?: string;
   description?: string;
@@ -13,7 +18,8 @@ export type ToggleProps = FieldA11yProps & {
 };
 
 export const Toggle = ({
-  checked,
+  checked: checkedProp,
+  defaultChecked = false,
   onChange,
   disabled = false,
   label,
@@ -22,6 +28,12 @@ export const Toggle = ({
   ...a11y
 }: ToggleProps) => {
   const fieldA11y = useFieldA11y(a11y, { ownLabel: !!label });
+  const [checked, setChecked] = useControllableState({
+    value: checkedProp,
+    defaultValue: defaultChecked,
+    onChange,
+    name: 'Toggle.checked',
+  });
   return (
     <label className={clsx('flex items-center gap-3', disabled && 'opacity-50')}>
       <button
@@ -31,7 +43,7 @@ export const Toggle = ({
         aria-checked={checked}
         {...fieldA11y}
         disabled={disabled}
-        onClick={() => !disabled && onChange(!checked)}
+        onClick={() => !disabled && setChecked(!checked)}
         className={clsx(
           'focus-visible:focus-indicator relative h-6 w-11 shrink-0 rounded-full transition-colors',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',

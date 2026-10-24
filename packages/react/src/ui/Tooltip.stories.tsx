@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -323,5 +323,45 @@ export const DelayedWithoutArrow: Story = {
     canvas.getByRole('button', { name: 'Export' }).focus();
     await waitFor(() => expect(canvas.getByRole('tooltip', { name: /Export/ })).toBeVisible());
     await expect(tip).not.toBeVisible();
+  },
+};
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const OpenStateDefaultOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="flex gap-24 pt-12">
+        <Tooltip content="Own tip" defaultOpen onOpenChange={args.onOpenChange}>
+          <Button variant="secondary" size="sm">
+            Own
+          </Button>
+        </Tooltip>
+        <Tooltip content="Held tip" open={false} onOpenChange={args.onOpenChange}>
+          <Button variant="secondary" size="sm">
+            Held
+          </Button>
+        </Tooltip>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('tooltip', { name: 'Own tip' });
+    await waitFor(() => expect(own).toBeVisible());
+    // Escape dismisses a tooltip the pointer did not open (WCAG 1.4.13).
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await waitFor(() => expect(own).not.toBeVisible());
+
+    const held = canvas.getByRole('tooltip', { name: 'Held tip' });
+    await userEvent.hover(canvas.getByRole('button', { name: 'Held' }));
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
+    await expect(held).not.toBeVisible();
   },
 };

@@ -448,3 +448,99 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(itemButtonRef, canvas.getByRole('button', { name: /Pressed item/ }));
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const UncontrolledFromDefaultCollapsed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Sidebar defaultCollapsed onCollapsedChange={args.onCollapsedChange}>
+        <Sidebar.Item icon={Server} label="Servers" />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+    await expect(canvas.getByText('Servers')).toBeVisible();
+  },
+};
+
+export const ControlledCollapsedOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Sidebar collapsed defaultCollapsed={false} onCollapsedChange={args.onCollapsedChange}>
+        <Sidebar.Item icon={Server} label="Servers" />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+    await expect(canvas.queryByText('Servers')).toBeNull();
+  },
+};
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const SubMenuAndGroupOpenState: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() } as never,
+  render: (args) => {
+    const onOpenChange = (args as unknown as { onOpenChange: (open: boolean) => void })
+      .onOpenChange;
+    return (
+      <Wrap>
+        <Sidebar>
+          <Sidebar.SubMenu icon={Layers} label="Own menu" onOpenChange={onOpenChange}>
+            <Sidebar.Item icon={Box} label="Tokens" />
+          </Sidebar.SubMenu>
+          <Sidebar.SubMenu icon={Globe} label="Held menu" open={false} onOpenChange={onOpenChange}>
+            <Sidebar.Item icon={Server} label="Servers" />
+          </Sidebar.SubMenu>
+          <Sidebar.Group label="Own group" onOpenChange={onOpenChange}>
+            <Sidebar.Item icon={FileText} label="Reports" />
+          </Sidebar.Group>
+          <Sidebar.Group label="Held group" open onOpenChange={onOpenChange}>
+            <Sidebar.Item icon={Network} label="Network" />
+          </Sidebar.Group>
+        </Sidebar>
+      </Wrap>
+    );
+  },
+  play: async ({ args, canvas }) => {
+    const onOpenChange = (args as unknown as { onOpenChange: ReturnType<typeof fn> }).onOpenChange;
+
+    // Uncontrolled: they move and report.
+    await userEvent.click(canvas.getByRole('button', { name: 'Own menu' }));
+    await expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    await expect(canvas.getByRole('button', { name: 'Tokens' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Own group' }));
+    await expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.queryByRole('button', { name: 'Reports' })).toBeNull();
+
+    // Held: they report and keep the state they are given.
+    await userEvent.click(canvas.getByRole('button', { name: 'Held menu' }));
+    await expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    await expect(canvas.getByRole('button', { name: 'Held menu' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Held group' }));
+    await expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.getByRole('button', { name: 'Network' })).toBeVisible();
+    await expect(onOpenChange).toHaveBeenCalledTimes(4);
+  },
+};

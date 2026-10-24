@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { LayoutDashboard, List, Map } from 'lucide-react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
 import { SegmentedControl } from './SegmentedControl';
 
@@ -136,6 +136,44 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(tabStopRef, canvas.getByRole('radio', { name: 'List' }));
     await userEvent.click(canvas.getByRole('radio', { name: 'Map' }));
     await expectRefFocuses(tabStopRef, canvas.getByRole('radio', { name: 'Map' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <SegmentedControl<string>
+        aria-label="Uncontrolled"
+        options={[...VIEWS]}
+        defaultValue="grid"
+        onChange={args.onChange}
+      />
+      <SegmentedControl<string>
+        aria-label="Controlled"
+        options={[...VIEWS]}
+        value="list"
+        onChange={args.onChange}
+      />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('radiogroup', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('radio', { name: 'Grid' })).toBeChecked();
+    await userEvent.click(own.getByRole('radio', { name: 'Map' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('map');
+    await expect(own.getByRole('radio', { name: 'Map' })).toBeChecked();
+
+    const held = within(canvas.getByRole('radiogroup', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('radio', { name: 'Grid' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('grid');
+    await expect(held.getByRole('radio', { name: 'List' })).toBeChecked();
   },
 };
 

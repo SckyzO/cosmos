@@ -10,6 +10,7 @@ import {
   type Ref,
 } from 'react';
 import { formatBytes } from './formatBytes';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type DropzoneProps = {
   label?: string;
@@ -67,11 +68,14 @@ export const Dropzone = ({
   const contentId = useId();
   const errorId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const isControlled = value !== undefined;
-  const [internalFiles, setInternalFiles] = useState<File[]>([]);
+  const [files, apply] = useControllableState<File[]>({
+    value,
+    defaultValue: [],
+    onChange,
+    name: 'Dropzone.value',
+  });
   const [internalError, setInternalError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const files = isControlled ? value : internalFiles;
   const error = errorProp ?? internalError;
 
   const validate = useCallback(
@@ -91,11 +95,6 @@ export const Dropzone = ({
     },
     [accept, files, maxFiles, maxSize, multiple]
   );
-
-  const apply = (next: File[]) => {
-    if (!isControlled) setInternalFiles(next);
-    onChange?.(next);
-  };
 
   const handleFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;

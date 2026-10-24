@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Cog, Mail, Rocket, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import { expectTextContrast } from '../storybook-helpers';
-import { Stepper } from './Stepper';
+import { Stepper, type StepperProps } from './Stepper';
 
 const meta = {
   title: 'Navigation/Stepper',
@@ -346,3 +346,52 @@ const pendingLabelContrastIn = (theme: string): Story => ({
 export const PendingLabelContrastInLight = pendingLabelContrastIn('light');
 export const PendingLabelContrastInSand = pendingLabelContrastIn('sand');
 export const PendingLabelContrastInDeepBlue = pendingLabelContrastIn('deep-blue');
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+const ThreeSteps = (props: Omit<StepperProps, 'children'>) => (
+  <Stepper clickable {...props}>
+    <Stepper.Step>Alpha</Stepper.Step>
+    <Stepper.Step>Beta</Stepper.Step>
+    <Stepper.Step>Gamma</Stepper.Step>
+  </Stepper>
+);
+
+export const DefaultCurrentOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onStepClick: fn() },
+  render: (args) => (
+    <div className="space-y-8">
+      <div role="group" aria-label="Uncontrolled">
+        <ThreeSteps defaultCurrent={2} onStepClick={args.onStepClick} />
+      </div>
+      <div role="group" aria-label="Controlled">
+        <ThreeSteps current={2} onStepClick={args.onStepClick} />
+      </div>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('group', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('button', { name: /Gamma/ })).toHaveAttribute(
+      'aria-current',
+      'step'
+    );
+    await userEvent.click(own.getByRole('button', { name: /Alpha/ }));
+    await expect(args.onStepClick).toHaveBeenLastCalledWith(0);
+    await expect(own.getByRole('button', { name: /Alpha/ })).toHaveAttribute(
+      'aria-current',
+      'step'
+    );
+
+    const held = within(canvas.getByRole('group', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('button', { name: /Alpha/ }));
+    await expect(args.onStepClick).toHaveBeenLastCalledWith(0);
+    await expect(held.getByRole('button', { name: /Gamma/ })).toHaveAttribute(
+      'aria-current',
+      'step'
+    );
+  },
+};

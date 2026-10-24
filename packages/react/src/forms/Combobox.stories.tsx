@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import {
   expectFocusBorder,
   expectPlaceholderContrast,
@@ -33,7 +33,7 @@ const PEOPLE = [
 // TUI Plus pattern "Simple" — label + input + dropdown of plain names.
 export const Simple: Story = {
   render: () => {
-    const [v, setV] = useState<string | undefined>();
+    const [v, setV] = useState('');
     return (
       <div className="max-w-md bg-white p-8 dark:bg-gray-900">
         <Combobox label="Assigned to" value={v} onChange={setV} options={PEOPLE} />
@@ -45,7 +45,7 @@ export const Simple: Story = {
 // TUI Plus pattern "With status indicator" — option carries a leading status dot.
 export const WithStatusIndicator: Story = {
   render: () => {
-    const [v, setV] = useState<string | undefined>();
+    const [v, setV] = useState('');
     const opts = PEOPLE.map((p, i) => ({
       ...p,
       leading: (
@@ -72,7 +72,7 @@ export const WithStatusIndicator: Story = {
 // TUI Plus pattern "With secondary text" — secondary text on the right of each row.
 export const WithSecondaryText: Story = {
   render: () => {
-    const [v, setV] = useState<string | undefined>();
+    const [v, setV] = useState('');
     const opts = PEOPLE.map((p) => ({
       ...p,
       secondary: `@${p.value}`,
@@ -114,7 +114,7 @@ export const InputHasComboboxRole: Story = {
 
 export const TypingFiltersAndPickingFires: Story = {
   render: () => {
-    const [v, setV] = useState<string | undefined>();
+    const [v, setV] = useState('');
     return (
       <div data-testid="wrap">
         <Combobox label="X" value={v} onChange={setV} options={PEOPLE} />
@@ -245,5 +245,73 @@ export const ForwardsRef: Story = {
   render: () => <Combobox ref={comboboxRef} label="Assigned to" options={PEOPLE} />,
   play: async ({ canvas }) => {
     await expectRefFocuses(comboboxRef, canvas.getByRole('combobox', { name: 'Assigned to' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="max-w-md space-y-4">
+      <Combobox label="Own" options={PEOPLE} defaultValue="tom" onChange={args.onChange} />
+      <Combobox label="Held" options={PEOPLE} value="tom" onChange={args.onChange} />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('combobox', { name: 'Own' });
+    await expect(own).toHaveValue('Tom Cook');
+    await userEvent.clear(own);
+    await userEvent.type(own, 'Dries');
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith('dries');
+    await expect(own).toHaveValue('Dries Vincent');
+
+    const held = canvas.getByRole('combobox', { name: 'Held' });
+    await userEvent.clear(held);
+    await userEvent.type(held, 'Dries');
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onChange).toHaveBeenLastCalledWith('dries');
+    // Closed again, the field mirrors the value it is given.
+    await expect(held).toHaveValue('Tom Cook');
+  },
+};
+
+// ── Open state (#151) ────────────────────────────────────────────────────────
+// `open` / `defaultOpen` / `onOpenChange`, only `undefined` meaning uncontrolled.
+// `defaultOpen` starts it open and it closes on its own; held at a fixed `open`,
+// it reports what the user asks for and keeps the state it is given.
+
+export const OpenStateDefaultOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onOpenChange: fn() },
+  render: (args) => (
+    <div className="max-w-md space-y-4">
+      <Combobox label="Own" options={PEOPLE} defaultOpen onOpenChange={args.onOpenChange} />
+      <div className="pt-64">
+        <Combobox label="Held" options={PEOPLE} open={false} onOpenChange={args.onOpenChange} />
+      </div>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = canvas.getByRole('combobox', { name: 'Own' });
+    await expect(own).toHaveAttribute('aria-expanded', 'true');
+    // Focus asks to open a list already open: nothing to report.
+    await userEvent.click(own);
+    await expect(args.onOpenChange).not.toHaveBeenCalled();
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onOpenChange).toHaveBeenCalledTimes(1);
+    await expect(args.onOpenChange).toHaveBeenCalledWith(false);
+    await expect(own).toHaveAttribute('aria-expanded', 'false');
+
+    const held = canvas.getByRole('combobox', { name: 'Held' });
+    await userEvent.click(held);
+    await expect(args.onOpenChange).toHaveBeenLastCalledWith(true);
+    await expect(held).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.queryByRole('listbox')).toBeNull();
   },
 };

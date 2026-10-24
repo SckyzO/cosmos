@@ -3,11 +3,15 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type NumberInputProps = FieldA11yProps & {
   name?: string;
-  value: number;
-  onChange: (v: number) => void;
+  /** Value, when controlled. */
+  value?: number;
+  /** Initial value, when uncontrolled. Default `0`, brought within `min`…`max`. */
+  defaultValue?: number;
+  onChange?: (v: number) => void;
   min?: number;
   max?: number;
   step?: number;
@@ -48,7 +52,8 @@ const stackedButton =
  * only valid values reach `onChange`, and leaving the field clamps.
  */
 export const NumberInput = ({
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   min = -Infinity,
   max = Infinity,
@@ -65,7 +70,13 @@ export const NumberInput = ({
 }: NumberInputProps) => {
   const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
-  const draft = useNumberDraft({ value, onChange, min, max });
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue: () => defaultValue ?? clamp(0),
+    onChange,
+    name: 'NumberInput.value',
+  });
+  const draft = useNumberDraft({ value, onChange: setValue, min, max });
   const stacked = controls === 'stacked';
 
   return (
@@ -106,7 +117,7 @@ export const NumberInput = ({
           <div className="flex w-7 shrink-0 flex-col border-l border-gray-200 dark:border-gray-700">
             <button
               type="button"
-              onClick={() => onChange(clamp(value + step))}
+              onClick={() => setValue(clamp(value + step))}
               disabled={disabled || value >= max}
               tabIndex={-1}
               aria-label="Increase"
@@ -116,7 +127,7 @@ export const NumberInput = ({
             </button>
             <button
               type="button"
-              onClick={() => onChange(clamp(value - step))}
+              onClick={() => setValue(clamp(value - step))}
               disabled={disabled || value <= min}
               tabIndex={-1}
               aria-label="Decrease"
@@ -130,7 +141,7 @@ export const NumberInput = ({
         <>
           <button
             type="button"
-            onClick={() => onChange(clamp(value - step))}
+            onClick={() => setValue(clamp(value - step))}
             disabled={disabled || value <= min}
             tabIndex={-1}
             aria-label="Decrease"
@@ -162,7 +173,7 @@ export const NumberInput = ({
           </div>
           <button
             type="button"
-            onClick={() => onChange(clamp(value + step))}
+            onClick={() => setValue(clamp(value + step))}
             disabled={disabled || value >= max}
             tabIndex={-1}
             aria-label="Increase"

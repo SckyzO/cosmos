@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <Combobox>
@@ -21,8 +22,8 @@ import {
 //     </ComboboxOptions>
 //   </Combobox>
 //
-// Our implementation is uncontrolled-input + controlled-selection, no
-// external lib (cmdk/headlessui not needed for this surface).
+// Our implementation is an uncontrolled input over a selection the host may
+// control, no external lib (cmdk/headlessui not needed for this surface).
 
 export type ComboboxOption = {
   value: string;
@@ -36,8 +37,10 @@ export type ComboboxOption = {
 
 export type ComboboxProps = {
   label?: ReactNode;
-  /** Selected option value (controlled). */
+  /** Selected option value, when controlled. */
   value?: string;
+  /** Initial option value, when uncontrolled. None selected when omitted. */
+  defaultValue?: string;
   /** Called when the user picks an option. */
   onChange?: (value: string) => void;
   options: ComboboxOption[];
@@ -53,11 +56,18 @@ export type ComboboxProps = {
   className?: string;
   /** Ref to the `<input role="combobox">`, not to the toggle button. */
   ref?: Ref<HTMLInputElement>;
+  /** Open state of the list, when controlled. */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
 };
 
 export const Combobox = ({
   label,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   options,
   placeholder,
@@ -67,14 +77,33 @@ export const Combobox = ({
   error,
   className,
   ref,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
 }: ComboboxProps) => {
   const id = useId();
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
   const hasDesc = !!(helperText || error);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'Combobox.value',
+  });
   const selected = options.find((o) => o.value === value);
   const [query, setQuery] = useState(selected?.label ?? '');
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Combobox.open',
+  });
+  // Typing, focus and ArrowDown ask to open a list that may be open already:
+  // only a change reaches `onOpenChange`.
+  const setOpen = (next: boolean) => {
+    if (next !== open) setOpenState(next);
+  };
   const [activeIndex, setActiveIndex] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -106,15 +135,15 @@ export const Combobox = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpenState(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [open, setOpenState]);
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
-    onChange?.(opt.value);
+    setValue(opt.value);
     setQuery(opt.label);
     setOpen(false);
   };
@@ -185,7 +214,7 @@ export const Combobox = ({
           type="button"
           aria-label="Toggle options"
           disabled={disabled}
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
           className="focus-visible:focus-indicator absolute inset-y-0 right-0 flex items-center rounded-r-md pr-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
         >
           <ChevronsUpDown className="size-5" aria-hidden />

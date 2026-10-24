@@ -9,6 +9,7 @@ import {
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
+import { useControllableState } from '../hooks/useControllableState';
 
 // ─── Internal context ─────────────────────────────────────────────────────────
 // Threads the `collapsed` state from <Sidebar> down to all subcomponents
@@ -38,8 +39,10 @@ const guideLeft = (depth: number) => 8 + rowPadding(depth) + 10;
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
 export type SidebarProps = {
-  /** Whether the sidebar is in collapsed (icons-only) state. */
+  /** Whether the sidebar is in collapsed (icons-only) state, when controlled. */
   collapsed?: boolean;
+  /** Initial collapsed state, when uncontrolled. Default `false`. */
+  defaultCollapsed?: boolean;
   /** Width when expanded (px). Default: 264 */
   width?: number;
   /** Width when collapsed (px). Default: 72 */
@@ -50,8 +53,9 @@ export type SidebarProps = {
   footer?: ReactNode;
   /**
    * Renders a collapse button at the very bottom, under `footer`, and fires
-   * with the next state when it is clicked. Leave it out when the control
-   * lives elsewhere (e.g. the Topbar hamburger).
+   * with the next state when it is clicked; an uncontrolled sidebar also
+   * moves to it. Leave it out when the control lives elsewhere (e.g. the
+   * Topbar hamburger).
    */
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Optional className override. */
@@ -67,36 +71,45 @@ export type SidebarProps = {
  * children don't need to receive it as a prop.
  */
 const SidebarRoot = ({
-  collapsed = false,
+  collapsed: collapsedProp,
+  defaultCollapsed = false,
   width = 264,
   collapsedWidth = 72,
   children,
   footer,
   onCollapsedChange,
   className,
-}: SidebarProps) => (
-  <SidebarContext.Provider value={{ collapsed }}>
-    <nav
-      aria-label="Main navigation"
-      style={{ width: collapsed ? collapsedWidth : width }}
-      className={clsx(
-        'flex h-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-bg-panel)]',
-        'transition-[width] duration-300 ease-in-out',
-        className
-      )}
-    >
-      <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
-      {footer && (
-        <div className="shrink-0 overflow-hidden border-t border-[var(--color-border)] p-3">
-          {footer}
-        </div>
-      )}
-      {onCollapsedChange && (
-        <CollapseButton collapsed={collapsed} onClick={() => onCollapsedChange(!collapsed)} />
-      )}
-    </nav>
-  </SidebarContext.Provider>
-);
+}: SidebarProps) => {
+  const [collapsed, setCollapsed] = useControllableState({
+    value: collapsedProp,
+    defaultValue: defaultCollapsed,
+    onChange: onCollapsedChange,
+    name: 'Sidebar.collapsed',
+  });
+  return (
+    <SidebarContext.Provider value={{ collapsed }}>
+      <nav
+        aria-label="Main navigation"
+        style={{ width: collapsed ? collapsedWidth : width }}
+        className={clsx(
+          'flex h-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-bg-panel)]',
+          'transition-[width] duration-300 ease-in-out',
+          className
+        )}
+      >
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+        {footer && (
+          <div className="shrink-0 overflow-hidden border-t border-[var(--color-border)] p-3">
+            {footer}
+          </div>
+        )}
+        {onCollapsedChange && (
+          <CollapseButton collapsed={collapsed} onClick={() => setCollapsed(!collapsed)} />
+        )}
+      </nav>
+    </SidebarContext.Provider>
+  );
+};
 
 // Bottom row: "Collapse" with its icon, or the expand icon alone when collapsed.
 const CollapseButton = ({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) => {
@@ -306,8 +319,15 @@ const SidebarItem = ({
 export type SidebarSubMenuProps = {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  /** Initial open state. */
+  /**
+   * Open state of the nested list, when controlled. The panel the collapsed
+   * sidebar opens beside the icon keeps its own state.
+   */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`, or `true` when `active`. */
   defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
   /** Override the inherited collapsed state. */
   collapsed?: boolean;
   /** Whether any child item is active. */
@@ -329,7 +349,9 @@ const SUBMENU_ROW = (active: boolean) =>
 const SidebarSubMenu = ({
   icon: Icon,
   label,
+  open: openProp,
   defaultOpen = false,
+  onOpenChange,
   collapsed: collapsedProp,
   active = false,
   badge,
@@ -337,7 +359,12 @@ const SidebarSubMenu = ({
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   const depth = useContext(SidebarDepthContext);
-  const [open, setOpen] = useState(defaultOpen || active);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen || active,
+    onChange: onOpenChange,
+    name: 'Sidebar.SubMenu.open',
+  });
   const [flyoutOpen, setFlyoutOpen] = useState(false);
 
   // Collapsed mode: an icon-only trigger opening the tree in a panel to its
@@ -413,19 +440,31 @@ const SidebarSubMenu = ({
 
 export type SidebarGroupProps = {
   label: string;
+  /** Open state of the group, when controlled. */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `true`. */
   defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
   collapsed?: boolean;
   children: ReactNode;
 };
 
 const SidebarGroup = ({
   label,
+  open: openProp,
   defaultOpen = true,
+  onOpenChange,
   collapsed: collapsedProp,
   children,
 }: SidebarGroupProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'Sidebar.Group.open',
+  });
 
   if (collapsed) {
     return <div className="my-1">{children}</div>;

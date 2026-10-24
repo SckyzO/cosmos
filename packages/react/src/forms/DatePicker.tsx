@@ -1,10 +1,20 @@
 import { clsx } from 'clsx';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { setRef } from '../ui/mergeRefs';
 import { usePortalFocus } from '../ui/overlayA11y';
 import { Calendar } from './Calendar';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type DateRange = {
   from: Date | undefined;
@@ -60,6 +70,15 @@ type CommonProps = {
   fullWidth?: boolean;
   className?: string;
   /**
+   * Open state of the calendar, when controlled. Opened this way, it anchors to the
+   * trigger the label points at, as a click on it does.
+   */
+  open?: boolean;
+  /** Initial open state of the calendar, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
+  /**
    * Ref to the trigger `<button>` the label points at: the only one in `single`
    * mode, the start date's in `range` mode.
    */
@@ -90,6 +109,9 @@ export const DatePicker = (props: DatePickerProps) => {
     fullWidth = false,
     className,
     ref,
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
   } = props;
 
   const isRange = props.mode === 'range';
@@ -106,28 +128,33 @@ export const DatePicker = (props: DatePickerProps) => {
   );
   // The trigger that opened the calendar: focus goes back to it on close.
   const openerRef = useRef<HTMLButtonElement | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'DatePicker.open',
+  });
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   // ── Value plumbing (controlled vs uncontrolled) ─────────────────────────────
-  const isControlled = props.value !== undefined;
-  const [internalSingle, setInternalSingle] = useState<Date | undefined>(
-    !isRange ? (props as SingleProps).defaultValue : undefined
-  );
-  const [internalRange, setInternalRange] = useState<DateRange>(
-    isRange ? ((props as RangeProps).defaultValue ?? EMPTY_RANGE) : EMPTY_RANGE
-  );
+  // One state per mode: each only reads the props of its own mode.
+  const single = isRange ? undefined : (props as SingleProps);
+  const range = isRange ? (props as RangeProps) : undefined;
+  const [singleState, setSingle] = useControllableState<Date | undefined>({
+    value: single?.value,
+    defaultValue: single?.defaultValue,
+    onChange: single?.onChange,
+    name: 'DatePicker.value',
+  });
+  const [rangeState, setRange] = useControllableState<DateRange>({
+    value: range?.value,
+    defaultValue: range?.defaultValue ?? EMPTY_RANGE,
+    onChange: range?.onChange,
+    name: 'DatePicker.value',
+  });
 
-  const selectedSingle = isRange
-    ? undefined
-    : isControlled
-      ? (props as SingleProps).value
-      : internalSingle;
-  const selectedRange = isRange
-    ? isControlled
-      ? ((props as RangeProps).value ?? EMPTY_RANGE)
-      : internalRange
-    : EMPTY_RANGE;
+  const selectedSingle = isRange ? undefined : singleState;
+  const selectedRange = isRange ? (rangeState ?? EMPTY_RANGE) : EMPTY_RANGE;
 
   // ── Calendar bounds ─────────────────────────────────────────────────────────
   const currentYear = new Date().getFullYear();
@@ -144,14 +171,35 @@ export const DatePicker = (props: DatePickerProps) => {
     if (r) setAnchorRect(r.getBoundingClientRect());
   }, []);
 
+  // What opening does: remember the trigger focus goes back to, anchor the panel
+  // to it and show the month of the selection.
+  const prepareOpen = (side: 'from' | 'to') => {
+    openerRef.current = side === 'to' ? toRef.current : fromRef.current;
+    anchor(side);
+    setMonth(initialMonth);
+  };
+  // Whether this opening is set up, by a trigger click or below.
+  const preparedRef = useRef(false);
+
   const toggle = (next: boolean, side: 'from' | 'to' = 'from') => {
     if (next) {
-      openerRef.current = side === 'to' ? toRef.current : fromRef.current;
-      anchor(side);
-      setMonth(initialMonth);
+      prepareOpen(side);
+      preparedRef.current = true;
     }
     setOpen(next);
   };
+
+  // Opened without a trigger click (`open`, `defaultOpen`): set up as a click on
+  // the start trigger would.
+  useLayoutEffect(() => {
+    if (!open) {
+      preparedRef.current = false;
+      return;
+    }
+    if (preparedRef.current) return;
+    preparedRef.current = true;
+    prepareOpen('from');
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -172,15 +220,13 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Selection commit ────────────────────────────────────────────────────────
   const commitSingle = (date: Date | undefined) => {
-    if (!isControlled) setInternalSingle(date);
-    (props as SingleProps).onChange?.(date);
+    setSingle(date);
     if (date) setOpen(false);
   };
 
-  const commitRange = (range: DateRange) => {
-    if (!isControlled) setInternalRange(range);
-    (props as RangeProps).onChange?.(range);
-    if (range.from && range.to) setOpen(false);
+  const commitRange = (next: DateRange) => {
+    setRange(next);
+    if (next.from && next.to) setOpen(false);
   };
 
   // ── Footer (single mode) ────────────────────────────────────────────────────

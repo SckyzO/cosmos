@@ -137,3 +137,38 @@ export const ActivePageHasAriaCurrent: Story = {
     await expect(active).toHaveAttribute('aria-current', 'page');
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const UncontrolledFromDefaultPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: undefined, defaultPage: 3, totalPages: 10, onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Page 3' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(4);
+    await expect(canvas.getByRole('button', { name: 'Page 4' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+  },
+};
+
+export const ControlledPageOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 5, defaultPage: 2, totalPages: 10, onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(6);
+    await expect(canvas.getByRole('button', { name: 'Page 5' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+  },
+};

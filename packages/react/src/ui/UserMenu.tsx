@@ -16,6 +16,7 @@ import { usePortalFocus } from './overlayA11y';
 import { Avatar } from './Avatar';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
+import { useControllableState } from '../hooks/useControllableState';
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -59,9 +60,12 @@ const UserMenuRoot = ({
   align = 'right',
   children,
 }: UserMenuProps) => {
-  const [internalOpen, setInternalOpen] = useState(defaultOpen);
-  const isControlled = openProp !== undefined;
-  const open = isControlled ? openProp : internalOpen;
+  const [open, setOpenState] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'UserMenu.open',
+  });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const initialItemRef = useRef<'first' | 'last'>('first');
@@ -73,10 +77,9 @@ const UserMenuRoot = ({
   const setOpen = useCallback(
     (v: boolean) => {
       if (v) refreshRect();
-      if (!isControlled) setInternalOpen(v);
-      onOpenChange?.(v);
+      setOpenState(v);
     },
-    [isControlled, onOpenChange, refreshRect]
+    [setOpenState, refreshRect]
   );
 
   useEffect(() => {

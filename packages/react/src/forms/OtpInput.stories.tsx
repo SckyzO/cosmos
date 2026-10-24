@@ -190,3 +190,31 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(otpRef, canvas.getByLabelText('Verification code digit 1'));
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <OtpInput ariaLabel="Uncontrolled" length={4} defaultValue="12" onChange={args.onChange} />
+      <OtpInput ariaLabel="Controlled" length={4} value="" onChange={args.onChange} />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    await expect(canvas.getByRole('textbox', { name: 'Uncontrolled digit 2' })).toHaveValue('2');
+    canvas.getByRole('textbox', { name: 'Uncontrolled digit 3' }).focus();
+    await userEvent.keyboard('3');
+    await expect(args.onChange).toHaveBeenLastCalledWith('123');
+    await expect(canvas.getByRole('textbox', { name: 'Uncontrolled digit 3' })).toHaveValue('3');
+
+    canvas.getByRole('textbox', { name: 'Controlled digit 1' }).focus();
+    await userEvent.keyboard('9');
+    await expect(args.onChange).toHaveBeenLastCalledWith('9');
+    await expect(canvas.getByRole('textbox', { name: 'Controlled digit 1' })).toHaveValue('');
+  },
+};

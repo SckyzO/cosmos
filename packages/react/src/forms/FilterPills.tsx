@@ -2,13 +2,17 @@ import { clsx } from 'clsx';
 import type { ElementType, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type FilterOption<T extends string = string> = { label: string; value: T };
 
 export type FilterPillsProps<T extends string = string> = FieldA11yProps & {
   options: FilterOption<T>[];
-  value: T;
-  onChange: (v: T) => void;
+  /** Selected value, when controlled. */
+  value?: T;
+  /** Initial value, when uncontrolled. None selected when omitted. */
+  defaultValue?: T;
+  onChange?: (v: T) => void;
   icon?: ElementType;
   /**
    * Stretch the pill group to fill its parent (`flex w-full`). Default
@@ -25,7 +29,8 @@ export type FilterPillsProps<T extends string = string> = FieldA11yProps & {
 
 export const FilterPills = <T extends string = string>({
   options,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   icon: Icon,
   fullWidth = false,
@@ -34,6 +39,12 @@ export const FilterPills = <T extends string = string>({
   ...a11y
 }: FilterPillsProps<T>) => {
   const fieldA11y = useFieldA11y(a11y);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'FilterPills.value',
+  });
   const anyChecked = options.some((opt) => opt.value === value);
   return (
     <div
@@ -64,7 +75,7 @@ export const FilterPills = <T extends string = string>({
               role="radio"
               aria-checked={value === opt.value}
               tabIndex={tabIndex}
-              onClick={() => onChange(opt.value)}
+              onClick={() => setValue(opt.value)}
               className={clsx(
                 'flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors focus-visible:ring-inset',
                 value === opt.value

@@ -8,13 +8,16 @@ import {
   type Ref,
 } from 'react';
 import { setRef } from '../ui/mergeRefs';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type OtpInputProps = {
   /** Number of cells. Default 6. */
   length?: number;
-  /** Current value. Length should be ≤ `length`. */
-  value: string;
-  onChange: (value: string) => void;
+  /** Current value, when controlled. Length should be ≤ `length`. */
+  value?: string;
+  /** Initial value, when uncontrolled. Default empty. */
+  defaultValue?: string;
+  onChange?: (value: string) => void;
   /** Fired when the user reaches `length` characters. */
   onComplete?: (value: string) => void;
   disabled?: boolean;
@@ -42,7 +45,8 @@ const sanitize = (raw: string, alphanumeric: boolean): string => {
 
 export const OtpInput = ({
   length = 6,
-  value,
+  value: valueProp,
+  defaultValue = '',
   onChange,
   onComplete,
   disabled = false,
@@ -56,6 +60,12 @@ export const OtpInput = ({
   ref,
 }: OtpInputProps) => {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'OtpInput.value',
+  });
 
   // Focus without scrolling: a field focused on mount shouldn't yank the page
   // (or a docs page embedding it) down to where it sits.
@@ -72,7 +82,7 @@ export const OtpInput = ({
       .map((c) => (c === ' ' ? '' : c))
       .join('')
       .slice(0, length);
-    onChange(finalValue);
+    setValue(finalValue);
     if (finalValue.length === length) onComplete?.(finalValue);
     return cleaned;
   };
@@ -96,13 +106,13 @@ export const OtpInput = ({
         // Clear previous cell and move focus there.
         const arr = value.split('');
         arr[idx - 1] = '';
-        onChange(arr.join('').replace(/$/, ''));
+        setValue(arr.join(''));
         focusCell(idx - 1);
       } else if (cell.length > 0) {
         // Default behaviour also wipes — but we ensure the parent state stays consistent.
         const arr = value.split('');
         arr[idx] = '';
-        onChange(arr.join(''));
+        setValue(arr.join(''));
       }
       return;
     }
@@ -129,7 +139,7 @@ export const OtpInput = ({
       .map((c) => (c === ' ' ? '' : c))
       .join('')
       .slice(0, length);
-    onChange(finalValue);
+    setValue(finalValue);
     const nextFocus = Math.min(length - 1, idx + cleaned.length);
     focusCell(nextFocus);
     if (finalValue.length === length) onComplete?.(finalValue);

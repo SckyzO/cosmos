@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectRefFocuses } from '../storybook-helpers';
 import { PaletteCard, type PaletteMeta } from './PaletteCard';
 import { PalettePicker } from './PalettePicker';
@@ -144,7 +144,7 @@ const ControlledPalettes = ({
   onChange,
 }: {
   initial: string;
-  onChange: (id: string) => void;
+  onChange?: (id: string) => void;
 }) => {
   const [value, setValue] = useState(initial);
   return (
@@ -154,7 +154,7 @@ const ControlledPalettes = ({
         palettes={LIGHT_THEMES}
         value={value}
         onChange={(id) => {
-          onChange(id);
+          onChange?.(id);
           setValue(id);
         }}
       />
@@ -240,5 +240,45 @@ export const PaletteCardForwardsRef: Story = {
   render: () => <PaletteCard ref={cardRef} meta={LIGHT_THEMES[0]} />,
   play: async ({ canvas }) => {
     await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Pure' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="space-y-6">
+        <PalettePicker
+          aria-label="Uncontrolled"
+          palettes={LIGHT_THEMES}
+          defaultValue="warm"
+          onChange={args.onChange}
+        />
+        <PalettePicker
+          aria-label="Controlled"
+          palettes={LIGHT_THEMES}
+          value="pure"
+          onChange={args.onChange}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('radiogroup', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('radio', { name: 'Warm' })).toBeChecked();
+    await userEvent.click(own.getByRole('radio', { name: 'Cool' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('cool');
+    await expect(own.getByRole('radio', { name: 'Cool' })).toBeChecked();
+
+    const held = within(canvas.getByRole('radiogroup', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('radio', { name: 'Cool' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('cool');
+    await expect(held.getByRole('radio', { name: 'Pure' })).toBeChecked();
   },
 };
