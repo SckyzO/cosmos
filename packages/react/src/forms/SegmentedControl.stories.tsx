@@ -174,6 +174,8 @@ export const DefaultValueOrControlled: Story = {
     await userEvent.click(held.getByRole('radio', { name: 'Grid' }));
     await expect(args.onChange).toHaveBeenLastCalledWith('grid');
     await expect(held.getByRole('radio', { name: 'List' })).toBeChecked();
+  },
+};
 
 // Roving tabindex puts focus on the checked segment, which is filled with the accent:
 // its ring is white and inside. Any other segment gets the accent ring.

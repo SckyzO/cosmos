@@ -268,6 +268,7 @@ export const ControlledOpenOnlyReports: Story = {
       'true'
     );
   },
+};
 
 // Opening the menu from the keyboard moves focus onto its first item.
 
