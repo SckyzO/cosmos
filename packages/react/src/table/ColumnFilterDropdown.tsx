@@ -41,7 +41,7 @@ export const ColumnFilterDropdown = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search…"
-            className="focus:border-brand-500 h-7 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder:text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+            className="focus:field-focus h-7 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
           />
         </div>
       )}
@@ -58,7 +58,7 @@ export const ColumnFilterDropdown = ({
                 type="checkbox"
                 checked={selected.has(val)}
                 onChange={() => onToggle(val)}
-                className="accent-brand-500 h-3.5 w-3.5 cursor-pointer rounded"
+                className="accent-brand-500 focus-visible:focus-indicator h-3.5 w-3.5 cursor-pointer rounded"
               />
               <span className="truncate text-gray-700 dark:text-gray-300">{val}</span>
             </label>
@@ -70,7 +70,7 @@ export const ColumnFilterDropdown = ({
           <button
             type="button"
             onClick={onClear}
-            className="w-full rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+            className="focus-visible:focus-indicator w-full rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
           >
             Clear ({selected.size} selected)
           </button>

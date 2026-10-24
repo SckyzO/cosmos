@@ -76,14 +76,14 @@ export function ChatComposer({
             send();
           }
         }}
-        className="focus:border-brand-500 min-h-10 flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none disabled:opacity-50"
+        className="focus:field-focus min-h-10 flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] disabled:opacity-50"
       />
       <button
         type="button"
         aria-label={sendLabel}
         disabled={!canSend}
         onClick={send}
-        className="bg-brand-500 hover:bg-brand-600 focus-visible:ring-brand-500/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
       >
         <SendHorizontal className="h-4 w-4" aria-hidden />
       </button>

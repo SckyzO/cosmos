@@ -72,8 +72,8 @@ export function FileInput({
         className={clsx(
           'flex h-9 w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
           error
-            ? 'border-red-400 focus-within:border-red-500 dark:border-red-500/60'
-            : 'focus-within:border-brand-500 border-gray-200 dark:border-gray-700',
+            ? 'focus-within:field-focus-error border-red-400 dark:border-red-500/60'
+            : 'focus-within:field-focus border-gray-200 dark:border-gray-700',
           disabled && 'cursor-not-allowed opacity-50'
         )}
       >
@@ -81,7 +81,7 @@ export function FileInput({
           type="button"
           onClick={() => innerRef.current?.click()}
           disabled={disabled}
-          className="flex shrink-0 items-center gap-2 border-r border-inherit bg-gray-50 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="flex shrink-0 items-center gap-2 border-r border-inherit bg-gray-50 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none disabled:cursor-not-allowed dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <Paperclip className="h-4 w-4" aria-hidden />
           {buttonLabel}

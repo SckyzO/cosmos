@@ -75,7 +75,7 @@ export type CommandPaletteInputProps = ComponentPropsWithRef<typeof Command.Inpu
 
 function CommandPaletteInput({ className, ref, ...rest }: CommandPaletteInputProps) {
   return (
-    <div className="flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
+    <div className="focus-within:border-brand-500 flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
       <Search className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
       <Command.Input
         ref={ref}
