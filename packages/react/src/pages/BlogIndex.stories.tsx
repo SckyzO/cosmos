@@ -170,7 +170,8 @@ export const ThreeColumnWithImages: Story = {
           <div className="mt-10 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {POSTS.map((p) => (
               <article key={p.slug} className="flex flex-col">
-                <a href={`#/${p.slug}`} className="group">
+                {/* The title below links to the same post: this one is for the pointer only. */}
+                <a href={`#/${p.slug}`} aria-hidden="true" tabIndex={-1} className="group">
                   <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                     <img
                       alt=""
@@ -287,7 +288,8 @@ export const WithFeaturedPost: Story = {
             <div className="grid grid-cols-1 gap-x-10 gap-y-12 lg:grid-cols-12">
               {/* Featured */}
               <article className="lg:col-span-8">
-                <a href={`#/${hero.slug}`} className="group block">
+                {/* The title below links to the same post: this one is for the pointer only. */}
+                <a href={`#/${hero.slug}`} aria-hidden="true" tabIndex={-1} className="group block">
                   <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                     <img
                       alt=""
@@ -400,7 +402,8 @@ export const WithPhotoAndList: Story = {
             <div className="grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-12 lg:items-start">
               {/* Hero photo article */}
               <article className="lg:col-span-7">
-                <a href={`#/${hero.slug}`} className="group block">
+                {/* The title below links to the same post: this one is for the pointer only. */}
+                <a href={`#/${hero.slug}`} aria-hidden="true" tabIndex={-1} className="group block">
                   <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                     <img
                       alt=""

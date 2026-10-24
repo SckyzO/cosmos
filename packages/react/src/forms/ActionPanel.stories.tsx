@@ -73,7 +73,7 @@ export const WithToggle: Story = {
           title="Email notifications"
           description="Receive a summary every weekday morning."
           layout="inline"
-          action={<Toggle checked={on} onChange={setOn} />}
+          action={<Toggle checked={on} onChange={setOn} aria-label="Email notifications" />}
         />
       </div>
     );

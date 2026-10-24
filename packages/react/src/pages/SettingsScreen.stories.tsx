@@ -142,10 +142,14 @@ const SettingsContent = ({
             </Tabs.Trigger>
           ))}
         </Tabs.List>
+        {/* The card is the panel of the selected tab: every tab needs one to control. The demo
+            shows the same form whichever tab is selected. */}
+        <Tabs.Panel value={tab}>
+          <Card padding="lg">
+            <SettingsForm />
+          </Card>
+        </Tabs.Panel>
       </Tabs>
-      <Card padding="lg">
-        <SettingsForm />
-      </Card>
     </ContentNarrow>
   </div>
 );

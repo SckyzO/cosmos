@@ -141,7 +141,7 @@ export const TypingFiltersAndPickingFires: Story = {
 export const FocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
-  args: { options: PEOPLE },
+  args: { label: 'Assigned to', options: PEOPLE },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('combobox'));
   },
@@ -150,7 +150,7 @@ export const FocusShowsAccentBorderInDark: Story = {
 export const ErrorFocusShowsRedBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
-  args: { options: PEOPLE, error: 'Pick someone' },
+  args: { label: 'Assigned to', options: PEOPLE, error: 'Pick someone' },
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('combobox'), { token: '--color-red-500' });
   },

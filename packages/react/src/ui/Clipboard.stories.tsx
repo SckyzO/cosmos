@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { Input } from '../forms/Input';
 import { Textarea } from '../forms/Textarea';
@@ -60,13 +60,24 @@ export const WithTextarea: Story = {
     "react-dom": "^19.0.0"
   }
 }`;
+    const id = useId();
     return (
       <div className="max-w-md">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={id}
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           package.json snippet
         </label>
         <div className="group relative">
-          <Textarea readOnly value={snippet} rows={8} resize="none" className="font-mono text-xs" />
+          <Textarea
+            id={id}
+            readOnly
+            value={snippet}
+            rows={8}
+            resize="none"
+            className="font-mono text-xs"
+          />
           <Clipboard value={snippet} floating className="absolute top-2 right-2" />
         </div>
         <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -107,26 +118,33 @@ export const InsideInput: Story = {
   // vertically centered in the field (top-1/2 + translate-y) and uses
   // `floating` so it has no border / transparent bg and blends with the
   // field instead of looking bolted on.
-  render: () => (
-    <div className="max-w-md">
-      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Share link
-      </label>
-      <div className="relative">
-        <Input
-          readOnly
-          value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
-          className="pr-10 font-mono text-xs"
-        />
-        <Clipboard
-          value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
-          floating
-          size="sm"
-          className="absolute top-1/2 right-1.5 -translate-y-1/2 opacity-100"
-        />
+  render: () => {
+    const id = useId();
+    return (
+      <div className="max-w-md">
+        <label
+          htmlFor={id}
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Share link
+        </label>
+        <div className="relative">
+          <Input
+            id={id}
+            readOnly
+            value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
+            className="pr-10 font-mono text-xs"
+          />
+          <Clipboard
+            value="https://cosmos.sckyzo.dev/invite/xK9pQ2mZ3vW8aR1n"
+            floating
+            size="sm"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 opacity-100"
+          />
+        </div>
       </div>
-    </div>
-  ),
+    );
+  },
 };
 
 export const InputGroupWithCopy: Story = {
@@ -136,9 +154,13 @@ export const InputGroupWithCopy: Story = {
   // canonical "verify your URL" pattern.
   render: () => {
     const url = 'https://cosmos.sckyzo.dev';
+    const id = useId();
     return (
       <div className="max-w-md">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={id}
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           Verify your website
         </label>
         <div className="flex items-stretch overflow-hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-700">
@@ -146,6 +168,7 @@ export const InputGroupWithCopy: Story = {
             URL
           </span>
           <input
+            id={id}
             readOnly
             value={url}
             className="flex-1 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-white"
@@ -170,6 +193,7 @@ export const ApiKeysCard: Story = {
   // keys" pattern. Footer mirrors the "Cancel / Next step" actions from
   // the reference for realism.
   render: () => {
+    const baseId = useId();
     const keys = [
       { label: 'Cosmos account ID', value: '756593826' },
       { label: 'API key', value: 'f4h6sd3t-jsy63ind-hsgdt7rs-jdhf76st' },
@@ -182,13 +206,17 @@ export const ApiKeysCard: Story = {
           desc="To give Cosmos read access, please create an IAM Role following the trust relationship and inline policy."
         >
           <div className="space-y-4">
-            {keys.map((k) => (
+            {keys.map((k, i) => (
               <div key={k.label}>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor={`${baseId}-${i}`}
+                  className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   {k.label}
                 </label>
                 <div className="relative">
                   <input
+                    id={`${baseId}-${i}`}
                     readOnly
                     value={k.value}
                     className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-12 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"

@@ -220,6 +220,12 @@ const BUTTON_SECTIONS: DocSection[] = [
   { id: 'api', label: 'API' },
 ];
 
+// MediaObject.Title is an <h4>, which would skip a level under the section's <h2>: the
+// heading goes in the Body instead, at the level the outline needs.
+const AnatomyTitle = ({ children }: { children: React.ReactNode }) => (
+  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{children}</h3>
+);
+
 const PreviewBox = ({ children }: { children: React.ReactNode }) => (
   <Card padding="lg" className="not-prose">
     <div className="flex flex-wrap items-center gap-3">{children}</div>
@@ -237,8 +243,8 @@ const ButtonDocBody = () => {
         </div>
       </aside>
 
-      {/* Center body */}
-      <main className="min-w-0 px-6 py-10 sm:px-10">
+      {/* Center body: Shell already renders the page's <main>, so this is an article. */}
+      <article className="min-w-0 px-6 py-10 sm:px-10">
         <div className="mx-auto max-w-3xl">
           <Breadcrumbs items={['Docs', 'Components', 'Button']} />
 
@@ -358,7 +364,7 @@ const ButtonDocBody = () => {
                     />
                   </MediaObject.Image>
                   <MediaObject.Body>
-                    <MediaObject.Title>Container</MediaObject.Title>
+                    <AnatomyTitle>Container</AnatomyTitle>
                     <MediaObject.Description>
                       A <code className="font-mono text-xs">button</code> element with rounded
                       corners, padding from the size prop, and colors from the variant.
@@ -375,7 +381,7 @@ const ButtonDocBody = () => {
                     />
                   </MediaObject.Image>
                   <MediaObject.Body>
-                    <MediaObject.Title>Icon slot</MediaObject.Title>
+                    <AnatomyTitle>Icon slot</AnatomyTitle>
                     <MediaObject.Description>
                       Pass any Lucide icon component via{' '}
                       <code className="font-mono text-xs">icon</code>; place it left or right with{' '}
@@ -393,7 +399,7 @@ const ButtonDocBody = () => {
                     />
                   </MediaObject.Image>
                   <MediaObject.Body>
-                    <MediaObject.Title>Label</MediaObject.Title>
+                    <AnatomyTitle>Label</AnatomyTitle>
                     <MediaObject.Description>
                       Children render as the visible label. Keep it short and action-oriented —
                       verbs over nouns.
@@ -556,7 +562,7 @@ const ButtonDocBody = () => {
             </a>
           </footer>
         </div>
-      </main>
+      </article>
 
       {/* Right TOC */}
       <aside className="hidden border-l border-[var(--color-border)] xl:block">
@@ -676,8 +682,18 @@ export const Changelog: Story = {
             {RELEASES.map((r) => (
               <article key={r.version} className="border-l-2 border-[var(--color-border)] pl-6">
                 <div className="flex items-baseline gap-x-3">
-                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">
-                    v{r.version}
+                  {/* A permalink per release: also the one control in this text-only page,
+                      so the scrolling <main> of the shell can be reached from the keyboard. */}
+                  <h2
+                    id={`v${r.version}`}
+                    className="text-2xl font-semibold text-[var(--color-text-primary)]"
+                  >
+                    <a
+                      href={`#v${r.version}`}
+                      className="focus-visible:focus-indicator rounded hover:underline"
+                    >
+                      v{r.version}
+                    </a>
                   </h2>
                   <time
                     dateTime={r.date}

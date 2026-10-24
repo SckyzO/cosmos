@@ -52,7 +52,10 @@ const AppearancePlayground = ({ initial }: { initial: CosmosAppearance }) => {
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Body text with{' '}
-          <a href="#appearance" className="text-brand-600 dark:text-brand-400 hover:underline">
+          <a
+            href="#appearance"
+            className="text-brand-600 dark:text-brand-400 underline underline-offset-2"
+          >
             a link
           </a>{' '}
           in the accent color.

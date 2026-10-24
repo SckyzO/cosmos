@@ -19,6 +19,14 @@ export type ProgressBarProps = {
   striped?: boolean;
   /** Loop a small bar across the container when total progress is unknown. */
   indeterminate?: boolean;
+  /**
+   * Accessible name of the bar: what is progressing ("Storage used"). The bar
+   * has no text of its own, so without this or `aria-labelledby` a screen
+   * reader announces a bare percentage. The `label` text does not name it.
+   */
+  'aria-label'?: string;
+  /** Id of the element that names the bar, when a visible label already says it. */
+  'aria-labelledby'?: string;
   className?: string;
 };
 
@@ -45,6 +53,8 @@ export const ProgressBar = ({
   labelContent,
   striped = false,
   indeterminate = false,
+  'aria-label': ariaLabel,
+  'aria-labelledby': labelledBy,
   className,
 }: ProgressBarProps) => {
   const pct = indeterminate ? 100 : Math.max(0, Math.min(100, (value / max) * 100));
@@ -61,6 +71,8 @@ export const ProgressBar = ({
           aria-valuenow={indeterminate ? undefined : Math.round(pct)}
           aria-valuemin={0}
           aria-valuemax={100}
+          aria-label={ariaLabel}
+          aria-labelledby={labelledBy}
           aria-busy={indeterminate || undefined}
           className={clsx(
             'relative flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800',
