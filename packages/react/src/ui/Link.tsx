@@ -20,7 +20,8 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
   colored: 'text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300',
   underline:
     'text-gray-900 underline underline-offset-2 hover:text-brand-600 dark:text-gray-100 dark:hover:text-brand-400',
-  opacity: 'text-gray-700 opacity-70 hover:opacity-100 dark:text-gray-200',
+  // gray-900 at 70% keeps 4.5:1 on the light themes' page (gray-700 was 4.2:1).
+  opacity: 'text-gray-900 opacity-70 hover:opacity-100 dark:text-gray-200',
   'opacity-hover': 'text-gray-700 transition-opacity hover:opacity-70 dark:text-gray-200',
   subtle: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
 };

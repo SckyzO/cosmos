@@ -145,11 +145,11 @@ export const AvatarUploader = ({
             <Button
               type="button"
               variant="ghost"
+              intent="danger"
               size="sm"
               icon={Trash2}
               disabled={isBusy}
               onClick={handleRemove}
-              className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               {removeLabel}
             </Button>
