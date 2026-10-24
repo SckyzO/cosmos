@@ -15,7 +15,6 @@ export * from './Spinner';
 export * from './SectionLabel';
 export * from './IconBox';
 export * from './AlertBanner';
-export * from './SelectInput';
 export * from './Backdrop';
 export * from './StatefulSaveButton';
 export * from './UnsavedIndicator';

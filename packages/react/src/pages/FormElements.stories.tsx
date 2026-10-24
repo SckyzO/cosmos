@@ -37,7 +37,6 @@ import { RadioGroup } from '../forms/Radio';
 import { SearchInput } from '../forms/SearchInput';
 import { SegmentedControl } from '../forms/SegmentedControl';
 import { Select } from '../forms/Select';
-import { StepperInput } from '../forms/StepperInput';
 import { Textarea } from '../forms/Textarea';
 import { TimePicker } from '../forms/TimePicker';
 import { Toggle } from '../forms/Toggle';
@@ -336,7 +335,7 @@ const FormContent = () => {
         <div className="space-y-4">
           <ToggleRow />
           <SegmentedControlCell />
-          <StepperInputCell />
+          <StackedNumberInputCell />
           <ZoomBarCell />
         </div>
       </SectionCard>
@@ -482,12 +481,12 @@ const SegmentedControlCell = () => {
   );
 };
 
-const StepperInputCell = () => {
+const StackedNumberInputCell = () => {
   const [n, setN] = useState(3);
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">Replicas</p>
-      <StepperInput value={n} onChange={setN} min={1} max={20} unit="replicas" />
+      <NumberInput controls="stacked" value={n} onChange={setN} min={1} max={20} unit="replicas" />
     </div>
   );
 };
