@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import { expectOwnTypesPerFormat } from './package-exports';
 
 // The published @sckyzo/cosmos-react bundles are plain JS: a CSS import in them
 // would break `require` in Node, Jest and any non-bundler consumer.
@@ -40,6 +41,10 @@ test('neither bundle imports CSS, and the Calendar stylesheet is an explicit exp
   expect(pkg.files).toContain('calendar.css');
   expect(pkg.sideEffects).toEqual(['*.css']);
   expect(existsSync(`${pkgDir}calendar.css`)).toBe(true);
+});
+
+test('import and require each resolve their own type declarations', () => {
+  expectOwnTypesPerFormat(pkgDir);
 });
 
 test('every JS file starts with the "use client" directive', () => {

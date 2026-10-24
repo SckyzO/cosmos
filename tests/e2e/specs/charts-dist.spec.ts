@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import { expectOwnTypesPerFormat } from './package-exports';
 
 // @sckyzo/cosmos-charts ships each wrapper as a file of its own, importing only
 // the ApexCharts engines it draws with, and declares no side effects: a
@@ -60,6 +61,10 @@ test('every entry and chunk starts with the "use client" directive', () => {
   for (const name of files) {
     expect(read(`${dist}${name}`).slice(0, directive.length), name).toBe(directive);
   }
+});
+
+test('import and require each resolve their own type declarations', () => {
+  expectOwnTypesPerFormat(pkgDir);
 });
 
 test('the CJS and ESM entries expose the same exports', () => {
