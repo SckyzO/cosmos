@@ -1,7 +1,18 @@
 import { clsx } from 'clsx';
-import type { ComponentPropsWithoutRef, CSSProperties, RefObject } from 'react';
+import {
+  useMemo,
+  type ComponentPropsWithoutRef,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
-import { useAnchorPosition, type AnchorPlacement } from '../hooks/useAnchorPosition';
+import {
+  useAnchorPosition,
+  type AnchorPlacement,
+  type AnchorSide,
+} from '../hooks/useAnchorPosition';
+import { mergeRefs } from './mergeRefs';
 import { useOutsideClick, usePortalFocus, type PortalFocusOptions } from './overlayA11y';
 
 // Internal to the package: the floating panel of Popover, UserMenu,
@@ -17,7 +28,12 @@ import { useOutsideClick, usePortalFocus, type PortalFocusOptions } from './over
 export const FLOATING_PANEL_Z = 'z-[9999]';
 export const TOOLTIP_Z = 'z-[10000]';
 
-export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style'> & {
+export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' | 'children'> & {
+  /**
+   * The content, or a function of the side the panel opened on, for a part that points at
+   * the anchor (an arrow): the panel flips to the other side when the viewport cuts it.
+   */
+  children?: ReactNode | ((side: AnchorSide) => ReactNode);
   /**
    * Shown while true. Keep the component mounted while closed: the focus handling tells a
    * panel open on mount (which doesn't take focus) from one opened later.
@@ -49,7 +65,8 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style'> 
  * A non-modal panel portaled to the end of `<body>`, so no `overflow: hidden` ancestor clips
  * it, kept next to its anchor in fixed position (`useAnchorPosition`), with the focus handling
  * of `usePortalFocus` and the outside click of `useOutsideClick`. Renders nothing while closed
- * or before the anchor is measured. No collision handling: it opens where `placement` says.
+ * or before the anchor is measured. It opens where `placement` says, flipped to the other side
+ * or moved along the anchor when the viewport would cut it there.
  */
 export function FloatingPanel({
   open,
@@ -61,15 +78,18 @@ export function FloatingPanel({
   initialFocus,
   style,
   className,
+  children,
   ...rest
 }: FloatingPanelProps) {
-  const anchored = useAnchorPosition(anchorRef, open, placement);
-  const focusProps = usePortalFocus<HTMLDivElement>({
+  const { style: anchored, side, panelRef } = useAnchorPosition(anchorRef, open, placement);
+  const { ref: focusRef, onFocusCapture } = usePortalFocus<HTMLDivElement>({
     open: open && moveFocus,
     onClose,
     triggerRef,
     initialFocus,
   });
+  // Both are state setters: stable, so the merged ref is too.
+  const ref = useMemo(() => mergeRefs(focusRef, panelRef), [focusRef, panelRef]);
   const outsideProps = useOutsideClick<HTMLDivElement>({
     open,
     onOutsideClick: onClose,
@@ -79,11 +99,14 @@ export function FloatingPanel({
   return createPortal(
     <div
       {...rest}
-      {...focusProps}
+      ref={ref}
+      onFocusCapture={onFocusCapture}
       {...outsideProps}
       style={{ ...anchored, ...style }}
       className={clsx('fixed', FLOATING_PANEL_Z, className)}
-    />,
+    >
+      {typeof children === 'function' ? children(side) : children}
+    </div>,
     document.body
   );
 }

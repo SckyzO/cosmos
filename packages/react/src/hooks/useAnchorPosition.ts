@@ -23,8 +23,59 @@ export type AnchorPlacement = {
 /** The part of a `DOMRect` a placement reads. */
 export type AnchorRect = Pick<DOMRect, 'top' | 'right' | 'bottom' | 'left' | 'width' | 'height'>;
 
-// Smallest gap kept between an `end`-aligned panel and the left of the screen.
+export type BoxSize = { width: number; height: number };
+
+/** What collision handling needs: the panel's size, once it is on screen, and the viewport's. */
+export type AnchorBounds = { panel: BoxSize; viewport: BoxSize };
+
+// Gap kept between the screen edge and a panel moved back inside it, or an `end`-aligned one.
 const VIEWPORT_MARGIN = 16;
+
+const OPPOSITE: Record<AnchorSide, AnchorSide> = {
+  top: 'bottom',
+  right: 'left',
+  bottom: 'top',
+  left: 'right',
+};
+
+const isVertical = (side: AnchorSide) => side === 'top' || side === 'bottom';
+
+// Room between the anchor, offset included, and the edge of the viewport on `side`.
+const roomOn = (side: AnchorSide, rect: AnchorRect, offset: number, viewport: BoxSize) => {
+  if (side === 'top') return rect.top - offset;
+  if (side === 'bottom') return viewport.height - rect.bottom - offset;
+  if (side === 'left') return rect.left - offset;
+  return viewport.width - rect.right - offset;
+};
+
+/**
+ * The side a panel opens on: `placement.side`, unless the viewport would cut the panel there
+ * and the opposite side has more room. Without `bounds`, always `placement.side`.
+ */
+export function resolveSide(
+  rect: AnchorRect,
+  { side = 'bottom', offset = 0 }: AnchorPlacement = {},
+  bounds?: AnchorBounds
+): AnchorSide {
+  if (!bounds) return side;
+  const needed = isVertical(side) ? bounds.panel.height : bounds.panel.width;
+  const room = roomOn(side, rect, offset, bounds.viewport);
+  if (needed <= room) return side;
+  const opposite = OPPOSITE[side];
+  return roomOn(opposite, rect, offset, bounds.viewport) > room ? opposite : side;
+}
+
+// How far to move a panel spanning `start` to `start + size` on an axis of `length`: nothing
+// while it is all in view, else enough to bring it 16px inside, its start edge first when it
+// is longer than the viewport.
+const clampShift = (start: number, size: number, length: number) => {
+  if (start >= 0 && start + size <= length) return 0;
+  const clamped = Math.max(VIEWPORT_MARGIN, Math.min(start, length - VIEWPORT_MARGIN - size));
+  return clamped - start;
+};
+
+const withShift = (style: CSSProperties, shift: number): CSSProperties =>
+  shift ? ({ ...style, '--anchor-shift': `${shift}px` } as CSSProperties) : style;
 
 /**
  * The `position: fixed` style that puts a panel on `side` of an anchor whose viewport rect is
@@ -32,18 +83,28 @@ const VIEWPORT_MARGIN = 16;
  * the screen. The style sets `--anchor-width` too, for a part of the panel that points at
  * the anchor (an arrow).
  *
- * No collision handling: the panel opens on the side asked for, even when the viewport cuts
- * it there.
+ * With `bounds`, collisions with the viewport: the panel flips to the opposite side when the
+ * viewport would cut it on its own (`resolveSide`), and one the viewport cuts on the other
+ * axis moves back inside, 16px from the edge. A panel that is all in view stays where its
+ * placement puts it. A moved panel's style sets `--anchor-shift`, how far it moved along
+ * the anchor, so an arrow can keep pointing at the anchor.
  */
 export function anchoredStyle(
   rect: AnchorRect,
-  { side = 'bottom', align = 'center', offset = 0, matchWidth = false }: AnchorPlacement = {}
+  placement: AnchorPlacement = {},
+  bounds?: AnchorBounds
 ): CSSProperties {
+  const { align = 'center', offset = 0, matchWidth = false } = placement;
+  const side = resolveSide(rect, placement, bounds);
   const style = { '--anchor-width': `${rect.width}px` } as CSSProperties;
   if (matchWidth) style.width = rect.width;
 
-  if (side === 'left' || side === 'right') {
-    style.top = rect.top + rect.height / 2;
+  if (!isVertical(side)) {
+    const centerY = rect.top + rect.height / 2;
+    const shift = bounds
+      ? clampShift(centerY - bounds.panel.height / 2, bounds.panel.height, bounds.viewport.height)
+      : 0;
+    style.top = centerY + shift;
     if (side === 'right') {
       style.left = rect.right + offset;
       style.transform = 'translateY(-50%)';
@@ -51,12 +112,19 @@ export function anchoredStyle(
       style.left = rect.left - offset;
       style.transform = 'translate(-100%, -50%)';
     }
-    return style;
+    return withShift(style, shift);
   }
 
   const shiftX = align === 'end' ? '-100%' : align === 'center' ? '-50%' : '0';
-  style.left =
+  const left =
     align === 'end' ? rect.right : align === 'center' ? rect.left + rect.width / 2 : rect.left;
+  let shift = 0;
+  if (bounds) {
+    const width = bounds.panel.width;
+    const start = align === 'end' ? left - width : align === 'center' ? left - width / 2 : left;
+    shift = clampShift(start, width, bounds.viewport.width);
+  }
+  style.left = left + shift;
   if (align === 'end') style.maxWidth = rect.right - VIEWPORT_MARGIN;
   if (side === 'top') {
     style.top = rect.top - offset;
@@ -65,23 +133,42 @@ export function anchoredStyle(
     style.top = rect.bottom + offset;
     if (shiftX !== '0') style.transform = `translateX(${shiftX})`;
   }
-  return style;
+  return withShift(style, shift);
 }
 
-const sameRect = (a: AnchorRect | null, b: AnchorRect) =>
-  !!a && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height;
+type Measures = { anchor: AnchorRect; viewport: BoxSize; panel: BoxSize | null };
+
+const sameSize = (a: BoxSize | null, b: BoxSize | null) =>
+  a === b || (!!a && !!b && a.width === b.width && a.height === b.height);
+
+const sameMeasures = (a: Measures | null, b: Measures) =>
+  !!a &&
+  a.anchor.top === b.anchor.top &&
+  a.anchor.left === b.anchor.left &&
+  sameSize(a.anchor, b.anchor) &&
+  sameSize(a.viewport, b.viewport) &&
+  sameSize(a.panel, b.panel);
+
+export type AnchorPosition = {
+  /** The panel's fixed-position style (see `anchoredStyle`), or `null` before the first measure. */
+  style: CSSProperties | null;
+  /** The side the panel opens on, once flipped (see `resolveSide`). */
+  side: AnchorSide;
+  /** Callback ref for the panel, measured for the collision handling. */
+  panelRef: (panel: HTMLElement | null) => void;
+};
 
 /**
  * Keeps a floating panel in place next to its anchor. While `open`, measures the anchor and
- * measures it again on a window resize, on any scroll (capture phase, so a scrolling
- * container counts as much as the page) and when the anchor itself changes size (a web font
- * swap, a new label): a border-box `ResizeObserver`, since the default content box misses
- * padding changes.
+ * the panel, and measures them again on a window resize, on any scroll (capture phase, so a
+ * scrolling container counts as much as the page) and when either changes size (a web font
+ * swap, a new label, a filtered list): a border-box `ResizeObserver`, since the default
+ * content box misses padding changes.
  *
- * Returns the panel's fixed-position style (see `anchoredStyle`), or `null` before the first
- * measure. Closed, it keeps the last position, so a panel fading out stays in place. It
- * measures in a layout effect, so the panel is placed before the browser paints it. Pass
- * another ref object to anchor the panel to another element.
+ * The panel opens where `placement` says, then, once measured, flips or moves to stay in the
+ * viewport (see `anchoredStyle`). Closed, it keeps the last position, so a panel fading out
+ * stays in place. It measures in a layout effect, so the panel is placed before the browser
+ * paints it. Pass another ref object to anchor the panel to another element.
  *
  * Internal to the package, not exported.
  */
@@ -89,8 +176,9 @@ export function useAnchorPosition(
   anchorRef: RefObject<HTMLElement | null>,
   open: boolean,
   placement: AnchorPlacement
-): CSSProperties | null {
-  const [rect, setRect] = useState<AnchorRect | null>(null);
+): AnchorPosition {
+  const [measures, setMeasures] = useState<Measures | null>(null);
+  const [panel, setPanel] = useState<HTMLElement | null>(null);
   // Set when the anchor wasn't attached yet: a compound component's trigger written after
   // its panel gets its ref after the panel's layout effect ran. Re-runs the effect once.
   const [missed, setMissed] = useState(false);
@@ -103,21 +191,39 @@ export function useAnchorPosition(
       return;
     }
     const measure = () => {
-      const next = anchor.getBoundingClientRect();
+      const next: Measures = {
+        anchor: anchor.getBoundingClientRect(),
+        // The box fixed elements are laid out in: the viewport without its scrollbars.
+        viewport: {
+          width: document.documentElement.clientWidth,
+          height: document.documentElement.clientHeight,
+        },
+        // Layout size, which the panel's own translate doesn't change.
+        panel: panel && { width: panel.offsetWidth, height: panel.offsetHeight },
+      };
       // Most scrolls happen in containers the anchor isn't in: don't re-render for nothing.
-      setRect((prev) => (sameRect(prev, next) ? prev : next));
+      setMeasures((prev) => (sameMeasures(prev, next) ? prev : next));
     };
     measure();
     window.addEventListener('resize', measure);
     window.addEventListener('scroll', measure, true);
     const observer = new ResizeObserver(measure);
     observer.observe(anchor, { box: 'border-box' });
+    if (panel) observer.observe(panel, { box: 'border-box' });
     return () => {
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
       observer.disconnect();
     };
-  }, [open, anchorRef, missed]);
+  }, [open, anchorRef, missed, panel]);
 
-  return rect ? anchoredStyle(rect, placement) : null;
+  if (!measures) return { style: null, side: placement.side ?? 'bottom', panelRef: setPanel };
+  const bounds = measures.panel
+    ? { panel: measures.panel, viewport: measures.viewport }
+    : undefined;
+  return {
+    style: anchoredStyle(measures.anchor, placement, bounds),
+    side: resolveSide(measures.anchor, placement, bounds),
+    panelRef: setPanel,
+  };
 }

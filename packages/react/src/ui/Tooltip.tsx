@@ -31,11 +31,13 @@ const OFFSET = 10;
 // its trigger is first measured, and must exist for `aria-describedby`.
 const UNPLACED: CSSProperties = { top: 0, left: 0 };
 
+// Centered on the box, minus `--anchor-shift`: how far the box moved along its trigger to
+// stay on screen, so the arrow keeps pointing at the trigger.
 const ARROW_POS: Record<TooltipPosition, string> = {
-  top: 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2',
-  bottom: 'bottom-full left-1/2 -translate-x-1/2 translate-y-1/2',
-  left: 'left-full top-1/2 -translate-x-1/2 -translate-y-1/2',
-  right: 'right-full top-1/2 translate-x-1/2 -translate-y-1/2',
+  top: 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
+  bottom: 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2',
+  left: 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
+  right: 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2',
 };
 
 const VARIANT_BOX: Record<TooltipVariant, string> = {
@@ -157,7 +159,11 @@ export const Tooltip = ({
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [engaged, open, setOpenState]);
-  const anchored = useAnchorPosition(anchorRef, open, {
+  const {
+    style: anchored,
+    side,
+    panelRef,
+  } = useAnchorPosition(anchorRef, open, {
     side: position,
     align: 'center',
     offset: OFFSET,
@@ -186,6 +192,7 @@ export const Tooltip = ({
       {isClient &&
         createPortal(
           <span
+            ref={panelRef}
             id={id}
             role="tooltip"
             style={anchored ?? UNPLACED}
@@ -214,7 +221,7 @@ export const Tooltip = ({
                 aria-hidden
                 className={clsx(
                   'absolute h-2 w-2 rotate-45',
-                  ARROW_POS[position],
+                  ARROW_POS[side],
                   intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
                 )}
               />
