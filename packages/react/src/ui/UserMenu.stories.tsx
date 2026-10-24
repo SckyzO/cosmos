@@ -120,6 +120,14 @@ export const WithoutAvatar: Story = {
       </UserMenu>
     </InTopbar>
   ),
+  // The avatars repeat the name next to them: no image for assistive technology, in the trigger
+  // (whose name is its content) and in the header of the menu.
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'User menu for John Doe' });
+    await expect(within(trigger).queryByRole('img')).toBeNull();
+    const menu = await within(document.body).findByRole('menu');
+    await expect(within(menu).queryByRole('img')).toBeNull();
+  },
 };
 
 export const WithoutHeader: Story = {
@@ -151,6 +159,10 @@ export const HideNameOnTrigger: Story = {
       </UserMenu>
     </InTopbar>
   ),
+  // The name is not shown, but it still names the button.
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'User menu for John Doe' })).toBeVisible();
+  },
 };
 
 export const AlignLeft: Story = {
