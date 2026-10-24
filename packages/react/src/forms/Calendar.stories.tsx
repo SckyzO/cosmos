@@ -161,6 +161,25 @@ export const DayNamesHoldTheVisibleNumber: Story = {
   },
 };
 
+/** With no `mode` the calendar only displays: its cells hold the number and are named the same way. */
+export const ReadOnlyDayNamesHoldTheVisibleNumber: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Calendar defaultMonth={MAY} today={TODAY} />,
+  play: async ({ canvas }) => {
+    const cells = canvas.getAllByRole('gridcell').filter((c) => /^\d+$/.test(c.textContent ?? ''));
+    await expect(cells).toHaveLength(31);
+    for (const cell of cells) {
+      await expect(wordsOf(cell.getAttribute('aria-label') ?? '')).toContain(cell.textContent);
+    }
+    await expect(
+      canvas.getByRole('gridcell', { name: '15, Friday, May 15th, 2026' })
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('gridcell', { name: '7, Today, Thursday, May 7th, 2026' })
+    ).toBeVisible();
+  },
+};
+
 /**
  * The names follow the locale. A date that writes the number as a word of its own is left alone
  * (French); one that glues it to other characters, as Japanese does, gets the number in front.

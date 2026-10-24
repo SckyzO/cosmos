@@ -87,7 +87,7 @@
   "pages-error-page--not-found": ["color-contrast"],
   "pages-error-page--server-error": ["color-contrast"],
   "pages-form-elements--default": ["label"],
-  "pages-form-elements--only-forms": ["label", "label-content-name-mismatch"],
+  "pages-form-elements--only-forms": ["label"],
   "pages-profile--content-only": ["color-contrast"],
   "pages-profile--default": ["image-redundant-alt", "label-content-name-mismatch"],
   "pages-profile--with-auth-disabled-banner": [
