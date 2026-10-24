@@ -1,13 +1,17 @@
-import { Command } from 'cmdk';
+import { Command, useCommandState } from 'cmdk';
 import { clsx } from 'clsx';
 import { Search } from 'lucide-react';
 import {
+  createContext,
+  useContext,
   useEffect,
+  useState,
   type ComponentPropsWithoutRef,
   type ElementType,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 
 // ── Root (wraps cmdk's Command.Dialog) ───────────────────────────────────────
@@ -96,13 +100,23 @@ function CommandPaletteInput({ className, ref, ...rest }: CommandPaletteInputPro
 
 export type CommandPaletteListProps = ComponentPropsWithRef<typeof Command.List>;
 
+// A `listbox` owns options and groups only, and the loading indicator of `cmdk` is a
+// `progressbar` (`aria-required-children`). The list keeps a slot right after the listbox,
+// and `CommandPalette.Loading` renders there, wherever it was written in the list.
+// `undefined`: not in a list. `null`: the list has not mounted its slot yet.
+const LoadingSlotContext = createContext<HTMLElement | null | undefined>(undefined);
+
 function CommandPaletteList({ className, ref, ...rest }: CommandPaletteListProps) {
+  const [loadingSlot, setLoadingSlot] = useState<HTMLDivElement | null>(null);
   return (
-    <Command.List
-      ref={ref}
-      className={clsx('max-h-[420px] overflow-y-auto p-2', className)}
-      {...rest}
-    />
+    <LoadingSlotContext.Provider value={loadingSlot}>
+      <Command.List
+        ref={ref}
+        className={clsx('max-h-[420px] overflow-y-auto p-2', className)}
+        {...rest}
+      />
+      <div ref={setLoadingSlot} />
+    </LoadingSlotContext.Provider>
   );
 }
 
@@ -170,12 +184,20 @@ function CommandPaletteItem({
 
 function CommandPaletteSeparator({
   className,
+  alwaysRender,
   ref,
   ...rest
-}: ComponentPropsWithRef<typeof Command.Separator>) {
+}: Omit<ComponentPropsWithRef<typeof Command.Separator>, 'asChild'>) {
+  // The separator of `cmdk` is `role="separator"`, which a `listbox` may not own
+  // (`aria-required-children`), and it can't be overridden. Between groups, a rule is only
+  // visual: hidden from assistive technology, and hidden while searching, as `cmdk`'s is.
+  const searching = useCommandState((state) => state.search !== '');
+  if (searching && !alwaysRender) return null;
   return (
-    <Command.Separator
+    <div
       ref={ref}
+      cmdk-separator=""
+      aria-hidden
       className={clsx('my-1 h-px bg-gray-100 dark:bg-gray-800', className)}
       {...rest}
     />
@@ -205,13 +227,16 @@ function CommandPaletteLoading({
   ref,
   ...rest
 }: ComponentPropsWithRef<typeof Command.Loading>) {
-  return (
+  const slot = useContext(LoadingSlotContext);
+  if (slot === null) return null;
+  const loading = (
     <Command.Loading
       ref={ref}
       className={clsx('px-2 py-6 text-center text-xs text-gray-500 dark:text-gray-400', className)}
       {...rest}
     />
   );
+  return slot ? createPortal(loading, slot) : loading;
 }
 
 // ── Footer (Cosmos addition — keyboard hints) ────────────────────────────────

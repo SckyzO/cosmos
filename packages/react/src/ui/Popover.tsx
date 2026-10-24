@@ -129,8 +129,10 @@ export type PopoverContentProps = {
    * from the left of the screen. Ignored for `left` / `right`.
    */
   align?: PopoverAlign;
-  /** Accessible name of the dialog. */
+  /** Accessible name of the dialog. Name it with this or `aria-labelledby`: a dialog needs a name. */
   'aria-label'?: string;
+  /** Id of an element inside the panel, a heading say, that names the dialog, instead of `aria-label`. */
+  'aria-labelledby'?: string;
   /** Distance from the trigger edge in px. Default 8. */
   offset?: number;
   /** Show a small arrow pointing to the trigger. Default false. */
@@ -145,6 +147,7 @@ const PopoverContent = ({
   position = 'bottom',
   align = 'center',
   'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   offset = 8,
   arrow = false,
   width = 'w-64',
@@ -161,6 +164,7 @@ const PopoverContent = ({
       role="dialog"
       tabIndex={-1}
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       className={clsx(
         'rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
         width,
