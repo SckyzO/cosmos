@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, ChevronDown, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { FloatingPanel } from './FloatingPanel';
 
 export type RefreshOption = { label: string; ms: number };
 
@@ -71,6 +72,7 @@ export const RefreshButton = ({
   className,
 }: RefreshButtonProps) => {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const currentLabel = options.find((o) => o.ms === autoRefreshMs)?.label ?? '?';
   const isAutoActive = autoRefreshMs > 0;
 
@@ -101,40 +103,44 @@ export const RefreshButton = ({
 
       <div className="relative">
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Choose refresh interval"
+          aria-expanded={open}
           className="focus-visible:focus-indicator flex h-full items-center rounded-r-lg px-2 text-gray-400 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-500 dark:hover:bg-gray-700"
         >
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
 
-        {open && (
-          <>
-            <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden />
-            <div className="absolute top-full right-0 z-30 mt-1 w-28 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
-              {options.map((opt) => (
-                <button
-                  type="button"
-                  key={opt.ms}
-                  onClick={() => {
-                    onIntervalChange(opt.ms);
-                    setOpen(false);
-                  }}
-                  className={clsx(
-                    'focus-visible:focus-indicator flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5',
-                    autoRefreshMs === opt.ms
-                      ? 'text-brand-600 dark:text-brand-400 font-semibold'
-                      : 'text-gray-700 dark:text-gray-300'
-                  )}
-                >
-                  {opt.label}
-                  {autoRefreshMs === opt.ms && <Check className="h-3 w-3" />}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+        <FloatingPanel
+          open={open}
+          onClose={() => setOpen(false)}
+          triggerRef={triggerRef}
+          placement={{ side: 'bottom', align: 'end', offset: 4 }}
+          tabIndex={-1}
+          className="w-28 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-800 dark:bg-gray-900"
+        >
+          {options.map((opt) => (
+            <button
+              type="button"
+              key={opt.ms}
+              onClick={() => {
+                onIntervalChange(opt.ms);
+                setOpen(false);
+              }}
+              className={clsx(
+                'focus-visible:focus-indicator flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5',
+                autoRefreshMs === opt.ms
+                  ? 'text-brand-600 dark:text-brand-400 font-semibold'
+                  : 'text-gray-700 dark:text-gray-300'
+              )}
+            >
+              {opt.label}
+              {autoRefreshMs === opt.ms && <Check className="h-3 w-3" />}
+            </button>
+          ))}
+        </FloatingPanel>
       </div>
     </div>
   );

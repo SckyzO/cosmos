@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { FloatingPanel } from '../ui/FloatingPanel';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { HEADER_CELL_PADDING } from './density';
 import type { DataTableDensity, SortDirection } from './types';
@@ -51,16 +52,9 @@ export const ColumnHeader = ({
 }: ColumnHeaderProps) => {
   const [open, setOpen] = useState(false);
   const filterCount = filterSelected.size;
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  // The label and the filter button: the dropdown opens under them, left-aligned.
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLButtonElement>(null);
 
   return (
     <th
@@ -73,7 +67,7 @@ export const ColumnHeader = ({
         className
       )}
     >
-      <div ref={ref} className="relative inline-flex items-center gap-1.5">
+      <div ref={anchorRef} className="relative inline-flex items-center gap-1.5">
         {sortable ? (
           <button
             type="button"
@@ -91,7 +85,9 @@ export const ColumnHeader = ({
         {filterable && filterValues.length > 0 && (
           <>
             <button
+              ref={filterRef}
               type="button"
+              aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
               aria-label={typeof label === 'string' ? `Filter ${label}` : 'Filter column'}
               className={clsx(
@@ -102,13 +98,23 @@ export const ColumnHeader = ({
               <Filter className="h-3 w-3" />
               {filterCount > 0 && <span className="text-3xs">{filterCount}</span>}
             </button>
-            {open && onFilterToggle && onFilterClear && (
-              <ColumnFilterDropdown
-                values={filterValues}
-                selected={filterSelected}
-                onToggle={onFilterToggle}
-                onClear={onFilterClear}
-              />
+            {onFilterToggle && onFilterClear && (
+              <FloatingPanel
+                open={open}
+                onClose={() => setOpen(false)}
+                triggerRef={filterRef}
+                anchorRef={anchorRef}
+                placement={{ side: 'bottom', align: 'start', offset: 4 }}
+                tabIndex={-1}
+                className="outline-none"
+              >
+                <ColumnFilterDropdown
+                  values={filterValues}
+                  selected={filterSelected}
+                  onToggle={onFilterToggle}
+                  onClear={onFilterClear}
+                />
+              </FloatingPanel>
             )}
           </>
         )}
