@@ -157,7 +157,10 @@ export const Controlled: Story = {
             <p className="text-xs">Externally controlled popover.</p>
           </Popover.Content>
         </Popover>
-        <button onClick={() => setOpen((o) => !o)} className="text-brand-500 text-xs underline">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="text-brand-600 dark:text-brand-400 text-xs underline"
+        >
           Toggle from outside
         </button>
       </div>

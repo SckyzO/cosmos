@@ -81,6 +81,9 @@ export const NumberInput = ({
 
   return (
     <div
+      // The unit is dimmed with the disabled field: aria-disabled tells axe it
+      // belongs to an inactive control, exempt from contrast (WCAG 1.4.3).
+      aria-disabled={disabled || undefined}
       className={clsx(
         // `inline-flex` so the control sizes to its content by default; opt into
         // `flex w-full` via `fullWidth` for form grids that need the column.

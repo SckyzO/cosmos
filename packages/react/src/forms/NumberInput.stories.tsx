@@ -24,6 +24,36 @@ export const Default: Story = {
 export const NoUnit: Story = { args: { value: 8, min: 1, max: 20, step: 1 } };
 export const Disabled: Story = { args: { value: 42, unit: 'ms', disabled: true } };
 
+/**
+ * The field, dimmed when disabled, is `aria-disabled`: the unit belongs to an
+ * inactive control, which axe then exempts from contrast.
+ */
+export const AriaDisabledFollowsDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-4">
+      <NumberInput aria-label="Enabled" value={42} onChange={() => {}} unit="ms" />
+      <NumberInput aria-label="Disabled" value={42} onChange={() => {}} unit="ms" disabled />
+      <NumberInput
+        aria-label="Stacked disabled"
+        controls="stacked"
+        value={42}
+        onChange={() => {}}
+        unit="ms"
+        disabled
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const field = (name: string) => canvas.getByRole('spinbutton', { name }).closest('.h-9');
+    await expect(field('Enabled')).not.toHaveAttribute('aria-disabled');
+    for (const name of ['Disabled', 'Stacked disabled']) {
+      await expect(field(name)).toHaveClass('opacity-50');
+      await expect(field(name)).toHaveAttribute('aria-disabled', 'true');
+    }
+  },
+};
+
 export const Controlled: Story = {
   render: () => {
     const [v, setV] = useState(60);

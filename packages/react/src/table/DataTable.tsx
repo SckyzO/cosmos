@@ -254,7 +254,7 @@ export const DataTable = <T,>({
           <button
             type="button"
             onClick={clearSelection}
-            className="focus-visible:focus-indicator rounded text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator rounded text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
           >
             Clear
           </button>

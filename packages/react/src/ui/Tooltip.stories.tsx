@@ -90,7 +90,7 @@ export const Variants: Story = {
       <div className="mt-4">
         <SectionCard title="TooltipHelp shortcut">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Hover the help icon</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Hover the help icon</span>
             <TooltipHelp text="TooltipHelp uses the HelpCircle icon as trigger." />
           </div>
         </SectionCard>

@@ -44,11 +44,12 @@ const INTENT_META: Record<
   },
 };
 
+// The solid fills of Badge: the text reaches 4.5:1 in the four themes.
 const BADGE_BG: Record<NotificationsPanelIntent, string> = {
-  danger: 'bg-red-500',
-  warning: 'bg-amber-500',
-  info: 'bg-blue-500',
-  success: 'bg-green-500',
+  danger: 'bg-red-600 text-white',
+  warning: 'bg-amber-500 text-gray-900',
+  info: 'bg-blue-600 text-white',
+  success: 'bg-green-500 text-gray-900',
 };
 
 // Monitoring vocabulary on the badge: the label is data-facing, the prop is not.
@@ -159,7 +160,7 @@ function NotificationsPanelTrigger({
           {showPing && (
             <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25" />
           )}
-          <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] leading-none font-bold text-white">
+          <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] leading-none font-bold text-white">
             {display}
           </span>
         </span>
@@ -381,7 +382,7 @@ function NotificationsPanelItem({
       </div>
       <span
         className={clsx(
-          'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold text-white',
+          'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold',
           BADGE_BG[intent]
         )}
       >

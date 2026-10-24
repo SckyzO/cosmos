@@ -33,6 +33,10 @@ const PRESENCE_CLASS: Record<ChatPresence, string> = {
   offline: 'bg-gray-400',
 };
 
+// The muted and secondary text drop under 4.5:1 on the accent tint of the
+// selected row in the light themes.
+const ON_SELECTED = 'text-gray-600 dark:text-gray-400';
+
 /**
  * Conversation picker for the left pane of a two-pane chat: name, last
  * message, time, unread count and presence of each thread.
@@ -84,13 +88,23 @@ export const ChatConversationList = ({
                     {c.presence && <span className="sr-only">, {c.presence}</span>}
                   </span>
                   {c.time && (
-                    <span className="text-2xs shrink-0 text-[var(--color-text-muted)]">
+                    <span
+                      className={clsx(
+                        'text-2xs shrink-0',
+                        selected ? ON_SELECTED : 'text-[var(--color-text-muted)]'
+                      )}
+                    >
                       {c.time}
                     </span>
                   )}
                 </span>
                 <span className="mt-0.5 flex items-center justify-between gap-2">
-                  <span className="truncate text-xs text-[var(--color-text-secondary)]">
+                  <span
+                    className={clsx(
+                      'truncate text-xs',
+                      selected ? ON_SELECTED : 'text-[var(--color-text-secondary)]'
+                    )}
+                  >
                     {c.lastMessage}
                   </span>
                   {unread > 0 && (

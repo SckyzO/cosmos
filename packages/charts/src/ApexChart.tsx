@@ -6,6 +6,12 @@ import { mergeOptions } from './mergeOptions';
 import { useChartTheme } from './theme';
 import type { ChartAccessibility, ChartEmptyProps, ChartRawOptions } from './types';
 
+// ApexCharts draws the tooltip title at 55% of the light tooltip's text color,
+// 4:1 on its white body. At 70% it reaches 6.6:1. The class keeps the rule to
+// the tooltips of these charts; the dark tooltip already passes.
+const TOOLTIP_CLASS = 'cosmos-chart-tooltip';
+const TOOLTIP_CSS = `.apexcharts-tooltip.apexcharts-theme-light.${TOOLTIP_CLASS}{--apx-tt-color-muted:rgba(15,23,42,0.7)}`;
+
 type ApexChartProps = ComponentProps<typeof ReactApexChart> &
   ChartAccessibility &
   ChartEmptyProps &
@@ -55,6 +61,9 @@ const nameLegendItems = (container: Element) => {
  * `emptyMessage` is the `noData` text ApexCharts draws, as SVG text, when there
  * is no series or only empty ones.
  *
+ * The tooltip takes a class that darkens its title in the light themes, from a
+ * style React hoists into `<head>` once for every chart.
+ *
  * `apexOptions` is merged over all of it last, so it can override anything the
  * wrapper or this component set. `mergeOptions` copies it: ApexCharts writes to
  * the options it gets, which would otherwise change the consumer's object.
@@ -102,9 +111,17 @@ export const ApexChart = ({
       ...options?.chart,
       accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
     },
+    tooltip: { ...options?.tooltip, cssClass: TOOLTIP_CLASS },
     noData: { text: emptyMessage, style: { color: textMuted } },
   };
   const merged = apexOptions ? mergeOptions(own, apexOptions) : own;
 
-  return <ReactApexChart {...props} options={merged} chartRef={chartRef} />;
+  return (
+    <>
+      <style href="cosmos-chart-tooltip" precedence="cosmos-charts">
+        {TOOLTIP_CSS}
+      </style>
+      <ReactApexChart {...props} options={merged} chartRef={chartRef} />
+    </>
+  );
 };

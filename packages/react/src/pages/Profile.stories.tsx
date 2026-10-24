@@ -198,7 +198,7 @@ const ClearCacheSection = () => {
           <p className="text-sm text-gray-700 dark:text-gray-300">
             API response cache (<code className="font-mono text-xs">cosmos.cache.*</code>)
           </p>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             Auth token, theme and dashboard layouts are preserved.
           </p>
         </div>
@@ -264,19 +264,19 @@ const LIGHT_PALETTES: PaletteMeta[] = [
     id: 'pure-light',
     label: 'Pure Light',
     desc: 'white surfaces',
-    preview: { bg: '#ffffff', surface: '#ffffff', border: '#e5e7eb' },
+    preview: { bg: '#ffffff', surface: '#ffffff', border: '#e5e7eb', text: '#667085' },
   },
   {
     id: 'soft-light',
     label: 'Soft Light',
     desc: 'gray-50 surfaces',
-    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb' },
+    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb', text: '#667085' },
   },
   {
     id: 'paper',
     label: 'Paper',
     desc: 'warm tinted',
-    preview: { bg: '#fafaf9', surface: '#ffffff', border: '#e7e5e4' },
+    preview: { bg: '#fafaf9', surface: '#ffffff', border: '#e7e5e4', text: '#667085' },
   },
 ];
 
@@ -285,19 +285,19 @@ const DARK_PALETTES: PaletteMeta[] = [
     id: 'true-black',
     label: 'True Black',
     desc: 'OLED-friendly',
-    preview: { bg: '#000000', surface: '#0a0a0a', border: '#1f1f1f' },
+    preview: { bg: '#000000', surface: '#0a0a0a', border: '#1f1f1f', text: '#a3a3a3' },
   },
   {
     id: 'slate',
     label: 'Slate',
     desc: 'cool gray',
-    preview: { bg: '#0f172a', surface: '#1e293b', border: '#334155' },
+    preview: { bg: '#0f172a', surface: '#1e293b', border: '#334155', text: '#a3a3a3' },
   },
   {
     id: 'zinc',
     label: 'Zinc',
     desc: 'neutral',
-    preview: { bg: '#18181b', surface: '#27272a', border: '#3f3f46' },
+    preview: { bg: '#18181b', surface: '#27272a', border: '#3f3f46', text: '#a3a3a3' },
   },
 ];
 

@@ -28,7 +28,9 @@ export const Default: Story = {
 export const Ratio16x9: Story = {
   render: () => (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] text-gray-400 uppercase">16:9 (default)</p>
+      <p className="font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">
+        16:9 (default)
+      </p>
       <VideoEmbed src={SAMPLE_SRC} title="16:9 demo" aspectRatio="16:9" />
     </div>
   ),
@@ -37,7 +39,7 @@ export const Ratio16x9: Story = {
 export const Ratio4x3: Story = {
   render: () => (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] text-gray-400 uppercase">4:3</p>
+      <p className="font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">4:3</p>
       <VideoEmbed src={SAMPLE_SRC} title="4:3 demo" aspectRatio="4:3" />
     </div>
   ),
@@ -46,7 +48,7 @@ export const Ratio4x3: Story = {
 export const RatioSquare: Story = {
   render: () => (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] text-gray-400 uppercase">1:1</p>
+      <p className="font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">1:1</p>
       <div className="max-w-sm">
         <VideoEmbed src={SAMPLE_SRC} title="Square demo" aspectRatio="1:1" />
       </div>
@@ -57,7 +59,7 @@ export const RatioSquare: Story = {
 export const Ultrawide: Story = {
   render: () => (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] text-gray-400 uppercase">21:9</p>
+      <p className="font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">21:9</p>
       <VideoEmbed src={SAMPLE_SRC} title="Ultrawide demo" aspectRatio="21:9" />
     </div>
   ),
@@ -89,7 +91,7 @@ export const Ratios: Story = {
     <div className="grid gap-6 md:grid-cols-2">
       {(['16:9', '4:3', '1:1', '21:9'] as const).map((r) => (
         <div key={r} className="space-y-2">
-          <p className="font-mono text-[10px] text-gray-400 uppercase">{r}</p>
+          <p className="font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">{r}</p>
           <VideoEmbed src={SAMPLE_SRC} title={`${r} demo`} aspectRatio={r} />
         </div>
       ))}

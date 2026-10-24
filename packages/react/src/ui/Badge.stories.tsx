@@ -190,10 +190,10 @@ const LIGHT_CLASSES: Record<Intent, string[]> = {
 const SOLID_CLASSES: Record<Intent, string[]> = {
   neutral: ['bg-gray-600', 'text-white'],
   brand: ['bg-brand-500', 'text-white'],
-  success: ['bg-green-500', 'text-white'],
-  warning: ['bg-amber-500', 'text-white'],
-  danger: ['bg-red-500', 'text-white'],
-  info: ['bg-blue-500', 'text-white'],
+  success: ['bg-green-500', 'text-gray-900'],
+  warning: ['bg-amber-500', 'text-gray-900'],
+  danger: ['bg-red-600', 'text-white'],
+  info: ['bg-blue-600', 'text-white'],
 };
 
 /** Each `intent` colors the light badge as its `variant` did; none is `neutral`. */

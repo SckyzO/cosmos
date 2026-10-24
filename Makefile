@@ -20,7 +20,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WOR
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-e2e screenshots build storybook storybook-build clean shell ci compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots build storybook storybook-build clean shell ci compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -57,6 +57,9 @@ typecheck: ## tsc --noEmit on all workspaces
 
 test: ## Vitest unit tests
 	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "pnpm browsers:install && pnpm test"
+
+test-contrast: ## axe color-contrast on every story in light, sand and deep-blue. One theme: A11Y_THEME=sand
+	$(DOCKER_RUN) -e A11Y_THEME $(DEV_IMAGE) sh -c "pnpm browsers:install && pnpm --filter @cosmos/storybook a11y:contrast"
 
 storybook: ## Start Storybook via docker compose (http://localhost:6006)
 	docker compose up storybook
@@ -99,4 +102,5 @@ ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every p
 	  echo '── 4. build packages ──' && pnpm build && \
 	  echo '── 5. storybook:build ──' && pnpm storybook:build && \
 	  echo '── 6. unit + e2e tests ──' && pnpm browsers:install && CI=true pnpm test && \
+	  echo '── 7. story contrast in light, sand, deep-blue ──' && CI=true pnpm --filter @cosmos/storybook a11y:contrast && \
 	  echo '── ALL GREEN ──'"

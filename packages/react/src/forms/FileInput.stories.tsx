@@ -53,6 +53,26 @@ export const Disabled: Story = {
   args: { label: 'Locked', disabled: true },
 };
 
+/**
+ * The field, dimmed when disabled, is `aria-disabled`: "No file chosen"
+ * belongs to an inactive control, which axe then exempts from contrast.
+ */
+export const AriaDisabledFollowsDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <FileInput label="Enabled" />
+      <FileInput label="Disabled" disabled />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const field = (label: string) => canvas.getByLabelText(label).closest('.h-9');
+    await expect(field('Enabled')).not.toHaveAttribute('aria-disabled');
+    await expect(field('Disabled')).toHaveClass('opacity-50');
+    await expect(field('Disabled')).toHaveAttribute('aria-disabled', 'true');
+  },
+};
+
 export const Controlled: Story = {
   render: () => {
     const [count, setCount] = useState(0);

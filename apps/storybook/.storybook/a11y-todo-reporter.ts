@@ -48,6 +48,11 @@ export default class A11yTodoReporter implements Reporter {
   ) {
     if (reason === 'interrupted' || !this.vitest) return;
     const { logger, config } = this.vitest;
+    if (process.env.A11Y_THEME) {
+      throw new Error(
+        'a11y-todo.json not written: it lists the default theme, run it without A11Y_THEME.'
+      );
+    }
 
     // Every file of the run's project(s) ran? (The browser project is named
     // `storybook (chromium)`, after its instance.)

@@ -223,7 +223,7 @@ export const Chatbot = ({
         {unread && (
           <span
             aria-hidden
-            className="text-2xs absolute -top-1 -right-1 min-w-5 rounded-full bg-red-500 px-1.5 text-center leading-5 font-semibold text-white ring-2 ring-[var(--color-bg-base)]"
+            className="text-2xs absolute -top-1 -right-1 min-w-5 rounded-full bg-red-600 px-1.5 text-center leading-5 font-semibold text-white ring-2 ring-[var(--color-bg-base)]"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>

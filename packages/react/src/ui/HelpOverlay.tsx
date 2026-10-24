@@ -155,7 +155,7 @@ export type HelpOverlaySectionProps = {
 
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
-    <h3 className="text-2xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+    <h3 className="text-2xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
       {title}
     </h3>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
@@ -188,7 +188,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
           return (
             <Fragment key={`${combo}-${idx}`}>
               {idx > 0 && (
-                <span className="text-3xs px-0.5 text-gray-400 uppercase dark:text-gray-500">
+                <span className="text-3xs px-0.5 text-gray-500 uppercase dark:text-gray-400">
                   then
                 </span>
               )}
@@ -196,7 +196,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
                 {parts.map((part, pIdx) => (
                   <Fragment key={`${part}-${pIdx}`}>
                     {pIdx > 0 && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">+</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">+</span>
                     )}
                     <Kbd>{formatKey(part, isMac)}</Kbd>
                   </Fragment>

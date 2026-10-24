@@ -16,12 +16,13 @@ export type RibbonProps = {
   className?: string;
 };
 
+// The solid fills of Badge: the text reaches 4.5:1 in the four themes.
 const INTENT_BG: Record<RibbonIntent, string> = {
   brand: 'bg-brand-500 text-white',
-  success: 'bg-green-500 text-white',
-  warning: 'bg-amber-500 text-white',
-  danger: 'bg-red-500 text-white',
-  neutral: 'bg-gray-700 text-white dark:bg-gray-600',
+  success: 'bg-green-500 text-gray-900',
+  warning: 'bg-amber-500 text-gray-900',
+  danger: 'bg-red-600 text-white',
+  neutral: 'bg-gray-600 text-white',
 };
 
 // `flat`: round the OUTER corners (away from the parent edge), keep the

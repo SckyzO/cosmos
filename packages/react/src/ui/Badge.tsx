@@ -10,7 +10,10 @@ export type BadgeProps = {
   /** Color of the badge. Default `neutral`. */
   intent?: Intent;
   size?: BadgeSize;
-  /** Visual style. `light` (default) = soft tinted bg + colored text. `solid` = filled bg + white text. */
+  /**
+   * Visual style. `light` (default) = soft tinted bg + colored text. `solid` =
+   * filled bg: white text, dark text on the bright `success` and `warning` fills.
+   */
   appearance?: BadgeAppearance;
   /** Optional Lucide icon. */
   icon?: ElementType;
@@ -27,13 +30,15 @@ const INTENT_LIGHT: Record<Intent, string> = {
   info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
+// Every text reaches 4.5:1 in the four themes. Ribbon, NotificationsPanel and
+// StatefulSaveButton use the same fill per intent.
 const INTENT_SOLID: Record<Intent, string> = {
-  neutral: 'bg-gray-600 text-white dark:bg-gray-500',
+  neutral: 'bg-gray-600 text-white',
   brand: 'bg-brand-500 text-white',
-  success: 'bg-green-500 text-white',
-  warning: 'bg-amber-500 text-white',
-  danger: 'bg-red-500 text-white',
-  info: 'bg-blue-500 text-white',
+  success: 'bg-green-500 text-gray-900',
+  warning: 'bg-amber-500 text-gray-900',
+  danger: 'bg-red-600 text-white',
+  info: 'bg-blue-600 text-white',
 };
 
 const SIZE_CLASS: Record<BadgeSize, string> = {
