@@ -24,7 +24,6 @@
   "charts-scatter-bubble--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
   "feedback-cookie-banner--no-icon-no-title": ["aria-dialog-name"],
   "forms-action-panel--with-link": ["color-contrast"],
-  "forms-action-panel--with-toggle": ["button-name"],
   "forms-calendar--caption-dropdowns-jump-to-a-month": ["label-content-name-mismatch"],
   "forms-calendar--click-selects-a-day": ["label-content-name-mismatch"],
   "forms-calendar--disabled-days-cannot-be-picked": ["label-content-name-mismatch"],
