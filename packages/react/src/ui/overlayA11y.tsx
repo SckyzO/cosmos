@@ -9,6 +9,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type RefObject,
 } from 'react';
+import { pushLayer, type OverlayLayer } from './overlayStack';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -19,17 +20,77 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/** Calls `onEscape` when Escape is pressed anywhere in the document while `active`. */
-export function useEscapeKey(active: boolean, onEscape: () => void) {
+// The open overlays, bottom first.
+let openLayers: readonly OverlayLayer[] = [];
+
+// One document listener for every overlay, so one Escape closes one overlay. In the bubble
+// phase, and an Escape whose default was prevented is left alone: it was handled already,
+// by a component that closes something on Escape itself, or by a third-party layer (Radix
+// dismisses in the capture phase and prevents the default, so the CommandPalette dialog,
+// built on cmdk, closes alone and the overlays under it stay open).
+const onEscapeKeyDown = (e: KeyboardEvent) => {
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  const top = openLayers[openLayers.length - 1];
+  if (!top) return;
+  e.preventDefault();
+  top.escape();
+};
+
+const OverlayLayerContext = createContext<OverlayLayer | null>(null);
+/** Wraps an overlay's content, so the overlays opened from it stack above it. */
+export const OverlayLayerProvider = OverlayLayerContext.Provider;
+
+/**
+ * Puts an overlay (a dialog, a drawer, a floating panel) in the stack of open overlays while
+ * `open`. Escape, wherever focus is, calls the `onEscape` of the top one only: a menu open
+ * in a modal closes, the modal stays until the next Escape.
+ *
+ * The overlay opened last is on top, and above the overlay it was opened from even when
+ * both open on mount: give the returned layer to the overlay's content with
+ * `OverlayLayerProvider`.
+ */
+export function useOverlayLayer(open: boolean, onEscape: () => void): OverlayLayer {
+  const parent = useContext(OverlayLayerContext);
+  // The latest callback, so a new inline `onEscape` doesn't move the layer to the top.
+  const latest = useRef(onEscape);
   useEffect(() => {
-    if (!active) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onEscape();
+    latest.current = onEscape;
+  });
+  const [layer] = useState<OverlayLayer>(() => ({ parent, escape: () => latest.current() }));
+
+  useEffect(() => {
+    if (!open) return;
+    openLayers = pushLayer(openLayers, layer);
+    document.addEventListener('keydown', onEscapeKeyDown);
+    return () => {
+      openLayers = openLayers.filter((other) => other !== layer);
+      if (openLayers.length === 0) document.removeEventListener('keydown', onEscapeKeyDown);
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [active, onEscape]);
+  }, [open, layer]);
+
+  return layer;
 }
+
+const PortalContainerContext = createContext<HTMLElement | null | undefined>(undefined);
+
+/**
+ * Gives the floating panels opened inside a modal dialog (Dialog, Drawer) the element to
+ * render into: the dialog itself, so `aria-modal` doesn't hide them from assistive technology.
+ * `null` while the dialog's element isn't mounted yet.
+ *
+ * The element must be the box the panels' fixed position is relative to, as
+ * `useAnchorPosition` places them against its origin: either the viewport itself, an element
+ * fixed at `inset-0` (Dialog), or an element with a transform (the Drawer panel, which slides
+ * with `translate`).
+ */
+export const PortalContainerProvider = PortalContainerContext.Provider;
+
+/**
+ * Where a floating panel renders: the element of the modal dialog it was opened in,
+ * `undefined` outside any (`<body>` then), `null` while that dialog isn't mounted yet
+ * (render nothing until it is).
+ */
+export const usePortalContainer = () => useContext(PortalContainerContext);
 
 export type OutsideClickOptions = {
   /** Panel is open: listen while true. */
@@ -111,7 +172,9 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean): RefObject<
     (focusables()[0] ?? node).focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      // A floating panel open in the container renders inside it and moves focus out of
+      // itself on Tab (`usePortalFocus`): leave a Tab it handled alone.
+      if (e.key !== 'Tab' || e.defaultPrevented) return;
       const items = focusables();
       if (items.length === 0) {
         e.preventDefault();
@@ -143,7 +206,7 @@ const isVisible = (el: HTMLElement) => el.getClientRects().length > 0;
 export type PortalFocusOptions = {
   /** Panel is open. Focus moves in once the panel element is mounted. */
   open: boolean;
-  /** Closes the panel (Escape, Tab out, focus moved elsewhere). */
+  /** Closes the panel (Tab out, focus moved elsewhere). */
   onClose: () => void;
   /** The button that opened the panel: focus returns to it on close. */
   triggerRef: RefObject<HTMLElement | null>;
@@ -162,12 +225,14 @@ export type PortalFocusProps<T extends HTMLElement> = {
  * whole page before reaching the panel. While open:
  * - moves focus into the panel when it opens (not when it is open on mount,
  *   so `defaultOpen` panels don't steal focus from the page),
- * - Escape closes it and returns focus to the trigger,
  * - Tab past the last element moves on to the element after the trigger, and
  *   Shift+Tab before the first one goes back to the trigger: the panel sits
  *   in the tab order right after its trigger, and closes on the way out,
  * - closes when focus moves from the panel to anywhere else but the trigger,
  * - on close, puts focus back on the trigger if it was left inside the panel.
+ *
+ * Escape is not handled here: the panel takes part in the overlay stack
+ * (`useOverlayLayer`), and closing it on Escape puts focus back on the trigger.
  *
  * Spread the returned props on the panel and give it `tabIndex={-1}` so it can
  * take focus when it holds no focusable children. `onFocusCapture` tells focus
@@ -225,9 +290,6 @@ export function usePortalFocus<T extends HTMLElement>({
       return all[all.indexOf(trigger) + 1] ?? null;
     };
 
-    const onDocKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
     const onPanelKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
       // Only elements Tab can reach: menu items with tabIndex -1 are focused
@@ -259,11 +321,9 @@ export function usePortalFocus<T extends HTMLElement>({
       close();
     };
 
-    document.addEventListener('keydown', onDocKeyDown);
     document.addEventListener('focusin', onFocusIn);
     panel.addEventListener('keydown', onPanelKeyDown);
     return () => {
-      document.removeEventListener('keydown', onDocKeyDown);
       document.removeEventListener('focusin', onFocusIn);
       panel.removeEventListener('keydown', onPanelKeyDown);
       focus.current.inside = false;
