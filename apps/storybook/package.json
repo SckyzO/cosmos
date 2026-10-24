@@ -20,7 +20,7 @@
     "@sckyzo/cosmos-charts": "workspace:*",
     "@sckyzo/cosmos-react": "workspace:*",
     "@sckyzo/cosmos-theme": "workspace:*",
-    "lucide-react": "^1.59.0",
+    "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -33,14 +33,14 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.0.4",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/browser": "^5.0.5",
     "@vitest/browser-playwright": "^5.0.5",
     "playwright": "^1.64.1",
     "storybook": "^10.6.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.1.6",
+    "vite": "^8.3.5",
     "vitest": "^5.0.5"
   }
 }
