@@ -2,9 +2,18 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
-import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
+import {
+  expectBelow,
+  expectGraphicContrast,
+  inEachTheme,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import { Button } from './Button';
+import { Dropdown } from './Dropdown';
+import { Popover } from './Popover';
+import { Tooltip } from './Tooltip';
+import { Combobox } from '../forms/Combobox';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -349,6 +358,121 @@ export const CloseTriggers: Story = {
     await expect(args.onClose).toHaveBeenCalledTimes(2);
     await userEvent.keyboard('{Escape}');
     await expect(args.onClose).toHaveBeenCalledTimes(3);
+  },
+};
+
+/**
+ * A listbox, a menu and a tooltip opened in the drawer render inside it and are drawn at
+ * their trigger, although the drawer, which slides with `translate`, is then the box their
+ * fixed position is relative to. A click elsewhere in the drawer closes a panel and Escape
+ * closes the menu, and the drawer stays open.
+ */
+export const PanelsRenderInsideTheDrawer: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer open={args.open} onClose={args.onClose}>
+      <Drawer.Header title="Filters" />
+      <Drawer.Body className="space-y-4">
+        <Combobox
+          label="Owner"
+          options={[
+            { value: 'leslie', label: 'Leslie Alexander' },
+            { value: 'michael', label: 'Michael Foster' },
+          ]}
+        />
+        <p>Filters apply to every table.</p>
+        <div className="flex items-center justify-end gap-3">
+          <Tooltip content="Newest first">
+            <Button variant="secondary" size="sm">
+              Order
+            </Button>
+          </Tooltip>
+          <Dropdown
+            label="Sort"
+            align="right"
+            options={[
+              { value: 'new', label: 'Newest' },
+              { value: 'old', label: 'Oldest' },
+            ]}
+          />
+        </div>
+      </Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const drawerElement = await body.findByRole('dialog', { name: 'Filters' });
+    const drawer = within(drawerElement);
+
+    const input = drawer.getByRole('combobox', { name: 'Owner' });
+    await userEvent.click(input);
+    const listbox = await body.findByRole('listbox');
+    await expect(drawerElement).toContainElement(listbox);
+    expectBelow(listbox, input.parentElement!, { offset: 4, align: 'start' });
+    await userEvent.click(drawer.getByText('Filters apply to every table.'));
+    await waitFor(() => expect(body.queryByRole('listbox')).toBeNull());
+
+    const sort = drawer.getByRole('button', { name: 'Sort' });
+    await userEvent.click(sort);
+    const menu = await body.findByRole('menu');
+    await expect(drawerElement).toContainElement(menu);
+    expectBelow(menu, sort, { offset: 4, align: 'end' });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('menu')).toBeNull());
+
+    const order = drawer.getByRole('button', { name: 'Order' });
+    await userEvent.hover(order);
+    const tip = body.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    await expect(drawerElement).toContainElement(tip);
+    const a = order.parentElement!.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    await expect(t.bottom).toBeCloseTo(a.top - 10, 0);
+    await expect((t.left + t.right) / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+
+    await expect(args.onClose).not.toHaveBeenCalled();
+  },
+};
+
+/** Escape closes a popover open in the drawer first, and the drawer on the next press. */
+export const EscapeClosesThePopoverFirst: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Drawer open={open} onClose={close}>
+        <Drawer.Header title="Filters" />
+        <Drawer.Body>
+          <Popover>
+            <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Help</Popover.Trigger>
+            <Popover.Content aria-label="Filter help">
+              <p>Filters apply to every table.</p>
+            </Popover.Content>
+          </Popover>
+        </Drawer.Body>
+      </Drawer>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const drawer = within(await body.findByRole('dialog', { name: 'Filters' }));
+    await userEvent.click(drawer.getByRole('button', { name: 'Help' }));
+    await body.findByRole('dialog', { name: 'Filter help' });
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filter help' })).toBeNull());
+    await expect(body.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filters' })).toBeNull());
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
 

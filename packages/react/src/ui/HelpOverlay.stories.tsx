@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
+import { Drawer } from './Drawer';
 import { HelpOverlay } from './HelpOverlay';
 
 const meta = {
@@ -163,6 +164,37 @@ export const EscapeClosesOverlay: Story = {
     await waitFor(() => expect(canvas.getByRole('dialog')).toBeInTheDocument());
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(canvas.queryByRole('dialog')).not.toBeInTheDocument());
+  },
+};
+
+/** Opened over a drawer, the overlay closes on Escape and the drawer stays until the next one. */
+export const EscapeOverADrawerClosesOnlyTheOverlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [drawer, setDrawer] = useState(true);
+    return (
+      <>
+        <Drawer open={drawer} onClose={() => setDrawer(false)}>
+          <Drawer.Header title="Filters" />
+        </Drawer>
+        <HelpOverlay>{SAMPLE_SHORTCUTS}</HelpOverlay>
+      </>
+    );
+  },
+  play: async () => {
+    const body = within(document.body);
+    await body.findByRole('dialog', { name: 'Filters' });
+    await userEvent.keyboard('?');
+    await body.findByRole('dialog', { name: 'Keyboard shortcuts' });
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(body.queryByRole('dialog', { name: 'Keyboard shortcuts' })).toBeNull()
+    );
+    await expect(body.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filters' })).toBeNull());
   },
 };
 
