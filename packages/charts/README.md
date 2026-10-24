@@ -6,6 +6,8 @@ Cosmos charts — opinionated [ApexCharts](https://apexcharts.com/) wrappers the
 
 Kept in a dedicated subpackage so that `@sckyzo/cosmos-react` consumers who don't render charts don't ship the ApexCharts bundle.
 
+Each chart is a module of its own that loads only the ApexCharts chart types it draws, and the package declares no side effects, so a bundler ships the charts you import and leaves the others out: `import { DonutChart } from '@sckyzo/cosmos-charts'` brings the donut engine, not the line or bar ones.
+
 ## Install
 
 ```bash

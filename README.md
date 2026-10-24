@@ -75,7 +75,7 @@ Notable groups:
 
 - **Pages** — full-page templates (Dashboard, Calendar, Activity, Settings, Profile, sign-in forms, Blog, Doc Page, …)
 - **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, Lists, Description List, HR
-- **Forms** — 25 controls (Input, Select, Combobox, DatePicker single + range, …)
+- **Forms** — 24 controls (Input, Select, Combobox, DatePicker single + range, …)
 - **Charts** — `@sckyzo/cosmos-charts`, one entry per chart type: line & area, bar & column, donut, radial gauges,
   realtime, sparkline, treemap, heatmap, radar, scatter & bubble, box plot, range bar, mixed
 

@@ -52,6 +52,106 @@ export const MinusFiresOnChange: Story = {
   },
 };
 
+/** `controls="stacked"`: ↑ / ↓ arrows stacked inside the right edge, left-aligned text. */
+export const StackedDefault: Story = {
+  args: {
+    controls: 'stacked',
+    value: 60,
+    min: 5,
+    max: 3600,
+    step: 5,
+    unit: 's',
+    className: 'w-28',
+  },
+};
+
+export const StackedNoUnit: Story = {
+  args: { controls: 'stacked', value: 8, min: 1, max: 18, className: 'w-20' },
+};
+
+export const StackedDisabled: Story = {
+  args: { controls: 'stacked', value: 60, unit: 's', disabled: true, className: 'w-28' },
+};
+
+export const StackedControlled: Story = {
+  render: () => {
+    const [v, setV] = useState(60);
+    return (
+      <div>
+        <NumberInput
+          controls="stacked"
+          value={v}
+          onChange={setV}
+          min={5}
+          max={3600}
+          step={5}
+          unit="s"
+          className="w-28"
+        />
+        <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+          Value: <code>{v}</code>
+        </p>
+      </div>
+    );
+  },
+};
+
+export const StackedClickIncreaseFiresOnChange: Story = {
+  args: {
+    controls: 'stacked',
+    value: 10,
+    min: 0,
+    max: 100,
+    step: 5,
+    onChange: fn(),
+    className: 'w-28',
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Increase' }));
+    await expect(args.onChange).toHaveBeenCalledWith(15);
+  },
+};
+
+export const StackedClickDecreaseFiresOnChange: Story = {
+  args: {
+    controls: 'stacked',
+    value: 10,
+    min: 0,
+    max: 100,
+    step: 5,
+    onChange: fn(),
+    className: 'w-28',
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Decrease' }));
+    await expect(args.onChange).toHaveBeenCalledWith(5);
+  },
+};
+
+/**
+ * A width set through `className` narrows the input, never the arrows: the
+ * input used to keep its `w-20` and push the arrows under the rounded border.
+ */
+export const StackedNarrowWidthKeepsArrowsInside: Story = {
+  args: {
+    controls: 'stacked',
+    value: 60,
+    min: 5,
+    max: 3600,
+    step: 5,
+    unit: 's',
+    className: 'w-28',
+  },
+  play: async ({ canvas }) => {
+    const increase = canvas.getByRole('button', { name: 'Increase' });
+    const control = increase.closest('div')?.parentElement as HTMLElement;
+    await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+    await expect(increase.getBoundingClientRect().right).toBeLessThanOrEqual(
+      control.getBoundingClientRect().right
+    );
+  },
+};
+
 // The inner input drops its outline: the wrapper shows focus with its border (#151).
 export const FocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
@@ -136,6 +236,27 @@ export const BlurClampsOrRestores: Story = {
   },
 };
 
+// The behaviour stories above run unchanged against the stacked layout.
+export const StackedFocusShowsAccentBorderInDark: Story = {
+  ...FocusShowsAccentBorderInDark,
+  args: { ...FocusShowsAccentBorderInDark.args, controls: 'stacked' },
+};
+
+export const StackedTypingPassesThroughInvalidValues: Story = {
+  ...TypingPassesThroughInvalidValues,
+  args: { ...TypingPassesThroughInvalidValues.args, controls: 'stacked' },
+};
+
+export const StackedTypingANegativeValue: Story = {
+  ...TypingANegativeValue,
+  args: { ...TypingANegativeValue.args, controls: 'stacked' },
+};
+
+export const StackedBlurClampsOrRestores: Story = {
+  ...BlurClampsOrRestores,
+  args: { ...BlurClampsOrRestores.args, controls: 'stacked' },
+};
+
 const numberRef = createRef<HTMLInputElement>();
 
 /** The ref gets the number `<input>`, not a − / + button, and focusing through it works. */
@@ -144,5 +265,24 @@ export const ForwardsRef: Story = {
   render: () => <NumberInput ref={numberRef} value={1} onChange={() => {}} aria-label="Quantity" />,
   play: async ({ canvas }) => {
     await expectRefFocuses(numberRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
+  },
+};
+
+const stackedRef = createRef<HTMLInputElement>();
+
+/** Same for `controls="stacked"`: the ref gets the number `<input>`, not an arrow button. */
+export const StackedForwardsRef: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <NumberInput
+      controls="stacked"
+      ref={stackedRef}
+      value={1}
+      onChange={() => {}}
+      aria-label="Quantity"
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expectRefFocuses(stackedRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
   },
 };

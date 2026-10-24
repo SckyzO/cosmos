@@ -16,9 +16,9 @@ export type FormRowProps = {
  * FormRow — horizontal setting row : label (+ optional description and help)
  * on the left, control on the right. Pair multiple FormRows inside a
  * `divide-y` container to build settings panels. The Cosmos controls inside
- * (Toggle, NumberInput, StepperInput, SearchInput, SelectInput,
- * SegmentedControl) take the label as their name and the description as their
- * description; any other control needs its own `aria-label`.
+ * (Toggle, NumberInput, SearchInput, Select, SegmentedControl) take the
+ * label as their name and the description as their description; any other
+ * control needs its own `aria-label`.
  */
 export const FormRow = ({ label, description, tooltip, children, className }: FormRowProps) => {
   const id = useId();
