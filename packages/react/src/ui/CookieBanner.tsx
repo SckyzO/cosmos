@@ -12,6 +12,11 @@ export type CookieBannerProps = {
   onOpenChange?: (open: boolean) => void;
   position?: CookieBannerPosition;
   title?: string;
+  /**
+   * Accessible name of the dialog, for a banner with no `title` to name it. With a `title`, the
+   * dialog is named after it and this is unnecessary.
+   */
+  ariaLabel?: string;
   message: ReactNode;
   /** Render the Settings button. Hidden if no handler. */
   onSettings?: () => void;
@@ -33,6 +38,7 @@ export const CookieBanner = ({
   onOpenChange,
   position = 'bottom',
   title = 'We use cookies',
+  ariaLabel,
   message,
   onSettings,
   settingsLabel = 'Cookie settings',
@@ -74,7 +80,7 @@ export const CookieBanner = ({
   return (
     <div
       role="dialog"
-      aria-label={title}
+      aria-label={ariaLabel ?? (title || undefined)}
       className={clsx(
         'z-50 border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900',
         positionClass[position],
