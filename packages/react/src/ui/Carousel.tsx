@@ -157,7 +157,7 @@ const CarouselControls = ({
 }: CarouselControlsProps) => {
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCtx();
   const baseBtn =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
+    'flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 focus-visible:focus-indicator';
   if (position === 'outside') {
     return (
       <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
@@ -224,7 +224,7 @@ const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
             aria-current={active}
             onClick={() => scrollTo(i)}
             className={clsx(
-              'h-2 rounded-full transition-all',
+              'focus-visible:focus-indicator h-2 rounded-full transition-all',
               active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600'
             )}
           />

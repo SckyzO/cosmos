@@ -98,7 +98,7 @@ export const TwoStepVerificationForm = ({
               type="button"
               onClick={onResend}
               disabled={loading}
-              className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 focus-visible:focus-indicator rounded font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {resendLabel}
             </button>

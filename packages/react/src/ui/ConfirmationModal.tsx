@@ -72,7 +72,7 @@ export const ConfirmationModal = ({
             type="button"
             onClick={onStay}
             aria-label="Close"
-            className="shrink-0 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator shrink-0 rounded text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
           >
             <X className="h-5 w-5" />
           </button>
@@ -82,7 +82,7 @@ export const ConfirmationModal = ({
           <button
             type="button"
             onClick={onStay}
-            className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="focus-visible:focus-indicator shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             {stayLabel}
           </button>
@@ -90,7 +90,7 @@ export const ConfirmationModal = ({
             <button
               type="button"
               onClick={onDiscard}
-              className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-700/40 dark:text-red-400 dark:hover:bg-red-500/10"
+              className="focus-visible:focus-indicator shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-700/40 dark:text-red-400 dark:hover:bg-red-500/10"
             >
               {discardLabel}
             </button>
@@ -100,7 +100,7 @@ export const ConfirmationModal = ({
               type="button"
               onClick={onSave}
               disabled={saving}
-              className="bg-brand-500 hover:bg-brand-600 flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+              className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
             >
               {saving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

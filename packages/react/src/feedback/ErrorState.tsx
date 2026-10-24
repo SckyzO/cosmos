@@ -27,7 +27,7 @@ export const ErrorState = ({
       <button
         type="button"
         onClick={onRetry}
-        className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-xs font-medium hover:underline"
+        className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 focus-visible:focus-indicator rounded text-xs font-medium hover:underline"
       >
         Try again
       </button>

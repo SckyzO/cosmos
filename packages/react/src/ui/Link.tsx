@@ -48,7 +48,7 @@ export function Link({
       target={finalTarget}
       rel={finalRel}
       className={clsx(
-        'focus-visible:ring-brand-500/40 inline-flex items-center gap-1 text-sm font-medium transition-colors focus:outline-none focus-visible:rounded focus-visible:ring-2',
+        'focus-visible:focus-indicator inline-flex items-center gap-1 text-sm font-medium transition-colors focus-visible:rounded',
         VARIANT_CLASS[variant],
         className
       )}
