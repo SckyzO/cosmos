@@ -19,7 +19,7 @@ import {
   User,
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { expectRefFocuses, transitionsEnd } from '../storybook-helpers';
 import { Sidebar } from './Sidebar';
 
 const meta = {
@@ -152,11 +152,13 @@ export const WithCollapseButton: Story = {
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
     const expand = canvas.getByRole('button', { name: 'Expand sidebar' });
     await expect(expand).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(expand);
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(264);
   },
 };
 
@@ -167,7 +169,8 @@ export const CollapsedFooterFits: Story = {
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: /collapse|expand/i }));
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
     const toggle = canvas.getByRole('button', { name: /collapse|expand/i }).getBoundingClientRect();
     // The nav's right edge is its 1px border.
     await expect(toggle.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);

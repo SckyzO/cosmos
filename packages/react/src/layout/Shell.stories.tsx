@@ -12,10 +12,11 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Shell } from './Shell';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
+import { transitionsEnd } from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Shell',
@@ -170,9 +171,11 @@ export const CollapseButtonInSidebar: Story = {
     await expect(toggles).toHaveLength(1);
     await expect(within(nav).getByRole('button', { name: 'Collapse sidebar' })).toBe(toggles[0]);
     await userEvent.click(toggles[0]);
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
     await userEvent.click(within(nav).getByRole('button', { name: 'Expand sidebar' }));
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(264);
   },
 };
 
@@ -278,19 +281,21 @@ export const HamburgerCollapsesAndExpandsTheSidebar: Story = {
     const mainWidth = main.getBoundingClientRect().width;
 
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
     // Labels leave, the items keep their name as a tooltip.
     await expect(within(nav).queryByText('Dashboard')).toBeNull();
     await expect(within(nav).getByRole('button', { name: 'Dashboard' })).toHaveAttribute(
       'title',
       'Dashboard'
     );
-    await waitFor(() => expect(main.getBoundingClientRect().width).toBeCloseTo(mainWidth + 192, 0));
+    await expect(main.getBoundingClientRect().width).toBeCloseTo(mainWidth + 192, 0);
 
     // From the keyboard, the same button expands it again.
     canvas.getByRole('button', { name: 'Expand sidebar' }).focus();
     await userEvent.keyboard('{Enter}');
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(264);
     await expect(within(nav).getByText('Dashboard')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
   },
@@ -303,7 +308,8 @@ export const StartsCollapsedExpandsOnToggle: Story = {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await expect(nav.getBoundingClientRect().width).toBe(72);
     await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(264));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(264);
   },
 };
 
@@ -344,7 +350,8 @@ export const ControlledHostOwnsTheState: Story = {
     await expect(canvas.getByText(/collapsed = false/)).toBeVisible();
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
     await expect(canvas.getByText(/collapsed = true/)).toBeVisible();
-    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
   },
 };
 
