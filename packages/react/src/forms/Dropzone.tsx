@@ -63,6 +63,9 @@ export const Dropzone = ({
   ref,
 }: DropzoneProps) => {
   const fieldId = useId();
+  const labelId = useId();
+  const contentId = useId();
+  const errorId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const isControlled = value !== undefined;
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -122,17 +125,24 @@ export const Dropzone = ({
     <div className={clsx('block', className)}>
       {label && (
         <label
+          id={labelId}
           htmlFor={fieldId}
           className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
         </label>
       )}
+      {/* The zone is the control: it is named by its own text, after the label
+          when there is one, and the file input sits outside it, hidden, so the
+          button holds nothing focusable. */}
       <div
         ref={ref}
         role="button"
         tabIndex={disabled ? -1 : 0}
-        aria-label={label ? undefined : 'Upload files'}
+        aria-labelledby={label ? `${labelId} ${contentId}` : undefined}
+        aria-describedby={error ? errorId : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-disabled={disabled || undefined}
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={(e) => {
           if (disabled) return;
@@ -166,32 +176,41 @@ export const Dropzone = ({
               : 'hover:border-brand-400 dark:hover:border-brand-500 border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40'
         )}
       >
-        {children ?? (
-          <>
-            <Upload className="h-7 w-7 text-gray-400 dark:text-gray-500" aria-hidden />
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              <span className="text-brand-600 dark:text-brand-400 font-semibold">
-                Click to upload
-              </span>{' '}
-              or drag and drop
-            </p>
-            {description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
-            )}
-          </>
-        )}
-        <input
-          ref={inputRef}
-          id={fieldId}
-          type="file"
-          multiple={multiple}
-          accept={accept}
-          disabled={disabled}
-          className="sr-only"
-          onChange={(e) => handleFiles(Array.from(e.target.files ?? []))}
-        />
+        <div id={contentId} className="flex w-full flex-col items-center justify-center gap-2">
+          {children ?? (
+            <>
+              <Upload className="h-7 w-7 text-gray-400 dark:text-gray-500" aria-hidden />
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <span className="text-brand-600 dark:text-brand-400 font-semibold">
+                  Click to upload
+                </span>{' '}
+                or drag and drop
+              </p>
+              {/* A space between the blocks: axe joins their text without one,
+                  and then misreads the name as not matching the visible text. */}
+              {description && ' '}
+              {description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-700 dark:text-red-400">{error}</p>}
+      <input
+        ref={inputRef}
+        id={fieldId}
+        type="file"
+        multiple={multiple}
+        accept={accept}
+        disabled={disabled}
+        hidden
+        onChange={(e) => handleFiles(Array.from(e.target.files ?? []))}
+      />
+      {error && (
+        <p id={errorId} className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+          {error}
+        </p>
+      )}
       {!hideFileList && files.length > 0 && (
         <ul className="mt-3 space-y-2">
           {files.map((f, idx) => (
