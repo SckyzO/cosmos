@@ -78,9 +78,10 @@ const sameRect = (a: AnchorRect | null, b: AnchorRect) =>
  * swap, a new label): a border-box `ResizeObserver`, since the default content box misses
  * padding changes.
  *
- * Returns the panel's fixed-position style (see `anchoredStyle`), or `null` while closed or
- * before the first measure. It measures in a layout effect, so the panel is placed before the
- * browser paints it. Pass another ref object to anchor the panel to another element.
+ * Returns the panel's fixed-position style (see `anchoredStyle`), or `null` before the first
+ * measure. Closed, it keeps the last position, so a panel fading out stays in place. It
+ * measures in a layout effect, so the panel is placed before the browser paints it. Pass
+ * another ref object to anchor the panel to another element.
  *
  * Internal to the package, not exported.
  */
@@ -118,5 +119,5 @@ export function useAnchorPosition(
     };
   }, [open, anchorRef, missed]);
 
-  return open && rect ? anchoredStyle(rect, placement) : null;
+  return rect ? anchoredStyle(rect, placement) : null;
 }
