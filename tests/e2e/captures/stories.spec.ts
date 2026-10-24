@@ -24,10 +24,10 @@ type Preview = {
 const matches = (value: string, filter: string | undefined) =>
   !filter || filter.split(',').some((part) => value.includes(part.trim()));
 
-// A story is captured once two frames taken this far apart (ms) are identical,
-// after at most this many frames.
+// A story is captured once two viewport frames taken this far apart (ms) are
+// identical, after at most this many frames.
 const SETTLE_PAUSE = 100;
-const SETTLE_FRAMES = 10;
+const SETTLE_FRAMES = 5;
 
 /**
  * Opens a story in a theme and waits for its render to end. `sb-show-main` on
@@ -57,22 +57,25 @@ const openStory = async (page: Page, id: string, theme: string, themes: string[]
 };
 
 /**
- * Screenshots the page until two consecutive frames are byte-identical. The
- * render phase ends before everything has stopped moving (a carousel still
- * scrolling, a chart redrawing, a panel finishing its transition), so a single
- * frame differs from one run to the next. A page that never settles gives its
- * last frame, flagged as not stable.
+ * Waits until two consecutive viewport frames are byte-identical, then takes
+ * the full-page screenshot, once. The render phase ends before everything has
+ * stopped moving (a carousel still scrolling, a chart redrawing, a panel
+ * finishing its transition), so a single frame differs from one run to the
+ * next. The frames only cover the viewport: a full-page frame of a tall story
+ * costs several times as much, and what is still moving is almost always in
+ * view. A page that never settles is captured anyway, flagged as not stable.
  */
 const settledScreenshot = async (page: Page) => {
-  const shoot = () => page.screenshot({ fullPage: true, animations: 'disabled' });
+  const shoot = () => page.screenshot({ animations: 'disabled' });
   let frame = await shoot();
-  for (let n = 1; n < SETTLE_FRAMES; n++) {
+  let stable = false;
+  for (let n = 1; n < SETTLE_FRAMES && !stable; n++) {
     await page.waitForTimeout(SETTLE_PAUSE);
     const next = await shoot();
-    if (next.equals(frame)) return { frame: next, stable: true };
+    stable = next.equals(frame);
     frame = next;
   }
-  return { frame, stable: false };
+  return { frame: await page.screenshot({ fullPage: true, animations: 'disabled' }), stable };
 };
 
 test('capture stories', async ({ context, page, baseURL }) => {
