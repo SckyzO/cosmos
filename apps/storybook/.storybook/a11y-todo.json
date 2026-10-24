@@ -72,7 +72,6 @@
     "landmark-unique"
   ],
   "lists-narrow-stacked-list--sticky-headings": ["scrollable-region-focusable"],
-  "navigation-breadcrumb--separator-matrix": ["landmark-unique"],
   "overlays-command-palette--group-heading-contrast-in-dark": ["aria-required-children"],
   "overlays-command-palette--group-heading-contrast-in-deep-blue": [
     "aria-required-children",

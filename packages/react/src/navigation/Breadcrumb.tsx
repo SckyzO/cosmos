@@ -18,6 +18,12 @@ export type BreadcrumbProps = {
   items: BreadcrumbItem[];
   /** Visual separator between items. Default `'chevron'`. Pass any ReactNode for full custom. */
   separator?: BreadcrumbSeparator;
+  /**
+   * Name of the navigation landmark. Default `'Breadcrumb'`. A page that holds
+   * several breadcrumbs gives each its own, or a screen reader cannot tell
+   * them apart; a translated app passes its own wording.
+   */
+  'aria-label'?: string;
   className?: string;
 };
 
@@ -52,9 +58,14 @@ const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
  * page headers with the Home icon. This Breadcrumb is bigger and supports
  * an icon per item.
  */
-export const Breadcrumb = ({ items, separator = 'chevron', className }: BreadcrumbProps) => (
+export const Breadcrumb = ({
+  items,
+  separator = 'chevron',
+  'aria-label': ariaLabel = 'Breadcrumb',
+  className,
+}: BreadcrumbProps) => (
   <nav
-    aria-label="Breadcrumb"
+    aria-label={ariaLabel}
     className={clsx('flex items-center gap-1 overflow-x-auto', className)}
   >
     {items.map(({ icon: Icon, label, href, onClick }, i) => {
