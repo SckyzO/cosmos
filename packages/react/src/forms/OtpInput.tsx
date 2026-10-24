@@ -106,7 +106,7 @@ export const OtpInput = ({
         // Clear previous cell and move focus there.
         const arr = value.split('');
         arr[idx - 1] = '';
-        setValue(arr.join('').replace(/$/, ''));
+        setValue(arr.join(''));
         focusCell(idx - 1);
       } else if (cell.length > 0) {
         // Default behaviour also wipes — but we ensure the parent state stays consistent.
