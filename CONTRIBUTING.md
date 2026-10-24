@@ -113,8 +113,12 @@ Every capture runs on the same day (15 January 2026, then time flows) with a see
 and chart animations off, so two runs of an unchanged story give the same image. A capture waits
 for a stable frame: the page is screenshotted, 100 ms apart, until two consecutive frames are
 byte-identical (ten at most), because a carousel, a panel or a chart can still be moving when the
-story's render ends. A story that ends in the wrong theme, or whose frame never settles, is still
-captured; one that can't be captured is skipped. All three are listed in `screenshots/problems.txt`.
+story's render ends. Requests to any origin but Storybook's are cut (a third-party frame gets a
+plain gray page), so a story never shows what the network returned that day: use the local
+placeholders of `storybook-avatars.ts` for images. A story whose picture depends on how long it
+has been running (a demo that ticks, or that loads after a delay) takes the `no-capture` tag and is
+skipped. A story that ends in the wrong theme, or whose frame never settles, is still captured; one
+that can't be captured is skipped. All three are listed in `screenshots/problems.txt`.
 
 The `Visual captures` workflow runs the same capture on the first day of each month, or from the
 Actions tab with the same two filters, and uploads `screenshots/` as an artifact kept 90 days. A

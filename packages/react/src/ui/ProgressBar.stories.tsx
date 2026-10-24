@@ -90,6 +90,8 @@ export const IndeterminateStriped: Story = {
 };
 
 export const Animated: Story = {
+  // Its value depends on how long it has been running: no capture can be stable.
+  tags: ['no-capture'],
   render: () => {
     const [value, setValue] = useState(0);
     useEffect(() => {
