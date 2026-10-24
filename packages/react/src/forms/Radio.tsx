@@ -131,11 +131,10 @@ export const RadioGroup = ({
 }: RadioGroupProps) => {
   const generatedName = useId();
   const groupName = name ?? generatedName;
-  // Empty until the first pick; `select` only ever passes a string.
-  const [current, select] = useControllableState<string | undefined>({
+  const [current, select] = useControllableState({
     value,
     defaultValue,
-    onChange: onChange as ((value: string | undefined) => void) | undefined,
+    onChange,
     name: 'RadioGroup.value',
   });
 

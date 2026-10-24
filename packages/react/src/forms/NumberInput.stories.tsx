@@ -172,7 +172,7 @@ const Stateful = (props: NumberInputProps) => {
       value={value}
       onChange={(v) => {
         setValue(v);
-        props.onChange(v);
+        props.onChange?.(v);
       }}
     />
   );

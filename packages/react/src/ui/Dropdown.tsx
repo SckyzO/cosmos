@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ElementType, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 export type DropdownOption = {
   value: string;
@@ -21,7 +22,10 @@ export type DropdownProps = {
   label?: string;
   icon?: ElementType;
   options: DropdownItem[];
+  /** Selected value, when controlled. */
   value?: string;
+  /** Initial value, when uncontrolled. None selected when omitted. */
+  defaultValue?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
   align?: 'left' | 'right';
@@ -33,13 +37,20 @@ export const Dropdown = ({
   label,
   icon: TriggerIcon,
   options,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   placeholder,
   align = 'left',
   disabled = false,
   className,
 }: DropdownProps) => {
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'Dropdown.value',
+  });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -150,7 +161,7 @@ export const Dropdown = ({
                   aria-checked={isSelected}
                   disabled={opt.disabled}
                   onClick={() => {
-                    onChange?.(opt.value);
+                    setValue(opt.value);
                     closeAndRefocus();
                   }}
                   className={clsx(

@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <Combobox>
@@ -21,8 +22,8 @@ import {
 //     </ComboboxOptions>
 //   </Combobox>
 //
-// Our implementation is uncontrolled-input + controlled-selection, no
-// external lib (cmdk/headlessui not needed for this surface).
+// Our implementation is an uncontrolled input over a selection the host may
+// control, no external lib (cmdk/headlessui not needed for this surface).
 
 export type ComboboxOption = {
   value: string;
@@ -36,8 +37,10 @@ export type ComboboxOption = {
 
 export type ComboboxProps = {
   label?: ReactNode;
-  /** Selected option value (controlled). */
+  /** Selected option value, when controlled. */
   value?: string;
+  /** Initial option value, when uncontrolled. None selected when omitted. */
+  defaultValue?: string;
   /** Called when the user picks an option. */
   onChange?: (value: string) => void;
   options: ComboboxOption[];
@@ -57,7 +60,8 @@ export type ComboboxProps = {
 
 export const Combobox = ({
   label,
-  value,
+  value: valueProp,
+  defaultValue,
   onChange,
   options,
   placeholder,
@@ -72,6 +76,12 @@ export const Combobox = ({
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
   const hasDesc = !!(helperText || error);
+  const [value, setValue] = useControllableState({
+    value: valueProp,
+    defaultValue,
+    onChange,
+    name: 'Combobox.value',
+  });
   const selected = options.find((o) => o.value === value);
   const [query, setQuery] = useState(selected?.label ?? '');
   const [open, setOpen] = useState(false);
@@ -114,7 +124,7 @@ export const Combobox = ({
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
-    onChange?.(opt.value);
+    setValue(opt.value);
     setQuery(opt.label);
     setOpen(false);
   };

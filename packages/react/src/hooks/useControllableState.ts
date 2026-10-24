@@ -1,16 +1,23 @@
 import { useCallback, useEffect, useInsertionEffect, useRef, useState } from 'react';
 
-/** The value to move to, or a function of the current one, as with `setState`. */
-export type ControllableUpdate<T> = T | ((current: T) => T);
+/**
+ * The value to move to, or a function of the current one, as with `setState`. `S` is the
+ * state, which may be empty (`undefined`) before the first set; `T` is what a set moves to.
+ */
+export type ControllableUpdate<T, S = T> = T | ((current: S) => T);
 
-export type ControllableStateOptions<T, A extends unknown[] = []> = {
+export type ControllableStateOptions<T, A extends unknown[] = [], D extends T | undefined = T> = {
   /**
    * The value the host controls. Only `undefined` means uncontrolled: `null`, `false`, `0`
    * and `''` are controlled values.
    */
   value: T | undefined;
-  /** Starting value while uncontrolled, read on the first render only. */
-  defaultValue: T | (() => T);
+  /**
+   * Starting value while uncontrolled, read on the first render only. May be `undefined` for
+   * a state that starts empty (no option picked yet): the state then reads `T | undefined`,
+   * while the setter and `onChange` keep to `T`.
+   */
+  defaultValue: D | (() => D);
   /**
    * Called on every set, controlled or not, with the value to move to and the setter's extra
    * arguments (a field passes its native event).
@@ -35,19 +42,19 @@ export type ControllableStateOptions<T, A extends unknown[] = []> = {
  * Internal to the package, not exported. `T` must not be a function type: a function passed
  * to the setter is an updater, as with `setState`.
  */
-export function useControllableState<T, A extends unknown[] = []>({
+export function useControllableState<T, A extends unknown[] = [], D extends T | undefined = T>({
   value,
   defaultValue,
   onChange,
   name,
-}: ControllableStateOptions<T, A>): [
-  value: T,
-  setValue: (next: ControllableUpdate<T>, ...args: A) => void,
+}: ControllableStateOptions<T, A, D>): [
+  value: T | D,
+  setValue: (next: ControllableUpdate<T, T | D>, ...args: A) => void,
   isControlled: boolean,
 ] {
   const isControlled = value !== undefined;
-  const [internal, setInternal] = useState<T>(defaultValue);
-  const current = isControlled ? (value as T) : internal;
+  const [internal, setInternal] = useState<T | D>(defaultValue);
+  const current = isControlled ? value : internal;
 
   // What the setter reads. Refreshed after each render, before any effect or event handler
   // can call the setter.
@@ -56,9 +63,10 @@ export function useControllableState<T, A extends unknown[] = []>({
     latest.current = { current, isControlled, onChange };
   });
 
-  const setValue = useCallback((next: ControllableUpdate<T>, ...args: A) => {
+  const setValue = useCallback((next: ControllableUpdate<T, T | D>, ...args: A) => {
     const state = latest.current;
-    const resolved = typeof next === 'function' ? (next as (current: T) => T)(state.current) : next;
+    const resolved =
+      typeof next === 'function' ? (next as (current: T | D) => T)(state.current) : next;
     if (!state.isControlled) {
       // A second set in the same event builds on this one, as with setState.
       state.current = resolved;
