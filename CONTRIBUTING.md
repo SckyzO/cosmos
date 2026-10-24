@@ -263,6 +263,13 @@ The same prop means the same thing on every component.
 - **Refs are props.** React 19 passes `ref` like any other prop, so no component uses `forwardRef`.
   A component whose root is focusable (a button, a link, a field) takes `ref` and attaches it to
   that element.
+- **One sidebar toggle: `SidebarToggle`** (`layout/SidebarToggle.tsx`). The Topbar renders it as a
+  `hamburger`, the bottom of the Sidebar as a `panel` row, and a custom header, a Topbar's
+  `leftActions` or the Sidebar's `footer` can place one more. `Shell` owns the collapsed state and
+  provides it through a context (`layout/shellContext.ts`): inside it, the toggle takes no props,
+  every toggle stays in sync, and the Topbar's `sidebarCollapsed` and the Sidebar's `collapsed`
+  are not read. Outside a Shell it takes `collapsed` + `onCollapsedChange`. Don't write another
+  collapse button.
 - **A floating panel renders in a portal.** A panel that opens next to its trigger (Popover,
   UserMenu, NotificationsPanel, DatePicker, Dropdown, Combobox, Tooltip, the column filter of
   ColumnHeader, RefreshButton's menu) renders at the end of `<body>`, so no `overflow: hidden`

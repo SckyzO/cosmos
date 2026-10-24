@@ -1,15 +1,18 @@
 import {
   createContext,
   useContext,
+  useId,
   useState,
   type ComponentType,
   type ReactNode,
   type Ref,
 } from 'react';
-import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
 import { useControllableState } from '../hooks/useControllableState';
+import { useShell } from './shellContext';
+import { SidebarToggle } from './SidebarToggle';
 
 // ─── Internal context ─────────────────────────────────────────────────────────
 // Threads the `collapsed` state from <Sidebar> down to all subcomponents
@@ -39,9 +42,12 @@ const guideLeft = (depth: number) => 8 + rowPadding(depth) + 10;
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
 export type SidebarProps = {
-  /** Whether the sidebar is in collapsed (icons-only) state, when controlled. */
+  /**
+   * Whether the sidebar is in collapsed (icons-only) state, when controlled. Not read inside
+   * a `Shell`, which owns the state: control it with the Shell's `sidebarCollapsed`.
+   */
   collapsed?: boolean;
-  /** Initial collapsed state, when uncontrolled. Default `false`. */
+  /** Initial collapsed state, when uncontrolled. Default `false`. Not read inside a Shell. */
   defaultCollapsed?: boolean;
   /** Width when expanded (px). Default: 264 */
   width?: number;
@@ -52,10 +58,12 @@ export type SidebarProps = {
   /** Footer content (sticks to bottom — e.g. user profile + collapse btn). */
   footer?: ReactNode;
   /**
-   * Renders a collapse button at the very bottom, under `footer`, and fires
-   * with the next state when it is clicked; an uncontrolled sidebar also
-   * moves to it. Leave it out when the control lives elsewhere (e.g. the
-   * Topbar hamburger).
+   * Renders a collapse button (a `SidebarToggle`, `panel` variant) at the very
+   * bottom, under `footer`, and fires with the next state when it is clicked;
+   * an uncontrolled sidebar also moves to it. Leave it out when the control
+   * lives elsewhere (e.g. the Topbar hamburger). Inside a Shell, the button
+   * also shows with `collapseControl="sidebar"`, moves the Shell, and this is
+   * called after it.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Optional className override. */
@@ -69,6 +77,9 @@ export type SidebarProps = {
  * Smooth width transition when `collapsed` toggles. The `collapsed` state
  * is automatically threaded to every subcomponent via React context, so
  * children don't need to receive it as a prop.
+ *
+ * Inside a `Shell`, the collapsed state is the Shell's: every SidebarToggle
+ * in the Shell (the Topbar's, this footer's, a custom header's) moves it.
  */
 const SidebarRoot = ({
   collapsed: collapsedProp,
@@ -80,15 +91,23 @@ const SidebarRoot = ({
   onCollapsedChange,
   className,
 }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useControllableState({
+  const [ownCollapsed, setOwnCollapsed] = useControllableState({
     value: collapsedProp,
     defaultValue: defaultCollapsed,
     onChange: onCollapsedChange,
     name: 'Sidebar.collapsed',
   });
+  // In a Shell, the state is the Shell's, and the nav carries the id its SidebarToggles
+  // name in `aria-controls`.
+  const shell = useShell();
+  const collapsed = shell ? shell.collapsed : ownCollapsed;
+  const ownNavId = useId();
+  const navId = shell ? shell.navId : ownNavId;
+  const showToggle = onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar';
   return (
     <SidebarContext.Provider value={{ collapsed }}>
       <nav
+        id={navId}
         aria-label="Main navigation"
         style={{ width: collapsed ? collapsedWidth : width }}
         className={clsx(
@@ -103,34 +122,22 @@ const SidebarRoot = ({
             {footer}
           </div>
         )}
-        {onCollapsedChange && (
-          <CollapseButton collapsed={collapsed} onClick={() => setCollapsed(!collapsed)} />
+        {showToggle && (
+          <div className="shrink-0 border-t border-[var(--color-border)] px-2 py-2">
+            {shell ? (
+              <SidebarToggle variant="panel" onCollapsedChange={onCollapsedChange} />
+            ) : (
+              <SidebarToggle
+                variant="panel"
+                collapsed={collapsed}
+                onCollapsedChange={setOwnCollapsed}
+                controls={navId}
+              />
+            )}
+          </div>
         )}
       </nav>
     </SidebarContext.Provider>
-  );
-};
-
-// Bottom row: "Collapse" with its icon, or the expand icon alone when collapsed.
-const CollapseButton = ({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) => {
-  const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
-  return (
-    <div className="shrink-0 border-t border-[var(--color-border)] py-2">
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        aria-expanded={!collapsed}
-        title={collapsed ? 'Expand sidebar' : undefined}
-        className={clsx(
-          'focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5',
-          collapsed ? 'justify-center px-2' : 'px-3'
-        )}
-      >
-        <Icon className="h-5 w-5 shrink-0" aria-hidden />
-        {!collapsed && <span>Collapse</span>}
-      </button>
-    </div>
   );
 };
 
