@@ -17,7 +17,7 @@ import { StackedList } from '../lists/StackedList';
 import { HealthDot } from '../status/HealthDot';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Home Screens" — sidebar shell with a list of
 // items in the main column and an activity feed in the secondary panel.
@@ -114,8 +114,6 @@ export const Sidebar_: Story = {
     <Shell
       topbar={
         <Topbar
-          sidebarCollapsed={false}
-          onCollapsedChange={() => {}}
           center={
             <div className="relative max-w-md">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -220,4 +218,12 @@ export const Sidebar_: Story = {
       </div>
     </Shell>
   ),
+};
+
+/** The Topbar hamburger collapses the sidebar and expands it again: Shell wires it. */
+export const HamburgerTogglesTheSidebar: Story = {
+  ...Sidebar_,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => expectHamburgerTogglesSidebar(canvas),
 };

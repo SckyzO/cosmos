@@ -16,7 +16,7 @@ import { placeholderAvatar } from '../storybook-avatars';
 import { Accordion } from '../ui/Accordion';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-helpers';
 
 // TUI Plus "Page Examples / Settings Screens" — typical user settings page
 // with a horizontal sub-nav (Account / Notifications / Billing / Teams /
@@ -191,8 +191,6 @@ export const Sidebar_: Story = {
       <Shell
         topbar={
           <Topbar
-            sidebarCollapsed={false}
-            onCollapsedChange={() => {}}
             center={
               <div className="relative max-w-md">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -275,4 +273,12 @@ export const Stacked: Story = {
       </Shell>
     );
   },
+};
+
+/** The Topbar hamburger collapses the sidebar and expands it again: Shell wires it. */
+export const HamburgerTogglesTheSidebar: Story = {
+  ...Sidebar_,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => expectHamburgerTogglesSidebar(canvas),
 };

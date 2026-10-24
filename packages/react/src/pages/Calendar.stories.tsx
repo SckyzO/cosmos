@@ -11,7 +11,7 @@ import { PageHeader } from '../templates/PageHeader';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { placeholderAvatar } from '../storybook-avatars';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-helpers';
 
 // Team calendar: the month view in the main column, and a side column with a
 // MiniCalendar to jump to a date and the events coming up from the picked day.
@@ -178,8 +178,6 @@ const CalendarPage = () => (
   <Shell
     topbar={
       <Topbar
-        sidebarCollapsed={false}
-        onCollapsedChange={() => {}}
         rightActions={
           <>
             <button
@@ -239,4 +237,12 @@ export const PickingADayUpdatesUpcoming: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Thursday, May 21, 2026' }));
     await expect(upcoming().getAllByRole('listitem')[0]).toHaveTextContent('On-call handover');
   },
+};
+
+/** The Topbar hamburger collapses the sidebar and expands it again: Shell wires it. */
+export const HamburgerTogglesTheSidebar: Story = {
+  ...Default,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => expectHamburgerTogglesSidebar(canvas),
 };
