@@ -398,12 +398,46 @@ export const TooltipEscapesOverflowHidden: Story = {
   },
 };
 
+/**
+ * A `top` tooltip on a trigger at the top of the screen opens below it, arrow included; one
+ * the left edge would cut moves right, and its arrow still points at the trigger.
+ */
+export const TooltipFlipsAndStaysOnScreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div className="p-1">
+      <Tooltip content="Deletes every selected row, then empties the trash" defaultOpen>
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // The tooltip is anchored on the wrapper around its trigger.
+    const anchor = canvas.getByRole('button', { name: 'Delete' }).parentElement!;
+    const tip = page.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    const a = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    await expect(t.top).toBeCloseTo(a.bottom + 10, 0);
+    await expect(t.left).toBeCloseTo(16, 0);
+    // The arrow sits on the tooltip's top edge, under the trigger's center.
+    const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
+    await expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);
+    await expect(arrow.left + arrow.width / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+  },
+};
+
 /** The tooltip stays 10px under its trigger, centered, while the page scrolls. */
 export const TooltipFollowsTriggerOnScroll: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div data-testid="scroller" className="h-64 overflow-y-auto">
-      <div className="p-6 pb-[600px]">
+      {/* Far enough from the left edge for the centered tooltip to fit: one the viewport
+          cuts would move back inside (TooltipFlipsAndStaysOnScreen). */}
+      <div className="px-24 pt-6 pb-[600px]">
         <Tooltip content="Deletes the selected rows" position="bottom" defaultOpen>
           <Button variant="secondary" size="sm">
             Delete

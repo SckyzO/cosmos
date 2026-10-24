@@ -16,6 +16,7 @@ import {
   expectBelow,
   expectFocusRing,
   expectOutsideClip,
+  portalDocsParams,
   scrollAnchor,
 } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
@@ -355,6 +356,37 @@ export const MenuFollowsTriggerAndCloses: Story = {
     await page.findByRole('menu');
     await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
     await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+  },
+};
+
+/**
+ * At the bottom of the screen, where the viewport would cut it, the menu opens upward. It
+ * flips only when the other side has more room, and a menu the viewport cuts on the left or
+ * the right moves back inside, 16px from the edge.
+ */
+export const OpensUpwardAtTheBottomEdge: Story = {
+  parameters: portalDocsParams.sm(),
+  render: () => (
+    <div className="flex h-screen items-end bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
+      <Dropdown
+        label="Actions"
+        options={[
+          { value: 'profile', label: 'Profile', icon: User },
+          { value: 'settings', label: 'Settings', icon: Settings },
+          { divider: true },
+          { value: 'logout', label: 'Sign out', icon: LogOut },
+        ]}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    await userEvent.click(trigger);
+    const menu = (await page.findByRole('menu')).getBoundingClientRect();
+    const anchor = trigger.getBoundingClientRect();
+    // 4px above the trigger, flush with its left edge.
+    await expect(menu.bottom).toBeCloseTo(anchor.top - 4, 0);
+    await expect(menu.left).toBeCloseTo(anchor.left, 0);
   },
 };
 
