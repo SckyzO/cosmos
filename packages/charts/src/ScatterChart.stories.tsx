@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { BubbleChart, ScatterChart, type BubblePoint, type ScatterPoint } from './ScatterChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -142,9 +143,11 @@ export const Bubble: BubbleStory = {
 const tooltipLabels = (root: HTMLElement) =>
   [...root.querySelectorAll('.apexcharts-tooltip-text-y-label')].map((el) => el.textContent);
 
+const firstPoint = (root: HTMLElement) =>
+  root.querySelector('.apexcharts-series-markers .apexcharts-marker');
+
 // The points listen for the pointer once their entry animation is over.
-const hoverFirstPoint = (root: HTMLElement) =>
-  hover(root.querySelector('.apexcharts-series-markers .apexcharts-marker') as Element);
+const hoverFirstPoint = (root: HTMLElement) => hover(firstPoint(root) as Element);
 
 /**
  * The legend and the tooltip are HTML: series names, point labels and axis
@@ -176,6 +179,7 @@ export const HtmlInLabelsRendersAsText: Story = {
       { timeout: 3000 }
     );
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, () => firstPoint(canvasElement));
   },
 };
 
@@ -204,6 +208,7 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
       { timeout: 3000 }
     );
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, () => firstPoint(canvasElement));
   },
 };
 

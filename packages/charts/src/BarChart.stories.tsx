@@ -5,6 +5,7 @@ import {
   HOSTILE,
   Rerender,
   expectNoRedrawOnRerender,
+  closeTooltip,
   expectNoInjectedImage,
   expectTooltipFollowsTheme,
   freshCopy,
@@ -204,11 +205,13 @@ export const HtmlInLabelsRendersAsText: Story = {
     await expectNoInjectedImage(canvasElement);
 
     // Tooltips render on hover: the title is the category.
+    const bar = () => canvasElement.querySelector('.apexcharts-bar-area');
     await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-bar-area') as Element);
+      hover(bar() as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, bar);
   },
 };
 

@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { RadarChart } from './RadarChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -110,14 +111,16 @@ export const HtmlInLabelsRendersAsText: Story = {
 
     // The tooltip renders on hover of a marker: its axis is the title, its
     // series the label.
+    const marker = () => canvasElement.querySelector(".apexcharts-marker[index='0'][j='0']");
     await waitFor(() => {
-      hover(canvasElement.querySelector(".apexcharts-marker[index='0'][j='0']") as Element);
+      hover(marker() as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
         `${HOSTILE}: `
       );
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, marker);
   },
 };
 
