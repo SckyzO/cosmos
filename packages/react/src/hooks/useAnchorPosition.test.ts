@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anchoredStyle, type AnchorRect } from './useAnchorPosition';
+import { anchoredStyle, resolveSide, type AnchorRect } from './useAnchorPosition';
 
 // A 100×40 anchor whose top-left corner sits at (200, 50).
 const rect: AnchorRect = { top: 50, left: 200, right: 300, bottom: 90, width: 100, height: 40 };
@@ -66,5 +66,110 @@ describe('anchoredStyle', () => {
       left: 200,
     });
     expect(anchoredStyle(rect).width).toBeUndefined();
+  });
+});
+
+describe('anchoredStyle collision handling', () => {
+  const viewport = { width: 1000, height: 800 };
+  const panel = (width: number, height: number) => ({ panel: { width, height }, viewport });
+  // A 100×40 anchor near the bottom of the screen: 60px below it, 700px above.
+  const low: AnchorRect = { top: 700, left: 200, right: 300, bottom: 740, width: 100, height: 40 };
+
+  it('changes nothing while the panel fits on its side', () => {
+    for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+      const placement = { side, offset: 8 };
+      expect(anchoredStyle(rect, placement, panel(150, 30))).toEqual(
+        anchoredStyle(rect, placement)
+      );
+      expect(resolveSide(rect, placement, panel(150, 30))).toBe(side);
+    }
+  });
+
+  it('flips a `bottom` panel the viewport cuts to the top, where there is more room', () => {
+    const placement = { side: 'bottom', align: 'start', offset: 4 } as const;
+    expect(resolveSide(low, placement, panel(180, 120))).toBe('top');
+    expect(anchoredStyle(low, placement, panel(180, 120))).toEqual(
+      anchoredStyle(low, { ...placement, side: 'top' })
+    );
+  });
+
+  it('flips a `top` panel the viewport cuts to the bottom', () => {
+    // 42px above the anchor and its 8px offset, 702px below.
+    expect(resolveSide(rect, { side: 'top', offset: 8 }, panel(100, 60))).toBe('bottom');
+    expect(anchoredStyle(rect, { side: 'top', offset: 8 }, panel(100, 60))).toMatchObject({
+      top: 98,
+      transform: 'translateX(-50%)',
+    });
+  });
+
+  it('flips a `right` or `left` panel the viewport cuts to the other side', () => {
+    const nearRight: AnchorRect = { ...rect, left: 850, right: 950 };
+    expect(resolveSide(nearRight, { side: 'right', offset: 8 }, panel(120, 30))).toBe('left');
+    expect(anchoredStyle(nearRight, { side: 'right', offset: 8 }, panel(120, 30))).toMatchObject({
+      left: 842,
+      transform: 'translate(-100%, -50%)',
+    });
+    expect(resolveSide(rect, { side: 'left', offset: 8 }, panel(250, 30))).toBe('right');
+  });
+
+  it('flips only to a side with more room, when the panel fits on neither', () => {
+    // 60px below the anchor, 50px above it: the 200px panel fits on neither side.
+    const bounds = { panel: { width: 100, height: 200 }, viewport: { width: 1000, height: 150 } };
+    expect(resolveSide(rect, { side: 'bottom' }, bounds)).toBe('bottom');
+    expect(resolveSide(rect, { side: 'top' }, bounds)).toBe('bottom');
+  });
+
+  it('flips only a panel the viewport cuts, not one ending close to the edge', () => {
+    // 56px between the anchor's 4px offset and the bottom of the screen.
+    expect(resolveSide(low, { side: 'bottom', offset: 4 }, panel(100, 56))).toBe('bottom');
+    expect(resolveSide(low, { side: 'bottom', offset: 4 }, panel(100, 57))).toBe('top');
+  });
+
+  it('moves a panel the viewport cuts on the cross axis back inside, 16px from the edge', () => {
+    const nearRight: AnchorRect = { ...rect, left: 900, right: 1000 };
+    // `start`: its left edge would sit at 900 and its right edge at 1100.
+    expect(anchoredStyle(nearRight, { align: 'start' }, panel(200, 50))).toMatchObject({
+      left: 784,
+      '--anchor-shift': '-116px',
+    });
+    const nearLeft: AnchorRect = { ...rect, left: 0, right: 40, width: 40 };
+    // `center`: from -80 to 120, around the anchor's center at 20.
+    expect(anchoredStyle(nearLeft, {}, panel(200, 50))).toMatchObject({
+      left: 116,
+      transform: 'translateX(-50%)',
+      '--anchor-shift': '96px',
+    });
+  });
+
+  it('clamps a `left` or `right` panel vertically', () => {
+    const nearTop: AnchorRect = {
+      top: 0,
+      left: 200,
+      right: 300,
+      bottom: 20,
+      width: 100,
+      height: 20,
+    };
+    // Centered on the anchor, from -40 to 60.
+    expect(anchoredStyle(nearTop, { side: 'right' }, panel(80, 100))).toMatchObject({
+      top: 66,
+      left: 300,
+      transform: 'translateY(-50%)',
+      '--anchor-shift': '56px',
+    });
+  });
+
+  it('keeps the left edge in view when the panel is wider than the viewport', () => {
+    expect(anchoredStyle(rect, { align: 'start' }, panel(1200, 50))).toMatchObject({
+      left: 16,
+      '--anchor-shift': '-184px',
+    });
+  });
+
+  it('leaves a panel the viewport does not cut where it is, even close to the edge', () => {
+    const atTheEdge: AnchorRect = { ...rect, left: 896, right: 996 };
+    const style = anchoredStyle(atTheEdge, { align: 'end' }, panel(200, 50));
+    expect(style).toEqual(anchoredStyle(atTheEdge, { align: 'end' }));
+    expect(style).not.toHaveProperty('--anchor-shift');
   });
 });

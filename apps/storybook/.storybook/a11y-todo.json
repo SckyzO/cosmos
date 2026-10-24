@@ -49,6 +49,7 @@
   "overlays-drawer--empty-slide-over-no-backdrop": ["aria-allowed-role"],
   "overlays-drawer--focus-trap-includes-close-outside": ["aria-allowed-role"],
   "overlays-drawer--no-backdrop-omits-overlay": ["aria-allowed-role"],
+  "overlays-drawer--panels-render-inside-the-drawer": ["aria-allowed-role"],
   "overlays-drawer--shift-tab-wraps-inside-the-drawer": ["aria-allowed-role"],
   "overlays-help-overlay--custom-footer": ["color-contrast"],
   "overlays-modal--untitled-dialog-has-no-dangling-label": ["aria-dialog-name"],

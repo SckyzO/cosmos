@@ -1,9 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectGraphicContrast, inEachTheme, portalDocsParams } from '../storybook-helpers';
+import {
+  expectBelow,
+  expectGraphicContrast,
+  inEachTheme,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { Dropdown } from './Dropdown';
+import { Popover } from './Popover';
+import { Tooltip } from './Tooltip';
+import { Combobox } from '../forms/Combobox';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -415,6 +424,166 @@ export const EscapeClosesOnce: Story = {
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
     await userEvent.keyboard('{Escape}');
     await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+const ACTIONS = [
+  { value: 'rename', label: 'Rename' },
+  { value: 'archive', label: 'Archive' },
+];
+const OWNERS = [
+  { value: 'leslie', label: 'Leslie Alexander' },
+  { value: 'michael', label: 'Michael Foster' },
+];
+
+/**
+ * Escape closes the innermost overlay only: a menu or a listbox open in the modal closes,
+ * and the modal stays until the next Escape.
+ */
+export const EscapeClosesTheInnermostOverlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Modal open={open} onClose={close}>
+        <Modal.Header title="Project settings" />
+        <Modal.Body className="space-y-4">
+          <Dropdown label="Actions" options={ACTIONS} />
+          <Combobox label="Owner" options={OWNERS} />
+        </Modal.Body>
+      </Modal>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const dialog = within(await body.findByRole('dialog', { name: 'Project settings' }));
+
+    await userEvent.click(dialog.getByRole('button', { name: 'Actions' }));
+    await body.findByRole('menu');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('menu')).toBeNull());
+    await expect(dialog.getByRole('button', { name: 'Actions' })).toHaveFocus();
+
+    await userEvent.click(dialog.getByRole('combobox', { name: 'Owner' }));
+    await body.findByRole('listbox');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('listbox')).toBeNull());
+
+    await expect(body.getByRole('dialog', { name: 'Project settings' })).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/**
+ * A listbox, a menu and a tooltip opened in the modal render inside it, so `aria-modal`
+ * doesn't hide them from assistive technology, and are drawn at their trigger. A click
+ * elsewhere in the modal closes a panel and leaves the modal open.
+ */
+export const PanelsRenderInsideTheModal: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClose: fn() },
+  render: (args) => (
+    <Modal open onClose={args.onClose}>
+      <Modal.Header title="Project settings" />
+      <Modal.Body className="space-y-4">
+        <Combobox label="Owner" options={OWNERS} />
+        <p>The owner gets every alert.</p>
+        <div className="flex gap-3">
+          <Dropdown label="Actions" options={ACTIONS} />
+          <Tooltip content="Visible to the whole team">
+            <Button variant="secondary" size="sm">
+              Visibility
+            </Button>
+          </Tooltip>
+        </div>
+      </Modal.Body>
+    </Modal>
+  ),
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const dialogElement = await body.findByRole('dialog', { name: 'Project settings' });
+    const dialog = within(dialogElement);
+
+    const input = dialog.getByRole('combobox', { name: 'Owner' });
+    await userEvent.click(input);
+    const listbox = await body.findByRole('listbox');
+    await expect(dialogElement).toContainElement(listbox);
+    // The listbox opens under the field: the input and its toggle button.
+    expectBelow(listbox, input.parentElement!, { offset: 4, align: 'start' });
+    await userEvent.click(dialog.getByText('The owner gets every alert.'));
+    await waitFor(() => expect(body.queryByRole('listbox')).toBeNull());
+
+    const trigger = dialog.getByRole('button', { name: 'Actions' });
+    await userEvent.click(trigger);
+    const menu = await body.findByRole('menu');
+    await expect(dialogElement).toContainElement(menu);
+    expectBelow(menu, trigger, { offset: 4, align: 'start' });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('menu')).toBeNull());
+
+    const visibility = dialog.getByRole('button', { name: 'Visibility' });
+    await userEvent.hover(visibility);
+    const tip = body.getByRole('tooltip');
+    await waitFor(() => expect(tip).toBeVisible());
+    await expect(dialogElement).toContainElement(tip);
+    // 10px above the wrapper around its trigger, centered on it.
+    const a = visibility.parentElement!.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    await expect(t.bottom).toBeCloseTo(a.top - 10, 0);
+    await expect((t.left + t.right) / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+
+    await expect(dialogElement).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+  },
+};
+
+/**
+ * Shift+Tab from the first control of a popover open in the modal goes back to its trigger,
+ * and only there: the modal's focus trap leaves alone a Tab the popover already handled.
+ */
+export const ShiftTabOutOfAPanelGoesBackToItsTrigger: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Header title="Sharing" />
+      <Modal.Body>
+        <Popover>
+          <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Share</Popover.Trigger>
+          <Popover.Content aria-label="Share options">
+            <button type="button">Copy link</button>
+            <button type="button">Send by email</button>
+          </Popover.Content>
+        </Popover>
+      </Modal.Body>
+    </Modal>
+  ),
+  play: async () => {
+    const body = within(document.body);
+    // The trigger is the modal's first control, so the trap would wrap Shift+Tab from it.
+    const trigger = await body.findByRole('button', { name: 'Share' });
+    await userEvent.click(trigger);
+    const panel = within(await body.findByRole('dialog', { name: 'Share options' }));
+    await waitFor(() => expect(panel.getByRole('button', { name: 'Copy link' })).toHaveFocus());
+
+    const focused: EventTarget[] = [];
+    const record = (e: FocusEvent) => focused.push(e.target!);
+    document.addEventListener('focusin', record);
+    try {
+      await userEvent.tab({ shift: true });
+      await waitFor(() => expect(body.queryByRole('dialog', { name: 'Share options' })).toBeNull());
+      await expect(trigger).toHaveFocus();
+      await expect(focused).toEqual([trigger]);
+    } finally {
+      document.removeEventListener('focusin', record);
+    }
   },
 };
 

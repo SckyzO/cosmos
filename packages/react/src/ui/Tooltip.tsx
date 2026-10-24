@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 import { Kbd } from '../typography/Kbd';
 import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
+import { useOverlayLayer, usePortalContainer } from './overlayA11y';
 import { useAnchorPosition } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
@@ -31,11 +32,13 @@ const OFFSET = 10;
 // its trigger is first measured, and must exist for `aria-describedby`.
 const UNPLACED: CSSProperties = { top: 0, left: 0 };
 
+// Centered on the box, minus `--anchor-shift`: how far the box moved along its trigger to
+// stay on screen, so the arrow keeps pointing at the trigger.
 const ARROW_POS: Record<TooltipPosition, string> = {
-  top: 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2',
-  bottom: 'bottom-full left-1/2 -translate-x-1/2 translate-y-1/2',
-  left: 'left-full top-1/2 -translate-x-1/2 -translate-y-1/2',
-  right: 'right-full top-1/2 translate-x-1/2 -translate-y-1/2',
+  top: 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
+  bottom: 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2',
+  left: 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
+  right: 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2',
 };
 
 const VARIANT_BOX: Record<TooltipVariant, string> = {
@@ -140,28 +143,33 @@ export const Tooltip = ({
     setOpen(false);
   };
 
-  // Escape closes it wherever focus is, even when it was opened by the pointer
-  // or by the host (WCAG 1.4.13), and cancels a pending show. Capture phase, so
-  // a surrounding modal doesn't also close.
+  // Escape hides it wherever focus is, even when it was opened by the pointer or
+  // by the host (WCAG 1.4.13). Shown, it is an overlay of the stack: a modal
+  // around it stays open, and an overlay opened above it closes first.
+  useOverlayLayer(open, () => setOpenState(false));
+  // Escape also cancels a show still waiting for `delay`.
   useEffect(() => {
-    if (!engaged && !open) return;
+    if (!engaged) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       clearTimeout(timer.current);
       setEngaged(false);
-      if (open) {
-        e.stopPropagation();
-        setOpenState(false);
-      }
     };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [engaged, open, setOpenState]);
-  const anchored = useAnchorPosition(anchorRef, open, {
-    side: position,
-    align: 'center',
-    offset: OFFSET,
-  });
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [engaged]);
+  // Inside a modal dialog, rendered in it (see FloatingPanel).
+  const container = usePortalContainer();
+  const {
+    style: anchored,
+    side,
+    panelRef,
+  } = useAnchorPosition(
+    anchorRef,
+    open,
+    { side: position, align: 'center', offset: OFFSET },
+    container
+  );
   const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
     ? cloneElement(children, {
         'aria-describedby': [children.props['aria-describedby'], id].filter(Boolean).join(' '),
@@ -182,10 +190,12 @@ export const Tooltip = ({
       {trigger}
       {/* Portaled, so no `overflow: hidden` ancestor clips it, and kept mounted
           while hidden: `aria-describedby` points at it. Client-side only, as
-          portals are. */}
+          portals are, and once the dialog it is in, if any, is mounted. */}
       {isClient &&
+        container !== null &&
         createPortal(
           <span
+            ref={panelRef}
             id={id}
             role="tooltip"
             style={anchored ?? UNPLACED}
@@ -214,13 +224,13 @@ export const Tooltip = ({
                 aria-hidden
                 className={clsx(
                   'absolute h-2 w-2 rotate-45',
-                  ARROW_POS[position],
+                  ARROW_POS[side],
                   intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
                 )}
               />
             )}
           </span>,
-          document.body
+          container ?? document.body
         )}
     </span>
   );
