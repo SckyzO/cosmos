@@ -57,5 +57,13 @@ test('the CJS and ESM entries expose the same exports', () => {
   const out = execFileSync(process.execPath, ['-e', script], { encoding: 'utf8' });
   const { cjs, esm } = JSON.parse(out);
   expect(cjs).toEqual(esm);
-  expect(esm).toEqual(expect.arrayContaining(['DonutChart', 'Sparkline', 'useChartTheme']));
+  expect(esm).toEqual(
+    expect.arrayContaining([
+      'DonutChart',
+      'Sparkline',
+      'useChartTheme',
+      'escapeHtml',
+      'tooltipHtml',
+    ])
+  );
 });

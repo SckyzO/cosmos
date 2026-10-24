@@ -56,7 +56,8 @@ export type ChartRawOptions = {
    * (GHSA-f4hm-pcxh-hcvv). The wrappers escape every series name, category,
    * label and value they hand it, but a `formatter` or `tooltip.custom` given
    * here replaces theirs and receives raw values: it must escape any HTML it
-   * writes. Axis labels are SVG text and must stay unescaped.
+   * writes, with `escapeHtml`, or build a tooltip with `tooltipHtml`, both
+   * exported by this package. Axis labels are SVG text and must stay unescaped.
    *
    * The chart is drawn again when these options change, compared deeply and
    * the functions in them by identity. An object literal without functions is
