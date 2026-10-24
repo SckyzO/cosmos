@@ -1,5 +1,13 @@
 import { clsx } from 'clsx';
-import { createContext, useContext, useId, useRef, type ComponentProps } from 'react';
+import {
+  createContext,
+  useContext,
+  useId,
+  useRef,
+  useSyncExternalStore,
+  type ComponentProps,
+  type RefObject,
+} from 'react';
 import { useOverflows } from '../hooks/useOverflows';
 import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
 import type { DataTableDensity } from './types';
@@ -8,6 +16,8 @@ type TableContextValue = {
   density: DataTableDensity;
   striped: boolean;
   stickyHeader: boolean;
+  /** The id a `TableCaption` takes unless the host passes its own. */
+  captionId?: string;
 };
 
 type TableSection = 'head' | 'body' | 'foot';
@@ -56,14 +66,31 @@ export type TableProps = ComponentProps<'table'> & {
   containerClassName?: string;
 };
 
+// The id of the caption of the table inside `containerRef`, if it has one. A read of the DOM,
+// hence a store: the caption is a direct child of the table, which the host's children add and
+// remove, and the container is not mounted yet during the first render.
+const useCaptionId = (containerRef: RefObject<HTMLElement | null>) =>
+  useSyncExternalStore(
+    (notify) => {
+      const table = containerRef.current?.querySelector(':scope > table');
+      if (!table) return () => {};
+      const observer = new MutationObserver(notify);
+      observer.observe(table, { childList: true });
+      return () => observer.disconnect();
+    },
+    () => containerRef.current?.querySelector(':scope > table')?.caption?.id || undefined,
+    () => undefined
+  );
+
 /**
  * Table — styled native `<table>` without any logic. The wrapper scrolls
  * horizontally, so a wide table never overflows the page on small screens.
- * While it scrolls, the wrapper takes the keyboard focus (so the arrow keys
- * scroll it even when no cell holds a control) and is a region named after the
- * table's caption. Compose with `TableCaption`, `TableHead`, `TableBody`, `TableFoot`,
- * `TableRow`, `TableHeaderCell` and `TableCell`. For sorting, filtering or
- * pagination, use `DataTable`.
+ * While it scrolls, the wrapper takes the keyboard focus, so the arrow keys
+ * scroll it even when no cell holds a control. With a `TableCaption` it is also
+ * a region named by that caption: without one it has no name to give, and
+ * stays an unnamed focusable element. Compose with `TableCaption`, `TableHead`,
+ * `TableBody`, `TableFoot`, `TableRow`, `TableHeaderCell` and `TableCell`. For
+ * sorting, filtering or pagination, use `DataTable`.
  */
 export const Table = ({
   density = 'default',
@@ -72,23 +99,23 @@ export const Table = ({
   containerClassName,
   className,
   children,
-  id,
   ...rest
 }: TableProps) => {
-  const generatedId = useId();
-  const tableId = id ?? generatedId;
+  const captionId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(containerRef);
+  const namedBy = useCaptionId(containerRef);
   return (
-    <TableContext.Provider value={{ density, striped, stickyHeader }}>
+    <TableContext.Provider value={{ density, striped, stickyHeader, captionId }}>
       <div
         ref={containerRef}
         // Focusable only while it scrolls: a scroll container with no control inside is out of
-        // reach of the keyboard, and one that fits would add a tab stop that does nothing. Its
-        // name is the table's, which the caption provides.
+        // reach of the keyboard, and one that fits would add a tab stop that does nothing. It is
+        // a region only with a caption to be named by: a region with no name is no landmark, and
+        // labelling it by the table itself would read out the text of every cell.
         tabIndex={scrolls ? 0 : undefined}
-        role={scrolls ? 'region' : undefined}
-        aria-labelledby={scrolls ? tableId : undefined}
+        role={scrolls && namedBy ? 'region' : undefined}
+        aria-labelledby={scrolls ? namedBy : undefined}
         className={clsx(
           'focus-visible:focus-indicator max-w-full rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] focus-visible:ring-inset dark:border-gray-800',
           stickyHeader ? 'overflow-auto' : 'overflow-x-auto',
@@ -96,7 +123,6 @@ export const Table = ({
         )}
       >
         <table
-          id={tableId}
           className={clsx(
             'w-full border-collapse text-sm text-[var(--color-text-primary)]',
             className
@@ -113,15 +139,19 @@ export const Table = ({
 export type TableCaptionProps = ComponentProps<'caption'>;
 
 /** TableCaption — the table's title, and its accessible name. */
-export const TableCaption = ({ className, ...rest }: TableCaptionProps) => (
-  <caption
-    className={clsx(
-      'px-4 py-3 text-left text-sm font-semibold text-[var(--color-text-primary)]',
-      className
-    )}
-    {...rest}
-  />
-);
+export const TableCaption = ({ className, ...rest }: TableCaptionProps) => {
+  const { captionId } = useContext(TableContext);
+  return (
+    <caption
+      id={captionId}
+      className={clsx(
+        'px-4 py-3 text-left text-sm font-semibold text-[var(--color-text-primary)]',
+        className
+      )}
+      {...rest}
+    />
+  );
+};
 
 export type TableHeadProps = ComponentProps<'thead'>;
 

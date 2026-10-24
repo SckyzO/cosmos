@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import {
   Table,
   TableBody,
@@ -190,6 +190,8 @@ export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
   play: async ({ canvas }) => {
     const region = await canvas.findByRole('region', { name: 'Scrolls' });
     await expect(region).toHaveAttribute('tabindex', '0');
+    // The name is the caption's text alone, not the text of the cells.
+    await expect(region).toHaveAccessibleName('Scrolls');
     await expect(region.scrollHeight).toBeGreaterThan(region.clientHeight);
     await expectFocusRing(region, { inset: true });
 
@@ -198,6 +200,33 @@ export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
     await expect(fitting).not.toHaveAttribute('tabindex');
     await expect(fitting).not.toHaveAttribute('role');
     await expect(canvas.queryByRole('region', { name: 'Fits' })).toBeNull();
+  },
+};
+
+/** With no caption a scrolling table has no name to give: focusable, but not a region. */
+export const ScrollingTableWithoutCaptionIsFocusableNotARegion: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Table stickyHeader containerClassName="max-h-32">
+        <NodeHead />
+        <TableBody>
+          {MANY_NODES.map((n) => (
+            <NodeRow key={n.name} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const container = canvas.getByRole('table').parentElement!;
+    await waitFor(() => expect(container).toHaveAttribute('tabindex', '0'));
+    await expect(container.scrollHeight).toBeGreaterThan(container.clientHeight);
+    // Not labelled by the table either: that would name it after every cell.
+    await expect(container).not.toHaveAttribute('role');
+    await expect(container).not.toHaveAttribute('aria-labelledby');
+    await expect(canvas.queryByRole('region')).toBeNull();
+    await expectFocusRing(container, { inset: true });
   },
 };
 
