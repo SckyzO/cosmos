@@ -1,8 +1,15 @@
 import * as a11yAddonAnnotations from '@storybook/addon-a11y/preview';
 import type { AfterEach } from 'storybook/internal/types';
-import type { TestContext } from 'vitest';
+import { inject, type TestContext } from 'vitest';
 
 import todoList from './a11y-todo.json';
+
+declare module 'vitest' {
+  export interface ProvidedContext {
+    /** `A11Y_THEME`, checked by `vitest.config.ts`: the contrast pass's theme, '' otherwise. */
+    a11yTheme: string;
+  }
+}
 
 /**
  * The Vitest task meta `a11y-todo-reporter.ts` reads: `storyId`, set by
@@ -12,8 +19,17 @@ import todoList from './a11y-todo.json';
  */
 export type A11yTaskMeta = { storyId?: string; a11yViolations?: string[] };
 
-/** Story id → the axe rules it still violates. Only ever shrinks. */
-const A11Y_TODO: Readonly<Record<string, readonly string[]>> = todoList;
+/**
+ * The theme of the contrast pass (`A11Y_THEME=light pnpm a11y:contrast`), or
+ * '' for the usual run, where axe checks every rule in the default theme.
+ */
+export const CONTRAST_THEME = inject('a11yTheme');
+
+/**
+ * Story id → the axe rules it still violates. Only ever shrinks. It lists
+ * what axe finds in the default theme: the contrast pass ignores it.
+ */
+const A11Y_TODO: Readonly<Record<string, readonly string[]>> = CONTRAST_THEME ? {} : todoList;
 
 const TODO_FILE = 'apps/storybook/.storybook/a11y-todo.json';
 
@@ -91,6 +107,22 @@ const a11yGate: AfterEach = async (context) => {
 
 /** The addon's annotations, with its `afterEach` behind the todo list. */
 export const a11yGateAnnotations = { ...a11yAddonAnnotations, afterEach: a11yGate };
+
+/**
+ * The contrast pass, after `preview.tsx` so it wins: every story renders in
+ * `CONTRAST_THEME` (a story that pins `globals.theme` keeps its own) and axe
+ * runs only `color-contrast`. With no todo list, any violation fails. Play
+ * functions run as usual: they open the panels and menus whose contrast is
+ * checked, and none depends on the theme.
+ */
+export const contrastPassAnnotations = CONTRAST_THEME
+  ? {
+      initialGlobals: { theme: CONTRAST_THEME },
+      parameters: {
+        a11y: { options: { runOnly: { type: 'rule', values: ['color-contrast'] } } },
+      },
+    }
+  : {};
 
 /**
  * Vitest `afterEach`: copies the rules the gate found into the task meta,

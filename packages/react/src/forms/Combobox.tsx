@@ -241,6 +241,7 @@ export const Combobox = ({
                   key={opt.value}
                   role="option"
                   aria-selected={isSelected}
+                  aria-disabled={opt.disabled || undefined}
                   onMouseEnter={() => setActiveIndex(i)}
                   onMouseDown={(e) => {
                     // mousedown fires before input blur — prevents losing focus
@@ -278,7 +279,7 @@ export const Combobox = ({
           id={descId}
           className={clsx(
             'mt-1.5 text-xs',
-            error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
           )}
         >
           {error ?? helperText}

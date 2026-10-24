@@ -2,7 +2,11 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 export type ErrorPageProps = {
-  /** Big numeric code displayed prominently — e.g. `404`, `500`, `503`. */
+  /**
+   * Big numeric code displayed prominently — e.g. `404`, `500`, `503`. A string
+   * or a number is drawn by CSS, a decoration outside the accessibility tree;
+   * the heading reads it once to assistive technology.
+   */
   code: ReactNode;
   title: ReactNode;
   description?: ReactNode;
@@ -39,26 +43,39 @@ export const ErrorPage = ({
   illustration,
   actions,
   className,
-}: ErrorPageProps) => (
-  <div
-    className={clsx(
-      'flex min-h-[500px] flex-col items-center justify-center px-6 text-center',
-      className
-    )}
-  >
-    {illustration}
-    <p aria-hidden className="text-brand-100 dark:text-brand-500/20 mt-2 text-8xl font-black">
-      {code}
-    </p>
-    <h1 className="-mt-4 text-2xl font-bold text-gray-900 dark:text-white">
-      <span className="sr-only">{code}: </span>
-      {title}
-    </h1>
-    {description && (
-      <p className="mt-3 max-w-sm text-sm text-gray-500 dark:text-gray-400">{description}</p>
-    )}
-    {actions && (
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">{actions}</div>
-    )}
-  </div>
-);
+}: ErrorPageProps) => {
+  // The big code is a faint watermark (1.2:1 by design). Drawn by a
+  // pseudo-element, it is no text node: axe's contrast check skips it, as
+  // WCAG 1.4.3 does for decoration.
+  const watermark = typeof code === 'string' || typeof code === 'number' ? String(code) : undefined;
+  return (
+    <div
+      className={clsx(
+        'flex min-h-[500px] flex-col items-center justify-center px-6 text-center',
+        className
+      )}
+    >
+      {illustration}
+      <p
+        aria-hidden
+        data-code={watermark}
+        className={clsx(
+          'text-brand-100 dark:text-brand-500/20 mt-2 text-8xl font-black',
+          watermark !== undefined && 'before:content-[attr(data-code)]'
+        )}
+      >
+        {watermark === undefined && code}
+      </p>
+      <h1 className="-mt-4 text-2xl font-bold text-gray-900 dark:text-white">
+        <span className="sr-only">{code}: </span>
+        {title}
+      </h1>
+      {description && (
+        <p className="mt-3 max-w-sm text-sm text-gray-500 dark:text-gray-400">{description}</p>
+      )}
+      {actions && (
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">{actions}</div>
+      )}
+    </div>
+  );
+};

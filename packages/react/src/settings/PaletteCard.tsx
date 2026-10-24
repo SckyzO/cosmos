@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
 import type { Ref } from 'react';
+import { paletteLabelColor } from './paletteLabelColor';
 
 export type PalettePreview = {
   /** Page background. */
@@ -10,8 +11,9 @@ export type PalettePreview = {
   /** Borders and faint dividers. */
   border: string;
   /**
-   * Label color on `surface`. Set it when the palettes in one picker mix light
-   * and dark surfaces: the default gray only reads on light ones.
+   * Label color on `surface`. Default: a gray that reads on it, dark on a light
+   * surface and light on a dark one (taken as light when `surface` isn't a hex
+   * color). Set it for a mid-tone surface or to match the palette's own text.
    */
   text?: string;
 };
@@ -50,64 +52,64 @@ export const PaletteCard = ({
   tabIndex,
   className,
   ref,
-}: PaletteCardProps) => (
-  <button
-    ref={ref}
-    type="button"
-    onClick={onClick}
-    role="radio"
-    aria-checked={active}
-    tabIndex={tabIndex}
-    aria-label={meta.label}
-    className={clsx(
-      'group focus-visible:focus-indicator relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
-      active
-        ? 'border-brand-500 shadow-sm'
-        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
-      className
-    )}
-  >
-    {/* Mini mockup */}
-    <div
-      className="flex h-16 w-full flex-col gap-0.5 p-2"
-      style={{ backgroundColor: meta.preview.bg }}
+}: PaletteCardProps) => {
+  const labelColor = meta.preview.text ?? paletteLabelColor(meta.preview.surface);
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      role="radio"
+      aria-checked={active}
+      tabIndex={tabIndex}
+      aria-label={meta.label}
+      className={clsx(
+        'group focus-visible:focus-indicator relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
+        active
+          ? 'border-brand-500 shadow-sm'
+          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
+        className
+      )}
     >
-      <span className="h-2 w-8 rounded-sm" style={{ backgroundColor: meta.preview.border }} />
-      <span
-        className="mt-1 flex-1 rounded-sm"
+      {/* Mini mockup */}
+      <div
+        className="flex h-16 w-full flex-col gap-0.5 p-2"
+        style={{ backgroundColor: meta.preview.bg }}
+      >
+        <span className="h-2 w-8 rounded-sm" style={{ backgroundColor: meta.preview.border }} />
+        <span
+          className="mt-1 flex-1 rounded-sm"
+          style={{
+            backgroundColor: meta.preview.surface,
+            border: `1px solid ${meta.preview.border}`,
+          }}
+        />
+      </div>
+
+      {/* Label row — flex-1 fills the card when a taller neighbor stretches the grid row. */}
+      <div
+        className="flex flex-1 items-center justify-between px-2.5 py-1.5"
         style={{
           backgroundColor: meta.preview.surface,
-          border: `1px solid ${meta.preview.border}`,
+          borderTop: `1px solid ${meta.preview.border}`,
         }}
-      />
-    </div>
-
-    {/* Label row — flex-1 fills the card when a taller neighbor stretches the grid row. */}
-    <div
-      className="flex flex-1 items-center justify-between px-2.5 py-1.5"
-      style={{
-        backgroundColor: meta.preview.surface,
-        borderTop: `1px solid ${meta.preview.border}`,
-      }}
-    >
-      <span className="text-left">
-        <span
-          className="block text-xs font-semibold"
-          style={{ color: meta.preview.text ?? (active ? undefined : '#6b7280') }}
-        >
-          {meta.label}
+      >
+        <span className="text-left">
+          <span className="block text-xs font-semibold" style={{ color: labelColor }}>
+            {meta.label}
+          </span>
+          {meta.desc && (
+            <span className="text-3xs block" style={{ color: labelColor }}>
+              {meta.desc}
+            </span>
+          )}
         </span>
-        {meta.desc && (
-          <span className="text-3xs block" style={{ color: meta.preview.text ?? '#9ca3af' }}>
-            {meta.desc}
+        {active && (
+          <span className="bg-brand-500 flex h-4 w-4 shrink-0 items-center justify-center rounded-full">
+            <Check className="h-2.5 w-2.5 text-white" aria-hidden />
           </span>
         )}
-      </span>
-      {active && (
-        <span className="bg-brand-500 flex h-4 w-4 shrink-0 items-center justify-center rounded-full">
-          <Check className="h-2.5 w-2.5 text-white" aria-hidden />
-        </span>
-      )}
-    </div>
-  </button>
-);
+      </div>
+    </button>
+  );
+};

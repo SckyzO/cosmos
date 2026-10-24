@@ -51,6 +51,10 @@ export const DonutChart = ({
     legend: { position: legendPosition, formatter: escapeHtml },
     tooltip: {
       theme: tooltipTheme,
+      // ApexCharts fills a donut's tooltip with the slice color under white
+      // text (2.6:1 on the success green): keep the themed body of the other
+      // charts, the slice color stays on the marker.
+      fillSeriesColor: false,
       y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
     },
     dataLabels: { enabled: false },

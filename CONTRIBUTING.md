@@ -52,9 +52,10 @@ its `tsconfig.json` because the packages do not depend on it.
 
 Every story test runs axe (addon-a11y) once the story has rendered and its play function has
 finished, and any violation fails the test. The exceptions are listed in
-`apps/storybook/.storybook/a11y-todo.json`, the burn-down list of #265: story id → the axe rules it
-still violates. A listed story runs in the addon's `todo` mode, so its violations are warnings in
-the Storybook Accessibility panel, but it must violate exactly the rules of its entry:
+`apps/storybook/.storybook/a11y-todo.json`: story id → the axe rules it still violates. #265 burned
+it down to `{}`; it stays as the escape hatch for known debt. A listed story runs in the addon's
+`todo` mode, so its violations are warnings in the Storybook Accessibility panel, but it must
+violate exactly the rules of its entry:
 
 - a listed rule that stops firing fails the test until it is removed from the entry, and a story
   with no violation left fails until its entry is deleted;
@@ -65,8 +66,19 @@ story of a component with known debt (say, `label` on every NumberInput story) i
 instead of forcing its fix into an unrelated change. A rule the component doesn't have yet is a
 regression: fix it.
 
-The gate is wired in `apps/storybook/.storybook/a11y-gate.ts`. axe only sees the default `dark`
-theme: check contrast in the other themes with the Theme menu and the Accessibility panel.
+The gate is wired in `apps/storybook/.storybook/a11y-gate.ts`.
+
+axe checks contrast in every theme. The story tests run every rule in the default `dark` theme;
+the contrast pass renders every story again in `light`, `sand` and `deep-blue` and runs only
+`color-contrast`. A story that pins its theme with `globals` keeps it, and play functions run as
+in the story tests, so they must hold in every theme. The todo list only covers the default theme:
+the contrast pass has none, and any violation fails it. CI runs it in one job per theme, `make ci`
+one theme after the other:
+
+```bash
+make test-contrast                    # light, sand and deep-blue
+A11Y_THEME=sand make test-contrast    # one theme
+```
 
 After fixing a story, edit its entry by hand as the failure message says, in the same commit as the
 fix. After a change that fixes many stories at once (a theme token, a shared component), rewrite

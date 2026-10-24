@@ -91,6 +91,28 @@ export const DisabledBlocksInteraction: Story = {
   },
 };
 
+/**
+ * The label, dimmed with a disabled switch, is `aria-disabled`: its text
+ * belongs to an inactive control, which axe then exempts from contrast.
+ */
+export const AriaDisabledFollowsDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-3">
+        <Toggle checked onChange={() => {}} label="Enabled" />
+        <Toggle checked disabled onChange={() => {}} label="Disabled" />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Enabled').closest('label')).not.toHaveAttribute('aria-disabled');
+    const dimmed = canvas.getByText('Disabled').closest('label');
+    await expect(dimmed).toHaveClass('opacity-50');
+    await expect(dimmed).toHaveAttribute('aria-disabled', 'true');
+  },
+};
+
 // The off track (gray-200 on the page, 1.2:1) was nearly invisible (#151).
 export const OffTrackContrastInEveryTheme: Story = {
   ...Off,

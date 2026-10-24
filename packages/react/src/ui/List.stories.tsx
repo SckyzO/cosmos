@@ -115,7 +115,9 @@ export const SpacingComparison: Story = {
     <div className="grid gap-6 sm:grid-cols-3">
       {(['tight', 'normal', 'loose'] as const).map((s) => (
         <div key={s}>
-          <p className="mb-2 font-mono text-[10px] text-gray-400 uppercase">{s}</p>
+          <p className="mb-2 font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">
+            {s}
+          </p>
           <List marker="check" spacing={s}>
             {ITEMS.map((label) => (
               <List.Item key={label}>{label}</List.Item>

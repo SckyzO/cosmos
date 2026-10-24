@@ -27,7 +27,7 @@ export const InitialsAndImage: Story = {
           {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
             <div key={size} className="flex flex-col items-center gap-1">
               <Avatar size={size} name="John Doe" />
-              <span className="text-[10px] text-gray-500 uppercase">{size}</span>
+              <span className="text-[10px] text-gray-500 uppercase dark:text-gray-400">{size}</span>
             </div>
           ))}
         </div>

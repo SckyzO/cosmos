@@ -98,7 +98,7 @@ const IconGallery = () => {
         )}
 
         {!term && matches.length > DEFAULT_CAP && (
-          <p className="mt-5 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">
             +{(matches.length - DEFAULT_CAP).toLocaleString()} more — search to find any icon.
           </p>
         )}

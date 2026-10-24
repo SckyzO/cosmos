@@ -35,7 +35,7 @@ export const Avatar = ({ src, alt, name, size = 'md', className }: AvatarProps) 
   return (
     <span
       className={clsx(
-        'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400 inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold',
+        'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300 inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold',
         SIZE_CLASS[size],
         className
       )}

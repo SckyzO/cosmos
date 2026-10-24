@@ -31,12 +31,12 @@ const STATE_CONFIG: Record<SaveState, StateConfig> = {
   saved: {
     label: 'Saved',
     icon: Check,
-    cls: 'bg-green-500 text-white cursor-default',
+    cls: 'bg-green-500 text-gray-900 cursor-default',
   },
   error: {
     label: 'Error',
     icon: AlertCircle,
-    cls: 'bg-red-500 text-white',
+    cls: 'bg-red-600 text-white',
   },
 };
 

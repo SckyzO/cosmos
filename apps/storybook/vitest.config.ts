@@ -4,7 +4,22 @@ import { playwright } from '@vitest/browser-playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { COSMOS_THEMES } from '../../packages/react/src/settings/appearance';
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * `A11Y_THEME=<theme>` turns the story run into the contrast pass of that
+ * theme (`pnpm a11y:contrast` runs light, sand and deep-blue): see
+ * `contrastPassAnnotations` in `.storybook/a11y-gate.ts`. Unset, the stories
+ * run in the default theme with every axe rule, behind the todo list.
+ */
+const a11yTheme = process.env.A11Y_THEME ?? '';
+if (a11yTheme && !COSMOS_THEMES.some(({ id }) => id === a11yTheme)) {
+  throw new Error(
+    `A11Y_THEME=${a11yTheme}: expected one of ${COSMOS_THEMES.map(({ id }) => id).join(', ')}.`
+  );
+}
 
 /**
  * Vitest config for the Storybook app, two projects:
@@ -13,7 +28,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
  *   component tests using the Storybook addon-vitest plugin. The plugin
  *   discovers stories from this app's storybook config and executes them in a
  *   headless Chromium browser instance, then runs axe on each, behind the
- *   todo list of `.storybook/a11y-gate.ts`.
+ *   todo list of `.storybook/a11y-gate.ts` (in the contrast pass, `A11Y_THEME`
+ *   above, axe's `color-contrast` rule alone, with no todo list).
  * - `node`: plain Node, no browser and no DOM. Runs the `*.test.ts` unit tests
  *   of the packages' pure logic. Vitest is a dependency of this app only, so
  *   the packages' tests run from here (and `tsconfig.json` maps `vitest` for
@@ -46,6 +62,7 @@ export default defineConfig({
         optimizeDeps: { include: ['@storybook/addon-a11y/preview'] },
         test: {
           name: 'storybook',
+          provide: { a11yTheme },
           browser: {
             enabled: true,
             provider: playwright({}),

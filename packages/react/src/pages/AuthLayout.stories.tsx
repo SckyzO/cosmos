@@ -61,7 +61,9 @@ export const CustomBrand: Story = {
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <Sparkles className="text-brand-500 h-10 w-10" aria-hidden />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">cosmos</h1>
-          <p className="text-xs tracking-widest text-gray-400 uppercase">design system</p>
+          <p className="text-xs tracking-widest text-gray-500 uppercase dark:text-gray-400">
+            design system
+          </p>
         </div>
       }
     >

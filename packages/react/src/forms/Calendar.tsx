@@ -114,8 +114,10 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         disabled: 'opacity-30',
         range_start: '[&_button]:rounded-r-none',
         range_end: '[&_button]:rounded-l-none',
+        // The days between the ends are `selected` too: `!` puts the tint and its
+        // text over the solid fill, or white text landed on the light tint.
         range_middle:
-          '[&_button]:bg-brand-500/15 [&_button]:text-brand-700 [&_button]:rounded-none dark:[&_button]:text-brand-300',
+          '[&_button]:bg-brand-500/15! [&_button]:text-brand-700! [&_button]:hover:bg-brand-500/25! [&_button]:rounded-none dark:[&_button]:text-brand-300!',
         footer: 'pt-2 text-center text-xs text-gray-500 dark:text-gray-400',
         ...classNames,
       }}

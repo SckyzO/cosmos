@@ -34,8 +34,14 @@ export const Toggle = ({
     onChange,
     name: 'Toggle.checked',
   });
+  // aria-disabled marks the dimmed label as part of an inactive control, whose
+  // text WCAG 1.4.3 exempts from contrast: axe doesn't see a disabled
+  // role="switch" button as a label's control.
   return (
-    <label className={clsx('flex items-center gap-3', disabled && 'opacity-50')}>
+    <label
+      aria-disabled={disabled || undefined}
+      className={clsx('flex items-center gap-3', disabled && 'opacity-50')}
+    >
       <button
         ref={ref}
         type="button"

@@ -13,9 +13,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Three jobs run side by side, then `ci` checks they all passed. `make ci` runs
-# the same commands one after the other in the dev container. Each job builds
-# what it tests: no artifact passes between jobs, so none can be swapped.
+# Four jobs run side by side (`contrast` once per theme), then `ci` checks they
+# all passed. `make ci` runs the same commands one after the other in the dev
+# container. Each job builds what it tests: no artifact passes between jobs, so
+# none can be swapped.
 jobs:
   static:
     name: Lint + format + typecheck
@@ -130,10 +131,47 @@ jobs:
       - name: Unit and story tests
         run: pnpm --filter @cosmos/storybook test
 
+  contrast:
+    # `stories` runs axe in the default theme (dark). This pass renders every
+    # story in another theme and runs axe's color-contrast rule alone, with no
+    # todo list.
+    name: Story contrast (${{ matrix.theme }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Report every theme, not only the first one that fails.
+      fail-fast: false
+      matrix:
+        theme: [light, sand, deep-blue]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @cosmos/storybook exec playwright install --with-deps chromium
+
+      - name: Story contrast pass
+        env:
+          A11Y_THEME: ${{ matrix.theme }}
+        run: pnpm --filter @cosmos/storybook a11y:contrast
+
   ci:
     # Branch protection requires this check name: keep it.
     name: Lint + typecheck + test + build
-    needs: [static, build-e2e, stories]
+    needs: [static, build-e2e, stories, contrast]
     # Runs when a job fails or is cancelled too, so the check never stays
     # pending, and fails then.
     if: always()

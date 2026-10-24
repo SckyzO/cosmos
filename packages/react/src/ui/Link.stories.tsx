@@ -79,7 +79,9 @@ export const AllVariants: Story = {
       {(['colored', 'underline', 'opacity', 'opacity-hover', 'subtle'] as LinkVariant[]).map(
         (v) => (
           <div key={v} className="flex items-center gap-3">
-            <span className="w-28 font-mono text-[10px] text-gray-400 uppercase">{v}</span>
+            <span className="w-28 font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">
+              {v}
+            </span>
             <Link href="#" variant={v}>
               Read the docs →
             </Link>
