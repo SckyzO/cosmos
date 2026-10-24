@@ -13,7 +13,7 @@ import { test, expect } from '@playwright/test';
 // dropped argTypes block is caught.
 const cases: Array<{ id: string; name: string; expectProp: string }> = [
   { id: 'atoms-button--docs', name: 'Button', expectProp: 'variant' },
-  { id: 'atoms-badge--docs', name: 'Badge', expectProp: 'variant' },
+  { id: 'atoms-badge--docs', name: 'Badge', expectProp: 'intent' },
   { id: 'navigation-tabs--docs', name: 'Tabs', expectProp: 'orientation' },
   { id: 'navigation-breadcrumb--docs', name: 'Breadcrumb', expectProp: 'items' },
   { id: 'overlays-drawer--docs', name: 'Drawer', expectProp: 'open' },

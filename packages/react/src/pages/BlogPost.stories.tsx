@@ -251,7 +251,7 @@ const RelatedArticles = () => (
               <div className="p-5">
                 <div className="flex items-center gap-x-3 text-xs">
                   <span className="text-[var(--color-text-secondary)]">{p.date}</span>
-                  <Badge variant="neutral" size="sm">
+                  <Badge intent="neutral" size="sm">
                     {p.tag}
                   </Badge>
                 </div>
@@ -328,7 +328,7 @@ const ArticleBody = ({ withHero = true }: { withHero?: boolean }) => (
         <div className="col-span-12 lg:col-span-8">
           {/* Kicker (date + tag) above the title */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
-            <Badge variant="brand" size="sm">
+            <Badge intent="brand" size="sm">
               {POST.tag}
             </Badge>
             <span aria-hidden>·</span>
@@ -514,7 +514,7 @@ export const Minimal: Story = {
       <article className="bg-[var(--color-bg-base)]">
         <ContentNarrow maxWidth={680} className="px-6 py-16">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tracking-wider text-[var(--color-text-muted)] uppercase">
-            <Badge variant="success" size="sm">
+            <Badge intent="success" size="sm">
               Changelog
             </Badge>
             <span aria-hidden>·</span>

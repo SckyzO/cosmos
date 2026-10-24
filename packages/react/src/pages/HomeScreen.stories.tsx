@@ -212,7 +212,7 @@ export const Sidebar_: Story = {
                     Deploys from GitHub · {d.meta}
                   </p>
                 </div>
-                <Badge variant={d.badge === 'Production' ? 'success' : 'neutral'}>{d.badge}</Badge>
+                <Badge intent={d.badge === 'Production' ? 'success' : 'neutral'}>{d.badge}</Badge>
               </li>
             ))}
           </ul>

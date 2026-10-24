@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Badge } from '../ui/Badge';
+import type { Intent } from '../ui/intent';
 import { Button, type ButtonVariant } from '../ui/Button';
 
 export type IntegrationStatus = 'connected' | 'available' | 'error' | 'pending';
@@ -31,7 +32,7 @@ const STATUS_LABEL: Record<IntegrationStatus, string> = {
   pending: 'Pending',
 };
 
-const STATUS_VARIANT: Record<IntegrationStatus, 'success' | 'neutral' | 'danger' | 'warning'> = {
+const STATUS_INTENT: Record<IntegrationStatus, Intent> = {
   connected: 'success',
   available: 'neutral',
   error: 'danger',
@@ -63,7 +64,7 @@ export const IntegrationCard = ({
         {logo}
       </div>
       {status && (
-        <Badge variant={STATUS_VARIANT[status]} appearance="light">
+        <Badge intent={STATUS_INTENT[status]} appearance="light">
           {STATUS_LABEL[status]}
         </Badge>
       )}

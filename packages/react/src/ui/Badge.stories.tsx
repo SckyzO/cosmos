@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Check, Info, Star, X, Zap } from 'lucide-react';
-import { Badge, type BadgeVariant } from './Badge';
+import { Badge } from './Badge';
+import type { Intent } from './intent';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -21,29 +22,29 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 export const AllVariants: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Variants × sizes">
+      <SectionCard title="Intents × sizes">
         <div className="space-y-3">
           {(['sm', 'md'] as const).map((size) => (
             <div key={size} className="flex flex-wrap items-center gap-2">
               <span className="w-6 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
                 {size}
               </span>
-              <Badge variant="neutral" size={size}>
+              <Badge intent="neutral" size={size}>
                 Neutral
               </Badge>
-              <Badge variant="brand" size={size}>
+              <Badge intent="brand" size={size}>
                 Brand
               </Badge>
-              <Badge variant="success" size={size}>
+              <Badge intent="success" size={size}>
                 Success
               </Badge>
-              <Badge variant="warning" size={size}>
+              <Badge intent="warning" size={size}>
                 Warning
               </Badge>
-              <Badge variant="danger" size={size}>
+              <Badge intent="danger" size={size}>
                 Danger
               </Badge>
-              <Badge variant="info" size={size}>
+              <Badge intent="info" size={size}>
                 Info
               </Badge>
             </div>
@@ -59,22 +60,22 @@ export const Solid: Story = {
     <Wrap>
       <SectionCard title="Solid appearance — filled bg + white text">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge appearance="solid" variant="neutral">
+          <Badge appearance="solid" intent="neutral">
             Neutral
           </Badge>
-          <Badge appearance="solid" variant="brand">
+          <Badge appearance="solid" intent="brand">
             Brand
           </Badge>
-          <Badge appearance="solid" variant="success">
+          <Badge appearance="solid" intent="success">
             Success
           </Badge>
-          <Badge appearance="solid" variant="warning">
+          <Badge appearance="solid" intent="warning">
             Warning
           </Badge>
-          <Badge appearance="solid" variant="danger">
+          <Badge appearance="solid" intent="danger">
             Danger
           </Badge>
-          <Badge appearance="solid" variant="info">
+          <Badge appearance="solid" intent="info">
             Info
           </Badge>
         </div>
@@ -88,19 +89,19 @@ export const WithIconLeft: Story = {
     <Wrap>
       <SectionCard title="With left icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="success" icon={Check}>
+          <Badge intent="success" icon={Check}>
             Verified
           </Badge>
-          <Badge variant="warning" icon={AlertTriangle}>
+          <Badge intent="warning" icon={AlertTriangle}>
             Warning
           </Badge>
-          <Badge variant="danger" icon={X}>
+          <Badge intent="danger" icon={X}>
             Failed
           </Badge>
-          <Badge variant="info" icon={Info}>
+          <Badge intent="info" icon={Info}>
             FYI
           </Badge>
-          <Badge variant="brand" icon={Zap}>
+          <Badge intent="brand" icon={Zap}>
             Pro
           </Badge>
         </div>
@@ -114,10 +115,10 @@ export const WithIconRight: Story = {
     <Wrap>
       <SectionCard title="With right icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="brand" icon={Star} iconPosition="right">
+          <Badge intent="brand" icon={Star} iconPosition="right">
             Featured
           </Badge>
-          <Badge variant="success" icon={Check} iconPosition="right">
+          <Badge intent="success" icon={Check} iconPosition="right">
             Done
           </Badge>
         </div>
@@ -131,16 +132,16 @@ export const SolidWithIcon: Story = {
     <Wrap>
       <SectionCard title="Solid + icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge appearance="solid" variant="success" icon={Check}>
+          <Badge appearance="solid" intent="success" icon={Check}>
             Approved
           </Badge>
-          <Badge appearance="solid" variant="danger" icon={X}>
+          <Badge appearance="solid" intent="danger" icon={X}>
             Rejected
           </Badge>
-          <Badge appearance="solid" variant="brand" icon={Zap}>
+          <Badge appearance="solid" intent="brand" icon={Zap}>
             New
           </Badge>
-          <Badge appearance="solid" variant="warning" icon={AlertTriangle}>
+          <Badge appearance="solid" intent="warning" icon={AlertTriangle}>
             Beta
           </Badge>
         </div>
@@ -149,20 +150,20 @@ export const SolidWithIcon: Story = {
   ),
 };
 
-const VARIANTS: BadgeVariant[] = ['neutral', 'brand', 'success', 'warning', 'danger', 'info'];
+const INTENTS: Intent[] = ['neutral', 'brand', 'success', 'warning', 'danger', 'info'];
 
 export const AppearanceMatrix: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Appearance × variant — light vs solid">
+      <SectionCard title="Appearance × intent — light vs solid">
         <div className="space-y-3">
           {(['light', 'solid'] as const).map((appearance) => (
             <div key={appearance} className="flex flex-wrap items-center gap-2">
               <span className="w-12 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
                 {appearance}
               </span>
-              {VARIANTS.map((v) => (
-                <Badge key={v} appearance={appearance} variant={v} icon={Check}>
+              {INTENTS.map((v) => (
+                <Badge key={v} appearance={appearance} intent={v} icon={Check}>
                   {v}
                 </Badge>
               ))}

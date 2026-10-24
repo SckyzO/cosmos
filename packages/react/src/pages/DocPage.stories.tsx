@@ -259,7 +259,7 @@ const ButtonDocBody = () => {
               submit, cancel, delete, save.
             </p>
             <div className="mt-4 flex items-center gap-x-3 text-sm">
-              <Badge variant="success">Stable</Badge>
+              <Badge intent="success">Stable</Badge>
               <span className="text-[var(--color-text-muted)]">·</span>
               <span className="font-mono text-xs text-[var(--color-text-secondary)]">v1.0.0</span>
               <span className="text-[var(--color-text-muted)]">·</span>
@@ -595,7 +595,7 @@ export const WithoutSidebar: Story = {
               or deep-dive articles.
             </p>
             <div className="mt-4 flex items-center gap-x-3 text-sm">
-              <Badge variant="success">Stable</Badge>
+              <Badge intent="success">Stable</Badge>
               <span className="font-mono text-xs text-[var(--color-text-secondary)]">v1.0.0</span>
             </div>
           </header>
@@ -688,7 +688,7 @@ export const Changelog: Story = {
                 </div>
                 {r.added.length > 0 && (
                   <div className="mt-4">
-                    <Badge variant="success" size="sm">
+                    <Badge intent="success" size="sm">
                       Added
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
@@ -700,7 +700,7 @@ export const Changelog: Story = {
                 )}
                 {r.changed && r.changed.length > 0 && (
                   <div className="mt-4">
-                    <Badge variant="info" size="sm">
+                    <Badge intent="info" size="sm">
                       Changed
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
@@ -712,7 +712,7 @@ export const Changelog: Story = {
                 )}
                 {r.fixed && r.fixed.length > 0 && (
                   <div className="mt-4">
-                    <Badge variant="warning" size="sm">
+                    <Badge intent="warning" size="sm">
                       Fixed
                     </Badge>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">

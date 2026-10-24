@@ -8,7 +8,8 @@ import { DataTable } from './DataTable';
 import type { ColumnDef, DataTableDensity } from './types';
 import { StatusBadge } from '../status/StatusBadge';
 import { Avatar } from '../ui/Avatar';
-import { Badge, type BadgeVariant } from '../ui/Badge';
+import { Badge } from '../ui/Badge';
+import type { Intent } from '../ui/intent';
 import { Button } from '../ui/Button';
 import { RowActionButton } from '../ui/RowActionButton';
 import { SectionCard } from '../templates/SectionCard';
@@ -391,7 +392,7 @@ type Member = {
   lastSeen: string;
 };
 
-const MEMBER_STATUS_VARIANT: Record<Member['status'], BadgeVariant> = {
+const MEMBER_STATUS_INTENT: Record<Member['status'], Intent> = {
   Active: 'success',
   Invited: 'warning',
   Suspended: 'neutral',
@@ -456,7 +457,7 @@ const memberColumns: ColumnDef<Member>[] = [
     width: '16%',
     filterable: true,
     filterValue: (m) => m.status,
-    render: (m) => <Badge variant={MEMBER_STATUS_VARIANT[m.status]}>{m.status}</Badge>,
+    render: (m) => <Badge intent={MEMBER_STATUS_INTENT[m.status]}>{m.status}</Badge>,
   },
   {
     key: 'lastSeen',
