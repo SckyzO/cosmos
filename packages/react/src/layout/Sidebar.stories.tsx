@@ -544,3 +544,35 @@ export const SubMenuAndGroupOpenState: Story = {
     await expect(onOpenChange).toHaveBeenCalledTimes(4);
   },
 };
+
+/**
+ * A section right under the Brand draws no line of its own: the Brand's bottom
+ * border already separates them. The next section still opens with its line.
+ */
+export const SectionUnderTheBrandDrawsNoSecondLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand title="Acme" />
+        <Sidebar.Section>
+          <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
+        </Sidebar.Section>
+        <Sidebar.Section label="Account">
+          <Sidebar.Item icon={Settings} label="Settings" />
+        </Sidebar.Section>
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const brand = canvas.getByText('Acme').closest('[data-sidebar-brand]') as HTMLElement;
+    const first = canvas.getByRole('button', { name: 'Dashboard' }).parentElement
+      ?.parentElement as HTMLElement;
+    const second = canvas.getByText('Account').parentElement as HTMLElement;
+    await expect(getComputedStyle(brand).borderBottomWidth).toBe('1px');
+    await expect(first.previousElementSibling).toBe(brand);
+    await expect(getComputedStyle(first).borderTopWidth).toBe('0px');
+    await expect(getComputedStyle(first).marginTop).toBe('0px');
+    await expect(getComputedStyle(second).borderTopWidth).toBe('1px');
+  },
+};

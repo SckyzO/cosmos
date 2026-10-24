@@ -382,3 +382,20 @@ export const inEachTheme = (check: () => void) => {
     noTransitions.remove();
   }
 };
+
+/**
+ * Clicks the Topbar hamburger of a `Shell` story twice and checks the sidebar
+ * collapses to its rail, then expands back. A page story that pins the
+ * Topbar's `sidebarCollapsed` overrides what Shell wires, and the button then
+ * does nothing.
+ */
+export const expectHamburgerTogglesSidebar = async (canvas: {
+  getByRole: (role: string, options: { name: string }) => HTMLElement;
+}) => {
+  const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+  const expanded = nav.getBoundingClientRect().width;
+  await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+  await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+  await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+  await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(expanded));
+};

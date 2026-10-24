@@ -201,7 +201,7 @@ const SidebarBrand = ({
 
   if (href) {
     return (
-      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
+      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass} data-sidebar-brand>
         {inner}
       </a>
     );
@@ -213,13 +213,14 @@ const SidebarBrand = ({
         type="button"
         onClick={onClick}
         className={clsx(baseClass, 'w-full text-left')}
+        data-sidebar-brand
       >
         {inner}
       </button>
     );
   }
   return (
-    <div ref={ref as Ref<HTMLDivElement>} className={baseClass}>
+    <div ref={ref as Ref<HTMLDivElement>} className={baseClass} data-sidebar-brand>
       {inner}
     </div>
   );
@@ -495,7 +496,9 @@ const SidebarGroup = ({
 
 // ─── Sidebar.Section ──────────────────────────────────────────────────────────
 // Visual separator + optional non-collapsible label. Label hides automatically
-// when the sidebar is collapsed.
+// when the sidebar is collapsed. Right under the Brand, whose bottom border
+// already separates it, the section draws no line of its own: two lines 8px
+// apart would sit there otherwise.
 
 export type SidebarSectionProps = {
   label?: string;
@@ -506,7 +509,7 @@ export type SidebarSectionProps = {
 const SidebarSection = ({ label, collapsed: collapsedProp, children }: SidebarSectionProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   return (
-    <div className="my-2 border-t border-[var(--color-border)] pt-2">
+    <div className="my-2 border-t border-[var(--color-border)] pt-2 [[data-sidebar-brand]+&]:mt-0 [[data-sidebar-brand]+&]:border-t-0">
       {label && !collapsed && (
         <p className="text-3xs px-5 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
           {label}
