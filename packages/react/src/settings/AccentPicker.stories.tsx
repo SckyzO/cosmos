@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 import { ColorSwatch } from './ColorSwatch';
@@ -237,5 +237,45 @@ export const ColorSwatchForwardsRef: Story = {
   render: () => <ColorSwatch ref={swatchRef} hex="#465fff" label="Brand" />,
   play: async ({ canvas }) => {
     await expectRefFocuses(swatchRef, canvas.getByRole('radio', { name: 'Brand' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="space-y-6">
+        <AccentPicker
+          aria-label="Uncontrolled"
+          colors={ACCENTS}
+          defaultValue="sky"
+          onChange={args.onChange}
+        />
+        <AccentPicker
+          aria-label="Controlled"
+          colors={ACCENTS}
+          value="brand"
+          onChange={args.onChange}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('radiogroup', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('radio', { name: 'Sky' })).toBeChecked();
+    await userEvent.click(own.getByRole('radio', { name: 'Teal' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('teal');
+    await expect(own.getByRole('radio', { name: 'Teal' })).toBeChecked();
+
+    const held = within(canvas.getByRole('radiogroup', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('radio', { name: 'Teal' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('teal');
+    await expect(held.getByRole('radio', { name: 'Brand' })).toBeChecked();
   },
 };

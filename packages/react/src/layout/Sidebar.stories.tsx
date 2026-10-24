@@ -448,3 +448,44 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(itemButtonRef, canvas.getByRole('button', { name: /Pressed item/ }));
   },
 };
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const UncontrolledFromDefaultCollapsed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Sidebar defaultCollapsed onCollapsedChange={args.onCollapsedChange}>
+        <Sidebar.Item icon={Server} label="Servers" />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+    await expect(canvas.getByText('Servers')).toBeVisible();
+  },
+};
+
+export const ControlledCollapsedOnlyReports: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Sidebar collapsed defaultCollapsed={false} onCollapsedChange={args.onCollapsedChange}>
+        <Sidebar.Item icon={Server} label="Servers" />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    await expect(canvas.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+    await expect(canvas.queryByText('Servers')).toBeNull();
+  },
+};

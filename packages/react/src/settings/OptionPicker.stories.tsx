@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectRefFocuses } from '../storybook-helpers';
 import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
@@ -248,5 +248,45 @@ export const OptionCardForwardsRef: Story = {
   render: () => <OptionCard ref={cardRef} id="soft" label="Soft" />,
   play: async ({ canvas }) => {
     await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Soft' }));
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="space-y-6">
+        <OptionPicker
+          aria-label="Uncontrolled"
+          options={ICON_STYLES}
+          defaultValue="soft"
+          onChange={args.onChange}
+        />
+        <OptionPicker
+          aria-label="Controlled"
+          options={ICON_STYLES}
+          value="soft"
+          onChange={args.onChange}
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('radiogroup', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('radio', { name: 'Soft' })).toBeChecked();
+    await userEvent.click(own.getByRole('radio', { name: 'Badge' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('badge');
+    await expect(own.getByRole('radio', { name: 'Badge' })).toBeChecked();
+
+    const held = within(canvas.getByRole('radiogroup', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('radio', { name: 'Badge' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('badge');
+    await expect(held.getByRole('radio', { name: 'Soft' })).toBeChecked();
   },
 };

@@ -9,8 +9,8 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
-import { Tabs } from './Tabs';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { Tabs, type TabsProps } from './Tabs';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -495,5 +495,51 @@ export const TabAndPanelAreLinked: Story = {
     await expect(overview).toHaveFocus();
     await userEvent.tab();
     await expect(panel).toHaveFocus();
+  },
+};
+
+// ── Controlled or not (#151) ─────────────────────────────────────────────────
+// Only `undefined` means uncontrolled. The uncontrolled instance starts from its
+// default and moves on its own; the controlled one, held at a fixed value, reports
+// the change and keeps showing the value it is given.
+
+const TwoTabs = (props: Omit<TabsProps, 'children'>) => (
+  <Tabs {...props}>
+    <Tabs.List>
+      <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+      <Tabs.Trigger value="logs">Logs</Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Panel value="overview">Overview panel</Tabs.Panel>
+    <Tabs.Panel value="logs">Logs panel</Tabs.Panel>
+  </Tabs>
+);
+
+export const DefaultValueOrControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="space-y-6">
+        <div role="group" aria-label="Uncontrolled">
+          <TwoTabs defaultValue="logs" onChange={args.onChange} />
+        </div>
+        <div role="group" aria-label="Controlled">
+          <TwoTabs value="overview" onChange={args.onChange} />
+        </div>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const own = within(canvas.getByRole('group', { name: 'Uncontrolled' }));
+    await expect(own.getByRole('tab', { name: 'Logs' })).toHaveAttribute('aria-selected', 'true');
+    await expect(own.getByRole('tabpanel')).toHaveTextContent('Logs panel');
+    await userEvent.click(own.getByRole('tab', { name: 'Overview' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('overview');
+    await expect(own.getByRole('tabpanel')).toHaveTextContent('Overview panel');
+
+    const held = within(canvas.getByRole('group', { name: 'Controlled' }));
+    await userEvent.click(held.getByRole('tab', { name: 'Logs' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('logs');
+    await expect(held.getByRole('tabpanel')).toHaveTextContent('Overview panel');
   },
 };
