@@ -34,42 +34,42 @@ const EVENTS: CalendarEvent[] = [
     id: 'patching',
     title: 'Kernel patching, rack A',
     start: new Date(2026, 4, 5),
-    tone: 'warning',
+    intent: 'warning',
   },
-  { id: 'release', title: 'Release 2.4', start: new Date(2026, 4, 7), tone: 'success' },
+  { id: 'release', title: 'Release 2.4', start: new Date(2026, 4, 7), intent: 'success' },
   {
     id: 'postmortem',
     title: 'Postmortem: API latency',
     start: new Date(2026, 4, 7),
-    tone: 'danger',
+    intent: 'danger',
   },
-  { id: 'one-on-one', title: '1:1 with Sarah', start: new Date(2026, 4, 7), tone: 'violet' },
-  { id: 'vendor', title: 'Vendor call', start: new Date(2026, 4, 7), tone: 'info' },
+  { id: 'one-on-one', title: '1:1 with Sarah', start: new Date(2026, 4, 7), intent: 'violet' },
+  { id: 'vendor', title: 'Vendor call', start: new Date(2026, 4, 7), intent: 'info' },
   {
     id: 'kubecon',
     title: 'KubeCon trip',
     start: new Date(2026, 4, 9),
     end: new Date(2026, 4, 12),
-    tone: 'info',
+    intent: 'info',
   },
   { id: 'grafana', title: 'Grafana upgrade', start: new Date(2026, 4, 14) },
   { id: 'capacity', title: 'Capacity review', start: new Date(2026, 4, 19) },
-  { id: 'handover', title: 'On-call handover', start: new Date(2026, 4, 21), tone: 'violet' },
+  { id: 'handover', title: 'On-call handover', start: new Date(2026, 4, 21), intent: 'violet' },
   {
     id: 'pentest',
     title: 'Pen test window',
     start: new Date(2026, 4, 25),
     end: new Date(2026, 4, 26),
-    tone: 'danger',
+    intent: 'danger',
   },
-  { id: 'report', title: 'Quarterly report', start: new Date(2026, 4, 28), tone: 'success' },
-  { id: 'drill', title: 'Failover drill', start: new Date(2026, 5, 10), tone: 'warning' },
-  { id: 'offsite', title: 'Team offsite', start: new Date(2026, 5, 17), tone: 'violet' },
+  { id: 'report', title: 'Quarterly report', start: new Date(2026, 4, 28), intent: 'success' },
+  { id: 'drill', title: 'Failover drill', start: new Date(2026, 5, 10), intent: 'warning' },
+  { id: 'offsite', title: 'Team offsite', start: new Date(2026, 5, 17), intent: 'violet' },
 ];
 
 const UPCOMING_COUNT = 4;
 
-const DOT: Record<NonNullable<CalendarEvent['tone']>, string> = {
+const DOT: Record<NonNullable<CalendarEvent['intent']>, string> = {
   brand: 'bg-brand-500',
   success: 'bg-green-500',
   warning: 'bg-amber-500',
@@ -115,7 +115,7 @@ const Upcoming = ({ from }: { from: Date }) => {
             <li key={e.id} className="flex items-start gap-3 px-4 py-3">
               <span
                 aria-hidden
-                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[e.tone ?? 'brand']}`}
+                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[e.intent ?? 'brand']}`}
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">

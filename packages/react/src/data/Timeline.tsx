@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
+import type { Intent } from '../ui/intent';
 
 export type TimelineItem = {
   id: string;
@@ -17,10 +18,10 @@ export type TimelineItem = {
   /** Optional image URL for `avatar` variant. */
   avatarSrc?: string;
   /**
-   * Visual tone for `stepper` and `alternating` variants (icon circle
-   * background). Defaults to `brand`.
+   * Color of the icon circle in the `stepper` and `alternating` variants.
+   * Defaults to `brand`.
    */
-  tone?: TimelineTone;
+  intent?: TimelineIntent;
   /** Extra line under the description, e.g. "by Sarah Chen". */
   meta?: ReactNode;
   /**
@@ -30,7 +31,10 @@ export type TimelineItem = {
   group?: string;
 };
 
-export type TimelineTone = 'brand' | 'success' | 'warning' | 'danger' | 'neutral';
+export type TimelineIntent = Extract<
+  Intent,
+  'brand' | 'success' | 'warning' | 'danger' | 'neutral'
+>;
 
 export type TimelineVariant =
   /** Small coloured dot — concise activity stream. */
@@ -39,7 +43,7 @@ export type TimelineVariant =
   | 'avatar'
   /**
    * Flowbite-style stepper timeline — large icon circle (40px) with the
-   * Lucide icon at 20px, tinted background per `tone`. Best for hero
+   * Lucide icon at 20px, tinted background per `intent`. Best for hero
    * activity feeds or onboarding-style step-by-step views.
    */
   | 'stepper'
@@ -58,9 +62,9 @@ export type TimelineProps = {
   className?: string;
 };
 
-// ── Tone colour map for the `stepper` variant ────────────────────────────────
+// ── Intent colour map for the `stepper` variant ──────────────────────────────
 
-const TONE_BG: Record<TimelineTone, string> = {
+const INTENT_BG: Record<TimelineIntent, string> = {
   brand: 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300',
   success: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
@@ -82,15 +86,15 @@ const AvatarIndicator = ({ name, src }: { name?: string; src?: string }) => (
 
 const StepperIndicator = ({
   icon: Icon,
-  tone = 'brand',
+  intent = 'brand',
 }: {
   icon?: ElementType;
-  tone?: TimelineTone;
+  intent?: TimelineIntent;
 }) => (
   <span
     className={clsx(
       'flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900',
-      TONE_BG[tone]
+      INTENT_BG[intent]
     )}
   >
     {Icon ? <Icon className="h-5 w-5" /> : <span className="h-2 w-2 rounded-full bg-current" />}
@@ -179,7 +183,7 @@ const TimelineList = ({
               className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 md:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)]"
             >
               <div className="col-start-1 row-start-1 flex flex-col items-center md:col-start-2">
-                <StepperIndicator icon={item.icon} tone={item.tone} />
+                <StepperIndicator icon={item.icon} intent={item.intent} />
                 {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
               </div>
               <div
@@ -241,7 +245,7 @@ const TimelineList = ({
               {variant === 'avatar' ? (
                 <AvatarIndicator name={item.avatarName} src={item.avatarSrc} />
               ) : variant === 'stepper' ? (
-                <StepperIndicator icon={item.icon} tone={item.tone} />
+                <StepperIndicator icon={item.icon} intent={item.intent} />
               ) : (
                 <DotIndicator icon={item.icon} />
               )}
