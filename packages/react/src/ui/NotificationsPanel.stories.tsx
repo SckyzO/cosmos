@@ -353,21 +353,22 @@ export const ItemIntentsKeepTheirLook: Story = {
   play: async () => {
     const body = within(document.body);
     const item = async (title: string) => (await body.findByText(title)).closest('button')!;
+    // The badge takes Badge's solid fill for the intent.
     const cases = [
-      ['danger item', 'red', 'CRIT'],
-      ['warning item', 'amber', 'WARN'],
-      ['info item', 'blue', 'INFO'],
-      ['success item', 'green', 'OK'],
+      ['danger item', 'red', 'CRIT', ['bg-red-600', 'text-white']],
+      ['warning item', 'amber', 'WARN', ['bg-amber-500', 'text-gray-900']],
+      ['info item', 'blue', 'INFO', ['bg-blue-600', 'text-white']],
+      ['success item', 'green', 'OK', ['bg-green-500', 'text-gray-900']],
     ] as const;
-    for (const [title, color, label] of cases) {
+    for (const [title, color, label, badge] of cases) {
       const row = await item(title);
       await expect(row.querySelector('svg')).toHaveClass(
         color === 'green' ? 'text-green-600' : `text-${color}-500`
       );
       await expect(row.querySelector('div.rounded-full')).toHaveClass(`bg-${color}-500/15`);
-      await expect(within(row).getByText(label)).toHaveClass(`bg-${color}-500`, 'text-white');
+      await expect(within(row).getByText(label)).toHaveClass(...badge);
     }
     // The label is only a default.
-    await expect(within(await item('custom item')).getByText('DOWN')).toHaveClass('bg-red-500');
+    await expect(within(await item('custom item')).getByText('DOWN')).toHaveClass('bg-red-600');
   },
 };
