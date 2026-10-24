@@ -161,10 +161,10 @@ export const OtpInput = ({
             onPaste={handlePaste(i)}
             onFocus={(e) => e.target.select()}
             className={clsx(
-              'focus:ring-brand-500/30 h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+              'h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
               error
-                ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
-                : 'focus:border-brand-500 border-gray-200 dark:border-gray-700'
+                ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
+                : 'focus:field-focus border-gray-200 dark:border-gray-700'
             )}
           />
         );

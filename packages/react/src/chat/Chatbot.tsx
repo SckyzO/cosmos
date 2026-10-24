@@ -140,7 +140,7 @@ export const Chatbot = ({
               type="button"
               aria-label="Close chat"
               onClick={() => setOpen(false)}
-              className="focus-visible:ring-brand-500/40 rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 dark:hover:bg-gray-800"
+              className="focus-visible:focus-indicator rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)] dark:hover:bg-gray-800"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
@@ -172,7 +172,7 @@ export const Chatbot = ({
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 dark:hover:bg-red-500/20"
+                  className="focus-visible:focus-indicator inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
                   <RotateCcw className="h-3 w-3" aria-hidden />
                   Retry
@@ -188,7 +188,7 @@ export const Chatbot = ({
                   <button
                     type="button"
                     onClick={() => onSend(s)}
-                    className="border-brand-500/40 text-brand-600 dark:text-brand-400 hover:bg-brand-500/10 focus-visible:ring-brand-500/40 rounded-full border px-3 py-1 text-xs font-medium focus:outline-none focus-visible:ring-2"
+                    className="border-brand-500/40 text-brand-600 dark:text-brand-400 hover:bg-brand-500/10 focus-visible:focus-indicator rounded-full border px-3 py-1 text-xs font-medium"
                   >
                     {s}
                   </button>
@@ -208,7 +208,7 @@ export const Chatbot = ({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={clsx(
-          'bg-brand-500 shadow-brand-500/25 hover:bg-brand-600 focus-visible:ring-brand-500/40 fixed right-6 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform focus:outline-none focus-visible:ring-4 active:scale-95',
+          'bg-brand-500 shadow-brand-500/25 hover:bg-brand-600 focus-visible:focus-indicator fixed right-6 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95',
           open && 'max-[479px]:hidden'
         )}
       >

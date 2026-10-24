@@ -97,7 +97,7 @@ const PopoverRoot = ({
 
 export type PopoverTriggerProps = ComponentPropsWithRef<'button'>;
 
-function PopoverTrigger({ onClick, children, ref, ...rest }: PopoverTriggerProps) {
+function PopoverTrigger({ onClick, className, children, ref, ...rest }: PopoverTriggerProps) {
   const { open, setOpen, triggerRef, refreshRect } = useCtx();
   useEffect(() => {
     if (open) refreshRect();
@@ -108,6 +108,7 @@ function PopoverTrigger({ onClick, children, ref, ...rest }: PopoverTriggerProps
       type="button"
       aria-haspopup="dialog"
       aria-expanded={open}
+      className={clsx('focus-visible:focus-indicator', className)}
       onClick={(e) => {
         onClick?.(e);
         setOpen(!open);

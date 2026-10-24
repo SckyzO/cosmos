@@ -159,13 +159,13 @@ Values (from 25 to 950, in the order 25, 50, 100, 200, 300, 400, 500, 600, 700, 
 | ---------- | -------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
 | `blue`     | Blue     | `#f2f7ff` | `#ecf3ff` | `#dde9ff` | `#c2d6ff` | `#9cb9ff` | `#7592ff` | `#465fff` | `#3641f5` | `#2a31d8` | `#252dae` | `#262e89` | `#161950` |
 | `indigo`   | Indigo   | `#f4f6fe` | `#eff2fe` | `#e2e7ff` | `#c9d3ff` | `#a7b5ff` | `#7f8fff` | `#5963e9` | `#4a4fd3` | `#3c3bbf` | `#2f25ab` | `#24257a` | `#160b63` |
-| `violet`   | Violet   | `#f7f5ff` | `#f3f0fe` | `#eae4ff` | `#d8ceff` | `#c0abff` | `#a57eff` | `#8745f1` | `#752cdb` | `#6508c6` | `#5200a4` | `#3f097e` | `#2b005b` |
-| `purple`   | Purple   | `#fcf3ff` | `#fbedff` | `#f7dfff` | `#f0c2ff` | `#e696ff` | `#d55bf8` | `#ad2ecf` | `#990aba` | `#81019e` | `#690181` | `#520066` | `#380046` |
-| `rose`     | Rose     | `#fff3f6` | `#ffeef1` | `#ffdfe6` | `#ffc3d2` | `#ff96b4` | `#ff4e90` | `#d4166d` | `#b8005c` | `#9b004c` | `#7f013d` | `#64002f` | `#45001e` |
+| `violet`   | Violet   | `#f7f5ff` | `#f3f0fe` | `#eae4ff` | `#d8ceff` | `#c0abff` | `#a57eff` | `#8a49f5` | `#752cdb` | `#6508c6` | `#5200a4` | `#3f097e` | `#2b005b` |
+| `purple`   | Purple   | `#fcf3ff` | `#fbedff` | `#f7dfff` | `#f0c2ff` | `#e696ff` | `#d55bf8` | `#b234d4` | `#990aba` | `#81019e` | `#690181` | `#520066` | `#380046` |
+| `rose`     | Rose     | `#fff3f6` | `#ffeef1` | `#ffdfe6` | `#ffc3d2` | `#ff96b4` | `#ff4e90` | `#d81e70` | `#b8005c` | `#9b004c` | `#7f013d` | `#64002f` | `#45001e` |
 | `teal`     | Teal     | `#defffa` | `#d2fdf6` | `#c8f3ec` | `#99e7dc` | `#31d5c6` | `#02b3a5` | `#038378` | `#006f66` | `#015c54` | `#024a43` | `#003833` | `#002723` |
 | `cyan`     | Cyan     | `#ecf9ff` | `#e1f7ff` | `#c8f0ff` | `#96e3fe` | `#25cefb` | `#01abd3` | `#017f9d` | `#016b84` | `#01596e` | `#014759` | `#003645` | `#002631` |
 | `graphite` | Graphite | `#f5f7fb` | `#f0f3f7` | `#e6e8ec` | `#d0d6e2` | `#b5bbc7` | `#959ba6` | `#707580` | `#5d626d` | `#4c515c` | `#3c414b` | `#2e3138` | `#1f2228` |
-| `red`      | Red      | `#fff4f3` | `#ffeeec` | `#ffe0dd` | `#ffc6c0` | `#ff9b94` | `#ff5a57` | `#db192a` | `#be021e` | `#a00118` | `#830011` | `#67000b` | `#470005` |
+| `red`      | Red      | `#fff4f3` | `#ffeeec` | `#ffe0dd` | `#ffc6c0` | `#ff9b94` | `#ff5a57` | `#de1f2d` | `#be021e` | `#a00118` | `#830011` | `#67000b` | `#470005` |
 | `orange`   | Orange   | `#fff4f0` | `#ffefe8` | `#ffe1d5` | `#ffc8b0` | `#ff9f73` | `#f66a15` | `#c04f01` | `#a44201` | `#8a3600` | `#712b00` | `#592000` | `#3d1300` |
 | `amber`    | Amber    | `#fff5ea` | `#fff0e0` | `#ffe3c5` | `#ffcb8f` | `#ffa408` | `#d48700` | `#a46800` | `#8a5601` | `#734701` | `#5d3900` | `#482b00` | `#321c00` |
 | `green`    | Green    | `#e5ffe9` | `#d7ffde` | `#cdf4d4` | `#a5e9b2` | `#5ad87e` | `#32b75e` | `#02863c` | `#027232` | `#015e28` | `#014b1f` | `#003915` | `#00280d` |
@@ -179,6 +179,8 @@ Replace the hardcoded blue:
 ```css
 --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
 ```
+
+Since #151 the halo is drawn together with a solid indicator through the `focus-indicator`, `field-focus`, `field-focus-error` and `focus-indicator-on-accent` utilities of `tailwind-tokens.css` (documented in `packages/theme/README.md`); no component uses `--shadow-focus-ring` alone.
 
 ### 1.6 Contrast guard — `packages/theme/scripts/check-contrast.mjs`
 
@@ -207,13 +209,14 @@ Checked thresholds (≥ 4.5 unless stated otherwise):
 - For each accent × light theme: `brand-600` on the 3 surfaces and on `brand-50`.
 - For each accent × dark theme: `brand-400` on the 3 surfaces.
 - For each accent: white text (the theme's `--color-white`, cream `oklch(99.3% 0.008 85)` on `sand`) on `brand-500`.
+- For each accent × theme: `brand-500`, the focus indicator, on the 3 surfaces plus `--color-bg-panel`, `--color-bg-elevated`, `gray-800` and `gray-900` (the dark grays that stay dark in a light theme, as a `Navbar` with `theme="dark"`), ≥ 3 (WCAG 1.4.11). `violet`, `purple`, `rose` and `red` have a `brand-500` just light enough to clear 3:1 on `deep-blue` raised while white text stays above 4.8.
 - `dark` structure (non-WCAG thresholds, so surfaces don't blend into each other): card ↔ raised ≥ 1.15; `gray-700` on card ≥ 1.6.
 
 Before the contrast checks, the script reads `packages/react/src/settings/appearance.ts` as text and **fails** when it disagrees with the CSS: every theme and accent of `COSMOS_THEMES` / `COSMOS_ACCENTS` must exist in the CSS and vice versa, a theme's `dark` flag must match the classes the `dark:` variant of `tailwind-tokens.css` covers, and an accent's `hex` must equal its `brand-500`. A theme is `:root` or a class block of `css-vars.css` that sets `--color-bg-base`.
 
 Do **not** check `--color-text-muted` or `gray-400` on light themes, nor `muted` on `deep-blue` (known debt, separate PR).
 
-Expected reference values (worst case): white on `brand-500` between 4.61 and 5.16; `brand-600` on Sand subtle ≥ 5.21; `brand-400` on `deep-blue` raised ≥ 4.67; `dark`: `gray-500` on raised 4.80, card ↔ raised 1.19, `gray-700` on card 1.70.
+Expected reference values (worst case): white on `brand-500` between 4.51 and 4.84; `brand-500` focus indicator ≥ 4.19 on `light`, 3.96 on `sand`, 3.20 on `dark`, 3.03 on `deep-blue`; `brand-600` on Sand subtle ≥ 5.21; `brand-400` on `deep-blue` raised ≥ 4.67; `dark`: `gray-500` on raised 4.80, card ↔ raised 1.19, `gray-700` on card 1.70.
 
 The script prints a readable table and exits with code 1 on the first failure, naming the failing pair.
 

@@ -42,8 +42,8 @@ export function Input({
   };
   const hasGroup = prefix !== undefined || suffix !== undefined;
   const borderClass = error
-    ? 'border-red-400 focus-within:border-red-500 dark:border-red-500/60'
-    : 'border-gray-200 focus-within:border-brand-500 dark:border-gray-700';
+    ? 'border-red-400 focus-within:field-focus-error dark:border-red-500/60'
+    : 'border-gray-200 focus-within:field-focus dark:border-gray-700';
 
   return (
     <div className="block">
@@ -97,12 +97,12 @@ export function Input({
             id={inputId}
             {...fieldA11y}
             className={clsx(
-              'h-full w-full rounded-lg border bg-white text-sm transition-colors placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400',
+              'h-full w-full rounded-lg border bg-white text-sm transition-colors placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400',
               Icon ? 'pl-9' : 'pl-3',
               rightSlot ? 'pr-16' : 'pr-3',
               error
-                ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
-                : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
+                ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
+                : 'focus:field-focus border-gray-200 dark:border-gray-700',
               className
             )}
             {...rest}

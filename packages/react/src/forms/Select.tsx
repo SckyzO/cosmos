@@ -85,11 +85,11 @@ export function Select({
           aria-describedby={describedByIds}
           aria-invalid={error ? true : undefined}
           className={clsx(
-            'h-9 appearance-none rounded-lg border bg-white pr-9 pl-3 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'h-9 appearance-none rounded-lg border bg-white pr-9 pl-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
             fullWidth && 'w-full',
             error
-              ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
-              : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
+              ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
+              : 'focus:field-focus border-gray-200 dark:border-gray-700',
             className
           )}
           {...rest}

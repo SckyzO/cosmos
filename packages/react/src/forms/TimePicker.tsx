@@ -79,12 +79,12 @@ export function TimePicker({
           disabled={disabled}
           onChange={(e) => onChange?.(e.target.value, e)}
           className={clsx(
-            'h-full w-full rounded-lg border bg-white pr-3 pl-9 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'h-full w-full rounded-lg border bg-white pr-3 pl-9 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
             // Hide the browser-native time picker icon (Chrome adds an extra clock on the right) so only our left-icon shows.
             '[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0',
             error
-              ? 'border-red-400 focus:border-red-500 dark:border-red-500/60'
-              : 'focus:border-brand-500 border-gray-200 dark:border-gray-700',
+              ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
+              : 'focus:field-focus border-gray-200 dark:border-gray-700',
             className
           )}
           {...rest}

@@ -46,7 +46,7 @@ export const ActiveFiltersBar = ({
             type="button"
             onClick={() => onClearOne(f.key)}
             aria-label={`Clear ${f.label} filter`}
-            className="hover:text-brand-800 dark:hover:text-brand-200 ml-0.5 rounded-full"
+            className="hover:text-brand-800 dark:hover:text-brand-200 focus-visible:focus-indicator ml-0.5 rounded-full"
           >
             <X className="h-3 w-3" />
           </button>
@@ -55,7 +55,7 @@ export const ActiveFiltersBar = ({
       <button
         type="button"
         onClick={onClearAll}
-        className="ml-1 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+        className="focus-visible:focus-indicator ml-1 rounded text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Clear all
       </button>

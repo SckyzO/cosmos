@@ -85,7 +85,7 @@ export const StickyScrollNav = ({
             type="button"
             key={id}
             onClick={() => handleClick(id)}
-            className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
+            className="focus-visible:focus-indicator shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
           >
             {label}
           </button>

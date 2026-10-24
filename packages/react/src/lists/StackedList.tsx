@@ -86,7 +86,7 @@ function StackedListItem({
 
   const titleEl = isLinked ? (
     <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">
-      <a href={href}>
+      <a href={href} className="focus:outline-hidden">
         {/* Full-row click target */}
         <span className="absolute inset-x-0 -top-px bottom-0" aria-hidden />
         {title}
@@ -99,7 +99,11 @@ function StackedListItem({
   return (
     <li
       ref={ref}
-      className={clsx('flex justify-between gap-x-6 py-5', isLinked && 'relative', className)}
+      className={clsx(
+        'flex justify-between gap-x-6 py-5',
+        isLinked && 'has-focus-visible:focus-indicator relative has-focus-visible:ring-inset',
+        className
+      )}
       {...rest}
     >
       <div className="flex min-w-0 gap-x-4">

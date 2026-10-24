@@ -57,7 +57,7 @@ export const Pagination = ({
           <button
             type="button"
             onClick={() => onToggleShowAll(!showAll)}
-            className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator rounded text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             {showAll ? 'Show paginated' : 'Show all'}
           </button>
@@ -69,7 +69,7 @@ export const Pagination = ({
               type="button"
               onClick={() => onPageChange(Math.max(0, safePage - 1))}
               disabled={safePage === 0}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5"
+              className="focus-visible:focus-indicator flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5"
             >
               <ChevronLeft className="h-4 w-4" /> Previous
             </button>
@@ -88,7 +88,7 @@ export const Pagination = ({
                     key={p}
                     onClick={() => onPageChange(p)}
                     className={clsx(
-                      'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors',
+                      'focus-visible:focus-indicator flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors',
                       p === safePage
                         ? 'bg-brand-500 text-white'
                         : 'border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5'
@@ -103,7 +103,7 @@ export const Pagination = ({
               type="button"
               onClick={() => onPageChange(Math.min(totalPages - 1, safePage + 1))}
               disabled={safePage === totalPages - 1}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5"
+              className="focus-visible:focus-indicator flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5"
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>

@@ -67,7 +67,7 @@ function AccordionTrigger({
       <RadixAccordion.Trigger
         ref={ref}
         className={clsx(
-          'group focus-visible:ring-brand-500/30 flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 dark:text-white dark:hover:bg-white/5',
+          'group focus-visible:focus-indicator flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
           className
         )}
         {...rest}

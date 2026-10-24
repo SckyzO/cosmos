@@ -55,7 +55,7 @@ export const PageActionButton = ({
     ref={ref}
     type={type}
     className={clsx(
-      'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      'focus-visible:focus-indicator flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
       variantClass(variant, intent),
       className
     )}
@@ -92,7 +92,7 @@ export const PageActionIconButton = ({
     ref={ref}
     type={type}
     className={clsx(
-      'flex items-center justify-center rounded-lg border p-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      'focus-visible:focus-indicator flex items-center justify-center rounded-lg border p-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
       variantClass(variant, intent),
       className
     )}

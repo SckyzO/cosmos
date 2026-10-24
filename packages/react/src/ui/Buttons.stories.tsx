@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
-import { expectRefFocuses, expectTextContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectRefFocuses,
+  expectTextContrast,
+  inEachTheme,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -369,4 +374,20 @@ export const ForwardsRef: Story = {
   play: async ({ canvas }) => {
     await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: 'Save' }));
   },
+};
+
+// The keyboard focus indicator: a 2px accent ring and its halo, on every theme.
+
+export const FocusShowsRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { children: 'Save' },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('button', { name: 'Save' }));
+  },
+};
+
+export const FocusShowsRingInLight: Story = {
+  ...FocusShowsRingInDark,
+  globals: { theme: 'light' },
 };

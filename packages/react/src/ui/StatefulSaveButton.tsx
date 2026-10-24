@@ -77,7 +77,7 @@ export const StatefulSaveButton = ({
       onClick={inactive ? undefined : onClick}
       disabled={inactive}
       className={clsx(
-        'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all disabled:cursor-not-allowed',
+        'focus-visible:focus-indicator flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all disabled:cursor-not-allowed',
         cfg.cls,
         className
       )}

@@ -103,7 +103,7 @@ export const Dropdown = ({
         aria-haspopup="menu"
         aria-expanded={open}
         className={clsx(
-          'flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
+          'focus-visible:focus-indicator flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
           open && 'ring-brand-500/30 ring-2'
         )}
       >
@@ -154,7 +154,7 @@ export const Dropdown = ({
                     closeAndRefocus();
                   }}
                   className={clsx(
-                    'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                    'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
                     isSelected
                       ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
                       : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'

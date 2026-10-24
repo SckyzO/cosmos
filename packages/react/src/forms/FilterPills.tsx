@@ -66,10 +66,10 @@ export const FilterPills = <T extends string = string>({
               tabIndex={tabIndex}
               onClick={() => onChange(opt.value)}
               className={clsx(
-                'flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors',
+                'flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors focus-visible:ring-inset',
                 value === opt.value
-                  ? 'bg-brand-500 text-white'
-                  : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5'
+                  ? 'bg-brand-500 focus-visible:focus-indicator-on-accent text-white'
+                  : 'focus-visible:focus-indicator text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5'
               )}
             >
               {opt.label}

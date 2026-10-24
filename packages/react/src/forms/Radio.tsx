@@ -72,7 +72,7 @@ export function Radio({
         <span
           aria-hidden
           className={clsx(
-            'peer-focus-visible:ring-brand-500/40 flex items-center justify-center rounded-full border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 dark:peer-focus-visible:ring-offset-gray-900',
+            'peer-focus-visible:focus-indicator flex items-center justify-center rounded-full border transition-colors',
             sizes.box,
             isChecked
               ? 'border-brand-500 bg-white dark:bg-gray-800'

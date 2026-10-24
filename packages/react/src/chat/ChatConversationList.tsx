@@ -56,7 +56,7 @@ export const ChatConversationList = ({
               aria-current={selected || undefined}
               onClick={() => onSelect(c.id)}
               className={clsx(
-                'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors focus:outline-none focus-visible:bg-gray-100 dark:focus-visible:bg-gray-800',
+                'focus-visible:focus-indicator flex w-full items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:bg-gray-100 focus-visible:ring-inset dark:focus-visible:bg-gray-800',
                 selected ? 'bg-brand-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
               )}
             >

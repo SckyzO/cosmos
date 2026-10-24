@@ -44,6 +44,7 @@
   --shadow-theme-lg: 0px 12px 16px -4px rgb(16 24 40 / 8%), 0px 4px 6px -2px rgb(16 24 40 / 3%);
   --shadow-theme-xl: 0px 20px 24px -4px rgb(16 24 40 / 8%), 0px 8px 8px -4px rgb(16 24 40 / 3%);
   --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
+  --shadow-focus-ring-error: 0 0 0 4px color-mix(in srgb, var(--color-red-500) 12%, transparent);
 
   /* ── Brand palette (TailAdmin blue) — [data-accent] in css-vars.css swaps it ── */
   --color-brand-25: #f2f7ff;
@@ -84,4 +85,47 @@
   /* ── Bridges: aliases that pull values from CSS vars (defined in css-vars.css)
      so utilities like bg-accent-primary stay in sync with theme switcher. */
   --color-accent-primary: var(--color-accent);
+}
+
+/* ── Focus indicator ───────────────────────────────────────────────────────
+ * One focus look for every control: a solid accent indicator plus the
+ * --shadow-focus-ring halo. The halo is 12% of the accent, too faint to be the
+ * only cue, so the solid part is what carries WCAG 1.4.11 (brand-500 reaches
+ * 3:1 on the surfaces of the four themes, see scripts/check-contrast.mjs).
+ *
+ * The utilities hold no state: put the variant that fits in front of them.
+ *
+ *   focus-visible:focus-indicator    a button, link, toggle, tab, menu item…:
+ *                                    2px accent ring + halo, keyboard focus only
+ *   peer-focus-visible:…, group-focus-visible:…, focus-within:…
+ *                                    the same, for a control drawn by a sibling
+ *                                    or a wrapper (checkbox, radio, card)
+ *   focus:field-focus                a text field: accent border + halo
+ *   focus-within:field-focus         the same on a wrapper of the field
+ *   focus:field-focus-error          the field in error: red border + red halo
+ *   focus-visible:focus-indicator-on-accent
+ *                                    a control filled with brand-500 (the active
+ *                                    segment, the selected day), where a brand
+ *                                    ring would vanish: a 2px white ring, no halo
+ *                                    (white on brand-500 is checked at 4.5:1)
+ *
+ * No ring offset. Add ring-inset where an ancestor clips (overflow-hidden) or a
+ * neighbour hides the outer ring.
+ *
+ * outline-hidden hides the browser outline but keeps it in forced-colors mode,
+ * where box-shadow is not painted: the indicator never disappears there. */
+@utility focus-indicator {
+  @apply ring-brand-500 shadow-focus-ring ring-2 outline-hidden;
+}
+
+@utility field-focus {
+  @apply border-brand-500 shadow-focus-ring outline-hidden;
+}
+
+@utility field-focus-error {
+  @apply shadow-focus-ring-error border-red-500 outline-hidden;
+}
+
+@utility focus-indicator-on-accent {
+  @apply ring-2 ring-white outline-hidden;
 }
