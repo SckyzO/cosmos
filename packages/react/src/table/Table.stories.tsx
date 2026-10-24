@@ -19,6 +19,7 @@ import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
+import { expectFocusRing } from '../storybook-helpers';
 
 const meta = {
   title: 'Tables/Table',
@@ -142,6 +143,7 @@ export const StickyHeader: Story = {
   render: (args) => (
     <Wrap>
       <Table {...args}>
+        <TableCaption>All compute nodes</TableCaption>
         <NodeHead />
         <TableBody>
           {MANY_NODES.map((n) => (
@@ -151,6 +153,52 @@ export const StickyHeader: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The rows overflow the container: it is a focusable region, named by the caption.
+    const region = await canvas.findByRole('region', { name: 'All compute nodes' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+  },
+};
+
+/** A table that scrolls takes the focus, as a region named by its caption; one that fits does not. */
+export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        <Table stickyHeader containerClassName="max-h-32">
+          <TableCaption>Scrolls</TableCaption>
+          <NodeHead />
+          <TableBody>
+            {MANY_NODES.map((n) => (
+              <NodeRow key={n.name} node={n} />
+            ))}
+          </TableBody>
+        </Table>
+        <Table>
+          <TableCaption>Fits</TableCaption>
+          <NodeHead />
+          <TableBody>
+            {NODES.slice(0, 2).map((n) => (
+              <NodeRow key={n.name} node={n} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'Scrolls' });
+    await expect(region).toHaveAttribute('tabindex', '0');
+    await expect(region.scrollHeight).toBeGreaterThan(region.clientHeight);
+    await expectFocusRing(region, { inset: true });
+
+    // The other table fits: no tab stop, no region.
+    const fitting = canvas.getByRole('table', { name: 'Fits' }).parentElement;
+    await expect(fitting).not.toHaveAttribute('tabindex');
+    await expect(fitting).not.toHaveAttribute('role');
+    await expect(canvas.queryByRole('region', { name: 'Fits' })).toBeNull();
+  },
 };
 
 export const FooterTotals: Story = {

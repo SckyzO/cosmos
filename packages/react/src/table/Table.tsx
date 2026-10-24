@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
-import { createContext, useContext, type ComponentProps } from 'react';
+import { createContext, useContext, useId, useRef, type ComponentProps } from 'react';
+import { useOverflows } from '../hooks/useOverflows';
 import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
 import type { DataTableDensity } from './types';
 
@@ -58,7 +59,9 @@ export type TableProps = ComponentProps<'table'> & {
 /**
  * Table — styled native `<table>` without any logic. The wrapper scrolls
  * horizontally, so a wide table never overflows the page on small screens.
- * Compose with `TableCaption`, `TableHead`, `TableBody`, `TableFoot`,
+ * While it scrolls, the wrapper takes the keyboard focus (so the arrow keys
+ * scroll it even when no cell holds a control) and is a region named after the
+ * table's caption. Compose with `TableCaption`, `TableHead`, `TableBody`, `TableFoot`,
  * `TableRow`, `TableHeaderCell` and `TableCell`. For sorting, filtering or
  * pagination, use `DataTable`.
  */
@@ -69,28 +72,43 @@ export const Table = ({
   containerClassName,
   className,
   children,
+  id,
   ...rest
-}: TableProps) => (
-  <TableContext.Provider value={{ density, striped, stickyHeader }}>
-    <div
-      className={clsx(
-        'max-w-full rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] dark:border-gray-800',
-        stickyHeader ? 'overflow-auto' : 'overflow-x-auto',
-        containerClassName
-      )}
-    >
-      <table
+}: TableProps) => {
+  const generatedId = useId();
+  const tableId = id ?? generatedId;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrolls = useOverflows(containerRef);
+  return (
+    <TableContext.Provider value={{ density, striped, stickyHeader }}>
+      <div
+        ref={containerRef}
+        // Focusable only while it scrolls: a scroll container with no control inside is out of
+        // reach of the keyboard, and one that fits would add a tab stop that does nothing. Its
+        // name is the table's, which the caption provides.
+        tabIndex={scrolls ? 0 : undefined}
+        role={scrolls ? 'region' : undefined}
+        aria-labelledby={scrolls ? tableId : undefined}
         className={clsx(
-          'w-full border-collapse text-sm text-[var(--color-text-primary)]',
-          className
+          'focus-visible:focus-indicator max-w-full rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] focus-visible:ring-inset dark:border-gray-800',
+          stickyHeader ? 'overflow-auto' : 'overflow-x-auto',
+          containerClassName
         )}
-        {...rest}
       >
-        {children}
-      </table>
-    </div>
-  </TableContext.Provider>
-);
+        <table
+          id={tableId}
+          className={clsx(
+            'w-full border-collapse text-sm text-[var(--color-text-primary)]',
+            className
+          )}
+          {...rest}
+        >
+          {children}
+        </table>
+      </div>
+    </TableContext.Provider>
+  );
+};
 
 export type TableCaptionProps = ComponentProps<'caption'>;
 
