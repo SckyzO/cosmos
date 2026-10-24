@@ -2,18 +2,14 @@ import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useRef,
-  useState,
   type ComponentType,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { usePortalFocus } from './overlayA11y';
 import { Avatar } from './Avatar';
+import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
@@ -24,8 +20,6 @@ type Ctx = {
   open: boolean;
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  triggerRect: DOMRect | null;
-  refreshRect: () => void;
   align: 'left' | 'right';
   /** Item to focus when the menu opens: `last` after ArrowUp on the trigger. */
   initialItemRef: React.MutableRefObject<'first' | 'last'>;
@@ -60,43 +54,17 @@ const UserMenuRoot = ({
   align = 'right',
   children,
 }: UserMenuProps) => {
-  const [open, setOpenState] = useControllableState({
+  const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
     onChange: onOpenChange,
     name: 'UserMenu.open',
   });
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const initialItemRef = useRef<'first' | 'last'>('first');
 
-  const refreshRect = useCallback(() => {
-    if (triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect());
-  }, []);
-
-  const setOpen = useCallback(
-    (v: boolean) => {
-      if (v) refreshRect();
-      setOpenState(v);
-    },
-    [setOpenState, refreshRect]
-  );
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = () => refreshRect();
-    window.addEventListener('resize', handler);
-    window.addEventListener('scroll', handler, true);
-    return () => {
-      window.removeEventListener('resize', handler);
-      window.removeEventListener('scroll', handler, true);
-    };
-  }, [open, refreshRect]);
-
   return (
-    <UserMenuContext.Provider
-      value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align, initialItemRef }}
-    >
+    <UserMenuContext.Provider value={{ open, setOpen, triggerRef, align, initialItemRef }}>
       {children}
     </UserMenuContext.Provider>
   );
@@ -121,10 +89,7 @@ function UserMenuTrigger({
   ref,
   ...rest
 }: UserMenuTriggerProps) {
-  const { open, setOpen, triggerRef, refreshRect, initialItemRef } = useCtx();
-  useEffect(() => {
-    if (open) refreshRect();
-  }, [open, refreshRect]);
+  const { open, setOpen, triggerRef, initialItemRef } = useCtx();
   return (
     <button
       ref={mergeRefs(triggerRef, ref)}
@@ -174,62 +139,49 @@ export type UserMenuContentProps = {
 };
 
 const UserMenuContent = ({ width = 'w-56', className, children }: UserMenuContentProps) => {
-  const { open, setOpen, triggerRef, triggerRect, align, initialItemRef } = useCtx();
-  const menuRef = usePortalFocus<HTMLDivElement>({
-    open,
-    onClose: () => setOpen(false),
-    triggerRef,
-    initialFocus: (menu) => {
-      const items = menuItems(menu);
-      return initialItemRef.current === 'last' ? items[items.length - 1] : items[0];
-    },
-  });
-  if (!open || !triggerRect) return null;
-  const top = triggerRect.bottom + 8;
-  const positionStyle =
-    align === 'right'
-      ? { top, right: window.innerWidth - triggerRect.right }
-      : { top, left: triggerRect.left };
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-      <div
-        ref={menuRef}
-        role="menu"
-        tabIndex={-1}
-        aria-label="User menu"
-        onKeyDown={(e) => {
-          // Items are out of the tab order (Tab leaves the menu); arrows,
-          // Home and End move between them, wrapping at both ends.
-          const items = menuItems(e.currentTarget);
-          if (items.length === 0) return;
-          const i = items.indexOf(document.activeElement as HTMLElement);
-          const n = items.length;
-          const next =
-            e.key === 'ArrowDown'
-              ? items[(i + 1) % n]
-              : e.key === 'ArrowUp'
-                ? items[(i - 1 + n) % n]
-                : e.key === 'Home'
-                  ? items[0]
-                  : e.key === 'End'
-                    ? items[n - 1]
-                    : undefined;
-          if (!next) return;
-          e.preventDefault();
-          next.focus();
-        }}
-        style={positionStyle}
-        className={clsx(
-          'fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg outline-none dark:border-gray-700 dark:bg-gray-900',
-          width,
-          className
-        )}
-      >
-        {children}
-      </div>
-    </>,
-    document.body
+  const { open, setOpen, triggerRef, align, initialItemRef } = useCtx();
+  return (
+    <FloatingPanel
+      open={open}
+      onClose={() => setOpen(false)}
+      triggerRef={triggerRef}
+      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      initialFocus={(menu) => {
+        const items = menuItems(menu);
+        return initialItemRef.current === 'last' ? items[items.length - 1] : items[0];
+      }}
+      role="menu"
+      tabIndex={-1}
+      aria-label="User menu"
+      onKeyDown={(e) => {
+        // Items are out of the tab order (Tab leaves the menu); arrows,
+        // Home and End move between them, wrapping at both ends.
+        const items = menuItems(e.currentTarget);
+        if (items.length === 0) return;
+        const i = items.indexOf(document.activeElement as HTMLElement);
+        const n = items.length;
+        const next =
+          e.key === 'ArrowDown'
+            ? items[(i + 1) % n]
+            : e.key === 'ArrowUp'
+              ? items[(i - 1 + n) % n]
+              : e.key === 'Home'
+                ? items[0]
+                : e.key === 'End'
+                  ? items[n - 1]
+                  : undefined;
+        if (!next) return;
+        e.preventDefault();
+        next.focus();
+      }}
+      className={clsx(
+        'overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg outline-none dark:border-gray-700 dark:bg-gray-900',
+        width,
+        className
+      )}
+    >
+      {children}
+    </FloatingPanel>
   );
 };
 

@@ -7,10 +7,8 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { usePortalFocus } from './overlayA11y';
+import { FloatingPanel } from './FloatingPanel';
 import { mergeRefs } from './mergeRefs';
-import { useAnchorPosition } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
 
 export type PopoverPosition = 'top' | 'bottom' | 'left' | 'right';
@@ -148,39 +146,30 @@ const PopoverContent = ({
   children,
 }: PopoverContentProps) => {
   const { open, setOpen, triggerRef } = useCtx();
-  const panelRef = usePortalFocus<HTMLDivElement>({
-    open,
-    onClose: () => setOpen(false),
-    triggerRef,
-  });
-  const anchored = useAnchorPosition(triggerRef, open, { side: position, align, offset });
-  if (!open || !anchored) return null;
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-      <div
-        ref={panelRef}
-        role="dialog"
-        tabIndex={-1}
-        aria-label={ariaLabel}
-        style={anchored}
-        className={clsx(
-          'fixed z-[9999] rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
-          width,
-          className
-        )}
-      >
-        {arrow && (
-          <span
-            aria-hidden
-            style={arrowStyle(position, align)}
-            className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
-          />
-        )}
-        <div className="relative">{children}</div>
-      </div>
-    </>,
-    document.body
+  return (
+    <FloatingPanel
+      open={open}
+      onClose={() => setOpen(false)}
+      triggerRef={triggerRef}
+      placement={{ side: position, align, offset }}
+      role="dialog"
+      tabIndex={-1}
+      aria-label={ariaLabel}
+      className={clsx(
+        'rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
+        width,
+        className
+      )}
+    >
+      {arrow && (
+        <span
+          aria-hidden
+          style={arrowStyle(position, align)}
+          className="border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+        />
+      )}
+      <div className="relative">{children}</div>
+    </FloatingPanel>
   );
 };
 

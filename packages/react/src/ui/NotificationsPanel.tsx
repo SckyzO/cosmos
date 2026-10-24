@@ -2,18 +2,14 @@ import { clsx } from 'clsx';
 import { AlertTriangle, Bell, BellOff, CheckCircle2, Info, XCircle } from 'lucide-react';
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useRef,
-  useState,
   type ButtonHTMLAttributes,
   type ComponentType,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { usePortalFocus } from './overlayA11y';
+import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
@@ -69,8 +65,6 @@ type Ctx = {
   open: boolean;
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  triggerRect: DOMRect | null;
-  refreshRect: () => void;
   align: 'left' | 'right';
 };
 
@@ -101,46 +95,16 @@ const NotificationsPanelRoot = ({
   align = 'right',
   children,
 }: NotificationsPanelProps) => {
-  const [open, setOpenState] = useControllableState({
+  const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
     onChange: onOpenChange,
     name: 'NotificationsPanel.open',
   });
-
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-
-  const refreshRect = useCallback(() => {
-    if (triggerRef.current) {
-      setTriggerRect(triggerRef.current.getBoundingClientRect());
-    }
-  }, []);
-
-  const setOpen = useCallback(
-    (v: boolean) => {
-      if (v) refreshRect();
-      setOpenState(v);
-    },
-    [setOpenState, refreshRect]
-  );
-
-  // Refresh rect on resize/scroll while open
-  useEffect(() => {
-    if (!open) return;
-    const handler = () => refreshRect();
-    window.addEventListener('resize', handler);
-    window.addEventListener('scroll', handler, true);
-    return () => {
-      window.removeEventListener('resize', handler);
-      window.removeEventListener('scroll', handler, true);
-    };
-  }, [open, refreshRect]);
 
   return (
-    <NotificationsPanelContext.Provider
-      value={{ open, setOpen, triggerRef, triggerRect, refreshRect, align }}
-    >
+    <NotificationsPanelContext.Provider value={{ open, setOpen, triggerRef, align }}>
       {children}
     </NotificationsPanelContext.Provider>
   );
@@ -168,15 +132,7 @@ function NotificationsPanelTrigger({
   ref,
   ...rest
 }: NotificationsPanelTriggerProps) {
-  const { open, setOpen, triggerRef, refreshRect } = useCtx();
-  // Merge refs
-  // If the panel starts open (defaultOpen / controlled open), the rect
-  // must be computed once after the trigger button mounts; otherwise
-  // <Content> stays null because triggerRect is still null.
-  useEffect(() => {
-    if (open) refreshRect();
-    // We intentionally only react to mount + open transitions here.
-  }, [open, refreshRect]);
+  const { open, setOpen, triggerRef } = useCtx();
   const showPing = ping ?? (count > 0 && !muted);
   const Icon = muted ? BellOff : Bell;
   const display = count > 9999 ? '9999+' : String(count);
@@ -225,39 +181,24 @@ const NotificationsPanelContent = ({
   className,
   children,
 }: NotificationsPanelContentProps) => {
-  const { open, setOpen, triggerRef, triggerRect, align } = useCtx();
-  const panelRef = usePortalFocus<HTMLDivElement>({
-    open,
-    onClose: () => setOpen(false),
-    triggerRef,
-  });
-  if (!open || !triggerRect) return null;
-
-  const top = triggerRect.bottom + 8;
-  const positionStyle =
-    align === 'right'
-      ? { top, right: window.innerWidth - triggerRect.right }
-      : { top, left: triggerRect.left };
-
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-      <div
-        ref={panelRef}
-        role="dialog"
-        tabIndex={-1}
-        aria-label="Notifications"
-        style={positionStyle}
-        className={clsx(
-          'fixed z-[9999] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900',
-          width,
-          className
-        )}
-      >
-        {children}
-      </div>
-    </>,
-    document.body
+  const { open, setOpen, triggerRef, align } = useCtx();
+  return (
+    <FloatingPanel
+      open={open}
+      onClose={() => setOpen(false)}
+      triggerRef={triggerRef}
+      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      role="dialog"
+      tabIndex={-1}
+      aria-label="Notifications"
+      className={clsx(
+        'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900',
+        width,
+        className
+      )}
+    >
+      {children}
+    </FloatingPanel>
   );
 };
 
