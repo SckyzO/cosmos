@@ -41,7 +41,10 @@ const SHARED_ITEMS = (
               </div>
             </div>
             <div className="ml-4 shrink-0">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <a
+                href="#"
+                className="text-brand-600 dark:text-brand-400 font-medium hover:underline"
+              >
                 Download
               </a>
             </div>

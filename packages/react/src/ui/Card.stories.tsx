@@ -293,7 +293,7 @@ export const WithLink: Story = {
         </p>
         <a
           href="#"
-          className="text-brand-500 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+          className="text-brand-600 dark:text-brand-400 inline-flex items-center gap-1 text-sm font-medium hover:underline"
         >
           Read changelog <ArrowRight className="h-4 w-4" />
         </a>
@@ -367,7 +367,7 @@ export const WithList: Story = {
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">Top exporters</h3>
             <a
               href="#"
-              className="text-brand-500 inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              className="text-brand-600 dark:text-brand-400 inline-flex items-center gap-1 text-xs font-medium hover:underline"
             >
               View all <ArrowRight className="h-3.5 w-3.5" />
             </a>
@@ -416,7 +416,7 @@ export const WithTabs: Story = {
                 type="button"
                 className={
                   i === active
-                    ? 'text-brand-500 border-brand-500 -mb-px border-b-2 px-4 py-2.5 text-sm font-medium'
+                    ? 'text-brand-600 dark:text-brand-400 border-brand-500 -mb-px border-b-2 px-4 py-2.5 text-sm font-medium'
                     : 'border-b-2 border-transparent px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                 }
               >

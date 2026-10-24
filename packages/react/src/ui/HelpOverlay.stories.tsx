@@ -117,7 +117,8 @@ export const CustomFooter: Story = {
       onOpenChange={() => undefined}
       footer={
         <span className="flex items-center gap-2">
-          Need more help? <a className="text-brand-600 hover:underline">Read the docs →</a>
+          Need more help?{' '}
+          <a className="text-brand-600 dark:text-brand-400 hover:underline">Read the docs →</a>
         </span>
       }
     >

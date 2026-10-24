@@ -57,7 +57,7 @@ export const InlineEmphasis: Story = {
         --color-*
       </code>{' '}
       tokens, and there&apos;s a{' '}
-      <a href="#" className="text-brand-500 font-medium hover:underline">
+      <a href="#" className="text-brand-600 dark:text-brand-400 font-medium hover:underline">
         getting started guide
       </a>{' '}
       if you want to skim before installing.

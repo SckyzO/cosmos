@@ -10,17 +10,5 @@
   "charts-range-bar--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
   "charts-scatter-bubble--bubble-html-in-labels-renders-as-text": ["label-content-name-mismatch"],
   "charts-scatter-bubble--html-in-labels-renders-as-text": ["label-content-name-mismatch"],
-  "forms-action-panel--with-link": ["color-contrast"],
-  "layout-card--with-link": ["color-contrast"],
-  "layout-card--with-list": ["color-contrast"],
-  "layout-card--with-tabs": ["color-contrast"],
-  "overlays-command-palette--group-heading-contrast-in-deep-blue": ["color-contrast"],
-  "overlays-help-overlay--custom-footer": ["color-contrast"],
-  "overlays-popover--controlled": ["color-contrast"],
-  "typography-description-list--left-aligned": ["color-contrast"],
-  "typography-description-list--left-aligned-in-card": ["color-contrast"],
-  "typography-description-list--striped": ["color-contrast"],
-  "typography-headings--with-badge": ["color-contrast"],
-  "typography-paragraphs--inline-emphasis": ["color-contrast"],
-  "typography-text--colors": ["color-contrast"]
+  "overlays-command-palette--group-heading-contrast-in-deep-blue": ["color-contrast"]
 }

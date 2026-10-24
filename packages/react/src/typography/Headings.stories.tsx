@@ -41,7 +41,8 @@ export const Scale: Story = {
 export const Highlighted: Story = {
   render: () => (
     <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-      Cosmos is the design system for <span className="text-brand-500">monitoring tools</span>.
+      Cosmos is the design system for{' '}
+      <span className="text-brand-600 dark:text-brand-400">monitoring tools</span>.
     </h1>
   ),
 };
@@ -84,7 +85,7 @@ export const WithBadge: Story = {
       <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
         Cosmos v0.1.0
       </h2>
-      <span className="ring-brand-500/40 bg-brand-500/10 text-brand-500 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1">
+      <span className="ring-brand-500/40 bg-brand-500/10 text-brand-600 dark:text-brand-400 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1">
         Beta
       </span>
     </div>
@@ -109,7 +110,7 @@ export const AsLink: Story = {
     <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
       <a
         href="#"
-        className="hover:text-brand-500 transition-colors hover:underline hover:underline-offset-4"
+        className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors hover:underline hover:underline-offset-4"
       >
         Read the changelog →
       </a>
