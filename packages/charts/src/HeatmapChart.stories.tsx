@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { HeatmapChart } from './HeatmapChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -164,8 +165,9 @@ export const HtmlInLabelsRendersAsText: Story = {
 
     // The tooltip renders on hover of a cell: its column is the title, its
     // row the label. The first row is drawn at the top.
+    const cell = () => canvasElement.querySelector(".apexcharts-heatmap-rect[i='0'][j='0']");
     await waitFor(() => {
-      hover(canvasElement.querySelector(".apexcharts-heatmap-rect[i='0'][j='0']") as Element);
+      hover(cell() as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
         `${HOSTILE}: `
@@ -175,6 +177,7 @@ export const HtmlInLabelsRendersAsText: Story = {
       );
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, cell);
   },
 };
 

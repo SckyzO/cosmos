@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { RangeBarChart } from './RangeBarChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -164,14 +165,16 @@ export const HtmlInLabelsRendersAsText: Story = {
     // and the dates.
     // The chart redraws once after mount and rebuilds an empty tooltip, so
     // hover again until both show.
+    const bar = () => canvasElement.querySelector('.apexcharts-rangebar-series path');
     await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-rangebar-series path') as Element);
+      hover(bar() as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
         HOSTILE
       );
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, bar);
   },
 };
 

@@ -3,6 +3,7 @@ import { expect, waitFor } from 'storybook/test';
 import { MixedChart } from './MixedChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   hover,
   legendTexts,
@@ -158,12 +159,14 @@ export const HtmlInLabelsRendersAsText: Story = {
       [...canvasElement.querySelectorAll('.apexcharts-tooltip-text-y-label')].map(
         (el) => el.textContent
       );
+    const bar = () => canvasElement.querySelector('.apexcharts-bar-area');
     await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-bar-area') as Element);
+      hover(bar() as Element);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       expect(yLabels()).toContain(`${HOSTILE}: `);
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, bar);
   },
 };
 

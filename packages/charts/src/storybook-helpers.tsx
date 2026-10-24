@@ -234,6 +234,23 @@ const expectTooltipTheme = (root: HTMLElement, target: () => Element | null, exp
   });
 
 /**
+ * Ends the hover on `hovered`, the element a play function hovered (a bar, a
+ * marker or a cell listens for the pointer on its own), and on the chart, then
+ * waits until no tooltip is active. A play function that opened a tooltip ends
+ * with this, like every other story: axe runs after it, and a tooltip caught
+ * mid-fade has no visible text, so it fails aria-tooltip-name at random; a
+ * screenshot catches it open or closed depending on a redraw.
+ */
+export const closeTooltip = (root: HTMLElement, hovered: () => Element | null) =>
+  waitFor(() => {
+    for (const el of [hovered(), root.querySelector('.apexcharts-svg')]) {
+      el?.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
+      el?.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    }
+    expect(root.querySelector('.apexcharts-tooltip.apexcharts-active')).toBeNull();
+  });
+
+/**
  * Asserts the tooltip is dark in a dark theme (the story's global), then
  * switches `<html>` to the light theme and asserts it turns light.
  */
@@ -248,16 +265,7 @@ export const expectTooltipFollowsTheme = async (
   } finally {
     restore();
   }
-  // End with the tooltip closed, like every other story: axe runs after the
-  // play function, and a tooltip caught mid-fade has no visible text, so it
-  // fails aria-tooltip-name at random.
-  await waitFor(() => {
-    for (const el of [target(), root.querySelector('.apexcharts-svg')]) {
-      el?.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
-      el?.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
-    }
-    expect(root.querySelector('.apexcharts-tooltip.apexcharts-active')).toBeNull();
-  });
+  await closeTooltip(root, target);
 };
 
 /** Copies arrays and plain objects, keeps functions: equal props, new identities. */

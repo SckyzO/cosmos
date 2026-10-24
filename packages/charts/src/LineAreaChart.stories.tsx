@@ -5,6 +5,7 @@ import { expect, waitFor } from 'storybook/test';
 import { LineAreaChart } from './LineAreaChart';
 import {
   HOSTILE,
+  closeTooltip,
   expectNoInjectedImage,
   expectTooltipFollowsTheme,
   hover,
@@ -292,8 +293,9 @@ export const HtmlInLabelsRendersAsText: Story = {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
 
+    const grid = () => canvasElement.querySelector('.apexcharts-grid');
     await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.05);
+      hover(grid() as Element, 0.05);
       expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
       // The shared tooltip fills its series rows after the title.
       expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
@@ -301,6 +303,7 @@ export const HtmlInLabelsRendersAsText: Story = {
       );
     });
     await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, grid);
   },
 };
 
