@@ -45,39 +45,33 @@ export const WithLighterPageHeader: Story = {
   render: () => (
     <Shell
       topbar={
-        // Type-casted via `as never` because <Navbar> doesn't share the
-        // TopbarProps shape the `topbar` slot is typed with. Shell passes the
-        // topbar no props (a Topbar reads the sidebar state from its context),
-        // so the cast is harmless.
-        (
-          <Navbar theme="dark">
-            <Navbar.Brand>
-              <Navbar.MobileMenuButton theme="dark" />
-              <span className="ml-2 text-lg font-semibold text-white">Acme</span>
-              <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">
-                  Dashboard
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Team
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Projects
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Calendar
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Reports
-                </Navbar.Item>
-              </Navbar.Items>
-            </Navbar.Brand>
-            <Navbar.Actions>
-              <BellIcon />
-              <Avatar />
-            </Navbar.Actions>
-          </Navbar>
-        ) as never
+        <Navbar theme="dark">
+          <Navbar.Brand>
+            <Navbar.MobileMenuButton theme="dark" />
+            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <Navbar.Items>
+              <Navbar.Item theme="dark" active href="#">
+                Dashboard
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Team
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Projects
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Calendar
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Reports
+              </Navbar.Item>
+            </Navbar.Items>
+          </Navbar.Brand>
+          <Navbar.Actions>
+            <BellIcon />
+            <Avatar />
+          </Navbar.Actions>
+        </Navbar>
       }
     >
       <div className="bg-white dark:bg-gray-900">
@@ -100,32 +94,30 @@ export const WithPageHeaderActions: Story = {
   render: () => (
     <Shell
       topbar={
-        (
-          <Navbar theme="dark">
-            <Navbar.Brand>
-              <Navbar.MobileMenuButton theme="dark" />
-              <span className="ml-2 text-lg font-semibold text-white">Acme</span>
-              <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">
-                  Dashboard
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Team
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Projects
-                </Navbar.Item>
-              </Navbar.Items>
-            </Navbar.Brand>
-            <Navbar.Actions>
-              <Button size="sm" icon={Plus}>
-                New project
-              </Button>
-              <BellIcon />
-              <Avatar />
-            </Navbar.Actions>
-          </Navbar>
-        ) as never
+        <Navbar theme="dark">
+          <Navbar.Brand>
+            <Navbar.MobileMenuButton theme="dark" />
+            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <Navbar.Items>
+              <Navbar.Item theme="dark" active href="#">
+                Dashboard
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Team
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Projects
+              </Navbar.Item>
+            </Navbar.Items>
+          </Navbar.Brand>
+          <Navbar.Actions>
+            <Button size="sm" icon={Plus}>
+              New project
+            </Button>
+            <BellIcon />
+            <Avatar />
+          </Navbar.Actions>
+        </Navbar>
       }
     >
       <div className="bg-[var(--color-bg-base)]">
@@ -148,24 +140,22 @@ export const MultiColumnWithSecondary: Story = {
   render: () => (
     <Shell
       topbar={
-        (
-          <Navbar theme="dark">
-            <Navbar.Brand>
-              <span className="ml-2 text-lg font-semibold text-white">Acme</span>
-              <Navbar.Items>
-                <Navbar.Item theme="dark" active href="#">
-                  Inbox
-                </Navbar.Item>
-                <Navbar.Item theme="dark" href="#">
-                  Sent
-                </Navbar.Item>
-              </Navbar.Items>
-            </Navbar.Brand>
-            <Navbar.Actions>
-              <Avatar />
-            </Navbar.Actions>
-          </Navbar>
-        ) as never
+        <Navbar theme="dark">
+          <Navbar.Brand>
+            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <Navbar.Items>
+              <Navbar.Item theme="dark" active href="#">
+                Inbox
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Sent
+              </Navbar.Item>
+            </Navbar.Items>
+          </Navbar.Brand>
+          <Navbar.Actions>
+            <Avatar />
+          </Navbar.Actions>
+        </Navbar>
       }
       secondary={
         <div className="p-6">
