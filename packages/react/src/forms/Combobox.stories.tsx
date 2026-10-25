@@ -399,3 +399,25 @@ export const ClickOnAnOptionPicks: Story = {
     await expect(page.queryByRole('listbox')).toBeNull();
   },
 };
+
+// A disabled option shows the not-allowed cursor, not the pointer of its default (#290).
+export const DisabledOptionShowsNotAllowedCursor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Assigned to',
+    options: [
+      { value: 'a', label: 'Alice' },
+      { value: 'b', label: 'Bob', disabled: true },
+    ],
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('combobox'));
+    const options = within(document.body);
+    await expect(getComputedStyle(options.getByRole('option', { name: 'Bob' })).cursor).toBe(
+      'not-allowed'
+    );
+    await expect(getComputedStyle(options.getByRole('option', { name: 'Alice' })).cursor).toBe(
+      'pointer'
+    );
+  },
+};

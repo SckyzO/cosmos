@@ -160,6 +160,25 @@ export const Disabled: Story = {
   ),
 };
 
+export const Sizes: Story = {
+  render: () => (
+    <div className="space-y-6">
+      {(['sm', 'md'] as const).map((size) => (
+        <Accordion key={size} type="single" collapsible defaultValue="item-0" size={size}>
+          {FAQ.slice(0, 2).map((row, i) => (
+            <Accordion.Item key={i} value={`item-${i}`}>
+              <Accordion.Trigger>
+                {row.q} ({size})
+              </Accordion.Trigger>
+              <Accordion.Content>{row.a}</Accordion.Content>
+            </Accordion.Item>
+          ))}
+        </Accordion>
+      ))}
+    </div>
+  ),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickTriggerOpens: Story = {
@@ -218,5 +237,53 @@ export const DisabledBlocksClick: Story = {
     await expect(trigger).toBeDisabled();
     await userEvent.click(trigger).catch(() => undefined);
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+export const DisabledLooksDisabled: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Accordion type="single" collapsible>
+      <Accordion.Item value="item-1">
+        <Accordion.Trigger>Live</Accordion.Trigger>
+        <Accordion.Content>Hello.</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="item-2" disabled>
+        <Accordion.Trigger>Locked</Accordion.Trigger>
+        <Accordion.Content>Hidden.</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  ),
+  play: async ({ canvas }) => {
+    const live = canvas.getByRole('button', { name: 'Live' });
+    const locked = canvas.getByRole('button', { name: 'Locked' });
+    await expect(getComputedStyle(locked).cursor).toBe('not-allowed');
+    await expect(Number(getComputedStyle(locked).opacity)).toBeLessThan(1);
+    await expect(getComputedStyle(live).opacity).toBe('1');
+  },
+};
+
+export const SizeMdIsLarger: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <div>
+      {(['sm', 'md'] as const).map((size) => (
+        <Accordion key={size} type="single" collapsible size={size}>
+          <Accordion.Item value="a">
+            <Accordion.Trigger>{`Trigger ${size}`}</Accordion.Trigger>
+            <Accordion.Content>Body</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const sm = canvas.getByRole('button', { name: 'Trigger sm' });
+    const md = canvas.getByRole('button', { name: 'Trigger md' });
+    await expect(getComputedStyle(sm).paddingTop).toBe('12px');
+    await expect(parseFloat(getComputedStyle(md).paddingTop)).toBeGreaterThan(12);
+    await expect(parseFloat(getComputedStyle(md).fontSize)).toBeGreaterThan(
+      parseFloat(getComputedStyle(sm).fontSize)
+    );
   },
 };

@@ -186,6 +186,16 @@ export const FocusShowsRingInLight: Story = {
   globals: { theme: 'light' },
 };
 
+// A disabled field shows the not-allowed cursor, not the pointer of its default (#290).
+export const DisabledShowsNotAllowedCursor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Locked', disabled: true, name: 'cursor-test' },
+  play: async ({ canvas }) => {
+    const label = canvas.getByLabelText('Locked').closest('label') as HTMLElement;
+    await expect(getComputedStyle(label).cursor).toBe('not-allowed');
+  },
+};
+
 const SEVERITIES = [
   { value: 'low', label: 'Low', description: 'Can wait' },
   { value: 'medium', label: 'Medium', description: 'This week' },

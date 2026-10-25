@@ -248,6 +248,14 @@ The same prop means the same thing on every component.
   `WARN`, `CRIT`…), which is data and not a color, and decorative color names such as
   `SectionCard.iconTone`. A color with no meaning of its own (`violet` in `EventCalendar`) is
   documented as a category color next to the `Intent` values.
+- **A state never overrides a default through class order.** Two utilities of one family on one
+  element (`bg-white` and `bg-brand-500`, `text-gray-700` and `text-white`, `w-full` and `w-40`)
+  are settled by their order in the generated CSS, not by their order in `clsx`: the neutral one
+  can win, and the state it was meant to show is invisible (the active `Pagination` page was a
+  white digit on a white button). Default and state classes are mutually exclusive: write
+  `active ? activeClass : idleClass`, never `base`, then `active && override`. A value a caller
+  may change is a prop (`Popover.Content`'s `width` and `padding`), not a `className` that wins by
+  `!`. There is no `tailwind-merge`: it would hide the conflict at runtime instead of removing it.
 - **Change callbacks follow the control.** A wrapper of a native field (Input, PasswordInput,
   Textarea, Select, Checkbox, Radio, TimePicker) passes the native event: `onChange(event)`, and
   `onChange(value, event)` for Checkbox, Radio and TimePicker. A custom widget passes the value:

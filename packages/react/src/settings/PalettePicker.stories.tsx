@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { expectPickerSelected, expectRefFocuses } from '../storybook-helpers';
 import { PaletteCard, type PaletteMeta } from './PaletteCard';
 import { PalettePicker } from './PalettePicker';
 
@@ -309,3 +309,37 @@ export const DefaultValueOrControlled: Story = {
     await expect(held.getByRole('radio', { name: 'Pure' })).toBeChecked();
   },
 };
+
+/** The checked card has the brand border and the check badge, as the other pickers. */
+export const SelectedSharesThePickerTreatment: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <PalettePicker aria-label="Palette" palettes={LIGHT_THEMES} value="cool" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectPickerSelected(canvas.getByRole('radiogroup', { name: 'Palette' }));
+  },
+};
+
+const columnsAt = (viewport: 'mobile' | 'tw-sm', sm: boolean, columns: number): Story => ({
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: viewport, isRotated: false } },
+  render: () => (
+    <Wrap>
+      <PalettePicker aria-label="Palette" palettes={LIGHT_THEMES} cols={4} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(window.matchMedia('(min-width: 640px)').matches).toBe(sm);
+    const group = canvas.getByRole('radiogroup', { name: 'Palette' });
+    await expect(getComputedStyle(group).gridTemplateColumns.split(' ')).toHaveLength(columns);
+  },
+});
+
+/** Two columns below `sm` (640px), whatever `cols` is. */
+export const TwoColumnsBelowSm = columnsAt('mobile', false, 2);
+
+/** From `sm` up, `cols` sets the number of columns. */
+export const ColsApplyFromSm = columnsAt('tw-sm', true, 4);

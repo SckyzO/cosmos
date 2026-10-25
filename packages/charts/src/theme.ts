@@ -1,24 +1,31 @@
 import type { ApexOptions } from 'apexcharts';
 import { useEffect, useState } from 'react';
+import { categoricalPalette } from './palette';
 
 /** Default brand color (the blue accent). Prefer `useChartTheme().brand`, which follows the accent. */
 export const COSMOS_BRAND = '#465fff';
 
-// What the colors below are when the theme CSS isn't loaded or during SSR. With
-// the theme, `useChartTheme()` reads the status colors from its tokens instead
+// What the status colors are when the theme CSS isn't loaded or during SSR. With
+// the theme, `useChartTheme()` reads them from its tokens instead
 // (`--color-success-500`, `--color-warning-500`, `--color-error-500`).
 const SUCCESS = '#10b981';
 const WARNING = '#f59e0b';
 const ERROR = '#ef4444';
-// The theme has no violet token: the fifth color of the palette stays this hex.
-const VIOLET = '#8b5cf6';
 
 /**
- * The palette used without the theme CSS. With it, `useChartTheme().palette` is
- * the brand color of the accent followed by the theme's success, warning and
- * error colors and a violet.
+ * The default series colors without the theme CSS: eight categorical colors,
+ * the blue accent first. With it, `useChartTheme().palette` is the same list
+ * with the accent's brand color in first place, and without the colors that
+ * look like that accent (a cyan accent drops the cyan and the teal).
+ *
+ * Series do not read as statuses: green, amber and red are absent from the
+ * first four places, and the status colors are never the default. A chart that
+ * means a status passes them as `colors`, for example
+ * `useChartTheme().statusPalette` (success, warning, error). A palette is a
+ * categorical scale: it names things, it does not rank them. For a quantity,
+ * use `brandScale`.
  */
-export const COSMOS_PALETTE = [COSMOS_BRAND, SUCCESS, WARNING, ERROR, VIOLET];
+export const COSMOS_PALETTE = categoricalPalette(COSMOS_BRAND);
 
 // Theme classes that enable the dark variant (see @sckyzo/cosmos-theme).
 const DARK_THEME_CLASSES = ['dark', 'deep-blue'];
@@ -51,7 +58,7 @@ const relativeLuminance = (hex: string): number => {
  * The text color, white or black, that reads best on `background`, a
  * `#rrggbb` color (white when it is not one). White text drops under 3:1 on
  * the palette's green and amber, and black text drops to 4.34:1 on the brand
- * blue, where white gets 4.84:1: the pick reaches 4.5:1 on all five colors.
+ * blue, where white gets 4.84:1: the pick reaches 4.5:1 on every color of the palette.
  */
 export const readableOn = (background: string): string => {
   if (!/^#[0-9a-f]{6}$/i.test(background)) return '#ffffff';
@@ -137,9 +144,11 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * sequential scale (five brand steps, low to high) and `surface` the card
  * background. `text` and `textMuted` are the primary and secondary text colors.
  * `success`, `warning` and `error` are the theme's status colors, and
- * `statusWarn` and `statusCrit` its monitoring statuses (thresholds), `track` the
- * empty part of a radial arc, and `palette` the default series colors: the
- * brand color followed by the status colors and a violet.
+ * `statusPalette` the three in that order, for a chart whose series are
+ * statuses (`colors={statusPalette}`). `statusWarn` and `statusCrit` are its
+ * monitoring statuses (thresholds), `track` the empty part of a radial arc, and
+ * `palette` the default series colors: eight categorical colors, the brand
+ * color first and none of the status hues among the first four.
  * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
  */
 export const useChartTheme = () => {
@@ -187,6 +196,7 @@ export const useChartTheme = () => {
     statusCrit,
     track,
     tooltipTheme,
-    palette: [brand, success, warning, error, VIOLET],
+    statusPalette: [success, warning, error],
+    palette: categoricalPalette(brand),
   };
 };

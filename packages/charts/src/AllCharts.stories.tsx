@@ -18,7 +18,14 @@ import { SemiCircleGauge } from './SemiCircleGauge';
 import { Sparkline } from './Sparkline';
 import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
-import { HOSTILE, expectNoInjectedImage, switchTheme, themeColor } from './storybook-helpers';
+import {
+  HOSTILE,
+  expectLegendMarkersUnstroked,
+  expectNoFrame,
+  expectNoInjectedImage,
+  switchTheme,
+  themeColor,
+} from './storybook-helpers';
 import type { ChartEmptyProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper
@@ -213,10 +220,13 @@ const emptyCharts = (props: ChartEmptyProps) => (
   <Grid names={EMPTY_NAMES}>{(name) => CHARTS[name].empty?.(props)}</Grid>
 );
 
-/** Without data, every chart draws the default message in place of the plot. */
+/** Without data, every chart draws the default message in place of the plot, and nothing around it. */
 export const EmptyChartsShowTheDefaultMessage: Story = {
   render: () => emptyCharts({}),
-  play: ({ canvasElement }) => expectEveryNoData(canvasElement, 'No data'),
+  play: async ({ canvasElement }) => {
+    await expectEveryNoData(canvasElement, 'No data');
+    await expectNoFrame(canvasElement);
+  },
 };
 
 /** `emptyMessage` replaces the default message, on every chart that can be empty. */
@@ -299,6 +309,48 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     for (const name of EMPTY_NAMES) await userEvent.click(canvas.getByRole('button', { name }));
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
+    // The axes hidden for the message come back with the data.
+    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart']) {
+      await waitFor(() =>
+        expect(
+          [...canvasElement.querySelectorAll(`[data-chart="${name}"] .apexcharts-yaxis-label`)]
+            .filter((el) => !el.closest('[style*="display: none"]'))
+            .map((el) => el.textContent)
+            .join('')
+        ).not.toBe('')
+      );
+    }
+  },
+};
+
+// The wrappers that draw a legend with two series, through `chartLegend`.
+const LEGEND_NAMES = [
+  'LineAreaChart',
+  'BarChart',
+  'DonutChart',
+  'HeatmapChart',
+  'RadarChart',
+  'ScatterChart',
+  'BubbleChart',
+  'BoxPlotChart',
+  'RangeBarChart',
+  'MixedChart',
+];
+
+/** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
+export const LegendSwatchesHaveNoOutline: Story = {
+  globals: { theme: 'dark' },
+  render: () => (
+    <Grid names={LEGEND_NAMES}>
+      {(name) => CHARTS[name].filled({ legend: { show: true, showForSingleSeries: true } })}
+    </Grid>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const name of LEGEND_NAMES) {
+      const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`)!;
+      await waitFor(() => expect(chart.querySelector('.apexcharts-svg')).not.toBeNull());
+      await expectLegendMarkersUnstroked(chart);
+    }
   },
 };
 

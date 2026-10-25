@@ -273,9 +273,9 @@ const StepperStep = ({
         <span
           aria-hidden
           className={clsx(
-            'absolute top-9 left-[17px] h-full w-0.5 -translate-x-1/2',
+            'absolute h-full w-0.5 -translate-x-1/2',
             __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
-            __size === 'sm' && 'top-7 left-[13px]'
+            __size === 'sm' ? 'top-7 left-[13px]' : 'top-9 left-[17px]'
           )}
         />
       )}

@@ -265,9 +265,9 @@ export const Combobox = ({
                     pick(opt);
                   }}
                   className={clsx(
-                    'flex cursor-pointer items-center gap-2 px-3 py-2 select-none',
+                    'flex items-center gap-2 px-3 py-2 select-none',
                     isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
-                    opt.disabled && 'cursor-not-allowed opacity-50'
+                    opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   )}
                 >
                   {opt.leading && <span className="shrink-0">{opt.leading}</span>}

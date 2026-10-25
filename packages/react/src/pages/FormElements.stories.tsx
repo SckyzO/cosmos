@@ -26,7 +26,6 @@ import { Combobox } from '../forms/Combobox';
 import { DatePicker } from '../forms/DatePicker';
 import { Dropzone } from '../forms/Dropzone';
 import { FileInput } from '../forms/FileInput';
-import { FilterPills } from '../forms/FilterPills';
 import { FormFooter } from '../forms/FormFooter';
 import { Input } from '../forms/Input';
 import { NumberInput } from '../forms/NumberInput';
@@ -307,7 +306,7 @@ const FormContent = () => {
 
       <SectionCard
         title="Search, filter & combo"
-        desc="SearchInput, Combobox (autocomplete) and FilterPills for typing-based selection."
+        desc="SearchInput, Combobox (autocomplete) and pill-style SegmentedControl for typing-based selection."
         icon={Globe}
         iconTone="violet"
       >
@@ -322,7 +321,7 @@ const FormContent = () => {
               { value: 'priya', label: 'Priya Singh' },
             ]}
           />
-          <FilterPillsCell />
+          <PillsCell />
         </div>
       </SectionCard>
 
@@ -448,10 +447,11 @@ const SearchInputCell = () => {
   return <SearchInput value={q} onChange={setQ} placeholder="Search hosts, alerts, dashboards…" />;
 };
 
-const FilterPillsCell = () => {
+const PillsCell = () => {
   const [tone, setTone] = useState<'crit' | 'warn' | 'ok' | 'info'>('crit');
   return (
-    <FilterPills
+    <SegmentedControl
+      appearance="pills"
       value={tone}
       onChange={setTone}
       options={[

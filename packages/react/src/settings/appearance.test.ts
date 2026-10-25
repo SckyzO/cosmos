@@ -7,6 +7,9 @@ import {
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
   isDarkTheme,
+  resolveTheme,
+  systemPrefersDark,
+  watchSystemTheme,
   type CosmosAppearance,
   type CosmosTheme,
 } from './appearance';
@@ -164,6 +167,99 @@ describe('applyAppearance', () => {
 // `applyAppearance` writes class names and attribute values that
 // @sckyzo/cosmos-theme has to key on: a drift between the two ships a picker
 // option that changes nothing.
+// A stand-in for `window.matchMedia` with the one query the module asks.
+const fakeMatchMedia = (dark: boolean) => {
+  const listeners = new Set<(event: { matches: boolean }) => void>();
+  const query = {
+    matches: dark,
+    addEventListener: (_: string, l: (event: { matches: boolean }) => void) => listeners.add(l),
+    removeEventListener: (_: string, l: (event: { matches: boolean }) => void) =>
+      listeners.delete(l),
+  };
+  const matchMedia = vi.fn((q: string) => ({ ...query, media: q }));
+  return {
+    matchMedia,
+    listeners,
+    emit: (matches: boolean) => listeners.forEach((l) => l({ matches })),
+  };
+};
+
+describe('system theme', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['system', true, 'dark'],
+    ['system', false, 'light'],
+    ['sand', true, 'sand'],
+    ['deep-blue', false, 'deep-blue'],
+  ] as const)('resolveTheme(%s, prefersDark %s) -> %s', (choice, prefersDark, expected) => {
+    expect(resolveTheme(choice, prefersDark)).toBe(expected);
+  });
+
+  it('resolves system to the chosen pair', () => {
+    const pair = { light: 'sand', dark: 'deep-blue' } as const;
+    expect(resolveTheme('system', true, pair)).toBe('deep-blue');
+    expect(resolveTheme('system', false, pair)).toBe('sand');
+  });
+
+  it('systemPrefersDark is false without a window', () => {
+    vi.stubGlobal('window', undefined);
+    expect(systemPrefersDark()).toBe(false);
+  });
+
+  it('systemPrefersDark is false without matchMedia', () => {
+    vi.stubGlobal('window', {});
+    expect(systemPrefersDark()).toBe(false);
+  });
+
+  it('applyAppearance applies the dark theme when the device is dark', () => {
+    vi.stubGlobal('window', { matchMedia: fakeMatchMedia(true).matchMedia });
+    expect([...apply({ theme: 'system', accent: 'blue' }).classes]).toEqual(['dark']);
+  });
+
+  it('applyAppearance applies the light theme when the device is light', () => {
+    vi.stubGlobal('window', { matchMedia: fakeMatchMedia(false).matchMedia });
+    expect([...apply({ theme: 'system', accent: 'blue' }, { classes: ['dark'] }).classes]).toEqual(
+      []
+    );
+  });
+
+  it('applyAppearance uses systemThemes', () => {
+    vi.stubGlobal('window', { matchMedia: fakeMatchMedia(true).matchMedia });
+    const appearance = {
+      theme: 'system',
+      accent: 'blue',
+      systemThemes: { light: 'sand', dark: 'deep-blue' },
+    } as const;
+    expect([...apply(appearance).classes]).toEqual(['deep-blue']);
+  });
+
+  it('a fixed theme ignores the device', () => {
+    vi.stubGlobal('window', { matchMedia: fakeMatchMedia(true).matchMedia });
+    expect([...apply({ theme: 'light', accent: 'blue' }).classes]).toEqual([]);
+  });
+
+  it('watchSystemTheme reports changes until stopped', () => {
+    const media = fakeMatchMedia(false);
+    vi.stubGlobal('window', { matchMedia: media.matchMedia });
+    const seen: boolean[] = [];
+    const stop = watchSystemTheme((dark) => seen.push(dark));
+    media.emit(true);
+    media.emit(false);
+    stop();
+    media.emit(true);
+    expect(seen).toEqual([true, false]);
+    expect(media.listeners.size).toBe(0);
+  });
+
+  it('watchSystemTheme is a no-op without a window', () => {
+    vi.stubGlobal('window', undefined);
+    expect(() => watchSystemTheme(() => {})()).not.toThrow();
+  });
+});
+
 describe('contract with @sckyzo/cosmos-theme', () => {
   const read = (file: string) =>
     readFileSync(new URL(`../../../theme/css/${file}`, import.meta.url), 'utf8');

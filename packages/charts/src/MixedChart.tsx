@@ -5,6 +5,7 @@ import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -105,15 +106,14 @@ export const MixedChart = ({
     },
     yaxis,
     legend: {
-      show: legendVisible,
-      position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
+      ...chartLegend({
+        show: legendVisible,
+        position: legendPosition,
+        color: axisLabels.style.colors,
+      }),
       // ApexCharts stacks the series of each y axis in a column of their own:
       // keep one row, like the other charts.
       clusterGroupedSeries: false,
-      formatter: escapeHtml,
     },
     // The tooltip is HTML: escape the category, the series names and the values.
     tooltip: {

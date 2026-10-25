@@ -54,10 +54,14 @@ export const Pagination = ({
   };
   const isFirst = safePage <= 1;
   const isLast = safePage >= totalPages;
+  // Colors live in two exclusive sets: a page button takes `idleClass` or `activeClass`, never both,
+  // since Tailwind's CSS order (not clsx's) decides which of two `bg-*` classes wins.
   const btnClass =
-    'inline-flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
+    'inline-flex items-center justify-center rounded-md border transition-colors focus-visible:focus-indicator disabled:cursor-not-allowed disabled:opacity-40';
+  const idleClass =
+    'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
   const activeClass =
-    'bg-brand-500 border-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
+    'border-brand-500 bg-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
 
   const infoNode =
     showInfo && pageSize !== undefined && total !== undefined ? (
@@ -90,7 +94,7 @@ export const Pagination = ({
           aria-label="Previous page"
           disabled={isFirst}
           onClick={() => goTo(safePage - 1)}
-          className={clsx(btnClass, SIZE_BTN[size])}
+          className={clsx(btnClass, idleClass, SIZE_BTN[size])}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -120,7 +124,7 @@ export const Pagination = ({
                 aria-label={`Page ${p}`}
                 aria-current={p === safePage ? 'page' : undefined}
                 onClick={() => goTo(p)}
-                className={clsx(btnClass, SIZE_BTN[size], p === safePage && activeClass)}
+                className={clsx(btnClass, SIZE_BTN[size], p === safePage ? activeClass : idleClass)}
               >
                 {p}
               </button>
@@ -133,7 +137,7 @@ export const Pagination = ({
           aria-label="Next page"
           disabled={isLast}
           onClick={() => goTo(safePage + 1)}
-          className={clsx(btnClass, SIZE_BTN[size])}
+          className={clsx(btnClass, idleClass, SIZE_BTN[size])}
         >
           <ChevronRight className="h-4 w-4" />
         </button>

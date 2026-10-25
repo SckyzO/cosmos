@@ -117,7 +117,7 @@ export const ActionsMenu: Story = {
         >
           <MoreVertical className="h-4 w-4" aria-hidden />
         </Popover.Trigger>
-        <Popover.Content position="bottom" width="w-48" className="p-0" aria-label="Actions">
+        <Popover.Content position="bottom" width="w-48" padding="p-0" aria-label="Actions">
           <ul className="py-1">
             <li>
               <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">
@@ -481,5 +481,24 @@ export const KeyboardFocusManagement: Story = {
     await userEvent.tab({ shift: true });
     await waitFor(() => expect(dialog()).toBeNull());
     await expect(document.activeElement).toBe(trigger);
+  },
+};
+
+// `padding` replaces the default `p-4`; the two never both reach the panel (#290).
+export const PaddingReplacesDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.sm(),
+  render: () => (
+    <Popover>
+      <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Open</Popover.Trigger>
+      <Popover.Content aria-label="Tight" padding="p-2">
+        Tight
+      </Popover.Content>
+    </Popover>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open' }));
+    const panel = within(canvasElement.ownerDocument.body).getByRole('dialog', { name: 'Tight' });
+    await expect(getComputedStyle(panel).paddingTop).toBe('8px');
   },
 };

@@ -387,7 +387,7 @@ const SidebarSubMenu = ({
         >
           <Icon className="h-5 w-5 shrink-0" />
         </Popover.Trigger>
-        <Popover.Content position="right" aria-label={label} width="w-64" className="p-2!">
+        <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
           <SidebarContext.Provider value={{ collapsed: false }}>
             <SidebarDepthContext.Provider value={0}>
               <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">

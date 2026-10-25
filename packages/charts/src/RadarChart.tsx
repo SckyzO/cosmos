@@ -3,7 +3,7 @@ import 'apexcharts/radar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -77,15 +77,11 @@ export const RadarChart = ({
       max,
       labels: { ...axisLabels, formatter: format.axis },
     },
-    legend: {
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      // The default stroke outlines the swatches in white, glaring in dark themes.
-      markers: { size: 5, strokeWidth: 0 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // The tooltip and the legend are HTML: escape names, categories and
     // values. The title is the hovered axis.
     tooltip: {

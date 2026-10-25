@@ -15,6 +15,8 @@ import {
   xAxisLayout,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  opaqueColor,
+  resolveColor,
   LegendSides,
   expectLegendsOnTheirSide,
 } from './storybook-helpers';
@@ -250,6 +252,46 @@ export const TooltipFollowsTheme: Story = {
     await expectTooltipFollowsTheme(canvasElement, () =>
       canvasElement.querySelector('.apexcharts-bar-area')
     );
+  },
+};
+
+/**
+ * The default palette has eight categorical colors: the accent first, then
+ * hues apart from each other, none of them green, amber or red in the first
+ * places, so series never read as statuses. Past eight the colors repeat.
+ */
+export const EightSeriesPalette: Story = {
+  args: {
+    categories: MONTHS.slice(0, 5),
+    stacked: true,
+    legendPosition: 'bottom',
+    series: ['web', 'api', 'batch', 'cache', 'queue', 'search', 'auth', 'mail'].map(
+      (name, index) => ({ name, data: [4, 6, 5, 7, 3].map((v) => v + index) })
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
+  },
+};
+
+/** With the cyan accent the palette drops the cyan and the teal, which would repeat the accent. */
+export const EightSeriesPaletteCyanAccent: Story = {
+  ...EightSeriesPalette,
+  globals: { accent: 'cyan' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const fills = [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        opaqueColor(el.getAttribute('stroke') ?? '')
+      );
+      expect(fills).toHaveLength(8);
+      expect(new Set(fills).size).toBe(8);
+      expect(fills).not.toContain(resolveColor('#06b6d4'));
+      expect(fills).not.toContain(resolveColor('#14b8a6'));
+    });
   },
 };
 
