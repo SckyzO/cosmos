@@ -16,6 +16,9 @@ import {
   expectMessageOnly,
   axisTitles,
   expectAxisTitles,
+  contrastRatio,
+  switchTheme,
+  themeColor,
 } from './storybook-helpers';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
@@ -191,6 +194,68 @@ export const HtmlInLabelsRendersAsText: Story = {
     });
     await expectNoInjectedImage(canvasElement);
     await closeTooltip(canvasElement, cell);
+  },
+};
+
+const ACCENT_IDS = [
+  'blue',
+  'indigo',
+  'violet',
+  'purple',
+  'rose',
+  'teal',
+  'cyan',
+  'graphite',
+  'red',
+  'orange',
+  'amber',
+  'green',
+];
+
+// A CSS color in any syntax (the deep-blue grays are oklch) as `#rrggbb`.
+const toHex = (color: string) => {
+  const context = document.createElement('canvas').getContext('2d')!;
+  context.fillStyle = color;
+  context.fillRect(0, 0, 1, 1);
+  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+};
+
+/**
+ * In the dark themes the lowest step of the default scale stays a cell of its
+ * own on the card, whatever the accent: its fill is at least 1.5:1 against the
+ * card, where the darkest brand steps sit at 1.3:1.
+ */
+export const LowestStepStaysVisibleInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['a', 'b', 'c'],
+    series: [
+      { name: 'x', data: [0, 5, 10] },
+      { name: 'y', data: [2, 6, 9] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const lowestFill = () =>
+      canvasElement.querySelector('.apexcharts-heatmap-rect')?.getAttribute('fill') ?? '';
+    // The chart redraws a moment after <html> changes: wait for the new fill
+    // (every accent has its own) before judging it.
+    let drawn = '';
+    for (const theme of ['dark', 'deep-blue']) {
+      const restore = switchTheme(theme);
+      try {
+        for (const accent of ACCENT_IDS) {
+          document.documentElement.setAttribute('data-accent', accent);
+          await waitFor(() => expect(lowestFill()).not.toBe(drawn));
+          drawn = lowestFill();
+          const ratio = contrastRatio(toHex(drawn), toHex(themeColor('--color-gray-900')));
+          expect(ratio, `${theme} ${accent}`).toBeGreaterThanOrEqual(1.5);
+        }
+      } finally {
+        document.documentElement.removeAttribute('data-accent');
+        restore();
+      }
+    }
   },
 };
 
