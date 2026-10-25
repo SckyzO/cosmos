@@ -8,7 +8,7 @@ import { VideoEmbed } from './VideoEmbed';
 const SAMPLE_SRC = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ';
 
 const meta = {
-  title: 'Data/Video Embed',
+  title: 'Media/Video Embed',
   component: VideoEmbed,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

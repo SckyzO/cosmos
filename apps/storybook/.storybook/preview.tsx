@@ -192,6 +192,7 @@ const preview: Preview = {
           'Actions',
           'Forms',
           'Data',
+          'Media',
           'Status',
           'Feedback',
           'Overlays',

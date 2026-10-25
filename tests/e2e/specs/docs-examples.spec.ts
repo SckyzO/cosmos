@@ -44,10 +44,10 @@ for (const c of cases) {
 // plus OTP Input, whose autoFocus stories render inline. Interaction tests
 // that take focus carry `!autodocs`; autoFocus focuses without scrolling.
 const docsPagesTakingFocus = [
-  'data-carousel--docs',
   'feedback-cookie-banner--docs',
   'forms-date-picker--docs',
   'forms-otp-input--docs',
+  'media-carousel--docs',
   'overlays-command-palette--docs',
   'overlays-confirmation-modal--docs',
   'overlays-drawer--docs',
