@@ -1,14 +1,31 @@
 import { clsx } from 'clsx';
 import { Clock } from 'lucide-react';
 import { useId, type ChangeEvent, type ComponentPropsWithRef } from 'react';
+import {
+  FIELD_HEIGHT,
+  FIELD_ICON_LEFT,
+  FIELD_ICON_SIZE,
+  FIELD_PAD_LEFT_ICON,
+  FIELD_PAD_RIGHT,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 export type TimePickerProps = Omit<
   ComponentPropsWithRef<'input'>,
-  'type' | 'value' | 'onChange'
+  'type' | 'value' | 'onChange' | 'size'
 > & {
   label?: string;
   description?: string;
   error?: string;
+  /**
+   * Height and text size, aligned on Button's. Default `md`. Replaces the native
+   * `size` attribute, which is omitted from the props.
+   */
+  size?: FieldSize;
+  /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the input. */
+  required?: boolean;
   /** HH:MM (24h) string. */
   value?: string;
   defaultValue?: string;
@@ -31,6 +48,8 @@ export function TimePicker({
   label,
   description,
   error,
+  size = 'md',
+  required,
   value,
   defaultValue,
   onChange,
@@ -57,15 +76,24 @@ export function TimePicker({
           className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
+          {required && <RequiredMark />}
         </label>
       )}
       <div
         className={clsx(
-          'relative inline-flex h-9 items-center',
+          'relative inline-flex items-center',
+          FIELD_HEIGHT[size],
           fullWidth ? 'w-full' : 'min-w-[140px]'
         )}
       >
-        <Clock aria-hidden className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400" />
+        <Clock
+          aria-hidden
+          className={clsx(
+            'pointer-events-none absolute text-gray-400',
+            FIELD_ICON_LEFT[size],
+            FIELD_ICON_SIZE[size]
+          )}
+        />
         <input
           ref={ref}
           id={fieldId}
@@ -77,14 +105,16 @@ export function TimePicker({
           min={min}
           max={max}
           disabled={disabled}
+          required={required}
+          aria-required={required || undefined}
           onChange={(e) => onChange?.(e.target.value, e)}
           className={clsx(
-            'h-full w-full rounded-lg border bg-white pr-3 pl-9 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'h-full w-full',
+            fieldClass({ size, invalid: !!error, fixedHeight: false }),
+            FIELD_PAD_LEFT_ICON[size],
+            FIELD_PAD_RIGHT[size],
             // Hide the browser-native time picker icon (Chrome adds an extra clock on the right) so only our left-icon shows.
             '[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0',
-            error
-              ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-              : 'focus:field-focus border-gray-200 dark:border-gray-700',
             className
           )}
           {...rest}

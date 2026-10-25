@@ -11,6 +11,14 @@ import {
 } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
+import {
+  FIELD_LISTBOX_PANEL,
+  FIELD_PAD_LEFT,
+  FIELD_PLACEHOLDER,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <Combobox>
@@ -53,6 +61,10 @@ export type ComboboxProps = {
   helperText?: string;
   /** Error message — replaces helperText when set. */
   error?: string;
+  /** Height and text size, aligned on Button's. Default `md`. */
+  size?: FieldSize;
+  /** Marks the field required: an asterisk after the label and `aria-required` on the input. */
+  required?: boolean;
   className?: string;
   /** Ref to the `<input role="combobox">`, not to the toggle button. */
   ref?: Ref<HTMLInputElement>;
@@ -75,6 +87,8 @@ export const Combobox = ({
   disabled = false,
   helperText,
   error,
+  size = 'md',
+  required,
   className,
   ref,
   open: openProp,
@@ -169,6 +183,7 @@ export const Combobox = ({
       {label && (
         <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
           {label}
+          {required && <RequiredMark />}
         </label>
       )}
       <div ref={fieldRef} className={clsx('relative', label && 'mt-2')}>
@@ -181,6 +196,7 @@ export const Combobox = ({
           aria-autocomplete="list"
           aria-describedby={hasDesc ? descId : undefined}
           aria-invalid={error ? true : undefined}
+          aria-required={required || undefined}
           aria-activedescendant={
             open && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined
           }
@@ -195,11 +211,10 @@ export const Combobox = ({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           className={clsx(
-            'w-full rounded-md border bg-white py-1.5 pr-10 pl-3 text-sm shadow-sm placeholder:text-gray-500 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-400',
-            error
-              ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-              : 'focus:field-focus border-gray-300 dark:border-white/10',
-            disabled && 'cursor-not-allowed opacity-50'
+            'w-full pr-10',
+            fieldClass({ size, invalid: !!error }),
+            FIELD_PLACEHOLDER,
+            FIELD_PAD_LEFT[size]
           )}
         />
         <button
@@ -207,7 +222,7 @@ export const Combobox = ({
           aria-label="Toggle options"
           disabled={disabled}
           onClick={() => setOpen(!open)}
-          className="focus-visible:focus-indicator absolute inset-y-0 right-0 flex items-center rounded-r-md pr-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
+          className="focus-visible:focus-indicator absolute inset-y-0 right-0 flex items-center rounded-r-lg pr-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
         >
           <ChevronsUpDown className="size-5" aria-hidden />
         </button>
@@ -227,7 +242,7 @@ export const Combobox = ({
         <ul
           id={listboxId}
           role="listbox"
-          className="max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
+          className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
         >
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</li>

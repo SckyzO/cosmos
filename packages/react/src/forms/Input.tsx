@@ -1,11 +1,31 @@
 import { clsx } from 'clsx';
 import { useId } from 'react';
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
+import {
+  FIELD_HEIGHT,
+  FIELD_ICON_LEFT,
+  FIELD_ICON_SIZE,
+  FIELD_PAD_LEFT,
+  FIELD_PAD_LEFT_ICON,
+  FIELD_PAD_RIGHT,
+  FIELD_PAD_X,
+  FIELD_PLACEHOLDER,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   label?: string;
   description?: string;
   error?: string;
+  /**
+   * Height and text size, aligned on Button's. Default `md`. Replaces the native
+   * `size` attribute (a character count), which is omitted from the props.
+   */
+  size?: FieldSize;
+  /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the input. */
+  required?: boolean;
   /** Optional left icon (lucide-react). Ignored when `prefix` is set. */
   icon?: ElementType;
   /** Optional right slot — e.g. unit suffix, validation pill. Ignored when `suffix` is set. */
@@ -22,6 +42,8 @@ export function Input({
   label,
   description,
   error,
+  size = 'md',
+  required,
   icon: Icon,
   rightSlot,
   labelTrailing,
@@ -36,14 +58,17 @@ export function Input({
   const inputId = id ?? rest.name ?? generatedId;
   const descId = `${inputId}-desc`;
   const hasDesc = !!(error || description);
-  const fieldA11y = {
+  const controlProps = {
     'aria-describedby': hasDesc ? descId : undefined,
     'aria-invalid': error ? true : undefined,
+    'aria-required': required || undefined,
+    required,
   };
   const hasGroup = prefix !== undefined || suffix !== undefined;
-  const borderClass = error
-    ? 'border-red-400 focus-within:field-focus-error dark:border-red-500/60'
-    : 'border-gray-200 focus-within:field-focus dark:border-gray-700';
+  const addon = clsx(
+    'flex shrink-0 items-center border-inherit bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400',
+    FIELD_PAD_X[size]
+  );
 
   return (
     <div className="block">
@@ -52,57 +77,61 @@ export function Input({
           htmlFor={inputId}
           className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {label}
+          {required ? (
+            <span>
+              {label}
+              <RequiredMark />
+            </span>
+          ) : (
+            label
+          )}
           {labelTrailing}
         </label>
       )}
       {hasGroup ? (
         <div
           className={clsx(
-            'flex h-9 w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
-            borderClass
+            'flex w-full items-stretch overflow-hidden',
+            fieldClass({ size, invalid: !!error, within: true })
           )}
         >
-          {prefix !== undefined && (
-            <span className="flex shrink-0 items-center border-r border-inherit bg-gray-50 px-3 text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-              {prefix}
-            </span>
-          )}
+          {prefix !== undefined && <span className={clsx(addon, 'border-r')}>{prefix}</span>}
           <input
             ref={ref}
             id={inputId}
-            {...fieldA11y}
+            {...controlProps}
             className={clsx(
-              'h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white dark:placeholder:text-gray-400',
+              'h-full min-w-0 flex-1 border-0 bg-transparent text-gray-900 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
+              FIELD_PAD_X[size],
+              FIELD_PLACEHOLDER,
               className
             )}
             {...rest}
           />
-          {suffix !== undefined && (
-            <span className="flex shrink-0 items-center border-l border-inherit bg-gray-50 px-3 text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-              {suffix}
-            </span>
-          )}
+          {suffix !== undefined && <span className={clsx(addon, 'border-l')}>{suffix}</span>}
         </div>
       ) : (
-        <div className="relative inline-flex h-9 w-full items-center">
+        <div className={clsx('relative inline-flex w-full items-center', FIELD_HEIGHT[size])}>
           {Icon && (
             <Icon
               aria-hidden
-              className="pointer-events-none absolute left-3 h-4 w-4 text-gray-400"
+              className={clsx(
+                'pointer-events-none absolute text-gray-400',
+                FIELD_ICON_LEFT[size],
+                FIELD_ICON_SIZE[size]
+              )}
             />
           )}
           <input
             ref={ref}
             id={inputId}
-            {...fieldA11y}
+            {...controlProps}
             className={clsx(
-              'h-full w-full rounded-lg border bg-white text-sm transition-colors placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400',
-              Icon ? 'pl-9' : 'pl-3',
-              rightSlot ? 'pr-16' : 'pr-3',
-              error
-                ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-                : 'focus:field-focus border-gray-200 dark:border-gray-700',
+              'h-full w-full',
+              fieldClass({ size, invalid: !!error, fixedHeight: false }),
+              FIELD_PLACEHOLDER,
+              Icon ? FIELD_PAD_LEFT_ICON[size] : FIELD_PAD_LEFT[size],
+              rightSlot ? 'pr-16' : FIELD_PAD_RIGHT[size],
               className
             )}
             {...rest}
