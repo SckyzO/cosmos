@@ -24,7 +24,9 @@ export type BadgeProps = {
 };
 
 const INTENT_LIGHT: Record<Intent, string> = {
-  neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  // A translucent fill, not gray-800: the badge sits on gray-800 cards and panels, where a gray-800
+  // fill vanished.
+  neutral: 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300',
   brand: 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-400',
   success: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400',
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
