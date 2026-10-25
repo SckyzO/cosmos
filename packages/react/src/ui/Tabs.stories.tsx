@@ -596,6 +596,62 @@ export const FocusShowsRingInLight: Story = {
   globals: { theme: 'light' },
 };
 
+// ── Disabled and folder tabs (#303) ──────────────────────────────────────────
+
+// The computed value of a CSS color, read through a probe so both sides use the same serialization.
+const colorOf = (value: string) => {
+  const probe = document.createElement('span');
+  probe.style.color = value;
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+/** A disabled tab is the theme's muted text at full opacity, not the idle gray faded by half. */
+export const DisabledTabIsMuted: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <KeyboardTabs />,
+  play: async ({ canvas }) => {
+    const disabled = canvas.getByRole('tab', { name: 'Soon' });
+    await expect(disabled).toBeDisabled();
+    await expect(getComputedStyle(disabled).color).toBe(colorOf('var(--color-text-muted)'));
+    await expect(getComputedStyle(disabled).opacity).toBe('1');
+    await expect(getComputedStyle(disabled).cursor).toBe('not-allowed');
+    // It is no hover target: the idle tabs darken on hover, this one stays.
+    await userEvent.hover(disabled);
+    await expect(getComputedStyle(disabled).color).toBe(colorOf('var(--color-text-muted)'));
+  },
+};
+
+const folderBorders = (canvas: ReturnType<typeof within>) => ({
+  tab: getComputedStyle(canvas.getByRole('tab', { name: 'Images' })).borderTopColor,
+  list: getComputedStyle(canvas.getByRole('tablist')).borderBottomColor,
+  panel: getComputedStyle(canvas.getByRole('tabpanel')).borderLeftColor,
+});
+
+/** In dark, the outline of the tabs and the panel is one step above the theme's border. */
+export const FolderOutlineIsStrongerInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => <FolderTrio />,
+  play: async ({ canvas }) => {
+    const strong = colorOf('var(--color-gray-600)');
+    await expect(strong).not.toBe(colorOf('var(--color-border)'));
+    await expect(folderBorders(canvas)).toEqual({ tab: strong, list: strong, panel: strong });
+  },
+};
+
+/** In light, the folder keeps the theme's own border. */
+export const FolderOutlineKeepsBorderInLight: Story = {
+  ...FolderOutlineIsStrongerInDark,
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    const plain = colorOf('var(--color-border)');
+    await expect(folderBorders(canvas)).toEqual({ tab: plain, list: plain, panel: plain });
+  },
+};
+
 // ── Narrow screens (#291) ────────────────────────────────────────────────────
 
 const SECTIONS = ['Overview', 'Metrics', 'Logs', 'Alerts', 'Deployments', 'Settings', 'Billing'];
