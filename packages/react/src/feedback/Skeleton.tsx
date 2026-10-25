@@ -12,8 +12,13 @@ export type SkProps = {
 
 /**
  * Sk — primitive skeleton block (animated pulsing rectangle). Compose with
- * the Skeleton presets (SkeletonText / SkeletonTable / SkeletonList) or
- * use directly for custom placeholders.
+ * the Skeleton presets (SkeletonText / SkeletonTable / SkeletonList /
+ * SkeletonAvatarText) or use directly for custom placeholders.
+ *
+ * A skeleton says nothing to a screen reader. Put `aria-busy="true"` on the
+ * region that is loading, and drop it (with the skeleton) once the content
+ * arrives; a short `role="status"` message ("Loading messages…") announces
+ * the wait.
  */
 export const Sk = ({ h = 'h-4', w = 'w-full', round = 'rounded', className }: SkProps) => (
   <div className={clsx('animate-pulse bg-gray-200 dark:bg-gray-700', h, w, round, className)} />
