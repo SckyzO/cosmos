@@ -4,12 +4,14 @@ import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
+import { useChartTheme } from './theme';
 import {
   expectColorInThemes,
   expectColorsFromTokens,
   expectPaletteFromTheme,
   opaqueColor,
   resolveColor,
+  themeColor,
   expectTextFollowsTheme,
   Rerender,
   expectNoRedrawOnRerender,
@@ -125,18 +127,30 @@ export const SemiCircle: Story = {
   ),
 };
 
-/** `color` maps a gauge to a status. */
+// The recipe for threshold zones: the gauge takes one color, so the host picks
+// it from the value with the theme's status colors.
+const ThresholdGauge = ({ value }: { value: number }) => {
+  const { success, statusWarn, statusCrit } = useChartTheme();
+  const color = value >= 90 ? statusCrit : value >= 70 ? statusWarn : success;
+  return <SemiCircleGauge value={value} label="CPU" color={color} />;
+};
+
+/**
+ * Threshold zones are not a prop: `color` takes one color, picked from the
+ * value. Here green under 70, amber from 70 and red from 90, read from the
+ * theme as `useChartTheme()`'s `success`, `statusWarn` and `statusCrit`.
+ */
 export const SemiCircleStatusColors: Story = {
   render: () => (
     <div className="grid gap-4 md:grid-cols-3">
       <Card title="web-01">
-        <SemiCircleGauge value={42} label="CPU" color="#10b981" />
+        <ThresholdGauge value={42} />
       </Card>
       <Card title="web-02">
-        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+        <ThresholdGauge value={78} />
       </Card>
       <Card title="db-01">
-        <SemiCircleGauge value={94} label="CPU" color="#ef4444" />
+        <ThresholdGauge value={94} />
       </Card>
     </div>
   ),
@@ -303,12 +317,30 @@ export const NameLabelsUseMutedText: Story = {
   },
 };
 
+/** The recipe colors each gauge from its value, with the theme's status colors. */
+export const ThresholdColorsComeFromTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: SemiCircleStatusColors.render,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const strokes = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')].map(
+        (el) => opaqueColor(el.getAttribute('stroke') ?? '')
+      );
+      expect(strokes).toEqual([
+        themeColor('--color-success-500'),
+        themeColor('--color-status-warn'),
+        themeColor('--color-status-crit'),
+      ]);
+    });
+  },
+};
+
 /** Each ring takes the color of its index in `colors`. */
 export const ColorsOverridePalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: CustomColors.args,
   play: async ({ canvasElement }) => {
-    // The ring colors without their opacity: ApexCharts draws them at 0.85.
+    // The ring colors, resolved without any alpha.
     const strokes = () =>
       [...canvasElement.querySelectorAll('.apexcharts-radial-series path')].map((el) =>
         normalizeColor(
@@ -316,6 +348,35 @@ export const ColorsOverridePalette: Story = {
         )
       );
     await waitFor(() => expect(strokes()).toEqual(RING_COLORS));
+  },
+};
+
+/**
+ * The arcs are drawn opaque: at ApexCharts' 0.85 default they looked duller
+ * than their legend swatches and the colors of the page.
+ */
+export const ArcsAreOpaque: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RadialBarChart series={[78, 62]} labels={['CPU', 'Mem']} colors={['#10b981', '#8b5cf6']} />
+      <GradientRadial value={84} label="Health" color="#8b5cf6" />
+      <SemiCircleGauge value={67} label="Load" color="#f59e0b" />
+      <StrokedGauge value={92} label="Uptime" color="#ef4444" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const arcs = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')];
+      // Two rings, then one arc for each of the three gauges.
+      expect(arcs.length).toBe(5);
+      for (const arc of arcs) {
+        const stroke = arc.getAttribute('stroke') ?? '';
+        // The gradient is a url(); a plain color is rgba(…, alpha) at ApexCharts' fill opacity.
+        if (stroke.startsWith('url')) continue;
+        expect(resolveColor(stroke), stroke).not.toMatch(/^rgba\(.*, (?!1\))/);
+      }
+    });
   },
 };
 

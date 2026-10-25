@@ -3,7 +3,6 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { useOptionalValueFormat } from './formatters';
 import { readableOn, useChartTheme } from './theme';
 import type { ChartAxisTitleProps, ChartBaseProps } from './types';
@@ -81,7 +80,8 @@ export const RealtimeChart = ({
   height = 240,
   width = '100%',
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, brand, statusWarn, statusCrit, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, brand, statusWarn, statusCrit, tooltipTheme } =
+    useChartTheme();
   const format = useOptionalValueFormat(formatValue);
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
@@ -155,6 +155,8 @@ export const RealtimeChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
       events,
     },
     colors: [brand],
@@ -166,7 +168,7 @@ export const RealtimeChart = ({
     xaxis: showTimeAxis
       ? {
           type: 'datetime',
-          title: axisTitle(xTitle, axisLabels.style.colors),
+          title: axisTitle(xTitle),
           labels: { ...axisLabels, datetimeUTC: false, datetimeFormatter: CLOCK_FORMATS },
           axisBorder: { show: false },
           axisTicks: { show: false },
@@ -182,7 +184,7 @@ export const RealtimeChart = ({
     yaxis: {
       min,
       max,
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: { ...axisLabels, formatter: format.axis },
     },
     annotations: {

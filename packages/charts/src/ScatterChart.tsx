@@ -6,7 +6,6 @@ import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { useMemo } from 'react';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { useStableCallback } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -99,7 +98,7 @@ const useXYOptions = <P extends ScatterPoint>(
   }: XYChartProps & { series: { name: string; data: P[] }[] },
   { pad = 0, extraRows = () => [] }: { pad?: number; extraRows?: (point: P) => TooltipRow[] } = {}
 ): ApexOptions => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const seriesColors = colors ?? palette;
   const axisFormat = useMemo(
     () => ({
@@ -129,7 +128,13 @@ const useXYOptions = <P extends ScatterPoint>(
   const points = series.flatMap(({ data }) => data);
 
   return {
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+    chart: {
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
+    },
     colors: seriesColors,
     dataLabels: { enabled: false },
     grid,
@@ -141,7 +146,7 @@ const useXYOptions = <P extends ScatterPoint>(
         points.map(({ x }) => x),
         pad
       ),
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: { ...axisLabels, formatter: axisFormat.x },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -153,7 +158,7 @@ const useXYOptions = <P extends ScatterPoint>(
         points.map(({ y }) => y),
         pad
       ),
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: { ...axisLabels, formatter: axisFormat.y },
     },
     legend: chartLegend({
@@ -205,7 +210,7 @@ export const BubbleChart = ({
   width = '100%',
   ...props
 }: BubbleChartProps) => {
-  const { palette } = useChartTheme();
+  const { dark, palette } = useChartTheme();
   const base = useXYOptions(props, {
     // Room for the bubbles at the edges of the plot.
     pad: 0.08,
@@ -217,7 +222,8 @@ export const BubbleChart = ({
     plotOptions: { bubble: { minBubbleRadius: 4 } },
     // Translucent bubbles, outlined in their own color (ApexCharts' white
     // outline glares on the dark themes), keep the overlapping ones readable.
-    fill: { opacity: 0.55 },
+    // On a dark card the same alpha reads darker than the legend swatch.
+    fill: { opacity: dark ? 0.7 : 0.55 },
     markers: { strokeWidth: 1, strokeColors: props.colors ?? palette },
   };
   return (

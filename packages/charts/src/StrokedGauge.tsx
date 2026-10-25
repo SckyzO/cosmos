@@ -38,6 +38,7 @@ export const StrokedGauge = ({
   const options: ApexOptions = {
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: [color ?? brand],
+    fill: { opacity: 1 },
     stroke: { lineCap: 'round', dashArray: 4 },
     plotOptions: {
       radialBar: {

@@ -547,4 +547,71 @@ export const expectAxisTitlesIn = (root: HTMLElement, { x, y }: { x: string; y: 
     const [left, right] = box('.apexcharts-yaxis-title-text').sort((a, b) => a.left - b.left);
     expect(left.right).toBeLessThan(plot.left + 1);
     if (y.length > 1) expect(right.left).toBeGreaterThan(plot.right - 1);
+    // The title is inside the drawing, and the chart's container ends where the
+    // drawing does: ApexCharts adds 15px under it by default (parentHeightOffset).
+    const svg = root.querySelector('svg.apexcharts-svg')?.getBoundingClientRect();
+    const container = root
+      .querySelector('.apexcharts-canvas')
+      ?.parentElement?.getBoundingClientRect();
+    expect(svg).toBeTruthy();
+    expect(container).toBeTruthy();
+    if (!svg || !container) return;
+    for (const title of box('.apexcharts-xaxis-title-text')) {
+      expect(title.bottom).toBeLessThan(svg.bottom + 1);
+    }
+    expect(container.bottom - svg.bottom).toBeLessThan(1);
   });
+
+// The font size, in px, of the first element matching `selector`: the SVG
+// attribute ApexCharts writes, or the inline style of its HTML.
+const fontSizeOf = (root: HTMLElement, selector: string) => {
+  const el = root.querySelector<HTMLElement | SVGElement>(selector);
+  return parseFloat(el?.getAttribute('font-size') ?? el?.style.fontSize ?? '');
+};
+
+/** The sizes of the chart text in `root`: axis labels, axis title, legend. */
+const textSizes = (root: HTMLElement) => ({
+  axis: fontSizeOf(root, '.apexcharts-xaxis-label'),
+  title: fontSizeOf(root, '.apexcharts-xaxis-title-text'),
+  legend: fontSizeOf(root, '.apexcharts-legend-text'),
+});
+
+/**
+ * Asserts the chart text in `root` follows the text size setting: the axis
+ * labels are `text-2xs` (11px), the axis title and the legend `text-xs`
+ * (12px), and the same sizes scaled by 1.125 once `<html>` takes
+ * `data-text-size="lg"`. The chart needs an x-axis title and a legend. With
+ * `hovered`, the tooltip is checked too, shown over that element.
+ */
+export const expectTextFollowsTextSize = async (
+  root: HTMLElement,
+  hovered?: () => Element | null
+) => {
+  const tooltipSize = () => fontSizeOf(root, '.apexcharts-tooltip-title');
+  const open = async () => {
+    if (!hovered) return;
+    await waitFor(() => {
+      const el = hovered();
+      expect(el).not.toBeNull();
+      hover(el as Element, 0.05);
+      expect(root.querySelector('.apexcharts-tooltip.apexcharts-active')).not.toBeNull();
+    });
+  };
+  const html = document.documentElement;
+  const previous = html.getAttribute('data-text-size');
+  await waitFor(() => expect(textSizes(root)).toEqual({ axis: 11, title: 12, legend: 12 }));
+  await open();
+  if (hovered) expect(tooltipSize()).toBe(12);
+  try {
+    html.setAttribute('data-text-size', 'lg');
+    await waitFor(() =>
+      expect(textSizes(root)).toEqual({ axis: 12.38, title: 13.5, legend: 13.5 })
+    );
+    await open();
+    if (hovered) await waitFor(() => expect(tooltipSize()).toBe(13.5));
+  } finally {
+    if (previous === null) html.removeAttribute('data-text-size');
+    else html.setAttribute('data-text-size', previous);
+    if (hovered) await closeTooltip(root, hovered);
+  }
+};

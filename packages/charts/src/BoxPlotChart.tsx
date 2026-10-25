@@ -2,7 +2,6 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/boxPlot';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { useStableCallback, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -65,7 +64,7 @@ export const BoxPlotChart = ({
   height = 320,
   width = '100%',
 }: BoxPlotChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const seriesColors = colors ?? palette;
   const format = useValueFormat(formatValue);
@@ -98,6 +97,8 @@ export const BoxPlotChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: seriesColors,
     plotOptions: {
@@ -112,7 +113,7 @@ export const BoxPlotChart = ({
     grid,
     // The titles name the axes as drawn, whichever of categories and values each carries.
     xaxis: {
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: horizontal ? valueLabels() : categoryLabels(),
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -120,7 +121,7 @@ export const BoxPlotChart = ({
       tooltip: { enabled: false },
     },
     yaxis: {
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: horizontal ? categoryLabels() : valueLabels(),
     },
     // Horizontal, the value labels sit side by side and run into each other

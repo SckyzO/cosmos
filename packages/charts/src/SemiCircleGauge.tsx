@@ -10,7 +10,16 @@ import type { ChartBaseProps } from './types';
 export type SemiCircleGaugeProps = Omit<ChartBaseProps, 'height'> & {
   value: number;
   label?: string;
-  /** Color of the arc. Default: the accent. */
+  /**
+   * Color of the arc. Default: the accent. The gauge has no threshold zones of its own: pick
+   * the color from the value, with the theme's status colors from `useChartTheme()`:
+   *
+   * ```tsx
+   * const { success, statusWarn, statusCrit } = useChartTheme();
+   * const color = value >= 90 ? statusCrit : value >= 70 ? statusWarn : success;
+   * <SemiCircleGauge value={value} color={color} />
+   * ```
+   */
   color?: string;
   /** Value at the start of the arc. Default 0. */
   min?: number;
@@ -82,6 +91,7 @@ export const SemiCircleGauge = ({
       sparkline: { enabled: true },
     },
     colors: [color ?? brand],
+    fill: { opacity: 1 },
     plotOptions: {
       radialBar: {
         startAngle: -90,

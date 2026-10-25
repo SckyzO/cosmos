@@ -22,6 +22,7 @@ import {
   expectRedrawOnRerender,
   axisTitles,
   expectAxisTitles,
+  expectTextFollowsTextSize,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -144,6 +145,25 @@ export const FormattedValues: Story = {
 export const AxisTitles: Story = {
   args: { ...Basic.args, xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
   play: expectAxisTitles({ x: 'Hour of day', y: ['CPU usage (%)'] }),
+};
+
+/**
+ * The axis labels, the axis titles, the legend and the tooltip are drawn at the
+ * size of the text size setting, as the page's text is: a larger setting makes
+ * the chart text larger.
+ */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Basic.args,
+    xTitle: 'Hour of day',
+    series: [
+      { name: 'CPU', data: [31, 40, 28, 51, 42, 109, 100, 120, 130] },
+      { name: 'Memory', data: [11, 32, 45, 32, 34, 52, 41, 60, 66] },
+    ],
+  },
+  play: ({ canvasElement }) =>
+    expectTextFollowsTextSize(canvasElement, () => canvasElement.querySelector('.apexcharts-grid')),
 };
 
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */

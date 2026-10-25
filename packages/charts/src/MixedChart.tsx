@@ -3,7 +3,6 @@ import 'apexcharts/line';
 import 'apexcharts/bar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { chartLegend } from './legend';
@@ -74,7 +73,7 @@ export const MixedChart = ({
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const formatters = { left: formatValue, right: formatRightValue };
   const titles = { left: yTitle, right: yRightTitle };
@@ -95,7 +94,7 @@ export const MixedChart = ({
     seriesName:
       sides.length > 1 ? series.filter((s) => axisOf(s) === side).map((s) => s.name) : undefined,
     opposite: side === 'right',
-    title: axisTitle(titles[side], axisLabels.style.colors),
+    title: axisTitle(titles[side]),
     labels: { ...axisLabels, formatter: formatters[side] },
   }));
 
@@ -105,6 +104,8 @@ export const MixedChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },
@@ -117,7 +118,7 @@ export const MixedChart = ({
     grid,
     xaxis: {
       categories,
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },

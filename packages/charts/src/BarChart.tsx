@@ -3,7 +3,6 @@ import 'apexcharts/bar';
 import 'apexcharts/features/legend';
 
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
@@ -58,9 +57,11 @@ export const BarChart = ({
   height = 320,
   width = '100%',
 }: BarChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, surface, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
+  // Side by side, the bars of a group would touch.
+  const grouped = !stacked && series.length > 1;
 
   const format = useValueFormat(formatValue);
 
@@ -71,6 +72,8 @@ export const BarChart = ({
       zoom: { enabled: false },
       stacked,
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },
@@ -87,16 +90,19 @@ export const BarChart = ({
     // whichever of categories and values it carries.
     xaxis: {
       categories,
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? format.axis : undefined,
+        // Category labels: a long name is cut short once rotated past this
+        // height instead of eating the plot; the tooltip keeps the full name.
+        ...(horizontal ? {} : { trim: true, maxHeight: 90 }),
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
     yaxis: {
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? undefined : format.axis,
@@ -117,7 +123,8 @@ export const BarChart = ({
       },
     },
     fill: { opacity: 1 },
-    stroke: { show: false },
+    // A line in the card's color between the bars of a group.
+    stroke: grouped ? { show: true, width: 2, colors: [surface] } : { show: false },
   };
 
   return (

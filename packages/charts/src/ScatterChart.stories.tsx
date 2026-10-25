@@ -12,8 +12,11 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  resolveColor,
+  switchTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  expectAxisTitles,
 } from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
@@ -83,6 +86,12 @@ export const LatencyVsLoad: Story = {
     formatX: percent,
     formatY: ms,
   },
+};
+
+/** The axis titles sit under and beside the plot, inside the drawing, with no space left under it. */
+export const AxisTitles: Story = {
+  args: { ...LatencyVsLoad.args },
+  play: expectAxisTitles({ x: 'CPU load', y: ['p95 latency'] }),
 };
 
 /** Two series or more get a legend, one color each. */
@@ -248,6 +257,43 @@ export const BubblePaletteFromTheme: BubbleStory = {
   render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
     await expectPaletteFromTheme(() => markerColors(canvasElement));
+  },
+};
+
+// The alpha of the first bubble of the chart.
+const bubbleAlpha = (root: HTMLElement) => {
+  const fill = root.querySelector('.apexcharts-marker[index]:not(.apexcharts-legend-marker)');
+  return Number(/^rgba\(.*, ([\d.]+)\)$/.exec(resolveColor(fill?.getAttribute('fill') ?? ''))?.[1]);
+};
+
+/**
+ * The bubbles are translucent, so the overlapping ones read. On a dark card
+ * the same alpha looks darker than the legend swatch, so the dark themes draw
+ * them more opaque.
+ */
+export const BubblesAreMoreOpaqueInDark: BubbleStory = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: {
+    series: [
+      {
+        name: 'a',
+        data: [
+          { x: 1, y: 2, z: 3 },
+          { x: 2, y: 4, z: 5 },
+        ],
+      },
+    ],
+  },
+  render: (args) => <BubbleChart {...args} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(bubbleAlpha(canvasElement)).toBe(0.55));
+    const restore = switchTheme('dark');
+    try {
+      await waitFor(() => expect(bubbleAlpha(canvasElement)).toBe(0.7));
+    } finally {
+      restore();
+    }
   },
 };
 
