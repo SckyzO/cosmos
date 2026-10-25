@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, fn, userEvent } from 'storybook/test';
 import { AlertBanner } from './AlertBanner';
+import { Button } from './Button';
 
 const meta = {
   title: 'Atoms/Alert Banner',
@@ -37,6 +38,36 @@ export const AllVariants: Story = {
   ),
 };
 
+export const WithTitle: Story = {
+  args: {
+    intent: 'warning',
+    title: 'Scrape interval is short',
+    children:
+      'Targets are scraped every 5 seconds. A long message wraps next to the icon, which stays aligned with the title.',
+  },
+};
+
+export const WithAction: Story = {
+  args: {
+    intent: 'danger',
+    title: 'Failed to connect to Prometheus',
+    children: 'The last attempt timed out after 30 seconds.',
+    action: (
+      <Button variant="secondary" intent="danger" size="sm">
+        Retry
+      </Button>
+    ),
+  },
+};
+
+export const Dismissible: Story = {
+  args: {
+    intent: 'success',
+    children: 'Settings saved successfully.',
+    onDismiss: fn(),
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** Each `intent` keeps its colors, `danger` being the red the old `error` was; `info` is the default. */
@@ -60,5 +91,42 @@ export const IntentColorsTheBanner: Story = {
     await expect(banner('default').className).toBe(banner('info').className);
     await expect(canvas.getByText('danger')).toHaveClass('text-red-700');
     await expect(banner('danger').querySelector('svg')).toHaveClass('text-red-500');
+  },
+};
+
+/** The close button has an accessible name and reports the click; the host removes the banner. */
+export const DismissCallsOnDismiss: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { intent: 'info', title: 'Heads up', children: 'Closable.', onDismiss: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Dismiss alert' }));
+    await expect(args.onDismiss).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Without `onDismiss` there is no close button; the action sits beside the text. */
+export const NoDismissWithoutCallback: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: 'Plain', action: <a href="#more">More</a> },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button')).toBeNull();
+    await expect(canvas.getByRole('link', { name: 'More' })).toBeVisible();
+  },
+};
+
+/** With a title the icon aligns to the top; without one the row stays centered, as before. */
+export const IconAlignsWithTitle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-2">
+      <AlertBanner title="Titled">with title</AlertBanner>
+      <AlertBanner>no title</AlertBanner>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const banner = (label: string) => canvas.getByText(label).closest('[role="alert"]')!;
+    await expect(banner('with title')).toHaveClass('items-start');
+    await expect(banner('no title')).toHaveClass('items-center');
+    await expect(banner('no title')).toHaveClass('rounded-lg');
   },
 };
