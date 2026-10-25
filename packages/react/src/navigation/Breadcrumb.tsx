@@ -105,10 +105,8 @@ export const Breadcrumb = ({
                       <Menu.Item
                         key={crumb.label}
                         icon={crumb.icon}
-                        onSelect={() => {
-                          if (crumb.onClick) crumb.onClick();
-                          else window.location.assign(crumb.href ?? '#');
-                        }}
+                        href={crumb.onClick ? undefined : (crumb.href ?? '#')}
+                        onSelect={crumb.onClick}
                       >
                         {crumb.label}
                       </Menu.Item>
