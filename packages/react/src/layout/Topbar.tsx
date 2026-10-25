@@ -7,6 +7,11 @@ export type TopbarProps = {
   /** Current page title (≠ site name — that lives in `Sidebar.Brand`). */
   pageTitle?: ReactNode;
   /**
+   * Element of `pageTitle`. Default `p`: plain text, so the page's own heading (a
+   * `PageHeader`) is its only `h1`. Pass `h1` when the Topbar carries the page's heading.
+   */
+  as?: 'h1' | 'p' | 'span';
+  /**
    * Outside a `Shell`: whether the sidebar is collapsed. Pass it with `onCollapsedChange`
    * to render the built-in toggle (a `SidebarToggle`). Inside a Shell, leave it out: the
    * toggle shows where the Shell puts its control (`collapseControl="topbar"`, the default)
@@ -45,6 +50,7 @@ export type TopbarProps = {
  */
 export const Topbar = ({
   pageTitle,
+  as: TitleTag = 'p',
   sidebarCollapsed,
   onCollapsedChange,
   leftActions,
@@ -79,9 +85,9 @@ export const Topbar = ({
       {leftActions}
 
       {pageTitle && (
-        <h1 className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
+        <TitleTag className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
           {pageTitle}
-        </h1>
+        </TitleTag>
       )}
 
       {/* Center: stretches */}
