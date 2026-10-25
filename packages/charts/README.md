@@ -32,7 +32,7 @@ Most charts take `colors`, which overrides the Cosmos palette, and `formatValue`
 
 The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `MixedChart`, `HeatmapChart`, `BoxPlotChart`, `RangeBarChart`, `RealtimeChart`, `ScatterChart` and `BubbleChart`) take `xTitle`, drawn under the horizontal axis, and `yTitle`, drawn beside the vertical one, as plain text: a horizontal `BarChart` puts its values on the horizontal axis. `MixedChart` also takes `yRightTitle` for its second axis. `RealtimeChart` only has an x axis with `showTimeAxis`.
 
-`Sparkline` takes `label` and `formatValue` for its tooltip, and `min` and `max` to pin its scale: it fits its own data otherwise, so sparklines read against each other (the rows of a table) share the same two.
+`Sparkline` takes `label` and `formatValue` for its tooltip, and `min` and `max` to pin its scale: it fits its own data otherwise, so sparklines read against each other (the rows of a table) share the same two. In a KPI tile, pass it to the `chart` slot of `KpiCard` (`@sckyzo/cosmos-react`): `<KpiCard label="Requests/s" value="2.3k" chart={<Sparkline data={data} />} />`. The two packages do not depend on each other, so the chart is yours to pass.
 
 `RealtimeChart` takes `min` and `max` for its y axis (0 and 100 by default), `showTimeAxis` to label the x axis with the time of each sample, and `warnLabel` and `critLabel` to rename the threshold labels.
 
@@ -62,7 +62,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `SemiCircleGauge`              | Half-donut gauge                                       |
 | `StrokedGauge`                 | Dashed-stroke radial                                   |
 | `DonutChart`                   | Donut, legend below by default                         |
-| `Sparkline` / `SparklineGroup` | Mini sparklines + KPI grid                             |
+| `Sparkline`                    | Mini line or area trend, no axes                       |
 | `TreemapChart`                 | Repartition treemap                                    |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges      |
 | `RadarChart`                   | One polygon per series over named axes                 |
