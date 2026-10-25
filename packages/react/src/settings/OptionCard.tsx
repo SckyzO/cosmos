@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
-import { Check } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
+import { PICKER_SELECTED_BORDER, SelectedMark } from './SelectedMark';
 
 export type OptionCardProps = {
   /** Stable identifier (used as React key + value). */
@@ -46,7 +46,7 @@ export const OptionCard = ({
     className={clsx(
       'focus-visible:focus-indicator relative flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 transition-all',
       active
-        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
+        ? clsx(PICKER_SELECTED_BORDER, 'bg-brand-50 dark:bg-brand-500/10')
         : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
       className
     )}
@@ -63,10 +63,6 @@ export const OptionCard = ({
       </p>
       {desc && <p className="text-3xs text-gray-600 dark:text-gray-400">{desc}</p>}
     </div>
-    {active && (
-      <span className="bg-brand-500 absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full">
-        <Check className="h-2.5 w-2.5 text-white" aria-hidden />
-      </span>
-    )}
+    {active && <SelectedMark className="absolute top-1.5 right-1.5" />}
   </button>
 );

@@ -10,11 +10,15 @@ export const STATUS_PILL: Record<HealthStatus, string> = {
   INFO: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
-/** Tailwind background class per status — the HealthDot fill, same hues as the pills. */
+/**
+ * Tailwind background class per status — the HealthDot fill, same hues as the pills.
+ * UNKNOWN steps up to gray-400 in dark, where gray-500 sinks into the surface (a
+ * non-text mark needs 3:1).
+ */
 export const STATUS_DOT: Record<HealthStatus, string> = {
   OK: 'bg-green-500',
   WARN: 'bg-amber-500',
   CRIT: 'bg-red-500',
-  UNKNOWN: 'bg-gray-500',
+  UNKNOWN: 'bg-gray-500 dark:bg-gray-400',
   INFO: 'bg-blue-500',
 };

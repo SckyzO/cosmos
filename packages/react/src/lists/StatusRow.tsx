@@ -1,5 +1,6 @@
 import { type ComponentType, type Ref } from 'react';
 import { clsx } from 'clsx';
+import { StatusBadge } from '../status/StatusBadge';
 import { type HealthStatus } from '../status/types';
 
 export type StatusRowProps = {
@@ -12,15 +13,6 @@ export type StatusRowProps = {
   className?: string;
   /** Ref to the row's root: an `<a>` when `href` is set, a `<button>` otherwise. */
   ref?: Ref<HTMLAnchorElement | HTMLButtonElement>;
-};
-
-// Inlined here too (Tailwind scanner doesn't follow imports from constants).
-const STATUS_CLASS: Record<HealthStatus, string> = {
-  OK: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400',
-  WARN: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
-  CRIT: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
-  UNKNOWN: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  INFO: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
 /**
@@ -47,14 +39,7 @@ export const StatusRow = ({
         <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
         {subtitle && <p className="truncate text-xs text-[var(--color-text-muted)]">{subtitle}</p>}
       </div>
-      <span
-        className={clsx(
-          'text-3xs shrink-0 rounded-full px-2 py-0.5 font-bold',
-          STATUS_CLASS[status]
-        )}
-      >
-        {status}
-      </span>
+      <StatusBadge status={status} size="sm" className="shrink-0" />
     </>
   );
   const baseClass = clsx(

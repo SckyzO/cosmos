@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import { expectPickerSelected, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 import { ColorSwatch } from './ColorSwatch';
 
@@ -277,5 +277,18 @@ export const DefaultValueOrControlled: Story = {
     await userEvent.click(held.getByRole('radio', { name: 'Teal' }));
     await expect(args.onChange).toHaveBeenLastCalledWith('teal');
     await expect(held.getByRole('radio', { name: 'Brand' })).toBeChecked();
+  },
+};
+
+/** The checked swatch has the brand border and the check badge, as the other pickers. */
+export const SelectedSharesThePickerTreatment: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <AccentPicker aria-label="Accent" colors={ACCENTS} value="sky" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectPickerSelected(canvas.getByRole('radiogroup', { name: 'Accent' }));
   },
 };

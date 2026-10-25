@@ -17,7 +17,9 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
-  expectNoData,
+  expectMessageOnly,
+  expectColorInThemes,
+  expectLegendMarkersUnstroked,
 } from './storybook-helpers';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
@@ -108,7 +110,7 @@ export const UpdatingSeries: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], labels: [] },
-  play: expectNoData('No data'),
+  play: expectMessageOnly('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -180,6 +182,31 @@ export const TooltipFollowsTheme: Story = {
       canvasElement.querySelector('.apexcharts-pie-area')
     );
   },
+};
+
+/** The gap between slices is the card's color in every theme, never ApexCharts' white. */
+export const SliceGapsMatchTheSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  play: ({ canvasElement }) =>
+    expectColorInThemes(
+      () => canvasElement.querySelector('.apexcharts-pie-area')?.getAttribute('stroke'),
+      {
+        dark: '--color-gray-900',
+        'deep-blue': '--color-gray-900',
+        '': '--color-white',
+        sand: '--color-white',
+      }
+    ),
+};
+
+/** The legend swatches have no outline: ApexCharts' white ring glares in the dark themes. */
+export const LegendSwatchesHaveNoOutline: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  play: ({ canvasElement }) => expectLegendMarkersUnstroked(canvasElement),
 };
 
 /** The slices take the default palette of the theme. */

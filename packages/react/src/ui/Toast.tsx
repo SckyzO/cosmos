@@ -1,5 +1,13 @@
 import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
 import { useCosmosTheme } from '../settings/useCosmosTheme';
+import { INTENT_ICON_SIZE, INTENT_STYLE } from './intent';
+
+// sonner colors the icon through `richColors`, so only the shape and the size come from the map.
+const ICON_CLASS = INTENT_ICON_SIZE.inline;
+const SuccessIcon = INTENT_STYLE.success.icon;
+const InfoIcon = INTENT_STYLE.info.icon;
+const WarningIcon = INTENT_STYLE.warning.icon;
+const ErrorIcon = INTENT_STYLE.danger.icon;
 
 /**
  * Cosmos toast — thin wrapper around sonner.
@@ -21,6 +29,12 @@ export const Toaster = (props: CosmosToasterProps) => (
     richColors
     closeButton
     duration={4000}
+    icons={{
+      success: <SuccessIcon className={ICON_CLASS} />,
+      info: <InfoIcon className={ICON_CLASS} />,
+      warning: <WarningIcon className={ICON_CLASS} />,
+      error: <ErrorIcon className={ICON_CLASS} />,
+    }}
     toastOptions={{
       classNames: {
         toast:

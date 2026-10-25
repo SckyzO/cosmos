@@ -240,3 +240,37 @@ export const IntentTintsTheIconCircle: Story = {
     await expect(circle('danger step', 1)).toHaveClass(...INTENT_CIRCLES.danger);
   },
 };
+
+/** The `dot` variant: a 24px indicator, the time on the title row, a gap between entries. */
+export const DotLayout: Story = {
+  ...Dot,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const rows = canvas.getAllByRole('listitem');
+    const indicator = rows[0].querySelector('span.rounded-full')!.getBoundingClientRect();
+    await expect(indicator.width).toBe(24);
+    await expect(indicator.height).toBe(24);
+    // The time is a sibling of the title, not a line under the description.
+    const time = canvas.getByText('5m ago');
+    const title = canvas.getByText('server-prod-01 marked CRIT');
+    await expect(time.parentElement).toBe(title.parentElement);
+    // Entries are apart: the gap under an entry's last line, none under the last entry.
+    const body = (row: HTMLElement) => row.lastElementChild as HTMLElement;
+    await expect(getComputedStyle(body(rows[0])).paddingBottom).toBe('24px');
+    await expect(getComputedStyle(body(rows[rows.length - 1])).paddingBottom).toBe('0px');
+  },
+};
+
+/** Timeline and ActivityFeed share one time style: small, tabular, muted, not mono nor uppercase. */
+export const TimeStyle: Story = {
+  ...Card,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const style = getComputedStyle(canvas.getByText('5m ago'));
+    await expect(style.fontVariantNumeric).toContain('tabular-nums');
+    await expect(style.textTransform).toBe('none');
+    await expect(style.fontFamily).not.toMatch(/mono/i);
+    // text-2xs: 11px at the default text size.
+    await expect(style.fontSize).toBe('11px');
+  },
+};

@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
 import { Popover } from '../ui/Popover';
+import { Tooltip } from '../ui/Tooltip';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -47,6 +48,8 @@ export type EventCalendarProps = {
    * month, "+N more") stay English. An invalid tag throws a `RangeError`.
    */
   locale?: string;
+  /** Shown under the grid when no event falls in the shown month. Default `No events this month`. */
+  emptyMessage?: ReactNode;
   className?: string;
 };
 
@@ -116,21 +119,28 @@ const EventChip = ({
   event,
   onClick,
   compact = false,
+  continuation = false,
 }: {
   event: CalendarEvent;
   onClick?: (event: CalendarEvent) => void;
   /** In a day cell: below `sm` only the dot shows, the title stays for screen readers. */
   compact?: boolean;
+  /** A later day of a multi-day event: the title is not repeated, screen readers still get it. */
+  continuation?: boolean;
 }) => {
   const intent = event.intent ?? 'brand';
   const content = (
     <>
       <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', INTENT_DOT[intent])} />
-      <span className={clsx('truncate', compact && 'max-sm:sr-only')}>{event.title}</span>
+      <span className={clsx('truncate', continuation ? 'sr-only' : compact && 'max-sm:sr-only')}>
+        {event.title}
+      </span>
     </>
   );
   const className = clsx(
     'flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-xs text-gray-700 dark:text-gray-200',
+    // Without a title the chip keeps the height of one that has it, so the rows stay aligned.
+    continuation && 'min-h-5',
     INTENT_CHIP[intent],
     compact ? 'max-sm:bg-transparent max-sm:px-1 sm:w-full max-sm:dark:bg-transparent' : 'w-full'
   );
@@ -157,8 +167,8 @@ const EventChip = ({
  * EventCalendar — month view of events, with ISO weeks (Monday first).
  *
  * Each day shows up to three event chips (a color dot and the title) and a
- * "+N more" button that lists the whole day. An event with an `end` repeats on
- * every day it covers. Below `sm` the chips shrink to their dots.
+ * "+N more" button that lists the whole day. An event with an `end` shows its title on
+ * its first day and a bare chip on each following day. Below `sm` the chips shrink to their dots.
  *
  * Uncontrolled by default; pass `month` with `onMonthChange` to drive it from
  * outside (a side MiniCalendar, or loading events per month).
@@ -172,6 +182,7 @@ export const EventCalendar = ({
   onEventClick,
   onDayClick,
   locale,
+  emptyMessage = 'No events this month',
   className,
 }: EventCalendarProps) => {
   const [current, goTo] = useControllableState({
@@ -188,6 +199,9 @@ export const EventCalendar = ({
     const grid = monthGrid(current);
     return { days: grid, byDay: indexByDay(events, grid[0], grid[grid.length - 1]) };
   }, [events, current]);
+  const isEmptyMonth = !days.some(
+    (day) => day.getMonth() === shown.getMonth() && byDay.has(isoDate(day))
+  );
   const isTodayMonth =
     shown.getFullYear() === today.getFullYear() && shown.getMonth() === today.getMonth();
 
@@ -203,15 +217,24 @@ export const EventCalendar = ({
           {fmt.monthYear(shown)}
         </h3>
         <div className="flex items-center gap-1">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => goTo(startOfMonth(today))}
-            disabled={isTodayMonth}
-            className="mr-1"
+          {/* A disabled Today reads as dead: the tooltip says why. It wraps the button in both
+              states, so the button is the same element when the month changes. */}
+          <Tooltip
+            content={
+              isTodayMonth ? 'Already showing the current month' : 'Back to the current month'
+            }
+            position="bottom"
           >
-            Today
-          </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => goTo(startOfMonth(today))}
+              disabled={isTodayMonth}
+              className="mr-1"
+            >
+              Today
+            </Button>
+          </Tooltip>
           <button
             type="button"
             onClick={() => goTo(new Date(shown.getFullYear(), shown.getMonth() - 1, 1))}
@@ -304,7 +327,13 @@ export const EventCalendar = ({
                 <ul className="mt-1 flex flex-wrap gap-0.5 sm:flex-col sm:flex-nowrap">
                   {dayEvents.slice(0, MAX_CHIPS).map((event) => (
                     <li key={event.id} className="min-w-0">
-                      <EventChip event={event} onClick={onEventClick} compact />
+                      <EventChip
+                        event={event}
+                        onClick={onEventClick}
+                        compact
+                        // The first shown day also carries it, for an event that began before the grid.
+                        continuation={!sameDay(startOfDay(event.start), day) && i > 0}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -352,6 +381,14 @@ export const EventCalendar = ({
           );
         })}
       </div>
+      {isEmptyMonth && (
+        <p
+          role="status"
+          className="border-t border-gray-200 px-4 py-3 text-center text-sm text-[var(--color-text-muted)] dark:border-gray-800"
+        >
+          {emptyMessage}
+        </p>
+      )}
     </div>
   );
 };

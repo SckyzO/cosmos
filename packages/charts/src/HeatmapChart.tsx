@@ -3,7 +3,7 @@ import 'apexcharts/heatmap';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -155,15 +155,11 @@ export const HeatmapChart = ({
     },
     // ApexCharts draws the first series at the bottom; read top-down instead.
     yaxis: { reversed: true, labels: { ...axisLabels } },
-    legend: {
+    legend: chartLegend({
       show: showLegend,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      // The default stroke outlines the swatches in white, glaring in dark themes.
-      markers: { size: 5, strokeWidth: 0 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // The tooltip and the legend are HTML: escape row names, categories,
     // range names and values. The title is the hovered column's category.
     tooltip: {

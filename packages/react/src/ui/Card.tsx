@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { createContext, useContext } from 'react';
 import type { ImgHTMLAttributes, ReactNode } from 'react';
 
 export type CardProps = {
@@ -14,7 +15,18 @@ export type CardProps = {
    * "Card, edge-to-edge on mobile" pattern.
    */
   edgeToEdgeMobile?: boolean;
+  /**
+   * `vertical` (default) stacks the parts. `horizontal` puts a `Card.Image` in a fixed-width
+   * column on the left and the rest on the right from the `sm` breakpoint, and stacks them
+   * below it.
+   */
+  orientation?: CardOrientation;
 };
+
+export type CardOrientation = 'vertical' | 'horizontal';
+
+// `Card.Image` sizes itself by the orientation of the card around it.
+const OrientationContext = createContext<CardOrientation>('vertical');
 
 const PADDING_CLASS = {
   none: '',
@@ -29,21 +41,25 @@ const Root = ({
   padding = 'md',
   interactive = false,
   edgeToEdgeMobile = false,
+  orientation = 'vertical',
 }: CardProps) => (
-  <div
-    className={clsx(
-      'overflow-hidden bg-white dark:bg-gray-900',
-      edgeToEdgeMobile
-        ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
-        : 'rounded-2xl border border-gray-200 dark:border-gray-800',
-      interactive &&
-        'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
-      PADDING_CLASS[padding],
-      className
-    )}
-  >
-    {children}
-  </div>
+  <OrientationContext value={orientation}>
+    <div
+      className={clsx(
+        'overflow-hidden bg-white dark:bg-gray-900',
+        edgeToEdgeMobile
+          ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
+          : 'rounded-2xl border border-gray-200 dark:border-gray-800',
+        interactive &&
+          'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
+        orientation === 'horizontal' && 'flex flex-col sm:flex-row',
+        PADDING_CLASS[padding],
+        className
+      )}
+    >
+      {children}
+    </div>
+  </OrientationContext>
 );
 
 const Header = ({ children, className }: { children: ReactNode; className?: string }) => (
@@ -87,16 +103,21 @@ const Image = ({
   className,
   alt,
   ...rest
-}: CardImageProps) => (
-  <div
-    className={clsx(
-      'w-full overflow-hidden bg-gray-100 dark:bg-gray-800',
-      aspectRatio,
-      wrapperClassName
-    )}
-  >
-    <img alt={alt} className={clsx('h-full w-full object-cover', className)} {...rest} />
-  </div>
-);
+}: CardImageProps) => {
+  const horizontal = useContext(OrientationContext) === 'horizontal';
+  return (
+    <div
+      className={clsx(
+        'overflow-hidden bg-gray-100 dark:bg-gray-800',
+        // Horizontal: full width while stacked, a fixed column from `sm`.
+        horizontal ? 'sm:w-40 sm:shrink-0' : 'w-full',
+        aspectRatio,
+        wrapperClassName
+      )}
+    >
+      <img alt={alt} className={clsx('h-full w-full object-cover', className)} {...rest} />
+    </div>
+  );
+};
 
 export const Card = Object.assign(Root, { Header, Body, Footer, Image });
