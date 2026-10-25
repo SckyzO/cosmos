@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Filter } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
@@ -78,8 +78,15 @@ export const ColumnHeader = ({
             className="focus-visible:focus-indicator flex items-center gap-1 rounded transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
             {label}
-            {sortDir === 'asc' && <ChevronUp className="h-3 w-3" />}
-            {sortDir === 'desc' && <ChevronDown className="h-3 w-3" />}
+            {/* Always drawn, so a column that sorts is recognisable before any sort: muted until
+                it is the sorted one. */}
+            {sortDir === 'asc' ? (
+              <ChevronUp aria-hidden className="h-3 w-3" />
+            ) : sortDir === 'desc' ? (
+              <ChevronDown aria-hidden className="h-3 w-3" />
+            ) : (
+              <ChevronsUpDown aria-hidden className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+            )}
           </button>
         ) : (
           <span>{label}</span>
