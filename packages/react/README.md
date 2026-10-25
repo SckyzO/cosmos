@@ -131,9 +131,25 @@ import {
 </Table>;
 ```
 
+`DataTable` shows a muted two-way icon on every sortable column, keeps its
+header (and the width of its selection and action columns) while it loads, is
+empty or fails, and takes `loadingRows` for the number of placeholder rows. Its
+rows can act: `onRowClick(row)` makes them focusable (Enter and Space) and
+clickable, `rowHref(row)` makes each one a link (a real `<a>` in the first
+column, drawn over the row, so middle click and "Open in a new tab" work; keep
+buttons and links out of that column). A click on a control inside the row (the
+checkbox, the action column, a link or button in another cell) never counts as a
+row click. `RowActionsMenu` is the ⋮ button and menu of a row, for
+`renderRowAction`: give it `Menu.Item`s, a destructive one with
+`intent="danger"`. On a narrow screen the edge of a table that scrolls sideways
+fades, and `stickyFirstColumn` pins its first column (after the checkbox on
+`DataTable`). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
+`TableAmountCell` are the cells tables keep rebuilding.
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
-`striped` and `stickyHeader` (give the wrapper a height with
-`containerClassName`, e.g. `max-h-80`). Cells take `align` and `numeric`
+`striped`, `stickyHeader` (give the wrapper a height with
+`containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
+loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
 (right-aligned, tabular figures). `TableHeaderCell` sets `scope` to `col` in the
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
