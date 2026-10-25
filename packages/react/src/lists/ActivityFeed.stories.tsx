@@ -85,6 +85,7 @@ export const MixedIntents: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsUlWithRoleList: Story = {
+  tags: ['!dev'],
   render: () => (
     <ActivityFeed data-testid="af">
       <ActivityFeed.Item icon={User}>x</ActivityFeed.Item>
@@ -98,6 +99,7 @@ export const RootIsUlWithRoleList: Story = {
 };
 
 export const LastItemHidesConnector: Story = {
+  tags: ['!dev'],
   render: () => (
     <ActivityFeed>
       <ActivityFeed.Item icon={User} data-testid="i1">

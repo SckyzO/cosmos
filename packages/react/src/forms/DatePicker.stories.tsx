@@ -218,7 +218,7 @@ export const TodayAndClear: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const ClickOpensCalendar: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { label: 'Pick' },
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: /pick/i });
@@ -230,7 +230,7 @@ export const ClickOpensCalendar: Story = {
 };
 
 export const EscapeCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { label: 'Pick' },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /pick/i }));
@@ -242,7 +242,7 @@ export const EscapeCloses: Story = {
 
 /** Opening from the keyboard moves focus into the calendar; Escape brings it back. */
 export const KeyboardFocusManagement: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { label: 'Pick' },
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: /pick/i });
@@ -259,7 +259,7 @@ export const KeyboardFocusManagement: Story = {
 
 /** In range mode, focus goes back to the trigger that opened the calendar. */
 export const RangeRestoresFocusToOpeningTrigger: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { mode: 'range', label: 'Stay' },
   play: async ({ canvas }) => {
     const to = canvas.getByRole('button', { name: /end date/i });

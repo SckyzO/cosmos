@@ -78,6 +78,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ChangingFiresHandler: Story = {
+  tags: ['!dev'],
   args: { label: 'Test', onChange: fn() },
   play: async ({ args, canvas }) => {
     const input = canvas.getByLabelText('Test') as HTMLInputElement;

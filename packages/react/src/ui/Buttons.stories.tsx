@@ -137,6 +137,7 @@ export const States: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickFiresOnClick: Story = {
+  tags: ['!dev'],
   args: { children: 'Click me', onClick: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: 'Click me' });
@@ -146,6 +147,7 @@ export const ClickFiresOnClick: Story = {
 };
 
 export const DisabledBlocksClick: Story = {
+  tags: ['!dev'],
   args: { children: 'Disabled', onClick: fn(), disabled: true },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: 'Disabled' });
@@ -155,6 +157,7 @@ export const DisabledBlocksClick: Story = {
 };
 
 export const LoadingBlocksClick: Story = {
+  tags: ['!dev'],
   args: { children: 'Saving…', onClick: fn(), loading: true },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /Saving/ });
@@ -307,6 +310,7 @@ export const CircularIconOnly: Story = {
 // ── Interaction tests for new props ──────────────────────────────────────────
 
 export const SoftVariantHasTintedBg: Story = {
+  tags: ['!dev'],
   args: { children: 'Soft', variant: 'soft' },
   play: async ({ canvas }) => {
     const btn = canvas.getByRole('button', { name: 'Soft' });
@@ -315,6 +319,7 @@ export const SoftVariantHasTintedBg: Story = {
 };
 
 export const PillShapeIsFullyRounded: Story = {
+  tags: ['!dev'],
   args: { children: 'Pill', shape: 'pill' },
   play: async ({ canvas }) => {
     const btn = canvas.getByRole('button', { name: 'Pill' });
@@ -323,6 +328,7 @@ export const PillShapeIsFullyRounded: Story = {
 };
 
 export const CircleShapeMakesSquare: Story = {
+  tags: ['!dev'],
   args: { 'aria-label': 'Add', shape: 'circle', icon: Plus, children: undefined },
   play: async ({ canvas }) => {
     const btn = canvas.getByRole('button', { name: 'Add' });
@@ -426,6 +432,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };

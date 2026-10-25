@@ -153,6 +153,7 @@ export const WeeksStartOnMonday: Story = {
 };
 
 export const MultiDayEventRepeats: Story = {
+  tags: ['!dev'],
   play: async ({ canvas }) => {
     // Saturday to Tuesday, across a week boundary: the title is written once, on the
     // first day; the other days keep a bare chip that still names the event.
@@ -178,6 +179,7 @@ export const MultiDayEventRepeats: Story = {
 };
 
 export const BusyDayOpensMore: Story = {
+  tags: ['!dev'],
   play: async ({ args, canvas, canvasElement }) => {
     const day = within(canvas.getByRole('group', { name: 'Thursday, May 7, 2026' }));
     await expect(day.getAllByRole('listitem')).toHaveLength(3);
@@ -195,6 +197,7 @@ export const BusyDayOpensMore: Story = {
 };
 
 export const ClicksFireCallbacks: Story = {
+  tags: ['!dev'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Thursday, May 14, 2026' }));
     await expect(args.onDayClick).toHaveBeenCalledWith(new Date(2026, 4, 14));

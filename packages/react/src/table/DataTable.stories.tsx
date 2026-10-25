@@ -564,6 +564,7 @@ export const SelectionBulkSearchCombined: Story = {
 // ── New interaction tests ────────────────────────────────────────────────────
 
 export const SelectAllToggles: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <DataTable
       rows={rows.slice(0, 5)}
@@ -586,6 +587,7 @@ export const SelectAllToggles: Story = {
 };
 
 export const SearchFiltersRows: Story = {
+  tags: ['!dev'],
   render: () => (
     <DataTable
       rows={rows}
@@ -607,6 +609,7 @@ export const SearchFiltersRows: Story = {
 };
 
 export const BulkActionsAppearWhenSelected: Story = {
+  tags: ['!dev'],
   render: () => (
     <DataTable
       rows={rows.slice(0, 3)}
@@ -742,6 +745,7 @@ export const ComfortableDensity: Story = {
  * extra height splits evenly above and below the content, which stays centred.
  */
 export const ComfortableRowsAreTaller: Story = {
+  tags: ['!dev'],
   render: () => (
     <Wrap>
       <div className="space-y-6">

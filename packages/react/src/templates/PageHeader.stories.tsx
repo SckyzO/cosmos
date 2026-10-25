@@ -151,6 +151,7 @@ export const Narrow: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const MetaRendersWhenProvided: Story = {
+  tags: ['!dev'],
   args: {
     title: 'T',
     meta: <PageHeader.MetaItem>x</PageHeader.MetaItem>,
@@ -162,6 +163,7 @@ export const MetaRendersWhenProvided: Story = {
 };
 
 export const NoMetaOmitsMetaContainer: Story = {
+  tags: ['!dev'],
   args: { title: 'T' },
   play: async ({ canvasElement }) => {
     const metaRow = canvasElement.querySelector('.mt-2.flex.flex-wrap');

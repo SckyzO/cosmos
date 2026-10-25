@@ -14,7 +14,7 @@ import { expect } from 'storybook/test';
 // the top bar.
 
 const meta = {
-  title: 'Pages/Stacked Shell',
+  title: 'Layout/Stacked Shell',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

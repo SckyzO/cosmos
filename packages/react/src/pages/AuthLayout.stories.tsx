@@ -9,7 +9,7 @@ import { PasswordInput } from '../forms/PasswordInput';
 import { AuthLayout } from './AuthLayout';
 
 const meta = {
-  title: 'Pages/Auth Layout',
+  title: 'Pages/Auth/Auth Layout',
   component: AuthLayout,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],
@@ -75,6 +75,7 @@ export const CustomBrand: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RendersCardAndBrand: Story = {
+  tags: ['!dev'],
   render: () => (
     <AuthLayout logo={Activity} title="Cosmos" subtitle="Sign in to continue">
       <FormPlaceholder />

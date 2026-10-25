@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
 const meta = {
-  title: 'Pages/Reset Password Form',
+  title: 'Pages/Auth/Reset Password Form',
   component: ResetPasswordForm,
   parameters: portalDocsParams(500),
   tags: ['autodocs'],
@@ -92,7 +92,7 @@ const standaloneDecorator = [
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const SubmitFiresWithEmail: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ args, canvas }) => {
@@ -106,7 +106,7 @@ export const SubmitFiresWithEmail: Story = {
 };
 
 export const SentViewShowsEmail: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: {
     onSubmit: fn(),

@@ -19,7 +19,7 @@ import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-he
 // Composed from existing Cosmos primitives.
 
 const meta = {
-  title: 'Pages/Calendar',
+  title: 'Pages/Examples/Calendar',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
@@ -220,7 +220,7 @@ export const Default: Story = {
 
 /** Interaction test, kept off the docs page so Default shows the initial state. */
 export const PickingADayUpdatesUpcoming: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <CalendarPage />,
   play: async ({ canvas }) => {
     const side = within(canvas.getByRole('complementary', { name: 'Calendar sidebar' }));

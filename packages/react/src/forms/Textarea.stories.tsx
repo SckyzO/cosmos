@@ -88,6 +88,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const TypingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { label: 'Message', onChange: fn() },
   play: async ({ args, canvas }) => {
     const ta = canvas.getByLabelText('Message');

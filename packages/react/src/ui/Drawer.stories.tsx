@@ -14,6 +14,9 @@ import { Dropdown } from './Dropdown';
 import { Popover } from './Popover';
 import { Tooltip } from './Tooltip';
 import { Combobox } from '../forms/Combobox';
+import { Input } from '../forms/Input';
+import { Select } from '../forms/Select';
+import { Textarea } from '../forms/Textarea';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -89,11 +92,142 @@ export const Sides: Story = {
   },
 };
 
+/** Open on mount, as the panel looks once a trigger has opened it: header, scrolling body, pinned footer. */
+export const Open: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <Wrap>
+        <SectionCard title="Closed it? Open it again">
+          <Button variant="secondary" onClick={() => setOpen(true)}>
+            Open drawer
+          </Button>
+        </SectionCard>
+        <Drawer open={open} onClose={() => setOpen(false)}>
+          <Drawer.Header
+            title="Server details"
+            icon={SlidersHorizontal}
+            description="Inspect and configure"
+            onClose={() => setOpen(false)}
+          />
+          <Drawer.Body>
+            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <p>web-01 runs in Europe (West) and has been up for 41 days.</p>
+              <p>Use a drawer for inspectors, filters or a supplementary form.</p>
+            </div>
+          </Drawer.Body>
+          <Drawer.Footer>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </Drawer.Footer>
+        </Drawer>
+      </Wrap>
+    );
+  },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Server details' });
+    await expect(dialog).toBeVisible();
+  },
+};
+
+const REGIONS = [
+  { value: 'eu-west', label: 'Europe (West)' },
+  { value: 'us-east', label: 'US (East)' },
+  { value: 'ap-south', label: 'Asia Pacific (South)' },
+];
+
+/**
+ * A form in a drawer: the title with its close button, the fields in a body that scrolls while
+ * the footer stays pinned, Cancel and the primary action together on the right (the primary
+ * stays disabled until the form is valid) and the destructive action apart on the left.
+ */
+export const FormInDrawer: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(true);
+    const [name, setName] = useState('');
+    const [region, setRegion] = useState('');
+    const valid = name.trim() !== '' && region !== '';
+    const close = () => setOpen(false);
+    return (
+      <Wrap>
+        <SectionCard title="Closed it? Open it again">
+          <Button variant="secondary" onClick={() => setOpen(true)}>
+            Edit server
+          </Button>
+        </SectionCard>
+        <Drawer open={open} onClose={close}>
+          <Drawer.Header
+            title="Edit server"
+            description="Changes apply to the next deploy."
+            onClose={close}
+          />
+          <form
+            className="flex min-h-0 flex-1 flex-col"
+            onSubmit={(event) => {
+              event.preventDefault();
+              close();
+            }}
+          >
+            <Drawer.Body className="min-h-0 space-y-4">
+              <Input
+                label="Name"
+                required
+                placeholder="web-01"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <Select
+                label="Region"
+                required
+                placeholder="Choose a region"
+                options={REGIONS}
+                value={region}
+                onChange={(event) => setRegion(event.target.value)}
+              />
+              <Textarea label="Notes" rows={4} description="Visible to your team only." />
+            </Drawer.Body>
+            <Drawer.Footer className="justify-between">
+              <Button type="button" variant="ghost" intent="danger" size="sm">
+                Delete server
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={close}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={!valid}>
+                  Save changes
+                </Button>
+              </div>
+            </Drawer.Footer>
+          </form>
+        </Drawer>
+      </Wrap>
+    );
+  },
+  play: async () => {
+    const dialog = within(
+      await within(document.body).findByRole('dialog', { name: 'Edit server' })
+    );
+    const save = dialog.getByRole('button', { name: 'Save changes' });
+    await expect(save).toBeDisabled();
+    await userEvent.type(dialog.getByRole('textbox', { name: /^Name/ }), 'web-01');
+    // A name alone is not enough: the region is required too.
+    await expect(save).toBeDisabled();
+    await userEvent.selectOptions(dialog.getByRole('combobox', { name: /^Region/ }), 'eu-west');
+    await expect(save).toBeEnabled();
+    await userEvent.clear(dialog.getByRole('textbox', { name: /^Name/ }));
+    await expect(save).toBeDisabled();
+  },
+};
+
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 /** The left drawer enters and leaves by the left edge, never the right. */
 export const LeftDrawerStaysOnTheLeft: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
@@ -167,6 +301,7 @@ export const EmptySlideOverNoBackdrop: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const CloseOutsideRendersBackdropButton: Story = {
+  tags: ['!dev'],
   render: () => (
     <Drawer open onClose={() => {}} closeOutside>
       <Drawer.Header title="Panel" />
@@ -180,6 +315,7 @@ export const CloseOutsideRendersBackdropButton: Story = {
 };
 
 export const NoBackdropOmitsOverlay: Story = {
+  tags: ['!dev'],
   render: () => (
     <Drawer open onClose={() => {}} withBackdrop={false}>
       <Drawer.Header title="Panel" />
@@ -207,7 +343,7 @@ const inDialog = (el: Element | null) => !!el?.closest('[role="dialog"]');
  * to the button that opened it.
  */
 export const ClosedDrawerIsNotFocusable: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [open, setOpen] = useState(false);
     return (
@@ -287,7 +423,7 @@ export const ClosedDrawerIsInvisible: Story = {
 
 /** Tab cycles inside the open drawer, the outside close button included. */
 export const FocusTrapIncludesCloseOutside: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <Button variant="secondary">Page button</Button>

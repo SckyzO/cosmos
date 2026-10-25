@@ -4,7 +4,7 @@ import { expect, userEvent, waitFor } from 'storybook/test';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
-  title: 'Data/Image Grid',
+  title: 'Media/Image Grid',
   component: ImageGrid,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

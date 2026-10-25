@@ -44,10 +44,10 @@ for (const c of cases) {
 // plus OTP Input, whose autoFocus stories render inline. Interaction tests
 // that take focus carry `!autodocs`; autoFocus focuses without scrolling.
 const docsPagesTakingFocus = [
-  'data-carousel--docs',
   'feedback-cookie-banner--docs',
   'forms-date-picker--docs',
   'forms-otp-input--docs',
+  'media-carousel--docs',
   'overlays-command-palette--docs',
   'overlays-confirmation-modal--docs',
   'overlays-drawer--docs',
@@ -56,14 +56,14 @@ const docsPagesTakingFocus = [
   'overlays-notifications-panel--docs',
   'overlays-popover--docs',
   'overlays-user-menu--docs',
-  'pages-activity--docs',
-  'pages-auth-layout--docs',
-  'pages-calendar--docs',
-  'pages-reset-password-form--docs',
-  'pages-sign-in-form--docs',
-  'pages-sign-up-form--docs',
-  'pages-social-auth-buttons--docs',
-  'pages-two-step-verification-form--docs',
+  'pages-auth-auth-layout--docs',
+  'pages-auth-reset-password-form--docs',
+  'pages-auth-sign-in-form--docs',
+  'pages-auth-sign-up-form--docs',
+  'pages-auth-social-auth-buttons--docs',
+  'pages-auth-two-step-verification-form--docs',
+  'pages-examples-activity--docs',
+  'pages-examples-calendar--docs',
   'settings-appearance-menu--docs',
 ];
 

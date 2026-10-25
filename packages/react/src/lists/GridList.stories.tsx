@@ -97,6 +97,7 @@ export const SimpleTwoColumn: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsUlGrid: Story = {
+  tags: ['!dev'],
   render: () => (
     <GridList data-testid="gl">
       <GridList.Card>x</GridList.Card>
@@ -110,6 +111,7 @@ export const RootIsUlGrid: Story = {
 };
 
 export const ColsPropMapsToGridCols: Story = {
+  tags: ['!dev'],
   render: () => (
     <GridList cols={4} data-testid="gl">
       <GridList.Card>x</GridList.Card>
@@ -126,6 +128,7 @@ export const ColsPropMapsToGridCols: Story = {
  * follows the card: the first the bottom-left, the last the bottom-right.
  */
 export const FooterActionsRoundTheirOuterCorner: Story = {
+  tags: ['!dev'],
   render: () => (
     <GridList cols={2}>
       <GridList.Card>
@@ -157,6 +160,7 @@ export const FooterActionsRoundTheirOuterCorner: Story = {
 };
 
 export const FooterActionAddsMlPxAfterFirst: Story = {
+  tags: ['!dev'],
   render: () => (
     <GridList>
       <GridList.Card>

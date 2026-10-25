@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 // regression of that fix — each component must expose a representative
 // optional prop, not just its required ones.
 //
-// Modal + Lists render through a portal / a dynamic `<Tag>` element, which
+// Modal + List render through a portal / a dynamic `<Tag>` element, which
 // react-docgen can't trace to the props type; their Controls surface is
 // restored via explicit `argTypes` in the story meta — covered here too so a
 // dropped argTypes block is caught.
@@ -19,7 +19,7 @@ const cases: Array<{ id: string; name: string; expectProp: string }> = [
   { id: 'overlays-drawer--docs', name: 'Drawer', expectProp: 'open' },
   { id: 'tables-datatable--docs', name: 'DataTable', expectProp: 'selectable' },
   { id: 'overlays-modal--docs', name: 'Modal', expectProp: 'size' },
-  { id: 'typography-lists--docs', name: 'Lists', expectProp: 'variant' },
+  { id: 'typography-list--docs', name: 'List', expectProp: 'variant' },
 ];
 
 for (const c of cases) {

@@ -98,6 +98,7 @@ export const RichContent: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickDismissFiresHandlerAndHides: Story = {
+  tags: ['!dev'],
   args: {
     intent: 'info',
     message: 'Will disappear on click.',
@@ -113,6 +114,7 @@ export const ClickDismissFiresHandlerAndHides: Story = {
 };
 
 export const NotDismissibleHasNoCloseBtn: Story = {
+  tags: ['!dev'],
   args: { intent: 'info', message: 'Plain banner.' },
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /dismiss/i })).toBeNull();
@@ -134,6 +136,7 @@ export const BrandDismissFocusShowsWhiteRingInDark: Story = {
 };
 
 export const BrandDismissFocusShowsWhiteRingInLight: Story = {
+  tags: ['!dev'],
   ...BrandDismissFocusShowsWhiteRingInDark,
   globals: { theme: 'light' },
 };

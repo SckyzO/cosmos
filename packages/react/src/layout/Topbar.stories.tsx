@@ -229,6 +229,7 @@ export const PageTitleIsPlainTextByDefault: Story = {
 
 /** `as="h1"` gives the title back as the page heading. */
 export const PageTitleAsHeading: Story = {
+  tags: ['!dev'],
   args: { pageTitle: 'Servers', as: 'h1' },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();

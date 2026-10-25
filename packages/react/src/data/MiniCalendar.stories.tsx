@@ -52,6 +52,7 @@ export const Controlled: Story = {
 };
 
 export const NextMonthFiresOnSelect: Story = {
+  tags: ['!dev'],
   args: {
     today: new Date(2026, 4, 7),
     selected: new Date(2026, 4, 7),

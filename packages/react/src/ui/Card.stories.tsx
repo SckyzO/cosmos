@@ -228,6 +228,7 @@ export const ImageGallery: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ImageRendersImg: Story = {
+  tags: ['!dev'],
   render: () => (
     <Card padding="none">
       <Card.Image src={gradientImage('#6366f1', '#a855f7', 'X')} alt="cover" />
@@ -253,6 +254,7 @@ export const EdgeToEdgeMobile: Story = {
 };
 
 export const EdgeToEdgeAddsBorderY: Story = {
+  tags: ['!dev'],
   render: () => (
     <Card edgeToEdgeMobile padding="md">
       x
@@ -482,6 +484,7 @@ export const InteractiveFocusShowsRingOnTheCardInDark: Story = {
 };
 
 export const InteractiveFocusShowsRingOnTheCardInLight: Story = {
+  tags: ['!dev'],
   ...InteractiveFocusShowsRingOnTheCardInDark,
   globals: { theme: 'light' },
 };
@@ -524,6 +527,7 @@ export const BorderIsStrongerInDark: Story = {
 };
 
 export const BorderKeepsThemeColorInLight: Story = {
+  tags: ['!dev'],
   ...BorderIsStrongerInDark,
   globals: { theme: 'light' },
   play: async ({ canvas }) => {

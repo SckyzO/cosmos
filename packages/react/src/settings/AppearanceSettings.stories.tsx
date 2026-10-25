@@ -126,6 +126,7 @@ export const NoSystemByDefault: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const GroupsAreRadioGroups: Story = {
+  tags: ['!dev'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
     await expect(canvas.getByRole('radiogroup', { name: 'Accent color' })).toBeInTheDocument();
@@ -137,6 +138,7 @@ export const GroupsAreRadioGroups: Story = {
 };
 
 export const ClickSandFiresThemeChange: Story = {
+  tags: ['!dev'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('radio', { name: 'Sand' }));
     await expect(args.onThemeChange).toHaveBeenCalledWith('sand');
@@ -145,6 +147,7 @@ export const ClickSandFiresThemeChange: Story = {
 };
 
 export const ClickTealFiresAccentChange: Story = {
+  tags: ['!dev'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('radio', { name: 'Teal' }));
     await expect(args.onAccentChange).toHaveBeenCalledWith('teal');
@@ -154,7 +157,7 @@ export const ClickTealFiresAccentChange: Story = {
 
 /** Without their handlers, the font and text size groups stay hidden. */
 export const FontAndTextSizeNeedHandlers: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('radiogroup', { name: 'Font' })).toBeNull();
     await expect(canvas.queryByRole('radiogroup', { name: 'Text size' })).toBeNull();
@@ -162,7 +165,7 @@ export const FontAndTextSizeNeedHandlers: Story = {
 };
 
 export const PickingFontAndTextSize: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onFontChange: fn(), onTextSizeChange: fn() },
   play: async ({ args, canvas }) => {
     // Outfit and the default size are selected when nothing is passed.

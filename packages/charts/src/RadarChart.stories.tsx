@@ -148,7 +148,7 @@ export const PlotFillsItsBox: Story = {
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     series: [
       { name: HOSTILE, data: [3, 5, 2, 4] },

@@ -11,7 +11,7 @@ import { expect } from 'storybook/test';
 import { CodeBlock } from './CodeBlock';
 
 const meta = {
-  title: 'Data/CodeBlock',
+  title: 'Media/CodeBlock',
   component: CodeBlock,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

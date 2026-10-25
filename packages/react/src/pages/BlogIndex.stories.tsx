@@ -11,7 +11,7 @@ import { portalDocsParams } from '../storybook-helpers';
 // Each story is a self-contained "From the blog" page section.
 
 const meta = {
-  title: 'Pages/Blog Index',
+  title: 'Pages/Examples/Blog Index',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

@@ -5,7 +5,7 @@ import { expect } from 'storybook/test';
 import { List } from './List';
 
 const meta = {
-  title: 'Typography/Lists',
+  title: 'Typography/List',
   component: List,
   subcomponents: { 'List.Item': List.Item },
   parameters: { layout: 'padded' },
@@ -180,6 +180,7 @@ export const RichItems: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RendersAsUl: Story = {
+  tags: ['!dev'],
   render: () => (
     <List>
       <List.Item>One</List.Item>
@@ -193,6 +194,7 @@ export const RendersAsUl: Story = {
 };
 
 export const OrderedRendersAsOl: Story = {
+  tags: ['!dev'],
   render: () => (
     <List variant="ordered">
       <List.Item>First</List.Item>

@@ -163,7 +163,7 @@ const hoverFirstPoint = (root: HTMLElement) => hover(firstPoint(root) as Element
  * titles show as text.
  */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     series: [
       { name: HOSTILE, data: [{ x: 50, y: 50, label: HOSTILE }] },
@@ -194,7 +194,7 @@ export const HtmlInLabelsRendersAsText: Story = {
 
 /** Same for the bubble chart, whose tooltip adds the size row, titled by sizeTitle. */
 export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     series: [
       { name: HOSTILE, data: [{ x: 50, y: 50, z: 10, label: HOSTILE }] },

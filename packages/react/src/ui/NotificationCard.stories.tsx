@@ -77,6 +77,7 @@ export const CondensedWithoutAction: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SimpleRendersTitleAndDismiss: Story = {
+  tags: ['!dev'],
   render: () => <NotificationCard.Simple title="Hello" description="World" onDismiss={() => {}} />,
   play: async ({ canvasElement }) => {
     const status = canvasElement.querySelector('[role="status"]');
@@ -87,6 +88,7 @@ export const SimpleRendersTitleAndDismiss: Story = {
 };
 
 export const SimpleOmitsDismissWhenNoHandler: Story = {
+  tags: ['!dev'],
   render: () => <NotificationCard.Simple title="X" />,
   play: async ({ canvasElement }) => {
     const dismiss = canvasElement.querySelector('button[aria-label="Dismiss notification"]');
@@ -95,6 +97,7 @@ export const SimpleOmitsDismissWhenNoHandler: Story = {
 };
 
 export const CondensedRendersActionLink: Story = {
+  tags: ['!dev'],
   render: () => (
     <NotificationCard.Condensed
       title="Removed"

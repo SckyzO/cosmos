@@ -240,6 +240,7 @@ export const FolderVertical: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SwitchesPanelOnTabClick: Story = {
+  tags: ['!dev'],
   render: () => {
     const [tab, setTab] = useState('overview');
     return (
@@ -272,6 +273,7 @@ export const SwitchesPanelOnTabClick: Story = {
 };
 
 export const DisabledTabIsNotClickable: Story = {
+  tags: ['!dev'],
   render: () => {
     const [tab, setTab] = useState('overview');
     return (
@@ -301,6 +303,7 @@ export const DisabledTabIsNotClickable: Story = {
 };
 
 export const VerticalAriaOrientation: Story = {
+  tags: ['!dev'],
   render: () => {
     const [tab, setTab] = useState('one');
     return (
@@ -349,6 +352,7 @@ const FolderTrio = () => {
 };
 
 export const FolderSwitchesPanel: Story = {
+  tags: ['!dev'],
   render: () => <FolderTrio />,
   play: async ({ canvas }) => {
     const documents = canvas.getByRole('tab', { name: 'Documents' });
@@ -370,6 +374,7 @@ export const FolderSwitchesPanel: Story = {
 };
 
 export const FolderActiveTabJoinsPanel: Story = {
+  tags: ['!dev'],
   render: () => <FolderTrio />,
   play: async ({ canvas }) => {
     const active = canvas.getByRole('tab', { name: 'Documents' });
@@ -592,6 +597,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };
@@ -644,6 +650,7 @@ export const FolderOutlineIsStrongerInDark: Story = {
 
 /** In light, the folder keeps the theme's own border. */
 export const FolderOutlineKeepsBorderInLight: Story = {
+  tags: ['!dev'],
   ...FolderOutlineIsStrongerInDark,
   globals: { theme: 'light' },
   play: async ({ canvas }) => {

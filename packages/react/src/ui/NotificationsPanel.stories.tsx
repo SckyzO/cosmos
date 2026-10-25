@@ -230,7 +230,7 @@ export const AlignLeft: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensPanel: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel defaultOpen={false} />
@@ -247,7 +247,7 @@ export const TriggerOpensPanel: Story = {
 };
 
 export const ItemClickFiresHandler: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => {
     const extra = args as unknown as { onItemClick: (id: string) => void };
     return (
@@ -273,7 +273,7 @@ export const ItemClickFiresHandler: Story = {
 };
 
 export const EscapeKeyCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel defaultOpen={false} />
@@ -289,7 +289,7 @@ export const EscapeKeyCloses: Story = {
 
 /** Opening from the keyboard moves focus into the panel; Escape brings it back. */
 export const KeyboardFocusManagement: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-[420px] items-start justify-end">
       <FullPanel defaultOpen={false} />
@@ -391,7 +391,7 @@ export const ItemIntentsKeepTheirLook: Story = {
 
 /** `unread` puts a dot before the title and tints the row; `time` is a line under the text. */
 export const UnreadAndTime: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-[480px] items-start justify-end">
       <FullPanel onMarkAllRead={fn()} />
@@ -414,7 +414,7 @@ export const UnreadAndTime: Story = {
 
 /** "Mark all as read" is in the header only when `onMarkAllRead` is given, and keeps the panel open. */
 export const MarkAllReadFiresHandler: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="flex h-[480px] items-start justify-end">
       <FullPanel onMarkAllRead={(args as unknown as { onMarkAllRead: () => void }).onMarkAllRead} />

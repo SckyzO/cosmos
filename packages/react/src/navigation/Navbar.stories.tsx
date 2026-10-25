@@ -147,7 +147,7 @@ export const Light: Story = {
 // bare fixtures (a lone "x", a menu button hidden from `md` up) that read as
 // broken examples there.
 export const RootIsNavWithThemeAttribute: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar theme="dark" data-testid="n">
       <Navbar.Brand>x</Navbar.Brand>
@@ -162,7 +162,7 @@ export const RootIsNavWithThemeAttribute: Story = {
 };
 
 export const ActiveItemSetsAriaCurrent: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar theme="dark">
       <Navbar.Items>
@@ -184,7 +184,7 @@ export const ActiveItemSetsAriaCurrent: Story = {
 };
 
 export const MobileMenuButtonHasLabel: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar theme="dark">
       <Navbar.Brand>
@@ -201,7 +201,7 @@ export const MobileMenuButtonHasLabel: Story = {
 // An Item or MobileMenuButton without a `theme` prop takes the theme of its
 // Navbar: inside a dark bar it must render exactly like an explicit dark one.
 export const PartsInheritNavbarTheme: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <>
       <Navbar theme="dark" aria-label="Explicit">
@@ -270,7 +270,7 @@ const contrast = (a: string, b: string) => {
 // A dark Navbar sets its own text colour: content without one (a plain brand
 // name here) stays readable when the page around the bar has dark text.
 export const DarkNavbarSetsTextColor: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="bg-white text-gray-900">
       <Navbar theme="dark" aria-label="Main">
@@ -288,7 +288,7 @@ export const DarkNavbarSetsTextColor: Story = {
 // The light menu button draws its keyboard focus ring in the accent colour,
 // like the rest of the library, so it follows the Accent toolbar menu.
 export const MenuButtonFocusRingFollowsAccent: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar>
       <Navbar.Brand>

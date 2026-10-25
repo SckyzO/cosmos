@@ -20,6 +20,7 @@ export const Default: Story = {};
 export const HideChevron: Story = { args: { children: 'Open', hideChevron: true } };
 
 export const ClickFiresOnClick: Story = {
+  tags: ['!dev'],
   args: { children: 'View', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /View/ }));

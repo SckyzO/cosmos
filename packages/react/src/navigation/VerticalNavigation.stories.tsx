@@ -147,6 +147,7 @@ export const WithSecondarySection: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsNavWithAriaLabel: Story = {
+  tags: ['!dev'],
   render: () => (
     <VerticalNavigation data-testid="vn">
       <VerticalNavigation.Item href="#">A</VerticalNavigation.Item>
@@ -160,6 +161,7 @@ export const RootIsNavWithAriaLabel: Story = {
 };
 
 export const ActiveItemSetsAriaCurrent: Story = {
+  tags: ['!dev'],
   render: () => (
     <VerticalNavigation>
       <VerticalNavigation.Item active href="#" data-testid="active">
@@ -179,6 +181,7 @@ export const ActiveItemSetsAriaCurrent: Story = {
 };
 
 export const BadgeRendersWhenProvided: Story = {
+  tags: ['!dev'],
   render: () => (
     <VerticalNavigation>
       <VerticalNavigation.Item href="#" badge={7} data-testid="i">

@@ -39,6 +39,7 @@ export const Controlled: Story = {
 };
 
 export const TypingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { onChange: fn(), placeholder: 'Search…' },
   play: async ({ args, canvas }) => {
     const input = canvas.getByPlaceholderText('Search…');

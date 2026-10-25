@@ -135,7 +135,7 @@ export const Controlled: Story = {
 // there and would leave an empty example once the banner has closed.
 
 export const ClickAcceptFiresHandlerAndCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="relative h-72">
       <CookieBanner message={sampleMessage} onAccept={args.onAccept as () => void} />
@@ -150,7 +150,7 @@ export const ClickAcceptFiresHandlerAndCloses: Story = {
 };
 
 export const ClickDenyFiresHandlerAndCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="relative h-72">
       <CookieBanner
@@ -169,6 +169,7 @@ export const ClickDenyFiresHandlerAndCloses: Story = {
 };
 
 export const SettingsDoesNotAutoClose: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <div className="relative h-72">
       <CookieBanner

@@ -121,6 +121,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const TypingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { label: 'Name', placeholder: 'Your name', onChange: fn() },
   play: async ({ args, canvas }) => {
     const input = canvas.getByLabelText('Name');
@@ -131,6 +132,7 @@ export const TypingFiresOnChange: Story = {
 };
 
 export const PrefixTypingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: {
     label: 'Domain',
     prefix: 'https://',
@@ -164,11 +166,13 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
 };
 
 export const FocusShowsAccentBorderInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsAccentBorderInDark,
   globals: { theme: 'light' },
 };
 
 export const ErrorFocusShowsRedBorderInLight: Story = {
+  tags: ['!dev'],
   ...ErrorFocusShowsRedBorderInDark,
   globals: { theme: 'light' },
 };

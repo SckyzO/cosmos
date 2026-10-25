@@ -78,6 +78,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RemoveCallsHandler: Story = {
+  tags: ['!dev'],
   args: { src: SAMPLE_AVATAR, onRemove: fn() },
   play: async ({ args, canvas }) => {
     const removeBtn = canvas.getByRole('button', { name: /remove/i });
@@ -87,6 +88,7 @@ export const RemoveCallsHandler: Story = {
 };
 
 export const InvalidFileShowsError: Story = {
+  tags: ['!dev'],
   args: { src: null, onUpload: fn() },
   play: async ({ args, canvas }) => {
     const fileInput = canvas.getByLabelText('Upload avatar') as HTMLInputElement;
@@ -100,6 +102,7 @@ export const InvalidFileShowsError: Story = {
 };
 
 export const LoadingShowsSpinner: Story = {
+  tags: ['!dev'],
   args: { src: SAMPLE_AVATAR, loading: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('status', { name: /uploading/i })).toBeInTheDocument();
@@ -107,6 +110,7 @@ export const LoadingShowsSpinner: Story = {
 };
 
 export const DisabledBlocksUpload: Story = {
+  tags: ['!dev'],
   args: { src: SAMPLE_AVATAR, disabled: true, onUpload: fn(), onRemove: fn() },
   play: async ({ args, canvas }) => {
     const uploadBtn = canvas.getByRole('button', { name: /change photo/i });

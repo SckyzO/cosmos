@@ -185,6 +185,7 @@ export const InteractiveWizard: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ActiveStepHasAriaCurrent: Story = {
+  tags: ['!dev'],
   render: () => (
     <Stepper current={1}>
       <Stepper.Step>One</Stepper.Step>
@@ -201,6 +202,7 @@ export const ActiveStepHasAriaCurrent: Story = {
 };
 
 export const ClickableStepFiresHandler: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <Stepper current={2} clickable onStepClick={args.onStepClick as (i: number) => void}>
       <Stepper.Step>Alpha</Stepper.Step>
@@ -219,6 +221,7 @@ export const ClickableStepFiresHandler: Story = {
 };
 
 export const NotClickableHasNoButtons: Story = {
+  tags: ['!dev'],
   render: () => (
     <Stepper current={1}>
       <Stepper.Step>One</Stepper.Step>
@@ -231,6 +234,7 @@ export const NotClickableHasNoButtons: Story = {
 };
 
 export const DisabledStepIsNotClickable: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <Stepper current={2} clickable onStepClick={args.onStepClick as (i: number) => void}>
       <Stepper.Step>Alpha</Stepper.Step>
@@ -279,6 +283,7 @@ export const VariantPanels: Story = {
 };
 
 export const BarsAddsBrandTopBorder: Story = {
+  tags: ['!dev'],
   render: () => (
     <Stepper current={0} variant="bars">
       <Stepper.Step>A</Stepper.Step>
@@ -291,6 +296,7 @@ export const BarsAddsBrandTopBorder: Story = {
 };
 
 export const PanelsWrapsInBorderedOl: Story = {
+  tags: ['!dev'],
   render: () => (
     <Stepper current={0} variant="panels">
       <Stepper.Step>A</Stepper.Step>
@@ -309,7 +315,7 @@ export const PanelsWrapsInBorderedOl: Story = {
 // whose width the story can't pick.
 export const PanelsSeparatedByChevronsOnly: Story = {
   globals: { viewport: { value: 'desktop', isRotated: false } },
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Stepper current={1} variant="panels">
       <Stepper.Step>Job details</Stepper.Step>

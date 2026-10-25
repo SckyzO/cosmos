@@ -236,7 +236,7 @@ export const LegendListsEverySeries: Story = {
 
 /** A single series has nothing to tell apart: no legend unless forced. */
 export const SingleSeriesHasNoLegend: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: Basic.args,
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(canvasElement.querySelector('.apexcharts-series')).not.toBeNull());
@@ -286,7 +286,7 @@ export const FormatValueFormatsLabels: Story = {
  * category formatter onto it.
  */
 export const AccentSwitchKeepsYAxisLabels: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: Basic.args,
   play: async ({ canvasElement }) => {
     const yLabels = () =>
@@ -318,7 +318,7 @@ export const AccentSwitchKeepsYAxisLabels: Story = {
  * of the plot.
  */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     xTitle: HOSTILE,
     yTitle: HOSTILE,

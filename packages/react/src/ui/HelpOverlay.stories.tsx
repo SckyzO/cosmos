@@ -132,7 +132,7 @@ export const CustomFooter: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const HotkeyOpensOverlay: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
       <p className="text-sm text-gray-500 dark:text-gray-400">Press ? to open</p>
@@ -151,7 +151,7 @@ export const HotkeyOpensOverlay: Story = {
 };
 
 export const EscapeClosesOverlay: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [open, setOpen] = useState(true);
     return (
@@ -200,7 +200,7 @@ export const EscapeOverADrawerClosesOnlyTheOverlay: Story = {
 };
 
 export const CloseButtonClosesOverlay: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onOpenChange: fn() } as never,
   render: (args) => (
     <HelpOverlay open onOpenChange={args.onOpenChange as (open: boolean) => void}>
@@ -220,7 +220,7 @@ export const CloseButtonClosesOverlay: Story = {
 };
 
 export const HotkeyIgnoredWhileTypingInInput: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-screen items-center justify-center bg-gray-50 p-6 dark:bg-gray-950">
       <input
@@ -244,7 +244,7 @@ export const HotkeyIgnoredWhileTypingInInput: Story = {
 
 /** Focus moves into the open overlay and Tab cannot leave it. */
 export const FocusIsTrapped: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="p-6">
       <Button variant="secondary">Page button</Button>

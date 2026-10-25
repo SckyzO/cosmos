@@ -93,6 +93,7 @@ export const Controlled: Story = {
 };
 
 export const ChangingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { label: 'Region', options: REGIONS, defaultValue: 'eu-west-1', onChange: fn() },
   play: async ({ args, canvas }) => {
     const select = canvas.getByLabelText('Region');

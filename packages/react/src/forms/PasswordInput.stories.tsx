@@ -70,6 +70,7 @@ export const ToggleVisibility: Story = {
 };
 
 export const TypingFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { label: 'Password', onChange: fn() },
   play: async ({ args, canvas }) => {
     const input = canvas.getByLabelText('Password');
@@ -79,6 +80,7 @@ export const TypingFiresOnChange: Story = {
 };
 
 export const DisabledBlocksToggle: Story = {
+  tags: ['!dev'],
   args: { label: 'Password', disabled: true, defaultValue: 'secret' },
   play: async ({ canvas }) => {
     const toggle = canvas.getByRole('button', { name: /show password/i });

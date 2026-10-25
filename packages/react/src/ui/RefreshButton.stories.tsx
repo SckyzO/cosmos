@@ -48,6 +48,7 @@ export const WithUseAutoRefresh: Story = {
 };
 
 export const ClickRefreshFiresHandler: Story = {
+  tags: ['!dev'],
   args: { autoRefreshMs: 0, onRefresh: fn(), onIntervalChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Refresh/ }));

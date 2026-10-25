@@ -59,7 +59,7 @@ import type { HealthStatus } from '../status/types';
 import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
-  title: 'Pages/Dashboard',
+  title: 'Pages/Examples/Dashboard',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

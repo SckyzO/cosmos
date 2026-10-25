@@ -179,7 +179,7 @@ const preview: Preview = {
     // Docs pages (prose, prop tables, code blocks) follow the toolbar theme.
     docs: { container: CosmosDocsContainer },
     options: {
-      // `Pages/Dashboard` is the landing — the first story Storybook opens
+      // `Pages/Examples/Dashboard` is the landing — the first story Storybook opens
       // when the user arrives. Then `Welcome` (intro doc), then the rest
       // ordered atomic-design-style.
       storySort: {
@@ -189,13 +189,14 @@ const preview: Preview = {
           'Foundations',
           'Typography',
           'Atoms',
+          'Actions',
           'Forms',
           'Data',
+          'Media',
           'Status',
           'Feedback',
           'Overlays',
           'Navigation',
-          'Actions',
           'Layout',
           'Lists',
           'Chat',

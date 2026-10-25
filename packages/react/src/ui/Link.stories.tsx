@@ -104,6 +104,7 @@ export const AllVariants: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ExternalAddsSafeAttrs: Story = {
+  tags: ['!dev'],
   args: { external: true, href: 'https://example.com', children: 'External' },
   play: async ({ canvas }) => {
     const link = canvas.getByRole('link', { name: /external/i });
@@ -113,6 +114,7 @@ export const ExternalAddsSafeAttrs: Story = {
 };
 
 export const ExternalIconRenders: Story = {
+  tags: ['!dev'],
   args: { external: true, href: '#', children: 'Click' },
   play: async ({ canvas }) => {
     const link = canvas.getByRole('link', { name: /click/i });
@@ -130,6 +132,7 @@ export const ExternalIconHidden: Story = {
 };
 
 export const ExternalKeepsSafeRelWithCustomRel: Story = {
+  tags: ['!dev'],
   args: { external: true, rel: 'nofollow noopener', href: 'https://example.com', children: 'Ext' },
   play: async ({ canvas }) => {
     const link = canvas.getByRole('link', { name: /ext/i });
@@ -139,6 +142,7 @@ export const ExternalKeepsSafeRelWithCustomRel: Story = {
 };
 
 export const InternalKeepsCallerRel: Story = {
+  tags: ['!dev'],
   args: { rel: 'nofollow', href: '#', children: 'Internal' },
   play: async ({ canvas }) => {
     const link = canvas.getByRole('link', { name: /internal/i });
@@ -155,6 +159,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };

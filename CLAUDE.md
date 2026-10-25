@@ -197,8 +197,8 @@ titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group tha
 `parameters.options.storySort.order` in `apps/storybook/.storybook/preview.tsx`:
 
 ```text
-Welcome → Pages → Foundations → Typography → Atoms → Forms → Data → Status → Feedback
-→ Overlays → Navigation → Actions → Layout → Lists → Chat → Tables → Settings → Charts
+Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
+→ Feedback → Overlays → Navigation → Layout → Lists → Chat → Tables → Settings → Charts
 ```
 
 Adding a top-level group means updating `storySort`; the Welcome page builds its group table from

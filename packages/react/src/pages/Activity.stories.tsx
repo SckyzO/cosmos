@@ -30,7 +30,7 @@ import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-he
 // primitives.
 
 const meta = {
-  title: 'Pages/Activity',
+  title: 'Pages/Examples/Activity',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

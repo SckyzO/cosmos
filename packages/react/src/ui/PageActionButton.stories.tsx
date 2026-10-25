@@ -26,6 +26,7 @@ export const DangerOutline: Story = {
 };
 
 export const ClickFiresOnClick: Story = {
+  tags: ['!dev'],
   args: { children: 'Save', icon: Plus, onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Save' }));

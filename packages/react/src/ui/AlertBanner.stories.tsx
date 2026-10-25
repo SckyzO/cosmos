@@ -4,7 +4,7 @@ import { AlertBanner } from './AlertBanner';
 import { Button } from './Button';
 
 const meta = {
-  title: 'Atoms/Alert Banner',
+  title: 'Feedback/Alert Banner',
   component: AlertBanner,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

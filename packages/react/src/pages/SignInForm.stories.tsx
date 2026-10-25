@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './SignInForm';
 
 const meta = {
-  title: 'Pages/Sign In Form',
+  title: 'Pages/Auth/Sign In Form',
   component: SignInForm,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],
@@ -88,7 +88,7 @@ const standaloneDecorator = [
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const SubmitFiresWithValues: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ args, canvas }) => {
@@ -105,7 +105,7 @@ export const SubmitFiresWithValues: Story = {
 };
 
 export const ForgotFiresHandler: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), onForgotPassword: fn() },
   play: async ({ args, canvas }) => {
@@ -115,7 +115,7 @@ export const ForgotFiresHandler: Story = {
 };
 
 export const LoadingDisablesSubmit: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), loading: true },
   play: async ({ args, canvas }) => {

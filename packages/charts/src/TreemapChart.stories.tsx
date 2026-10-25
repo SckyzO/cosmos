@@ -287,6 +287,7 @@ export const TileGapsMatchTheSurface: Story = {
 
 /** One name keeps its color in every group: `compute` is the same in Paris and Frankfurt. */
 export const NameKeepsItsColor: Story = {
+  tags: ['!dev'],
   args: MultipleSeries.args,
   play: async ({ canvasElement }) => {
     await waitFor(() => {

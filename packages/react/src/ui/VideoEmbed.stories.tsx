@@ -8,7 +8,7 @@ import { VideoEmbed } from './VideoEmbed';
 const SAMPLE_SRC = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ';
 
 const meta = {
-  title: 'Data/Video Embed',
+  title: 'Media/Video Embed',
   component: VideoEmbed,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
@@ -113,6 +113,7 @@ export const Ratios: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RendersIframeByDefault: Story = {
+  tags: ['!dev'],
   args: { src: SAMPLE_SRC, title: 'Iframe sample' },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('iframe')).not.toBeNull();
@@ -121,6 +122,7 @@ export const RendersIframeByDefault: Story = {
 };
 
 export const NativeRendersVideo: Story = {
+  tags: ['!dev'],
   args: { src: '', title: 'Video sample', type: 'video' },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('video')).not.toBeNull();
@@ -129,6 +131,7 @@ export const NativeRendersVideo: Story = {
 };
 
 export const IframeIsSandboxedByDefault: Story = {
+  tags: ['!dev'],
   args: { src: 'about:blank', title: 'Sandbox sample' },
   play: async ({ canvasElement }) => {
     const iframe = canvasElement.querySelector('iframe');
@@ -143,6 +146,7 @@ export const IframeIsSandboxedByDefault: Story = {
 };
 
 export const IframeSandboxAndReferrerPolicyOverride: Story = {
+  tags: ['!dev'],
   args: { src: 'about:blank', title: 'Strict sample', sandbox: '', referrerPolicy: 'no-referrer' },
   play: async ({ canvasElement }) => {
     const iframe = canvasElement.querySelector('iframe');

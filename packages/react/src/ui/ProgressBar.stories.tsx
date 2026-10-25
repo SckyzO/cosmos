@@ -5,7 +5,7 @@ import { ProgressBar, type ProgressBarIntent, type ProgressBarSize } from './Pro
 import { SectionLabel } from './SectionLabel';
 
 const meta = {
-  title: 'Navigation/Progress Bar',
+  title: 'Feedback/Progress Bar',
   component: ProgressBar,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
@@ -183,6 +183,7 @@ export const IndeterminateAriaBusy: Story = {
 };
 
 export const ClampsOverflow: Story = {
+  tags: ['!dev'],
   args: { value: 250, max: 100, label: 'outside' },
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar');

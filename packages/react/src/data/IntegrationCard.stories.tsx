@@ -256,6 +256,7 @@ export const Interactive: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickPrimaryFiresHandler: Story = {
+  tags: ['!dev'],
   args: {
     logo: <Mail />,
     name: 'Mailchimp',
@@ -269,6 +270,7 @@ export const ClickPrimaryFiresHandler: Story = {
 };
 
 export const ClickSecondaryFiresHandler: Story = {
+  tags: ['!dev'],
   args: {
     logo: <Hash />,
     name: 'Hash',
@@ -285,6 +287,7 @@ export const ClickSecondaryFiresHandler: Story = {
 };
 
 export const LoadingDisablesActions: Story = {
+  tags: ['!dev'],
   args: {
     logo: <Mail />,
     name: 'Mailchimp',

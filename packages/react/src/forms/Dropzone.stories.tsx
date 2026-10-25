@@ -101,6 +101,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SelectingViaInputAddsFile: Story = {
+  tags: ['!dev'],
   args: { label: 'Doc', multiple: true },
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Doc', { selector: 'input' }) as HTMLInputElement;
@@ -111,6 +112,7 @@ export const SelectingViaInputAddsFile: Story = {
 };
 
 export const RemovingClearsFile: Story = {
+  tags: ['!dev'],
   args: { label: 'Removable', multiple: true },
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Removable', { selector: 'input' }) as HTMLInputElement;
@@ -125,6 +127,7 @@ export const RemovingClearsFile: Story = {
 };
 
 export const RejectsByAccept: Story = {
+  tags: ['!dev'],
   args: { label: 'Images', accept: 'image/*' },
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Images', { selector: 'input' }) as HTMLInputElement;
@@ -136,6 +139,7 @@ export const RejectsByAccept: Story = {
 };
 
 export const RejectsByMaxSize: Story = {
+  tags: ['!dev'],
   args: { label: 'Tiny', maxSize: 5 },
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Tiny', { selector: 'input' }) as HTMLInputElement;

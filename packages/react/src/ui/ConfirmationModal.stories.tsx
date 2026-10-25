@@ -67,6 +67,7 @@ export const TriggeredFromButton: Story = {
 };
 
 export const StayClosesModal: Story = {
+  tags: ['!dev'],
   args: { open: true, onClose: fn(), onDiscard: () => {}, onSave: () => {} },
   play: async ({ args }) => {
     // ConfirmationModal portals into document.body: query the document.

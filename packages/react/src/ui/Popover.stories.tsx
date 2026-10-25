@@ -139,7 +139,7 @@ export const Controlled: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
@@ -163,7 +163,7 @@ export const TriggerOpensCloses: Story = {
 
 /** `aria-labelledby` names the panel after a heading inside it, so the text isn't written twice. */
 export const NamedByItsHeading: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
@@ -185,7 +185,7 @@ export const NamedByItsHeading: Story = {
 };
 
 export const EscapeCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center">
       <Popover>
@@ -233,7 +233,7 @@ export const ArrowFollowsTheFlip: Story = {
 };
 
 export const AlignEndIsFlushWithTrigger: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-start justify-end p-6">
       <Popover>
@@ -258,7 +258,7 @@ export const AlignEndIsFlushWithTrigger: Story = {
 };
 
 export const AlignEndFollowsTriggerResize: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-start justify-end p-6">
       <Popover>
@@ -291,7 +291,7 @@ export const AlignEndFollowsTriggerResize: Story = {
 };
 
 export const OnOpenChangeFires: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="flex h-48 items-center justify-center">
       <Popover onOpenChange={args.onOpenChange as (o: boolean) => void}>
@@ -312,7 +312,7 @@ export const OnOpenChangeFires: Story = {
 
 /** Panels open on mount don't take focus, so they don't close each other. */
 export const DefaultOpenPanelsStayOpen: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center gap-24">
       {['One', 'Two'].map((name) => (
@@ -408,7 +408,7 @@ export const NestedMenuKeepsThePanelOpen: Story = {
 
 /** Keyboard users land in the panel, can Tab out of it, and get back to the trigger. */
 export const KeyboardFocusManagement: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="flex h-48 items-center justify-center gap-4">
       <Popover>

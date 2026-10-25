@@ -45,7 +45,7 @@ import { UserMenu } from '../ui/UserMenu';
 import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
-  title: 'Pages/Profile',
+  title: 'Pages/Examples/Profile',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

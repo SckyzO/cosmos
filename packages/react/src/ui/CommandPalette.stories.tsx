@@ -292,6 +292,7 @@ export const Interactive: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SelectingItemFiresHandler: Story = {
+  tags: ['!dev'],
   render: () => {
     const [open, setOpen] = useState(true);
     const handler = fn();
@@ -328,6 +329,7 @@ export const SelectingItemFiresHandler: Story = {
 };
 
 export const SearchFiltersItems: Story = {
+  tags: ['!dev'],
   render: () => {
     const [open, setOpen] = useState(true);
     return (
@@ -359,6 +361,7 @@ export const SearchFiltersItems: Story = {
 };
 
 export const HotkeyOpensPalette: Story = {
+  tags: ['!dev'],
   render: () => {
     const [open, setOpen] = useState(false);
     return (
@@ -543,7 +546,7 @@ export const RichItems: Story = {
 
 /** The close button of the input calls `onClose`; without the prop there is none. */
 export const CloseButtonClosesThePalette: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [open, setOpen] = useState(true);
     return (

@@ -44,6 +44,7 @@ export const SaveCycle: Story = {
 };
 
 export const IdleClickFiresOnClick: Story = {
+  tags: ['!dev'],
   args: { state: 'idle', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button'));
@@ -52,6 +53,7 @@ export const IdleClickFiresOnClick: Story = {
 };
 
 export const SavedDoesNotFireOnClick: Story = {
+  tags: ['!dev'],
   args: { state: 'saved', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button'));

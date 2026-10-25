@@ -183,7 +183,7 @@ const NavMenu = ({ onSelect }: { onSelect?: (name: string) => void }) => (
 // functions take focus, which scrolls the docs page down to their iframe.
 /** The ARIA contract: the trigger announces a menu, the panel and its parts have their roles. */
 export const RolesAndAttributes: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Spot>
       <Menu defaultOpen>
@@ -213,7 +213,7 @@ export const RolesAndAttributes: Story = {
 
 /** Enter opens on the first item; arrows move and wrap; Home and End jump; Escape gives focus back. */
 export const KeyboardNavigation: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <NavMenu />,
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Actions' });
@@ -243,7 +243,7 @@ export const KeyboardNavigation: Story = {
 
 /** ArrowDown on the trigger opens on the first item, ArrowUp on the last. */
 export const ArrowKeysOpenOnTheTrigger: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <NavMenu />,
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Actions' });
@@ -263,7 +263,7 @@ export const ArrowKeysOpenOnTheTrigger: Story = {
 
 /** Enter and Space choose an item: `onSelect` fires once and the menu closes. */
 export const SelectFiresAndCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <NavMenu onSelect={(args as unknown as { onPick: (n: string) => void }).onPick} />
   ),
@@ -288,7 +288,7 @@ export const SelectFiresAndCloses: Story = {
 
 /** A disabled item can't be chosen by the pointer either. */
 export const DisabledItemIsNotSelectable: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <NavMenu onSelect={(args as unknown as { onPick: (n: string) => void }).onPick} />
   ),
@@ -328,7 +328,7 @@ export const CloseOnSelectOff: Story = {
 
 /** Typing characters moves to the item whose label starts with them. */
 export const TypeaheadMovesToMatchingItem: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <NavMenu />,
   play: async ({ canvas }) => {
     canvas.getByRole('button', { name: 'Actions' }).focus();

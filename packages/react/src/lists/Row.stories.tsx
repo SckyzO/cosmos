@@ -51,6 +51,7 @@ export const StackedWithStatus: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickFiresOnClick: Story = {
+  tags: ['!dev'],
   args: { icon: Server, title: 'Click me', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Click me/ }));
