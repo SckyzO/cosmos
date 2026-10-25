@@ -5,6 +5,10 @@ import type { ImgHTMLAttributes, ReactNode } from 'react';
 export type CardProps = {
   children: ReactNode;
   className?: string;
+  /**
+   * Inner padding: `none`, `sm` (12px), `md` (16px, default) or `lg` (24px). `Card.Header`,
+   * `Card.Body` and `Card.Footer` pad themselves, so pair them with `none`.
+   */
   padding?: 'none' | 'sm' | 'md' | 'lg';
   /** Adds hover-lift + cursor-pointer affordance. Pair with `as="a"` or wrap in your router's Link. */
   interactive?: boolean;
@@ -46,10 +50,10 @@ const Root = ({
   <OrientationContext value={orientation}>
     <div
       className={clsx(
-        'overflow-hidden bg-white dark:bg-gray-900',
+        'overflow-hidden bg-[var(--color-bg-panel)]',
         edgeToEdgeMobile
-          ? 'border-y border-gray-200 sm:rounded-2xl sm:border dark:border-gray-800'
-          : 'rounded-2xl border border-gray-200 dark:border-gray-800',
+          ? 'border-y border-[var(--color-border)] sm:rounded-2xl sm:border'
+          : 'rounded-2xl border border-[var(--color-border)]',
         interactive &&
           'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
         orientation === 'horizontal' && 'flex flex-col sm:flex-row',
@@ -65,7 +69,7 @@ const Root = ({
 const Header = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div
     className={clsx(
-      'flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800',
+      'flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3',
       className
     )}
   >
@@ -80,7 +84,7 @@ const Body = ({ children, className }: { children: ReactNode; className?: string
 const Footer = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div
     className={clsx(
-      'flex items-center justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800',
+      'flex items-center justify-end gap-2 border-t border-[var(--color-border)] px-4 py-3',
       className
     )}
   >

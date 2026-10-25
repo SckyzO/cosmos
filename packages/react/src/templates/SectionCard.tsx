@@ -1,5 +1,6 @@
 import { type ComponentType, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { Card } from '../ui/Card';
 
 export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
 
@@ -53,7 +54,7 @@ export type SectionCardProps = {
 };
 
 /**
- * SectionCard — white card with title, optional icon and description, and children.
+ * SectionCard — a `Card` (24px padding) with title, optional icon and description, and children.
  *
  * The de-facto building block for grouped content in a page. Use multiple
  * SectionCards stacked vertically (with `space-y-6`) or in a grid.
@@ -72,12 +73,7 @@ export const SectionCard = ({
   const finalIconColor = tonePreset?.color ?? iconColor ?? 'text-[var(--color-text-muted)]';
   const finalIconBg = tonePreset?.bg ?? iconBg ?? 'bg-black/5 dark:bg-white/5';
   return (
-    <div
-      className={clsx(
-        'rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6',
-        className
-      )}
-    >
+    <Card padding="lg" className={className}>
       <div className="mb-5 flex items-center gap-3">
         {Icon && (
           <div
@@ -95,6 +91,6 @@ export const SectionCard = ({
         </div>
       </div>
       {children}
-    </div>
+    </Card>
   );
 };
