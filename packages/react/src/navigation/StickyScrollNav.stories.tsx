@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, spyOn, userEvent, waitFor } from 'storybook/test';
-import { StickyScrollNav, type StickyScrollNavProps } from '../navigation/StickyScrollNav';
+import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
