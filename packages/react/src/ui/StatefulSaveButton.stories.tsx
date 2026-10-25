@@ -92,3 +92,16 @@ export const SavedKeepsDarkTextOnGreen: Story = {
     await expect(bg).toBeGreaterThan(bb);
   },
 };
+
+/** `saved` is `aria-disabled`, not natively disabled: it keeps its colours and ignores clicks. */
+export const SavedIsAriaDisabledAndIgnoresClicks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { state: 'saved', onClick: fn() },
+  play: async ({ args, canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Saved' });
+    await expect(button).toHaveAttribute('aria-disabled', 'true');
+    await expect(button).toBeEnabled();
+    await userEvent.click(button);
+    await expect(args.onClick).not.toHaveBeenCalled();
+  },
+};
