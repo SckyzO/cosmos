@@ -253,6 +253,29 @@ export const TooltipFollowsTheme: Story = {
   },
 };
 
+/**
+ * The default palette has eight categorical colors: the accent first, then
+ * hues apart from each other, none of them green, amber or red in the first
+ * places, so series never read as statuses. Past eight the colors repeat.
+ */
+export const EightSeriesPalette: Story = {
+  args: {
+    categories: MONTHS.slice(0, 5),
+    stacked: true,
+    legendPosition: 'bottom',
+    series: ['web', 'api', 'batch', 'cache', 'queue', 'search', 'auth', 'mail'].map(
+      (name, index) => ({ name, data: [4, 6, 5, 7, 3].map((v) => v + index) })
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await expectPaletteFromTheme(() =>
+      [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        el.getAttribute('stroke')
+      )
+    );
+  },
+};
+
 /** The bars take the default palette of the theme. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
