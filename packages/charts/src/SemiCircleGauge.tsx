@@ -1,9 +1,10 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useRef } from 'react';
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/radialBar';
 import { ApexChart } from './ApexChart';
 import { percent, useValueFormat } from './formatters';
 import { useChartTheme } from './theme';
+import { useWidth } from './useWidth';
 import type { ChartBaseProps } from './types';
 
 export type SemiCircleGaugeProps = Omit<ChartBaseProps, 'height'> & {
@@ -41,21 +42,6 @@ const ARC_THICKNESS = 0.0976;
 // Room under the arc: the `showRange` labels, and a margin without them.
 const RANGE_ROW = 20;
 const EDGE_ROW = 4;
-
-/** The width of `ref`'s element, once measured, and again whenever it changes. */
-const useWidth = (ref: RefObject<HTMLElement | null>) => {
-  const [width, setWidth] = useState<number>();
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const read = () => setWidth(el.clientWidth);
-    read();
-    const observer = new ResizeObserver(read);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-};
 
 export const SemiCircleGauge = ({
   value,
