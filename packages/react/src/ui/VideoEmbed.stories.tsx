@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { VideoEmbed } from './VideoEmbed';
 
 // Real YouTube embed for the showcase stories. The interaction tests
@@ -23,6 +23,17 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: { src: SAMPLE_SRC, title: 'Sample video' },
+};
+
+const POSTER =
+  'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22640%22%20height%3D%22360%22%3E%3Crect%20width%3D%22640%22%20height%3D%22360%22%20fill%3D%22%231f2937%22%2F%3E%3C%2Fsvg%3E';
+
+/**
+ * `facade` puts the poster and a play button in place of the player: the iframe, and what the
+ * provider's page loads or stores, only come once the visitor presses play. Opt-in.
+ */
+export const Facade: Story = {
+  args: { src: SAMPLE_SRC, title: 'Sample video', facade: true, poster: POSTER },
 };
 
 export const Ratio16x9: Story = {
@@ -137,5 +148,40 @@ export const IframeSandboxAndReferrerPolicyOverride: Story = {
     const iframe = canvasElement.querySelector('iframe');
     await expect(iframe).toHaveAttribute('sandbox', '');
     await expect(iframe).toHaveAttribute('referrerpolicy', 'no-referrer');
+  },
+};
+
+export const FacadeLoadsNoIframeUntilPlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { src: 'about:blank', title: 'Facade sample', facade: true, poster: POSTER },
+  play: async ({ canvasElement, canvas }) => {
+    await expect(canvasElement.querySelector('iframe')).toBeNull();
+    const play = canvas.getByRole('button', { name: 'Play Facade sample' });
+    await userEvent.click(play);
+    await waitFor(() => expect(canvasElement.querySelector('iframe')).not.toBeNull());
+    await expect(canvas.queryByRole('button', { name: 'Play Facade sample' })).toBeNull();
+    // The player takes over the focus the button held.
+    await expect(canvasElement.querySelector('iframe')).toHaveFocus();
+  },
+};
+
+export const FacadeRequestsAutoplay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { src: 'https://example.test/embed/abc?rel=0', title: 'Autoplay sample', facade: true },
+  play: async ({ canvasElement, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Play Autoplay sample' }));
+    const src = canvasElement.querySelector('iframe')?.getAttribute('src') ?? '';
+    await expect(new URL(src).searchParams.get('autoplay')).toBe('1');
+    await expect(new URL(src).searchParams.get('rel')).toBe('0');
+  },
+};
+
+/** The facade is opt-in: without it the iframe is there from the start, as before. */
+export const WithoutFacadeIframeIsImmediate: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { src: 'about:blank', title: 'Plain sample', poster: POSTER },
+  play: async ({ canvasElement, canvas }) => {
+    await expect(canvasElement.querySelector('iframe')).not.toBeNull();
+    await expect(canvas.queryByRole('button')).toBeNull();
   },
 };

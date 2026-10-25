@@ -484,6 +484,9 @@ export const StickyHeadings: Story = {
     // One list whose children are all list items, headers included.
     const items = Array.from(canvas.getByRole('list').children);
     await expect(items.map((el) => el.tagName)).toEqual(items.map(() => 'LI'));
+    // A pinned heading reads as a band over the rows scrolling under it: a shadow on its edge.
+    const heading = canvas.getAllByText('A').find((el) => el.tagName === 'LI')!;
+    await expect(getComputedStyle(heading).boxShadow).not.toBe('none');
   },
 };
 
@@ -953,7 +956,7 @@ export const HeaderRendersWithBackgroundAndStickyClass: Story = {
   ),
   play: async ({ canvasElement }) => {
     const h = canvasElement.querySelector('[data-testid="h"]');
-    await expect(h?.className ?? '').toMatch(/bg-gray-50/);
+    await expect(h?.className ?? '').toMatch(/bg-gray-100/);
     await expect(h?.className ?? '').toMatch(/sticky/);
   },
 };

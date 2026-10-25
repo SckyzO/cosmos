@@ -15,6 +15,7 @@ import {
 } from './Table';
 import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
 import { EmptyState } from '../feedback/EmptyState';
+import { Badge } from '../ui/Badge';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
@@ -141,6 +142,20 @@ export const Basic: Story = {
 export const Striped: Story = {
   args: { striped: true },
   render: Basic.render,
+  play: async ({ canvas }) => {
+    // The shaded rows must stand out from the panel in every theme, dark ones included: a
+    // stripe under about 5% white is invisible on a dark panel.
+    const rows = canvas.getAllByRole('row').slice(1);
+    const alphaOf = (row: HTMLElement) => {
+      const bg = getComputedStyle(row).backgroundColor;
+      const alpha = /\/\s*([\d.]+%?)\s*\)|,\s*([\d.]+)\s*\)$/.exec(bg);
+      if (!alpha) return bg === 'rgba(0, 0, 0, 0)' ? 0 : 1;
+      const value = alpha[1] ?? alpha[2];
+      return value.endsWith('%') ? parseFloat(value) / 100 : parseFloat(value);
+    };
+    await expect(alphaOf(rows[0])).toBe(0);
+    await expect(alphaOf(rows[1])).toBeGreaterThanOrEqual(0.05);
+  },
 };
 
 export const Densities: Story = {
@@ -301,35 +316,45 @@ export const GroupedRows: Story = {
         <Table>
           <TableCaption>Nodes by room</TableCaption>
           <NodeHead />
-          {rooms.map((room) => (
-            <TableBody key={room}>
-              <TableRow className="bg-gray-50/60 dark:bg-white/[0.03]">
-                <TableHeaderCell
-                  scope="rowgroup"
-                  colSpan={5}
-                  className="text-2xs tracking-wider text-[var(--color-text-secondary)] uppercase"
-                >
-                  {room}
-                </TableHeaderCell>
-              </TableRow>
-              {NODES.filter((n) => n.room === room).map((n) => (
-                <NodeRow key={n.name} node={n} />
-              ))}
-            </TableBody>
-          ))}
+          {rooms.map((room) => {
+            const nodes = NODES.filter((n) => n.room === room);
+            return (
+              <TableBody key={room}>
+                <TableRow className="bg-gray-100 dark:bg-white/[0.06]">
+                  <TableHeaderCell
+                    scope="rowgroup"
+                    colSpan={5}
+                    className="text-[var(--color-text-primary)]"
+                  >
+                    <span className="flex items-center gap-2">
+                      {room}
+                      <Badge size="sm">
+                        {nodes.length} {nodes.length === 1 ? 'node' : 'nodes'}
+                      </Badge>
+                    </span>
+                  </TableHeaderCell>
+                </TableRow>
+                {nodes.map((n) => (
+                  <NodeRow key={n.name} node={n} />
+                ))}
+              </TableBody>
+            );
+          })}
         </Table>
       </Wrap>
     );
   },
   play: async ({ canvas }) => {
-    // Each group header spans its own <tbody> with scope="rowgroup".
-    const groupHeader = canvas.getAllByText('Room A').find((el) => el.tagName === 'TH');
+    // Each group header spans its own <tbody> with scope="rowgroup", and carries a count.
+    const groupHeader = canvas.getAllByText(/^Room A/)[0]?.closest('th');
     await expect(groupHeader).toHaveAttribute('scope', 'rowgroup');
+    await expect(within(groupHeader!).getByText(/^\d+ nodes?$/)).toBeInTheDocument();
+    inEachTheme(() => expectTextContrast(groupHeader!));
   },
 };
 
-const ExpandableTable = () => {
-  const [open, setOpen] = useState<Set<string>>(new Set());
+const ExpandableTable = ({ initiallyOpen = [] }: { initiallyOpen?: string[] }) => {
+  const [open, setOpen] = useState<Set<string>>(new Set(initiallyOpen));
   const toggle = (name: string) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -406,6 +431,26 @@ export const ExpandableRows: Story = {
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(canvas.queryByText(/Memory 61%/)).toBeNull();
+  },
+};
+
+/** Rows that start open: the first node shows its details at once. */
+export const ExpandableRowsOpenByDefault: Story = {
+  render: () => (
+    <Wrap>
+      <ExpandableTable initiallyOpen={['node-101']} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const toggle = canvas.getByRole('button', { name: 'Details for node-101' });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByText(/Memory 61%/)).toBeInTheDocument();
+    // The others stay closed, and the caret of an open row has turned.
+    await expect(canvas.getByRole('button', { name: 'Details for node-102' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    await expect(toggle.querySelector('svg')).toHaveClass('rotate-90');
   },
 };
 

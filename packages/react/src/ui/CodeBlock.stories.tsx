@@ -9,7 +9,6 @@ import typescript from 'shiki/langs/typescript.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import { expect } from 'storybook/test';
 import { CodeBlock } from './CodeBlock';
-import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
   title: 'Data/CodeBlock',
@@ -82,9 +81,8 @@ const highlightWithShiki = (code: string, language?: string) => {
 export const WithLanguage: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Shell snippet">
-        <CodeBlock language="bash" code={SHELL} />
-      </SectionCard>
+      <p className="mb-2 text-xs text-[var(--color-text-muted)]">Shell snippet</p>
+      <CodeBlock language="bash" code={SHELL} />
     </Wrap>
   ),
 };
@@ -92,9 +90,10 @@ export const WithLanguage: Story = {
 export const Plain: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="No language bar — copy floats top-right on hover">
-        <CodeBlock code={SHELL} />
-      </SectionCard>
+      <p className="mb-2 text-xs text-[var(--color-text-muted)]">
+        No language bar — copy floats top-right on hover
+      </p>
+      <CodeBlock code={SHELL} />
     </Wrap>
   ),
 };
@@ -102,9 +101,8 @@ export const Plain: Story = {
 export const TypeScript: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="TypeScript">
-        <CodeBlock language="typescript" code={TS} />
-      </SectionCard>
+      <p className="mb-2 text-xs text-[var(--color-text-muted)]">TypeScript</p>
+      <CodeBlock language="typescript" code={TS} />
     </Wrap>
   ),
 };
@@ -112,13 +110,14 @@ export const TypeScript: Story = {
 export const NoCopy: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Read-only snippet (showCopy=false)">
-        <CodeBlock
-          language="yaml"
-          code={'name: ci\non:\n  push:\n    branches: [main]\n'}
-          showCopy={false}
-        />
-      </SectionCard>
+      <p className="mb-2 text-xs text-[var(--color-text-muted)]">
+        Read-only snippet (showCopy=false)
+      </p>
+      <CodeBlock
+        language="yaml"
+        code={'name: ci\non:\n  push:\n    branches: [main]\n'}
+        showCopy={false}
+      />
     </Wrap>
   ),
 };
@@ -158,15 +157,18 @@ export const HighlightedWithShiki: Story = {
   render: () => (
     <Wrap>
       <div className="space-y-4">
-        <SectionCard title="Shell">
+        <div>
+          <p className="mb-2 text-xs text-[var(--color-text-muted)]">Shell</p>
           <CodeBlock language="bash" code={SHELL} highlight={highlightWithShiki} />
-        </SectionCard>
-        <SectionCard title="TypeScript">
+        </div>
+        <div>
+          <p className="mb-2 text-xs text-[var(--color-text-muted)]">TypeScript</p>
           <CodeBlock language="typescript" code={TS} highlight={highlightWithShiki} />
-        </SectionCard>
-        <SectionCard title="YAML">
+        </div>
+        <div>
+          <p className="mb-2 text-xs text-[var(--color-text-muted)]">YAML</p>
           <CodeBlock language="yaml" code={YAML} highlight={highlightWithShiki} />
-        </SectionCard>
+        </div>
       </div>
     </Wrap>
   ),

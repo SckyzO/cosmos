@@ -14,6 +14,8 @@ export type IntegrationCardProps = {
   status?: IntegrationStatus;
   /** Optional small label rendered above the name (e.g. "Communication"). */
   category?: string;
+  /** Extra line under the description (e.g. "Last synced 2 min ago", a version, a count). */
+  meta?: ReactNode;
   /** Primary action button label. */
   actionLabel?: string;
   /** Emphasis of the primary action button. Default `primary`. */
@@ -48,6 +50,7 @@ export const IntegrationCard = ({
   description,
   status,
   category,
+  meta,
   actionLabel,
   actionVariant = 'primary',
   actionIntent = 'brand',
@@ -75,7 +78,7 @@ export const IntegrationCard = ({
     </div>
     <div className="mt-4 min-w-0 flex-1">
       {category && (
-        <p className="text-3xs font-mono tracking-wide text-gray-500 uppercase dark:text-gray-400">
+        <p className="text-2xs font-mono tracking-wide text-gray-500 uppercase dark:text-gray-400">
           {category}
         </p>
       )}
@@ -85,6 +88,7 @@ export const IntegrationCard = ({
       {description && (
         <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{description}</p>
       )}
+      {meta && <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">{meta}</div>}
     </div>
     {(actionLabel || secondaryLabel) && (
       <div className="mt-4 flex items-center justify-end gap-2">

@@ -202,7 +202,7 @@ export const TableBody = ({ className, ...rest }: TableBodyProps) => {
         className={clsx(
           'divide-y divide-gray-100 border-t border-gray-100 first:border-t-0 dark:divide-gray-800 dark:border-gray-800',
           striped &&
-            '[&>tr:nth-child(even)]:bg-gray-50 dark:[&>tr:nth-child(even)]:bg-white/[0.03]',
+            '[&>tr:nth-child(even)]:bg-gray-50 dark:[&>tr:nth-child(even)]:bg-white/[0.06]',
           className
         )}
         {...rest}
