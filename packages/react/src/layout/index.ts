@@ -13,6 +13,7 @@ export {
   type MediaObjectAlign,
   type MediaObjectPosition,
 } from './MediaObject';
+export { PageContainer, type PageContainerProps, type PageContainerWidth } from './PageContainer';
 export { Shell, type ShellProps } from './Shell';
 export { Topbar, type TopbarProps } from './Topbar';
 export {
