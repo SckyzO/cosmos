@@ -12,13 +12,29 @@ import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
 import { useOverflows } from '../hooks/useOverflows';
+import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
   columns: ColumnDef<T>[];
   rowKey: (row: T) => string | number;
-  /** Optional right-edge action column (typically a `RowActionButton`). */
+  /**
+   * Called when a row is clicked, or when Enter or Space is pressed on it: the row then takes the
+   * keyboard focus and a pointer cursor. A click on a control inside the row (the checkbox, the
+   * action column, a link or button in a cell) does not call it. With `rowHref`, a click on the
+   * row's link calls it too, once the browser follows the link.
+   */
+  onRowClick?: (row: T) => void;
+  /**
+   * Makes each row a link to the returned URL (a row that returns `undefined` stays a plain row).
+   * The first column holds the link, drawn over the whole row: a click anywhere on it, a middle
+   * click, "Open in a new tab" and Enter on the focused link all work as on a link. Keep the first
+   * column's content free of buttons and links (they cannot nest in a link), and give the
+   * others' as many as you want: they stay clickable above the row.
+   */
+  rowHref?: (row: T) => string | undefined;
+  /** Optional right-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
   renderRowAction?: (row: T) => React.ReactNode;
   pageSize?: number;
   loading?: boolean;
@@ -85,6 +101,8 @@ export const DataTable = <T,>({
   rows,
   columns,
   rowKey,
+  onRowClick,
+  rowHref,
   renderRowAction,
   pageSize = 25,
   loading = false,
@@ -402,16 +420,47 @@ export const DataTable = <T,>({
               {pageRows.map((row) => {
                 const key = rowKey(row);
                 const isSelected = selection.has(key);
+                const href = rowHref?.(row);
+                // A link is the focusable thing of its row; without one, the row itself is.
+                const focusableRow = onRowClick && !href;
                 return (
                   <tr
                     key={key}
+                    tabIndex={focusableRow ? 0 : undefined}
+                    onClick={
+                      onRowClick
+                        ? (e) => {
+                            if (isRowClick(e)) onRowClick(row);
+                          }
+                        : undefined
+                    }
+                    onKeyDown={
+                      focusableRow
+                        ? (e) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key !== 'Enter' && e.key !== ' ') return;
+                            e.preventDefault();
+                            onRowClick(row);
+                          }
+                        : undefined
+                    }
                     className={clsx(
                       'hover:bg-gray-50 dark:hover:bg-white/5',
-                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5'
+                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
+                      (onRowClick || href) && 'cursor-pointer',
+                      focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+                      href &&
+                        'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
                     )}
                   >
                     {selectable && (
-                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                      <td
+                        className={clsx(
+                          'px-4',
+                          BODY_CELL_PADDING[density],
+                          href && 'relative z-[1]'
+                        )}
+                      >
                         {/* A flex box centres the checkbox; inline, it sat on the
                             text baseline and moved with the font metrics. */}
                         <div className="flex items-center">
@@ -423,21 +472,34 @@ export const DataTable = <T,>({
                         </div>
                       </td>
                     )}
-                    {columns.map((col) => (
+                    {columns.map((col, i) => (
                       <td
                         key={col.key}
                         className={clsx(
                           'px-4',
                           BODY_CELL_PADDING[density],
                           'text-sm',
-                          ALIGN_CELL[col.align ?? 'left']
+                          ALIGN_CELL[col.align ?? 'left'],
+                          href && i > 0 && RAISE_CONTROLS
                         )}
                       >
-                        {col.render(row)}
+                        {href && i === 0 ? (
+                          <a href={href} data-row-link className={ROW_LINK}>
+                            {col.render(row)}
+                          </a>
+                        ) : (
+                          col.render(row)
+                        )}
                       </td>
                     ))}
                     {renderRowAction && (
-                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                      <td
+                        className={clsx(
+                          'px-4',
+                          BODY_CELL_PADDING[density],
+                          href && 'relative z-[1]'
+                        )}
+                      >
                         <div className="flex items-center justify-end">{renderRowAction(row)}</div>
                       </td>
                     )}
