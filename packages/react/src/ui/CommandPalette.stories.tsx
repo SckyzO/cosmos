@@ -479,3 +479,29 @@ export const PlaceholderContrastInEveryTheme: Story = {
     inEachTheme(() => expectPlaceholderContrast(input));
   },
 };
+
+/** A search that matches nothing hides the empty listbox and shows the `Empty` message. */
+export const NoResults: Story = {
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <SamplePanel open={open} onOpenChange={setOpen} />
+      </div>
+    );
+  },
+  play: async () => {
+    await waitFor(() => expect(document.querySelector('[cmdk-input]')).not.toBeNull());
+    const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+    input.focus();
+    await userEvent.type(input, 'zzzz');
+    const page = within(document.body);
+    await waitFor(() => expect(page.getByText('No matching commands.')).toBeVisible());
+    await expect(document.querySelectorAll('[cmdk-item]')).toHaveLength(0);
+    // No listbox is left in the accessibility tree with nothing in it.
+    await expect(page.queryByRole('listbox')).toBeNull();
+    // Clearing the search brings the list back.
+    await userEvent.clear(input);
+    await waitFor(() => expect(page.getByRole('listbox')).toBeVisible());
+  },
+};
