@@ -286,7 +286,10 @@ The same prop means the same thing on every component.
   provides it through a context (`layout/shellContext.ts`): inside it, the toggle takes no props,
   every toggle stays in sync, and the Topbar's `sidebarCollapsed` and the Sidebar's `collapsed`
   are not read. Outside a Shell it takes `collapsed` + `onCollapsedChange`. Don't write another
-  collapse button.
+  collapse button. The Shell owns two sidebar states: collapsed from `lg` up (`sidebarCollapsed`),
+  open below `lg` (`sidebarOpen`), where the sidebar is a `Drawer` and the same toggle opens and
+  closes it. A component of the sidebar that must differ in the drawer reads `isMobile` from
+  `shellContext.ts`.
 - **A floating panel renders in a portal.** A panel that opens next to its trigger (Popover,
   UserMenu, NotificationsPanel, DatePicker, Dropdown, Combobox, Tooltip, the column filter of
   ColumnHeader, RefreshButton's menu) renders at the end of `<body>`, so no `overflow: hidden`
