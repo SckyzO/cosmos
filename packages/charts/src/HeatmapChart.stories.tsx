@@ -239,18 +239,23 @@ export const LowestStepStaysVisibleInDark: Story = {
   play: async ({ canvasElement }) => {
     const lowestFill = () =>
       canvasElement.querySelector('.apexcharts-heatmap-rect')?.getAttribute('fill') ?? '';
-    // The chart redraws a moment after <html> changes: wait for the new fill
-    // (every accent has its own) before judging it.
+    // The chart redraws a moment after <html> changes, sometimes in more than one
+    // pass: judge the new fill (every accent has its own) until the redraw is done,
+    // or a busy machine reads an intermediate colour. A fill that stays too dark
+    // still fails when the wait runs out.
     let drawn = '';
     for (const theme of ['dark', 'deep-blue']) {
       const restore = switchTheme(theme);
       try {
         for (const accent of ACCENT_IDS) {
           document.documentElement.setAttribute('data-accent', accent);
-          await waitFor(() => expect(lowestFill()).not.toBe(drawn));
+          await waitFor(() => {
+            const fill = lowestFill();
+            expect(fill).not.toBe(drawn);
+            const ratio = contrastRatio(toHex(fill), toHex(themeColor('--color-gray-900')));
+            expect(ratio, `${theme} ${accent}`).toBeGreaterThanOrEqual(1.5);
+          });
           drawn = lowestFill();
-          const ratio = contrastRatio(toHex(drawn), toHex(themeColor('--color-gray-900')));
-          expect(ratio, `${theme} ${accent}`).toBeGreaterThanOrEqual(1.5);
         }
       } finally {
         document.documentElement.removeAttribute('data-accent');
