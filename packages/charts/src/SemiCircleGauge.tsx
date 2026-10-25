@@ -8,6 +8,7 @@ import type { ChartBaseProps } from './types';
 export type SemiCircleGaugeProps = ChartBaseProps & {
   value: number;
   label?: string;
+  /** Color of the arc. Default: the accent. */
   color?: string;
   /** Value at the start of the arc. Default 0. */
   min?: number;
