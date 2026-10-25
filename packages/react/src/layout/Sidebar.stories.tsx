@@ -164,7 +164,7 @@ export const WithCollapseButton: Story = {
 
 /** Collapsed to 72 px, the footer's toggle stays inside the sidebar. */
 export const CollapsedFooterFits: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: FullExample.render,
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
@@ -254,7 +254,7 @@ export const ThreeLevelMenu: Story = {
 
 /** Collapsed, a sub-menu opens its whole tree in a panel to its right. */
 export const CollapsedSubMenuOpensFlyout: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onPick: fn() } as never,
   render: (args) => (
     <Wrap>

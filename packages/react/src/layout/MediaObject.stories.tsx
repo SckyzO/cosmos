@@ -170,6 +170,7 @@ export const MediaOnRight: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsFlexRow: Story = {
+  tags: ['!dev'],
   render: () => (
     <MediaObject data-testid="mo">
       <MediaObject.Image>x</MediaObject.Image>
@@ -183,6 +184,7 @@ export const RootIsFlexRow: Story = {
 };
 
 export const MediaPositionRightAddsRowReverse: Story = {
+  tags: ['!dev'],
   render: () => (
     <MediaObject mediaPosition="right" data-testid="mo">
       <MediaObject.Image>x</MediaObject.Image>
@@ -197,6 +199,7 @@ export const MediaPositionRightAddsRowReverse: Story = {
 };
 
 export const AlignCenterAddsItemsCenter: Story = {
+  tags: ['!dev'],
   render: () => (
     <MediaObject align="center" data-testid="mo">
       <MediaObject.Image>x</MediaObject.Image>
