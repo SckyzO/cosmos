@@ -19,7 +19,7 @@ import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
-import { expectFocusRing } from '../storybook-helpers';
+import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 
 const meta = {
   title: 'Tables/Table',
@@ -514,4 +514,56 @@ export const DashboardCells: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const MobileStickyFirstColumn: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <Table stickyFirstColumn striped>
+        <TableCaption>Compute nodes</TableCaption>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell className="min-w-40">Room</TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              CPU
+            </TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              Memory
+            </TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              Power
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {NODES.map((n) => (
+            <NodeRow key={n.name} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const table = canvas.getByRole('table', { name: 'Compute nodes' });
+    const scroller = table.parentElement as HTMLElement;
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    // The end fades, the start does not: the first column is pinned there.
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
+    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const head = canvas.getAllByRole('columnheader')[0];
+    const cell = canvas.getAllByRole('row')[2].firstElementChild as HTMLElement;
+    const second = canvas.getAllByRole('row')[2].children[1];
+    // Pinned to the padding box of the wrapper, inside its 1px border.
+    const start = left(scroller) + scroller.clientLeft;
+    const before = left(second);
+    scroller.scrollLeft = 120;
+    await waitFor(() => expect(left(second)).toBeLessThan(before));
+    await expect(left(head)).toBe(start);
+    await expect(left(cell)).toBe(start);
+    // Opaque even on a striped row, which has a background of its own.
+    await expect(getComputedStyle(cell).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
 };

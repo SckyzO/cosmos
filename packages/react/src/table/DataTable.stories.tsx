@@ -1222,3 +1222,125 @@ export const HeaderCellsShareOneStyleWithTable: Story = {
     }
   },
 };
+
+// Wide enough to scroll sideways on a phone.
+const wideColumns = columns.map((c) => ({ ...c, width: '160px' }));
+
+const scrollerOf = (table: HTMLElement) => table.parentElement as HTMLElement;
+
+export const MobileScrollsWithAnEdgeFade: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.id} pageSize={5} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    // At the start, only the end fades: there is more to the right.
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
+    await expect(getComputedStyle(scroller).maskImage).toMatch(
+      /^linear-gradient\(to right, rgb\(0, 0, 0\), rgb\(0, 0, 0\) 24px/
+    );
+    // Scrolled into the middle, both do; at the end, only the start.
+    scroller.scrollLeft = 200;
+    await waitFor(() =>
+      expect(getComputedStyle(scroller).maskImage).toMatch(
+        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgba\(0, 0, 0, 0\)\)$/
+      )
+    );
+    scroller.scrollLeft = scroller.scrollWidth;
+    await waitFor(() =>
+      expect(getComputedStyle(scroller).maskImage).toMatch(
+        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgb\(0, 0, 0\)\)$/
+      )
+    );
+  },
+};
+
+export const TableThatFitsHasNoFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.id} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
+    await expect(getComputedStyle(scroller).maskImage).toBe('none');
+  },
+};
+
+export const StickyFirstColumn: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={[columns[1], columns[0], ...wideColumns.slice(2)]}
+        rowKey={(r) => r.id}
+        pageSize={5}
+        selectable
+        stickyFirstColumn
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const table = canvas.getByRole('table');
+    const scroller = scrollerOf(table);
+    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const row = within(table).getAllByRole('row')[1];
+    const [select, first, second] = within(row).getAllByRole('cell');
+    const [selectHead, firstHead] = within(table).getAllByRole('columnheader');
+    const start = left(scroller);
+    const secondBefore = left(second);
+    scroller.scrollLeft = 150;
+    await waitFor(() => expect(left(second)).toBeLessThan(secondBefore));
+    // The selection column and the first data column stay where they were, header and body
+    // alike, with the second one scrolling under the pinned pair.
+    await expect(left(select)).toBe(start);
+    await expect(left(selectHead)).toBe(start);
+    await expect(left(first)).toBe(start + 44);
+    await expect(left(firstHead)).toBe(start + 44);
+    // The start edge is the pinned column's: it does not fade.
+    await expect(getComputedStyle(scroller).maskImage).not.toMatch(
+      /^linear-gradient\(to right, rgba/
+    );
+    // Pinned cells are opaque, or the ones under them would show through.
+    await expect(getComputedStyle(first).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(select).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+};
+
+export const StickyFirstColumnKeepsRowLinks: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 4)}
+        columns={[columns[1], ...wideColumns.slice(2)]}
+        rowKey={(r) => r.id}
+        rowHref={(r) => `#${r.id}`}
+        stickyFirstColumn
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-101/ });
+    const clicks = recordLinkClicks();
+    try {
+      // A click on a cell that scrolls follows the link of the pinned one, which does not cover it.
+      await userEvent.click(within(row).getAllByRole('cell')[2]);
+      await expect(clicks.followed).toEqual(['#alert-2']);
+      await userEvent.click(within(row).getByRole('link'));
+      await expect(clicks.followed).toEqual(['#alert-2', '#alert-2']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
