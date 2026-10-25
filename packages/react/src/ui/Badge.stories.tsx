@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Check, Info, Star, X, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
+import { inEachTheme } from '../storybook-helpers';
 import { Badge } from './Badge';
 import type { Intent } from './intent';
 import { SectionCard } from '../templates/SectionCard';
@@ -321,5 +322,30 @@ export const DotLeadsTheLabel: Story = {
     const dot = badge.firstElementChild!;
     await expect(dot).toHaveClass('bg-red-500', 'rounded-full');
     await expect(dot).toHaveAttribute('aria-hidden', 'true');
+  },
+};
+
+/**
+ * The neutral light badge on the surface of a card (`gray-800` in dark): it keeps a fill of its own
+ * in every theme, instead of melting into the card.
+ */
+export const NeutralBadgeShowsOnACardSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div
+      data-testid="surface"
+      className="w-fit rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
+    >
+      <Badge>Available</Badge>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const surface = canvas.getByTestId('surface');
+    const badge = canvas.getByText('Available').parentElement!;
+    inEachTheme(() => {
+      const fill = getComputedStyle(badge).backgroundColor;
+      expect(fill).not.toBe(getComputedStyle(surface).backgroundColor);
+      expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+    });
   },
 };
