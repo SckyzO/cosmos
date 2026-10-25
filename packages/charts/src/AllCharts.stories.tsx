@@ -83,7 +83,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <TreemapChart
         series={[
           {
@@ -93,7 +94,6 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <TreemapChart series={[]} {...props} />,
