@@ -927,3 +927,146 @@ export const ColumnFilterFollowsAndCloses: Story = {
     await waitFor(() => expect(page.queryByPlaceholderText('Search…')).toBeNull());
   },
 };
+
+// ── Row click and row links ──────────────────────────────────────────────────
+
+export const ClickableRows: Story = {
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        onRowClick={args.onRowClick}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const row = canvas.getByRole('row', { name: /node-100/ });
+    await expect(row).toHaveClass('cursor-pointer');
+    // A click on a cell is a click on the row.
+    await userEvent.click(within(row).getByText('node-100'));
+    await expect(onRowClick).toHaveBeenCalledTimes(1);
+    await expect(onRowClick).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'alert-1' }));
+    // The checkbox and the action column keep their own meaning.
+    await userEvent.click(within(row).getByRole('checkbox', { name: 'Select row alert-1' }));
+    await userEvent.click(within(row).getByRole('button', { name: 'View' }));
+    await expect(onRowClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const ClickableRowFocusesFromTheKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 3)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        onRowClick={args.onRowClick}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const row = canvas.getByRole('row', { name: /node-101/ });
+    await expect(row).toHaveAttribute('tabindex', '0');
+    await expectFocusRing(row, { inset: true });
+    await userEvent.keyboard('{Enter}');
+    await expect(onRowClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'alert-2' }));
+    await userEvent.keyboard(' ');
+    await expect(onRowClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+// The link of a row would navigate the page that runs the story: record the click that reaches
+// the document and cancel it.
+const recordLinkClicks = () => {
+  const followed: (string | null)[] = [];
+  const listener = (e: Event) => {
+    const link = (e.target as Element).closest('a');
+    if (!link) return;
+    e.preventDefault();
+    followed.push(link.getAttribute('href'));
+  };
+  document.addEventListener('click', listener);
+  return { followed, stop: () => document.removeEventListener('click', listener) };
+};
+
+// The link sits in the first column: the name leads.
+const linkColumns = [columns[1], columns[0], ...columns.slice(2)];
+
+export const LinkRows: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={linkColumns}
+        rowKey={(r) => r.id}
+        selectable
+        rowHref={(r) => `#${r.id}`}
+        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-100/ });
+    const link = within(row).getByRole('link', { name: /node-100/ });
+    await expect(link).toHaveAttribute('href', '#alert-1');
+    // The link is drawn over the whole row: what sits under a point in another cell is the link,
+    // and what sits under the checkbox and the action button is that control, not the link.
+    const under = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    };
+    await expect(under(within(row).getByText('cpu'))).toBe(link);
+    const checkbox = within(row).getByRole('checkbox');
+    const edit = within(row).getByRole('button', { name: 'Edit' });
+    await expect(under(checkbox.closest('label') ?? checkbox)?.closest('label')).not.toBeNull();
+    await expect(under(edit)?.closest('button')).toBe(edit);
+    // Clicking a control does not follow the link; clicking elsewhere on the row does.
+    const clicks = recordLinkClicks();
+    try {
+      await userEvent.click(within(row).getByRole('checkbox'));
+      await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+      await expect(clicks.followed).toEqual([]);
+      // userEvent clicks the element it is given, so give it the one under the cell's point.
+      await userEvent.click(under(within(row).getByText('cpu'))!);
+      await expect(clicks.followed).toEqual(['#alert-1']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
+
+export const LinkRowFocusesFromTheKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 3)}
+        columns={linkColumns}
+        rowKey={(r) => r.id}
+        rowHref={(r) => `#${r.id}`}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-102/ });
+    const link = within(row).getByRole('link');
+    // The row draws the ring: the link itself would only outline its cell.
+    await expectFocusRing(link, { ring: row, inset: true });
+    const clicks = recordLinkClicks();
+    try {
+      await userEvent.keyboard('{Enter}');
+      await expect(clicks.followed).toEqual(['#alert-3']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
