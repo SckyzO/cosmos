@@ -138,6 +138,7 @@ const stubScrollTo = () => {
 };
 
 export const HiddenWhenAboveThreshold: Story = {
+  tags: ['!dev'],
   render: () => (
     <div className="h-32 p-6">
       <BackToTopFab threshold={1000} />
@@ -163,6 +164,7 @@ export const HiddenWhenAboveThreshold: Story = {
 };
 
 export const VisibleAfterScroll: Story = {
+  tags: ['!dev'],
   render: () => (
     <div className="h-32 p-6">
       <BackToTopFab threshold={100} />
@@ -182,6 +184,7 @@ export const VisibleAfterScroll: Story = {
 };
 
 export const ClickScrollsToTop: Story = {
+  tags: ['!dev'],
   render: () => (
     <div className="h-32 p-6">
       <BackToTopFab threshold={0} />

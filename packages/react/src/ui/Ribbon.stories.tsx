@@ -127,6 +127,7 @@ export const DemoCorner: Story = {
 
 /** A flat ribbon on a Cosmos `Card` takes the card's corner radius, whatever it is. */
 export const FollowsCardRadius: Story = {
+  tags: ['!dev'],
   render: () => (
     <CosmosCard padding="lg" className="relative h-44 w-64">
       <Ribbon position="top-right">NEW</Ribbon>

@@ -270,6 +270,7 @@ const stubClipboard = () => {
 };
 
 export const ClickFiresOnCopy: Story = {
+  tags: ['!dev'],
   args: { value: 'test-value', onCopy: fn() },
   play: async ({ args, canvas }) => {
     const restore = stubClipboard();
@@ -287,6 +288,7 @@ export const ClickFiresOnCopy: Story = {
 };
 
 export const FeedbackResetsAfterDuration: Story = {
+  tags: ['!dev'],
   args: { value: 'reset-test', duration: 200 },
   play: async ({ canvas }) => {
     const restore = stubClipboard();

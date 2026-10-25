@@ -179,6 +179,7 @@ export const ToggleGroup: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickButtonFiresHandler: Story = {
+  tags: ['!dev'],
   render: (args) => {
     const extra = args as unknown as { onDay: () => void; onWeek: () => void };
     return (
@@ -206,6 +207,7 @@ export const ClickButtonFiresHandler: Story = {
 };
 
 export const RoleGroup: Story = {
+  tags: ['!dev'],
   render: () => (
     <ButtonGroup>
       <Button variant="secondary">A</Button>

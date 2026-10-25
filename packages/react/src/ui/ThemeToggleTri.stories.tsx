@@ -77,6 +77,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const LightClickFiresWithDark: Story = {
+  tags: ['!dev'],
   args: { theme: 'light', onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to dark mode/i });
@@ -87,6 +88,7 @@ export const LightClickFiresWithDark: Story = {
 };
 
 export const DarkClickFiresWithDeepBlue: Story = {
+  tags: ['!dev'],
   args: { theme: 'dark', onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to deep blue mode/i });
@@ -97,6 +99,7 @@ export const DarkClickFiresWithDeepBlue: Story = {
 };
 
 export const DeepBlueClickWrapsToLight: Story = {
+  tags: ['!dev'],
   args: { theme: 'deep-blue', onChange: fn() },
   play: async ({ args, canvas }) => {
     const button = canvas.getByRole('button', { name: /switch to light mode/i });
