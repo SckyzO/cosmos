@@ -17,6 +17,7 @@ import {
   expectPaletteFromTheme,
   opaqueColor,
   resolveColor,
+  themeColor,
   LegendSides,
   expectLegendsOnTheirSide,
   axisTitles,
@@ -337,6 +338,44 @@ export const EightSeriesPaletteCyanAccent: Story = {
   },
 };
 
+/**
+ * The bars of a group are told apart by a line in the card's color, two pixels
+ * wide. A single series has no group and a stacked one keeps its segments flush.
+ */
+export const GroupedBarsHaveAGap: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: MultiSeries.args,
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-testid="grouped">
+        <BarChart {...args} />
+      </div>
+      <div data-testid="stacked">
+        <BarChart {...args} stacked />
+      </div>
+      <div data-testid="single">
+        <BarChart {...args} series={args.series.slice(0, 1)} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const outline = (id: string) => {
+      const bar = canvasElement.querySelector(`[data-testid="${id}"] .apexcharts-bar-area[j="0"]`);
+      return {
+        color: resolveColor(bar?.getAttribute('stroke') ?? ''),
+        width: Number(bar?.getAttribute('stroke-width')),
+      };
+    };
+    await waitFor(() => {
+      expect(outline('grouped').width).toBe(2);
+      expect(outline('grouped').color).toBe(themeColor('--color-white'));
+      expect(outline('stacked').width).toBe(0);
+      expect(outline('single').width).toBe(0);
+    });
+  },
+};
+
 /** The bars take the default palette of the theme. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -345,9 +384,10 @@ export const PaletteFromTheme: Story = {
     series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
   },
   play: async ({ canvasElement }) => {
+    // The fill: grouped bars outline themselves in the card's color.
     await expectPaletteFromTheme(() =>
       [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
-        el.getAttribute('stroke')
+        el.getAttribute('fill')
       )
     );
   },
