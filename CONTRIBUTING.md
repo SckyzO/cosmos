@@ -248,6 +248,14 @@ The same prop means the same thing on every component.
   `WARN`, `CRIT`…), which is data and not a color, and decorative color names such as
   `SectionCard.iconTone`. A color with no meaning of its own (`violet` in `EventCalendar`) is
   documented as a category color next to the `Intent` values.
+- **A state never overrides a default through class order.** Two utilities of one family on one
+  element (`bg-white` and `bg-brand-500`, `text-gray-700` and `text-white`, `w-full` and `w-40`)
+  are settled by their order in the generated CSS, not by their order in `clsx`: the neutral one
+  can win, and the state it was meant to show is invisible (the active `Pagination` page was a
+  white digit on a white button). Default and state classes are mutually exclusive: write
+  `active ? activeClass : idleClass`, never `base`, then `active && override`. A value a caller
+  may change is a prop (`Popover.Content`'s `width` and `padding`), not a `className` that wins by
+  `!`. There is no `tailwind-merge`: it would hide the conflict at runtime instead of removing it.
 - **Change callbacks follow the control.** A wrapper of a native field (Input, PasswordInput,
   Textarea, Select, Checkbox, Radio, TimePicker) passes the native event: `onChange(event)`, and
   `onChange(value, event)` for Checkbox, Radio and TimePicker. A custom widget passes the value:
@@ -313,6 +321,27 @@ The same prop means the same thing on every component.
   its content. A tooltip one step higher, at `z-[10000]`, so it shows over the panel it opens
   from. Both come from `FLOATING_PANEL_Z` and `TOOLTIP_Z` in `ui/FloatingPanel.tsx`; don't
   write another value.
+
+## Narrow screens
+
+A component laid out in a row says what it does when the row no longer fits (below `sm`, 640px),
+by kind. None of them may widen the page.
+
+- **Scroll** what is a list of equals the user moves along: `Tabs` (horizontal, hidden scrollbar,
+  the active tab scrolled into view, an edge fade only where there is more), `Table` and
+  `DataTable` (the table scrolls in its own container).
+- **Wrap** what is a set of small items with no order to keep: meta rows, chips, badges, button
+  rows (`flex-wrap`, and `break-all` on a path or URL that has no break point).
+- **Collapse** what has a primary part and a long tail: `Breadcrumb` (`maxItems` folds the middle
+  into a menu, the current crumb stays), `Topbar` (the title goes, `moreActions` becomes a "More"
+  menu), `Pagination` (the info on its own row, "Page 2 / 9" in place of the numbers),
+  `EventCalendar` (one-letter weekdays, the picked day listed under the grid). A layout with a side
+  column stacks it under the main one (`Shell`'s `secondary`, vertical `Tabs`).
+
+Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQuery` only when the
+markup itself changes. Every component with such a behavior has a story at the `mobile` viewport
+(`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor) whose play
+function calls `expectNoHorizontalOverflow`.
 
 ## PR checklist
 

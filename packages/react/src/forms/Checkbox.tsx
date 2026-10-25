@@ -68,8 +68,8 @@ export function Checkbox({
     <label
       htmlFor={fieldId}
       className={clsx(
-        'inline-flex cursor-pointer items-start gap-2',
-        disabled && 'cursor-not-allowed opacity-50',
+        'inline-flex items-start gap-2',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className
       )}
     >

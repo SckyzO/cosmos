@@ -1,4 +1,4 @@
-export * from './intent';
+export type { Intent } from './intent';
 export * from './Button';
 export * from './Card';
 export * from './Badge';
@@ -22,6 +22,7 @@ export * from './UnsavedIndicator';
 export * from './ConfirmationModal';
 export * from './NotificationsPanel';
 export * from './NotificationCard';
+export * from './Menu';
 export * from './UserMenu';
 export * from './ThemeToggle';
 export * from './ThemeToggleTri';

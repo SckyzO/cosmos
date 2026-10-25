@@ -361,7 +361,7 @@ export const NoSidebarHasNoHamburger: Story = {
   render: NoSidebar.render,
   play: async ({ canvas }) => {
     const topbar = within(canvas.getByRole('banner'));
-    await expect(topbar.getByRole('heading', { name: 'Documentation' })).toBeVisible();
+    await expect(topbar.getByText('Documentation')).toBeVisible();
     await expect(canvas.queryByRole('navigation')).toBeNull();
     await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
   },

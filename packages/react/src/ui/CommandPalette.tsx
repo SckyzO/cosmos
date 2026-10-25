@@ -1,6 +1,6 @@
 import { Command, useCommandState } from 'cmdk';
 import { clsx } from 'clsx';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -78,9 +78,15 @@ const CommandPaletteRoot = ({
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
-export type CommandPaletteInputProps = ComponentPropsWithRef<typeof Command.Input>;
+export type CommandPaletteInputProps = ComponentPropsWithRef<typeof Command.Input> & {
+  /**
+   * Shows a close button at the end of the input, which calls this (usually
+   * `() => onOpenChange(false)`). No button without it.
+   */
+  onClose?: () => void;
+};
 
-function CommandPaletteInput({ className, ref, ...rest }: CommandPaletteInputProps) {
+function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPaletteInputProps) {
   return (
     <div className="focus-within:border-brand-500 flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
       <Search className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
@@ -92,6 +98,16 @@ function CommandPaletteInput({ className, ref, ...rest }: CommandPaletteInputPro
         )}
         {...rest}
       />
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="focus-visible:focus-indicator flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      )}
     </div>
   );
 }
@@ -150,12 +166,18 @@ export type CommandPaletteItemProps = Omit<
   icon?: ElementType;
   /** Right-aligned keyboard shortcut hint (e.g. "⌘D"). */
   shortcut?: ReactNode;
+  /** Second line under the label: what the command does. The item stays one line without it. */
+  description?: ReactNode;
+  /** Trailing text before the shortcut: a path, a count, a type. */
+  meta?: ReactNode;
   children: ReactNode;
 };
 
 function CommandPaletteItem({
   icon: Icon,
   shortcut,
+  description,
+  meta,
   children,
   className,
   ref,
@@ -174,7 +196,19 @@ function CommandPaletteItem({
       {...rest}
     >
       {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />}
-      <span className="flex-1 truncate">{children}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{children}</span>
+        {description && (
+          <span className="text-2xs block truncate text-gray-600 dark:text-gray-400">
+            {description}
+          </span>
+        )}
+      </span>
+      {meta && (
+        <span className="text-2xs max-w-[40%] shrink-0 truncate text-gray-600 dark:text-gray-400">
+          {meta}
+        </span>
+      )}
       {shortcut && (
         <kbd className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
           {shortcut}

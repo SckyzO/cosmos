@@ -5,14 +5,21 @@ import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
 export type BarChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
@@ -39,6 +46,8 @@ export const BarChart = ({
   stacked = false,
   colors,
   formatValue,
+  xTitle,
+  yTitle,
   showLegend,
   legendPosition = 'top',
   borderRadius = 4,
@@ -48,9 +57,11 @@ export const BarChart = ({
   height = 320,
   width = '100%',
 }: BarChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, surface, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
+  // Side by side, the bars of a group would touch.
+  const grouped = !stacked && series.length > 1;
 
   const format = useValueFormat(formatValue);
 
@@ -61,6 +72,8 @@ export const BarChart = ({
       zoom: { enabled: false },
       stacked,
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },
@@ -73,29 +86,33 @@ export const BarChart = ({
       },
     },
     grid,
+    // The titles name the axes as drawn: `xTitle` under the horizontal one,
+    // whichever of categories and values it carries.
     xaxis: {
       categories,
+      title: axisTitle(xTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? format.axis : undefined,
+        // Category labels: a long name is cut short once rotated past this
+        // height instead of eating the plot; the tooltip keeps the full name.
+        ...(horizontal ? {} : { trim: true, maxHeight: 90 }),
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
     yaxis: {
+      title: axisTitle(yTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? undefined : format.axis,
       },
     },
-    legend: {
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // Tooltips and the legend are HTML: escape names, categories and values.
     tooltip: {
       theme: tooltipTheme,
@@ -106,7 +123,8 @@ export const BarChart = ({
       },
     },
     fill: { opacity: 1 },
-    stroke: { show: false },
+    // A line in the card's color between the bars of a group.
+    stroke: grouped ? { show: true, width: 2, colors: [surface] } : { show: false },
   };
 
   return (

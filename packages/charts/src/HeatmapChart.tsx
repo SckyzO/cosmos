@@ -3,9 +3,14 @@ import 'apexcharts/heatmap';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type HeatmapColorRange = {
   /** Lowest value of the range, inclusive. */
@@ -19,7 +24,8 @@ export type HeatmapColorRange = {
 
 export type HeatmapChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** One row per series, drawn top to bottom; one value per category. */
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
@@ -96,6 +102,8 @@ export const HeatmapChart = ({
   colors,
   ranges,
   formatValue,
+  xTitle,
+  yTitle,
   showValues = false,
   showLegend = true,
   legendPosition = 'top',
@@ -105,7 +113,7 @@ export const HeatmapChart = ({
   height = 320,
   width = '100%',
 }: HeatmapChartProps) => {
-  const { axisLabels, brandScale, surface, tooltipTheme } = useChartTheme();
+  const { axisLabels, axisTitle, brandScale, surface, tooltipTheme } = useChartTheme();
   const format = useValueFormat(formatValue);
   const categoryTitle = useCategoryTitle(categories);
 
@@ -126,6 +134,8 @@ export const HeatmapChart = ({
       type: 'heatmap',
       toolbar: { show: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     dataLabels: {
       enabled: showValues,
@@ -148,22 +158,23 @@ export const HeatmapChart = ({
     // pile; the tooltip still names every column.
     xaxis: {
       categories,
+      title: axisTitle(xTitle),
       labels: { ...axisLabels, rotate: 0 },
       axisBorder: { show: false },
       axisTicks: { show: false },
       tooltip: { enabled: false },
     },
     // ApexCharts draws the first series at the bottom; read top-down instead.
-    yaxis: { reversed: true, labels: { ...axisLabels } },
-    legend: {
+    yaxis: {
+      reversed: true,
+      title: axisTitle(yTitle),
+      labels: { ...axisLabels },
+    },
+    legend: chartLegend({
       show: showLegend,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      // The default stroke outlines the swatches in white, glaring in dark themes.
-      markers: { size: 5, strokeWidth: 0 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // The tooltip and the legend are HTML: escape row names, categories,
     // range names and values. The title is the hovered column's category.
     tooltip: {

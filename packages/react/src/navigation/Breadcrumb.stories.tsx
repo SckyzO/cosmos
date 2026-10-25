@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Building2, Cpu, Server } from 'lucide-react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Breadcrumb } from './Breadcrumb';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Breadcrumb',
@@ -42,6 +43,18 @@ const PATH = [
   { label: 'Components', href: '/library/components' },
   { label: 'Breadcrumb' },
 ];
+
+/** The page-header path: a Home icon on the first item, the rest as usual. */
+export const HomeIcon: Story = {
+  args: {
+    items: [
+      { label: 'Overview', href: '/' },
+      { label: 'Monitoring', href: '/monitoring' },
+      { label: 'Production' },
+    ],
+    homeIcon: true,
+  },
+};
 
 export const SeparatorSlash: Story = { args: { items: PATH, separator: 'slash' } };
 
@@ -115,7 +128,8 @@ export const LastItemIsTheCurrentPage: Story = {
   args: { items: PATH },
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
-    await expect(within(nav).getByText('Breadcrumb')).toHaveAttribute('aria-current', 'page');
+    await expect(nav.querySelector('[aria-current]')).toHaveTextContent('Breadcrumb');
+    await expect(nav.querySelector('[aria-current]')).toHaveAttribute('aria-current', 'page');
     await expect(nav.querySelectorAll('[aria-current]')).toHaveLength(1);
   },
 };
@@ -142,5 +156,134 @@ export const ClickHandlersMakeButtons: Story = {
     await expect(home.onClick).toHaveBeenCalledTimes(1);
     // No `href`, no `onClick`: a link to `#`.
     await expect(canvas.getByRole('link', { name: 'Components' })).toHaveAttribute('href', '#');
+  },
+};
+
+// ── Long trails and narrow screens (#291) ────────────────────────────────────
+
+const DEEP_PATH = [
+  { icon: Building2, label: 'DC Paris', href: '#' },
+  { icon: Server, label: 'Room A', onClick: fn() },
+  { label: 'Aisle 03', onClick: fn() },
+  { icon: Box, label: 'Rack 01-A', href: '#' },
+  { label: 'Chassis 4', href: '#' },
+  { icon: Cpu, label: 'server-alpha-01-with-a-very-long-hostname' },
+];
+
+/** `maxItems` keeps the first crumb and the last ones; the crumbs between collapse into a menu. */
+export const CollapsedMiddle: Story = {
+  parameters: portalDocsParams.lg(),
+  args: { items: DEEP_PATH, maxItems: 3 },
+  play: async ({ args, canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    // First and last two crumbs stay; the middle three are in the menu.
+    await expect(within(nav).getByRole('link', { name: 'DC Paris' })).toBeVisible();
+    await expect(within(nav).getByRole('link', { name: 'Chassis 4' })).toBeVisible();
+    await expect(nav.querySelector('[aria-current]')).toHaveTextContent(/server-alpha-01/);
+    await expect(within(nav).queryByText('Room A')).toBeNull();
+
+    const menu = within(document.body);
+    await userEvent.click(within(nav).getByRole('button', { name: 'Show 3 more pages' }));
+    await userEvent.click(await menu.findByRole('menuitem', { name: 'Room A' }));
+    await expect(args.items[1].onClick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(menu.queryByRole('menu')).toBeNull());
+  },
+};
+
+export const MenuListsTheHiddenCrumbsInOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.lg(),
+  args: { items: DEEP_PATH, maxItems: 3 },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Show 3 more pages' }));
+    const items = await within(document.body).findAllByRole('menuitem');
+    await expect(items.map((item) => item.textContent)).toEqual([
+      'Room A',
+      'Aisle 03',
+      'Rack 01-A',
+    ]);
+    // Like the visible crumbs: a crumb with onClick is a button, one with href a link.
+    await expect(items[0].tagName).toBe('BUTTON');
+    await expect(items[2].tagName).toBe('A');
+    await expect(items[2]).toHaveAttribute('href', '#');
+  },
+};
+
+export const ShortTrailIsNotCollapsed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: PATH, maxItems: 6 },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: /more pages/ })).toBeNull();
+    await expect(canvas.getAllByRole('link').length + 1).toBe(PATH.length);
+  },
+};
+
+/** Below `sm` the labels truncate and the current crumb stays in view. */
+export const Mobile: Story = {
+  globals: mobileViewport,
+  args: { items: DEEP_PATH, maxItems: 3 },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    expectNoHorizontalOverflow(nav);
+    const current = within(nav)
+      .getByText(/server-alpha-01/)
+      .closest('[aria-current]')!;
+    await expect(current.getBoundingClientRect().right).toBeLessThanOrEqual(
+      nav.getBoundingClientRect().right
+    );
+    // The label is cut with an ellipsis, not clipped mid-word.
+    const label = current.querySelector('span')!;
+    await expect(getComputedStyle(label).textOverflow).toBe('ellipsis');
+  },
+};
+
+export const MobileWithIcons: Story = {
+  globals: mobileViewport,
+  args: {
+    items: [
+      { icon: Building2, label: 'DC Paris', href: '#' },
+      { icon: Server, label: 'Room A', href: '#' },
+      { icon: Box, label: 'Rack 01-A', href: '#' },
+      { icon: Cpu, label: 'server-alpha-01' },
+    ],
+  },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Breadcrumb' }));
+  },
+};
+
+/** `homeIcon` puts one icon, named "Home", on the first crumb only; an item's own `icon` wins. */
+export const HomeIconIsNamedAndOnTheFirstCrumbOnly: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...HomeIcon.args, 'aria-label': 'Path' },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Path' });
+    const icon = within(nav).getByRole('img', { name: 'Home' });
+    await expect(within(nav).getAllByRole('img')).toHaveLength(1);
+    await expect(
+      within(nav)
+        .getByRole('link', { name: /Overview/ })
+        .contains(icon)
+    ).toBe(true);
+  },
+};
+
+export const OwnIconBeatsHomeIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    items: [{ icon: Building2, label: 'DC Paris', href: '/' }, { label: 'Room A' }],
+    homeIcon: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('img', { name: 'Home' })).toBeNull();
+  },
+};
+
+/** The icon is also the first crumb when the path has a single item (the current page). */
+export const HomeIconOnASingleCrumb: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: [{ label: 'Overview' }], homeIcon: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img', { name: 'Home' })).toBeInTheDocument();
   },
 };

@@ -203,3 +203,61 @@ export const IndicatorClickJumps: Story = {
     await waitFor(() => expect(dots[2]).toHaveAttribute('aria-current', 'true'));
   },
 };
+
+const arrowsStory = (theme: string): Story => ({
+  tags: ['!dev', '!autodocs'],
+  globals: { theme },
+  render: () => (
+    <Carousel>
+      <Carousel.Viewport>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Carousel.Slide key={i}>
+            <Slide index={i} />
+          </Carousel.Slide>
+        ))}
+      </Carousel.Viewport>
+      <Carousel.Controls />
+    </Carousel>
+  ),
+  play: async ({ canvas }) => {
+    const next = canvas.getByRole('button', { name: /next slide/i });
+    const style = getComputedStyle(next);
+    // A scrim and white glyphs (the theme's white), the same in every theme.
+    await expect(next).toHaveClass('bg-black/40', 'text-white');
+    await expect(style.backgroundColor).toMatch(/0\.4\)$/);
+    // Inset from the slide edge.
+    const root = next.parentElement!.getBoundingClientRect();
+    await expect(root.right - next.getBoundingClientRect().right).toBeGreaterThanOrEqual(12);
+  },
+});
+
+/** The arrows over a slide are a dark scrim with white glyphs and sit off the edge, in any theme. */
+export const OverlayArrowsInLight: Story = arrowsStory('light');
+export const OverlayArrowsInDark: Story = arrowsStory('dark');
+export const OverlayArrowsInSand: Story = arrowsStory('sand');
+
+export const DotsHaveA24pxTarget: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Carousel>
+      <Carousel.Viewport>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Carousel.Slide key={i}>
+            <Slide index={i} />
+          </Carousel.Slide>
+        ))}
+      </Carousel.Viewport>
+      <Carousel.Indicators />
+    </Carousel>
+  ),
+  play: async ({ canvas }) => {
+    const dots = await canvas.findAllByRole('button', { name: /go to slide/i });
+    for (const dot of dots) {
+      const box = dot.getBoundingClientRect();
+      await expect(box.height).toBeGreaterThanOrEqual(24);
+      await expect(box.width).toBeGreaterThanOrEqual(24);
+      // The visible dot stays small.
+      await expect(dot.firstElementChild!.getBoundingClientRect().height).toBeLessThanOrEqual(8);
+    }
+  },
+};

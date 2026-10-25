@@ -1,10 +1,18 @@
-import { AlertCircle } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { StateLayout } from './StateLayout';
 
 export type ErrorStateProps = {
-  /** Error message. Default: 'Something went wrong.' */
+  /** What went wrong. Default: 'Something went wrong.' */
+  title?: string;
+  /** Detail under the title: the cause, or what to do next. */
+  description?: string;
+  /** Alias of `title`, kept for existing callers. `title` wins when both are set. */
   message?: string;
-  /** Optional retry callback. If set, a "Try again" link appears. */
+  /** Optional retry callback. If set, a "Try again" button appears. */
   onRetry?: () => void;
+  /** Tighter spacing, for a card or a table body. */
+  compact?: boolean;
   className?: string;
 };
 
@@ -13,24 +21,29 @@ export type ErrorStateProps = {
  *
  * Use when an API call fails or rendering fails inside a section.
  * Pair with `<EmptyState>` when the error is "no data found" rather
- * than a real failure.
+ * than a real failure. It is announced to assistive technology (`role="alert"`).
  */
 export const ErrorState = ({
-  message = 'Something went wrong.',
+  title,
+  description,
+  message,
   onRetry,
+  compact,
   className,
 }: ErrorStateProps) => (
-  <div className={`flex flex-col items-center justify-center gap-3 py-12 ${className ?? ''}`}>
-    <AlertCircle className="h-8 w-8 text-red-400" />
-    <p className="text-sm text-[var(--color-text-secondary)]">{message}</p>
-    {onRetry && (
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 focus-visible:focus-indicator rounded text-xs font-medium hover:underline"
-      >
-        Try again
-      </button>
-    )}
-  </div>
+  <StateLayout
+    role="alert"
+    intent="danger"
+    title={title ?? message ?? 'Something went wrong.'}
+    description={description}
+    action={
+      onRetry && (
+        <Button variant="secondary" size="sm" icon={RotateCw} onClick={onRetry}>
+          Try again
+        </Button>
+      )
+    }
+    compact={compact}
+    className={className}
+  />
 );

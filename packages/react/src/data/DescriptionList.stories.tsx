@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Paperclip } from 'lucide-react';
+import { StatusBadge } from '../status/StatusBadge';
 import { DescriptionList } from './DescriptionList';
 
 const meta = {
@@ -102,6 +103,26 @@ export const Striped: Story = {
 };
 
 // Bare list — no header, just items.
+/** Flat label/value rows for the metadata of a card; `mono` sets an ID or a path in monospace. */
+export const Compact: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <DescriptionList compact>
+        <DescriptionList.Item label="ID" mono>
+          rack-01-a
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Height">42U</DescriptionList.Item>
+        <DescriptionList.Item label="Template">Standard Air Cooled</DescriptionList.Item>
+        <DescriptionList.Item label="Devices">{14}</DescriptionList.Item>
+        <DescriptionList.Item label="Status">
+          <StatusBadge status="OK" />
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Last seen">2 minutes ago</DescriptionList.Item>
+      </DescriptionList>
+    </div>
+  ),
+};
+
 export const Bare: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
@@ -166,5 +187,57 @@ export const StripedAddsAlternatingBg: Story = {
   play: async ({ canvasElement }) => {
     const dl = canvasElement.querySelector('dl[data-testid="dl"]');
     await expect(dl?.className ?? '').toMatch(/nth-child\(even\)/);
+  },
+};
+
+/** A compact item puts the label and the value on one line, the value at the right edge. */
+export const CompactItemsAreOneLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="max-w-md">
+      <DescriptionList compact>
+        <DescriptionList.Item label="Height">42U</DescriptionList.Item>
+      </DescriptionList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const label = canvas.getByText('Height');
+    const value = canvas.getByText('42U');
+    const row = label.parentElement!;
+    await expect(
+      Math.abs(label.getBoundingClientRect().top - value.getBoundingClientRect().top)
+    ).toBeLessThan(8);
+    await expect(
+      row.getBoundingClientRect().right - value.getBoundingClientRect().right
+    ).toBeLessThan(2);
+    await expect(
+      label.getBoundingClientRect().left - row.getBoundingClientRect().left
+    ).toBeLessThan(2);
+  },
+};
+
+/** `mono` sets the value in the monospace font, in both layouts. */
+export const MonoSetsAMonospaceValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <DescriptionList compact>
+        <DescriptionList.Item label="ID" mono>
+          rack-01-a
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Name">rack one</DescriptionList.Item>
+      </DescriptionList>
+      <DescriptionList>
+        <DescriptionList.Item label="Hash" mono>
+          9f2c1d
+        </DescriptionList.Item>
+      </DescriptionList>
+    </>
+  ),
+  play: async ({ canvas }) => {
+    const family = (text: string) => getComputedStyle(canvas.getByText(text)).fontFamily;
+    await expect(family('rack-01-a')).toBe(family('9f2c1d'));
+    await expect(family('rack-01-a')).not.toBe(family('rack one'));
+    await expect(family('rack-01-a')).toMatch(/mono/i);
   },
 };

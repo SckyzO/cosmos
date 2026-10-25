@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
+import { StateLayout } from './StateLayout';
 
 export type EmptyStateProps = {
   /** Title (typically "No data" or domain-specific) */
@@ -8,6 +9,8 @@ export type EmptyStateProps = {
   description?: string;
   /** Optional call-to-action (button, link) */
   action?: ReactNode;
+  /** Tighter spacing, for a card or a table body. */
+  compact?: boolean;
   className?: string;
 };
 
@@ -16,19 +19,22 @@ export type EmptyStateProps = {
  *
  * Use when an API call returns no results. Always show a description
  * if there's an action the user can take to populate the list.
+ * It is static: nothing announces it, since nothing changed under the user.
  */
 export const EmptyState = ({
   title = 'No data',
   description,
   action,
+  compact,
   className,
 }: EmptyStateProps) => (
-  <div className={`flex flex-col items-center justify-center gap-3 py-12 ${className ?? ''}`}>
-    <Inbox className="h-10 w-10 text-[var(--color-border)]" />
-    <div className="text-center">
-      <p className="text-sm font-medium text-[var(--color-text-secondary)]">{title}</p>
-      {description && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{description}</p>}
-    </div>
-    {action}
-  </div>
+  <StateLayout
+    intent="neutral"
+    icon={Inbox}
+    title={title}
+    description={description}
+    action={action}
+    compact={compact}
+    className={className}
+  />
 );

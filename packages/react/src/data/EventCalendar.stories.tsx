@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { EventCalendar, type CalendarEvent } from './EventCalendar';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 
 const TODAY = new Date(2026, 4, 7);
 
@@ -79,6 +80,46 @@ export const Default: Story = {};
 
 export const Empty: Story = {
   args: { events: [] },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status')).toHaveTextContent('No events this month');
+  },
+};
+
+/** The message is a prop, and a month with events shows none. */
+export const EmptyMessageOnlyWhenEmpty: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { events: [], emptyMessage: 'Nothing planned' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status')).toHaveTextContent('Nothing planned');
+    // June 2026 has no event either; the greyed days of May do not count for it.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('status')).toBeVisible();
+  },
+};
+
+export const MonthWithEventsHasNoEmptyMessage: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('status')).toBeNull();
+  },
+};
+
+/** The Today button is disabled on the current month: a tooltip says why. */
+export const TodayTooltipExplainsDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const today = canvas.getByRole('button', { name: 'Today' });
+    await expect(today).toBeDisabled();
+    const tip = within(document.body).getByRole('tooltip', { hidden: true });
+    await expect(tip).toHaveTextContent('Already showing the current month');
+    await expect(today).toHaveAccessibleDescription('Already showing the current month');
+    await userEvent.hover(today.parentElement!);
+    await expect(tip).toHaveClass('opacity-100');
+    // Away from the current month the button is live, with its own tooltip.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('button', { name: 'Today' })).toBeEnabled();
+    await expect(tip).toHaveTextContent('Back to the current month');
+  },
 };
 
 /**
@@ -113,23 +154,26 @@ export const WeeksStartOnMonday: Story = {
 
 export const MultiDayEventRepeats: Story = {
   play: async ({ canvas }) => {
-    // Saturday to Tuesday, across a week boundary.
-    for (const day of [
-      'Saturday, May 9, 2026',
-      'Sunday, May 10, 2026',
-      'Monday, May 11, 2026',
-      'Tuesday, May 12, 2026',
-    ]) {
-      const cell = within(canvas.getByRole('group', { name: day }));
-      await expect(cell.getByText('KubeCon trip')).toBeVisible();
+    // Saturday to Tuesday, across a week boundary: the title is written once, on the
+    // first day; the other days keep a bare chip that still names the event.
+    const title = (day: string) =>
+      within(canvas.getByRole('group', { name: day })).getByText('KubeCon trip');
+    for (const day of ['Sunday, May 10, 2026', 'Monday, May 11, 2026', 'Tuesday, May 12, 2026']) {
+      await expect(title(day)).toHaveClass('sr-only');
     }
+    await expect(title('Saturday, May 9, 2026')).not.toHaveClass('sr-only');
     await expect(canvas.getAllByText('KubeCon trip')).toHaveLength(4);
-    // Starts in April: shown on the greyed days before the 1st too.
+    // Starts in April: its first shown day, a greyed one, carries the title.
     await expect(
       within(canvas.getByRole('group', { name: 'Wednesday, April 29, 2026' })).getByText(
         'Datacenter migration'
       )
-    ).toBeVisible();
+    ).not.toHaveClass('sr-only');
+    await expect(
+      within(canvas.getByRole('group', { name: 'Thursday, April 30, 2026' })).getByText(
+        'Datacenter migration'
+      )
+    ).toHaveClass('sr-only');
   },
 };
 
@@ -285,5 +329,38 @@ export const IntentColorsTheEvent: Story = {
     await expect(chip('default event').querySelector('span[aria-hidden]')).toHaveClass(
       'bg-brand-500'
     );
+  },
+};
+
+// ── Narrow screens (#291) ────────────────────────────────────────────────────
+
+/**
+ * Below `sm` the weekday names shrink to one letter, the chips to dots, and the picked day (today
+ * to begin with) lists its events under the grid.
+ */
+export const Mobile: Story = {
+  globals: mobileViewport,
+  play: async ({ args, canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.queryByText('Mon')).not.toBeVisible();
+    const letters = canvas.getAllByText('M');
+    await expect(letters.some((el) => el.checkVisibility())).toBe(true);
+
+    const today = within(canvas.getByRole('region', { name: 'Events on Thursday, May 7, 2026' }));
+    await expect(today.getAllByRole('listitem')).toHaveLength(5);
+    // No "+N more" popover: the list under the grid shows everything.
+    await expect(canvas.queryByRole('button', { name: /more on/ })).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Monday, May 4, 2026' }));
+    await expect(args.onDayClick).toHaveBeenCalledWith(new Date(2026, 4, 4));
+    const monday = within(canvas.getByRole('region', { name: 'Events on Monday, May 4, 2026' }));
+    await expect(monday.getByText('Sprint planning')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Monday, May 4, 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Wednesday, May 13, 2026' }));
+    await expect(canvas.getByText('No events')).toBeVisible();
   },
 };

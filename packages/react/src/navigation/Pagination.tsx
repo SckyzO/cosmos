@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildRange } from './pageRange';
 import { useControllableState } from '../hooks/useControllableState';
@@ -21,6 +22,16 @@ export type PaginationProps = {
   /** `text` (default) shows numbered buttons. `compact` shows chevrons + "Page X of Y". */
   variant?: PaginationVariant;
   size?: PaginationSize;
+  /**
+   * Show every result on one page instead of paginating: the page buttons go away and the info
+   * reads "Showing all N results". Controlled only; pair it with `onShowAllChange`, which also
+   * adds the "Show all" / "Show paginated" button.
+   */
+  showAll?: boolean;
+  /** Called with the mode to switch to. */
+  onShowAllChange?: (showAll: boolean) => void;
+  /** Names the landmark. Default `Pagination`; two pagers on one page need distinct names. */
+  'aria-label'?: string;
   className?: string;
 };
 
@@ -39,6 +50,9 @@ export const Pagination = ({
   total,
   variant = 'text',
   size = 'sm',
+  showAll = false,
+  onShowAllChange,
+  'aria-label': ariaLabel = 'Pagination',
   className,
 }: PaginationProps) => {
   const [page, setPage] = useControllableState({
@@ -54,89 +68,128 @@ export const Pagination = ({
   };
   const isFirst = safePage <= 1;
   const isLast = safePage >= totalPages;
+  // Colors live in two exclusive sets: a page button takes `idleClass` or `activeClass`, never both,
+  // since Tailwind's CSS order (not clsx's) decides which of two `bg-*` classes wins.
   const btnClass =
-    'inline-flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
+    'items-center justify-center rounded-md border transition-colors focus-visible:focus-indicator disabled:cursor-not-allowed disabled:opacity-40';
+  const idleClass =
+    'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
   const activeClass =
-    'bg-brand-500 border-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
+    'border-brand-500 bg-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
 
-  const infoNode =
-    showInfo && pageSize !== undefined && total !== undefined ? (
-      <span className="text-xs text-gray-500 dark:text-gray-400">
-        Showing{' '}
-        <span className="font-medium text-gray-700 dark:text-gray-200">
-          {Math.min(total, (safePage - 1) * pageSize + 1)}
-        </span>{' '}
-        to{' '}
-        <span className="font-medium text-gray-700 dark:text-gray-200">
-          {Math.min(safePage * pageSize, total)}
-        </span>{' '}
-        of <span className="font-medium text-gray-700 dark:text-gray-200">{total}</span>
-      </span>
-    ) : null;
+  const strong = 'font-medium text-gray-700 dark:text-gray-200';
+  let infoNode: ReactNode = null;
+  if (showInfo && total !== undefined) {
+    if (showAll) {
+      infoNode = (
+        <>
+          Showing all <span className={strong}>{total}</span> results
+        </>
+      );
+    } else if (pageSize !== undefined) {
+      infoNode = (
+        <>
+          Showing <span className={strong}>{Math.min(total, (safePage - 1) * pageSize + 1)}</span>{' '}
+          to <span className={strong}>{Math.min(safePage * pageSize, total)}</span> of{' '}
+          <span className={strong}>{total}</span>
+        </>
+      );
+    }
+  }
 
   return (
+    // Below `sm` the info takes its own row and the controls shrink to
+    // "Previous · Page 2 / 9 · Next": the numbered buttons cannot wrap.
     <nav
-      aria-label="Pagination"
+      aria-label={ariaLabel}
       className={clsx(
         'flex items-center gap-3',
-        showInfo ? 'justify-between' : 'justify-center',
+        infoNode
+          ? 'flex-col sm:flex-row sm:justify-between'
+          : onShowAllChange
+            ? 'justify-between'
+            : 'justify-center',
         className
       )}
     >
-      {infoNode}
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          aria-label="Previous page"
-          disabled={isFirst}
-          onClick={() => goTo(safePage - 1)}
-          className={clsx(btnClass, SIZE_BTN[size])}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+      {infoNode && <span className="text-xs text-gray-500 dark:text-gray-400">{infoNode}</span>}
+      <div className="flex items-center gap-3">
+        {onShowAllChange && (
+          <button
+            type="button"
+            onClick={() => onShowAllChange(!showAll)}
+            className="focus-visible:focus-indicator rounded text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            {showAll ? 'Show paginated' : 'Show all'}
+          </button>
+        )}
+        {!showAll && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Previous page"
+              disabled={isFirst}
+              onClick={() => goTo(safePage - 1)}
+              className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
 
-        {variant === 'compact' ? (
-          <span className="px-3 text-xs text-gray-600 dark:text-gray-300">
-            Page <span className="font-medium">{safePage}</span> of{' '}
-            <span className="font-medium">{Math.max(1, totalPages)}</span>
-          </span>
-        ) : (
-          buildRange(safePage, Math.max(1, totalPages)).map((p, i) =>
-            p === 0 ? (
-              <span
-                key={`ellipsis-${i}`}
-                aria-hidden
-                className={clsx(
-                  'inline-flex items-center justify-center text-gray-500 dark:text-gray-400',
-                  SIZE_BTN[size]
-                )}
-              >
-                …
+            {variant === 'compact' ? (
+              <span className="px-3 text-xs text-gray-600 dark:text-gray-300">
+                Page <span className="font-medium">{safePage}</span> of{' '}
+                <span className="font-medium">{Math.max(1, totalPages)}</span>
               </span>
             ) : (
-              <button
-                key={p}
-                type="button"
-                aria-label={`Page ${p}`}
-                aria-current={p === safePage ? 'page' : undefined}
-                onClick={() => goTo(p)}
-                className={clsx(btnClass, SIZE_BTN[size], p === safePage && activeClass)}
-              >
-                {p}
-              </button>
-            )
-          )
-        )}
+              <>
+                <span className="px-3 text-xs text-gray-600 sm:hidden dark:text-gray-300">
+                  Page <span className="font-medium">{safePage}</span> /{' '}
+                  <span className="font-medium">{Math.max(1, totalPages)}</span>
+                </span>
+                {buildRange(safePage, Math.max(1, totalPages)).map((p, i) =>
+                  p === 0 ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      aria-hidden
+                      className={clsx(
+                        'hidden items-center justify-center text-gray-500 sm:inline-flex dark:text-gray-400',
+                        SIZE_BTN[size]
+                      )}
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      aria-label={`Page ${p}`}
+                      aria-current={p === safePage ? 'page' : undefined}
+                      onClick={() => goTo(p)}
+                      className={clsx(
+                        btnClass,
+                        SIZE_BTN[size],
+                        'hidden sm:inline-flex',
+                        p === safePage ? activeClass : idleClass
+                      )}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </>
+            )}
 
-        <button
-          type="button"
-          aria-label="Next page"
-          disabled={isLast}
-          onClick={() => goTo(safePage + 1)}
-          className={clsx(btnClass, SIZE_BTN[size])}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+            <button
+              type="button"
+              aria-label="Next page"
+              disabled={isLast}
+              onClick={() => goTo(safePage + 1)}
+              className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

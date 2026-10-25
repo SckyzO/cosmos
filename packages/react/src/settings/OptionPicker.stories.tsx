@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
+import { expectFocusRing, expectPickerSelected, expectRefFocuses } from '../storybook-helpers';
 import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
@@ -310,4 +310,24 @@ export const CardFocusShowsRingInDark: Story = {
 export const CardFocusShowsRingInLight: Story = {
   ...CardFocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+/** The checked card has the brand border and the check badge, as the other pickers. */
+export const SelectedSharesThePickerTreatment: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <OptionPicker
+      aria-label="Options"
+      cols={3}
+      value="b"
+      options={[
+        { id: 'a', label: 'Alpha' },
+        { id: 'b', label: 'Beta' },
+        { id: 'c', label: 'Gamma' },
+      ]}
+    />
+  ),
+  play: async ({ canvas }) => {
+    expectPickerSelected(canvas.getByRole('radiogroup', { name: 'Options' }));
+  },
 };

@@ -17,7 +17,7 @@ export type ShellProps = {
   /**
    * Optional right-aligned secondary panel — mirrors the TUI Plus "Multi-
    * column" application shell pattern (sidebar + main + secondary). Renders
-   * after `children` inside a flex row below the topbar.
+   * after `children` inside a flex row below the topbar; below `lg` it stacks under `children`.
    */
   secondary?: ReactNode;
   /** Width class for the secondary panel. Default `w-80` (320px). */
@@ -103,13 +103,16 @@ export const Shell = ({
         {sidebar && <aside className="shrink-0">{sidebar}</aside>}
         <div className="flex min-w-0 flex-1 flex-col">
           {topbar && <div className="shrink-0">{topbar}</div>}
-          <div className="flex min-h-0 flex-1">
-            <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+          {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
+            <main className="min-w-0 flex-1 lg:overflow-auto">{children}</main>
             {secondary && (
               <aside
                 className={clsx(
-                  'shrink-0 overflow-auto border-l border-[var(--color-border)]',
-                  secondaryWidthClassName
+                  'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-t-0 lg:border-l',
+                  // `max-lg:` sorts after the plain width utility: full width while stacked.
+                  secondaryWidthClassName,
+                  'max-lg:w-full'
                 )}
               >
                 {secondary}

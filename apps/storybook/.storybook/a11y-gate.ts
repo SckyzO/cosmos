@@ -33,7 +33,14 @@ const A11Y_TODO: Readonly<Record<string, readonly string[]>> = CONTRAST_THEME ? 
 
 const TODO_FILE = 'apps/storybook/.storybook/a11y-todo.json';
 
-type A11yResult = { violations?: { id: string }[] };
+type AxeNode = {
+  target?: unknown[];
+  any?: { data?: { messageKey?: string; contrastRatio?: number } | null }[];
+};
+type A11yResult = {
+  violations?: { id: string }[];
+  incomplete?: { id: string; nodes?: AxeNode[] }[];
+};
 
 /**
  * The rules axe flagged in this run, or undefined if axe did not run (or
@@ -47,6 +54,23 @@ const violatedRules = (reports: { type: string; result: unknown }[]) => {
     .find((v) => v !== undefined);
   return violations && [...new Set(violations.map((v) => v.id))].sort();
 };
+
+/**
+ * The selectors whose `color-contrast` axe could not decide because foreground
+ * and background are the same color (`equalRatio`, a 1:1 ratio). axe files
+ * that under `incomplete`, not `violations`, so the addon never fails on it,
+ * yet it is what a state painted white on white looks like.
+ */
+const equalContrastTargets = (reports: { type: string; result: unknown }[]) =>
+  reports
+    .filter((r) => r.type === 'a11y')
+    .flatMap((r) => (r.result as A11yResult | undefined)?.incomplete ?? [])
+    .filter((rule) => rule.id === 'color-contrast')
+    .flatMap((rule) => rule.nodes ?? [])
+    .filter((node) =>
+      node.any?.some((c) => c.data?.messageKey === 'equalRatio' || c.data?.contrastRatio === 1)
+    )
+    .map((node) => String(node.target?.[0] ?? 'unknown element'));
 
 const list = (rules: readonly string[]) => rules.join(', ');
 
@@ -63,6 +87,9 @@ const foundByStory = new Map<string, string[]>();
  * Then the ratchet: a listed story must violate exactly its listed rules. A
  * rule that no longer fires fails the run until its entry is trimmed, and a
  * new rule fails it too (an entry never grows), so the list can only shrink.
+ *
+ * A `color-contrast` result axe leaves incomplete because the ratio is 1:1
+ * fails too, in every story and whatever the todo list says.
  *
  * Wrapping the addon's hook keeps the story's parameters untouched and does
  * not depend on the order Storybook runs project `afterEach` hooks in (last
@@ -82,6 +109,13 @@ const a11yGate: AfterEach = async (context) => {
   } finally {
     found = violatedRules(context.reporting.reports);
     if (found) foundByStory.set(context.id, found);
+  }
+
+  const equal = equalContrastTargets(context.reporting.reports);
+  if (equal.length > 0) {
+    throw new Error(
+      `${context.id} has text with a 1:1 contrast ratio (same color as its background; axe reports it as incomplete, not as a violation): ${list(equal)}.`
+    );
   }
 
   if (!listed || !found) return;

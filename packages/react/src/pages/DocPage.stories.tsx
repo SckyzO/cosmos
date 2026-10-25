@@ -29,7 +29,8 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
 import { IconBox } from '../ui/IconBox';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { expect } from 'storybook/test';
 
 // Pages/DocPage — component documentation template (RTFM).
 // Style: Stripe Docs × Linear Docs × Tailwind Docs, dressed in Cosmos tokens.
@@ -264,14 +265,17 @@ const ButtonDocBody = () => {
               Trigger an action with a click. Use Button anywhere a user makes a binary commit —
               submit, cancel, delete, save.
             </p>
-            <div className="mt-4 flex items-center gap-x-3 text-sm">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <Badge intent="success">Stable</Badge>
               <span className="text-[var(--color-text-muted)]">·</span>
               <span className="font-mono text-xs text-[var(--color-text-secondary)]">v1.0.0</span>
               <span className="text-[var(--color-text-muted)]">·</span>
-              <span className="text-[var(--color-text-secondary)]">
+              <span className="min-w-0 text-[var(--color-text-secondary)]">
                 Source:{' '}
-                <a href="#" className="text-brand-600 dark:text-brand-400 hover:underline">
+                <a
+                  href="#"
+                  className="text-brand-600 dark:text-brand-400 break-all hover:underline"
+                >
                   packages/react/src/ui/Button.tsx
                 </a>
               </span>
@@ -582,6 +586,19 @@ export const Default: Story = {
       <ButtonDocBody />
     </Shell>
   ),
+};
+
+// The meta row wraps and the source path may break, so nothing runs off a phone.
+export const Mobile: Story = {
+  ...Default,
+  globals: mobileViewport,
+  play: async ({ canvas }) => {
+    // The Shell scrolls its own main: that is the box that must not overflow.
+    expectNoHorizontalOverflow(canvas.getByRole('main'));
+    const source = canvas.getByRole('link', { name: 'packages/react/src/ui/Button.tsx' });
+    await expect(getComputedStyle(source.closest('div')!).flexWrap).toBe('wrap');
+    await expect(getComputedStyle(source).wordBreak).toBe('break-all');
+  },
 };
 
 // Variant 2 — single column (no sidebar, no TOC). For mobile previews or

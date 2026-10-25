@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
-import { Pagination } from './Pagination';
+import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { LoadingState } from '../feedback/LoadingState';
 import { EmptyState } from '../feedback/EmptyState';
@@ -241,7 +241,7 @@ export const DataTable = <T,>({
   return (
     <div
       className={clsx(
-        'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900',
+        'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] dark:border-gray-800',
         className
       )}
     >
@@ -434,13 +434,16 @@ export const DataTable = <T,>({
 
       {!loading && !error && sortedRows.length > 0 && (
         <Pagination
-          page={safePage}
+          page={safePage + 1}
           totalPages={totalPages}
+          aria-label={ariaLabel ? `${ariaLabel} pagination` : undefined}
+          showInfo
           total={sortedRows.length}
           pageSize={pageSize}
-          onPageChange={setPage}
+          onPageChange={(next) => setPage(next - 1)}
           showAll={showAll}
-          onToggleShowAll={setShowAll}
+          onShowAllChange={setShowAll}
+          className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800"
         />
       )}
     </div>

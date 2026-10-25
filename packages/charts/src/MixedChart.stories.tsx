@@ -14,6 +14,8 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  axisTitles,
+  expectAxisTitles,
 } from './storybook-helpers';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
@@ -134,12 +136,31 @@ export const CustomColors: Story = {
   },
 };
 
+/** `xTitle`, `yTitle` and `yRightTitle` name the axes, so the ticks need no unit. */
+export const AxisTitles: Story = {
+  args: {
+    ...RequestsAndLatency.args,
+    formatValue: compact.format,
+    formatRightValue: (v) => String(Math.round(v)),
+    xTitle: 'Time of day',
+    yTitle: 'Requests (req/s)',
+    yRightTitle: 'p95 latency (ms)',
+  },
+  play: expectAxisTitles({
+    x: 'Time of day',
+    y: ['Requests (req/s)', 'p95 latency (ms)'],
+  }),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
+    yRightTitle: HOSTILE,
     categories: [HOSTILE, 'B', 'C'],
     series: [
       { name: HOSTILE, type: 'column', data: [3, 5, 2] },
@@ -150,6 +171,11 @@ export const HtmlInLabelsRendersAsText: Story = {
     // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE, HOSTILE] })
+    );
     await expectNoInjectedImage(canvasElement);
 
     // The shared tooltip renders on hover: the title is the category, then

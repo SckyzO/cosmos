@@ -24,6 +24,8 @@ type Alert = {
   title: string;
   subtitle: string;
   caption?: string;
+  time?: string;
+  unread?: boolean;
 };
 
 const SAMPLE_ALERTS: Alert[] = [
@@ -33,6 +35,8 @@ const SAMPLE_ALERTS: Alert[] = [
     title: 'rack-a07-srv03',
     subtitle: 'Rack A07 · Datacenter Paris',
     caption: 'cpu_temp_critical +2',
+    time: '2 min ago',
+    unread: true,
   },
   {
     id: '2',
@@ -40,6 +44,8 @@ const SAMPLE_ALERTS: Alert[] = [
     title: 'rack-b12-srv01',
     subtitle: 'Rack B12 · Datacenter Frankfurt',
     caption: 'disk_full',
+    time: '18 min ago',
+    unread: true,
   },
   {
     id: '3',
@@ -47,6 +53,7 @@ const SAMPLE_ALERTS: Alert[] = [
     title: 'rack-a03-srv11',
     subtitle: 'Rack A03 · Datacenter Paris',
     caption: 'memory_pressure',
+    time: '1 h ago',
   },
   {
     id: '4',
@@ -54,6 +61,7 @@ const SAMPLE_ALERTS: Alert[] = [
     title: 'rack-c02-srv05',
     subtitle: 'Rack C02 · Datacenter London',
     caption: 'fan_speed_low',
+    time: '3 h ago',
   },
   {
     id: '5',
@@ -61,6 +69,7 @@ const SAMPLE_ALERTS: Alert[] = [
     title: 'rack-a01-srv02',
     subtitle: 'Rack A01 · Datacenter Paris',
     caption: 'maintenance_scheduled',
+    time: 'Yesterday',
   },
 ];
 
@@ -71,6 +80,7 @@ const FullPanel = ({
   onItemClick,
   onViewAll,
   onMuteToggle,
+  onMarkAllRead,
 }: {
   alerts?: Alert[];
   defaultOpen?: boolean;
@@ -78,6 +88,7 @@ const FullPanel = ({
   onItemClick?: (id: string) => void;
   onViewAll?: () => void;
   onMuteToggle?: () => void;
+  onMarkAllRead?: () => void;
 }) => {
   const [isMuted, setMuted] = useState(muted);
   const crit = alerts.filter((a) => a.intent === 'danger').length;
@@ -87,7 +98,7 @@ const FullPanel = ({
     <NotificationsPanel defaultOpen={defaultOpen}>
       <NotificationsPanel.Trigger count={alerts.length} muted={isMuted} />
       <NotificationsPanel.Content>
-        <NotificationsPanel.Header title="Active Alerts">
+        <NotificationsPanel.Header title="Active Alerts" onMarkAllRead={onMarkAllRead}>
           <NotificationsPanel.Counters crit={crit} warn={warn} info={info} />
           <NotificationsPanel.HeaderAction
             icon={isMuted ? VolumeX : Volume2}
@@ -116,6 +127,8 @@ const FullPanel = ({
                 title={a.title}
                 subtitle={a.subtitle}
                 caption={a.caption}
+                time={a.time}
+                unread={a.unread}
                 onClick={() => onItemClick?.(a.id)}
               />
             ))}
@@ -366,9 +379,67 @@ export const ItemIntentsKeepTheirLook: Story = {
         color === 'green' ? 'text-green-600' : `text-${color}-500`
       );
       await expect(row.querySelector('div.rounded-full')).toHaveClass(`bg-${color}-500/15`);
-      await expect(within(row).getByText(label)).toHaveClass(...badge);
+      // The badge is the pill around the label's own span.
+      await expect(within(row).getByText(label).parentElement).toHaveClass(...badge);
     }
     // The label is only a default.
-    await expect(within(await item('custom item')).getByText('DOWN')).toHaveClass('bg-red-600');
+    await expect(within(await item('custom item')).getByText('DOWN').parentElement).toHaveClass(
+      'bg-red-600'
+    );
+  },
+};
+
+/** `unread` puts a dot before the title and tints the row; `time` is a line under the text. */
+export const UnreadAndTime: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <div className="flex h-[480px] items-start justify-end">
+      <FullPanel onMarkAllRead={fn()} />
+    </div>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    const rows = Array.from(dialog.querySelectorAll('button')).filter((b) =>
+      b.textContent?.match(/CRIT|WARN|INFO|OK/)
+    );
+    const unread = rows[0]!;
+    const read = rows[2]!;
+    await expect(within(unread).getByText('2 min ago')).toBeVisible();
+    await expect(unread).toHaveTextContent('Unread:');
+    await expect(unread).toHaveClass('dark:bg-brand-500/10');
+    await expect(read).not.toHaveTextContent('Unread:');
+    await expect(read).not.toHaveClass('dark:bg-brand-500/10');
+  },
+};
+
+/** "Mark all as read" is in the header only when `onMarkAllRead` is given, and keeps the panel open. */
+export const MarkAllReadFiresHandler: Story = {
+  tags: ['!autodocs'],
+  render: (args) => (
+    <div className="flex h-[480px] items-start justify-end">
+      <FullPanel onMarkAllRead={(args as unknown as { onMarkAllRead: () => void }).onMarkAllRead} />
+    </div>
+  ),
+  args: { onMarkAllRead: fn() } as never,
+  play: async ({ args }) => {
+    const onMarkAllRead = (args as unknown as { onMarkAllRead: ReturnType<typeof fn> })
+      .onMarkAllRead;
+    const dialog = await within(document.body).findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Mark all as read' }));
+    await expect(onMarkAllRead).toHaveBeenCalledTimes(1);
+    await expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  },
+};
+
+export const NoMarkAllReadByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-[480px] items-start justify-end">
+      <FullPanel />
+    </div>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await expect(within(dialog).queryByRole('button', { name: 'Mark all as read' })).toBeNull();
   },
 };

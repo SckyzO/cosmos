@@ -26,7 +26,6 @@ import { Combobox } from '../forms/Combobox';
 import { DatePicker } from '../forms/DatePicker';
 import { Dropzone } from '../forms/Dropzone';
 import { FileInput } from '../forms/FileInput';
-import { FilterPills } from '../forms/FilterPills';
 import { FormFooter } from '../forms/FormFooter';
 import { Input } from '../forms/Input';
 import { NumberInput } from '../forms/NumberInput';
@@ -43,10 +42,12 @@ import { Toggle } from '../forms/Toggle';
 import { ZoomBar } from '../forms/ZoomBar';
 import { placeholderAvatar } from '../storybook-avatars';
 import { MiniCalendar } from '../data/MiniCalendar';
+import { expect } from 'storybook/test';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
-import { PageBreadcrumb } from '../templates/PageBreadcrumb';
+import { PageContainer } from '../layout/PageContainer';
+import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from '../ui/Button';
@@ -68,323 +69,347 @@ const FormContent = () => {
   const [submitting, setSubmitting] = useState(false);
   return (
     <form
-      className="mx-auto w-full max-w-[860px] space-y-6 p-6"
       onSubmit={(e) => {
         e.preventDefault();
         setSubmitting(true);
         window.setTimeout(() => setSubmitting(false), 1200);
       }}
     >
-      <PageHeader
-        title="Form Elements"
-        breadcrumb={
-          <PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Form Elements' }]} />
-        }
-      />
+      <PageContainer width="default" className="space-y-6">
+        <PageHeader
+          as="h1"
+          title="Form Elements"
+          breadcrumb={
+            <Breadcrumb
+              homeIcon
+              items={[{ label: 'Overview', href: '#' }, { label: 'Form Elements' }]}
+            />
+          }
+        />
 
-      <SectionCard
-        title="Default Inputs"
-        desc="Standard text inputs, select and textarea — the everyday building blocks."
-        icon={Type}
-        iconTone="blue"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="First name" placeholder="John" autoComplete="given-name" />
-          <Input label="Last name" placeholder="Doe" autoComplete="family-name" />
-          <Input
-            label="Email"
-            type="email"
-            icon={Mail}
-            placeholder="john@example.com"
-            autoComplete="email"
-          />
-          <Select
-            label="Country"
-            defaultValue=""
-            options={[
-              { value: '', label: 'Select a country…' },
-              { value: 'fr', label: 'France' },
-              { value: 'us', label: 'United States' },
-              { value: 'uk', label: 'United Kingdom' },
-              { value: 'de', label: 'Germany' },
-            ]}
-          />
-          <div className="sm:col-span-2">
-            <Textarea label="Bio" placeholder="Tell us a bit about yourself…" maxLength={280} />
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Input States"
-        desc="Visual feedback for invalid, helper-text and locked fields."
-        icon={CheckSquare}
-        iconTone="violet"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Endpoint URL"
-            placeholder="https://prom.example.com"
-            description="HTTPS required for production."
-          />
-          <Input label="Project key" placeholder="ACME-2026" error="This key is already taken." />
-          <Input
-            label="API token"
-            placeholder="Generated automatically"
-            disabled
-            defaultValue="sk-••••••••••••••"
-          />
-          <Input
-            label="Slug"
-            placeholder="my-project"
-            description="Lowercase letters, numbers and hyphens only."
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Input Group"
-        desc="Attached prefix / suffix addons sharing a single rounded border."
-        icon={Globe}
-        iconTone="green"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Website" prefix="https://" suffix=".com" placeholder="example" />
-          <Input label="S3 bucket" suffix=".s3.amazonaws.com" placeholder="my-bucket" />
-          <Input label="Monthly budget" prefix="€" suffix="/ month" type="number" placeholder="0" />
-          <Input label="Mention" prefix="@" placeholder="username" />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Checkbox"
-        desc="Single & grouped multi-select."
-        icon={ListChecks}
-        iconTone="brand"
-      >
-        <div className="space-y-4">
-          <Checkbox label="Subscribe to product updates" defaultChecked />
-          <Checkbox
-            label="Marketing emails"
-            description="Tips, tricks and the occasional newsletter."
-          />
-          <CheckboxGroup
-            legend="Notification channels"
-            options={[
-              { value: 'email', label: 'Email' },
-              { value: 'sms', label: 'SMS', description: 'Standard rates apply.' },
-              { value: 'push', label: 'Push notifications' },
-              { value: 'slack', label: 'Slack', disabled: true },
-            ]}
-            defaultValue={['email', 'push']}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Radio Buttons"
-        desc="Exclusive single-choice selectors."
-        icon={RadioIcon}
-        iconTone="amber"
-      >
-        <div className="space-y-4">
-          <RadioGroup
-            legend="Plan"
-            options={[
-              { value: 'free', label: 'Free', description: '0 € — 1 user' },
-              { value: 'pro', label: 'Pro', description: '29 € / month — 10 users' },
-              { value: 'team', label: 'Team', description: '99 € / month — unlimited' },
-            ]}
-            defaultValue="pro"
-          />
-          <RadioGroup
-            legend="Severity"
-            orientation="horizontal"
-            options={[
-              { value: 'low', label: 'Low' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'high', label: 'High' },
-              { value: 'critical', label: 'Critical' },
-            ]}
-            defaultValue="medium"
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="File Input"
-        desc="Two patterns: compact button-style FileInput and a full Dropzone with drag-and-drop."
-        icon={Upload}
-        iconTone="violet"
-      >
-        <div className="space-y-4">
-          <FileInput
-            label="Profile picture"
-            accept="image/*"
-            description="JPG, PNG or GIF — max 5 MB."
-          />
-          <Dropzone
-            label="Attachments"
-            description="Drop one or more files (PDF, DOCX, XLSX, …)."
-            multiple
-            maxFiles={5}
-            maxSize={10 * 1024 * 1024}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Date Picker"
-        desc="Calendar popover with month/year dropdowns and an optional Today shortcut."
-        icon={CalendarIcon}
-        iconTone="green"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <DatePicker
-            label="Departure"
-            description="Year dropdown is bounded to the next 5 years."
-            fromYear={new Date().getFullYear()}
-            toYear={new Date().getFullYear() + 5}
-            fullWidth
-          />
-          <DatePicker
-            label="Birthday"
-            description="Year dropdown spans 1950–today."
-            fromYear={1950}
-            toYear={new Date().getFullYear()}
-            fullWidth
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Time Picker"
-        desc="Native time input with optional minute granularity."
-        icon={Clock}
-        iconTone="red"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TimePicker label="Reminder" defaultValue="09:00" fullWidth />
-          <TimePicker
-            label="Meeting slot"
-            description="15-minute increments only."
-            step={15}
-            min="08:00"
-            max="18:00"
-            defaultValue="14:30"
-            fullWidth
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Specialised inputs"
-        desc="Password, OTP, number stepper — focused controls for specific data types."
-        icon={Type}
-        iconTone="brand"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <PasswordInput label="Password" placeholder="•••••••••" />
-          <NumberInputCell />
-          <div className="sm:col-span-2">
-            <PasswordPolicyChecker
-              rules={[
-                { label: 'At least 8 characters', ok: true },
-                { label: 'One uppercase letter', ok: true },
-                { label: 'One number', ok: true },
-                { label: 'One special character', ok: false },
+        <SectionCard
+          as="h2"
+          title="Default Inputs"
+          desc="Standard text inputs, select and textarea — the everyday building blocks."
+          icon={Type}
+          iconTone="blue"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="First name" placeholder="John" autoComplete="given-name" />
+            <Input label="Last name" placeholder="Doe" autoComplete="family-name" />
+            <Input
+              label="Email"
+              type="email"
+              icon={Mail}
+              placeholder="john@example.com"
+              autoComplete="email"
+            />
+            <Select
+              label="Country"
+              defaultValue=""
+              options={[
+                { value: '', label: 'Select a country…' },
+                { value: 'fr', label: 'France' },
+                { value: 'us', label: 'United States' },
+                { value: 'uk', label: 'United Kingdom' },
+                { value: 'de', label: 'Germany' },
               ]}
             />
+            <div className="sm:col-span-2">
+              <Textarea label="Bio" placeholder="Tell us a bit about yourself…" maxLength={280} />
+            </div>
           </div>
-          <div className="sm:col-span-2">
-            <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-              One-time code
-            </p>
-            <OtpInputCell />
-          </div>
-        </div>
-      </SectionCard>
+        </SectionCard>
 
-      <SectionCard
-        title="Search, filter & combo"
-        desc="SearchInput, Combobox (autocomplete) and FilterPills for typing-based selection."
-        icon={Globe}
-        iconTone="violet"
-      >
-        <div className="space-y-4">
-          <SearchInputCell />
-          <Combobox
-            label="Assigned to"
-            options={[
-              { value: 'aiden', label: 'Aiden Park' },
-              { value: 'mei', label: 'Mei Tanaka' },
-              { value: 'olivier', label: 'Olivier Dubois' },
-              { value: 'priya', label: 'Priya Singh' },
-            ]}
+        <SectionCard
+          as="h2"
+          title="Input States"
+          desc="Visual feedback for invalid, helper-text and locked fields."
+          icon={CheckSquare}
+          iconTone="violet"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Endpoint URL"
+              placeholder="https://prom.example.com"
+              description="HTTPS required for production."
+            />
+            <Input label="Project key" placeholder="ACME-2026" error="This key is already taken." />
+            <Input
+              label="API token"
+              placeholder="Generated automatically"
+              disabled
+              defaultValue="sk-••••••••••••••"
+            />
+            <Input
+              label="Slug"
+              placeholder="my-project"
+              description="Lowercase letters, numbers and hyphens only."
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Input Group"
+          desc="Attached prefix / suffix addons sharing a single rounded border."
+          icon={Globe}
+          iconTone="green"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Website" prefix="https://" suffix=".com" placeholder="example" />
+            <Input label="S3 bucket" suffix=".s3.amazonaws.com" placeholder="my-bucket" />
+            <Input
+              label="Monthly budget"
+              prefix="€"
+              suffix="/ month"
+              type="number"
+              placeholder="0"
+            />
+            <Input label="Mention" prefix="@" placeholder="username" />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Checkbox"
+          desc="Single & grouped multi-select."
+          icon={ListChecks}
+          iconTone="brand"
+        >
+          <div className="space-y-4">
+            <Checkbox label="Subscribe to product updates" defaultChecked />
+            <Checkbox
+              label="Marketing emails"
+              description="Tips, tricks and the occasional newsletter."
+            />
+            <CheckboxGroup
+              legend="Notification channels"
+              options={[
+                { value: 'email', label: 'Email' },
+                { value: 'sms', label: 'SMS', description: 'Standard rates apply.' },
+                { value: 'push', label: 'Push notifications' },
+                { value: 'slack', label: 'Slack', disabled: true },
+              ]}
+              defaultValue={['email', 'push']}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Radio Buttons"
+          desc="Exclusive single-choice selectors."
+          icon={RadioIcon}
+          iconTone="amber"
+        >
+          <div className="space-y-4">
+            <RadioGroup
+              legend="Plan"
+              options={[
+                { value: 'free', label: 'Free', description: '0 € — 1 user' },
+                { value: 'pro', label: 'Pro', description: '29 € / month — 10 users' },
+                { value: 'team', label: 'Team', description: '99 € / month — unlimited' },
+              ]}
+              defaultValue="pro"
+            />
+            <RadioGroup
+              legend="Severity"
+              orientation="horizontal"
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+                { value: 'critical', label: 'Critical' },
+              ]}
+              defaultValue="medium"
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="File Input"
+          desc="Two patterns: compact button-style FileInput and a full Dropzone with drag-and-drop."
+          icon={Upload}
+          iconTone="violet"
+        >
+          <div className="space-y-4">
+            <FileInput
+              label="Profile picture"
+              accept="image/*"
+              description="JPG, PNG or GIF — max 5 MB."
+            />
+            <Dropzone
+              label="Attachments"
+              description="Drop one or more files (PDF, DOCX, XLSX, …)."
+              multiple
+              maxFiles={5}
+              maxSize={10 * 1024 * 1024}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Date Picker"
+          desc="Calendar popover with month/year dropdowns and an optional Today shortcut."
+          icon={CalendarIcon}
+          iconTone="green"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DatePicker
+              label="Departure"
+              description="Year dropdown is bounded to the next 5 years."
+              fromYear={new Date().getFullYear()}
+              toYear={new Date().getFullYear() + 5}
+              fullWidth
+            />
+            <DatePicker
+              label="Birthday"
+              description="Year dropdown spans 1950–today."
+              fromYear={1950}
+              toYear={new Date().getFullYear()}
+              fullWidth
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Time Picker"
+          desc="Native time input with optional minute granularity."
+          icon={Clock}
+          iconTone="red"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TimePicker label="Reminder" defaultValue="09:00" fullWidth />
+            <TimePicker
+              label="Meeting slot"
+              description="15-minute increments only."
+              step={15}
+              min="08:00"
+              max="18:00"
+              defaultValue="14:30"
+              fullWidth
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Specialised inputs"
+          desc="Password, OTP, number stepper — focused controls for specific data types."
+          icon={Type}
+          iconTone="brand"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PasswordInput label="Password" placeholder="•••••••••" />
+            <NumberInputCell />
+            <div className="sm:col-span-2">
+              <PasswordPolicyChecker
+                rules={[
+                  { label: 'At least 8 characters', ok: true },
+                  { label: 'One uppercase letter', ok: true },
+                  { label: 'One number', ok: true },
+                  { label: 'One special character', ok: false },
+                ]}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+                One-time code
+              </p>
+              <OtpInputCell />
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Search, filter & combo"
+          desc="SearchInput, Combobox (autocomplete) and pill-style SegmentedControl for typing-based selection."
+          icon={Globe}
+          iconTone="violet"
+        >
+          <div className="space-y-4">
+            <SearchInputCell />
+            <Combobox
+              label="Assigned to"
+              options={[
+                { value: 'aiden', label: 'Aiden Park' },
+                { value: 'mei', label: 'Mei Tanaka' },
+                { value: 'olivier', label: 'Olivier Dubois' },
+                { value: 'priya', label: 'Priya Singh' },
+              ]}
+            />
+            <PillsCell />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Toggles, segmented & stepper"
+          desc="Binary toggles, segmented selectors, number stepper and a zoom toolbar."
+          icon={CheckSquare}
+          iconTone="green"
+        >
+          <div className="space-y-4">
+            <ToggleRow />
+            <SegmentedControlCell />
+            <StackedNumberInputCell />
+            <ZoomBarCell />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="Avatar & calendars"
+          desc="Picture upload + calendar widgets — DatePicker uses a popover, Calendar is full-size inline, MiniCalendar is a compact data widget."
+          icon={CalendarIcon}
+          iconTone="blue"
+        >
+          <div className="space-y-6">
+            <AvatarUploaderInline />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+                  Full Calendar
+                </p>
+                <Calendar />
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
+                  MiniCalendar (data display)
+                </p>
+                <MiniCalendarCell />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          as="h2"
+          title="ActionPanel"
+          desc="Card-shaped form section with title, description and a single trailing action."
+          icon={CheckSquare}
+          iconTone="amber"
+        >
+          <ActionPanel
+            title="Manage subscription"
+            description="Lorem ipsum dolor sit amet consectetur adipisicing elit."
+            action={<Button size="sm">Change plan</Button>}
           />
-          <FilterPillsCell />
-        </div>
-      </SectionCard>
+        </SectionCard>
 
-      <SectionCard
-        title="Toggles, segmented & stepper"
-        desc="Binary toggles, segmented selectors, number stepper and a zoom toolbar."
-        icon={CheckSquare}
-        iconTone="green"
-      >
-        <div className="space-y-4">
-          <ToggleRow />
-          <SegmentedControlCell />
-          <StackedNumberInputCell />
-          <ZoomBarCell />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Avatar & calendars"
-        desc="Picture upload + calendar widgets — DatePicker uses a popover, Calendar is full-size inline, MiniCalendar is a compact data widget."
-        icon={CalendarIcon}
-        iconTone="blue"
-      >
-        <div className="space-y-6">
-          <AvatarUploaderInline />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-                Full Calendar
-              </p>
-              <Calendar />
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-                MiniCalendar (data display)
-              </p>
-              <MiniCalendarCell />
-            </div>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="ActionPanel"
-        desc="Card-shaped form section with title, description and a single trailing action."
-        icon={CheckSquare}
-        iconTone="amber"
-      >
-        <ActionPanel
-          title="Manage subscription"
-          description="Lorem ipsum dolor sit amet consectetur adipisicing elit."
-          action={<Button size="sm">Change plan</Button>}
+        <FormFooter
+          align="between"
+          extra="All fields are demo-only — nothing is persisted."
+          onCancel={() => undefined}
+          submitting={submitting}
+          submitLabel="Save form"
         />
-      </SectionCard>
-
-      <FormFooter
-        align="between"
-        extra="All fields are demo-only — nothing is persisted."
-        onCancel={() => undefined}
-        submitting={submitting}
-        submitLabel="Save form"
-      />
+      </PageContainer>
     </form>
   );
 };
@@ -448,10 +473,11 @@ const SearchInputCell = () => {
   return <SearchInput value={q} onChange={setQ} placeholder="Search hosts, alerts, dashboards…" />;
 };
 
-const FilterPillsCell = () => {
+const PillsCell = () => {
   const [tone, setTone] = useState<'crit' | 'warn' | 'ok' | 'info'>('crit');
   return (
-    <FilterPills
+    <SegmentedControl
+      appearance="pills"
       value={tone}
       onChange={setTone}
       options={[
@@ -584,6 +610,17 @@ export const Default: Story = {
       <FormContent />
     </FormShell>
   ),
+};
+
+/** The Topbar title is plain text: the PageHeader is the page's only `h1`. */
+export const HasOneH1: Story = {
+  ...Default,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Form Elements' })).toBeVisible();
+  },
 };
 
 export const OnlyForms: Story = {

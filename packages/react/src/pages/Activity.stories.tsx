@@ -20,6 +20,7 @@ import { SegmentedControl } from '../forms/SegmentedControl';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { PageContainer } from '../layout/PageContainer';
 import { PageHeader } from '../templates/PageHeader';
 import { placeholderAvatar } from '../storybook-avatars';
 import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-helpers';
@@ -152,7 +153,7 @@ const RANGES = [
 const ActivityContent = () => {
   const [range, setRange] = useState<Range>('month');
   return (
-    <div className="space-y-6 p-6 lg:p-8">
+    <PageContainer width="full" className="space-y-6">
       <PageHeader
         title="Activity"
         description="Deploys, incidents and changes across the platform."
@@ -164,7 +165,7 @@ const ActivityContent = () => {
           items={range === 'month' ? THIS_MONTH : [...THIS_MONTH, ...OLDER]}
         />
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

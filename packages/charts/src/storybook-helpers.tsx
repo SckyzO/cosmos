@@ -182,21 +182,27 @@ export const expectColorsFromTokens = async (
   }
 };
 
-/** The default series colors, in order: theme tokens, and the violet that has none. */
+/** The default series colors, in order: the accent token, then hues the theme has no token for. */
 const PALETTE = [
   '--color-brand-500',
-  '--color-success-500',
-  '--color-warning-500',
-  '--color-error-500',
+  '#06b6d4',
   '#8b5cf6',
+  '#ec4899',
+  '#64748b',
+  '#f97316',
+  '#14b8a6',
+  '#84cc16',
 ];
 
 /**
- * Asserts the series colors `drawn()` finds are the default palette of the
- * theme, then that a redefined success color reaches the chart.
+ * Asserts the series colors `drawn()` finds are the first of the default
+ * palette of the theme, one per series, then that a redefined accent reaches
+ * the chart.
  */
-export const expectPaletteFromTheme = (drawn: () => (string | null | undefined)[]) =>
-  expectColorsFromTokens(drawn, PALETTE, '--color-success-500');
+export const expectPaletteFromTheme = async (drawn: () => (string | null | undefined)[]) => {
+  await waitFor(() => expect(drawn().length).toBeGreaterThan(0));
+  await expectColorsFromTokens(drawn, PALETTE.slice(0, drawn().length), '--color-brand-500');
+};
 
 /**
  * Asserts `drawn()` is the color of `tokens[theme]` after switching `<html>` to
@@ -385,6 +391,57 @@ export const expectLegendsOnTheirSide = async ({
   }
 };
 
+/**
+ * Play function for a story with no data: the chart draws `text` and nothing
+ * else, no axis labels, grid lines or legend around it.
+ */
+export const expectMessageOnly =
+  (text: string) =>
+  async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    await expectNoData(text)({ canvasElement });
+    await expectNoFrame(canvasElement);
+    await expectMessageCentered(canvasElement);
+  };
+
+/** Asserts the message sits in the middle of the chart, not in a corner. */
+const expectMessageCentered = (root: HTMLElement) =>
+  waitFor(() => {
+    const message = root.querySelector('.apexcharts-text-nodata')?.getBoundingClientRect();
+    const chart = root.querySelector('.apexcharts-canvas')?.getBoundingClientRect();
+    expect(message && chart).toBeTruthy();
+    if (!message || !chart) return;
+    const offset = (a: number, b: number, size: number) => Math.abs(a - b) / size;
+    expect(
+      offset(message.x + message.width / 2, chart.x + chart.width / 2, chart.width)
+    ).toBeLessThan(0.1);
+    expect(
+      offset(message.y + message.height / 2, chart.y + chart.height / 2, chart.height)
+    ).toBeLessThan(0.1);
+  });
+
+/** Asserts the chart in `root` draws no axis label, grid line, legend item or polygon grid. */
+export const expectNoFrame = (root: HTMLElement) =>
+  waitFor(() => {
+    // ApexCharts keeps the parts it hides in the DOM under `display: none`.
+    const shown = (selector: string) =>
+      [...root.querySelectorAll(selector)].filter((el) => !el.closest('[style*="display: none"]'));
+    expect(
+      shown('.apexcharts-xaxis-label, .apexcharts-yaxis-label').map((el) => el.textContent)
+    ).toEqual([]);
+    expect(
+      shown('.apexcharts-gridline, .apexcharts-yaxis-tick, .apexcharts-xaxis-tick')
+    ).toHaveLength(0);
+    expect(shown('.apexcharts-legend-series')).toHaveLength(0);
+  });
+
+/** Asserts every legend swatch of the chart in `root` has no outline. */
+export const expectLegendMarkersUnstroked = (root: HTMLElement) =>
+  waitFor(() => {
+    const markers = [...root.querySelectorAll('.apexcharts-legend .apexcharts-marker')];
+    expect(markers.length, root.dataset.chart).toBeGreaterThan(0);
+    for (const marker of markers) expect(parseFloat(getComputedStyle(marker).strokeWidth)).toBe(0);
+  });
+
 /** Play function for a story with no data: the chart draws `text` in place of the plot. */
 export const expectNoData =
   (text: string) =>
@@ -450,3 +507,111 @@ export const expectAccessibleChart =
       expect(announcement(canvasElement)).not.toBe(first);
     });
   };
+
+/**
+ * The axis titles drawn in `root`: the x one, and the y ones from left to right.
+ * ApexCharts keeps an empty title element where there is no title: skipped.
+ */
+export const axisTitles = (root: HTMLElement) => {
+  const texts = (elements: Element[]) => elements.map((el) => el.textContent).filter(Boolean);
+  return {
+    x: texts([...root.querySelectorAll('.apexcharts-xaxis-title-text')]),
+    y: texts(
+      [...root.querySelectorAll('.apexcharts-yaxis-title-text')].sort(
+        (a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left
+      )
+    ),
+  };
+};
+
+/**
+ * Play function for a story with axis titles: the chart in `root` draws `x`
+ * under its plot, and `y` beside it, the first on the left and a second one on
+ * the right.
+ */
+export const expectAxisTitles =
+  ({ x, y }: { x: string; y: string[] }) =>
+  ({ canvasElement }: { canvasElement: HTMLElement }) =>
+    expectAxisTitlesIn(canvasElement, { x, y });
+
+export const expectAxisTitlesIn = (root: HTMLElement, { x, y }: { x: string; y: string[] }) =>
+  waitFor(() => {
+    expect(axisTitles(root)).toEqual({ x: [x], y });
+    const plot = root.querySelector('.apexcharts-grid')?.getBoundingClientRect();
+    expect(plot).toBeTruthy();
+    if (!plot) return;
+    const box = (selector: string) =>
+      [...root.querySelectorAll(selector)].map((el) => el.getBoundingClientRect());
+    for (const title of box('.apexcharts-xaxis-title-text'))
+      expect(title.top).toBeGreaterThan(plot.bottom - 1);
+    const [left, right] = box('.apexcharts-yaxis-title-text').sort((a, b) => a.left - b.left);
+    expect(left.right).toBeLessThan(plot.left + 1);
+    if (y.length > 1) expect(right.left).toBeGreaterThan(plot.right - 1);
+    // The title is inside the drawing, and the chart's container ends where the
+    // drawing does: ApexCharts adds 15px under it by default (parentHeightOffset).
+    const svg = root.querySelector('svg.apexcharts-svg')?.getBoundingClientRect();
+    const container = root
+      .querySelector('.apexcharts-canvas')
+      ?.parentElement?.getBoundingClientRect();
+    expect(svg).toBeTruthy();
+    expect(container).toBeTruthy();
+    if (!svg || !container) return;
+    for (const title of box('.apexcharts-xaxis-title-text')) {
+      expect(title.bottom).toBeLessThan(svg.bottom + 1);
+    }
+    expect(container.bottom - svg.bottom).toBeLessThan(1);
+  });
+
+// The font size, in px, of the first element matching `selector`: the SVG
+// attribute ApexCharts writes, or the inline style of its HTML.
+const fontSizeOf = (root: HTMLElement, selector: string) => {
+  const el = root.querySelector<HTMLElement | SVGElement>(selector);
+  return parseFloat(el?.getAttribute('font-size') ?? el?.style.fontSize ?? '');
+};
+
+/** The sizes of the chart text in `root`: axis labels, axis title, legend. */
+const textSizes = (root: HTMLElement) => ({
+  axis: fontSizeOf(root, '.apexcharts-xaxis-label'),
+  title: fontSizeOf(root, '.apexcharts-xaxis-title-text'),
+  legend: fontSizeOf(root, '.apexcharts-legend-text'),
+});
+
+/**
+ * Asserts the chart text in `root` follows the text size setting: the axis
+ * labels are `text-2xs` (11px), the axis title and the legend `text-xs`
+ * (12px), and the same sizes scaled by 1.125 once `<html>` takes
+ * `data-text-size="lg"`. The chart needs an x-axis title and a legend. With
+ * `hovered`, the tooltip is checked too, shown over that element.
+ */
+export const expectTextFollowsTextSize = async (
+  root: HTMLElement,
+  hovered?: () => Element | null
+) => {
+  const tooltipSize = () => fontSizeOf(root, '.apexcharts-tooltip-title');
+  const open = async () => {
+    if (!hovered) return;
+    await waitFor(() => {
+      const el = hovered();
+      expect(el).not.toBeNull();
+      hover(el as Element, 0.05);
+      expect(root.querySelector('.apexcharts-tooltip.apexcharts-active')).not.toBeNull();
+    });
+  };
+  const html = document.documentElement;
+  const previous = html.getAttribute('data-text-size');
+  await waitFor(() => expect(textSizes(root)).toEqual({ axis: 11, title: 12, legend: 12 }));
+  await open();
+  if (hovered) expect(tooltipSize()).toBe(12);
+  try {
+    html.setAttribute('data-text-size', 'lg');
+    await waitFor(() =>
+      expect(textSizes(root)).toEqual({ axis: 12.38, title: 13.5, legend: 13.5 })
+    );
+    await open();
+    if (hovered) await waitFor(() => expect(tooltipSize()).toBe(13.5));
+  } finally {
+    if (previous === null) html.removeAttribute('data-text-size');
+    else html.setAttribute('data-text-size', previous);
+    if (hovered) await closeTooltip(root, hovered);
+  }
+};

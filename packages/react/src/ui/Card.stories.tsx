@@ -104,12 +104,11 @@ export const WithImage: Story = {
 export const Horizontal: Story = {
   render: () => (
     <Wrap>
-      <Card padding="none" className="flex max-w-2xl flex-row">
+      <Card padding="none" orientation="horizontal" className="max-w-2xl">
         <Card.Image
           src={gradientImage('#10b981', '#06b6d4', 'Server')}
           alt="Server cover"
           aspectRatio="aspect-square"
-          wrapperClassName="w-40 shrink-0"
         />
         <div className="flex flex-1 flex-col p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -130,6 +129,30 @@ export const Horizontal: Story = {
       </Card>
     </Wrap>
   ),
+};
+
+export const HorizontalLayout: Story = {
+  ...Horizontal,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const image = canvas.getByRole('img', { name: 'Server cover' });
+    const heading = canvas.getByRole('heading', { name: 'Production datacenter' });
+    const wrapper = image.parentElement as HTMLElement;
+    await expect(image).toBeVisible();
+    await expect(heading).toBeVisible();
+    if (window.matchMedia('(min-width: 640px)').matches) {
+      // Image column on the left, content on its right.
+      await expect(wrapper.getBoundingClientRect().width).toBe(160);
+      await expect(heading.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+        wrapper.getBoundingClientRect().right
+      );
+    } else {
+      // Stacked: the content sits under the image.
+      await expect(heading.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+        wrapper.getBoundingClientRect().bottom
+      );
+    }
+  },
 };
 
 export const WithIcon: Story = {

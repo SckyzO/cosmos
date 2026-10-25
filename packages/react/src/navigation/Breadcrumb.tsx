@@ -1,6 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Ellipsis, Home } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Menu } from '../ui/Menu';
 
 export type BreadcrumbItem = {
   label: string;
@@ -19,11 +20,23 @@ export type BreadcrumbProps = {
   /** Visual separator between items. Default `'chevron'`. Pass any ReactNode for full custom. */
   separator?: BreadcrumbSeparator;
   /**
+   * Put a Home icon on the first item (the usual page-header path). It is named "Home" for
+   * assistive technology, so a first item labelled "Home" reads twice: label it otherwise
+   * (a site name). An `icon` set on that item wins.
+   */
+  homeIcon?: boolean;
+  /**
    * Name of the navigation landmark. Default `'Breadcrumb'`. A page that holds
    * several breadcrumbs gives each its own, or a screen reader cannot tell
    * them apart; a translated app passes its own wording.
    */
   'aria-label'?: string;
+  /**
+   * Most crumbs shown at once (at least 2). A longer trail keeps its first crumb and its last
+   * `maxItems - 1`, and the ones in between collapse into a "…" menu that links to them. Default:
+   * all of them.
+   */
+  maxItems?: number;
   className?: string;
 };
 
@@ -52,55 +65,90 @@ const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
  * Breadcrumb — navigable path: Site → Room → Aisle → Rack → Device.
  *
  * Each item except the last is clickable. Last item renders as plain text
- * (the current page). Use icons for the most important items in the path.
- *
- * Differs from PageBreadcrumb (templates/) which is the slim variant for
- * page headers with the Home icon. This Breadcrumb is bigger and supports
- * an icon per item.
+ * (the current page). Use icons for the most important items in the path,
+ * or `homeIcon` for the Home icon of a page header.
  */
 export const Breadcrumb = ({
   items,
   separator = 'chevron',
+  homeIcon = false,
   'aria-label': ariaLabel = 'Breadcrumb',
+  maxItems,
   className,
-}: BreadcrumbProps) => (
-  <nav
-    aria-label={ariaLabel}
-    className={clsx('flex items-center gap-1 overflow-x-auto', className)}
-  >
-    {items.map(({ icon: Icon, label, href, onClick }, i) => {
-      const isLast = i === items.length - 1;
-      return (
-        <div key={label} className="flex items-center gap-1">
-          {i > 0 && renderSeparator(separator)}
-          {isLast ? (
-            <span
-              aria-current="page"
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
-            >
-              {Icon && <Icon className="text-brand-500 h-4 w-4" />}
-              {label}
-            </span>
-          ) : onClick ? (
-            <button
-              type="button"
-              onClick={onClick}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
-            >
-              {Icon && <Icon className="h-4 w-4" />}
-              {label}
-            </button>
+}: BreadcrumbProps) => {
+  const limit = maxItems === undefined ? items.length : Math.max(2, maxItems);
+  const collapsed = items.length > limit;
+  // The collapsed crumbs are the ones after the first, up to the last `limit - 1`.
+  const hiddenFrom = 1;
+  const hiddenTo = collapsed ? items.length - (limit - 1) : 1;
+  const hidden = items.slice(hiddenFrom, hiddenTo);
+  const shown = collapsed ? [...items.slice(0, hiddenFrom), ...items.slice(hiddenTo)] : items;
+  const linkClass =
+    'text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex max-w-32 items-center max-sm:min-w-0 gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:max-w-none';
+  return (
+    <nav
+      aria-label={ariaLabel}
+      className={clsx('flex items-center gap-1 overflow-x-auto', className)}
+    >
+      {shown.map(({ icon: Icon, label, href, onClick }, i) => {
+        const isLast = i === shown.length - 1;
+        // The first crumb is never collapsed: `i === 0` is the first item of the trail.
+        const renderIcon = (className: string) =>
+          homeIcon && i === 0 && !Icon ? (
+            <Home className={className} role="img" aria-label="Home" />
           ) : (
-            <a
-              href={href ?? '#'}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
-            >
-              {Icon && <Icon className="h-4 w-4" />}
-              {label}
-            </a>
-          )}
-        </div>
-      );
-    })}
-  </nav>
-);
+            Icon && <Icon className={className} />
+          );
+        return (
+          <div key={label} className="flex items-center gap-1 max-sm:min-w-0">
+            {i > 0 && renderSeparator(separator)}
+            {collapsed && i === hiddenFrom && (
+              <>
+                <Menu>
+                  <Menu.Trigger
+                    aria-label={`Show ${hidden.length} more pages`}
+                    className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded px-2 py-1 transition-colors"
+                  >
+                    <Ellipsis className="h-4 w-4" aria-hidden />
+                  </Menu.Trigger>
+                  <Menu.Content aria-label="Hidden pages">
+                    {hidden.map((crumb) => (
+                      <Menu.Item
+                        key={crumb.label}
+                        icon={crumb.icon}
+                        href={crumb.onClick ? undefined : (crumb.href ?? '#')}
+                        onSelect={crumb.onClick}
+                      >
+                        {crumb.label}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Content>
+                </Menu>
+                {renderSeparator(separator)}
+              </>
+            )}
+            {isLast ? (
+              <span
+                aria-current="page"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
+              >
+                {renderIcon('text-brand-500 h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </span>
+            ) : onClick ? (
+              <button type="button" onClick={onClick} className={linkClass}>
+                {renderIcon('h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </button>
+            ) : (
+              <a href={href ?? '#'} className={linkClass}>
+                {renderIcon('h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </a>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+};

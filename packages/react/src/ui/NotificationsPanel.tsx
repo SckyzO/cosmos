@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { Badge } from './Badge';
 import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
@@ -42,14 +43,6 @@ const INTENT_META: Record<
     color: 'text-green-600 dark:text-green-400',
     chipBg: 'bg-green-500/15 dark:bg-green-500/20',
   },
-};
-
-// The solid fills of Badge: the text reaches 4.5:1 in the four themes.
-const BADGE_BG: Record<NotificationsPanelIntent, string> = {
-  danger: 'bg-red-600 text-white',
-  warning: 'bg-amber-500 text-gray-900',
-  info: 'bg-blue-600 text-white',
-  success: 'bg-green-500 text-gray-900',
 };
 
 // Monitoring vocabulary on the badge: the label is data-facing, the prop is not.
@@ -208,6 +201,11 @@ const NotificationsPanelContent = ({
 
 export type NotificationsPanelHeaderProps = {
   title: string;
+  /**
+   * Shows a "Mark all as read" button in the header, which calls this. The button is not
+   * rendered without it, and the panel stays open: the host clears its `unread` items.
+   */
+  onMarkAllRead?: () => void;
   /** Right-side slot — pills, action buttons, etc. */
   children?: ReactNode;
   className?: string;
@@ -215,6 +213,7 @@ export type NotificationsPanelHeaderProps = {
 
 const NotificationsPanelHeader = ({
   title,
+  onMarkAllRead,
   children,
   className,
 }: NotificationsPanelHeaderProps) => (
@@ -225,7 +224,20 @@ const NotificationsPanelHeader = ({
     )}
   >
     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
-    {children && <div className="flex items-center gap-2">{children}</div>}
+    {(onMarkAllRead || children) && (
+      <div className="flex items-center gap-2">
+        {onMarkAllRead && (
+          <button
+            type="button"
+            onClick={onMarkAllRead}
+            className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+          >
+            Mark all as read
+          </button>
+        )}
+        {children}
+      </div>
+    )}
   </div>
 );
 
@@ -240,22 +252,19 @@ export type NotificationsPanelCountersProps = {
 const NotificationsPanelCounters = ({ crit, warn, info }: NotificationsPanelCountersProps) => (
   <>
     {crit !== undefined && crit > 0 && (
-      <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-600 dark:bg-red-500/15 dark:text-red-400">
-        <XCircle className="h-3 w-3" />
+      <Badge intent="danger" icon={XCircle}>
         {crit}
-      </span>
+      </Badge>
     )}
     {warn !== undefined && warn > 0 && (
-      <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
-        <AlertTriangle className="h-3 w-3" />
+      <Badge intent="warning" icon={AlertTriangle}>
         {warn}
-      </span>
+      </Badge>
     )}
     {info !== undefined && info > 0 && (
-      <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
-        <Info className="h-3 w-3" />
+      <Badge intent="info" icon={Info}>
         {info}
-      </span>
+      </Badge>
     )}
   </>
 );
@@ -326,6 +335,10 @@ export type NotificationsPanelItemProps = ComponentPropsWithRef<'button'> & {
   subtitle?: string;
   /** Small mono caption shown below the subtitle (e.g. check id, error code). */
   caption?: string;
+  /** When the notification happened, as a line under the text (e.g. "2 min ago"). */
+  time?: ReactNode;
+  /** Not read yet: a dot before the title and a tinted row. Default false. */
+  unread?: boolean;
   /** Right-side badge label. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
   badgeLabel?: string;
   /** When true, the panel auto-closes after the item is clicked. Default true. */
@@ -337,6 +350,8 @@ function NotificationsPanelItem({
   title,
   subtitle,
   caption,
+  time,
+  unread = false,
   badgeLabel,
   closeOnClick = true,
   onClick,
@@ -356,7 +371,10 @@ function NotificationsPanelItem({
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5',
+        'focus-visible:focus-indicator flex w-full items-start gap-3 px-4 py-3 text-left transition-colors focus-visible:ring-inset',
+        unread
+          ? 'bg-brand-50/60 hover:bg-brand-50 dark:bg-brand-500/10 dark:hover:bg-brand-500/15'
+          : 'hover:bg-gray-50 dark:hover:bg-white/5',
         className
       )}
       {...rest}
@@ -370,7 +388,15 @@ function NotificationsPanelItem({
         <Icon className={clsx('h-4 w-4', meta.color)} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
+          {unread && (
+            <>
+              <span aria-hidden className="bg-brand-500 h-2 w-2 shrink-0 rounded-full" />
+              <span className="sr-only">Unread: </span>
+            </>
+          )}
+          <span className="min-w-0 truncate">{title}</span>
+        </p>
         {subtitle && (
           <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
         )}
@@ -379,15 +405,11 @@ function NotificationsPanelItem({
             {caption}
           </p>
         )}
+        {time && <p className="text-3xs mt-1 text-gray-500 dark:text-gray-400">{time}</p>}
       </div>
-      <span
-        className={clsx(
-          'text-3xs mt-0.5 shrink-0 rounded-full px-2 py-0.5 font-bold',
-          BADGE_BG[intent]
-        )}
-      >
+      <Badge appearance="solid" intent={intent} size="sm" className="mt-0.5 shrink-0">
         {badgeLabel ?? BADGE_LABEL[intent]}
-      </span>
+      </Badge>
     </button>
   );
 }

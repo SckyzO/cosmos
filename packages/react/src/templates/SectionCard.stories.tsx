@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { KeyRound, Lock, Server, Trash2, User, Users, Zap } from 'lucide-react';
 import { SectionCard, type SectionCardIconTone } from './SectionCard';
 
@@ -78,5 +79,38 @@ export const RawClassEscapeHatch: Story = {
     iconBg: 'bg-pink-500/10 dark:bg-pink-500/20',
     desc: 'Pass `iconColor` + `iconBg` directly when `iconTone` presets do not fit.',
     children: <p className="text-sm text-[var(--color-text-secondary)]">Section body content.</p>,
+  },
+};
+
+/** SectionCard is a Card with 24px padding: same radius, same padding as `Card padding="lg"`. */
+export const IsACardWithLargePadding: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'Panel', children: <p>Body</p> },
+  play: async ({ canvas }) => {
+    const panel = canvas
+      .getByRole('heading', { name: 'Panel' })
+      .closest('.rounded-2xl') as HTMLElement;
+    const style = getComputedStyle(panel);
+    await expect(style.paddingLeft).toBe('24px');
+    await expect(style.borderTopLeftRadius).toBe('16px');
+    await expect(style.overflow).toBe('hidden');
+  },
+};
+
+/** `as` picks the heading element of the title, `h3` by default. */
+export const TitleHeadingLevel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div>
+      <h1 className="sr-only">Page</h1>
+      <SectionCard as="h2" title="Under the page heading">
+        <p>Body</p>
+      </SectionCard>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByRole('heading', { level: 2, name: 'Under the page heading' })
+    ).toBeVisible();
   },
 };

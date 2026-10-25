@@ -395,3 +395,14 @@ export const DefaultCurrentOrControlled: Story = {
     );
   },
 };
+
+// The small vertical connector starts at the small marker's edge, not the default size's (#290).
+export const SmallVerticalConnectorOffset: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: VerticalSm.render,
+  play: async ({ canvasElement }) => {
+    const connector = canvasElement.querySelector('li > span[aria-hidden]') as HTMLElement;
+    await expect(getComputedStyle(connector).top).toBe('28px');
+    await expect(getComputedStyle(connector).left).toBe('13px');
+  },
+};

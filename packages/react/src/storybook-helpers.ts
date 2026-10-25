@@ -64,6 +64,25 @@ fn.full = () => buildParams(800);
 
 export const portalDocsParams = fn;
 
+// ── Narrow screens ──────────────────────────────────────────────────────────
+
+/**
+ * The viewport of the stories that check a narrow screen: the toolbar's `mobile` preset, which the
+ * story tests honour too (`globals` of the story, applied by addon-vitest before it renders).
+ */
+export const mobileViewport = { viewport: { value: 'mobile', isRotated: false } } as const;
+
+/**
+ * Play-function assertion: the page does not scroll sideways. Checks the document, which is what
+ * a component wider than the viewport widens, and `box` when given (an `overflow: auto` strip
+ * is allowed to scroll, so pass the element that must not).
+ */
+export const expectNoHorizontalOverflow = (box?: HTMLElement) => {
+  const root = document.documentElement;
+  expect(root.scrollWidth, 'the page scrolls sideways').toBeLessThanOrEqual(root.clientWidth);
+  if (box) expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+};
+
 /**
  * Padding for a story that sits in the `fullscreen` layout `portalDocsParams`
  * sets but has no frame of its own: without it the content is drawn against the
@@ -417,4 +436,26 @@ export const expectHamburgerTogglesSidebar = async (canvas: {
   await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
   await transitionsEnd(nav);
   await expect(nav.getBoundingClientRect().width).toBe(expanded);
+};
+
+/**
+ * The settings pickers (accent, option, palette) mark the checked item one way:
+ * the brand border plus a brand check badge. Unchecked items have neither.
+ */
+export const expectPickerSelected = (group: HTMLElement) => {
+  const probe = document.createElement('span');
+  probe.className = 'border-brand-500 border-2';
+  document.body.append(probe);
+  const brand = getComputedStyle(probe).borderTopColor;
+  probe.remove();
+  const radios = [...group.querySelectorAll<HTMLElement>('[role="radio"]')];
+  expect(radios.length).toBeGreaterThan(1);
+  for (const radio of radios) {
+    const checked = radio.getAttribute('aria-checked') === 'true';
+    expect(`${radio.getAttribute('aria-label')} border ${checked}`).toBe(
+      `${radio.getAttribute('aria-label')} border ${getComputedStyle(radio).borderTopColor === brand}`
+    );
+    expect(radio.querySelectorAll('.bg-brand-500.rounded-full')).toHaveLength(checked ? 1 : 0);
+  }
+  expect(radios.filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1);
 };
