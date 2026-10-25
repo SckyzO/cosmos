@@ -13,8 +13,6 @@ export {
 } from './NarrowStackedList';
 export { SimpleRow, type SimpleRowProps } from './SimpleRow';
 export { Row, type RowProps } from './Row';
-export { ClickableRow, type ClickableRowProps } from './ClickableRow';
-export { StatusRow, type StatusRowProps } from './StatusRow';
 export {
   ActivityFeed,
   type ActivityFeedProps,
