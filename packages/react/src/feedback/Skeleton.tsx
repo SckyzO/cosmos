@@ -109,3 +109,25 @@ export const SkeletonList = ({ rows = 4, showAction = true, className }: Skeleto
     ))}
   </div>
 );
+
+export type SkeletonAvatarTextProps = {
+  /** Lines of text beside the avatar: a title, then shorter ones. Default 2. */
+  lines?: number;
+  className?: string;
+};
+
+/** SkeletonAvatarText — a round avatar with a few lines of text: a comment, a profile row. */
+export const SkeletonAvatarText = ({ lines = 2, className }: SkeletonAvatarTextProps) => (
+  <div className={clsx('flex items-start gap-3', className)}>
+    <Sk h="h-10" w="w-10" round="rounded-full" className="shrink-0" />
+    <div className="min-w-0 flex-1 space-y-2 pt-1">
+      {Array.from({ length: Math.max(1, lines) }).map((_, i) => (
+        <Sk
+          key={i}
+          h={i === 0 ? 'h-4' : 'h-3'}
+          w={i === 0 ? 'w-1/3' : TEXT_WIDTHS[i % TEXT_WIDTHS.length]}
+        />
+      ))}
+    </div>
+  </div>
+);
