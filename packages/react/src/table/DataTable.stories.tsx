@@ -413,9 +413,19 @@ export const WithSelection: Story = {
         rowKey={(r) => r.id}
         pageSize={10}
         selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The story's column widths add up to 80%: the rest goes to a data column, not to the
+    // selection and action columns, which keep their fixed width.
+    const heads = canvas.getAllByRole('columnheader');
+    await expect(heads[0].getBoundingClientRect().width).toBe(44);
+    const action = heads[heads.length - 1];
+    await expect(action).toHaveTextContent('Action');
+    await expect(action.getBoundingClientRect().width).toBe(96);
+  },
 };
 
 export const WithBulkActions: Story = {
