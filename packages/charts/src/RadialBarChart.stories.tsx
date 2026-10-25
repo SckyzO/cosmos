@@ -308,7 +308,7 @@ export const ColorsOverridePalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: CustomColors.args,
   play: async ({ canvasElement }) => {
-    // The ring colors without their opacity: ApexCharts draws them at 0.85.
+    // The ring colors, resolved without any alpha.
     const strokes = () =>
       [...canvasElement.querySelectorAll('.apexcharts-radial-series path')].map((el) =>
         normalizeColor(
@@ -316,6 +316,35 @@ export const ColorsOverridePalette: Story = {
         )
       );
     await waitFor(() => expect(strokes()).toEqual(RING_COLORS));
+  },
+};
+
+/**
+ * The arcs are drawn opaque: at ApexCharts' 0.85 default they looked duller
+ * than their legend swatches and the colors of the page.
+ */
+export const ArcsAreOpaque: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RadialBarChart series={[78, 62]} labels={['CPU', 'Mem']} colors={['#10b981', '#8b5cf6']} />
+      <GradientRadial value={84} label="Health" color="#8b5cf6" />
+      <SemiCircleGauge value={67} label="Load" color="#f59e0b" />
+      <StrokedGauge value={92} label="Uptime" color="#ef4444" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const arcs = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')];
+      // Two rings, then one arc for each of the three gauges.
+      expect(arcs.length).toBe(5);
+      for (const arc of arcs) {
+        const stroke = arc.getAttribute('stroke') ?? '';
+        // The gradient is a url(); a plain color is rgba(…, alpha) at ApexCharts' fill opacity.
+        if (stroke.startsWith('url')) continue;
+        expect(resolveColor(stroke), stroke).not.toMatch(/^rgba\(.*, (?!1\))/);
+      }
+    });
   },
 };
 
