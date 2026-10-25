@@ -33,17 +33,20 @@ const DARK_THEME_CLASSES = ['dark', 'deep-blue'];
 // Brand steps of the sequential scale, low to high. Light themes run from a
 // pale tint to a deep shade, dark themes from a dark tint to a bright one, so
 // low values stay a muted cell on the card instead of a glaring one. The steps
-// skip neighbors that look alike in some accents (800 and 900, 100 and 200).
+// skip neighbors that look alike in some accents (100 and 200, 600 and 700),
+// and the dark scale starts at 800: 900 sits at 1.3:1 to 1.4:1 of the dark
+// card in most accents and the lowest cells vanish into it.
 const BRAND_SCALE_LIGHT = [100, 300, 400, 500, 700];
-const BRAND_SCALE_DARK = [900, 700, 500, 400, 300];
+const BRAND_SCALE_DARK = [800, 600, 500, 400, 300];
 // The blue accent's steps, used when the theme CSS isn't loaded or during SSR.
 const BLUE_STEPS: Record<number, string> = {
   100: '#dde9ff',
   300: '#9cb9ff',
   400: '#7592ff',
   500: COSMOS_BRAND,
+  600: '#3641f5',
   700: '#2a31d8',
-  900: '#262e89',
+  800: '#252dae',
 };
 
 const relativeLuminance = (hex: string): number => {
