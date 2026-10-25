@@ -42,12 +42,13 @@ export type ActivityFeedIntent = Extract<
   'neutral' | 'info' | 'success' | 'warning' | 'danger'
 >;
 
+// Timeline's tinted-disc recipe, plus `info`.
 const INTENT_BG: Record<ActivityFeedIntent, string> = {
-  neutral: 'bg-gray-400 dark:bg-gray-600',
-  info: 'bg-blue-500',
-  success: 'bg-green-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-500',
+  neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+  success: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
+  warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  danger: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
 };
 
 // ── Item ─────────────────────────────────────────────────────────────────────
@@ -86,13 +87,18 @@ function ActivityFeedItem({
         )}
         <div className="relative flex space-x-3">
           <div>
-            <span
-              className={clsx(
-                'flex size-10 items-center justify-center rounded-full ring-8 ring-white dark:ring-gray-900',
-                INTENT_BG[intent]
-              )}
-            >
-              <Icon className="size-5 text-white" aria-hidden />
+            {/* An opaque disc in the panel colour sits under the tint (translucent in dark) so the
+                connector does not show through, and its ring blends with the surface. */}
+            <span className="block rounded-full bg-[var(--color-bg-panel)] ring-8 ring-[var(--color-bg-panel)]">
+              <span
+                data-slot="disc"
+                className={clsx(
+                  'flex size-10 items-center justify-center rounded-full',
+                  INTENT_BG[intent]
+                )}
+              >
+                <Icon className="size-5" aria-hidden />
+              </span>
             </span>
           </div>
           <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
