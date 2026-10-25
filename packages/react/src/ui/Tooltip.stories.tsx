@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectOutsideClip, scrollAnchor } from '../storybook-helpers';
+import { expectOutsideClip, portalDocsParams, scrollAnchor } from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -97,6 +97,60 @@ export const Variants: Story = {
       </div>
     </Wrap>
   ),
+};
+
+/**
+ * `open` pins the tooltip so it can be read without hovering: the four positions, then the
+ * `white` surface and the `intent` colors. Hover and focus only report through `onOpenChange`.
+ */
+export const Open: Story = {
+  parameters: portalDocsParams.md(),
+  render: () => (
+    <Wrap>
+      <div className="grid grid-cols-2 gap-x-48 gap-y-32 pt-10 pb-10 md:grid-cols-4 md:gap-x-24">
+        {(['top', 'bottom', 'left', 'right'] as const).map((position) => (
+          <div key={position} className="flex justify-center">
+            <Tooltip content={`Position: ${position}`} position={position} open>
+              <Button variant="secondary" size="sm">
+                {position}
+              </Button>
+            </Tooltip>
+          </div>
+        ))}
+        <div className="flex justify-center">
+          <Tooltip content="White surface" variant="white" position="bottom" open>
+            <Button variant="secondary" size="sm">
+              white
+            </Button>
+          </Tooltip>
+        </div>
+        <div className="flex justify-center">
+          <Tooltip content="Disk almost full" intent="warning" position="bottom" open>
+            <Button variant="secondary" size="sm">
+              warning
+            </Button>
+          </Tooltip>
+        </div>
+        <div className="flex justify-center">
+          <Tooltip
+            title="Error budget"
+            content="Share of failed requests allowed this month."
+            shortcut={['⌘', 'E']}
+            position="bottom"
+            open
+          >
+            <Button variant="secondary" size="sm">
+              title
+            </Button>
+          </Tooltip>
+        </div>
+      </div>
+    </Wrap>
+  ),
+  play: async () => {
+    await waitFor(() => expect(page.getAllByRole('tooltip')).toHaveLength(7));
+    for (const tip of page.getAllByRole('tooltip')) await expect(tip).toBeVisible();
+  },
 };
 
 // ── Keyboard access ──────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { expect, fireEvent, fn, userEvent, waitFor } from 'storybook/test';
+import { useEffect, useState } from 'react';
+import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
+import { portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { Toaster, toast } from './Toast';
 
@@ -179,6 +180,40 @@ export const ProgrammaticDismiss: Story = {
         <Toaster />
       </div>
     );
+  },
+};
+
+/**
+ * The toasts as they look on screen, kept (`duration: Infinity`) and expanded (`expand` on the
+ * Toaster) instead of stacked: a title, a description, an action. The status toasts are left
+ * out: their rich colors fail the contrast check in the light and sand themes.
+ */
+export const Open: Story = {
+  parameters: portalDocsParams.lg(),
+  render: function Render() {
+    useEffect(() => {
+      const ids = [
+        toast('Settings updated', { duration: Infinity }),
+        toast('Invite sent', {
+          description: 'sarah@example.com will get a link that expires in 7 days.',
+          duration: Infinity,
+        }),
+        toast('Export ready', {
+          description: 'servers-2026-01.csv, 1.2 MB.',
+          duration: Infinity,
+          action: { label: 'Download', onClick: () => {} },
+        }),
+      ];
+      return () => {
+        for (const id of ids) toast.dismiss(id);
+      };
+    }, []);
+    return <Toaster expand />;
+  },
+  play: async () => {
+    await waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(3));
+    // Each toast fades in once mounted.
+    await waitFor(() => expect(within(document.body).getByText('Settings updated')).toBeVisible());
   },
 };
 

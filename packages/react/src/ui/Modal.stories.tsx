@@ -13,6 +13,9 @@ import { Dropdown } from './Dropdown';
 import { Popover } from './Popover';
 import { Tooltip } from './Tooltip';
 import { Combobox } from '../forms/Combobox';
+import { Input } from '../forms/Input';
+import { Select } from '../forms/Select';
+import { Textarea } from '../forms/Textarea';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -88,6 +91,137 @@ export const Confirmation: Story = {
         </Modal>
       </Wrap>
     );
+  },
+};
+
+/** Open on mount, as the dialog looks once a trigger has opened it: header, body, pinned footer. */
+export const Open: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <Wrap>
+        <SectionCard title="Closed it? Open it again">
+          <Button onClick={() => setOpen(true)}>Open modal</Button>
+        </SectionCard>
+        <Modal open={open} onClose={() => setOpen(false)}>
+          <Modal.Header
+            title="Rotate the API key?"
+            description="Clients using the current key stop working until they are updated."
+            onClose={() => setOpen(false)}
+          />
+          <Modal.Body>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              The new key is shown once. Copy it before you close this dialog.
+            </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={() => setOpen(false)}>
+              Rotate key
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </Wrap>
+    );
+  },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', {
+      name: 'Rotate the API key?',
+    });
+    await expect(dialog).toBeVisible();
+  },
+};
+
+const REGIONS = [
+  { value: 'eu-west', label: 'Europe (West)' },
+  { value: 'us-east', label: 'US (East)' },
+  { value: 'ap-south', label: 'Asia Pacific (South)' },
+];
+
+/**
+ * A form in a modal: the title with its close button, the fields in a body that scrolls while
+ * the footer stays pinned, Cancel and the primary action together on the right (the primary
+ * stays disabled until the form is valid) and the destructive action apart on the left.
+ */
+export const FormInModal: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(true);
+    const [name, setName] = useState('');
+    const [region, setRegion] = useState('');
+    const valid = name.trim() !== '' && region !== '';
+    const close = () => setOpen(false);
+    return (
+      <Wrap>
+        <SectionCard title="Closed it? Open it again">
+          <Button onClick={() => setOpen(true)}>Edit server</Button>
+        </SectionCard>
+        <Modal open={open} onClose={close} className="flex max-h-[85vh] flex-col">
+          <Modal.Header
+            className="shrink-0"
+            title="Edit server"
+            description="Changes apply to the next deploy."
+            onClose={close}
+          />
+          <form
+            className="flex min-h-0 flex-1 flex-col"
+            onSubmit={(event) => {
+              event.preventDefault();
+              close();
+            }}
+          >
+            <Modal.Body className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+              <Input
+                label="Name"
+                required
+                placeholder="web-01"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <Select
+                label="Region"
+                required
+                placeholder="Choose a region"
+                options={REGIONS}
+                value={region}
+                onChange={(event) => setRegion(event.target.value)}
+              />
+              <Textarea label="Notes" rows={3} description="Visible to your team only." />
+            </Modal.Body>
+            <Modal.Footer className="shrink-0 justify-between">
+              <Button type="button" variant="ghost" intent="danger" size="sm">
+                Delete server
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={close}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={!valid}>
+                  Save changes
+                </Button>
+              </div>
+            </Modal.Footer>
+          </form>
+        </Modal>
+      </Wrap>
+    );
+  },
+  play: async () => {
+    const dialog = within(
+      await within(document.body).findByRole('dialog', { name: 'Edit server' })
+    );
+    const save = dialog.getByRole('button', { name: 'Save changes' });
+    await expect(save).toBeDisabled();
+    await userEvent.type(dialog.getByRole('textbox', { name: /^Name/ }), 'web-01');
+    // A name alone is not enough: the region is required too.
+    await expect(save).toBeDisabled();
+    await userEvent.selectOptions(dialog.getByRole('combobox', { name: /^Region/ }), 'eu-west');
+    await expect(save).toBeEnabled();
+    await userEvent.clear(dialog.getByRole('textbox', { name: /^Name/ }));
+    await expect(save).toBeDisabled();
   },
 };
 

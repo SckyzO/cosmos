@@ -105,6 +105,39 @@ export const MultipleDividers: Story = {
   },
 };
 
+/** `defaultOpen` shows the menu as it looks once opened: the selected option checked, a divider, a disabled option. */
+export const Open: Story = {
+  parameters: portalDocsParams.md(),
+  render: () => {
+    const [project, setProject] = useState('website');
+    return (
+      <Wrap>
+        <Dropdown
+          icon={Filter}
+          defaultOpen
+          value={project}
+          onChange={setProject}
+          options={[
+            { value: 'all', label: 'All projects' },
+            { divider: true },
+            { value: 'website', label: 'Website', icon: Globe },
+            { value: 'mobile', label: 'Mobile app', icon: Smartphone },
+            { value: 'api', label: 'Public API', icon: Database },
+            { value: 'legacy', label: 'Legacy portal', icon: Archive, disabled: true },
+          ]}
+        />
+      </Wrap>
+    );
+  },
+  play: async () => {
+    const menu = await page.findByRole('menu');
+    await expect(menu).toBeVisible();
+    await expect(within(menu).getByRole('menuitemradio', { name: 'Website' })).toBeChecked();
+    // Opened on mount, not by the user: focus stays out of the menu, so a docs page does not jump to it.
+    await expect(menu.contains(document.activeElement)).toBe(false);
+  },
+};
+
 /**
  * a11y: the trigger advertises a popup (aria-haspopup + aria-expanded), the
  * panel is a real menu (role=menu / role=menuitemradio), opening moves focus to the
