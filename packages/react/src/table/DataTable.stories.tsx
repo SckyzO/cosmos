@@ -12,6 +12,7 @@ import {
 } from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
+import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from './Table';
 import type { ColumnDef, DataTableDensity } from './types';
 import { StatusBadge } from '../status/StatusBadge';
 import { Avatar } from '../ui/Avatar';
@@ -1165,5 +1166,59 @@ export const RowMenu: Story = {
     await userEvent.click(trigger);
     await userEvent.click(await page.findByRole('separator'));
     await expect(onRowClick).not.toHaveBeenCalled();
+  },
+};
+
+export const HeaderCellsShareOneStyleWithTable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        <DataTable
+          rows={rows.slice(0, 2)}
+          columns={columns.slice(0, 2)}
+          rowKey={(r) => r.id}
+          selectable
+          renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Severity</TableHeaderCell>
+              <TableHeaderCell>Name</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>OK</TableCell>
+              <TableCell>node-100</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const look = (el: Element) => {
+      const cs = getComputedStyle(el);
+      return {
+        fontSize: cs.fontSize,
+        fontWeight: cs.fontWeight,
+        letterSpacing: cs.letterSpacing,
+        textTransform: cs.textTransform,
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+      };
+    };
+    const [dataTable, table] = canvas.getAllByRole('table');
+    const reference = look(within(table).getAllByRole('columnheader')[0]);
+    await expect(reference.textTransform).toBe('uppercase');
+    // Every header cell of the DataTable (selection, data and action) looks like the Table's,
+    // and so does the label of a sortable one, which is a button.
+    for (const th of within(dataTable).getAllByRole('columnheader')) {
+      await expect(look(th)).toEqual(reference);
+      const button = th.querySelector('button');
+      if (button) await expect(look(button)).toMatchObject({ textTransform: 'uppercase' });
+    }
   },
 };
