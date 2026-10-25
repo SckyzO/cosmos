@@ -117,7 +117,7 @@ export const HamburgerFiresOnCollapsedChange: Story = {
     );
   },
   play: async ({ args, canvas }) => {
-    await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
+    await expect(canvas.getByText('Servers')).toBeVisible();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
     await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
@@ -156,7 +156,9 @@ export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(3);
+    for (const title of ['No state', 'State is null', 'No handler']) {
+      await expect(canvas.getByText(title)).toBeVisible();
+    }
     await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
   },
 };
@@ -210,5 +212,23 @@ export const HamburgerExpandsACollapsedSidebar: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
     await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
     await expect(args.onCollapsedChange).toHaveBeenCalledWith(false);
+  },
+};
+
+/** The title is plain text by default, so a composed page keeps the PageHeader as its `h1`. */
+export const PageTitleIsPlainTextByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { pageTitle: 'Servers' },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('heading')).toBeNull();
+    await expect(canvas.getByText('Servers').tagName).toBe('P');
+  },
+};
+
+/** `as="h1"` gives the title back as the page heading. */
+export const PageTitleAsHeading: Story = {
+  args: { pageTitle: 'Servers', as: 'h1' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
   },
 };
