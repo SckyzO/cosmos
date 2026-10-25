@@ -104,6 +104,8 @@ export const MixedChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },

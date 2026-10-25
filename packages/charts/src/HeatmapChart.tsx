@@ -134,6 +134,8 @@ export const HeatmapChart = ({
       type: 'heatmap',
       toolbar: { show: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     dataLabels: {
       enabled: showValues,

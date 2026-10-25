@@ -128,7 +128,13 @@ const useXYOptions = <P extends ScatterPoint>(
   const points = series.flatMap(({ data }) => data);
 
   return {
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+    chart: {
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
+    },
     colors: seriesColors,
     dataLabels: { enabled: false },
     grid,
