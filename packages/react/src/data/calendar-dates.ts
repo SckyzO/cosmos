@@ -17,6 +17,8 @@ export const isoWeekday = (d: Date) => (d.getDay() + 6) % 7;
 export type CalendarFormats = {
   /** Short weekday names, Monday first: `Mon`..`Sun` in en-US. */
   weekdays: string[];
+  /** One-letter weekday names, Monday first (`M`..`S` in en-US), for a grid too narrow for `weekdays`. */
+  weekdaysNarrow: string[];
   /** Month and year: `May 2026`. */
   monthYear: (d: Date) => string;
   /** Weekday, day, month and year: `Thursday, May 7, 2026`. A day's accessible name. */
@@ -38,12 +40,16 @@ export const createCalendarFormats = (locale?: string): CalendarFormats => {
   const formatter = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(locale, { ...options, calendar: 'gregory' });
   const weekday = formatter({ weekday: 'short' });
+  const weekdayNarrow = formatter({ weekday: 'narrow' });
   const monthYear = formatter({ month: 'long', year: 'numeric' });
   const fullDate = formatter({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const dayNumber = formatter({ day: 'numeric' });
   return {
     // 2024-01-01 is a Monday.
     weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(new Date(2024, 0, 1 + i))),
+    weekdaysNarrow: Array.from({ length: 7 }, (_, i) =>
+      weekdayNarrow.format(new Date(2024, 0, 1 + i))
+    ),
     monthYear: monthYear.format,
     fullDate: fullDate.format,
     // Some locales write the day with a suffix (`7日`): keep the number alone.
