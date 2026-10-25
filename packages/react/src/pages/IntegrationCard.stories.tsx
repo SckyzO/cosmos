@@ -96,6 +96,24 @@ export const NoStatus: Story = {
   },
 };
 
+/** `meta` is a line under the description: a sync time, a version, a count. */
+export const WithMeta: Story = {
+  args: {
+    logo: <ColoredIcon icon={Hash} color="text-violet-500" />,
+    name: 'Hash',
+    description: 'Send incident alerts to a channel and respond from chat.',
+    status: 'connected',
+    category: 'Communication',
+    meta: 'Last synced 2 min ago · 14 channels',
+    actionLabel: 'Disconnect',
+    actionIntent: 'danger',
+    onAction: fn(),
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Last synced 2 min ago · 14 channels')).toBeInTheDocument();
+  },
+};
+
 export const NoActions: Story = {
   args: {
     logo: <ColoredIcon icon={Video} color="text-blue-600" />,
@@ -110,7 +128,9 @@ export const Loading: Story = {
   args: {
     logo: <ColoredIcon icon={Mail} color="text-orange-500" />,
     name: 'Mailchimp',
+    description: 'Email marketing platform — sync your contact lists and campaigns.',
     status: 'pending',
+    category: 'Marketing',
     actionLabel: 'Connecting…',
     onAction: fn(),
     loading: true,
@@ -310,5 +330,29 @@ export const ActionIntentAndStatusColors: Story = {
     await expect(badge('Available')).toHaveClass('bg-gray-100', 'text-gray-700');
     await expect(badge('Error')).toHaveClass('bg-red-100', 'text-red-700');
     await expect(badge('Pending')).toHaveClass('bg-amber-100', 'text-amber-700');
+  },
+};
+
+/** The category is a small label, and sized in `text-2xs` so it follows the text size setting. */
+export const CategoryUsesTheSmallLabelSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { logo: <Mail />, name: 'Mailchimp', category: 'Marketing' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Marketing')).toHaveClass('text-2xs');
+  },
+};
+
+/** Loading only disables the actions: the description stays on the card. */
+export const LoadingKeepsTheDescription: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    logo: <Mail />,
+    name: 'Mailchimp',
+    description: 'Email marketing platform.',
+    actionLabel: 'Connect',
+    loading: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Email marketing platform.')).toBeVisible();
   },
 };
