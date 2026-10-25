@@ -661,6 +661,7 @@ export const InCardInsideContainer: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsUlWithRoleList: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList data-testid="sl">
       <StackedList.Item title="One" />
@@ -675,6 +676,7 @@ export const RootIsUlWithRoleList: Story = {
 };
 
 export const ItemRendersTitleAndSubtitle: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item title="Aiden Park" subtitle="aiden@ex.com" />
@@ -687,6 +689,7 @@ export const ItemRendersTitleAndSubtitle: Story = {
 };
 
 export const HrefMakesRowLinkAndChevronShows: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item href="/x" chevron title="Linked Row" data-testid="li" />
@@ -705,6 +708,7 @@ export const HrefMakesRowLinkAndChevronShows: Story = {
 
 /** On a linked row the full-row overlay must leave the trailing actions clickable. */
 export const TrailingStaysClickableOnLinkedRow: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item
@@ -738,6 +742,7 @@ export const TrailingStaysClickableOnLinkedRow: Story = {
 };
 
 export const MetaIsHiddenOnMobileViewport: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item title="X" meta={<p data-testid="meta">meta-content</p>} />
@@ -755,6 +760,7 @@ export const MetaIsHiddenOnMobileViewport: Story = {
 // ── Interaction tests: content, narrow and card ──────────────────────────────
 
 export const BadgeRendersInsideTitleRow: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item title="My project" badge={<Badge intent="success">Complete</Badge>} />
@@ -768,6 +774,7 @@ export const BadgeRendersInsideTitleRow: Story = {
 
 /** A single detail gets no dot separator. */
 export const SingleDetailHasNoDot: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item
@@ -785,6 +792,7 @@ export const SingleDetailHasNoDot: Story = {
 };
 
 export const DetailsRenderDotSeparatorBetweenItems: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item
@@ -811,6 +819,7 @@ export const DetailsRenderDotSeparatorBetweenItems: Story = {
  * instead of every item breaking in the middle around the dots.
  */
 export const DetailsStayOnOneLineWhenNarrow: Story = {
+  tags: ['!dev'],
   render: () => (
     <div style={{ width: 320 }}>
       <StackedList>
@@ -844,6 +853,7 @@ export const DetailsStayOnOneLineWhenNarrow: Story = {
 
 /** `meta` stays the right-hand column; only `details` is the dotted line under the title. */
 export const MetaAndDetailsAreDistinct: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item
@@ -862,6 +872,7 @@ export const MetaAndDetailsAreDistinct: Story = {
 };
 
 export const RankRendersBeforeTheTitle: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item rank={1} title="First" />
@@ -879,6 +890,7 @@ export const RankRendersBeforeTheTitle: Story = {
 };
 
 export const DescriptionTriggersRichLayout: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Item
@@ -898,6 +910,7 @@ export const DescriptionTriggersRichLayout: Story = {
 
 /** `trailing` still renders next to the two-row layout of `timestamp` and `description`. */
 export const TrailingRendersWithDescription: Story = {
+  tags: ['!dev'],
   render: () => (
     <div className="max-w-2xl">
       <StackedList>
@@ -931,6 +944,7 @@ const alphaOf = (color: string) => {
 
 /** A sticky header must be opaque in dark themes, or the rows scrolling under it show through. */
 export const StickyHeaderIsOpaqueInDarkThemes: Story = {
+  tags: ['!dev'],
   globals: { theme: 'dark' },
   render: () => (
     <StackedList>
@@ -946,6 +960,7 @@ export const StickyHeaderIsOpaqueInDarkThemes: Story = {
 };
 
 export const HeaderRendersWithBackgroundAndStickyClass: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList>
       <StackedList.Header sticky data-testid="h">
@@ -962,6 +977,7 @@ export const HeaderRendersWithBackgroundAndStickyClass: Story = {
 };
 
 export const CardIsASurfaceWithRingAndShadow: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList card className="card-under-test">
       <StackedList.Item title="x" />
@@ -978,6 +994,7 @@ export const CardIsASurfaceWithRingAndShadow: Story = {
 };
 
 export const CardItemsReceiveHorizontalPadding: Story = {
+  tags: ['!dev'],
   render: () => (
     <>
       <StackedList card>
@@ -997,6 +1014,7 @@ export const CardItemsReceiveHorizontalPadding: Story = {
 };
 
 export const CardListKeepsRoleListAndDivider: Story = {
+  tags: ['!dev'],
   render: () => (
     <StackedList card data-testid="ul">
       <StackedList.Item title="One" />
@@ -1013,6 +1031,7 @@ export const CardListKeepsRoleListAndDivider: Story = {
 
 /** The header slots show their title, description and action above the rows; none, no header. */
 export const CardHeaderSlotsRender: Story = {
+  tags: ['!dev'],
   render: () => (
     <>
       <StackedList
