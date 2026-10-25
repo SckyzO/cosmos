@@ -1,3 +1,5 @@
+import type { Decorator } from '@storybook/react-vite';
+import { createElement } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 
 /**
@@ -80,6 +82,14 @@ export const expectNoHorizontalOverflow = (box?: HTMLElement) => {
   expect(root.scrollWidth, 'the page scrolls sideways').toBeLessThanOrEqual(root.clientWidth);
   if (box) expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
 };
+
+/**
+ * Padding for a story that sits in the `fullscreen` layout `portalDocsParams`
+ * sets but has no frame of its own: without it the content is drawn against the
+ * corner of the canvas. The same 24 px the other layouts get.
+ */
+export const withCanvasPadding: Decorator = (Story) =>
+  createElement('div', { className: 'p-6' }, createElement(Story));
 
 // ── Floating panels ─────────────────────────────────────────────────────────
 

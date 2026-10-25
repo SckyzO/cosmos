@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Paperclip } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
+import { expectGraphicContrast, expectTextContrast, inEachTheme } from '../storybook-helpers';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
@@ -305,5 +306,37 @@ export const TwoPane: Story = {
         </div>
       </div>
     );
+  },
+};
+
+/**
+ * The outgoing bubble's text, and the time and delivery ticks under it, hold
+ * their contrast in every theme and on the default and two light accents.
+ */
+export const OutgoingContrastInEveryThemeAndAccent: Story = {
+  ...DeliveryStates,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const root = document.documentElement;
+    const saved = root.getAttribute('data-accent');
+    try {
+      for (const accent of ['blue', 'amber', 'cyan']) {
+        root.setAttribute('data-accent', accent);
+        inEachTheme(() => {
+          try {
+            for (const bubble of canvasElement.querySelectorAll('p')) expectTextContrast(bubble);
+            for (const time of canvasElement.querySelectorAll('time')) expectTextContrast(time);
+            for (const tick of canvasElement.querySelectorAll('svg')) {
+              expectGraphicContrast(tick, 'color');
+            }
+          } catch (error) {
+            throw new Error(`[${accent}] ${(error as Error).message}`, { cause: error });
+          }
+        });
+      }
+    } finally {
+      if (saved === null) root.removeAttribute('data-accent');
+      else root.setAttribute('data-accent', saved);
+    }
   },
 };

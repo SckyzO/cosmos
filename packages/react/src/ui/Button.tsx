@@ -4,8 +4,8 @@ import type { Intent } from './intent';
 
 /** Emphasis: how loud the button is. Its color is the `intent`. */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'soft';
-/** Meaning: the accent (`brand`, default) or a destructive action (`danger`). */
-export type ButtonIntent = Extract<Intent, 'brand' | 'danger'>;
+/** Meaning: the accent (`brand`, default), a confirmed outcome (`success`) or a destructive action (`danger`). */
+export type ButtonIntent = Extract<Intent, 'brand' | 'success' | 'danger'>;
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 /**
  * Corner radius shape. Default `rounded` (TUI default `rounded-md`).
@@ -19,7 +19,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   /**
    * Meaning. Default `brand`: the accent on `primary` and `soft`, the neutral gray on
-   * `secondary` and `ghost`. `danger` turns any variant red.
+   * `secondary` and `ghost`. `success` turns any variant green, `danger` red.
    */
   intent?: ButtonIntent;
   size?: ButtonSize;
@@ -36,18 +36,25 @@ const VARIANT_CLASS: Record<ButtonVariant, Record<ButtonIntent, string>> = {
   primary: {
     brand:
       'bg-brand-500 hover:bg-brand-600 text-white shadow-sm disabled:bg-brand-500/50 disabled:cursor-not-allowed',
+    // Dark text on the green fill: white on green-500 is about 2.3:1, under 4.5:1.
+    success:
+      'bg-green-500 hover:bg-green-600 text-gray-900 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
     danger:
       'bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
   },
   secondary: {
     brand:
       'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed',
+    success:
+      'bg-white text-green-700 border border-green-200 hover:bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
     danger:
       'bg-white text-red-700 border border-red-200 hover:bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-500/30 dark:hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
   },
   ghost: {
     brand:
       'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed',
+    success:
+      'text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
     danger:
       'text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed',
   },
@@ -55,6 +62,8 @@ const VARIANT_CLASS: Record<ButtonVariant, Record<ButtonIntent, string>> = {
   soft: {
     brand:
       'bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20',
+    success:
+      'bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-green-500/10 dark:text-green-300 dark:hover:bg-green-500/20',
     danger:
       'bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20',
   },

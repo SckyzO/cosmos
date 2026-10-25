@@ -1,43 +1,25 @@
 import { clsx } from 'clsx';
-import { AlertCircle, Check, Loader2, Save } from 'lucide-react';
+import { Check, Save } from 'lucide-react';
 import type { ElementType, Ref } from 'react';
+import { Button, type ButtonProps } from './Button';
 
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 
 type StateConfig = {
   label: string;
-  icon: ElementType;
-  cls: string;
-  spin?: boolean;
+  icon?: ElementType;
+  intent?: ButtonProps['intent'];
+  loading?: boolean;
+  cls?: string;
 };
 
 const STATE_CONFIG: Record<SaveState, StateConfig> = {
-  idle: {
-    label: 'Save Changes',
-    icon: Save,
-    cls: 'bg-brand-500 hover:bg-brand-600 text-white',
-  },
-  dirty: {
-    label: 'Save Changes',
-    icon: Save,
-    cls: 'bg-brand-500 hover:bg-brand-600 text-white animate-pulse',
-  },
-  saving: {
-    label: 'Saving…',
-    icon: Loader2,
-    cls: 'bg-brand-500 text-white opacity-70 cursor-not-allowed',
-    spin: true,
-  },
-  saved: {
-    label: 'Saved',
-    icon: Check,
-    cls: 'bg-green-500 text-gray-900 cursor-default',
-  },
-  error: {
-    label: 'Error',
-    icon: AlertCircle,
-    cls: 'bg-red-600 text-white',
-  },
+  idle: { label: 'Save Changes', icon: Save },
+  dirty: { label: 'Save Changes', icon: Save, cls: 'animate-pulse' },
+  saving: { label: 'Saving…', loading: true },
+  // The `success` intent carries the dark text on green (white on green-500 is about 2.3:1).
+  saved: { label: 'Saved', icon: Check, intent: 'success' },
+  error: { label: 'Error', intent: 'danger' },
 };
 
 export type StatefulSaveButtonProps = {
@@ -53,7 +35,7 @@ export type StatefulSaveButtonProps = {
 };
 
 /**
- * StatefulSaveButton — save button with 5 visual states cycling
+ * StatefulSaveButton — a `Button` with 5 visual states cycling
  * idle → dirty → saving → saved → idle (or error on failure).
  */
 export const StatefulSaveButton = ({
@@ -67,23 +49,20 @@ export const StatefulSaveButton = ({
   const cfg = { ...STATE_CONFIG[state] };
   if (label && (state === 'idle' || state === 'dirty')) cfg.label = label;
   if (savedLabel && state === 'saved') cfg.label = savedLabel;
-  const Icon = cfg.icon;
   const inactive = state === 'saving' || state === 'saved';
 
   return (
-    <button
+    <Button
       ref={ref}
-      type="button"
+      intent={cfg.intent}
+      icon={cfg.icon}
+      loading={cfg.loading}
+      // `saved` ignores clicks without the native `disabled`, which would dim it.
+      aria-disabled={state === 'saved' || undefined}
       onClick={inactive ? undefined : onClick}
-      disabled={inactive}
-      className={clsx(
-        'focus-visible:focus-indicator flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all disabled:cursor-not-allowed',
-        cfg.cls,
-        className
-      )}
+      className={clsx(cfg.cls, className)}
     >
-      <Icon className={clsx('h-4 w-4 shrink-0', cfg.spin && 'animate-spin')} />
       {cfg.label}
-    </button>
+    </Button>
   );
 };

@@ -23,7 +23,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
-const INTENTS = ['brand', 'danger'] as const;
+const INTENTS = ['brand', 'success', 'danger'] as const;
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
@@ -428,4 +428,27 @@ export const FocusShowsRingInDark: Story = {
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+/** White on green-500 is about 2.3:1: the success fill takes dark text. */
+export const PrimarySuccessHasDarkTextOnGreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { intent: 'success', children: 'Saved' },
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Saved' });
+    const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+    const rgb = (color: string) => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3));
+    };
+    const style = getComputedStyle(button);
+    const [tr, tg, tb] = rgb(style.color);
+    const [br, bg, bb] = rgb(style.backgroundColor);
+    await expect(tr + tg + tb).toBeLessThan(300);
+    await expect(bg).toBeGreaterThan(br);
+    await expect(bg).toBeGreaterThan(bb);
+    expectTextContrast(button);
+  },
 };

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Sk, SkeletonList, SkeletonTable, SkeletonText } from './Skeleton';
+import { expect } from 'storybook/test';
+import { Sk, SkeletonAvatarText, SkeletonList, SkeletonTable, SkeletonText } from './Skeleton';
 
 const meta = {
   title: 'Feedback/Skeleton',
@@ -38,4 +39,35 @@ export const List: Story = {
       <SkeletonList rows={3} />
     </div>
   ),
+};
+
+export const AvatarText: Story = {
+  name: 'SkeletonAvatarText',
+  render: () => (
+    <div className="max-w-sm space-y-4">
+      <SkeletonAvatarText />
+      <SkeletonAvatarText lines={3} />
+    </div>
+  ),
+};
+
+/** The loading region carries `aria-busy`; the skeleton itself is silent. */
+export const BusyRegion: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <section aria-label="Comments" aria-busy="true" className="max-w-sm space-y-4">
+      <p role="status" className="sr-only">
+        Loading comments…
+      </p>
+      <SkeletonAvatarText />
+      <SkeletonAvatarText />
+    </section>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('region', { name: 'Comments' })).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
+    await expect(canvas.getByRole('status')).toHaveTextContent('Loading comments…');
+  },
 };

@@ -12,8 +12,13 @@ export type SkProps = {
 
 /**
  * Sk — primitive skeleton block (animated pulsing rectangle). Compose with
- * the Skeleton presets (SkeletonText / SkeletonTable / SkeletonList) or
- * use directly for custom placeholders.
+ * the Skeleton presets (SkeletonText / SkeletonTable / SkeletonList /
+ * SkeletonAvatarText) or use directly for custom placeholders.
+ *
+ * A skeleton says nothing to a screen reader. Put `aria-busy="true"` on the
+ * region that is loading, and drop it (with the skeleton) once the content
+ * arrives; a short `role="status"` message ("Loading messages…") announces
+ * the wait.
  */
 export const Sk = ({ h = 'h-4', w = 'w-full', round = 'rounded', className }: SkProps) => (
   <div className={clsx('animate-pulse bg-gray-200 dark:bg-gray-700', h, w, round, className)} />
@@ -102,5 +107,27 @@ export const SkeletonList = ({ rows = 4, showAction = true, className }: Skeleto
         {showAction && <Sk h="h-8" w="w-16" round="rounded-lg" className="shrink-0" />}
       </div>
     ))}
+  </div>
+);
+
+export type SkeletonAvatarTextProps = {
+  /** Lines of text beside the avatar: a title, then shorter ones. Default 2. */
+  lines?: number;
+  className?: string;
+};
+
+/** SkeletonAvatarText — a round avatar with a few lines of text: a comment, a profile row. */
+export const SkeletonAvatarText = ({ lines = 2, className }: SkeletonAvatarTextProps) => (
+  <div className={clsx('flex items-start gap-3', className)}>
+    <Sk h="h-10" w="w-10" round="rounded-full" className="shrink-0" />
+    <div className="min-w-0 flex-1 space-y-2 pt-1">
+      {Array.from({ length: Math.max(1, lines) }).map((_, i) => (
+        <Sk
+          key={i}
+          h={i === 0 ? 'h-4' : 'h-3'}
+          w={i === 0 ? 'w-1/3' : TEXT_WIDTHS[i % TEXT_WIDTHS.length]}
+        />
+      ))}
+    </div>
   </div>
 );

@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
+import { expect } from 'storybook/test';
+import { Card as CosmosCard } from './Card';
 import { Ribbon, type RibbonIntent, type RibbonPosition } from './Ribbon';
 
 const meta = {
@@ -15,7 +17,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative h-44 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  <div className="relative h-44 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
     {children}
     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">29 € / month</p>
@@ -121,4 +123,21 @@ export const DemoCorner: Story = {
       </Ribbon>
     </Card>
   ),
+};
+
+/** A flat ribbon on a Cosmos `Card` takes the card's corner radius, whatever it is. */
+export const FollowsCardRadius: Story = {
+  render: () => (
+    <CosmosCard padding="lg" className="relative h-44 w-64">
+      <Ribbon position="top-right">NEW</Ribbon>
+      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
+    </CosmosCard>
+  ),
+  play: async ({ canvas }) => {
+    const ribbon = canvas.getByText('NEW');
+    const card = ribbon.parentElement as HTMLElement;
+    await expect(getComputedStyle(ribbon).borderTopRightRadius).toBe(
+      getComputedStyle(card).borderTopRightRadius
+    );
+  },
 };

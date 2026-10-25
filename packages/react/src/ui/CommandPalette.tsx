@@ -118,16 +118,20 @@ export type CommandPaletteListProps = ComponentPropsWithRef<typeof Command.List>
 
 // A `listbox` owns options and groups only, and the loading indicator of `cmdk` is a
 // `progressbar` (`aria-required-children`). The list keeps a slot right after the listbox,
-// and `CommandPalette.Loading` renders there, wherever it was written in the list.
+// and `CommandPalette.Loading` renders there, wherever it was written in the list, and so
+// does `CommandPalette.Empty`: a search with no match leaves the listbox with no option, so
+// the list is hidden then and the message sits outside it.
 // `undefined`: not in a list. `null`: the list has not mounted its slot yet.
 const LoadingSlotContext = createContext<HTMLElement | null | undefined>(undefined);
 
 function CommandPaletteList({ className, ref, ...rest }: CommandPaletteListProps) {
   const [loadingSlot, setLoadingSlot] = useState<HTMLDivElement | null>(null);
+  const noMatch = useCommandState((state) => state.filtered.count === 0);
   return (
     <LoadingSlotContext.Provider value={loadingSlot}>
       <Command.List
         ref={ref}
+        hidden={noMatch || undefined}
         className={clsx('max-h-[420px] overflow-y-auto p-2', className)}
         {...rest}
       />
@@ -245,13 +249,16 @@ function CommandPaletteEmpty({
   ref,
   ...rest
 }: ComponentPropsWithRef<typeof Command.Empty>) {
-  return (
+  const slot = useContext(LoadingSlotContext);
+  if (slot === null) return null;
+  const empty = (
     <Command.Empty
       ref={ref}
       className={clsx('px-2 py-8 text-center text-sm text-gray-500 dark:text-gray-400', className)}
       {...rest}
     />
   );
+  return slot ? createPortal(empty, slot) : empty;
 }
 
 // ── Loading ──────────────────────────────────────────────────────────────────

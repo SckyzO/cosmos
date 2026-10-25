@@ -233,3 +233,24 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(fabRef, canvas.getByLabelText('Back to top'));
   },
 };
+
+/**
+ * The page is scrolled past the threshold, so the button is in view (a capture
+ * of the other stories, at scroll 0, shows nothing).
+ */
+export const ScrolledPastThreshold: Story = {
+  render: () => (
+    <TallContent>
+      <BackToTopFab />
+    </TallContent>
+  ),
+  beforeEach: () => () => window.scrollTo({ top: 0, behavior: 'instant' }),
+  play: async ({ canvas }) => {
+    window.scrollTo({ top: 600, behavior: 'instant' });
+    await waitFor(() => {
+      const btn = canvas.getByRole('button', { name: /back to top/i });
+      expect(btn).not.toHaveAttribute('aria-hidden');
+      expect(getComputedStyle(btn).opacity).toBe('1');
+    });
+  },
+};

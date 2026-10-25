@@ -186,3 +186,22 @@ export const SettingsDoesNotAutoClose: Story = {
     await expect(canvas.queryByRole('dialog')).not.toBeNull();
   },
 };
+
+/** At the `mobile` viewport the actions wrap under the message and nothing runs past the edge. */
+export const FullChoicesOnMobile: Story = {
+  ...FullChoices,
+  globals: { viewport: { value: 'mobile', isRotated: false } },
+  play: async ({ canvas }) => {
+    await expect(window.innerWidth).toBeLessThan(768);
+    const dialog = canvas.getByRole('dialog');
+    await expect(dialog.scrollWidth).toBeLessThanOrEqual(dialog.clientWidth);
+    await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+    // The three actions are all inside the dialog.
+    const bounds = dialog.getBoundingClientRect();
+    for (const name of ['Cookie settings', 'Deny all', 'Accept all']) {
+      const { left, right } = canvas.getByRole('button', { name }).getBoundingClientRect();
+      await expect(left).toBeGreaterThanOrEqual(bounds.left);
+      await expect(right).toBeLessThanOrEqual(bounds.right);
+    }
+  },
+};

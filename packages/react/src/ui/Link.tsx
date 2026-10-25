@@ -5,6 +5,14 @@ import type { ReactNode, ComponentPropsWithRef } from 'react';
 export type LinkVariant = 'colored' | 'underline' | 'opacity' | 'opacity-hover' | 'subtle';
 
 export type LinkProps = ComponentPropsWithRef<'a'> & {
+  /**
+   * Look of the link. Default `colored`: the accent, for a link that stands out of the text.
+   * `underline` is dark text with an underline, the one for a link inside a sentence.
+   * `opacity` and `opacity-hover` are body text that fades on hover: `opacity` rests at 70% and
+   * brightens, `opacity-hover` rests full and dims. `subtle` is muted gray, for a secondary
+   * link; at rest it is close to `opacity`, they differ on hover (`subtle` darkens a step,
+   * `opacity` goes to full strength).
+   */
   variant?: LinkVariant;
   /**
    * When true, opens in a new tab with `rel="noopener noreferrer"` and renders an external

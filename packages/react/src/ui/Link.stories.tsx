@@ -15,7 +15,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Colored: Story = {};
+export const Colored: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The default variant: the accent color, with no underline. Pick `underline` for a link inside a sentence.',
+      },
+    },
+  },
+};
 
 export const Underline: Story = { args: { variant: 'underline' } };
 
