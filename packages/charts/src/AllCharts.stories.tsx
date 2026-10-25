@@ -152,9 +152,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BoxPlotChart series={[]} categories={[]} {...props} />,
   },
   RangeBarChart: {
-    filled: (apexOptions) => (
-      <RangeBarChart series={[{ name: 'a', data: RANGE }]} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RangeBarChart series={[{ name: 'a', data: RANGE }]} />,
     empty: (props) => <RangeBarChart series={[]} {...props} />,
   },
   MixedChart: {
@@ -357,7 +356,6 @@ const LEGEND_NAMES = [
   'ScatterChart',
   'BubbleChart',
   'BoxPlotChart',
-  'RangeBarChart',
 ];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */

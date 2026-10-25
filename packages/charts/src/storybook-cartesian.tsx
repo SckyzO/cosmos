@@ -1,5 +1,6 @@
 import { expect, waitFor } from 'storybook/test';
 import { resolveColor, switchTheme, themeColor } from './storybook-helpers';
+import { surface, tooltipCard } from './storybook-recharts';
 
 // Helpers for the stories of the cartesian charts on Recharts (bars, boxes,
 // scatter points, ranges), next to the ones in `storybook-recharts.tsx`, which
@@ -8,7 +9,9 @@ import { resolveColor, switchTheme, themeColor } from './storybook-helpers';
 /** The shapes of each bar series in `root`, series first. */
 export const barShapes = (root: HTMLElement) =>
   [...root.querySelectorAll('.recharts-bar')].map((series) => [
-    ...series.querySelectorAll<SVGElement>('.recharts-bar-rectangle path'),
+    ...series.querySelectorAll<SVGElement>(
+      '.recharts-bar-rectangle path, .recharts-bar-rectangle rect'
+    ),
   ]);
 
 /** The fill of the first bar of each series, in series order. */
@@ -55,3 +58,18 @@ export const expectRepaintsWithThemeOf = async (root: HTMLElement, firstSeries: 
     else html.setAttribute('data-accent', previous);
   }
 };
+
+/** Hovers until the tooltip shows, with the pointer at `xRatio` and `yRatio` of the chart. */
+export const openTooltipAt = (root: HTMLElement, xRatio: number, yRatio: number) =>
+  waitFor(() => {
+    const svg = surface(root) as Element;
+    const { left, top, width, height } = svg.getBoundingClientRect();
+    svg.dispatchEvent(
+      new MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: left + width * xRatio,
+        clientY: top + height * yRatio,
+      })
+    );
+    expect(tooltipCard(root)).not.toBeNull();
+  });
