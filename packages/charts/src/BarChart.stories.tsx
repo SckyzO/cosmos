@@ -19,6 +19,8 @@ import {
   resolveColor,
   LegendSides,
   expectLegendsOnTheirSide,
+  axisTitles,
+  expectAxisTitlesIn,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -188,12 +190,49 @@ export const ShortHeight: Story = {
   },
 };
 
+/**
+ * `xTitle` and `yTitle` name the axes as drawn: under the horizontal one, beside
+ * the vertical one, so a horizontal chart puts its values under `xTitle`.
+ */
+export const AxisTitles: Story = {
+  args: { ...SingleSeries.args },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="vertical">
+        <BarChart
+          categories={MONTHS}
+          series={[{ name: 'Deploys', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }]}
+          xTitle="Month"
+          yTitle="Deployments"
+        />
+      </div>
+      <div data-testid="horizontal">
+        <BarChart
+          orientation="horizontal"
+          categories={DCS}
+          series={[{ name: 'Active racks', data: [42, 38, 26, 19] }]}
+          xTitle="Active racks"
+          yTitle="Datacenter"
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
+    await expectAxisTitlesIn(chart('vertical'), { x: 'Month', y: ['Deployments'] });
+    await expectAxisTitlesIn(chart('horizontal'), { x: 'Active racks', y: ['Datacenter'] });
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
     series: [
       { name: HOSTILE, data: [3, 5, 2] },
       { name: 'Normal', data: [4, 1, 6] },
@@ -204,6 +243,9 @@ export const HtmlInLabelsRendersAsText: Story = {
     // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await expectNoInjectedImage(canvasElement);
 
     // Tooltips render on hover: the title is the category.

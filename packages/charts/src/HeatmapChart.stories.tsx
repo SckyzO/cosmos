@@ -14,6 +14,8 @@ import {
   LegendSides,
   expectLegendsOnTheirSide,
   expectMessageOnly,
+  axisTitles,
+  expectAxisTitles,
 } from './storybook-helpers';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
@@ -138,6 +140,12 @@ export const Empty: Story = {
   play: expectMessageOnly('No data'),
 };
 
+/** `xTitle` and `yTitle` name the columns and the rows. */
+export const AxisTitles: Story = {
+  args: { ...RackTemperature.args, xTitle: 'Hour of day', yTitle: 'Rack' },
+  play: expectAxisTitles({ x: 'Hour of day', y: ['Rack'] }),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /**
@@ -147,6 +155,8 @@ export const Empty: Story = {
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
     series: [
       { name: HOSTILE, data: [3, 5, 2] },
       { name: 'Normal', data: [4, 1, 6] },
@@ -161,6 +171,9 @@ export const HtmlInLabelsRendersAsText: Story = {
     // The legend renders on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement)).toHaveLength(2));
     await expect(legendTexts(canvasElement)).toEqual([HOSTILE, '3 – 10']);
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await expectNoInjectedImage(canvasElement);
 
     // The tooltip renders on hover of a cell: its column is the title, its

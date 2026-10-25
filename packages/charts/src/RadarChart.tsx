@@ -1,10 +1,13 @@
+import { useRef } from 'react';
 import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/radar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
+import { radarSize } from './radarSize';
 import { useChartTheme } from './theme';
+import { useWidth } from './useWidth';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
 export type RadarChartProps = ChartBaseProps &
@@ -25,6 +28,11 @@ export type RadarChartProps = ChartBaseProps &
     showLegend?: boolean;
     /** Top of the scale, e.g. 100 for scores. Default: rounded up from the data. */
     max?: number;
+    /**
+     * Write the scale on the polygons (0, 20 … 100). Default off: the labels sit on the
+     * polygons and the tooltip gives the values. `max` and `formatValue` still apply.
+     */
+    showScale?: boolean;
   };
 
 export const RadarChart = ({
@@ -35,6 +43,7 @@ export const RadarChart = ({
   showLegend,
   legendPosition = 'top',
   max,
+  showScale = false,
   emptyMessage,
   ariaLabel,
   apexOptions,
@@ -45,6 +54,19 @@ export const RadarChart = ({
   const legendVisible = showLegend ?? series.length > 1;
   const format = useValueFormat(formatValue);
   const categoryTitle = useCategoryTitle(categories);
+  const box = useRef<HTMLDivElement>(null);
+  const boxWidth = useWidth(box);
+  // The polygons as large as the box allows. A height that is not a number of
+  // pixels, or a box not measured yet, leaves the size to ApexCharts.
+  const size =
+    typeof height === 'number' && boxWidth
+      ? radarSize({
+          height,
+          width: boxWidth,
+          categories,
+          legend: legendVisible ? legendPosition : undefined,
+        })
+      : undefined;
 
   const options: ApexOptions = {
     chart: {
@@ -64,6 +86,7 @@ export const RadarChart = ({
     grid: { padding: { left: 24, right: 24 } },
     plotOptions: {
       radar: {
+        size,
         polygons: {
           strokeColors: grid?.borderColor,
           connectorColors: grid?.borderColor,
@@ -74,6 +97,7 @@ export const RadarChart = ({
     // One labels object per axis: ApexCharts mutates them.
     xaxis: { categories, labels: { ...axisLabels } },
     yaxis: {
+      show: showScale,
       max,
       labels: { ...axisLabels, formatter: format.axis },
     },
@@ -92,15 +116,19 @@ export const RadarChart = ({
   };
 
   return (
-    <ApexChart
-      type="radar"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      emptyMessage={emptyMessage}
-      apexOptions={apexOptions}
-    />
+    <div ref={box} style={{ width }}>
+      {boxWidth !== undefined && (
+        <ApexChart
+          type="radar"
+          options={options}
+          series={series}
+          height={height}
+          width="100%"
+          ariaLabel={ariaLabel}
+          emptyMessage={emptyMessage}
+          apexOptions={apexOptions}
+        />
+      )}
+    </div>
   );
 };

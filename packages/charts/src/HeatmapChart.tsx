@@ -2,10 +2,16 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/heatmap';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type HeatmapColorRange = {
   /** Lowest value of the range, inclusive. */
@@ -19,7 +25,8 @@ export type HeatmapColorRange = {
 
 export type HeatmapChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** One row per series, drawn top to bottom; one value per category. */
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
@@ -96,6 +103,8 @@ export const HeatmapChart = ({
   colors,
   ranges,
   formatValue,
+  xTitle,
+  yTitle,
   showValues = false,
   showLegend = true,
   legendPosition = 'top',
@@ -148,13 +157,18 @@ export const HeatmapChart = ({
     // pile; the tooltip still names every column.
     xaxis: {
       categories,
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: { ...axisLabels, rotate: 0 },
       axisBorder: { show: false },
       axisTicks: { show: false },
       tooltip: { enabled: false },
     },
     // ApexCharts draws the first series at the bottom; read top-down instead.
-    yaxis: { reversed: true, labels: { ...axisLabels } },
+    yaxis: {
+      reversed: true,
+      title: axisTitle(yTitle, axisLabels.style.colors),
+      labels: { ...axisLabels },
+    },
     legend: chartLegend({
       show: showLegend,
       position: legendPosition,

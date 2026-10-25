@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
@@ -8,6 +8,8 @@ import {
   expectColorInThemes,
   expectColorsFromTokens,
   expectPaletteFromTheme,
+  opaqueColor,
+  resolveColor,
   expectTextFollowsTheme,
   Rerender,
   expectNoRedrawOnRerender,
@@ -135,6 +137,54 @@ export const SemiCircleStatusColors: Story = {
       </Card>
       <Card title="db-01">
         <SemiCircleGauge value={94} label="CPU" color="#ef4444" />
+      </Card>
+    </div>
+  ),
+};
+
+/**
+ * `color` is on every gauge: the arc of `StrokedGauge`, and the color
+ * `GradientRadial` starts from before it fades to the theme's success color.
+ */
+export const GaugeColors: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="SemiCircleGauge">
+        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+      </Card>
+      <Card title="StrokedGauge">
+        <StrokedGauge value={94} label="Disk" color="#ef4444" />
+      </Card>
+      <Card title="GradientRadial">
+        <GradientRadial value={64} label="Health" color="#8b5cf6" />
+      </Card>
+    </div>
+  ),
+};
+
+/**
+ * `showRange` writes `min` and `max`, formatted by `formatValue`, under the ends
+ * of the arc of `SemiCircleGauge`. `height` is the most it takes: the arc is as
+ * wide as its box allows, so a narrow card gets a shorter gauge.
+ */
+export const SemiCircleRange: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="Power draw">
+        <SemiCircleGauge value={1450} max={2000} label="PDU 3" formatValue={watts} showRange />
+      </Card>
+      <Card title="Inlet temperature">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          showRange
+        />
+      </Card>
+      <Card title="Load average">
+        <SemiCircleGauge value={67} showRange />
       </Card>
     </div>
   ),
@@ -269,6 +319,41 @@ export const ColorsOverridePalette: Story = {
   },
 };
 
+/**
+ * The center leads with its value: big and bold, over a small label, for the
+ * average and for a hovered ring alike.
+ */
+export const CenterValueLeadsItsLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const size = (selector: string) => {
+      const el = canvasElement.querySelector(selector);
+      return {
+        size: parseFloat(el?.getAttribute('font-size') ?? '0'),
+        weight: el?.getAttribute('font-weight'),
+      };
+    };
+    const expectValueOverLabel = () => {
+      const value = size('.apexcharts-datalabel-value');
+      const label = size('.apexcharts-datalabel-label');
+      expect(label.size).toBeGreaterThan(0);
+      expect(value.size).toBeGreaterThan(label.size);
+      expect(value.weight).toBe('700');
+    };
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('Avg');
+      expectValueOverLabel();
+    });
+    await waitFor(() => {
+      canvasElement
+        .querySelector('.apexcharts-radial-series path')
+        ?.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('CPU');
+      expectValueOverLabel();
+    });
+  },
+};
+
 /** `formatValue` formats the average and the value of the hovered ring. */
 export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
@@ -283,6 +368,108 @@ export const FormatValueFormatsLabels: Story = {
         ?.dispatchEvent(new MouseEvent('mouseenter'));
       expect(value()).toBe('92 pts');
     });
+  },
+};
+
+/** `color` colors the arc of every gauge; the gradient starts from it. */
+export const ColorSetsTheArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-testid="semicircle">
+        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={94} label="Disk" color="#ef4444" />
+      </div>
+      <div data-testid="gradient">
+        <GradientRadial value={64} label="Health" color="#8b5cf6" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const arc = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"] .apexcharts-radialbar-area[j]`);
+    const stroke = (id: string) => () => arc(id)?.getAttribute('stroke');
+    await waitFor(() => {
+      expect(opaqueColor(stroke('semicircle')() ?? '')).toBe(resolveColor('#f59e0b'));
+      expect(opaqueColor(stroke('stroked')() ?? '')).toBe(resolveColor('#ef4444'));
+    });
+    // The gradient: its first stop is the color, its last the theme's success.
+    await waitFor(() => {
+      const id = /url\(#(.+)\)/.exec(stroke('gradient')() ?? '')?.[1];
+      const stops = [...canvasElement.querySelectorAll(`[id="${id}"] stop`)];
+      expect(stops.length).toBeGreaterThan(1);
+      expect(opaqueColor(stops[0].getAttribute('stop-color') ?? '')).toBe(resolveColor('#8b5cf6'));
+    });
+  },
+};
+
+/**
+ * The value and the label sit inside the hollow of the arc, which takes the
+ * box: no empty half under it. `showRange` labels sit under the arc's ends.
+ */
+export const SemiCircleFitsItsBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="w-80" data-testid="gauge">
+      <SemiCircleGauge value={1450} max={2000} label="PDU 3" formatValue={watts} showRange />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const gauge = canvasElement.querySelector('[data-testid="gauge"]')!;
+    await waitFor(() => {
+      const box = gauge.firstElementChild!.getBoundingClientRect();
+      const track = gauge.querySelector('.apexcharts-radialbar-track path');
+      const value = gauge.querySelector('.apexcharts-datalabel-value')?.getBoundingClientRect();
+      const label = gauge.querySelector('.apexcharts-datalabel-label')?.getBoundingClientRect();
+      expect(track && value && label).toBeTruthy();
+      if (!track || !value || !label) return;
+      const arc = track.getBoundingClientRect();
+      const ring = parseFloat(track.getAttribute('stroke-width') ?? '0');
+      // The arc's base, and the top of the inner edge of its ring.
+      const base = arc.bottom;
+      const hollowTop = arc.top + ring / 2;
+      expect(value.top).toBeGreaterThan(hollowTop);
+      expect(label.bottom).toBeLessThanOrEqual(base);
+      expect(value.bottom).toBeLessThanOrEqual(label.top + 2);
+      // The arc starts at the top of the box and the labels fit under it.
+      expect(arc.top - ring / 2).toBeLessThanOrEqual(box.top + 2);
+      expect(box.bottom - base).toBeLessThanOrEqual(24);
+    });
+    await expect(within(gauge as HTMLElement).getByText('0 W')).toBeVisible();
+    await expect(within(gauge as HTMLElement).getByText('2000 W')).toBeVisible();
+  },
+};
+
+/** The range labels are off by default, and follow `min`, `max` and `formatValue`. */
+export const SemiCircleRangeIsOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="plain">
+        <SemiCircleGauge value={67} label="Load" />
+      </div>
+      <div data-testid="ranged">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          showRange
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const root = (id: string) =>
+      within(canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!);
+    await waitFor(() => expect(root('plain').getByText('Load')).toBeVisible());
+    await expect(root('plain').queryByText('0%')).toBeNull();
+    await expect(root('plain').queryByText('100%')).toBeNull();
+    await expect(root('ranged').getByText('10 °C')).toBeVisible();
+    await expect(root('ranged').getByText('45 °C')).toBeVisible();
   },
 };
 

@@ -16,6 +16,7 @@ import {
   expectLegendsOnTheirSide,
 } from './storybook-helpers';
 
+const percent = (v: number) => `${v}%`;
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];
 const RESOURCES = ['CPU', 'Memory', 'Storage', 'Network', 'Power', 'Cooling'];
 
@@ -79,6 +80,17 @@ export const FormattedValues: Story = {
   },
 };
 
+/** `showScale` writes the scale on the polygons; `formatValue` formats it. Off by default. */
+export const WithScale: Story = {
+  args: {
+    categories: RESOURCES,
+    max: 100,
+    showScale: true,
+    formatValue: (v) => `${v}%`,
+    series: [{ name: 'cluster-prod', data: [72, 64, 81, 38, 69, 57] }],
+  },
+};
+
 export const CustomColors: Story = {
   args: {
     categories: SCORES,
@@ -92,6 +104,47 @@ export const CustomColors: Story = {
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
+
+/** The scale labels are off by default, and `showScale` brings them back. */
+export const ScaleIsOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...CompareDatacenters.args },
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="hidden">
+        <RadarChart {...args} />
+      </div>
+      <div data-testid="shown">
+        <RadarChart {...args} showScale formatValue={percent} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const scale = (id: string) =>
+      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-yaxis text`)].map(
+        (el) => el.textContent
+      );
+    await waitFor(() => expect(scale('shown')).toContain('100%'));
+    await expect(scale('shown')).toEqual(['100%', '80%', '60%', '40%', '20%', '0%']);
+    await expect(scale('hidden')).toEqual([]);
+  },
+};
+
+/** The polygons fill the height of a wide chart, less the room of the names and the legend. */
+export const PlotFillsItsBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...CompareDatacenters.args },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const widths = [...canvasElement.querySelectorAll('.apexcharts-radar-series polygon')].map(
+        (el) => el.getBoundingClientRect().width
+      );
+      expect(widths.length).toBeGreaterThan(0);
+      // The outer polygon is a pentagon: its width is 1.9 times its radius.
+      expect(Math.max(...widths)).toBeGreaterThan(235);
+    });
+  },
+};
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {

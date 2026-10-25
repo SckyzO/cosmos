@@ -3,17 +3,24 @@ import 'apexcharts/bar';
 import 'apexcharts/features/legend';
 
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
 export type BarChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
@@ -40,6 +47,8 @@ export const BarChart = ({
   stacked = false,
   colors,
   formatValue,
+  xTitle,
+  yTitle,
   showLegend,
   legendPosition = 'top',
   borderRadius = 4,
@@ -74,8 +83,11 @@ export const BarChart = ({
       },
     },
     grid,
+    // The titles name the axes as drawn: `xTitle` under the horizontal one,
+    // whichever of categories and values it carries.
     xaxis: {
       categories,
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: {
         ...axisLabels,
         formatter: horizontal ? format.axis : undefined,
@@ -84,6 +96,7 @@ export const BarChart = ({
       axisTicks: { show: false },
     },
     yaxis: {
+      title: axisTitle(yTitle, axisLabels.style.colors),
       labels: {
         ...axisLabels,
         formatter: horizontal ? undefined : format.axis,

@@ -2,11 +2,17 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/rangeBar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { useStableCallback } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -17,7 +23,8 @@ export type RangeBarPoint = {
 
 export type RangeBarChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
     series: { name: string; data: RangeBarPoint[] }[];
     /** Draw every series of a row on one lane, instead of one lane per series. */
@@ -47,6 +54,8 @@ export const RangeBarChart = ({
   groupRows = false,
   colors,
   formatDate = defaultFormatDate,
+  xTitle,
+  yTitle,
   showLegend,
   legendPosition = 'top',
   emptyMessage,
@@ -105,11 +114,12 @@ export const RangeBarChart = ({
     // One labels object per axis: ApexCharts mutates them.
     xaxis: {
       type: 'datetime',
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: { ...axisLabels, datetimeUTC: true },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { labels: { ...axisLabels } },
+    yaxis: { title: axisTitle(yTitle, axisLabels.style.colors), labels: { ...axisLabels } },
     legend: chartLegend({
       show: legendVisible,
       position: legendPosition,

@@ -8,6 +8,8 @@ import type { ChartBaseProps } from './types';
 export type StrokedGaugeProps = ChartBaseProps & {
   value: number;
   label?: string;
+  /** Color of the arc. Default: the accent. */
+  color?: string;
   /** Value at the start of the arc. Default 0. */
   min?: number;
   /** Value at the end of the arc, above `min`. Default 100. Out of range, the arc stops at an end. */
@@ -22,6 +24,7 @@ export type StrokedGaugeProps = ChartBaseProps & {
 export const StrokedGauge = ({
   value,
   label = '',
+  color,
   min = 0,
   max = 100,
   formatValue = percent,
@@ -34,7 +37,7 @@ export const StrokedGauge = ({
   const format = useValueFormat(formatValue);
   const options: ApexOptions = {
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
-    colors: [brand],
+    colors: [color ?? brand],
     stroke: { lineCap: 'round', dashArray: 4 },
     plotOptions: {
       radialBar: {
