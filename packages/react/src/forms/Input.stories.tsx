@@ -294,7 +294,7 @@ export const ReadOnlyIsMutedAndFocusable: Story = {
 export const ErrorIconShowsOnlyOnError: Story = {
   tags: ['!dev', '!autodocs'],
   args: { label: 'Endpoint URL', errorIcon: true },
-  play: async ({ canvas, canvasElement }) => {
+  play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('svg')).toBeNull();
   },
 };
