@@ -42,6 +42,8 @@ export const RadialBarChart = ({
     // foreColor colors the center value (ApexCharts defaults to dark gray).
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: colors ?? palette,
+    // ApexCharts draws the arcs at 0.85, duller than their swatches.
+    fill: { opacity: 1 },
     labels,
     plotOptions: {
       radialBar: {

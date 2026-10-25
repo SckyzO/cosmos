@@ -82,6 +82,7 @@ export const SemiCircleGauge = ({
       sparkline: { enabled: true },
     },
     colors: [color ?? brand],
+    fill: { opacity: 1 },
     plotOptions: {
       radialBar: {
         startAngle: -90,

@@ -40,6 +40,7 @@ export const GradientRadial = ({
     colors: [color ?? brand],
     fill: {
       type: 'gradient',
+      opacity: 1,
       gradient: {
         shade: 'dark',
         type: 'horizontal',
