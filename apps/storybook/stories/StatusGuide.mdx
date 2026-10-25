@@ -22,14 +22,14 @@ color.
 | A machine's health, as a pill in a table    | `StatusBadge` | `status`, `size`, `label`        |
 | A machine's health, as a hero or a summary  | `HealthBadge` | `status`, `label`                |
 | A machine's health, next to a name or a row | `HealthDot`   | `status`, `pulse`, `label`       |
-| A row of a list that ends with a health     | `StatusRow`   | `status` (renders a StatusBadge) |
+| A row of a list that ends with a health     | `Row`         | `status` (renders a StatusBadge) |
 | A workflow state or a category              | `Badge`       | `intent`, `appearance`, a label  |
 
 ## StatusBadge
 
 A rounded pill with the status text in capitals, in three sizes: `sm` inside dense tables and
 rows, `md` by default, `lg` for a prominent display. `label` replaces the text without changing the
-color ("Healthy" on an `OK`). `StatusRow` ends with one, so a list of machines and a table of
+color ("Healthy" on an `OK`). `Row` with a `status` ends with one, so a list of machines and a table of
 machines show the same pill.
 
 ## HealthBadge

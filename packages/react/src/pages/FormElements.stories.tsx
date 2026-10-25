@@ -45,7 +45,7 @@ import { MiniCalendar } from '../data/MiniCalendar';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
-import { PageBreadcrumb } from '../templates/PageBreadcrumb';
+import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from '../ui/Button';
@@ -77,7 +77,10 @@ const FormContent = () => {
       <PageHeader
         title="Form Elements"
         breadcrumb={
-          <PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Form Elements' }]} />
+          <Breadcrumb
+            homeIcon
+            items={[{ label: 'Overview', href: '#' }, { label: 'Form Elements' }]}
+          />
         }
       />
 

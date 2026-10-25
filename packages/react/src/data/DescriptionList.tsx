@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ReactNode, ComponentPropsWithRef } from 'react';
+import { createContext, useContext, type ReactNode, type ComponentPropsWithRef } from 'react';
 
 // TUI Plus reference (Pattern 1 — "Left-aligned"):
 //   <div>
@@ -21,16 +21,48 @@ import type { ReactNode, ComponentPropsWithRef } from 'react';
 // Pattern 2 — "Left-aligned in card": wraps the <dl> in a card surface with
 // border + rounded + shadow.
 
+// The list's `compact` mode reaches its items without a prop on each of them.
+const CompactContext = createContext(false);
+
 // ── Item ─────────────────────────────────────────────────────────────────────
 
 export type DescriptionListItemProps = ComponentPropsWithRef<'div'> & {
   /** Label (`<dt>`). */
   label: ReactNode;
+  /** Render the value in a monospace font (IDs, hashes, paths…). */
+  mono?: boolean;
   /** Value (`<dd>`). */
   children: ReactNode;
 };
 
-function Item({ label, children, className, ref, ...rest }: DescriptionListItemProps) {
+function Item({
+  label,
+  mono = false,
+  children,
+  className,
+  ref,
+  ...rest
+}: DescriptionListItemProps) {
+  const compact = useContext(CompactContext);
+  if (compact) {
+    return (
+      <div
+        ref={ref}
+        className={clsx('flex items-center justify-between gap-x-4 py-2.5', className)}
+        {...rest}
+      >
+        <dt className="text-sm text-[var(--color-text-secondary)]">{label}</dt>
+        <dd
+          className={clsx(
+            'text-sm font-medium text-[var(--color-text-primary)]',
+            mono && 'font-mono text-xs'
+          )}
+        >
+          {children}
+        </dd>
+      </div>
+    );
+  }
   return (
     <div
       ref={ref}
@@ -38,7 +70,12 @@ function Item({ label, children, className, ref, ...rest }: DescriptionListItemP
       {...rest}
     >
       <dt className="text-sm/6 font-medium text-gray-900 dark:text-white">{label}</dt>
-      <dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0 dark:text-gray-300">
+      <dd
+        className={clsx(
+          'mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0 dark:text-gray-300',
+          mono && 'font-mono'
+        )}
+      >
         {children}
       </dd>
     </div>
@@ -62,6 +99,12 @@ export type DescriptionListProps = ComponentPropsWithRef<'dl'> & {
    * striped" pattern). Implementation uses `even:bg-gray-50`.
    */
   striped?: boolean;
+  /**
+   * When `true`, items are flat label/value rows, the label on the left and the value on the
+   * right, for the metadata of a card (ID, template, last seen…). The default items are
+   * wide, with the label above the value on a phone.
+   */
+  compact?: boolean;
   children: ReactNode;
 };
 
@@ -70,25 +113,28 @@ function DescriptionListRoot({
   description,
   inCard = false,
   striped = false,
+  compact = false,
   className,
   children,
   ref,
   ...rest
 }: DescriptionListProps) {
   const dl = (
-    <dl
-      ref={ref}
-      className={clsx(
-        'divide-y divide-gray-100 dark:divide-white/5',
-        striped &&
-          '[&>div:nth-child(even)]:bg-gray-50 dark:[&>div:nth-child(even)]:bg-white/[0.03]',
-        inCard && 'px-4 sm:px-6',
-        className
-      )}
-      {...rest}
-    >
-      {children}
-    </dl>
+    <CompactContext value={compact}>
+      <dl
+        ref={ref}
+        className={clsx(
+          'divide-y divide-gray-100 dark:divide-white/5',
+          striped &&
+            '[&>div:nth-child(even)]:bg-gray-50 dark:[&>div:nth-child(even)]:bg-white/[0.03]',
+          inCard && 'px-4 sm:px-6',
+          className
+        )}
+        {...rest}
+      >
+        {children}
+      </dl>
+    </CompactContext>
   );
 
   const header =
