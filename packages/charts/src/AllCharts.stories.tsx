@@ -108,7 +108,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <ScatterChart
         series={[
           {
@@ -119,13 +120,13 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <ScatterChart series={[]} {...props} />,
   },
   BubbleChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <BubbleChart
         series={[
           {
@@ -136,7 +137,6 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <BubbleChart series={[]} {...props} />,
@@ -338,7 +338,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart']) {
+    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart', 'ScatterChart']) {
       await waitFor(() => {
         const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`);
         expect(chart).not.toBeNull();
@@ -349,14 +349,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES = [
-  'DonutChart',
-  'HeatmapChart',
-  'RadarChart',
-  'ScatterChart',
-  'BubbleChart',
-  'BoxPlotChart',
-];
+const LEGEND_NAMES = ['DonutChart', 'HeatmapChart', 'RadarChart', 'BoxPlotChart'];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
 export const LegendSwatchesHaveNoOutline: Story = {

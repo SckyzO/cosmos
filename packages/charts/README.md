@@ -88,7 +88,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `TreemapChart`                 | Repartition treemap                                           |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges             |
 | `RadarChart`                   | One polygon per series over named axes                        |
-| `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure              |
+| `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure (Recharts)   |
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
 
 ## License

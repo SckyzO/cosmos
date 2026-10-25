@@ -18,6 +18,16 @@ export const barShapes = (root: HTMLElement) =>
 export const barFills = (root: HTMLElement) =>
   barShapes(root).map((shapes) => (shapes[0] ? getComputedStyle(shapes[0]).fill : ''));
 
+/** The symbols (points or bubbles) of each scatter series in `root`, series first. */
+export const scatterSymbols = (root: HTMLElement) =>
+  [...root.querySelectorAll('.recharts-scatter')].map((series) => [
+    ...series.querySelectorAll<SVGElement>('.recharts-scatter-symbol path'),
+  ]);
+
+/** The fill of the first symbol of each scatter series, in series order. */
+export const scatterFills = (root: HTMLElement) =>
+  scatterSymbols(root).map((symbols) => (symbols[0] ? getComputedStyle(symbols[0]).fill : ''));
+
 /**
  * Asserts a theme switch repaints the chart in `root` with no observer and no
  * redraw: the computed color of a tick label is the theme's muted text color
