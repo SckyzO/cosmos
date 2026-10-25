@@ -235,7 +235,7 @@ export const AxisTitles: Story = {
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     xTitle: HOSTILE,
     yTitle: HOSTILE,

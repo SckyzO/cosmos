@@ -117,7 +117,7 @@ export const Empty: Story = {
 
 /** The legend is HTML: the labels show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { series: [40, 60], labels: [HOSTILE, 'Normal'] },
   play: async ({ canvasElement }) => {
     // Legends render on mount: the label must show up as literal text.

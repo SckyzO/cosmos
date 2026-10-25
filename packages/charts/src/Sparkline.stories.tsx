@@ -220,7 +220,7 @@ export const TooltipShowsLabelAndFormattedValue: Story = {
 
 /** The tooltip is HTML: the label shows as text. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { label: HOSTILE, variant: 'line' },
   render: (args) => <Sparkline {...args} />,
   play: async ({ canvasElement }) => {

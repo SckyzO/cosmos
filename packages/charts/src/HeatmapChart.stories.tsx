@@ -157,7 +157,7 @@ export const AxisTitles: Story = {
  * show as text. The legend lists the ranges, not the rows.
  */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     xTitle: HOSTILE,
     yTitle: HOSTILE,
