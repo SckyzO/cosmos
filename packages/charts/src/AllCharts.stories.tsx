@@ -102,9 +102,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
   },
   RadarChart: {
-    filled: (apexOptions) => (
-      <RadarChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
@@ -361,7 +360,6 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 const LEGEND_NAMES = [
   'BarChart',
   'HeatmapChart',
-  'RadarChart',
   'ScatterChart',
   'BubbleChart',
   'BoxPlotChart',

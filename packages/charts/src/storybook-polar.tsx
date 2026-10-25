@@ -74,3 +74,22 @@ export const expectKeyboardWalk =
     await userEvent.tab();
     await closeTooltip(canvasElement);
   };
+
+/**
+ * Moves the pointer over the plot, at `xRatio` and `yRatio` of the chart's
+ * size, until the tooltip shows: a polar chart picks the point from the angle
+ * of the pointer around its center.
+ */
+export const openTooltipAt = (root: HTMLElement, xRatio: number, yRatio: number) =>
+  waitFor(() => {
+    const svg = surface(root) as SVGSVGElement;
+    const { left, top, width, height } = svg.getBoundingClientRect();
+    svg.dispatchEvent(
+      new MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: left + width * xRatio,
+        clientY: top + height * yRatio,
+      })
+    );
+    expect(tooltipCard(root)).not.toBeNull();
+  });
