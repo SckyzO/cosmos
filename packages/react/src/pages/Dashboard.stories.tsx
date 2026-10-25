@@ -425,6 +425,7 @@ export const Default: Story = {
         {/* Alerts table */}
         <SectionCard as="h2" title="Active alerts" desc="sortable, filterable, paginated">
           <DataTable
+            aria-label="Recent alerts"
             rows={ROWS}
             columns={COLUMNS}
             rowKey={(r) => r.id}

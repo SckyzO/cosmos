@@ -9,9 +9,9 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Tabs, type TabsProps } from './Tabs';
-import { expectFocusRing } from '../storybook-helpers';
+import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -78,7 +78,7 @@ export const Vertical: Story = {
       <Wrap>
         <SectionCard title="Vertical tabs (settings layout)">
           <Tabs value={tab} onChange={setTab} orientation="vertical">
-            <Tabs.List className="w-44">
+            <Tabs.List className="sm:w-44">
               <Tabs.Trigger value="account" icon={User}>
                 Account
               </Tabs.Trigger>
@@ -199,7 +199,7 @@ export const FolderVertical: Story = {
     return (
       <Wrap>
         <Tabs value={tab} onChange={setTab} orientation="vertical" variant="folder">
-          <Tabs.List className="w-44">
+          <Tabs.List className="sm:w-44">
             <Tabs.Trigger value="account" icon={User}>
               Account
             </Tabs.Trigger>
@@ -594,4 +594,109 @@ export const FocusShowsRingInDark: Story = {
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+// ── Narrow screens (#291) ────────────────────────────────────────────────────
+
+const SECTIONS = ['Overview', 'Metrics', 'Logs', 'Alerts', 'Deployments', 'Settings', 'Billing'];
+
+const ManyTabs = ({ variant }: { variant: 'underline' | 'folder' }) => {
+  const [tab, setTab] = useState(SECTIONS[0]);
+  return (
+    <Wrap>
+      <Tabs value={tab} onChange={setTab} variant={variant}>
+        <Tabs.List>
+          {SECTIONS.map((section) => (
+            <Tabs.Trigger key={section} value={section}>
+              {section}
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
+        <Tabs.Panel value={tab}>
+          <p className="text-sm text-[var(--color-text-secondary)]">{tab} panel.</p>
+        </Tabs.Panel>
+      </Tabs>
+    </Wrap>
+  );
+};
+
+// The strip scrolls by itself, so the page does not; picking the last tab brings it into view.
+const expectStripScrollsToActiveTab = async (
+  canvas: Parameters<NonNullable<Story['play']>>[0]['canvas']
+) => {
+  expectNoHorizontalOverflow();
+  const tablist = canvas.getByRole('tablist');
+  const strip = tablist.parentElement!;
+  await expect(getComputedStyle(strip).overflowX).toBe('auto');
+  await expect(strip.scrollWidth).toBeGreaterThan(strip.clientWidth);
+  await expect(strip.scrollLeft).toBe(0);
+  const last = canvas.getByRole('tab', { name: 'Billing' });
+  await userEvent.click(last);
+  await waitFor(() => expect(strip.scrollLeft).toBeGreaterThan(0));
+  await waitFor(() =>
+    expect(last.getBoundingClientRect().right).toBeLessThanOrEqual(
+      strip.getBoundingClientRect().right + 1
+    )
+  );
+  expectNoHorizontalOverflow();
+};
+
+export const MobileScrollingTabs: Story = {
+  globals: mobileViewport,
+  render: () => <ManyTabs variant="underline" />,
+  play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
+};
+
+export const MobileFolder: Story = {
+  globals: mobileViewport,
+  render: () => <ManyTabs variant="folder" />,
+  play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
+};
+
+export const MobileVertical: Story = {
+  globals: mobileViewport,
+  render: () => {
+    const [tab, setTab] = useState('account');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab} orientation="vertical">
+          <Tabs.List>
+            <Tabs.Trigger value="account" icon={User}>
+              Account
+            </Tabs.Trigger>
+            <Tabs.Trigger value="security" icon={KeyRound}>
+              Security
+            </Tabs.Trigger>
+            <Tabs.Trigger value="notifications" icon={Bell}>
+              Notifications
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="account">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Manage your username, profile picture and display name.
+            </p>
+          </Tabs.Panel>
+          <Tabs.Panel value="security">
+            <p className="text-sm text-[var(--color-text-secondary)]">Change your password.</p>
+          </Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    // Below `sm` a vertical list is a strip above the panel, and works as one.
+    const tablist = canvas.getByRole('tablist');
+    await expect(tablist).toHaveAttribute('aria-orientation', 'horizontal');
+    await expect(tablist.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      canvas.getByRole('tabpanel').getBoundingClientRect().top
+    );
+    const account = canvas.getByRole('tab', { name: 'Account' });
+    account.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('tab', { name: 'Security' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
 };

@@ -1,5 +1,7 @@
 import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { Ellipsis } from 'lucide-react';
+import { Menu } from '../ui/Menu';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
 
@@ -31,6 +33,13 @@ export type TopbarProps = {
   center?: ReactNode;
   /** Right-aligned actions — theme switcher, notifications, avatar… */
   rightActions?: ReactNode;
+  /**
+   * `Menu.Item`s (or `Menu.Group`s) for the actions that do not fit a phone. Below `sm` the
+   * Topbar shows a "More" menu with them, before `rightActions`; from `sm` up the menu is gone.
+   * Hide the matching actions of `rightActions` below `sm` (`max-sm:hidden`) and keep there only
+   * what must stay in reach, such as the profile menu.
+   */
+  moreActions?: ReactNode;
   /** Optional className override. */
   className?: string;
 };
@@ -56,6 +65,7 @@ export const Topbar = ({
   leftActions,
   center,
   rightActions,
+  moreActions,
   className,
 }: TopbarProps) => {
   const shell = useShell();
@@ -85,7 +95,8 @@ export const Topbar = ({
       {leftActions}
 
       {pageTitle && (
-        <TitleTag className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
+        // Below `sm` the page shows its own title: the Topbar keeps the width for actions.
+        <TitleTag className="hidden truncate text-lg font-semibold text-[var(--color-text-primary)] sm:block">
           {pageTitle}
         </TitleTag>
       )}
@@ -94,7 +105,24 @@ export const Topbar = ({
       {center ? <div className="min-w-0 flex-1">{center}</div> : <div className="flex-1" />}
 
       {/* Right: actions */}
-      {rightActions && <div className="flex shrink-0 items-center gap-2">{rightActions}</div>}
+      {(rightActions || moreActions) && (
+        <div className="flex shrink-0 items-center gap-2">
+          {moreActions && (
+            <div className="sm:hidden">
+              <Menu align="right">
+                <Menu.Trigger
+                  aria-label="More actions"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <Ellipsis className="h-4 w-4" aria-hidden />
+                </Menu.Trigger>
+                <Menu.Content aria-label="More actions">{moreActions}</Menu.Content>
+              </Menu>
+            </div>
+          )}
+          {rightActions}
+        </div>
+      )}
     </header>
   );
 };

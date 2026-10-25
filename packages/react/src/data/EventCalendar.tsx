@@ -7,6 +7,7 @@ import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 import { useControllableState } from '../hooks/useControllableState';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 /**
  * An event's color: an `Intent`, or `violet`, a category color that carries no meaning of
@@ -168,7 +169,8 @@ const EventChip = ({
  *
  * Each day shows up to three event chips (a color dot and the title) and a
  * "+N more" button that lists the whole day. An event with an `end` shows its title on
- * its first day and a bare chip on each following day. Below `sm` the chips shrink to their dots.
+ * its first day and a bare chip on each following day. Below `sm` the weekday names shrink
+ * to a letter, the chips to their dots, and picking a day lists its events under the grid.
  *
  * Uncontrolled by default; pass `month` with `onMonthChange` to drive it from
  * outside (a side MiniCalendar, or loading events per month).
@@ -192,6 +194,9 @@ export const EventCalendar = ({
     name: 'EventCalendar.month',
   });
   const [openDay, setOpenDay] = useState<string | null>(null);
+  // Below `sm` a cell has room for a dot only: the picked day's events are listed under the grid.
+  const narrow = !useMediaQuery('(min-width: 40rem)', true);
+  const [pickedKey, setPickedKey] = useState<string | null>(null);
   const shown = startOfMonth(current);
   const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
@@ -204,6 +209,11 @@ export const EventCalendar = ({
   );
   const isTodayMonth =
     shown.getFullYear() === today.getFullYear() && shown.getMonth() === today.getMonth();
+  // The picked day if it is in the month shown, else today, else the 1st.
+  const pickedDay =
+    days.find((d) => isoDate(d) === pickedKey && d.getMonth() === shown.getMonth()) ??
+    (isTodayMonth ? today : shown);
+  const pickedEvents = byDay.get(isoDate(pickedDay)) ?? [];
 
   return (
     <div
@@ -266,7 +276,8 @@ export const EventCalendar = ({
             key={i}
             className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
-            {d}
+            <span className="max-sm:hidden">{d}</span>
+            <span className="sm:hidden">{fmt.weekdaysNarrow[i]}</span>
           </span>
         ))}
       </div>
@@ -299,15 +310,20 @@ export const EventCalendar = ({
                 outside && 'bg-gray-50 dark:bg-white/[0.02]'
               )}
             >
-              {onDayClick ? (
+              {onDayClick || narrow ? (
                 <button
                   type="button"
                   aria-label={label}
                   aria-current={isToday ? 'date' : undefined}
-                  onClick={() => onDayClick(day)}
+                  aria-pressed={narrow ? sameDay(day, pickedDay) : undefined}
+                  onClick={() => {
+                    setPickedKey(key);
+                    onDayClick?.(day);
+                  }}
                   className={clsx(
                     numberClass,
                     !isToday && 'hover:bg-gray-100 dark:hover:bg-white/5',
+                    narrow && sameDay(day, pickedDay) && 'ring-brand-500 ring-2 ring-inset',
                     'focus-visible:focus-indicator'
                   )}
                 >
@@ -339,7 +355,7 @@ export const EventCalendar = ({
                 </ul>
               )}
 
-              {hidden > 0 && (
+              {hidden > 0 && !narrow && (
                 <Popover
                   open={openDay === key}
                   onOpenChange={(open) => setOpenDay(open ? key : null)}
@@ -388,6 +404,25 @@ export const EventCalendar = ({
         >
           {emptyMessage}
         </p>
+      )}
+
+      {narrow && !isEmptyMonth && (
+        <section aria-label={`Events on ${fmt.fullDate(pickedDay)}`} className="px-4 py-3">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
+            {fmt.fullDate(pickedDay)}
+          </p>
+          {pickedEvents.length > 0 ? (
+            <ul className="space-y-1">
+              {pickedEvents.map((event) => (
+                <li key={event.id}>
+                  <EventChip event={event} onClick={onEventClick} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-[var(--color-text-muted)]">No events</p>
+          )}
+        </section>
       )}
     </div>
   );

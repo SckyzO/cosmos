@@ -17,7 +17,10 @@ export const isoWeekday = (d: Date) => (d.getDay() + 6) % 7;
 export type CalendarFormats = {
   /** Short weekday names, Monday first: `Mon`..`Sun` in en-US. */
   weekdays: string[];
-  /** One-letter weekday names, Monday first: `M`..`S` in en-US. Ambiguous alone: pair them with `weekdays`. */
+  /**
+   * One-letter weekday names, Monday first (`M`..`S` in en-US), for a grid too narrow for
+   * `weekdays`. Ambiguous alone: pair them with `weekdays`.
+   */
   weekdaysNarrow: string[];
   /** Month and year: `May 2026`. */
   monthYear: (d: Date) => string;

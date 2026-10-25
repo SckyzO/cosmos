@@ -367,3 +367,88 @@ export const DangerIntentColorsTheItem: Story = {
     await expect(danger.querySelector('svg')).toHaveClass('text-red-500');
   },
 };
+
+// ── Link items ───────────────────────────────────────────────────────────────
+
+const LinkMenu = ({ onSelect }: { onSelect?: () => void }) => (
+  <Spot>
+    <Menu>
+      <Menu.Trigger>Actions</Menu.Trigger>
+      <Menu.Content>
+        <Menu.Item>Rename</Menu.Item>
+        <Menu.Item href="/docs" target="_blank" rel="noreferrer" onSelect={onSelect}>
+          Documentation
+        </Menu.Item>
+        <Menu.Item href="/gone" disabled>
+          Archived
+        </Menu.Item>
+        <Menu.Item>Delete</Menu.Item>
+      </Menu.Content>
+    </Menu>
+  </Spot>
+);
+
+/** With `href` an item is a link: it keeps the menu behaviour and the browser's link behaviour. */
+export const LinkItems: Story = {
+  render: () => <LinkMenu />,
+};
+
+export const LinkItemFollowsItsHrefAndCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onPick: fn() } as never,
+  render: (args) => <LinkMenu onSelect={(args as unknown as { onPick: () => void }).onPick} />,
+  play: async ({ args, canvas }) => {
+    const onPick = (args as unknown as { onPick: ReturnType<typeof fn> }).onPick;
+    canvas.getByRole('button', { name: 'Actions' }).focus();
+    await userEvent.keyboard('{Enter}');
+    const body = within(document.body);
+    const link = await body.findByRole('menuitem', { name: 'Documentation' });
+    await expect(link.tagName).toBe('A');
+    await expect(link).toHaveAttribute('href', '/docs');
+    await expect(link).toHaveAttribute('target', '_blank');
+    // Activating it fires a click on the link; stop it there so the test page stays put.
+    let clicks = 0;
+    const stop = (e: Event) => {
+      clicks += 1;
+      e.preventDefault();
+    };
+    link.addEventListener('click', stop);
+    link.focus();
+    await userEvent.keyboard('{Enter}');
+    link.removeEventListener('click', stop);
+    await expect(clicks).toBe(1);
+    await expect(onPick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(menu()).toBeNull());
+  },
+};
+
+export const ArrowKeysCrossButtonAndLinkItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LinkMenu />,
+  play: async ({ canvas }) => {
+    canvas.getByRole('button', { name: 'Actions' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Rename'));
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Documentation');
+    // The disabled link is skipped.
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Delete');
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}');
+    await expect(document.activeElement).toHaveTextContent('Rename');
+    await userEvent.keyboard('{Escape}');
+  },
+};
+
+export const DisabledLinkItemHasNoHref: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LinkMenu />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    const item = await within(document.body).findByRole('menuitem', { name: 'Archived' });
+    await expect(item).toHaveAttribute('aria-disabled', 'true');
+    await expect(item).not.toHaveAttribute('href');
+    await userEvent.click(item);
+    await expect(menu()).not.toBeNull();
+  },
+};

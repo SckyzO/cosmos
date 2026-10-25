@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Pagination } from './Pagination';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Pagination',
@@ -187,5 +188,50 @@ export const ActivePageDiffersFromInactive: Story = {
     await expect(active.backgroundColor).not.toBe(inactive.backgroundColor);
     await expect(active.borderTopColor).not.toBe(inactive.borderTopColor);
     await expect(active.color).not.toBe(active.backgroundColor);
+  },
+};
+
+// ── Narrow screens (#291) ────────────────────────────────────────────────────
+
+export const Mobile: Story = {
+  globals: mobileViewport,
+  args: { page: 2, totalPages: 9, showInfo: true, pageSize: 10, total: 87 },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Pagination' });
+    expectNoHorizontalOverflow(nav);
+    // The numbered buttons give way to "Page 2 / 9" between Previous and Next...
+    await expect(canvas.queryByRole('button', { name: 'Page 3' })).toBeNull();
+    await expect(canvas.getByText(/^Page/)).toHaveTextContent('Page 2 / 9');
+    await expect(canvas.getByRole('button', { name: 'Previous page' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toBeVisible();
+    // ...and the info sits on a row of its own, above the controls.
+    const info = canvas.getByText(/^Showing/);
+    await expect(info.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      canvas.getByRole('button', { name: 'Next page' }).getBoundingClientRect().top
+    );
+  },
+};
+
+export const ShowAll: Story = {
+  render: (args) => {
+    const [showAll, setShowAll] = useState(false);
+    return (
+      <Pagination
+        {...args}
+        showAll={showAll}
+        onShowAllChange={setShowAll}
+        showInfo
+        pageSize={10}
+        total={87}
+      />
+    );
+  },
+  args: { page: 2, totalPages: 9 },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Show all' }));
+    await expect(canvas.getByText(/^Showing all/)).toHaveTextContent('Showing all 87 results');
+    await expect(canvas.queryByRole('button', { name: 'Next page' })).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Show paginated' }));
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toBeVisible();
   },
 };

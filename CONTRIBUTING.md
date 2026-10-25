@@ -322,6 +322,27 @@ The same prop means the same thing on every component.
   from. Both come from `FLOATING_PANEL_Z` and `TOOLTIP_Z` in `ui/FloatingPanel.tsx`; don't
   write another value.
 
+## Narrow screens
+
+A component laid out in a row says what it does when the row no longer fits (below `sm`, 640px),
+by kind. None of them may widen the page.
+
+- **Scroll** what is a list of equals the user moves along: `Tabs` (horizontal, hidden scrollbar,
+  the active tab scrolled into view, an edge fade only where there is more), `Table` and
+  `DataTable` (the table scrolls in its own container).
+- **Wrap** what is a set of small items with no order to keep: meta rows, chips, badges, button
+  rows (`flex-wrap`, and `break-all` on a path or URL that has no break point).
+- **Collapse** what has a primary part and a long tail: `Breadcrumb` (`maxItems` folds the middle
+  into a menu, the current crumb stays), `Topbar` (the title goes, `moreActions` becomes a "More"
+  menu), `Pagination` (the info on its own row, "Page 2 / 9" in place of the numbers),
+  `EventCalendar` (one-letter weekdays, the picked day listed under the grid). A layout with a side
+  column stacks it under the main one (`Shell`'s `secondary`, vertical `Tabs`).
+
+Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQuery` only when the
+markup itself changes. Every component with such a behavior has a story at the `mobile` viewport
+(`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor) whose play
+function calls `expectNoHorizontalOverflow`.
+
 ## PR checklist
 
 - [ ] `make ci` passes locally

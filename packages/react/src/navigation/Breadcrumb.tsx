@@ -1,6 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Ellipsis, Home } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Menu } from '../ui/Menu';
 
 export type BreadcrumbItem = {
   label: string;
@@ -30,6 +31,12 @@ export type BreadcrumbProps = {
    * them apart; a translated app passes its own wording.
    */
   'aria-label'?: string;
+  /**
+   * Most crumbs shown at once (at least 2). A longer trail keeps its first crumb and its last
+   * `maxItems - 1`, and the ones in between collapse into a "…" menu that links to them. Default:
+   * all of them.
+   */
+  maxItems?: number;
   className?: string;
 };
 
@@ -66,52 +73,82 @@ export const Breadcrumb = ({
   separator = 'chevron',
   homeIcon = false,
   'aria-label': ariaLabel = 'Breadcrumb',
+  maxItems,
   className,
-}: BreadcrumbProps) => (
-  <nav
-    aria-label={ariaLabel}
-    className={clsx('flex items-center gap-1 overflow-x-auto', className)}
-  >
-    {items.map(({ icon, label, href, onClick }, i) => {
-      const isLast = i === items.length - 1;
-      const Icon = icon;
-      const renderIcon = (className: string) =>
-        homeIcon && i === 0 && !Icon ? (
-          <Home className={className} role="img" aria-label="Home" />
-        ) : (
-          Icon && <Icon className={className} />
-        );
-      return (
-        <div key={label} className="flex items-center gap-1">
-          {i > 0 && renderSeparator(separator)}
-          {isLast ? (
-            <span
-              aria-current="page"
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
-            >
-              {renderIcon('text-brand-500 h-4 w-4')}
-              {label}
-            </span>
-          ) : onClick ? (
-            <button
-              type="button"
-              onClick={onClick}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
-            >
-              {renderIcon('h-4 w-4')}
-              {label}
-            </button>
+}: BreadcrumbProps) => {
+  const limit = maxItems === undefined ? items.length : Math.max(2, maxItems);
+  const collapsed = items.length > limit;
+  // The collapsed crumbs are the ones after the first, up to the last `limit - 1`.
+  const hiddenFrom = 1;
+  const hiddenTo = collapsed ? items.length - (limit - 1) : 1;
+  const hidden = items.slice(hiddenFrom, hiddenTo);
+  const shown = collapsed ? [...items.slice(0, hiddenFrom), ...items.slice(hiddenTo)] : items;
+  const linkClass =
+    'text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex max-w-32 items-center max-sm:min-w-0 gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:max-w-none';
+  return (
+    <nav
+      aria-label={ariaLabel}
+      className={clsx('flex items-center gap-1 overflow-x-auto', className)}
+    >
+      {shown.map(({ icon: Icon, label, href, onClick }, i) => {
+        const isLast = i === shown.length - 1;
+        // The first crumb is never collapsed: `i === 0` is the first item of the trail.
+        const renderIcon = (className: string) =>
+          homeIcon && i === 0 && !Icon ? (
+            <Home className={className} role="img" aria-label="Home" />
           ) : (
-            <a
-              href={href ?? '#'}
-              className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors"
-            >
-              {renderIcon('h-4 w-4')}
-              {label}
-            </a>
-          )}
-        </div>
-      );
-    })}
-  </nav>
-);
+            Icon && <Icon className={className} />
+          );
+        return (
+          <div key={label} className="flex items-center gap-1 max-sm:min-w-0">
+            {i > 0 && renderSeparator(separator)}
+            {collapsed && i === hiddenFrom && (
+              <>
+                <Menu>
+                  <Menu.Trigger
+                    aria-label={`Show ${hidden.length} more pages`}
+                    className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded px-2 py-1 transition-colors"
+                  >
+                    <Ellipsis className="h-4 w-4" aria-hidden />
+                  </Menu.Trigger>
+                  <Menu.Content aria-label="Hidden pages">
+                    {hidden.map((crumb) => (
+                      <Menu.Item
+                        key={crumb.label}
+                        icon={crumb.icon}
+                        href={crumb.onClick ? undefined : (crumb.href ?? '#')}
+                        onSelect={crumb.onClick}
+                      >
+                        {crumb.label}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Content>
+                </Menu>
+                {renderSeparator(separator)}
+              </>
+            )}
+            {isLast ? (
+              <span
+                aria-current="page"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
+              >
+                {renderIcon('text-brand-500 h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </span>
+            ) : onClick ? (
+              <button type="button" onClick={onClick} className={linkClass}>
+                {renderIcon('h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </button>
+            ) : (
+              <a href={href ?? '#'} className={linkClass}>
+                {renderIcon('h-4 w-4 shrink-0')}
+                <span className="truncate">{label}</span>
+              </a>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+};

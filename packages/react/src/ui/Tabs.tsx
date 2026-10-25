@@ -1,7 +1,17 @@
 import { clsx } from 'clsx';
-import { createContext, useCallback, useContext, useId, useLayoutEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 export type TabsOrientation = 'horizontal' | 'vertical';
 
@@ -44,13 +54,14 @@ const panelId = (baseId: string, value: string) => `${baseId}-panel-${encodeURIC
 
 const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   underline: {
-    horizontal: 'flex items-center gap-1 border-b border-gray-200 dark:border-gray-800',
+    horizontal:
+      'flex w-max min-w-full items-center gap-1 border-b border-gray-200 dark:border-gray-800',
     vertical: 'flex shrink-0 flex-col gap-1 border-r border-gray-200 dark:border-gray-800',
   },
   // The list's border is the panel's edge: it runs under the inactive tabs and
   // the active tab covers it.
   folder: {
-    horizontal: 'flex items-end gap-1 border-b border-[var(--color-border)]',
+    horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--color-border)]',
     vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--color-border)]',
   },
 };
@@ -130,11 +141,15 @@ const Root = ({
   value: valueProp,
   defaultValue,
   onChange: onChangeProp,
-  orientation = 'horizontal',
+  orientation: orientationProp = 'horizontal',
   variant = 'underline',
   children,
   className,
 }: TabsProps) => {
+  // A vertical list beside its panel leaves the panel a few words per line on a phone: below `sm`
+  // it lays out as a horizontal strip above the panel, and behaves as one (arrow keys, ARIA).
+  const wide = useMediaQuery('(min-width: 40rem)', true);
+  const orientation = orientationProp === 'vertical' && !wide ? 'horizontal' : orientationProp;
   const baseId = useId();
   const [panels, setPanels] = useState<ReadonlySet<string>>(() => new Set());
   const registerPanel = useCallback((panelValue: string) => {
@@ -196,12 +211,62 @@ const List = ({ children, className }: { children: ReactNode; className?: string
     tabs[target].focus();
     tabs[target].click();
   };
-  return (
+  const list = (
     <div
       role="tablist"
       aria-orientation={orientation}
       onKeyDown={onKeyDown}
       className={clsx(LIST_CLASSES[variant][orientation], className)}
+    >
+      {children}
+    </div>
+  );
+  return orientation === 'vertical' ? list : <ScrollStrip>{list}</ScrollStrip>;
+};
+
+// The horizontal list scrolls instead of overflowing the page: the scrollbar is hidden, the active
+// tab is brought into view when it changes, and an edge fades only on the side with more tabs.
+const ScrollStrip = ({ children }: { children: ReactNode }) => {
+  const { value } = useTabs();
+  const ref = useRef<HTMLDivElement>(null);
+  const [fade, setFade] = useState({ start: false, end: false });
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => {
+      const start = node.scrollLeft > 1;
+      const end = node.scrollLeft + node.clientWidth < node.scrollWidth - 1;
+      setFade((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+    };
+    measure();
+    node.addEventListener('scroll', measure, { passive: true });
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    for (const child of node.children) observer.observe(child);
+    return () => {
+      node.removeEventListener('scroll', measure);
+      observer.disconnect();
+    };
+  }, []);
+  // Not on mount: scrolling the first tab into view could scroll the page to it.
+  const shown = useRef(value);
+  useEffect(() => {
+    if (shown.current === value) return;
+    shown.current = value;
+    ref.current
+      ?.querySelector('[role="tab"][aria-selected="true"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [value]);
+  const edge = '1.5rem';
+  const mask =
+    fade.start || fade.end
+      ? `linear-gradient(to right, ${fade.start ? 'transparent' : '#000'}, #000 ${edge}, #000 calc(100% - ${edge}), ${fade.end ? 'transparent' : '#000'})`
+      : undefined;
+  return (
+    <div
+      ref={ref}
+      style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+      className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {children}
     </div>
@@ -234,7 +299,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(
-        'focus-visible:focus-indicator flex items-center gap-2 text-sm font-medium transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
+        'focus-visible:focus-indicator flex shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
         styles.base,
         isActive ? styles.active : styles.inactive,
         className

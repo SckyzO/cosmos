@@ -5,7 +5,8 @@ import { Navbar } from '../navigation/Navbar';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Button } from '../ui/Button';
 import { PageHeader } from '../templates/PageHeader';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { expect } from 'storybook/test';
 
 // TUI Plus "Application Shells / Stacked" — top navbar with horizontal nav,
 // no sidebar, full-width main content beneath. Builds on Cosmos `Shell` by
@@ -180,4 +181,20 @@ export const MultiColumnWithSecondary: Story = {
       </div>
     </Shell>
   ),
+};
+
+// Below `lg` the secondary panel stacks under the main column instead of squeezing it.
+export const MultiColumnMobile: Story = {
+  ...MultiColumnWithSecondary,
+  globals: mobileViewport,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const main = canvas.getByRole('main');
+    const secondary = canvas.getByRole('complementary');
+    await expect(main.getBoundingClientRect().width).toBeGreaterThan(300);
+    await expect(secondary.getBoundingClientRect().width).toBe(main.getBoundingClientRect().width);
+    await expect(secondary.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      main.getBoundingClientRect().bottom - 1
+    );
+  },
 };

@@ -6,7 +6,9 @@ import {
   useRef,
   type ComponentPropsWithRef,
   type ComponentType,
+  type MouseEvent,
   type MutableRefObject,
+  type Ref,
   type ReactNode,
   type RefObject,
 } from 'react';
@@ -31,7 +33,7 @@ type Ctx = {
 };
 
 // A disabled item is skipped by the arrows, Home, End and the typeahead.
-const ITEM_SELECTOR = '[role="menuitem"]:not([disabled])';
+const ITEM_SELECTOR = '[role="menuitem"]:not([disabled]):not([aria-disabled="true"])';
 const menuItems = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR));
 
@@ -217,7 +219,10 @@ const MenuGroup = ({ label, className, children }: MenuGroupProps) => {
 
 export type MenuItemIntent = Extract<Intent, 'neutral' | 'danger'>;
 
-export type MenuItemProps = Omit<ComponentPropsWithRef<'button'>, 'children' | 'onSelect'> & {
+export type MenuItemProps = Omit<
+  ComponentPropsWithRef<'button'>,
+  'children' | 'onSelect' | 'type'
+> & {
   children: ReactNode;
   icon?: ComponentType<{ className?: string }>;
   /** `danger` colors a destructive item (delete, sign out) red. Default `neutral`. */
@@ -226,6 +231,16 @@ export type MenuItemProps = Omit<ComponentPropsWithRef<'button'>, 'children' | '
   shortcut?: ReactNode;
   /** Trailing badge, before the shortcut: a `<Badge size="sm">` with a count or a tag. */
   badge?: ReactNode;
+  /**
+   * Makes the item a link (`<a role="menuitem">`) instead of a button: middle-click, "open in a
+   * new tab" and a router's link interception work. `onSelect` still runs and the menu still
+   * closes. A disabled link item has no `href` and `aria-disabled="true"`.
+   */
+  href?: string;
+  /** With `href`: where the link opens (`_blank`…). */
+  target?: string;
+  /** With `href`: the link's `rel`. */
+  rel?: string;
   /** Runs when the item is chosen, by click, Enter or Space. */
   onSelect?: () => void;
   /** Closes the menu once the item is chosen. Default true. */
@@ -239,6 +254,7 @@ function MenuItem({
   badge,
   onSelect,
   closeOnSelect = true,
+  href,
   disabled,
   onClick,
   className,
@@ -248,33 +264,21 @@ function MenuItem({
 }: MenuItemProps) {
   const { setOpen } = useCtx();
   const danger = intent === 'danger';
-  return (
-    <button
-      type="button"
-      {...rest}
-      ref={ref}
-      role="menuitem"
-      tabIndex={-1}
-      disabled={disabled}
-      onClick={(e) => {
-        onClick?.(e);
-        if (e.defaultPrevented) return;
-        onSelect?.();
-        if (closeOnSelect) setOpen(false);
-      }}
-      className={clsx(
-        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset',
-        danger
-          ? 'text-red-600 focus-visible:bg-red-50 dark:text-red-400 dark:focus-visible:bg-red-500/10'
-          : 'text-gray-700 focus-visible:bg-gray-50 dark:text-gray-300 dark:focus-visible:bg-white/5',
-        disabled
-          ? 'cursor-not-allowed opacity-50'
-          : danger
-            ? 'hover:bg-red-50 dark:hover:bg-red-500/10'
-            : 'hover:bg-gray-50 dark:hover:bg-white/5',
-        className
-      )}
-    >
+  const isLink = href !== undefined;
+  const classes = clsx(
+    'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset',
+    danger
+      ? 'text-red-600 focus-visible:bg-red-50 dark:text-red-400 dark:focus-visible:bg-red-500/10'
+      : 'text-gray-700 focus-visible:bg-gray-50 dark:text-gray-300 dark:focus-visible:bg-white/5',
+    disabled
+      ? 'cursor-not-allowed opacity-50'
+      : danger
+        ? 'hover:bg-red-50 dark:hover:bg-red-500/10'
+        : 'hover:bg-gray-50 dark:hover:bg-white/5',
+    className
+  );
+  const content = (
+    <>
       {Icon && (
         <Icon
           className={clsx(
@@ -291,6 +295,48 @@ function MenuItem({
           {shortcut}
         </kbd>
       )}
+    </>
+  );
+  const choose = (e: MouseEvent<HTMLElement>) => {
+    // Only a `preventDefault` from the item's own `onClick` cancels the choice: a router that
+    // intercepts the link has prevented the navigation, not the selection.
+    const prevented = e.defaultPrevented;
+    (onClick as ((e: MouseEvent<HTMLElement>) => void) | undefined)?.(e);
+    if (!prevented && e.defaultPrevented) return;
+    onSelect?.();
+    if (closeOnSelect) setOpen(false);
+  };
+  if (isLink) {
+    return (
+      <a
+        {...(rest as ComponentPropsWithRef<'a'>)}
+        ref={ref as Ref<HTMLAnchorElement>}
+        role="menuitem"
+        tabIndex={-1}
+        href={disabled ? undefined : href}
+        aria-disabled={disabled ? true : undefined}
+        onClick={(e) => {
+          if (disabled) return e.preventDefault();
+          choose(e);
+        }}
+        className={classes}
+      >
+        {content}
+      </a>
+    );
+  }
+  return (
+    <button
+      type="button"
+      {...rest}
+      ref={ref}
+      role="menuitem"
+      tabIndex={-1}
+      disabled={disabled}
+      onClick={choose}
+      className={classes}
+    >
+      {content}
     </button>
   );
 }
