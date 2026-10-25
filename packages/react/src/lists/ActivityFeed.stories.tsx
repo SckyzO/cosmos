@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 // + content + timestamp.
 export const SimpleWithIcons: Story = {
   render: () => (
-    <div className="max-w-2xl bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-2xl bg-[var(--color-bg-panel)] p-8">
       <ActivityFeed>
         <ActivityFeed.Item
           icon={User}
@@ -69,7 +69,7 @@ export const SimpleWithIcons: Story = {
 // Mixed intents — danger + warning + info + success in one feed.
 export const MixedIntents: Story = {
   render: () => (
-    <div className="max-w-2xl bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-2xl bg-[var(--color-bg-panel)] p-8">
       <ActivityFeed>
         <ActivityFeed.Item icon={Send} intent="info" timestamp="2m ago">
           Triggered alert pipeline run
@@ -126,8 +126,8 @@ export const IntentSuccessColorsCircleGreen: Story = {
     </ActivityFeed>
   ),
   play: async ({ canvasElement }) => {
-    const circle = canvasElement.querySelector('[data-testid="i"] .rounded-full');
-    await expect(circle?.className ?? '').toMatch(/bg-green-500/);
+    const circle = canvasElement.querySelector('[data-testid="i"] [data-slot="disc"]');
+    await expect(circle).toHaveClass('bg-green-100', 'text-green-700');
   },
 };
 
@@ -147,5 +147,29 @@ export const TimestampStyle: Story = {
     await expect(style.fontFamily).not.toMatch(/mono/i);
     // text-2xs: 11px at the default text size.
     await expect(style.fontSize).toBe('11px');
+  },
+};
+
+export const RingFollowsTheSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="surface" className="bg-[var(--color-bg-panel)] p-8">
+      <ActivityFeed>
+        <ActivityFeed.Item icon={Check} intent="success" data-testid="i" timestamp="1m ago">
+          Done
+        </ActivityFeed.Item>
+      </ActivityFeed>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const disc = canvasElement.querySelector('[data-testid="i"] [data-slot="disc"]')!;
+    const outer = disc.parentElement!;
+    const panel = getComputedStyle(
+      canvasElement.querySelector('[data-testid="surface"]')!
+    ).backgroundColor;
+    // The halo is the surface colour, in the theme being rendered, not a fixed white or gray-900.
+    await expect(getComputedStyle(outer).boxShadow).toContain(panel);
+    // The tint sits on an opaque base: nothing behind the disc (the connector) shows through.
+    await expect(getComputedStyle(outer).backgroundColor).toBe(panel);
   },
 };
