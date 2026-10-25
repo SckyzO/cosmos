@@ -16,35 +16,16 @@
    `focus:border-brand-500`, so form controls lost their focus border in the dark themes. */
 @custom-variant dark (&:where(.dark, .dark *, .deep-blue, .deep-blue *));
 
-@theme {
-  /* ── Typography ─────────────────────────────────────────────────────────── */
-  --font-sans: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-
-  /* Sizes under text-xs (12px) for dense labels: 11px and 10px. Without a
-     --line-height they set only font-size, like text-[11px] would, and the
-     text size setting in css-vars.css can scale them. */
-  --text-2xs: 0.6875rem;
-  --text-3xs: 0.625rem;
-
+/* The colors the charts read as plain CSS variables (var(--color-brand-500),
+ * var(--color-status-warn)…), with no utility behind them. Tailwind only emits
+ * a theme variable that a utility uses, so these are `static`: always in the
+ * CSS, whatever the app's classes are. */
+@theme static {
   /* ── Status colors — health indicators, badges, alerts ─────────────────── */
   --color-status-ok: #10b981;
   --color-status-warn: #f59e0b;
   --color-status-crit: #ef4444;
   --color-status-unknown: #6b7280;
-
-  /* ── Card shadows — work on both light and dark backgrounds ────────────── */
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 40%), 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow-card-hover: 0 10px 25px rgb(0 0 0 / 50%), 0 4px 6px rgb(0 0 0 / 20%);
-
-  /* ── TailAdmin elevation shadows (theme.shadow-{xs,sm,md,lg,xl}) ───────── */
-  --shadow-theme-xs: 0px 1px 2px 0px rgb(16 24 40 / 5%);
-  --shadow-theme-sm: 0px 1px 3px 0px rgb(16 24 40 / 10%), 0px 1px 2px 0px rgb(16 24 40 / 6%);
-  --shadow-theme-md: 0px 4px 8px -2px rgb(16 24 40 / 10%), 0px 2px 4px -2px rgb(16 24 40 / 6%);
-  --shadow-theme-lg: 0px 12px 16px -4px rgb(16 24 40 / 8%), 0px 4px 6px -2px rgb(16 24 40 / 3%);
-  --shadow-theme-xl: 0px 20px 24px -4px rgb(16 24 40 / 8%), 0px 8px 8px -4px rgb(16 24 40 / 3%);
-  --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
-  --shadow-focus-ring-error: 0 0 0 4px color-mix(in srgb, var(--color-red-500) 12%, transparent);
 
   /* ── Brand palette (TailAdmin blue) — [data-accent] in css-vars.css swaps it ── */
   --color-brand-25: #f2f7ff;
@@ -59,9 +40,6 @@
   --color-brand-800: #252dae;
   --color-brand-900: #262e89;
   --color-brand-950: #161950;
-
-  /* Dark gray aligned with Tailwind gray-900 — keeps SectionCard bg matching body bg */
-  --color-gray-dark: #111827;
 
   /* ── Semantic colors ───────────────────────────────────────────────────── */
   --color-success-25: #f6fef9;
@@ -81,6 +59,34 @@
   --color-warning-100: #fef0c7;
   --color-warning-500: #f79009;
   --color-warning-600: #dc6803;
+}
+
+@theme {
+  /* ── Typography ─────────────────────────────────────────────────────────── */
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Sizes under text-xs (12px) for dense labels: 11px and 10px. Without a
+     --line-height they set only font-size, like text-[11px] would, and the
+     text size setting in css-vars.css can scale them. */
+  --text-2xs: 0.6875rem;
+  --text-3xs: 0.625rem;
+
+  /* ── Card shadows — work on both light and dark backgrounds ────────────── */
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 40%), 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-card-hover: 0 10px 25px rgb(0 0 0 / 50%), 0 4px 6px rgb(0 0 0 / 20%);
+
+  /* ── TailAdmin elevation shadows (theme.shadow-{xs,sm,md,lg,xl}) ───────── */
+  --shadow-theme-xs: 0px 1px 2px 0px rgb(16 24 40 / 5%);
+  --shadow-theme-sm: 0px 1px 3px 0px rgb(16 24 40 / 10%), 0px 1px 2px 0px rgb(16 24 40 / 6%);
+  --shadow-theme-md: 0px 4px 8px -2px rgb(16 24 40 / 10%), 0px 2px 4px -2px rgb(16 24 40 / 6%);
+  --shadow-theme-lg: 0px 12px 16px -4px rgb(16 24 40 / 8%), 0px 4px 6px -2px rgb(16 24 40 / 3%);
+  --shadow-theme-xl: 0px 20px 24px -4px rgb(16 24 40 / 8%), 0px 8px 8px -4px rgb(16 24 40 / 3%);
+  --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
+  --shadow-focus-ring-error: 0 0 0 4px color-mix(in srgb, var(--color-red-500) 12%, transparent);
+
+  /* Dark gray aligned with Tailwind gray-900 — keeps SectionCard bg matching body bg */
+  --color-gray-dark: #111827;
 
   /* ── Bridges: aliases that pull values from CSS vars (defined in css-vars.css)
      so utilities like bg-accent-primary stay in sync with theme switcher. */
