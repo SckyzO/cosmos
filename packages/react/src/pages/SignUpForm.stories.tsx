@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { SignUpForm } from './SignUpForm';
 
@@ -133,5 +133,31 @@ export const WeakPasswordKeepsSubmitDisabled: Story = {
     await userEvent.click(canvas.getByLabelText(/i agree to the/i));
     const submit = canvas.getByRole('button', { name: /create account/i });
     await expect(submit).toBeDisabled();
+  },
+};
+
+// ── Narrow screens (#303) ────────────────────────────────────────────────────
+
+/** Below `sm`, the first and last name stack instead of squeezing into two narrow columns. */
+export const MobileStacksNameFields: Story = {
+  globals: mobileViewport,
+  args: { signInHref: '#' },
+  play: async ({ canvas, canvasElement }) => {
+    const first = canvas.getByLabelText(/First name/).getBoundingClientRect();
+    const last = canvas.getByLabelText(/Last name/).getBoundingClientRect();
+    await expect(last.top).toBeGreaterThanOrEqual(first.bottom);
+    await expect(last.width).toBeCloseTo(first.width, 0);
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** From `sm` they share a row. */
+export const NameFieldsShareARowWhenWide: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { signInHref: '#' },
+  play: async ({ canvas }) => {
+    const first = canvas.getByLabelText(/First name/).getBoundingClientRect();
+    const last = canvas.getByLabelText(/Last name/).getBoundingClientRect();
+    await expect(last.top).toBeCloseTo(first.top, 0);
   },
 };
