@@ -190,6 +190,10 @@ export const MenuListsTheHiddenCrumbsInOrder: Story = {
       'Aisle 03',
       'Rack 01-A',
     ]);
+    // Like the visible crumbs: a crumb with onClick is a button, one with href a link.
+    await expect(items[0].tagName).toBe('BUTTON');
+    await expect(items[2].tagName).toBe('A');
+    await expect(items[2]).toHaveAttribute('href', '#');
   },
 };
 
