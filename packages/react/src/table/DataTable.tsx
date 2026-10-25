@@ -5,23 +5,47 @@ import { ColumnHeader } from './ColumnHeader';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
-import { LoadingState } from '../feedback/LoadingState';
+import { Sk } from '../feedback/Skeleton';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
-import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
+import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
 import { useOverflows } from '../hooks/useOverflows';
+import { useScrollFade } from '../hooks/useScrollFade';
+import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
+import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
 import type { ColumnDef, DataTableDensity, SortDirection } from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
   columns: ColumnDef<T>[];
   rowKey: (row: T) => string | number;
-  /** Optional right-edge action column (typically a `RowActionButton`). */
+  /**
+   * Called when a row is clicked, or when Enter or Space is pressed on it: the row then takes the
+   * keyboard focus and a pointer cursor. A click on a control inside the row (the checkbox, the
+   * action column, a link or button in a cell) does not call it. With `rowHref`, a click on the
+   * row's link calls it too, once the browser follows the link.
+   */
+  onRowClick?: (row: T) => void;
+  /**
+   * Makes each row a link to the returned URL (a row that returns `undefined` stays a plain row).
+   * The first column holds the link, drawn over the whole row: a click anywhere on it, a middle
+   * click, "Open in a new tab" and Enter on the focused link all work as on a link. Keep the first
+   * column's content free of buttons and links (they cannot nest in a link), and give the
+   * others' as many as you want: they stay clickable above the row.
+   */
+  rowHref?: (row: T) => string | undefined;
+  /** Optional right-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
   renderRowAction?: (row: T) => React.ReactNode;
   pageSize?: number;
+  /**
+   * Keeps the header and shows `loadingRows` placeholder rows in place of the body, so the
+   * columns and the page do not jump when the rows arrive.
+   */
   loading?: boolean;
+  /** How many placeholder rows `loading` draws. Default 5. */
+  loadingRows?: number;
   error?: string | null;
   onRetry?: () => void;
   emptyTitle?: string;
@@ -32,6 +56,13 @@ export type DataTableProps<T> = {
    * email, an avatar) or need more room. Cell content stays vertically centred.
    */
   density?: DataTableDensity;
+  /**
+   * Pins the first data column (and the selection column before it) to the start while the table
+   * scrolls sideways, so the row stays identified on a narrow screen. With `rowHref`, the link
+   * of the row then covers its own column, and a click on the rest of the row follows it from a
+   * handler: middle click and the context menu work on the first column only.
+   */
+  stickyFirstColumn?: boolean;
 
   // ── Selection ──────────────────────────────────────────────────────────────
   /** Show a checkbox column and enable row selection. */
@@ -62,6 +93,10 @@ export type DataTableProps<T> = {
   className?: string;
 };
 
+// The selection and action columns keep these widths whatever the data columns add up to.
+const SELECT_COLUMN_WIDTH = '44px';
+const ACTION_COLUMN_WIDTH = '96px';
+
 const ALIGN_CELL = {
   left: 'text-left',
   right: 'text-right',
@@ -81,14 +116,18 @@ export const DataTable = <T,>({
   rows,
   columns,
   rowKey,
+  onRowClick,
+  rowHref,
   renderRowAction,
   pageSize = 25,
   loading = false,
+  loadingRows = 5,
   error = null,
   onRetry,
   emptyTitle = 'No results',
   emptyDescription,
   density = 'default',
+  stickyFirstColumn = false,
   selectable = false,
   selection: selectionProp,
   defaultSelection,
@@ -104,6 +143,8 @@ export const DataTable = <T,>({
 }: DataTableProps<T>) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
+  // An edge fades where the table goes on, as the Tabs' do; not the start one under a pinned column.
+  const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -191,6 +232,14 @@ export const DataTable = <T,>({
     () => sortRows(filteredRows, columns, sortKey, sortDir),
     [filteredRows, columns, sortKey, sortDir]
   );
+
+  // In a fixed layout the width the columns leave over is shared among all of them, the selection
+  // and action columns too. When every data column states a width, the first one gives it up and
+  // takes what is left, so those two stay as wide as asked.
+  const firstColumnTakesTheRest =
+    (selectable || Boolean(renderRowAction)) && columns.length > 0 && columns.every((c) => c.width);
+
+  const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -305,96 +354,186 @@ export const DataTable = <T,>({
         role={region ? 'region' : undefined}
         aria-label={region ? ariaLabel : undefined}
         aria-labelledby={region ? ariaLabelledBy : undefined}
+        style={fade}
         className="focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset"
       >
-        {loading ? (
-          <div className="flex h-full items-center justify-center py-10">
-            <LoadingState />
-          </div>
-        ) : error ? (
-          <div className="flex h-full items-center justify-center py-10">
-            <ErrorState message={error} onRetry={onRetry} />
-          </div>
-        ) : sortedRows.length === 0 ? (
-          <div className="flex h-full items-center justify-center py-10">
-            <EmptyState title={emptyTitle} description={emptyDescription} />
-          </div>
-        ) : (
-          <table
-            aria-label={ariaLabel}
-            aria-labelledby={ariaLabelledBy}
-            className="w-full table-fixed"
-          >
-            <colgroup>
-              {selectable && <col style={{ width: '44px' }} />}
-              {columns.map((c) => (
-                <col key={c.key} style={c.width ? { width: c.width } : undefined} />
+        {loading && (
+          <span role="status" className="sr-only">
+            Loading…
+          </span>
+        )}
+        <table
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
+          aria-busy={loading || undefined}
+          className="w-full table-fixed"
+        >
+          <colgroup>
+            {selectable && <col style={{ width: SELECT_COLUMN_WIDTH }} />}
+            {columns.map((c, i) => (
+              <col
+                key={c.key}
+                style={
+                  c.width && !(i === 0 && firstColumnTakesTheRest) ? { width: c.width } : undefined
+                }
+              />
+            ))}
+            {renderRowAction && <col style={{ width: ACTION_COLUMN_WIDTH }} />}
+          </colgroup>
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-gray-100 dark:border-gray-800">
+              {selectable && (
+                <th
+                  className={clsx(
+                    HEADER_CELL,
+                    HEADER_CELL_PADDING[density],
+                    stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
+                  )}
+                >
+                  <div className="flex items-center">
+                    <Checkbox
+                      aria-label="Select all rows"
+                      checked={allVisibleSelected}
+                      indeterminate={someVisibleSelected}
+                      onChange={toggleAllVisible}
+                    />
+                  </div>
+                </th>
+              )}
+              {columns.map((col, i) => (
+                <ColumnHeader
+                  key={col.key}
+                  className={clsx(
+                    stickyFirstColumn &&
+                      i === 0 && [
+                        stickyHeadCell(true),
+                        selectable ? STICKY_AFTER_SELECT : STICKY_START,
+                      ]
+                  )}
+                  label={col.label}
+                  align={col.align}
+                  sortable={col.sortable}
+                  filterable={col.filterable}
+                  sortDir={sortKey === col.key ? sortDir : null}
+                  onSortToggle={() => handleSortToggle(col.key)}
+                  filterValues={filterValues[col.key]}
+                  filterSelected={filters[col.key]}
+                  onFilterToggle={(v) => handleFilterToggle(col.key, v)}
+                  onFilterClear={() => clearFilter(col.key)}
+                  density={density}
+                />
               ))}
-              {renderRowAction && <col style={{ width: '8%' }} />}
-            </colgroup>
-            <thead className="sticky top-0 z-10">
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                {selectable && (
-                  <th
-                    className={clsx(
-                      'bg-gray-50 px-4',
-                      HEADER_CELL_PADDING[density],
-                      'dark:bg-gray-800'
+              {renderRowAction && (
+                <th className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], 'text-right')}>
+                  Action
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {loading ? (
+              Array.from({ length: loadingRows }, (_, i) => (
+                <tr key={i}>
+                  {selectable && <td className={clsx('px-4', BODY_CELL_PADDING[density])} />}
+                  {columns.map((col, c) => (
+                    <td
+                      key={col.key}
+                      className={clsx(
+                        'px-4',
+                        BODY_CELL_PADDING[density],
+                        // The cell's own line height, so a row is as tall loading as loaded.
+                        'text-sm',
+                        ALIGN_CELL[col.align ?? 'left']
+                      )}
+                    >
+                      <div
+                        className={clsx(
+                          'flex h-5 items-center',
+                          col.align === 'right' && 'justify-end',
+                          col.align === 'center' && 'justify-center'
+                        )}
+                      >
+                        <Sk h="h-3" w={SKELETON_WIDTHS[(i + c) % SKELETON_WIDTHS.length]} />
+                      </div>
+                    </td>
+                  ))}
+                  {renderRowAction && (
+                    <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                      <div className="flex h-5 items-center justify-end">
+                        <Sk h="h-5" w="w-12" round="rounded-lg" />
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))
+            ) : error || sortedRows.length === 0 ? (
+              <tr>
+                <td colSpan={columnCount} className="px-4">
+                  <div className="flex justify-center">
+                    {error ? (
+                      <ErrorState message={error} onRetry={onRetry} />
+                    ) : (
+                      <EmptyState title={emptyTitle} description={emptyDescription} />
                     )}
-                  >
-                    <div className="flex items-center">
-                      <Checkbox
-                        aria-label="Select all rows"
-                        checked={allVisibleSelected}
-                        indeterminate={someVisibleSelected}
-                        onChange={toggleAllVisible}
-                      />
-                    </div>
-                  </th>
-                )}
-                {columns.map((col) => (
-                  <ColumnHeader
-                    key={col.key}
-                    label={col.label}
-                    align={col.align}
-                    sortable={col.sortable}
-                    filterable={col.filterable}
-                    sortDir={sortKey === col.key ? sortDir : null}
-                    onSortToggle={() => handleSortToggle(col.key)}
-                    filterValues={filterValues[col.key]}
-                    filterSelected={filters[col.key]}
-                    onFilterToggle={(v) => handleFilterToggle(col.key, v)}
-                    onFilterClear={() => clearFilter(col.key)}
-                    density={density}
-                  />
-                ))}
-                {renderRowAction && (
-                  <th
-                    className={clsx(
-                      'bg-gray-50 px-4',
-                      HEADER_CELL_PADDING[density],
-                      'text-right text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400'
-                    )}
-                  >
-                    Action
-                  </th>
-                )}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {pageRows.map((row) => {
+            ) : (
+              pageRows.map((row) => {
                 const key = rowKey(row);
                 const isSelected = selection.has(key);
+                const href = rowHref?.(row);
+                // A link is the focusable thing of its row; without one, the row itself is.
+                const focusableRow = onRowClick && !href;
                 return (
                   <tr
                     key={key}
+                    tabIndex={focusableRow ? 0 : undefined}
+                    onClick={
+                      onRowClick || (href && stickyFirstColumn)
+                        ? (e) => {
+                            if (!isRowClick(e)) return;
+                            // The link covers its own column only: follow it from the rest of
+                            // the row. Its click comes back here, and calls onRowClick.
+                            const link =
+                              e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
+                            if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
+                              link.click();
+                              return;
+                            }
+                            onRowClick?.(row);
+                          }
+                        : undefined
+                    }
+                    onKeyDown={
+                      focusableRow
+                        ? (e) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key !== 'Enter' && e.key !== ' ') return;
+                            e.preventDefault();
+                            onRowClick(row);
+                          }
+                        : undefined
+                    }
                     className={clsx(
                       'hover:bg-gray-50 dark:hover:bg-white/5',
-                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5'
+                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
+                      (onRowClick || href) && 'cursor-pointer',
+                      stickyFirstColumn && 'group',
+                      focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+                      href &&
+                        'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
                     )}
                   >
                     {selectable && (
-                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                      <td
+                        className={clsx(
+                          'px-4',
+                          BODY_CELL_PADDING[density],
+                          href && 'relative z-[1]',
+                          stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
+                        )}
+                      >
                         {/* A flex box centres the checkbox; inline, it sat on the
                             text baseline and moved with the font metrics. */}
                         <div className="flex items-center">
@@ -406,30 +545,48 @@ export const DataTable = <T,>({
                         </div>
                       </td>
                     )}
-                    {columns.map((col) => (
+                    {columns.map((col, i) => (
                       <td
                         key={col.key}
                         className={clsx(
                           'px-4',
                           BODY_CELL_PADDING[density],
                           'text-sm',
-                          ALIGN_CELL[col.align ?? 'left']
+                          ALIGN_CELL[col.align ?? 'left'],
+                          href && i > 0 && RAISE_CONTROLS,
+                          stickyFirstColumn &&
+                            i === 0 && [
+                              stickyBodyCell(isSelected, true),
+                              selectable ? STICKY_AFTER_SELECT : STICKY_START,
+                            ]
                         )}
                       >
-                        {col.render(row)}
+                        {href && i === 0 ? (
+                          <a href={href} data-row-link className={ROW_LINK}>
+                            {col.render(row)}
+                          </a>
+                        ) : (
+                          col.render(row)
+                        )}
                       </td>
                     ))}
                     {renderRowAction && (
-                      <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                      <td
+                        className={clsx(
+                          'px-4',
+                          BODY_CELL_PADDING[density],
+                          href && 'relative z-[1]'
+                        )}
+                      >
                         <div className="flex items-center justify-end">{renderRowAction(row)}</div>
                       </td>
                     )}
                   </tr>
                 );
-              })}
-            </tbody>
-          </table>
-        )}
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {!loading && !error && sortedRows.length > 0 && (

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { ChevronRight, Server, TrendingDown, TrendingUp } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
   Table,
   TableBody,
@@ -11,15 +11,21 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TableSkeletonRows,
 } from './Table';
+import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
 import { EmptyState } from '../feedback/EmptyState';
-import { Sk } from '../feedback/Skeleton';
-import { HealthDot } from '../status/HealthDot';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
-import { expectFocusRing } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectNoHorizontalOverflow,
+  expectTextContrast,
+  inEachTheme,
+  mobileViewport,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Tables/Table',
@@ -57,6 +63,25 @@ const NODES: Node[] = [
   { name: 'node-105', status: 'OK', room: 'Room C', cpu: 33, memory: 48, power: 351, trend: -4.0 },
   { name: 'node-106', status: 'INFO', room: 'Room C', cpu: 9, memory: 22, power: 248, trend: 0.6 },
 ];
+
+// What the dashboard story's cells show beside the node's metrics.
+const NOTES: Record<string, string> = {
+  'node-101': 'Primary database replica, nightly backup runs at 02:00.',
+  'node-102': 'Memory above the usual ceiling since the last firmware update.',
+  'node-103': 'Idle, kept as a spare for the Room B racks.',
+  'node-104': 'Fan 3 failed: ticket opened with the vendor, replacement due Friday.',
+  'node-105': 'Batch workers.',
+  'node-106': 'Decommissioning planned for next quarter.',
+};
+
+const COSTS: Record<string, number> = {
+  'node-101': 12.4,
+  'node-102': -3.15,
+  'node-103': 0,
+  'node-104': 148.9,
+  'node-105': -27.8,
+  'node-106': 1042.5,
+};
 
 const MANY_NODES: Node[] = Array.from({ length: 24 }, (_, i) => ({
   ...NODES[i % NODES.length],
@@ -399,33 +424,53 @@ export const Empty: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
+    await expect(canvas.getByText('No nodes')).toBeInTheDocument();
+  },
 };
 
 export const Loading: Story = {
   render: () => (
     <Wrap>
       <Table aria-busy="true">
+        <TableCaption>Compute nodes</TableCaption>
         <NodeHead />
         <TableBody>
-          {Array.from({ length: 4 }, (_, row) => (
-            <TableRow key={row}>
-              <TableCell>
-                <Sk h="h-3" w="w-24" />
-              </TableCell>
-              <TableCell>
-                <Sk h="h-3" w="w-16" />
-              </TableCell>
-              {Array.from({ length: 3 }, (_, col) => (
-                <TableCell key={col}>
-                  <Sk h="h-3" w="w-10" className="ml-auto" />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          <TableSkeletonRows rows={4} columns={5} numericColumns={[2, 3, 4]} />
         </TableBody>
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays, with the rows in its place.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
+    const table = canvas.getByRole('table', { hidden: true });
+    await expect(table.querySelector('thead')).not.toBeNull();
+    await expect(table.querySelectorAll('tbody > tr')).toHaveLength(4);
+    await expect(table.querySelectorAll('tbody > tr:first-child > td')).toHaveLength(5);
+  },
+};
+
+export const LoadingRowsFollowTheDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      {(['default', 'comfortable'] as const).map((density) => (
+        <Table key={density} density={density} aria-label={density} className="mb-4">
+          <TableBody>
+            <TableSkeletonRows rows={1} columns={3} />
+          </TableBody>
+        </Table>
+      ))}
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const height = (name: string) =>
+      canvas.getByRole('table', { name, hidden: true }).querySelector('tr')!.getBoundingClientRect()
+        .height;
+    await expect(height('comfortable')).toBeGreaterThan(height('default'));
+  },
 };
 
 const usageIntent = (pct: number): ProgressBarIntent =>
@@ -455,9 +500,12 @@ export const DashboardCells: Story = {
         <TableHead>
           <TableRow>
             <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>ID</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell className="min-w-40">Memory</TableHeaderCell>
+            <TableHeaderCell>Note</TableHeaderCell>
             <TableHeaderCell numeric>Power 24h</TableHeaderCell>
+            <TableHeaderCell numeric>Cost, 24h</TableHeaderCell>
             <TableHeaderCell align="right">Action</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -465,10 +513,10 @@ export const DashboardCells: Story = {
           {NODES.map((n) => (
             <TableRow key={n.name}>
               <TableCell>
-                <span className="flex items-center gap-2 font-medium whitespace-nowrap">
-                  <HealthDot status={n.status} pulse={n.status === 'CRIT'} />
-                  {n.name}
-                </span>
+                <TableIdentityCell title={n.name} subtitle={n.room} icon={Server} />
+              </TableCell>
+              <TableCell>
+                <TableIdCell>{`i-${n.name.slice(-3)}a9f${n.power}c0e41d7`}</TableIdCell>
               </TableCell>
               <TableCell>
                 <StatusBadge status={n.status} size="sm" />
@@ -482,8 +530,14 @@ export const DashboardCells: Story = {
                   aria-label={`Memory used on ${n.name}`}
                 />
               </TableCell>
+              <TableCell>
+                <TableDescriptionCell className="max-w-48">{NOTES[n.name]}</TableDescriptionCell>
+              </TableCell>
               <TableCell numeric>
                 <Trend value={n.trend} />
+              </TableCell>
+              <TableCell numeric>
+                <TableAmountCell value={COSTS[n.name]} currency="EUR" locale="en-GB" />
               </TableCell>
               <TableCell align="right">
                 <RowActionButton aria-label={`View ${n.name}`} />
@@ -494,4 +548,79 @@ export const DashboardCells: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-104/ });
+    // The identity cell: the name, then its detail line, under an icon that says nothing more.
+    await expect(within(row).getByText('node-104')).toBeVisible();
+    await expect(within(row).getByText('Room B')).toBeVisible();
+    // The identifier is monospaced, and the note is cut with its whole text as a tooltip.
+    await expect(getComputedStyle(within(row).getByText(/^i-104/)).fontFamily).toMatch(/mono/i);
+    const note = within(row).getByText(/Fan 3 failed/);
+    await expect(note).toHaveAttribute('title', expect.stringContaining('replacement due Friday.'));
+    await expect(note.scrollWidth).toBeGreaterThan(note.clientWidth);
+    // Gains are green and losses red, signed so the colour is not the only cue, and readable in
+    // every theme.
+    const gain = within(row).getByText('+€148.90');
+    const loss = within(canvas.getByRole('row', { name: /node-102/ })).getByText('-€3.15');
+    const zero = within(canvas.getByRole('row', { name: /node-103/ })).getByText('€0.00');
+    await expect(getComputedStyle(gain).color).not.toBe(getComputedStyle(loss).color);
+    await expect(zero.className).not.toMatch(/green|red/);
+    inEachTheme(() => {
+      for (const el of [gain, loss, zero]) expectTextContrast(el);
+    });
+  },
+};
+
+export const MobileStickyFirstColumn: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <Table stickyFirstColumn striped>
+        <TableCaption>Compute nodes</TableCaption>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell className="min-w-40">Room</TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              CPU
+            </TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              Memory
+            </TableHeaderCell>
+            <TableHeaderCell numeric className="min-w-32">
+              Power
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {NODES.map((n) => (
+            <NodeRow key={n.name} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const table = canvas.getByRole('table', { name: 'Compute nodes' });
+    const scroller = table.parentElement as HTMLElement;
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    // A region that scrolls is a tab stop, so the keyboard can scroll it.
+    await waitFor(() => expect(scroller).toHaveAttribute('tabindex', '0'));
+    // The end fades, the start does not: the first column is pinned there.
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
+    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const head = canvas.getAllByRole('columnheader')[0];
+    const cell = canvas.getAllByRole('row')[2].firstElementChild as HTMLElement;
+    const second = canvas.getAllByRole('row')[2].children[1];
+    // Pinned to the padding box of the wrapper, inside its 1px border.
+    const start = left(scroller) + scroller.clientLeft;
+    const before = left(second);
+    scroller.scrollLeft = 120;
+    await waitFor(() => expect(left(second)).toBeLessThan(before));
+    await expect(left(head)).toBe(start);
+    await expect(left(cell)).toBe(start);
+    // Opaque even on a striped row, which has a background of its own.
+    await expect(getComputedStyle(cell).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
 };

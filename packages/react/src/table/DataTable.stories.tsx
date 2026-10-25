@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Archive, Download, Trash2 } from 'lucide-react';
+import { Archive, Copy, Download, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
@@ -7,20 +7,29 @@ import {
   expectFocusBorder,
   expectFocusRing,
   expectOutsideClip,
+  portalDocsParams,
   scrollAnchor,
 } from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
+import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from './Table';
 import type { ColumnDef, DataTableDensity } from './types';
 import { StatusBadge } from '../status/StatusBadge';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import type { Intent } from '../ui/intent';
 import { Button } from '../ui/Button';
+import { Menu } from '../ui/Menu';
 import { RowActionButton } from '../ui/RowActionButton';
+import { RowActionsMenu } from './RowActionsMenu';
+import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
+import { placeholderAvatar } from '../storybook-avatars';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
+
+// What the row menu's danger item calls.
+const deleted = fn();
 
 const meta = {
   title: 'Tables/DataTable',
@@ -140,9 +149,42 @@ export const Alerts: Story = {
 export const Loading: Story = {
   render: () => (
     <Wrap>
-      <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading />
+      <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading loadingRows={4} />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays, so the columns do not jump: its cells, then one row per placeholder.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    const table = canvas.getByRole('table');
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    await expect(table.querySelector('thead')).not.toBeNull();
+    await expect(table.querySelectorAll('tbody > tr')).toHaveLength(4);
+    await expect(canvas.getByRole('status')).toHaveTextContent('Loading…');
+  },
+};
+
+export const LoadingKeepsTheSelectionAndActionColumns: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        loading
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // The default is five rows, and every one has a cell per column.
+    const rowsLoading = within(canvas.getByRole('table')).getAllByRole('row').slice(1);
+    await expect(rowsLoading).toHaveLength(5);
+    for (const row of rowsLoading) await expect(row.children).toHaveLength(columns.length + 2);
+    const heads = canvas.getAllByRole('columnheader');
+    await expect(heads[0].getBoundingClientRect().width).toBe(44);
+  },
 };
 
 export const ErrorWithRetry: Story = {
@@ -157,6 +199,13 @@ export const ErrorWithRetry: Story = {
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays above the error, so the page has the same shape as with rows.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    await expect(canvas.getByRole('table').querySelector('thead')).not.toBeNull();
+    await expect(canvas.getByText('Failed to fetch alerts.')).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  },
 };
 
 export const Empty: Story = {
@@ -171,6 +220,11 @@ export const Empty: Story = {
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    await expect(canvas.getByRole('table').querySelector('thead')).not.toBeNull();
+    await expect(canvas.getByText('No active alerts')).toBeInTheDocument();
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -379,6 +433,29 @@ export const ScrollingAreaFollowsItsContent: Story = {
   },
 };
 
+export const SortableHeadersShowTheirAffordance: Story = {
+  tags: ['!dev'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    // Before any sort every sortable column carries a muted two-way icon, hidden from assistive
+    // technology (the button is named by its label).
+    const name = canvas.getByRole('columnheader', { name: /Name/ });
+    const button = within(name).getByRole('button', { name: 'Name' });
+    const icon = button.querySelector('svg');
+    await expect(icon).not.toBeNull();
+    await expect(icon).toHaveAttribute('aria-hidden', 'true');
+    await expect(icon).toHaveClass('lucide-chevrons-up-down');
+    await expect(name).toHaveAttribute('aria-sort', 'none');
+    // Sorted, the icon points the way, and aria-sort follows.
+    await userEvent.click(button);
+    await expect(name).toHaveAttribute('aria-sort', 'ascending');
+    await expect(button.querySelector('svg')).toHaveClass('lucide-chevron-up');
+    await userEvent.click(button);
+    await expect(name).toHaveAttribute('aria-sort', 'descending');
+    await expect(button.querySelector('svg')).toHaveClass('lucide-chevron-down');
+  },
+};
+
 // ── New: Selection + Bulk actions + Global search ────────────────────────────
 
 export const WithSelection: Story = {
@@ -390,9 +467,19 @@ export const WithSelection: Story = {
         rowKey={(r) => r.id}
         pageSize={10}
         selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The story's column widths add up to 80%: the rest goes to a data column, not to the
+    // selection and action columns, which keep their fixed width.
+    const heads = canvas.getAllByRole('columnheader');
+    await expect(heads[0].getBoundingClientRect().width).toBe(44);
+    const action = heads[heads.length - 1];
+    await expect(action).toHaveTextContent('Action');
+    await expect(action.getBoundingClientRect().width).toBe(96);
+  },
 };
 
 export const WithBulkActions: Story = {
@@ -892,5 +979,460 @@ export const ColumnFilterFollowsAndCloses: Story = {
     await page.findByPlaceholderText('Search…');
     await userEvent.click(canvas.getByRole('button', { name: 'Outside' }));
     await waitFor(() => expect(page.queryByPlaceholderText('Search…')).toBeNull());
+  },
+};
+
+// ── Row click and row links ──────────────────────────────────────────────────
+
+export const ClickableRows: Story = {
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        onRowClick={args.onRowClick}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const row = canvas.getByRole('row', { name: /node-100/ });
+    await expect(row).toHaveClass('cursor-pointer');
+    // A click on a cell is a click on the row.
+    await userEvent.click(within(row).getByText('node-100'));
+    await expect(onRowClick).toHaveBeenCalledTimes(1);
+    await expect(onRowClick).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'alert-1' }));
+    // The checkbox and the action column keep their own meaning.
+    await userEvent.click(within(row).getByRole('checkbox', { name: 'Select row alert-1' }));
+    await userEvent.click(within(row).getByRole('button', { name: 'View' }));
+    await expect(onRowClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const ClickableRowFocusesFromTheKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 3)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        onRowClick={args.onRowClick}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const row = canvas.getByRole('row', { name: /node-101/ });
+    await expect(row).toHaveAttribute('tabindex', '0');
+    await expectFocusRing(row, { inset: true });
+    await userEvent.keyboard('{Enter}');
+    await expect(onRowClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'alert-2' }));
+    await userEvent.keyboard(' ');
+    await expect(onRowClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+// The link of a row would navigate the page that runs the story: record the click that reaches
+// the document and cancel it.
+const recordLinkClicks = () => {
+  const followed: (string | null)[] = [];
+  const listener = (e: Event) => {
+    const link = (e.target as Element).closest('a');
+    if (!link) return;
+    e.preventDefault();
+    followed.push(link.getAttribute('href'));
+  };
+  document.addEventListener('click', listener);
+  return { followed, stop: () => document.removeEventListener('click', listener) };
+};
+
+// The link sits in the first column: the name leads.
+const linkColumns = [columns[1], columns[0], ...columns.slice(2)];
+
+export const LinkRows: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={linkColumns}
+        rowKey={(r) => r.id}
+        selectable
+        rowHref={(r) => `#${r.id}`}
+        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-100/ });
+    const link = within(row).getByRole('link', { name: /node-100/ });
+    await expect(link).toHaveAttribute('href', '#alert-1');
+    // The link is drawn over the whole row: what sits under a point in another cell is the link,
+    // and what sits under the checkbox and the action button is that control, not the link.
+    const under = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    };
+    await expect(under(within(row).getByText('cpu'))).toBe(link);
+    const checkbox = within(row).getByRole('checkbox');
+    const edit = within(row).getByRole('button', { name: 'Edit' });
+    await expect(under(checkbox.closest('label') ?? checkbox)?.closest('label')).not.toBeNull();
+    await expect(under(edit)?.closest('button')).toBe(edit);
+    // Clicking a control does not follow the link; clicking elsewhere on the row does.
+    const clicks = recordLinkClicks();
+    try {
+      await userEvent.click(within(row).getByRole('checkbox'));
+      await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+      await expect(clicks.followed).toEqual([]);
+      // userEvent clicks the element it is given, so give it the one under the cell's point.
+      await userEvent.click(under(within(row).getByText('cpu'))!);
+      await expect(clicks.followed).toEqual(['#alert-1']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
+
+export const LinkRowFocusesFromTheKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 3)}
+        columns={linkColumns}
+        rowKey={(r) => r.id}
+        rowHref={(r) => `#${r.id}`}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-102/ });
+    const link = within(row).getByRole('link');
+    // The row draws the ring: the link itself would only outline its cell.
+    await expectFocusRing(link, { ring: row, inset: true });
+    const clicks = recordLinkClicks();
+    try {
+      await userEvent.keyboard('{Enter}');
+      await expect(clicks.followed).toEqual(['#alert-3']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
+
+export const RowMenu: Story = {
+  parameters: portalDocsParams.lg(),
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        onRowClick={args.onRowClick}
+        renderRowAction={(r) => (
+          <RowActionsMenu aria-label={`Actions for ${r.name}`}>
+            <Menu.Item icon={Pencil} onSelect={fn()}>
+              Edit
+            </Menu.Item>
+            <Menu.Item icon={Copy}>Duplicate</Menu.Item>
+            <Menu.Separator />
+            <Menu.Item icon={Trash2} intent="danger" onSelect={() => deleted(r.id)}>
+              Delete
+            </Menu.Item>
+          </RowActionsMenu>
+        )}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const page = within(document.body);
+    deleted.mockClear();
+    const trigger = canvas.getByRole('button', { name: 'Actions for node-101' });
+    // The 32px button fits the action column.
+    await expect(trigger.getBoundingClientRect().width).toBe(32);
+    await userEvent.click(trigger);
+    const menu = await page.findByRole('menu', { name: 'Actions for node-101' });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    // The danger item is red, and choosing it runs it, closes the menu, and is not a row click.
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Delete' }));
+    await expect(deleted).toHaveBeenCalledWith('alert-2');
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    // Nor is the click on the trigger, or on the menu around its items, one on the row.
+    await userEvent.click(trigger);
+    await userEvent.click(await page.findByRole('separator'));
+    await expect(onRowClick).not.toHaveBeenCalled();
+  },
+};
+
+export const HeaderCellsShareOneStyleWithTable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        <DataTable
+          rows={rows.slice(0, 2)}
+          columns={columns.slice(0, 2)}
+          rowKey={(r) => r.id}
+          selectable
+          renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Severity</TableHeaderCell>
+              <TableHeaderCell>Name</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>OK</TableCell>
+              <TableCell>node-100</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const look = (el: Element) => {
+      const cs = getComputedStyle(el);
+      return {
+        fontSize: cs.fontSize,
+        fontWeight: cs.fontWeight,
+        letterSpacing: cs.letterSpacing,
+        textTransform: cs.textTransform,
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+      };
+    };
+    const [dataTable, table] = canvas.getAllByRole('table');
+    const reference = look(within(table).getAllByRole('columnheader')[0]);
+    await expect(reference.textTransform).toBe('uppercase');
+    // Every header cell of the DataTable (selection, data and action) looks like the Table's,
+    // and so does the label of a sortable one, which is a button.
+    for (const th of within(dataTable).getAllByRole('columnheader')) {
+      await expect(look(th)).toEqual(reference);
+      const button = th.querySelector('button');
+      if (button) await expect(look(button)).toMatchObject({ textTransform: 'uppercase' });
+    }
+  },
+};
+
+// Wide enough to scroll sideways on a phone.
+const wideColumns = columns.map((c) => ({ ...c, width: '160px' }));
+
+const scrollerOf = (table: HTMLElement) => table.parentElement as HTMLElement;
+
+export const MobileScrollsWithAnEdgeFade: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.id} pageSize={5} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    // At the start, only the end fades: there is more to the right.
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
+    await expect(getComputedStyle(scroller).maskImage).toMatch(
+      /^linear-gradient\(to right, rgb\(0, 0, 0\), rgb\(0, 0, 0\) 24px/
+    );
+    // Scrolled into the middle, both do; at the end, only the start.
+    scroller.scrollLeft = 200;
+    await waitFor(() =>
+      expect(getComputedStyle(scroller).maskImage).toMatch(
+        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgba\(0, 0, 0, 0\)\)$/
+      )
+    );
+    scroller.scrollLeft = scroller.scrollWidth;
+    await waitFor(() =>
+      expect(getComputedStyle(scroller).maskImage).toMatch(
+        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgb\(0, 0, 0\)\)$/
+      )
+    );
+  },
+};
+
+export const TableThatFitsHasNoFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.id} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
+    await expect(getComputedStyle(scroller).maskImage).toBe('none');
+  },
+};
+
+export const StickyFirstColumn: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={[columns[1], columns[0], ...wideColumns.slice(2)]}
+        rowKey={(r) => r.id}
+        pageSize={5}
+        selectable
+        stickyFirstColumn
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const table = canvas.getByRole('table');
+    const scroller = scrollerOf(table);
+    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const row = within(table).getAllByRole('row')[1];
+    const [select, first, second] = within(row).getAllByRole('cell');
+    const [selectHead, firstHead] = within(table).getAllByRole('columnheader');
+    const start = left(scroller);
+    const secondBefore = left(second);
+    scroller.scrollLeft = 150;
+    await waitFor(() => expect(left(second)).toBeLessThan(secondBefore));
+    // The selection column and the first data column stay where they were, header and body
+    // alike, with the second one scrolling under the pinned pair.
+    await expect(left(select)).toBe(start);
+    await expect(left(selectHead)).toBe(start);
+    await expect(left(first)).toBe(start + 44);
+    await expect(left(firstHead)).toBe(start + 44);
+    // The start edge is the pinned column's: it does not fade.
+    await expect(getComputedStyle(scroller).maskImage).not.toMatch(
+      /^linear-gradient\(to right, rgba/
+    );
+    // Pinned cells are opaque, or the ones under them would show through.
+    await expect(getComputedStyle(first).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(select).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+};
+
+export const StickyFirstColumnKeepsRowLinks: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 4)}
+        columns={[columns[1], ...wideColumns.slice(2)]}
+        rowKey={(r) => r.id}
+        rowHref={(r) => `#${r.id}`}
+        stickyFirstColumn
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-101/ });
+    const clicks = recordLinkClicks();
+    try {
+      // A click on a cell that scrolls follows the link of the pinned one, which does not cover it.
+      await userEvent.click(within(row).getAllByRole('cell')[2]);
+      await expect(clicks.followed).toEqual(['#alert-2']);
+      await userEvent.click(within(row).getByRole('link'));
+      await expect(clicks.followed).toEqual(['#alert-2', '#alert-2']);
+    } finally {
+      clicks.stop();
+    }
+  },
+};
+
+type Customer = { id: string; name: string; email: string; plan: string; balance: number };
+
+const customers: Customer[] = [
+  {
+    id: 'cus_9f2a41c07d5e8b3a6c1d',
+    name: 'Ada Lovelace',
+    email: 'ada.lovelace@analytical-engine.example.org',
+    plan: 'Business, billed yearly, with the audit log and single sign-on add-ons',
+    balance: 1240.5,
+  },
+  {
+    id: 'cus_1b7c88e02f4a9d63e5b0',
+    name: 'Grace Hopper',
+    email: 'grace@cobol.example.org',
+    plan: 'Team',
+    balance: -89,
+  },
+  {
+    id: 'cus_5d0e73a91c2b4f8a6e37',
+    name: 'Alan Turing',
+    email: 'alan@bletchley.example.org',
+    plan: 'Free',
+    balance: 0,
+  },
+];
+
+const customerColumns: ColumnDef<Customer>[] = [
+  {
+    key: 'name',
+    label: 'Customer',
+    width: '30%',
+    sortable: true,
+    sortValue: (r) => r.name,
+    render: (r) => (
+      <TableIdentityCell title={r.name} subtitle={r.email} src={placeholderAvatar(r.name, 80)} />
+    ),
+  },
+  {
+    key: 'id',
+    label: 'ID',
+    width: '20%',
+    render: (r) => <TableIdCell>{r.id}</TableIdCell>,
+  },
+  {
+    key: 'plan',
+    label: 'Plan',
+    width: '28%',
+    render: (r) => <TableDescriptionCell lines={2}>{r.plan}</TableDescriptionCell>,
+  },
+  {
+    key: 'balance',
+    label: 'Balance',
+    width: '22%',
+    align: 'right',
+    sortable: true,
+    sortValue: (r) => r.balance,
+    render: (r) => <TableAmountCell value={r.balance} currency="USD" locale="en-US" />,
+  },
+];
+
+export const CellHelpers: Story = {
+  render: () => (
+    <Wrap>
+      <div className="max-w-3xl">
+        <DataTable
+          rows={customers}
+          columns={customerColumns}
+          rowKey={(r) => r.id}
+          density="comfortable"
+          aria-label="Customers"
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // In the fixed layout of a DataTable the cells truncate to their column, whatever they hold.
+    const email = canvas.getByText('ada.lovelace@analytical-engine.example.org');
+    await expect(email.scrollWidth).toBeGreaterThan(email.clientWidth);
+    await expect(canvas.getByText('cus_9f2a41c07d5e8b3a6c1d')).toHaveAttribute(
+      'title',
+      'cus_9f2a41c07d5e8b3a6c1d'
+    );
+    const plan = canvas.getByText(/^Business, billed yearly/);
+    await expect(plan).toHaveAttribute('title', expect.stringContaining('single sign-on'));
+    await expect(canvas.getByText('+$1,240.50')).toBeVisible();
+    await expect(canvas.getByText('-$89.00')).toBeVisible();
+    expectNoHorizontalOverflow();
   },
 };
