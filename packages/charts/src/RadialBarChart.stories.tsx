@@ -8,6 +8,8 @@ import {
   expectColorInThemes,
   expectColorsFromTokens,
   expectPaletteFromTheme,
+  opaqueColor,
+  resolveColor,
   expectTextFollowsTheme,
   Rerender,
   expectNoRedrawOnRerender,
@@ -135,6 +137,26 @@ export const SemiCircleStatusColors: Story = {
       </Card>
       <Card title="db-01">
         <SemiCircleGauge value={94} label="CPU" color="#ef4444" />
+      </Card>
+    </div>
+  ),
+};
+
+/**
+ * `color` is on every gauge: the arc of `StrokedGauge`, and the color
+ * `GradientRadial` starts from before it fades to the theme's success color.
+ */
+export const GaugeColors: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="SemiCircleGauge">
+        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+      </Card>
+      <Card title="StrokedGauge">
+        <StrokedGauge value={94} label="Disk" color="#ef4444" />
+      </Card>
+      <Card title="GradientRadial">
+        <GradientRadial value={64} label="Health" color="#8b5cf6" />
       </Card>
     </div>
   ),
@@ -282,6 +304,40 @@ export const FormatValueFormatsLabels: Story = {
         .querySelector('.apexcharts-radial-series path')
         ?.dispatchEvent(new MouseEvent('mouseenter'));
       expect(value()).toBe('92 pts');
+    });
+  },
+};
+
+/** `color` colors the arc of every gauge; the gradient starts from it. */
+export const ColorSetsTheArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-testid="semicircle">
+        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={94} label="Disk" color="#ef4444" />
+      </div>
+      <div data-testid="gradient">
+        <GradientRadial value={64} label="Health" color="#8b5cf6" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const arc = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"] .apexcharts-radialbar-area[j]`);
+    const stroke = (id: string) => () => arc(id)?.getAttribute('stroke');
+    await waitFor(() => {
+      expect(opaqueColor(stroke('semicircle')() ?? '')).toBe(resolveColor('#f59e0b'));
+      expect(opaqueColor(stroke('stroked')() ?? '')).toBe(resolveColor('#ef4444'));
+    });
+    // The gradient: its first stop is the color, its last the theme's success.
+    await waitFor(() => {
+      const id = /url\(#(.+)\)/.exec(stroke('gradient')() ?? '')?.[1];
+      const stops = [...canvasElement.querySelectorAll(`[id="${id}"] stop`)];
+      expect(stops.length).toBeGreaterThan(1);
+      expect(opaqueColor(stops[0].getAttribute('stop-color') ?? '')).toBe(resolveColor('#8b5cf6'));
     });
   },
 };
