@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Archive, Download, Trash2 } from 'lucide-react';
+import { Archive, Copy, Download, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
@@ -7,6 +7,7 @@ import {
   expectFocusBorder,
   expectFocusRing,
   expectOutsideClip,
+  portalDocsParams,
   scrollAnchor,
 } from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
@@ -17,10 +18,15 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import type { Intent } from '../ui/intent';
 import { Button } from '../ui/Button';
+import { Menu } from '../ui/Menu';
 import { RowActionButton } from '../ui/RowActionButton';
+import { RowActionsMenu } from './RowActionsMenu';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
+
+// What the row menu's danger item calls.
+const deleted = fn();
 
 const meta = {
   title: 'Tables/DataTable',
@@ -1068,5 +1074,51 @@ export const LinkRowFocusesFromTheKeyboard: Story = {
     } finally {
       clicks.stop();
     }
+  },
+};
+
+export const RowMenu: Story = {
+  parameters: portalDocsParams.lg(),
+  args: { onRowClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={rows.slice(0, 6)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        onRowClick={args.onRowClick}
+        renderRowAction={(r) => (
+          <RowActionsMenu aria-label={`Actions for ${r.name}`}>
+            <Menu.Item icon={Pencil} onSelect={fn()}>
+              Edit
+            </Menu.Item>
+            <Menu.Item icon={Copy}>Duplicate</Menu.Item>
+            <Menu.Separator />
+            <Menu.Item icon={Trash2} intent="danger" onSelect={() => deleted(r.id)}>
+              Delete
+            </Menu.Item>
+          </RowActionsMenu>
+        )}
+      />
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onRowClick = args.onRowClick as ReturnType<typeof fn>;
+    const page = within(document.body);
+    deleted.mockClear();
+    const trigger = canvas.getByRole('button', { name: 'Actions for node-101' });
+    // The 32px button fits the action column.
+    await expect(trigger.getBoundingClientRect().width).toBe(32);
+    await userEvent.click(trigger);
+    const menu = await page.findByRole('menu', { name: 'Actions for node-101' });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    // The danger item is red, and choosing it runs it, closes the menu, and is not a row click.
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Delete' }));
+    await expect(deleted).toHaveBeenCalledWith('alert-2');
+    await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
+    // Nor is the click on the trigger, or on the menu around its items, one on the row.
+    await userEvent.click(trigger);
+    await userEvent.click(await page.findByRole('separator'));
+    await expect(onRowClick).not.toHaveBeenCalled();
   },
 };
