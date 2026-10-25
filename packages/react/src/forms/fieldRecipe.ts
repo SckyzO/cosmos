@@ -89,6 +89,8 @@ type FieldClassOptions = {
    * around it): the focus state follows `focus-within` instead of `focus`.
    */
   within?: boolean;
+  /** Muted surface of a field that shows a value but can't be edited. */
+  readOnly?: boolean;
   /** `false` for a field that grows with its content (a Textarea). Default `true`. */
   fixedHeight?: boolean;
 };
@@ -97,16 +99,18 @@ type FieldClassOptions = {
  * Surface of a field: radius, border, background in light and dark, text size,
  * height, and the focus, disabled and invalid states. Padding, width and the
  * text color of a part stay with the field. The state classes are exclusive:
- * `invalid` swaps the border and the focus together.
+ * `invalid` swaps the border and the focus together, `readOnly` the background.
  */
 export const fieldClass = ({
   size,
   invalid = false,
   within = false,
+  readOnly = false,
   fixedHeight = true,
 }: FieldClassOptions) =>
   clsx(
-    'rounded-lg border bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+    'rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
+    readOnly ? 'bg-gray-50 dark:bg-gray-900' : 'bg-white dark:bg-gray-800',
     FIELD_TEXT[size],
     fixedHeight && FIELD_HEIGHT[size],
     invalid
