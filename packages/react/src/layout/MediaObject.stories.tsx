@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
+import { Card } from '../ui/Card';
 import { MediaObject } from './MediaObject';
 
 const meta = {
@@ -63,22 +64,25 @@ const Placeholder = ({ className = '' }: { className?: string }) => (
 // `max-w-xs` row: taller than the 64px media, so each `align` value puts the
 // media somewhere visibly different.
 
-// TUI Plus pattern "Basic" — media left, body right, top-aligned.
+// TUI Plus pattern "Basic" — media left, body right, top-aligned. Shown in a Card, where a media
+// object usually sits (a comment, a notification, a list entry).
 export const Basic: Story = {
   render: () => (
-    <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject className="max-w-xs">
-        <MediaObject.Image>
-          <Placeholder className="size-16" />
-        </MediaObject.Image>
-        <MediaObject.Body>
-          <MediaObject.Title>Lorem ipsum</MediaObject.Title>
-          <MediaObject.Description>
-            Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
-            voluptatem. Minus quidem ipsam quia iusto.
-          </MediaObject.Description>
-        </MediaObject.Body>
-      </MediaObject>
+    <div className="bg-[var(--color-bg-base)] p-8">
+      <Card className="max-w-sm">
+        <MediaObject>
+          <MediaObject.Image>
+            <Placeholder className="size-16" />
+          </MediaObject.Image>
+          <MediaObject.Body>
+            <MediaObject.Title>Lorem ipsum</MediaObject.Title>
+            <MediaObject.Description>
+              Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
+              voluptatem. Minus quidem ipsam quia iusto.
+            </MediaObject.Description>
+          </MediaObject.Body>
+        </MediaObject>
+      </Card>
     </div>
   ),
 };
