@@ -103,6 +103,7 @@ export const Variants: Story = {
 
 /** Focus shows the tooltip, Escape hides it, and it describes its trigger. */
 export const KeyboardFocusShowsTooltip: Story = {
+  tags: ['!dev'],
   render: () => (
     <Wrap>
       <Tooltip content="Deletes the selected rows">
@@ -130,6 +131,7 @@ export const KeyboardFocusShowsTooltip: Story = {
 
 /** Escape also closes a tooltip opened by the pointer, wherever focus is. */
 export const EscapeClosesHoveredTooltip: Story = {
+  tags: ['!dev'],
   render: () => (
     <Wrap>
       <Tooltip content="Deletes the selected rows">
@@ -180,6 +182,7 @@ export const EscapeInAModalHidesOnlyTheTooltip: Story = {
 
 /** The help icon is a button, so keyboard users can open its tooltip too. */
 export const HelpIconOpensOnFocus: Story = {
+  tags: ['!dev'],
   render: () => (
     <Wrap>
       <TooltipHelp text="Share of failed requests allowed this month." />

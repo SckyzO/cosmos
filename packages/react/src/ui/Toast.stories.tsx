@@ -185,6 +185,7 @@ export const ProgrammaticDismiss: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickShowsToast: Story = {
+  tags: ['!dev'],
   render: () => (
     <>
       <Button onClick={() => toast('Clicked')}>Trigger</Button>
@@ -226,6 +227,7 @@ export const FollowsCosmosTheme: Story = {
 };
 
 export const ActionFiresHandler: Story = {
+  tags: ['!dev'],
   render: (args) => {
     const extra = args as unknown as { onUndo: () => void };
     return (
