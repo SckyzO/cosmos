@@ -240,3 +240,74 @@ export const PlaceholderContrastInEveryTheme: Story = {
     inEachTheme(() => fields.forEach((field) => expectPlaceholderContrast(field)));
   },
 };
+
+export const ReadOnly: Story = {
+  args: { label: 'API endpoint', defaultValue: 'https://prom.example.com', readOnly: true },
+};
+
+export const ReadOnlyWithPrefix: Story = {
+  args: {
+    label: 'API endpoint',
+    prefix: 'https://',
+    defaultValue: 'prom.example.com',
+    readOnly: true,
+  },
+};
+
+export const WithErrorIcon: Story = {
+  args: {
+    label: 'Endpoint URL',
+    placeholder: 'https://prom.example.com',
+    error: 'Must start with https://',
+    errorIcon: true,
+  },
+};
+
+export const WithErrorIconAndPrefix: Story = {
+  args: {
+    label: 'Endpoint URL',
+    prefix: 'https://',
+    error: 'Enter a valid host',
+    errorIcon: true,
+  },
+};
+
+export const ReadOnlyIsMutedAndFocusable: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'API endpoint', defaultValue: 'https://prom.example.com', readOnly: true },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox', { name: 'API endpoint' });
+    const white = document.createElement('div');
+    white.className = 'bg-white dark:bg-gray-800';
+    document.body.append(white);
+    const editable = getComputedStyle(white).backgroundColor;
+    white.remove();
+    await expect(getComputedStyle(input).backgroundColor).not.toBe(editable);
+    // Not disabled: it takes focus and keeps its value, which can't be typed over.
+    await userEvent.click(input);
+    await expect(input).toHaveFocus();
+    await userEvent.type(input, 'x');
+    await expect(input).toHaveValue('https://prom.example.com');
+  },
+};
+
+export const ErrorIconShowsOnlyOnError: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Endpoint URL', errorIcon: true },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvasElement.querySelector('svg')).toBeNull();
+  },
+};
+
+export const ErrorIconIsDecorative: Story = {
+  tags: ['!dev', '!autodocs'],
+  ...WithErrorIcon,
+  play: async ({ canvasElement }) => {
+    const icon = canvasElement.querySelector('svg')!;
+    await expect(icon).toHaveAttribute('aria-hidden', 'true');
+    // The input keeps room for it: its text can't run under the icon.
+    const input = canvasElement.querySelector('input')!;
+    const pad = parseFloat(getComputedStyle(input).paddingRight);
+    await expect(pad).toBeGreaterThanOrEqual(icon.getBoundingClientRect().width + 12);
+  },
+};
