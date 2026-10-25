@@ -3,6 +3,7 @@ import { Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
+import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
@@ -91,6 +92,22 @@ export type DataTableProps<T> = {
   'aria-labelledby'?: string;
 
   className?: string;
+
+  // ── Column filters ─────────────────────────────────────────────────────────
+  /**
+   * Controlled column filters: column `key` → the selected values. Pass this or `defaultFilters`;
+   * a filter picked in a column header, a status tab or the active filters bar goes through
+   * `onFiltersChange`, and a controlled table shows it once the host passes it back.
+   */
+  filters?: Record<string, Set<string>>;
+  defaultFilters?: Record<string, Set<string>>;
+  onFiltersChange?: (filters: Record<string, Set<string>>) => void;
+  /**
+   * Underlined tabs at the top of the card ("All", then one per option) that set the filter of
+   * one column; "All" clears it. The tabs and the active filters bar stay in sync. The counts
+   * come from the host (they may come from a server), the table never computes them.
+   */
+  filterTabs?: DataTableFilterTabsConfig;
 };
 
 // The selection and action columns keep these widths whatever the data columns add up to.
@@ -140,6 +157,10 @@ export const DataTable = <T,>({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   className,
+  filters: filtersProp,
+  defaultFilters,
+  onFiltersChange,
+  filterTabs,
 }: DataTableProps<T>) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
@@ -149,7 +170,12 @@ export const DataTable = <T,>({
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
-  const [filters, setFilters] = useState<Record<string, Set<string>>>({});
+  const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
+    value: filtersProp,
+    defaultValue: () => defaultFilters ?? {},
+    onChange: onFiltersChange,
+    name: 'DataTable.filters',
+  });
   const [page, setPage] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
@@ -207,6 +233,15 @@ export const DataTable = <T,>({
       return out;
     });
     setPage(0);
+  };
+
+  const selectFilterTab = (value: string | undefined) => {
+    if (!filterTabs) return;
+    if (value === undefined) clearFilter(filterTabs.columnKey);
+    else {
+      setFilters((prev) => ({ ...prev, [filterTabs.columnKey]: new Set([value]) }));
+      setPage(0);
+    }
   };
 
   const clearAllFilters = () => {
@@ -294,6 +329,14 @@ export const DataTable = <T,>({
         className
       )}
     >
+      {filterTabs && (
+        <DataTableFilterTabsStrip
+          tabs={filterTabs}
+          selected={filters[filterTabs.columnKey]}
+          onSelect={selectFilterTab}
+        />
+      )}
+
       {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
       {selectable && selection.size > 0 ? (
         <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
