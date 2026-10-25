@@ -1,8 +1,13 @@
 import { type ReactNode } from 'react';
 
 export type PageHeaderProps = {
-  /** Main page title (h2) */
+  /** Main page title */
   title: string;
+  /**
+   * Heading element of the title. Default `h2`; a page whose Topbar title is plain text
+   * (the default) passes `h1` so it keeps exactly one.
+   */
+  as?: 'h1' | 'h2';
   /** Optional description shown below title (only when no breadcrumb) */
   description?: string;
   /** Breadcrumb shown below title (replaces description if provided) */
@@ -26,13 +31,21 @@ export type PageHeaderProps = {
  * Use at the top of every page. If both `breadcrumb` and `description` are passed,
  * the breadcrumb wins (description is hidden — they're alternatives).
  */
-const Root = ({ title, description, breadcrumb, meta, actions, className }: PageHeaderProps) => (
+const Root = ({
+  title,
+  as: Heading = 'h2',
+  description,
+  breadcrumb,
+  meta,
+  actions,
+  className,
+}: PageHeaderProps) => (
   // The title column asks for 16rem: when that and the actions don't both fit
   // (a phone, a narrow pane), the actions wrap under the title instead of
   // squeezing it until its words run under the buttons.
   <div className={`flex flex-wrap items-start justify-between gap-4 ${className ?? ''}`}>
     <div className="min-w-0 grow basis-64">
-      <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{title}</h2>
+      <Heading className="text-xl font-bold text-[var(--color-text-primary)]">{title}</Heading>
       {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
       {!breadcrumb && description && (
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>
