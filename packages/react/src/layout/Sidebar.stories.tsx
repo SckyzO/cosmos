@@ -405,18 +405,60 @@ export const ActiveItemIsTheCurrentPage: Story = {
   },
 };
 
-/** Collapsed, an item keeps its name as a tooltip and drops its label, badge and the brand text. */
+/** Collapsed, an item keeps its name for assistive technology and drops its label, badge and the brand text. */
 export const CollapsedItemsAreIconOnly: Story = {
   tags: ['!dev', '!autodocs'],
   render: Collapsed.render,
   play: async ({ canvas }) => {
     const dashboard = canvas.getByRole('button', { name: 'Dashboard' });
-    await expect(dashboard).toHaveAttribute('title', 'Dashboard');
+    await expect(dashboard).toHaveAttribute('aria-label', 'Dashboard');
+    await expect(dashboard).not.toHaveAttribute('title');
     await expect(dashboard.textContent).toBe('');
     // The Notifications badge and the Account section label leave with the text.
     await expect(canvas.getByRole('button', { name: 'Notifications' }).textContent).toBe('');
     await expect(canvas.queryByText('Account')).toBeNull();
     await expect(canvas.getByText('Cosmos')).not.toBeVisible();
+  },
+};
+
+/** Collapsed, a leaf item names itself in a tooltip on hover and on keyboard focus, links included. */
+export const CollapsedItemShowsTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'padded' },
+  render: () => (
+    <Wrap>
+      <Sidebar collapsed>
+        <div className="py-3">
+          <Sidebar.Item icon={LayoutDashboard} label="Dashboard" href="#dashboard" active />
+          <Sidebar.Item icon={Box} label="Tokens" onClick={() => {}} />
+        </div>
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const tip = (name: string) => body.getByRole('tooltip', { name, hidden: true });
+    const link = canvas.getByRole('link', { name: 'Dashboard' });
+    const button = canvas.getByRole('button', { name: 'Tokens' });
+    // Not shown until the item is reached.
+    await expect(tip('Dashboard')).toHaveClass('opacity-0');
+    // Keyboard: Tab focuses the link and shows its tooltip, to the right of the sidebar.
+    await userEvent.tab();
+    await expect(link).toHaveFocus();
+    await waitFor(() => expect(tip('Dashboard')).toHaveClass('opacity-100'));
+    await expect(link).toHaveAttribute('aria-describedby', tip('Dashboard').id);
+    await expect(tip('Dashboard').getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().right
+    );
+    await userEvent.tab();
+    await expect(button).toHaveFocus();
+    await waitFor(() => expect(tip('Tokens')).toHaveClass('opacity-100'));
+    await expect(tip('Dashboard')).toHaveClass('opacity-0');
+    // Pointer: hover shows it too.
+    await userEvent.unhover(button);
+    button.blur();
+    await userEvent.hover(link);
+    await waitFor(() => expect(tip('Dashboard')).toHaveClass('opacity-100'));
   },
 };
 

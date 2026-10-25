@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
 
@@ -138,5 +138,19 @@ export const ResendFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /resend code/i }));
     await expect(args.onResend).toHaveBeenCalledTimes(1);
+  },
+};
+
+// ── Resend code (#303) ───────────────────────────────────────────────────────
+
+/** "Resend code" is a ghost button of at least 44px, a touch target on a phone too. */
+export const ResendIsA44pxButton: Story = {
+  globals: mobileViewport,
+  args: { onSubmit: fn(), onResend: fn(), sentTo: 'john@example.com' },
+  play: async ({ canvas, canvasElement }) => {
+    const resend = canvas.getByRole('button', { name: 'Resend code' });
+    await expect(resend.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    await expect(resend).toBeEnabled();
+    expectNoHorizontalOverflow(canvasElement);
   },
 };

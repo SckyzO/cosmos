@@ -283,10 +283,10 @@ export const HamburgerCollapsesAndExpandsTheSidebar: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
     await transitionsEnd(nav);
     await expect(nav.getBoundingClientRect().width).toBe(72);
-    // Labels leave, the items keep their name as a tooltip.
+    // Labels leave, the items keep their name (and a tooltip on hover and focus).
     await expect(within(nav).queryByText('Dashboard')).toBeNull();
     await expect(within(nav).getByRole('button', { name: 'Dashboard' })).toHaveAttribute(
-      'title',
+      'aria-label',
       'Dashboard'
     );
     await expect(main.getBoundingClientRect().width).toBeCloseTo(mainWidth + 192, 0);

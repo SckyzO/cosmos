@@ -50,10 +50,12 @@ const Root = ({
   <OrientationContext value={orientation}>
     <div
       className={clsx(
-        'overflow-hidden bg-[var(--color-bg-panel)]',
+        // The outline is one step stronger in dark, where the theme's border fades into the page;
+        // the dividers of Header and Footer keep the plain border.
+        'overflow-hidden bg-[var(--color-bg-panel)] [--card-border:var(--color-border)] dark:[--card-border:var(--color-gray-600)]',
         edgeToEdgeMobile
-          ? 'border-y border-[var(--color-border)] sm:rounded-2xl sm:border'
-          : 'rounded-2xl border border-[var(--color-border)]',
+          ? 'border-y border-[var(--card-border)] sm:rounded-2xl sm:border'
+          : 'rounded-2xl border border-[var(--card-border)]',
         interactive &&
           'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
         orientation === 'horizontal' && 'flex flex-col sm:flex-row',

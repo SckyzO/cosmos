@@ -44,9 +44,9 @@ export const ErrorPage = ({
   actions,
   className,
 }: ErrorPageProps) => {
-  // The big code is a faint watermark (1.2:1 by design). Drawn by a
-  // pseudo-element, it is no text node: axe's contrast check skips it, as
-  // WCAG 1.4.3 does for decoration.
+  // The big code is decoration, but it must still show on every theme: the accent at 3:1 or more
+  // (`brand-600`, `brand-400` in dark), the large-text threshold. Drawn by a pseudo-element, it is
+  // no text node: axe's contrast check skips it, as WCAG 1.4.3 does for decoration.
   const watermark = typeof code === 'string' || typeof code === 'number' ? String(code) : undefined;
   return (
     <div
@@ -60,7 +60,7 @@ export const ErrorPage = ({
         aria-hidden
         data-code={watermark}
         className={clsx(
-          'text-brand-100 dark:text-brand-500/20 mt-2 text-8xl font-black',
+          'text-brand-600 dark:text-brand-400 mt-2 text-8xl font-black',
           watermark !== undefined && 'before:content-[attr(data-code)]'
         )}
       >

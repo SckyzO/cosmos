@@ -92,17 +92,20 @@ export const TwoStepVerificationForm = ({
           {submitLabel}
         </Button>
         {onResend && (
-          <p className="text-center text-xs text-[var(--color-text-muted)]">
-            Didn&apos;t get a code?{' '}
-            <button
+          <div className="flex flex-wrap items-center justify-center gap-x-1 text-xs text-[var(--color-text-muted)]">
+            <span>Didn&apos;t get a code?</span>
+            {/* 44px tall, the touch target size, though the label is small. */}
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={onResend}
               disabled={loading}
-              className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 focus-visible:focus-indicator rounded font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-11"
             >
               {resendLabel}
-            </button>
-          </p>
+            </Button>
+          </div>
         )}
         {cancelHref && (
           <div className="flex justify-center">

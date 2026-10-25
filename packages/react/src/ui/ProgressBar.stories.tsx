@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useId, useState } from 'react';
 import { expect } from 'storybook/test';
 import { ProgressBar, type ProgressBarIntent, type ProgressBarSize } from './ProgressBar';
+import { SectionLabel } from './SectionLabel';
 
 const meta = {
   title: 'Navigation/Progress Bar',
@@ -21,9 +22,7 @@ export const Sizes: Story = {
     <div className="space-y-3">
       {(['xs', 'sm', 'md', 'lg'] as ProgressBarSize[]).map((s) => (
         <div key={s} className="flex items-center gap-3">
-          <span className="w-6 font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">
-            {s}
-          </span>
+          <SectionLabel className="w-6">{s}</SectionLabel>
           <ProgressBar value={62} size={s} aria-label={`Size ${s}`} className="flex-1" />
         </div>
       ))}
@@ -36,10 +35,14 @@ export const Intents: Story = {
     <div className="space-y-3">
       {(['brand', 'success', 'warning', 'danger'] as ProgressBarIntent[]).map((i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="w-16 font-mono text-[10px] text-gray-500 uppercase dark:text-gray-400">
-            {i}
-          </span>
-          <ProgressBar value={75} intent={i} aria-label={`${i} progress`} className="flex-1" />
+          <SectionLabel className="w-16">{i}</SectionLabel>
+          <ProgressBar
+            value={75}
+            intent={i}
+            label="outside"
+            aria-label={`${i} progress`}
+            className="flex-1"
+          />
         </div>
       ))}
     </div>

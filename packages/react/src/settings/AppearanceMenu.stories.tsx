@@ -92,6 +92,11 @@ export const InTopbar: Story = {
   },
 };
 
+/** `onReset` adds a "Reset" button under the groups, in view while they scroll. */
+export const WithReset: Story = {
+  args: { onReset: fn(), onFontChange: fn(), onTextSizeChange: fn() },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 // The interaction tests below stay off the docs page (`!autodocs`): their play
@@ -176,5 +181,54 @@ export const TallPanelFitsTheScreen: Story = {
     const large = within(panel()).getByRole('radio', { name: 'Extra large' });
     large.scrollIntoView();
     await userEvent.click(large);
+  },
+};
+
+/** Reset reports and leaves the panel open: it is the host that puts the defaults back. */
+export const ResetCallsOnReset: Story = {
+  tags: ['!autodocs'],
+  args: { onReset: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    await userEvent.click(within(panel()).getByRole('button', { name: 'Reset' }));
+    await expect(args.onReset).toHaveBeenCalledTimes(1);
+    await expect(panel()).toBeVisible();
+  },
+};
+
+export const NoResetByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    await expect(within(panel()).queryByRole('button', { name: 'Reset' })).toBeNull();
+  },
+};
+
+/** Scrolled, a group's heading stays at the top of the panel while its group is in view. */
+export const HeadingsStayPinnedWhileScrolling: Story = {
+  tags: ['!autodocs'],
+  args: { onReset: fn(), onFontChange: fn(), onTextSizeChange: fn() },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
+    await waitFor(() => expect(panel()).toBeVisible());
+    const heading = within(panel()).getByText('Theme');
+    // The panel's own scroll area, made short enough to scroll on any screen.
+    const scroller = heading.closest<HTMLElement>('.overflow-y-auto')!;
+    scroller.style.maxHeight = '260px';
+    await waitFor(() => expect(scroller.scrollHeight).toBeGreaterThan(scroller.clientHeight));
+    scroller.scrollTop = 60;
+    await waitFor(() =>
+      expect(heading.getBoundingClientRect().top).toBeCloseTo(
+        scroller.getBoundingClientRect().top,
+        0
+      )
+    );
+    // Reset is outside the scroll area: it stays below, whatever the scroll.
+    await expect(within(panel()).getByRole('button', { name: 'Reset' })).toBeVisible();
+    await expect(scroller.contains(within(panel()).getByRole('button', { name: 'Reset' }))).toBe(
+      false
+    );
   },
 };

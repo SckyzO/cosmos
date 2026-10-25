@@ -237,12 +237,14 @@ The font and text size groups show only when their handlers are set. Pass
 (`@sckyzo/cosmos-theme/fonts/<name>`).
 
 For a top bar, `AppearanceMenu` takes the same props and puts the pickers in a
-panel behind an icon button, for example in `Topbar`'s `rightActions`.
+panel behind an icon button, for example in `Topbar`'s `rightActions`. Set `onReset`
+to add a Reset button under the groups.
 
 To offer a **System** choice that follows the device's `prefers-color-scheme`,
 add `COSMOS_SYSTEM_THEME` to the themes and apply again when the device switches
 (it resolves to `light` or `dark`; set `systemThemes` for another pair). Nothing
-changes for an app that doesn't opt in:
+changes for an app that doesn't opt in (`ThemeToggleTri` takes a `system` prop for the same
+choice at the end of its cycle):
 
 ```tsx
 const [appearance, setAppearance] = useState<CosmosAppearance>({ theme: 'system', accent: 'blue' });

@@ -81,6 +81,11 @@ export type TooltipProps = {
   shortcut?: string[];
   /** Bold first line; `content` then reads as its explanation. */
   title?: ReactNode;
+  /**
+   * Lay the trigger's wrapper out as a block spanning its container, for a row that fills its
+   * width (a collapsed sidebar item), instead of hugging the trigger inline. Default `false`.
+   */
+  block?: boolean;
   /** Draw the small arrow pointing at the trigger. Default `true`. */
   arrow?: boolean;
   /** Milliseconds to wait before showing on hover or focus. Default `0`. */
@@ -107,6 +112,7 @@ export const Tooltip = ({
   maxWidth = 'max-w-xs',
   shortcut,
   title,
+  block = false,
   arrow = true,
   delay = 0,
   open: openProp,
@@ -181,7 +187,7 @@ export const Tooltip = ({
     // than on the parent cell.
     <span
       ref={anchorRef}
-      className="relative inline-block w-fit align-middle"
+      className={clsx('relative', block ? 'block' : 'inline-block w-fit align-middle')}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}

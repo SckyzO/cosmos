@@ -62,27 +62,40 @@ const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   // The list's border is the panel's edge: it runs under the inactive tabs and
   // the active tab covers it.
   folder: {
-    horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--color-border)]',
-    vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--color-border)]',
+    horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--folder-border)]',
+    vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--folder-border)]',
   },
 };
 
-type TriggerClasses = { base: string; active: string; inactive: string };
+type TriggerClasses = {
+  base: string;
+  active: string;
+  /** Structure of an inactive tab; its text colors come from `IDLE_TEXT` and `hover`. */
+  inactive: string;
+  /** Hover feedback of an inactive tab, left out of a disabled one. */
+  hover: string;
+};
+
+const IDLE_TEXT = 'text-gray-500 dark:text-gray-400';
+const IDLE_HOVER = 'hover:text-gray-700 dark:hover:text-gray-200';
+// A disabled tab trades the idle colors for the theme's muted text, exclusively: no opacity on top,
+// which left gray-500 too faint on light themes.
+const DISABLED_TEXT = 'text-[var(--color-text-muted)]';
 
 const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasses>> = {
   underline: {
     horizontal: {
       base: '-mb-px border-b-2 px-3 py-2',
       active: 'border-brand-500 text-brand-600 dark:text-brand-400',
-      inactive:
-        'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+      inactive: 'border-transparent',
+      hover: IDLE_HOVER,
     },
     vertical: {
       base: '-mr-px justify-start rounded-l-lg border-r-2 px-3 py-2 text-left whitespace-nowrap',
       active:
         'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
-      inactive:
-        'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+      inactive: 'border-transparent',
+      hover: 'hover:bg-gray-50 dark:hover:bg-white/5 ' + IDLE_HOVER,
     },
   },
   // Every tab overlaps the list's border by 1px. The active one has the
@@ -92,18 +105,18 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
   // background. The padding moves with the size so the labels don't shift.
   folder: {
     horizontal: {
-      base: '-mb-px rounded-t-lg border border-[var(--color-border)] px-3 pb-2',
+      base: '-mb-px rounded-t-lg border border-[var(--folder-border)] px-3 pb-2',
       active:
         'border-b-transparent bg-[var(--color-bg-panel)] pt-3 text-brand-600 dark:text-brand-400',
-      inactive:
-        'bg-[var(--color-bg-base)] pt-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+      inactive: 'bg-[var(--color-bg-base)] pt-2',
+      hover: IDLE_HOVER,
     },
     vertical: {
-      base: '-mr-px justify-start rounded-l-lg border border-[var(--color-border)] py-2 pr-3 text-left whitespace-nowrap',
+      base: '-mr-px justify-start rounded-l-lg border border-[var(--folder-border)] py-2 pr-3 text-left whitespace-nowrap',
       active:
         'border-r-transparent bg-[var(--color-bg-panel)] pl-4 text-brand-600 dark:text-brand-400',
-      inactive:
-        'ml-1 bg-[var(--color-bg-base)] pl-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+      inactive: 'ml-1 bg-[var(--color-bg-base)] pl-3',
+      hover: IDLE_HOVER,
     },
   },
 };
@@ -113,9 +126,9 @@ const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   // Bordered on three sides: the list's border closes the side facing the tabs.
   folder: {
     horizontal:
-      'rounded-b-xl border border-t-0 border-[var(--color-border)] bg-[var(--color-bg-panel)] p-5',
+      'rounded-b-xl border border-t-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
     vertical:
-      'flex-1 rounded-r-xl border border-l-0 border-[var(--color-border)] bg-[var(--color-bg-panel)] p-5',
+      'flex-1 rounded-r-xl border border-l-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
   },
 };
 
@@ -176,6 +189,10 @@ const Root = ({
         className={clsx(
           // Folder tabs touch their panel, so no gap between list and panel.
           orientation === 'vertical' && (variant === 'folder' ? 'flex' : 'flex gap-6'),
+          // The outline of folder tabs and panel, one step stronger in dark where the theme's
+          // border fades into the surfaces.
+          variant === 'folder' &&
+            '[--folder-border:var(--color-border)] dark:[--folder-border:var(--color-gray-600)]',
           className
         )}
       >
@@ -277,9 +294,11 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(
-        'focus-visible:focus-indicator flex shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
+        'focus-visible:focus-indicator flex shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed',
         styles.base,
-        isActive ? styles.active : styles.inactive,
+        isActive
+          ? styles.active
+          : [styles.inactive, disabled ? DISABLED_TEXT : [IDLE_TEXT, styles.hover]],
         className
       )}
     >

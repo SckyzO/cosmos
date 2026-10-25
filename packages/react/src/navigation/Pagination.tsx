@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { buildRange } from './pageRange';
 import { useControllableState } from '../hooks/useControllableState';
 
@@ -22,6 +22,11 @@ export type PaginationProps = {
   /** `text` (default) shows numbered buttons. `compact` shows chevrons + "Page X of Y". */
   variant?: PaginationVariant;
   size?: PaginationSize;
+  /**
+   * Add "First page" and "Last page" buttons around Previous and Next, for long lists. They stay
+   * below `sm`, where Previous and Next do. Default `false`.
+   */
+  showEdges?: boolean;
   /**
    * Show every result on one page instead of paginating: the page buttons go away and the info
    * reads "Showing all N results". Controlled only; pair it with `onShowAllChange`, which also
@@ -50,6 +55,7 @@ export const Pagination = ({
   total,
   variant = 'text',
   size = 'sm',
+  showEdges = false,
   showAll = false,
   onShowAllChange,
   'aria-label': ariaLabel = 'Pagination',
@@ -125,6 +131,17 @@ export const Pagination = ({
         )}
         {!showAll && (
           <div className="flex items-center gap-1">
+            {showEdges && (
+              <button
+                type="button"
+                aria-label="First page"
+                disabled={isFirst}
+                onClick={() => goTo(1)}
+                className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
               aria-label="Previous page"
@@ -188,6 +205,17 @@ export const Pagination = ({
             >
               <ChevronRight className="h-4 w-4" />
             </button>
+            {showEdges && (
+              <button
+                type="button"
+                aria-label="Last page"
+                disabled={isLast}
+                onClick={() => goTo(Math.max(1, totalPages))}
+                className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
