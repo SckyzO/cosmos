@@ -408,3 +408,25 @@ export const expectHamburgerTogglesSidebar = async (canvas: {
   await transitionsEnd(nav);
   await expect(nav.getBoundingClientRect().width).toBe(expanded);
 };
+
+/**
+ * The settings pickers (accent, option, palette) mark the checked item one way:
+ * the brand border plus a brand check badge. Unchecked items have neither.
+ */
+export const expectPickerSelected = (group: HTMLElement) => {
+  const probe = document.createElement('span');
+  probe.className = 'border-brand-500 border-2';
+  document.body.append(probe);
+  const brand = getComputedStyle(probe).borderTopColor;
+  probe.remove();
+  const radios = [...group.querySelectorAll<HTMLElement>('[role="radio"]')];
+  expect(radios.length).toBeGreaterThan(1);
+  for (const radio of radios) {
+    const checked = radio.getAttribute('aria-checked') === 'true';
+    expect(`${radio.getAttribute('aria-label')} border ${checked}`).toBe(
+      `${radio.getAttribute('aria-label')} border ${getComputedStyle(radio).borderTopColor === brand}`
+    );
+    expect(radio.querySelectorAll('.bg-brand-500.rounded-full')).toHaveLength(checked ? 1 : 0);
+  }
+  expect(radios.filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+};
