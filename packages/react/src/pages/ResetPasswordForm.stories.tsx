@@ -98,7 +98,7 @@ export const SubmitFiresWithEmail: Story = {
   play: async ({ args, canvas }) => {
     const submit = canvas.getByRole('button', { name: /send reset link/i });
     await expect(submit).toBeDisabled();
-    await userEvent.type(canvas.getByLabelText('Email'), 'john@example.com');
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'john@example.com');
     await expect(submit).not.toBeDisabled();
     await userEvent.click(submit);
     await expect(args.onSubmit).toHaveBeenCalledWith('john@example.com');

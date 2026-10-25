@@ -92,8 +92,8 @@ export const SubmitFiresWithValues: Story = {
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ args, canvas }) => {
-    await userEvent.type(canvas.getByLabelText('Email'), 'john@example.com');
-    await userEvent.type(canvas.getByLabelText('Password'), 'p4ssw0rd');
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'john@example.com');
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'p4ssw0rd');
     await userEvent.click(canvas.getByLabelText(/keep me signed in/i));
     await userEvent.click(canvas.getByRole('button', { name: /^sign in$/i }));
     await expect(args.onSubmit).toHaveBeenCalledWith({
