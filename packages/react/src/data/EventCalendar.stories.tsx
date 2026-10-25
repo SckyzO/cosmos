@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { EventCalendar, type CalendarEvent } from './EventCalendar';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 
 const TODAY = new Date(2026, 4, 7);
 
@@ -285,5 +286,38 @@ export const IntentColorsTheEvent: Story = {
     await expect(chip('default event').querySelector('span[aria-hidden]')).toHaveClass(
       'bg-brand-500'
     );
+  },
+};
+
+// ── Narrow screens (#291) ────────────────────────────────────────────────────
+
+/**
+ * Below `sm` the weekday names shrink to one letter, the chips to dots, and the picked day (today
+ * to begin with) lists its events under the grid.
+ */
+export const Mobile: Story = {
+  globals: mobileViewport,
+  play: async ({ args, canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.queryByText('Mon')).not.toBeVisible();
+    const letters = canvas.getAllByText('M');
+    await expect(letters.some((el) => el.checkVisibility())).toBe(true);
+
+    const today = within(canvas.getByRole('region', { name: 'Events on Thursday, May 7, 2026' }));
+    await expect(today.getAllByRole('listitem')).toHaveLength(5);
+    // No "+N more" popover: the list under the grid shows everything.
+    await expect(canvas.queryByRole('button', { name: /more on/ })).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Monday, May 4, 2026' }));
+    await expect(args.onDayClick).toHaveBeenCalledWith(new Date(2026, 4, 4));
+    const monday = within(canvas.getByRole('region', { name: 'Events on Monday, May 4, 2026' }));
+    await expect(monday.getByText('Sprint planning')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Monday, May 4, 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Wednesday, May 13, 2026' }));
+    await expect(canvas.getByText('No events')).toBeVisible();
   },
 };
