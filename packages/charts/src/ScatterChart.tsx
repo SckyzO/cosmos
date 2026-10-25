@@ -205,7 +205,7 @@ export const BubbleChart = ({
   width = '100%',
   ...props
 }: BubbleChartProps) => {
-  const { palette } = useChartTheme();
+  const { dark, palette } = useChartTheme();
   const base = useXYOptions(props, {
     // Room for the bubbles at the edges of the plot.
     pad: 0.08,
@@ -217,7 +217,8 @@ export const BubbleChart = ({
     plotOptions: { bubble: { minBubbleRadius: 4 } },
     // Translucent bubbles, outlined in their own color (ApexCharts' white
     // outline glares on the dark themes), keep the overlapping ones readable.
-    fill: { opacity: 0.55 },
+    // On a dark card the same alpha reads darker than the legend swatch.
+    fill: { opacity: dark ? 0.7 : 0.55 },
     markers: { strokeWidth: 1, strokeColors: props.colors ?? palette },
   };
   return (
