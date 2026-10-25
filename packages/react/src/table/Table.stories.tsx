@@ -605,6 +605,8 @@ export const MobileStickyFirstColumn: Story = {
     const table = canvas.getByRole('table', { name: 'Compute nodes' });
     const scroller = table.parentElement as HTMLElement;
     await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    // A region that scrolls is a tab stop, so the keyboard can scroll it.
+    await waitFor(() => expect(scroller).toHaveAttribute('tabindex', '0'));
     // The end fades, the start does not: the first column is pinned there.
     await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
     const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
