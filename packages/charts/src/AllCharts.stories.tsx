@@ -142,13 +142,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BubbleChart series={[]} {...props} />,
   },
   BoxPlotChart: {
-    filled: (apexOptions) => (
-      <BoxPlotChart
-        series={[{ name: 'a', data: BOX }]}
-        categories={['A', 'B']}
-        apexOptions={apexOptions}
-      />
-    ),
+    recharts: true,
+    filled: () => <BoxPlotChart series={[{ name: 'a', data: BOX }]} categories={['A', 'B']} />,
     empty: (props) => <BoxPlotChart series={[]} categories={[]} {...props} />,
   },
   RangeBarChart: {
@@ -338,7 +333,13 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart', 'ScatterChart']) {
+    for (const name of [
+      'LineAreaChart',
+      'BarChart',
+      'MixedChart',
+      'ScatterChart',
+      'BoxPlotChart',
+    ]) {
       await waitFor(() => {
         const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`);
         expect(chart).not.toBeNull();
@@ -349,7 +350,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES = ['DonutChart', 'HeatmapChart', 'RadarChart', 'BoxPlotChart'];
+const LEGEND_NAMES = ['DonutChart', 'HeatmapChart', 'RadarChart'];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
 export const LegendSwatchesHaveNoOutline: Story = {

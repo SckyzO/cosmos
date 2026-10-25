@@ -89,7 +89,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges             |
 | `RadarChart`                   | One polygon per series over named axes                        |
 | `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure (Recharts)   |
-| `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
+| `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal (Recharts)    |
 
 ## License
 
