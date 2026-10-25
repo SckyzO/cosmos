@@ -1787,3 +1787,25 @@ export const StatusTabsMobile: Story = {
     await expect(list.parentElement!.scrollWidth).toBeGreaterThan(list.parentElement!.clientWidth);
   },
 };
+
+export const MultiValueFilterKeepsTheStripReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        defaultFilters={{ status: new Set(['Active', 'Invited']) }}
+        aria-label="Teammates"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // Two values match no single tab: none is selected, and Tab still lands on the strip.
+    await expect(canvas.queryAllByRole('tab', { selected: true })).toHaveLength(0);
+    await userEvent.tab();
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveFocus();
+  },
+};
