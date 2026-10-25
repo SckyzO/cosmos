@@ -281,3 +281,13 @@ export const RefCleanupRunsOnUnmount: Story = {
     await expect(refCalls).not.toContain('null');
   },
 };
+
+// A disabled field shows the not-allowed cursor, not the pointer of its default (#290).
+export const DisabledShowsNotAllowedCursor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Locked', disabled: true },
+  play: async ({ canvas }) => {
+    const label = canvas.getByLabelText('Locked').closest('label') as HTMLElement;
+    await expect(getComputedStyle(label).cursor).toBe('not-allowed');
+  },
+};
