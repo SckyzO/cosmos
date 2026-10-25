@@ -77,7 +77,7 @@ Notable groups:
 - **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, List, Description List, Divider
 - **Forms** — 24 controls (Input, Select, Combobox, DatePicker single + range, …)
 - **Media** — Carousel, Image Grid, Video Embed, CodeBlock
-- **Charts** — `@sckyzo/cosmos-charts`, one entry per chart type: line & area, bar & column, donut, radial gauges,
+- **Charts** — `@sckyzo/cosmos-charts`, one entry per chart type: line & area, bar & column, donut, radial bar, gauges,
   realtime, sparkline, treemap, heatmap, radar, scatter & bubble, box plot, range bar, mixed
 
 ## Development (everything in Docker)
