@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
-import { HelpCircle, MoreVertical } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
@@ -107,42 +107,8 @@ export const RichContent: Story = {
   ),
 };
 
-export const ActionsMenu: Story = {
-  render: () => (
-    <div className="flex h-72 items-center justify-center">
-      <Popover>
-        <Popover.Trigger
-          aria-label="More actions"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-        >
-          <MoreVertical className="h-4 w-4" aria-hidden />
-        </Popover.Trigger>
-        <Popover.Content position="bottom" width="w-48" className="p-0" aria-label="Actions">
-          <ul className="py-1">
-            <li>
-              <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">
-                Rename
-              </button>
-            </li>
-            <li>
-              <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">
-                Duplicate
-              </button>
-            </li>
-            <li>
-              <hr className="my-1 border-gray-100 dark:border-gray-800" />
-            </li>
-            <li>
-              <button className="block w-full px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10">
-                Delete
-              </button>
-            </li>
-          </ul>
-        </Popover.Content>
-      </Popover>
-    </div>
-  ),
-};
+// A list of actions (rename, delete…) is a `Menu`, with the menu roles and arrow keys; a
+// `Popover` holds free-form content.
 
 export const Controlled: Story = {
   render: () => {

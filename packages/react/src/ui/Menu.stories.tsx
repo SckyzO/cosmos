@@ -1,0 +1,369 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { Copy, Download, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { portalDocsParams } from '../storybook-helpers';
+import { Badge } from './Badge';
+import { Menu } from './Menu';
+
+const meta = {
+  title: 'Overlays/Menu',
+  component: Menu,
+  parameters: portalDocsParams(380),
+  tags: ['autodocs'],
+  // Storybook 10 requires `args` when the component has required props.
+  args: { children: null as ReactNode },
+} satisfies Meta<typeof Menu>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+const TRIGGER_CLASS =
+  'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200';
+
+const Spot = ({ children }: { children: ReactNode }) => (
+  <div className="flex h-80 items-start justify-center pt-8">{children}</div>
+);
+
+// ── Stories ──────────────────────────────────────────────────────────────────
+
+/** Icons, shortcuts, a trailing badge, a disabled item, a divider and a danger item. */
+export const Open: Story = {
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger aria-label="More actions" className={TRIGGER_CLASS}>
+          <MoreVertical className="h-4 w-4" aria-hidden />
+        </Menu.Trigger>
+        <Menu.Content aria-label="Actions">
+          <Menu.Item icon={Pencil} shortcut="⌘E">
+            Rename
+          </Menu.Item>
+          <Menu.Item icon={Copy} shortcut="⌘D">
+            Duplicate
+          </Menu.Item>
+          <Menu.Item
+            icon={Share2}
+            badge={
+              <Badge size="sm" intent="brand">
+                New
+              </Badge>
+            }
+          >
+            Share
+          </Menu.Item>
+          <Menu.Item icon={Download} disabled>
+            Export
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item icon={Trash2} intent="danger" shortcut="⌫">
+            Delete
+          </Menu.Item>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+};
+
+export const Closed: Story = {
+  render: () => (
+    <div className="flex h-24 items-start justify-center pt-8">
+      <Menu>
+        <Menu.Trigger
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200"
+          aria-label="Actions"
+        >
+          Actions
+        </Menu.Trigger>
+      </Menu>
+    </div>
+  ),
+};
+
+/** `Menu.Group` names a run of items with a heading. */
+export const Groups: Story = {
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200"
+          aria-label="Document"
+        >
+          Document
+        </Menu.Trigger>
+        <Menu.Content aria-label="Document actions">
+          <Menu.Group label="Edit">
+            <Menu.Item icon={Pencil}>Rename</Menu.Item>
+            <Menu.Item icon={Copy}>Duplicate</Menu.Item>
+          </Menu.Group>
+          <Menu.Separator />
+          <Menu.Group label="Danger zone">
+            <Menu.Item icon={Trash2} intent="danger">
+              Delete
+            </Menu.Item>
+          </Menu.Group>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+};
+
+export const AlignRight: Story = {
+  render: () => (
+    <div className="flex h-80 items-start justify-end px-8 pt-8">
+      <Menu defaultOpen align="right">
+        <Menu.Trigger aria-label="More actions" className={TRIGGER_CLASS}>
+          <MoreVertical className="h-4 w-4" aria-hidden />
+        </Menu.Trigger>
+        <Menu.Content aria-label="Actions">
+          <Menu.Item icon={Pencil}>Rename</Menu.Item>
+          <Menu.Item icon={Trash2} intent="danger">
+            Delete
+          </Menu.Item>
+        </Menu.Content>
+      </Menu>
+    </div>
+  ),
+};
+
+export const Controlled: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <div className="flex h-72 flex-col items-center gap-3 pt-8">
+        <Menu open={open} onOpenChange={setOpen}>
+          <Menu.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+            Actions ({open ? 'open' : 'closed'})
+          </Menu.Trigger>
+          <Menu.Content>
+            <Menu.Item icon={Pencil}>Rename</Menu.Item>
+            <Menu.Item icon={Copy}>Duplicate</Menu.Item>
+          </Menu.Content>
+        </Menu>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="text-brand-600 dark:text-brand-400 text-xs underline"
+        >
+          Toggle from outside
+        </button>
+      </div>
+    );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+const menu = () => document.querySelector<HTMLElement>('[role="menu"]');
+
+const NavMenu = ({ onSelect }: { onSelect?: (name: string) => void }) => (
+  <Spot>
+    <Menu>
+      <Menu.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+        Actions
+      </Menu.Trigger>
+      <Menu.Content>
+        <Menu.Item onSelect={() => onSelect?.('Rename')}>Rename</Menu.Item>
+        <Menu.Item disabled onSelect={() => onSelect?.('Duplicate')}>
+          Duplicate
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item onSelect={() => onSelect?.('Share')}>Share</Menu.Item>
+        <Menu.Item intent="danger" onSelect={() => onSelect?.('Delete')}>
+          Delete
+        </Menu.Item>
+      </Menu.Content>
+    </Menu>
+    <button type="button">After</button>
+  </Spot>
+);
+
+// The interaction tests below stay off the docs page (`!autodocs`): their play
+// functions take focus, which scrolls the docs page down to their iframe.
+/** The ARIA contract: the trigger announces a menu, the panel and its parts have their roles. */
+export const RolesAndAttributes: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger>Actions</Menu.Trigger>
+        <Menu.Content>
+          <Menu.Group label="Edit">
+            <Menu.Item>Rename</Menu.Item>
+          </Menu.Group>
+          <Menu.Separator />
+          <Menu.Item>Delete</Menu.Item>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    const panel = await waitFor(() => menu()!);
+    await expect(panel).toHaveAccessibleName('Actions');
+    const inside = within(panel);
+    await expect(inside.getByRole('group', { name: 'Edit' })).toBeInTheDocument();
+    await expect(inside.getByRole('separator')).toBeInTheDocument();
+    await expect(inside.getAllByRole('menuitem')).toHaveLength(2);
+  },
+};
+
+/** Enter opens on the first item; arrows move and wrap; Home and End jump; Escape gives focus back. */
+export const KeyboardNavigation: Story = {
+  tags: ['!autodocs'],
+  render: () => <NavMenu />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(menu()).not.toBeNull());
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Rename'));
+    // The disabled item is skipped.
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Share');
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Delete');
+    // Wraps at both ends.
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Rename');
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(document.activeElement).toHaveTextContent('Delete');
+    await userEvent.keyboard('{Home}');
+    await expect(document.activeElement).toHaveTextContent('Rename');
+    await userEvent.keyboard('{End}');
+    await expect(document.activeElement).toHaveTextContent('Delete');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+  },
+};
+
+/** ArrowDown on the trigger opens on the first item, ArrowUp on the last. */
+export const ArrowKeysOpenOnTheTrigger: Story = {
+  tags: ['!autodocs'],
+  render: () => <NavMenu />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    trigger.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Rename'));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(menu()).toBeNull());
+    await userEvent.keyboard('{ArrowUp}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Delete'));
+    // Tab leaves the menu and moves on past the trigger.
+    await userEvent.tab();
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(canvas.getByRole('button', { name: 'After' }));
+  },
+};
+
+/** Enter and Space choose an item: `onSelect` fires once and the menu closes. */
+export const SelectFiresAndCloses: Story = {
+  tags: ['!autodocs'],
+  render: (args) => (
+    <NavMenu onSelect={(args as unknown as { onPick: (n: string) => void }).onPick} />
+  ),
+  args: { onPick: fn() } as never,
+  play: async ({ args, canvas }) => {
+    const onPick = (args as unknown as { onPick: ReturnType<typeof fn> }).onPick;
+    const trigger = canvas.getByRole('button', { name: 'Actions' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Rename'));
+    await userEvent.keyboard('{Enter}');
+    await expect(onPick).toHaveBeenCalledWith('Rename');
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(document.activeElement).toBe(trigger);
+    await userEvent.keyboard('{ArrowUp}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Delete'));
+    await userEvent.keyboard(' ');
+    await expect(onPick).toHaveBeenLastCalledWith('Delete');
+    await expect(onPick).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(menu()).toBeNull());
+  },
+};
+
+/** A disabled item can't be chosen by the pointer either. */
+export const DisabledItemIsNotSelectable: Story = {
+  tags: ['!autodocs'],
+  render: (args) => (
+    <NavMenu onSelect={(args as unknown as { onPick: (n: string) => void }).onPick} />
+  ),
+  args: { onPick: fn() } as never,
+  play: async ({ args, canvas }) => {
+    const onPick = (args as unknown as { onPick: ReturnType<typeof fn> }).onPick;
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    const item = await within(await waitFor(() => menu()!)).findByRole('menuitem', {
+      name: 'Duplicate',
+    });
+    await expect(item).toBeDisabled();
+    await userEvent.click(item, { pointerEventsCheck: 0 });
+    await expect(onPick).not.toHaveBeenCalled();
+    await expect(menu()).not.toBeNull();
+  },
+};
+
+/** `closeOnSelect={false}` keeps the menu open after the item runs. */
+export const CloseOnSelectOff: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger>Actions</Menu.Trigger>
+        <Menu.Content>
+          <Menu.Item closeOnSelect={false}>Stay</Menu.Item>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+  play: async () => {
+    const item = await within(await waitFor(() => menu()!)).findByRole('menuitem');
+    await userEvent.click(item);
+    await expect(menu()).not.toBeNull();
+  },
+};
+
+/** Typing characters moves to the item whose label starts with them. */
+export const TypeaheadMovesToMatchingItem: Story = {
+  tags: ['!autodocs'],
+  render: () => <NavMenu />,
+  play: async ({ canvas }) => {
+    canvas.getByRole('button', { name: 'Actions' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Rename'));
+    await userEvent.keyboard('d');
+    await expect(document.activeElement).toHaveTextContent('Delete');
+    await userEvent.keyboard('{Escape}');
+  },
+};
+
+/** `intent="danger"` colors the item and its icon red; a neutral item stays gray. */
+export const DangerIntentColorsTheItem: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger>Actions</Menu.Trigger>
+        <Menu.Content>
+          <Menu.Item icon={Pencil}>Rename</Menu.Item>
+          <Menu.Item icon={Trash2} intent="danger">
+            Delete
+          </Menu.Item>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+  play: async () => {
+    const inside = within(await waitFor(() => menu()!));
+    const neutral = inside.getByRole('menuitem', { name: 'Rename' });
+    const danger = inside.getByRole('menuitem', { name: 'Delete' });
+    await expect(neutral).toHaveClass('text-gray-700');
+    await expect(neutral.querySelector('svg')).toHaveClass('text-gray-400');
+    await expect(danger).toHaveClass('text-red-600', 'hover:bg-red-50');
+    await expect(danger).not.toHaveClass('text-gray-700');
+    await expect(danger.querySelector('svg')).toHaveClass('text-red-500');
+  },
+};
