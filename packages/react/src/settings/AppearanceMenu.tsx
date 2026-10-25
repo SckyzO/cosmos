@@ -2,10 +2,14 @@ import { clsx } from 'clsx';
 import { Palette } from 'lucide-react';
 import { Popover } from '../ui/Popover';
 import { AppearanceSettings, type AppearanceSettingsProps } from './AppearanceSettings';
+import type { CosmosTheme, CosmosThemeChoice } from './appearance';
 
 export type AppearanceMenuSize = 'sm' | 'md';
 
-export type AppearanceMenuProps = Omit<AppearanceSettingsProps, 'className'> & {
+export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omit<
+  AppearanceSettingsProps<T>,
+  'className'
+> & {
   /** Trigger label (title + aria-label), also the panel's name. Default `'Appearance'`. */
   label?: string;
   /** Trigger size, as `ThemeToggle`. `md` (default) = 40px, `sm` = 32px. */
@@ -26,12 +30,12 @@ const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
  * panel stays open while the user tries combinations; Escape, a click
  * outside or the button close it.
  */
-export const AppearanceMenu = ({
+export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
   label = 'Appearance',
   size = 'md',
   className,
   ...settings
-}: AppearanceMenuProps) => {
+}: AppearanceMenuProps<T>) => {
   const { box, icon } = SIZE_CLASS[size];
   return (
     <Popover>

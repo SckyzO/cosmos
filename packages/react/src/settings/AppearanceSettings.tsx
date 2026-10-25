@@ -14,23 +14,28 @@ import {
   type CosmosFontMeta,
   type CosmosTextSize,
   type CosmosTextSizeMeta,
+  type CosmosSystemThemeMeta,
   type CosmosTheme,
+  type CosmosThemeChoice,
   type CosmosThemeMeta,
 } from './appearance';
 
-export type AppearanceSettingsProps = {
-  /** Selected theme. */
-  theme: CosmosTheme;
+export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> = {
+  /** Selected theme (`'system'` when `themes` offers it: then type the state as `CosmosThemeChoice`). */
+  theme: T;
   /** Selected accent. */
   accent: CosmosAccent;
-  onThemeChange: (theme: CosmosTheme) => void;
+  onThemeChange: (theme: T) => void;
   onAccentChange: (accent: CosmosAccent) => void;
   /** Heading of the theme group. Default `'Theme'`. */
   themeLabel?: string;
   /** Heading of the accent group. Default `'Accent color'`. */
   accentLabel?: string;
-  /** Themes to offer. Default: all of `COSMOS_THEMES`. */
-  themes?: CosmosThemeMeta[];
+  /**
+   * Themes to offer. Default: all of `COSMOS_THEMES`. Add `COSMOS_SYSTEM_THEME`
+   * to offer "System", then resolve it with `applyAppearance`.
+   */
+  themes?: (CosmosThemeMeta | CosmosSystemThemeMeta)[];
   /** Accents to offer. Default: all of `COSMOS_ACCENTS`. */
   accents?: CosmosAccentMeta[];
   /** Columns of the theme grid. Default 4; use 2 in narrow containers. */
@@ -63,7 +68,7 @@ export type AppearanceSettingsProps = {
  * when their `on…Change` handlers are set. Controlled: pass the result to
  * `applyAppearance` (or your own theme switcher) to update the page.
  */
-export const AppearanceSettings = ({
+export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   theme,
   accent,
   onThemeChange,
@@ -82,7 +87,7 @@ export const AppearanceSettings = ({
   fonts = COSMOS_FONTS,
   textSizes = COSMOS_TEXT_SIZES,
   className,
-}: AppearanceSettingsProps) => {
+}: AppearanceSettingsProps<T>) => {
   const themeHeadingId = useId();
   const accentHeadingId = useId();
   const fontHeadingId = useId();
@@ -99,8 +104,8 @@ export const AppearanceSettings = ({
           palettes={themes}
           value={theme}
           cols={themeColumns}
-          // ids come from `themes`, so they are CosmosTheme values.
-          onChange={(id) => onThemeChange(id as CosmosTheme)}
+          // ids come from `themes`, so they are theme values.
+          onChange={(id) => onThemeChange(id as T)}
         />
       </div>
       <div>
