@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { useOverflows } from '../hooks/useOverflows';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import type { DataTableDensity } from './types';
 
@@ -64,9 +65,21 @@ export type TableProps = ComponentProps<'table'> & {
    * (e.g. `max-h-80`).
    */
   stickyHeader?: boolean;
+  /**
+   * Pins the first cell of every row to the start while the table scrolls sideways, so the row
+   * stays identified on a narrow screen. The header, body and footer cells keep their own
+   * backgrounds; a row's hover or stripe shows on the pinned cell too.
+   */
+  stickyFirstColumn?: boolean;
   /** Classes for the wrapper that draws the border and scrolls horizontally. */
   containerClassName?: string;
 };
+
+// The first cell of every row pinned to the start. A body cell takes its row's background, which
+// is given a solid base so the cells that scroll under it do not show through; a header or
+// footer cell has its own.
+const STICKY_FIRST_COLUMN =
+  '[&_tr>:first-child]:sticky [&_tr>:first-child]:left-0 [&_tr>:first-child]:z-[1] [&_tr>:first-child]:[box-shadow:inset_-1px_0_0_var(--color-border)] [&_tbody_tr]:bg-[var(--color-bg-panel)] [&_tbody_tr>:first-child]:bg-inherit';
 
 // The id of the caption of the table inside `containerRef`, if it has one. A read of the DOM,
 // hence a store: the caption is a direct child of the table, which the host's children add and
@@ -105,6 +118,7 @@ export const Table = ({
   density = 'default',
   striped = false,
   stickyHeader = false,
+  stickyFirstColumn = false,
   containerClassName,
   className,
   children,
@@ -113,6 +127,7 @@ export const Table = ({
   const captionId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(containerRef);
+  const fade = useScrollFade(containerRef, { start: !stickyFirstColumn });
   const namedBy = useCaptionId(containerRef);
   return (
     <TableContext.Provider value={{ density, striped, stickyHeader, captionId }}>
@@ -125,6 +140,7 @@ export const Table = ({
         tabIndex={scrolls ? 0 : undefined}
         role={scrolls && namedBy ? 'region' : undefined}
         aria-labelledby={scrolls ? namedBy : undefined}
+        style={fade}
         className={clsx(
           'focus-visible:focus-indicator max-w-full rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] focus-visible:ring-inset dark:border-gray-800',
           stickyHeader ? 'overflow-auto' : 'overflow-x-auto',
@@ -134,6 +150,7 @@ export const Table = ({
         <table
           className={clsx(
             'w-full border-collapse text-sm text-[var(--color-text-primary)]',
+            stickyFirstColumn && STICKY_FIRST_COLUMN,
             className
           )}
           {...rest}
