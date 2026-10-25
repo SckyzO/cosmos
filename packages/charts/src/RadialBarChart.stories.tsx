@@ -319,6 +319,41 @@ export const ColorsOverridePalette: Story = {
   },
 };
 
+/**
+ * The center leads with its value: big and bold, over a small label, for the
+ * average and for a hovered ring alike.
+ */
+export const CenterValueLeadsItsLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const size = (selector: string) => {
+      const el = canvasElement.querySelector(selector);
+      return {
+        size: parseFloat(el?.getAttribute('font-size') ?? '0'),
+        weight: el?.getAttribute('font-weight'),
+      };
+    };
+    const expectValueOverLabel = () => {
+      const value = size('.apexcharts-datalabel-value');
+      const label = size('.apexcharts-datalabel-label');
+      expect(label.size).toBeGreaterThan(0);
+      expect(value.size).toBeGreaterThan(label.size);
+      expect(value.weight).toBe('700');
+    };
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('Avg');
+      expectValueOverLabel();
+    });
+    await waitFor(() => {
+      canvasElement
+        .querySelector('.apexcharts-radial-series path')
+        ?.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('CPU');
+      expectValueOverLabel();
+    });
+  },
+};
+
 /** `formatValue` formats the average and the value of the hovered ring. */
 export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
