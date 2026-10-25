@@ -91,7 +91,7 @@ const emailRef = useRef<HTMLInputElement>(null);
 The `ref` prop of each component says what it points to: the native `<input>`
 for text, number and search fields, the switch `<button>` for `Toggle`, the first
 cell for `OtpInput`, the trigger for `DatePicker`, and the segment you would Tab
-to for `SegmentedControl` and `FilterPills` (the selected one, else the first).
+to for `SegmentedControl`, in either appearance (the selected one, else the first).
 
 ## Tables
 
