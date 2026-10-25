@@ -547,6 +547,19 @@ export const expectAxisTitlesIn = (root: HTMLElement, { x, y }: { x: string; y: 
     const [left, right] = box('.apexcharts-yaxis-title-text').sort((a, b) => a.left - b.left);
     expect(left.right).toBeLessThan(plot.left + 1);
     if (y.length > 1) expect(right.left).toBeGreaterThan(plot.right - 1);
+    // The title is inside the drawing, and the chart's container ends where the
+    // drawing does: ApexCharts adds 15px under it by default (parentHeightOffset).
+    const svg = root.querySelector('svg.apexcharts-svg')?.getBoundingClientRect();
+    const container = root
+      .querySelector('.apexcharts-canvas')
+      ?.parentElement?.getBoundingClientRect();
+    expect(svg).toBeTruthy();
+    expect(container).toBeTruthy();
+    if (!svg || !container) return;
+    for (const title of box('.apexcharts-xaxis-title-text')) {
+      expect(title.bottom).toBeLessThan(svg.bottom + 1);
+    }
+    expect(container.bottom - svg.bottom).toBeLessThan(1);
   });
 
 // The font size, in px, of the first element matching `selector`: the SVG

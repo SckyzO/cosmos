@@ -16,6 +16,7 @@ import {
   switchTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  expectAxisTitles,
 } from './storybook-helpers';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
@@ -85,6 +86,12 @@ export const LatencyVsLoad: Story = {
     formatX: percent,
     formatY: ms,
   },
+};
+
+/** The axis titles sit under and beside the plot, inside the drawing, with no space left under it. */
+export const AxisTitles: Story = {
+  args: { ...LatencyVsLoad.args },
+  play: expectAxisTitles({ x: 'CPU load', y: ['p95 latency'] }),
 };
 
 /** Two series or more get a legend, one color each. */
