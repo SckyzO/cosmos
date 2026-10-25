@@ -22,6 +22,11 @@ type ListboxNavigationOptions<T extends ListboxItem> = {
   setOpen: (open: boolean) => void;
   /** Enter on the active option. */
   onPick: (item: T) => void;
+  /**
+   * The active option before any arrow key. Default `0`; `-1` for a list that suggests and must
+   * not take an Enter meant for the typed text.
+   */
+  initialIndex?: number;
 };
 
 /**
@@ -36,8 +41,9 @@ export const useListboxNavigation = <T extends ListboxItem>({
   open,
   setOpen,
   onPick,
+  initialIndex = 0,
 }: ListboxNavigationOptions<T>) => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
 
   const moveActive = (step: 1 | -1) =>
     setActiveIndex((i) => {
