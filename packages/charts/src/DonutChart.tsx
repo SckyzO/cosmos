@@ -3,8 +3,8 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/donut';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -34,7 +34,7 @@ export const DonutChart = ({
   height = 280,
   width = '100%',
 }: DonutChartProps) => {
-  const { palette, text, textMuted, tooltipTheme } = useChartTheme();
+  const { palette, surface, text, textMuted, tooltipTheme } = useChartTheme();
   const format = useValueFormat(formatValue);
   // ApexCharts' default total, the sum of the visible slices, formatted.
   const total = useMemo(
@@ -48,7 +48,7 @@ export const DonutChart = ({
     colors: colors ?? palette,
     labels,
     // The legend and the tooltip are HTML: escape the labels and the values.
-    legend: { position: legendPosition, formatter: escapeHtml },
+    legend: chartLegend({ position: legendPosition, alignRight: false }),
     tooltip: {
       theme: tooltipTheme,
       // ApexCharts fills a donut's tooltip with the slice color under white
@@ -57,6 +57,8 @@ export const DonutChart = ({
       fillSeriesColor: false,
       y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
     },
+    // The gap between slices is the card's color: ApexCharts' white glares in dark themes.
+    stroke: { colors: [surface] },
     dataLabels: { enabled: false },
     plotOptions: {
       pie: {

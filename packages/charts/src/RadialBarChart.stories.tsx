@@ -13,7 +13,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
-  expectNoData,
+  expectMessageOnly,
 } from './storybook-helpers';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -173,7 +173,12 @@ export const CustomRange: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], labels: [] },
-  play: expectNoData('No data'),
+  render: (args) => (
+    <Card title="RadialBarChart">
+      <RadialBarChart {...args} />
+    </Card>
+  ),
+  play: expectMessageOnly('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────

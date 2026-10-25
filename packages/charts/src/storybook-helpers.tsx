@@ -182,21 +182,27 @@ export const expectColorsFromTokens = async (
   }
 };
 
-/** The default series colors, in order: theme tokens, and the violet that has none. */
+/** The default series colors, in order: the accent token, then hues the theme has no token for. */
 const PALETTE = [
   '--color-brand-500',
-  '--color-success-500',
-  '--color-warning-500',
-  '--color-error-500',
+  '#06b6d4',
   '#8b5cf6',
+  '#ec4899',
+  '#64748b',
+  '#f97316',
+  '#14b8a6',
+  '#84cc16',
 ];
 
 /**
- * Asserts the series colors `drawn()` finds are the default palette of the
- * theme, then that a redefined success color reaches the chart.
+ * Asserts the series colors `drawn()` finds are the first of the default
+ * palette of the theme, one per series, then that a redefined accent reaches
+ * the chart.
  */
-export const expectPaletteFromTheme = (drawn: () => (string | null | undefined)[]) =>
-  expectColorsFromTokens(drawn, PALETTE, '--color-success-500');
+export const expectPaletteFromTheme = async (drawn: () => (string | null | undefined)[]) => {
+  await waitFor(() => expect(drawn().length).toBeGreaterThan(0));
+  await expectColorsFromTokens(drawn, PALETTE.slice(0, drawn().length), '--color-brand-500');
+};
 
 /**
  * Asserts `drawn()` is the color of `tokens[theme]` after switching `<html>` to
@@ -384,6 +390,57 @@ export const expectLegendsOnTheirSide = async ({
     });
   }
 };
+
+/**
+ * Play function for a story with no data: the chart draws `text` and nothing
+ * else, no axis labels, grid lines or legend around it.
+ */
+export const expectMessageOnly =
+  (text: string) =>
+  async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    await expectNoData(text)({ canvasElement });
+    await expectNoFrame(canvasElement);
+    await expectMessageCentered(canvasElement);
+  };
+
+/** Asserts the message sits in the middle of the chart, not in a corner. */
+const expectMessageCentered = (root: HTMLElement) =>
+  waitFor(() => {
+    const message = root.querySelector('.apexcharts-text-nodata')?.getBoundingClientRect();
+    const chart = root.querySelector('.apexcharts-canvas')?.getBoundingClientRect();
+    expect(message && chart).toBeTruthy();
+    if (!message || !chart) return;
+    const offset = (a: number, b: number, size: number) => Math.abs(a - b) / size;
+    expect(
+      offset(message.x + message.width / 2, chart.x + chart.width / 2, chart.width)
+    ).toBeLessThan(0.1);
+    expect(
+      offset(message.y + message.height / 2, chart.y + chart.height / 2, chart.height)
+    ).toBeLessThan(0.1);
+  });
+
+/** Asserts the chart in `root` draws no axis label, grid line, legend item or polygon grid. */
+export const expectNoFrame = (root: HTMLElement) =>
+  waitFor(() => {
+    // ApexCharts keeps the parts it hides in the DOM under `display: none`.
+    const shown = (selector: string) =>
+      [...root.querySelectorAll(selector)].filter((el) => !el.closest('[style*="display: none"]'));
+    expect(
+      shown('.apexcharts-xaxis-label, .apexcharts-yaxis-label').map((el) => el.textContent)
+    ).toEqual([]);
+    expect(
+      shown('.apexcharts-gridline, .apexcharts-yaxis-tick, .apexcharts-xaxis-tick')
+    ).toHaveLength(0);
+    expect(shown('.apexcharts-legend-series')).toHaveLength(0);
+  });
+
+/** Asserts every legend swatch of the chart in `root` has no outline. */
+export const expectLegendMarkersUnstroked = (root: HTMLElement) =>
+  waitFor(() => {
+    const markers = [...root.querySelectorAll('.apexcharts-legend .apexcharts-marker')];
+    expect(markers.length, root.dataset.chart).toBeGreaterThan(0);
+    for (const marker of markers) expect(parseFloat(getComputedStyle(marker).strokeWidth)).toBe(0);
+  });
 
 /** Play function for a story with no data: the chart draws `text` in place of the plot. */
 export const expectNoData =
