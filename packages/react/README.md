@@ -146,6 +146,13 @@ fades, and `stickyFirstColumn` pins its first column (after the checkbox on
 `DataTable`). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
 `TableAmountCell` are the cells tables keep rebuilding.
 
+`DataTable` takes `mobileLayout="cards"` to show each row as a block below `sm`
+instead of scrolling: the checkbox, the column marked `mobile: 'title'` and the
+row action on the first line, then a label/value pair per other column
+(`mobileLabel` renames a label, `mobile: 'hidden'` drops a column). The toolbar
+gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
+the table.
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
