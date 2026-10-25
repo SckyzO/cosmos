@@ -153,14 +153,46 @@ export const SolidWithIcon: Story = {
 
 const INTENTS: Intent[] = ['neutral', 'brand', 'success', 'warning', 'danger', 'info'];
 
+export const Outline: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Outline appearance — border + colored text, no fill">
+        <div className="flex flex-wrap items-center gap-2">
+          {INTENTS.map((v) => (
+            <Badge key={v} appearance="outline" intent={v}>
+              {v}
+            </Badge>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+export const Dot: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Dot appearance — neutral text led by a dot of the intent color">
+        <div className="flex flex-wrap items-center gap-2">
+          {INTENTS.map((v) => (
+            <Badge key={v} appearance="dot" intent={v}>
+              {v}
+            </Badge>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
 export const AppearanceMatrix: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Appearance × intent — light vs solid">
+      <SectionCard title="Appearance × intent">
         <div className="space-y-3">
-          {(['light', 'solid'] as const).map((appearance) => (
+          {(['light', 'solid', 'outline', 'dot'] as const).map((appearance) => (
             <div key={appearance} className="flex flex-wrap items-center gap-2">
-              <span className="w-12 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
+              <span className="w-14 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
                 {appearance}
               </span>
               {INTENTS.map((v) => (
@@ -238,5 +270,56 @@ export const IntentColorsTheSolidBadge: Story = {
     for (const intent of INTENTS) {
       await expect(canvas.getByText(intent).parentElement).toHaveClass(...SOLID_CLASSES[intent]);
     }
+  },
+};
+
+const OUTLINE_CLASSES: Record<Intent, string[]> = {
+  neutral: ['border', 'border-gray-300', 'text-gray-700'],
+  brand: ['border', 'border-brand-300', 'text-brand-700'],
+  success: ['border', 'border-green-300', 'text-green-700'],
+  warning: ['border', 'border-amber-300', 'text-amber-700'],
+  danger: ['border', 'border-red-300', 'text-red-700'],
+  info: ['border', 'border-blue-300', 'text-blue-700'],
+};
+
+/** `appearance="outline"` draws a border and colored text with no fill. */
+export const OutlineHasABorderAndNoFill: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-2">
+        {INTENTS.map((i) => (
+          <Badge key={i} appearance="outline" intent={i}>
+            {i}
+          </Badge>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    for (const intent of INTENTS) {
+      const badge = canvas.getByText(intent).parentElement!;
+      await expect(badge).toHaveClass(...OUTLINE_CLASSES[intent]);
+      await expect(badge.className).not.toMatch(/(^|\s)bg-/);
+    }
+  },
+};
+
+/** `appearance="dot"` leads neutral text with a dot of the intent color, hidden from assistive technology. */
+export const DotLeadsTheLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Badge appearance="dot" intent="danger">
+        Down
+      </Badge>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const badge = canvas.getByText('Down').parentElement!;
+    await expect(badge).toHaveClass('text-gray-700');
+    const dot = badge.firstElementChild!;
+    await expect(dot).toHaveClass('bg-red-500', 'rounded-full');
+    await expect(dot).toHaveAttribute('aria-hidden', 'true');
   },
 };
