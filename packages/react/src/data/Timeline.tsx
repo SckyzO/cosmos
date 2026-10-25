@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 import type { Intent } from '../ui/intent';
+import { TIMESTAMP_CLASS } from '../ui/timestamp';
 
 export type TimelineItem = {
   id: string;
@@ -125,11 +126,7 @@ const Body = ({
       )}
     >
       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
-      {item.time && (
-        <span className="text-3xs shrink-0 font-mono text-gray-500 uppercase dark:text-gray-400">
-          {item.time}
-        </span>
-      )}
+      {item.time && <span className={clsx(TIMESTAMP_CLASS, 'shrink-0')}>{item.time}</span>}
     </div>
     {item.description && (
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
@@ -174,11 +171,7 @@ const TimelineList = ({
                 )}
                 <Meta meta={item.meta} />
               </div>
-              {item.time && (
-                <span className="text-3xs shrink-0 font-mono text-gray-500 uppercase dark:text-gray-400">
-                  {item.time}
-                </span>
-              )}
+              {item.time && <span className={clsx(TIMESTAMP_CLASS, 'shrink-0')}>{item.time}</span>}
             </div>
           </li>
         ))}
@@ -221,16 +214,15 @@ const TimelineList = ({
                   )}
                   <Meta meta={item.meta} />
                   {item.time && (
-                    <p className="text-3xs mt-2 font-mono text-gray-500 uppercase md:hidden dark:text-gray-400">
-                      {item.time}
-                    </p>
+                    <p className={clsx(TIMESTAMP_CLASS, 'mt-2 md:hidden')}>{item.time}</p>
                   )}
                 </div>
               </div>
               {item.time && (
                 <p
                   className={clsx(
-                    'text-3xs row-start-1 hidden pt-3 font-mono text-gray-500 uppercase md:block dark:text-gray-400',
+                    TIMESTAMP_CLASS,
+                    'row-start-1 hidden pt-3 md:block',
                     left ? 'md:col-start-3' : 'md:col-start-1 md:text-right'
                   )}
                 >

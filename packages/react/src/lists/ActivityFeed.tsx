@@ -7,6 +7,7 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import type { Intent } from '../ui/intent';
+import { TIMESTAMP_CLASS } from '../ui/timestamp';
 
 // TUI Plus reference (Pattern 1 — "Simple with icons"):
 //   <ul role="list" class="-mb-8">
@@ -99,7 +100,7 @@ function ActivityFeedItem({
               <div className="text-sm text-gray-500 dark:text-gray-400">{children}</div>
             </div>
             {timestamp && (
-              <div className="text-right text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+              <div className={clsx(TIMESTAMP_CLASS, 'text-right whitespace-nowrap')}>
                 {timestamp}
               </div>
             )}
