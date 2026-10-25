@@ -135,6 +135,7 @@ const INTEGRATIONS = [
     description: 'Incident alerts in chat.',
     category: 'Communication',
     status: 'connected' as const,
+    actionVariant: 'primary' as const,
   },
   {
     logo: Video,
@@ -143,6 +144,7 @@ const INTEGRATIONS = [
     description: 'Spin up incident calls.',
     category: 'Communication',
     status: 'connected' as const,
+    actionVariant: 'secondary' as const,
   },
   {
     logo: MessageSquare,
@@ -159,6 +161,7 @@ const INTEGRATIONS = [
     description: 'Auto-create tickets from incidents.',
     category: 'Productivity',
     status: 'connected' as const,
+    actionVariant: 'soft' as const,
   },
   {
     logo: Database,
@@ -170,6 +173,12 @@ const INTEGRATIONS = [
   },
 ];
 
+/**
+ * The three connected cards show the three emphases a destructive action can take
+ * (`actionVariant` with `actionIntent="danger"`): `primary`, `secondary` (outlined) and
+ * `soft` (tinted). On a grid, `secondary` or `soft` keeps it from being the loudest
+ * element of every card.
+ */
 export const Grid: Story = {
   render: () => (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -184,6 +193,7 @@ export const Grid: Story = {
             category={i.category}
             status={i.status}
             actionLabel={i.status === 'connected' ? 'Disconnect' : 'Connect'}
+            actionVariant={i.actionVariant}
             actionIntent={i.status === 'connected' ? 'danger' : 'brand'}
             secondaryLabel="Details"
             onAction={fn()}

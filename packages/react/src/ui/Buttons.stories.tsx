@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { createRef } from 'react';
+import { createRef, Fragment } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
 import {
@@ -21,6 +21,9 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
+const INTENTS = ['brand', 'danger'] as const;
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
@@ -49,6 +52,43 @@ export const Variants: Story = {
                 Danger
               </Button>
             </div>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+/**
+ * Every variant takes an `intent`. `danger` gives three levels of emphasis for a
+ * destructive action: `primary` for the confirmation itself, `secondary` (outlined)
+ * or `soft` (tinted) where it sits next to other actions, as on a card.
+ */
+export const Intents: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Variants × intents">
+        <div className="grid grid-cols-[repeat(5,max-content)] items-center gap-x-6 gap-y-3">
+          <span />
+          {EMPHASES.map((variant) => (
+            <span
+              key={variant}
+              className="text-2xs font-mono text-[var(--color-text-muted)] uppercase"
+            >
+              {variant}
+            </span>
+          ))}
+          {INTENTS.map((intent) => (
+            <Fragment key={intent}>
+              <span className="text-2xs font-mono text-[var(--color-text-muted)] uppercase">
+                {intent}
+              </span>
+              {EMPHASES.map((variant) => (
+                <Button key={variant} variant={variant} intent={intent}>
+                  {intent === 'danger' ? 'Disconnect' : 'Connect'}
+                </Button>
+              ))}
+            </Fragment>
           ))}
         </div>
       </SectionCard>
@@ -302,8 +342,6 @@ export const DangerContrastInLight: Story = {
 };
 
 // `variant` is the emphasis and `intent` the color: every pair of the two keeps one look.
-const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
-const INTENTS = ['brand', 'danger'] as const;
 
 export const IntentColorsEachVariant: Story = {
   tags: ['!dev', '!autodocs'],
