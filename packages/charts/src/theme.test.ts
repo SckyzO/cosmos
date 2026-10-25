@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CATEGORICAL, categoricalPalette, looksAlike, parseColor } from './palette';
 import { COSMOS_BRAND, COSMOS_PALETTE, readableOn } from './theme';
 
 // WCAG 2.x contrast, written out here rather than imported so the test does
@@ -44,6 +45,68 @@ describe('COSMOS_PALETTE', () => {
         h > 50 && h < 80 ? 'yellow' : h < 50 || h >= 340 ? 'red' : h <= 170 ? 'green' : 'ok',
         color
       ).toBe('ok');
+    }
+  });
+});
+
+// `--color-brand-500` of every `data-accent` in packages/theme/css/css-vars.css.
+const ACCENTS: Record<string, string> = {
+  blue: COSMOS_BRAND,
+  indigo: '#5963e9',
+  violet: '#8a49f5',
+  purple: '#b234d4',
+  rose: '#d81e70',
+  teal: '#038378',
+  cyan: '#017f9d',
+  graphite: '#707580',
+  red: '#de1f2d',
+  orange: '#c04f01',
+  amber: '#a46800',
+  green: '#02863c',
+};
+
+describe('categoricalPalette', () => {
+  it.each(Object.entries(ACCENTS))(
+    'has eight distinct colors, none like the %s accent',
+    (_name, accent) => {
+      const palette = categoricalPalette(accent);
+      expect(palette).toHaveLength(8);
+      expect(palette[0]).toBe(accent);
+      expect(new Set(palette).size).toBe(8);
+      for (const color of palette.slice(1)) expect(looksAlike(accent, color), color).toBe(false);
+    }
+  );
+
+  it('is the categorical list after the blue accent, so the default is unchanged', () => {
+    expect(categoricalPalette(COSMOS_BRAND)).toEqual([COSMOS_BRAND, ...CATEGORICAL]);
+    expect(COSMOS_PALETTE).toEqual([COSMOS_BRAND, ...CATEGORICAL]);
+  });
+
+  it('drops the cyan and the teal for a cyan accent, the slate for graphite', () => {
+    expect(categoricalPalette(ACCENTS.cyan)).not.toContain('#06b6d4');
+    expect(categoricalPalette(ACCENTS.cyan)).not.toContain('#14b8a6');
+    expect(categoricalPalette(ACCENTS.graphite)).not.toContain('#64748b');
+  });
+
+  it.each(['', 'red', 'var(--x)', '#fff', 'oklch(50% 0.1 20)'])(
+    'keeps the first seven colors for %j, which it cannot read',
+    (accent) => {
+      expect(categoricalPalette(accent)).toEqual([accent, ...CATEGORICAL]);
+    }
+  );
+
+  it('reads rgb() accents', () => {
+    expect(parseColor('rgb(1, 127, 157)')).toEqual([1, 127, 157]);
+    expect(categoricalPalette('rgb(1, 127, 157)')).toEqual(
+      categoricalPalette(ACCENTS.cyan).map((c, i) => (i ? c : 'rgb(1, 127, 157)'))
+    );
+  });
+
+  it('reaches readable text on every color it can hand out', () => {
+    for (const accent of Object.values(ACCENTS)) {
+      for (const color of categoricalPalette(accent).slice(1)) {
+        expect(contrast(color, readableOn(color)), color).toBeGreaterThanOrEqual(4.5);
+      }
     }
   });
 });

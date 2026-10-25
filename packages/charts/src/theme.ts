@@ -1,5 +1,6 @@
 import type { ApexOptions } from 'apexcharts';
 import { useEffect, useState } from 'react';
+import { categoricalPalette } from './palette';
 
 /** Default brand color (the blue accent). Prefer `useChartTheme().brand`, which follows the accent. */
 export const COSMOS_BRAND = '#465fff';
@@ -10,25 +11,12 @@ export const COSMOS_BRAND = '#465fff';
 const SUCCESS = '#10b981';
 const WARNING = '#f59e0b';
 const ERROR = '#ef4444';
-// The theme has no token for these hues, so they are fixed hexes. They follow
-// the accent (first place) in the order a legend reads them: hues far apart on
-// the wheel come first, and none of the first four can be mistaken for a status
-// (green, amber, red). The last three sit near the status hues and come only
-// after five series, which is when a legend needs a key anyway.
-const CATEGORICAL = [
-  '#06b6d4', // cyan
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#64748b', // slate
-  '#f97316', // orange
-  '#14b8a6', // teal
-  '#84cc16', // lime
-];
 
 /**
  * The default series colors without the theme CSS: eight categorical colors,
  * the blue accent first. With it, `useChartTheme().palette` is the same list
- * with the accent's brand color in first place.
+ * with the accent's brand color in first place, and without the colors that
+ * look like that accent (a cyan accent drops the cyan and the teal).
  *
  * Series do not read as statuses: green, amber and red are absent from the
  * first four places, and the status colors are never the default. A chart that
@@ -37,7 +25,7 @@ const CATEGORICAL = [
  * categorical scale: it names things, it does not rank them. For a quantity,
  * use `brandScale`.
  */
-export const COSMOS_PALETTE = [COSMOS_BRAND, ...CATEGORICAL];
+export const COSMOS_PALETTE = categoricalPalette(COSMOS_BRAND);
 
 // Theme classes that enable the dark variant (see @sckyzo/cosmos-theme).
 const DARK_THEME_CLASSES = ['dark', 'deep-blue'];
@@ -209,6 +197,6 @@ export const useChartTheme = () => {
     track,
     tooltipTheme,
     statusPalette: [success, warning, error],
-    palette: [brand, ...CATEGORICAL],
+    palette: categoricalPalette(brand),
   };
 };
