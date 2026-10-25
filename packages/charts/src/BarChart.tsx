@@ -3,7 +3,6 @@ import 'apexcharts/bar';
 import 'apexcharts/features/legend';
 
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
@@ -58,7 +57,7 @@ export const BarChart = ({
   height = 320,
   width = '100%',
 }: BarChartProps) => {
-  const { grid, axisLabels, palette, surface, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, surface, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
   // Side by side, the bars of a group would touch.
@@ -89,7 +88,7 @@ export const BarChart = ({
     // whichever of categories and values it carries.
     xaxis: {
       categories,
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? format.axis : undefined,
@@ -101,7 +100,7 @@ export const BarChart = ({
       axisTicks: { show: false },
     },
     yaxis: {
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: {
         ...axisLabels,
         formatter: horizontal ? undefined : format.axis,

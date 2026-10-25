@@ -2,7 +2,6 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/heatmap';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { seriesTitle, useCategoryTitle, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -114,7 +113,7 @@ export const HeatmapChart = ({
   height = 320,
   width = '100%',
 }: HeatmapChartProps) => {
-  const { axisLabels, brandScale, surface, tooltipTheme } = useChartTheme();
+  const { axisLabels, axisTitle, brandScale, surface, tooltipTheme } = useChartTheme();
   const format = useValueFormat(formatValue);
   const categoryTitle = useCategoryTitle(categories);
 
@@ -157,7 +156,7 @@ export const HeatmapChart = ({
     // pile; the tooltip still names every column.
     xaxis: {
       categories,
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: { ...axisLabels, rotate: 0 },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -166,7 +165,7 @@ export const HeatmapChart = ({
     // ApexCharts draws the first series at the bottom; read top-down instead.
     yaxis: {
       reversed: true,
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: { ...axisLabels },
     },
     legend: chartLegend({

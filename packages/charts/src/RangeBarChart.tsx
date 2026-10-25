@@ -2,7 +2,6 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/rangeBar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { useStableCallback } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -64,7 +63,7 @@ export const RangeBarChart = ({
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const seriesColors = colors ?? palette;
   const legendVisible = showLegend ?? series.length > 1;
   const lanes = groupRows ? 1 : series.length;
@@ -114,12 +113,12 @@ export const RangeBarChart = ({
     // One labels object per axis: ApexCharts mutates them.
     xaxis: {
       type: 'datetime',
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: { ...axisLabels, datetimeUTC: true },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { title: axisTitle(yTitle, axisLabels.style.colors), labels: { ...axisLabels } },
+    yaxis: { title: axisTitle(yTitle), labels: { ...axisLabels } },
     legend: chartLegend({
       show: legendVisible,
       position: legendPosition,

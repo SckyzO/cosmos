@@ -2,7 +2,6 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
-import { axisTitle } from './axisTitle';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -45,7 +44,7 @@ export const LineAreaChart = ({
   showLegend,
   legendPosition = 'top',
 }: LineAreaChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const categoryTitle = useCategoryTitle(categories);
   const format = useOptionalValueFormat(formatValue);
@@ -65,13 +64,13 @@ export const LineAreaChart = ({
     // formatter onto it, which blanked the y labels on the next update.
     xaxis: {
       categories,
-      title: axisTitle(xTitle, axisLabels.style.colors),
+      title: axisTitle(xTitle),
       labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
     yaxis: {
-      title: axisTitle(yTitle, axisLabels.style.colors),
+      title: axisTitle(yTitle),
       labels: { ...axisLabels, formatter: format.axis },
     },
     legend: chartLegend({

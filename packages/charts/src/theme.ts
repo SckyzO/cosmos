@@ -1,6 +1,8 @@
 import type { ApexOptions } from 'apexcharts';
 import { useEffect, useState } from 'react';
+import { axisTitle as titleStyle } from './axisTitle';
 import { categoricalPalette } from './palette';
+import { AXIS_LABEL_PX, CHART_TEXT_PX, parseTextScale, scaledPx } from './textSize';
 
 /** Default brand color (the blue accent). Prefer `useChartTheme().brand`, which follows the accent. */
 export const COSMOS_BRAND = '#465fff';
@@ -110,12 +112,14 @@ const readChartColors = () => {
     statusWarn: readCssVar('--color-status-warn', WARNING),
     statusCrit: readCssVar('--color-status-crit', ERROR),
     track: line,
+    textScale: parseTextScale(readCssVar('--cosmos-text-scale', '')),
   };
 };
 
 /**
- * Returns `read()` and calls it again whenever `<html>` changes theme or accent
- * (the Cosmos convention: a theme class, `data-accent`). `read` must be stable.
+ * Returns `read()` and calls it again whenever `<html>` changes theme, accent or
+ * text size (the Cosmos convention: a theme class, `data-accent`,
+ * `data-text-size`). `read` must be stable.
  * Fonts do not change the colors: `ApexChart` redraws for them.
  */
 const useHtmlAppearance = <T>(read: () => T): T => {
@@ -127,7 +131,7 @@ const useHtmlAppearance = <T>(read: () => T): T => {
     const observer = new MutationObserver(update);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class', 'data-accent'],
+      attributeFilter: ['class', 'data-accent', 'data-text-size'],
     });
     return () => observer.disconnect();
   }, [read]);
@@ -153,6 +157,11 @@ export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
  * `palette` the default series colors: eight categorical colors, the brand
  * color first and none of the status hues among the first four.
  * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
+ *
+ * The chart text follows the text size setting (`data-text-size` on `<html>`):
+ * `axisLabels` carries the size of the axis labels, `axisTitle(text)` builds an
+ * axis title in the axis color and `textSize` is the size of the legend and the
+ * tooltip, all scaled as the page's `text-*` sizes are.
  */
 export const useChartTheme = () => {
   const {
@@ -170,6 +179,7 @@ export const useChartTheme = () => {
     statusWarn,
     statusCrit,
     track,
+    textScale,
   } = useHtmlAppearance(readChartColors);
   const grid: ApexOptions['grid'] = {
     borderColor: gridColor,
@@ -178,15 +188,20 @@ export const useChartTheme = () => {
   const axisLabels = {
     style: {
       colors: axis,
-      fontSize: '11px',
+      fontSize: scaledPx(AXIS_LABEL_PX, textScale),
       fontFamily: 'inherit',
     },
   };
+  // The size of the axis titles, the legend and the tooltip.
+  const textSize = scaledPx(CHART_TEXT_PX, textScale);
+  const axisTitle = (title: string | undefined) => titleStyle(title, axis, textSize);
   const tooltipTheme: 'dark' | 'light' = dark ? 'dark' : 'light';
   return {
     dark,
     grid,
     axisLabels,
+    axisTitle,
+    textSize,
     brand,
     brandScale,
     surface,
