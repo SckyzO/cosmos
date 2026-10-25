@@ -15,6 +15,8 @@ import {
   xAxisLayout,
   expectAccessibleChart,
   expectPaletteFromTheme,
+  opaqueColor,
+  resolveColor,
   LegendSides,
   expectLegendsOnTheirSide,
 } from './storybook-helpers';
@@ -273,6 +275,23 @@ export const EightSeriesPalette: Story = {
         el.getAttribute('stroke')
       )
     );
+  },
+};
+
+/** With the cyan accent the palette drops the cyan and the teal, which would repeat the accent. */
+export const EightSeriesPaletteCyanAccent: Story = {
+  ...EightSeriesPalette,
+  globals: { accent: 'cyan' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const fills = [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
+        opaqueColor(el.getAttribute('stroke') ?? '')
+      );
+      expect(fills).toHaveLength(8);
+      expect(new Set(fills).size).toBe(8);
+      expect(fills).not.toContain(resolveColor('#06b6d4'));
+      expect(fills).not.toContain(resolveColor('#14b8a6'));
+    });
   },
 };
 
