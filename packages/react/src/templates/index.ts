@@ -1,8 +1,3 @@
-export {
-  PageBreadcrumb,
-  type PageBreadcrumbProps,
-  type PageBreadcrumbItem,
-} from './PageBreadcrumb';
 export { PageHeader, type PageHeaderProps, type PageHeaderMetaItemProps } from './PageHeader';
 export { SectionCard, type SectionCardProps } from './SectionCard';
 export { ContentNarrow, type ContentNarrowProps } from './ContentNarrow';
