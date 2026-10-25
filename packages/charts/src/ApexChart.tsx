@@ -51,12 +51,13 @@ const hasNoData = (series: unknown): boolean =>
 
 /**
  * What an empty chart draws besides its message: nothing. ApexCharts still
- * lays out a 0–6 axis, a grid and a legend around "No data".
+ * lays out a 0–6 axis, a grid, a legend and the axis titles around "No data".
  */
 const withoutFrame = (options: ApexOptions | undefined): ApexOptions => ({
   grid: { show: false },
   legend: { show: false },
   xaxis: {
+    title: { text: '' },
     labels: { show: false },
     axisBorder: { show: false },
     axisTicks: { show: false },
@@ -90,7 +91,8 @@ const withoutFrame = (options: ApexOptions | undefined): ApexOptions => ({
  * grid or legend around it (`withoutFrame`).
  *
  * The tooltip takes a class that darkens its title in the light themes, from a
- * style React hoists into `<head>` once for every chart.
+ * style React hoists into `<head>` once for every chart. The tooltip and the
+ * legend are drawn at the size of the text size setting (`useChartTheme().textSize`).
  *
  * `apexOptions` is merged over all of it last, so it can override anything the
  * wrapper or this component set. `mergeOptions` copies it: ApexCharts writes to
@@ -105,7 +107,7 @@ export const ApexChart = ({
   ...props
 }: ApexChartProps) => {
   const chartRef = useRef<ApexCharts | null>(null);
-  const { textMuted } = useChartTheme();
+  const { textMuted, textSize } = useChartTheme();
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -134,13 +136,20 @@ export const ApexChart = ({
   }, []);
 
   const frame = hasNoData(props.series) ? withoutFrame(options) : undefined;
+  const base = frame ? mergeOptions(options ?? {}, frame) : options;
   const own = {
-    ...(frame ? mergeOptions(options ?? {}, frame) : options),
+    ...base,
     chart: {
       ...options?.chart,
       accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
     },
-    tooltip: { ...options?.tooltip, cssClass: TOOLTIP_CLASS },
+    // A chart without a legend must not get one: ApexCharts shows any legend object.
+    ...(base?.legend ? { legend: { fontSize: textSize, ...base.legend } } : {}),
+    tooltip: {
+      ...options?.tooltip,
+      style: { fontSize: textSize, ...options?.tooltip?.style },
+      cssClass: TOOLTIP_CLASS,
+    },
     noData: {
       text: emptyMessage,
       align: 'center' as const,

@@ -3,7 +3,7 @@ import type { ElementType, ReactNode } from 'react';
 import type { Intent } from './intent';
 
 export type BadgeSize = 'sm' | 'md';
-export type BadgeAppearance = 'light' | 'solid';
+export type BadgeAppearance = 'light' | 'solid' | 'outline' | 'dot';
 
 export type BadgeProps = {
   children: ReactNode;
@@ -12,7 +12,9 @@ export type BadgeProps = {
   size?: BadgeSize;
   /**
    * Visual style. `light` (default) = soft tinted bg + colored text. `solid` =
-   * filled bg: white text, dark text on the bright `success` and `warning` fills.
+   * filled bg: white text, dark text on the bright `success` and `warning` fills. `outline` =
+   * no fill, a colored border and text. `dot` = no fill, neutral text led by a dot of the
+   * intent color: for a status in a dense list, where a filled pill would shout.
    */
   appearance?: BadgeAppearance;
   /** Optional Lucide icon. */
@@ -28,6 +30,24 @@ const INTENT_LIGHT: Record<Intent, string> = {
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
   danger: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
   info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
+};
+
+const INTENT_OUTLINE: Record<Intent, string> = {
+  neutral: 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300',
+  brand: 'border-brand-300 text-brand-700 dark:border-brand-500/50 dark:text-brand-400',
+  success: 'border-green-300 text-green-700 dark:border-green-500/50 dark:text-green-400',
+  warning: 'border-amber-300 text-amber-700 dark:border-amber-500/50 dark:text-amber-400',
+  danger: 'border-red-300 text-red-700 dark:border-red-500/50 dark:text-red-400',
+  info: 'border-blue-300 text-blue-700 dark:border-blue-500/50 dark:text-blue-400',
+};
+
+const DOT_COLOR: Record<Intent, string> = {
+  neutral: 'bg-gray-400 dark:bg-gray-500',
+  brand: 'bg-brand-500',
+  success: 'bg-green-500',
+  warning: 'bg-amber-500',
+  danger: 'bg-red-500',
+  info: 'bg-blue-500',
 };
 
 // Every text reaches 4.5:1 in the four themes. Ribbon, NotificationsPanel and
@@ -60,17 +80,30 @@ export const Badge = ({
   iconPosition = 'left',
   className,
 }: BadgeProps) => {
-  const intentMap = appearance === 'solid' ? INTENT_SOLID : INTENT_LIGHT;
+  const intentClass =
+    appearance === 'solid'
+      ? INTENT_SOLID[intent]
+      : appearance === 'outline'
+        ? clsx('border', INTENT_OUTLINE[intent])
+        : appearance === 'dot'
+          ? 'border border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-300'
+          : INTENT_LIGHT[intent];
   const iconClass = ICON_SIZE[size];
   return (
     <span
       className={clsx(
         'inline-flex items-center rounded-full font-semibold',
-        intentMap[intent],
+        intentClass,
         SIZE_CLASS[size],
         className
       )}
     >
+      {appearance === 'dot' && (
+        <span
+          aria-hidden
+          className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', DOT_COLOR[intent])}
+        />
+      )}
       {Icon && iconPosition === 'left' && (
         <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
       )}

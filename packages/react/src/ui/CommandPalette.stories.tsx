@@ -479,3 +479,100 @@ export const PlaceholderContrastInEveryTheme: Story = {
     inEachTheme(() => expectPlaceholderContrast(input));
   },
 };
+
+// ── Rich items and close button ──────────────────────────────────────────────
+
+const RichPalette = ({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) => (
+  <CommandPalette open={open} onOpenChange={onOpenChange} hotkey={null}>
+    <CommandPalette.Input placeholder="Search…" onClose={() => onOpenChange(false)} />
+    <CommandPalette.List>
+      <CommandPalette.Empty>No matching commands.</CommandPalette.Empty>
+      <CommandPalette.Group heading="Projects">
+        <CommandPalette.Item
+          icon={LayoutDashboard}
+          description="Fleet overview with the live alerts"
+          meta="Dashboards"
+        >
+          Open dashboard
+        </CommandPalette.Item>
+        <CommandPalette.Item
+          icon={FileText}
+          description="Start from a template or an empty page"
+          meta="3 templates"
+          shortcut="N"
+        >
+          Create document
+        </CommandPalette.Item>
+        <CommandPalette.Item icon={Settings} meta="Account">
+          Settings
+        </CommandPalette.Item>
+      </CommandPalette.Group>
+    </CommandPalette.List>
+  </CommandPalette>
+);
+
+/** `description` is a second line, `meta` trailing text; an item with neither stays compact. */
+export const RichItems: Story = {
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <RichPalette open={open} onOpenChange={setOpen} />
+      </div>
+    );
+  },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    const inside = within(dialog);
+    await expect(inside.getByText('Fleet overview with the live alerts')).toBeVisible();
+    await expect(inside.getByText('3 templates')).toBeVisible();
+    // The compact item has no second line: it is no taller than the text line it carries.
+    const compact = inside.getByText('Settings').closest('[cmdk-item]') as HTMLElement;
+    const rich = inside.getByText('Create document').closest('[cmdk-item]') as HTMLElement;
+    await expect(rich.getBoundingClientRect().height).toBeGreaterThan(
+      compact.getBoundingClientRect().height
+    );
+  },
+};
+
+/** The close button of the input calls `onClose`; without the prop there is none. */
+export const CloseButtonClosesThePalette: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <span data-testid="state">{open ? 'open' : 'closed'}</span>
+        <RichPalette open={open} onOpenChange={setOpen} />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    await expect(canvas.getByTestId('state')).toHaveTextContent('closed');
+  },
+};
+
+export const NoCloseButtonByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <CommandPalette open hotkey={null} onOpenChange={fn()}>
+      <CommandPalette.Input placeholder="Search…" />
+      <CommandPalette.List>
+        <CommandPalette.Item>Item</CommandPalette.Item>
+      </CommandPalette.List>
+    </CommandPalette>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await expect(within(dialog).queryByRole('button', { name: 'Close' })).toBeNull();
+  },
+};

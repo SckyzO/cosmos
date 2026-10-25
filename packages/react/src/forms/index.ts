@@ -22,3 +22,4 @@ export * from './OtpInput';
 export * from './ActionPanel';
 export * from './Combobox';
 // forms/formatBytes (the file size shown by FileInput and Dropzone) is internal: not re-exported.
+export type { FieldSize } from './fieldRecipe';

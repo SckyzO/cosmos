@@ -1,14 +1,24 @@
 import { type ComponentType, type Ref } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { StatusBadge } from '../status/StatusBadge';
 import { type HealthStatus } from '../status/types';
 
-export type StatusRowProps = {
+export type RowProps = {
+  /** Optional leading icon (lucide-react or any icon component) */
   icon?: ComponentType<{ className?: string }>;
+  /** Main row title */
   title: string;
+  /** Optional subtitle below the title */
   subtitle?: string;
-  status: HealthStatus;
+  /**
+   * Health shown as a `StatusBadge` at the end of the row, in place of the
+   * navigation chevron.
+   */
+  status?: HealthStatus;
+  /** Click handler — renders a button */
   onClick?: () => void;
+  /** Or provide an href to render an `<a>` instead */
   href?: string;
   className?: string;
   /** Ref to the row's root: an `<a>` when `href` is set, a `<button>` otherwise. */
@@ -16,9 +26,14 @@ export type StatusRowProps = {
 };
 
 /**
- * StatusRow — same as ClickableRow but ends with a status badge instead of a chevron.
+ * Row — full-width navigable row with icon + title + subtitle, ending with a
+ * chevron, or with a status badge when `status` is set.
+ *
+ * Use for navigable lists: racks, servers, exporters, articles… The padding
+ * insets the content from the hover background, so stack rows in a plain
+ * container, with or without dividers.
  */
-export const StatusRow = ({
+export const Row = ({
   icon: Icon,
   title,
   subtitle,
@@ -27,7 +42,7 @@ export const StatusRow = ({
   href,
   className,
   ref,
-}: StatusRowProps) => {
+}: RowProps) => {
   const inner = (
     <>
       {Icon && (
@@ -39,11 +54,15 @@ export const StatusRow = ({
         <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
         {subtitle && <p className="truncate text-xs text-[var(--color-text-muted)]">{subtitle}</p>}
       </div>
-      <StatusBadge status={status} size="sm" className="shrink-0" />
+      {status ? (
+        <StatusBadge status={status} size="sm" className="shrink-0" />
+      ) : (
+        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+      )}
     </>
   );
   const baseClass = clsx(
-    'focus-visible:focus-indicator flex w-full items-center gap-3 px-1 py-2.5 text-left transition-colors focus-visible:ring-inset',
+    'focus-visible:focus-indicator flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-inset',
     'hover:bg-black/5 dark:hover:bg-white/5',
     className
   );

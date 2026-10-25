@@ -46,27 +46,17 @@ const PAIRS = {
       {
         slug: 'issues-with-avatar-group',
         tuiTitle: 'With inline links and avatar group preview',
-        storyId: 'lists-content-stacked-list--issues-with-avatar-group',
+        storyId: 'lists-stacked-list--issues-with-avatar-group',
       },
       {
         slug: 'projects-with-badge-and-actions',
         tuiTitle: 'With badges, button, and actions menu preview',
-        storyId: 'lists-content-stacked-list--projects-with-badge-and-actions',
+        storyId: 'lists-stacked-list--projects-with-badge-and-actions',
       },
       {
-        slug: 'title-without-link',
+        slug: 'title-only-no-details',
         tuiTitle: 'With inline links and avatar group preview',
-        storyId: 'lists-content-stacked-list--title-without-link',
-      },
-      {
-        slug: 'title-only-no-meta',
-        tuiTitle: 'With inline links and avatar group preview',
-        storyId: 'lists-content-stacked-list--title-only-no-meta',
-      },
-      {
-        slug: 'single-meta-item',
-        tuiTitle: 'With inline links and actions menu preview',
-        storyId: 'lists-content-stacked-list--single-meta-item',
+        storyId: 'lists-stacked-list--title-only-no-details',
       },
     ],
   },
@@ -76,43 +66,38 @@ const PAIRS = {
       {
         slug: 'default',
         tuiTitle: 'In card with links preview',
-        storyId: 'lists-stacked-list-in-card--default',
+        storyId: 'lists-stacked-list--in-card',
       },
       {
         slug: 'no-links',
         tuiTitle: 'In card with links preview',
-        storyId: 'lists-stacked-list-in-card--no-links',
-      },
-      {
-        slug: 'with-leading-icon',
-        tuiTitle: 'In card with links preview',
-        storyId: 'lists-stacked-list-in-card--with-leading-icon',
+        storyId: 'lists-stacked-list--in-card-no-links',
       },
       {
         slug: 'inside-container',
         tuiTitle: 'In card with links preview',
-        storyId: 'lists-stacked-list-in-card--inside-container',
+        storyId: 'lists-stacked-list--in-card-inside-container',
       },
     ],
   },
   narrow: {
     tuiUrl: 'https://tailwindcss.com/plus/ui-blocks/application-ui/lists/stacked-lists',
     cases: [
-      { slug: 'narrow', tuiTitle: 'Narrow preview', storyId: 'lists-narrow-stacked-list--narrow' },
+      { slug: 'narrow', tuiTitle: 'Narrow preview', storyId: 'lists-stacked-list--narrow' },
       {
         slug: 'sticky-headings',
         tuiTitle: 'Narrow with sticky headings preview',
-        storyId: 'lists-narrow-stacked-list--sticky-headings',
+        storyId: 'lists-stacked-list--sticky-headings',
       },
       {
-        slug: 'with-actions',
+        slug: 'narrow-with-actions',
         tuiTitle: 'Narrow with actions preview',
-        storyId: 'lists-narrow-stacked-list--with-actions',
+        storyId: 'lists-stacked-list--narrow-with-actions',
       },
       {
         slug: 'with-truncated-description',
         tuiTitle: 'Narrow with truncated content preview',
-        storyId: 'lists-narrow-stacked-list--with-truncated-description',
+        storyId: 'lists-stacked-list--with-truncated-description',
       },
     ],
   },

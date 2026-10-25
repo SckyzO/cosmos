@@ -4,6 +4,7 @@ import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 import { useControllableState } from '../hooks/useControllableState';
+import { FIELD_PAD_LEFT, FIELD_TEXT, fieldClass, type FieldSize } from './fieldRecipe';
 
 export type NumberInputProps = FieldA11yProps & {
   name?: string;
@@ -16,6 +17,10 @@ export type NumberInputProps = FieldA11yProps & {
   max?: number;
   step?: number;
   unit?: string;
+  /** Height and text size, aligned on Button's. Default `md`. */
+  size?: FieldSize;
+  /** Sets `aria-required` on the input. It has no label of its own to carry an asterisk. */
+  required?: boolean;
   /**
    * Where the step buttons sit. `sides` (default): `−` / `+` on the outer edges,
    * centered text. `stacked`: ↑ / ↓ arrows stacked in a column inside the right
@@ -59,6 +64,8 @@ export const NumberInput = ({
   max = Infinity,
   step = 1,
   unit,
+  size = 'md',
+  required,
   controls = 'sides',
   width = 'w-20',
   fullWidth = false,
@@ -88,7 +95,8 @@ export const NumberInput = ({
         // `inline-flex` so the control sizes to its content by default; opt into
         // `flex w-full` via `fullWidth` for form grids that need the column.
         fullWidth ? 'flex w-full' : 'inline-flex',
-        'focus-within:field-focus h-9 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800',
+        'overflow-hidden',
+        fieldClass({ size, within: true }),
         disabled && 'opacity-50',
         className
       )}
@@ -101,13 +109,16 @@ export const NumberInput = ({
             name={name}
             {...fieldA11y}
             {...draft}
+            aria-required={required || undefined}
             disabled={disabled}
             min={min}
             max={max}
             step={step}
             className={clsx(
               // min-w-0: in a narrower container the input gives way, not the arrows.
-              'h-full min-w-0 [appearance:textfield] bg-transparent pr-1 pl-3 text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+              'h-full min-w-0 [appearance:textfield] bg-transparent pr-1 font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+              FIELD_TEXT[size],
+              FIELD_PAD_LEFT[size],
               fullWidth ? 'flex-1' : width
             )}
           />
@@ -161,12 +172,14 @@ export const NumberInput = ({
               name={name}
               {...fieldA11y}
               {...draft}
+              aria-required={required || undefined}
               disabled={disabled}
               min={min}
               max={max}
               step={step}
               className={clsx(
-                'h-full [appearance:textfield] border-0 bg-transparent text-center text-sm font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+                'h-full [appearance:textfield] border-0 bg-transparent text-center font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+                FIELD_TEXT[size],
                 width
               )}
             />

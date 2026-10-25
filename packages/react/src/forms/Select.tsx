@@ -2,14 +2,30 @@ import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { useId, type ComponentPropsWithRef } from 'react';
 import { useFieldA11y } from './fieldA11y';
+import {
+  FIELD_ICON_RIGHT,
+  FIELD_ICON_SIZE,
+  FIELD_PAD_LEFT,
+  FIELD_PAD_RIGHT_ICON,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
-export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'children'> & {
+export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'children' | 'size'> & {
   options: SelectOption[];
   label?: string;
   description?: string;
   error?: string;
+  /**
+   * Height and text size, aligned on Button's. Default `md`. Replaces the native
+   * `size` attribute (the number of visible rows), which is omitted from the props.
+   */
+  size?: FieldSize;
+  /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the select. */
+  required?: boolean;
   /**
    * Hint shown while nothing is picked: a disabled option with an empty value,
    * listed first. A Select without `value` or `defaultValue` starts on it; a
@@ -41,6 +57,8 @@ export function Select({
   description,
   error,
   placeholder,
+  size = 'md',
+  required,
   fullWidth = true,
   className,
   id,
@@ -74,6 +92,7 @@ export function Select({
           className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
+          {required && <RequiredMark />}
         </label>
       )}
       <div className="relative">
@@ -84,12 +103,14 @@ export function Select({
           aria-labelledby={fieldA11y['aria-labelledby']}
           aria-describedby={describedByIds}
           aria-invalid={error ? true : undefined}
+          aria-required={required || undefined}
+          required={required}
           className={clsx(
-            'h-9 appearance-none rounded-lg border bg-white pr-9 pl-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+            'appearance-none',
+            fieldClass({ size, invalid: !!error }),
+            FIELD_PAD_RIGHT_ICON[size],
+            FIELD_PAD_LEFT[size],
             fullWidth && 'w-full',
-            error
-              ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-              : 'focus:field-focus border-gray-200 dark:border-gray-700',
             className
           )}
           {...rest}
@@ -106,7 +127,13 @@ export function Select({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <ChevronDown
+          className={clsx(
+            'pointer-events-none absolute top-1/2 -translate-y-1/2 text-gray-400',
+            FIELD_ICON_RIGHT[size],
+            FIELD_ICON_SIZE[size]
+          )}
+        />
       </div>
       {hasDesc && (
         <span

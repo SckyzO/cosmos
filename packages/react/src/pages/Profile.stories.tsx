@@ -31,7 +31,7 @@ import { AccentPicker, type AccentColor } from '../settings/AccentPicker';
 import { OptionPicker, type OptionItem } from '../settings/OptionPicker';
 import { PalettePicker } from '../settings/PalettePicker';
 import type { PaletteMeta } from '../settings/PaletteCard';
-import { PageBreadcrumb } from '../templates/PageBreadcrumb';
+import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageHeader } from '../templates/PageHeader';
 import { SectionCard } from '../templates/SectionCard';
 import { AlertBanner } from '../ui/AlertBanner';
@@ -363,7 +363,9 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
       <PageHeader
         as="h1"
         title="Profile"
-        breadcrumb={<PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Profile' }]} />}
+        breadcrumb={
+          <Breadcrumb homeIcon items={[{ label: 'Overview', href: '#' }, { label: 'Profile' }]} />
+        }
       />
       <div className="space-y-4">
         <SectionCard

@@ -7,7 +7,12 @@ import { seriesTitle, useCategoryTitle, useStableCallback } from './formatters';
 import { escapeHtml } from './escape';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type MixedChartAxis = 'left' | 'right';
 
@@ -22,7 +27,8 @@ export type MixedChartSeries = {
 
 export type MixedChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** Lines and columns on one category axis. Names must be unique: each y axis finds its series by name. */
     series: MixedChartSeries[];
     categories: (string | number)[];
@@ -38,6 +44,11 @@ export type MixedChartProps = ChartBaseProps &
      * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
      */
     formatRightValue?: (value: number) => string;
+    /**
+     * Title beside the right axis. `yTitle` names the left one. With one axis only, that axis
+     * takes the title of its side.
+     */
+    yRightTitle?: string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
   };
@@ -51,6 +62,9 @@ export const MixedChart = ({
   colors,
   formatValue,
   formatRightValue,
+  xTitle,
+  yTitle,
+  yRightTitle,
   showLegend,
   legendPosition = 'top',
   emptyMessage,
@@ -59,9 +73,10 @@ export const MixedChart = ({
   height = 320,
   width = '100%',
 }: MixedChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const formatters = { left: formatValue, right: formatRightValue };
+  const titles = { left: yTitle, right: yRightTitle };
   const categoryTitle = useCategoryTitle(categories);
   // Each value in the format of its series' axis. Read on hover: a stable
   // function, so a parent render does not redraw the chart.
@@ -79,6 +94,7 @@ export const MixedChart = ({
     seriesName:
       sides.length > 1 ? series.filter((s) => axisOf(s) === side).map((s) => s.name) : undefined,
     opposite: side === 'right',
+    title: axisTitle(titles[side]),
     labels: { ...axisLabels, formatter: formatters[side] },
   }));
 
@@ -88,6 +104,8 @@ export const MixedChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },
@@ -100,6 +118,7 @@ export const MixedChart = ({
     grid,
     xaxis: {
       categories,
+      title: axisTitle(xTitle),
       labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },

@@ -24,7 +24,7 @@ import { PageContainer } from '../layout/PageContainer';
 import { Divider } from '../layout/Divider';
 import { MediaObject } from '../layout/MediaObject';
 import { PageHeader } from '../templates/PageHeader';
-import { PageBreadcrumb } from '../templates/PageBreadcrumb';
+import { Breadcrumb } from '../navigation/Breadcrumb';
 import { SectionCard } from '../templates/SectionCard';
 import { KpiCard } from '../data/KpiCard';
 import { Timeline, type TimelineItem } from '../data/Timeline';
@@ -358,9 +358,10 @@ export const Default: Story = {
           as="h1"
           title="Production Dashboard"
           breadcrumb={
-            <PageBreadcrumb
+            <Breadcrumb
+              homeIcon
               items={[
-                { label: 'Home', href: '#' },
+                { label: 'Overview', href: '#' },
                 { label: 'Monitoring', href: '#' },
                 { label: 'Production' },
               ]}

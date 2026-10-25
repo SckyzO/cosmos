@@ -26,6 +26,14 @@ export type ChartEmptyProps = {
   emptyMessage?: string;
 };
 
+/** Props of the charts with a horizontal and a vertical axis. */
+export type ChartAxisTitleProps = {
+  /** Title under the horizontal axis, such as "Time (UTC)". Drawn as plain text. */
+  xTitle?: string;
+  /** Title beside the vertical axis, such as "Requests / s". Drawn as plain text. */
+  yTitle?: string;
+};
+
 export type ChartLegendPosition = 'top' | 'right' | 'bottom' | 'left';
 
 /** Props of the charts that draw a legend. */

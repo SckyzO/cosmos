@@ -17,8 +17,12 @@ import {
   expectPaletteFromTheme,
   opaqueColor,
   resolveColor,
+  themeColor,
   LegendSides,
   expectLegendsOnTheirSide,
+  axisTitles,
+  expectAxisTitlesIn,
+  expectTextFollowsTextSize,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -103,7 +107,11 @@ export const NegativeValues: Story = {
   },
 };
 
-/** Long category labels rotate when they don't fit under their column. */
+/**
+ * Long category labels rotate when they don't fit under their column, and are
+ * cut short with an ellipsis past a rotated height of 90 px: the tooltip and
+ * the label's own title keep the full name.
+ */
 export const ManyCategories: Story = {
   args: {
     categories: SERVICES,
@@ -188,12 +196,49 @@ export const ShortHeight: Story = {
   },
 };
 
+/**
+ * `xTitle` and `yTitle` name the axes as drawn: under the horizontal one, beside
+ * the vertical one, so a horizontal chart puts its values under `xTitle`.
+ */
+export const AxisTitles: Story = {
+  args: { ...SingleSeries.args },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="vertical">
+        <BarChart
+          categories={MONTHS}
+          series={[{ name: 'Deploys', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }]}
+          xTitle="Month"
+          yTitle="Deployments"
+        />
+      </div>
+      <div data-testid="horizontal">
+        <BarChart
+          orientation="horizontal"
+          categories={DCS}
+          series={[{ name: 'Active racks', data: [42, 38, 26, 19] }]}
+          xTitle="Active racks"
+          yTitle="Datacenter"
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
+    await expectAxisTitlesIn(chart('vertical'), { x: 'Month', y: ['Deployments'] });
+    await expectAxisTitlesIn(chart('horizontal'), { x: 'Active racks', y: ['Datacenter'] });
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** The legend and the tooltip are HTML: series names and categories show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
     series: [
       { name: HOSTILE, data: [3, 5, 2] },
       { name: 'Normal', data: [4, 1, 6] },
@@ -204,6 +249,9 @@ export const HtmlInLabelsRendersAsText: Story = {
     // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await expectNoInjectedImage(canvasElement);
 
     // Tooltips render on hover: the title is the category.
@@ -295,6 +343,77 @@ export const EightSeriesPaletteCyanAccent: Story = {
   },
 };
 
+/**
+ * The bars of a group are told apart by a line in the card's color, two pixels
+ * wide. A single series has no group and a stacked one keeps its segments flush.
+ */
+export const GroupedBarsHaveAGap: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: MultiSeries.args,
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-testid="grouped">
+        <BarChart {...args} />
+      </div>
+      <div data-testid="stacked">
+        <BarChart {...args} stacked />
+      </div>
+      <div data-testid="single">
+        <BarChart {...args} series={args.series.slice(0, 1)} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const outline = (id: string) => {
+      const bar = canvasElement.querySelector(`[data-testid="${id}"] .apexcharts-bar-area[j="0"]`);
+      return {
+        color: resolveColor(bar?.getAttribute('stroke') ?? ''),
+        width: Number(bar?.getAttribute('stroke-width')),
+      };
+    };
+    await waitFor(() => {
+      expect(outline('grouped').width).toBe(2);
+      expect(outline('grouped').color).toBe(themeColor('--color-white'));
+      expect(outline('stacked').width).toBe(0);
+      expect(outline('single').width).toBe(0);
+    });
+  },
+};
+
+/** Past a rotated height of 90 px a category label is cut short, and the full name stays in its title. */
+export const LongLabelsAreTrimmed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ManyCategories.args,
+  render: (args) => (
+    <div style={{ width: 640 }}>
+      <BarChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const label = (name: string) =>
+      [...canvasElement.querySelectorAll('.apexcharts-xaxis-label')].find(
+        (el) => el.querySelector('title')?.textContent === name || el.textContent === name
+      );
+    // The visible text, without the title that holds the full name.
+    const shown = (name: string) => label(name)?.querySelector('tspan')?.textContent;
+    await waitFor(() => {
+      expect(shown('api-gateway')).toBe('api-gateway');
+      expect(shown('user-profile-service')).toMatch(/^user-.*\.\.\.$/);
+      expect(label('user-profile-service')?.querySelector('title')?.textContent).toBe(
+        'user-profile-service'
+      );
+    });
+  },
+};
+
+/** The axis labels, the axis title and the legend follow the text size setting. */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MultiSeries.args, xTitle: 'Month' },
+  play: ({ canvasElement }) => expectTextFollowsTextSize(canvasElement),
+};
+
 /** The bars take the default palette of the theme. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -303,9 +422,10 @@ export const PaletteFromTheme: Story = {
     series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
   },
   play: async ({ canvasElement }) => {
+    // The fill: grouped bars outline themselves in the card's color.
     await expectPaletteFromTheme(() =>
       [...canvasElement.querySelectorAll('.apexcharts-bar-area[j="0"]')].map((el) =>
-        el.getAttribute('stroke')
+        el.getAttribute('fill')
       )
     );
   },

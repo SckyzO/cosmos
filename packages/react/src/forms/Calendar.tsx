@@ -55,6 +55,7 @@ const NamedDay = ({ children, ...props }: DayProps) => (
  */
 export const Calendar = ({ classNames, components, className, ...rest }: CalendarProps) => {
   const def = getDefaultClassNames();
+  const showLabel = (rest.captionLayout ?? 'label') === 'label';
   return (
     // `animate` is intentionally OFF: with our custom caption (mode/year
     // dropdowns), the cross-fade transition renders the outgoing caption on
@@ -68,11 +69,12 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         // Reserve horizontal padding so the absolute Nav prev/next chevrons sit
         // OUTSIDE of the caption content (dropdowns or label), never overlapping.
         month_caption: clsx(def.month_caption, 'flex min-h-9 items-center justify-center px-9'),
-        // Hide the textual caption visually — react-day-picker still emits it
-        // for screen readers, but our `Dropdowns` (when `captionLayout` is set)
-        // already show the month + year, so the raw label produces a visual
-        // doubling. `sr-only` keeps the a11y guarantee, kills the ghost text.
-        caption_label: 'sr-only',
+        // The `label` layout (the default) shows the month and year here. A dropdown
+        // layout shows them in its selects, so the raw label would double them: it
+        // stays for screen readers only (`sr-only`).
+        caption_label: showLabel
+          ? 'text-sm font-medium text-gray-700 select-none dark:text-gray-200'
+          : 'sr-only',
         // Nav stays absolutely positioned but vertically centered with the caption
         // (top-1.5 lines up with the caption baseline; pointer-events-none on wrapper
         //  keeps the inner space click-through, then re-enables on the buttons).
