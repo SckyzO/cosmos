@@ -141,7 +141,7 @@ const Dot = () => (
 //     </div>
 //   </li>
 
-export type StackedListItemProps = ComponentPropsWithRef<'li'> & {
+export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title'> & {
   /** Leading slot — typically an `<img>` (size-12, rounded-full) or `<Avatar>`. */
   avatar?: ReactNode;
   /** Primary text. */
