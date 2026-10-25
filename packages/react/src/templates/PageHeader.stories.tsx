@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Clock, Cpu, MapPin, Plus, RefreshCw, Server } from 'lucide-react';
 import { PageHeader } from './PageHeader';
-import { PageBreadcrumb } from './PageBreadcrumb';
+import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
 
 const meta = {
@@ -27,9 +27,10 @@ export const WithBreadcrumb: Story = {
   args: {
     title: 'Production Dashboard',
     breadcrumb: (
-      <PageBreadcrumb
+      <Breadcrumb
+        homeIcon
         items={[
-          { label: 'Home', href: '#' },
+          { label: 'Overview', href: '#' },
           { label: 'Monitoring', href: '#' },
           { label: 'Production' },
         ]}
@@ -42,9 +43,10 @@ export const WithActions: Story = {
   args: {
     title: 'Production Dashboard',
     breadcrumb: (
-      <PageBreadcrumb
+      <Breadcrumb
+        homeIcon
         items={[
-          { label: 'Home', href: '#' },
+          { label: 'Overview', href: '#' },
           { label: 'Monitoring', href: '#' },
           { label: 'Production' },
         ]}
@@ -94,9 +96,10 @@ export const Narrow: Story = {
       <PageHeader
         title="Production Dashboard"
         breadcrumb={
-          <PageBreadcrumb
+          <Breadcrumb
+            homeIcon
             items={[
-              { label: 'Home', href: '#' },
+              { label: 'Overview', href: '#' },
               { label: 'Monitoring', href: '#' },
               { label: 'Production' },
             ]}

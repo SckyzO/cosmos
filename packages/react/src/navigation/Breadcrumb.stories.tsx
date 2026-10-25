@@ -43,6 +43,18 @@ const PATH = [
   { label: 'Breadcrumb' },
 ];
 
+/** The page-header path: a Home icon on the first item, the rest as usual. */
+export const HomeIcon: Story = {
+  args: {
+    items: [
+      { label: 'Overview', href: '/' },
+      { label: 'Monitoring', href: '/monitoring' },
+      { label: 'Production' },
+    ],
+    homeIcon: true,
+  },
+};
+
 export const SeparatorSlash: Story = { args: { items: PATH, separator: 'slash' } };
 
 export const SeparatorDot: Story = { args: { items: PATH, separator: 'dot' } };
@@ -142,5 +154,41 @@ export const ClickHandlersMakeButtons: Story = {
     await expect(home.onClick).toHaveBeenCalledTimes(1);
     // No `href`, no `onClick`: a link to `#`.
     await expect(canvas.getByRole('link', { name: 'Components' })).toHaveAttribute('href', '#');
+  },
+};
+
+/** `homeIcon` puts one icon, named "Home", on the first crumb only; an item's own `icon` wins. */
+export const HomeIconIsNamedAndOnTheFirstCrumbOnly: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...HomeIcon.args, 'aria-label': 'Path' },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Path' });
+    const icon = within(nav).getByRole('img', { name: 'Home' });
+    await expect(within(nav).getAllByRole('img')).toHaveLength(1);
+    await expect(
+      within(nav)
+        .getByRole('link', { name: /Overview/ })
+        .contains(icon)
+    ).toBe(true);
+  },
+};
+
+export const OwnIconBeatsHomeIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    items: [{ icon: Building2, label: 'DC Paris', href: '/' }, { label: 'Room A' }],
+    homeIcon: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('img', { name: 'Home' })).toBeNull();
+  },
+};
+
+/** The icon is also the first crumb when the path has a single item (the current page). */
+export const HomeIconOnASingleCrumb: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: [{ label: 'Overview' }], homeIcon: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img', { name: 'Home' })).toBeInTheDocument();
   },
 };
