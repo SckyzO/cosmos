@@ -108,7 +108,7 @@ export const AutoSubmitOnComplete: Story = {
 };
 
 export const ManualSubmitDisabledUntilFilled: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: {
     onSubmit: fn(),
@@ -132,7 +132,7 @@ export const ManualSubmitDisabledUntilFilled: Story = {
 };
 
 export const ResendFiresHandler: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), onResend: fn(), sentTo: 'john@example.com' },
   play: async ({ args, canvas }) => {
@@ -145,6 +145,7 @@ export const ResendFiresHandler: Story = {
 
 /** "Resend code" is a ghost button of at least 44px, a touch target on a phone too. */
 export const ResendIsA44pxButton: Story = {
+  tags: ['!dev'],
   globals: mobileViewport,
   args: { onSubmit: fn(), onResend: fn(), sentTo: 'john@example.com' },
   play: async ({ canvas, canvasElement }) => {

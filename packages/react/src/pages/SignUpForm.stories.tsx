@@ -86,7 +86,7 @@ const standaloneDecorator = [
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const SubmitDisabledUntilValid: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ args, canvas }) => {
@@ -111,7 +111,7 @@ export const SubmitDisabledUntilValid: Story = {
 };
 
 export const PolicyDisplaysOnTyping: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
@@ -122,7 +122,7 @@ export const PolicyDisplaysOnTyping: Story = {
 };
 
 export const WeakPasswordKeepsSubmitDisabled: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
@@ -140,6 +140,7 @@ export const WeakPasswordKeepsSubmitDisabled: Story = {
 
 /** Below `sm`, the first and last name stack instead of squeezing into two narrow columns. */
 export const MobileStacksNameFields: Story = {
+  tags: ['!dev'],
   globals: mobileViewport,
   args: { signInHref: '#' },
   play: async ({ canvas, canvasElement }) => {

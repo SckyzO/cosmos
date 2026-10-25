@@ -143,6 +143,7 @@ export const Interactive: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickProviderFiresHandler: Story = {
+  tags: ['!dev'],
   args: {
     providers: ['google', 'github'],
     onProviderClick: fn(),
@@ -156,6 +157,7 @@ export const ClickProviderFiresHandler: Story = {
 };
 
 export const LoadingDisablesAllButtons: Story = {
+  tags: ['!dev'],
   args: {
     providers: ['google', 'github', 'apple'],
     loading: 'github',
@@ -170,6 +172,7 @@ export const LoadingDisablesAllButtons: Story = {
 };
 
 export const EmptyProvidersRendersNothing: Story = {
+  tags: ['!dev'],
   args: { providers: [], onProviderClick: fn() },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('button')).toBeNull();

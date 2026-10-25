@@ -75,6 +75,7 @@ export const CustomBrand: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RendersCardAndBrand: Story = {
+  tags: ['!dev'],
   render: () => (
     <AuthLayout logo={Activity} title="Cosmos" subtitle="Sign in to continue">
       <FormPlaceholder />
