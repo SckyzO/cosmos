@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
+import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
@@ -9,6 +10,7 @@ import { Sk } from '../feedback/Skeleton';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
 import { useOverflows } from '../hooks/useOverflows';
@@ -91,6 +93,21 @@ export type DataTableProps<T> = {
   'aria-labelledby'?: string;
 
   className?: string;
+
+  // ── Column visibility ──────────────────────────────────────────────────────
+  /**
+   * Shows a "Columns" button at the end of the toolbar, with a checkbox per column. The toolbar
+   * then shows even without a search field. Default `false`.
+   */
+  columnsMenu?: boolean;
+  /**
+   * Controlled visibility: column key → shown. A key that is missing follows the column's
+   * `defaultHidden`, and a `hideable: false` column is shown whatever it says.
+   */
+  columnVisibility?: ColumnVisibility;
+  defaultColumnVisibility?: ColumnVisibility;
+  /** Called with the visibility of every column when one is toggled from the menu. */
+  onColumnVisibilityChange?: (visibility: ColumnVisibility) => void;
 };
 
 // The selection and action columns keep these widths whatever the data columns add up to.
@@ -114,7 +131,7 @@ const ALIGN_CELL = {
  */
 export const DataTable = <T,>({
   rows,
-  columns,
+  columns: allColumns,
   rowKey,
   onRowClick,
   rowHref,
@@ -140,7 +157,30 @@ export const DataTable = <T,>({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   className,
+  columnsMenu = false,
+  columnVisibility: columnVisibilityProp,
+  defaultColumnVisibility,
+  onColumnVisibilityChange,
 }: DataTableProps<T>) => {
+  const [columnVisibility, setColumnVisibility] = useControllableState<ColumnVisibility>({
+    value: columnVisibilityProp,
+    defaultValue: () => defaultColumnVisibility ?? {},
+    onChange: onColumnVisibilityChange,
+    name: 'DataTable.columnVisibility',
+  });
+  // `columns` below is what is drawn, searched and sorted; `allColumns` still names the filters.
+  const { visible: columns, shown } = useMemo(
+    () => resolveColumnVisibility(allColumns, columnVisibility),
+    [allColumns, columnVisibility]
+  );
+  const columnsMenuNode = columnsMenu ? (
+    <DataTableColumnsMenu
+      columns={allColumns}
+      shown={shown}
+      onToggle={(key, visible) => setColumnVisibility({ ...shown, [key]: visible })}
+    />
+  ) : null;
+
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
   // An edge fades where the table goes on, as the Tabs' do; not the start one under a pinned column.
@@ -224,8 +264,8 @@ export const DataTable = <T,>({
   );
 
   const filteredRows = useMemo(
-    () => filterRows(searchedRows, columns, filters),
-    [searchedRows, columns, filters]
+    () => filterRows(searchedRows, allColumns, filters),
+    [searchedRows, allColumns, filters]
   );
 
   const sortedRows = useMemo(
@@ -283,7 +323,7 @@ export const DataTable = <T,>({
 
   const activeFilters: ActiveFilter[] = Object.entries(filters).map(([key, vals]) => ({
     key,
-    label: columns.find((c) => c.key === key)?.label?.toString() ?? key,
+    label: allColumns.find((c) => c.key === key)?.label?.toString() ?? key,
     value: Array.from(vals).join(', '),
   }));
 
@@ -312,8 +352,13 @@ export const DataTable = <T,>({
           </div>
         </div>
       ) : searchEnabled ? (
-        <div className="border-b border-gray-100 px-4 py-2 dark:border-gray-800">
-          <div className="relative h-9">
+        <div
+          className={clsx(
+            'border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+            columnsMenu && 'flex items-center gap-2'
+          )}
+        >
+          <div className={clsx('relative h-9', columnsMenu && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -337,6 +382,11 @@ export const DataTable = <T,>({
               </button>
             )}
           </div>
+          {columnsMenuNode}
+        </div>
+      ) : columnsMenu ? (
+        <div className="flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800">
+          {columnsMenuNode}
         </div>
       ) : null}
 

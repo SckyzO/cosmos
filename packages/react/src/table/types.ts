@@ -23,4 +23,11 @@ export type ColumnDef<T> = {
   searchValue?: (row: T) => string;
   sortable?: boolean;
   filterable?: boolean;
+  /**
+   * With `columnsMenu`, whether the column can be hidden from the menu. Default `true`; `false`
+   * keeps it shown and its checkbox disabled (the column that names the row).
+   */
+  hideable?: boolean;
+  /** Starts hidden, until `columnVisibility` or the menu says otherwise. */
+  defaultHidden?: boolean;
 };
