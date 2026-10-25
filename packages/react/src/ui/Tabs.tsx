@@ -12,6 +12,7 @@ import {
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useScrollFade } from '../hooks/useScrollFade';
 
 export type TabsOrientation = 'horizontal' | 'vertical';
 
@@ -229,25 +230,7 @@ const List = ({ children, className }: { children: ReactNode; className?: string
 const ScrollStrip = ({ children }: { children: ReactNode }) => {
   const { value } = useTabs();
   const ref = useRef<HTMLDivElement>(null);
-  const [fade, setFade] = useState({ start: false, end: false });
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const measure = () => {
-      const start = node.scrollLeft > 1;
-      const end = node.scrollLeft + node.clientWidth < node.scrollWidth - 1;
-      setFade((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
-    };
-    measure();
-    node.addEventListener('scroll', measure, { passive: true });
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    for (const child of node.children) observer.observe(child);
-    return () => {
-      node.removeEventListener('scroll', measure);
-      observer.disconnect();
-    };
-  }, []);
+  const fade = useScrollFade(ref);
   // Not on mount: scrolling the first tab into view could scroll the page to it.
   const shown = useRef(value);
   useEffect(() => {
@@ -257,15 +240,10 @@ const ScrollStrip = ({ children }: { children: ReactNode }) => {
       ?.querySelector('[role="tab"][aria-selected="true"]')
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [value]);
-  const edge = '1.5rem';
-  const mask =
-    fade.start || fade.end
-      ? `linear-gradient(to right, ${fade.start ? 'transparent' : '#000'}, #000 ${edge}, #000 calc(100% - ${edge}), ${fade.end ? 'transparent' : '#000'})`
-      : undefined;
   return (
     <div
       ref={ref}
-      style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+      style={fade}
       className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {children}
