@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
-import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
+import { X, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { Intent } from './intent';
+import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <div class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5">
@@ -30,20 +30,6 @@ import type { Intent } from './intent';
 
 export type NotificationIntent = Extract<Intent, 'success' | 'info' | 'warning' | 'danger'>;
 
-const INTENT_ICON: Record<NotificationIntent, LucideIcon> = {
-  success: CheckCircle2,
-  info: Info,
-  warning: AlertTriangle,
-  danger: XCircle,
-};
-
-const INTENT_COLOR: Record<NotificationIntent, string> = {
-  success: 'text-green-400',
-  info: 'text-blue-400',
-  warning: 'text-amber-400',
-  danger: 'text-red-400',
-};
-
 // ── Simple variant ───────────────────────────────────────────────────────────
 
 export type NotificationCardSimpleProps = {
@@ -68,7 +54,7 @@ const SimpleVariant = ({
   onDismiss,
   className,
 }: NotificationCardSimpleProps) => {
-  const Icon = icon ?? INTENT_ICON[intent];
+  const Icon = icon ?? INTENT_STYLE[intent].icon;
   return (
     <div
       role="status"
@@ -81,7 +67,10 @@ const SimpleVariant = ({
       <div className="p-4">
         <div className="flex items-start">
           <div className="shrink-0">
-            <Icon className={clsx('size-6', INTENT_COLOR[intent])} aria-hidden />
+            <Icon
+              className={clsx(INTENT_ICON_SIZE.card, INTENT_STYLE[intent].iconColor)}
+              aria-hidden
+            />
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
