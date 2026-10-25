@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { placeholderAvatar } from '../storybook-avatars';
+import { expect } from 'storybook/test';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { PageContainer } from '../layout/PageContainer';
 import { Divider } from '../layout/Divider';
 import { MediaObject } from '../layout/MediaObject';
 import { PageHeader } from '../templates/PageHeader';
@@ -350,9 +352,10 @@ export const Default: Story = {
         </Sidebar>
       }
     >
-      <div className="space-y-6 p-6">
+      <PageContainer width="full" className="space-y-6">
         {/* Page header with breadcrumb + actions */}
         <PageHeader
+          as="h1"
           title="Production Dashboard"
           breadcrumb={
             <PageBreadcrumb
@@ -389,6 +392,7 @@ export const Default: Story = {
         {/* Mid row : 2/3 charts + 1/3 timeline */}
         <div className="grid gap-4 lg:grid-cols-3">
           <SectionCard
+            as="h2"
             title="CPU usage — last 24h"
             desc="cluster-wide average"
             className="lg:col-span-2"
@@ -397,28 +401,28 @@ export const Default: Story = {
               <MiniChart variant="line" height={180} />
             </div>
           </SectionCard>
-          <SectionCard title="Recent activity" desc="system events">
+          <SectionCard as="h2" title="Recent activity" desc="system events">
             <Timeline items={TIMELINE} variant="dot" />
           </SectionCard>
         </div>
 
         {/* Secondary KPIs row */}
         <div className="grid gap-4 lg:grid-cols-3">
-          <SectionCard title="Memory utilisation" desc="rolling 1h">
+          <SectionCard as="h2" title="Memory utilisation" desc="rolling 1h">
             <MiniChart variant="bars" height={140} />
           </SectionCard>
-          <SectionCard title="Disk health" desc="OK / WARN / CRIT split">
+          <SectionCard as="h2" title="Disk health" desc="OK / WARN / CRIT split">
             <div className="text-[var(--color-text-secondary)]">
               <MiniChart variant="donut" height={140} />
             </div>
           </SectionCard>
-          <SectionCard title="Throughput" desc="requests / second">
+          <SectionCard as="h2" title="Throughput" desc="requests / second">
             <MiniChart variant="line" height={140} />
           </SectionCard>
         </div>
 
         {/* Alerts table */}
-        <SectionCard title="Active alerts" desc="sortable, filterable, paginated">
+        <SectionCard as="h2" title="Active alerts" desc="sortable, filterable, paginated">
           <DataTable
             rows={ROWS}
             columns={COLUMNS}
@@ -431,6 +435,7 @@ export const Default: Story = {
         {/* Footer */}
         {/* Overlays + states showcase (single SectionCard demoing previously orphan components) */}
         <SectionCard
+          as="h2"
           title="Overlays & states"
           desc="Modal, Drawer, Tooltip, ConfirmationModal, EmptyState, LoadingState, ErrorState, Skeleton, Pagination, IconBox, MediaObject, Divider, Avatar — all wired into a working dashboard context."
         >
@@ -449,9 +454,22 @@ export const Default: Story = {
             }
           />
         </div>
-      </div>
+      </PageContainer>
     </Shell>
   ),
+};
+
+/** The Topbar title is plain text: the PageHeader is the page's only `h1`. */
+export const HasOneH1: Story = {
+  ...Default,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    await expect(
+      canvas.getByRole('heading', { level: 1, name: 'Production Dashboard' })
+    ).toBeVisible();
+  },
 };
 
 // ── Overlays + states showcase ──────────────────────────────────────────────
@@ -523,7 +541,10 @@ const DashboardOverlaysDemo = () => {
           <IconBox icon={Bell} color="amber" />
         </MediaObject.Image>
         <MediaObject.Body>
-          <MediaObject.Title>Inline notification preview</MediaObject.Title>
+          {/* An h3: the title helper is an h4, a level too deep under the h2 sections. */}
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            Inline notification preview
+          </h3>
           <MediaObject.Description>
             MediaObject pairs an icon (here via IconBox) with a title + description — handy for
             inline notices inside a dashboard panel.

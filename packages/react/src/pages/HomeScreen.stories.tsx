@@ -13,6 +13,7 @@ import { placeholderAvatar } from '../storybook-avatars';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { PageContainer } from '../layout/PageContainer';
 import { StackedList } from '../lists/StackedList';
 import { HealthDot } from '../status/HealthDot';
 import { Badge } from '../ui/Badge';
@@ -156,7 +157,7 @@ export const Sidebar_: Story = {
         </Sidebar>
       }
       secondary={
-        <div className="p-6">
+        <PageContainer width="full">
           {/* py-3 + text-base: level with the Deployments card header. */}
           <div className="flex items-center justify-between py-3">
             <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -179,7 +180,7 @@ export const Sidebar_: Story = {
               ))}
             </StackedList>
           </div>
-        </div>
+        </PageContainer>
       }
       // The feed column only fits from xl; below that the list takes the width.
       secondaryWidthClassName="hidden w-96 xl:block"

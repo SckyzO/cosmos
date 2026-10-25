@@ -22,9 +22,11 @@ import { AvatarUploader } from '../forms/AvatarUploader';
 import { Input } from '../forms/Input';
 import { PasswordInput } from '../forms/PasswordInput';
 import { PasswordPolicyChecker, defaultPasswordRules } from '../forms/PasswordPolicyChecker';
+import { expect } from 'storybook/test';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { PageContainer } from '../layout/PageContainer';
 import { AccentPicker, type AccentColor } from '../settings/AccentPicker';
 import { OptionPicker, type OptionItem } from '../settings/OptionPicker';
 import { PalettePicker } from '../settings/PalettePicker';
@@ -357,13 +359,15 @@ const AppearanceSection = () => {
 const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }) => {
   const [avatar, setAvatar] = useState<string | null>(SAMPLE_AVATAR);
   return (
-    <div className="mx-auto w-full max-w-[760px] space-y-6 p-6">
+    <PageContainer width="narrow" className="space-y-6">
       <PageHeader
+        as="h1"
         title="Profile"
         breadcrumb={<PageBreadcrumb items={[{ label: 'Home', href: '#' }, { label: 'Profile' }]} />}
       />
       <div className="space-y-4">
         <SectionCard
+          as="h2"
           title="Account"
           desc="Your display name and profile picture."
           icon={User}
@@ -390,6 +394,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
         </SectionCard>
 
         <SectionCard
+          as="h2"
           title="Change Username"
           desc="Update the display name shown in the header and audit logs."
           icon={AtSign}
@@ -399,6 +404,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
         </SectionCard>
 
         <SectionCard
+          as="h2"
           title="Change Password"
           desc="Update your account password."
           icon={KeyRound}
@@ -408,6 +414,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
         </SectionCard>
 
         <SectionCard
+          as="h2"
           title="Appearance"
           desc="Customise how Cosmos looks in your browser."
           icon={Palette}
@@ -417,6 +424,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
         </SectionCard>
 
         <SectionCard
+          as="h2"
           title="Local Storage"
           desc="Clear cached data stored in your browser."
           icon={Trash2}
@@ -425,7 +433,7 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
           <ClearCacheSection />
         </SectionCard>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 
@@ -526,6 +534,17 @@ export const Default: Story = {
       <ProfileContent />
     </ProfileShell>
   ),
+};
+
+/** The Topbar title is plain text: the PageHeader is the page's only `h1`. */
+export const HasOneH1: Story = {
+  ...Default,
+  name: undefined,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
+  },
 };
 
 export const WithAuthDisabledBanner: Story = {

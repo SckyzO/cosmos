@@ -6,7 +6,7 @@ import { Navbar } from '../navigation/Navbar';
 import { Topbar } from '../layout/Topbar';
 import { Sidebar } from '../layout/Sidebar';
 import { Tabs } from '../ui/Tabs';
-import { ContentNarrow } from '../templates/ContentNarrow';
+import { PageContainer } from '../layout/PageContainer';
 import { Input } from '../forms/Input';
 import { Select } from '../forms/Select';
 import { Textarea } from '../forms/Textarea';
@@ -132,26 +132,24 @@ const SettingsContent = ({
   tab: string;
   onTabChange: (value: string) => void;
 }) => (
-  <div className="p-6 lg:p-8">
-    <ContentNarrow maxWidth={960} className="space-y-6">
-      <Tabs value={tab} onChange={onTabChange}>
-        <Tabs.List>
-          {TABS.map((t) => (
-            <Tabs.Trigger key={t.value} value={t.value}>
-              {t.label}
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
-        {/* The card is the panel of the selected tab: every tab needs one to control. The demo
+  <PageContainer width="default" className="space-y-6">
+    <Tabs value={tab} onChange={onTabChange}>
+      <Tabs.List>
+        {TABS.map((t) => (
+          <Tabs.Trigger key={t.value} value={t.value}>
+            {t.label}
+          </Tabs.Trigger>
+        ))}
+      </Tabs.List>
+      {/* The card is the panel of the selected tab: every tab needs one to control. The demo
             shows the same form whichever tab is selected. */}
-        <Tabs.Panel value={tab}>
-          <Card padding="lg">
-            <SettingsForm />
-          </Card>
-        </Tabs.Panel>
-      </Tabs>
-    </ContentNarrow>
-  </div>
+      <Tabs.Panel value={tab}>
+        <Card padding="lg">
+          <SettingsForm />
+        </Card>
+      </Tabs.Panel>
+    </Tabs>
+  </PageContainer>
 );
 
 const SettingsSection = ({
