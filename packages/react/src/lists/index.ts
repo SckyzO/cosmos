@@ -11,7 +11,6 @@ export {
   type NarrowStackedListItemProps,
   type NarrowStackedListHeaderProps,
 } from './NarrowStackedList';
-export { SimpleRow, type SimpleRowProps } from './SimpleRow';
 export { Row, type RowProps } from './Row';
 export {
   ActivityFeed,
