@@ -379,6 +379,29 @@ export const ScrollingAreaFollowsItsContent: Story = {
   },
 };
 
+export const SortableHeadersShowTheirAffordance: Story = {
+  tags: ['!dev'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    // Before any sort every sortable column carries a muted two-way icon, hidden from assistive
+    // technology (the button is named by its label).
+    const name = canvas.getByRole('columnheader', { name: /Name/ });
+    const button = within(name).getByRole('button', { name: 'Name' });
+    const icon = button.querySelector('svg');
+    await expect(icon).not.toBeNull();
+    await expect(icon).toHaveAttribute('aria-hidden', 'true');
+    await expect(icon).toHaveClass('lucide-chevrons-up-down');
+    await expect(name).toHaveAttribute('aria-sort', 'none');
+    // Sorted, the icon points the way, and aria-sort follows.
+    await userEvent.click(button);
+    await expect(name).toHaveAttribute('aria-sort', 'ascending');
+    await expect(button.querySelector('svg')).toHaveClass('lucide-chevron-up');
+    await userEvent.click(button);
+    await expect(name).toHaveAttribute('aria-sort', 'descending');
+    await expect(button.querySelector('svg')).toHaveClass('lucide-chevron-down');
+  },
+};
+
 // ── New: Selection + Bulk actions + Global search ────────────────────────────
 
 export const WithSelection: Story = {
