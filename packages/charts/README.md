@@ -30,6 +30,8 @@ The included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the
 
 Most charts take `colors`, which overrides the Cosmos palette, and `formatValue`, which formats the values in their labels and tooltips (a unit, a precision). Define `formatValue` outside the component or wrap it in `useCallback`: a new function redraws the chart. The gauges (`GradientRadial`, `SemiCircleGauge`, `StrokedGauge`) also take `min` and `max` (default 0 and 100), a `color` for the arc (the accent by default; on `GradientRadial` the color the arc starts from), and show a percent unless given a `formatValue`. `SemiCircleGauge` also takes `showRange`, which writes `min` and `max` under the ends of its arc, and its `height` (a number of pixels, 120 by default) is the most it takes: the arc is as wide as its box allows, up to that height.
 
+`RealtimeChart` takes `min` and `max` for its y axis (0 and 100 by default), `showTimeAxis` to label the x axis with the time of each sample, and `warnLabel` and `critLabel` to rename the threshold labels.
+
 `TreemapChart` writes the value of each tile under its name when given `showValues`, and draws its group headers in the card's colors.
 
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`.
