@@ -158,6 +158,10 @@ const CarouselControls = ({
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCtx();
   const baseBtn =
     'flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 focus-visible:focus-indicator';
+  // Over a slide (an image, a card) the arrows must read whatever the theme: a dark scrim with
+  // white glyphs, not the surface colors of the buttons below the viewport.
+  const overlayBtn =
+    'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:focus-indicator-on-accent';
   if (position === 'outside') {
     return (
       <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
@@ -189,7 +193,7 @@ const CarouselControls = ({
         aria-label={prevLabel}
         disabled={!canScrollPrev}
         onClick={scrollPrev}
-        className={clsx('absolute top-1/2 left-2 z-10 -translate-y-1/2', baseBtn, className)}
+        className={clsx('absolute top-1/2 left-4 z-10 -translate-y-1/2', overlayBtn, className)}
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -198,7 +202,7 @@ const CarouselControls = ({
         aria-label={nextLabel}
         disabled={!canScrollNext}
         onClick={scrollNext}
-        className={clsx('absolute top-1/2 right-2 z-10 -translate-y-1/2', baseBtn, className)}
+        className={clsx('absolute top-1/2 right-4 z-10 -translate-y-1/2', overlayBtn, className)}
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -213,7 +217,7 @@ export type CarouselIndicatorsProps = { className?: string };
 const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
   const { snapCount, selectedIndex, scrollTo } = useCtx();
   return (
-    <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
+    <div className={clsx('mt-3 flex items-center justify-center', className)}>
       {Array.from({ length: snapCount }, (_, i) => {
         const active = i === selectedIndex;
         return (
@@ -223,11 +227,16 @@ const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
             aria-label={`Go to slide ${i + 1}`}
             aria-current={active}
             onClick={() => scrollTo(i)}
-            className={clsx(
-              'focus-visible:focus-indicator h-2 rounded-full transition-all',
-              active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600'
-            )}
-          />
+            // The button is the 24px touch target; the dot inside it stays small.
+            className="focus-visible:focus-indicator flex h-6 min-w-6 items-center justify-center rounded-full"
+          >
+            <span
+              className={clsx(
+                'h-2 rounded-full transition-all',
+                active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600'
+              )}
+            />
+          </button>
         );
       })}
     </div>

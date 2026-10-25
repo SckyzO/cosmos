@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 import type { Intent } from '../ui/intent';
+import { TIMESTAMP_CLASS } from '../ui/timestamp';
 
 export type TimelineItem = {
   id: string;
@@ -75,8 +76,8 @@ const INTENT_BG: Record<TimelineIntent, string> = {
 // ── Indicator renderers (one per variant) ────────────────────────────────────
 
 const DotIndicator = ({ icon: Icon }: { icon?: ElementType }) => (
-  <span className="bg-brand-500 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900">
-    {Icon && <Icon className="h-2.5 w-2.5 text-white" />}
+  <span className="bg-brand-500 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900">
+    {Icon && <Icon className="h-3.5 w-3.5 text-white" />}
   </span>
 );
 
@@ -106,18 +107,31 @@ const StepperIndicator = ({
 const Meta = ({ meta }: { meta: ReactNode }) =>
   meta ? <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{meta}</p> : null;
 
-const Body = ({ item }: { item: TimelineItem }) => (
-  <div className="min-w-0 flex-1 pb-2 last:pb-0">
-    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+const Body = ({
+  item,
+  variant,
+  isLast,
+}: {
+  item: TimelineItem;
+  variant: TimelineVariant;
+  isLast: boolean;
+}) => (
+  // The gap under an entry keeps it apart from the next title; the last one has none.
+  <div className={clsx('min-w-0 flex-1', !isLast && 'pb-6')}>
+    {/* The time shares the title row; the dot's row is as tall as its indicator, so the title centres on it. */}
+    <div
+      className={clsx(
+        'flex justify-between gap-3',
+        variant === 'dot' ? 'min-h-6 items-center' : 'items-baseline'
+      )}
+    >
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+      {item.time && <span className={clsx(TIMESTAMP_CLASS, 'shrink-0')}>{item.time}</span>}
+    </div>
     {item.description && (
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
     )}
     <Meta meta={item.meta} />
-    {item.time && (
-      <p className="text-3xs mt-0.5 font-mono text-gray-500 uppercase dark:text-gray-400">
-        {item.time}
-      </p>
-    )}
   </div>
 );
 
@@ -157,11 +171,7 @@ const TimelineList = ({
                 )}
                 <Meta meta={item.meta} />
               </div>
-              {item.time && (
-                <span className="text-3xs shrink-0 font-mono text-gray-500 uppercase dark:text-gray-400">
-                  {item.time}
-                </span>
-              )}
+              {item.time && <span className={clsx(TIMESTAMP_CLASS, 'shrink-0')}>{item.time}</span>}
             </div>
           </li>
         ))}
@@ -204,16 +214,15 @@ const TimelineList = ({
                   )}
                   <Meta meta={item.meta} />
                   {item.time && (
-                    <p className="text-3xs mt-2 font-mono text-gray-500 uppercase md:hidden dark:text-gray-400">
-                      {item.time}
-                    </p>
+                    <p className={clsx(TIMESTAMP_CLASS, 'mt-2 md:hidden')}>{item.time}</p>
                   )}
                 </div>
               </div>
               {item.time && (
                 <p
                   className={clsx(
-                    'text-3xs row-start-1 hidden pt-3 font-mono text-gray-500 uppercase md:block dark:text-gray-400',
+                    TIMESTAMP_CLASS,
+                    'row-start-1 hidden pt-3 md:block',
                     left ? 'md:col-start-3' : 'md:col-start-1 md:text-right'
                   )}
                 >
@@ -252,7 +261,7 @@ const TimelineList = ({
               {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
             </div>
             {/* Content. */}
-            <Body item={item} />
+            <Body item={item} variant={variant} isLast={isLast} />
           </li>
         );
       })}

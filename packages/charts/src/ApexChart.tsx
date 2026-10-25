@@ -1,4 +1,5 @@
 import type ApexCharts from 'apexcharts';
+import type { ApexOptions } from 'apexcharts';
 import { useEffect, useRef, type ComponentProps } from 'react';
 import 'apexcharts/features/keyboard';
 import ReactApexChart from 'react-apexcharts/core';
@@ -41,6 +42,32 @@ const nameLegendItems = (container: Element) => {
   }
 };
 
+/** Whether `series` has nothing to draw: none, or only series without data. */
+const hasNoData = (series: unknown): boolean =>
+  !Array.isArray(series) ||
+  series.every(
+    (item) => typeof item === 'object' && item !== null && 'data' in item && !item.data?.length
+  );
+
+/**
+ * What an empty chart draws besides its message: nothing. ApexCharts still
+ * lays out a 0–6 axis, a grid and a legend around "No data".
+ */
+const withoutFrame = (options: ApexOptions | undefined): ApexOptions => ({
+  grid: { show: false },
+  legend: { show: false },
+  xaxis: {
+    labels: { show: false },
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    tooltip: { enabled: false },
+    crosshairs: { show: false },
+  },
+  yaxis: Array.isArray(options?.yaxis)
+    ? options.yaxis.map((axis) => ({ ...axis, show: false }))
+    : { ...options?.yaxis, show: false },
+});
+
 /**
  * `ReactApexChart`, drawn again when a web font finishes loading or `<html>`
  * switches `data-font`. ApexCharts measures its labels when it draws: a font
@@ -59,7 +86,8 @@ const nameLegendItems = (container: Element) => {
  * text instead, as ApexCharts itself does when an item is toggled.
  *
  * `emptyMessage` is the `noData` text ApexCharts draws, as SVG text, when there
- * is no series or only empty ones.
+ * is no series or only empty ones. That chart shows the message alone: no axis,
+ * grid or legend around it (`withoutFrame`).
  *
  * The tooltip takes a class that darkens its title in the light themes, from a
  * style React hoists into `<head>` once for every chart.
@@ -105,14 +133,20 @@ export const ApexChart = ({
     return () => observer.disconnect();
   }, []);
 
+  const frame = hasNoData(props.series) ? withoutFrame(options) : undefined;
   const own = {
-    ...options,
+    ...(frame ? mergeOptions(options ?? {}, frame) : options),
     chart: {
       ...options?.chart,
       accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
     },
     tooltip: { ...options?.tooltip, cssClass: TOOLTIP_CLASS },
-    noData: { text: emptyMessage, style: { color: textMuted } },
+    noData: {
+      text: emptyMessage,
+      align: 'center' as const,
+      verticalAlign: 'middle' as const,
+      style: { color: textMuted, fontSize: '14px', fontFamily: 'inherit' },
+    },
   };
   const merged = apexOptions ? mergeOptions(own, apexOptions) : own;
 

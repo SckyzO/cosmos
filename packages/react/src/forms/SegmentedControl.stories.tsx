@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { LayoutDashboard, List, Map } from 'lucide-react';
+import { Filter, LayoutDashboard, List, Map } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
 import { SegmentedControl } from './SegmentedControl';
@@ -208,5 +208,113 @@ export const FocusShowsAccentRingOnOtherSegmentInDark: Story = {
     const grid = canvas.getByRole('radio', { name: 'Grid' });
     grid.focus();
     await expectFocusRing(grid, { inset: true });
+  },
+};
+
+// ── Pills (merged from FilterPills, #298) ────────────────────────────────────
+
+const SEVERITY = [
+  { value: 'all', label: 'All' },
+  { value: 'crit', label: 'CRIT' },
+  { value: 'warn', label: 'WARN' },
+  { value: 'ok', label: 'OK' },
+];
+
+export const Pills: Story = {
+  args: { options: SEVERITY, value: 'all', appearance: 'pills' },
+};
+
+export const PillsWithGroupIcon: Story = {
+  args: { options: SEVERITY, value: 'all', appearance: 'pills', icon: Filter },
+};
+
+export const PillsFullWidth: Story = {
+  parameters: { layout: 'padded' },
+  args: { options: SEVERITY, value: 'all', appearance: 'pills', icon: Filter, fullWidth: true },
+};
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="space-y-3">
+      <SegmentedControl<string> options={[...VIEWS]} value="list" size="sm" />
+      <SegmentedControl<string> options={[...VIEWS]} value="list" />
+      <div>
+        <SegmentedControl<string> options={SEVERITY} value="all" appearance="pills" size="sm" />
+      </div>
+      <div>
+        <SegmentedControl<string> options={SEVERITY} value="all" appearance="pills" />
+      </div>
+    </div>
+  ),
+};
+
+const ControlledSeverity = () => {
+  const [v, setV] = useState('all');
+  return (
+    <SegmentedControl
+      aria-label="Severity"
+      appearance="pills"
+      options={SEVERITY}
+      value={v}
+      onChange={setV}
+    />
+  );
+};
+
+export const PillsArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledSeverity />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'All' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('radio', { name: 'CRIT', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(canvas.getByRole('radio', { name: 'OK', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'All', checked: true })).toHaveFocus();
+  },
+};
+
+export const PillsSelectedHasAccentBackground: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { options: SEVERITY, value: 'warn', appearance: 'pills', 'aria-label': 'Severity' },
+  play: async ({ canvas }) => {
+    const selected = getComputedStyle(canvas.getByRole('radio', { name: 'WARN' }));
+    const other = getComputedStyle(canvas.getByRole('radio', { name: 'All' }));
+    const probe = document.createElement('span');
+    probe.className = 'bg-brand-500 text-white';
+    document.body.append(probe);
+    const accent = getComputedStyle(probe);
+    await expect(selected.backgroundColor).toBe(accent.backgroundColor);
+    await expect(selected.color).toBe(accent.color);
+    probe.remove();
+    await expect(other.backgroundColor).not.toBe(selected.backgroundColor);
+    await expect(other.color).not.toBe(selected.color);
+  },
+};
+
+export const FullWidthFillsItsContainer: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" style={{ width: 480 }}>
+      <SegmentedControl<string>
+        aria-label="Severity"
+        appearance="pills"
+        options={SEVERITY}
+        value="all"
+        fullWidth
+      />
+      <div className="mt-3">
+        <SegmentedControl<string> aria-label="Shrunk" options={SEVERITY} value="all" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('box').getBoundingClientRect().width;
+    const full = canvas.getByRole('radiogroup', { name: 'Severity' }).getBoundingClientRect().width;
+    const shrunk = canvas.getByRole('radiogroup', { name: 'Shrunk' }).getBoundingClientRect().width;
+    await expect(full).toBe(box);
+    await expect(shrunk).toBeLessThan(box);
   },
 };

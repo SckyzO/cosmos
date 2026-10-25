@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
@@ -126,4 +127,121 @@ export const Sharp: Story = {
       ))}
     </ImageGrid>
   ),
+};
+
+/** `ImageGrid.Item` adds a caption over the bottom edge. */
+export const WithCaptions: Story = {
+  render: () => (
+    <ImageGrid columns={3}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <ImageGrid.Item key={i} caption={`Photo ${i + 1}`}>
+          <Image i={i} />
+        </ImageGrid.Item>
+      ))}
+    </ImageGrid>
+  ),
+};
+
+/** An `overlay` covers the tile on hover and on keyboard focus; `onClick` or `href` make the tile clickable. */
+export const ClickableWithOverlay: Story = {
+  render: () => (
+    <ImageGrid columns={3}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <ImageGrid.Item key={i} caption={`Photo ${i + 1}`} overlay="Open" onClick={() => {}}>
+          <Image i={i} />
+        </ImageGrid.Item>
+      ))}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <ImageGrid.Item key={i} overlay="View original" href="#original">
+          <Image i={i + 3} />
+        </ImageGrid.Item>
+      ))}
+    </ImageGrid>
+  ),
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+export const ItemIsAButtonOrALink: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: null },
+  render: () => (
+    <ImageGrid columns={3}>
+      <ImageGrid.Item onClick={() => {}} overlay="Open">
+        <img src={gradient(0)} alt="Clickable" />
+      </ImageGrid.Item>
+      <ImageGrid.Item href="#there">
+        <img src={gradient(1)} alt="Linked" />
+      </ImageGrid.Item>
+      <ImageGrid.Item caption="Static">
+        <img src={gradient(2)} alt="Plain item" />
+      </ImageGrid.Item>
+      <img src={gradient(3)} alt="Bare image" />
+    </ImageGrid>
+  ),
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: /Clickable/ });
+    const link = canvas.getByRole('link', { name: 'Linked' });
+    await expect(link).toHaveAttribute('href', '#there');
+    // The static tile and the bare image are not interactive.
+    await expect(canvas.getAllByRole('button')).toHaveLength(1);
+    await expect(canvas.getAllByRole('link')).toHaveLength(1);
+    await expect(canvas.getByRole('img', { name: 'Bare image' })).toBeVisible();
+
+    // Keyboard: both are reachable with Tab, in order, and Enter/Space activate the button.
+    await userEvent.tab();
+    await expect(button).toHaveFocus();
+    await userEvent.tab();
+    await expect(link).toHaveFocus();
+    await userEvent.tab({ shift: true });
+    await expect(button).toHaveFocus();
+  },
+};
+
+export const OverlayShowsOnFocus: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: null },
+  render: () => (
+    <ImageGrid columns={2}>
+      <ImageGrid.Item onClick={() => {}} overlay="Open">
+        <img src={gradient(0)} alt="First" />
+      </ImageGrid.Item>
+    </ImageGrid>
+  ),
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    const overlay = canvas.getByText('Open');
+    await expect(getComputedStyle(overlay).opacity).toBe('0');
+    await userEvent.tab();
+    await expect(button).toHaveFocus();
+    // Focus shows the overlay and the focus indicator, like hover does.
+    await expect(button.matches(':focus-visible')).toBe(true);
+    await waitFor(() => expect(getComputedStyle(overlay).opacity).toBe('1'));
+    await expect(getComputedStyle(button).boxShadow).not.toBe('none');
+  },
+};
+
+export const ItemClickFires: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: null },
+  render: () => {
+    const [count, setCount] = useState(0);
+    return (
+      <div>
+        <ImageGrid columns={2}>
+          <ImageGrid.Item onClick={() => setCount((c) => c + 1)}>
+            <img src={gradient(0)} alt="First" />
+          </ImageGrid.Item>
+        </ImageGrid>
+        <p>Clicks: {count}</p>
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button'));
+    await expect(canvas.getByText('Clicks: 1')).toBeVisible();
+    // Enter on the focused tile clicks it too.
+    await userEvent.keyboard('{Enter}');
+    await expect(canvas.getByText('Clicks: 2')).toBeVisible();
+  },
 };

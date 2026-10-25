@@ -1,0 +1,54 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Status/Which one to use" />
+
+# Choosing a status component
+
+Cosmos has two vocabularies for "this is red", and they answer different questions.
+
+- **Machine health** is a fixed vocabulary of five values, `OK`, `WARN`, `CRIT`, `INFO` and
+  `UNKNOWN` (`HealthStatus`). It is data reported by a monitored thing: a server, a service, a
+  check. The health components take it as `status`, and render it in the same hues.
+- **Workflow state** is a meaning chosen by the interface: a draft, a pending review, a failed
+  import, a paid invoice. It uses the shared `intent` vocabulary (`neutral`, `brand`, `info`,
+  `success`, `warning`, `danger`) and a label you write.
+
+A `CRIT` badge and an "Error" badge are both red but say different things: the first is a reading
+of a machine, the second a state of a record. Pick the component by what the value is, not by its
+color.
+
+| You show                                    | Use           | Takes                            |
+| ------------------------------------------- | ------------- | -------------------------------- |
+| A machine's health, as a pill in a table    | `StatusBadge` | `status`, `size`, `label`        |
+| A machine's health, as a hero or a summary  | `HealthBadge` | `status`, `label`                |
+| A machine's health, next to a name or a row | `HealthDot`   | `status`, `pulse`, `label`       |
+| A row of a list that ends with a health     | `StatusRow`   | `status` (renders a StatusBadge) |
+| A workflow state or a category              | `Badge`       | `intent`, `appearance`, a label  |
+
+## StatusBadge
+
+A rounded pill with the status text in capitals, in three sizes: `sm` inside dense tables and
+rows, `md` by default, `lg` for a prominent display. `label` replaces the text without changing the
+color ("Healthy" on an `OK`). `StatusRow` ends with one, so a list of machines and a table of
+machines show the same pill.
+
+## HealthBadge
+
+A larger, bordered badge with an icon and the label. Use it where the status is the subject of the
+page or the card: a "System health" header, a dashboard summary. Its icon means the status is not
+carried by color alone.
+
+## HealthDot
+
+A 10px dot for places where a pill would be heavy: next to a hostname, in a legend, in a compact
+list. `pulse` draws attention, and is meant for `CRIT`. Without `label`, the status is read as
+hidden text ("CRIT"). With `label`, the dot is an image with that name, which is the better choice
+when the dot stands for something ("Database: critical"). Put the machine's name or value beside
+the dot: color alone is not a cue.
+
+## Badge
+
+For everything that is not a machine reading. Choose the `intent` for the meaning (`success` for
+done, `warning` for needs attention, `danger` for failed, `neutral` for inactive) and write the
+label in your product's words. A `Badge` never takes a `HealthStatus`: if the value comes from
+monitoring, it is a `StatusBadge`.

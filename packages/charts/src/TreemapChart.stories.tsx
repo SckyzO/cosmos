@@ -11,7 +11,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
-  expectNoData,
+  expectMessageOnly,
+  expectColorInThemes,
 } from './storybook-helpers';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
@@ -184,7 +185,50 @@ export const FormatValueFormatsTooltip: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
-  play: expectNoData('No data'),
+  play: expectMessageOnly('No data'),
+};
+
+/** The gap between tiles is the card's color in every theme, never ApexCharts' white. */
+export const TileGapsMatchTheSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: {
+    series: [
+      {
+        data: [
+          { x: 'a', y: 5 },
+          { x: 'b', y: 3 },
+        ],
+      },
+    ],
+  },
+  play: ({ canvasElement }) =>
+    expectColorInThemes(
+      () => canvasElement.querySelector('.apexcharts-treemap-rect')?.getAttribute('stroke'),
+      {
+        dark: '--color-gray-900',
+        'deep-blue': '--color-gray-900',
+        '': '--color-white',
+        sand: '--color-white',
+      }
+    ),
+};
+
+/** One name keeps its color in every group: `compute` is the same in Paris and Frankfurt. */
+export const NameKeepsItsColor: Story = {
+  args: MultipleSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const fills: Record<string, Set<string | null>> = {};
+      for (const tile of canvasElement.querySelectorAll('.apexcharts-treemap-rect')) {
+        const name = tile.getAttribute('data:key')?.split(':').pop() ?? '';
+        (fills[name] ??= new Set()).add(tile.getAttribute('fill'));
+      }
+      expect(Object.keys(fills).sort()).toEqual(['compute', 'gpu', 'network', 'storage']);
+      for (const colors of Object.values(fills)) expect(colors.size).toBe(1);
+      expect(new Set(Object.values(fills).map(([...c]) => c[0])).size).toBe(4);
+    });
+  },
 };
 
 /** The tiles take the default palette of the theme. */

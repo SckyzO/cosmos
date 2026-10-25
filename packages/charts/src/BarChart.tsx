@@ -5,6 +5,7 @@ import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { escapeHtml } from './escape';
 import { seriesTitle, useValueFormat } from './formatters';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -88,14 +89,11 @@ export const BarChart = ({
         formatter: horizontal ? undefined : format.axis,
       },
     },
-    legend: {
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // Tooltips and the legend are HTML: escape names, categories and values.
     tooltip: {
       theme: tooltipTheme,

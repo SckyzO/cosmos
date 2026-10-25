@@ -1,0 +1,37 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Feedback/Which one to use" />
+
+# Which feedback component to use
+
+Cosmos has several ways to tell people something. They differ by where the message lives, how long
+it stays and how loudly assistive technology announces it. They share one palette and one icon per
+`intent` (`neutral | brand | info | success | warning | danger`), so the same meaning looks the same
+in all of them.
+
+| Component          | Lives                      | Stays until           | Role              | Use it for                                             |
+| ------------------ | -------------------------- | --------------------- | ----------------- | ------------------------------------------------------ |
+| `AlertBanner`      | Inline, in the page flow   | The host removes it   | `alert`           | A result or a problem about the content next to it     |
+| `AnnouncementBar`  | Page-wide, top of the page | The user dismisses it | `status`          | News, maintenance windows, a plan notice               |
+| `NotificationCard` | Floating, you place it     | The host removes it   | `status`          | A single notification you lay out yourself             |
+| `Toast`            | Floating, bottom-right     | A few seconds         | `status` (sonner) | Confirming an action that already happened             |
+| `EmptyState`       | Inside a card or a table   | The data arrives      | none (static)     | A list or a section with nothing in it                 |
+| `ErrorState`       | Inside a card or a table   | The user retries      | `alert`           | A section that failed to load, with a Try again button |
+| `LoadingState`     | Inside a card or a table   | The data arrives      | `status`          | A section that is fetching                             |
+
+## Picking one
+
+- The message belongs to one form or section and the user must act on it: `AlertBanner`, with
+  `action` for the fix and `onDismiss` when it can be closed.
+- The message concerns the whole app, not the screen: `AnnouncementBar`.
+- The user just did something and needs a quiet confirmation: `Toast`. Anything they must read or
+  act on does not belong in a toast, which disappears.
+- A region has no content to show: `EmptyState` when there is nothing, `ErrorState` when loading
+  failed, `LoadingState` while it loads. The three share one layout (icon tile, `title`,
+  `description`, `action`, `compact`), so swapping one for another does not move the page.
+
+## What they share
+
+`INTENT_STYLE` in `packages/react/src/ui/intent.ts` holds, for each intent, the icon, the tinted
+surface, the text color, the icon color and the icon tile. `AlertBanner`, `AnnouncementBar`,
+`NotificationCard` and `Toast` read it; each keeps its own layout, padding and live-region role.
