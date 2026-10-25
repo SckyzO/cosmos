@@ -18,6 +18,7 @@ import { Badge } from '../ui/Badge';
 import type { Intent } from '../ui/intent';
 import { Button } from '../ui/Button';
 import { RowActionButton } from '../ui/RowActionButton';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
 
@@ -177,19 +178,46 @@ export const Empty: Story = {
 export const NextPageButton: Story = {
   render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
   play: async ({ canvas }) => {
-    // 60 rows / 10 = 6 pages. Initial range is "1–10" — but the dash and the
-    // numbers live in separate `<b>` nodes around the `Showing` literal. Use
-    // a function matcher with normalized text to handle whitespace + spans.
+    // 60 rows / 10 = 6 pages. The range is split over several nodes: match
+    // the info line by its normalized text.
     const findRange = (range: string) =>
-      canvas.getByText(
-        (_, el) =>
-          el?.tagName === 'P' &&
-          /^Showing\s/.test(el.textContent ?? '') &&
-          (el.textContent ?? '').includes(range)
-      );
-    await expect(findRange('1–10')).toBeInTheDocument();
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    await expect(findRange('11–20')).toBeInTheDocument();
+      canvas.getByText((_, el) => el?.tagName === 'SPAN' && el.textContent === `Showing ${range}`);
+    await expect(findRange('1 to 10 of 60')).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
+    await expect(findRange('11 to 20 of 60')).toBeInTheDocument();
+  },
+};
+
+export const PagerIsANavigation: Story = {
+  tags: ['!dev'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Pagination' });
+    await expect(within(nav).getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    await userEvent.click(within(nav).getByRole('button', { name: 'Page 3' }));
+    await expect(within(nav).getByRole('button', { name: 'Page 3' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    await userEvent.click(within(nav).getByRole('button', { name: 'Show all' }));
+    await expect(nav).toHaveTextContent('Showing all 60 results');
+  },
+};
+
+export const Mobile: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('navigation', { name: 'Pagination' })).toBeVisible();
+    await expect(canvas.getByText(/^Page/)).toHaveTextContent('Page 1 / 6');
   },
 };
 
@@ -633,6 +661,7 @@ export const ComfortableRowsAreTaller: Story = {
         {(['default', 'comfortable'] as const).map((density) => (
           <section key={density} aria-label={`${density} density`}>
             <DataTable
+              aria-label={`${density} density members`}
               rows={members.slice(0, 3)}
               columns={memberColumns}
               rowKey={(m) => m.id}
