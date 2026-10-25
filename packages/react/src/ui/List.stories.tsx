@@ -180,6 +180,7 @@ export const RichItems: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RendersAsUl: Story = {
+  tags: ['!dev'],
   render: () => (
     <List>
       <List.Item>One</List.Item>
@@ -193,6 +194,7 @@ export const RendersAsUl: Story = {
 };
 
 export const OrderedRendersAsOl: Story = {
+  tags: ['!dev'],
   render: () => (
     <List variant="ordered">
       <List.Item>First</List.Item>

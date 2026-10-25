@@ -138,6 +138,7 @@ export const Bare: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootIsDlWithDivideY: Story = {
+  tags: ['!dev'],
   render: () => (
     <DescriptionList data-testid="dl">
       <DescriptionList.Item label="A">x</DescriptionList.Item>
@@ -151,6 +152,7 @@ export const RootIsDlWithDivideY: Story = {
 };
 
 export const ItemRendersDtAndDd: Story = {
+  tags: ['!dev'],
   render: () => (
     <DescriptionList>
       <DescriptionList.Item label="Label" data-testid="li">
@@ -166,6 +168,7 @@ export const ItemRendersDtAndDd: Story = {
 };
 
 export const InCardWrapsInBorderedSurface: Story = {
+  tags: ['!dev'],
   render: () => (
     <DescriptionList inCard>
       <DescriptionList.Item label="x">y</DescriptionList.Item>
@@ -178,6 +181,7 @@ export const InCardWrapsInBorderedSurface: Story = {
 };
 
 export const StripedAddsAlternatingBg: Story = {
+  tags: ['!dev'],
   render: () => (
     <DescriptionList striped data-testid="dl">
       <DescriptionList.Item label="a">1</DescriptionList.Item>

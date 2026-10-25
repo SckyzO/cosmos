@@ -123,6 +123,7 @@ export const PlainLine: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const PlainLineHasSeparatorRole: Story = {
+  tags: ['!dev'],
   render: () => <Divider data-testid="d" />,
   play: async ({ canvasElement }) => {
     const el = canvasElement.querySelector('[data-testid="d"]');
@@ -132,6 +133,7 @@ export const PlainLineHasSeparatorRole: Story = {
 };
 
 export const InsetCenteredByDefault: Story = {
+  tags: ['!dev'],
   render: () => <Divider inset="X" />,
   play: async ({ canvasElement }) => {
     const inner = canvasElement.querySelector('.flex.justify-center');
@@ -140,6 +142,7 @@ export const InsetCenteredByDefault: Story = {
 };
 
 export const AlignLeftMovesInsetToStart: Story = {
+  tags: ['!dev'],
   render: () => <Divider inset="X" align="left" />,
   play: async ({ canvasElement }) => {
     const inner = canvasElement.querySelector('.flex.justify-start');
@@ -148,6 +151,7 @@ export const AlignLeftMovesInsetToStart: Story = {
 };
 
 export const EmphasisSwitchesToTitleStyle: Story = {
+  tags: ['!dev'],
   render: () => <Divider inset="X" emphasis />,
   play: async ({ canvasElement }) => {
     const span = canvasElement.querySelector('span.font-semibold');
@@ -156,6 +160,7 @@ export const EmphasisSwitchesToTitleStyle: Story = {
 };
 
 export const RowRendersTitleAndActions: Story = {
+  tags: ['!dev'],
   render: () => (
     <Divider.Row
       title="T"
@@ -175,6 +180,7 @@ export const RowRendersTitleAndActions: Story = {
 };
 
 export const IconVariantRendersIconChip: Story = {
+  tags: ['!dev'],
   render: () => <Divider.Icon icon={Plus} data-testid="d" />,
   play: async ({ canvasElement }) => {
     const root = canvasElement.querySelector('[data-testid="d"]');
