@@ -191,7 +191,7 @@ export const AlignLeft: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensMenu: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <InTopbar>
       <UserMenu>
@@ -214,7 +214,7 @@ export const TriggerOpensMenu: Story = {
 };
 
 export const ItemClickFiresHandler: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => {
     const extra = args as unknown as { onProfile: () => void; onSignOut: () => void };
     return (
@@ -251,7 +251,7 @@ export const ItemClickFiresHandler: Story = {
 };
 
 export const EscapeCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <InTopbar>
       <UserMenu>
@@ -274,7 +274,7 @@ export const EscapeCloses: Story = {
 
 /** WAI-ARIA menu button: arrows move between items, Tab and Escape leave the menu. */
 export const KeyboardMenuNavigation: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <InTopbar>
       <UserMenu>

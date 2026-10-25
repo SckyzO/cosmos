@@ -111,6 +111,7 @@ export const MultipleDividers: Story = {
  * first item, and ArrowDown roves between items.
  */
 export const MenuSemanticsAndKeyboard: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('');
     return (
@@ -306,6 +307,7 @@ export const MenuItemFocusShowsRingInDark: Story = {
 };
 
 export const MenuItemFocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...MenuItemFocusShowsRingInDark,
   globals: { theme: 'light' },
 };
@@ -365,6 +367,7 @@ export const MenuFollowsTriggerAndCloses: Story = {
  * the right moves back inside, 16px from the edge.
  */
 export const OpensUpwardAtTheBottomEdge: Story = {
+  tags: ['!dev'],
   parameters: portalDocsParams.sm(),
   render: () => (
     <div className="flex h-screen items-end bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">

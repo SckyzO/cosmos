@@ -93,7 +93,7 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 
 /** The left drawer enters and leaves by the left edge, never the right. */
 export const LeftDrawerStaysOnTheLeft: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
@@ -167,6 +167,7 @@ export const EmptySlideOverNoBackdrop: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const CloseOutsideRendersBackdropButton: Story = {
+  tags: ['!dev'],
   render: () => (
     <Drawer open onClose={() => {}} closeOutside>
       <Drawer.Header title="Panel" />
@@ -180,6 +181,7 @@ export const CloseOutsideRendersBackdropButton: Story = {
 };
 
 export const NoBackdropOmitsOverlay: Story = {
+  tags: ['!dev'],
   render: () => (
     <Drawer open onClose={() => {}} withBackdrop={false}>
       <Drawer.Header title="Panel" />
@@ -207,7 +209,7 @@ const inDialog = (el: Element | null) => !!el?.closest('[role="dialog"]');
  * to the button that opened it.
  */
 export const ClosedDrawerIsNotFocusable: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [open, setOpen] = useState(false);
     return (
@@ -287,7 +289,7 @@ export const ClosedDrawerIsInvisible: Story = {
 
 /** Tab cycles inside the open drawer, the outside close button included. */
 export const FocusTrapIncludesCloseOutside: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <Button variant="secondary">Page button</Button>

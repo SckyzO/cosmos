@@ -289,6 +289,7 @@ export const AlertCenteredFullWidth: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const HorizontalLayoutHasGrayFooter: Story = {
+  tags: ['!dev'],
   render: () => (
     <Modal.Alert
       open
@@ -315,6 +316,7 @@ export const HorizontalLayoutHasGrayFooter: Story = {
 };
 
 export const FullWidthActionMakesButtonFull: Story = {
+  tags: ['!dev'],
   render: () => (
     <Modal.Alert
       open
@@ -338,6 +340,7 @@ export const FullWidthActionMakesButtonFull: Story = {
  * users start inside it, not on the page behind.
  */
 export const AccessibleNameAndInitialFocus: Story = {
+  tags: ['!dev'],
   render: () => (
     <Modal open onClose={() => {}}>
       <Modal.Header title="Delete workspace" />
