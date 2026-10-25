@@ -74,7 +74,8 @@ export const Topbar = ({
   const showToggle =
     sidebarCollapsed !== null &&
     (shell
-      ? shell.collapseControl === 'topbar'
+      ? // Below `lg` the sidebar has no toggle of its own: the hamburger opens its drawer.
+        shell.collapseControl === 'topbar' || shell.isMobile
       : sidebarCollapsed !== undefined && onCollapsedChange !== undefined);
 
   return (

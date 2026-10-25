@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
@@ -24,7 +24,10 @@ import { SidebarToggle } from './SidebarToggle';
 // context — useful for one-off overrides or stories that mount a child in
 // isolation.
 
-const SidebarContext = createContext<{ collapsed: boolean }>({ collapsed: false });
+const SidebarContext = createContext<{ collapsed: boolean; inDrawer: boolean }>({
+  collapsed: false,
+  inDrawer: false,
+});
 
 const useSidebarCollapsed = (override?: boolean): boolean => {
   const ctx = useContext(SidebarContext);
@@ -80,7 +83,9 @@ export type SidebarProps = {
  * children don't need to receive it as a prop.
  *
  * Inside a `Shell`, the collapsed state is the Shell's: every SidebarToggle
- * in the Shell (the Topbar's, this footer's, a custom header's) moves it.
+ * in the Shell (the Topbar's, this footer's, a custom header's) moves it. Below `lg` the Shell
+ * shows the sidebar as a drawer: it then fills the panel, is always expanded, and `Sidebar.Brand`
+ * gets a close button.
  */
 const SidebarRoot = ({
   collapsed: collapsedProp,
@@ -101,18 +106,24 @@ const SidebarRoot = ({
   // In a Shell, the state is the Shell's, and the nav carries the id its SidebarToggles
   // name in `aria-controls`.
   const shell = useShell();
-  const collapsed = shell ? shell.collapsed : ownCollapsed;
+  // In the Shell's drawer the sidebar is always expanded, whatever the desktop state.
+  const inDrawer = shell?.isMobile === true;
+  const collapsed = inDrawer ? false : shell ? shell.collapsed : ownCollapsed;
   const ownNavId = useId();
   const navId = shell ? shell.navId : ownNavId;
-  const showToggle = onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar';
+  // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
+  const showToggle =
+    !inDrawer && (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
   return (
-    <SidebarContext.Provider value={{ collapsed }}>
+    <SidebarContext.Provider value={{ collapsed, inDrawer }}>
       <nav
         id={navId}
         aria-label="Main navigation"
-        style={{ width: collapsed ? collapsedWidth : width }}
+        style={inDrawer ? undefined : { width: collapsed ? collapsedWidth : width }}
         className={clsx(
-          'flex h-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-bg-panel)]',
+          'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
+          // The drawer panel draws the edge and the shadow, and sets the width.
+          inDrawer ? 'w-full' : 'border-r border-[var(--color-border)]',
           'transition-[width] duration-300 ease-in-out',
           className
         )}
@@ -176,6 +187,10 @@ const SidebarBrand = ({
   ref,
 }: SidebarBrandProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const shell = useShell();
+  // In the Shell's drawer the brand row also holds the close button, a sibling of the brand's own
+  // link or button (which can't contain one).
+  const inDrawer = useContext(SidebarContext).inDrawer && shell !== null;
   const inner = (
     <>
       {logo && (
@@ -197,32 +212,60 @@ const SidebarBrand = ({
     </>
   );
 
-  const baseClass =
-    'flex h-[72px] shrink-0 items-center gap-3 px-4 border-b border-[var(--color-border)] focus-visible:ring-inset focus-visible:focus-indicator';
+  const baseClass = clsx(
+    'focus-visible:focus-indicator flex h-[72px] items-center gap-3 px-4 focus-visible:ring-inset',
+    inDrawer ? 'min-w-0 flex-1' : 'shrink-0 border-b border-[var(--color-border)]'
+  );
+  // The marker sits on the outermost element of the row (`Sidebar.Section` reads it).
+  const marker = inDrawer ? undefined : '';
 
+  let brand;
   if (href) {
-    return (
-      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass} data-sidebar-brand>
+    brand = (
+      <a
+        ref={ref as Ref<HTMLAnchorElement>}
+        href={href}
+        className={baseClass}
+        data-sidebar-brand={marker}
+      >
         {inner}
       </a>
     );
-  }
-  if (onClick) {
-    return (
+  } else if (onClick) {
+    brand = (
       <button
         ref={ref as Ref<HTMLButtonElement>}
         type="button"
         onClick={onClick}
         className={clsx(baseClass, 'w-full text-left')}
-        data-sidebar-brand
+        data-sidebar-brand={marker}
       >
         {inner}
       </button>
     );
+  } else {
+    brand = (
+      <div ref={ref as Ref<HTMLDivElement>} className={baseClass} data-sidebar-brand={marker}>
+        {inner}
+      </div>
+    );
   }
+  if (!inDrawer || !shell) return brand;
+
   return (
-    <div ref={ref as Ref<HTMLDivElement>} className={baseClass} data-sidebar-brand>
-      {inner}
+    <div
+      className="flex h-[72px] shrink-0 items-center border-b border-[var(--color-border)] pr-3"
+      data-sidebar-brand=""
+    >
+      {brand}
+      <button
+        type="button"
+        onClick={() => shell.setOpen(false)}
+        aria-label="Close navigation"
+        className="focus-visible:focus-indicator flex size-10 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5"
+      >
+        <X className="size-5" aria-hidden />
+      </button>
     </div>
   );
 };
@@ -238,7 +281,10 @@ export type SidebarItemProps = {
   active?: boolean;
   /** Link target — renders an `<a>` if set, otherwise a `<button>`. */
   href?: string;
-  /** Click handler (if not using href). */
+  /**
+   * Click handler (if not using href). In the Shell's drawer, below `lg`, a click on any item
+   * also closes the drawer, after this runs.
+   */
   onClick?: () => void;
   /** Optional badge (count, "new"…) shown right of label. Hidden when collapsed. */
   badge?: ReactNode;
@@ -267,6 +313,10 @@ const SidebarItem = ({
   const collapsed = useSidebarCollapsed(collapsedProp);
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
+  // Picking an item in the Shell's drawer navigates: the drawer closes behind it.
+  const shell = useShell();
+  const closeDrawer =
+    useContext(SidebarContext).inDrawer && shell ? () => shell.setOpen(false) : undefined;
   const baseClass = clsx(
     'group focus-visible:focus-indicator mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
     collapsed ? 'justify-center px-2' : 'px-3',
@@ -295,6 +345,7 @@ const SidebarItem = ({
     <a
       ref={ref as Ref<HTMLAnchorElement>}
       href={href}
+      onClick={closeDrawer}
       aria-label={name}
       className={baseClass}
       style={style}
@@ -307,7 +358,10 @@ const SidebarItem = ({
     <button
       ref={ref as Ref<HTMLButtonElement>}
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        onClick?.();
+        closeDrawer?.();
+      }}
       aria-label={name}
       className={clsx(baseClass, 'w-[calc(100%-1rem)] text-left')}
       style={style}
@@ -396,7 +450,7 @@ const SidebarSubMenu = ({
           <Icon className="h-5 w-5 shrink-0" />
         </Popover.Trigger>
         <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
-          <SidebarContext.Provider value={{ collapsed: false }}>
+          <SidebarContext.Provider value={{ collapsed: false, inDrawer: false }}>
             <SidebarDepthContext.Provider value={0}>
               <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
                 {label}
