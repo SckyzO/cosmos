@@ -180,7 +180,8 @@ const CHARTS: Record<string, Chart> = {
     filled: (apexOptions) => <StrokedGauge value={92} apexOptions={apexOptions} />,
   },
   RealtimeChart: {
-    filled: (apexOptions) => <RealtimeChart apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <RealtimeChart />,
   },
 };
 

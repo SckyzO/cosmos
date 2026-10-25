@@ -78,7 +78,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `RangeBarChart`                | Time ranges per row on a time axis (timeline) (Recharts)      |
 | `MixedChart`                   | Columns and lines, optional second y axis (Recharts)          |
 | `LineAreaChart`                | Smooth area + gradient fill, legend when 2+ series (Recharts) |
-| `RealtimeChart`                | Live updates with WARN/CRIT threshold annotations             |
+| `RealtimeChart`                | Live updates with WARN/CRIT threshold lines (Recharts)        |
 | `RadialBarChart`               | Multi-series radial gauge                                     |
 | `GradientRadial`               | Single gradient radial                                        |
 | `SemiCircleGauge`              | Half-donut gauge                                              |
