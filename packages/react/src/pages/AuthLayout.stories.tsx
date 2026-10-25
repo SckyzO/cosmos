@@ -9,7 +9,7 @@ import { PasswordInput } from '../forms/PasswordInput';
 import { AuthLayout } from './AuthLayout';
 
 const meta = {
-  title: 'Pages/Auth Layout',
+  title: 'Pages/Auth/Auth Layout',
   component: AuthLayout,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],

@@ -516,43 +516,43 @@ const WelcomePage = ({
       </h2>
       <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-3.5">
         <TemplateCard
-          href="./?path=/docs/pages-dashboard--docs"
+          href="./?path=/docs/pages-examples-dashboard--docs"
           icon={LayoutDashboard}
           title="Dashboard"
           desc="KPI cards, charts and status rows: the landing page of a monitoring app."
         />
         <TemplateCard
-          href="./?path=/docs/pages-calendar--docs"
+          href="./?path=/docs/pages-examples-calendar--docs"
           icon={CalendarDays}
           title="Calendar"
           desc="Month view with colored events, a mini calendar and the next events."
         />
         <TemplateCard
-          href="./?path=/docs/pages-activity--docs"
+          href="./?path=/docs/pages-examples-activity--docs"
           icon={ActivityIcon}
           title="Activity"
           desc="Deploys, incidents and changes on an alternating timeline, grouped by day."
         />
         <TemplateCard
-          href="./?path=/docs/pages-settings-screen--docs"
+          href="./?path=/docs/pages-examples-settings-screen--docs"
           icon={Settings}
           title="Settings"
           desc="Sections in tabs, each with its labels on the left and the form on the right."
         />
         <TemplateCard
-          href="./?path=/docs/pages-profile--docs"
+          href="./?path=/docs/pages-examples-profile--docs"
           icon={UserRound}
           title="Profile"
           desc="Account details, username and password, appearance and local storage."
         />
         <TemplateCard
-          href="./?path=/docs/pages-doc-page--docs"
+          href="./?path=/docs/pages-examples-doc-page--docs"
           icon={BookMarked}
           title="Doc page"
           desc="Documentation with a sidebar nav, the article and a table of contents."
         />
         <TemplateCard
-          href="./?path=/docs/pages-blog-index--docs"
+          href="./?path=/docs/pages-examples-blog-index--docs"
           icon={FileText}
           title="Blog"
           desc="Five blog section layouts for a landing page, with a matching post page."

@@ -24,7 +24,7 @@ import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-he
 // repo title/status + KPIs row + activity table. Built from Cosmos primitives.
 
 const meta = {
-  title: 'Pages/Detail Screen',
+  title: 'Pages/Examples/Detail Screen',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

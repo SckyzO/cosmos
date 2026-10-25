@@ -37,7 +37,7 @@ import { expect } from 'storybook/test';
 // 3-col layout: left sidebar nav (VerticalNavigation) + center body + right TOC.
 
 const meta = {
-  title: 'Pages/Doc Page',
+  title: 'Pages/Examples/Doc Page',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
 const meta = {
-  title: 'Pages/Reset Password Form',
+  title: 'Pages/Auth/Reset Password Form',
   component: ResetPasswordForm,
   parameters: portalDocsParams(500),
   tags: ['autodocs'],

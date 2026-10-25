@@ -19,7 +19,7 @@ import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-he
 // Composed from existing Cosmos primitives.
 
 const meta = {
-  title: 'Pages/Calendar',
+  title: 'Pages/Examples/Calendar',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

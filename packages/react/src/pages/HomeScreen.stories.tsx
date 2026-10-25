@@ -25,7 +25,7 @@ import { expectHamburgerTogglesSidebar, portalDocsParams } from '../storybook-he
 // Composed entirely from existing Cosmos primitives.
 
 const meta = {
-  title: 'Pages/Home Screen',
+  title: 'Pages/Examples/Home Screen',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

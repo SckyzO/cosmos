@@ -55,7 +55,7 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 import { portalDocsParams } from '../storybook-helpers';
 
 const meta = {
-  title: 'Pages/Form Elements',
+  title: 'Pages/Examples/Form Elements',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;

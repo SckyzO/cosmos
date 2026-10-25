@@ -19,7 +19,7 @@ import { portalDocsParams } from '../storybook-helpers';
 // WithoutHeroImage (text-first, no top image).
 
 const meta = {
-  title: 'Pages/Blog Post',
+  title: 'Pages/Examples/Blog Post',
   parameters: portalDocsParams.full(),
   tags: ['autodocs'],
 } satisfies Meta;
