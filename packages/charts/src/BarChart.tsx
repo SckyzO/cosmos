@@ -58,9 +58,11 @@ export const BarChart = ({
   height = 320,
   width = '100%',
 }: BarChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, palette, surface, tooltipTheme } = useChartTheme();
   const horizontal = orientation === 'horizontal';
   const legendVisible = showLegend ?? series.length > 1;
+  // Side by side, the bars of a group would touch.
+  const grouped = !stacked && series.length > 1;
 
   const format = useValueFormat(formatValue);
 
@@ -117,7 +119,8 @@ export const BarChart = ({
       },
     },
     fill: { opacity: 1 },
-    stroke: { show: false },
+    // A line in the card's color between the bars of a group.
+    stroke: grouped ? { show: true, width: 2, colors: [surface] } : { show: false },
   };
 
   return (
