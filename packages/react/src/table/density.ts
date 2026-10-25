@@ -13,3 +13,6 @@ export const BODY_CELL_PADDING: Record<DataTableDensity, string> = {
   default: 'py-3.5',
   comfortable: 'py-5',
 };
+
+// Placeholder widths of a loading row, cycled over its cells so the rows do not look stamped.
+export const SKELETON_WIDTHS = ['w-24', 'w-16', 'w-20', 'w-12'] as const;

@@ -9,8 +9,9 @@ import {
   type ComponentProps,
   type RefObject,
 } from 'react';
+import { Sk } from '../feedback/Skeleton';
 import { useOverflows } from '../hooks/useOverflows';
-import { BODY_CELL_PADDING, HEADER_CELL_PADDING } from './density';
+import { BODY_CELL_PADDING, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import type { DataTableDensity } from './types';
 
 type TableContextValue = {
@@ -278,3 +279,39 @@ export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps
     />
   );
 };
+
+export type TableSkeletonRowsProps = {
+  /** How many placeholder rows. Default 4. */
+  rows?: number;
+  /** How many cells in a row: the number of columns of the table. */
+  columns: number;
+  /** Indices of the columns that hold numbers (`numeric` cells), whose placeholder sits at the end. */
+  numericColumns?: number[];
+};
+
+/**
+ * TableSkeletonRows — placeholder rows for a `TableBody` while the data loads, under the header
+ * row the table already has, so the columns do not jump when it arrives. They take the table's
+ * `density`, and are hidden from assistive technology: put `aria-busy` on the `Table`.
+ */
+export const TableSkeletonRows = ({
+  rows = 4,
+  columns,
+  numericColumns = [],
+}: TableSkeletonRowsProps) => (
+  <>
+    {Array.from({ length: rows }, (_, row) => (
+      <TableRow key={row} aria-hidden>
+        {Array.from({ length: columns }, (_, col) => (
+          <TableCell key={col} numeric={numericColumns.includes(col)}>
+            <Sk
+              h="h-3"
+              w={SKELETON_WIDTHS[(row + col) % SKELETON_WIDTHS.length]}
+              className={numericColumns.includes(col) ? 'ml-auto' : undefined}
+            />
+          </TableCell>
+        ))}
+      </TableRow>
+    ))}
+  </>
+);
