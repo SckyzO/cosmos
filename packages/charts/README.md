@@ -32,6 +32,8 @@ Most charts take `colors`, which overrides the Cosmos palette, and `formatValue`
 
 The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `MixedChart`, `HeatmapChart`, `BoxPlotChart`, `RangeBarChart`, `RealtimeChart`, `ScatterChart` and `BubbleChart`) take `xTitle`, drawn under the horizontal axis, and `yTitle`, drawn beside the vertical one, as plain text: a horizontal `BarChart` puts its values on the horizontal axis. `MixedChart` also takes `yRightTitle` for its second axis. `RealtimeChart` only has an x axis with `showTimeAxis`.
 
+`Sparkline` takes `label` and `formatValue` for its tooltip, and `min` and `max` to pin its scale: it fits its own data otherwise, so sparklines read against each other (the rows of a table) share the same two.
+
 `RealtimeChart` takes `min` and `max` for its y axis (0 and 100 by default), `showTimeAxis` to label the x axis with the time of each sample, and `warnLabel` and `critLabel` to rename the threshold labels.
 
 `TreemapChart` writes the value of each tile under its name when given `showValues`, and draws its group headers in the card's colors.
