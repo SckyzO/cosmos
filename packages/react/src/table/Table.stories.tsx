@@ -11,9 +11,9 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TableSkeletonRows,
 } from './Table';
 import { EmptyState } from '../feedback/EmptyState';
-import { Sk } from '../feedback/Skeleton';
 import { HealthDot } from '../status/HealthDot';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
@@ -399,33 +399,53 @@ export const Empty: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
+    await expect(canvas.getByText('No nodes')).toBeInTheDocument();
+  },
 };
 
 export const Loading: Story = {
   render: () => (
     <Wrap>
       <Table aria-busy="true">
+        <TableCaption>Compute nodes</TableCaption>
         <NodeHead />
         <TableBody>
-          {Array.from({ length: 4 }, (_, row) => (
-            <TableRow key={row}>
-              <TableCell>
-                <Sk h="h-3" w="w-24" />
-              </TableCell>
-              <TableCell>
-                <Sk h="h-3" w="w-16" />
-              </TableCell>
-              {Array.from({ length: 3 }, (_, col) => (
-                <TableCell key={col}>
-                  <Sk h="h-3" w="w-10" className="ml-auto" />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          <TableSkeletonRows rows={4} columns={5} numericColumns={[2, 3, 4]} />
         </TableBody>
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays, with the rows in its place.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
+    const table = canvas.getByRole('table', { hidden: true });
+    await expect(table.querySelector('thead')).not.toBeNull();
+    await expect(table.querySelectorAll('tbody > tr')).toHaveLength(4);
+    await expect(table.querySelectorAll('tbody > tr:first-child > td')).toHaveLength(5);
+  },
+};
+
+export const LoadingRowsFollowTheDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      {(['default', 'comfortable'] as const).map((density) => (
+        <Table key={density} density={density} aria-label={density} className="mb-4">
+          <TableBody>
+            <TableSkeletonRows rows={1} columns={3} />
+          </TableBody>
+        </Table>
+      ))}
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const height = (name: string) =>
+      canvas.getByRole('table', { name, hidden: true }).querySelector('tr')!.getBoundingClientRect()
+        .height;
+    await expect(height('comfortable')).toBeGreaterThan(height('default'));
+  },
 };
 
 const usageIntent = (pct: number): ProgressBarIntent =>

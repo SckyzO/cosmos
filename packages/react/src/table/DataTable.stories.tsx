@@ -146,9 +146,42 @@ export const Alerts: Story = {
 export const Loading: Story = {
   render: () => (
     <Wrap>
-      <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading />
+      <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading loadingRows={4} />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays, so the columns do not jump: its cells, then one row per placeholder.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    const table = canvas.getByRole('table');
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    await expect(table.querySelector('thead')).not.toBeNull();
+    await expect(table.querySelectorAll('tbody > tr')).toHaveLength(4);
+    await expect(canvas.getByRole('status')).toHaveTextContent('Loading…');
+  },
+};
+
+export const LoadingKeepsTheSelectionAndActionColumns: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        loading
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // The default is five rows, and every one has a cell per column.
+    const rowsLoading = within(canvas.getByRole('table')).getAllByRole('row').slice(1);
+    await expect(rowsLoading).toHaveLength(5);
+    for (const row of rowsLoading) await expect(row.children).toHaveLength(columns.length + 2);
+    const heads = canvas.getAllByRole('columnheader');
+    await expect(heads[0].getBoundingClientRect().width).toBe(44);
+  },
 };
 
 export const ErrorWithRetry: Story = {
@@ -163,6 +196,13 @@ export const ErrorWithRetry: Story = {
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    // The header stays above the error, so the page has the same shape as with rows.
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    await expect(canvas.getByRole('table').querySelector('thead')).not.toBeNull();
+    await expect(canvas.getByText('Failed to fetch alerts.')).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  },
 };
 
 export const Empty: Story = {
@@ -177,6 +217,11 @@ export const Empty: Story = {
       />
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
+    await expect(canvas.getByRole('table').querySelector('thead')).not.toBeNull();
+    await expect(canvas.getByText('No active alerts')).toBeInTheDocument();
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
