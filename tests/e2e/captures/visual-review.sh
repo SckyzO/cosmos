@@ -68,7 +68,7 @@ dev() {
   docker run --rm \
     -v "$root:/workspace" -v "$root/.git:/workspace/.git:ro" \
     -w "$dir" -u "$(id -u):$(id -g)" -e HOME=/home/node \
-    -e "STORIES=$stories" -e "THEMES=$themes" -e CAPTURE_PAGES \
+    -e "STORIES=$stories" -e "THEMES=$themes" -e CAPTURE_PAGES -e CAPTURE_VIEWPORT \
     "$image" "$@"
 }
 

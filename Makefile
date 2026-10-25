@@ -74,7 +74,7 @@ test-e2e: ## Run Playwright e2e (auto-starts storybook via compose)
 	docker compose run --rm playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm test"
 
 screenshots: ## Capture every story in each theme into screenshots/<theme>/ (not in CI). Filters: STORIES=<id substring> THEMES=<theme>
-	docker compose run --rm -e STORIES -e THEMES -e CAPTURE_PAGES playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm screenshots"
+	docker compose run --rm -e STORIES -e THEMES -e CAPTURE_PAGES -e CAPTURE_VIEWPORT playwright bash -c "cd /workspace/tests/e2e && pnpm install --frozen-lockfile && pnpm -w browsers:install && pnpm screenshots"
 
 visual-diff: ## Visual diff of some stories, BASE (default main) vs the working tree: STORIES=<id substrings> [THEMES=<themes>] [BASE=<ref>]
 	@tests/e2e/captures/visual-review.sh
