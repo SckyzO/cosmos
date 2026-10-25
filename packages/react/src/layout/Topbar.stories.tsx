@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { Bell, Search, Sun, User } from 'lucide-react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { Bell, Search, Settings, Sun, User } from 'lucide-react';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from './Topbar';
+import { Menu } from '../ui/Menu';
+import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Topbar',
@@ -210,5 +212,69 @@ export const HamburgerExpandsACollapsedSidebar: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
     await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
     await expect(args.onCollapsedChange).toHaveBeenCalledWith(false);
+  },
+};
+
+// ── Narrow screens (#291) ────────────────────────────────────────────────────
+
+const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
+  <Wrap>
+    <Topbar
+      sidebarCollapsed={false}
+      onCollapsedChange={() => {}}
+      pageTitle="Analytics Dashboard"
+      moreActions={
+        <>
+          <Menu.Item icon={Bell} onSelect={onSelect}>
+            Notifications
+          </Menu.Item>
+          <Menu.Item icon={Sun}>Toggle theme</Menu.Item>
+        </>
+      }
+      rightActions={
+        <>
+          <span className="flex gap-2 max-sm:hidden">
+            <IconBtn icon={Bell} label="Notifications" />
+            <IconBtn icon={Sun} label="Toggle theme" />
+            <IconBtn icon={Settings} label="Settings" />
+          </span>
+          <IconBtn icon={User} label="Profile" />
+        </>
+      }
+    />
+  </Wrap>
+);
+
+/**
+ * Below `sm` the page title goes (the page has its own heading) and the actions marked with
+ * `max-sm:hidden` move into the "More actions" menu given as `moreActions`.
+ */
+export const Mobile: Story = {
+  globals: mobileViewport,
+  parameters: { ...portalDocsParams.lg(), layout: 'fullscreen' },
+  render: () => <MobileTopbar onSelect={fn()} />,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow(canvas.getByRole('banner'));
+    await expect(canvas.queryByRole('heading', { name: 'Analytics Dashboard' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Profile' })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'More actions' }));
+    const menu = within(document.body);
+    await expect(await menu.findByRole('menuitem', { name: 'Notifications' })).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: 'Toggle theme' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(menu.queryByRole('menu')).toBeNull());
+  },
+};
+
+/** From `sm` up the title and the actions are back, and the "More" menu is gone. */
+export const MoreMenuIsMobileOnly: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileTopbar />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Settings' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'More actions' })).toBeNull();
   },
 };
