@@ -10,6 +10,7 @@ import {
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
+import { Tooltip } from '../ui/Tooltip';
 import { useControllableState } from '../hooks/useControllableState';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
@@ -287,27 +288,27 @@ const SidebarItem = ({
     </>
   );
 
-  if (href) {
-    return (
-      <a
-        ref={ref as Ref<HTMLAnchorElement>}
-        href={href}
-        title={collapsed ? label : undefined}
-        className={baseClass}
-        style={style}
-        aria-current={active ? 'page' : undefined}
-        data-sidebar-item=""
-      >
-        {content}
-      </a>
-    );
-  }
-  return (
+  // Collapsed, the label is the tooltip's: it shows on hover and on keyboard focus (a native
+  // `title` showed on hover only) and names the icon-only row for assistive technology.
+  const name = collapsed ? label : undefined;
+  const row = href ? (
+    <a
+      ref={ref as Ref<HTMLAnchorElement>}
+      href={href}
+      aria-label={name}
+      className={baseClass}
+      style={style}
+      aria-current={active ? 'page' : undefined}
+      data-sidebar-item=""
+    >
+      {content}
+    </a>
+  ) : (
     <button
       ref={ref as Ref<HTMLButtonElement>}
       type="button"
       onClick={onClick}
-      title={collapsed ? label : undefined}
+      aria-label={name}
       className={clsx(baseClass, 'w-[calc(100%-1rem)] text-left')}
       style={style}
       aria-current={active ? 'page' : undefined}
@@ -315,6 +316,13 @@ const SidebarItem = ({
     >
       {content}
     </button>
+  );
+  return collapsed ? (
+    <Tooltip content={label} position="right" block>
+      {row}
+    </Tooltip>
+  ) : (
+    row
   );
 };
 
