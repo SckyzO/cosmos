@@ -260,3 +260,17 @@ export const DotLayout: Story = {
     await expect(getComputedStyle(body(rows[rows.length - 1])).paddingBottom).toBe('0px');
   },
 };
+
+/** Timeline and ActivityFeed share one time style: small, tabular, muted, not mono nor uppercase. */
+export const TimeStyle: Story = {
+  ...Card,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const style = getComputedStyle(canvas.getByText('5m ago'));
+    await expect(style.fontVariantNumeric).toContain('tabular-nums');
+    await expect(style.textTransform).toBe('none');
+    await expect(style.fontFamily).not.toMatch(/mono/i);
+    // text-2xs: 11px at the default text size.
+    await expect(style.fontSize).toBe('11px');
+  },
+};

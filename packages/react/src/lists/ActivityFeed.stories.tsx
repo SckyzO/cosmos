@@ -130,3 +130,22 @@ export const IntentSuccessColorsCircleGreen: Story = {
     await expect(circle?.className ?? '').toMatch(/bg-green-500/);
   },
 };
+
+export const TimestampStyle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <ActivityFeed>
+      <ActivityFeed.Item icon={User} timestamp="5m ago">
+        Someone did something
+      </ActivityFeed.Item>
+    </ActivityFeed>
+  ),
+  play: async ({ canvas }) => {
+    const style = getComputedStyle(canvas.getByText('5m ago'));
+    await expect(style.fontVariantNumeric).toContain('tabular-nums');
+    await expect(style.textTransform).toBe('none');
+    await expect(style.fontFamily).not.toMatch(/mono/i);
+    // text-2xs: 11px at the default text size.
+    await expect(style.fontSize).toBe('11px');
+  },
+};
