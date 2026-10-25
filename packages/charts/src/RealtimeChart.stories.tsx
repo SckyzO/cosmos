@@ -3,6 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 import {
+  closeTooltip,
   contrastRatio,
   expectColorsFromTokens,
   expectTooltipFollowsTheme,
@@ -91,6 +92,34 @@ export const CompactHeight: Story = {
 export const FormattedValues: Story = {
   args: { formatValue: pct },
   render: (args) => <Replay {...args} trace={CPU} />,
+};
+
+/** `min` and `max` set the y axis (default 0–100): a temperature, a latency, a count. */
+export const CustomRange: Story = {
+  args: {
+    min: 20,
+    max: 120,
+    warnThreshold: 90,
+    critThreshold: 105,
+    formatValue: (v) => `${v} °C`,
+  },
+  render: (args) => <Replay {...args} trace={DISK} />,
+};
+
+/** `showTimeAxis` labels the x axis, and the tooltip, with the time of each sample. */
+export const TimeAxis: Story = {
+  args: { showTimeAxis: true },
+  render: (args) => <Replay {...args} trace={CPU} />,
+};
+
+/** `warnLabel` and `critLabel` rename the threshold labels; an empty string draws the line alone. */
+export const ThresholdLabels: Story = {
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Replay {...args} trace={DISK} warnLabel="Avertissement" critLabel="Critique" />
+      <Replay {...args} trace={DISK} warnLabel="" critLabel="Limit" />
+    </div>
+  ),
 };
 
 // ApexCharts hides an annotation group with this class until its first
@@ -193,6 +222,83 @@ export const ThresholdColorsFromTheme: Story = {
       tokens,
       '--color-status-crit'
     );
+  },
+};
+
+/** The y axis spans `min` to `max`, and the thresholds sit on it. */
+export const RangeSetsTheYAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...CustomRange.args, intervalMs: 60_000 },
+  render: (args) => <Replay {...args} trace={DISK} />,
+  play: async ({ canvasElement }) => {
+    const yLabels = () =>
+      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) =>
+        Number.parseFloat(el.textContent ?? '')
+      );
+    await waitFor(() => {
+      expect(yLabels().length).toBeGreaterThan(1);
+      expect(Math.min(...yLabels())).toBe(20);
+      expect(Math.max(...yLabels())).toBe(120);
+    });
+  },
+};
+
+const CLOCK_TIME = /^\d\d:\d\d:\d\d$/;
+
+/** The x axis is hidden by default; `showTimeAxis` labels it, and the tooltip title, with the clock. */
+export const TimeAxisIsOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { intervalMs: 60_000 },
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="plain">
+        <Replay {...args} trace={CPU} />
+      </div>
+      <div data-testid="timed">
+        <Replay {...args} trace={CPU} showTimeAxis />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const xLabels = (id: string) =>
+      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-xaxis-label`)]
+        .map((el) => el.textContent)
+        .filter(Boolean);
+    await waitFor(() => expect(xLabels('timed').length).toBeGreaterThan(1));
+    for (const label of xLabels('timed')) expect(label).toMatch(CLOCK_TIME);
+    await expect(xLabels('plain')).toEqual([]);
+    await waitFor(() => {
+      hover(canvasElement.querySelector('[data-testid="timed"] .apexcharts-grid') as Element, 0.5);
+      expect(
+        canvasElement.querySelector('[data-testid="timed"] .apexcharts-tooltip-title')?.textContent
+      ).toMatch(CLOCK_TIME);
+    });
+    await closeTooltip(canvasElement, () =>
+      canvasElement.querySelector('[data-testid="timed"] .apexcharts-grid')
+    );
+  },
+};
+
+/** The threshold labels take the text given, and a threshold with an empty one has a line only. */
+export const ThresholdLabelProps: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: ThresholdLabels.render,
+  play: async ({ canvasElement }) => {
+    const labels = (side: number) =>
+      [
+        ...canvasElement.querySelectorAll(
+          `.grid > :nth-child(${side}) .apexcharts-yaxis-annotation-label`
+        ),
+      ]
+        .map((el) => el.textContent)
+        // ApexCharts keeps an empty label element where there is no text.
+        .filter(Boolean);
+    await waitFor(() => expect(labels(1)).toEqual(['Avertissement', 'Critique']));
+    await waitFor(() => expect(labels(2)).toEqual(['Limit']));
+    // Both lines are still drawn.
+    await expect(
+      canvasElement.querySelectorAll('.grid > :nth-child(2) .apexcharts-yaxis-annotations line')
+    ).toHaveLength(2);
   },
 };
 
