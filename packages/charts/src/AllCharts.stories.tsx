@@ -69,9 +69,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
-    filled: (apexOptions) => (
-      <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} />,
     empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
   },
   RadialBarChart: {
@@ -361,7 +360,6 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 // The wrappers that draw a legend with two series, through `chartLegend`.
 const LEGEND_NAMES = [
   'BarChart',
-  'DonutChart',
   'HeatmapChart',
   'RadarChart',
   'ScatterChart',

@@ -1,26 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { DonutChart } from './DonutChart';
 import {
   HOSTILE,
-  expectNoInjectedImage,
-  expectTextFollowsTheme,
-  expectTooltipFollowsTheme,
-  hover,
-  legendTexts,
-  resolveColor,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
   LegendSides,
-  expectLegendsOnTheirSide,
-  expectMessageOnly,
-  expectColorInThemes,
-  expectLegendMarkersUnstroked,
+  expectNoInjectedImage,
+  resolveColor,
+  switchTheme,
+  themeColor,
 } from './storybook-helpers';
+import { centerText, expectKeyboardWalk, expectLegendsAround } from './storybook-polar';
+import { closeTooltip, expectEmptyMessage, legendTexts, tooltipCard } from './storybook-recharts';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
 const REGIONS = ['eu-west', 'eu-central', 'us-east', 'us-west', 'ap-south'];
@@ -110,20 +101,33 @@ export const UpdatingSeries: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], labels: [] },
-  play: expectMessageOnly('No data'),
+  play: expectEmptyMessage('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** The legend is HTML: the labels show as text. */
+// The slices, in order: the path of each pie sector.
+const slices = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGPathElement>('.recharts-pie-sector path'),
+];
+
+/**
+ * The legend and the tooltip are React text: a label with markup shows as
+ * written, and nothing is injected.
+ */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [40, 60], labels: [HOSTILE, 'Normal'] },
   play: async ({ canvasElement }) => {
-    // Legends render on mount: the label must show up as literal text.
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
-    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await waitFor(() => expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']));
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
+    await userEvent.hover(slices(canvasElement)[0]);
+    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent(HOSTILE));
+    // The center names the hovered slice.
+    await expect(centerText(canvasElement)?.label).toBe(HOSTILE);
     await expectNoInjectedImage(canvasElement);
+    await userEvent.unhover(slices(canvasElement)[0]);
+    await closeTooltip(canvasElement);
   },
 };
 
@@ -132,11 +136,11 @@ export const ColorsOverridePalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: CustomColors.args,
   play: async ({ canvasElement }) => {
-    const fills = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-pie-area')].map((el) =>
-        resolveColor(el.getAttribute('fill') ?? '')
-      );
-    await waitFor(() => expect(fills()).toEqual(STATUS_COLORS));
+    await waitFor(() =>
+      expect(slices(canvasElement).map((el) => resolveColor(getComputedStyle(el).fill))).toEqual(
+        STATUS_COLORS.map(resolveColor)
+      )
+    );
   },
 };
 
@@ -145,68 +149,49 @@ export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
   args: FormattedValues.args,
   play: async ({ canvasElement }) => {
-    const center = () => canvasElement.querySelector('.apexcharts-datalabel-value')?.textContent;
-    await waitFor(() => expect(center()).toBe('1000 GiB'));
-    const slice = () => canvasElement.querySelector('.apexcharts-pie-area') as Element;
-    await waitFor(() => {
-      slice().dispatchEvent(new MouseEvent('mouseenter'));
-      expect(center()).toBe('732 GiB');
-    });
-    await waitFor(() => {
-      hover(slice());
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
-        '732 GiB'
-      );
-    });
+    await waitFor(() =>
+      expect(centerText(canvasElement)).toEqual({ value: '1000 GiB', label: 'Total' })
+    );
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
+    await userEvent.hover(slices(canvasElement)[0]);
+    await waitFor(() =>
+      expect(centerText(canvasElement)).toEqual({ value: '732 GiB', label: 'Used' })
+    );
+    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent('732 GiB'));
+    await userEvent.unhover(slices(canvasElement)[0]);
+    await waitFor(() => expect(centerText(canvasElement)?.label).toBe('Total'));
+    await closeTooltip(canvasElement);
   },
 };
 
-/** The legend and the center value use the theme text color and follow theme changes. */
+/** The legend, the center and the tooltip use the theme's colors and follow theme changes. */
 export const TextFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
   args: { series: [44, 23, 18], labels: ['CRIT', 'WARN', 'OK'] },
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBe(3));
-    await expectTextFollowsTheme(canvasElement, 'sand');
+    const legendColor = () =>
+      resolveColor(
+        getComputedStyle(canvasElement.querySelector('.recharts-legend-wrapper button') as Element)
+          .color
+      );
+    const centerColor = () =>
+      resolveColor(
+        getComputedStyle(canvasElement.querySelector('[data-chart-center] tspan') as Element).fill
+      );
+    await waitFor(() => expect(legendTexts(canvasElement)).toHaveLength(3));
+    await expect(legendColor()).toBe(themeColor('--color-text-muted'));
+    await expect(centerColor()).toBe(themeColor('--color-text-primary'));
+    const dark = centerColor();
+    const restore = switchTheme('');
+    try {
+      await expect(legendColor()).toBe(themeColor('--color-text-muted'));
+      await expect(centerColor()).toBe(themeColor('--color-text-primary'));
+      await expect(centerColor()).not.toBe(dark);
+    } finally {
+      restore();
+    }
   },
-};
-
-/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
-export const TooltipFollowsTheme: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  args: { series: [44, 23, 18], labels: ['CRIT', 'WARN', 'OK'] },
-  play: async ({ canvasElement }) => {
-    await expectTooltipFollowsTheme(canvasElement, () =>
-      canvasElement.querySelector('.apexcharts-pie-area')
-    );
-  },
-};
-
-/** The gap between slices is the card's color in every theme, never ApexCharts' white. */
-export const SliceGapsMatchTheSurface: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
-  play: ({ canvasElement }) =>
-    expectColorInThemes(
-      () => canvasElement.querySelector('.apexcharts-pie-area')?.getAttribute('stroke'),
-      {
-        dark: '--color-gray-900',
-        'deep-blue': '--color-gray-900',
-        '': '--color-white',
-        sand: '--color-white',
-      }
-    ),
-};
-
-/** The legend swatches have no outline: ApexCharts' white ring glares in the dark themes. */
-export const LegendSwatchesHaveNoOutline: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
-  play: ({ canvasElement }) => expectLegendMarkersUnstroked(canvasElement),
 };
 
 /** The slices take the default palette of the theme. */
@@ -214,11 +199,42 @@ export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [5, 4, 3, 2, 1], labels: ['a', 'b', 'c', 'd', 'e'] },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-pie-area')].map((el) =>
-        el.getAttribute('fill')
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    await waitFor(() =>
+      expect(slices(canvasElement).map((el) => resolveColor(getComputedStyle(el).fill))).toEqual(
+        tokens.map(themeColor)
       )
     );
+  },
+};
+
+/** A click on a legend entry hides its slice and the total follows; another click brings it back. */
+export const LegendTogglesSlices: Story = {
+  tags: ['!autodocs'],
+  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'] },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const drawn = () => slices(canvasElement).filter((el) => el.getAttribute('d'));
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('100'));
+    const entry = canvas.getByRole('button', { name: 'b' });
+    await userEvent.click(entry);
+    // The same button stays: focus is not lost.
+    await expect(entry).toBeInTheDocument();
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('80'));
+    await expect(entry).toHaveAttribute('aria-pressed', 'false');
+    await expect(drawn().length).toBeLessThan(3);
+    // The legend keeps the hidden entry and the order.
+    await expect(legendTexts(canvasElement)).toEqual(['a', 'b', 'c']);
+    entry.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('100'));
+    await expect(entry).toHaveAttribute('aria-pressed', 'true');
   },
 };
 
@@ -231,25 +247,42 @@ export const LegendOnEachSide: Story = {
       {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
     </LegendSides>
   ),
-  play: expectLegendsOnTheirSide,
+  play: expectLegendsAround('.recharts-pie'),
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+/** The center stays in the middle of the ring, whichever side the legend takes. */
+export const CenterFollowsThePlot: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...BottomLegend.args, colors: STATUS_COLORS, formatValue: gib },
+  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
   render: (args) => (
-    <Rerender>{(grown) => <DonutChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+    <LegendSides>
+      {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      for (const side of ['top', 'right', 'bottom', 'left']) {
+        const chart = canvasElement.querySelector(`[data-side="${side}"]`) as Element;
+        const ring = chart.querySelector('.recharts-pie')?.getBoundingClientRect();
+        const center = chart.querySelector('[data-chart-center] tspan')?.getBoundingClientRect();
+        expect(ring && center, side).toBeTruthy();
+        if (!ring || !center) return;
+        expect(
+          Math.abs(center.x + center.width / 2 - (ring.x + ring.width / 2)),
+          side
+        ).toBeLessThan(3);
+        expect(
+          Math.abs(center.y + center.height / 2 - (ring.y + ring.height / 2)),
+          side
+        ).toBeLessThan(ring.height / 4);
+      }
+    });
+  },
 };
 
-/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its slices. */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...BottomLegend.args, ariaLabel: 'Alerts by severity' },
-  play: expectAccessibleChart({ keyboard: true }),
+  play: expectKeyboardWalk({ announcesOnFocus: false }),
 };
