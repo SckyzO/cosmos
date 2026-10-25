@@ -6,10 +6,12 @@ import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
 import { useChartTheme } from './theme';
 import {
+  expectColorInThemes,
   expectColorsFromTokens,
   opaqueColor,
   resolveColor,
   themeColor,
+  expectTextFollowsTheme,
   Rerender,
   expectNoRedrawOnRerender,
   freshCopy,
@@ -193,8 +195,35 @@ export const CustomRange: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+/** Every wrapper's center value uses the theme text color and follows theme changes. */
+export const TextFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'deep-blue' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <GradientRadial value={84} label="Health" />
+      <SemiCircleGauge value={67} label="Load" />
+      <StrokedGauge value={92} label="Uptime" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.apexcharts-datalabel-value').length).toBe(3)
+    );
+    await expectTextFollowsTheme(canvasElement, '');
+  },
+};
+
+// A CSS color as a canvas normalizes it, so '#fff' and 'rgb(255, 255, 255)' compare equal.
+const normalizeColor = (color: string) => {
+  const context = document.createElement('canvas').getContext('2d')!;
+  context.fillStyle = '#000';
+  context.fillStyle = color;
+  return context.fillStyle;
+};
+
 const themeMutedText = () =>
-  resolveColor(
+  normalizeColor(
     getComputedStyle(document.documentElement).getPropertyValue('--color-text-secondary').trim()
   );
 
@@ -202,7 +231,7 @@ const expectNameLabelsMuted = (root: HTMLElement) => {
   const labels = [...root.querySelectorAll('.apexcharts-datalabel-label')];
   expect(labels.length).toBe(3);
   for (const label of labels) {
-    expect(resolveColor(label.getAttribute('fill') ?? '')).toBe(themeMutedText());
+    expect(normalizeColor(label.getAttribute('fill') ?? '')).toBe(themeMutedText());
   }
 };
 
@@ -249,6 +278,34 @@ export const ThresholdColorsComeFromTheTheme: Story = {
         themeColor('--color-status-warn'),
         themeColor('--color-status-crit'),
       ]);
+    });
+  },
+};
+
+/**
+ * The arcs are drawn opaque: at ApexCharts' 0.85 default they looked duller
+ * than their legend swatches and the colors of the page.
+ */
+export const ArcsAreOpaque: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <GradientRadial value={84} label="Health" color="#8b5cf6" />
+      <SemiCircleGauge value={67} label="Load" color="#f59e0b" />
+      <StrokedGauge value={92} label="Uptime" color="#ef4444" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const arcs = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')];
+      // One arc for each of the three gauges.
+      expect(arcs.length).toBe(3);
+      for (const arc of arcs) {
+        const stroke = arc.getAttribute('stroke') ?? '';
+        // The gradient is a url(); a plain color is rgba(…, alpha) at ApexCharts' fill opacity.
+        if (stroke.startsWith('url')) continue;
+        expect(resolveColor(stroke), stroke).not.toMatch(/^rgba\(.*, (?!1\))/);
+      }
     });
   },
 };
@@ -376,6 +433,39 @@ export const GradientTrackMatchesOtherWrappers: Story = {
         ?.getAttribute('stroke');
     await waitFor(() => expect(trackColor('reference')).toBeTruthy());
     await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
+  },
+};
+
+/** The empty part of every radial arc is the theme's grid gray. */
+export const TrackFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="gradient">
+        <GradientRadial value={84} label="Health" />
+      </div>
+      <div data-testid="semicircle">
+        <SemiCircleGauge value={42} label="CPU" />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={92} label="Uptime" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const track = (id: string) => () =>
+      canvasElement
+        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
+        ?.getAttribute('stroke');
+    for (const id of ['gradient', 'semicircle', 'stroked']) {
+      await expectColorInThemes(track(id), {
+        dark: '--color-gray-800',
+        '': '--color-gray-200',
+        sand: '--color-gray-200',
+        'deep-blue': '--color-gray-800',
+      });
+    }
   },
 };
 

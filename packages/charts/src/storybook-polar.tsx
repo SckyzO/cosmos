@@ -93,3 +93,45 @@ export const openTooltipAt = (root: HTMLElement, xRatio: number, yRatio: number)
     );
     expect(tooltipCard(root)).not.toBeNull();
   });
+
+const RING_SECTOR = '.recharts-radial-bar-sector';
+
+/** The arc of each ring of a `RadialBarChart`, in series order. */
+export const ringSectors = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGPathElement>(RING_SECTOR),
+];
+
+/**
+ * Puts the pointer on ring `index` of those named `names` (the first is the
+ * outer one), to the right of the center, until its tooltip and the center
+ * name it: the ring reports the hover to the center, the chart's own pointer
+ * tracking opens the tooltip.
+ * `inner` is the share of the radius the rings leave empty in the middle.
+ */
+export const hoverRing = (root: HTMLElement, index: number, names: string[], inner = 0.4) =>
+  waitFor(async () => {
+    const svg = surface(root) as SVGSVGElement;
+    const { left, top, width, height } = svg.getBoundingClientRect();
+    const radius = Math.min(width, height) / 2;
+    const at = radius - ((index + 0.5) * radius * (1 - inner)) / names.length;
+    const sector = ringSectors(root)[index];
+    expect(sector).toBeTruthy();
+    await userEvent.hover(sector);
+    svg.dispatchEvent(
+      new MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: left + width / 2 + at,
+        clientY: top + height / 2,
+      })
+    );
+    expect(tooltipCard(root)).toHaveTextContent(names[index]);
+    expect(centerText(root)?.label).toBe(names[index]);
+  });
+
+/** Takes the pointer off ring `index` and waits until the tooltip is gone. */
+export const leaveRing = (root: HTMLElement, index: number) => {
+  ringSectors(root)[index]?.dispatchEvent(
+    new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })
+  );
+  return closeTooltip(root);
+};

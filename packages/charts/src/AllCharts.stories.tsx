@@ -74,9 +74,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
   },
   RadialBarChart: {
-    filled: (apexOptions) => (
-      <RadialBarChart series={[60, 40]} labels={['a', 'b']} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RadialBarChart series={[60, 40]} labels={['a', 'b']} />,
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {

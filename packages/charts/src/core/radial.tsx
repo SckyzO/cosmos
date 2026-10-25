@@ -47,3 +47,6 @@ export const CenterText = ({
     </text>
   );
 };
+
+/** A value as a percentage, the default `formatValue` of the radial charts. */
+export const percent = (value: number) => `${value}%`;
