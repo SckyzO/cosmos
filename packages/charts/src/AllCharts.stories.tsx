@@ -158,14 +158,14 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <RangeBarChart series={[]} {...props} />,
   },
   MixedChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <MixedChart
         series={[
           { name: 'a', type: 'column', data: [3, 5, 4] },
           { name: 'b', type: 'line', data: [4, 2, 5] },
         ]}
         categories={CATEGORIES}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <MixedChart series={[]} categories={[]} {...props} />,
@@ -339,17 +339,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['MixedChart']) {
-      await waitFor(() =>
-        expect(
-          [...canvasElement.querySelectorAll(`[data-chart="${name}"] .apexcharts-yaxis-label`)]
-            .filter((el) => !el.closest('[style*="display: none"]'))
-            .map((el) => el.textContent)
-            .join('')
-        ).not.toBe('')
-      );
-    }
-    for (const name of ['LineAreaChart', 'BarChart']) {
+    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart']) {
       await waitFor(() => {
         const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`);
         expect(chart).not.toBeNull();
@@ -368,7 +358,6 @@ const LEGEND_NAMES = [
   'BubbleChart',
   'BoxPlotChart',
   'RangeBarChart',
-  'MixedChart',
 ];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */

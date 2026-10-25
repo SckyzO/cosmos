@@ -76,7 +76,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | ------------------------------ | ------------------------------------------------------------- |
 | `BarChart`                     | Vertical or horizontal bars, grouped or stacked (Recharts)    |
 | `RangeBarChart`                | Time ranges per row on a datetime axis (timeline)             |
-| `MixedChart`                   | Columns and lines on one chart, optional second y axis        |
+| `MixedChart`                   | Columns and lines, optional second y axis (Recharts)          |
 | `LineAreaChart`                | Smooth area + gradient fill, legend when 2+ series (Recharts) |
 | `RealtimeChart`                | Live updates with WARN/CRIT threshold annotations             |
 | `RadialBarChart`               | Multi-series radial gauge                                     |
