@@ -102,7 +102,7 @@ export const WithReset: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const TriggerOpensPanel: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -117,7 +117,7 @@ export const TriggerOpensPanel: Story = {
 };
 
 export const PanelIsFlushWithTrigger: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await userEvent.click(trigger);
@@ -130,7 +130,7 @@ export const PanelIsFlushWithTrigger: Story = {
 };
 
 export const PickingKeepsPanelOpen: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
     await waitFor(() => expect(panel()).toBeVisible());
@@ -143,7 +143,7 @@ export const PickingKeepsPanelOpen: Story = {
 };
 
 export const EscapeClosesPanel: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Appearance' });
     await userEvent.click(trigger);
@@ -157,7 +157,7 @@ export const EscapeClosesPanel: Story = {
 };
 
 export const PanelShowsFontAndTextSize: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onFontChange: fn(), onTextSizeChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
@@ -171,7 +171,7 @@ export const PanelShowsFontAndTextSize: Story = {
 
 /** With every group, the panel is taller than a short screen: it scrolls instead. */
 export const TallPanelFitsTheScreen: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onFontChange: fn(), onTextSizeChange: fn() },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
@@ -186,7 +186,7 @@ export const TallPanelFitsTheScreen: Story = {
 
 /** Reset reports and leaves the panel open: it is the host that puts the defaults back. */
 export const ResetCallsOnReset: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onReset: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
@@ -208,7 +208,7 @@ export const NoResetByDefault: Story = {
 
 /** Scrolled, a group's heading stays at the top of the panel while its group is in view. */
 export const HeadingsStayPinnedWhileScrolling: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onReset: fn(), onFontChange: fn(), onTextSizeChange: fn() },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Appearance' }));
