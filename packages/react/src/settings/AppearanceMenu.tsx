@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { Palette } from 'lucide-react';
+import { Button } from '../ui/Button';
 import { Popover } from '../ui/Popover';
 import { AppearanceSettings, type AppearanceSettingsProps } from './AppearanceSettings';
 import type { CosmosTheme, CosmosThemeChoice } from './appearance';
@@ -8,12 +9,17 @@ export type AppearanceMenuSize = 'sm' | 'md';
 
 export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omit<
   AppearanceSettingsProps<T>,
-  'className'
+  'className' | 'stickyHeadings'
 > & {
   /** Trigger label (title + aria-label), also the panel's name. Default `'Appearance'`. */
   label?: string;
   /** Trigger size, as `ThemeToggle`. `md` (default) = 40px, `sm` = 32px. */
   size?: AppearanceMenuSize;
+  /**
+   * Adds a "Reset" button under the groups, always in view. Called with no argument: put the
+   * theme, accent, font and text size back to the app's defaults. The panel stays open.
+   */
+  onReset?: () => void;
   /** Class for the trigger button. */
   className?: string;
 };
@@ -33,6 +39,7 @@ const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
 export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
   label = 'Appearance',
   size = 'md',
+  onReset,
   className,
   ...settings
 }: AppearanceMenuProps<T>) => {
@@ -51,12 +58,21 @@ export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
         <Palette className={icon} aria-hidden />
       </Popover.Trigger>
       <Popover.Content align="end" width="w-96" aria-label={label}>
-        {/* Scrolls when taller than the screen (all four groups are), keeping the
-            panel's padding around the scroll area. The panel opens under a top
-            bar, so 6rem is left for the bar and a margin. */}
-        <div className="-m-4 max-h-[calc(100dvh-6rem)] overflow-y-auto p-4">
-          {/* Two columns: four 78px cards are too narrow for "Deep Blue" plus its check. */}
-          <AppearanceSettings themeColumns={2} {...settings} />
+        {/* The groups scroll when taller than the screen (all four are), their headings pinned;
+            Reset stays below. The panel opens under a top bar, so 6rem is left for the bar and
+            a margin. -m-4 takes back the panel's padding, which the scroll area restores. */}
+        <div className="-m-4 flex max-h-[calc(100dvh-6rem)] flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            {/* Two columns: four 78px cards are too narrow for "Deep Blue" plus its check. */}
+            <AppearanceSettings themeColumns={2} stickyHeadings {...settings} />
+          </div>
+          {onReset && (
+            <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+              <Button type="button" variant="ghost" size="sm" onClick={onReset}>
+                Reset
+              </Button>
+            </div>
+          )}
         </div>
       </Popover.Content>
     </Popover>

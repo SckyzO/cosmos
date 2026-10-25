@@ -59,6 +59,13 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   fonts?: CosmosFontMeta[];
   /** Text sizes to offer. Default: all of `COSMOS_TEXT_SIZES`. */
   textSizes?: CosmosTextSizeMeta[];
+  /**
+   * Pin each group's heading to the top of the scrolling ancestor while its group is in view.
+   * For a panel that scrolls (`AppearanceMenu` sets it): the headings paint the `Popover` surface
+   * (`bg-white`, `dark:bg-gray-900`) and bleed 1rem on each side, so the container needs a 1rem
+   * padding. Default `false`.
+   */
+  stickyHeadings?: boolean;
   className?: string;
 };
 
@@ -86,16 +93,21 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   textSizeLabel = 'Text size',
   fonts = COSMOS_FONTS,
   textSizes = COSMOS_TEXT_SIZES,
+  stickyHeadings = false,
   className,
 }: AppearanceSettingsProps<T>) => {
   const themeHeadingId = useId();
   const accentHeadingId = useId();
   const fontHeadingId = useId();
   const textSizeHeadingId = useId();
+  const headingClass = clsx(
+    'text-sm font-medium text-gray-700 dark:text-gray-300',
+    stickyHeadings && 'sticky -top-4 z-10 -mx-4 bg-white px-4 py-2 dark:bg-gray-900'
+  );
   return (
     <div className={clsx('space-y-6', className)}>
       <div>
-        <p id={themeHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <p id={themeHeadingId} className={headingClass}>
           {themeLabel}
         </p>
         <PalettePicker
@@ -109,7 +121,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
         />
       </div>
       <div>
-        <p id={accentHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <p id={accentHeadingId} className={headingClass}>
           {accentLabel}
         </p>
         <AccentPicker
@@ -123,7 +135,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       </div>
       {onFontChange && (
         <div>
-          <p id={fontHeadingId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <p id={fontHeadingId} className={headingClass}>
             {fontLabel}
           </p>
           <OptionPicker
@@ -151,10 +163,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       )}
       {onTextSizeChange && (
         <div>
-          <p
-            id={textSizeHeadingId}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+          <p id={textSizeHeadingId} className={headingClass}>
             {textSizeLabel}
           </p>
           <OptionPicker
