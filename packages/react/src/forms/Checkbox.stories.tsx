@@ -144,6 +144,7 @@ export const GroupControlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickToggles: Story = {
+  tags: ['!dev'],
   args: { label: 'Click me', onChange: fn() },
   play: async ({ args, canvas }) => {
     const cb = canvas.getByLabelText('Click me') as HTMLInputElement;
@@ -157,6 +158,7 @@ export const ClickToggles: Story = {
 };
 
 export const DisabledBlocksClick: Story = {
+  tags: ['!dev'],
   args: { label: 'No clicking', disabled: true, onChange: fn() },
   play: async ({ args, canvas }) => {
     const cb = canvas.getByLabelText('No clicking') as HTMLInputElement;
@@ -167,6 +169,7 @@ export const DisabledBlocksClick: Story = {
 };
 
 export const GroupTogglesValue: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <CheckboxGroup
       legend="Pick one or more"
@@ -242,6 +245,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };

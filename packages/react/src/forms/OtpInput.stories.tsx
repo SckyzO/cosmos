@@ -72,6 +72,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const TypingFillsCells: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('');
     return <OtpInput value={v} onChange={setV} length={4} />;
@@ -88,6 +89,7 @@ export const TypingFillsCells: Story = {
 };
 
 export const OnCompleteFiresOnLastCell: Story = {
+  tags: ['!dev'],
   render: (args) => {
     const [v, setV] = useState('');
     return <OtpInput value={v} onChange={setV} onComplete={args.onComplete} length={3} />;
@@ -102,6 +104,7 @@ export const OnCompleteFiresOnLastCell: Story = {
 };
 
 export const NonDigitsAreFiltered: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('');
     return <OtpInput value={v} onChange={setV} length={4} />;
@@ -118,6 +121,7 @@ export const NonDigitsAreFiltered: Story = {
 };
 
 export const AlphanumericAccepts: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('');
     return <OtpInput value={v} onChange={setV} length={4} alphanumeric />;
@@ -133,6 +137,7 @@ export const AlphanumericAccepts: Story = {
 };
 
 export const BackspaceMovesBack: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('123');
     return <OtpInput value={v} onChange={setV} length={4} autoFocus />;
@@ -148,7 +153,7 @@ export const BackspaceMovesBack: Story = {
 
 /** autoFocus focuses the first cell without scrolling the page to it. */
 export const AutoFocusDoesNotScroll: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div>
       <div style={{ height: 2000 }} />

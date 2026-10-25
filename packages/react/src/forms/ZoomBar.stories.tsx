@@ -38,6 +38,7 @@ export const Controlled: Story = {
 };
 
 export const ZoomInFiresHandler: Story = {
+  tags: ['!dev'],
   args: { zoom: 1, onZoomIn: fn(), onZoomOut: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByTitle('Zoom in'));
@@ -46,6 +47,7 @@ export const ZoomInFiresHandler: Story = {
 };
 
 export const ZoomOutFiresHandler: Story = {
+  tags: ['!dev'],
   args: { zoom: 1, onZoomIn: fn(), onZoomOut: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByTitle('Zoom out'));

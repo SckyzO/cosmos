@@ -101,6 +101,7 @@ export const InsideForm: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickCancelFiresHandler: Story = {
+  tags: ['!dev'],
   args: { onCancel: fn() },
   play: async ({ args, canvas }) => {
     const cancel = canvas.getByRole('button', { name: /cancel/i });
@@ -122,6 +123,7 @@ export const SubmittingDisablesButtons: Story = {
 };
 
 export const SubmitInsideForm: Story = {
+  tags: ['!dev'],
   render: () => {
     const onSubmit = fn();
     return (

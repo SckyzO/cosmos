@@ -109,6 +109,7 @@ export const GroupControlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickSelects: Story = {
+  tags: ['!dev'],
   args: { label: 'Click me', name: 'click-test', onChange: fn() },
   play: async ({ args, canvas }) => {
     const r = canvas.getByLabelText('Click me') as HTMLInputElement;
@@ -120,6 +121,7 @@ export const ClickSelects: Story = {
 };
 
 export const GroupSelectsExclusive: Story = {
+  tags: ['!dev'],
   render: (args) => (
     <RadioGroup
       legend="Pick one"
@@ -152,6 +154,7 @@ export const GroupSelectsExclusive: Story = {
 };
 
 export const DisabledBlocksClick: Story = {
+  tags: ['!dev'],
   args: { label: 'No clicking', disabled: true, name: 'disabled-test', onChange: fn() },
   play: async ({ args, canvas }) => {
     const r = canvas.getByLabelText('No clicking') as HTMLInputElement;
@@ -182,6 +185,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };

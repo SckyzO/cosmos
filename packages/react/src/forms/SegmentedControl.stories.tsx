@@ -51,6 +51,7 @@ export const Controlled: Story = {
 };
 
 export const ClickFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { options: VIEWS as unknown as never, value: 'list', onChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('radio', { name: 'Grid' }));
@@ -194,6 +195,7 @@ export const FocusShowsWhiteRingOnCheckedSegmentInDark: Story = {
 };
 
 export const FocusShowsWhiteRingOnCheckedSegmentInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsWhiteRingOnCheckedSegmentInDark,
   globals: { theme: 'light' },
 };

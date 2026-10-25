@@ -90,6 +90,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const SelectingFileShowsName: Story = {
+  tags: ['!dev'],
   args: { label: 'Doc', onChange: fn() },
   play: async ({ args, canvas }) => {
     const input = canvas.getByLabelText('Doc') as HTMLInputElement;
@@ -101,6 +102,7 @@ export const SelectingFileShowsName: Story = {
 };
 
 export const MultipleShowsCount: Story = {
+  tags: ['!dev'],
   args: { label: 'Docs', multiple: true },
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Docs') as HTMLInputElement;

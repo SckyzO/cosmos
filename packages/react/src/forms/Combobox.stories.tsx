@@ -107,6 +107,7 @@ export const WithError: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const InputHasComboboxRole: Story = {
+  tags: ['!dev'],
   render: () => <Combobox label="X" options={PEOPLE} />,
   play: async ({ canvasElement }) => {
     const input = canvasElement.querySelector('input[role="combobox"]');
@@ -116,6 +117,7 @@ export const InputHasComboboxRole: Story = {
 };
 
 export const TypingFiltersAndPickingFires: Story = {
+  tags: ['!dev'],
   render: () => {
     const [v, setV] = useState('');
     return (

@@ -73,6 +73,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickFiresOnChangeWithNextValue: Story = {
+  tags: ['!dev'],
   args: { checked: false, onChange: fn(), label: 'Notifications' },
   play: async ({ args, canvas }) => {
     const sw = canvas.getByRole('switch');
@@ -83,6 +84,7 @@ export const ClickFiresOnChangeWithNextValue: Story = {
 };
 
 export const DisabledBlocksInteraction: Story = {
+  tags: ['!dev'],
   args: { checked: true, disabled: true, onChange: fn(), label: 'Read only' },
   play: async ({ args, canvas }) => {
     const sw = canvas.getByRole('switch');
@@ -174,6 +176,7 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
+  tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };

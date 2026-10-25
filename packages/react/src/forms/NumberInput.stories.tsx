@@ -77,6 +77,7 @@ export const Controlled: Story = {
 };
 
 export const PlusFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { value: 10, min: 0, max: 100, step: 5, onChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Increase' }));
@@ -85,6 +86,7 @@ export const PlusFiresOnChange: Story = {
 };
 
 export const MinusFiresOnChange: Story = {
+  tags: ['!dev'],
   args: { value: 10, min: 0, max: 100, step: 5, onChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Decrease' }));
@@ -138,6 +140,7 @@ export const StackedControlled: Story = {
 };
 
 export const StackedClickIncreaseFiresOnChange: Story = {
+  tags: ['!dev'],
   args: {
     controls: 'stacked',
     value: 10,
@@ -154,6 +157,7 @@ export const StackedClickIncreaseFiresOnChange: Story = {
 };
 
 export const StackedClickDecreaseFiresOnChange: Story = {
+  tags: ['!dev'],
   args: {
     controls: 'stacked',
     value: 10,
@@ -174,6 +178,7 @@ export const StackedClickDecreaseFiresOnChange: Story = {
  * input used to keep its `w-20` and push the arrows under the rounded border.
  */
 export const StackedNarrowWidthKeepsArrowsInside: Story = {
+  tags: ['!dev'],
   args: {
     controls: 'stacked',
     value: 60,
@@ -279,21 +284,25 @@ export const BlurClampsOrRestores: Story = {
 
 // The behaviour stories above run unchanged against the stacked layout.
 export const StackedFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev'],
   ...FocusShowsAccentBorderInDark,
   args: { ...FocusShowsAccentBorderInDark.args, controls: 'stacked' },
 };
 
 export const StackedTypingPassesThroughInvalidValues: Story = {
+  tags: ['!dev'],
   ...TypingPassesThroughInvalidValues,
   args: { ...TypingPassesThroughInvalidValues.args, controls: 'stacked' },
 };
 
 export const StackedTypingANegativeValue: Story = {
+  tags: ['!dev'],
   ...TypingANegativeValue,
   args: { ...TypingANegativeValue.args, controls: 'stacked' },
 };
 
 export const StackedBlurClampsOrRestores: Story = {
+  tags: ['!dev'],
   ...BlurClampsOrRestores,
   args: { ...BlurClampsOrRestores.args, controls: 'stacked' },
 };

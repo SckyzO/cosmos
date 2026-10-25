@@ -100,6 +100,7 @@ export const SimpleWell: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RootRendersTitleAsH3: Story = {
+  tags: ['!dev'],
   render: () => <ActionPanel title="X" description="y" data-testid="ap" />,
   play: async ({ canvasElement }) => {
     const panel = canvasElement.querySelector('[data-testid="ap"]');
@@ -108,6 +109,7 @@ export const RootRendersTitleAsH3: Story = {
 };
 
 export const InlineLayoutAddsFlexBetween: Story = {
+  tags: ['!dev'],
   render: () => (
     <ActionPanel
       title="X"
@@ -123,6 +125,7 @@ export const InlineLayoutAddsFlexBetween: Story = {
 };
 
 export const WellSwitchesSurfaceToGray: Story = {
+  tags: ['!dev'],
   render: () => <ActionPanel well title="X" data-testid="ap" />,
   play: async ({ canvasElement }) => {
     const panel = canvasElement.querySelector('[data-testid="ap"]');
