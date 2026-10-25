@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { ChevronRight, Server, TrendingDown, TrendingUp } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
   Table,
   TableBody,
@@ -13,13 +13,19 @@ import {
   TableRow,
   TableSkeletonRows,
 } from './Table';
+import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
 import { EmptyState } from '../feedback/EmptyState';
-import { HealthDot } from '../status/HealthDot';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
-import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectNoHorizontalOverflow,
+  expectTextContrast,
+  inEachTheme,
+  mobileViewport,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Tables/Table',
@@ -57,6 +63,25 @@ const NODES: Node[] = [
   { name: 'node-105', status: 'OK', room: 'Room C', cpu: 33, memory: 48, power: 351, trend: -4.0 },
   { name: 'node-106', status: 'INFO', room: 'Room C', cpu: 9, memory: 22, power: 248, trend: 0.6 },
 ];
+
+// What the dashboard story's cells show beside the node's metrics.
+const NOTES: Record<string, string> = {
+  'node-101': 'Primary database replica, nightly backup runs at 02:00.',
+  'node-102': 'Memory above the usual ceiling since the last firmware update.',
+  'node-103': 'Idle, kept as a spare for the Room B racks.',
+  'node-104': 'Fan 3 failed: ticket opened with the vendor, replacement due Friday.',
+  'node-105': 'Batch workers.',
+  'node-106': 'Decommissioning planned for next quarter.',
+};
+
+const COSTS: Record<string, number> = {
+  'node-101': 12.4,
+  'node-102': -3.15,
+  'node-103': 0,
+  'node-104': 148.9,
+  'node-105': -27.8,
+  'node-106': 1042.5,
+};
 
 const MANY_NODES: Node[] = Array.from({ length: 24 }, (_, i) => ({
   ...NODES[i % NODES.length],
@@ -475,9 +500,12 @@ export const DashboardCells: Story = {
         <TableHead>
           <TableRow>
             <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>ID</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell className="min-w-40">Memory</TableHeaderCell>
+            <TableHeaderCell>Note</TableHeaderCell>
             <TableHeaderCell numeric>Power 24h</TableHeaderCell>
+            <TableHeaderCell numeric>Cost, 24h</TableHeaderCell>
             <TableHeaderCell align="right">Action</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -485,10 +513,10 @@ export const DashboardCells: Story = {
           {NODES.map((n) => (
             <TableRow key={n.name}>
               <TableCell>
-                <span className="flex items-center gap-2 font-medium whitespace-nowrap">
-                  <HealthDot status={n.status} pulse={n.status === 'CRIT'} />
-                  {n.name}
-                </span>
+                <TableIdentityCell title={n.name} subtitle={n.room} icon={Server} />
+              </TableCell>
+              <TableCell>
+                <TableIdCell>{`i-${n.name.slice(-3)}a9f${n.power}c0e41d7`}</TableIdCell>
               </TableCell>
               <TableCell>
                 <StatusBadge status={n.status} size="sm" />
@@ -502,8 +530,14 @@ export const DashboardCells: Story = {
                   aria-label={`Memory used on ${n.name}`}
                 />
               </TableCell>
+              <TableCell>
+                <TableDescriptionCell className="max-w-48">{NOTES[n.name]}</TableDescriptionCell>
+              </TableCell>
               <TableCell numeric>
                 <Trend value={n.trend} />
+              </TableCell>
+              <TableCell numeric>
+                <TableAmountCell value={COSTS[n.name]} currency="EUR" locale="en-GB" />
               </TableCell>
               <TableCell align="right">
                 <RowActionButton aria-label={`View ${n.name}`} />
@@ -514,6 +548,27 @@ export const DashboardCells: Story = {
       </Table>
     </Wrap>
   ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('row', { name: /node-104/ });
+    // The identity cell: the name, then its detail line, under an icon that says nothing more.
+    await expect(within(row).getByText('node-104')).toBeVisible();
+    await expect(within(row).getByText('Room B')).toBeVisible();
+    // The identifier is monospaced, and the note is cut with its whole text as a tooltip.
+    await expect(getComputedStyle(within(row).getByText(/^i-104/)).fontFamily).toMatch(/mono/i);
+    const note = within(row).getByText(/Fan 3 failed/);
+    await expect(note).toHaveAttribute('title', expect.stringContaining('replacement due Friday.'));
+    await expect(note.scrollWidth).toBeGreaterThan(note.clientWidth);
+    // Gains are green and losses red, signed so the colour is not the only cue, and readable in
+    // every theme.
+    const gain = within(row).getByText('+€148.90');
+    const loss = within(canvas.getByRole('row', { name: /node-102/ })).getByText('-€3.15');
+    const zero = within(canvas.getByRole('row', { name: /node-103/ })).getByText('€0.00');
+    await expect(getComputedStyle(gain).color).not.toBe(getComputedStyle(loss).color);
+    await expect(zero.className).not.toMatch(/green|red/);
+    inEachTheme(() => {
+      for (const el of [gain, loss, zero]) expectTextContrast(el);
+    });
+  },
 };
 
 export const MobileStickyFirstColumn: Story = {

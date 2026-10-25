@@ -22,6 +22,8 @@ import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
 import { RowActionButton } from '../ui/RowActionButton';
 import { RowActionsMenu } from './RowActionsMenu';
+import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
+import { placeholderAvatar } from '../storybook-avatars';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import type { HealthStatus } from '../status/types';
@@ -1342,5 +1344,95 @@ export const StickyFirstColumnKeepsRowLinks: Story = {
     } finally {
       clicks.stop();
     }
+  },
+};
+
+type Customer = { id: string; name: string; email: string; plan: string; balance: number };
+
+const customers: Customer[] = [
+  {
+    id: 'cus_9f2a41c07d5e8b3a6c1d',
+    name: 'Ada Lovelace',
+    email: 'ada.lovelace@analytical-engine.example.org',
+    plan: 'Business, billed yearly, with the audit log and single sign-on add-ons',
+    balance: 1240.5,
+  },
+  {
+    id: 'cus_1b7c88e02f4a9d63e5b0',
+    name: 'Grace Hopper',
+    email: 'grace@cobol.example.org',
+    plan: 'Team',
+    balance: -89,
+  },
+  {
+    id: 'cus_5d0e73a91c2b4f8a6e37',
+    name: 'Alan Turing',
+    email: 'alan@bletchley.example.org',
+    plan: 'Free',
+    balance: 0,
+  },
+];
+
+const customerColumns: ColumnDef<Customer>[] = [
+  {
+    key: 'name',
+    label: 'Customer',
+    width: '30%',
+    sortable: true,
+    sortValue: (r) => r.name,
+    render: (r) => (
+      <TableIdentityCell title={r.name} subtitle={r.email} src={placeholderAvatar(r.name, 80)} />
+    ),
+  },
+  {
+    key: 'id',
+    label: 'ID',
+    width: '20%',
+    render: (r) => <TableIdCell>{r.id}</TableIdCell>,
+  },
+  {
+    key: 'plan',
+    label: 'Plan',
+    width: '28%',
+    render: (r) => <TableDescriptionCell lines={2}>{r.plan}</TableDescriptionCell>,
+  },
+  {
+    key: 'balance',
+    label: 'Balance',
+    width: '22%',
+    align: 'right',
+    sortable: true,
+    sortValue: (r) => r.balance,
+    render: (r) => <TableAmountCell value={r.balance} currency="USD" locale="en-US" />,
+  },
+];
+
+export const CellHelpers: Story = {
+  render: () => (
+    <Wrap>
+      <div className="max-w-3xl">
+        <DataTable
+          rows={customers}
+          columns={customerColumns}
+          rowKey={(r) => r.id}
+          density="comfortable"
+          aria-label="Customers"
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // In the fixed layout of a DataTable the cells truncate to their column, whatever they hold.
+    const email = canvas.getByText('ada.lovelace@analytical-engine.example.org');
+    await expect(email.scrollWidth).toBeGreaterThan(email.clientWidth);
+    await expect(canvas.getByText('cus_9f2a41c07d5e8b3a6c1d')).toHaveAttribute(
+      'title',
+      'cus_9f2a41c07d5e8b3a6c1d'
+    );
+    const plan = canvas.getByText(/^Business, billed yearly/);
+    await expect(plan).toHaveAttribute('title', expect.stringContaining('single sign-on'));
+    await expect(canvas.getByText('+$1,240.50')).toBeVisible();
+    await expect(canvas.getByText('-$89.00')).toBeVisible();
+    expectNoHorizontalOverflow();
   },
 };
