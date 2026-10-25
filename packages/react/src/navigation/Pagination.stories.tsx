@@ -235,3 +235,55 @@ export const ShowAll: Story = {
     await expect(canvas.getByRole('button', { name: 'Next page' })).toBeVisible();
   },
 };
+
+// ── First and last page (#303) ───────────────────────────────────────────────
+
+export const WithEdges: Story = {
+  args: { page: 25, totalPages: 50, showEdges: true },
+};
+
+export const CompactWithEdges: Story = {
+  args: { page: 7, totalPages: 25, variant: 'compact', showEdges: true },
+};
+
+export const EdgesJumpToFirstAndLast: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: undefined, defaultPage: 25, totalPages: 50, showEdges: true, onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Last page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(50);
+    await expect(canvas.getByRole('button', { name: 'Page 50' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    // On the last page, Last and Next have nowhere to go.
+    await expect(canvas.getByRole('button', { name: 'Last page' })).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toBeDisabled();
+    await userEvent.click(canvas.getByRole('button', { name: 'First page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(1);
+    await expect(canvas.getByRole('button', { name: 'First page' })).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+  },
+};
+
+export const NoEdgesByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 5, totalPages: 10 },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'First page' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Last page' })).toBeNull();
+  },
+};
+
+/** Below `sm` the edges stay with Previous and Next, around "Page 2 / 9". */
+export const MobileWithEdges: Story = {
+  tags: ['!autodocs'],
+  globals: mobileViewport,
+  args: { page: 2, totalPages: 9, showEdges: true, showInfo: true, pageSize: 10, total: 87 },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
+    await expect(canvas.getByRole('button', { name: 'First page' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Last page' })).toBeVisible();
+    await expect(canvas.getByText(/^Page/)).toHaveTextContent('Page 2 / 9');
+  },
+};
