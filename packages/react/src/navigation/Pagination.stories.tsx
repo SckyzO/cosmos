@@ -88,6 +88,7 @@ export const Controlled: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickPageFiresChange: Story = {
+  tags: ['!dev'],
   args: { page: 5, totalPages: 10, onPageChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Page 6' }));
@@ -116,6 +117,7 @@ export const NextDisabledOnLastPage: Story = {
 };
 
 export const PrevAdvancesPage: Story = {
+  tags: ['!dev'],
   args: { page: 5, totalPages: 10, onPageChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /previous/i }));
@@ -124,6 +126,7 @@ export const PrevAdvancesPage: Story = {
 };
 
 export const NextAdvancesPage: Story = {
+  tags: ['!dev'],
   args: { page: 5, totalPages: 10, onPageChange: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /next/i }));
@@ -132,6 +135,7 @@ export const NextAdvancesPage: Story = {
 };
 
 export const ActivePageHasAriaCurrent: Story = {
+  tags: ['!dev'],
   args: { page: 3, totalPages: 10 },
   play: async ({ canvas }) => {
     const active = canvas.getByRole('button', { name: 'Page 3' });

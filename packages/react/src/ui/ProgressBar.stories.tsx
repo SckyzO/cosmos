@@ -183,6 +183,7 @@ export const IndeterminateAriaBusy: Story = {
 };
 
 export const ClampsOverflow: Story = {
+  tags: ['!dev'],
   args: { value: 250, max: 100, label: 'outside' },
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar');
