@@ -48,6 +48,7 @@ describe('createCalendarFormats', () => {
   it('formats in en-US', () => {
     const fmt = createCalendarFormats('en-US');
     expect(fmt.weekdays).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    expect(fmt.weekdaysNarrow).toEqual(['M', 'T', 'W', 'T', 'F', 'S', 'S']);
     expect(fmt.monthYear(thursday)).toBe('May 2026');
     expect(fmt.fullDate(thursday)).toBe('Thursday, May 7, 2026');
     expect(fmt.dayNumber(thursday)).toBe('7');

@@ -103,10 +103,12 @@ export const MiniCalendar = ({
       </div>
 
       <div className="grid grid-cols-7 gap-0.5 text-center">
-        {fmt.weekdays.map((d, i) => (
+        {/* One letter each so the seven labels never touch; the short name is the tooltip. */}
+        {fmt.weekdaysNarrow.map((d, i) => (
           <span
             key={i}
-            className="text-3xs py-1 font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+            title={fmt.weekdays[i]}
+            className="text-3xs py-1 font-semibold text-gray-500 uppercase dark:text-gray-400"
           >
             {d}
           </span>
@@ -125,19 +127,20 @@ export const MiniCalendar = ({
               aria-pressed={isSelected}
               aria-current={isToday ? 'date' : undefined}
               className={clsx(
-                'relative flex h-8 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:ring-inset',
+                // The number sits above the middle of the cell (`pb-1.5`) to leave room for the event dot under it.
+                'relative flex h-9 items-center justify-center rounded-md border pb-1.5 text-xs font-medium transition-colors focus-visible:ring-inset',
                 isSelected
-                  ? 'bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator-on-accent text-white'
+                  ? 'bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator-on-accent border-transparent text-white'
                   : isToday
-                    ? 'bg-brand-50 text-brand-600 hover:bg-brand-100 focus-visible:focus-indicator dark:bg-brand-500/15 dark:text-brand-400'
-                    : 'focus-visible:focus-indicator text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
+                    ? 'border-brand-500 text-brand-600 hover:bg-brand-50 focus-visible:focus-indicator dark:text-brand-400 dark:hover:bg-white/5'
+                    : 'focus-visible:focus-indicator border-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
               )}
             >
               {fmt.dayNumber(d)}
               {hasEvent && (
                 <span
                   className={clsx(
-                    'absolute bottom-1 h-1 w-1 rounded-full',
+                    'absolute bottom-1.5 h-1 w-1 rounded-full',
                     isSelected ? 'bg-white' : 'bg-brand-500'
                   )}
                 />
