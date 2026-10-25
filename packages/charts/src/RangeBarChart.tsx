@@ -3,7 +3,7 @@ import 'apexcharts/rangeBar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { useStableCallback } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
@@ -110,14 +110,11 @@ export const RangeBarChart = ({
       axisTicks: { show: false },
     },
     yaxis: { labels: { ...axisLabels } },
-    legend: {
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     tooltip: { theme: tooltipTheme, custom: tooltip },
     fill: { opacity: 1 },
   };

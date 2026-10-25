@@ -3,7 +3,7 @@ import 'apexcharts/boxPlot';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { useStableCallback, useValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
@@ -112,14 +112,11 @@ export const BoxPlotChart = ({
     // Horizontal, the value labels sit side by side and run into each other
     // on a phone: keep three of them.
     responsive: horizontal ? [{ breakpoint: 640, options: { xaxis: { tickAmount: 2 } } }] : [],
-    legend: {
+    legend: chartLegend({
       show: showLegend ?? series.length > 1,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     tooltip: { theme: tooltipTheme, custom: tooltip },
   };
 

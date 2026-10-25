@@ -3,7 +3,7 @@ import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
 
@@ -61,14 +61,11 @@ export const LineAreaChart = ({
       axisTicks: { show: false },
     },
     yaxis: { labels: { ...axisLabels, formatter: format.axis } },
-    legend: {
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // The tooltip and the legend are HTML: escape the category, the series
     // name and the formatted value.
     tooltip: {

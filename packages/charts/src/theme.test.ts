@@ -20,6 +20,34 @@ const contrast = (a: string, b: string) => {
 // `useChartTheme()` reads in place of the fallbacks of the palette.
 const THEME_STATUS = ['#12b76a', '#f79009', '#f04438'];
 
+const hue = (hex: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  if (d === 0) return 0;
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return (h * 60 + 360) % 360;
+};
+
+describe('COSMOS_PALETTE', () => {
+  it('has eight distinct colors, the brand blue first', () => {
+    expect(COSMOS_PALETTE).toHaveLength(8);
+    expect(new Set(COSMOS_PALETTE).size).toBe(8);
+    expect(COSMOS_PALETTE[0]).toBe(COSMOS_BRAND);
+  });
+
+  it('keeps green, amber and red out of the first four places', () => {
+    // Hue ranges of the status colors: red/orange to amber (0-50, 340-360) and green (80-170).
+    for (const color of COSMOS_PALETTE.slice(0, 4)) {
+      const h = hue(color);
+      expect(
+        h > 50 && h < 80 ? 'yellow' : h < 50 || h >= 340 ? 'red' : h <= 170 ? 'green' : 'ok',
+        color
+      ).toBe('ok');
+    }
+  });
+});
+
 describe('readableOn', () => {
   it('is white on a dark background and black on a light one', () => {
     expect(readableOn('#000000')).toBe('#ffffff');

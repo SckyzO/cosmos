@@ -7,7 +7,7 @@ import 'apexcharts/features/legend';
 import { useMemo } from 'react';
 import { ApexChart } from './ApexChart';
 import { useStableCallback } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml, type TooltipRow } from './tooltip';
 import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
@@ -167,14 +167,11 @@ const useXYOptions = <P extends ScatterPoint>(
       title: axisTitle(yTitle),
       labels: { ...axisLabels, formatter: axisFormat.y },
     },
-    legend: {
+    legend: chartLegend({
       show: showLegend ?? series.length > 1,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     tooltip: { theme: tooltipTheme, custom: tooltip },
   };
 };
