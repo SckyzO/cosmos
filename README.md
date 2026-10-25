@@ -66,15 +66,15 @@ Stories are organised by **responsibility**, not file location (Storybook
 [story-hierarchy convention](https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy)):
 
 ```text
-Welcome → Pages → Foundations → Typography → Atoms → Forms → Data → Status
-       → Feedback → Overlays → Navigation → Actions → Layout → Lists
+Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data
+       → Status → Feedback → Overlays → Navigation → Layout → Lists
        → Chat → Tables → Settings → Charts
 ```
 
 Notable groups:
 
 - **Pages** — full-page templates (Dashboard, Calendar, Activity, Settings, Profile, sign-in forms, Blog, Doc Page, …)
-- **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, Lists, Description List, HR
+- **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, List, Description List, Divider
 - **Forms** — 24 controls (Input, Select, Combobox, DatePicker single + range, …)
 - **Charts** — `@sckyzo/cosmos-charts`, one entry per chart type: line & area, bar & column, donut, radial gauges,
   realtime, sparkline, treemap, heatmap, radar, scatter & bubble, box plot, range bar, mixed

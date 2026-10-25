@@ -558,7 +558,7 @@ const WelcomePage = ({
           desc="Five blog section layouts for a landing page, with a matching post page."
         />
         <TemplateCard
-          href="./?path=/docs/pages-stacked-shell--docs"
+          href="./?path=/docs/layout-stacked-shell--docs"
           icon={AppWindow}
           title="Stacked shell"
           desc="Top navbar, no sidebar, full-width content under a page header."

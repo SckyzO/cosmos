@@ -4,7 +4,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import { ThemeToggle } from './ThemeToggle';
 
 const meta = {
-  title: 'Atoms/Theme Toggle',
+  title: 'Settings/Theme Toggle',
   component: ThemeToggle,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

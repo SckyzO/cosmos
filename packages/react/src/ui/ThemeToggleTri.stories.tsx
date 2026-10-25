@@ -5,7 +5,7 @@ import { applyAppearance, type CosmosAccent } from '../settings/appearance';
 import { ThemeToggleTri, type ThemeMode, type ThemeModeChoice } from './ThemeToggleTri';
 
 const meta = {
-  title: 'Atoms/Theme Toggle Tri',
+  title: 'Settings/Theme Toggle Tri',
   component: ThemeToggleTri,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
