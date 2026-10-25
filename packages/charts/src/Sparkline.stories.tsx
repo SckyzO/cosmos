@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
-import { Sparkline, SparklineGroup } from './Sparkline';
+import { Sparkline } from './Sparkline';
 import {
   HOSTILE,
   closeTooltip,
@@ -60,7 +60,6 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
 const meta = {
   title: 'Charts/Sparkline',
   component: Sparkline,
-  subcomponents: { SparklineGroup },
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { data: REQUESTS },
@@ -108,25 +107,6 @@ export const Empty: Story = {
     </Card>
   ),
   play: expectNoData('No data'),
-};
-
-/** `SparklineGroup` lays out KPI cards: label, value and a sparkline each. */
-export const KpiGroup: Story = {
-  render: () => (
-    <SparklineGroup
-      items={[
-        { label: 'Requests/s', value: '2.3k', data: [10, 22, 18, 25, 30, 28, 35, 31, 29] },
-        { label: 'Errors/min', value: '12', data: [3, 5, 4, 8, 6, 9, 7, 11, 8], color: '#ef4444' },
-        {
-          label: 'Latency p95',
-          value: '184ms',
-          data: [120, 130, 110, 150, 160, 170, 165, 184],
-          color: '#f59e0b',
-        },
-        { label: 'Active users', value: '341', data: [300, 320, 280, 340, 360, 350, 341] },
-      ]}
-    />
-  ),
 };
 
 /** `width` and `height` shrink a line sparkline into a table cell. */
