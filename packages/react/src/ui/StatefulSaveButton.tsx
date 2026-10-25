@@ -17,14 +17,8 @@ const STATE_CONFIG: Record<SaveState, StateConfig> = {
   idle: { label: 'Save Changes', icon: Save },
   dirty: { label: 'Save Changes', icon: Save, cls: 'animate-pulse' },
   saving: { label: 'Saving…', loading: true },
-  // Dark text on green: white on green-500 is about 2.3:1, under the 4.5:1 of
-  // text. The `!` modifiers beat Button's own `disabled:` brand background,
-  // since a saved button is disabled.
-  saved: {
-    label: 'Saved',
-    icon: Check,
-    cls: 'bg-green-500! text-gray-900! disabled:cursor-default!',
-  },
+  // The `success` intent carries the dark text on green (white on green-500 is about 2.3:1).
+  saved: { label: 'Saved', icon: Check, intent: 'success' },
   error: { label: 'Error', intent: 'danger' },
 };
 
@@ -63,7 +57,8 @@ export const StatefulSaveButton = ({
       intent={cfg.intent}
       icon={cfg.icon}
       loading={cfg.loading}
-      disabled={state === 'saved'}
+      // `saved` ignores clicks without the native `disabled`, which would dim it.
+      aria-disabled={state === 'saved' || undefined}
       onClick={inactive ? undefined : onClick}
       className={clsx(cfg.cls, className)}
     >
