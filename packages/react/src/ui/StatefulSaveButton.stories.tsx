@@ -69,3 +69,26 @@ export const ForwardsRef: Story = {
     await expectRefFocuses(saveRef, canvas.getByRole('button', { name: 'Save Changes' }));
   },
 };
+
+/** `saved` keeps dark text on green (white on green-500 is about 2.3:1), not the brand fill of a disabled Button. */
+export const SavedKeepsDarkTextOnGreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { state: 'saved', onClick: () => {} },
+  play: async ({ canvas }) => {
+    const style = getComputedStyle(canvas.getByRole('button', { name: 'Saved' }));
+    // Computed colors may come back as oklch(): a 1x1 canvas turns them into RGB.
+    const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+    const rgb = (color: string) => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3));
+    };
+    const [tr, tg, tb] = rgb(style.color);
+    const [br, bg, bb] = rgb(style.backgroundColor);
+    // Dark text, on a green (not brand blue) background.
+    await expect(tr + tg + tb).toBeLessThan(300);
+    await expect(bg).toBeGreaterThan(br);
+    await expect(bg).toBeGreaterThan(bb);
+  },
+};
