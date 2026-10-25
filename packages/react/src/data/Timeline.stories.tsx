@@ -172,7 +172,7 @@ export const GroupedWithMeta: Story = {
 
 /** Only consecutive items share a header: a group seen again starts a new one. */
 export const RepeatedGroupStartsNewHeader: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     variant: 'card',
     items: [

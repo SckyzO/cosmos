@@ -182,6 +182,7 @@ export const Sizes: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickTriggerOpens: Story = {
+  tags: ['!dev'],
   render: () => (
     <Accordion type="single" collapsible>
       <Accordion.Item value="item-1">
@@ -200,6 +201,7 @@ export const ClickTriggerOpens: Story = {
 };
 
 export const SingleClosesOthers: Story = {
+  tags: ['!dev'],
   render: () => (
     <Accordion type="single" collapsible defaultValue="item-1">
       <Accordion.Item value="item-1">
@@ -224,6 +226,7 @@ export const SingleClosesOthers: Story = {
 };
 
 export const DisabledBlocksClick: Story = {
+  tags: ['!dev'],
   render: () => (
     <Accordion type="single" collapsible>
       <Accordion.Item value="item-1" disabled>

@@ -161,7 +161,7 @@ export const MultipleSlidesPerView: Story = {
 // The interaction tests below stay off the docs page (`!autodocs`): their play
 // functions take focus, which scrolls the docs page down to their iframe.
 export const NextButtonAdvances: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Carousel>
       <Carousel.Viewport>
@@ -184,7 +184,7 @@ export const NextButtonAdvances: Story = {
 };
 
 export const IndicatorClickJumps: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Carousel>
       <Carousel.Viewport>
