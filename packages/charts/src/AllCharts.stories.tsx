@@ -63,9 +63,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <LineAreaChart series={[]} categories={[]} {...props} />,
   },
   BarChart: {
-    filled: (apexOptions) => (
-      <BarChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <BarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
@@ -340,7 +339,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['BarChart', 'MixedChart']) {
+    for (const name of ['MixedChart']) {
       await waitFor(() =>
         expect(
           [...canvasElement.querySelectorAll(`[data-chart="${name}"] .apexcharts-yaxis-label`)]
@@ -350,17 +349,18 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
         ).not.toBe('')
       );
     }
-    await waitFor(() => {
-      const chart = canvasElement.querySelector<HTMLElement>('[data-chart="LineAreaChart"]');
-      expect(chart).not.toBeNull();
-      expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
-    });
+    for (const name of ['LineAreaChart', 'BarChart']) {
+      await waitFor(() => {
+        const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`);
+        expect(chart).not.toBeNull();
+        expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
+      });
+    }
   },
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
 const LEGEND_NAMES = [
-  'BarChart',
   'DonutChart',
   'HeatmapChart',
   'RadarChart',
