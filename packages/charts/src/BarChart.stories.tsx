@@ -106,7 +106,11 @@ export const NegativeValues: Story = {
   },
 };
 
-/** Long category labels rotate when they don't fit under their column. */
+/**
+ * Long category labels rotate when they don't fit under their column, and are
+ * cut short with an ellipsis past a rotated height of 90 px: the tooltip and
+ * the label's own title keep the full name.
+ */
 export const ManyCategories: Story = {
   args: {
     categories: SERVICES,
@@ -372,6 +376,32 @@ export const GroupedBarsHaveAGap: Story = {
       expect(outline('grouped').color).toBe(themeColor('--color-white'));
       expect(outline('stacked').width).toBe(0);
       expect(outline('single').width).toBe(0);
+    });
+  },
+};
+
+/** Past a rotated height of 90 px a category label is cut short, and the full name stays in its title. */
+export const LongLabelsAreTrimmed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ManyCategories.args,
+  render: (args) => (
+    <div style={{ width: 640 }}>
+      <BarChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const label = (name: string) =>
+      [...canvasElement.querySelectorAll('.apexcharts-xaxis-label')].find(
+        (el) => el.querySelector('title')?.textContent === name || el.textContent === name
+      );
+    // The visible text, without the title that holds the full name.
+    const shown = (name: string) => label(name)?.querySelector('tspan')?.textContent;
+    await waitFor(() => {
+      expect(shown('api-gateway')).toBe('api-gateway');
+      expect(shown('user-profile-service')).toMatch(/^user-.*\.\.\.$/);
+      expect(label('user-profile-service')?.querySelector('title')?.textContent).toBe(
+        'user-profile-service'
+      );
     });
   },
 };
