@@ -1,3 +1,5 @@
+import type { Decorator } from '@storybook/react-vite';
+import { createElement } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 
 /**
@@ -61,6 +63,14 @@ fn.lg = () => buildParams(640);
 fn.full = () => buildParams(800);
 
 export const portalDocsParams = fn;
+
+/**
+ * Padding for a story that sits in the `fullscreen` layout `portalDocsParams`
+ * sets but has no frame of its own: without it the content is drawn against the
+ * corner of the canvas. The same 24 px the other layouts get.
+ */
+export const withCanvasPadding: Decorator = (Story) =>
+  createElement('div', { className: 'p-6' }, createElement(Story));
 
 // ── Floating panels ─────────────────────────────────────────────────────────
 

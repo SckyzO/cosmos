@@ -7,6 +7,7 @@ import {
   expectTextContrast,
   inEachTheme,
   portalDocsParams,
+  withCanvasPadding,
 } from '../storybook-helpers';
 import { Calendar } from './Calendar';
 import { DatePicker, type DateRange } from './DatePicker';
@@ -15,6 +16,7 @@ const meta = {
   title: 'Forms/Date Picker',
   component: DatePicker,
   parameters: portalDocsParams(420),
+  decorators: [withCanvasPadding],
   tags: ['autodocs'],
 } satisfies Meta<typeof DatePicker>;
 
