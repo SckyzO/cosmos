@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { useOverflows } from '../hooks/useOverflows';
-import { BODY_CELL_PADDING, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import type { DataTableDensity } from './types';
 
 type TableContextValue = {
@@ -247,14 +247,10 @@ export const TableHeaderCell = ({
     <th
       scope={scope ?? (inHead ? 'col' : 'row')}
       className={clsx(
-        'px-4',
         alignClass({ align, numeric }),
         inHead
-          ? [
-              HEADER_CELL_PADDING[density],
-              'bg-gray-50 text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase dark:bg-gray-800',
-            ]
-          : [BODY_CELL_PADDING[density], 'font-medium'],
+          ? [HEADER_CELL, HEADER_CELL_PADDING[density]]
+          : ['px-4', BODY_CELL_PADDING[density], 'font-medium'],
         className
       )}
       {...rest}

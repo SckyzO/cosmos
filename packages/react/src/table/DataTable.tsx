@@ -8,7 +8,7 @@ import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
-import { BODY_CELL_PADDING, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
 import { useOverflows } from '../hooks/useOverflows';
@@ -373,13 +373,7 @@ export const DataTable = <T,>({
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-gray-100 dark:border-gray-800">
                 {selectable && (
-                  <th
-                    className={clsx(
-                      'bg-gray-50 px-4',
-                      HEADER_CELL_PADDING[density],
-                      'dark:bg-gray-800'
-                    )}
-                  >
+                  <th className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density])}>
                     <div className="flex items-center">
                       <Checkbox
                         aria-label="Select all rows"
@@ -407,13 +401,7 @@ export const DataTable = <T,>({
                   />
                 ))}
                 {renderRowAction && (
-                  <th
-                    className={clsx(
-                      'bg-gray-50 px-4',
-                      HEADER_CELL_PADDING[density],
-                      'text-right text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400'
-                    )}
-                  >
+                  <th className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], 'text-right')}>
                     Action
                   </th>
                 )}

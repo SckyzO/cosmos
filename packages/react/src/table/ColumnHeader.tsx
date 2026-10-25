@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
-import { HEADER_CELL_PADDING } from './density';
+import { HEADER_CELL, HEADER_CELL_PADDING } from './density';
 import type { DataTableDensity, SortDirection } from './types';
 
 export type ColumnHeaderProps = {
@@ -62,20 +62,14 @@ export const ColumnHeader = ({
   return (
     <th
       aria-sort={sortable ? ARIA_SORT[sortDir ?? 'none'] : undefined}
-      className={clsx(
-        'bg-gray-50 px-4',
-        HEADER_CELL_PADDING[density],
-        'text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400',
-        ALIGN_CLASS[align],
-        className
-      )}
+      className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], ALIGN_CLASS[align], className)}
     >
       <div ref={anchorRef} className="relative inline-flex items-center gap-1.5">
         {sortable ? (
           <button
             type="button"
             onClick={onSortToggle}
-            className="focus-visible:focus-indicator flex items-center gap-1 rounded transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator flex items-center gap-1 rounded uppercase transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
             {label}
             {/* Always drawn, so a column that sorts is recognisable before any sort: muted until
