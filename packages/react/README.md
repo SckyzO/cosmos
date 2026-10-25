@@ -223,6 +223,23 @@ The font and text size groups show only when their handlers are set. Pass
 For a top bar, `AppearanceMenu` takes the same props and puts the pickers in a
 panel behind an icon button, for example in `Topbar`'s `rightActions`.
 
+To offer a **System** choice that follows the device's `prefers-color-scheme`,
+add `COSMOS_SYSTEM_THEME` to the themes and apply again when the device switches
+(it resolves to `light` or `dark`; set `systemThemes` for another pair). Nothing
+changes for an app that doesn't opt in:
+
+```tsx
+const [appearance, setAppearance] = useState<CosmosAppearance>({ theme: 'system', accent: 'blue' });
+useEffect(() => {
+  applyAppearance(appearance);
+  return appearance.theme === 'system'
+    ? watchSystemTheme(() => applyAppearance(appearance))
+    : undefined;
+}, [appearance]);
+// …
+<AppearanceSettings {...appearance} themes={[COSMOS_SYSTEM_THEME, ...COSMOS_THEMES]} … />
+```
+
 Saving the choice (local storage, user profile) is left to the app.
 
 Charts live in a separate package, [`@sckyzo/cosmos-charts`](../charts), so apps
