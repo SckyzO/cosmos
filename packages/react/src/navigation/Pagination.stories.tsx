@@ -174,6 +174,23 @@ export const ControlledPageOnlyReports: Story = {
   },
 };
 
+// ── Active page is visible (#290) ────────────────────────────────────────────
+// The active page used to carry both its own and the neutral classes, and the
+// neutral ones won: a white digit on a white button. The test compares computed
+// colors, which is what the eye sees.
+
+export const ActivePageDiffersFromInactive: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 3, totalPages: 10 },
+  play: async ({ canvas }) => {
+    const active = getComputedStyle(canvas.getByRole('button', { name: 'Page 3' }));
+    const inactive = getComputedStyle(canvas.getByRole('button', { name: 'Page 4' }));
+    await expect(active.backgroundColor).not.toBe(inactive.backgroundColor);
+    await expect(active.borderTopColor).not.toBe(inactive.borderTopColor);
+    await expect(active.color).not.toBe(active.backgroundColor);
+  },
+};
+
 // ── Narrow screens (#291) ────────────────────────────────────────────────────
 
 export const Mobile: Story = {

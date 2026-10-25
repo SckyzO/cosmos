@@ -449,3 +449,22 @@ export const KeyboardFocusManagement: Story = {
     await expect(document.activeElement).toBe(trigger);
   },
 };
+
+// `padding` replaces the default `p-4`; the two never both reach the panel (#290).
+export const PaddingReplacesDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.sm(),
+  render: () => (
+    <Popover>
+      <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Open</Popover.Trigger>
+      <Popover.Content aria-label="Tight" padding="p-2">
+        Tight
+      </Popover.Content>
+    </Popover>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open' }));
+    const panel = within(canvasElement.ownerDocument.body).getByRole('dialog', { name: 'Tight' });
+    await expect(getComputedStyle(panel).paddingTop).toBe('8px');
+  },
+};

@@ -281,3 +281,51 @@ export const RefCleanupRunsOnUnmount: Story = {
     await expect(refCalls).not.toContain('null');
   },
 };
+
+// A disabled field shows the not-allowed cursor, not the pointer of its default (#290).
+export const DisabledShowsNotAllowedCursor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Locked', disabled: true },
+  play: async ({ canvas }) => {
+    const label = canvas.getByLabelText('Locked').closest('label') as HTMLElement;
+    await expect(getComputedStyle(label).cursor).toBe('not-allowed');
+  },
+};
+
+const STATUSES = [
+  { value: 'open', label: 'Open', description: 'Waiting for a reply' },
+  { value: 'in-progress', label: 'In progress', description: 'Someone is on it' },
+  { value: 'closed', label: 'Closed', description: 'Nothing left to do' },
+];
+
+/** Each item is one block (box, label, description), kept apart from the next. */
+export const GroupHorizontalWithDescriptions: Story = {
+  render: () => (
+    <CheckboxGroup
+      legend="Filter by status"
+      orientation="horizontal"
+      options={STATUSES}
+      defaultValue={['open']}
+    />
+  ),
+};
+
+export const GroupHorizontalKeepsItemsApart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: GroupHorizontalWithDescriptions.render,
+  play: async ({ canvasElement }) => {
+    const items = [...canvasElement.querySelectorAll<HTMLElement>('fieldset label')];
+    await expect(items).toHaveLength(3);
+    for (const [i, item] of items.entries()) {
+      const box = item.getBoundingClientRect();
+      // The description sits inside its own item, not under a neighbour.
+      const description = within(item).getByText(STATUSES[i]!.description).getBoundingClientRect();
+      await expect(description.left).toBeGreaterThanOrEqual(box.left);
+      await expect(description.right).toBeLessThanOrEqual(box.right + 0.5);
+      if (i > 0)
+        await expect(box.left - items[i - 1]!.getBoundingClientRect().right).toBeGreaterThanOrEqual(
+          24
+        );
+    }
+  },
+};

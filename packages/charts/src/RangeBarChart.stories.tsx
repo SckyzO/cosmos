@@ -14,6 +14,8 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
+  axisTitles,
+  expectAxisTitles,
 } from './storybook-helpers';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
@@ -138,12 +140,20 @@ export const SeverityColors: Story = {
   },
 };
 
+/** `xTitle` and `yTitle` name the time axis and the rows. */
+export const AxisTitles: Story = {
+  args: { ...MaintenanceWindows.args, xTitle: 'Time (UTC)', yTitle: 'Rack' },
+  play: expectAxisTitles({ x: 'Time (UTC)', y: ['Rack'] }),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** The legend and the tooltip are HTML: series names and row labels show as text. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
     series: [
       {
         name: HOSTILE,
@@ -159,6 +169,9 @@ export const HtmlInLabelsRendersAsText: Story = {
     // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
     await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await expectNoInjectedImage(canvasElement);
 
     // Tooltips render on hover: the title is the row, then the series name

@@ -119,7 +119,7 @@ export const HamburgerFiresOnCollapsedChange: Story = {
     );
   },
   play: async ({ args, canvas }) => {
-    await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
+    await expect(canvas.getByText('Servers')).toBeVisible();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
     await expect(args.onCollapsedChange).toHaveBeenCalledTimes(1);
@@ -158,7 +158,9 @@ export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(3);
+    for (const title of ['No state', 'State is null', 'No handler']) {
+      await expect(canvas.getByText(title)).toBeVisible();
+    }
     await expect(canvas.queryByRole('button', { name: /sidebar/i })).toBeNull();
   },
 };
@@ -215,6 +217,24 @@ export const HamburgerExpandsACollapsedSidebar: Story = {
   },
 };
 
+/** The title is plain text by default, so a composed page keeps the PageHeader as its `h1`. */
+export const PageTitleIsPlainTextByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { pageTitle: 'Servers' },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('heading')).toBeNull();
+    await expect(canvas.getByText('Servers').tagName).toBe('P');
+  },
+};
+
+/** `as="h1"` gives the title back as the page heading. */
+export const PageTitleAsHeading: Story = {
+  args: { pageTitle: 'Servers', as: 'h1' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Servers' })).toBeVisible();
+  },
+};
+
 // ── Narrow screens (#291) ────────────────────────────────────────────────────
 
 const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
@@ -255,7 +275,7 @@ export const Mobile: Story = {
   render: () => <MobileTopbar onSelect={fn()} />,
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('banner'));
-    await expect(canvas.queryByRole('heading', { name: 'Analytics Dashboard' })).toBeNull();
+    await expect(canvas.getByText('Analytics Dashboard')).not.toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
     await expect(canvas.getByRole('button', { name: 'Profile' })).toBeVisible();
 
@@ -273,7 +293,7 @@ export const MoreMenuIsMobileOnly: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <MobileTopbar />,
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible();
+    await expect(canvas.getByText('Analytics Dashboard')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'More actions' })).toBeNull();
   },

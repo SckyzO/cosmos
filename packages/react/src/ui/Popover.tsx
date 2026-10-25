@@ -139,6 +139,8 @@ export type PopoverContentProps = {
   arrow?: boolean;
   /** Tailwind width class. Default `w-64`. */
   width?: string;
+  /** Tailwind padding class. Default `p-4`. */
+  padding?: string;
   className?: string;
   children: ReactNode;
 };
@@ -151,6 +153,7 @@ const PopoverContent = ({
   offset = 8,
   arrow = false,
   width = 'w-64',
+  padding = 'p-4',
   className,
   children,
 }: PopoverContentProps) => {
@@ -166,8 +169,9 @@ const PopoverContent = ({
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       className={clsx(
-        'rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
+        'rounded-xl border border-gray-200 bg-white text-sm shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
         width,
+        padding,
         className
       )}
     >

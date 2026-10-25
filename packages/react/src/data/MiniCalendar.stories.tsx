@@ -151,15 +151,15 @@ export const WeeksStartOnMonday: Story = {
   play: async ({ canvas }) => {
     const left = (el: HTMLElement) => el.getBoundingClientRect().left;
     await expect(left(canvas.getByRole('button', { name: 'Friday, May 1, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Fri')),
+      left(canvas.getByTitle('Fri')),
       0
     );
     await expect(left(canvas.getByRole('button', { name: 'Sunday, May 3, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Sun')),
+      left(canvas.getByTitle('Sun')),
       0
     );
     await expect(left(canvas.getByRole('button', { name: 'Monday, May 4, 2026' }))).toBeCloseTo(
-      left(canvas.getByText('Mon')),
+      left(canvas.getByTitle('Mon')),
       0
     );
   },
@@ -172,8 +172,8 @@ export const LocaleNamesTheDatesInFrench: Story = {
   play: async ({ canvas }) => {
     // The abbreviations carry a trailing dot in CLDR: `lun.`.
     for (const name of ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'])
-      await expect(canvas.getByText(new RegExp(`^${name}\\.?$`))).toBeVisible();
-    await expect(canvas.queryByText('Mon')).toBeNull();
+      await expect(canvas.getByTitle(new RegExp(`^${name}\\.?$`))).toBeVisible();
+    await expect(canvas.queryByTitle('Mon')).toBeNull();
 
     await expect(canvas.getByRole('button', { name: 'mai 2026' })).toBeVisible();
     const today = canvas.getByRole('button', { name: 'jeudi 7 mai 2026' });
@@ -184,7 +184,7 @@ export const LocaleNamesTheDatesInFrench: Story = {
     // Still Monday first: the 1st of May 2026 is a Friday, under the fifth weekday.
     const left = (el: HTMLElement) => el.getBoundingClientRect().left;
     await expect(left(canvas.getByRole('button', { name: 'vendredi 1 mai 2026' }))).toBeCloseTo(
-      left(canvas.getByText(/^ven\.?$/)),
+      left(canvas.getByTitle(/^ven\.?$/)),
       0
     );
 
@@ -210,7 +210,7 @@ export const DefaultLocaleFollowsTheBrowser: Story = {
     await expect(args.locale).toBeUndefined();
     const monday = new Date(2026, 4, 4);
     await expect(
-      canvas.getByText(browserFormat({ weekday: 'short' }).format(monday))
+      canvas.getByTitle(browserFormat({ weekday: 'short' }).format(monday))
     ).toBeVisible();
     await expect(
       canvas.getByRole('button', {
@@ -281,5 +281,59 @@ export const DefaultSelectedOrControlled: Story = {
     const bare = within(canvas.getByRole('group', { name: 'No selection' }));
     await expect(bare.getByRole('button', { name: 'May 2026' })).toBeVisible();
     await expect(bare.queryByRole('button', { pressed: true })).toBeNull();
+  },
+};
+
+/** Selected is a filled cell, today an outlined one; the event dot sits under the number. */
+export const SelectedTodayAndEventDot: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    today: new Date(2026, 4, 7),
+    selected: new Date(2026, 4, 12),
+    eventDays: new Set(['2026-05-12', '2026-05-14']),
+    onSelect: fn(),
+  },
+  play: async ({ canvas }) => {
+    const today = getComputedStyle(canvas.getByRole('button', { name: 'Thursday, May 7, 2026' }));
+    const selected = getComputedStyle(
+      canvas.getByRole('button', { name: 'Tuesday, May 12, 2026' })
+    );
+    const transparent = 'rgba(0, 0, 0, 0)';
+    await expect(selected.backgroundColor).not.toBe(transparent);
+    await expect(today.backgroundColor).toBe(transparent);
+    await expect(today.borderTopColor).not.toBe(transparent);
+    await expect(today.borderTopWidth).toBe('1px');
+    await expect(selected.borderTopColor).toBe(transparent);
+
+    // The dot is under the digits, not over them.
+    const cell = canvas.getByRole('button', { name: 'Thursday, May 14, 2026' });
+    const dot = cell.querySelector('span')!;
+    const range = document.createRange();
+    range.selectNodeContents(cell.firstChild!);
+    await expect(dot.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      range.getBoundingClientRect().bottom
+    );
+  },
+};
+
+/** The weekday labels have room between them, and their short name stays available as a tooltip. */
+export const WeekdayLabelsDoNotTouch: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...FIXED_DAY, onSelect: fn() },
+  play: async ({ canvas }) => {
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((name) =>
+      canvas.getByTitle(name)
+    );
+    for (let i = 1; i < labels.length; i++) {
+      const gap =
+        labels[i].getBoundingClientRect().left - labels[i - 1].getBoundingClientRect().right;
+      const textWidth = (el: HTMLElement) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return range.getBoundingClientRect().width;
+      };
+      // The letters of two neighbours are further apart than a few pixels.
+      await expect(gap + (labels[i].offsetWidth - textWidth(labels[i])) / 2).toBeGreaterThan(8);
+    }
   },
 };

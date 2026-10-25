@@ -241,7 +241,7 @@ export const DataTable = <T,>({
   return (
     <div
       className={clsx(
-        'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900',
+        'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] dark:border-gray-800',
         className
       )}
     >

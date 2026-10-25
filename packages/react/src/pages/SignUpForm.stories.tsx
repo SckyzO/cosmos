@@ -92,10 +92,10 @@ export const SubmitDisabledUntilValid: Story = {
   play: async ({ args, canvas }) => {
     const submit = canvas.getByRole('button', { name: /create account/i });
     await expect(submit).toBeDisabled();
-    await userEvent.type(canvas.getByLabelText('First name'), 'John');
-    await userEvent.type(canvas.getByLabelText('Last name'), 'Doe');
-    await userEvent.type(canvas.getByLabelText('Email'), 'john@example.com');
-    await userEvent.type(canvas.getByLabelText('Password'), 'SuperSecret_123!');
+    await userEvent.type(canvas.getByLabelText(/^First name/), 'John');
+    await userEvent.type(canvas.getByLabelText(/^Last name/), 'Doe');
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'john@example.com');
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'SuperSecret_123!');
     await expect(submit).toBeDisabled();
     await userEvent.click(canvas.getByLabelText(/i agree to the/i));
     await expect(submit).not.toBeDisabled();
@@ -116,7 +116,7 @@ export const PolicyDisplaysOnTyping: Story = {
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
     await expect(canvas.queryByText(/At least 12 characters/i)).toBeNull();
-    await userEvent.type(canvas.getByLabelText('Password'), 'abc');
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'abc');
     await expect(canvas.getByText(/At least 12 characters/i)).toBeInTheDocument();
   },
 };
@@ -126,10 +126,10 @@ export const WeakPasswordKeepsSubmitDisabled: Story = {
   decorators: standaloneDecorator,
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
-    await userEvent.type(canvas.getByLabelText('First name'), 'A');
-    await userEvent.type(canvas.getByLabelText('Last name'), 'B');
-    await userEvent.type(canvas.getByLabelText('Email'), 'a@b.co');
-    await userEvent.type(canvas.getByLabelText('Password'), 'weak');
+    await userEvent.type(canvas.getByLabelText(/^First name/), 'A');
+    await userEvent.type(canvas.getByLabelText(/^Last name/), 'B');
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'a@b.co');
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'weak');
     await userEvent.click(canvas.getByLabelText(/i agree to the/i));
     const submit = canvas.getByRole('button', { name: /create account/i });
     await expect(submit).toBeDisabled();

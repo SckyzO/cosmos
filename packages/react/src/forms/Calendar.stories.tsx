@@ -313,6 +313,40 @@ export const CaptionDropdownsJumpToAMonth: Story = {
   },
 };
 
+// The month caption of a calendar, as drawn: the element holding the month's name.
+const captionLabel = (root: HTMLElement) =>
+  [...root.querySelectorAll<HTMLElement>('[aria-live]')].find((el) =>
+    /\d{4}/.test(el.textContent ?? '')
+  )!;
+
+/** A bare calendar names its month and year between the chevrons. */
+export const BareCalendarShowsItsMonth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PickADay />,
+  play: async ({ canvasElement }) => {
+    const label = captionLabel(canvasElement);
+    await expect(label).toHaveTextContent('May 2026');
+    await expect(label).toBeVisible();
+    // Not the 1px clip of `sr-only`.
+    await expect(label.getBoundingClientRect().width).toBeGreaterThan(40);
+  },
+};
+
+/** With month and year selects, the label stays for screen readers only: the selects show it. */
+export const DropdownCaptionKeepsTheLabelHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <PickADay
+      captionLayout="dropdown"
+      startMonth={new Date(2024, 0)}
+      endMonth={new Date(2028, 11)}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(captionLabel(canvasElement).getBoundingClientRect().width).toBeLessThanOrEqual(1);
+  },
+};
+
 /** A disabled day is not clickable and is never picked. */
 export const DisabledDaysCannotBePicked: Story = {
   tags: ['!dev', '!autodocs'],

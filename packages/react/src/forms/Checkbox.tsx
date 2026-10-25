@@ -68,8 +68,8 @@ export function Checkbox({
     <label
       htmlFor={fieldId}
       className={clsx(
-        'inline-flex cursor-pointer items-start gap-2',
-        disabled && 'cursor-not-allowed opacity-50',
+        'inline-flex items-start gap-2',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className
       )}
     >
@@ -179,7 +179,11 @@ export const CheckboxGroup = ({
       {description && (
         <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{description}</p>
       )}
-      <div className={clsx(orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2')}>
+      <div
+        className={clsx(
+          orientation === 'horizontal' ? 'flex flex-wrap gap-x-6 gap-y-2' : 'space-y-2'
+        )}
+      >
         {options.map((opt) => (
           <Checkbox
             key={opt.value}

@@ -1,5 +1,5 @@
 import { type ComponentType, type ReactNode } from 'react';
-import { ChevronRight, Ellipsis } from 'lucide-react';
+import { ChevronRight, Ellipsis, Home } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Menu } from '../ui/Menu';
 
@@ -19,6 +19,12 @@ export type BreadcrumbProps = {
   items: BreadcrumbItem[];
   /** Visual separator between items. Default `'chevron'`. Pass any ReactNode for full custom. */
   separator?: BreadcrumbSeparator;
+  /**
+   * Put a Home icon on the first item (the usual page-header path). It is named "Home" for
+   * assistive technology, so a first item labelled "Home" reads twice: label it otherwise
+   * (a site name). An `icon` set on that item wins.
+   */
+  homeIcon?: boolean;
   /**
    * Name of the navigation landmark. Default `'Breadcrumb'`. A page that holds
    * several breadcrumbs gives each its own, or a screen reader cannot tell
@@ -59,15 +65,13 @@ const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
  * Breadcrumb — navigable path: Site → Room → Aisle → Rack → Device.
  *
  * Each item except the last is clickable. Last item renders as plain text
- * (the current page). Use icons for the most important items in the path.
- *
- * Differs from PageBreadcrumb (templates/) which is the slim variant for
- * page headers with the Home icon. This Breadcrumb is bigger and supports
- * an icon per item.
+ * (the current page). Use icons for the most important items in the path,
+ * or `homeIcon` for the Home icon of a page header.
  */
 export const Breadcrumb = ({
   items,
   separator = 'chevron',
+  homeIcon = false,
   'aria-label': ariaLabel = 'Breadcrumb',
   maxItems,
   className,
@@ -88,6 +92,13 @@ export const Breadcrumb = ({
     >
       {shown.map(({ icon: Icon, label, href, onClick }, i) => {
         const isLast = i === shown.length - 1;
+        // The first crumb is never collapsed: `i === 0` is the first item of the trail.
+        const renderIcon = (className: string) =>
+          homeIcon && i === 0 && !Icon ? (
+            <Home className={className} role="img" aria-label="Home" />
+          ) : (
+            Icon && <Icon className={className} />
+          );
         return (
           <div key={label} className="flex items-center gap-1 max-sm:min-w-0">
             {i > 0 && renderSeparator(separator)}
@@ -121,17 +132,17 @@ export const Breadcrumb = ({
                 aria-current="page"
                 className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
               >
-                {Icon && <Icon className="text-brand-500 h-4 w-4 shrink-0" />}
+                {renderIcon('text-brand-500 h-4 w-4 shrink-0')}
                 <span className="truncate">{label}</span>
               </span>
             ) : onClick ? (
               <button type="button" onClick={onClick} className={linkClass}>
-                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                {renderIcon('h-4 w-4 shrink-0')}
                 <span className="truncate">{label}</span>
               </button>
             ) : (
               <a href={href ?? '#'} className={linkClass}>
-                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                {renderIcon('h-4 w-4 shrink-0')}
                 <span className="truncate">{label}</span>
               </a>
             )}

@@ -8,6 +8,8 @@ import type { ChartBaseProps } from './types';
 export type GradientRadialProps = ChartBaseProps & {
   value: number;
   label?: string;
+  /** Color the arc starts from, fading to the theme's success color. Default: the accent. */
+  color?: string;
   /** Value at the start of the arc. Default 0. */
   min?: number;
   /** Value at the end of the arc, above `min`. Default 100. Out of range, the arc stops at an end. */
@@ -22,6 +24,7 @@ export type GradientRadialProps = ChartBaseProps & {
 export const GradientRadial = ({
   value,
   label = 'Score',
+  color,
   min = 0,
   max = 100,
   formatValue = percent,
@@ -34,9 +37,10 @@ export const GradientRadial = ({
   const format = useValueFormat(formatValue);
   const options: ApexOptions = {
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
-    colors: [brand],
+    colors: [color ?? brand],
     fill: {
       type: 'gradient',
+      opacity: 1,
       gradient: {
         shade: 'dark',
         type: 'horizontal',

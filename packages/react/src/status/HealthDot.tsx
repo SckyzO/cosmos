@@ -5,6 +5,11 @@ export type HealthDotProps = {
   status: HealthStatus;
   /** Show a pulsing animation around the dot */
   pulse?: boolean;
+  /**
+   * Accessible name. Set, the dot is an `img` with this name (say what it
+   * stands for: "Database: critical"). Omitted, the status text is read.
+   */
+  label?: string;
   className?: string;
 };
 
@@ -14,8 +19,12 @@ export type HealthDotProps = {
  * Use for compact status displays (next to a label, in a row, in a chart legend).
  * Set `pulse` to draw attention (recommended for CRIT).
  */
-export const HealthDot = ({ status, pulse = false, className }: HealthDotProps) => (
-  <span className={clsx('relative flex h-2.5 w-2.5 shrink-0', className)}>
+export const HealthDot = ({ status, pulse = false, label, className }: HealthDotProps) => (
+  <span
+    role={label ? 'img' : undefined}
+    aria-label={label}
+    className={clsx('relative flex h-2.5 w-2.5 shrink-0', className)}
+  >
     {pulse && (
       <span
         className={clsx(
@@ -25,6 +34,6 @@ export const HealthDot = ({ status, pulse = false, className }: HealthDotProps) 
       />
     )}
     <span className={clsx('relative inline-flex h-2.5 w-2.5 rounded-full', STATUS_DOT[status])} />
-    <span className="sr-only">{status}</span>
+    {!label && <span className="sr-only">{status}</span>}
   </span>
 );

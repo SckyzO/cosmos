@@ -185,3 +185,69 @@ export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
 };
+
+// A disabled field shows the not-allowed cursor, not the pointer of its default (#290).
+export const DisabledShowsNotAllowedCursor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Locked', disabled: true, name: 'cursor-test' },
+  play: async ({ canvas }) => {
+    const label = canvas.getByLabelText('Locked').closest('label') as HTMLElement;
+    await expect(getComputedStyle(label).cursor).toBe('not-allowed');
+  },
+};
+
+const SEVERITIES = [
+  { value: 'low', label: 'Low', description: 'Can wait' },
+  { value: 'medium', label: 'Medium', description: 'This week' },
+  { value: 'high', label: 'High', description: 'Today' },
+];
+
+/** Each item is one block (dot, label, description), kept apart from the next. */
+export const GroupHorizontalWithDescriptions: Story = {
+  render: () => (
+    <RadioGroup
+      legend="Severity"
+      orientation="horizontal"
+      options={SEVERITIES}
+      defaultValue="medium"
+    />
+  ),
+};
+
+// Where the dot's box sits in its item, and the item's top: equal across the group when the
+// checked radio lines up with the others.
+const expectItemsAligned = async (root: HTMLElement) => {
+  const items = [...root.querySelectorAll<HTMLElement>('fieldset label')];
+  await expect(items.length).toBeGreaterThan(1);
+  const offsets = items.map((item) => {
+    const box = item.querySelector('[aria-hidden]')!.getBoundingClientRect();
+    return Math.round((box.top - item.getBoundingClientRect().top) * 10) / 10;
+  });
+  await expect(new Set(offsets).size).toBe(1);
+  await expect(
+    new Set(items.map((item) => Math.round(item.getBoundingClientRect().top))).size
+  ).toBe(1);
+  for (const [i, item] of items.entries()) {
+    const box = item.getBoundingClientRect();
+    for (const text of item.querySelectorAll('span')) {
+      await expect(text.getBoundingClientRect().right).toBeLessThanOrEqual(box.right + 0.5);
+    }
+    if (i > 0) {
+      await expect(box.left - items[i - 1]!.getBoundingClientRect().right).toBeGreaterThanOrEqual(
+        24
+      );
+    }
+  }
+};
+
+export const GroupHorizontalKeepsItemsAligned: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: GroupHorizontalWithDescriptions.render,
+  play: ({ canvasElement }) => expectItemsAligned(canvasElement),
+};
+
+export const GroupHorizontalWithoutDescriptionsKeepsItemsAligned: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: GroupHorizontal.render,
+  play: ({ canvasElement }) => expectItemsAligned(canvasElement),
+};

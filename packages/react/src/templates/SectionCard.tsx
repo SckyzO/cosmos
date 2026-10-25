@@ -1,5 +1,6 @@
 import { type ComponentType, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { Card } from '../ui/Card';
 
 export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
 
@@ -35,8 +36,13 @@ const TONE_CLASSES: Record<SectionCardIconTone, { color: string; bg: string }> =
 };
 
 export type SectionCardProps = {
-  /** Section title (h3) */
+  /** Section title */
   title: string;
+  /**
+   * Heading element of the title. Default `h3`; under a page whose `PageHeader` is the `h1`
+   * (`as="h1"`), pass `h2` so the levels go up by one.
+   */
+  as?: 'h2' | 'h3';
   /** Optional description shown below title */
   desc?: string;
   /** Optional icon component (lucide-react or any React component accepting className) */
@@ -53,13 +59,14 @@ export type SectionCardProps = {
 };
 
 /**
- * SectionCard — white card with title, optional icon and description, and children.
+ * SectionCard — a `Card` (24px padding) with title, optional icon and description, and children.
  *
  * The de-facto building block for grouped content in a page. Use multiple
  * SectionCards stacked vertically (with `space-y-6`) or in a grid.
  */
 export const SectionCard = ({
   title,
+  as: Heading = 'h3',
   desc,
   icon: Icon,
   iconTone,
@@ -72,12 +79,7 @@ export const SectionCard = ({
   const finalIconColor = tonePreset?.color ?? iconColor ?? 'text-[var(--color-text-muted)]';
   const finalIconBg = tonePreset?.bg ?? iconBg ?? 'bg-black/5 dark:bg-white/5';
   return (
-    <div
-      className={clsx(
-        'rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6',
-        className
-      )}
-    >
+    <Card padding="lg" className={className}>
       <div className="mb-5 flex items-center gap-3">
         {Icon && (
           <div
@@ -90,11 +92,13 @@ export const SectionCard = ({
           </div>
         )}
         <div>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
+          <Heading className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {title}
+          </Heading>
           {desc && <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{desc}</p>}
         </div>
       </div>
       {children}
-    </div>
+    </Card>
   );
 };

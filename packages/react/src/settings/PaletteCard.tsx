@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
-import { Check } from 'lucide-react';
 import type { Ref } from 'react';
 import { paletteLabelColor } from './paletteLabelColor';
+import { PICKER_SELECTED_BORDER, SelectedMark } from './SelectedMark';
 
 export type PalettePreview = {
   /** Page background. */
@@ -66,7 +66,7 @@ export const PaletteCard = ({
       className={clsx(
         'group focus-visible:focus-indicator relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
         active
-          ? 'border-brand-500 shadow-sm'
+          ? clsx(PICKER_SELECTED_BORDER, 'shadow-sm')
           : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
         className
       )}
@@ -104,11 +104,7 @@ export const PaletteCard = ({
             </span>
           )}
         </span>
-        {active && (
-          <span className="bg-brand-500 flex h-4 w-4 shrink-0 items-center justify-center rounded-full">
-            <Check className="h-2.5 w-2.5 text-white" aria-hidden />
-          </span>
-        )}
+        {active && <SelectedMark />}
       </div>
     </button>
   );

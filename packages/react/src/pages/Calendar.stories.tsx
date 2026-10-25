@@ -7,6 +7,7 @@ import { MiniCalendar } from '../data/MiniCalendar';
 import { Shell } from '../layout/Shell';
 import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
+import { PageContainer } from '../layout/PageContainer';
 import { PageHeader } from '../templates/PageHeader';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -139,7 +140,7 @@ const CalendarContent = () => {
   const [selected, setSelected] = useState(TODAY);
   const days = useMemo(() => eventDays(EVENTS), []);
   return (
-    <div className="space-y-6 p-6 lg:p-8">
+    <PageContainer width="full" className="space-y-6">
       <PageHeader
         title="Calendar"
         description="Releases, maintenance windows and on-call for the platform team."
@@ -170,7 +171,7 @@ const CalendarContent = () => {
           <Upcoming from={selected} />
         </aside>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

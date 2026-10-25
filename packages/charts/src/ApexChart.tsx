@@ -1,4 +1,5 @@
 import type ApexCharts from 'apexcharts';
+import type { ApexOptions } from 'apexcharts';
 import { useEffect, useRef, type ComponentProps } from 'react';
 import 'apexcharts/features/keyboard';
 import ReactApexChart from 'react-apexcharts/core';
@@ -41,6 +42,33 @@ const nameLegendItems = (container: Element) => {
   }
 };
 
+/** Whether `series` has nothing to draw: none, or only series without data. */
+const hasNoData = (series: unknown): boolean =>
+  !Array.isArray(series) ||
+  series.every(
+    (item) => typeof item === 'object' && item !== null && 'data' in item && !item.data?.length
+  );
+
+/**
+ * What an empty chart draws besides its message: nothing. ApexCharts still
+ * lays out a 0–6 axis, a grid, a legend and the axis titles around "No data".
+ */
+const withoutFrame = (options: ApexOptions | undefined): ApexOptions => ({
+  grid: { show: false },
+  legend: { show: false },
+  xaxis: {
+    title: { text: '' },
+    labels: { show: false },
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    tooltip: { enabled: false },
+    crosshairs: { show: false },
+  },
+  yaxis: Array.isArray(options?.yaxis)
+    ? options.yaxis.map((axis) => ({ ...axis, show: false }))
+    : { ...options?.yaxis, show: false },
+});
+
 /**
  * `ReactApexChart`, drawn again when a web font finishes loading or `<html>`
  * switches `data-font`. ApexCharts measures its labels when it draws: a font
@@ -59,10 +87,12 @@ const nameLegendItems = (container: Element) => {
  * text instead, as ApexCharts itself does when an item is toggled.
  *
  * `emptyMessage` is the `noData` text ApexCharts draws, as SVG text, when there
- * is no series or only empty ones.
+ * is no series or only empty ones. That chart shows the message alone: no axis,
+ * grid or legend around it (`withoutFrame`).
  *
  * The tooltip takes a class that darkens its title in the light themes, from a
- * style React hoists into `<head>` once for every chart.
+ * style React hoists into `<head>` once for every chart. The tooltip and the
+ * legend are drawn at the size of the text size setting (`useChartTheme().textSize`).
  *
  * `apexOptions` is merged over all of it last, so it can override anything the
  * wrapper or this component set. `mergeOptions` copies it: ApexCharts writes to
@@ -77,7 +107,7 @@ export const ApexChart = ({
   ...props
 }: ApexChartProps) => {
   const chartRef = useRef<ApexCharts | null>(null);
-  const { textMuted } = useChartTheme();
+  const { textMuted, textSize } = useChartTheme();
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -105,14 +135,27 @@ export const ApexChart = ({
     return () => observer.disconnect();
   }, []);
 
+  const frame = hasNoData(props.series) ? withoutFrame(options) : undefined;
+  const base = frame ? mergeOptions(options ?? {}, frame) : options;
   const own = {
-    ...options,
+    ...base,
     chart: {
       ...options?.chart,
       accessibility: { description: ariaLabel, keyboard: { enabled: keyboard } },
     },
-    tooltip: { ...options?.tooltip, cssClass: TOOLTIP_CLASS },
-    noData: { text: emptyMessage, style: { color: textMuted } },
+    // A chart without a legend must not get one: ApexCharts shows any legend object.
+    ...(base?.legend ? { legend: { fontSize: textSize, ...base.legend } } : {}),
+    tooltip: {
+      ...options?.tooltip,
+      style: { fontSize: textSize, ...options?.tooltip?.style },
+      cssClass: TOOLTIP_CLASS,
+    },
+    noData: {
+      text: emptyMessage,
+      align: 'center' as const,
+      verticalAlign: 'middle' as const,
+      style: { color: textMuted, fontSize: '14px', fontFamily: 'inherit' },
+    },
   };
   const merged = apexOptions ? mergeOptions(own, apexOptions) : own;
 

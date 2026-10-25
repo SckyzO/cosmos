@@ -1,71 +1,67 @@
 import { clsx } from 'clsx';
-import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import type { ElementType, ReactNode } from 'react';
-import type { Intent } from './intent';
+import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
 
 export type AlertBannerIntent = Extract<Intent, 'success' | 'danger' | 'warning' | 'info'>;
-
-type IntentConfig = {
-  border: string;
-  bg: string;
-  icon: ElementType;
-  iconCls: string;
-  text: string;
-};
-
-const INTENT_CONFIG: Record<AlertBannerIntent, IntentConfig> = {
-  success: {
-    border: 'border-green-200 dark:border-green-500/20',
-    bg: 'bg-green-50 dark:bg-green-500/10',
-    icon: CheckCircle,
-    iconCls: 'text-green-500',
-    text: 'text-green-700 dark:text-green-400',
-  },
-  danger: {
-    border: 'border-red-200 dark:border-red-500/20',
-    bg: 'bg-red-50 dark:bg-red-500/10',
-    icon: AlertCircle,
-    iconCls: 'text-red-500',
-    text: 'text-red-700 dark:text-red-400',
-  },
-  warning: {
-    border: 'border-amber-200 dark:border-amber-500/20',
-    bg: 'bg-amber-50 dark:bg-amber-500/10',
-    icon: AlertTriangle,
-    iconCls: 'text-amber-500',
-    text: 'text-amber-700 dark:text-amber-400',
-  },
-  info: {
-    border: 'border-blue-200 dark:border-blue-500/20',
-    bg: 'bg-blue-50 dark:bg-blue-500/10',
-    icon: Info,
-    iconCls: 'text-blue-500',
-    text: 'text-blue-700 dark:text-blue-400',
-  },
-};
 
 export type AlertBannerProps = {
   /** Color and icon of the banner. Default `info`. */
   intent?: AlertBannerIntent;
+  /** Bold first line. The icon aligns with it instead of centering on the whole banner. */
+  title?: ReactNode;
   children: ReactNode;
+  /** Right-side slot: a Link or a Button. */
+  action?: ReactNode;
+  /** Shows a close button that calls this. The host removes the banner. */
+  onDismiss?: () => void;
   className?: string;
 };
 
-export const AlertBanner = ({ intent = 'info', children, className }: AlertBannerProps) => {
-  const v = INTENT_CONFIG[intent];
+export const AlertBanner = ({
+  intent = 'info',
+  title,
+  children,
+  action,
+  onDismiss,
+  className,
+}: AlertBannerProps) => {
+  const v = INTENT_STYLE[intent];
   const Icon = v.icon;
+  const hasTitle = title !== undefined && title !== null && title !== false;
   return (
     <div
       role="alert"
       className={clsx(
-        'flex items-center gap-3 rounded-2xl border px-5 py-3.5',
-        v.border,
-        v.bg,
+        'flex gap-3 rounded-lg border px-5 py-3.5',
+        hasTitle ? 'items-start' : 'items-center',
+        v.surface,
         className
       )}
     >
-      <Icon className={clsx('h-4 w-4 shrink-0', v.iconCls)} />
-      <p className={clsx('text-sm font-medium', v.text)}>{children}</p>
+      <Icon
+        className={clsx(INTENT_ICON_SIZE.inline, 'shrink-0', hasTitle && 'mt-0.5', v.iconColor)}
+      />
+      <div className="min-w-0 flex-1">
+        {hasTitle && <p className={clsx('text-sm font-semibold', v.text)}>{title}</p>}
+        <p className={clsx('text-sm', hasTitle ? 'mt-0.5 font-normal' : 'font-medium', v.text)}>
+          {children}
+        </p>
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+      {onDismiss && (
+        <button
+          type="button"
+          aria-label="Dismiss alert"
+          onClick={onDismiss}
+          className={clsx(
+            'focus-visible:focus-indicator -my-1 -mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',
+            v.text
+          )}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 };

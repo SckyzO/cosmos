@@ -3,13 +3,19 @@ import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type LineAreaChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** Override the default Cosmos palette. */
@@ -28,6 +34,8 @@ export const LineAreaChart = ({
   categories,
   colors,
   formatValue,
+  xTitle,
+  yTitle,
   emptyMessage,
   ariaLabel,
   apexOptions,
@@ -36,7 +44,7 @@ export const LineAreaChart = ({
   showLegend,
   legendPosition = 'top',
 }: LineAreaChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const legendVisible = showLegend ?? series.length > 1;
   const categoryTitle = useCategoryTitle(categories);
   const format = useOptionalValueFormat(formatValue);
@@ -46,6 +54,8 @@ export const LineAreaChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: colors ?? palette,
     dataLabels: { enabled: false },
@@ -56,19 +66,20 @@ export const LineAreaChart = ({
     // formatter onto it, which blanked the y labels on the next update.
     xaxis: {
       categories,
+      title: axisTitle(xTitle),
       labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { labels: { ...axisLabels, formatter: format.axis } },
-    legend: {
+    yaxis: {
+      title: axisTitle(yTitle),
+      labels: { ...axisLabels, formatter: format.axis },
+    },
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     // The tooltip and the legend are HTML: escape the category, the series
     // name and the formatted value.
     tooltip: {

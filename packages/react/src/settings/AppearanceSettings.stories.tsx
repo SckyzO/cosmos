@@ -5,11 +5,13 @@ import { AppearanceSettings } from './AppearanceSettings';
 import {
   COSMOS_ACCENTS,
   COSMOS_FONTS,
+  COSMOS_SYSTEM_THEME,
   COSMOS_THEMES,
   type CosmosAccent,
   type CosmosFont,
   type CosmosTextSize,
   type CosmosTheme,
+  type CosmosThemeChoice,
 } from './appearance';
 
 const meta = {
@@ -87,6 +89,37 @@ export const Controlled: Story = {
         </p>
       </div>
     );
+  },
+};
+
+/** Opt-in: add `COSMOS_SYSTEM_THEME` to the themes, and `applyAppearance` resolves it with `prefers-color-scheme`. */
+export const WithSystemTheme: Story = {
+  render: () => {
+    const [theme, setTheme] = useState<CosmosThemeChoice>('system');
+    return (
+      <AppearanceSettings
+        theme={theme}
+        accent="blue"
+        themes={[COSMOS_SYSTEM_THEME, ...COSMOS_THEMES]}
+        onThemeChange={setTheme}
+        onAccentChange={() => {}}
+      />
+    );
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('radio', { name: 'System' })).toBeChecked();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Deep Blue' }));
+    await expect(canvas.getByRole('radio', { name: 'Deep Blue' })).toBeChecked();
+    await userEvent.click(canvas.getByRole('radio', { name: 'System' }));
+    await expect(canvas.getByRole('radio', { name: 'System' })).toBeChecked();
+  },
+};
+
+// The default list has no System card.
+export const NoSystemByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('radio', { name: 'System' })).toBeNull();
   },
 };
 

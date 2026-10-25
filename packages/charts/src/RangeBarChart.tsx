@@ -3,10 +3,15 @@ import 'apexcharts/rangeBar';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
 import { useStableCallback } from './formatters';
-import { escapeHtml } from './escape';
+import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -17,7 +22,8 @@ export type RangeBarPoint = {
 
 export type RangeBarChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** One series per kind of range (maintenance, deploy, incident…), drawn on a datetime axis. */
     series: { name: string; data: RangeBarPoint[] }[];
     /** Draw every series of a row on one lane, instead of one lane per series. */
@@ -47,6 +53,8 @@ export const RangeBarChart = ({
   groupRows = false,
   colors,
   formatDate = defaultFormatDate,
+  xTitle,
+  yTitle,
   showLegend,
   legendPosition = 'top',
   emptyMessage,
@@ -55,7 +63,7 @@ export const RangeBarChart = ({
   height = 320,
   width = '100%',
 }: RangeBarChartProps) => {
-  const { grid, axisLabels, palette, tooltipTheme } = useChartTheme();
+  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
   const seriesColors = colors ?? palette;
   const legendVisible = showLegend ?? series.length > 1;
   const lanes = groupRows ? 1 : series.length;
@@ -86,6 +94,8 @@ export const RangeBarChart = ({
       toolbar: { show: false },
       zoom: { enabled: false },
       fontFamily: 'inherit',
+      // ApexCharts keeps 15px free under the drawing: dead space in a card.
+      parentHeightOffset: 0,
     },
     colors: seriesColors,
     dataLabels: { enabled: false },
@@ -105,19 +115,17 @@ export const RangeBarChart = ({
     // One labels object per axis: ApexCharts mutates them.
     xaxis: {
       type: 'datetime',
+      title: axisTitle(xTitle),
       labels: { ...axisLabels, datetimeUTC: true },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { labels: { ...axisLabels } },
-    legend: {
+    yaxis: { title: axisTitle(yTitle), labels: { ...axisLabels } },
+    legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
-      horizontalAlign: 'right',
-      labels: { colors: axisLabels.style.colors },
-      markers: { size: 5 },
-      formatter: escapeHtml,
-    },
+      color: axisLabels.style.colors,
+    }),
     tooltip: { theme: tooltipTheme, custom: tooltip },
     fill: { opacity: 1 },
   };

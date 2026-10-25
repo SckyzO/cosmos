@@ -11,7 +11,8 @@ import {
   freshCopy,
   expectAccessibleChart,
   expectPaletteFromTheme,
-  expectNoData,
+  expectMessageOnly,
+  expectColorInThemes,
 } from './storybook-helpers';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
@@ -109,6 +110,14 @@ export const FormattedValues: Story = {
   args: { ...Distributed.args, formatValue: tb },
 };
 
+/**
+ * `showValues` writes each tile's value under its name, in the format of
+ * `formatValue`. The group names sit on plates in the card's colors.
+ */
+export const ShowValues: Story = {
+  args: { ...MultipleSeries.args, showValues: true, formatValue: tb },
+};
+
 /** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
 export const TooltipFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -181,10 +190,116 @@ export const FormatValueFormatsTooltip: Story = {
   },
 };
 
+/** Tiles show their name alone, and their name over their value with `showValues`. */
+export const ValuesAreOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MultipleSeries.args },
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="plain">
+        <TreemapChart {...args} />
+      </div>
+      <div data-testid="valued">
+        <TreemapChart {...args} showValues formatValue={tb} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    // The lines of each tile label: the name, then the value.
+    const lines = (id: string) =>
+      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-datalabel`)].map(
+        (el) => {
+          const rows = [...el.querySelectorAll('tspan')];
+          return rows.length > 0 ? rows.map((row) => row.textContent) : [el.textContent];
+        }
+      );
+    await waitFor(() => expect(lines('valued')).toContainEqual(['compute', '120 TB']));
+    await expect(lines('valued')).toContainEqual(['storage', '51 TB']);
+    await waitFor(() => expect(lines('plain').length).toBeGreaterThan(0));
+    for (const label of lines('plain')) expect(label).toHaveLength(1);
+  },
+};
+
+/**
+ * The name of a group sits on a plate in the card's color, with the theme's
+ * text color and line color, in every theme.
+ */
+export const GroupHeaderFollowsTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { ...MultipleSeries.args },
+  play: async ({ canvasElement }) => {
+    const plate = () =>
+      canvasElement.querySelector(
+        '.apexcharts-treemap-series > rect:not(.apexcharts-treemap-rect)'
+      );
+    const title = () =>
+      canvasElement.querySelector('.apexcharts-treemap-series > text')?.getAttribute('fill');
+    await waitFor(() => expect(plate()).toBeTruthy());
+    const themes = {
+      dark: ['--color-gray-900', '--color-gray-800'],
+      '': ['--color-white', '--color-gray-200'],
+      sand: ['--color-white', '--color-gray-200'],
+      'deep-blue': ['--color-gray-900', '--color-gray-800'],
+    };
+    const tokens = (index: number) =>
+      Object.fromEntries(Object.entries(themes).map(([theme, pair]) => [theme, pair[index]]));
+    await expectColorInThemes(() => plate()?.getAttribute('fill'), tokens(0));
+    await expectColorInThemes(() => plate()?.getAttribute('stroke'), tokens(1));
+    await expectColorInThemes(
+      title,
+      Object.fromEntries(Object.keys(themes).map((theme) => [theme, '--color-text-primary']))
+    );
+  },
+};
+
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
-  play: expectNoData('No data'),
+  play: expectMessageOnly('No data'),
+};
+
+/** The gap between tiles is the card's color in every theme, never ApexCharts' white. */
+export const TileGapsMatchTheSurface: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: {
+    series: [
+      {
+        data: [
+          { x: 'a', y: 5 },
+          { x: 'b', y: 3 },
+        ],
+      },
+    ],
+  },
+  play: ({ canvasElement }) =>
+    expectColorInThemes(
+      () => canvasElement.querySelector('.apexcharts-treemap-rect')?.getAttribute('stroke'),
+      {
+        dark: '--color-gray-900',
+        'deep-blue': '--color-gray-900',
+        '': '--color-white',
+        sand: '--color-white',
+      }
+    ),
+};
+
+/** One name keeps its color in every group: `compute` is the same in Paris and Frankfurt. */
+export const NameKeepsItsColor: Story = {
+  args: MultipleSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const fills: Record<string, Set<string | null>> = {};
+      for (const tile of canvasElement.querySelectorAll('.apexcharts-treemap-rect')) {
+        const name = tile.getAttribute('data:key')?.split(':').pop() ?? '';
+        (fills[name] ??= new Set()).add(tile.getAttribute('fill'));
+      }
+      expect(Object.keys(fills).sort()).toEqual(['compute', 'gpu', 'network', 'storage']);
+      for (const colors of Object.values(fills)) expect(colors.size).toBe(1);
+      expect(new Set(Object.values(fills).map(([...c]) => c[0])).size).toBe(4);
+    });
+  },
 };
 
 /** The tiles take the default palette of the theme. */

@@ -18,8 +18,11 @@ import {
   expectPaletteFromTheme,
   LegendSides,
   expectLegendsOnTheirSide,
-  expectNoData,
+  expectMessageOnly,
   expectRedrawOnRerender,
+  axisTitles,
+  expectAxisTitles,
+  expectTextFollowsTextSize,
 } from './storybook-helpers';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
@@ -138,10 +141,45 @@ export const FormattedValues: Story = {
   },
 };
 
+/** `xTitle` and `yTitle` name the axes, so the tick labels need no unit. */
+export const AxisTitles: Story = {
+  args: { ...Basic.args, xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
+  play: expectAxisTitles({ x: 'Hour of day', y: ['CPU usage (%)'] }),
+};
+
+/**
+ * The axis labels, the axis titles, the legend and the tooltip are drawn at the
+ * size of the text size setting, as the page's text is: a larger setting makes
+ * the chart text larger.
+ */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Basic.args,
+    xTitle: 'Hour of day',
+    series: [
+      { name: 'CPU', data: [31, 40, 28, 51, 42, 109, 100, 120, 130] },
+      { name: 'Memory', data: [11, 32, 45, 32, 34, 52, 41, 60, 66] },
+    ],
+  },
+  play: ({ canvasElement }) =>
+    expectTextFollowsTextSize(canvasElement, () => canvasElement.querySelector('.apexcharts-grid')),
+};
+
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
-  play: expectNoData('No data'),
+  play: expectMessageOnly('No data'),
+};
+
+/** A chart with no data draws its message without the axis titles. */
+export const EmptyDrawsNoAxisTitles: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [], categories: [], xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
+  play: async (context) => {
+    await expectMessageOnly('No data')(context);
+    await expect(axisTitles(context.canvasElement)).toEqual({ x: [], y: [] });
+  },
 };
 
 /** `emptyMessage` says why there is nothing to draw. */
@@ -151,7 +189,7 @@ export const EmptyWithMessage: Story = {
     categories: [],
     emptyMessage: 'No samples in the last hour',
   },
-  play: expectNoData('No samples in the last hour'),
+  play: expectMessageOnly('No samples in the last hour'),
 };
 
 /**
@@ -282,6 +320,8 @@ export const AccentSwitchKeepsYAxisLabels: Story = {
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!autodocs'],
   args: {
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
     series: [
       { name: HOSTILE, data: [3, 5, 2] },
       { name: 'B', data: [1, 2, 4] },
@@ -291,6 +331,9 @@ export const HtmlInLabelsRendersAsText: Story = {
   play: async ({ canvasElement }) => {
     // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await expectNoInjectedImage(canvasElement);
+    // Axis titles are SVG text: the same string, drawn as written.
+    await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await expectNoInjectedImage(canvasElement);
 
     const grid = () => canvasElement.querySelector('.apexcharts-grid');

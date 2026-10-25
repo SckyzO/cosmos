@@ -80,6 +80,46 @@ export const Default: Story = {};
 
 export const Empty: Story = {
   args: { events: [] },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status')).toHaveTextContent('No events this month');
+  },
+};
+
+/** The message is a prop, and a month with events shows none. */
+export const EmptyMessageOnlyWhenEmpty: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { events: [], emptyMessage: 'Nothing planned' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status')).toHaveTextContent('Nothing planned');
+    // June 2026 has no event either; the greyed days of May do not count for it.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('status')).toBeVisible();
+  },
+};
+
+export const MonthWithEventsHasNoEmptyMessage: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('status')).toBeNull();
+  },
+};
+
+/** The Today button is disabled on the current month: a tooltip says why. */
+export const TodayTooltipExplainsDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const today = canvas.getByRole('button', { name: 'Today' });
+    await expect(today).toBeDisabled();
+    const tip = within(document.body).getByRole('tooltip', { hidden: true });
+    await expect(tip).toHaveTextContent('Already showing the current month');
+    await expect(today).toHaveAccessibleDescription('Already showing the current month');
+    await userEvent.hover(today.parentElement!);
+    await expect(tip).toHaveClass('opacity-100');
+    // Away from the current month the button is live, with its own tooltip.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
+    await expect(canvas.getByRole('button', { name: 'Today' })).toBeEnabled();
+    await expect(tip).toHaveTextContent('Back to the current month');
+  },
 };
 
 /**
@@ -114,23 +154,26 @@ export const WeeksStartOnMonday: Story = {
 
 export const MultiDayEventRepeats: Story = {
   play: async ({ canvas }) => {
-    // Saturday to Tuesday, across a week boundary.
-    for (const day of [
-      'Saturday, May 9, 2026',
-      'Sunday, May 10, 2026',
-      'Monday, May 11, 2026',
-      'Tuesday, May 12, 2026',
-    ]) {
-      const cell = within(canvas.getByRole('group', { name: day }));
-      await expect(cell.getByText('KubeCon trip')).toBeVisible();
+    // Saturday to Tuesday, across a week boundary: the title is written once, on the
+    // first day; the other days keep a bare chip that still names the event.
+    const title = (day: string) =>
+      within(canvas.getByRole('group', { name: day })).getByText('KubeCon trip');
+    for (const day of ['Sunday, May 10, 2026', 'Monday, May 11, 2026', 'Tuesday, May 12, 2026']) {
+      await expect(title(day)).toHaveClass('sr-only');
     }
+    await expect(title('Saturday, May 9, 2026')).not.toHaveClass('sr-only');
     await expect(canvas.getAllByText('KubeCon trip')).toHaveLength(4);
-    // Starts in April: shown on the greyed days before the 1st too.
+    // Starts in April: its first shown day, a greyed one, carries the title.
     await expect(
       within(canvas.getByRole('group', { name: 'Wednesday, April 29, 2026' })).getByText(
         'Datacenter migration'
       )
-    ).toBeVisible();
+    ).not.toHaveClass('sr-only');
+    await expect(
+      within(canvas.getByRole('group', { name: 'Thursday, April 30, 2026' })).getByText(
+        'Datacenter migration'
+      )
+    ).toHaveClass('sr-only');
   },
 };
 

@@ -13,6 +13,8 @@ import { FloatingPanel } from '../ui/FloatingPanel';
 import { setRef } from '../ui/mergeRefs';
 import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
+import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 export type DateRange = {
   from: Date | undefined;
@@ -48,6 +50,13 @@ type CommonProps = {
   label?: string;
   description?: string;
   error?: string;
+  /** Height and text size of the trigger(s), aligned on Button's. Default `md`. */
+  size?: FieldSize;
+  /**
+   * Marks the field required: an asterisk after the label. A button can't carry
+   * `aria-required`, so the label also tells assistive technology ("required").
+   */
+  required?: boolean;
   disabled?: boolean;
   /** Earliest selectable date (inclusive). */
   fromDate?: Date;
@@ -95,6 +104,8 @@ export const DatePicker = (props: DatePickerProps) => {
     label,
     description,
     error,
+    size = 'md',
+    required,
     disabled = false,
     fromDate,
     toDate,
@@ -248,10 +259,9 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Trigger rendering ───────────────────────────────────────────────────────
   const triggerClass = clsx(
-    'h-9 items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800',
-    error
-      ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-      : 'focus:field-focus border-gray-200 dark:border-gray-700'
+    'items-center gap-2 text-left',
+    fieldClass({ size, invalid: !!error }),
+    FIELD_PAD_X[size]
   );
 
   const renderTrigger = (
@@ -277,7 +287,7 @@ export const DatePicker = (props: DatePickerProps) => {
         triggerClass
       )}
     >
-      <CalendarIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+      <CalendarIcon className={clsx('shrink-0 text-gray-400', FIELD_ICON_SIZE[size])} aria-hidden />
       <span
         className={clsx(
           'flex-1 truncate',
@@ -298,6 +308,7 @@ export const DatePicker = (props: DatePickerProps) => {
           className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
+          {required && <RequiredMark srText=" (required)" />}
         </label>
       )}
 

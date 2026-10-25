@@ -21,12 +21,13 @@ export const Pulsing: Story = { args: { status: 'CRIT', pulse: true } };
 
 const STATUSES: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'INFO', 'UNKNOWN'];
 
+// UNKNOWN is gray-400 in the dark themes, where gray-500 sinks into the surface.
 const PALETTE_500: Record<HealthStatus, string> = {
   OK: 'bg-green-500',
   WARN: 'bg-amber-500',
   CRIT: 'bg-red-500',
   INFO: 'bg-blue-500',
-  UNKNOWN: 'bg-gray-500',
+  UNKNOWN: 'bg-gray-500 dark:bg-gray-400',
 };
 
 // Each dot must paint the theme's 500 step of its status hue, the palette the
@@ -84,5 +85,25 @@ export const StatusIsAvailableAsText: Story = {
   args: { status: 'CRIT' },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('CRIT')).toHaveClass('sr-only');
+  },
+};
+
+export const Labelled: Story = { args: { status: 'CRIT', label: 'Database: critical' } };
+
+// With a label the dot is an image with that name (and no duplicate status
+// text); without one, the status text stays the name.
+export const LabelNamesTheDot: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-4">
+      <HealthDot status="CRIT" label="Database: critical" />
+      <HealthDot status="OK" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const dot = canvas.getByRole('img', { name: 'Database: critical' });
+    await expect(dot.querySelector('.sr-only')).toBeNull();
+    await expect(canvas.getAllByRole('img')).toHaveLength(1);
+    await expect(canvas.getByText('OK')).toHaveClass('sr-only');
   },
 };

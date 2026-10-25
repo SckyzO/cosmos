@@ -1,6 +1,14 @@
 import { clsx } from 'clsx';
 import { useId, type ChangeEvent, type ComponentPropsWithRef, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import {
+  FIELD_PAD_X,
+  FIELD_PAD_Y,
+  FIELD_PLACEHOLDER,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
+import { RequiredMark } from './RequiredMark';
 
 export type TextareaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
@@ -8,6 +16,10 @@ export type TextareaProps = ComponentPropsWithRef<'textarea'> & {
   label?: string;
   description?: string;
   error?: string;
+  /** Text size and padding, aligned on Button's. Default `md`. The height follows `rows`. */
+  size?: FieldSize;
+  /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the textarea. */
+  required?: boolean;
   /** Slot rendered next to the label text (e.g. a TooltipHelp). */
   labelTrailing?: ReactNode;
   /** Resize behaviour. Default `vertical`. */
@@ -27,6 +39,8 @@ export function Textarea({
   label,
   description,
   error,
+  size = 'md',
+  required,
   labelTrailing,
   resize = 'vertical',
   showCount,
@@ -61,7 +75,14 @@ export function Textarea({
           htmlFor={fieldId}
           className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {label}
+          {required ? (
+            <span>
+              {label}
+              <RequiredMark />
+            </span>
+          ) : (
+            label
+          )}
           {labelTrailing}
         </label>
       )}
@@ -75,12 +96,15 @@ export function Textarea({
         onChange={(e) => setCurrentValue(e.target.value, e)}
         aria-describedby={hasDesc ? descId : undefined}
         aria-invalid={error || overLimit ? true : undefined}
+        aria-required={required || undefined}
+        required={required}
         className={clsx(
-          'block w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400',
+          'block w-full',
+          fieldClass({ size, invalid: !!(error || overLimit), fixedHeight: false }),
+          FIELD_PAD_X[size],
+          FIELD_PAD_Y[size],
+          FIELD_PLACEHOLDER,
           RESIZE_CLASS[resize],
-          error || overLimit
-            ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-            : 'focus:field-focus border-gray-200 dark:border-gray-700',
           className
         )}
         {...rest}

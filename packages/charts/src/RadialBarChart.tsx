@@ -42,16 +42,22 @@ export const RadialBarChart = ({
     // foreColor colors the center value (ApexCharts defaults to dark gray).
     chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
     colors: colors ?? palette,
+    // ApexCharts draws the arcs at 0.85, duller than their swatches.
+    fill: { opacity: 1 },
     labels,
     plotOptions: {
       radialBar: {
         track: { background: track },
         dataLabels: {
-          name: { fontSize: '12px', color: textMuted },
-          value: { fontSize: '14px', formatter: format.axis },
+          // The value large and bold over its small muted label, as on the
+          // gauges. The total takes the label's own style, not its default.
+          name: { fontSize: '12px', fontWeight: 600, color: textMuted, offsetY: -10 },
+          value: { fontSize: '22px', fontWeight: 700, offsetY: 4, formatter: format.axis },
           total: {
             show: true,
             label: 'Avg',
+            fontSize: '12px',
+            fontWeight: 600,
             color: textMuted,
             formatter: average,
           },

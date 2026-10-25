@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import { Sparkline, SparklineGroup } from './Sparkline';
 import {
+  HOSTILE,
+  closeTooltip,
+  expectNoInjectedImage,
+  hover,
   Rerender,
   expectAccessibleChart,
   expectNoRedrawOnRerender,
@@ -33,6 +38,15 @@ const SERVICES = [
     color: '#ef4444',
   },
 ];
+
+const FLAT = [60, 62, 61, 63, 62, 64, 63, 62];
+const NODES = [
+  { name: 'node-01', cpu: [58, 61, 60, 63, 62, 64, 63, 62] },
+  { name: 'node-02', cpu: [12, 15, 11, 14, 13, 12, 16, 14] },
+  { name: 'node-03', cpu: [30, 52, 71, 88, 64, 41, 77, 93] },
+];
+const ms = (v: number) => `${v} ms`;
+const percent = (v: number) => `${v}%`;
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -141,6 +155,136 @@ export const InTable: Story = {
       </table>
     </Card>
   ),
+};
+
+/**
+ * `label` names the value in the tooltip and `formatValue` formats it: hover the
+ * line to read `Latency p95: 181 ms`.
+ */
+export const TooltipLabelAndFormat: Story = {
+  args: {
+    variant: 'line',
+    data: [120, 130, 110, 150, 160, 170, 165, 184, 176, 168, 181, 179],
+    label: 'Latency p95',
+    formatValue: ms,
+  },
+  render: (args) => (
+    <Card title="Latency p95">
+      <Sparkline {...args} />
+    </Card>
+  ),
+};
+
+/**
+ * A sparkline fits its own data: a node at 60–63% reads as steep as one that
+ * swings from 5 to 95%. `min` and `max` give the rows of a table one scale, so
+ * they read against each other.
+ */
+export const InTableSharedScale: Story = {
+  render: () => (
+    <Card title="CPU by node">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-xs text-gray-500 dark:text-gray-400">
+            <th className="pb-2 font-medium">Node</th>
+            <th className="pb-2 font-medium">Fits its data</th>
+            <th className="pb-2 font-medium">0–100%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {NODES.map((node) => (
+            <tr key={node.name} className="border-t border-gray-100 dark:border-gray-800">
+              <td className="py-2 font-mono text-xs text-gray-900 dark:text-white">{node.name}</td>
+              <td className="py-2">
+                <Sparkline data={node.cpu} variant="line" width={120} height={32} />
+              </td>
+              <td className="py-2">
+                <Sparkline
+                  data={node.cpu}
+                  variant="line"
+                  width={120}
+                  height={32}
+                  min={0}
+                  max={100}
+                  label="CPU"
+                  formatValue={percent}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  ),
+};
+
+/** The tooltip names the value with `label` and writes it with `formatValue`. */
+export const TooltipShowsLabelAndFormattedValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...TooltipLabelAndFormat.args },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    const svg = () => canvasElement.querySelector('.apexcharts-svg');
+    await waitFor(() => {
+      hover(svg() as Element, 0.99);
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
+        'Latency p95: '
+      );
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
+        '179 ms'
+      );
+    });
+    await closeTooltip(canvasElement, svg);
+  },
+};
+
+/** The tooltip is HTML: the label shows as text. */
+export const HtmlInLabelsRendersAsText: Story = {
+  tags: ['!autodocs'],
+  args: { label: HOSTILE, variant: 'line' },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    const svg = () => canvasElement.querySelector('.apexcharts-svg');
+    await waitFor(() => {
+      hover(svg() as Element, 0.5);
+      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
+        `${HOSTILE}: `
+      );
+    });
+    await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement, svg);
+  },
+};
+
+// The vertical extent of the line, as a share of the height of the chart.
+const lineSpread = (root: HTMLElement) => {
+  const line = root.querySelector<SVGGraphicsElement>('.apexcharts-line');
+  const svg = root.querySelector('.apexcharts-svg');
+  return line && svg ? line.getBBox().height / svg.getBoundingClientRect().height : NaN;
+};
+
+/**
+ * Without `min` and `max` a flat series fills the height of its chart; pinned
+ * to 0–100, the same series is a flat line.
+ */
+export const ScaleCanBePinned: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="fit">
+        <Sparkline data={FLAT} variant="line" height={80} />
+      </div>
+      <div data-testid="pinned">
+        <Sparkline data={FLAT} variant="line" height={80} min={0} max={100} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const spread = (id: string) =>
+      lineSpread(canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!);
+    await waitFor(() => expect(spread('fit')).toBeGreaterThan(0.6));
+    await waitFor(() => expect(spread('pinned')).toBeLessThan(0.15));
+  },
 };
 
 /**
