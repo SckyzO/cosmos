@@ -485,3 +485,49 @@ export const InteractiveFocusShowsRingOnTheCardInLight: Story = {
   ...InteractiveFocusShowsRingOnTheCardInDark,
   globals: { theme: 'light' },
 };
+
+// ── Border in dark (#303) ────────────────────────────────────────────────────
+
+const cardBorder = (token: string) => {
+  const probe = document.createElement('span');
+  probe.style.color = `var(${token})`;
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+const CardWithParts = () => (
+  <Card padding="none">
+    <Card.Header>Header</Card.Header>
+    <Card.Body>Body</Card.Body>
+  </Card>
+);
+
+/** In dark, the outline is one step above the theme's border; the header's divider keeps the plain one. */
+export const BorderIsStrongerInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <CardWithParts />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const card = canvas.getByText('Body').parentElement!;
+    await expect(getComputedStyle(card).borderTopColor).toBe(cardBorder('--color-gray-600'));
+    await expect(getComputedStyle(card).borderTopColor).not.toBe(cardBorder('--color-border'));
+    await expect(getComputedStyle(canvas.getByText('Header')).borderBottomColor).toBe(
+      cardBorder('--color-border')
+    );
+  },
+};
+
+export const BorderKeepsThemeColorInLight: Story = {
+  ...BorderIsStrongerInDark,
+  globals: { theme: 'light' },
+  play: async ({ canvas }) => {
+    const card = canvas.getByText('Body').parentElement!;
+    await expect(getComputedStyle(card).borderTopColor).toBe(cardBorder('--color-border'));
+  },
+};
