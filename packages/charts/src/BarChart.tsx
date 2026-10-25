@@ -93,6 +93,9 @@ export const BarChart = ({
       labels: {
         ...axisLabels,
         formatter: horizontal ? format.axis : undefined,
+        // Category labels: a long name is cut short once rotated past this
+        // height instead of eating the plot; the tooltip keeps the full name.
+        ...(horizontal ? {} : { trim: true, maxHeight: 90 }),
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
