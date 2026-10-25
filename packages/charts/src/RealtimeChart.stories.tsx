@@ -12,6 +12,7 @@ import {
   expectNoRedrawOnRerender,
   freshCopy,
   expectAccessibleChart,
+  expectAxisTitlesIn,
 } from './storybook-helpers';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
@@ -120,6 +121,14 @@ export const ThresholdLabels: Story = {
       <Replay {...args} trace={DISK} warnLabel="" critLabel="Limit" />
     </div>
   ),
+};
+
+/** `yTitle` names the y axis, and `xTitle` the time axis. */
+export const AxisTitles: Story = {
+  args: { showTimeAxis: true, xTitle: 'Time', yTitle: 'CPU usage (%)' },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: ({ canvasElement }) =>
+    expectAxisTitlesIn(canvasElement, { x: 'Time', y: ['CPU usage (%)'] }),
 };
 
 // ApexCharts hides an annotation group with this class until its first

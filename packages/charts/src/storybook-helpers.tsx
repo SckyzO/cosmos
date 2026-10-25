@@ -507,3 +507,44 @@ export const expectAccessibleChart =
       expect(announcement(canvasElement)).not.toBe(first);
     });
   };
+
+/**
+ * The axis titles drawn in `root`: the x one, and the y ones from left to right.
+ * ApexCharts keeps an empty title element where there is no title: skipped.
+ */
+export const axisTitles = (root: HTMLElement) => {
+  const texts = (elements: Element[]) => elements.map((el) => el.textContent).filter(Boolean);
+  return {
+    x: texts([...root.querySelectorAll('.apexcharts-xaxis-title-text')]),
+    y: texts(
+      [...root.querySelectorAll('.apexcharts-yaxis-title-text')].sort(
+        (a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left
+      )
+    ),
+  };
+};
+
+/**
+ * Play function for a story with axis titles: the chart in `root` draws `x`
+ * under its plot, and `y` beside it, the first on the left and a second one on
+ * the right.
+ */
+export const expectAxisTitles =
+  ({ x, y }: { x: string; y: string[] }) =>
+  ({ canvasElement }: { canvasElement: HTMLElement }) =>
+    expectAxisTitlesIn(canvasElement, { x, y });
+
+export const expectAxisTitlesIn = (root: HTMLElement, { x, y }: { x: string; y: string[] }) =>
+  waitFor(() => {
+    expect(axisTitles(root)).toEqual({ x: [x], y });
+    const plot = root.querySelector('.apexcharts-grid')?.getBoundingClientRect();
+    expect(plot).toBeTruthy();
+    if (!plot) return;
+    const box = (selector: string) =>
+      [...root.querySelectorAll(selector)].map((el) => el.getBoundingClientRect());
+    for (const title of box('.apexcharts-xaxis-title-text'))
+      expect(title.top).toBeGreaterThan(plot.bottom - 1);
+    const [left, right] = box('.apexcharts-yaxis-title-text').sort((a, b) => a.left - b.left);
+    expect(left.right).toBeLessThan(plot.left + 1);
+    if (y.length > 1) expect(right.left).toBeGreaterThan(plot.right - 1);
+  });
