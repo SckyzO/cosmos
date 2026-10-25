@@ -36,8 +36,13 @@ const TONE_CLASSES: Record<SectionCardIconTone, { color: string; bg: string }> =
 };
 
 export type SectionCardProps = {
-  /** Section title (h3) */
+  /** Section title */
   title: string;
+  /**
+   * Heading element of the title. Default `h3`; under a page whose `PageHeader` is the `h1`
+   * (`as="h1"`), pass `h2` so the levels go up by one.
+   */
+  as?: 'h2' | 'h3';
   /** Optional description shown below title */
   desc?: string;
   /** Optional icon component (lucide-react or any React component accepting className) */
@@ -61,6 +66,7 @@ export type SectionCardProps = {
  */
 export const SectionCard = ({
   title,
+  as: Heading = 'h3',
   desc,
   icon: Icon,
   iconTone,
@@ -86,7 +92,9 @@ export const SectionCard = ({
           </div>
         )}
         <div>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
+          <Heading className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {title}
+          </Heading>
           {desc && <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{desc}</p>}
         </div>
       </div>
