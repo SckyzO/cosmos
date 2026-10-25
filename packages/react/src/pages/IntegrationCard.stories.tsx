@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { IntegrationCard } from './IntegrationCard';
+import { IntegrationCard } from '../data/IntegrationCard';
 
 const meta = {
   title: 'Data/Integration Card',
