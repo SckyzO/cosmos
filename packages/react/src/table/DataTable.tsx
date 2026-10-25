@@ -62,6 +62,10 @@ export type DataTableProps<T> = {
   className?: string;
 };
 
+// The selection and action columns keep these widths whatever the data columns add up to.
+const SELECT_COLUMN_WIDTH = '44px';
+const ACTION_COLUMN_WIDTH = '96px';
+
 const ALIGN_CELL = {
   left: 'text-left',
   right: 'text-right',
@@ -191,6 +195,12 @@ export const DataTable = <T,>({
     () => sortRows(filteredRows, columns, sortKey, sortDir),
     [filteredRows, columns, sortKey, sortDir]
   );
+
+  // In a fixed layout the width the columns leave over is shared among all of them, the selection
+  // and action columns too. When every data column states a width, the first one gives it up and
+  // takes what is left, so those two stay as wide as asked.
+  const firstColumnTakesTheRest =
+    (selectable || Boolean(renderRowAction)) && columns.length > 0 && columns.every((c) => c.width);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -326,11 +336,18 @@ export const DataTable = <T,>({
             className="w-full table-fixed"
           >
             <colgroup>
-              {selectable && <col style={{ width: '44px' }} />}
-              {columns.map((c) => (
-                <col key={c.key} style={c.width ? { width: c.width } : undefined} />
+              {selectable && <col style={{ width: SELECT_COLUMN_WIDTH }} />}
+              {columns.map((c, i) => (
+                <col
+                  key={c.key}
+                  style={
+                    c.width && !(i === 0 && firstColumnTakesTheRest)
+                      ? { width: c.width }
+                      : undefined
+                  }
+                />
               ))}
-              {renderRowAction && <col style={{ width: '8%' }} />}
+              {renderRowAction && <col style={{ width: ACTION_COLUMN_WIDTH }} />}
             </colgroup>
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-gray-100 dark:border-gray-800">
