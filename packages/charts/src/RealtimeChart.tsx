@@ -3,37 +3,39 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/annotations';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { useOptionalValueFormat } from './formatters';
 import { readableOn, useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import type { ChartAxisTitleProps, ChartBaseProps } from './types';
 
-export type RealtimeChartProps = ChartBaseProps & {
-  /** Sample generator — defaults to a noisy walk between 30 and 80. */
-  generator?: () => number;
-  /** Interval in ms — defaults to 2000. */
-  intervalMs?: number;
-  windowSize?: number;
-  /** Bottom of the y axis. Default 0. */
-  min?: number;
-  /** Top of the y axis, above `min`. Default 100. */
-  max?: number;
-  warnThreshold?: number;
-  critThreshold?: number;
-  /** Text of the warning threshold's label. Default `WARN`; an empty string draws the line alone. */
-  warnLabel?: string;
-  /** Text of the critical threshold's label. Default `CRIT`; an empty string draws the line alone. */
-  critLabel?: string;
-  /**
-   * Label the x axis with the time of each sample (`14:03:25`, in local time), and the
-   * tooltip with it. Default off: no x axis.
-   */
-  showTimeAxis?: boolean;
-  /**
-   * Format the y-axis labels and the tooltip values.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
-  formatValue?: (value: number) => string;
-};
+export type RealtimeChartProps = ChartBaseProps &
+  ChartAxisTitleProps & {
+    /** Sample generator — defaults to a noisy walk between 30 and 80. */
+    generator?: () => number;
+    /** Interval in ms — defaults to 2000. */
+    intervalMs?: number;
+    windowSize?: number;
+    /** Bottom of the y axis. Default 0. */
+    min?: number;
+    /** Top of the y axis, above `min`. Default 100. */
+    max?: number;
+    warnThreshold?: number;
+    critThreshold?: number;
+    /** Text of the warning threshold's label. Default `WARN`; an empty string draws the line alone. */
+    warnLabel?: string;
+    /** Text of the critical threshold's label. Default `CRIT`; an empty string draws the line alone. */
+    critLabel?: string;
+    /**
+     * Label the x axis with the time of each sample (`14:03:25`, in local time), and the
+     * tooltip with it, and `xTitle` has an axis to name. Default off: no x axis.
+     */
+    showTimeAxis?: boolean;
+    /**
+     * Format the y-axis labels and the tooltip values.
+     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
+     */
+    formatValue?: (value: number) => string;
+  };
 
 type Sample = { time: number; value: number };
 
@@ -71,6 +73,8 @@ export const RealtimeChart = ({
   warnLabel = 'WARN',
   critLabel = 'CRIT',
   showTimeAxis = false,
+  xTitle,
+  yTitle,
   formatValue,
   ariaLabel,
   apexOptions,
@@ -162,6 +166,7 @@ export const RealtimeChart = ({
     xaxis: showTimeAxis
       ? {
           type: 'datetime',
+          title: axisTitle(xTitle, axisLabels.style.colors),
           labels: { ...axisLabels, datetimeUTC: false, datetimeFormatter: CLOCK_FORMATS },
           axisBorder: { show: false },
           axisTicks: { show: false },
@@ -174,7 +179,12 @@ export const RealtimeChart = ({
           axisTicks: { show: false },
         },
     // One labels object per axis: ApexCharts mutates them.
-    yaxis: { min, max, labels: { ...axisLabels, formatter: format.axis } },
+    yaxis: {
+      min,
+      max,
+      title: axisTitle(yTitle, axisLabels.style.colors),
+      labels: { ...axisLabels, formatter: format.axis },
+    },
     annotations: {
       yaxis: [
         thresholdLine(warnThreshold, warnLabel, statusWarn),

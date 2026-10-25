@@ -2,11 +2,17 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/boxPlot';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { useStableCallback, useValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
 import { tooltipHtml } from './tooltip';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
@@ -15,7 +21,8 @@ export type BoxPlotSummary = [min: number, q1: number, median: number, q3: numbe
 
 export type BoxPlotChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     /** One summary per category, in the order of `categories`. */
     series: { name: string; data: BoxPlotSummary[] }[];
     categories: string[];
@@ -48,6 +55,8 @@ export const BoxPlotChart = ({
   orientation = 'vertical',
   colors,
   formatValue,
+  xTitle,
+  yTitle,
   showLegend,
   legendPosition = 'top',
   emptyMessage,
@@ -101,14 +110,19 @@ export const BoxPlotChart = ({
     fill: { opacity: 0.35 },
     stroke: { width: 1.5, colors: seriesColors },
     grid,
+    // The titles name the axes as drawn, whichever of categories and values each carries.
     xaxis: {
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: horizontal ? valueLabels() : categoryLabels(),
       axisBorder: { show: false },
       axisTicks: { show: false },
       // The x-axis tooltip is HTML and repeats the tooltip title.
       tooltip: { enabled: false },
     },
-    yaxis: { labels: horizontal ? categoryLabels() : valueLabels() },
+    yaxis: {
+      title: axisTitle(yTitle, axisLabels.style.colors),
+      labels: horizontal ? categoryLabels() : valueLabels(),
+    },
     // Horizontal, the value labels sit side by side and run into each other
     // on a phone: keep three of them.
     responsive: horizontal ? [{ breakpoint: 640, options: { xaxis: { tickAmount: 2 } } }] : [],

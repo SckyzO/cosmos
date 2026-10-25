@@ -51,12 +51,13 @@ const hasNoData = (series: unknown): boolean =>
 
 /**
  * What an empty chart draws besides its message: nothing. ApexCharts still
- * lays out a 0–6 axis, a grid and a legend around "No data".
+ * lays out a 0–6 axis, a grid, a legend and the axis titles around "No data".
  */
 const withoutFrame = (options: ApexOptions | undefined): ApexOptions => ({
   grid: { show: false },
   legend: { show: false },
   xaxis: {
+    title: { text: '' },
     labels: { show: false },
     axisBorder: { show: false },
     axisTicks: { show: false },

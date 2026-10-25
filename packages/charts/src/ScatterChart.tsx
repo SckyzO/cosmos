@@ -6,6 +6,7 @@ import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { useMemo } from 'react';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { useStableCallback } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
@@ -126,18 +127,6 @@ const useXYOptions = <P extends ScatterPoint>(
     }
   );
   const points = series.flatMap(({ data }) => data);
-  const axisTitle = (text: string | undefined) =>
-    text === undefined
-      ? undefined
-      : {
-          text,
-          style: {
-            color: axisLabels.style.colors,
-            fontSize: '12px',
-            fontFamily: 'inherit',
-            fontWeight: 500,
-          },
-        };
 
   return {
     chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
@@ -152,7 +141,7 @@ const useXYOptions = <P extends ScatterPoint>(
         points.map(({ x }) => x),
         pad
       ),
-      title: axisTitle(xTitle),
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: { ...axisLabels, formatter: axisFormat.x },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -164,7 +153,7 @@ const useXYOptions = <P extends ScatterPoint>(
         points.map(({ y }) => y),
         pad
       ),
-      title: axisTitle(yTitle),
+      title: axisTitle(yTitle, axisLabels.style.colors),
       labels: { ...axisLabels, formatter: axisFormat.y },
     },
     legend: chartLegend({

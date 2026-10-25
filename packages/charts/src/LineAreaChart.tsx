@@ -2,14 +2,21 @@ import type { ApexOptions } from 'apexcharts';
 import 'apexcharts/line';
 import 'apexcharts/features/legend';
 import { ApexChart } from './ApexChart';
+import { axisTitle } from './axisTitle';
 import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
 import { chartLegend } from './legend';
 import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartBaseProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+} from './types';
 
 export type LineAreaChartProps = ChartBaseProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartAxisTitleProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** Override the default Cosmos palette. */
@@ -28,6 +35,8 @@ export const LineAreaChart = ({
   categories,
   colors,
   formatValue,
+  xTitle,
+  yTitle,
   emptyMessage,
   ariaLabel,
   apexOptions,
@@ -56,11 +65,15 @@ export const LineAreaChart = ({
     // formatter onto it, which blanked the y labels on the next update.
     xaxis: {
       categories,
+      title: axisTitle(xTitle, axisLabels.style.colors),
       labels: { ...axisLabels },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    yaxis: { labels: { ...axisLabels, formatter: format.axis } },
+    yaxis: {
+      title: axisTitle(yTitle, axisLabels.style.colors),
+      labels: { ...axisLabels, formatter: format.axis },
+    },
     legend: chartLegend({
       show: legendVisible,
       position: legendPosition,
