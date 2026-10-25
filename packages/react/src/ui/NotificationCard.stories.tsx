@@ -131,11 +131,11 @@ export const IntentColorsTheIcon: Story = {
   play: async ({ canvas }) => {
     const icon = (title: string) =>
       canvas.getByText(title).closest('[role="status"]')!.querySelector('svg')!;
-    await expect(icon('success card')).toHaveClass('text-green-400');
-    await expect(icon('info card')).toHaveClass('text-blue-400');
-    await expect(icon('warning card')).toHaveClass('text-amber-400');
-    await expect(icon('danger card')).toHaveClass('text-red-400');
-    await expect(icon('default card')).toHaveClass('text-green-400');
+    await expect(icon('success card')).toHaveClass('text-green-500');
+    await expect(icon('info card')).toHaveClass('text-blue-500');
+    await expect(icon('warning card')).toHaveClass('text-amber-500');
+    await expect(icon('danger card')).toHaveClass('text-red-500');
+    await expect(icon('default card')).toHaveClass('text-green-500');
     // Four intents, four glyphs.
     const glyphs = new Set(
       ['success', 'info', 'warning', 'danger'].map((i) => icon(`${i} card`).innerHTML)
