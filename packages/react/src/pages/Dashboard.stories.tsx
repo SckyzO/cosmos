@@ -11,6 +11,7 @@ import {
   Plus,
   RefreshCw,
   Server,
+  ShieldAlert,
   ShieldCheck,
   User,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ import { PageHeader } from '../templates/PageHeader';
 import { Breadcrumb } from '../navigation/Breadcrumb';
 import { SectionCard } from '../templates/SectionCard';
 import { KpiCard } from '../data/KpiCard';
+import { TrendDelta } from '../data/TrendDelta';
 import { Timeline, type TimelineItem } from '../data/Timeline';
 import { PageActionButton } from '../ui/PageActionButton';
 import { Button } from '../ui/Button';
@@ -379,15 +381,35 @@ export const Default: Story = {
 
         {/* KPI row */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard label="Total Racks" value="48" sub="across 3 sites" />
+          <KpiCard
+            label="Total Racks"
+            value="48"
+            sub="across 3 sites"
+            icon={Server}
+            delta={<TrendDelta value={4.3} label="vs last month" />}
+          />
           <KpiCard
             label="CRIT Alerts"
             value="3"
             sub="2 escalated"
-            className="border-red-200 dark:border-red-900/40"
+            icon={ShieldAlert}
+            intent="danger"
+            delta={<TrendDelta value={50} goodDirection="down" label="vs last week" />}
           />
-          <KpiCard label="Health Score" value="94%" />
-          <KpiCard label="Nodes Online" value="1 204" sub="of 1 248 total" />
+          <KpiCard
+            label="Health Score"
+            value="94%"
+            icon={Activity}
+            iconIntent="success"
+            delta={<TrendDelta value={1.2} label="vs last week" />}
+          />
+          <KpiCard
+            label="Nodes Online"
+            value="1 204"
+            sub="of 1 248 total"
+            icon={Network}
+            delta={<TrendDelta value={-0.8} label="vs last week" />}
+          />
         </div>
 
         {/* Mid row : 2/3 charts + 1/3 timeline */}

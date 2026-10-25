@@ -7,6 +7,8 @@ export type SkProps = {
   w?: string;
   /** Tailwind border-radius class — default `rounded`. */
   round?: string;
+  /** Element to render — default `div`; `span` where only phrasing content is allowed (inside a button). */
+  as?: 'div' | 'span';
   className?: string;
 };
 
@@ -20,8 +22,16 @@ export type SkProps = {
  * arrives; a short `role="status"` message ("Loading messages…") announces
  * the wait.
  */
-export const Sk = ({ h = 'h-4', w = 'w-full', round = 'rounded', className }: SkProps) => (
-  <div className={clsx('animate-pulse bg-gray-200 dark:bg-gray-700', h, w, round, className)} />
+export const Sk = ({
+  h = 'h-4',
+  w = 'w-full',
+  round = 'rounded',
+  as: Tag = 'div',
+  className,
+}: SkProps) => (
+  <Tag
+    className={clsx('block animate-pulse bg-gray-200 dark:bg-gray-700', h, w, round, className)}
+  />
 );
 
 export type SkeletonTextProps = {
