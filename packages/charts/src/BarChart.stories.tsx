@@ -22,6 +22,7 @@ import {
   expectLegendsOnTheirSide,
   axisTitles,
   expectAxisTitlesIn,
+  expectTextFollowsTextSize,
 } from './storybook-helpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
@@ -404,6 +405,13 @@ export const LongLabelsAreTrimmed: Story = {
       );
     });
   },
+};
+
+/** The axis labels, the axis title and the legend follow the text size setting. */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MultiSeries.args, xTitle: 'Month' },
+  play: ({ canvasElement }) => expectTextFollowsTextSize(canvasElement),
 };
 
 /** The bars take the default palette of the theme. */

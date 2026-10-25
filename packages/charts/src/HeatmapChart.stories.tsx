@@ -16,6 +16,7 @@ import {
   expectMessageOnly,
   axisTitles,
   expectAxisTitles,
+  expectTextFollowsTextSize,
   contrastRatio,
   switchTheme,
   themeColor,
@@ -257,6 +258,13 @@ export const LowestStepStaysVisibleInDark: Story = {
       }
     }
   },
+};
+
+/** The axis labels, the axis title and the legend follow the text size setting. */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: DAYS, series: rackTemperatures(7, 24), xTitle: 'Day' },
+  play: ({ canvasElement }) => expectTextFollowsTextSize(canvasElement),
 };
 
 /** `legendPosition` puts the legend on each side of the plot. */
