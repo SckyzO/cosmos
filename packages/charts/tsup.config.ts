@@ -9,9 +9,8 @@ const modules = [...readFileSync('src/index.ts', 'utf8').matchAll(/from '\.\/(\w
   .map(([, name]) => name)
   .filter((name) => name !== 'types');
 
-// Each module is an entry, so each wrapper is its own file in dist/ with the
-// ApexCharts engines it imports, and index re-exports those files rather than
-// bundling them. Bundled, esbuild would move the wrappers into chunks and leave
+// Each module is an entry, so each wrapper is its own file in dist/, and index
+// re-exports those files rather than bundling them. Bundled, esbuild would move the wrappers into chunks and leave
 // their entry files as stubs nothing imports.
 const reexportBuiltModules: EsbuildPlugin = {
   name: 'reexport-built-modules',
@@ -25,11 +24,9 @@ const reexportBuiltModules: EsbuildPlugin = {
   },
 };
 
-// Splitting puts the code the wrappers share (ApexChart, theme, formatters…) in
-// chunks, once. With `sideEffects: false` in package.json, a bundler leaves out
-// the files of the wrappers a consumer doesn't import, and their engines with
-// them. The engine imports of the wrappers it keeps stay: apexcharts declares
-// those modules as having side effects.
+// Splitting puts the code the wrappers share (the frame, the colors, the
+// legend…) in chunks, once. With `sideEffects: false` in package.json, a
+// bundler leaves out the files of the wrappers a consumer doesn't import.
 export default defineConfig({
   entry: ['src/index.ts', ...modules.map((name) => `src/${name}.{ts,tsx}`)],
   format: ['esm', 'cjs'],
@@ -41,7 +38,8 @@ export default defineConfig({
   // each file to CJS, so the CJS files mirror the ESM ones.
   splitting: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'apexcharts', 'react-apexcharts'],
+  // `recharts` is a dependency, so tsup leaves it external too.
+  external: ['react', 'react-dom'],
   esbuildPlugins: [reexportBuiltModules],
   // Every entry and chunk is a client module for React Server Components
   // bundlers. After the build: Rollup, which `treeshake` runs, drops an

@@ -11,7 +11,7 @@ describe('SERIES', () => {
     expect(SERIES[7]).toBe('var(--color-chart-8, #84cc16)');
   });
 
-  it('falls back to the default palette of the ApexCharts wrappers', () => {
+  it('falls back to the default palette', () => {
     expect(SERIES_FALLBACKS).toEqual(categoricalPalette(COSMOS_BRAND));
   });
 });

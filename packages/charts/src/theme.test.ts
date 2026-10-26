@@ -18,7 +18,7 @@ const contrast = (a: string, b: string) => {
 
 // The defaults of `--color-success-500`, `--color-warning-500` and
 // `--color-error-500` in packages/theme/css/tailwind-tokens.css: the colors
-// `useChartTheme()` reads in place of the fallbacks of the palette.
+// the charts read in place of the fallbacks of the palette.
 const THEME_STATUS = ['#12b76a', '#f79009', '#f04438'];
 
 const hue = (hex: string) => {

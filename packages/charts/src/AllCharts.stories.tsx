@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { ApexOptions } from 'apexcharts';
 import { useState, type ReactNode } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
@@ -20,10 +19,8 @@ import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
 import {
   HOSTILE,
-  expectLegendMarkersUnstroked,
-  resolveColor,
-  expectNoFrame,
   expectNoInjectedImage,
+  resolveColor,
   switchTheme,
   themeColor,
 } from './storybook-helpers';
@@ -31,10 +28,7 @@ import { tickTexts } from './storybook-recharts';
 import type { ChartEmptyProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper
-// that forgets to pass a prop on to ApexChart drops it without a type error.
-// `LineAreaChart` and `Sparkline` draw with Recharts: they take `children`, not
-// `apexOptions`, and have their own empty state, so the checks of the ApexCharts
-// options leave them out.
+// that forgets to pass a prop on to the frame drops it without a type error.
 
 const CATEGORIES = ['A', 'B', 'C'];
 const TWO_SERIES = [
@@ -48,39 +42,32 @@ const BOX = [
 const RANGE = [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }];
 
 type Chart = {
-  /** Drawn with Recharts: no `apexOptions`, no ApexCharts DOM. */
-  recharts?: true;
-  /** What marks its plot in the DOM, when it is not an SVG drawn by Recharts. */
+  /** What marks its plot in the DOM, when it is not a Recharts SVG. */
   plot?: string;
   /** Drawn with data. */
-  filled: (apexOptions?: ApexOptions) => ReactNode;
+  filled: () => ReactNode;
   /** Drawn with no data, for the wrappers that can have none. */
   empty?: (props: ChartEmptyProps) => ReactNode;
 };
 
 const CHARTS: Record<string, Chart> = {
   LineAreaChart: {
-    recharts: true,
     filled: () => <LineAreaChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <LineAreaChart series={[]} categories={[]} {...props} />,
   },
   BarChart: {
-    recharts: true,
     filled: () => <BarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
-    recharts: true,
     filled: () => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} />,
     empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
   },
   RadialBarChart: {
-    recharts: true,
     filled: () => <RadialBarChart series={[60, 40]} labels={['a', 'b']} />,
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {
-    recharts: true,
     filled: () => (
       <TreemapChart
         series={[
@@ -96,18 +83,15 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <TreemapChart series={[]} {...props} />,
   },
   HeatmapChart: {
-    recharts: true,
     plot: '[role="grid"]',
     filled: () => <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
   },
   RadarChart: {
-    recharts: true,
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
-    recharts: true,
     filled: () => (
       <ScatterChart
         series={[
@@ -124,7 +108,6 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <ScatterChart series={[]} {...props} />,
   },
   BubbleChart: {
-    recharts: true,
     filled: () => (
       <BubbleChart
         series={[
@@ -141,17 +124,14 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BubbleChart series={[]} {...props} />,
   },
   BoxPlotChart: {
-    recharts: true,
     filled: () => <BoxPlotChart series={[{ name: 'a', data: BOX }]} categories={['A', 'B']} />,
     empty: (props) => <BoxPlotChart series={[]} categories={[]} {...props} />,
   },
   RangeBarChart: {
-    recharts: true,
     filled: () => <RangeBarChart series={[{ name: 'a', data: RANGE }]} />,
     empty: (props) => <RangeBarChart series={[]} {...props} />,
   },
   MixedChart: {
-    recharts: true,
     filled: () => (
       <MixedChart
         series={[
@@ -164,31 +144,24 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <MixedChart series={[]} categories={[]} {...props} />,
   },
   Sparkline: {
-    recharts: true,
     filled: () => <Sparkline data={[1, 3, 2, 4]} />,
     empty: (props) => <Sparkline data={[]} {...props} />,
   },
   // Always have data: no empty state.
   GradientRadial: {
-    recharts: true,
     filled: () => <GradientRadial value={84} />,
   },
   SemiCircleGauge: {
-    recharts: true,
     filled: () => <SemiCircleGauge value={42} />,
   },
   StrokedGauge: {
-    recharts: true,
     filled: () => <StrokedGauge value={92} />,
   },
   RealtimeChart: {
-    recharts: true,
     filled: () => <RealtimeChart />,
   },
 };
 
-// The ones that take `apexOptions`.
-const NAMES = Object.keys(CHARTS).filter((name) => !CHARTS[name].recharts);
 const EMPTY_NAMES = Object.keys(CHARTS).filter((name) => CHARTS[name].empty);
 
 const Grid = ({ names, children }: { names: string[]; children: (name: string) => ReactNode }) => (
@@ -211,13 +184,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const noData = (root: HTMLElement, name: string) =>
-  root.querySelector(
-    `[data-chart="${name}"] ${CHARTS[name].recharts ? '[data-chart-empty]' : '.apexcharts-text-nodata'}`
-  );
+  root.querySelector(`[data-chart="${name}"] [data-chart-empty]`);
 
-// The Recharts wrappers draw a plot with an SVG, or with a grid of their own; the ApexCharts ones always draw an SVG.
-const plot = (name: string) =>
-  CHARTS[name].plot ?? (CHARTS[name].recharts ? 'svg.recharts-surface' : '.apexcharts-svg');
+// A wrapper draws its plot with an SVG, or with a grid of its own.
+const plot = (name: string) => CHARTS[name].plot ?? 'svg.recharts-surface';
 
 const expectEveryNoData = (root: HTMLElement, text: string) =>
   waitFor(() =>
@@ -235,7 +205,10 @@ export const EmptyChartsShowTheDefaultMessage: Story = {
   render: () => emptyCharts({}),
   play: async ({ canvasElement }) => {
     await expectEveryNoData(canvasElement, 'No data');
-    await expectNoFrame(canvasElement);
+    // Nothing around the message: no axis, grid line or legend, which are SVG.
+    for (const name of EMPTY_NAMES) {
+      await expect(canvasElement.querySelector(`[data-chart="${name}"] svg`), name).toBeNull();
+    }
   },
 };
 
@@ -250,23 +223,15 @@ export const EmptyStringDrawsNothing: Story = {
   render: () => emptyCharts({ emptyMessage: '' }),
   play: async ({ canvasElement }) => {
     await waitFor(() =>
-      expect(
-        EMPTY_NAMES.filter((name) =>
-          CHARTS[name].recharts
-            ? noData(canvasElement, name) !== null
-            : canvasElement.querySelector(`[data-chart="${name}"] ${plot(name)}`) !== null
-        )
-      ).toEqual(EMPTY_NAMES)
+      expect(EMPTY_NAMES.filter((name) => noData(canvasElement, name) !== null)).toEqual(
+        EMPTY_NAMES
+      )
     );
-    for (const name of EMPTY_NAMES) {
-      const message = noData(canvasElement, name);
-      if (CHARTS[name].recharts) await expect(message).toBeEmptyDOMElement();
-      else await expect(message).toBeNull();
-    }
+    for (const name of EMPTY_NAMES) await expect(noData(canvasElement, name)).toBeEmptyDOMElement();
   },
 };
 
-/** The message is SVG text: markup in it shows as written. */
+/** The message is plain text: markup in it shows as written. */
 export const HtmlInEmptyMessageRendersAsText: Story = {
   render: () => emptyCharts({ emptyMessage: HOSTILE }),
   play: async ({ canvasElement }) => {
@@ -285,16 +250,10 @@ export const EmptyMessageFollowsTheme: Story = {
       try {
         await waitFor(() => {
           const message = (name: string) => noData(canvasElement, name);
-          const fills = EMPTY_NAMES.map((name) =>
-            CHARTS[name].recharts
-              ? resolveColor(getComputedStyle(message(name) as Element).color)
-              : message(name)?.getAttribute('fill')
+          const colors = EMPTY_NAMES.map((name) =>
+            resolveColor(getComputedStyle(message(name) as Element).color)
           );
-          expect(fills).toEqual(
-            EMPTY_NAMES.map((name) =>
-              themeColor(CHARTS[name].recharts ? '--color-text-muted' : '--color-text-secondary')
-            )
-          );
+          expect(colors).toEqual(EMPTY_NAMES.map(() => themeColor('--color-text-muted')));
         });
       } finally {
         restore();
@@ -350,78 +309,5 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
         expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
       });
     }
-  },
-};
-
-// The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES: string[] = [];
-
-/** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
-export const LegendSwatchesHaveNoOutline: Story = {
-  globals: { theme: 'dark' },
-  render: () => (
-    <Grid names={LEGEND_NAMES}>
-      {(name) => CHARTS[name].filled({ legend: { show: true, showForSingleSeries: true } })}
-    </Grid>
-  ),
-  play: async ({ canvasElement }) => {
-    for (const name of LEGEND_NAMES) {
-      const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`)!;
-      await waitFor(() => expect(chart.querySelector('.apexcharts-svg')).not.toBeNull());
-      await expectLegendMarkersUnstroked(chart);
-    }
-  },
-};
-
-const deepFreeze = <T,>(value: T): T => {
-  if (typeof value === 'object' && value !== null) {
-    for (const entry of Object.values(value)) deepFreeze(entry);
-    Object.freeze(value);
-  }
-  return value;
-};
-
-const titles = (root: HTMLElement) =>
-  Object.fromEntries(
-    NAMES.map((name) => [
-      name,
-      root.querySelector(`[data-chart="${name}"] .apexcharts-title-text`)?.textContent,
-    ])
-  );
-
-/** `apexOptions` reaches ApexCharts from every wrapper: here, a title none of them sets. */
-export const ApexOptionsReachEveryChart: Story = {
-  render: () => (
-    <Grid names={NAMES}>{(name) => CHARTS[name].filled({ title: { text: 'Raw title' } })}</Grid>
-  ),
-  play: async ({ canvasElement }) => {
-    await waitFor(() =>
-      expect(titles(canvasElement)).toEqual(
-        Object.fromEntries(NAMES.map((name) => [name, 'Raw title']))
-      )
-    );
-  },
-};
-
-/**
- * ApexCharts writes to the options it is given: every wrapper hands it a copy,
- * so an object that is frozen draws all the same and comes out as it went in.
- */
-export const ApexOptionsAreNotChanged: Story = {
-  render: () => {
-    const options = deepFreeze({
-      title: { text: 'Raw title' },
-      chart: { toolbar: { show: false } },
-      xaxis: { labels: { rotate: 0 } },
-      colors: ['#7c3aed', '#0ea5e9'],
-    });
-    return <Grid names={NAMES}>{(name) => CHARTS[name].filled(options)}</Grid>;
-  },
-  play: async ({ canvasElement }) => {
-    await waitFor(() =>
-      expect(titles(canvasElement)).toEqual(
-        Object.fromEntries(NAMES.map((name) => [name, 'Raw title']))
-      )
-    );
   },
 };
