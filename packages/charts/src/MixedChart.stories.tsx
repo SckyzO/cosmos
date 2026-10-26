@@ -26,6 +26,7 @@ import {
   referenceLineEls,
   resolveColor,
   seriesStrokes,
+  themeColor,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
@@ -186,6 +187,135 @@ export const RightAxisOnly: Story = {
     await waitFor(() => {
       expect(axisTitles(canvasElement)).toEqual({ x: [], y: ['Energy (MWh)'] });
       expect(tickTexts(canvasElement, 'yAxis').length).toBeGreaterThan(1);
+    });
+  },
+};
+
+/**
+ * A series of `type: 'area'` fills under its line, behind the columns: here the
+ * capacity as an area, the traffic as columns and the mean as a line.
+ */
+export const AreaSeries: Story = {
+  args: {
+    categories: WEEKS,
+    series: [
+      { name: 'Capacity', type: 'area', data: INCIDENTS.map((v) => v + 8) },
+      { name: 'Incidents', type: 'column', data: INCIDENTS },
+      { name: '4-week mean', type: 'line', data: ROLLING_4W },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelectorAll('.recharts-area-curve')).toHaveLength(1);
+      expect(canvasElement.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+      expect(barShapes(canvasElement)).toHaveLength(1);
+    });
+    // The area has a gradient fill, in the first color of the palette.
+    const area = canvasElement.querySelector('.recharts-area-area') as Element;
+    await expect(getComputedStyle(area).fill).toMatch(/^url\(/);
+    await expect(resolveColor(seriesStrokes(canvasElement)[0])).toBe(
+      themeColor('--color-brand-500')
+    );
+    // Behind the columns and the line.
+    const layers = [
+      ...canvasElement.querySelectorAll('.recharts-area, .recharts-bar, .recharts-line'),
+    ];
+    await expect(layers[0].classList.contains('recharts-area')).toBe(true);
+  },
+};
+
+/** An area on the right axis reads that axis. */
+export const AreaOnTheRightAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: EVERY_4H,
+    formatRightValue: (v) => `${Math.round(v)} ms`,
+    series: [
+      { name: 'Requests', type: 'column', data: [820, 520, 1810, 2460, 2050, 1050] },
+      { name: 'p95 latency', type: 'area', axis: 'right', data: [112, 104, 164, 205, 158, 119] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelectorAll('.recharts-area-curve')).toHaveLength(1);
+      expect(tickTexts(canvasElement, 'yAxis').some((t) => t?.endsWith(' ms'))).toBe(true);
+    });
+  },
+};
+
+const STACKED_COLUMNS = [
+  { name: 'Reads', type: 'column' as const, data: [30, 24, 36, 28] },
+  { name: 'Writes', type: 'column' as const, data: [12, 10, 14, 11] },
+];
+
+/**
+ * `stackedColumns` piles the column series on each other instead of grouping
+ * them; a line or an area stays free of the stack.
+ */
+export const StackedColumns: Story = {
+  args: {
+    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+    stackedColumns: true,
+    series: [...STACKED_COLUMNS, { name: 'Target', type: 'line', data: [45, 36, 52, 41] }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(reads).toHaveLength(4);
+      expect(writes).toHaveLength(4);
+      // Once the columns have grown.
+      expect(reads[0].height).toBeGreaterThan(20);
+      reads.forEach((read, i) => {
+        // The writes sit on the reads, in the same column.
+        expect(writes[i].bottom).toBeCloseTo(read.top, 0);
+        expect(writes[i].left).toBeCloseTo(read.left, 0);
+      });
+    });
+    // Only the outer segment of a stack is rounded.
+    const [reads, writes] = barShapes(canvasElement);
+    await expect(reads[0].getAttribute('d')).not.toContain('a4,4');
+    await expect(writes[0].getAttribute('d')).toContain('a4,4');
+  },
+};
+
+/** Without `stackedColumns`, the columns are grouped side by side, as before. */
+export const ColumnsAreGroupedByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: ['Q1', 'Q2', 'Q3', 'Q4'], series: STACKED_COLUMNS },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(reads).toHaveLength(4);
+      expect(writes[0].left).toBeGreaterThanOrEqual(reads[0].right - 1);
+      expect(writes[0].bottom).toBeCloseTo(reads[0].bottom, 0);
+    });
+  },
+};
+
+/** The columns of each axis stack apart: two stacks side by side when two axes hold columns. */
+export const StackedColumnsPerAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+    stackedColumns: true,
+    series: [
+      ...STACKED_COLUMNS,
+      { name: 'Latency', type: 'column', axis: 'right', data: [120, 140, 160, 130] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes, latency] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(latency).toHaveLength(4);
+      // Writes sit on reads; the right-axis column rests on the baseline.
+      expect(writes[0].bottom).toBeCloseTo(reads[0].top, 0);
+      expect(latency[0].bottom).toBeCloseTo(reads[0].bottom, 0);
     });
   },
 };
