@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useId, useState } from 'react';
 import { expect } from 'storybook/test';
-import { ProgressBar, type ProgressBarIntent, type ProgressBarSize } from './ProgressBar';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  ProgressBar,
+  type ProgressBarIntent,
+  type ProgressBarSegment,
+  type ProgressBarSize,
+} from './ProgressBar';
 import { SectionLabel } from './SectionLabel';
 
 const meta = {
@@ -189,5 +195,164 @@ export const ClampsOverflow: Story = {
     const bar = canvas.getByRole('progressbar');
     // Value 250/100 → clamps to 100%
     await expect(bar).toHaveAttribute('aria-valuenow', '100');
+  },
+};
+
+// ── Segments ─────────────────────────────────────────────────────────────────
+
+const STORAGE = [
+  { label: 'Documents', value: 40, valueLabel: '40 GB' },
+  { label: 'Images', value: 25, intent: 'success', valueLabel: '25 GB' },
+  { label: 'Backups', value: 15, intent: 'warning', valueLabel: '15 GB' },
+] satisfies ProgressBarSegment[];
+
+// The segment elements of a bar, and the track they share.
+const partsOf = (bar: HTMLElement) =>
+  Array.from(bar.querySelectorAll<HTMLElement>('[data-segment]'));
+
+export const Segments: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <ProgressBar segments={STORAGE} aria-label="Storage by type" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('progressbar', { name: 'Storage by type' });
+    await expect(bar).toHaveAttribute('aria-valuenow', '80');
+    await expect(bar).toHaveAttribute(
+      'aria-valuetext',
+      'Documents 40 GB, Images 25 GB, Backups 15 GB, Free 20'
+    );
+    // Parts share the track in proportion, with a 2px gap between neighbours (and the free room).
+    const [docs, images, backups] = partsOf(bar).map((el) => el.getBoundingClientRect().width);
+    await expect(docs / images).toBeCloseTo(40 / 25, 1);
+    await expect(images / backups).toBeCloseTo(25 / 15, 1);
+    const free = bar.getBoundingClientRect().width - (docs + images + backups) - 3 * 2;
+    await expect(free / docs).toBeCloseTo(20 / 40, 1);
+  },
+};
+
+export const SegmentsWithLegend: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <ProgressBar
+        segments={STORAGE}
+        legend
+        free={{ valueLabel: '20 GB' }}
+        label="outside"
+        aria-label="Storage by type"
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const items = canvas.getAllByRole('listitem').map((li) => li.textContent);
+    await expect(items).toEqual(['Documents40 GB', 'Images25 GB', 'Backups15 GB', 'Free20 GB']);
+    await expect(canvas.getByText('80%')).toBeVisible();
+  },
+};
+
+export const SegmentsSizes: Story = {
+  render: () => (
+    <div className="max-w-md space-y-3">
+      {(['xs', 'sm', 'md', 'lg'] as ProgressBarSize[]).map((s) => (
+        <ProgressBar key={s} segments={STORAGE} size={s} aria-label={`Size ${s}`} />
+      ))}
+    </div>
+  ),
+};
+
+export const SegmentsFullAndOver: Story = {
+  render: () => (
+    <div className="max-w-md space-y-5">
+      <ProgressBar
+        aria-label="Exactly full"
+        legend
+        segments={[
+          { label: 'Used', value: 70 },
+          { label: 'Reserved', value: 30, intent: 'warning' },
+        ]}
+      />
+      <div>
+        <div className="mb-1 flex items-baseline justify-between text-sm">
+          <span className="text-[var(--color-text-muted)]">Budget · over 100%, clamped</span>
+          <span className="font-semibold text-red-700 dark:text-red-400">112%</span>
+        </div>
+        <ProgressBar
+          aria-label="Over budget"
+          size="sm"
+          segments={[
+            { label: 'Planned', value: 70 },
+            { label: 'Unplanned', value: 42, intent: 'danger' },
+          ]}
+        />
+      </div>
+    </div>
+  ),
+};
+
+export const SegmentsClampToMax: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <div className="w-80">
+      <ProgressBar
+        aria-label="Over budget"
+        legend
+        segments={[
+          { label: 'Planned', value: 70 },
+          { label: 'Unplanned', value: 42, intent: 'danger' },
+        ]}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('progressbar');
+    await expect(bar).toHaveAttribute('aria-valuenow', '100');
+    // 70 + 42 is held to 100: the second part is cut to 30, and nothing is left on the track.
+    await expect(bar).toHaveAttribute('aria-valuetext', 'Planned 70, Unplanned 30');
+    const [planned, unplanned] = partsOf(bar).map((el) => el.getBoundingClientRect().width);
+    await expect(planned / unplanned).toBeCloseTo(70 / 30, 1);
+    // The parts and the one gap fill the track exactly: no overflow.
+    await expect(planned + unplanned + 2).toBeCloseTo(bar.getBoundingClientRect().width, 0);
+    await expect(canvas.queryByText('Free')).toBeNull();
+  },
+};
+
+export const SegmentsAreNamedByTheirParts: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <div className="w-80">
+      <ProgressBar
+        aria-label="Seats"
+        segments={[
+          { label: 'Active', value: 72 },
+          { label: 'Invited', value: 12, intent: 'warning' },
+          { label: 'Empty', value: 0 },
+        ]}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('progressbar', { name: 'Seats' });
+    await expect(bar).toHaveAttribute('aria-valuetext', 'Active 72, Invited 12, Empty 0, Free 16');
+    await expect(bar).toHaveAttribute('aria-valuemax', '100');
+    // A part with nothing in it draws nothing.
+    await expect(partsOf(bar)).toHaveLength(2);
+  },
+};
+
+export const SegmentsOnNarrowScreen: Story = {
+  tags: ['!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <ProgressBar
+      segments={STORAGE}
+      legend
+      free={{ valueLabel: '20 GB' }}
+      label="outside"
+      aria-label="Storage by type"
+    />
+  ),
+  play: async () => {
+    expectNoHorizontalOverflow();
   },
 };

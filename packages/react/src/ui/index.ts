@@ -32,6 +32,7 @@ export * from './ButtonGroup';
 export * from './Carousel';
 export * from './Popover';
 export * from './ProgressBar';
+export * from './ProgressRing';
 export * from './Ribbon';
 export * from './Link';
 export * from './List';
