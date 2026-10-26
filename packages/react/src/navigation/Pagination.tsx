@@ -35,6 +35,11 @@ export type PaginationProps = {
   showAll?: boolean;
   /** Called with the mode to switch to. */
   onShowAllChange?: (showAll: boolean) => void;
+  /**
+   * A control that belongs with the paging ones (a rows-per-page select), shown before "Show all"
+   * and the page buttons. The group wraps when the row is too narrow for all of them.
+   */
+  controls?: ReactNode;
   /** Names the landmark. Default `Pagination`; two pagers on one page need distinct names. */
   'aria-label'?: string;
   className?: string;
@@ -58,6 +63,7 @@ export const Pagination = ({
   showEdges = false,
   showAll = false,
   onShowAllChange,
+  controls,
   'aria-label': ariaLabel = 'Pagination',
   className,
 }: PaginationProps) => {
@@ -119,7 +125,13 @@ export const Pagination = ({
       )}
     >
       {infoNode && <span className="text-xs text-gray-500 dark:text-gray-400">{infoNode}</span>}
-      <div className="flex items-center gap-3">
+      <div
+        className={clsx(
+          'flex items-center gap-3',
+          controls && 'max-w-full flex-wrap justify-center'
+        )}
+      >
+        {controls}
         {onShowAllChange && (
           <button
             type="button"

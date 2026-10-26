@@ -165,6 +165,34 @@ export const HamburgerIsHiddenWithoutStateOrHandler: Story = {
   },
 };
 
+/**
+ * `brand`: the product logo right after the hamburger. Outside a Shell it always shows; inside
+ * one it shows only while the sidebar is off screen (see `Layout/Shell` › Mobile).
+ */
+export const WithBrand: Story = {
+  render: () => (
+    <Wrap>
+      <Topbar
+        sidebarCollapsed={false}
+        onCollapsedChange={() => {}}
+        brand={<span className="font-bold tracking-tight">Cosmos</span>}
+        pageTitle="Analytics Dashboard"
+        rightActions={<IconBtn icon={User} label="Profile" />}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const brand = canvas.getByText('Cosmos');
+    await expect(brand).toBeVisible();
+    // Right after the hamburger, before the page title.
+    const hamburger = canvas.getByRole('button', { name: 'Collapse sidebar' });
+    await expect(hamburger.compareDocumentPosition(brand)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    await expect(brand.compareDocumentPosition(canvas.getByText('Analytics Dashboard'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+  },
+};
+
 /** Keyboard order follows the layout: hamburger, left actions, center, right actions. */
 export const SlotsFollowTheLayoutOrder: Story = {
   tags: ['!dev', '!autodocs'],

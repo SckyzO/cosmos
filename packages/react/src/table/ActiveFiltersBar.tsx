@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { X } from 'lucide-react';
+import { Tag } from '../ui/Tag';
 
 export type ActiveFilter = {
   key: string;
@@ -33,29 +33,26 @@ export const ActiveFiltersBar = ({
         className
       )}
     >
-      <span className="text-xs text-gray-500 dark:text-gray-400">Active filters:</span>
+      <span className="text-xs text-gray-600 dark:text-gray-400">Active filters:</span>
       {filters.map((f) => (
-        <span
+        <Tag
           key={f.key}
-          className="border-brand-200 text-brand-600 dark:border-brand-700/50 dark:text-brand-400 flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-xs font-medium dark:bg-gray-900"
+          intent="brand"
+          size="md"
+          onRemove={() => onClearOne(f.key)}
+          removeLabel={`Clear ${f.label} filter`}
         >
           <span className="font-semibold capitalize">{f.label}</span>
-          <span className="text-brand-400">·</span>
-          <span className="max-w-[180px] truncate">{f.value}</span>
-          <button
-            type="button"
-            onClick={() => onClearOne(f.key)}
-            aria-label={`Clear ${f.label} filter`}
-            className="hover:text-brand-800 dark:hover:text-brand-200 focus-visible:focus-indicator ml-0.5 rounded-full"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </span>
+          <span aria-hidden className="opacity-60">
+            {' · '}
+          </span>
+          <span className="inline-block max-w-[180px] truncate align-bottom">{f.value}</span>
+        </Tag>
       ))}
       <button
         type="button"
         onClick={onClearAll}
-        className="focus-visible:focus-indicator ml-1 rounded text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+        className="focus-visible:focus-indicator ml-1 rounded text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Clear all
       </button>

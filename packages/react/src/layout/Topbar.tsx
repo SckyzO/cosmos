@@ -27,6 +27,12 @@ export type TopbarProps = {
    * after the Shell moves, never instead.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
+  /**
+   * The product logo (or name), right after the hamburger. Inside a `Shell` it shows only while
+   * the sidebar is off screen (below `lg`), where `Sidebar.Brand` isn't visible; outside a Shell
+   * it always shows. Keep it compact: it shares the bar with the hamburger and the actions.
+   */
+  brand?: ReactNode;
   /** Extra slot rendered between the hamburger and the page title. */
   leftActions?: ReactNode;
   /** Center area — typically search, breadcrumb, or empty. */
@@ -47,9 +53,10 @@ export type TopbarProps = {
 /**
  * Topbar — application header bar.
  *
- * Layout: [toggle] [leftActions] [pageTitle] [center] [rightActions]
+ * Layout: [toggle] [brand] [leftActions] [pageTitle] [center] [rightActions]
  *
- * The site brand belongs in `<Sidebar.Brand />` — the topbar carries only
+ * The site brand belongs in `<Sidebar.Brand />`; the `brand` prop repeats the logo here while
+ * the sidebar is off screen (below `lg` in a Shell). Otherwise the topbar carries only
  * the sidebar collapse button (a `SidebarToggle`, `hamburger` variant), the
  * current page title, and contextual actions. Matches the rackscope/TailAdmin
  * pattern.
@@ -62,6 +69,7 @@ export const Topbar = ({
   as: TitleTag = 'p',
   sidebarCollapsed,
   onCollapsedChange,
+  brand,
   leftActions,
   center,
   rightActions,
@@ -74,7 +82,8 @@ export const Topbar = ({
   const showToggle =
     sidebarCollapsed !== null &&
     (shell
-      ? shell.collapseControl === 'topbar'
+      ? // Below `lg` the sidebar has no toggle of its own: the hamburger opens its drawer.
+        shell.collapseControl === 'topbar' || shell.isMobile
       : sidebarCollapsed !== undefined && onCollapsedChange !== undefined);
 
   return (
@@ -90,6 +99,10 @@ export const Topbar = ({
           collapsed={shell ? undefined : (sidebarCollapsed ?? undefined)}
           onCollapsedChange={onCollapsedChange}
         />
+      )}
+
+      {brand && (!shell || shell.isMobile) && (
+        <div className="flex min-w-0 shrink items-center">{brand}</div>
       )}
 
       {leftActions}

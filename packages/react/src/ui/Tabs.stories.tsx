@@ -763,3 +763,29 @@ export const MobileVertical: Story = {
     );
   },
 };
+
+export const StripWithNoSelectedTabIsReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Tabs value="" onChange={() => {}}>
+      <Tabs.List>
+        <Tabs.Trigger value="off" disabled>
+          Off
+        </Tabs.Trigger>
+        <Tabs.Trigger value="first">First</Tabs.Trigger>
+        <Tabs.Trigger value="second">Second</Tabs.Trigger>
+      </Tabs.List>
+    </Tabs>
+  ),
+  play: async ({ canvas }) => {
+    const first = canvas.getByRole('tab', { name: 'First' });
+    const second = canvas.getByRole('tab', { name: 'Second' });
+    // No tab is selected: the first enabled one is the strip's tab stop.
+    await expect(canvas.queryAllByRole('tab', { selected: true })).toHaveLength(0);
+    await expect(first).toHaveAttribute('tabindex', '0');
+    await expect(second).toHaveAttribute('tabindex', '-1');
+    await expect(canvas.getByRole('tab', { name: 'Off' })).toHaveAttribute('tabindex', '-1');
+    await userEvent.tab();
+    await expect(first).toHaveFocus();
+  },
+};

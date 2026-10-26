@@ -1,4 +1,5 @@
 import type { ApexOptions } from 'apexcharts';
+import type { ReactNode } from 'react';
 
 export type ChartSeriesPoint = [number, number] | { x: number | string; y: number };
 
@@ -78,3 +79,26 @@ export type ChartRawOptions = {
 
 /** Props every chart wrapper takes. */
 export type ChartBaseProps = ChartSize & ChartAccessibility & ChartRawOptions;
+
+/**
+ * Props every chart wrapper on Recharts takes. `children` replaces the
+ * `apexOptions` of the wrappers still on ApexCharts.
+ */
+export type ChartProps = ChartSize & {
+  /**
+   * Name screen readers read for the chart, such as "CPU usage per hour".
+   * Without it, the chart is named from its type and its series.
+   */
+  ariaLabel?: string;
+  /**
+   * [Recharts](https://recharts.github.io/) elements drawn inside the chart,
+   * after the ones the wrapper builds: a `ReferenceLine` for a threshold, a
+   * `ReferenceArea`, a `Brush`, an extra axis. They read the chart's data and
+   * axes, so a reference line takes a `y` in the units of the series.
+   *
+   * Add `recharts` at the version this package depends on (`3.10.1`): two
+   * copies of it do not share a chart's context. Colors take CSS variables
+   * (`stroke="var(--color-status-warn)"`), which follow the theme.
+   */
+  children?: ReactNode;
+};

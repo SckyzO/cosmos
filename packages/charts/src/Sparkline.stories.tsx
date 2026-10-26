@@ -1,17 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ReferenceLine } from 'recharts';
 import { expect, waitFor } from 'storybook/test';
 import { Sparkline } from './Sparkline';
+import { HOSTILE, expectNoInjectedImage } from './storybook-helpers';
 import {
-  HOSTILE,
   closeTooltip,
-  expectNoInjectedImage,
-  hover,
-  Rerender,
   expectAccessibleChart,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectNoData,
-} from './storybook-helpers';
+  expectEmptyMessage,
+  openTooltip,
+  surface,
+  tooltipCard,
+} from './storybook-recharts';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
 const SERVICES = [
@@ -106,7 +105,7 @@ export const Empty: Story = {
       <Sparkline {...args} />
     </Card>
   ),
-  play: expectNoData('No data'),
+  play: expectEmptyMessage('No data'),
 };
 
 /** `width` and `height` shrink a line sparkline into a table cell. */
@@ -204,42 +203,33 @@ export const TooltipShowsLabelAndFormattedValue: Story = {
   args: { ...TooltipLabelAndFormat.args },
   render: (args) => <Sparkline {...args} />,
   play: async ({ canvasElement }) => {
-    const svg = () => canvasElement.querySelector('.apexcharts-svg');
-    await waitFor(() => {
-      hover(svg() as Element, 0.99);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        'Latency p95: '
-      );
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
-        '179 ms'
-      );
-    });
-    await closeTooltip(canvasElement, svg);
+    await openTooltip(canvasElement, 0.99);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('li')).toHaveTextContent('Latency p95');
+    await expect(card.querySelector('li')).toHaveTextContent('179 ms');
+    // A sparkline has no axis to read a category from: no title.
+    await expect(card.querySelector('p')).toBeNull();
+    await closeTooltip(canvasElement);
   },
 };
 
-/** The tooltip is HTML: the label shows as text. */
+/** The tooltip is React text: the label shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: { label: HOSTILE, variant: 'line' },
   render: (args) => <Sparkline {...args} />,
   play: async ({ canvasElement }) => {
-    const svg = () => canvasElement.querySelector('.apexcharts-svg');
-    await waitFor(() => {
-      hover(svg() as Element, 0.5);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        `${HOSTILE}: `
-      );
-    });
+    await openTooltip(canvasElement, 0.5);
+    await expect(tooltipCard(canvasElement)).toHaveTextContent(HOSTILE);
     await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, svg);
+    await closeTooltip(canvasElement);
   },
 };
 
 // The vertical extent of the line, as a share of the height of the chart.
 const lineSpread = (root: HTMLElement) => {
-  const line = root.querySelector<SVGGraphicsElement>('.apexcharts-line');
-  const svg = root.querySelector('.apexcharts-svg');
+  const line = root.querySelector<SVGGraphicsElement>('.recharts-area-curve');
+  const svg = surface(root);
   return line && svg ? line.getBBox().height / svg.getBoundingClientRect().height : NaN;
 };
 
@@ -267,17 +257,21 @@ export const ScaleCanBePinned: Story = {
   },
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { ...Area.args },
+/** `children` takes Recharts elements: here a `ReferenceLine` at the level to stay under. */
+export const ReferenceLineInChildren: Story = {
+  args: { variant: 'line', data: [120, 130, 110, 150, 160, 170, 165, 184, 176, 168, 181, 179] },
   render: (args) => (
-    <Rerender>{(grown) => <Sparkline {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
+    <Card title="Latency p95">
+      <Sparkline {...args} height={80}>
+        <ReferenceLine y={150} stroke="var(--color-status-warn)" strokeDasharray="4 3" />
+      </Sparkline>
+    </Card>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.recharts-reference-line')).not.toBeNull()
+    );
+  },
 };
 
 /** A sparkline is an image: screen readers read `ariaLabel`, and it stays out of the tab order. */
