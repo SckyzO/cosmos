@@ -51,6 +51,21 @@ export const Disabled: Story = {
   ),
 };
 
+/** `sm` is a 36×20 track with a 16px thumb; `md` (default) keeps 44×24 and 20px. */
+export const Small: Story = {
+  args: { checked: true, size: 'sm', label: 'Weekly digest' },
+  render: (args) => (
+    <Wrap>
+      <div className="space-y-3">
+        <Toggle {...args} />
+        <Toggle {...args} checked={false} label="Muted" />
+        <Toggle {...args} disabled label="Locked" />
+        <Toggle {...args} label="Email alerts" description="Sent once a day." />
+      </div>
+    </Wrap>
+  ),
+};
+
 export const Controlled: Story = {
   render: () => {
     const [on, setOn] = useState(false);
@@ -71,6 +86,76 @@ export const Controlled: Story = {
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
+
+const SIZES = {
+  md: { track: [44, 24], thumb: 20 },
+  sm: { track: [36, 20], thumb: 16 },
+} as const;
+
+/**
+ * The thumb sits 2px from every edge of the track, on and off, in both sizes: measured on the
+ * boxes, not read from the classes.
+ */
+export const ThumbIsCenteredInTheTrack: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-3">
+        {(['md', 'sm'] as const).flatMap((size) =>
+          [true, false].map((on) => (
+            <Toggle
+              key={`${size}-${on}`}
+              size={size}
+              checked={on}
+              onChange={() => {}}
+              label={`${size} ${on ? 'on' : 'off'}`}
+            />
+          ))
+        )}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    for (const size of ['md', 'sm'] as const) {
+      for (const on of [true, false]) {
+        const track = canvas.getByLabelText(`${size} ${on ? 'on' : 'off'}`);
+        const thumb = track.firstElementChild!;
+        const t = track.getBoundingClientRect();
+        const h = thumb.getBoundingClientRect();
+        const { track: dims, thumb: diameter } = SIZES[size];
+        await expect([t.width, t.height]).toEqual(dims);
+        await expect([h.width, h.height]).toEqual([diameter, diameter]);
+        await expect(h.top - t.top).toBeCloseTo(2, 1);
+        await expect(t.bottom - h.bottom).toBeCloseTo(2, 1);
+        await expect(on ? t.right - h.right : h.left - t.left).toBeCloseTo(2, 1);
+        // On travels the whole track: the gap on the other side is the track minus the thumb.
+        await expect(on ? h.left - t.left : t.right - h.right).toBeCloseTo(
+          dims[0] - diameter - 2,
+          1
+        );
+      }
+    }
+  },
+};
+
+/** `sm` keeps the switch role, and a click on its label toggles it. */
+export const SmallKeepsSwitchAndLabelClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { size: 'sm', checked: false, onChange: fn(), label: 'Weekly digest' },
+  play: async ({ args, canvas }) => {
+    const sw = canvas.getByRole('switch', { name: 'Weekly digest' });
+    await expect(sw).toHaveAttribute('aria-checked', 'false');
+    // The label is part of the same <label>: the clickable area is larger than the track.
+    await userEvent.click(canvas.getByText('Weekly digest'));
+    await expect(args.onChange).toHaveBeenCalledWith(true);
+    await expect(sw.closest('label')).toContainElement(canvas.getByText('Weekly digest'));
+    // The pointer target is 24px tall (WCAG 2.5.8) though the track is 20px.
+    const box = sw.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    await expect(document.elementFromPoint(x, box.top - 1.5)).toBe(sw);
+    await expect(document.elementFromPoint(x, box.bottom + 1.5)).toBe(sw);
+  },
+};
 
 export const ClickFiresOnChangeWithNextValue: Story = {
   tags: ['!dev'],

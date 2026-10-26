@@ -382,6 +382,16 @@ export const expectGraphicContrast = (
   expect(contrastRatio(toRgba(getComputedStyle(el)[property]), behind)).toBeGreaterThanOrEqual(min);
 };
 
+/**
+ * Same for two strokes of an SVG, the arc of a ring against its track: WCAG
+ * 1.4.11 asks 3:1 between the part that carries the value and what it sits on.
+ */
+export const expectStrokeContrast = (arc: Element, track: Element, min = 3) => {
+  expect(
+    contrastRatio(toRgba(getComputedStyle(arc).stroke), toRgba(getComputedStyle(track).stroke))
+  ).toBeGreaterThanOrEqual(min);
+};
+
 const THEME_CLASSES = ['sand', 'dark', 'deep-blue'];
 
 /**

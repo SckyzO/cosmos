@@ -663,7 +663,7 @@ export const FolderOutlineKeepsBorderInLight: Story = {
 
 const SECTIONS = ['Overview', 'Metrics', 'Logs', 'Alerts', 'Deployments', 'Settings', 'Billing'];
 
-const ManyTabs = ({ variant }: { variant: 'underline' | 'folder' }) => {
+const ManyTabs = ({ variant }: { variant: 'underline' | 'folder' | 'pills' }) => {
   const [tab, setTab] = useState(SECTIONS[0]);
   return (
     <Wrap>
@@ -788,4 +788,213 @@ export const StripWithNoSelectedTabIsReachable: Story = {
     await userEvent.tab();
     await expect(first).toHaveFocus();
   },
+};
+
+// ── Pills variant ────────────────────────────────────────────────────────────
+
+const PillsDemo = ({
+  orientation,
+  badge,
+  defaultTab = 'overview',
+}: {
+  orientation?: 'horizontal' | 'vertical';
+  badge?: boolean;
+  defaultTab?: string;
+}) => {
+  const [tab, setTab] = useState(defaultTab);
+  return (
+    <Tabs value={tab} onChange={setTab} orientation={orientation} variant="pills">
+      <Tabs.List>
+        <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+        <Tabs.Trigger value="alerts" badge={badge ? '12' : undefined}>
+          Alerts
+        </Tabs.Trigger>
+        <Tabs.Trigger value="billing">Billing</Tabs.Trigger>
+        <Tabs.Trigger value="audit" disabled>
+          Audit
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Panel value="overview">
+        <p className="text-sm text-[var(--color-text-secondary)]">overview-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="alerts">
+        <p className="text-sm text-[var(--color-text-secondary)]">alerts-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="billing">
+        <p className="text-sm text-[var(--color-text-secondary)]">billing-panel-content</p>
+      </Tabs.Panel>
+    </Tabs>
+  );
+};
+
+/** Rounded triggers on a tinted track; the active one is filled with the accent. */
+export const Pills: Story = {
+  render: () => (
+    <Wrap>
+      <PillsDemo />
+    </Wrap>
+  ),
+};
+
+/** The count keeps its small pill: translucent dark on the active tab, so white text holds 4.5:1. */
+export const PillsWithBadge: Story = {
+  render: () => (
+    <Wrap>
+      <PillsDemo badge defaultTab="alerts" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // The count is read with the tab's name.
+    await expect(canvas.getByRole('tab', { name: 'Alerts 12' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+export const PillsVertical: Story = {
+  render: () => {
+    const [tab, setTab] = useState('notifications');
+    return (
+      <Wrap>
+        <Tabs value={tab} onChange={setTab} orientation="vertical" variant="pills">
+          <Tabs.List className="sm:w-44">
+            <Tabs.Trigger value="profile" icon={User}>
+              Profile
+            </Tabs.Trigger>
+            <Tabs.Trigger value="notifications" icon={Bell} badge="3">
+              Notifications
+            </Tabs.Trigger>
+            <Tabs.Trigger value="security" icon={KeyRound}>
+              Security
+            </Tabs.Trigger>
+            <Tabs.Trigger value="billing" disabled>
+              Billing
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Panel value="notifications">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Pick which alerts reach you and through which channels.
+            </p>
+          </Tabs.Panel>
+        </Tabs>
+      </Wrap>
+    );
+  },
+};
+
+export const PillsDisabled: Story = {
+  render: () => (
+    <Wrap>
+      <PillsDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const disabled = canvas.getByRole('tab', { name: 'Audit' });
+    await expect(disabled).toBeDisabled();
+    await expect(getComputedStyle(disabled).color).toBe(colorOf('var(--color-text-muted)'));
+    await userEvent.click(disabled);
+    await expect(disabled).toHaveAttribute('aria-selected', 'false');
+  },
+};
+
+/** The track and the active pill: gray tint behind, the accent fill with white text. */
+export const PillsActiveIsFilled: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <PillsDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const active = canvas.getByRole('tab', { name: 'Overview' });
+    await expect(getComputedStyle(active).backgroundColor).toBe(colorOf('var(--color-brand-500)'));
+    await expect(getComputedStyle(active).color).toBe(colorOf('var(--color-white)'));
+    const idle = canvas.getByRole('tab', { name: 'Billing' });
+    await expect(getComputedStyle(idle).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(canvas.getByRole('tablist')).backgroundColor).not.toBe(
+      'rgba(0, 0, 0, 0)'
+    );
+  },
+};
+
+/** Pills keep the Tabs keyboard model: arrows skip the disabled tab, wrap, Home and End jump. */
+export const PillsArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <PillsDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const alerts = canvas.getByRole('tab', { name: 'Alerts' });
+    const billing = canvas.getByRole('tab', { name: 'Billing' });
+    await userEvent.tab();
+    await expect(overview).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(alerts).toHaveFocus();
+    await expect(alerts).toHaveAttribute('aria-selected', 'true');
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('alerts-panel-content');
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(billing).toHaveFocus();
+    // The disabled tab is skipped: the next stop wraps to the first.
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(overview).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(billing).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(overview).toHaveAttribute('aria-selected', 'true');
+  },
+};
+
+export const PillsVerticalArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <PillsDemo orientation="vertical" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+    await userEvent.tab();
+    await expect(canvas.getByRole('tab', { name: 'Overview' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('tab', { name: 'Alerts' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+/** The active pill sits on the accent, so its ring is the white one with no halo. */
+export const PillsFocusRing: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The ring helper reads rgb() shadows: pinned to the theme whose white is one.
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <PillsDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Overview' }), {
+      token: '--color-white',
+      inset: true,
+      halo: false,
+    });
+    // Arrow keys select on focus: the pill that takes the focus is the active one.
+    await userEvent.keyboard('{ArrowRight}');
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Alerts' }), {
+      token: '--color-white',
+      inset: true,
+      halo: false,
+    });
+  },
+};
+
+export const MobilePills: Story = {
+  globals: mobileViewport,
+  render: () => <ManyTabs variant="pills" />,
+  play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };

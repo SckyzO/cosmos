@@ -116,6 +116,17 @@ Next.js's `Link` takes `href` as it is: `<LinkProvider component={NextLink}>`. W
 nothing changes. A link with `target="_blank"`, a link with no `href` or a bare `#`, and the links in
 chat messages stay a plain `<a>`, and a provider inside another one replaces it for its subtree.
 
+## Variants worth knowing
+
+- `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
+- `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
+- `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
+- `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
+- `PageHeader icon={Plug} iconIntent="brand"`: a decorative icon tile left of the title.
+- `ImageGrid layout="masonry"`: CSS columns, each picture keeping its aspect with its caption under it. Items flow down the first column, then the next; give the images `width` and `height` so the columns don't rebalance as they load.
+- `ConfirmationModal intent="danger" requireText="my-project"`: a red tile and a solid action, disabled until the exact (case-sensitive) text is typed; `requireTextLabel` replaces the label.
+- `SecretValue label="API key" value={key} visibleSuffix={4}`: a stored secret, masked until revealed. While masked the real value is not in the DOM (20 bullets plus the suffix, at most half of the value); the Copy button copies the real value without revealing it. `autoHideAfter` (ms) masks it again.
+
 ## Tables
 
 `DataTable` sorts, filters, searches and paginates its rows. Give it a height
@@ -190,6 +201,39 @@ loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells tak
 (right-aligned, tabular figures). `TableHeaderCell` sets `scope` to `col` in the
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
+
+## Progress
+
+`ProgressBar` shows one value (`value`, `max`, `intent`) or a list of parts
+(`segments`), never both. Each segment has a `value`, a `label` and an `intent`
+you pick yourself; the parts sit 2px apart, and their sum is held to `max`, so
+show the overflow yourself ("112%"). `legend` adds a row of swatch, label and value
+under the bar, with what is left on the track. `aria-valuetext` lists the parts
+("Documents 40, Images 25, Free 35"); `valueLabel` puts a unit on a part.
+
+```tsx
+<ProgressBar
+  aria-label="Storage"
+  legend
+  segments={[
+    { label: 'Documents', value: 40, valueLabel: '40 GB' },
+    { label: 'Images', value: 25, intent: 'success', valueLabel: '25 GB' },
+  ]}
+  free={{ valueLabel: '35 GB' }}
+/>
+```
+
+`ProgressRing` is the same meter as an SVG ring (no dependency): `value`, `max`,
+`intent`, `size` (`sm` 32px, `md` 56px, `lg` 96px, or a number of pixels), `thickness`,
+and `children` for the centre (a value, an icon). It is a `progressbar` too, so name it
+with `aria-label` or `aria-labelledby`; the centre is not read a second time. `indeterminate`
+spins a quarter arc, except under reduced motion.
+
+```tsx
+<ProgressRing aria-label="Course progress" value={68} intent="success">
+  68%
+</ProgressRing>
+```
 
 ## Chat
 
