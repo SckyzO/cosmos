@@ -228,6 +228,8 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 /** The left drawer enters and leaves by the left edge, never the right. */
 export const LeftDrawerStaysOnTheLeft: Story = {
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
@@ -395,6 +397,8 @@ export const ClosedDrawerIsNotFocusable: Story = {
  */
 export const ClosedDrawerIsInvisible: Story = {
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   render: () => {
     const [open, setOpen] = useState(false);
     return (

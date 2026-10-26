@@ -580,6 +580,8 @@ export const HamburgerOpensTheDrawer: Story = {
 export const EscapeClosesAndFocusReturns: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   args: { onSidebarOpenChange: fn() },
   render: (args) => <MobileShell onSidebarOpenChange={args.onSidebarOpenChange} />,
   play: async ({ args }) => {
@@ -597,6 +599,8 @@ export const EscapeClosesAndFocusReturns: Story = {
 export const ScrimCloseButtonAndLinkClose: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   render: () => <MobileShell />,
   play: async () => {
     const hamburger = body().getByRole('button', { name: 'Open navigation' });
@@ -632,6 +636,8 @@ export const ScrimCloseButtonAndLinkClose: Story = {
 export const BodyScrollIsLockedWhileOpen: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   render: () => <MobileShell />,
   play: async () => {
     await expect(document.body.style.overflow).toBe('');
@@ -647,6 +653,8 @@ export const BodyScrollIsLockedWhileOpen: Story = {
 export const SwipeLeftClosesTheDrawer: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
   render: () => <MobileShell />,
   play: async () => {
     const touch = (clientX: number) => ({

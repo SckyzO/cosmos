@@ -903,6 +903,8 @@ export const CollapsedWidthIgnoresTheContent: Story = {
 /** The width measured at mount shows at once: the sidebar does not grow from `width` on load. */
 export const FirstWidthShowsWithoutATransition: Story = {
   tags: ['!dev', '!autodocs'],
+  // The story is about the transition: keep it in the story tests.
+  parameters: { settleMotion: false },
   render: () => {
     const [shown, setShown] = useState(false);
     return (
