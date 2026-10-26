@@ -44,5 +44,6 @@ export * from './AnnouncementBar';
 export * from './CookieBanner';
 export * from './CommandPalette';
 export * from './Clipboard';
+export * from './SecretValue';
 export * from './BackToTopFab';
 export * from './HelpOverlay';
