@@ -26,7 +26,7 @@ export const AllVariants: Story = {
     <Wrap>
       <SectionCard title="Intents × sizes">
         <div className="space-y-3">
-          {(['sm', 'md'] as const).map((size) => (
+          {(['sm', 'md', 'lg'] as const).map((size) => (
             <div key={size} className="flex flex-wrap items-center gap-2">
               <span className="w-6 font-mono text-[10px] text-[var(--color-text-muted)] uppercase">
                 {size}
@@ -153,6 +153,59 @@ export const SolidWithIcon: Story = {
 };
 
 const INTENTS: Intent[] = ['neutral', 'brand', 'success', 'warning', 'danger', 'info'];
+
+export const Sizes: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Sizes: sm, md (default) and lg">
+        <div className="flex flex-wrap items-center gap-2">
+          {(['sm', 'md', 'lg'] as const).map((size) => (
+            <Badge key={size} size={size} intent="brand" icon={Zap}>
+              {size}
+            </Badge>
+          ))}
+          {(['sm', 'md', 'lg'] as const).map((size) => (
+            <Badge key={size} size={size} appearance="outline" intent="success">
+              {size}
+            </Badge>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+export const Shapes: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Shapes: pill (default) and rounded">
+        <div className="space-y-3">
+          {(['pill', 'rounded'] as const).map((shape) => (
+            <div key={shape} className="flex flex-wrap items-center gap-2">
+              <span className="text-3xs w-14 font-mono text-[var(--color-text-muted)] uppercase">
+                {shape}
+              </span>
+              {(['sm', 'md', 'lg'] as const).map((size) => (
+                <Badge key={size} shape={shape} size={size} intent="info">
+                  {size}
+                </Badge>
+              ))}
+              <Badge shape={shape} appearance="solid" intent="danger" icon={X}>
+                Failed
+              </Badge>
+              <Badge shape={shape} appearance="outline" intent="success" icon={Check}>
+                Verified
+              </Badge>
+              <Badge shape={shape} appearance="dot" intent="warning">
+                Pending
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
 
 export const Outline: Story = {
   render: () => (
@@ -347,5 +400,87 @@ export const NeutralBadgeShowsOnACardSurface: Story = {
       expect(fill).not.toBe(getComputedStyle(surface).backgroundColor);
       expect(fill).not.toBe('rgba(0, 0, 0, 0)');
     });
+  },
+};
+
+// A badge is the span that holds the label's own span.
+const badgeOf = (label: Node | null | HTMLElement) => (label as HTMLElement).parentElement!;
+const px = (value: string) => parseFloat(value);
+
+/** `lg` is px-3 py-1 with larger text, taller than `md`, and `md` stays the default. */
+export const LargeBadgeIsTheBiggestSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge size="sm">sm</Badge>
+        <Badge>default</Badge>
+        <Badge size="md">md</Badge>
+        <Badge size="lg">lg</Badge>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const [sm, def, md, lg] = ['sm', 'default', 'md', 'lg'].map((t) =>
+      badgeOf(canvas.getByText(t))
+    );
+    const lgStyle = getComputedStyle(lg);
+    await expect(px(lgStyle.paddingLeft)).toBe(12);
+    await expect(px(lgStyle.paddingTop)).toBe(4);
+    await expect(px(lgStyle.fontSize)).toBeGreaterThan(px(getComputedStyle(md).fontSize));
+    await expect(lg.getBoundingClientRect().height).toBeGreaterThan(
+      md.getBoundingClientRect().height
+    );
+    await expect(md.getBoundingClientRect().height).toBeGreaterThan(
+      sm.getBoundingClientRect().height
+    );
+    // No size is still `md`.
+    await expect(def.className).toBe(md.className);
+    await expect(def.getBoundingClientRect().height).toBe(md.getBoundingClientRect().height);
+  },
+};
+
+/** `rounded` squares the corners to `rounded-md`; the default stays a full pill, at every size. */
+export const RoundedShapeKeepsThePillDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-2">
+        {(['sm', 'md', 'lg'] as const).map((size) => (
+          <Badge key={size} size={size}>
+            {`${size} default`}
+          </Badge>
+        ))}
+        {(['sm', 'md', 'lg'] as const).map((size) => (
+          <Badge key={size} size={size} shape="rounded">
+            {`${size} rounded`}
+          </Badge>
+        ))}
+        <Badge shape="pill">explicit pill</Badge>
+        <Badge shape="rounded" appearance="dot" intent="danger">
+          dot rounded
+        </Badge>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const radius = (el: HTMLElement) => px(getComputedStyle(el).borderTopLeftRadius);
+    const probe = document.createElement('span');
+    probe.className = 'rounded-md';
+    document.body.append(probe);
+    const roundedMd = radius(probe);
+    probe.remove();
+    for (const size of ['sm', 'md', 'lg']) {
+      const pill = badgeOf(canvas.getByText(`${size} default`));
+      const rounded = badgeOf(canvas.getByText(`${size} rounded`));
+      // A pill's radius is at least half its height: the ends are fully round.
+      await expect(radius(pill)).toBeGreaterThanOrEqual(pill.getBoundingClientRect().height / 2);
+      await expect(radius(rounded)).toBe(roundedMd);
+      await expect(radius(rounded)).toBeLessThan(rounded.getBoundingClientRect().height / 2);
+    }
+    await expect(radius(badgeOf(canvas.getByText('explicit pill')))).toBe(
+      radius(badgeOf(canvas.getByText('md default')))
+    );
+    await expect(radius(badgeOf(canvas.getByText('dot rounded')))).toBe(roundedMd);
   },
 };

@@ -4,13 +4,16 @@ import type { Intent } from './intent';
 
 export type RibbonPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type RibbonIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'neutral'>;
-export type RibbonShape = 'flat' | 'angled';
+export type RibbonShape = 'flat' | 'angled' | 'pill';
 
 export type RibbonProps = {
   /** Corner of the parent to anchor to. Parent must be `position: relative` (and `overflow-hidden` for `angled`). */
   position?: RibbonPosition;
   intent?: RibbonIntent;
-  /** `flat` = rectangle hugging the corner. `angled` = 45° diagonal banner across the corner. */
+  /**
+   * `flat` = rectangle hugging the corner. `angled` = 45° diagonal banner across the corner.
+   * `pill` = fully rounded label set inside the card, 12px from the corner of its `position`.
+   */
   shape?: RibbonShape;
   children: ReactNode;
   className?: string;
@@ -43,6 +46,14 @@ const ANGLED_POSITION: Record<RibbonPosition, string> = {
   'bottom-left': 'bottom-5 -left-12 rotate-45',
 };
 
+// `pill`: a label set in the card, 12px from the corner, not stuck to it.
+const PILL_POSITION: Record<RibbonPosition, string> = {
+  'top-right': 'top-3 right-3',
+  'top-left': 'top-3 left-3',
+  'bottom-right': 'bottom-3 right-3',
+  'bottom-left': 'bottom-3 left-3',
+};
+
 export const Ribbon = ({
   position = 'top-right',
   intent = 'brand',
@@ -57,6 +68,20 @@ export const Ribbon = ({
           'text-2xs absolute z-10 w-40 px-2 py-1 text-center font-bold tracking-wide uppercase shadow-md',
           INTENT_BG[intent],
           ANGLED_POSITION[position],
+          className
+        )}
+      >
+        {children}
+      </span>
+    );
+  }
+  if (shape === 'pill') {
+    return (
+      <span
+        className={clsx(
+          'text-2xs absolute z-10 rounded-full px-2.5 py-1 font-bold tracking-wide uppercase shadow',
+          INTENT_BG[intent],
+          PILL_POSITION[position],
           className
         )}
       >

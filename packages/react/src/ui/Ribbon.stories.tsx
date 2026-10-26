@@ -87,6 +87,52 @@ export const AngledPositions: Story = {
   ),
 };
 
+export const Pill: Story = {
+  render: () => (
+    <Card>
+      <Ribbon shape="pill" intent="success">
+        NEW
+      </Ribbon>
+    </Card>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '`shape="pill"` is a fully rounded label set inside the card, 12px from the corner of its `position`. `flat` and `angled` stay stuck to the corner.',
+      },
+    },
+  },
+};
+
+export const PillPositions: Story = {
+  render: () => (
+    <div className="grid grid-cols-2 gap-6">
+      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+        <Card key={pos}>
+          <Ribbon shape="pill" position={pos} intent="brand">
+            {pos}
+          </Ribbon>
+        </Card>
+      ))}
+    </div>
+  ),
+};
+
+export const PillIntents: Story = {
+  render: () => (
+    <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+      {(['brand', 'success', 'warning', 'danger', 'neutral'] as RibbonIntent[]).map((i) => (
+        <Card key={i}>
+          <Ribbon shape="pill" intent={i}>
+            {i}
+          </Ribbon>
+        </Card>
+      ))}
+    </div>
+  ),
+};
+
 export const OnImage: Story = {
   render: () => (
     <div className="relative h-44 w-64 overflow-hidden rounded-xl shadow-sm">
@@ -140,5 +186,91 @@ export const FollowsCardRadius: Story = {
     await expect(getComputedStyle(ribbon).borderTopRightRadius).toBe(
       getComputedStyle(card).borderTopRightRadius
     );
+  },
+};
+
+const INSET: Record<RibbonPosition, [side: 'left' | 'right', edge: 'top' | 'bottom']> = {
+  'top-left': ['left', 'top'],
+  'top-right': ['right', 'top'],
+  'bottom-left': ['left', 'bottom'],
+  'bottom-right': ['right', 'bottom'],
+};
+
+/** A `pill` ribbon sits 12px from the corner of its position, and is fully rounded. */
+export const PillSitsInsideTheCorner: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid grid-cols-2 gap-6">
+      {(Object.keys(INSET) as RibbonPosition[]).map((pos) => (
+        <Card key={pos}>
+          <Ribbon shape="pill" position={pos} intent="danger">
+            {`${pos} pill`}
+          </Ribbon>
+        </Card>
+      ))}
+      <Card>
+        <Ribbon shape="flat" intent="danger">
+          flat
+        </Ribbon>
+      </Card>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const pos of Object.keys(INSET) as RibbonPosition[]) {
+      const ribbon = canvas.getByText(`${pos} pill`);
+      const card = ribbon.parentElement as HTMLElement;
+      const cardBox = card.getBoundingClientRect();
+      const box = ribbon.getBoundingClientRect();
+      const style = getComputedStyle(card);
+      // An absolute box is placed from the padding edge, inside the border.
+      const [side, edge] = INSET[pos];
+      const fromSide =
+        side === 'left'
+          ? box.left - (cardBox.left + parseFloat(style.borderLeftWidth))
+          : cardBox.right - parseFloat(style.borderRightWidth) - box.right;
+      const fromEdge =
+        edge === 'top'
+          ? box.top - (cardBox.top + parseFloat(style.borderTopWidth))
+          : cardBox.bottom - parseFloat(style.borderBottomWidth) - box.bottom;
+      await expect(fromSide).toBeCloseTo(12, 0);
+      await expect(fromEdge).toBeCloseTo(12, 0);
+      // Fully rounded: the radius is at least half the height.
+      await expect(parseFloat(getComputedStyle(ribbon).borderTopLeftRadius)).toBeGreaterThanOrEqual(
+        box.height / 2
+      );
+    }
+    // The flat ribbon still hugs the corner.
+    const flat = canvas.getByText('flat');
+    const flatCard = flat.parentElement as HTMLElement;
+    await expect(
+      flatCard.getBoundingClientRect().right - flat.getBoundingClientRect().right
+    ).toBeLessThan(12);
+  },
+};
+
+/** A `pill` ribbon keeps the solid fill of its intent, as the other shapes do. */
+export const PillKeepsTheIntentFill: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid grid-cols-2 gap-6">
+      {(['brand', 'success', 'warning', 'danger', 'neutral'] as RibbonIntent[]).map((i) => (
+        <Card key={i}>
+          <Ribbon shape="pill" intent={i}>
+            {`${i} pill`}
+          </Ribbon>
+          <Ribbon shape="flat" intent={i} position="bottom-left">
+            {`${i} flat`}
+          </Ribbon>
+        </Card>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const intent of ['brand', 'success', 'warning', 'danger', 'neutral']) {
+      const pill = getComputedStyle(canvas.getByText(`${intent} pill`));
+      const flat = getComputedStyle(canvas.getByText(`${intent} flat`));
+      await expect(pill.backgroundColor).toBe(flat.backgroundColor);
+      await expect(pill.color).toBe(flat.color);
+    }
   },
 };

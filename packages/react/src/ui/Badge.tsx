@@ -2,14 +2,18 @@ import { clsx } from 'clsx';
 import type { ElementType, ReactNode } from 'react';
 import type { Intent } from './intent';
 
-export type BadgeSize = 'sm' | 'md';
+export type BadgeSize = 'sm' | 'md' | 'lg';
+export type BadgeShape = 'pill' | 'rounded';
 export type BadgeAppearance = 'light' | 'solid' | 'outline' | 'dot';
 
 export type BadgeProps = {
   children: ReactNode;
   /** Color of the badge. Default `neutral`. */
   intent?: Intent;
+  /** `sm`, `md` (default) or `lg`, the largest, for a badge that has to carry weight next to a heading. */
   size?: BadgeSize;
+  /** Corners. `pill` (default) is fully rounded; `rounded` is a rounded rectangle (`rounded-md`), for a tag-like badge. */
+  shape?: BadgeShape;
   /**
    * Visual style. `light` (default) = soft tinted bg + colored text. `solid` =
    * filled bg: white text, dark text on the bright `success` and `warning` fills. `outline` =
@@ -66,17 +70,25 @@ const INTENT_SOLID: Record<Intent, string> = {
 const SIZE_CLASS: Record<BadgeSize, string> = {
   sm: 'px-1.5 py-0.5 text-3xs gap-1',
   md: 'px-2 py-0.5 text-xs gap-1.5',
+  lg: 'px-3 py-1 text-sm gap-1.5',
+};
+
+const SHAPE_CLASS: Record<BadgeShape, string> = {
+  pill: 'rounded-full',
+  rounded: 'rounded-md',
 };
 
 const ICON_SIZE: Record<BadgeSize, string> = {
   sm: 'h-2.5 w-2.5',
   md: 'h-3 w-3',
+  lg: 'h-3.5 w-3.5',
 };
 
 export const Badge = ({
   children,
   intent = 'neutral',
   size = 'md',
+  shape = 'pill',
   appearance = 'light',
   icon: Icon,
   iconPosition = 'left',
@@ -94,7 +106,8 @@ export const Badge = ({
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full font-semibold',
+        'inline-flex items-center font-semibold',
+        SHAPE_CLASS[shape],
         intentClass,
         SIZE_CLASS[size],
         className

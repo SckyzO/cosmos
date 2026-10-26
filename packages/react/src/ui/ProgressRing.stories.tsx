@@ -24,7 +24,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const INTENTS: ProgressBarIntent[] = ['brand', 'success', 'warning', 'danger'];
+const INTENTS: ProgressBarIntent[] = ['neutral', 'brand', 'success', 'warning', 'danger'];
 
 export const Default: Story = {};
 

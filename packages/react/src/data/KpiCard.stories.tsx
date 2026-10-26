@@ -10,6 +10,7 @@ import {
   expectTextContrast,
   mobileViewport,
 } from '../storybook-helpers';
+import { ProgressBar } from '../ui/ProgressBar';
 import { KpiCard } from './KpiCard';
 import { TrendDelta } from './TrendDelta';
 
@@ -103,6 +104,65 @@ export const ChartSlot: Story = {
     icon: Server,
     delta: <TrendDelta value={8.2} label="vs last week" />,
     chart: <MiniLine />,
+  },
+};
+
+/**
+ * A goal with a bar: the `chart` slot takes a `ProgressBar`, full width under the delta. `neutral`
+ * is for a gauge that means nothing, like space used; the accent for a goal being reached.
+ */
+export const WithProgress: Story = {
+  render: () => (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div data-testid="goal">
+        <KpiCard
+          label="Monthly goal"
+          value="$38 400"
+          sub="of $50 000"
+          icon={CreditCard}
+          delta={<TrendDelta value={9.6} label="vs last month" />}
+          chart={<ProgressBar value={77} size="sm" label="outside" aria-label="Monthly goal" />}
+        />
+      </div>
+      <div data-testid="storage">
+        <KpiCard
+          label="Storage"
+          value="640 GB"
+          sub="of 1 TB"
+          icon={Server}
+          chart={
+            <ProgressBar
+              value={64}
+              size="sm"
+              intent="neutral"
+              label="outside"
+              aria-label="Storage"
+            />
+          }
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const [testId, name, now] of [
+      ['goal', 'Monthly goal', '77'],
+      ['storage', 'Storage', '64'],
+    ] as const) {
+      const card = canvas.getByTestId(testId).firstElementChild as HTMLElement;
+      const bar = canvas.getByRole('progressbar', { name });
+      await expect(bar).toHaveAttribute('aria-valuenow', now);
+      // The bar's row takes the card's whole content width, under the value and the sub line.
+      const style = getComputedStyle(card);
+      const box = card.getBoundingClientRect();
+      const row = bar.parentElement!.getBoundingClientRect();
+      const left = box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+      const right = box.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
+      await expect(row.left).toBeCloseTo(left, 0);
+      await expect(row.right).toBeCloseTo(right, 0);
+      await expect(row.top).toBeGreaterThanOrEqual(
+        within(card).getByText(/^of /).getBoundingClientRect().bottom
+      );
+    }
   },
 };
 

@@ -37,6 +37,7 @@ const SIZE_THICKNESS: Record<ProgressRingSize, number> = { sm: 4, md: 6, lg: 9 }
 
 // Darker than the bar's fills on the light themes: a thin arc has to keep 3:1 against its track.
 const INTENT_STROKE: Record<ProgressRingIntent, string> = {
+  neutral: 'stroke-gray-500 dark:stroke-gray-400',
   brand: 'stroke-brand-500',
   success: 'stroke-green-700 dark:stroke-green-500',
   warning: 'stroke-amber-700 dark:stroke-amber-500',

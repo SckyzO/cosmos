@@ -215,12 +215,45 @@ const CarouselControls = ({
 
 // ── Indicators (dots) ────────────────────────────────────────────────────────
 
-export type CarouselIndicatorsProps = { className?: string };
+export type CarouselIndicatorsProps = {
+  /**
+   * Place the dots. `outside` puts them under the slide (default); `inside` sets them at the
+   * bottom center of the carousel, 12px from the edge, on a dark pill that keeps them readable
+   * over any image. `inside` is measured from the bottom of the carousel, so keep `outside` when
+   * `Carousel.Controls` is `outside` too: its row sits under the slide, and the dots would
+   * land on it.
+   */
+  position?: 'inside' | 'outside';
+  className?: string;
+};
 
-const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
+// Over a slide the dots read against their own pill, not the page: white on 50% black holds 3.95:1
+// for the active dot even over a white image. They only count the slides; the state is carried by
+// the wide active dot and `aria-current`. Tailwind scans for whole class names, so each is written out.
+const INDICATORS_CLASS = {
+  outside: 'mt-3',
+  inside: 'absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-2',
+} as const;
+
+const INDICATOR_FOCUS = {
+  outside: 'focus-visible:focus-indicator',
+  inside: 'focus-visible:focus-indicator-on-accent',
+} as const;
+
+const DOT_CLASS = {
+  outside: { active: 'bg-brand-500', idle: 'bg-gray-300 dark:bg-gray-600' },
+  inside: { active: 'bg-white', idle: 'bg-white/60' },
+} as const;
+
+const CarouselIndicators = ({ position = 'outside', className }: CarouselIndicatorsProps) => {
   const { snapCount, selectedIndex, scrollTo } = useCtx();
+  // Before the carousel has measured its slides there is nothing to count: an empty pill would
+  // flash over the slide.
+  if (position === 'inside' && snapCount === 0) return null;
   return (
-    <div className={clsx('mt-3 flex items-center justify-center', className)}>
+    <div
+      className={clsx('flex items-center justify-center', INDICATORS_CLASS[position], className)}
+    >
       {Array.from({ length: snapCount }, (_, i) => {
         const active = i === selectedIndex;
         return (
@@ -231,12 +264,16 @@ const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
             aria-current={active}
             onClick={() => scrollTo(i)}
             // The button is the 24px touch target; the dot inside it stays small.
-            className="focus-visible:focus-indicator flex h-6 min-w-6 items-center justify-center rounded-full"
+            className={clsx(
+              'flex h-6 min-w-6 items-center justify-center rounded-full',
+              INDICATOR_FOCUS[position]
+            )}
           >
             <span
               className={clsx(
                 'h-2 rounded-full transition-all',
-                active ? 'bg-brand-500 w-6' : 'w-2 bg-gray-300 dark:bg-gray-600'
+                active ? 'w-6' : 'w-2',
+                DOT_CLASS[position][active ? 'active' : 'idle']
               )}
             />
           </button>
