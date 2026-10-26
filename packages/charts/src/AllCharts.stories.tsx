@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
 import { BoxPlotChart } from './BoxPlotChart';
+import { BumpChart } from './BumpChart';
 import { CalendarChart } from './CalendarChart';
 import { DonutChart } from './DonutChart';
 import { GradientRadial } from './GradientRadial';
@@ -35,6 +36,10 @@ const CATEGORIES = ['A', 'B', 'C'];
 const TWO_SERIES = [
   { name: 'a', data: [3, 5, 4] },
   { name: 'b', data: [4, 2, 5] },
+];
+const RANKS = [
+  { name: 'a', data: ['A', 'B', 'C'].map((x, i) => ({ x, rank: [1, 2, 1][i] })) },
+  { name: 'b', data: ['A', 'B', 'C'].map((x, i) => ({ x, rank: [2, 1, 2][i] })) },
 ];
 const BOX = [
   [1, 2, 3, 4, 5],
@@ -100,6 +105,10 @@ const CHARTS: Record<string, Chart> = {
       />
     ),
     empty: (props) => <CalendarChart data={[]} {...props} />,
+  },
+  BumpChart: {
+    filled: () => <BumpChart series={RANKS} />,
+    empty: (props) => <BumpChart series={[]} {...props} />,
   },
   RadarChart: {
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
