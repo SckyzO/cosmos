@@ -2,6 +2,7 @@ export type { Intent } from './intent';
 export * from './Button';
 export * from './Card';
 export * from './Badge';
+export * from './Tag';
 export * from './Avatar';
 export * from './AvatarGroup';
 export * from './Tooltip';
