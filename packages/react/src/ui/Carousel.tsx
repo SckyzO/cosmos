@@ -3,9 +3,12 @@ import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 import {
+  Children,
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
@@ -243,6 +246,72 @@ const CarouselIndicators = ({ className }: CarouselIndicatorsProps) => {
   );
 };
 
+// ── Thumbnails (a strip of buttons, one per slide) ───────────────────────────
+
+export type CarouselThumbnailsProps = {
+  /**
+   * One node per slide, usually a small `<img>`, matched to the slides by index. The button
+   * carries the name ("Go to slide N"), so an image takes `alt=""` unless it says more.
+   */
+  children: ReactNode;
+  /** Accessible name of the strip. Default "Slide thumbnails". */
+  label?: string;
+  className?: string;
+};
+
+const CarouselThumbnails = ({
+  children,
+  label = 'Slide thumbnails',
+  className,
+}: CarouselThumbnailsProps) => {
+  const { selectedIndex, scrollTo } = useCtx();
+  const strip = useRef<HTMLDivElement>(null);
+  // Not on mount: scrolling the first thumbnail into view could scroll the page to it. A plain
+  // scrolling row, no second Embla instance.
+  const shown = useRef(selectedIndex);
+  useEffect(() => {
+    if (shown.current === selectedIndex) return;
+    shown.current = selectedIndex;
+    strip.current
+      ?.querySelector('[aria-current="true"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [selectedIndex]);
+  return (
+    <div
+      ref={strip}
+      role="group"
+      aria-label={label}
+      // The padding leaves room for the selected ring and its halo, which the scroll container
+      // would clip.
+      className={clsx(
+        'mt-3 flex gap-2 overflow-x-auto p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        className
+      )}
+    >
+      {Children.toArray(children).map((thumb, i) => {
+        const active = i === selectedIndex;
+        return (
+          <button
+            key={i}
+            type="button"
+            aria-label={`Go to slide ${i + 1}`}
+            aria-current={active}
+            onClick={() => scrollTo(i)}
+            className={clsx(
+              'focus-visible:focus-indicator h-14 w-19 shrink-0 overflow-hidden rounded-lg transition-opacity [&_img]:h-full [&_img]:w-full [&_img]:object-cover',
+              active
+                ? 'ring-brand-500 ring-2 ring-offset-2 ring-offset-[var(--color-bg-panel)]'
+                : 'opacity-70 hover:opacity-100'
+            )}
+          >
+            {thumb}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 // ── Compound export ──────────────────────────────────────────────────────────
 
 export const Carousel = Object.assign(CarouselRoot, {
@@ -250,4 +319,5 @@ export const Carousel = Object.assign(CarouselRoot, {
   Slide: CarouselSlide,
   Controls: CarouselControls,
   Indicators: CarouselIndicators,
+  Thumbnails: CarouselThumbnails,
 });
