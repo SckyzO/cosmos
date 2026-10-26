@@ -259,6 +259,11 @@ Several settings look removable but are not. They carry explanatory comments; re
   story in `error` mode, and fails a listed story whose violations differ from its entry, so the
   list only shrinks. `contrastPassAnnotations` comes last in that array: with `A11Y_THEME` set it
   renders every story in that theme and runs `color-contrast` alone, with no todo list.
+  The same file raises `asyncUtilTimeout` to 3 s and injects a style, per story, that sets
+  transition and animation durations to 0 s (`parameters: { settleMotion: false }` opts out): a
+  0 s transition never fires `transitionend` nor shows in `getAnimations()`, so a story about the
+  Drawer's slide or a sidebar width transition opts out. Never give a story a `timeout` of its own
+  for a slow machine.
   `./devctl run pnpm --filter '@cosmos/storybook' a11y:todo` rewrites it from a full run (a filtered
   run writes nothing); its diff must only remove lines. `vitest.config.ts` pre-bundles
   `@storybook/addon-a11y/preview` (`optimizeDeps`), or Vite reloads mid-run.
