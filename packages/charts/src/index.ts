@@ -20,3 +20,4 @@ export * from './MixedChart';
 export * from './BumpChart';
 export * from './FunnelChart';
 export * from './WaterfallChart';
+export * from './WorldMap';
