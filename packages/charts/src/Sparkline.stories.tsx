@@ -281,3 +281,142 @@ export const NamedImage: Story = {
   args: { ariaLabel: 'Requests per second, last hour' },
   play: expectAccessibleChart({ keyboard: false }),
 };
+
+// ── Bar variant ──────────────────────────────────────────────────────────────
+
+const MIXED = [3, 5, -2, 4, -4, 6, 2, -1, 5, 7, -3, 4];
+
+/** Narrow columns in the accent, on a scale that starts at zero. */
+export const Bar: Story = {
+  args: { variant: 'bar', data: REQUESTS },
+  render: (args) => (
+    <Card title="Requests/s">
+      <Sparkline {...args} />
+    </Card>
+  ),
+};
+
+/** Values below zero hang under a dashed zero line, in the danger color. */
+export const BarWithNegatives: Story = {
+  args: { variant: 'bar', data: MIXED, label: 'Net change' },
+  render: (args) => (
+    <Card title="Net change">
+      <Sparkline {...args} height={80} />
+    </Card>
+  ),
+};
+
+/** `min` and `max` pin the scale, as for the other variants. */
+export const BarPinnedScale: Story = {
+  args: { variant: 'bar', data: FLAT, min: 0, max: 100 },
+  render: (args) => (
+    <Card title="CPU">
+      <Sparkline {...args} label="CPU" formatValue={percent} />
+    </Card>
+  ),
+};
+
+const barRects = (root: HTMLElement) =>
+  Array.from(root.querySelectorAll<SVGPathElement>('.recharts-bar-rectangle path'));
+
+/** A bar scale starts at zero: the shortest of positive values is not stretched to nothing. */
+export const BarScaleStartsAtZero: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', data: [60, 62, 61, 63], height: 80 },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(barRects(canvasElement)).toHaveLength(4));
+    const plot = surface(canvasElement)!.getBoundingClientRect().height;
+    // Past the grow-in animation, the tallest bar fills most of the plot.
+    await waitFor(() =>
+      expect(Math.max(...barRects(canvasElement).map((p) => p.getBBox().height))).toBeGreaterThan(
+        plot * 0.7
+      )
+    );
+    const heights = barRects(canvasElement).map((p) => p.getBBox().height);
+    // On a fitted scale the lowest bar would be about a tenth of the tallest.
+    await expect(Math.min(...heights) / Math.max(...heights)).toBeGreaterThan(0.9);
+  },
+};
+
+export const BarNegativesAreDangerBelowAZeroLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', data: MIXED, height: 80 },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(barRects(canvasElement)).toHaveLength(MIXED.length));
+    const zero = canvasElement.querySelector<SVGLineElement>('.recharts-reference-line line');
+    await expect(zero).not.toBeNull();
+    await expect(zero!.getAttribute('stroke-dasharray')).toBe('3 3');
+    // Past the grow-in animation.
+    await waitFor(() =>
+      expect(Math.max(...barRects(canvasElement).map((p) => p.getBBox().height))).toBeGreaterThan(
+        20
+      )
+    );
+    const zeroY = zero!.getBoundingClientRect().top;
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--color-error-500, #f04438)';
+    document.body.append(probe);
+    const danger = getComputedStyle(probe).color;
+    probe.remove();
+    for (const [i, path] of barRects(canvasElement).entries()) {
+      const box = path.getBoundingClientRect();
+      if (MIXED[i] < 0) {
+        await expect(box.top).toBeGreaterThanOrEqual(zeroY - 1);
+        await expect(getComputedStyle(path).fill).toBe(danger);
+      } else {
+        await expect(box.bottom).toBeLessThanOrEqual(zeroY + 1);
+        await expect(getComputedStyle(path).fill).not.toBe(danger);
+      }
+    }
+  },
+};
+
+export const BarWithoutNegativesHasNoZeroLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', data: REQUESTS },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(barRects(canvasElement)).toHaveLength(REQUESTS.length));
+    await expect(canvasElement.querySelector('.recharts-reference-line')).toBeNull();
+  },
+};
+
+export const BarTooltipShowsLabelAndFormattedValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', data: REQUESTS, label: 'Latency p95', formatValue: ms },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    await openTooltip(canvasElement, 0.99);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('li')).toHaveTextContent('Latency p95');
+    await expect(card.querySelector('li')).toHaveTextContent('40 ms');
+    await closeTooltip(canvasElement);
+  },
+};
+
+export const BarEmpty: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', data: [] },
+  render: (args) => <Sparkline {...args} />,
+  play: expectEmptyMessage('No data'),
+};
+
+export const BarHtmlInLabelsRendersAsText: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', label: HOSTILE },
+  render: (args) => <Sparkline {...args} />,
+  play: async ({ canvasElement }) => {
+    await openTooltip(canvasElement, 0.5);
+    await expect(tooltipCard(canvasElement)).toHaveTextContent(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement);
+  },
+};
+
+export const BarNamedImage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'bar', ariaLabel: 'Orders per hour' },
+  play: expectAccessibleChart({ keyboard: false }),
+};

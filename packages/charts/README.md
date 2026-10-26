@@ -60,7 +60,7 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `BarChart` colors each bar from its value with `colorByValue(value, index)` (a threshold, a ranking; `undefined` keeps the series color), gives each category a color of the palette with `distributed`, and draws the bars below zero in `negativeColor`; that is the order of precedence, and the tooltip chip of a bar follows the bar.
 
-`Sparkline` takes `label` and `formatValue` for its tooltip, and `min` and `max` to pin its scale: it fits its own data otherwise, so sparklines read against each other (the rows of a table) share the same two. In a KPI tile, pass it to the `chart` slot of `KpiCard` (`@sckyzo/cosmos-react`): `<KpiCard label="Requests/s" value="2.3k" chart={<Sparkline data={data} />} />`. The two packages do not depend on each other, so the chart is yours to pass.
+`Sparkline` draws an `area` (default), a `line` or `bar` columns; the bar scale starts at zero (the lower of 0 and the lowest value, unless `min` is set) and the values below zero hang under a dashed zero line in the danger color. It takes `label` and `formatValue` for its tooltip, and `min` and `max` to pin its scale: it fits its own data otherwise, so sparklines read against each other (the rows of a table) share the same two. In a KPI tile, pass it to the `chart` slot of `KpiCard` (`@sckyzo/cosmos-react`): `<KpiCard label="Requests/s" value="2.3k" chart={<Sparkline data={data} />} />`. The two packages do not depend on each other, so the chart is yours to pass.
 
 `RealtimeChart` takes `min` and `max` for its y axis (0 and 100 by default), `showTimeAxis` to label the x axis with the time of each sample, and `warnLabel` and `critLabel` to rename the threshold labels.
 
@@ -98,7 +98,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `SemiCircleGauge`              | Half-donut gauge                                              |
 | `StrokedGauge`                 | Dashed-stroke radial                                          |
 | `DonutChart`                   | Donut, legend below by default                                |
-| `Sparkline`                    | Mini line or area trend, no axes                              |
+| `Sparkline`                    | Mini line, area or bar trend, no axes                         |
 | `TreemapChart`                 | Repartition treemap                                           |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges (HTML grid) |
 | `CalendarChart`                | Day-by-day heatmap over a year or any range (HTML grid)       |

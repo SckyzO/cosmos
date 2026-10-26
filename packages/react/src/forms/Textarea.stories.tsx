@@ -144,3 +144,118 @@ export const PlaceholderContrastInEveryTheme: Story = {
     inEachTheme(() => expectPlaceholderContrast(field));
   },
 };
+
+// ── Auto-resize ──────────────────────────────────────────────────────────────
+
+/** `rows` is the minimum: the field grows with its content and has no resize handle. */
+export const AutoResize: Story = {
+  args: {
+    label: 'Notes',
+    description: 'Grows as you type.',
+    autoResize: true,
+    rows: 2,
+    defaultValue: 'First line\nSecond line\nThird line',
+  },
+};
+
+/** Up to `maxRows` rows, then the field scrolls. */
+export const AutoResizeWithMaxRows: Story = {
+  args: {
+    label: 'Notes',
+    description: 'Grows to 5 rows, then scrolls.',
+    autoResize: true,
+    rows: 2,
+    maxRows: 5,
+    defaultValue: Array.from({ length: 9 }, (_, i) => `Line ${i + 1}`).join('\n'),
+  },
+};
+
+const heightOf = (el: HTMLElement) => el.getBoundingClientRect().height;
+
+export const AutoResizeGrowsAndShrinks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Notes', autoResize: true, rows: 2 },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Notes' });
+    const minimum = heightOf(field);
+    await userEvent.type(field, 'one{Enter}two{Enter}three{Enter}four');
+    await expect(heightOf(field)).toBeGreaterThan(minimum);
+    await expect(field.scrollHeight).toBeLessThanOrEqual(field.clientHeight);
+    await expect(getComputedStyle(field).resize).toBe('none');
+    await userEvent.clear(field);
+    await expect(heightOf(field)).toBe(minimum);
+  },
+};
+
+export const AutoResizeStopsAtMaxRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Notes', autoResize: true, rows: 2, maxRows: 4 },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Notes' });
+    const style = getComputedStyle(field);
+    const cap =
+      Number.parseFloat(style.lineHeight) * 4 +
+      Number.parseFloat(style.paddingTop) +
+      Number.parseFloat(style.paddingBottom) +
+      Number.parseFloat(style.borderTopWidth) +
+      Number.parseFloat(style.borderBottomWidth);
+    await userEvent.type(field, '1{Enter}2{Enter}3');
+    await expect(heightOf(field)).toBeLessThan(cap);
+    await expect(getComputedStyle(field).overflowY).toBe('hidden');
+    await userEvent.type(field, '{Enter}4{Enter}5{Enter}6{Enter}7');
+    await expect(heightOf(field)).toBeCloseTo(cap, 0);
+    await expect(getComputedStyle(field).overflowY).toBe('auto');
+    await expect(field.scrollHeight).toBeGreaterThan(field.clientHeight);
+  },
+};
+
+/** Without `autoResize` the field keeps its `rows`, however much is typed. */
+export const WithoutAutoResizeKeepsRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Notes', rows: 2 },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Notes' });
+    const before = heightOf(field);
+    await userEvent.type(field, '1{Enter}2{Enter}3{Enter}4{Enter}5');
+    await expect(heightOf(field)).toBe(before);
+    await expect(getComputedStyle(field).resize).toBe('vertical');
+  },
+};
+
+/** A field resized by its handle keeps that height while the user types. */
+export const WithoutAutoResizeKeepsAManualHeight: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Notes', rows: 2 },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Notes' });
+    // Dragging the handle writes an inline height, as this does.
+    field.style.height = '200px';
+    await userEvent.type(field, 'more');
+    await expect(heightOf(field)).toBe(200);
+  },
+};
+
+const AutoResizeSwitch = () => {
+  const [autoResize, setAutoResize] = useState(true);
+  return (
+    <div className="space-y-3">
+      <button type="button" onClick={() => setAutoResize(false)}>
+        Fixed height
+      </button>
+      <Textarea label="Notes" rows={2} autoResize={autoResize} defaultValue={'1\n2\n3\n4\n5'} />
+    </div>
+  );
+};
+
+/** Turning `autoResize` off hands the height back to `rows`. */
+export const TurningAutoResizeOffRestoresRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <AutoResizeSwitch />,
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Notes' });
+    await expect(field.style.height).not.toBe('');
+    await userEvent.click(canvas.getByRole('button', { name: 'Fixed height' }));
+    await expect(field.style.height).toBe('');
+    await expect(getComputedStyle(field).resize).toBe('vertical');
+  },
+};

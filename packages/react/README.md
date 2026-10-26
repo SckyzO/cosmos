@@ -93,6 +93,17 @@ for text, number and search fields, the switch `<button>` for `Toggle`, the firs
 cell for `OtpInput`, the trigger for `DatePicker`, and the segment you would Tab
 to for `SegmentedControl`, in either appearance (the selected one, else the first).
 
+## Variants worth knowing
+
+- `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
+- `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
+- `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
+- `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
+- `PageHeader icon={Plug} iconIntent="brand"`: a decorative icon tile left of the title.
+- `ImageGrid layout="masonry"`: CSS columns, each picture keeping its aspect with its caption under it. Items flow down the first column, then the next; give the images `width` and `height` so the columns don't rebalance as they load.
+- `ConfirmationModal intent="danger" requireText="my-project"`: a red tile and a solid action, disabled until the exact (case-sensitive) text is typed; `requireTextLabel` replaces the label.
+- `SecretValue label="API key" value={key} visibleSuffix={4}`: a stored secret, masked until revealed. While masked the real value is not in the DOM (20 bullets plus the suffix, at most half of the value); the Copy button copies the real value without revealing it. `autoHideAfter` (ms) masks it again.
+
 ## Tables
 
 `DataTable` sorts, filters, searches and paginates its rows. Give it a height

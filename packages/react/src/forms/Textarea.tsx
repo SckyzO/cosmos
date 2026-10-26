@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
-import { useId, type ChangeEvent, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { useId, useRef, type ChangeEvent, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { useAutoGrow } from '../hooks/useAutoGrow';
 import { useControllableState } from '../hooks/useControllableState';
+import { mergeRefs } from '../ui/mergeRefs';
 import {
   FIELD_PAD_X,
   FIELD_PAD_Y,
@@ -22,8 +24,15 @@ export type TextareaProps = ComponentPropsWithRef<'textarea'> & {
   required?: boolean;
   /** Slot rendered next to the label text (e.g. a TooltipHelp). */
   labelTrailing?: ReactNode;
-  /** Resize behaviour. Default `vertical`. */
+  /** Resize behaviour. Default `vertical`; with `autoResize` the handle goes and this is ignored. */
   resize?: TextareaResize;
+  /**
+   * Grow with the content: `rows` becomes the minimum height, and the field scrolls past `maxRows`
+   * (never, by default). Default `false`.
+   */
+  autoResize?: boolean;
+  /** With `autoResize`, the number of rows the field grows to before it scrolls. */
+  maxRows?: number;
   /** Show a `<used> / <max>` counter below the field. Default: auto when `maxLength` is set. */
   showCount?: boolean;
 };
@@ -43,6 +52,8 @@ export function Textarea({
   required,
   labelTrailing,
   resize = 'vertical',
+  autoResize = false,
+  maxRows,
   showCount,
   rows = 4,
   maxLength,
@@ -63,6 +74,8 @@ export function Textarea({
     onChange: (_text: string, e: ChangeEvent<HTMLTextAreaElement>) => onChange?.(e),
     name: 'Textarea.value',
   });
+  const inner = useRef<HTMLTextAreaElement | null>(null);
+  useAutoGrow(inner, { value: currentValue, enabled: autoResize, maxRows });
   const counterEnabled = showCount ?? maxLength !== undefined;
   const overLimit = maxLength !== undefined && currentValue.length > maxLength;
   const descId = `${fieldId}-desc`;
@@ -87,7 +100,7 @@ export function Textarea({
         </label>
       )}
       <textarea
-        ref={ref}
+        ref={mergeRefs(inner, ref)}
         id={fieldId}
         rows={rows}
         maxLength={maxLength}
@@ -104,7 +117,7 @@ export function Textarea({
           FIELD_PAD_X[size],
           FIELD_PAD_Y[size],
           FIELD_PLACEHOLDER,
-          RESIZE_CLASS[resize],
+          RESIZE_CLASS[autoResize ? 'none' : resize],
           className
         )}
         {...rest}

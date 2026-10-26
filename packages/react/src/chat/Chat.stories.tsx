@@ -223,6 +223,23 @@ export const ComposerForwardsRef: Story = {
   },
 };
 
+const NEWLINE = '{Shift>}{Enter}{/Shift}';
+
+/** A few lines fit with nothing to scroll; past `maxHeight` the field scrolls. */
+export const ComposerGrowsWithoutScrolling: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatComposer maxHeight={120} onSend={() => {}} />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox', { name: 'Message' });
+    await userEvent.type(input, `one${NEWLINE}two${NEWLINE}three`);
+    // The borders are counted in the height: the three lines fit exactly.
+    await expect(input.scrollHeight).toBeLessThanOrEqual(input.clientHeight);
+    await userEvent.type(input, `${NEWLINE}four${NEWLINE}five${NEWLINE}six${NEWLINE}seven`);
+    await expect(input.getBoundingClientRect().height).toBe(120);
+    await expect(input.scrollHeight).toBeGreaterThan(input.clientHeight);
+  },
+};
+
 const HOSTILE = '<img src=x onerror="window.__chatXss=1"><b>bold</b> javascript:alert(1)';
 
 /** Markup in a message shows up as text; only http(s) URLs become links. */
