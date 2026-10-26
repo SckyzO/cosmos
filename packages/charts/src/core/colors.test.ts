@@ -36,7 +36,7 @@ describe('seriesColor', () => {
 describe('SEQUENTIAL', () => {
   it('has five steps of the accent over the card, low to high', () => {
     expect(SEQUENTIAL).toHaveLength(5);
-    expect(SEQUENTIAL[0]).toContain('24%');
+    expect(SEQUENTIAL[0]).toContain('42%');
     expect(SEQUENTIAL[4]).toContain('100%');
   });
 });

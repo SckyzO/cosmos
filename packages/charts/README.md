@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts)
 
-Cosmos charts — opinionated chart wrappers themed for the Cosmos design system. They are moving from [ApexCharts](https://apexcharts.com/) to [Recharts](https://recharts.github.io/) one family at a time (#360): `LineAreaChart` and `Sparkline` draw with Recharts, the others still with ApexCharts for now.
+Cosmos charts — opinionated chart wrappers themed for the Cosmos design system. They are moving from [ApexCharts](https://apexcharts.com/) to [Recharts](https://recharts.github.io/) one family at a time (#360): `LineAreaChart`, `Sparkline`, `TreemapChart` and `HeatmapChart` draw without ApexCharts, the others still with it for now.
 
 Kept in a dedicated subpackage so that `@sckyzo/cosmos-react` consumers who don't render charts don't ship a chart library.
 
@@ -17,7 +17,7 @@ pnpm add react react-dom   # peers, react 19+
 
 ## Charts on Recharts
 
-`LineAreaChart` and `Sparkline` are drawn with Recharts, and the rules below are the ones every chart will follow once the move is done:
+`LineAreaChart`, `Sparkline` and `TreemapChart` are drawn with Recharts, `HeatmapChart` with a grid of its own (Recharts has no heatmap), and the rules below are the ones every chart will follow once the move is done:
 
 - **Colors are CSS variables** handed straight to the SVG, with a hex fallback: a theme, accent or text size switch on `<html>` repaints the chart with no observer and no redraw. `@sckyzo/cosmos-theme` always emits what the charts read (`--color-brand-500`, the status and semantic colors, `--color-chart-2` to `--color-chart-8`).
 - **The default palette** is the accent, then seven hues. Each accent lists its own seven in the theme CSS, skipping the hues that look like it (the teal accent has no teal series), and none of the first four reads as a status. `colors` overrides it.
@@ -48,7 +48,7 @@ import { LineAreaChart, RealtimeChart, useChartTheme } from '@sckyzo/cosmos-char
 />;
 ```
 
-On the charts still drawn with ApexCharts, the included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the brand color to the current Cosmos theme and accent: it subscribes to the theme class (`dark` and `deep-blue` render dark charts) and `data-accent` on `<html>`, and reads `--color-brand-500`, the gray scale and the status colors (`--color-success-500`, `--color-warning-500`, `--color-error-500`) from the CSS. The default palette (`palette`) is eight categorical colors, the brand color first and then hues apart from each other (cyan, violet, pink, slate, orange, teal, lime): green, amber and red are kept out of the first four places so that series never read as statuses, and treemap tiles take their color from their name. A chart whose series are statuses passes the status colors as `colors`: `statusPalette` is the theme's success, warning and error in that order. `success`, `warning`, `error` and `track` (the empty part of a radial arc) come from the same hook. Without the theme CSS, the charts fall back to the hex values of `COSMOS_PALETTE`. `COSMOS_BRAND` is the default blue; use `useChartTheme().brand` to follow the accent. `brandScale` is a sequential scale of five brand steps, low to high (pale to deep in light themes, dark to bright in dark ones), and `surface` the card background; `HeatmapChart` uses both.
+On the charts still drawn with ApexCharts, the included `useChartTheme()` hook adapts ApexCharts grid + axis tokens and the brand color to the current Cosmos theme and accent: it subscribes to the theme class (`dark` and `deep-blue` render dark charts) and `data-accent` on `<html>`, and reads `--color-brand-500`, the gray scale and the status colors (`--color-success-500`, `--color-warning-500`, `--color-error-500`) from the CSS. The default palette (`palette`) is eight categorical colors, the brand color first and then hues apart from each other (cyan, violet, pink, slate, orange, teal, lime): green, amber and red are kept out of the first four places so that series never read as statuses, and treemap tiles take their color from their name. A chart whose series are statuses passes the status colors as `colors`: `statusPalette` is the theme's success, warning and error in that order. `success`, `warning`, `error` and `track` (the empty part of a radial arc) come from the same hook. Without the theme CSS, the charts fall back to the hex values of `COSMOS_PALETTE`. `COSMOS_BRAND` is the default blue; use `useChartTheme().brand` to follow the accent. `brandScale` is a sequential scale of five brand steps, low to high (pale to deep in light themes, dark to bright in dark ones), and `surface` the card background.
 
 Most charts take `colors`, which overrides the Cosmos palette, and `formatValue`, which formats the values in their labels and tooltips (a unit, a precision). On the charts still drawn with ApexCharts, define `formatValue` outside the component or wrap it in `useCallback`: a new function redraws the chart; `LineAreaChart` and `Sparkline` take any function. The gauges (`GradientRadial`, `SemiCircleGauge`, `StrokedGauge`) also take `min` and `max` (default 0 and 100), a `color` for the arc (the accent by default; on `GradientRadial` the color the arc starts from), and show a percent unless given a `formatValue`. A gauge is an image named by its label and value (`ariaLabel` replaces the label in the name). `SemiCircleGauge` keeps the accent unless given `warnAt` or `critAt`, in the units of the value, which color its arc by status: the theme's success color below `warnAt`, its warning color from `warnAt` and its critical color from `critAt` (`color` replaces either). It also takes `showRange`, which writes `min` and `max` under the ends of its arc, and its `height` (a number of pixels, 120 by default) is the most it takes: the arc is as wide as its box allows, up to that height.
 
@@ -58,7 +58,9 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `RealtimeChart` takes `min` and `max` for its y axis (0 and 100 by default), `showTimeAxis` to label the x axis with the time of each sample, and `warnLabel` and `critLabel` to rename the threshold labels.
 
-`TreemapChart` writes the value of each tile under its name when given `showValues`, and draws its group headers in the card's colors.
+`TreemapChart` writes the value of each tile under its name when given `showValues`, and draws its group headers in the card's colors. Its tiles take the text color that reads on them (white or black). `children` are drawn over the tiles, in the chart's own SVG space.
+
+`HeatmapChart` is a grid of rounded cells, not a Recharts chart, so it takes no `children`. Its default scale is five steps of the accent mixed over the card, each told apart from the next and the lowest still a cell of its own on a dark card; `colors` replaces the steps and `ranges` sets thresholds with their own colors (a value on a bound shared by two ranges takes the later one). The grid is one tab stop: the arrow keys move between cells and show the tooltip of the cell they land on, Home and End go to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid. Each cell is named `row, column: value` for screen readers.
 
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place; `RadialBarChart` does the same with the average and the ring.
 
@@ -85,8 +87,8 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `StrokedGauge`                 | Dashed-stroke radial                                          |
 | `DonutChart`                   | Donut, legend below by default                                |
 | `Sparkline`                    | Mini line or area trend, no axes (Recharts)                   |
-| `TreemapChart`                 | Repartition treemap                                           |
-| `HeatmapChart`                 | Rows × columns colored by value buckets or ranges             |
+| `TreemapChart`                 | Repartition treemap (Recharts)                                |
+| `HeatmapChart`                 | Rows × columns colored by value buckets or ranges (HTML grid) |
 | `RadarChart`                   | One polygon per series over named axes                        |
 | `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure (Recharts)   |
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal (Recharts)    |

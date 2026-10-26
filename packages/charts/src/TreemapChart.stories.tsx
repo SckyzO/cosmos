@@ -1,19 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { TreemapChart } from './TreemapChart';
-import { expect, waitFor } from 'storybook/test';
 import {
+  HOSTILE,
   contrastRatio,
-  expectTooltipFollowsTheme,
-  hover,
-  resolveColor,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
-  expectMessageOnly,
   expectColorInThemes,
+  expectNoInjectedImage,
+  resolveColor,
+  switchTheme,
+  themeColor,
 } from './storybook-helpers';
+import { expectEmptyMessage } from './storybook-recharts';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
 const tb = (v: number) => `${v} TB`;
@@ -118,44 +115,92 @@ export const ShowValues: Story = {
   args: { ...MultipleSeries.args, showValues: true, formatValue: tb },
 };
 
-/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
-export const TooltipFollowsTheme: Story = {
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+const tilesOf = (root: HTMLElement) => [...root.querySelectorAll<SVGGElement>('[data-tile]')];
+const rectOf = (tile: Element) => tile.querySelector('rect') as SVGRectElement;
+const cardOf = (root: HTMLElement) =>
+  root.querySelector<HTMLElement>('.recharts-tooltip-wrapper [role="status"]');
+// The name of a tile: its accessible name is `group, name: value`.
+const nameOf = (tile: Element) =>
+  (tile.getAttribute('aria-label') ?? '')
+    .replace(/: [^:]*$/, '')
+    .split(', ')
+    .at(-1);
+const labelOf = (tile: Element) => tile.querySelector('foreignObject div');
+const px = (el: Element | null) => parseFloat(el ? getComputedStyle(el).fontSize : '');
+
+// A CSS color in any syntax (relative colors, color-mix) as `#rrggbb`.
+const toHex = (color: string) => {
+  const context = document.createElement('canvas').getContext('2d')!;
+  context.fillStyle = color;
+  context.fillRect(0, 0, 1, 1);
+  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+};
+
+// The fill of every tile, and the color of its label.
+const labelledTiles = (root: HTMLElement) =>
+  tilesOf(root).flatMap((tile) => {
+    const label = labelOf(tile);
+    return label
+      ? [
+          {
+            fill: toHex(getComputedStyle(rectOf(tile)).fill),
+            text: toHex(getComputedStyle(label).color),
+          },
+        ]
+      : [];
+  });
+
+/** The tooltip is a card in the colors of the theme, a live region for screen readers. */
+export const TooltipCardShowsTheTile: Story = {
   tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  args: {
-    series: [
-      {
-        data: [
-          { x: 'DC1', y: 218 },
-          { x: 'DC2', y: 152 },
-        ],
-      },
-    ],
-  },
+  args: { ...MultipleSeries.args, formatValue: tb },
   play: async ({ canvasElement }) => {
-    await expectTooltipFollowsTheme(canvasElement, () =>
-      canvasElement.querySelector('.apexcharts-treemap-rect')
-    );
+    await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(6));
+    await expect(cardOf(canvasElement)).toBeNull();
+    // The first tile of Paris: `compute`.
+    const tile = tilesOf(canvasElement)[0];
+    await waitFor(async () => {
+      await userEvent.hover(tile);
+      const card = cardOf(canvasElement);
+      expect(card).not.toBeNull();
+      expect(card).toHaveAttribute('aria-live', 'polite');
+      expect(card?.querySelector('p')).toHaveTextContent('Paris');
+      expect(card?.querySelector('li')).toHaveTextContent('compute');
+      expect(card?.querySelector('li')).toHaveTextContent('120 TB');
+    });
+    await userEvent.unhover(tile);
+    await waitFor(() => expect(cardOf(canvasElement)).toBeNull());
   },
 };
 
-// The fill of every tile and of its label.
-const labelledTiles = (root: HTMLElement) =>
-  [...root.querySelectorAll('.apexcharts-treemap-rect')].flatMap((rect) => {
-    const label = rect.nextElementSibling?.querySelector('text');
-    const fill = rect.getAttribute('fill');
-    const text = label?.getAttribute('fill');
-    return fill && text ? [{ fill, text }] : [];
-  });
-
-/** Each tile label reads on its tile: white on the green or amber was under 3:1. */
+/** Each tile label reads on its tile, in every theme and accent: white or black, 4.5:1 at least. */
 export const LabelsReadOnTiles: Story = {
   tags: ['!dev', '!autodocs'],
   args: Distributed.args,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(labelledTiles(canvasElement).length).toBeGreaterThanOrEqual(5));
-    for (const { fill, text } of labelledTiles(canvasElement)) {
-      expect(contrastRatio(text, fill)).toBeGreaterThanOrEqual(4.5);
+    for (const theme of ['', 'sand', 'dark', 'deep-blue']) {
+      const restore = switchTheme(theme);
+      try {
+        for (const accent of ['blue', 'teal', 'amber', 'graphite', 'rose']) {
+          document.documentElement.setAttribute('data-accent', accent);
+          await waitFor(() => {
+            const tiles = labelledTiles(canvasElement);
+            expect(tiles.length).toBeGreaterThanOrEqual(5);
+            for (const { fill, text } of tiles) {
+              expect(
+                contrastRatio(text, fill),
+                `${theme || 'light'} ${accent}`
+              ).toBeGreaterThanOrEqual(4.5);
+            }
+          });
+        }
+      } finally {
+        document.documentElement.removeAttribute('data-accent');
+        restore();
+      }
     }
   },
 };
@@ -167,26 +212,12 @@ export const ColorsOverridePalette: Story = {
   play: async ({ canvasElement }) => {
     const fills = () =>
       labelledTiles(canvasElement)
-        .map(({ fill }) => resolveColor(fill))
+        .map(({ fill }) => fill)
         .sort();
-    await waitFor(() => expect(fills()).toEqual([...BLUE_RAMP].sort()));
+    await waitFor(() => expect(fills()).toEqual(BLUE_RAMP.map(resolveColor).sort()));
     for (const { fill, text } of labelledTiles(canvasElement)) {
       expect(contrastRatio(text, fill)).toBeGreaterThanOrEqual(4.5);
     }
-  },
-};
-
-/** `formatValue` formats the tooltip value. */
-export const FormatValueFormatsTooltip: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: FormattedValues.args,
-  play: async ({ canvasElement }) => {
-    await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-treemap-rect') as Element);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
-        '218 TB'
-      );
-    });
   },
 };
 
@@ -207,12 +238,9 @@ export const ValuesAreOptIn: Story = {
   play: async ({ canvasElement }) => {
     // The lines of each tile label: the name, then the value.
     const lines = (id: string) =>
-      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-datalabel`)].map(
-        (el) => {
-          const rows = [...el.querySelectorAll('tspan')];
-          return rows.length > 0 ? rows.map((row) => row.textContent) : [el.textContent];
-        }
-      );
+      [...canvasElement.querySelectorAll(`[data-testid="${id}"] [data-tile] foreignObject > div`)]
+        .map((el) => [...el.children].map((row) => row.textContent))
+        .filter((rows) => rows.length > 0);
     await waitFor(() => expect(lines('valued')).toContainEqual(['compute', '120 TB']));
     await expect(lines('valued')).toContainEqual(['storage', '51 TB']);
     await waitFor(() => expect(lines('plain').length).toBeGreaterThan(0));
@@ -222,7 +250,7 @@ export const ValuesAreOptIn: Story = {
 
 /**
  * The name of a group sits on a plate in the card's color, with the theme's
- * text color and line color, in every theme.
+ * text color, in every theme.
  */
 export const GroupHeaderFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -230,25 +258,23 @@ export const GroupHeaderFollowsTheme: Story = {
   args: { ...MultipleSeries.args },
   play: async ({ canvasElement }) => {
     const plate = () =>
-      canvasElement.querySelector(
-        '.apexcharts-treemap-series > rect:not(.apexcharts-treemap-rect)'
+      canvasElement.querySelector<HTMLElement>(
+        '[data-tile] foreignObject > div[style*="inline-block"]'
       );
-    const title = () =>
-      canvasElement.querySelector('.apexcharts-treemap-series > text')?.getAttribute('fill');
     await waitFor(() => expect(plate()).toBeTruthy());
-    const themes = {
-      dark: ['--color-gray-900', '--color-gray-800'],
-      '': ['--color-white', '--color-gray-200'],
-      sand: ['--color-white', '--color-gray-200'],
-      'deep-blue': ['--color-gray-900', '--color-gray-800'],
-    };
-    const tokens = (index: number) =>
-      Object.fromEntries(Object.entries(themes).map(([theme, pair]) => [theme, pair[index]]));
-    await expectColorInThemes(() => plate()?.getAttribute('fill'), tokens(0));
-    await expectColorInThemes(() => plate()?.getAttribute('stroke'), tokens(1));
+    await expect(
+      [
+        ...canvasElement.querySelectorAll('[data-tile] foreignObject > div[style*="inline-block"]'),
+      ].map((el) => el.textContent)
+    ).toEqual(['Paris', 'Frankfurt']);
+    const themes = ['', 'sand', 'dark', 'deep-blue'];
     await expectColorInThemes(
-      title,
-      Object.fromEntries(Object.keys(themes).map((theme) => [theme, '--color-text-primary']))
+      () => plate() && getComputedStyle(plate() as HTMLElement).backgroundColor,
+      Object.fromEntries(themes.map((theme) => [theme, '--color-bg-panel']))
+    );
+    await expectColorInThemes(
+      () => plate() && getComputedStyle(plate() as HTMLElement).color,
+      Object.fromEntries(themes.map((theme) => [theme, '--color-text-primary']))
     );
   },
 };
@@ -256,10 +282,27 @@ export const GroupHeaderFollowsTheme: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
-  play: expectMessageOnly('No data'),
+  play: expectEmptyMessage('No data'),
 };
 
-/** The gap between tiles is the card's color in every theme, never ApexCharts' white. */
+/** A series of zeros has nothing to draw either. */
+export const OnlyZerosIsEmpty: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      {
+        data: [
+          { x: 'a', y: 0 },
+          { x: 'b', y: 0 },
+        ],
+      },
+    ],
+    emptyMessage: 'Nothing used',
+  },
+  play: expectEmptyMessage('Nothing used'),
+};
+
+/** The gap between tiles is the card's color in every theme. */
 export const TileGapsMatchTheSurface: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
@@ -273,16 +316,14 @@ export const TileGapsMatchTheSurface: Story = {
       },
     ],
   },
-  play: ({ canvasElement }) =>
-    expectColorInThemes(
-      () => canvasElement.querySelector('.apexcharts-treemap-rect')?.getAttribute('stroke'),
-      {
-        dark: '--color-gray-900',
-        'deep-blue': '--color-gray-900',
-        '': '--color-white',
-        sand: '--color-white',
-      }
-    ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(2));
+    const themes = ['', 'sand', 'dark', 'deep-blue'];
+    await expectColorInThemes(
+      () => getComputedStyle(rectOf(tilesOf(canvasElement)[0])).stroke,
+      Object.fromEntries(themes.map((theme) => [theme, '--color-bg-panel']))
+    );
+  },
 };
 
 /** One name keeps its color in every group: `compute` is the same in Paris and Frankfurt. */
@@ -291,10 +332,9 @@ export const NameKeepsItsColor: Story = {
   args: MultipleSeries.args,
   play: async ({ canvasElement }) => {
     await waitFor(() => {
-      const fills: Record<string, Set<string | null>> = {};
-      for (const tile of canvasElement.querySelectorAll('.apexcharts-treemap-rect')) {
-        const name = tile.getAttribute('data:key')?.split(':').pop() ?? '';
-        (fills[name] ??= new Set()).add(tile.getAttribute('fill'));
+      const fills: Record<string, Set<string>> = {};
+      for (const tile of tilesOf(canvasElement)) {
+        (fills[nameOf(tile) as string] ??= new Set()).add(getComputedStyle(rectOf(tile)).fill);
       }
       expect(Object.keys(fills).sort()).toEqual(['compute', 'gpu', 'network', 'storage']);
       for (const colors of Object.values(fills)) expect(colors.size).toBe(1);
@@ -303,39 +343,177 @@ export const NameKeepsItsColor: Story = {
   },
 };
 
-/** The tiles take the default palette of the theme. */
+/** The tiles take the default palette of the theme, and follow the accent. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     series: [{ data: ['a', 'b', 'c', 'd', 'e'].map((x, i) => ({ x, y: 5 - i })) }],
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-treemap-rect')].map((el) =>
-        el.getAttribute('fill')
-      )
-    );
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    const fills = () =>
+      tilesOf(canvasElement).map((tile) => resolveColor(getComputedStyle(rectOf(tile)).fill));
+    await waitFor(() => expect(fills()).toEqual(tokens.map(themeColor)));
+    const html = document.documentElement;
+    html.setAttribute('data-accent', 'teal');
+    try {
+      await waitFor(() => expect(fills()[0]).toBe(resolveColor('#038378')));
+    } finally {
+      html.removeAttribute('data-accent');
+    }
+  },
+};
+
+/** The labels follow the text size setting: 12px at the normal size, 13.5px at the large one. */
+export const TextFollowsTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Distributed.args, showValues: true, formatValue: tb },
+  play: async ({ canvasElement }) => {
+    const html = document.documentElement;
+    const label = () => px(canvasElement.querySelector('[data-tile] foreignObject > div'));
+    await waitFor(() => expect(label()).toBe(12));
+    const previous = html.getAttribute('data-text-size');
+    try {
+      html.setAttribute('data-text-size', 'lg');
+      await waitFor(() => expect(label()).toBe(13.5));
+      const tile = tilesOf(canvasElement)[0];
+      await waitFor(async () => {
+        await userEvent.hover(tile);
+        expect(px(cardOf(canvasElement))).toBe(13.5);
+      });
+      await userEvent.unhover(tile);
+    } finally {
+      if (previous === null) html.removeAttribute('data-text-size');
+      else html.setAttribute('data-text-size', previous);
+    }
+  },
+};
+
+/** Markup in a name, a group or a value shows as text: in the label, the tooltip and the names. */
+export const HtmlInLabelsRendersAsText: Story = {
+  tags: ['!autodocs'],
+  args: {
+    showValues: true,
+    series: [
+      {
+        name: HOSTILE,
+        data: [
+          { x: HOSTILE, y: 8 },
+          { x: 'Normal', y: 4 },
+        ],
+      },
+      { name: 'Other', data: [{ x: 'Third', y: 6 }] },
+    ],
+    formatValue: (v) => `${v} ${HOSTILE}`,
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(3));
+    const tile = tilesOf(canvasElement)[0];
+    await expect(labelOf(tile)).toHaveTextContent(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    await waitFor(async () => {
+      await userEvent.hover(tile);
+      const card = cardOf(canvasElement);
+      expect(card?.querySelector('p')?.textContent).toBe(HOSTILE);
+      expect(card?.querySelector('li')?.textContent).toContain(HOSTILE);
+    });
+    await expectNoInjectedImage(canvasElement);
+    await userEvent.unhover(tile);
+    await waitFor(() => expect(cardOf(canvasElement)).toBeNull());
+  },
+};
+
+/** `children` are SVG elements drawn over the tiles, inside the chart. */
+export const ChildrenAreDrawnOverTheTiles: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Distributed.args,
+    children: (
+      <text data-testid="note" x={12} y={310} fill="var(--color-text-muted)">
+        Source: inventory
+      </text>
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(tilesOf(canvasElement).length).toBeGreaterThan(0));
+    const note = canvasElement.querySelector('[data-testid="note"]');
+    await expect(note).toHaveTextContent('Source: inventory');
+    await expect(note?.closest('svg')).toBe(canvasElement.querySelector('svg.recharts-surface'));
+  },
+};
+
+/** A chart wider than its box is cut to it, so a narrow screen never scrolls sideways. */
+export const NoHorizontalOverflow: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MultipleSeries.args, width: 900 },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 375 }}>
+      <TreemapChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(tilesOf(canvasElement).length).toBeGreaterThan(0));
+    await waitFor(() => {
+      expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+      expect(
+        canvasElement.querySelector('svg.recharts-surface')?.getBoundingClientRect().width
+      ).toBeLessThanOrEqual(375);
+    });
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
   },
 };
 
 /**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
+ * The chart is a group named by `ariaLabel` and each tile a named image
+ * (`group, name: value`). Keyboard: one tab stop; the arrows walk the tiles in
+ * the order of the data, Home and End go to the ends, and the tile with the
+ * focus shows its tooltip and a ring. Tab leaves.
  */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { ...Distributed.args, colors: BLUE_RAMP, formatValue: tb },
-  render: (args) => (
-    <Rerender>
-      {(grown) => <TreemapChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
-/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...Distributed.args, ariaLabel: 'Racks per datacenter' },
-  play: expectAccessibleChart({ keyboard: true }),
+  args: { ...MultipleSeries.args, ariaLabel: 'Racks per datacenter', formatValue: tb },
+  play: async ({ canvasElement, args }) => {
+    const group = canvasElement.querySelector('[role="group"]') as HTMLElement;
+    await expect(group).toHaveAttribute('aria-label', args.ariaLabel);
+    await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(6));
+    const tile = (n: number) => tilesOf(canvasElement)[n];
+    const stops = () => tilesOf(canvasElement).filter((el) => el.tabIndex === 0);
+    const ringed = () => canvasElement.querySelectorAll('[data-tile] rect[fill="none"]').length;
+    await expect(tile(0)).toHaveAccessibleName('Paris, compute: 120 TB');
+    await expect(stops()).toEqual([tile(0)]);
+
+    await userEvent.tab();
+    await expect(tile(0)).toHaveFocus();
+    await waitFor(() => expect(cardOf(canvasElement)).toHaveTextContent('compute'));
+    await expect(ringed()).toBe(1);
+    const press = async (key: string, n: number, text: string) => {
+      await userEvent.keyboard(key);
+      await expect(tile(n), key).toHaveFocus();
+      await expect(stops()).toEqual([tile(n)]);
+      await waitFor(() => expect(cardOf(canvasElement)).toHaveTextContent(text));
+      await expect(ringed()).toBe(1);
+    };
+    await press('{ArrowRight}', 1, 'storage');
+    await press('{ArrowDown}', 2, 'gpu');
+    await press('{ArrowRight}', 3, 'compute');
+    await press('{ArrowLeft}', 2, 'gpu');
+    await press('{End}', 5, 'network');
+    // The end stops the arrows.
+    await press('{ArrowRight}', 5, 'network');
+    await press('{Home}', 0, 'compute');
+    await press('{ArrowUp}', 0, 'compute');
+
+    await userEvent.tab();
+    await expect(canvasElement.contains(document.activeElement)).toBe(false);
+    await waitFor(() => expect(cardOf(canvasElement)).toBeNull());
+    await expect(ringed()).toBe(0);
+  },
 };

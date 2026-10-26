@@ -50,6 +50,8 @@ const RANGE = [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number]
 type Chart = {
   /** Drawn with Recharts: no `apexOptions`, no ApexCharts DOM. */
   recharts?: true;
+  /** What marks its plot in the DOM, when it is not an SVG drawn by Recharts. */
+  plot?: string;
   /** Drawn with data. */
   filled: (apexOptions?: ApexOptions) => ReactNode;
   /** Drawn with no data, for the wrappers that can have none. */
@@ -78,7 +80,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <TreemapChart
         series={[
           {
@@ -88,15 +91,14 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <TreemapChart series={[]} {...props} />,
   },
   HeatmapChart: {
-    filled: (apexOptions) => (
-      <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    plot: '[role="grid"]',
+    filled: () => <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
   },
   RadarChart: {
@@ -213,8 +215,9 @@ const noData = (root: HTMLElement, name: string) =>
     `[data-chart="${name}"] ${CHARTS[name].recharts ? '[data-chart-empty]' : '.apexcharts-text-nodata'}`
   );
 
-// The Recharts wrappers draw a plot with an SVG; the ApexCharts ones always do.
-const plot = (name: string) => (CHARTS[name].recharts ? 'svg.recharts-surface' : '.apexcharts-svg');
+// The Recharts wrappers draw a plot with an SVG, or with a grid of their own; the ApexCharts ones always draw an SVG.
+const plot = (name: string) =>
+  CHARTS[name].plot ?? (CHARTS[name].recharts ? 'svg.recharts-surface' : '.apexcharts-svg');
 
 const expectEveryNoData = (root: HTMLElement, text: string) =>
   waitFor(() =>
@@ -351,7 +354,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES = ['HeatmapChart'];
+const LEGEND_NAMES: string[] = [];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
 export const LegendSwatchesHaveNoOutline: Story = {
