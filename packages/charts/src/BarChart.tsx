@@ -16,15 +16,23 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
+import { referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
 export type BarChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
-  ChartAxisTitleProps & {
+  ChartAxisTitleProps &
+  ChartReferenceProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** `vertical` (default) draws bars upward; `horizontal` draws them rightward. */
@@ -50,6 +58,8 @@ export const BarChart = ({
   formatValue,
   xTitle,
   yTitle,
+  referenceLines,
+  referenceBands,
   showLegend,
   legendPosition = 'top',
   borderRadius = 4,
@@ -137,6 +147,7 @@ export const BarChart = ({
           />
         );
       })}
+      {referenceMarks({ referenceLines, referenceBands, axis: horizontal ? 'x' : 'y' })}
       {children}
     </RechartsBarChart>
   );
