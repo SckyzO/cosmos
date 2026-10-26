@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { placeholderCover } from '../storybook-avatars';
+import {
+  expectFocusRing,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Carousel } from './Carousel';
 
 const meta = {
@@ -156,6 +162,40 @@ export const MultipleSlidesPerView: Story = {
   ),
 };
 
+const PHOTOS = Array.from({ length: 8 }, (_, i) => placeholderCover(`Photo ${i + 1}`, 320, 224));
+
+const Gallery = ({ count = PHOTOS.length }: { count?: number }) => (
+  <Carousel>
+    <Carousel.Viewport>
+      {PHOTOS.slice(0, count).map((src, i) => (
+        <Carousel.Slide key={i}>
+          <img src={src} alt={`Product photo ${i + 1}`} className="h-48 w-full rounded-xl" />
+        </Carousel.Slide>
+      ))}
+    </Carousel.Viewport>
+    <Carousel.Controls />
+    <Carousel.Thumbnails>
+      {PHOTOS.slice(0, count).map((src, i) => (
+        <img key={i} src={src} alt="" />
+      ))}
+    </Carousel.Thumbnails>
+  </Carousel>
+);
+
+/** A gallery: the strip under the slides jumps to a slide and follows the current one. */
+export const WithThumbnails: Story = { render: () => <Gallery count={5} /> };
+
+/** More thumbnails than fit: the strip scrolls sideways and keeps the current one in view. */
+export const ThumbnailsOverflowing: Story = {
+  globals: mobileViewport,
+  render: () => <Gallery />,
+  play: async ({ canvas }) => {
+    const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
+    await expect(strip.scrollWidth).toBeGreaterThan(strip.clientWidth);
+    expectNoHorizontalOverflow();
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 // The interaction tests below stay off the docs page (`!autodocs`): their play
@@ -259,5 +299,57 @@ export const DotsHaveA24pxTarget: Story = {
       // The visible dot stays small.
       await expect(dot.firstElementChild!.getBoundingClientRect().height).toBeLessThanOrEqual(8);
     }
+  },
+};
+
+export const ThumbnailClickJumps: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Gallery count={5} />,
+  play: async ({ canvas }) => {
+    const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
+    const thumbs = within(strip).getAllByRole('button', { name: /go to slide/i });
+    await expect(thumbs).toHaveLength(5);
+    await expect(thumbs[0]).toHaveAttribute('aria-current', 'true');
+    await expect(thumbs[3]).toHaveAttribute('aria-current', 'false');
+    await userEvent.click(thumbs[3]!);
+    await waitFor(() => expect(thumbs[3]).toHaveAttribute('aria-current', 'true'));
+    await expect(thumbs[0]).toHaveAttribute('aria-current', 'false');
+    // The thumbnail is dimmed until current: the current one carries the accent ring.
+    await expect(thumbs[3]).toHaveClass('ring-brand-500');
+    await expect(thumbs[0]).not.toHaveClass('ring-brand-500');
+    // The arrows move the thumbnails' selection too.
+    await userEvent.click(canvas.getByRole('button', { name: /next slide/i }));
+    await waitFor(() => expect(thumbs[4]).toHaveAttribute('aria-current', 'true'));
+  },
+};
+
+export const ThumbnailsFollowTheCurrentSlide: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => <Gallery />,
+  play: async ({ canvas }) => {
+    const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
+    const thumbs = within(strip).getAllByRole('button', { name: /go to slide/i });
+    await expect(strip.scrollLeft).toBe(0);
+    await userEvent.click(thumbs[1]!);
+    for (let i = 2; i < thumbs.length; i += 1)
+      await userEvent.click(canvas.getByRole('button', { name: /next slide/i }));
+    await waitFor(() => expect(thumbs[7]).toHaveAttribute('aria-current', 'true'));
+    // The last thumbnail was off the right edge: the strip scrolled to bring it into view.
+    await waitFor(() => {
+      const strip_ = strip.getBoundingClientRect();
+      const last = thumbs[7]!.getBoundingClientRect();
+      expect(last.right).toBeLessThanOrEqual(strip_.right + 1);
+    });
+    await expect(strip.scrollLeft).toBeGreaterThan(0);
+  },
+};
+
+export const ThumbnailFocusRing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Gallery count={4} />,
+  play: async ({ canvas }) => {
+    const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
+    await expectFocusRing(within(strip).getAllByRole('button')[1]!);
   },
 };
