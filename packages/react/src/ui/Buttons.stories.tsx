@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, Fragment } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { Plus, ArrowRight, Trash2, Download } from 'lucide-react';
+import { Plus, ArrowRight, Trash2, Download, Undo2 } from 'lucide-react';
 import {
   expectFocusRing,
   expectRefFocuses,
@@ -23,7 +23,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
-const INTENTS = ['brand', 'success', 'danger'] as const;
+const INTENTS = ['brand', 'success', 'warning', 'danger'] as const;
+const SIZES = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
+
+const INTENT_LABEL = {
+  brand: 'Connect',
+  success: 'Connect',
+  warning: 'Reconnect',
+  danger: 'Disconnect',
+} as const;
+
+// Width and height of an icon-only button, by size: 1.75, 2, 2.25, 2.75 and 3rem.
+const ICON_ONLY_PX = { xs: 28, sm: 32, md: 36, lg: 44, xl: 48 } as const;
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
@@ -62,7 +73,8 @@ export const Variants: Story = {
 /**
  * Every variant takes an `intent`. `danger` gives three levels of emphasis for a
  * destructive action: `primary` for the confirmation itself, `secondary` (outlined)
- * or `soft` (tinted) where it sits next to other actions, as on a card.
+ * or `soft` (tinted) where it sits next to other actions, as on a card. `warning` is
+ * amber: dark text on the `primary` fill, amber text on the other variants.
  */
 export const Intents: Story = {
   render: () => (
@@ -85,7 +97,7 @@ export const Intents: Story = {
               </span>
               {EMPHASES.map((variant) => (
                 <Button key={variant} variant={variant} intent={intent}>
-                  {intent === 'danger' ? 'Disconnect' : 'Connect'}
+                  {INTENT_LABEL[intent]}
                 </Button>
               ))}
             </Fragment>
@@ -307,6 +319,170 @@ export const CircularIconOnly: Story = {
   },
 };
 
+/**
+ * `square` is the icon-only button with `rounded-lg` corners: as wide as it is tall at every size,
+ * like `circle`. An icon-only button needs an `aria-label`.
+ */
+export const SquareIconOnly: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Square and circular (icon-only)">
+        <div className="space-y-3">
+          {(['square', 'circle'] as const).map((shape) => (
+            <div key={shape} className="flex flex-wrap items-center gap-3">
+              <span className="text-2xs w-12 font-mono text-[var(--color-text-muted)] uppercase">
+                {shape}
+              </span>
+              {SIZES.map((size) => (
+                <Button
+                  key={size}
+                  shape={shape}
+                  size={size}
+                  icon={Plus}
+                  aria-label={`${shape} ${size}`}
+                />
+              ))}
+            </div>
+          ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-2xs w-12 font-mono text-[var(--color-text-muted)] uppercase">
+              Intents
+            </span>
+            {INTENTS.map((intent) => (
+              <Button
+                key={intent}
+                shape="square"
+                variant="secondary"
+                intent={intent}
+                icon={Plus}
+                aria-label={`square ${intent}`}
+              />
+            ))}
+          </div>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    for (const shape of ['square', 'circle'] as const) {
+      for (const size of SIZES) {
+        const button = canvas.getByRole('button', { name: `${shape} ${size}` });
+        const box = button.getBoundingClientRect();
+        await expect(box.width).toBe(ICON_ONLY_PX[size]);
+        await expect(box.height).toBe(ICON_ONLY_PX[size]);
+        // The size's horizontal padding must not squeeze the icon.
+        const icon = button.querySelector('svg')!.getBoundingClientRect();
+        await expect(icon.width).toBe(icon.height);
+        // Square keeps its corners, circle is round.
+        const radius = parseFloat(getComputedStyle(button).borderTopLeftRadius);
+        if (shape === 'square') await expect(radius).toBeLessThan(box.width / 2);
+        else await expect(radius).toBeGreaterThanOrEqual(box.width / 2);
+      }
+    }
+    // `square` takes the same box with a border, and with any intent.
+    for (const intent of INTENTS) {
+      const box = canvas.getByRole('button', { name: `square ${intent}` }).getBoundingClientRect();
+      await expect(box.width).toBe(ICON_ONLY_PX.md);
+      await expect(box.height).toBe(ICON_ONLY_PX.md);
+    }
+  },
+};
+
+/**
+ * `link` is an action that looks like a link: underlined text with no fixed height, padding or
+ * margin, so `size` only sets the text size. Navigation stays on `Link`; this one runs an action.
+ */
+export const LinkVariant: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="Link × intents × sizes">
+        <div className="space-y-3">
+          {INTENTS.map((intent) => (
+            <div key={intent} className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <span className="text-2xs w-16 font-mono text-[var(--color-text-muted)] uppercase">
+                {intent}
+              </span>
+              {SIZES.map((size) => (
+                <Button key={size} variant="link" intent={intent} size={size}>
+                  {intent} {size}
+                </Button>
+              ))}
+            </div>
+          ))}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="text-2xs w-16 font-mono text-[var(--color-text-muted)] uppercase">
+              Icon
+            </span>
+            <Button variant="link" icon={Undo2}>
+              Undo
+            </Button>
+            <Button variant="link" icon={ArrowRight} iconPosition="right">
+              Continue
+            </Button>
+          </div>
+          <p className="text-sm text-[var(--color-text-base)]">
+            In a sentence: the file was archived,{' '}
+            <Button variant="link" size="md">
+              restore it
+            </Button>{' '}
+            or{' '}
+            <Button variant="link" size="md" intent="danger">
+              delete it for good
+            </Button>
+            .
+          </p>
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const link = (intent: string, size: string) =>
+      canvas.getByRole('button', { name: `${intent} ${size}` });
+    const fontSize = (intent: string, size: string) =>
+      parseFloat(getComputedStyle(link(intent, size)).fontSize);
+
+    for (const intent of INTENTS) {
+      for (const size of SIZES) {
+        const button = link(intent, size);
+        const style = getComputedStyle(button);
+        // Underlined text, and nothing around it: no fill, border, padding or margin.
+        await expect(style.textDecorationLine).toContain('underline');
+        await expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+        for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
+          await expect(style.getPropertyValue(`border-${side.toLowerCase()}-width`)).toBe('0px');
+          await expect(style.getPropertyValue(`padding-${side.toLowerCase()}`)).toBe('0px');
+          await expect(style.getPropertyValue(`margin-${side.toLowerCase()}`)).toBe('0px');
+        }
+        // No fixed height: the box is its line of text, shorter than the smallest button (28px).
+        const box = button.getBoundingClientRect();
+        await expect(box.height).toBeCloseTo(parseFloat(style.lineHeight), 0);
+        await expect(box.height).toBeLessThan(ICON_ONLY_PX.xs);
+      }
+      // `size` sets the text size.
+      await expect(fontSize(intent, 'md')).toBeGreaterThan(fontSize(intent, 'xs'));
+      await expect(fontSize(intent, 'xl')).toBeGreaterThan(fontSize(intent, 'md'));
+    }
+
+    // The accent text is brand-600, and the other intents take the text color of their ghost.
+    await expect(link('brand', 'md')).toHaveClass('text-brand-600', 'dark:text-brand-400');
+    await expect(link('success', 'md')).toHaveClass('text-green-700', 'dark:text-green-400');
+    await expect(link('warning', 'md')).toHaveClass('text-amber-700', 'dark:text-amber-400');
+    await expect(link('danger', 'md')).toHaveClass('text-red-700', 'dark:text-red-400');
+
+    // The icon sits next to the text, and the text stays underlined.
+    const withIcon = canvas.getByRole('button', { name: 'Undo' });
+    await expect(withIcon.querySelector('svg')).not.toBeNull();
+    await expect(getComputedStyle(withIcon).textDecorationLine).toContain('underline');
+
+    // Readable on every theme.
+    inEachTheme(() => {
+      for (const intent of INTENTS) {
+        for (const size of SIZES) expectTextContrast(link(intent, size));
+      }
+    });
+  },
+};
+
 // ── Interaction tests for new props ──────────────────────────────────────────
 
 export const SoftVariantHasTintedBg: Story = {
@@ -397,15 +573,112 @@ export const IntentColorsEachVariant: Story = {
     await expect(button('soft danger')).toHaveClass('bg-red-50', 'text-red-700');
     await expect(button('soft danger')).not.toHaveClass('bg-brand-50');
 
+    // `warning` is amber: dark text on the fill, amber text on the other emphases.
+    await expect(button('primary warning')).toHaveClass(
+      'bg-amber-500',
+      'hover:bg-amber-600',
+      'text-gray-900',
+      'shadow-sm'
+    );
+    await expect(button('primary warning')).not.toHaveClass('bg-brand-500');
+    await expect(button('secondary warning')).toHaveClass(
+      'bg-white',
+      'border',
+      'border-amber-200',
+      'text-amber-700'
+    );
+    await expect(button('ghost warning')).toHaveClass('text-amber-700', 'hover:bg-amber-50');
+    await expect(button('ghost warning')).not.toHaveClass('border');
+    await expect(button('soft warning')).toHaveClass('bg-amber-50', 'text-amber-700');
+    await expect(button('soft warning')).not.toHaveClass('bg-brand-50');
+
     // No intent is `brand`.
     await expect(button('default').className).toBe(button('primary brand').className);
 
-    // Red text stays readable in every theme.
+    // Red and amber text stay readable in every theme.
     inEachTheme(() => {
-      for (const name of ['secondary danger', 'ghost danger', 'soft danger', 'primary danger']) {
-        expectTextContrast(button(name));
+      for (const intent of ['danger', 'warning']) {
+        for (const variant of EMPHASES) expectTextContrast(button(`${variant} ${intent}`));
       }
     });
+  },
+};
+
+// `warning`, `square` and `link` block the click like the other variants.
+export const NewVariantsBlockClickWhenDisabledOrLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClick: fn() },
+  render: (args) => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={args.onClick} variant="link" disabled>
+          link disabled
+        </Button>
+        <Button onClick={args.onClick} variant="link" loading>
+          link loading
+        </Button>
+        <Button onClick={args.onClick} intent="warning" disabled>
+          warning disabled
+        </Button>
+        <Button onClick={args.onClick} intent="warning" loading>
+          warning loading
+        </Button>
+        <Button
+          onClick={args.onClick}
+          shape="square"
+          icon={Plus}
+          aria-label="square disabled"
+          disabled
+        />
+        <Button
+          onClick={args.onClick}
+          shape="square"
+          icon={Plus}
+          aria-label="square loading"
+          loading
+        />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    for (const name of [
+      'link disabled',
+      'link loading',
+      'warning disabled',
+      'warning loading',
+      'square disabled',
+      'square loading',
+    ]) {
+      const button = canvas.getByRole('button', { name });
+      await expect(button).toBeDisabled();
+      await userEvent.click(button);
+    }
+    await expect(args.onClick).not.toHaveBeenCalled();
+    // A disabled link is dimmed and shows it is not clickable.
+    const disabled = getComputedStyle(canvas.getByRole('button', { name: 'link disabled' }));
+    await expect(disabled.opacity).toBe('0.5');
+    await expect(disabled.cursor).toBe('not-allowed');
+  },
+};
+
+/** An enabled link runs its action. */
+export const LinkClickFiresOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: 'Undo', variant: 'link', onClick: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Undo' }));
+    await expect(args.onClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** White on amber-500 is about 2.1:1: the warning fill takes dark text, as success does on green. */
+export const PrimaryWarningHasDarkTextOnAmber: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { intent: 'warning', children: 'Pause sync' },
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Pause sync' });
+    await expect(button).toHaveClass('bg-amber-500', 'text-gray-900');
+    inEachTheme(() => expectTextContrast(button));
   },
 };
 
@@ -435,6 +708,15 @@ export const FocusShowsRingInLight: Story = {
   tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+export const LinkShowsFocusRing: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { variant: 'link', children: 'Undo' },
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('button', { name: 'Undo' }));
+  },
 };
 
 /** White on green-500 is about 2.3:1: the success fill takes dark text. */
