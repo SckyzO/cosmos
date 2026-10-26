@@ -134,4 +134,4 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 
 MIT — see [LICENSE](../../LICENSE).
 
-The charts are drawn with [Recharts](https://github.com/recharts/recharts) (MIT), which pulls in modules of [d3](https://d3js.org/) (ISC, and BSD-3-Clause for `d3-ease`). `WorldMap` also uses [d3-geo](https://github.com/d3/d3-geo) (ISC) and [topojson-client](https://github.com/topojson/topojson-client) (ISC). Their licenses apply to the code they ship.
+The charts are drawn with [Recharts](https://github.com/recharts/recharts) (MIT), which pulls in modules of [d3](https://d3js.org/) (ISC, and BSD-3-Clause for `d3-ease`). `WorldMap` also uses [d3-geo](https://github.com/d3/d3-geo) (ISC) and [topojson-client](https://github.com/topojson/topojson-client) (ISC). Their licenses apply to the code they ship. `d3-geo` ships ES modules only, so the CommonJS build carries it inside `WorldMap.cjs`, with the `d3-array` and `internmap` it pulls; `THIRD_PARTY_NOTICES.md` holds their licenses.

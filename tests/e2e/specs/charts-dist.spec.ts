@@ -62,17 +62,28 @@ test('Recharts stays external: imported by name, never bundled', () => {
   }
 });
 
-test('the map libraries are imported by WorldMap alone', () => {
+test('the map libraries load with WorldMap alone', () => {
   // d3-geo and topojson-client are dependencies only WorldMap needs: any other
   // file importing them, or a chunk shared with the other wrappers, would load
   // them for every consumer of the package.
-  for (const format of ['js', 'cjs']) {
-    for (const name of readdirSync(dist).filter((file) => file.endsWith(`.${format}`))) {
-      const code = read(`${dist}${name}`);
-      const imported = [...importsOf(code, 'd3-geo'), ...importsOf(code, 'topojson-client')];
-      if (name === `WorldMap.${format}`) expect(imported, name).toHaveLength(2);
-      else expect(imported, name).toEqual([]);
-    }
+  const mapImports = (code: string) => [
+    ...importsOf(code, 'd3-geo'),
+    ...importsOf(code, 'topojson-client'),
+  ];
+  for (const name of readdirSync(dist).filter((file) => file.endsWith('.js'))) {
+    const imported = mapImports(read(`${dist}${name}`));
+    if (name === 'WorldMap.js') expect(imported, name).toEqual(['d3-geo', 'topojson-client']);
+    else expect(imported, name).toEqual([]);
+  }
+  // d3-geo ships ES modules only: the CJS build carries it inside WorldMap.cjs
+  // rather than requiring it, so a `require` of the package never depends on
+  // Node loading ESM from CJS. Nothing else holds its code.
+  for (const name of readdirSync(dist).filter((file) => file.endsWith('.cjs'))) {
+    const code = read(`${dist}${name}`);
+    const imported = mapImports(code);
+    if (name === 'WorldMap.cjs') expect(imported, name).toEqual(['topojson-client']);
+    else expect(imported, name).toEqual([]);
+    expect(code.includes('naturalEarth1Raw'), name).toBe(name === 'WorldMap.cjs');
   }
 });
 

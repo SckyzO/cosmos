@@ -24,6 +24,19 @@ const reexportBuiltModules: EsbuildPlugin = {
   },
 };
 
+// d3-geo ships ES modules only. The ESM build imports it like any dependency;
+// the CJS build bundles it, with the d3-array and internmap it pulls, so a
+// `require` of the package never needs Node to load ESM from CJS (20.19 and
+// 22.12 onwards). THIRD_PARTY_NOTICES.md carries their ISC licences.
+const esmOnlyDependencies = ['d3-geo'];
+const esmOnlyExternalInEsm: EsbuildPlugin = {
+  name: 'esm-only-external-in-esm',
+  setup(build) {
+    if ((build.initialOptions.outExtension?.['.js'] ?? '.js') !== '.js') return;
+    build.onResolve({ filter: /^d3-geo$/ }, ({ path }) => ({ path, external: true }));
+  },
+};
+
 // Splitting puts the code the wrappers share (the frame, the colors, the
 // legend…) in chunks, once. With `sideEffects: false` in package.json, a
 // bundler leaves out the files of the wrappers a consumer doesn't import.
@@ -40,7 +53,8 @@ export default defineConfig({
   treeshake: true,
   // `recharts` is a dependency, so tsup leaves it external too.
   external: ['react', 'react-dom'],
-  esbuildPlugins: [reexportBuiltModules],
+  noExternal: esmOnlyDependencies,
+  esbuildPlugins: [reexportBuiltModules, esmOnlyExternalInEsm],
   // Every entry and chunk is a client module for React Server Components
   // bundlers. After the build: Rollup, which `treeshake` runs, drops an
   // esbuild banner.

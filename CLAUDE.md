@@ -123,6 +123,9 @@ charts ───────────── storybook      (charts imports ne
   chart library: it imports neither `theme` nor `react`. One build entry per wrapper and
   `sideEffects: false`; `recharts` stays a dependency, not a peer, and so do `d3-geo` and
   `topojson-client`, which only `WorldMap` imports: a consumer who doesn't use it ships neither.
+  `d3-geo` ships ESM only: the CJS build bundles it into `WorldMap.cjs` (`noExternal` plus a plugin
+  that keeps it external in the ESM pass, `tsup.config.ts`), and `THIRD_PARTY_NOTICES.md` carries the
+  licences of what it bundles. `tests/e2e/specs/charts-dist.spec.ts` checks both.
   Built on the internal `src/core/`:
   - **Colours are CSS variables** with a hex fallback (`var(--color-brand-500, #465fff)`), only through
     `core/colors.ts`, handed to `fill` / `stroke` / `stopColor` / `cursor`. No `getComputedStyle`, no
