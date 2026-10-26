@@ -8,6 +8,7 @@ import {
   Cpu,
   FileText,
   Globe,
+  Info,
   LayoutDashboard,
   Layers,
   Network,
@@ -190,6 +191,211 @@ export const Collapsed: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+// ── Sections, spacing and styles ─────────────────────────────────────────────
+
+const SectionedNav = () => (
+  <>
+    <Sidebar.Section label="Main">
+      <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
+    </Sidebar.Section>
+    <Sidebar.Section label="Monitoring">
+      <Sidebar.Item icon={Globe} label="World Map" />
+      <Sidebar.Item icon={Bell} label="Notifications" active />
+    </Sidebar.Section>
+    <Sidebar.Section label="Infrastructure">
+      <Sidebar.Item icon={Server} label="Servers" />
+      <Sidebar.Item icon={Network} label="Network" />
+    </Sidebar.Section>
+  </>
+);
+
+/**
+ * Sections are set apart by space and a title, without lines; rows sit 20 px from the edge and
+ * are 40 px tall.
+ */
+export const Sections: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const brand = canvas.getByText('Cosmos').closest('.h-\\[72px\\]') as HTMLElement;
+    await expect(getComputedStyle(brand).borderBottomWidth).toBe('0px');
+    const section = canvas.getByText('Monitoring').parentElement as HTMLElement;
+    await expect(getComputedStyle(section).borderTopWidth).toBe('0px');
+    await expect(getComputedStyle(section).marginTop).toBe('16px');
+    const row = canvas.getByRole('button', { name: 'World Map' }).getBoundingClientRect();
+    await expect(row.left - nav.getBoundingClientRect().left).toBe(20);
+    await expect(row.height).toBe(40);
+    await expect(canvas.getByRole('button', { name: 'Notifications' })).toHaveClass(
+      'bg-brand-500/10'
+    );
+  },
+};
+
+/** Collapsed, a "···" mark takes each section title's place. */
+export const SectionsCollapsed: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar collapsed>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(canvas.queryByText('Monitoring')).toBeNull();
+    await expect(nav.querySelectorAll('div[aria-hidden="true"] > svg')).toHaveLength(3);
+    const row = canvas.getByRole('button', { name: 'World Map' }).getBoundingClientRect();
+    await expect(row.left - nav.getBoundingClientRect().left).toBe(8);
+  },
+};
+
+/** `divider` brings back the lines: under the Brand, and above each section. */
+export const Dividers: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand
+          logo={<Box className="h-5 w-5" />}
+          title="Cosmos"
+          subtitle="Design system"
+          divider
+        />
+        <Sidebar.Section divider>
+          <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
+        </Sidebar.Section>
+        <Sidebar.Section label="Account" divider>
+          <Sidebar.Item icon={Bell} label="Notifications" />
+          <Sidebar.Item icon={Settings} label="Settings" />
+        </Sidebar.Section>
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+/** `activeStyle="solid"` fills the active row with the accent. */
+export const ActiveSolid: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar activeStyle="solid">
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Notifications' })).toHaveClass(
+      'bg-brand-500',
+      'text-white'
+    );
+  },
+};
+
+/** `logoStyle`: the tinted square (default), a filled one, or the logo alone. */
+export const LogoStyles: Story = {
+  render: () => (
+    <div className="w-[264px] bg-[var(--color-bg-panel)]">
+      <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Tint" subtitle="Default" />
+      <Sidebar.Brand
+        logo={<Box className="h-5 w-5" />}
+        title="Solid"
+        subtitle="logoStyle=solid"
+        logoStyle="solid"
+      />
+      <Sidebar.Brand
+        logo={<Box className="text-brand-500 h-7 w-7" />}
+        title="None"
+        subtitle="logoStyle=none"
+        logoStyle="none"
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const square = (title: string) =>
+      canvas.getByText(title).closest('.h-\\[72px\\]')!.firstElementChild as HTMLElement;
+    await expect(square('Tint')).toHaveClass('bg-brand-500/10');
+    await expect(square('Solid')).toHaveClass('bg-brand-500', 'text-white');
+    await expect(square('None')).not.toHaveClass('rounded-lg');
+  },
+};
+
+// ── Footers ──────────────────────────────────────────────────────────────────
+
+const FooterNav = () => (
+  <>
+    <Sidebar.Item icon={User} label="Profile" />
+    <Sidebar.Item icon={Settings} label="Settings" />
+    <Sidebar.Item icon={Info} label="About" />
+  </>
+);
+
+/** Navigation rows in the footer, under a line inset 20 px from each edge. */
+export const FooterNavigation: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar footer={<FooterNav />} footerDivider="inset">
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const profile = canvas.getByRole('button', { name: 'Profile' });
+    const footer = profile.parentElement as HTMLElement;
+    await expect(getComputedStyle(footer).borderTopWidth).toBe('0px');
+    const line = getComputedStyle(footer, '::before');
+    await expect(line.left).toBe('20px');
+    await expect(line.right).toBe('20px');
+    // The footer's own padding and the row margin add up to the rows' 20 px.
+    await expect(profile.getBoundingClientRect().left - nav.getBoundingClientRect().left).toBe(20);
+  },
+};
+
+/** The user's profile and the collapse button, under a full-width line. */
+export const FooterProfile: Story = {
+  render: FullExample.render,
+  play: async ({ canvas }) => {
+    const footer = canvas.getByText('sckyzo').closest('.shrink-0') as HTMLElement;
+    await expect(getComputedStyle(footer).borderTopWidth).toBe('1px');
+  },
+};
+
+/** Navigation rows in the footer, then the collapse row that `onCollapsedChange` adds. */
+export const FooterNavigationAndCollapse: Story = {
+  render: () => {
+    const [collapsed, setCollapsed] = useState(false);
+    return (
+      <Wrap>
+        <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} footer={<FooterNav />}>
+          <Sidebar.Brand
+            logo={<Box className="h-5 w-5" />}
+            title="Cosmos"
+            subtitle="Design system"
+          />
+          <SectionedNav />
+        </Sidebar>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await transitionsEnd(nav);
+    await expect(nav.getBoundingClientRect().width).toBe(72);
+    // Collapsed, the footer rows are icons named by their label.
+    const profile = canvas.getByRole('button', { name: 'Profile' }).getBoundingClientRect();
+    await expect(profile.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);
+  },
 };
 
 export const SubMenuExpanded: Story = {
@@ -603,11 +809,11 @@ export const SectionUnderTheBrandDrawsNoSecondLine: Story = {
   render: () => (
     <Wrap>
       <Sidebar>
-        <Sidebar.Brand title="Acme" />
-        <Sidebar.Section>
+        <Sidebar.Brand title="Acme" divider />
+        <Sidebar.Section divider>
           <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
         </Sidebar.Section>
-        <Sidebar.Section label="Account">
+        <Sidebar.Section label="Account" divider>
           <Sidebar.Item icon={Settings} label="Settings" />
         </Sidebar.Section>
       </Sidebar>
