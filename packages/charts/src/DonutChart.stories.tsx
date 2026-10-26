@@ -112,6 +112,18 @@ const slices = (root: HTMLElement) => [
 ];
 
 /**
+ * Hovers slice `index` until the tooltip shows `text`. While the slices draw
+ * in, Recharts keys each one by its angles, so a frame replaces the hovered
+ * node and its mouseenter is lost: leave and enter again until it holds.
+ */
+const hoverSlice = (root: HTMLElement, index: number, text: string) =>
+  waitFor(async () => {
+    await userEvent.unhover(slices(root)[index]);
+    await userEvent.hover(slices(root)[index]);
+    expect(tooltipCard(root)).toHaveTextContent(text);
+  });
+
+/**
  * The legend and the tooltip are React text: a label with markup shows as
  * written, and nothing is injected.
  */
@@ -121,8 +133,7 @@ export const HtmlInLabelsRendersAsText: Story = {
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']));
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
-    await userEvent.hover(slices(canvasElement)[0]);
-    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent(HOSTILE));
+    await hoverSlice(canvasElement, 0, HOSTILE);
     // The center names the hovered slice.
     await expect(centerText(canvasElement)?.label).toBe(HOSTILE);
     await expectNoInjectedImage(canvasElement);
@@ -153,11 +164,10 @@ export const FormatValueFormatsLabels: Story = {
       expect(centerText(canvasElement)).toEqual({ value: '1000 GiB', label: 'Total' })
     );
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
-    await userEvent.hover(slices(canvasElement)[0]);
+    await hoverSlice(canvasElement, 0, '732 GiB');
     await waitFor(() =>
       expect(centerText(canvasElement)).toEqual({ value: '732 GiB', label: 'Used' })
     );
-    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent('732 GiB'));
     await userEvent.unhover(slices(canvasElement)[0]);
     await waitFor(() => expect(centerText(canvasElement)?.label).toBe('Total'));
     await closeTooltip(canvasElement);

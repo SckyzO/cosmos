@@ -183,12 +183,15 @@ export const ReferenceAreaInChildren: Story = {
 
 const firstSymbol = (root: HTMLElement) => scatterSymbols(root).flat()[0] as Element;
 
-// The points listen for the pointer once they are drawn.
-const hoverFirstPoint = async (root: HTMLElement) => {
-  await waitFor(() => expect(firstSymbol(root)).toBeDefined());
-  await userEvent.hover(firstSymbol(root));
-  await waitFor(() => expect(tooltipCard(root)).not.toBeNull());
-};
+// While the points draw in, Recharts keys each one by its position, so a frame
+// replaces the hovered node and its mouseenter is lost: leave and enter again
+// until the tooltip shows.
+const hoverFirstPoint = (root: HTMLElement) =>
+  waitFor(async () => {
+    await userEvent.unhover(firstSymbol(root));
+    await userEvent.hover(firstSymbol(root));
+    expect(tooltipCard(root)).not.toBeNull();
+  });
 
 const leaveFirstPoint = async (root: HTMLElement) => {
   await userEvent.unhover(firstSymbol(root));
