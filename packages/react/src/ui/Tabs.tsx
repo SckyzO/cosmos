@@ -29,7 +29,13 @@ export type TabsVariant =
    * Rounded triggers on a tinted track; the active one is filled with the
    * accent. The panel has no surface of its own. Works in both orientations.
    */
-  | 'pills';
+  | 'pills'
+  /**
+   * A neutral gray track with the active tab raised on it (white in the light
+   * themes, a lighter gray in the dark ones). No accent in the bar. The panel
+   * has no surface of its own. Works in both orientations.
+   */
+  | 'raised';
 
 type TabsContextValue = {
   value: string;
@@ -61,6 +67,13 @@ const panelId = (baseId: string, value: string) => `${baseId}-panel-${encodeURIC
 
 // ── Class maps (variant × orientation) ───────────────────────────────────────
 
+// The gray track of `pills` and `raised`. It hugs its tabs (no `min-w-full`) and scrolls in its
+// strip when they don't fit; the vertical one is as tall as its tabs, not as the panel beside it.
+const TRACK_LIST: Record<TabsOrientation, string> = {
+  horizontal: 'flex w-max items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
+  vertical: 'flex shrink-0 flex-col gap-1 self-start rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
+};
+
 const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   underline: {
     horizontal:
@@ -73,10 +86,8 @@ const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
     horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--folder-border)]',
     vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--folder-border)]',
   },
-  pills: {
-    horizontal: 'flex w-max items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
-    vertical: 'flex shrink-0 flex-col gap-1 self-start rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
-  },
+  pills: TRACK_LIST,
+  raised: TRACK_LIST,
 };
 
 type TriggerClasses = {
@@ -97,6 +108,33 @@ const IDLE_HOVER = 'hover:text-gray-700 dark:hover:text-gray-200';
 // A disabled tab trades the idle colors for the theme's muted text, exclusively: no opacity on top,
 // which left gray-500 too faint on light themes.
 const DISABLED_TEXT = 'text-[var(--color-text-muted)]';
+
+type BadgeClasses = { active: string; inactive: string };
+
+const PAGE_BADGE: BadgeClasses = {
+  active: 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400',
+  inactive: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+};
+
+// The count's colors follow what the tab sits on: the page, or a gray track.
+const BADGE_CLASSES: Record<TabsVariant, BadgeClasses> = {
+  underline: PAGE_BADGE,
+  folder: PAGE_BADGE,
+  // Translucent dark on the accent fill, so the white text holds 4.5:1; white on the track.
+  pills: {
+    active: 'bg-black/20 text-white',
+    inactive: 'bg-white text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+  },
+  // No accent in the bar. gray-100 would vanish on the track, and white would read as a second
+  // raised tab: the idle count is a step darker than the track.
+  raised: {
+    active: 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-100',
+    inactive: 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+  },
+};
+
+// The raised tab of `raised`, the same in both orientations.
+const RAISED_ACTIVE = 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white';
 
 const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasses>> = {
   underline: {
@@ -155,6 +193,26 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       activeFocus: 'focus-visible:focus-indicator-on-accent',
     },
   },
+  // A rounded chip on the track, whose padding gives the list its edge. The active one is raised by
+  // color and a small shadow, not by size, so the labels don't shift. Its ring is the usual brand
+  // one: the tab is white (or gray), not an accent fill. gray-500 text is 4.39:1 on the track, so the
+  // idle text takes gray-600.
+  raised: {
+    horizontal: {
+      base: 'rounded-lg px-3 py-1.5',
+      active: RAISED_ACTIVE,
+      inactive: '',
+      hover: 'hover:text-gray-900 dark:hover:text-white',
+      idle: 'text-gray-600 dark:text-gray-400',
+    },
+    vertical: {
+      base: 'justify-start rounded-lg px-3 py-1.5 text-left whitespace-nowrap',
+      active: RAISED_ACTIVE,
+      inactive: '',
+      hover: 'hover:text-gray-900 dark:hover:text-white',
+      idle: 'text-gray-600 dark:text-gray-400',
+    },
+  },
 };
 
 const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
@@ -167,6 +225,7 @@ const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
       'flex-1 rounded-r-xl border border-l-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
   },
   pills: { horizontal: 'pt-5', vertical: 'flex-1' },
+  raised: { horizontal: 'pt-5', vertical: 'flex-1' },
 };
 
 export type TabsProps = {
@@ -183,6 +242,8 @@ export type TabsProps = {
    * line. `folder` draws file-folder tabs attached to their panel, which then
    * gets its own border, background and padding. `pills` puts rounded
    * triggers on a tinted track and fills the active one with the accent.
+   * `raised` puts them on a neutral gray track and raises the active one on
+   * it, with no accent.
    */
   variant?: TabsVariant;
   children: ReactNode;
@@ -379,13 +440,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
         <span
           className={clsx(
             'text-3xs ms-auto rounded-full px-1.5 py-0.5 font-bold',
-            isActive
-              ? variant === 'pills'
-                ? 'bg-black/20 text-white'
-                : 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
-              : variant === 'pills'
-                ? 'bg-white text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+            isActive ? BADGE_CLASSES[variant].active : BADGE_CLASSES[variant].inactive
           )}
         >
           {badge}
