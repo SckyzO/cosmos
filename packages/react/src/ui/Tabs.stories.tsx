@@ -2,9 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
   Archive,
   Bell,
+  CreditCard,
   FileText,
   ImageIcon,
   KeyRound,
+  LayoutDashboard,
+  ScrollText,
   Settings as SettingsIcon,
   User,
 } from 'lucide-react';
@@ -663,7 +666,7 @@ export const FolderOutlineKeepsBorderInLight: Story = {
 
 const SECTIONS = ['Overview', 'Metrics', 'Logs', 'Alerts', 'Deployments', 'Settings', 'Billing'];
 
-const ManyTabs = ({ variant }: { variant: 'underline' | 'folder' | 'pills' }) => {
+const ManyTabs = ({ variant }: { variant: 'underline' | 'folder' | 'pills' | 'raised' }) => {
   const [tab, setTab] = useState(SECTIONS[0]);
   return (
     <Wrap>
@@ -996,5 +999,362 @@ export const PillsFocusRing: Story = {
 export const MobilePills: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="pills" />,
+  play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
+};
+
+// ── Raised variant (#402) ────────────────────────────────────────────────────
+
+const RaisedDemo = ({
+  orientation,
+  badge,
+  icons,
+  tall,
+  defaultTab = 'overview',
+}: {
+  orientation?: 'horizontal' | 'vertical';
+  badge?: boolean;
+  icons?: boolean;
+  /** Panels taller than the list, to show the vertical track keeps the height of its tabs. */
+  tall?: boolean;
+  defaultTab?: string;
+}) => {
+  const [tab, setTab] = useState(defaultTab);
+  const panelClass = tall ? 'h-72' : undefined;
+  return (
+    <Tabs value={tab} onChange={setTab} orientation={orientation} variant="raised">
+      <Tabs.List className={orientation === 'vertical' ? 'sm:w-44' : undefined}>
+        <Tabs.Trigger value="overview" icon={icons ? LayoutDashboard : undefined}>
+          Overview
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="alerts"
+          icon={icons ? Bell : undefined}
+          badge={badge ? '12' : undefined}
+        >
+          Alerts
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="billing"
+          icon={icons ? CreditCard : undefined}
+          badge={badge ? '3' : undefined}
+        >
+          Billing
+        </Tabs.Trigger>
+        <Tabs.Trigger value="audit" icon={icons ? ScrollText : undefined} disabled>
+          Audit
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Panel value="overview" className={panelClass}>
+        <p className="text-sm text-[var(--color-text-secondary)]">overview-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="alerts" className={panelClass}>
+        <p className="text-sm text-[var(--color-text-secondary)]">alerts-panel-content</p>
+      </Tabs.Panel>
+      <Tabs.Panel value="billing" className={panelClass}>
+        <p className="text-sm text-[var(--color-text-secondary)]">billing-panel-content</p>
+      </Tabs.Panel>
+    </Tabs>
+  );
+};
+
+/** A neutral gray track; the active tab is raised on it in white, with no accent in the bar. */
+export const Raised: Story = {
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+};
+
+export const RaisedWithIcons: Story = {
+  render: () => (
+    <Wrap>
+      <RaisedDemo icons />
+    </Wrap>
+  ),
+};
+
+/** The counts stay neutral: a step darker than the track when idle, gray on the raised tab. */
+export const RaisedWithBadge: Story = {
+  render: () => (
+    <Wrap>
+      <RaisedDemo badge defaultTab="alerts" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const active = canvas.getByRole('tab', { name: 'Alerts 12' });
+    const idle = canvas.getByRole('tab', { name: 'Billing 3' });
+    await expect(active).toHaveAttribute('aria-selected', 'true');
+    const activeCount = within(active).getByText('12');
+    const idleCount = within(idle).getByText('3');
+    // No accent tint in the bar.
+    await expect(getComputedStyle(activeCount).backgroundColor).not.toBe(
+      colorOf('var(--color-brand-100)')
+    );
+    // Each count stands out from what it sits on: the raised tab, the track.
+    await expect(getComputedStyle(activeCount).backgroundColor).not.toBe(
+      getComputedStyle(active).backgroundColor
+    );
+    await expect(getComputedStyle(idleCount).backgroundColor).not.toBe(
+      getComputedStyle(canvas.getByRole('tablist')).backgroundColor
+    );
+  },
+};
+
+export const RaisedVertical: Story = {
+  render: () => (
+    <Wrap>
+      <RaisedDemo orientation="vertical" icons badge defaultTab="alerts" />
+    </Wrap>
+  ),
+};
+
+export const RaisedDisabled: Story = {
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const disabled = canvas.getByRole('tab', { name: 'Audit' });
+    await expect(disabled).toBeDisabled();
+    await expect(getComputedStyle(disabled).color).toBe(colorOf('var(--color-text-muted)'));
+    await expect(getComputedStyle(disabled).cursor).toBe('not-allowed');
+    await userEvent.click(disabled);
+    await expect(disabled).toHaveAttribute('aria-selected', 'false');
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('overview-panel-content');
+  },
+};
+
+/** The sizes the track and the tabs are drawn with, in either orientation. */
+export const RaisedGeometry: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tablist = canvas.getByRole('tablist');
+    const active = canvas.getByRole('tab', { name: 'Overview' });
+    const idle = canvas.getByRole('tab', { name: 'Billing' });
+    const track = getComputedStyle(tablist);
+    // rounded-xl, p-1, gap-1; the tabs are rounded-lg, px-3 py-1.5, and the list's own width is
+    // its tabs' (it does not stretch like the underline's).
+    await expect(track.borderTopLeftRadius).toBe('12px');
+    await expect(track.padding).toBe('4px');
+    await expect(track.columnGap).toBe('4px');
+    for (const tab of [active, idle]) {
+      await expect(getComputedStyle(tab).borderTopLeftRadius).toBe('8px');
+      await expect(getComputedStyle(tab).padding).toBe('6px 12px');
+    }
+    // The active tab is raised by color and shadow, not by size: no label moves when it changes.
+    await expect(active.getBoundingClientRect().height).toBe(idle.getBoundingClientRect().height);
+    await expect(active.getBoundingClientRect().top).toBe(idle.getBoundingClientRect().top);
+    await expect(tablist.getBoundingClientRect().width).toBeLessThan(
+      tablist.parentElement!.getBoundingClientRect().width
+    );
+    const tabs = canvas.getAllByRole('tab');
+    const [first, last] = [tabs[0], tabs[tabs.length - 1]];
+    await expect(tablist.getBoundingClientRect().width).toBeCloseTo(
+      last.getBoundingClientRect().right - first.getBoundingClientRect().left + 8,
+      0
+    );
+  },
+};
+
+/** The vertical track is as tall as its tabs, not stretched to a taller panel. */
+export const RaisedVerticalTrackHugsItsTabs: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <RaisedDemo orientation="vertical" tall />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tablist = canvas.getByRole('tablist');
+    const panel = canvas.getByRole('tabpanel');
+    const tabs = canvas.getAllByRole('tab');
+    const [first, last] = [tabs[0], tabs[tabs.length - 1]];
+    await expect(panel.getBoundingClientRect().height).toBeGreaterThan(
+      tablist.getBoundingClientRect().height
+    );
+    await expect(tablist.getBoundingClientRect().height).toBeCloseTo(
+      last.getBoundingClientRect().bottom - first.getBoundingClientRect().top + 8,
+      0
+    );
+    await expect(tablist.getBoundingClientRect().top).toBeCloseTo(
+      panel.getBoundingClientRect().top,
+      0
+    );
+    // The tabs fill the track's width, so the raised one is as wide as the others.
+    await expect(first.getBoundingClientRect().width).toBeCloseTo(
+      tablist.getBoundingClientRect().width - 8,
+      0
+    );
+  },
+};
+
+const expectRaisedColors = async (
+  canvas: ReturnType<typeof within>,
+  tokens: { track: string; raised: string; text: string; idle: string }
+) => {
+  const active = canvas.getByRole('tab', { name: 'Overview' });
+  const idle = canvas.getByRole('tab', { name: 'Billing' });
+  await expect(getComputedStyle(canvas.getByRole('tablist')).backgroundColor).toBe(
+    colorOf(`var(${tokens.track})`)
+  );
+  await expect(getComputedStyle(active).backgroundColor).toBe(colorOf(`var(${tokens.raised})`));
+  await expect(getComputedStyle(active).color).toBe(colorOf(`var(${tokens.text})`));
+  await expect(getComputedStyle(active).boxShadow).not.toBe('none');
+  await expect(getComputedStyle(idle).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+  await expect(getComputedStyle(idle).color).toBe(colorOf(`var(${tokens.idle})`));
+  await expect(getComputedStyle(idle).boxShadow).toBe('none');
+  // No accent in the bar.
+  await expect(getComputedStyle(active).backgroundColor).not.toBe(
+    colorOf('var(--color-brand-500)')
+  );
+  await expect(getComputedStyle(active).color).not.toBe(colorOf('var(--color-brand-600)'));
+};
+
+/** In dark, the active tab is a lighter gray than the track, with white text. */
+export const RaisedActiveIsRaisedInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) =>
+    expectRaisedColors(canvas, {
+      track: '--color-gray-800',
+      raised: '--color-gray-700',
+      text: '--color-white',
+      idle: '--color-gray-400',
+    }),
+};
+
+/** In light, the active tab is white on the gray-100 track, with gray-900 text. */
+export const RaisedActiveIsRaisedInLight: Story = {
+  tags: ['!dev'],
+  ...RaisedActiveIsRaisedInDark,
+  globals: { theme: 'light' },
+  play: async ({ canvas }) =>
+    expectRaisedColors(canvas, {
+      track: '--color-gray-100',
+      raised: '--color-white',
+      text: '--color-gray-900',
+      idle: '--color-gray-600',
+    }),
+};
+
+/** Raised keeps the Tabs keyboard model: arrows skip the disabled tab, wrap, Home and End jump. */
+export const RaisedArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const alerts = canvas.getByRole('tab', { name: 'Alerts' });
+    const billing = canvas.getByRole('tab', { name: 'Billing' });
+    await expect(canvas.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+    await userEvent.tab();
+    await expect(overview).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(alerts).toHaveFocus();
+    await expect(alerts).toHaveAttribute('aria-selected', 'true');
+    await expect(overview).toHaveAttribute('aria-selected', 'false');
+    await expect(canvas.getByRole('tabpanel')).toHaveTextContent('alerts-panel-content');
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(billing).toHaveFocus();
+    // The disabled tab is skipped: the next stop wraps to the first.
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(overview).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(billing).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(overview).toHaveAttribute('aria-selected', 'true');
+    await userEvent.keyboard('{End}');
+    await expect(billing).toHaveAttribute('aria-selected', 'true');
+  },
+};
+
+export const RaisedVerticalArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <RaisedDemo orientation="vertical" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+    await userEvent.tab();
+    await expect(canvas.getByRole('tab', { name: 'Overview' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('tab', { name: 'Alerts' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(canvas.getByRole('tab', { name: 'Overview' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+export const RaisedTabAndPanelAreLinked: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const overview = canvas.getByRole('tab', { name: 'Overview' });
+    const panel = canvas.getByRole('tabpanel');
+    await expect(overview).toHaveAttribute('aria-controls', panel.id);
+    await expect(panel).toHaveAttribute('aria-labelledby', overview.id);
+    // The link follows the selection.
+    const alerts = canvas.getByRole('tab', { name: 'Alerts' });
+    await userEvent.click(alerts);
+    const next = canvas.getByRole('tabpanel');
+    await expect(next).toHaveTextContent('alerts-panel-content');
+    await expect(alerts).toHaveAttribute('aria-controls', next.id);
+    await expect(next).toHaveAttribute('aria-labelledby', alerts.id);
+    await expect(overview).not.toHaveAttribute('aria-controls');
+  },
+};
+
+/** The ring is the usual brand one, inset: the raised tab is white or gray, not an accent fill. */
+export const RaisedFocusRingInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => (
+    <Wrap>
+      <RaisedDemo />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Overview' }), { inset: true });
+    // Arrow keys select on focus: the tab that takes the focus is the raised one.
+    await userEvent.keyboard('{ArrowRight}');
+    await expectFocusRing(canvas.getByRole('tab', { name: 'Alerts' }), { inset: true });
+  },
+};
+
+export const RaisedFocusRingInLight: Story = {
+  tags: ['!dev'],
+  ...RaisedFocusRingInDark,
+  globals: { theme: 'light' },
+};
+
+export const MobileRaised: Story = {
+  globals: mobileViewport,
+  render: () => <ManyTabs variant="raised" />,
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
