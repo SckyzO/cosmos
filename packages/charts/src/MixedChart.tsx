@@ -17,8 +17,15 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, MUTED, PANEL, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
+import { referenceMarks } from './core/reference';
 import { roundedBarShape } from './core/roundedBar';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import type {
+  ChartAxisTitleProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type MixedChartAxis = 'left' | 'right';
 
@@ -34,7 +41,8 @@ export type MixedChartSeries = {
 export type MixedChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
-  ChartAxisTitleProps & {
+  ChartAxisTitleProps &
+  ChartReferenceProps & {
     /** Lines and columns on one category axis. */
     series: MixedChartSeries[];
     categories: (string | number)[];
@@ -80,6 +88,8 @@ export const MixedChart = ({
   xTitle,
   yTitle,
   yRightTitle,
+  referenceLines,
+  referenceBands,
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
@@ -180,6 +190,7 @@ export const MixedChart = ({
           />
         );
       })}
+      {referenceMarks({ referenceLines, referenceBands, axisId: sides[0] })}
       {children}
     </ComposedChart>
   );
