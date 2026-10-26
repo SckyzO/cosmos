@@ -19,8 +19,11 @@ export type TimelineItem = {
   /** Optional image URL for `avatar` variant. */
   avatarSrc?: string;
   /**
-   * Color of the icon circle in the `stepper` and `alternating` variants.
-   * Defaults to `brand`.
+   * The state of the event, as a color on its marker: the icon circle of
+   * `stepper` and `alternating` (tinted), the dot of `dot`, a ring around the
+   * avatar of `avatar`, the left edge of the card of `card`. Defaults to
+   * `brand` in `dot`, `stepper` and `alternating`; `avatar` and `card` draw
+   * nothing without it, so an item with no `intent` keeps its look there.
    */
   intent?: TimelineIntent;
   /** Extra line under the description, e.g. "by Sarah Chen". */
@@ -73,16 +76,83 @@ const INTENT_BG: Record<TimelineIntent, string> = {
   neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
 };
 
+// ── Intent colours for the `dot`, `avatar` and `card` variants ───────────────
+
+// A coloured marker on a neutral surface: `-600` on the light themes, `-500` on the dark ones.
+// `brand` keeps the dot's `bg-brand-500`. The icon in the dot is white, except on the green and amber
+// `-500` fills, where white is about 2.2:1: it turns dark there, as on a solid `Button` or `Badge`.
+// Tailwind scans for whole class names, so each is written out.
+const INTENT_MARKER: Record<
+  TimelineIntent,
+  { dot: string; dotIcon: string; ring: string; edge: string }
+> = {
+  brand: {
+    dot: 'bg-brand-500',
+    dotIcon: 'text-white',
+    ring: 'ring-brand-600 dark:ring-brand-500',
+    edge: 'border-l-brand-600 dark:border-l-brand-500',
+  },
+  success: {
+    dot: 'bg-green-600 dark:bg-green-500',
+    dotIcon: 'text-white dark:text-gray-900',
+    ring: 'ring-green-600 dark:ring-green-500',
+    edge: 'border-l-green-600 dark:border-l-green-500',
+  },
+  warning: {
+    dot: 'bg-amber-600 dark:bg-amber-500',
+    dotIcon: 'text-white dark:text-gray-900',
+    ring: 'ring-amber-600 dark:ring-amber-500',
+    edge: 'border-l-amber-600 dark:border-l-amber-500',
+  },
+  danger: {
+    dot: 'bg-red-600 dark:bg-red-500',
+    dotIcon: 'text-white',
+    ring: 'ring-red-600 dark:ring-red-500',
+    edge: 'border-l-red-600 dark:border-l-red-500',
+  },
+  neutral: {
+    dot: 'bg-gray-600 dark:bg-gray-500',
+    dotIcon: 'text-white',
+    ring: 'ring-gray-600 dark:ring-gray-500',
+    edge: 'border-l-gray-600 dark:border-l-gray-500',
+  },
+};
+
 // ── Indicator renderers (one per variant) ────────────────────────────────────
 
-const DotIndicator = ({ icon: Icon }: { icon?: ElementType }) => (
-  <span className="bg-brand-500 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900">
-    {Icon && <Icon className="h-3.5 w-3.5 text-white" />}
+const DotIndicator = ({
+  icon: Icon,
+  intent = 'brand',
+}: {
+  icon?: ElementType;
+  intent?: TimelineIntent;
+}) => (
+  <span
+    className={clsx(
+      'flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900',
+      INTENT_MARKER[intent].dot
+    )}
+  >
+    {Icon && <Icon className={clsx('h-3.5 w-3.5', INTENT_MARKER[intent].dotIcon)} />}
   </span>
 );
 
-const AvatarIndicator = ({ name, src }: { name?: string; src?: string }) => (
-  <Avatar size="sm" name={name} src={src} className="shrink-0" />
+// The ring sits outside the avatar, so it shows around an image as well as around initials.
+const AvatarIndicator = ({
+  name,
+  src,
+  intent,
+}: {
+  name?: string;
+  src?: string;
+  intent?: TimelineIntent;
+}) => (
+  <Avatar
+    size="sm"
+    name={name}
+    src={src}
+    className={clsx('shrink-0', intent && ['ring-2', INTENT_MARKER[intent].ring])}
+  />
 );
 
 const StepperIndicator = ({
@@ -101,6 +171,16 @@ const StepperIndicator = ({
     {Icon ? <Icon className="h-5 w-5" /> : <span className="h-2 w-2 rounded-full bg-current" />}
   </span>
 );
+
+// ── Card ─────────────────────────────────────────────────────────────────────
+
+// The card is a 1px gray frame. With an `intent` its left edge is 4px and takes the colour; the three
+// other sides get their gray from classes of their own (not `border-gray-200` under a `border-l-*`),
+// so no side depends on which class the CSS lists last. The padding gives back the 3px the thicker
+// edge takes: the titles of cards with and without an `intent` start at the same place.
+const CARD_PLAIN = 'border border-gray-200 p-3 dark:border-gray-800';
+const CARD_EDGED =
+  'border-y border-r border-l-4 border-y-gray-200 border-r-gray-200 py-3 pr-3 pl-[calc(var(--spacing)*3-3px)] dark:border-y-gray-800 dark:border-r-gray-800';
 
 // ── Body (title + description + meta + time) — shared across line variants ───
 
@@ -159,7 +239,10 @@ const TimelineList = ({
         {items.map((item) => (
           <li
             key={item.id}
-            className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900"
+            className={clsx(
+              'rounded-xl bg-white dark:bg-gray-900',
+              item.intent ? [CARD_EDGED, INTENT_MARKER[item.intent].edge] : CARD_PLAIN
+            )}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -252,11 +335,11 @@ const TimelineList = ({
             {/* Indicator + vertical connector. */}
             <div className="flex flex-col items-center">
               {variant === 'avatar' ? (
-                <AvatarIndicator name={item.avatarName} src={item.avatarSrc} />
+                <AvatarIndicator name={item.avatarName} src={item.avatarSrc} intent={item.intent} />
               ) : variant === 'stepper' ? (
                 <StepperIndicator icon={item.icon} intent={item.intent} />
               ) : (
-                <DotIndicator icon={item.icon} />
+                <DotIndicator icon={item.icon} intent={item.intent} />
               )}
               {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
             </div>
