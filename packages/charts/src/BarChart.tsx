@@ -1,22 +1,26 @@
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/bar';
-import 'apexcharts/features/legend';
-
-import { ApexChart } from './ApexChart';
-import { escapeHtml } from './escape';
-import { seriesTitle, useValueFormat } from './formatters';
-import { chartLegend } from './legend';
-import { useChartTheme } from './theme';
-import type {
-  ChartAxisTitleProps,
-  ChartBaseProps,
-  ChartEmptyProps,
-  ChartLegendProps,
-} from './types';
+import {
+  Bar,
+  BarChart as RechartsBarChart,
+  CartesianGrid,
+  Legend,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { ANIMATION } from './core/animation';
+import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { categoryAxis, trimLabel } from './core/categoryAxis';
+import { ChartTooltip } from './core/ChartTooltip';
+import { legendProps, useHiddenSeries } from './core/ChartLegend';
+import { BORDER, seriesColor } from './core/colors';
+import { hasNoData, seriesKey, toRows } from './core/data';
+import { ChartEmpty, frameProps } from './core/frame';
+import { isOuterInStack, roundedBarShape } from './core/roundedBar';
+import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
-export type BarChartProps = ChartBaseProps &
+export type BarChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
   ChartAxisTitleProps & {
@@ -28,14 +32,11 @@ export type BarChartProps = ChartBaseProps &
     stacked?: boolean;
     /** Override the default Cosmos palette. */
     colors?: string[];
-    /**
-     * Format the numeric axis labels (and tooltip values).
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the numeric axis labels and the tooltip values. */
     formatValue?: (value: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
-    /** Tailwind border-radius applied to bar tops. Default 4. */
+    /** Radius, in px, of the end of a bar away from the axis; only the outer end of a stack is rounded. Default 4. */
     borderRadius?: number;
   };
 
@@ -51,92 +52,87 @@ export const BarChart = ({
   showLegend,
   legendPosition = 'top',
   borderRadius = 4,
-  emptyMessage,
+  emptyMessage = 'No data',
   ariaLabel,
-  apexOptions,
+  children,
   height = 320,
-  width = '100%',
+  width,
 }: BarChartProps) => {
-  const { grid, axisLabels, axisTitle, palette, surface, tooltipTheme } = useChartTheme();
+  const hidden = useHiddenSeries();
+  const name = ariaLabel ?? `Bar chart: ${series.map((s) => s.name).join(', ')}`;
+  if (hasNoData(series)) {
+    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
   const horizontal = orientation === 'horizontal';
-  const legendVisible = showLegend ?? series.length > 1;
-  // Side by side, the bars of a group would touch.
-  const grouped = !stacked && series.length > 1;
-
-  const format = useValueFormat(formatValue);
-
-  const options: ApexOptions = {
-    chart: {
-      type: 'bar',
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      stacked,
-      fontFamily: 'inherit',
-      // ApexCharts keeps 15px free under the drawing: dead space in a card.
-      parentHeightOffset: 0,
-    },
-    colors: colors ?? palette,
-    dataLabels: { enabled: false },
-    plotOptions: {
-      bar: {
-        horizontal,
-        borderRadius,
-        borderRadiusApplication: 'end',
-        columnWidth: '55%',
-      },
-    },
-    grid,
-    // The titles name the axes as drawn: `xTitle` under the horizontal one,
-    // whichever of categories and values it carries.
-    xaxis: {
-      categories,
-      title: axisTitle(xTitle),
-      labels: {
-        ...axisLabels,
-        formatter: horizontal ? format.axis : undefined,
-        // Category labels: a long name is cut short once rotated past this
-        // height instead of eating the plot; the tooltip keeps the full name.
-        ...(horizontal ? {} : { trim: true, maxHeight: 90 }),
-      },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      title: axisTitle(yTitle),
-      labels: {
-        ...axisLabels,
-        formatter: horizontal ? undefined : format.axis,
-      },
-    },
-    legend: chartLegend({
-      show: legendVisible,
-      position: legendPosition,
-      color: axisLabels.style.colors,
-    }),
-    // Tooltips and the legend are HTML: escape names, categories and values.
-    tooltip: {
-      theme: tooltipTheme,
-      x: { formatter: escapeHtml },
-      y: {
-        formatter: format.tooltip,
-        title: { formatter: seriesTitle },
-      },
-    },
-    fill: { opacity: 1 },
-    // A line in the card's color between the bars of a group.
-    stroke: grouped ? { show: true, width: 2, colors: [surface] } : { show: false },
-  };
-
+  // Recharts names the layout after the axis the categories sit on.
+  const layout = horizontal ? 'vertical' : 'horizontal';
+  const shown = series.map((_, i) => seriesKey(i)).filter((key) => !hidden.hidden.has(key));
   return (
-    <ApexChart
-      type="bar"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-    />
+    <RechartsBarChart
+      {...frameProps({ height, width, ariaLabel: name })}
+      data={toRows(categories, series)}
+      layout={layout}
+      // Stacks of both signs: the negative values stack down from zero, apart from the positive ones.
+      stackOffset="sign"
+      margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+      barGap={4}
+      barCategoryGap="22%"
+    >
+      <CartesianGrid
+        {...GRID_PROPS}
+        {...(horizontal ? { horizontal: false, vertical: true } : {})}
+      />
+      {horizontal ? (
+        <>
+          <XAxis type="number" tickFormatter={formatValue} {...AXIS} {...xAxisTitle(xTitle)} />
+          <YAxis
+            type="category"
+            dataKey="category"
+            width="auto"
+            tickFormatter={trimLabel}
+            {...AXIS}
+            {...yAxisTitle(yTitle)}
+          />
+        </>
+      ) : (
+        <>
+          <XAxis
+            dataKey="category"
+            {...AXIS}
+            {...xAxisTitle(xTitle)}
+            {...categoryAxis(categories, xTitle)}
+          />
+          <YAxis width="auto" tickFormatter={formatValue} {...AXIS} {...yAxisTitle(yTitle)} />
+        </>
+      )}
+      {(showLegend ?? series.length > 1) && <Legend {...legendProps(legendPosition, hidden)} />}
+      <Tooltip
+        content={<ChartTooltip format={formatValue} />}
+        cursor={{ fill: BORDER, fillOpacity: 0.35, radius: 8 }}
+        animationDuration={150}
+      />
+      {series.map((s, i) => {
+        const key = seriesKey(i);
+        return (
+          <Bar
+            key={key}
+            name={s.name}
+            dataKey={key}
+            fill={seriesColor(i, colors)}
+            stackId={stacked ? 'stack' : undefined}
+            maxBarSize={44}
+            shape={roundedBarShape({
+              layout,
+              radius: borderRadius,
+              dataKey: key,
+              isOuter: stacked ? isOuterInStack(shown, key) : undefined,
+            })}
+            hide={hidden.hidden.has(key)}
+            {...ANIMATION}
+          />
+        );
+      })}
+      {children}
+    </RechartsBarChart>
   );
 };

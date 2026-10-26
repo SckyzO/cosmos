@@ -1,23 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { ReferenceArea } from 'recharts';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BubbleChart, ScatterChart, type BubblePoint, type ScatterPoint } from './ScatterChart';
+import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
-  HOSTILE,
+  axisTitles,
   closeTooltip,
-  expectNoInjectedImage,
-  hover,
-  legendTexts,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
   expectAccessibleChart,
-  expectPaletteFromTheme,
-  resolveColor,
-  switchTheme,
-  LegendSides,
+  expectEmptyMessage,
   expectLegendsOnTheirSide,
-  expectAxisTitles,
-} from './storybook-helpers';
+  legendTexts,
+  surface,
+  tickTexts,
+  tooltipCard,
+} from './storybook-recharts';
+import { expectRepaintsWithThemeOf, scatterFills, scatterSymbols } from './storybook-cartesian';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
 const noise = (i: number) => (Math.sin(i * 12.9898) * 43758.5453) % 1;
@@ -91,7 +88,11 @@ export const LatencyVsLoad: Story = {
 /** The axis titles sit under and beside the plot, inside the drawing, with no space left under it. */
 export const AxisTitles: Story = {
   args: { ...LatencyVsLoad.args },
-  play: expectAxisTitles({ x: 'CPU load', y: ['p95 latency'] }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({ x: ['CPU load'], y: ['p95 latency'] })
+    );
+  },
 };
 
 /** Two series or more get a legend, one color each. */
@@ -146,21 +147,61 @@ export const Bubble: BubbleStory = {
   render: (args) => <BubbleChart {...args} />,
 };
 
-// ── Interaction tests ────────────────────────────────────────────────────────
-
-// The text of the tooltip lines: the series name, then one per row.
-const tooltipLabels = (root: HTMLElement) =>
-  [...root.querySelectorAll('.apexcharts-tooltip-text-y-label')].map((el) => el.textContent);
-
-const firstPoint = (root: HTMLElement) =>
-  root.querySelector('.apexcharts-series-markers .apexcharts-marker');
-
-// The points listen for the pointer once their entry animation is over.
-const hoverFirstPoint = (root: HTMLElement) => hover(firstPoint(root) as Element);
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [] },
+  play: expectEmptyMessage('No data'),
+};
 
 /**
- * The legend and the tooltip are HTML: series names, point labels and axis
- * titles show as text.
+ * `children` takes Recharts elements, drawn inside the chart: here a
+ * `ReferenceArea` shading the nodes that are slow under a light load.
+ */
+export const ReferenceAreaInChildren: Story = {
+  args: {
+    ...LatencyVsLoad.args,
+    children: (
+      <ReferenceArea
+        x1={0}
+        x2={40}
+        y1={60}
+        y2={140}
+        fill="var(--color-status-warn)"
+        fillOpacity={0.12}
+        stroke="none"
+      />
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.recharts-reference-area')).not.toBeNull()
+    );
+  },
+};
+
+// ── Interaction tests ────────────────────────────────────────────────────────
+
+const firstSymbol = (root: HTMLElement) => scatterSymbols(root).flat()[0] as Element;
+
+// The points listen for the pointer once they are drawn.
+const hoverFirstPoint = async (root: HTMLElement) => {
+  await waitFor(() => expect(firstSymbol(root)).toBeDefined());
+  await userEvent.hover(firstSymbol(root));
+  await waitFor(() => expect(tooltipCard(root)).not.toBeNull());
+};
+
+const leaveFirstPoint = async (root: HTMLElement) => {
+  await userEvent.unhover(firstSymbol(root));
+  await closeTooltip(root);
+};
+
+// The lines of the tooltip: the series name, then one per measure.
+const tooltipRows = (root: HTMLElement) =>
+  [...(tooltipCard(root)?.querySelectorAll('li') ?? [])].map((li) => li.textContent);
+
+/**
+ * The legend and the tooltip are React text: series names, point labels and
+ * axis titles with markup show as written.
  */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
@@ -172,23 +213,14 @@ export const HtmlInLabelsRendersAsText: Story = {
     xTitle: HOSTILE,
   },
   play: async ({ canvasElement }) => {
-    // Legends render on mount: the name must show up as literal text.
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
-    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
-
-    // Tooltips render on hover: the point's label as title, then the series
-    // name and the x row, titled by xTitle.
-    await waitFor(
-      () => {
-        hoverFirstPoint(canvasElement);
-        expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-        expect(tooltipLabels(canvasElement)).toEqual([HOSTILE, `${HOSTILE}:`, 'y:']);
-      },
-      { timeout: 3000 }
-    );
+    await hoverFirstPoint(canvasElement);
+    // The point's label is the title; then the series, the x row (titled by xTitle) and y.
+    await expect(tooltipCard(canvasElement)?.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(tooltipRows(canvasElement)).toEqual([HOSTILE, `${HOSTILE}50`, 'y50']);
     await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, () => firstPoint(canvasElement));
+    await leaveFirstPoint(canvasElement);
   },
 };
 
@@ -204,35 +236,79 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
   },
   render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
-    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
-
-    await waitFor(
-      () => {
-        hoverFirstPoint(canvasElement);
-        expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-        expect(tooltipLabels(canvasElement)).toEqual([HOSTILE, 'x:', 'y:', `${HOSTILE}:`]);
-      },
-      { timeout: 3000 }
-    );
+    await hoverFirstPoint(canvasElement);
+    await expect(tooltipCard(canvasElement)?.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(tooltipRows(canvasElement)).toEqual([HOSTILE, 'x50', 'y50', `${HOSTILE}10`]);
     await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, () => firstPoint(canvasElement));
+    await leaveFirstPoint(canvasElement);
   },
 };
 
-// The first marker drawn for each series, by series index: ApexCharts draws two
-// per point, and the legend has its own.
-const markerColors = (root: HTMLElement) => {
-  const byIndex = new Map<string, string | null>();
-  for (const el of root.querySelectorAll('.apexcharts-marker[index]')) {
-    const index = el.getAttribute('index') ?? '';
-    if (!el.classList.contains('apexcharts-legend-marker') && !byIndex.has(index)) {
-      byIndex.set(index, el.getAttribute('fill'));
-    }
-  }
-  return [...byIndex.values()];
+/** The tooltip names the point, its series and its measures through the formatters. */
+export const TooltipFormatsTheMeasures: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [{ name: 'DC1 Paris', data: [{ x: 40, y: 85, label: 'par1-node-01' }] }],
+    xTitle: 'CPU load',
+    yTitle: 'p95 latency',
+    formatX: percent,
+    formatY: ms,
+  },
+  play: async ({ canvasElement }) => {
+    await hoverFirstPoint(canvasElement);
+    await expect(tooltipCard(canvasElement)?.querySelector('p')).toHaveTextContent('par1-node-01');
+    await expect(tooltipRows(canvasElement)).toEqual([
+      'DC1 Paris',
+      'CPU load40 %',
+      'p95 latency85 ms',
+    ]);
+    await leaveFirstPoint(canvasElement);
+  },
 };
+
+/** `formatX` and `formatY` format the tick labels of their axis. */
+export const FormatsFormatTheTicks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: LatencyVsLoad.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const x = tickTexts(canvasElement, 'xAxis');
+      const y = tickTexts(canvasElement, 'yAxis');
+      expect(x.length).toBeGreaterThan(2);
+      expect(y.length).toBeGreaterThan(2);
+      for (const label of x) expect(label).toMatch(/^\d+ %$/);
+      for (const label of y) expect(label).toMatch(/^\d+ ms$/);
+    });
+  },
+};
+
+/** A click on a legend entry hides its points and shows them again. */
+export const LegendTogglesSeries: Story = {
+  tags: ['!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    const drawn = () => scatterSymbols(canvasElement).flat().length;
+    await waitFor(() => expect(drawn()).toBe(54));
+    const frankfurt = within(canvasElement).getByRole('button', { name: 'DC2 Frankfurt' });
+    await userEvent.click(frankfurt);
+    await waitFor(() => expect(drawn()).toBe(36));
+    await expect(frankfurt).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(frankfurt);
+    await waitFor(() => expect(drawn()).toBe(54));
+  },
+};
+
+const palette = (token: string) =>
+  resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+const PALETTE_TOKENS = [
+  '--color-brand-500',
+  '--color-chart-2',
+  '--color-chart-3',
+  '--color-chart-4',
+  '--color-chart-5',
+];
 
 /** The markers take the default palette of the theme. */
 export const PaletteFromTheme: Story = {
@@ -241,7 +317,9 @@ export const PaletteFromTheme: Story = {
     series: ['a', 'b', 'c', 'd', 'e'].map((name, i) => ({ name, data: [{ x: i, y: 5 - i }] })),
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() => markerColors(canvasElement));
+    await waitFor(() =>
+      expect(scatterFills(canvasElement).map(resolveColor)).toEqual(PALETTE_TOKENS.map(palette))
+    );
   },
 };
 
@@ -256,44 +334,75 @@ export const BubblePaletteFromTheme: BubbleStory = {
   },
   render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() => markerColors(canvasElement));
+    await waitFor(() =>
+      expect(scatterFills(canvasElement).map(resolveColor)).toEqual(PALETTE_TOKENS.map(palette))
+    );
   },
 };
 
-// The alpha of the first bubble of the chart.
-const bubbleAlpha = (root: HTMLElement) => {
-  const fill = root.querySelector('.apexcharts-marker[index]:not(.apexcharts-legend-marker)');
-  return Number(/^rgba\(.*, ([\d.]+)\)$/.exec(resolveColor(fill?.getAttribute('fill') ?? ''))?.[1]);
+/** `colors` overrides the palette, one color per series. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: StatusColors.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(scatterFills(canvasElement).map(resolveColor)).toEqual(
+        ['#10b981', '#f59e0b', '#ef4444'].map(resolveColor)
+      )
+    );
+  },
 };
 
-/**
- * The bubbles are translucent, so the overlapping ones read. On a dark card
- * the same alpha looks darker than the legend swatch, so the dark themes draw
- * them more opaque.
- */
-export const BubblesAreMoreOpaqueInDark: BubbleStory = {
+/** A theme or accent switch on `<html>` repaints the chart with no observer and no redraw. */
+export const RepaintsWithTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  globals: { theme: 'light' },
+  globals: { theme: 'dark' },
+  args: LatencyVsLoad.args,
+  play: ({ canvasElement }) =>
+    expectRepaintsWithThemeOf(canvasElement, () => scatterFills(canvasElement)[0]),
+};
+
+// The size of a bubble is its width: the bigger the measure, the bigger the bubble.
+const sizes = (root: HTMLElement) =>
+  scatterSymbols(root)
+    .flat()
+    .map((el) => el.getBoundingClientRect().width);
+
+/** The bubble size follows `z`: a larger measure draws a larger bubble. */
+export const BubbleSizeFollowsTheMeasure: BubbleStory = {
+  tags: ['!dev', '!autodocs'],
   args: {
     series: [
       {
         name: 'a',
         data: [
-          { x: 1, y: 2, z: 3 },
-          { x: 2, y: 4, z: 5 },
+          { x: 1, y: 2, z: 1 },
+          { x: 2, y: 4, z: 50 },
+          { x: 3, y: 3, z: 100 },
         ],
       },
     ],
   },
   render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(bubbleAlpha(canvasElement)).toBe(0.55));
-    const restore = switchTheme('dark');
-    try {
-      await waitFor(() => expect(bubbleAlpha(canvasElement)).toBe(0.7));
-    } finally {
-      restore();
-    }
+    await waitFor(() => {
+      const [small, medium, large] = sizes(canvasElement);
+      expect(small).toBeLessThan(medium);
+      expect(medium).toBeLessThan(large);
+    });
+  },
+};
+
+/** The points of a scatter chart are all the same size. */
+export const ScatterPointsHaveOneSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: LatencyVsLoad.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const all = sizes(canvasElement);
+      expect(all.length).toBe(18);
+      expect(new Set(all.map((size) => Math.round(size))).size).toBe(1);
+    });
   },
 };
 
@@ -355,19 +464,25 @@ export const BubbleLegendOnEachSide: BubbleStory = {
   play: expectLegendsOnTheirSide,
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+/** A chart wider than its box is cut to it, so a narrow screen never scrolls sideways. */
+export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...LatencyVsLoad.args, formatX: (v) => `${v} rps`, formatY: (v) => `${v} ms` },
+  args: { ...MultiSeries.args, width: 900 },
   render: (args) => (
-    <Rerender>
-      {(grown) => <ScatterChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
+    <div data-testid="box" style={{ width: 375 }}>
+      <ScatterChart {...args} />
+    </div>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(surface(canvasElement)).not.toBeNull());
+    await waitFor(() => {
+      expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+      expect(surface(canvasElement)?.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+    });
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+  },
 };
 
 /** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */

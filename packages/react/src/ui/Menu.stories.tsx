@@ -452,3 +452,194 @@ export const DisabledLinkItemHasNoHref: Story = {
     await expect(menu()).not.toBeNull();
   },
 };
+
+// ── Checkbox items ───────────────────────────────────────────────────────────
+
+const CheckboxMenu = ({
+  onCheckedChange,
+  closeOnSelect,
+}: {
+  onCheckedChange?: (name: string, checked: boolean) => void;
+  closeOnSelect?: boolean;
+}) => (
+  <Spot>
+    <Menu>
+      <Menu.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+        View
+      </Menu.Trigger>
+      <Menu.Content aria-label="View options">
+        <Menu.Group label="Show">
+          <Menu.CheckboxItem
+            defaultChecked
+            closeOnSelect={closeOnSelect}
+            onCheckedChange={(c) => onCheckedChange?.('Sidebar', c)}
+          >
+            Sidebar
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            closeOnSelect={closeOnSelect}
+            onCheckedChange={(c) => onCheckedChange?.('Minimap', c)}
+          >
+            Minimap
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem disabled defaultChecked>
+            Status bar
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            closeOnSelect={closeOnSelect}
+            onCheckedChange={(c) => onCheckedChange?.('Ruler', c)}
+          >
+            Ruler
+          </Menu.CheckboxItem>
+        </Menu.Group>
+      </Menu.Content>
+    </Menu>
+    <button type="button">After</button>
+  </Spot>
+);
+
+/** Checkbox items for options that are on or off: a checked item shows a filled accent box. */
+export const CheckboxItems: Story = {
+  render: () => (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+          View
+        </Menu.Trigger>
+        <Menu.Content aria-label="View options">
+          <Menu.Group label="Show">
+            <Menu.CheckboxItem defaultChecked>Sidebar</Menu.CheckboxItem>
+            <Menu.CheckboxItem>Minimap</Menu.CheckboxItem>
+            <Menu.CheckboxItem disabled defaultChecked>
+              Status bar
+            </Menu.CheckboxItem>
+          </Menu.Group>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  ),
+};
+
+/** The role, the state and the disabled state are exposed to assistive technology. */
+export const CheckboxItemRolesAndAttributes: Story = {
+  tags: ['!autodocs'],
+  render: () => <CheckboxMenu />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'View' }));
+    const inside = within(await waitFor(() => menu()!));
+    const items = inside.getAllByRole('menuitemcheckbox');
+    await expect(items).toHaveLength(4);
+    await expect(inside.getByRole('menuitemcheckbox', { name: 'Sidebar' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    await expect(inside.getByRole('menuitemcheckbox', { name: 'Minimap' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+    await expect(inside.getByRole('menuitemcheckbox', { name: 'Status bar' })).toBeDisabled();
+  },
+};
+
+/** A click toggles the item, calls `onCheckedChange` with the new state, and keeps the menu open. */
+export const CheckboxItemTogglesAndStaysOpen: Story = {
+  tags: ['!autodocs'],
+  args: { onPick: fn() } as never,
+  render: (args) => (
+    <CheckboxMenu
+      onCheckedChange={(args as unknown as { onPick: (n: string, c: boolean) => void }).onPick}
+    />
+  ),
+  play: async ({ args, canvas }) => {
+    const onPick = (args as unknown as { onPick: ReturnType<typeof fn> }).onPick;
+    await userEvent.click(canvas.getByRole('button', { name: 'View' }));
+    const inside = within(await waitFor(() => menu()!));
+    const minimap = inside.getByRole('menuitemcheckbox', { name: 'Minimap' });
+    await userEvent.click(minimap);
+    await expect(onPick).toHaveBeenLastCalledWith('Minimap', true);
+    await expect(minimap).toHaveAttribute('aria-checked', 'true');
+    await expect(menu()).not.toBeNull();
+    await userEvent.click(minimap);
+    await expect(onPick).toHaveBeenLastCalledWith('Minimap', false);
+    await expect(minimap).toHaveAttribute('aria-checked', 'false');
+    // A disabled item neither toggles nor calls back.
+    await userEvent.click(inside.getByRole('menuitemcheckbox', { name: 'Status bar' }), {
+      pointerEventsCheck: 0,
+    });
+    await expect(onPick).toHaveBeenCalledTimes(2);
+  },
+};
+
+/** Arrows, Home, End and the typeahead move over the checkbox items; Space and Enter toggle them. */
+export const CheckboxItemKeyboard: Story = {
+  tags: ['!autodocs'],
+  render: () => <CheckboxMenu />,
+  play: async ({ canvas }) => {
+    canvas.getByRole('button', { name: 'View' }).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toHaveTextContent('Sidebar'));
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Minimap');
+    await userEvent.keyboard(' ');
+    await expect(document.activeElement).toHaveAttribute('aria-checked', 'true');
+    await userEvent.keyboard('{Enter}');
+    await expect(document.activeElement).toHaveAttribute('aria-checked', 'false');
+    // The disabled "Status bar" is skipped.
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Ruler');
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(document.activeElement).toHaveTextContent('Sidebar');
+    await userEvent.keyboard('{End}');
+    await expect(document.activeElement).toHaveTextContent('Ruler');
+    await userEvent.keyboard('{Home}');
+    await expect(document.activeElement).toHaveTextContent('Sidebar');
+    await userEvent.keyboard('r');
+    await expect(document.activeElement).toHaveTextContent('Ruler');
+    // The menu stayed open through all of it.
+    await expect(menu()).not.toBeNull();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(menu()).toBeNull());
+  },
+};
+
+/** `closeOnSelect` closes the menu after the toggle, as an action item does. */
+export const CheckboxItemCloseOnSelect: Story = {
+  tags: ['!autodocs'],
+  render: () => <CheckboxMenu closeOnSelect />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'View' }));
+    const inside = within(await waitFor(() => menu()!));
+    await userEvent.click(inside.getByRole('menuitemcheckbox', { name: 'Ruler' }));
+    await waitFor(() => expect(menu()).toBeNull());
+  },
+};
+
+const ControlledCheckbox = () => {
+  const [on, setOn] = useState(false);
+  return (
+    <Spot>
+      <Menu defaultOpen>
+        <Menu.Trigger>View</Menu.Trigger>
+        <Menu.Content aria-label="View options">
+          <Menu.CheckboxItem checked={on} onCheckedChange={setOn}>
+            Minimap
+          </Menu.CheckboxItem>
+        </Menu.Content>
+      </Menu>
+      <span data-testid="state">{on ? 'on' : 'off'}</span>
+    </Spot>
+  );
+};
+
+/** With `checked`, the host owns the state and the item shows what it passes back. */
+export const CheckboxItemControlled: Story = {
+  tags: ['!autodocs'],
+  render: () => <ControlledCheckbox />,
+  play: async ({ canvas }) => {
+    const item = await within(await waitFor(() => menu()!)).findByRole('menuitemcheckbox');
+    await expect(item).toHaveAttribute('aria-checked', 'false');
+    await userEvent.click(item);
+    await expect(canvas.getByTestId('state')).toHaveTextContent('on');
+    await expect(item).toHaveAttribute('aria-checked', 'true');
+  },
+};

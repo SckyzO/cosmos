@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { Check } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -33,7 +34,8 @@ type Ctx = {
 };
 
 // A disabled item is skipped by the arrows, Home, End and the typeahead.
-const ITEM_SELECTOR = '[role="menuitem"]:not([disabled]):not([aria-disabled="true"])';
+const ITEM_SELECTOR =
+  '[role="menuitem"]:not([disabled]):not([aria-disabled="true"]), [role="menuitemcheckbox"]:not([disabled]):not([aria-disabled="true"])';
 const menuItems = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR));
 
@@ -341,6 +343,82 @@ function MenuItem({
   );
 }
 
+// ── Checkbox item ────────────────────────────────────────────────────────────
+
+export type MenuCheckboxItemProps = Omit<
+  ComponentPropsWithRef<'button'>,
+  'children' | 'onSelect' | 'type' | 'role' | 'defaultChecked'
+> & {
+  children: ReactNode;
+  /** Controlled state. Only `undefined` means uncontrolled. */
+  checked?: boolean;
+  defaultChecked?: boolean;
+  /** Called with the state to move to, on click, Enter or Space. */
+  onCheckedChange?: (checked: boolean) => void;
+  /** Closes the menu once the item is toggled. Default false: a list of options stays open. */
+  closeOnSelect?: boolean;
+};
+
+/**
+ * An item that is on or off (`role="menuitemcheckbox"`). It keeps the menu open, so several can
+ * be toggled in a row, and takes the same arrows, Home, End and typeahead as `Menu.Item`.
+ */
+function MenuCheckboxItem({
+  checked: checkedProp,
+  defaultChecked = false,
+  onCheckedChange,
+  closeOnSelect = false,
+  disabled,
+  onClick,
+  className,
+  children,
+  ref,
+  ...rest
+}: MenuCheckboxItemProps) {
+  const { setOpen } = useCtx();
+  const [checked, setChecked] = useControllableState({
+    value: checkedProp,
+    defaultValue: defaultChecked,
+    onChange: onCheckedChange,
+    name: 'Menu.CheckboxItem.checked',
+  });
+  return (
+    <button
+      type="button"
+      {...rest}
+      ref={ref}
+      role="menuitemcheckbox"
+      aria-checked={checked}
+      tabIndex={-1}
+      disabled={disabled}
+      onClick={(e) => {
+        onClick?.(e);
+        if (e.defaultPrevented) return;
+        setChecked(!checked);
+        if (closeOnSelect) setOpen(false);
+      }}
+      className={clsx(
+        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
+        className
+      )}
+    >
+      <span
+        aria-hidden
+        className={clsx(
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+          checked
+            ? 'bg-brand-500 border-brand-500 text-white'
+            : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+        )}
+      >
+        {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+      </span>
+      <span className="flex-1 truncate">{children}</span>
+    </button>
+  );
+}
+
 // ── Separator ────────────────────────────────────────────────────────────────
 
 const MenuSeparator = () => (
@@ -354,5 +432,6 @@ export const Menu = Object.assign(MenuRoot, {
   Content: MenuContent,
   Group: MenuGroup,
   Item: MenuItem,
+  CheckboxItem: MenuCheckboxItem,
   Separator: MenuSeparator,
 });

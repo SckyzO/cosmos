@@ -63,9 +63,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <LineAreaChart series={[]} categories={[]} {...props} />,
   },
   BarChart: {
-    filled: (apexOptions) => (
-      <BarChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <BarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
@@ -106,7 +105,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <ScatterChart
         series={[
           {
@@ -117,13 +117,13 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <ScatterChart series={[]} {...props} />,
   },
   BubbleChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <BubbleChart
         series={[
           {
@@ -134,36 +134,29 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <BubbleChart series={[]} {...props} />,
   },
   BoxPlotChart: {
-    filled: (apexOptions) => (
-      <BoxPlotChart
-        series={[{ name: 'a', data: BOX }]}
-        categories={['A', 'B']}
-        apexOptions={apexOptions}
-      />
-    ),
+    recharts: true,
+    filled: () => <BoxPlotChart series={[{ name: 'a', data: BOX }]} categories={['A', 'B']} />,
     empty: (props) => <BoxPlotChart series={[]} categories={[]} {...props} />,
   },
   RangeBarChart: {
-    filled: (apexOptions) => (
-      <RangeBarChart series={[{ name: 'a', data: RANGE }]} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RangeBarChart series={[{ name: 'a', data: RANGE }]} />,
     empty: (props) => <RangeBarChart series={[]} {...props} />,
   },
   MixedChart: {
-    filled: (apexOptions) => (
+    recharts: true,
+    filled: () => (
       <MixedChart
         series={[
           { name: 'a', type: 'column', data: [3, 5, 4] },
           { name: 'b', type: 'line', data: [4, 2, 5] },
         ]}
         categories={CATEGORIES}
-        apexOptions={apexOptions}
       />
     ),
     empty: (props) => <MixedChart series={[]} categories={[]} {...props} />,
@@ -187,7 +180,8 @@ const CHARTS: Record<string, Chart> = {
     filled: () => <StrokedGauge value={92} />,
   },
   RealtimeChart: {
-    filled: (apexOptions) => <RealtimeChart apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <RealtimeChart />,
   },
 };
 
@@ -340,34 +334,24 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['BarChart', 'MixedChart']) {
-      await waitFor(() =>
-        expect(
-          [...canvasElement.querySelectorAll(`[data-chart="${name}"] .apexcharts-yaxis-label`)]
-            .filter((el) => !el.closest('[style*="display: none"]'))
-            .map((el) => el.textContent)
-            .join('')
-        ).not.toBe('')
-      );
+    for (const name of [
+      'LineAreaChart',
+      'BarChart',
+      'MixedChart',
+      'ScatterChart',
+      'BoxPlotChart',
+    ]) {
+      await waitFor(() => {
+        const chart = canvasElement.querySelector<HTMLElement>(`[data-chart="${name}"]`);
+        expect(chart).not.toBeNull();
+        expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
+      });
     }
-    await waitFor(() => {
-      const chart = canvasElement.querySelector<HTMLElement>('[data-chart="LineAreaChart"]');
-      expect(chart).not.toBeNull();
-      expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
-    });
   },
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES = [
-  'BarChart',
-  'HeatmapChart',
-  'ScatterChart',
-  'BubbleChart',
-  'BoxPlotChart',
-  'RangeBarChart',
-  'MixedChart',
-];
+const LEGEND_NAMES = ['HeatmapChart'];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
 export const LegendSwatchesHaveNoOutline: Story = {

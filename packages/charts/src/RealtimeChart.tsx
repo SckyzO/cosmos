@@ -1,13 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/line';
-import 'apexcharts/features/annotations';
-import { ApexChart } from './ApexChart';
-import { useOptionalValueFormat } from './formatters';
-import { readableOn, useChartTheme } from './theme';
-import type { ChartAxisTitleProps, ChartBaseProps } from './types';
+import { useEffect, useState } from 'react';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type TooltipContentProps,
+} from 'recharts';
+import { AXIS, GRID_PROPS, TEXT_SIZE, xAxisTitle, yAxisTitle } from './core/axes';
+import { TooltipCard } from './core/ChartTooltip';
+import { BORDER, PANEL, SERIES, STATUS_CRIT, STATUS_WARN, TEXT } from './core/colors';
+import { frameProps } from './core/frame';
+import type { ChartAxisTitleProps, ChartProps } from './types';
 
-export type RealtimeChartProps = ChartBaseProps &
+export type RealtimeChartProps = ChartProps &
   ChartAxisTitleProps & {
     /** Sample generator — defaults to a noisy walk between 30 and 80. */
     generator?: () => number;
@@ -29,27 +37,42 @@ export type RealtimeChartProps = ChartBaseProps &
      * tooltip with it, and `xTitle` has an axis to name. Default off: no x axis.
      */
     showTimeAxis?: boolean;
-    /**
-     * Format the y-axis labels and the tooltip values.
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the y-axis labels and the tooltip values. */
     formatValue?: (value: number) => string;
   };
 
 type Sample = { time: number; value: number };
 
-// The time axis reads as a clock, whatever the zoom ApexCharts picks.
-const CLOCK = 'HH:mm:ss';
-const CLOCK_FORMATS = { year: CLOCK, month: CLOCK, day: CLOCK, hour: CLOCK, minute: CLOCK };
+// The time axis reads as a clock.
+const CLOCK = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+const clock = (timestamp: number) => CLOCK.format(timestamp);
 
 /** A threshold: a line in its status color, and a label on it unless `label` is empty. */
-const thresholdLine = (y: number, label: string, color: string) => ({
-  y,
-  borderColor: color,
-  ...(label === ''
-    ? {}
-    : { label: { text: label, style: { color: readableOn(color), background: color } } }),
-});
+const Threshold = ({ y, label, color }: { y: number; label: string; color: string }) => (
+  <ReferenceLine
+    y={y}
+    stroke={color}
+    strokeWidth={1.5}
+    strokeDasharray="6 4"
+    label={
+      label === ''
+        ? undefined
+        : {
+            value: label,
+            position: 'insideTopRight',
+            offset: 4,
+            // Text on the card, whatever the status color: it reads on every theme.
+            fill: TEXT,
+            style: { fill: TEXT, fontSize: TEXT_SIZE, fontWeight: 600 },
+          }
+    }
+  />
+);
 
 // One walk per chart: a module-level one made every instance continue the last.
 const createDefaultGenerator = () => {
@@ -76,13 +99,10 @@ export const RealtimeChart = ({
   yTitle,
   formatValue,
   ariaLabel,
-  apexOptions,
+  children,
   height = 240,
-  width = '100%',
+  width,
 }: RealtimeChartProps) => {
-  const { grid, axisLabels, axisTitle, brand, statusWarn, statusCrit, tooltipTheme } =
-    useChartTheme();
-  const format = useOptionalValueFormat(formatValue);
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
   // Each sample with the time it was taken, for the time axis. A window that
@@ -115,106 +135,77 @@ export const RealtimeChart = ({
     );
   }
 
-  // ApexCharts hides the threshold annotations until its mount animation
-  // ends, and a series update during that animation cancels the reveal: the
-  // lines stayed hidden for good. Samples only start once the chart is drawn.
-  const [drawn, setDrawn] = useState(false);
-
-  // Fallback in case neither chart event reports the end of the mount
-  // animation: a stalled live chart is worse than a hidden threshold.
   useEffect(() => {
-    const id = setTimeout(() => setDrawn(true), 2000);
-    return () => clearTimeout(id);
-  }, []);
-
-  useEffect(() => {
-    if (!drawn) return;
     const id = setInterval(() => {
       setSamples((current) => [...current.slice(1), { time: Date.now(), value: generate() }]);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [drawn, generate, intervalMs]);
+  }, [generate, intervalMs]);
 
-  // Stable, so a new sample updates the series instead of redrawing the chart
-  // with new options: ApexCharts compares the functions in them by identity.
-  const events = useMemo<NonNullable<ApexOptions['chart']>['events']>(
-    () => ({
-      animationEnd: () => setDrawn(true),
-      // No mount animation (reduced motion, hidden container): nothing to wait for.
-      mounted: (_chart, opts) => {
-        if (opts?.w.globals.animationEnded) setDrawn(true);
-      },
-    }),
-    []
-  );
+  const format = formatValue ?? String;
 
-  const options: ApexOptions = {
-    chart: {
-      type: 'line',
-      animations: { enabled: true, dynamicAnimation: { enabled: true, speed: 800 } },
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      fontFamily: 'inherit',
-      // ApexCharts keeps 15px free under the drawing: dead space in a card.
-      parentHeightOffset: 0,
-      events,
-    },
-    colors: [brand],
-    stroke: { curve: 'smooth', width: 2 },
-    dataLabels: { enabled: false },
-    grid,
-    // The samples are not on a scale of their own: the x axis is their order,
-    // unless it is the clock. Axis labels are SVG text and stay unescaped.
-    xaxis: showTimeAxis
-      ? {
-          type: 'datetime',
-          title: axisTitle(xTitle),
-          labels: { ...axisLabels, datetimeUTC: false, datetimeFormatter: CLOCK_FORMATS },
-          axisBorder: { show: false },
-          axisTicks: { show: false },
-          tooltip: { enabled: false },
-        }
-      : {
-          type: 'numeric',
-          labels: { show: false },
-          axisBorder: { show: false },
-          axisTicks: { show: false },
-        },
-    // One labels object per axis: ApexCharts mutates them.
-    yaxis: {
-      min,
-      max,
-      title: axisTitle(yTitle),
-      labels: { ...axisLabels, formatter: format.axis },
-    },
-    annotations: {
-      yaxis: [
-        thresholdLine(warnThreshold, warnLabel, statusWarn),
-        thresholdLine(critThreshold, critLabel, statusCrit),
-      ],
-    },
-    // The tooltip is HTML: escape the formatted value.
-    tooltip: {
-      theme: tooltipTheme,
-      ...(showTimeAxis ? { x: { format: CLOCK } } : {}),
-      y: { formatter: format.tooltip },
-    },
+  // The card of the sample under the pointer, with its time when the axis shows it.
+  const tooltip = ({ active, payload }: Partial<TooltipContentProps>) => {
+    const sample = payload?.[0]?.payload as Sample | undefined;
+    if (!active || !sample) return null;
+    return (
+      <TooltipCard
+        title={showTimeAxis ? clock(sample.time) : undefined}
+        rows={[{ name: 'value', value: format(sample.value), color: SERIES[0] }]}
+      />
+    );
   };
 
-  // Plain values, or points on the clock.
-  const data = showTimeAxis
-    ? samples.map(({ time, value }) => ({ x: time, y: value }))
-    : samples.map(({ value }) => value);
-
   return (
-    <ApexChart
-      type="line"
-      options={options}
-      series={[{ name: 'value', data }]}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-    />
+    <LineChart
+      {...frameProps({
+        height,
+        width,
+        ariaLabel: ariaLabel ?? 'Live values, newest on the right',
+      })}
+      data={samples}
+      margin={{ top: 4, right: 12, bottom: 0, left: 0 }}
+    >
+      <CartesianGrid {...GRID_PROPS} />
+      {/* The samples are not on a scale of their own unless the axis is the clock. */}
+      <XAxis
+        dataKey="time"
+        type="number"
+        domain={['dataMin', 'dataMax']}
+        hide={!showTimeAxis}
+        tickFormatter={clock}
+        {...AXIS}
+        {...(showTimeAxis ? xAxisTitle(xTitle) : {})}
+      />
+      <YAxis
+        domain={[min, max]}
+        allowDataOverflow
+        // The bottom tick is `min`: keep it.
+        interval={0}
+        width="auto"
+        tickFormatter={formatValue}
+        {...AXIS}
+        {...yAxisTitle(yTitle)}
+      />
+      <Threshold y={warnThreshold} label={warnLabel} color={STATUS_WARN} />
+      <Threshold y={critThreshold} label={critLabel} color={STATUS_CRIT} />
+      <Tooltip
+        content={tooltip}
+        cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}
+        animationDuration={0}
+      />
+      <Line
+        name="value"
+        dataKey="value"
+        type="monotone"
+        stroke={SERIES[0]}
+        strokeWidth={2}
+        dot={false}
+        activeDot={{ r: 5, fill: PANEL, stroke: SERIES[0], strokeWidth: 2.5 }}
+        // A new sample moves the window: no animation, so the line redraws steadily.
+        isAnimationActive={false}
+      />
+      {children}
+    </LineChart>
   );
 };

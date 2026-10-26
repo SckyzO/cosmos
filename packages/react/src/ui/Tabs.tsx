@@ -37,6 +37,9 @@ type TabsContextValue = {
   panels: ReadonlySet<string>;
   /** Called by a `Tabs.Panel` while it is mounted; returns what unregisters it. */
   registerPanel: (value: string) => () => void;
+  /** Id of the tab that is the tab stop while no tab is selected: the first enabled one. */
+  fallbackTabId: string | null;
+  setFallbackTabId: (id: string | null) => void;
 };
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -165,6 +168,7 @@ const Root = ({
   const wide = useMediaQuery('(min-width: 40rem)', true);
   const orientation = orientationProp === 'vertical' && !wide ? 'horizontal' : orientationProp;
   const baseId = useId();
+  const [fallbackTabId, setFallbackTabId] = useState<string | null>(null);
   const [panels, setPanels] = useState<ReadonlySet<string>>(() => new Set());
   const registerPanel = useCallback((panelValue: string) => {
     setPanels((current) => new Set(current).add(panelValue));
@@ -183,7 +187,17 @@ const Root = ({
   });
   return (
     <TabsContext.Provider
-      value={{ value, onChange, orientation, variant, baseId, panels, registerPanel }}
+      value={{
+        value,
+        onChange,
+        orientation,
+        variant,
+        baseId,
+        panels,
+        registerPanel,
+        fallbackTabId,
+        setFallbackTabId,
+      }}
     >
       <div
         className={clsx(
@@ -203,7 +217,19 @@ const Root = ({
 };
 
 const List = ({ children, className }: { children: ReactNode; className?: string }) => {
-  const { orientation, variant } = useTabs();
+  const { orientation, variant, setFallbackTabId } = useTabs();
+  const listRef = useRef<HTMLDivElement>(null);
+  // With no tab selected (a value that matches none), every tab would be out of the tab
+  // sequence: the first enabled one takes the tab stop until one is selected.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const selected = list?.querySelector('[role="tab"][aria-selected="true"]');
+    setFallbackTabId(
+      selected
+        ? null
+        : (list?.querySelector<HTMLElement>('[role="tab"]:not(:disabled)')?.id ?? null)
+    );
+  });
   // WAI-ARIA APG tabs with automatic activation: the arrow keys of the list's
   // orientation move focus to the previous/next enabled tab (wrapping), Home
   // and End to the first/last, and the focused tab is selected.
@@ -231,6 +257,7 @@ const List = ({ children, className }: { children: ReactNode; className?: string
   };
   const list = (
     <div
+      ref={listRef}
       role="tablist"
       aria-orientation={orientation}
       onKeyDown={onKeyDown}
@@ -278,7 +305,15 @@ export type TabProps = {
 };
 
 const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: TabProps) => {
-  const { value: active, onChange, orientation, variant, baseId, panels } = useTabs();
+  const {
+    value: active,
+    onChange,
+    orientation,
+    variant,
+    baseId,
+    panels,
+    fallbackTabId,
+  } = useTabs();
   const isActive = value === active;
   const styles = TRIGGER_CLASSES[variant][orientation];
   return (
@@ -290,7 +325,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       // Only the selected panel is rendered, and a set of tabs may have no panels at all
       // (navigation tabs): point at the panel from its own tab, and only if it exists.
       aria-controls={isActive && panels.has(value) ? panelId(baseId, value) : undefined}
-      tabIndex={isActive ? 0 : -1}
+      tabIndex={isActive || fallbackTabId === tabId(baseId, value) ? 0 : -1}
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(

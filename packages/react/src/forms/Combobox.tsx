@@ -1,14 +1,6 @@
 import { clsx } from 'clsx';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import {
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-  type Ref,
-} from 'react';
+import { useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
 import {
@@ -18,6 +10,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
@@ -118,7 +111,6 @@ export const Combobox = ({
   const setOpen = (next: boolean) => {
     if (next !== open) setOpenState(next);
   };
-  const [activeIndex, setActiveIndex] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   // The input and its toggle button: the listbox opens under it, as wide.
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -133,19 +125,7 @@ export const Combobox = ({
     if (mirrorKey !== null) setQuery(mirrorKey);
   }
 
-  const filtered = useMemo(() => {
-    if (!query) return options;
-    const q = query.toLowerCase();
-    return options.filter((o) => o.label.toLowerCase().includes(q));
-  }, [options, query]);
-
-  // Arrow keys step over disabled options and stay put at either end.
-  const moveActive = (step: 1 | -1) =>
-    setActiveIndex((i) => {
-      let next = i + step;
-      while (filtered[next]?.disabled) next += step;
-      return filtered[next] ? next : i;
-    });
+  const filtered = useFilteredOptions(options, query);
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
@@ -154,23 +134,12 @@ export const Combobox = ({
     setOpen(false);
   };
 
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setOpen(true);
-      moveActive(1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      moveActive(-1);
-    } else if (e.key === 'Enter') {
-      if (open && filtered[activeIndex]) {
-        e.preventDefault();
-        pick(filtered[activeIndex]);
-      }
-    } else if (e.key === 'Tab') {
-      setOpen(false);
-    }
-  };
+  const { activeIndex, setActiveIndex, onKeyDown } = useListboxNavigation({
+    items: filtered,
+    open,
+    setOpen,
+    onPick: pick,
+  });
 
   return (
     <div
