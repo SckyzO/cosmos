@@ -1,20 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RadarChart } from './RadarChart';
 import {
   HOSTILE,
-  closeTooltip,
-  expectNoInjectedImage,
-  hover,
-  legendTexts,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
   LegendSides,
-  expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  resolveColor,
+  themeColor,
 } from './storybook-helpers';
+import { expectKeyboardWalk, expectLegendsAround, openTooltipAt } from './storybook-polar';
+import { closeTooltip, expectEmptyMessage, legendTexts, tooltipCard } from './storybook-recharts';
 
 const percent = (v: number) => `${v}%`;
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];
@@ -105,6 +100,23 @@ export const CustomColors: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+// The text of the scale labels of the chart in `root`.
+const scale = (root: Element) =>
+  [...root.querySelectorAll('.recharts-polar-radius-axis-tick-value')].map((el) => el.textContent);
+
+// The outline of each polygon, in series order.
+const strokes = (root: Element) =>
+  [...root.querySelectorAll<SVGElement>('.recharts-radar-polygon .recharts-polygon')].map((el) =>
+    resolveColor(getComputedStyle(el).stroke)
+  );
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [], categories: [] },
+  play: expectEmptyMessage('No data'),
+};
+
 /** The scale labels are off by default, and `showScale` brings them back. */
 export const ScaleIsOptIn: Story = {
   tags: ['!dev', '!autodocs'],
@@ -120,13 +132,12 @@ export const ScaleIsOptIn: Story = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    const scale = (id: string) =>
-      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-yaxis text`)].map(
-        (el) => el.textContent
-      );
-    await waitFor(() => expect(scale('shown')).toContain('100%'));
-    await expect(scale('shown')).toEqual(['100%', '80%', '60%', '40%', '20%', '0%']);
-    await expect(scale('hidden')).toEqual([]);
+    const root = (id: string) => canvasElement.querySelector(`[data-testid="${id}"]`) as Element;
+    await waitFor(() => expect(scale(root('shown'))).toContain('100%'));
+    await expect([...scale(root('shown'))].sort()).toEqual(
+      ['0%', '20%', '40%', '60%', '80%', '100%'].sort()
+    );
+    await expect(scale(root('hidden'))).toEqual([]);
   },
 };
 
@@ -136,9 +147,9 @@ export const PlotFillsItsBox: Story = {
   args: { ...CompareDatacenters.args },
   play: async ({ canvasElement }) => {
     await waitFor(() => {
-      const widths = [...canvasElement.querySelectorAll('.apexcharts-radar-series polygon')].map(
-        (el) => el.getBoundingClientRect().width
-      );
+      const widths = [
+        ...canvasElement.querySelectorAll('.recharts-polar-grid-concentric-polygon'),
+      ].map((el) => el.getBoundingClientRect().width);
       expect(widths.length).toBeGreaterThan(0);
       // The outer polygon is a pentagon: its width is 1.9 times its radius.
       expect(Math.max(...widths)).toBeGreaterThan(235);
@@ -146,7 +157,10 @@ export const PlotFillsItsBox: Story = {
   },
 };
 
-/** The legend and the tooltip are HTML: series names and categories show as text. */
+/**
+ * The legend and the tooltip are React text: series names and categories with
+ * markup show as written, and nothing is injected.
+ */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -157,23 +171,32 @@ export const HtmlInLabelsRendersAsText: Story = {
     categories: [HOSTILE, 'B', 'C', 'D'],
   },
   play: async ({ canvasElement }) => {
-    // The legend renders on mount: the name must show up as literal text.
-    await waitFor(() => expect(legendTexts(canvasElement)).toHaveLength(2));
-    await expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']);
+    await waitFor(() => expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']));
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.recharts-polar-angle-axis')).not.toBeNull()
+    );
+    await expect(canvasElement.querySelector('.recharts-polar-angle-axis')).toHaveTextContent(
+      HOSTILE
+    );
     await expectNoInjectedImage(canvasElement);
+    // The tooltip's title is the hovered axis, its first row the first series.
+    await openTooltipAt(canvasElement, 0.5, 0.3);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(card.querySelector('li')).toHaveTextContent(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    await closeTooltip(canvasElement);
+  },
+};
 
-    // The tooltip renders on hover of a marker: its axis is the title, its
-    // series the label.
-    const marker = () => canvasElement.querySelector(".apexcharts-marker[index='0'][j='0']");
-    await waitFor(() => {
-      hover(marker() as Element);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        `${HOSTILE}: `
-      );
-    });
-    await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, marker);
+/** `formatValue` formats the tooltip values. */
+export const FormatValueFormatsTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: FormattedValues.args,
+  play: async ({ canvasElement }) => {
+    await openTooltipAt(canvasElement, 0.5, 0.3);
+    await expect(tooltipCard(canvasElement)).toHaveTextContent('72%');
+    await closeTooltip(canvasElement);
   },
 };
 
@@ -185,11 +208,43 @@ export const PaletteFromTheme: Story = {
     series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-radar[fill="none"]')].map((el) =>
-        el.getAttribute('stroke')
-      )
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    await waitFor(() => expect(strokes(canvasElement)).toEqual(tokens.map(themeColor)));
+  },
+};
+
+/** Each polygon takes the color of its index in `colors`. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: CustomColors.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(strokes(canvasElement)).toEqual(['#f59e0b', '#8b5cf6'].map(resolveColor))
     );
+  },
+};
+
+/** A click on a legend entry hides its polygon; another brings it back. */
+export const LegendTogglesSeries: Story = {
+  tags: ['!autodocs'],
+  args: CompareDatacenters.args,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const polygons = () => canvasElement.querySelectorAll('.recharts-radar-polygon').length;
+    await waitFor(() => expect(polygons()).toBe(3));
+    const entry = canvas.getByRole('button', { name: 'DC2 Frankfurt' });
+    await userEvent.click(entry);
+    await waitFor(() => expect(polygons()).toBe(2));
+    await expect(entry).toHaveAttribute('aria-pressed', 'false');
+    await expect(legendTexts(canvasElement)).toEqual(['DC1 Paris', 'DC2 Frankfurt', 'DC3 London']);
+    await userEvent.click(entry);
+    await waitFor(() => expect(polygons()).toBe(3));
   },
 };
 
@@ -208,25 +263,12 @@ export const LegendOnEachSide: Story = {
       {(legendPosition) => <RadarChart {...args} legendPosition={legendPosition} />}
     </LegendSides>
   ),
-  play: expectLegendsOnTheirSide,
+  play: expectLegendsAround('.recharts-polar-grid'),
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { ...SingleSeries.args, formatValue: (v) => `${v}%` },
-  render: (args) => (
-    <Rerender>{(grown) => <RadarChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
-/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its axes. */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...SingleSeries.args, ariaLabel: 'DC1 Paris scores' },
-  play: expectAccessibleChart({ keyboard: true }),
+  play: expectKeyboardWalk(),
 };

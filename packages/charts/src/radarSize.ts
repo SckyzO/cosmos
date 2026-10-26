@@ -1,9 +1,9 @@
 import type { ChartLegendPosition } from './types';
 
-// ApexCharts sizes a radar from the smaller side of its plot, less the width of
-// its widest axis name: on a chart a few hundred pixels wide the polygons took
-// little more than half the height. These are what the plot must leave around
-// the polygons for the names (11px text): above and below them, and beside them.
+// Recharts draws the axis names outside the outer polygon and does not make
+// room for them, so the radius is sized from the smaller side of the plot less
+// the room the names need (12px text): above and below the polygons, and beside
+// them.
 const NAME_BAND = 44;
 const NAME_GAP = 14;
 const NAME_CHAR = 6.5;

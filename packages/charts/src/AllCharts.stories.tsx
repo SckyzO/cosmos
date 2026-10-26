@@ -68,15 +68,13 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
-    filled: (apexOptions) => (
-      <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} />,
     empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
   },
   RadialBarChart: {
-    filled: (apexOptions) => (
-      <RadialBarChart series={[60, 40]} labels={['a', 'b']} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RadialBarChart series={[60, 40]} labels={['a', 'b']} />,
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {
@@ -102,9 +100,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
   },
   RadarChart: {
-    filled: (apexOptions) => (
-      <RadarChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
@@ -171,13 +168,16 @@ const CHARTS: Record<string, Chart> = {
   },
   // Always have data: no empty state.
   GradientRadial: {
-    filled: (apexOptions) => <GradientRadial value={84} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <GradientRadial value={84} />,
   },
   SemiCircleGauge: {
-    filled: (apexOptions) => <SemiCircleGauge value={42} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <SemiCircleGauge value={42} />,
   },
   StrokedGauge: {
-    filled: (apexOptions) => <StrokedGauge value={92} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <StrokedGauge value={92} />,
   },
   RealtimeChart: {
     recharts: true,
@@ -351,7 +351,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
-const LEGEND_NAMES = ['DonutChart', 'HeatmapChart', 'RadarChart'];
+const LEGEND_NAMES = ['HeatmapChart'];
 
 /** No legend swatch of any chart has an outline: ApexCharts' white ring glares in the dark themes. */
 export const LegendSwatchesHaveNoOutline: Story = {
