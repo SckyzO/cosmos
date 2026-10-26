@@ -1,16 +1,22 @@
-import type { ApexOptions } from 'apexcharts';
-// `apexcharts/scatter` and `apexcharts/bubble` are byte-identical copies of
-// `apexcharts/line`, which registers both types. Importing `line`, like the
-// other line-family wrappers, keeps a single copy of the engine in a bundle.
-import 'apexcharts/line';
-import 'apexcharts/features/legend';
-import { useMemo } from 'react';
-import { ApexChart } from './ApexChart';
-import { useStableCallback } from './formatters';
-import { chartLegend } from './legend';
-import { useChartTheme } from './theme';
-import { tooltipHtml, type TooltipRow } from './tooltip';
-import type { ChartBaseProps, ChartEmptyProps, ChartLegendProps } from './types';
+import {
+  CartesianGrid,
+  Legend,
+  Scatter,
+  ScatterChart as RechartsScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ZAxis,
+  type TooltipContentProps,
+} from 'recharts';
+import { ANIMATION } from './core/animation';
+import { AXIS, xAxisTitle, yAxisTitle } from './core/axes';
+import { TooltipCard } from './core/ChartTooltip';
+import { legendProps, useHiddenSeries } from './core/ChartLegend';
+import { BORDER, GRID, seriesColor } from './core/colors';
+import { hasNoData, seriesKey } from './core/data';
+import { ChartEmpty, frameProps } from './core/frame';
+import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -24,7 +30,7 @@ export type BubblePoint = ScatterPoint & {
   z: number;
 };
 
-type XYChartProps = ChartBaseProps &
+type XYChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps & {
     /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
@@ -33,15 +39,9 @@ type XYChartProps = ChartBaseProps &
     yTitle?: string;
     /** Override the default Cosmos palette, one color per series. */
     colors?: string[];
-    /**
-     * Format the x-axis labels and the tooltip's x value (default: at most two decimals).
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the x-axis labels and the tooltip's x value (default: at most two decimals). */
     formatX?: (value: number) => string;
-    /**
-     * Format the y-axis labels and the tooltip's y value (default: at most two decimals).
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the y-axis labels and the tooltip's y value (default: at most two decimals). */
     formatY?: (value: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
@@ -62,180 +62,127 @@ export type BubbleChartProps = XYChartProps & {
 /** Drops the float noise of computed values: 33.333333 reads 33.33. */
 const formatNumber = (value: number) => String(Number(value.toFixed(2)));
 
-/**
- * Axis bounds and tick count that put every tick on a round value.
- * ApexCharts splits a numeric x-axis evenly between the data extremes (12,
- * 16.59, 21.18…). `pad` first widens the range by that fraction on each side,
- * so the bubbles at the edges are not clipped; it never crosses zero.
- */
-const niceAxis = (values: number[], pad = 0, ticks = 5) => {
-  const low = Math.min(...values);
-  const high = Math.max(...values);
-  const margin = (high - low) * pad;
-  const min = low >= 0 ? Math.max(low - margin, 0) : low - margin;
-  const max = high <= 0 ? Math.min(high + margin, 0) : high + margin;
-  // No data, or a single value: let ApexCharts scale it.
-  if (!(max > min)) return {};
-  const rough = (max - min) / ticks;
-  const magnitude = 10 ** Math.floor(Math.log10(rough));
-  const step = [1, 2, 2.5, 5, 10].map((f) => f * magnitude).find((s) => s >= rough) ?? rough;
-  const round = (value: number) => Number(value.toPrecision(12));
-  const niceMin = round(Math.floor(min / step) * step);
-  const niceMax = round(Math.ceil(max / step) * step);
-  return { min: niceMin, max: niceMax, tickAmount: Math.round((niceMax - niceMin) / step) };
+// The area of a point, in px², for the Scatter chart: a 6px radius disc.
+const POINT_AREA = 113;
+// The areas of the smallest and the largest bubble.
+const BUBBLE_AREAS: [number, number] = [60, 1100];
+
+type Bubbles = { sizeTitle: string; formatSize: (value: number) => string };
+
+type XYProps = XYChartProps & {
+  series: { name: string; data: (ScatterPoint & { z?: number })[] }[];
+  bubbles?: Bubbles;
 };
 
-const useXYOptions = <P extends ScatterPoint>(
-  {
-    series,
-    xTitle,
-    yTitle,
-    colors,
-    formatX = formatNumber,
-    formatY = formatNumber,
-    showLegend,
-    legendPosition = 'top',
-  }: XYChartProps & { series: { name: string; data: P[] }[] },
-  { pad = 0, extraRows = () => [] }: { pad?: number; extraRows?: (point: P) => TooltipRow[] } = {}
-): ApexOptions => {
-  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
-  const seriesColors = colors ?? palette;
-  const axisFormat = useMemo(
-    () => ({
-      x: (value: string | number) => formatX(Number(value)),
-      y: (value: number) => formatY(value),
-    }),
-    [formatX, formatY]
-  );
-  // The tooltip is HTML: tooltipHtml escapes the label, the series name and
-  // the values. Read on hover: a stable function, so a parent render does not
-  // redraw the chart.
-  const tooltip = useStableCallback(
-    ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
-      const { name, data } = series[seriesIndex];
-      const point = data[dataPointIndex];
-      return tooltipHtml({
-        title: point.label,
-        series: { name, color: seriesColors[seriesIndex % seriesColors.length] },
-        rows: [
-          [xTitle ?? 'x', formatX(point.x)],
-          [yTitle ?? 'y', formatY(point.y)],
-          ...extraRows(point),
-        ],
-      });
-    }
-  );
-  const points = series.flatMap(({ data }) => data);
+const XYChart = ({
+  series,
+  bubbles,
+  colors,
+  formatX = formatNumber,
+  formatY = formatNumber,
+  xTitle,
+  yTitle,
+  showLegend,
+  legendPosition = 'top',
+  emptyMessage = 'No data',
+  ariaLabel,
+  children,
+  height = 320,
+  width,
+}: XYProps) => {
+  const hidden = useHiddenSeries();
+  const name =
+    ariaLabel ?? `${bubbles ? 'Bubble' : 'Scatter'} chart: ${series.map((s) => s.name).join(', ')}`;
+  if (hasNoData(series)) {
+    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
 
-  return {
-    chart: {
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      fontFamily: 'inherit',
-      // ApexCharts keeps 15px free under the drawing: dead space in a card.
-      parentHeightOffset: 0,
-    },
-    colors: seriesColors,
-    dataLabels: { enabled: false },
-    grid,
-    // One labels object per axis: ApexCharts writes formatters onto them.
-    // Axis labels and titles are SVG text and stay unescaped.
-    xaxis: {
-      type: 'numeric',
-      ...niceAxis(
-        points.map(({ x }) => x),
-        pad
-      ),
-      title: axisTitle(xTitle),
-      labels: { ...axisLabels, formatter: axisFormat.x },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      // The x-axis tooltip is HTML and repeats the x value of the tooltip.
-      tooltip: { enabled: false },
-    },
-    yaxis: {
-      ...niceAxis(
-        points.map(({ y }) => y),
-        pad
-      ),
-      title: axisTitle(yTitle),
-      labels: { ...axisLabels, formatter: axisFormat.y },
-    },
-    legend: chartLegend({
-      show: showLegend ?? series.length > 1,
-      position: legendPosition,
-      color: axisLabels.style.colors,
-    }),
-    tooltip: { theme: tooltipTheme, custom: tooltip },
+  // The card of the point under the pointer: its label, the series, then one
+  // row per measure.
+  const tooltip = ({ active, payload }: Partial<TooltipContentProps>) => {
+    const point = payload?.[0]?.payload as
+      (ScatterPoint & { z?: number; series: number }) | undefined;
+    if (!active || !point) return null;
+    const color = seriesColor(point.series, colors);
+    const none = 'transparent';
+    return (
+      <TooltipCard
+        title={point.label}
+        rows={[
+          { name: series[point.series].name, value: '', color },
+          { name: xTitle ?? 'x', value: formatX(point.x), color: none },
+          { name: yTitle ?? 'y', value: formatY(point.y), color: none },
+          ...(bubbles && point.z !== undefined
+            ? [{ name: bubbles.sizeTitle, value: bubbles.formatSize(point.z), color: none }]
+            : []),
+        ]}
+      />
+    );
   };
+
+  return (
+    <RechartsScatterChart
+      {...frameProps({ height, width, ariaLabel: name })}
+      margin={{ top: 4, right: bubbles ? 24 : 12, bottom: 0, left: 0 }}
+    >
+      <CartesianGrid stroke={GRID} strokeDasharray="4 4" />
+      <XAxis
+        type="number"
+        dataKey="x"
+        name={xTitle ?? 'x'}
+        domain={['auto', 'auto']}
+        tickFormatter={formatX}
+        {...AXIS}
+        {...xAxisTitle(xTitle)}
+      />
+      <YAxis
+        type="number"
+        dataKey="y"
+        name={yTitle ?? 'y'}
+        domain={['auto', 'auto']}
+        width="auto"
+        tickFormatter={formatY}
+        {...AXIS}
+        {...yAxisTitle(yTitle)}
+      />
+      {bubbles ? (
+        <ZAxis type="number" dataKey="z" name={bubbles.sizeTitle} range={BUBBLE_AREAS} />
+      ) : (
+        <ZAxis type="number" range={[POINT_AREA, POINT_AREA]} />
+      )}
+      {(showLegend ?? series.length > 1) && <Legend {...legendProps(legendPosition, hidden)} />}
+      <Tooltip
+        content={tooltip}
+        cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}
+        animationDuration={150}
+      />
+      {series.map((s, index) => {
+        const color = seriesColor(index, colors);
+        return (
+          <Scatter
+            key={seriesKey(index)}
+            name={s.name}
+            dataKey={seriesKey(index)}
+            data={s.data.map((point) => ({ ...point, series: index }))}
+            fill={color}
+            // Translucent bubbles, outlined in their own color, keep the overlapping ones readable.
+            {...(bubbles ? { fillOpacity: 0.6, stroke: color, strokeWidth: 1 } : {})}
+            hide={hidden.hidden.has(seriesKey(index))}
+            {...ANIMATION}
+          />
+        );
+      })}
+      {children}
+    </RechartsScatterChart>
+  );
 };
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
-export const ScatterChart = ({
-  emptyMessage,
-  ariaLabel,
-  apexOptions,
-  height = 320,
-  width = '100%',
-  ...props
-}: ScatterChartProps) => {
-  const base = useXYOptions(props);
-  const options: ApexOptions = {
-    ...base,
-    chart: { ...base.chart, type: 'scatter' },
-    markers: { size: 6, strokeWidth: 0, hover: { sizeOffset: 2 } },
-  };
-  return (
-    <ApexChart
-      type="scatter"
-      options={options}
-      series={props.series}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-    />
-  );
-};
+export const ScatterChart = (props: ScatterChartProps) => <XYChart {...props} />;
 
 /** A scatter chart whose bubble size carries a third measure (`z`), e.g. request volume. */
 export const BubbleChart = ({
   sizeTitle = 'Size',
   formatSize = formatNumber,
-  emptyMessage,
-  ariaLabel,
-  apexOptions,
-  height = 320,
-  width = '100%',
   ...props
-}: BubbleChartProps) => {
-  const { dark, palette } = useChartTheme();
-  const base = useXYOptions(props, {
-    // Room for the bubbles at the edges of the plot.
-    pad: 0.08,
-    extraRows: (point) => [[sizeTitle, formatSize(point.z)]],
-  });
-  const options: ApexOptions = {
-    ...base,
-    chart: { ...base.chart, type: 'bubble' },
-    plotOptions: { bubble: { minBubbleRadius: 4 } },
-    // Translucent bubbles, outlined in their own color (ApexCharts' white
-    // outline glares on the dark themes), keep the overlapping ones readable.
-    // On a dark card the same alpha reads darker than the legend swatch.
-    fill: { opacity: dark ? 0.7 : 0.55 },
-    markers: { strokeWidth: 1, strokeColors: props.colors ?? palette },
-  };
-  return (
-    <ApexChart
-      type="bubble"
-      options={options}
-      series={props.series}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-    />
-  );
-};
+}: BubbleChartProps) => <XYChart {...props} bubbles={{ sizeTitle, formatSize }} />;

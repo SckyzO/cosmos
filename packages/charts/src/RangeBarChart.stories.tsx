@@ -1,22 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { ReferenceLine } from 'recharts';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RangeBarChart } from './RangeBarChart';
+import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
-  HOSTILE,
-  closeTooltip,
-  expectNoInjectedImage,
-  hover,
-  legendTexts,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
-  LegendSides,
-  expectLegendsOnTheirSide,
   axisTitles,
-  expectAxisTitles,
-} from './storybook-helpers';
+  closeTooltip,
+  expectAccessibleChart,
+  expectEmptyMessage,
+  expectLegendsOnTheirSide,
+  legendTexts,
+  surface,
+  tickTexts,
+  tooltipCard,
+} from './storybook-recharts';
+import {
+  barFills,
+  barShapes,
+  expectRepaintsWithThemeOf,
+  openTooltipAt,
+} from './storybook-cartesian';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
 const at = (day: number, hour: number, minute = 0) => Date.UTC(2026, 9, day, hour, minute);
@@ -143,12 +146,62 @@ export const SeverityColors: Story = {
 /** `xTitle` and `yTitle` name the time axis and the rows. */
 export const AxisTitles: Story = {
   args: { ...MaintenanceWindows.args, xTitle: 'Time (UTC)', yTitle: 'Rack' },
-  play: expectAxisTitles({ x: 'Time (UTC)', y: ['Rack'] }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({ x: ['Time (UTC)'], y: ['Rack'] })
+    );
+  },
+};
+
+/** The time axis has round UTC ticks: the day at midnight, the time of day between. */
+export const TimeAxisTicks: Story = {
+  args: { ...MaintenanceWindows.args },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const ticks = tickTexts(canvasElement, 'xAxis');
+      expect(ticks.length).toBeGreaterThan(2);
+      expect(ticks.length).toBeLessThanOrEqual(9);
+      for (const tick of ticks) expect(tick).toMatch(/^(\d\d:\d\d|\d\d \w{3})$/);
+    });
+  },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [] },
+  play: expectEmptyMessage('No data'),
+};
+
+/**
+ * `children` takes Recharts elements, drawn inside the chart: here a vertical
+ * `ReferenceLine` marking a moment on the time axis, in milliseconds.
+ */
+export const ReferenceLineInChildren: Story = {
+  args: {
+    series: CHANGES,
+    children: (
+      <ReferenceLine
+        x={at(14, 0)}
+        stroke="var(--color-status-warn)"
+        strokeDasharray="6 4"
+        label={{ value: 'Freeze', position: 'insideTopRight', fill: 'var(--color-text-muted)' }}
+      />
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
+      expect(canvasElement.textContent).toContain('Freeze');
+    });
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** The legend and the tooltip are HTML: series names and row labels show as text. */
+/**
+ * The legend and the tooltip are React text: a series name, a row label or an
+ * axis title with markup shows as written, and nothing is injected.
+ */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -166,32 +219,113 @@ export const HtmlInLabelsRendersAsText: Story = {
     ],
   },
   play: async ({ canvasElement }) => {
-    // Legends render on mount: the name must show up as literal text.
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
-    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
-    // Axis titles are SVG text: the same string, drawn as written.
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
+    // The first row sits in the top half of the plot.
+    await openTooltipAt(canvasElement, 0.5, 0.2);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(card.querySelector('li')).toHaveTextContent(HOSTILE);
     await expectNoInjectedImage(canvasElement);
-
-    // Tooltips render on hover: the title is the row, then the series name
-    // and the dates.
-    // The chart redraws once after mount and rebuilds an empty tooltip, so
-    // hover again until both show.
-    const bar = () => canvasElement.querySelector('.apexcharts-rangebar-series path');
-    await waitFor(() => {
-      hover(bar() as Element);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        HOSTILE
-      );
-    });
-    await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, bar);
+    await closeTooltip(canvasElement);
   },
 };
 
-/** The bars take the default palette of the theme. */
+const rects = (root: HTMLElement) => barShapes(root).flat();
+
+/** Two ranges of one series on the same row are two bars on one lane. */
+export const SeveralRangesOnARow: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: MaintenanceWindows.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const bars = rects(canvasElement);
+      expect(bars).toHaveLength(6);
+      const first = bars[0].getBoundingClientRect();
+      const second = bars[1].getBoundingClientRect();
+      // The second window of rack A12 starts after the first one ends, on the same lane.
+      expect(second.left).toBeGreaterThan(first.right);
+      expect(Math.abs(second.top - first.top)).toBeLessThan(1);
+    });
+  },
+};
+
+/** Without `groupRows` each series has a lane of its own in a row; with it they share one. */
+export const LanesPerSeriesOrPerRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: CHANGES },
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="lanes">
+        <RangeBarChart {...args} />
+      </div>
+      <div data-testid="grouped">
+        <RangeBarChart {...args} groupRows />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    // api-gateway has a maintenance (13th, 02:00), a deploy (13th, 10:00) and an incident (14th).
+    const laneOf = (root: HTMLElement) =>
+      [...new Set(rects(root).map((el) => Math.round(el.getBoundingClientRect().top)))].length;
+    await waitFor(() => {
+      expect(rects(chart('lanes')).length).toBe(11);
+      expect(rects(chart('grouped')).length).toBe(11);
+      // Five rows: three lanes in each row, or one.
+      expect(laneOf(chart('lanes'))).toBeGreaterThan(laneOf(chart('grouped')));
+      expect(laneOf(chart('grouped'))).toBe(5);
+    });
+  },
+};
+
+/** The tooltip lists every range of the row, each with its start and end through `formatDate`. */
+export const TooltipListsTheRangesOfARow: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...SeverityColors.args },
+  play: async ({ canvasElement }) => {
+    // DC2 Frankfurt: a degraded window, an outage, a second degraded window.
+    await openTooltipAt(canvasElement, 0.5, 0.3);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('p')).toHaveTextContent(/^DC\d/);
+    const items = [...card.querySelectorAll('li')].map((li) => li.textContent);
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) expect(item).toMatch(/\d\d:\d\d UTC – \d\d:\d\d UTC$/);
+    await closeTooltip(canvasElement);
+  },
+};
+
+/** A click on a legend entry hides its ranges and shows them again. */
+export const LegendTogglesSeries: Story = {
+  tags: ['!autodocs'],
+  args: { series: CHANGES },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => expect(rects(canvasElement)).toHaveLength(11));
+    const deploy = canvas.getByRole('button', { name: 'Deploy' });
+    await userEvent.click(deploy);
+    await waitFor(() => expect(rects(canvasElement)).toHaveLength(6));
+    await expect(deploy).toHaveAttribute('aria-pressed', 'false');
+    await expect(legendTexts(canvasElement)).toEqual(['Maintenance', 'Deploy', 'Incident']);
+    await userEvent.click(deploy);
+    await waitFor(() => expect(rects(canvasElement)).toHaveLength(11));
+  },
+};
+
+/** With `groupRows`, a hidden series leaves the lane it shared. */
+export const LegendTogglesSeriesInGroupedRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: CHANGES, groupRows: true },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(rects(canvasElement)).toHaveLength(11));
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Incident' }));
+    await waitFor(() => expect(rects(canvasElement)).toHaveLength(8));
+  },
+};
+
+/** The bars take the default palette of the theme, one color per series. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -201,12 +335,26 @@ export const PaletteFromTheme: Story = {
     })),
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-rangebar-area')].map((el) =>
-        el.getAttribute('stroke')
-      )
-    );
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    const css = (token: string) =>
+      resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+    await waitFor(() => expect(barFills(canvasElement).map(resolveColor)).toEqual(tokens.map(css)));
   },
+};
+
+/** A theme or accent switch on `<html>` repaints the chart with no observer and no redraw. */
+export const RepaintsWithTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: MaintenanceWindows.args,
+  play: ({ canvasElement }) =>
+    expectRepaintsWithThemeOf(canvasElement, () => barFills(canvasElement)[0]),
 };
 
 /** `legendPosition` puts the legend on each side of the plot. */
@@ -226,24 +374,33 @@ export const LegendOnEachSide: Story = {
   play: expectLegendsOnTheirSide,
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+/** A chart wider than its box is cut to it, so a narrow screen never scrolls sideways. */
+export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...MaintenanceWindows.args, formatDate: (t) => new Date(t).toISOString() },
+  args: { series: CHANGES, width: 900 },
   render: (args) => (
-    <Rerender>
-      {(grown) => <RangeBarChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
+    <div data-testid="box" style={{ width: 375 }}>
+      <RangeBarChart {...args} />
+    </div>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(surface(canvasElement)).not.toBeNull());
+    await waitFor(() => {
+      expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+      expect(surface(canvasElement)?.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+    });
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+  },
 };
 
-/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
+/**
+ * Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its rows.
+ * Recharts reads left and right the other way round when the rows are vertical.
+ */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...MaintenanceWindows.args, ariaLabel: 'Maintenance windows' },
-  play: expectAccessibleChart({ keyboard: true }),
+  play: expectAccessibleChart({ keyboard: true, next: '{ArrowLeft}' }),
 };

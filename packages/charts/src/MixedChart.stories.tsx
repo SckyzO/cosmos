@@ -1,22 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { ReferenceLine } from 'recharts';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MixedChart } from './MixedChart';
+import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
-  HOSTILE,
-  closeTooltip,
-  expectNoInjectedImage,
-  hover,
-  legendTexts,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
-  LegendSides,
-  expectLegendsOnTheirSide,
   axisTitles,
-  expectAxisTitles,
-} from './storybook-helpers';
+  closeTooltip,
+  expectAccessibleChart,
+  expectEmptyMessage,
+  expectLegendsOnTheirSide,
+  legendTexts,
+  openTooltip,
+  seriesStrokes,
+  tickTexts,
+  tooltipCard,
+} from './storybook-recharts';
+import { barFills, barShapes, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
 const EVERY_4H = ['00h', '04h', '08h', '12h', '16h', '20h'];
@@ -146,15 +145,75 @@ export const AxisTitles: Story = {
     yTitle: 'Requests (req/s)',
     yRightTitle: 'p95 latency (ms)',
   },
-  play: expectAxisTitles({
-    x: 'Time of day',
-    y: ['Requests (req/s)', 'p95 latency (ms)'],
-  }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({
+        x: ['Time of day'],
+        y: ['Requests (req/s)', 'p95 latency (ms)'],
+      })
+    );
+  },
+};
+
+/** With every series on the right, that is the only axis drawn, and it takes `yRightTitle`. */
+export const RightAxisOnly: Story = {
+  args: {
+    categories: MONTHS,
+    yRightTitle: 'Energy (MWh)',
+    series: [
+      {
+        name: 'Energy',
+        type: 'column',
+        axis: 'right',
+        data: [298, 271, 285, 262, 251, 239, 246, 249, 254],
+      },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(axisTitles(canvasElement)).toEqual({ x: [], y: ['Energy (MWh)'] });
+      expect(tickTexts(canvasElement, 'yAxis').length).toBeGreaterThan(1);
+    });
+  },
+};
+
+/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+export const Empty: Story = {
+  args: { series: [], categories: [] },
+  play: expectEmptyMessage('No data'),
+};
+
+/**
+ * `children` takes Recharts elements, drawn inside the chart. A reference line
+ * is read on one axis: `yAxisId` says which, `left` or `right`.
+ */
+export const ReferenceLineInChildren: Story = {
+  args: {
+    ...RequestsAndLatency.args,
+    children: (
+      <ReferenceLine
+        yAxisId="right"
+        y={180}
+        stroke="var(--color-status-warn)"
+        strokeDasharray="6 4"
+        label={{ value: 'SLO 180 ms', position: 'insideTopLeft', fill: 'var(--color-text-muted)' }}
+      />
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
+      expect(canvasElement.textContent).toContain('SLO 180 ms');
+    });
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** The legend and the tooltip are HTML: series names and categories show as text. */
+/**
+ * The legend and the tooltip are React text: a series name, a category or an
+ * axis title with markup shows as written, and nothing is injected.
+ */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -168,59 +227,130 @@ export const HtmlInLabelsRendersAsText: Story = {
     ],
   },
   play: async ({ canvasElement }) => {
-    // Legends render on mount: the name must show up as literal text.
-    await waitFor(() => expect(legendTexts(canvasElement).length).toBeGreaterThan(1));
-    await expect(legendTexts(canvasElement)).toContain(HOSTILE);
+    await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
-    // Axis titles are SVG text: the same string, drawn as written.
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE, HOSTILE] })
     );
+    await openTooltip(canvasElement, 0.1);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(card.querySelector('li')).toHaveTextContent(HOSTILE);
     await expectNoInjectedImage(canvasElement);
-
-    // The shared tooltip renders on hover: the title is the category, then
-    // one row per series. The chart redraws once after mount and rebuilds an
-    // empty tooltip, so hover again until both show.
-    const yLabels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-tooltip-text-y-label')].map(
-        (el) => el.textContent
-      );
-    const bar = () => canvasElement.querySelector('.apexcharts-bar-area');
-    await waitFor(() => {
-      hover(bar() as Element);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-      expect(yLabels()).toContain(`${HOSTILE}: `);
-    });
-    await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, bar);
+    await closeTooltip(canvasElement);
   },
 };
+
+/** Each value in the tooltip is in the format of the axis of its series. */
+export const TooltipFormatsEachAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: RequestsAndLatency.args,
+  play: async ({ canvasElement }) => {
+    await openTooltip(canvasElement, 0.5);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card).toHaveTextContent(/\d\d:00/);
+    await expect(card).toHaveTextContent(/Requests\s*[\d.]+K? req\/s/);
+    await expect(card).toHaveTextContent(/p95 latency\s*\d+ ms/);
+    await closeTooltip(canvasElement);
+  },
+};
+
+/** Each axis formats its own labels. */
+export const AxesFormatTheirOwnLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: RequestsAndLatency.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const ticks = [...canvasElement.querySelectorAll('.recharts-yAxis-tick-labels')].map((axis) =>
+        [...axis.querySelectorAll('.recharts-cartesian-axis-tick-value')].map((t) => t.textContent)
+      );
+      expect(ticks).toHaveLength(2);
+      for (const label of ticks[0]) expect(label).toMatch(/req\/s$/);
+      for (const label of ticks[1]) expect(label).toMatch(/ ms$/);
+    });
+  },
+};
+
+/** A click on a legend entry hides its series, column or line, and shows it again. */
+export const LegendTogglesSeries: Story = {
+  tags: ['!autodocs'],
+  args: RequestsAndLatency.args,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lines = () => canvasElement.querySelectorAll('.recharts-line-curve').length;
+    const columns = () => barShapes(canvasElement).flat().length;
+    await waitFor(() => {
+      expect(lines()).toBe(1);
+      expect(columns()).toBeGreaterThan(0);
+    });
+    const latency = canvas.getByRole('button', { name: 'p95 latency' });
+    await userEvent.click(latency);
+    await waitFor(() => expect(lines()).toBe(0));
+    await expect(latency).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(canvas.getByRole('button', { name: 'Requests' }));
+    await waitFor(() => expect(columns()).toBe(0));
+    await userEvent.click(canvas.getByRole('button', { name: 'Requests' }));
+    await userEvent.click(latency);
+    await waitFor(() => {
+      expect(lines()).toBe(1);
+      expect(columns()).toBeGreaterThan(0);
+    });
+  },
+};
+
+const MIXED_PALETTE = {
+  categories: ['A', 'B', 'C'],
+  series: [
+    { name: 'a', type: 'column', data: [3, 5, 4] },
+    { name: 'b', type: 'column', data: [3, 5, 4] },
+    { name: 'c', type: 'line', data: [3, 5, 4] },
+    { name: 'd', type: 'line', data: [3, 5, 4] },
+    { name: 'e', type: 'column', data: [3, 5, 4] },
+  ],
+} satisfies Story['args'];
 
 /** The columns and the lines take the default palette of the theme, in series order. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  args: {
-    categories: ['A', 'B', 'C'],
-    series: [
-      { name: 'a', type: 'column', data: [3, 5, 4] },
-      { name: 'b', type: 'column', data: [3, 5, 4] },
-      { name: 'c', type: 'line', data: [3, 5, 4] },
-      { name: 'd', type: 'line', data: [3, 5, 4] },
-      { name: 'e', type: 'column', data: [3, 5, 4] },
-    ],
-  },
+  args: MIXED_PALETTE,
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() => {
-      const byIndex = new Map<number, string | null>();
-      for (const el of canvasElement.querySelectorAll(
-        '.apexcharts-line[index], .apexcharts-bar-area[index]'
-      )) {
-        const index = Number(el.getAttribute('index'));
-        if (!byIndex.has(index)) byIndex.set(index, el.getAttribute('stroke'));
-      }
-      return [...byIndex.entries()].sort(([a], [b]) => a - b).map(([, color]) => color);
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    const css = (token: string) =>
+      resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+    await waitFor(() => {
+      const columns = barFills(canvasElement).map(resolveColor);
+      const lines = seriesStrokes(canvasElement).map(resolveColor);
+      expect(columns).toEqual([css(tokens[0]), css(tokens[1]), css(tokens[4])]);
+      expect(lines).toEqual([css(tokens[2]), css(tokens[3])]);
     });
   },
+};
+
+/** `colors` overrides the palette, one color per series. */
+export const ColorsOverridePalette: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: CustomColors.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(barFills(canvasElement).map(resolveColor)).toEqual([resolveColor('#8b5cf6')]);
+      expect(seriesStrokes(canvasElement).map(resolveColor)).toEqual([resolveColor('#f59e0b')]);
+    });
+  },
+};
+
+/** A theme or accent switch on `<html>` repaints the chart with no observer and no redraw. */
+export const RepaintsWithTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: SingleAxis.args,
+  play: ({ canvasElement }) =>
+    expectRepaintsWithThemeOf(canvasElement, () => barFills(canvasElement)[0]),
 };
 
 /** `legendPosition` puts the legend on each side of the plot. */
@@ -241,26 +371,14 @@ export const LegendOnEachSide: Story = {
   play: expectLegendsOnTheirSide,
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: {
-    ...RequestsAndLatency.args,
-    formatValue: (v) => `${v} rps`,
-    formatRightValue: (v) => `${v} ms`,
-  },
-  render: (args) => (
-    <Rerender>{(grown) => <MixedChart {...freshCopy(args)} height={grown ? 400 : 320} />}</Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
 /** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...RequestsAndLatency.args, ariaLabel: 'Requests and latency every two hours' },
+  args: {
+    ...RequestsAndLatency.args,
+    // The legend's buttons would take the first Tab.
+    showLegend: false,
+    ariaLabel: 'Requests and latency every two hours',
+  },
   play: expectAccessibleChart({ keyboard: true }),
 };

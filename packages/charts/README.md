@@ -74,11 +74,11 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 
 | Chart                          | Notes                                                         |
 | ------------------------------ | ------------------------------------------------------------- |
-| `BarChart`                     | Vertical or horizontal bars                                   |
-| `RangeBarChart`                | Time ranges per row on a datetime axis (timeline)             |
-| `MixedChart`                   | Columns and lines on one chart, optional second y axis        |
+| `BarChart`                     | Vertical or horizontal bars, grouped or stacked (Recharts)    |
+| `RangeBarChart`                | Time ranges per row on a time axis (timeline) (Recharts)      |
+| `MixedChart`                   | Columns and lines, optional second y axis (Recharts)          |
 | `LineAreaChart`                | Smooth area + gradient fill, legend when 2+ series (Recharts) |
-| `RealtimeChart`                | Live updates with WARN/CRIT threshold annotations             |
+| `RealtimeChart`                | Live updates with WARN/CRIT threshold lines (Recharts)        |
 | `RadialBarChart`               | Multi-series radial gauge                                     |
 | `GradientRadial`               | Single gradient radial                                        |
 | `SemiCircleGauge`              | Half-donut gauge                                              |
@@ -88,8 +88,8 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `TreemapChart`                 | Repartition treemap                                           |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges             |
 | `RadarChart`                   | One polygon per series over named axes                        |
-| `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure              |
-| `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
+| `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure (Recharts)   |
+| `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal (Recharts)    |
 
 ## License
 
