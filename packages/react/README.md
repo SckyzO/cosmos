@@ -308,6 +308,27 @@ reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass i
 </Shell>
 ```
 
+## Split panes
+
+`SplitView` puts two or three `SplitView.Pane` side by side in one bordered frame (mail,
+chat, a file manager). It fills the height of its parent and each pane scrolls on its own;
+`width` is a Tailwind class (`w-56`), and a pane without one takes the remaining space. Below
+`collapseBelow` (`md`, `lg` by default, `xl`) only the active pane shows. Control it with
+`activePane` and `onActivePaneChange`, or start it with `defaultActivePane` and switch from
+inside with `useSplitView()`; the pane that appears takes focus. A Back button is yours to
+place.
+
+```tsx
+<SplitView activePane={pane} onActivePaneChange={setPane}>
+  <SplitView.Pane id="list" label="Messages" width="w-80">
+    {/* list */}
+  </SplitView.Pane>
+  <SplitView.Pane id="detail" label="Message">
+    {/* detail */}
+  </SplitView.Pane>
+</SplitView>
+```
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are
