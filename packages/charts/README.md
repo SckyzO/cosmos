@@ -80,7 +80,7 @@ The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or
 
 A chart with no series, or only empty ones, draws `emptyMessage` (default `No data`, an empty string for nothing) in place of the plot. The gauges, which always have a value, and `RealtimeChart`, which fills its own window, have no such prop.
 
-For what a chart has no prop for, every chart but `HeatmapChart` and `FunnelChart` takes `children` (see above).
+For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart` and `FunnelChart` takes `children` (see above).
 
 Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, the chart is named from its type and its series. Tab reaches a chart, and the arrow keys move from point to point and announce each one: ArrowRight goes to the next point, ArrowLeft to the previous one, and on a chart with its categories on the vertical axis (a horizontal `BarChart` or `BoxPlotChart`, `RangeBarChart`) ArrowDown and ArrowRight go to the next category and ArrowUp and ArrowLeft to the previous one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
 
