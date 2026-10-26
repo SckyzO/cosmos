@@ -4,7 +4,6 @@ import {
   Bell,
   Box,
   Database,
-  FileText,
   LayoutDashboard,
   Layers,
   Network,
@@ -12,7 +11,6 @@ import {
   RefreshCw,
   Server,
   ShieldAlert,
-  ShieldCheck,
   User,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -220,14 +218,14 @@ const Nav = () => (
   <div className="py-3">
     <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
     <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
-      <Sidebar.Item icon={Box} label="Tokens" depth={1} />
-      <Sidebar.Item icon={Layers} label="Components" depth={1} />
-      <Sidebar.Item icon={FileText} label="Templates" depth={1} />
+      <Sidebar.Item label="Tokens" />
+      <Sidebar.Item label="Components" />
+      <Sidebar.Item label="Templates" />
     </Sidebar.SubMenu>
     <Sidebar.SubMenu icon={Server} label="Infrastructure">
-      <Sidebar.Item icon={Server} label="Servers" depth={1} />
-      <Sidebar.Item icon={Network} label="Network" depth={1} />
-      <Sidebar.Item icon={ShieldCheck} label="Health checks" depth={1} />
+      <Sidebar.Item label="Servers" />
+      <Sidebar.Item label="Network" />
+      <Sidebar.Item label="Health checks" />
     </Sidebar.SubMenu>
     <Sidebar.Section label="Account">
       <Sidebar.Item
