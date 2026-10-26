@@ -4,7 +4,8 @@ import type { SectorProps } from 'recharts';
 import { ANIMATION } from './animation';
 import { TRACK } from './colors';
 import { frameProps } from './frame';
-import { CenterText, clampTo, gaugeName } from './radial';
+import { clampTo, gaugeName } from './gauge';
+import { CenterText } from './radial';
 import type { ChartSize } from '../types';
 
 type RadialGaugeProps = ChartSize & {

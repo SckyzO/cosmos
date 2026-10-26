@@ -1,6 +1,6 @@
 import type { SectorProps } from 'recharts';
 import { SERIES, TRACK } from './core/colors';
-import { percent } from './core/radial';
+import { percent } from './core/gauge';
 import { RadialGauge } from './core/RadialGauge';
 import type { ChartProps } from './types';
 

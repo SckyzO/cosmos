@@ -1,9 +1,9 @@
 import { useRef } from 'react';
 import { PolarAngleAxis, RadialBar, RadialBarChart, usePlotArea } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { MUTED, SERIES, STATUS_CRIT, STATUS_WARN, SUCCESS, TEXT, TRACK } from './core/colors';
+import { MUTED, SERIES, TEXT, TRACK } from './core/colors';
 import { frameProps } from './core/frame';
-import { clampTo, gaugeName, percent } from './core/radial';
+import { clampTo, gaugeName, percent, statusColor } from './core/gauge';
 import { useWidth } from './useWidth';
 import type { ChartProps } from './types';
 
@@ -129,15 +129,7 @@ export const SemiCircleGauge = ({
   const radius = boxWidth === undefined ? 0 : Math.floor(Math.min(boxWidth / 2, height - row));
   const thickness = Math.min(24, Math.max(8, Math.round(radius * 0.2)));
   const byStatus = warnAt !== undefined || critAt !== undefined;
-  const arc =
-    color ??
-    (!byStatus
-      ? SERIES[0]
-      : value >= (critAt ?? Infinity)
-        ? STATUS_CRIT
-        : value >= (warnAt ?? Infinity)
-          ? STATUS_WARN
-          : SUCCESS);
+  const arc = color ?? (byStatus ? statusColor(value, warnAt, critAt) : SERIES[0]);
   return (
     <div
       ref={box}

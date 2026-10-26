@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { SERIES, SUCCESS } from './core/colors';
 import { safeId } from './core/data';
-import { percent } from './core/radial';
+import { percent } from './core/gauge';
 import { RadialGauge } from './core/RadialGauge';
 import type { ChartProps } from './types';
 

@@ -11,7 +11,8 @@ import { ANIMATION } from './core/animation';
 import { TooltipCard } from './core/ChartTooltip';
 import { TRACK, seriesColor } from './core/colors';
 import { ChartEmpty, frameProps } from './core/frame';
-import { CenterText, percent } from './core/radial';
+import { percent } from './core/gauge';
+import { CenterText } from './core/radial';
 import type { ChartEmptyProps, ChartProps } from './types';
 
 export type RadialBarChartProps = ChartProps &
