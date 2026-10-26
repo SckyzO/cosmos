@@ -53,7 +53,13 @@ export const BORDER = token('--color-border', '#d0d5dd');
 export const GRID = `color-mix(in srgb, ${BORDER} 55%, transparent)`;
 export const TRACK = `color-mix(in srgb, ${BORDER} 70%, transparent)`;
 
-/** Five sequential steps of the accent, low to high, on any theme. */
-export const SEQUENTIAL = [24, 44, 64, 82, 100].map(
-  (share) => `color-mix(in srgb, ${SERIES[0]} ${share}%, ${PANEL})`
+/**
+ * Five sequential steps of the accent over the card, low to high, on any
+ * theme. Mixed in OKLab, which spaces the steps evenly to the eye: against the
+ * card, the lowest step stays at 1.5:1 or more in the dark themes whatever the
+ * accent (where a 24% share sat at 1.2:1), and two neighbors differ by 1.19:1
+ * or more.
+ */
+export const SEQUENTIAL = [42, 56, 70, 84, 100].map(
+  (share) => `color-mix(in oklab, ${SERIES[0]} ${share}%, ${PANEL})`
 );
