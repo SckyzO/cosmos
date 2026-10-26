@@ -16,7 +16,8 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
-import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import { referenceMarks } from './core/reference';
+import type { ChartEmptyProps, ChartLegendProps, ChartProps, ChartReferenceProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -32,7 +33,8 @@ export type BubblePoint = ScatterPoint & {
 
 type XYChartProps = ChartProps &
   ChartEmptyProps &
-  ChartLegendProps & {
+  ChartLegendProps &
+  ChartReferenceProps & {
     /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
     xTitle?: string;
     /** Title beside the y-axis. Also labels the y value in the tooltip (default `y`). */
@@ -82,6 +84,8 @@ const XYChart = ({
   formatY = formatNumber,
   xTitle,
   yTitle,
+  referenceLines,
+  referenceBands,
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
@@ -173,6 +177,7 @@ const XYChart = ({
           />
         );
       })}
+      {referenceMarks({ referenceLines, referenceBands })}
       {children}
     </RechartsScatterChart>
   );
