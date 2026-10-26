@@ -414,6 +414,48 @@ export const bandSpan = (band: SVGPathElement, axis: 'xAxis' | 'yAxis') => {
   return [from, from + parseFloat(band.getAttribute(size) ?? '')] as const;
 };
 
+/**
+ * Play function: the `lines` (values) and the `bands` ([from, to] pairs) a story
+ * gives, in the order given, sit at the pixels their values have on `axis`.
+ */
+export const expectMarksAtTheirValues =
+  (
+    axis: 'xAxis' | 'yAxis',
+    { lines = [], bands = [] }: { lines?: number[]; bands?: [number, number][] }
+  ) =>
+  async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    await waitFor(() => {
+      expect(referenceLineEls(canvasElement)).toHaveLength(lines.length);
+      expect(referenceBandEls(canvasElement)).toHaveLength(bands.length);
+    });
+    await waitFor(() => {
+      referenceLineEls(canvasElement).forEach((line, i) =>
+        expect(linePixel(line, axis), `line ${lines[i]}`).toBeCloseTo(
+          pixelOnAxis(canvasElement, axis, lines[i]),
+          0
+        )
+      );
+      referenceBandEls(canvasElement).forEach((band, i) => {
+        const [start, end] = bandSpan(band, axis);
+        const [a, b] = [
+          pixelOnAxis(canvasElement, axis, bands[i][0]),
+          pixelOnAxis(canvasElement, axis, bands[i][1]),
+        ];
+        expect(start, `band ${bands[i]}`).toBeCloseTo(Math.min(a, b), 0);
+        expect(end, `band ${bands[i]}`).toBeCloseTo(Math.max(a, b), 0);
+      });
+      // Every label is inside the chart.
+      const chart = (surface(canvasElement) as Element).getBoundingClientRect();
+      canvasElement.querySelectorAll('.recharts-reference-label').forEach((label) => {
+        const box = label.getBoundingClientRect();
+        expect(box.left, label.textContent ?? '').toBeGreaterThanOrEqual(chart.left - 1);
+        expect(box.right, label.textContent ?? '').toBeLessThanOrEqual(chart.right + 1);
+        expect(box.top, label.textContent ?? '').toBeGreaterThanOrEqual(chart.top - 1);
+        expect(box.bottom, label.textContent ?? '').toBeLessThanOrEqual(chart.bottom + 1);
+      });
+    });
+  };
+
 /** The font size, in px, of every label of the reference marks in `root`. */
 export const referenceLabelSizes = (root: HTMLElement) =>
   [...root.querySelectorAll('.recharts-reference-label')].map((el) =>
