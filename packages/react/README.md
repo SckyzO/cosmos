@@ -126,6 +126,11 @@ chat messages stay a plain `<a>`, and a provider inside another one replaces it 
 - `ImageGrid layout="masonry"`: CSS columns, each picture keeping its aspect with its caption under it. Items flow down the first column, then the next; give the images `width` and `height` so the columns don't rebalance as they load.
 - `ConfirmationModal intent="danger" requireText="my-project"`: a red tile and a solid action, disabled until the exact (case-sensitive) text is typed; `requireTextLabel` replaces the label.
 - `SecretValue label="API key" value={key} visibleSuffix={4}`: a stored secret, masked until revealed. While masked the real value is not in the DOM (20 bullets plus the suffix, at most half of the value); the Copy button copies the real value without revealing it. `autoHideAfter` (ms) masks it again.
+- `Link intent="danger"`: a `colored` link in `success`, `warning` or `danger` in place of the accent; the other variants have no color of their own and ignore it.
+- `ProgressBar intent="neutral"`: a gray fill for a gauge that means nothing (space used, a quota). Segments and `ProgressRing` take it too.
+- `Badge size="lg"` and `shape="rounded"`: a larger badge, and `rounded-md` corners in place of the pill.
+- `Carousel.Indicators position="inside"`: the dots at the bottom center of the slide, 12px from the edge, on a dark pill. Keep the default when `Carousel.Controls` is `outside` too: its row sits under the slide.
+- `Ribbon shape="pill"`: a fully rounded label set inside the card, 12px from the corner of its `position`.
 
 ## Tables
 
