@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { AppLink } from '../ui/AppLink';
 
 // TUI Plus reference (Pattern 1 — "Simple dark with menu button on left"):
 //   <nav class="bg-gray-800">
@@ -125,13 +126,13 @@ const Item = ({ active = false, theme, className, children, ...rest }: NavbarIte
   const inherited = useContext(NavbarThemeContext);
   const resolved = theme ?? inherited;
   return (
-    <a
+    <AppLink
       aria-current={active ? 'page' : undefined}
       className={clsx(ITEM_BASE, active ? ITEM_ACTIVE[resolved] : ITEM_IDLE[resolved], className)}
       {...rest}
     >
       {children}
-    </a>
+    </AppLink>
   );
 };
 

@@ -5,6 +5,7 @@ import { Select } from '../forms/Select';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
+import { AppLink } from '../ui/AppLink';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
   mobileLabelOf,
@@ -158,9 +159,9 @@ export const DataTableMobileCards = <T,>({
               <div className="min-w-0 flex-1">
                 {title &&
                   (href ? (
-                    <a href={href} data-row-link className={ROW_LINK}>
+                    <AppLink href={href} data-row-link className={ROW_LINK}>
                       {title.render(row)}
-                    </a>
+                    </AppLink>
                   ) : (
                     title.render(row)
                   ))}

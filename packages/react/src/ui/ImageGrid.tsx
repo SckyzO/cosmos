@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { AppLink } from './AppLink';
 
 export type ImageGridGap = 'sm' | 'md' | 'lg';
 
@@ -122,9 +123,14 @@ function ImageGridItem({
   );
   if (href !== undefined) {
     return (
-      <a ref={ref as Ref<HTMLAnchorElement>} href={href} onClick={onClick} className={classes}>
+      <AppLink
+        ref={ref as Ref<HTMLAnchorElement>}
+        href={href}
+        onClick={onClick}
+        className={classes}
+      >
         {content}
-      </a>
+      </AppLink>
     );
   }
   if (onClick) {

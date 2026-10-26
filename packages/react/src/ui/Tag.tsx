@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Children, isValidElement } from 'react';
 import type { ElementType, ReactNode, Ref } from 'react';
+import { AppLink } from './AppLink';
 import { INTENT_STYLE, type Intent } from './intent';
 
 export type TagSize = 'sm' | 'md';
@@ -96,14 +97,14 @@ export const Tag = ({
   let main: ReactNode;
   if (interactive && href !== undefined) {
     main = (
-      <a
+      <AppLink
         ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         onClick={onClick}
         className={clsx(mainClass, interactiveClass, 'underline underline-offset-2')}
       >
         {content}
-      </a>
+      </AppLink>
     );
   } else if (interactive) {
     main = (

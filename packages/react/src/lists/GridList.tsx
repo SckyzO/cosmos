@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { ReactNode, ComponentPropsWithRef } from 'react';
+import { AppLink } from '../ui/AppLink';
 
 // TUI Plus reference (Pattern 1 — "Contact cards with small portraits"):
 //   <ul role="list" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,7 +136,7 @@ function GridListFooterAction({
   return (
     // The cell's position picks the card corner it rounds: first bottom-left, last bottom-right.
     <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ml-px')}>
-      <a
+      <AppLink
         ref={ref}
         className={clsx(
           'focus-visible:focus-indicator relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent py-4 text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
@@ -144,7 +145,7 @@ function GridListFooterAction({
         {...rest}
       >
         {children}
-      </a>
+      </AppLink>
     </div>
   );
 }

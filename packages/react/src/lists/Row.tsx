@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { StatusBadge } from '../status/StatusBadge';
 import { type HealthStatus } from '../status/types';
+import { AppLink } from '../ui/AppLink';
 
 export type RowProps = {
   /** Optional leading icon (lucide-react or any icon component) */
@@ -68,9 +69,9 @@ export const Row = ({
   );
   if (href) {
     return (
-      <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
+      <AppLink ref={ref as Ref<HTMLAnchorElement>} href={href} className={baseClass}>
         {inner}
-      </a>
+      </AppLink>
     );
   }
   return (

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Sk } from '../feedback/Skeleton';
+import { AppLink } from '../ui/AppLink';
 import type { Intent } from '../ui/intent';
 import { barPercent, largestValue } from './bar-list';
 
@@ -183,9 +184,9 @@ export const BarList = ({
         return (
           <li key={item.id}>
             {href ? (
-              <a href={href} onClick={() => onItemClick?.(item)} className={rowClass}>
+              <AppLink href={href} onClick={() => onItemClick?.(item)} className={rowClass}>
                 {content}
-              </a>
+              </AppLink>
             ) : onItemClick ? (
               <button type="button" onClick={() => onItemClick(item)} className={rowClass}>
                 {content}

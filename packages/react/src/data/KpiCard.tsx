@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ElementType, MouseEventHandler, ReactNode, Ref } from 'react';
 import { Sk } from '../feedback/Skeleton';
+import { AppLink } from '../ui/AppLink';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 
 /** The meanings a card can carry: the plain one, or a metric that needs a look. */
@@ -153,7 +154,7 @@ export const KpiCard = ({
   );
   if (href)
     return (
-      <a
+      <AppLink
         ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         onClick={onClick}
@@ -161,7 +162,7 @@ export const KpiCard = ({
         className={classes}
       >
         {content}
-      </a>
+      </AppLink>
     );
   if (onClick)
     return (

@@ -17,6 +17,8 @@ export const MessageText = ({ text }: { text: string }) => {
     const url = match[0].replace(TRAILING, '');
     const start = match.index;
     if (start > last) parts.push(text.slice(last, start));
+    // A raw `<a>`, never `AppLink`: the URL is the sender's, so it opens a page of another site in a
+    // new tab and must not go through the app's router (`LinkProvider`).
     parts.push(
       <a
         key={start}
