@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { ANIMATION } from './core/animation';
 import { useAxis, xAxisTitle, yAxisTitle } from './core/axes';
+import { useCategoryKeys } from './core/categoryKeys';
 import { TooltipCard } from './core/ChartTooltip';
 import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
@@ -148,6 +149,8 @@ export const RangeBarChart = ({
 }: RangeBarChartProps) => {
   const hidden = useHiddenSeries();
   const axis = useAxis();
+  // Recharts names the layout after the axis the categories sit on.
+  const categoryKeys = useCategoryKeys('vertical');
   const name = ariaLabel ?? `Range chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -201,6 +204,7 @@ export const RangeBarChart = ({
 
   return (
     <BarChart
+      ref={categoryKeys}
       {...frameProps({ height, width, ariaLabel: name })}
       data={rows}
       layout="vertical"

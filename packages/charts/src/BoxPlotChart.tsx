@@ -12,6 +12,7 @@ import {
 import { ANIMATION } from './core/animation';
 import { GRID_PROPS, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { categoryAxis, trimLabel } from './core/categoryAxis';
+import { useCategoryKeys } from './core/categoryKeys';
 import { TooltipCard, type TooltipRow } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
@@ -126,6 +127,8 @@ export const BoxPlotChart = ({
 }: BoxPlotChartProps) => {
   const hidden = useHiddenSeries();
   const axis = useAxis();
+  // Recharts names the layout after the axis the categories sit on.
+  const categoryKeys = useCategoryKeys(orientation === 'horizontal' ? 'vertical' : 'horizontal');
   const name = ariaLabel ?? `Box plot: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -168,6 +171,7 @@ export const BoxPlotChart = ({
 
   return (
     <BarChart
+      ref={categoryKeys}
       {...frameProps({ height, width, ariaLabel: name })}
       data={rows}
       // Recharts names the layout after the axis the categories sit on.
