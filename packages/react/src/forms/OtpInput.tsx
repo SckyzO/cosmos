@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { setRef } from '../ui/mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
+import { fieldStateClass } from './fieldRecipe';
 
 export type OtpInputProps = {
   /** Number of cells. Default 6. */
@@ -21,7 +22,13 @@ export type OtpInputProps = {
   /** Fired when the user reaches `length` characters. */
   onComplete?: (value: string) => void;
   disabled?: boolean;
+  /** Red border on every cell. Wins over `success`. */
   error?: boolean;
+  /**
+   * Green border on every cell, once the code is accepted. No tint, as `error` has none. The
+   * component has no message of its own: write "Code verified" next to it.
+   */
+  success?: boolean;
   /** Allow letters in addition to digits. Default `false` (digits only). */
   alphanumeric?: boolean;
   /** Render each filled cell as a `•` instead of the actual character. */
@@ -51,6 +58,7 @@ export const OtpInput = ({
   onComplete,
   disabled = false,
   error = false,
+  success = false,
   alphanumeric = false,
   mask = false,
   autoFocus = false,
@@ -172,9 +180,7 @@ export const OtpInput = ({
             onFocus={(e) => e.target.select()}
             className={clsx(
               'h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
-              error
-                ? 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-                : 'focus:field-focus border-gray-200 dark:border-gray-700'
+              fieldStateClass({ invalid: error, success })
             )}
           />
         );

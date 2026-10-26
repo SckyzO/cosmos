@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { CircleAlert } from 'lucide-react';
+import { CircleAlert, CircleCheck } from 'lucide-react';
 import { useId } from 'react';
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
 import {
@@ -22,6 +22,13 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   label?: string;
   description?: string;
   error?: string;
+  /**
+   * Message shown once the value is valid (a free username, an accepted code):
+   * a green border and message, and a check icon on the right edge, which
+   * `rightSlot` replaces. The message is linked as the description and
+   * announced politely when it appears. `error` wins when both are set.
+   */
+  success?: string;
   /**
    * Height and text size, aligned on Button's. Default `md`. Replaces the native
    * `size` attribute (a character count), which is omitted from the props.
@@ -56,6 +63,7 @@ export function Input({
   label,
   description,
   error,
+  success,
   size = 'md',
   required,
   icon: Icon,
@@ -73,7 +81,8 @@ export function Input({
   const generatedId = useId();
   const inputId = id ?? rest.name ?? generatedId;
   const descId = `${inputId}-desc`;
-  const hasDesc = !!(error || description);
+  const successText = error ? undefined : success || undefined;
+  const hasDesc = !!(error || successText || description);
   const controlProps = {
     readOnly,
     'aria-describedby': hasDesc ? descId : undefined,
@@ -82,6 +91,12 @@ export function Input({
     required,
   };
   const showErrorIcon = errorIcon && !!error && !rightSlot;
+  const showSuccessIcon = !!successText && !rightSlot;
+  // The state icon of the right edge: the alert while in error, the check on success.
+  const StateIcon = showErrorIcon ? CircleAlert : showSuccessIcon ? CircleCheck : null;
+  const stateIconColor = showErrorIcon
+    ? 'text-red-600 dark:text-red-400'
+    : 'text-green-600 dark:text-green-400';
   const hasGroup = prefix !== undefined || suffix !== undefined;
   const addon = clsx(
     'flex shrink-0 items-center border-inherit bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400',
@@ -110,7 +125,7 @@ export function Input({
         <div
           className={clsx(
             'flex w-full items-stretch overflow-hidden',
-            fieldClass({ size, invalid: !!error, within: true, readOnly })
+            fieldClass({ size, invalid: !!error, success: !!successText, within: true, readOnly })
           )}
         >
           {prefix !== undefined && <span className={clsx(addon, 'border-r')}>{prefix}</span>}
@@ -126,13 +141,10 @@ export function Input({
             )}
             {...rest}
           />
-          {showErrorIcon && (
-            <CircleAlert
+          {StateIcon && (
+            <StateIcon
               aria-hidden
-              className={clsx(
-                'my-auto mr-3 shrink-0 text-red-600 dark:text-red-400',
-                FIELD_ICON_SIZE[size]
-              )}
+              className={clsx('my-auto mr-3 shrink-0', stateIconColor, FIELD_ICON_SIZE[size])}
             />
           )}
           {suffix !== undefined && <span className={clsx(addon, 'border-l')}>{suffix}</span>}
@@ -155,23 +167,26 @@ export function Input({
             {...controlProps}
             className={clsx(
               'h-full w-full',
-              fieldClass({ size, invalid: !!error, readOnly, fixedHeight: false }),
+              fieldClass({
+                size,
+                invalid: !!error,
+                success: !!successText,
+                readOnly,
+                fixedHeight: false,
+              }),
               FIELD_PLACEHOLDER,
               Icon ? FIELD_PAD_LEFT_ICON[size] : FIELD_PAD_LEFT[size],
-              rightSlot
-                ? 'pr-16'
-                : showErrorIcon
-                  ? FIELD_PAD_RIGHT_ICON[size]
-                  : FIELD_PAD_RIGHT[size],
+              rightSlot ? 'pr-16' : StateIcon ? FIELD_PAD_RIGHT_ICON[size] : FIELD_PAD_RIGHT[size],
               className
             )}
             {...rest}
           />
-          {showErrorIcon && (
-            <CircleAlert
+          {StateIcon && (
+            <StateIcon
               aria-hidden
               className={clsx(
-                'pointer-events-none absolute text-red-600 dark:text-red-400',
+                'pointer-events-none absolute',
+                stateIconColor,
                 FIELD_ICON_RIGHT[size],
                 FIELD_ICON_SIZE[size]
               )}
@@ -187,12 +202,17 @@ export function Input({
       {hasDesc && (
         <span
           id={descId}
+          aria-live={successText ? 'polite' : undefined}
           className={clsx(
             'mt-1 block text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+            error
+              ? 'text-red-700 dark:text-red-400'
+              : successText
+                ? 'text-green-700 dark:text-green-400'
+                : 'text-gray-500 dark:text-gray-400'
           )}
         >
-          {error ?? description}
+          {successText ?? error ?? description}
         </span>
       )}
     </div>

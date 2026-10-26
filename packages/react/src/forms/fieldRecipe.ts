@@ -80,15 +80,56 @@ export const FIELD_ICON_SIZE: Record<FieldSize, string> = {
   lg: 'h-5 w-5',
 };
 
-type FieldClassOptions = {
-  size: FieldSize;
-  /** Red border and halo instead of the neutral border. */
+type FieldState = 'neutral' | 'success' | 'invalid';
+
+// Border and focus of each state, so a field and the OTP cells read them from one place.
+// `success` keeps the accent focus: a green border alone would not tell where the focus is.
+const FIELD_STATE: Record<FieldState, { border: string; focus: string; focusWithin: string }> = {
+  neutral: {
+    border: 'border-gray-200 dark:border-gray-700',
+    focus: 'focus:field-focus',
+    focusWithin: 'focus-within:field-focus',
+  },
+  success: {
+    border: 'border-green-600 dark:border-green-500/60',
+    focus: 'focus:field-focus',
+    focusWithin: 'focus-within:field-focus',
+  },
+  invalid: {
+    border: 'border-red-400 dark:border-red-500/60',
+    focus: 'focus:field-focus-error',
+    focusWithin: 'focus-within:field-focus-error',
+  },
+};
+
+type FieldStateOptions = {
+  /** Red border and halo instead of the neutral border. Wins over `success`. */
   invalid?: boolean;
+  /** Green border instead of the neutral one: the value was checked and is valid. */
+  success?: boolean;
   /**
    * The border is drawn by a wrapper of the real input (a prefix or a stepper
    * around it): the focus state follows `focus-within` instead of `focus`.
    */
   within?: boolean;
+};
+
+/**
+ * Border and focus classes of a field in one of its states: neutral, `success`
+ * or `invalid` (exclusive, `invalid` first). Colors only: size, surface and
+ * the rest come from `fieldClass`, or from the control itself (the OTP cells).
+ */
+export const fieldStateClass = ({
+  invalid = false,
+  success = false,
+  within = false,
+}: FieldStateOptions) => {
+  const state = FIELD_STATE[invalid ? 'invalid' : success ? 'success' : 'neutral'];
+  return clsx(state.border, within ? state.focusWithin : state.focus);
+};
+
+type FieldClassOptions = FieldStateOptions & {
+  size: FieldSize;
   /** Muted surface of a field that shows a value but can't be edited. */
   readOnly?: boolean;
   /** `false` for a field that grows with its content (a Textarea). Default `true`. */
@@ -97,13 +138,15 @@ type FieldClassOptions = {
 
 /**
  * Surface of a field: radius, border, background in light and dark, text size,
- * height, and the focus, disabled and invalid states. Padding, width and the
- * text color of a part stay with the field. The state classes are exclusive:
- * `invalid` swaps the border and the focus together, `readOnly` the background.
+ * height, and the focus, disabled, success and invalid states. Padding, width
+ * and the text color of a part stay with the field. The state classes are
+ * exclusive: `invalid` (first) or `success` swaps the border and the focus
+ * together, `readOnly` the background.
  */
 export const fieldClass = ({
   size,
   invalid = false,
+  success = false,
   within = false,
   readOnly = false,
   fixedHeight = true,
@@ -113,13 +156,7 @@ export const fieldClass = ({
     readOnly ? 'bg-gray-50 dark:bg-gray-900' : 'bg-white dark:bg-gray-800',
     FIELD_TEXT[size],
     fixedHeight && FIELD_HEIGHT[size],
-    invalid
-      ? within
-        ? 'focus-within:field-focus-error border-red-400 dark:border-red-500/60'
-        : 'focus:field-focus-error border-red-400 dark:border-red-500/60'
-      : within
-        ? 'focus-within:field-focus border-gray-200 dark:border-gray-700'
-        : 'focus:field-focus border-gray-200 dark:border-gray-700'
+    fieldStateClass({ invalid, success, within })
   );
 
 /** Placeholder color of a text field, readable in light and dark. */

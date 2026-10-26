@@ -18,6 +18,12 @@ export type TextareaProps = ComponentPropsWithRef<'textarea'> & {
   label?: string;
   description?: string;
   error?: string;
+  /**
+   * Message shown once the text is valid: a green border and message, no icon. The message is
+   * linked as the description and announced politely when it appears. `error` wins when both are
+   * set, and so does going over `maxLength`.
+   */
+  success?: string;
   /** Text size and padding, aligned on Button's. Default `md`. The height follows `rows`. */
   size?: FieldSize;
   /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the textarea. */
@@ -48,6 +54,7 @@ export function Textarea({
   label,
   description,
   error,
+  success,
   size = 'md',
   required,
   labelTrailing,
@@ -79,7 +86,8 @@ export function Textarea({
   const counterEnabled = showCount ?? maxLength !== undefined;
   const overLimit = maxLength !== undefined && currentValue.length > maxLength;
   const descId = `${fieldId}-desc`;
-  const hasDesc = !!(error || description);
+  const successText = error || overLimit ? undefined : success || undefined;
+  const hasDesc = !!(error || successText || description);
 
   return (
     <div className="block">
@@ -113,7 +121,12 @@ export function Textarea({
         required={required}
         className={clsx(
           'block w-full',
-          fieldClass({ size, invalid: !!(error || overLimit), fixedHeight: false }),
+          fieldClass({
+            size,
+            invalid: !!(error || overLimit),
+            success: !!successText,
+            fixedHeight: false,
+          }),
           FIELD_PAD_X[size],
           FIELD_PAD_Y[size],
           FIELD_PLACEHOLDER,
@@ -125,12 +138,17 @@ export function Textarea({
       <div className="mt-1 flex items-start justify-between gap-2">
         <span
           id={descId}
+          aria-live={successText ? 'polite' : undefined}
           className={clsx(
             'block min-h-[1rem] text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+            error
+              ? 'text-red-700 dark:text-red-400'
+              : successText
+                ? 'text-green-700 dark:text-green-400'
+                : 'text-gray-500 dark:text-gray-400'
           )}
         >
-          {error ?? description ?? ''}
+          {successText ?? error ?? description ?? ''}
         </span>
         {counterEnabled && (
           <span
