@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
 import { BoxPlotChart } from './BoxPlotChart';
+import { CalendarChart } from './CalendarChart';
 import { DonutChart } from './DonutChart';
 import { GradientRadial } from './GradientRadial';
 import { HeatmapChart } from './HeatmapChart';
@@ -86,6 +87,19 @@ const CHARTS: Record<string, Chart> = {
     plot: '[role="grid"]',
     filled: () => <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
+  },
+  CalendarChart: {
+    plot: '[role="grid"]',
+    filled: () => (
+      <CalendarChart
+        layout="range"
+        data={[
+          { day: '2026-03-02', value: 3 },
+          { day: '2026-03-09', value: 5 },
+        ]}
+      />
+    ),
+    empty: (props) => <CalendarChart data={[]} {...props} />,
   },
   RadarChart: {
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
