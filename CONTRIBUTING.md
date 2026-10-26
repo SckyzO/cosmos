@@ -153,8 +153,8 @@ folder of the `cosmos-references` checkout with them, plus a `meta.json` naming 
 narrow the 1280px pass and `MOBILE_STORIES` the 375px one. `CAPTURE_VIEWPORT=<width>x<height>`
 gives any capture another size than 1280x720.
 
-Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`
-and chart animations off, so two runs of an unchanged story give the same image. A capture waits
+Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`,
+so two runs of an unchanged story give the same image. A capture waits
 for a stable frame: the viewport is screenshotted, 100 ms apart, until two consecutive frames are
 byte-identical (five at most), then the full page is screenshotted once, because a carousel, a
 panel or a chart can still be moving when the story's render ends. Requests to any origin but
@@ -345,6 +345,28 @@ Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQue
 markup itself changes. Every component with such a behavior has a story at the `mobile` viewport
 (`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor) whose play
 function calls `expectNoHorizontalOverflow`.
+
+## Charts
+
+The wrappers of `packages/charts` draw with Recharts and are built on the internal `src/core/`.
+
+- **Colours are CSS variables**, with a hex fallback, from `core/colors.ts`: never a `getComputedStyle`,
+  a `MutationObserver` or a colour kept in state. A theme, accent or text size switch repaints the
+  chart on its own. A colour a chart needs that the theme does not emit yet is added to the theme
+  first.
+- **Text** takes the text tokens (`var(--text-xs)`) and inherits the font. A tooltip and a legend are
+  React: a series name, a category or a title with markup shows as written, and nothing is escaped by
+  hand.
+- **Use the frame** (`frameProps`, `ChartEmpty`, `ChartTooltip`, `legendProps`, `useAxis`, `AXIS`,
+  `ANIMATION`) instead of writing the same props again. A chart with its categories on the vertical
+  axis takes `useCategoryKeys` for the arrow keys.
+- **Public props** are `ChartProps` (`height`, `width`, `ariaLabel`, `children`) plus what the chart
+  needs. `children` takes Recharts elements drawn inside the chart; `recharts` stays pinned to the
+  version in `packages/charts/package.json`, and a consumer who adds it uses the same one.
+- **Tests**: one `<Name>.stories.tsx` per wrapper, with the helpers of `src/storybook-recharts.tsx`.
+  Each keeps a `HtmlInLabelsRendersAsText` story, one that repaints with the theme and one for the
+  empty state. `tests/e2e/specs/charts-dist.spec.ts` guards the build: one file per wrapper, Recharts
+  external, `"use client"` on every file.
 
 ## PR checklist
 
