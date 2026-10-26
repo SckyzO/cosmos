@@ -4,7 +4,10 @@ import type { Intent } from './intent';
 import { fitSegments } from './progress';
 
 export type ProgressBarSize = 'xs' | 'sm' | 'md' | 'lg';
-export type ProgressBarIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
+export type ProgressBarIntent = Extract<
+  Intent,
+  'neutral' | 'brand' | 'success' | 'warning' | 'danger'
+>;
 export type ProgressBarLabel = 'none' | 'inside' | 'outside';
 
 type ProgressBarBaseProps = {
@@ -38,6 +41,10 @@ export type ProgressBarSegment = {
 /** One value in one colour. */
 export type SingleProgressBarProps = ProgressBarBaseProps & {
   value?: number;
+  /**
+   * Color of the fill. `brand` (default) is the accent; `success`, `warning` and `danger` carry a
+   * meaning; `neutral` is gray, for a gauge with none (space used, a quota).
+   */
   intent?: ProgressBarIntent;
   /** Where to render the % label. `inside` requires `lg` size. Default `none`. */
   label?: ProgressBarLabel;
@@ -79,10 +86,22 @@ const SIZE_TRACK: Record<ProgressBarSize, string> = {
 };
 
 const INTENT_BG: Record<ProgressBarIntent, string> = {
+  // A gauge that means nothing (space used, a quota) has no color to carry: gray on the gray track.
+  neutral: 'bg-gray-500 dark:bg-gray-400',
   brand: 'bg-brand-500',
   success: 'bg-green-500',
   warning: 'bg-amber-500',
   danger: 'bg-red-500',
+};
+
+// The label inside a `lg` fill is white, except on the neutral one: gray-400 in dark is too light
+// for white text (2.5:1), so it takes the dark text there.
+const INTENT_LABEL: Record<ProgressBarIntent, string> = {
+  neutral: 'text-white dark:text-gray-900',
+  brand: 'text-white',
+  success: 'text-white',
+  warning: 'text-white',
+  danger: 'text-white',
 };
 
 const SingleProgressBar = ({
@@ -150,7 +169,11 @@ const SingleProgressBar = ({
               )}
             >
               {showInsideLabel && (
-                <span className="text-3xs px-2 leading-none font-bold text-white">{labelText}</span>
+                <span
+                  className={clsx('text-3xs px-2 leading-none font-bold', INTENT_LABEL[intent])}
+                >
+                  {labelText}
+                </span>
               )}
             </div>
           )}
