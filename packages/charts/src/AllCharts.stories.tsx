@@ -6,6 +6,7 @@ import { BoxPlotChart } from './BoxPlotChart';
 import { BumpChart } from './BumpChart';
 import { CalendarChart } from './CalendarChart';
 import { DonutChart } from './DonutChart';
+import { FunnelChart } from './FunnelChart';
 import { GradientRadial } from './GradientRadial';
 import { HeatmapChart } from './HeatmapChart';
 import { LineAreaChart } from './LineAreaChart';
@@ -109,6 +110,18 @@ const CHARTS: Record<string, Chart> = {
   BumpChart: {
     filled: () => <BumpChart series={RANKS} />,
     empty: (props) => <BumpChart series={[]} {...props} />,
+  },
+  FunnelChart: {
+    plot: '[role="list"]',
+    filled: () => (
+      <FunnelChart
+        stages={[
+          { label: 'a', value: 5 },
+          { label: 'b', value: 3 },
+        ]}
+      />
+    ),
+    empty: (props) => <FunnelChart stages={[]} {...props} />,
   },
   RadarChart: {
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,

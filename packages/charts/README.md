@@ -17,7 +17,7 @@ pnpm add react react-dom   # peers, react 19+
 
 ## How the charts are drawn
 
-Every chart is drawn with Recharts, except `HeatmapChart`, a grid of its own (Recharts has no heatmap). The rules every chart follows:
+Every chart is drawn with Recharts, except `HeatmapChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow). The rules every chart follows:
 
 - **Colors are CSS variables** handed straight to the SVG, with a hex fallback: a theme, accent or text size switch on `<html>` repaints the chart with no observer and no redraw. `@sckyzo/cosmos-theme` always emits what the charts read (`--color-brand-500`, the status and semantic colors, `--color-chart-2` to `--color-chart-8`).
 - **The default palette** is the accent, then seven hues. Each accent lists its own seven in the theme CSS, skipping the hues that look like it (the teal accent has no teal series), and none of the first four reads as a status. `colors` overrides it.
@@ -66,13 +66,15 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `BumpChart` draws how a ranking changes over periods: `series` is `{ name, data: { x, rank }[] }[]`, 1 is the top, and the periods are every `x` once in the order they first appear. A series that enters late has no point before it enters, and ties are allowed (tied series are drawn apart around their rank). Each name is written at both ends of its line with its color, so there is no legend; on a narrow chart (under 560px) only the right-hand names stay, cut short, and where the periods get too close for the discs the points become dots. `points` is `rank` (default, a disc with the rank in it) or `dot`. A pointer over a line, a point or a name, or the arrows Up and Down on the keyboard (Escape lets go), gives that series a thicker line and fades the others. The tooltip, which Left and Right walk period by period, gives the period, the rank and the change from the previous period in words (`unchanged vs May`, `up 2 vs Apr`, `down 1 vs Mar`, `new entry`), never by color alone. `formatValue` formats the rank in the tooltip, and `children` takes Recharts elements, where a `y` is a rank.
 
+`FunnelChart` draws one centred bar per stage, as wide as its value against the largest stage (the first, unless a stage grows), joined to the next by a translucent flow. The stages keep the order given and are never sorted: a stage larger than the one before it is allowed, and shows a rate over 100%. The names sit on the left; on the right, the value, a chip with the rate from the previous stage (`65.4%`, `100%` for the first) and, beside it, the rate from the first (`20.5% of Visits`); `showConversion={false}` leaves the values alone. The accent fades from the first stage to the last, and `colors` gives one color per stage instead. `formatValue` formats the values, percentages always have one decimal. In a box under 520px wide each name and value go on one line above their bar, and the rate from the first stage stays in the tooltip. Like `HeatmapChart` it is HTML and SVG, not a Recharts chart, so it takes no `children`: the flow joins two bars at their own edges, which a Recharts bar can't be drawn to do. It is one tab stop: the arrow keys, Home and End walk the stages and show the tooltip of the one they land on. Stages that are all at 0 draw `emptyMessage`.
+
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place; `RadialBarChart` does the same with the average and the ring.
 
 The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`.
 
 A chart with no series, or only empty ones, draws `emptyMessage` (default `No data`, an empty string for nothing) in place of the plot. The gauges, which always have a value, and `RealtimeChart`, which fills its own window, have no such prop.
 
-For what a chart has no prop for, every chart but `HeatmapChart` takes `children` (see above).
+For what a chart has no prop for, every chart but `HeatmapChart` and `FunnelChart` takes `children` (see above).
 
 Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, the chart is named from its type and its series. Tab reaches a chart, and the arrow keys move from point to point and announce each one: ArrowRight goes to the next point, ArrowLeft to the previous one, and on a chart with its categories on the vertical axis (a horizontal `BarChart` or `BoxPlotChart`, `RangeBarChart`) ArrowDown and ArrowRight go to the next category and ArrowUp and ArrowLeft to the previous one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
 
@@ -98,6 +100,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `RadarChart`                   | One polygon per series over named axes                        |
 | `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure              |
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
+| `FunnelChart`                  | Centred bars joined by a flow, with the conversion per stage  |
 
 ## License
 
