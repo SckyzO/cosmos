@@ -1,7 +1,10 @@
-import { AlertTriangle, Save, X } from 'lucide-react';
-import { useId } from 'react';
+import { clsx } from 'clsx';
+import { AlertTriangle, Save, Trash2, X } from 'lucide-react';
+import { useId, useState } from 'react';
+import { Input } from '../forms/Input';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
+import { INTENT_STYLE, type Intent } from './intent';
 import { useDialogTitleId } from './overlayA11y';
 
 export type ConfirmationModalProps = {
@@ -18,6 +21,19 @@ export type ConfirmationModalProps = {
   saveLabel?: string;
   /** Hide the Save button — for simple confirm/cancel flows. */
   hideSave?: boolean;
+  /**
+   * What the dialog warns about. `warning` (default) is the amber triangle and a quiet discard
+   * button; `danger` is a red tile with a trash icon and a solid red discard button.
+   */
+  intent?: Extract<Intent, 'warning' | 'danger'>;
+  /**
+   * Text the user has to type, exactly (case-sensitive), before the discard action is enabled:
+   * a field appears, and Enter in it triggers `onDiscard` once it matches. The field is empty each
+   * time the dialog opens.
+   */
+  requireText?: string;
+  /** Label of the `requireText` field, for translations. Default `Type "<requireText>" to confirm`. */
+  requireTextLabel?: string;
 };
 
 /**
@@ -51,14 +67,30 @@ const ConfirmationContent = ({
   discardLabel = 'Discard',
   saveLabel = 'Save & go',
   hideSave = false,
+  intent = 'warning',
+  requireText,
+  requireTextLabel,
   messageId,
 }: Omit<ConfirmationModalProps, 'open'> & { messageId: string }) => {
   const titleId = useDialogTitleId();
+  // Rendered inside the Dialog, which unmounts its content on close: the field starts empty.
+  const [typed, setTyped] = useState('');
+  const danger = intent === 'danger';
+  const confirmed = requireText === undefined || typed === requireText;
   return (
     <>
       <div className="flex items-start gap-4 p-6">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-500/10">
-          <AlertTriangle className="h-5 w-5 text-amber-500" aria-hidden />
+        <div
+          className={clsx(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+            danger ? INTENT_STYLE.danger.tile : 'bg-amber-50 dark:bg-amber-500/10'
+          )}
+        >
+          {danger ? (
+            <Trash2 className={clsx('h-5 w-5', INTENT_STYLE.danger.iconColor)} aria-hidden />
+          ) : (
+            <AlertTriangle className="h-5 w-5 text-amber-500" aria-hidden />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="font-semibold text-gray-900 dark:text-white">
@@ -67,6 +99,26 @@ const ConfirmationContent = ({
           <p id={messageId} className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {message}
           </p>
+          {requireText !== undefined && (
+            <div className="mt-4">
+              <Input
+                label={requireTextLabel ?? `Type "${requireText}" to confirm`}
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => {
+                  // isComposing: the Enter that confirms an IME candidate must not act.
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing && confirmed) {
+                    e.preventDefault();
+                    onDiscard?.();
+                  }
+                }}
+                placeholder={requireText}
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+              />
+            </div>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -84,7 +136,13 @@ const ConfirmationContent = ({
           {stayLabel}
         </Button>
         {onDiscard && (
-          <Button variant="secondary" intent="danger" onClick={onDiscard} className="shrink-0">
+          <Button
+            variant={danger ? 'primary' : 'secondary'}
+            intent="danger"
+            disabled={!confirmed}
+            onClick={onDiscard}
+            className="shrink-0"
+          >
             {discardLabel}
           </Button>
         )}

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { SendHorizontal } from 'lucide-react';
-import { useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
+import { useAutoGrow } from '../hooks/useAutoGrow';
 import { mergeRefs } from '../ui/mergeRefs';
 
 export type ChatComposerProps = {
@@ -40,12 +41,7 @@ export function ChatComposer({
   const inner = useRef<HTMLTextAreaElement | null>(null);
   const canSend = !disabled && value.trim() !== '';
 
-  useLayoutEffect(() => {
-    const el = inner.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
-  }, [value, maxHeight]);
+  useAutoGrow(inner, { value, maxHeight });
 
   const send = () => {
     if (!canSend) return;

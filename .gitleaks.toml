@@ -16,3 +16,19 @@ condition = "AND"
 paths = ['''packages/react/src/ui/HelpOverlay\.stories\.tsx''']
 regexTarget = "line"
 regexes = ['''keys="[^"]*"''']
+
+
+# The SecretValue stories need values that look like an API key and a webhook
+# secret: they are made up for the demo. Same tight scope: that file, that
+# rule, only the two constants that hold them. Written as an allowlist of the
+# rule itself, the form gitleaks 8.21 (the pinned hook) reads: it keeps the
+# default rule's regex and adds this exception to it.
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "SecretValue demo values are not secrets"
+condition = "AND"
+paths = ['''packages/react/src/ui/SecretValue\.stories\.tsx''']
+regexTarget = "line"
+regexes = ['''const (API_KEY|WEBHOOK) = '[^']*';''']

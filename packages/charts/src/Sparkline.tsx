@@ -1,10 +1,11 @@
 import { useId } from 'react';
-import { Area, AreaChart, Tooltip, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, ReferenceLine, Tooltip, XAxis, YAxis } from 'recharts';
 import { ANIMATION } from './core/animation';
 import { ChartTooltip } from './core/ChartTooltip';
-import { PANEL, SERIES } from './core/colors';
+import { BORDER, ERROR, PANEL, SERIES } from './core/colors';
 import { hasNoData, safeId } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
+import { roundedBarShape } from './core/roundedBar';
 import type { ChartEmptyProps, ChartProps } from './types';
 
 export type SparklineProps = ChartProps &
@@ -12,17 +13,23 @@ export type SparklineProps = ChartProps &
     data: number[];
     /** A CSS color. Default: the accent. */
     color?: string;
-    variant?: 'line' | 'area';
+    /**
+     * `area` (default), `line`, or `bar`: narrow columns in `color`, the ones below zero in the
+     * danger color under a dashed zero line.
+     */
+    variant?: 'line' | 'area' | 'bar';
     /** Names the value in the tooltip. Default `value`. Drawn as plain text. */
     label?: string;
     /** Format the tooltip value (default `String`). */
     formatValue?: (value: number) => string;
     /**
      * Bottom of the scale. Default: the lowest value of `data`, so each sparkline fills its
-     * height. Set the same `min` and `max` on sparklines that are read against each other.
+     * height; for `bar`, the lower of 0 and the lowest value, since a bar scale that does not
+     * start at zero exaggerates the differences. Set the same `min` and `max` on sparklines that
+     * are read against each other.
      */
     min?: number;
-    /** Top of the scale. Default: the highest value of `data`. */
+    /** Top of the scale. Default: the highest value of `data` (for `bar`, at least 0). */
     max?: number;
   };
 
@@ -44,6 +51,40 @@ export const Sparkline = ({
   const name = ariaLabel ?? `Trend of ${label}`;
   if (hasNoData([{ data }])) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
+  if (variant === 'bar') {
+    const fillFor = (value: number) => (value < 0 ? ERROR : undefined);
+    const hasNegative = data.some((value) => value < 0);
+    return (
+      <BarChart
+        {...frameProps({ height, width, ariaLabel: name, keyboard: false })}
+        data={data.map((value, i) => ({ i, value }))}
+        margin={{ top: 6, right: 4, bottom: 4, left: 4 }}
+        barCategoryGap="20%"
+      >
+        <XAxis hide dataKey="i" />
+        <YAxis hide domain={[min ?? Math.min(0, ...data), max ?? Math.max(0, ...data)]} />
+        <Tooltip
+          content={<ChartTooltip format={formatValue} hideTitle colorOf={fillFor} />}
+          cursor={{ fill: BORDER, fillOpacity: 0.35 }}
+          offset={12}
+          allowEscapeViewBox={{ x: true, y: true }}
+          animationDuration={100}
+        />
+        <Bar
+          name={label}
+          dataKey="value"
+          fill={color}
+          maxBarSize={14}
+          shape={roundedBarShape({ layout: 'horizontal', radius: 2, dataKey: 'value', fillFor })}
+          {...ANIMATION}
+        />
+        {hasNegative && (
+          <ReferenceLine y={0} stroke={BORDER} strokeDasharray="3 3" ifOverflow="hidden" />
+        )}
+        {children}
+      </BarChart>
+    );
   }
   return (
     <AreaChart
