@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import {
   Legend,
   PolarAngleAxis,
@@ -16,7 +15,7 @@ import { BORDER, GRID, MUTED, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
 import { radarSize } from './radarSize';
-import { useWidth } from './useWidth';
+import { useElementWidth } from './core/useElementWidth';
 import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
 
 export type RadarChartProps = ChartProps &
@@ -57,8 +56,7 @@ export const RadarChart = ({
   width,
 }: RadarChartProps) => {
   const hidden = useHiddenSeries();
-  const box = useRef<HTMLDivElement>(null);
-  const boxWidth = useWidth(box);
+  const { ref: box, width: boxWidth } = useElementWidth();
   const name = ariaLabel ?? `Radar chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
