@@ -1,24 +1,30 @@
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/boxPlot';
-import 'apexcharts/features/legend';
-import { ApexChart } from './ApexChart';
-import { useStableCallback, useValueFormat } from './formatters';
-import { chartLegend } from './legend';
-import { useChartTheme } from './theme';
-import { tooltipHtml } from './tooltip';
-import type {
-  ChartAxisTitleProps,
-  ChartBaseProps,
-  ChartEmptyProps,
-  ChartLegendProps,
-} from './types';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type BarShapeProps,
+  type TooltipContentProps,
+} from 'recharts';
+import { ANIMATION } from './core/animation';
+import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { categoryAxis, trimLabel } from './core/categoryAxis';
+import { TooltipCard, type TooltipRow } from './core/ChartTooltip';
+import { legendProps, useHiddenSeries } from './core/ChartLegend';
+import { BORDER, seriesColor } from './core/colors';
+import { hasNoData, seriesKey } from './core/data';
+import { ChartEmpty, frameProps } from './core/frame';
+import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
 /** One box, the five-number summary of a distribution. */
 export type BoxPlotSummary = [min: number, q1: number, median: number, q3: number, max: number];
 
-export type BoxPlotChartProps = ChartBaseProps &
+export type BoxPlotChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
   ChartAxisTitleProps & {
@@ -29,10 +35,7 @@ export type BoxPlotChartProps = ChartBaseProps &
     orientation?: BoxPlotChartOrientation;
     /** Override the default Cosmos palette, one color per series. */
     colors?: string[];
-    /**
-     * Format the value axis labels and the tooltip values.
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the value axis labels and the tooltip values. */
     formatValue?: (value: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
@@ -47,109 +50,190 @@ const ROWS = [
   ['Min', 0],
 ] as const;
 
+const summaryKey = (index: number) => `box${index}`;
+
+type Row = { category: string } & Record<string, unknown>;
+
+// A bar's value is the span of the whiskers, so Recharts sizes and places it
+// and fits the value axis to it; the shape draws the box, the median and the
+// whiskers at the same scale. Recharts has no box plot of its own.
+const boxShape = (index: number, color: string, horizontal: boolean) => (props: BarShapeProps) => {
+  const { x, y, width, height } = props;
+  const row = props.payload as Row;
+  const summary = row[summaryKey(index)] as BoxPlotSummary | undefined;
+  if (!summary) return null;
+  const [min, q1, median, q3, max] = summary;
+  const span = max - min || 1;
+  const left = Math.min(x, x + width);
+  const top = Math.min(y, y + height);
+  const w = Math.abs(width);
+  const h = Math.abs(height);
+  // Position of a value along the value axis, and the cross-axis center.
+  const at = (v: number) =>
+    horizontal ? left + ((v - min) / span) * w : top + ((max - v) / span) * h;
+  const mid = horizontal ? top + h / 2 : left + w / 2;
+  const size = horizontal ? h : w;
+  const cap = size * 0.25;
+  const point = (value: number, across: number) =>
+    horizontal ? { x: at(value), y: across } : { x: across, y: at(value) };
+  const line = (
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    key: string,
+    wide = 1.5
+  ) => (
+    <line key={key} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={color} strokeWidth={wide} />
+  );
+  const [boxStart, boxEnd] = [at(q1), at(q3)];
+  return (
+    <g>
+      {line(point(min, mid), point(q1, mid), 'lower')}
+      {line(point(q3, mid), point(max, mid), 'upper')}
+      {line(point(min, mid - cap), point(min, mid + cap), 'min')}
+      {line(point(max, mid - cap), point(max, mid + cap), 'max')}
+      <rect
+        x={horizontal ? Math.min(boxStart, boxEnd) : mid - size / 2}
+        y={horizontal ? mid - size / 2 : Math.min(boxStart, boxEnd)}
+        width={horizontal ? Math.abs(boxEnd - boxStart) : size}
+        height={horizontal ? size : Math.abs(boxEnd - boxStart)}
+        rx={2}
+        fill={color}
+        fillOpacity={0.35}
+        stroke={color}
+        strokeWidth={1.5}
+      />
+      {line(point(median, mid - size / 2), point(median, mid + size / 2), 'median', 2.5)}
+    </g>
+  );
+};
+
 /** Distributions per category (min, quartiles, median, max), e.g. response times per service. */
 export const BoxPlotChart = ({
   series,
   categories,
   orientation = 'vertical',
   colors,
-  formatValue,
+  formatValue = String,
   xTitle,
   yTitle,
   showLegend,
   legendPosition = 'top',
-  emptyMessage,
+  emptyMessage = 'No data',
   ariaLabel,
-  apexOptions,
+  children,
   height = 320,
-  width = '100%',
+  width,
 }: BoxPlotChartProps) => {
-  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
+  const hidden = useHiddenSeries();
+  const name = ariaLabel ?? `Box plot: ${series.map((s) => s.name).join(', ')}`;
+  if (hasNoData(series)) {
+    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
   const horizontal = orientation === 'horizontal';
-  const seriesColors = colors ?? palette;
-  const format = useValueFormat(formatValue);
-
-  // One labels object per axis: ApexCharts writes formatters onto them.
-  // Axis labels are SVG text and stay unescaped.
-  const categoryLabels = () => ({ ...axisLabels });
-  const valueLabels = () => ({ ...axisLabels, formatter: format.axis });
-
-  // ApexCharts' own box plot tooltip prints the values raw. This one is
-  // HTML too: tooltipHtml escapes the category, the series name and values.
-  const tooltip = useStableCallback(
-    ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
-      const { name, data } = series[seriesIndex];
-      const summary = data[dataPointIndex];
-      return tooltipHtml({
-        title: categories[dataPointIndex],
-        series:
-          series.length > 1
-            ? { name, color: seriesColors[seriesIndex % seriesColors.length] }
-            : undefined,
-        rows: ROWS.map(([label, index]) => [label, format.axis(summary[index])]),
-      });
-    }
-  );
-
-  const options: ApexOptions = {
-    chart: {
-      type: 'boxPlot',
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      fontFamily: 'inherit',
-      // ApexCharts keeps 15px free under the drawing: dead space in a card.
-      parentHeightOffset: 0,
-    },
-    colors: seriesColors,
-    plotOptions: {
-      bar: { horizontal, columnWidth: '50%', barHeight: '50%' },
-      // Both halves take the series color: a translucent fill, and an outline,
-      // median and whiskers drawn in the full color (ApexCharts' defaults are
-      // fixed colors, with a near-black stroke lost on the dark themes).
-      boxPlot: { colors: { upper: seriesColors, lower: seriesColors } },
-    },
-    fill: { opacity: 0.35 },
-    stroke: { width: 1.5, colors: seriesColors },
-    grid,
-    // The titles name the axes as drawn, whichever of categories and values each carries.
-    xaxis: {
-      title: axisTitle(xTitle),
-      labels: horizontal ? valueLabels() : categoryLabels(),
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      // The x-axis tooltip is HTML and repeats the tooltip title.
-      tooltip: { enabled: false },
-    },
-    yaxis: {
-      title: axisTitle(yTitle),
-      labels: horizontal ? categoryLabels() : valueLabels(),
-    },
-    // Horizontal, the value labels sit side by side and run into each other
-    // on a phone: keep three of them.
-    responsive: horizontal ? [{ breakpoint: 640, options: { xaxis: { tickAmount: 2 } } }] : [],
-    legend: chartLegend({
-      show: showLegend ?? series.length > 1,
-      position: legendPosition,
-      color: axisLabels.style.colors,
-    }),
-    tooltip: { theme: tooltipTheme, custom: tooltip },
-  };
-
-  const chartSeries = series.map(({ name, data }) => ({
-    name,
-    data: data.map((y, index) => ({ x: categories[index], y })),
+  const rows: Row[] = categories.map((category, i) => ({
+    category,
+    ...Object.fromEntries(
+      series.flatMap((s, index) => {
+        const summary = s.data[i];
+        return summary
+          ? [
+              [summaryKey(index), summary],
+              [seriesKey(index), [summary[0], summary[4]]],
+            ]
+          : [];
+      })
+    ),
   }));
 
+  // The category, then the five numbers of each series shown, headed by its name when there are several.
+  const tooltip = ({ active, payload, label }: Partial<TooltipContentProps>) => {
+    const row = payload?.[0]?.payload as Row | undefined;
+    if (!active || !row) return null;
+    const lines = series.flatMap((s, index): TooltipRow[] => {
+      const summary = row[summaryKey(index)] as BoxPlotSummary | undefined;
+      if (!summary || hidden.hidden.has(seriesKey(index))) return [];
+      const color = seriesColor(index, colors);
+      return [
+        ...(series.length > 1 ? [{ name: s.name, value: '', color }] : []),
+        ...ROWS.map(([title, at]) => ({
+          name: title,
+          value: formatValue(summary[at]),
+          color: series.length > 1 ? 'transparent' : color,
+        })),
+      ];
+    });
+    return <TooltipCard title={label} rows={lines} />;
+  };
+
   return (
-    <ApexChart
-      type="boxPlot"
-      options={options}
-      series={chartSeries}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-    />
+    <BarChart
+      {...frameProps({ height, width, ariaLabel: name })}
+      data={rows}
+      // Recharts names the layout after the axis the categories sit on.
+      layout={horizontal ? 'vertical' : 'horizontal'}
+      margin={{ top: 4, right: 12, bottom: 0, left: 0 }}
+      barGap={4}
+      barCategoryGap="22%"
+    >
+      <CartesianGrid
+        {...GRID_PROPS}
+        {...(horizontal ? { horizontal: false, vertical: true } : {})}
+      />
+      {horizontal ? (
+        <>
+          <XAxis
+            type="number"
+            domain={['auto', 'auto']}
+            tickFormatter={formatValue}
+            {...AXIS}
+            {...xAxisTitle(xTitle)}
+          />
+          <YAxis
+            type="category"
+            dataKey="category"
+            width="auto"
+            tickFormatter={trimLabel}
+            {...AXIS}
+            {...yAxisTitle(yTitle)}
+          />
+        </>
+      ) : (
+        <>
+          <XAxis
+            dataKey="category"
+            {...AXIS}
+            {...xAxisTitle(xTitle)}
+            {...categoryAxis(categories, xTitle)}
+          />
+          <YAxis
+            type="number"
+            domain={['auto', 'auto']}
+            width="auto"
+            tickFormatter={formatValue}
+            {...AXIS}
+            {...yAxisTitle(yTitle)}
+          />
+        </>
+      )}
+      {(showLegend ?? series.length > 1) && <Legend {...legendProps(legendPosition, hidden)} />}
+      <Tooltip
+        content={tooltip}
+        cursor={{ fill: BORDER, fillOpacity: 0.35, radius: 8 }}
+        animationDuration={150}
+      />
+      {series.map((s, index) => (
+        <Bar
+          key={seriesKey(index)}
+          name={s.name}
+          dataKey={seriesKey(index)}
+          fill={seriesColor(index, colors)}
+          maxBarSize={56}
+          shape={boxShape(index, seriesColor(index, colors), horizontal)}
+          hide={hidden.hidden.has(seriesKey(index))}
+          {...ANIMATION}
+        />
+      ))}
+      {children}
+    </BarChart>
   );
 };

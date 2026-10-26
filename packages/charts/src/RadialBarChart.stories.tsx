@@ -1,20 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
-import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
-import { SemiCircleGauge } from './SemiCircleGauge';
-import { StrokedGauge } from './StrokedGauge';
+import { HOSTILE, expectNoInjectedImage, resolveColor, themeColor } from './storybook-helpers';
 import {
-  expectColorInThemes,
-  expectPaletteFromTheme,
-  resolveColor,
-  expectTextFollowsTheme,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectMessageOnly,
-} from './storybook-helpers';
+  centerText,
+  expectKeyboardWalk,
+  hoverRing,
+  leaveRing,
+  ringSectors,
+} from './storybook-polar';
+import { expectEmptyMessage, tooltipCard } from './storybook-recharts';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const points = (v: number) => `${v} pts`;
@@ -87,28 +82,54 @@ export const Empty: Story = {
       <RadialBarChart {...args} />
     </Card>
   ),
-  play: expectMessageOnly('No data'),
+  play: expectEmptyMessage('No data'),
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** Every wrapper's center value uses the theme text color and follows theme changes. */
-export const TextFollowsTheme: Story = {
+// The sectors of the rings, in series order, and their fills.
+const rings = ringSectors;
+const ringFills = (root: HTMLElement) =>
+  rings(root).map((el) => resolveColor(getComputedStyle(el).fill));
+
+/** The first series is the outer ring: each ring sits inside the one before. */
+export const FirstSeriesIsTheOuterRing: Story = {
   tags: ['!dev', '!autodocs'],
-  globals: { theme: 'deep-blue' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <RadialBarChart series={[78, 62]} labels={['CPU', 'Mem']} />
-      <GradientRadial value={84} label="Health" />
-      <SemiCircleGauge value={67} label="Load" />
-      <StrokedGauge value={92} label="Uptime" />
-    </div>
-  ),
   play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const widths = rings(canvasElement).map((el) => el.getBoundingClientRect().width);
+      expect(widths).toHaveLength(4);
+      for (let i = 1; i < widths.length; i++) expect(widths[i]).toBeLessThan(widths[i - 1]);
+    });
+  },
+};
+
+/** A value beyond the scale stops its arc at the end; the center and the tooltip give the value. */
+export const RingsClampButShowTheValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [120, 40], labels: ['Over', 'Half'] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(rings(canvasElement)).toHaveLength(2));
+    await hoverRing(canvasElement, 0, ['Over', 'Half']);
     await waitFor(() =>
-      expect(canvasElement.querySelectorAll('.apexcharts-datalabel-value').length).toBe(4)
+      expect(centerText(canvasElement)).toEqual({ value: '120%', label: 'Over' })
     );
-    await expectTextFollowsTheme(canvasElement, '');
+    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent('120%'));
+    await leaveRing(canvasElement, 0);
+  },
+};
+
+/** The rings are React text in the tooltip: a label with markup shows as written. */
+export const HtmlInLabelsRendersAsText: Story = {
+  tags: ['!autodocs'],
+  args: { series: [60, 40], labels: [HOSTILE, 'Normal'] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(rings(canvasElement)).toHaveLength(2));
+    await hoverRing(canvasElement, 0, [HOSTILE, 'Normal']);
+    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent(HOSTILE));
+    await expect(centerText(canvasElement)?.label).toBe(HOSTILE);
+    await expectNoInjectedImage(canvasElement);
+    await leaveRing(canvasElement, 0);
   },
 };
 
@@ -117,43 +138,7 @@ export const ColorsOverridePalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: CustomColors.args,
   play: async ({ canvasElement }) => {
-    // The ring colors, resolved without any alpha.
-    const strokes = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-radial-series path')].map((el) =>
-        resolveColor(
-          (el.getAttribute('stroke') ?? '').replace(/^rgba\((.*),\s*[\d.]+\)$/, 'rgb($1)')
-        )
-      );
-    await waitFor(() => expect(strokes()).toEqual(RING_COLORS));
-  },
-};
-
-/**
- * The arcs are drawn opaque: at ApexCharts' 0.85 default they looked duller
- * than their legend swatches and the colors of the page.
- */
-export const ArcsAreOpaque: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <RadialBarChart series={[78, 62]} labels={['CPU', 'Mem']} colors={['#10b981', '#8b5cf6']} />
-      <GradientRadial value={84} label="Health" color="#8b5cf6" />
-      <SemiCircleGauge value={67} label="Load" color="#f59e0b" />
-      <StrokedGauge value={92} label="Uptime" color="#ef4444" />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    await waitFor(() => {
-      const arcs = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')];
-      // Two rings, then one arc for each of the three gauges.
-      expect(arcs.length).toBe(5);
-      for (const arc of arcs) {
-        const stroke = arc.getAttribute('stroke') ?? '';
-        // The gradient is a url(); a plain color is rgba(…, alpha) at ApexCharts' fill opacity.
-        if (stroke.startsWith('url')) continue;
-        expect(resolveColor(stroke), stroke).not.toMatch(/^rgba\(.*, (?!1\))/);
-      }
-    });
+    await waitFor(() => expect(ringFills(canvasElement)).toEqual(RING_COLORS.map(resolveColor)));
   },
 };
 
@@ -164,48 +149,45 @@ export const ArcsAreOpaque: Story = {
 export const CenterValueLeadsItsLabel: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
-    const size = (selector: string) => {
-      const el = canvasElement.querySelector(selector);
-      return {
-        size: parseFloat(el?.getAttribute('font-size') ?? '0'),
-        weight: el?.getAttribute('font-weight'),
-      };
+    const sizes = () => {
+      const [value, label] = [...canvasElement.querySelectorAll('[data-chart-center] tspan')].map(
+        (el) => ({
+          size: parseFloat(getComputedStyle(el).fontSize),
+          weight: getComputedStyle(el).fontWeight,
+        })
+      );
+      return { value, label };
     };
     const expectValueOverLabel = () => {
-      const value = size('.apexcharts-datalabel-value');
-      const label = size('.apexcharts-datalabel-label');
+      const { value, label } = sizes();
       expect(label.size).toBeGreaterThan(0);
       expect(value.size).toBeGreaterThan(label.size);
       expect(value.weight).toBe('700');
     };
     await waitFor(() => {
-      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('Avg');
+      expect(centerText(canvasElement)?.label).toBe('Avg');
       expectValueOverLabel();
     });
+    await hoverRing(canvasElement, 0, ['CPU', 'Mem', 'Disk', 'Net']);
     await waitFor(() => {
-      canvasElement
-        .querySelector('.apexcharts-radial-series path')
-        ?.dispatchEvent(new MouseEvent('mouseenter'));
-      expect(canvasElement.querySelector('.apexcharts-datalabel-label')?.textContent).toBe('CPU');
+      expect(centerText(canvasElement)?.label).toBe('CPU');
       expectValueOverLabel();
     });
+    await leaveRing(canvasElement, 0);
   },
 };
 
-/** `formatValue` formats the average and the value of the hovered ring. */
+/** `formatValue` formats the average, the value of the hovered ring and the tooltip. */
 export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
   args: FormattedValues.args,
   play: async ({ canvasElement }) => {
-    const value = () => canvasElement.querySelector('.apexcharts-datalabel-value')?.textContent;
     // The average of 92, 78, 64 and 85, rounded.
-    await waitFor(() => expect(value()).toBe('80 pts'));
-    await waitFor(() => {
-      canvasElement
-        .querySelector('.apexcharts-radial-series path')
-        ?.dispatchEvent(new MouseEvent('mouseenter'));
-      expect(value()).toBe('92 pts');
-    });
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('80 pts'));
+    await hoverRing(canvasElement, 0, ['Security', 'Reliability', 'Performance', 'Cost']);
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('92 pts'));
+    await waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent('92 pts'));
+    await leaveRing(canvasElement, 0);
   },
 };
 
@@ -217,71 +199,23 @@ export const PaletteFromTheme: Story = {
     labels: ['CPU', 'RAM', 'Disk', 'Net', 'GPU'],
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')].map((el) =>
-        el.getAttribute('stroke')
-      )
-    );
-  },
-};
-
-/** The empty part of every radial arc is the theme's grid gray. */
-export const TrackFollowsTheme: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div data-testid="radialbar">
-        <RadialBarChart series={[40, 60]} labels={['CPU', 'RAM']} />
-      </div>
-      <div data-testid="gradient">
-        <GradientRadial value={84} label="Health" />
-      </div>
-      <div data-testid="semicircle">
-        <SemiCircleGauge value={42} label="CPU" />
-      </div>
-      <div data-testid="stroked">
-        <StrokedGauge value={92} label="Uptime" />
-      </div>
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const track = (id: string) => () =>
-      canvasElement
-        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
-        ?.getAttribute('stroke');
-    for (const id of ['radialbar', 'gradient', 'semicircle', 'stroked']) {
-      await expectColorInThemes(track(id), {
-        dark: '--color-gray-800',
-        '': '--color-gray-200',
-        sand: '--color-gray-200',
-        'deep-blue': '--color-gray-800',
-      });
-    }
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    await waitFor(() => expect(ringFills(canvasElement)).toEqual(tokens.map(themeColor)));
   },
 };
 
 /**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { colors: RING_COLORS, formatValue: points },
-  render: (args) => (
-    <Rerender>
-      {(grown) => <RadialBarChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
-/**
- * Screen readers read `ariaLabel` as the chart's name; Tab reaches the chart and
- * ↓ walks its rings, one per series.
+ * Screen readers read `ariaLabel` as the chart's name; Tab reaches the chart
+ * and the arrow keys walk its rings, one per series.
  */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ariaLabel: 'Node usage' },
-  play: expectAccessibleChart({ keyboard: true, next: '{ArrowDown}' }),
+  play: expectKeyboardWalk({ announcesOnFocus: false }),
 };

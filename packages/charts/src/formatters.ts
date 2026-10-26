@@ -8,9 +8,6 @@ import { escapeHtml } from './escape';
 /** Tooltip title of a series: its escaped name and a colon. */
 export const seriesTitle = (name: string) => `${escapeHtml(name)}: `;
 
-/** A value as a percentage, for the radial bar and gauge labels. */
-export const percent = (value: number) => `${value}%`;
-
 /**
  * A function with a fixed identity that calls the latest `fn`. For callbacks
  * reading props that ApexCharts also gets as data or options, such as a custom

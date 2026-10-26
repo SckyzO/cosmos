@@ -23,4 +23,19 @@ export type ColumnDef<T> = {
   searchValue?: (row: T) => string;
   sortable?: boolean;
   filterable?: boolean;
+  /**
+   * With `columnsMenu`, whether the column can be hidden from the menu. Default `true`; `false`
+   * keeps it shown and its checkbox disabled (the column that names the row).
+   */
+  hideable?: boolean;
+  /** Starts hidden, until `columnVisibility` or the menu says otherwise. */
+  defaultHidden?: boolean;
+  /**
+   * With `mobileLayout="cards"`, below `sm`: `'title'` makes the column the heading of the card
+   * (the first one of them; the first column when none is marked), `'hidden'` leaves it out of
+   * the card. The others become label/value pairs. The table above `sm` ignores it.
+   */
+  mobile?: 'title' | 'hidden';
+  /** The label of the column's pair in a card, in place of `label` (a short or plain-text one). */
+  mobileLabel?: ReactNode;
 };

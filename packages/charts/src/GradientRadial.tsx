@@ -1,11 +1,11 @@
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/radialBar';
-import { ApexChart } from './ApexChart';
-import { percent, useValueFormat } from './formatters';
-import { useChartTheme } from './theme';
-import type { ChartBaseProps } from './types';
+import { useId } from 'react';
+import { SERIES, SUCCESS } from './core/colors';
+import { safeId } from './core/data';
+import { percent } from './core/gauge';
+import { RadialGauge } from './core/RadialGauge';
+import type { ChartProps } from './types';
 
-export type GradientRadialProps = ChartBaseProps & {
+export type GradientRadialProps = ChartProps & {
   value: number;
   label?: string;
   /** Color the arc starts from, fading to the theme's success color. Default: the accent. */
@@ -14,70 +14,43 @@ export type GradientRadialProps = ChartBaseProps & {
   min?: number;
   /** Value at the end of the arc, above `min`. Default 100. Out of range, the arc stops at an end. */
   max?: number;
-  /**
-   * Format the center value, from `value` itself (not its share of the range). Default: `84%`.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-   */
+  /** Format the center value, from `value` itself (not its share of the range). Default: `84%`. */
   formatValue?: (value: number) => string;
 };
 
 export const GradientRadial = ({
   value,
   label = 'Score',
-  color,
+  color = SERIES[0],
   min = 0,
   max = 100,
   formatValue = percent,
   ariaLabel,
-  apexOptions,
+  children,
   height = 280,
-  width = '100%',
+  width,
 }: GradientRadialProps) => {
-  const { brand, success, text, textMuted, track } = useChartTheme();
-  const format = useValueFormat(formatValue);
-  const options: ApexOptions = {
-    chart: { type: 'radialBar', fontFamily: 'inherit', foreColor: text },
-    colors: [color ?? brand],
-    fill: {
-      type: 'gradient',
-      opacity: 1,
-      gradient: {
-        shade: 'dark',
-        type: 'horizontal',
-        shadeIntensity: 0.5,
-        gradientToColors: [success],
-        inverseColors: false,
-        opacityFrom: 1,
-        opacityTo: 1,
-        stops: [0, 100],
-      },
-    },
-    plotOptions: {
-      radialBar: {
-        // ApexCharts maps the value onto the arc, clamped to the range, and
-        // hands the formatter the value itself.
-        min,
-        max,
-        hollow: { size: '70%' },
-        track: { background: track },
-        dataLabels: {
-          name: { fontSize: '12px', offsetY: -10, color: textMuted },
-          value: { fontSize: '32px', fontWeight: 700, formatter: format.axis },
-        },
-      },
-    },
-    labels: [label],
-  };
+  const id = safeId(useId());
   return (
-    <ApexChart
-      type="radialBar"
-      options={options}
-      series={[value]}
+    <RadialGauge
+      value={value}
+      label={label}
+      min={min}
+      max={max}
+      text={formatValue(value)}
+      ariaLabel={ariaLabel}
+      hollow="70%"
+      fill={`url(#${id})`}
+      defs={
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} />
+          <stop offset="100%" stopColor={SUCCESS} />
+        </linearGradient>
+      }
       height={height}
       width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      keyboard={false}
-    />
+    >
+      {children}
+    </RadialGauge>
   );
 };

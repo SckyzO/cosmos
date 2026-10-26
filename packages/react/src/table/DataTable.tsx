@@ -2,7 +2,10 @@ import { clsx } from 'clsx';
 import { Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
+import { DataTableColumnsMenu } from './DataTableColumnsMenu';
+import { DataTableMobileCards, DataTableMobileSort } from './DataTableMobileCards';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
+import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
 import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
@@ -10,6 +13,7 @@ import { Sk } from '../feedback/Skeleton';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
 import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
 import { useControllableState } from '../hooks/useControllableState';
 import { useOverflows } from '../hooks/useOverflows';
@@ -96,6 +100,22 @@ export type DataTableProps<T> = {
 
   className?: string;
 
+  // ── Column filters ─────────────────────────────────────────────────────────
+  /**
+   * Controlled column filters: column `key` → the selected values. Pass this or `defaultFilters`;
+   * a filter picked in a column header, a status tab or the active filters bar goes through
+   * `onFiltersChange`, and a controlled table shows it once the host passes it back.
+   */
+  filters?: Record<string, Set<string>>;
+  defaultFilters?: Record<string, Set<string>>;
+  onFiltersChange?: (filters: Record<string, Set<string>>) => void;
+  /**
+   * Underlined tabs at the top of the card ("All", then one per option) that set the filter of
+   * one column; "All" clears it. The tabs and the active filters bar stay in sync. The counts
+   * come from the host (they may come from a server), the table never computes them.
+   */
+  filterTabs?: DataTableFilterTabsConfig;
+
   // ── Rows per page ──────────────────────────────────────────────────────────
   /** Rows per page when uncontrolled. Default 25. */
   defaultPageSize?: number;
@@ -107,6 +127,32 @@ export type DataTableProps<T> = {
    * controlled value that never moves: the select then reports the pick and keeps the size.
    */
   pageSizeOptions?: number[];
+
+  // ── Column visibility ──────────────────────────────────────────────────────
+  /**
+   * Shows a "Columns" button at the end of the toolbar, with a checkbox per column. The toolbar
+   * then shows even without a search field. Default `false`.
+   */
+  columnsMenu?: boolean;
+  /**
+   * Controlled visibility: column key → shown. A key that is missing follows the column's
+   * `defaultHidden`, and a `hideable: false` column is shown whatever it says.
+   */
+  columnVisibility?: ColumnVisibility;
+  defaultColumnVisibility?: ColumnVisibility;
+  /** Called with the visibility of every column when one is toggled from the menu. */
+  onColumnVisibilityChange?: (visibility: ColumnVisibility) => void;
+
+  // ── Narrow screens ─────────────────────────────────────────────────────────
+  /**
+   * What the rows become below `sm` (640px). `scroll` (the default) keeps the table, scrolling
+   * sideways. `cards` swaps it for a list of blocks: the selection checkbox, the `mobile: 'title'`
+   * column and the row action on the first line, then one label/value pair per remaining column
+   * (`mobileLabel`, else the column header; `mobile: 'hidden'` leaves a column out). The toolbar
+   * gets a second line with a "Sort by" select for the sortable columns and the columns button.
+   * From `sm` up the table is the same either way.
+   */
+  mobileLayout?: 'scroll' | 'cards';
 };
 
 // The selection and action columns keep these widths whatever the data columns add up to.
@@ -130,7 +176,7 @@ const ALIGN_CELL = {
  */
 export const DataTable = <T,>({
   rows,
-  columns,
+  columns: allColumns,
   rowKey,
   onRowClick,
   rowHref,
@@ -156,10 +202,39 @@ export const DataTable = <T,>({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   className,
+  filters: filtersProp,
+  defaultFilters,
+  onFiltersChange,
+  filterTabs,
   defaultPageSize = 25,
   onPageSizeChange,
   pageSizeOptions,
+  columnsMenu = false,
+  columnVisibility: columnVisibilityProp,
+  defaultColumnVisibility,
+  onColumnVisibilityChange,
+  mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
+  const mobileCards = mobileLayout === 'cards';
+  const [columnVisibility, setColumnVisibility] = useControllableState<ColumnVisibility>({
+    value: columnVisibilityProp,
+    defaultValue: () => defaultColumnVisibility ?? {},
+    onChange: onColumnVisibilityChange,
+    name: 'DataTable.columnVisibility',
+  });
+  // `columns` below is what is drawn, searched and sorted; `allColumns` still names the filters.
+  const { visible: columns, shown } = useMemo(
+    () => resolveColumnVisibility(allColumns, columnVisibility),
+    [allColumns, columnVisibility]
+  );
+  const columnsMenuNode = columnsMenu ? (
+    <DataTableColumnsMenu
+      columns={allColumns}
+      shown={shown}
+      onToggle={(key, visible) => setColumnVisibility({ ...shown, [key]: visible })}
+    />
+  ) : null;
+
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
   // An edge fades where the table goes on, as the Tabs' do; not the start one under a pinned column.
@@ -168,7 +243,12 @@ export const DataTable = <T,>({
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
-  const [filters, setFilters] = useState<Record<string, Set<string>>>({});
+  const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
+    value: filtersProp,
+    defaultValue: () => defaultFilters ?? {},
+    onChange: onFiltersChange,
+    name: 'DataTable.filters',
+  });
   const [page, setPage] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
@@ -239,6 +319,15 @@ export const DataTable = <T,>({
     setPage(0);
   };
 
+  const selectFilterTab = (value: string | undefined) => {
+    if (!filterTabs) return;
+    if (value === undefined) clearFilter(filterTabs.columnKey);
+    else {
+      setFilters((prev) => ({ ...prev, [filterTabs.columnKey]: new Set([value]) }));
+      setPage(0);
+    }
+  };
+
   const clearAllFilters = () => {
     setFilters({});
     setPage(0);
@@ -254,8 +343,8 @@ export const DataTable = <T,>({
   );
 
   const filteredRows = useMemo(
-    () => filterRows(searchedRows, columns, filters),
-    [searchedRows, columns, filters]
+    () => filterRows(searchedRows, allColumns, filters),
+    [searchedRows, allColumns, filters]
   );
 
   const sortedRows = useMemo(
@@ -268,6 +357,8 @@ export const DataTable = <T,>({
   // takes what is left, so those two stay as wide as asked.
   const firstColumnTakesTheRest =
     (selectable || Boolean(renderRowAction)) && columns.length > 0 && columns.every((c) => c.width);
+
+  const mobileSortable = columns.some((c) => c.sortable);
 
   const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
@@ -313,7 +404,7 @@ export const DataTable = <T,>({
 
   const activeFilters: ActiveFilter[] = Object.entries(filters).map(([key, vals]) => ({
     key,
-    label: columns.find((c) => c.key === key)?.label?.toString() ?? key,
+    label: allColumns.find((c) => c.key === key)?.label?.toString() ?? key,
     value: Array.from(vals).join(', '),
   }));
 
@@ -324,6 +415,14 @@ export const DataTable = <T,>({
         className
       )}
     >
+      {filterTabs && (
+        <DataTableFilterTabsStrip
+          tabs={filterTabs}
+          selected={filters[filterTabs.columnKey]}
+          onSelect={selectFilterTab}
+        />
+      )}
+
       {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
       {selectable && selection.size > 0 ? (
         <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
@@ -342,8 +441,13 @@ export const DataTable = <T,>({
           </div>
         </div>
       ) : searchEnabled ? (
-        <div className="border-b border-gray-100 px-4 py-2 dark:border-gray-800">
-          <div className="relative h-9">
+        <div
+          className={clsx(
+            'border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+            columnsMenu && 'flex items-center gap-2'
+          )}
+        >
+          <div className={clsx('relative h-9', columnsMenu && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -367,14 +471,63 @@ export const DataTable = <T,>({
               </button>
             )}
           </div>
+          {mobileCards ? <div className="max-sm:hidden">{columnsMenuNode}</div> : columnsMenuNode}
+        </div>
+      ) : columnsMenu ? (
+        <div
+          className={clsx(
+            'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+            mobileCards && 'max-sm:hidden'
+          )}
+        >
+          {columnsMenuNode}
         </div>
       ) : null}
+
+      {mobileCards && (mobileSortable || columnsMenu) && (
+        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800">
+          {mobileSortable && (
+            <DataTableMobileSort
+              columns={columns}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortChange={(key, dir) => {
+                setSortKey(key);
+                setSortDir(dir);
+              }}
+            />
+          )}
+          {columnsMenuNode}
+        </div>
+      )}
 
       <ActiveFiltersBar
         filters={activeFilters}
         onClearOne={clearFilter}
         onClearAll={clearAllFilters}
       />
+
+      {mobileCards && (
+        <DataTableMobileCards
+          rows={pageRows}
+          columns={columns}
+          rowKey={rowKey}
+          selectable={selectable}
+          isSelected={(key) => selection.has(key)}
+          onToggleRow={toggleRow}
+          renderRowAction={renderRowAction}
+          onRowClick={onRowClick}
+          rowHref={rowHref}
+          loading={loading}
+          loadingRows={loadingRows}
+          error={error}
+          onRetry={onRetry}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
+        />
+      )}
 
       <div
         ref={scrollerRef}
@@ -385,7 +538,10 @@ export const DataTable = <T,>({
         aria-label={region ? ariaLabel : undefined}
         aria-labelledby={region ? ariaLabelledBy : undefined}
         style={fade}
-        className="focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset"
+        className={clsx(
+          'focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset',
+          mobileCards && 'max-sm:hidden'
+        )}
       >
         {loading && (
           <span role="status" className="sr-only">

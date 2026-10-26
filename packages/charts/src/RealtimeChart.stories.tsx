@@ -1,19 +1,27 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
+import { ReferenceArea } from 'recharts';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 import {
-  closeTooltip,
+  HOSTILE,
   contrastRatio,
   expectColorsFromTokens,
-  expectTooltipFollowsTheme,
-  hover,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectAxisTitlesIn,
+  expectNoInjectedImage,
+  resolveColor,
+  themeColor,
 } from './storybook-helpers';
+import { expectRepaintsWithThemeOf } from './storybook-cartesian';
+import {
+  axisTitles,
+  closeTooltip,
+  expectAccessibleChart,
+  openTooltip,
+  seriesStrokes,
+  surface,
+  tickTexts,
+  tooltipCard,
+} from './storybook-recharts';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -123,113 +131,113 @@ export const ThresholdLabels: Story = {
   ),
 };
 
+// The threshold labels are `.recharts-label` texts too, and sit among the x titles.
+const withoutThresholds = ({ x, y }: { x: (string | null)[]; y: (string | null)[] }) => ({
+  x: x.filter((text) => text !== 'WARN' && text !== 'CRIT'),
+  y,
+});
+
 /** `yTitle` names the y axis, and `xTitle` the time axis. */
 export const AxisTitles: Story = {
   args: { showTimeAxis: true, xTitle: 'Time', yTitle: 'CPU usage (%)' },
   render: (args) => <Replay {...args} trace={CPU} />,
-  play: ({ canvasElement }) =>
-    expectAxisTitlesIn(canvasElement, { x: 'Time', y: ['CPU usage (%)'] }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(withoutThresholds(axisTitles(canvasElement))).toEqual({
+        x: ['Time'],
+        y: ['CPU usage (%)'],
+      })
+    );
+  },
 };
 
-// ApexCharts hides an annotation group with this class until its first
-// animation ends.
-const visibleThresholdLines = (root: HTMLElement) =>
-  [...root.querySelectorAll('.apexcharts-yaxis-annotations')]
-    .filter((group) => !group.closest('.apexcharts-element-hidden'))
-    .flatMap((group) => [...group.querySelectorAll('line')]).length;
+/**
+ * `children` takes Recharts elements, drawn inside the chart: here a
+ * `ReferenceArea` shading the band above the critical threshold.
+ */
+export const ReferenceAreaInChildren: Story = {
+  args: {
+    children: (
+      <ReferenceArea
+        y1={85}
+        y2={100}
+        fill="var(--color-status-crit)"
+        fillOpacity={0.1}
+        stroke="none"
+      />
+    ),
+  },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.recharts-reference-area')).not.toBeNull()
+    );
+  },
+};
+
+const thresholdLines = (root: HTMLElement) =>
+  root.querySelectorAll('.recharts-reference-line line').length;
 
 /**
- * Samples that arrive while ApexCharts still runs its first render must not
- * drop the threshold lines.
+ * Samples that arrive while the chart is still being drawn must not drop the
+ * threshold lines.
  */
 export const ThresholdsSurviveEarlyUpdates: Story = {
   tags: ['!dev'],
   args: { intervalMs: 50 },
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(canvasElement.querySelector('.apexcharts-line')).not.toBeNull());
-    // Let the first animation (and the updates racing it) settle.
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    await waitFor(() => expect(visibleThresholdLines(canvasElement)).toBe(2), { timeout: 2000 });
-  },
-};
-
-/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
-export const TooltipFollowsTheme: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  render: (args) => <Replay {...args} trace={CPU} />,
-  play: async ({ canvasElement }) => {
-    await expectTooltipFollowsTheme(canvasElement, () =>
-      canvasElement.querySelector('.apexcharts-grid')
-    );
+    await waitFor(() => expect(canvasElement.querySelector('.recharts-line-curve')).not.toBeNull());
+    // Let the updates settle.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await waitFor(() => expect(thresholdLines(canvasElement)).toBe(2), { timeout: 2000 });
   },
 };
 
 /** `formatValue` formats the y-axis labels and the tooltip value. */
 export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
-  // No new sample during the test: the first point stays CPU[0].
+  // No new sample during the test.
   args: { formatValue: pct, intervalMs: 60_000 },
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    const yLabels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
-    await waitFor(() => expect(yLabels().length).toBeGreaterThan(1));
-    for (const label of yLabels()) expect(label).toMatch(/^\d+%$/);
-
-    await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.01);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
-        pct(CPU[0])
-      );
-    });
+    await waitFor(() => expect(tickTexts(canvasElement, 'yAxis').length).toBeGreaterThan(1));
+    for (const label of tickTexts(canvasElement, 'yAxis')) expect(label).toMatch(/^\d+%$/);
+    await openTooltip(canvasElement, 0.05);
+    await expect(tooltipCard(canvasElement)).toHaveTextContent(/^value\d+%$/);
+    await closeTooltip(canvasElement);
   },
 };
 
-// The WARN and CRIT labels: the text, and the rectangle drawn behind it.
 const thresholdLabel = (root: HTMLElement, text: string) =>
-  [...root.querySelectorAll('.apexcharts-yaxis-annotation-label')].find(
-    (el) => el.textContent === text
-  );
-const labelFill = (root: HTMLElement, text: string) =>
-  thresholdLabel(root, text)?.getAttribute('fill');
-const labelBackground = (root: HTMLElement, text: string) =>
-  thresholdLabel(root, text)?.previousElementSibling?.getAttribute('fill');
+  [...root.querySelectorAll('.recharts-label')].find((el) => el.textContent === text);
 
-/** The WARN and CRIT labels read on their amber and red backgrounds. */
-export const ThresholdLabelsReadOnTheirColor: Story = {
+/** The WARN and CRIT labels read on the card, in the theme's text color. */
+export const ThresholdLabelsReadOnTheCard: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(labelBackground(canvasElement, 'CRIT')).toBeTruthy());
+    await waitFor(() => expect(thresholdLabel(canvasElement, 'CRIT')).toBeDefined());
     for (const text of ['WARN', 'CRIT']) {
-      expect(
-        contrastRatio(labelFill(canvasElement, text)!, labelBackground(canvasElement, text)!),
-        text
-      ).toBeGreaterThanOrEqual(4.5);
+      const fill = resolveColor(getComputedStyle(thresholdLabel(canvasElement, text)!).fill);
+      expect(fill, text).toBe(themeColor('--color-text-primary'));
+      expect(contrastRatio(fill, themeColor('--color-bg-panel')), text).toBeGreaterThanOrEqual(4.5);
     }
   },
 };
 
-/** The WARN and CRIT lines and labels take the theme's monitoring status colors. */
+/** The WARN and CRIT lines take the theme's monitoring status colors. */
 export const ThresholdColorsFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) => <Replay {...args} trace={CPU} />,
   play: async ({ canvasElement }) => {
-    const tokens = ['--color-status-warn', '--color-status-crit'];
     await expectColorsFromTokens(
       () =>
-        [...canvasElement.querySelectorAll('.apexcharts-yaxis-annotations line')].map((el) =>
-          el.getAttribute('stroke')
+        [...canvasElement.querySelectorAll('.recharts-reference-line line')].map(
+          (el) => getComputedStyle(el).stroke
         ),
-      tokens,
+      ['--color-status-warn', '--color-status-crit'],
       '--color-status-warn'
-    );
-    await expectColorsFromTokens(
-      () => [labelBackground(canvasElement, 'WARN'), labelBackground(canvasElement, 'CRIT')],
-      tokens,
-      '--color-status-crit'
     );
   },
 };
@@ -241,13 +249,12 @@ export const RangeSetsTheYAxis: Story = {
   render: (args) => <Replay {...args} trace={DISK} />,
   play: async ({ canvasElement }) => {
     const yLabels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) =>
-        Number.parseFloat(el.textContent ?? '')
-      );
+      tickTexts(canvasElement, 'yAxis').map((text) => Number.parseFloat(text ?? ''));
     await waitFor(() => {
       expect(yLabels().length).toBeGreaterThan(1);
       expect(Math.min(...yLabels())).toBe(20);
       expect(Math.max(...yLabels())).toBe(120);
+      expect(thresholdLines(canvasElement)).toBe(2);
     });
   },
 };
@@ -269,22 +276,18 @@ export const TimeAxisIsOptIn: Story = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    const xLabels = (id: string) =>
-      [...canvasElement.querySelectorAll(`[data-testid="${id}"] .apexcharts-xaxis-label`)]
-        .map((el) => el.textContent)
-        .filter(Boolean);
-    await waitFor(() => expect(xLabels('timed').length).toBeGreaterThan(1));
-    for (const label of xLabels('timed')) expect(label).toMatch(CLOCK_TIME);
-    await expect(xLabels('plain')).toEqual([]);
-    await waitFor(() => {
-      hover(canvasElement.querySelector('[data-testid="timed"] .apexcharts-grid') as Element, 0.5);
-      expect(
-        canvasElement.querySelector('[data-testid="timed"] .apexcharts-tooltip-title')?.textContent
-      ).toMatch(CLOCK_TIME);
-    });
-    await closeTooltip(canvasElement, () =>
-      canvasElement.querySelector('[data-testid="timed"] .apexcharts-grid')
-    );
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => expect(tickTexts(chart('timed'), 'xAxis').length).toBeGreaterThan(1));
+    for (const label of tickTexts(chart('timed'), 'xAxis')) expect(label).toMatch(CLOCK_TIME);
+    await expect(tickTexts(chart('plain'), 'xAxis')).toEqual([]);
+    await openTooltip(chart('timed'), 0.5);
+    await expect(tooltipCard(chart('timed'))?.querySelector('p')).toHaveTextContent(CLOCK_TIME);
+    await closeTooltip(chart('timed'));
+    // Without the axis the tooltip has no title.
+    await openTooltip(chart('plain'), 0.5);
+    await expect(tooltipCard(chart('plain'))?.querySelector('p')).toBeNull();
+    await closeTooltip(chart('plain'));
   },
 };
 
@@ -294,19 +297,14 @@ export const ThresholdLabelProps: Story = {
   render: ThresholdLabels.render,
   play: async ({ canvasElement }) => {
     const labels = (side: number) =>
-      [
-        ...canvasElement.querySelectorAll(
-          `.grid > :nth-child(${side}) .apexcharts-yaxis-annotation-label`
-        ),
-      ]
+      [...canvasElement.querySelectorAll(`.grid > :nth-child(${side}) .recharts-label`)]
         .map((el) => el.textContent)
-        // ApexCharts keeps an empty label element where there is no text.
         .filter(Boolean);
     await waitFor(() => expect(labels(1)).toEqual(['Avertissement', 'Critique']));
     await waitFor(() => expect(labels(2)).toEqual(['Limit']));
     // Both lines are still drawn.
     await expect(
-      canvasElement.querySelectorAll('.grid > :nth-child(2) .apexcharts-yaxis-annotations line')
+      canvasElement.querySelectorAll('.grid > :nth-child(2) .recharts-reference-line line')
     ).toHaveLength(2);
   },
 };
@@ -314,7 +312,7 @@ export const ThresholdLabelProps: Story = {
 // The line is a smooth path: one `C` command per segment, so one more point
 // than segments.
 const pointCount = (root: HTMLElement) => {
-  const d = root.querySelector('.apexcharts-line')?.getAttribute('d') ?? '';
+  const d = root.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
   return d ? (d.match(/C/g) ?? []).length + 1 : 0;
 };
 
@@ -322,9 +320,28 @@ const pointCount = (root: HTMLElement) => {
 const firstPointY = (root: HTMLElement) =>
   Number(
     /^M\s*[\d.]+[\s,]+([\d.]+)/.exec(
-      root.querySelector('.apexcharts-line')?.getAttribute('d') ?? ''
+      root.querySelector('.recharts-line-curve')?.getAttribute('d') ?? ''
     )?.[1]
   );
+
+/**
+ * A sample moves the window under the line without animating it: the path is
+ * already the one of the new window a moment after the tick, and stays put.
+ */
+export const TicksDoNotAnimate: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { intervalMs: 1500 },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    const path = () => canvasElement.querySelector('.recharts-line-curve')?.getAttribute('d');
+    await waitFor(() => expect(path()).toBeTruthy());
+    const before = path();
+    await waitFor(() => expect(path()).not.toBe(before), { timeout: 3000 });
+    const after = path();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await expect(path()).toBe(after);
+  },
+};
 
 /**
  * Two charts on the default generator both start their walk at 50: the walk
@@ -381,19 +398,57 @@ export const WindowSizeChanges: Story = {
   },
 };
 
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
+/** A theme or accent switch on `<html>` repaints the chart with no observer and no redraw. */
+export const RepaintsWithTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...Basic.args, intervalMs: 60_000, formatValue: pct },
+  globals: { theme: 'dark' },
+  args: { showTimeAxis: true, intervalMs: 60_000 },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: ({ canvasElement }) =>
+    expectRepaintsWithThemeOf(canvasElement, () => seriesStrokes(canvasElement)[0]),
+};
+
+/** The labels and the axis titles are SVG text: markup in them shows as written. */
+export const HtmlInLabelsRendersAsText: Story = {
+  tags: ['!autodocs'],
+  args: {
+    showTimeAxis: true,
+    xTitle: HOSTILE,
+    yTitle: HOSTILE,
+    warnLabel: HOSTILE,
+    critLabel: '',
+    intervalMs: 60_000,
+  },
+  render: (args) => <Replay {...args} trace={CPU} />,
+  play: async ({ canvasElement }) => {
+    // The x title, and the threshold label that sits among the same texts.
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE, HOSTILE], y: [HOSTILE] })
+    );
+    await waitFor(() => expect(thresholdLabel(canvasElement, HOSTILE)).toBeDefined());
+    await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** A chart wider than its box is cut to it, so a narrow screen never scrolls sideways. */
+export const NoHorizontalOverflow: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { width: 900 },
   render: (args) => (
-    <Rerender>
-      {(grown) => <RealtimeChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
+    <div data-testid="box" style={{ width: 375 }}>
+      <Replay {...args} trace={CPU} />
+    </div>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(surface(canvasElement)).not.toBeNull());
+    await waitFor(() => {
+      expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+      expect(surface(canvasElement)?.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+    });
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+  },
 };
 
 /** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */
