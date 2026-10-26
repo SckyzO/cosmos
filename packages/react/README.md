@@ -208,6 +208,12 @@ viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep 
 view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
 `swipeToClose`.
 
+The expanded `Sidebar` follows its content: from `width` (264px, its minimum) it grows to
+fit its widest visible row, the deep levels of a tree included, up to `maxWidth` (320px). A
+label that needs more ends in an ellipsis and its row shows the full label in a tooltip. Set
+`maxWidth` to the same value as `width` for a fixed width. The collapsed rail (`collapsedWidth`)
+and the drawer keep their own widths.
+
 `SidebarToggle` is that toggle, to place anywhere else in the Shell (a header of
 your own, the Topbar's `leftActions`, the Sidebar's `footer`) with no props: it
 reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass it
