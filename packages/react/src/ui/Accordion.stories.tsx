@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Bug, CreditCard, Info, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
+import { inEachTheme } from '../storybook-helpers';
 import { Accordion } from './Accordion';
+import { Button } from './Button';
 
 const meta = {
   title: 'Data/Accordion',
@@ -34,6 +37,9 @@ const FAQ = [
     a: 'Open an issue on the GitHub repo with a reproduction. Minimal Storybook stories are very welcome.',
   },
 ];
+
+// One icon per row of `FAQ`.
+const FAQ_ICONS = [Info, ShieldCheck, CreditCard, Bug];
 
 // ── Stories ──────────────────────────────────────────────────────────────────
 
@@ -179,6 +185,71 @@ export const Sizes: Story = {
   ),
 };
 
+export const WithIcon: Story = {
+  render: () => (
+    <Accordion type="single" defaultValue="item-0" collapsible>
+      {FAQ.map((row, i) => (
+        <Accordion.Item key={i} value={`item-${i}`}>
+          <Accordion.Trigger icon={FAQ_ICONS[i]}>{row.q}</Accordion.Trigger>
+          <Accordion.Content>{row.a}</Accordion.Content>
+        </Accordion.Item>
+      ))}
+    </Accordion>
+  ),
+};
+
+export const WithIconMultiple: Story = {
+  render: () => (
+    <Accordion type="multiple" defaultValue={['item-0', 'item-2']}>
+      {FAQ.map((row, i) => (
+        <Accordion.Item key={i} value={`item-${i}`}>
+          <Accordion.Trigger icon={FAQ_ICONS[i]}>{row.q}</Accordion.Trigger>
+          <Accordion.Content>{row.a}</Accordion.Content>
+        </Accordion.Item>
+      ))}
+    </Accordion>
+  ),
+};
+
+export const AccentOpen: Story = {
+  render: () => (
+    <div className="space-y-6">
+      {(['sm', 'md'] as const).map((size) => (
+        <Accordion
+          key={size}
+          type="single"
+          collapsible
+          defaultValue="item-0"
+          size={size}
+          accentOpen
+        >
+          {FAQ.slice(0, 3).map((row, i) => (
+            <Accordion.Item key={i} value={`item-${i}`}>
+              <Accordion.Trigger icon={FAQ_ICONS[i]}>
+                {row.q} ({size})
+              </Accordion.Trigger>
+              <Accordion.Content>{row.a}</Accordion.Content>
+            </Accordion.Item>
+          ))}
+        </Accordion>
+      ))}
+    </div>
+  ),
+};
+
+export const AccentOpenSeamless: Story = {
+  render: () => (
+    <Accordion type="multiple" defaultValue={['item-0', 'item-2']} appearance="seamless" accentOpen>
+      {FAQ.map((row, i) => (
+        <Accordion.Item key={i} value={`item-${i}`}>
+          <Accordion.Trigger icon={FAQ_ICONS[i]}>{row.q}</Accordion.Trigger>
+          <Accordion.Content>{row.a}</Accordion.Content>
+        </Accordion.Item>
+      ))}
+    </Accordion>
+  ),
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const ClickTriggerOpens: Story = {
@@ -288,5 +359,237 @@ export const SizeMdIsLarger: Story = {
     await expect(parseFloat(getComputedStyle(md).fontSize)).toBeGreaterThan(
       parseFloat(getComputedStyle(sm).fontSize)
     );
+  },
+};
+
+// The trigger, its icon and its chevron, as the tests read them.
+const parts = (trigger: HTMLElement) => {
+  const svgs = trigger.querySelectorAll('svg');
+  return { title: trigger, icon: svgs.length > 1 ? svgs[0] : null, chevron: svgs[svgs.length - 1] };
+};
+
+// The color a class list gives in the current theme, read off a probe: the story names the classes
+// the design calls for (Tailwind sees them here), the theme decides what they resolve to.
+const colorOf = (classes: string) => {
+  const probe = document.createElement('span');
+  probe.className = classes;
+  document.body.append(probe);
+  const { color } = getComputedStyle(probe);
+  probe.remove();
+  return color;
+};
+
+const ACCENT = 'text-brand-600 dark:text-brand-400';
+
+// A row is accented or plain, whole: title, icon (when there is one) and chevron.
+const expectTone = (trigger: HTMLElement, tone: 'accent' | 'plain') => {
+  const { title, icon, chevron } = parts(trigger);
+  const accent = tone === 'accent';
+  expect(getComputedStyle(title).color).toBe(
+    colorOf(accent ? ACCENT : 'text-gray-900 dark:text-white')
+  );
+  if (icon) {
+    expect(getComputedStyle(icon).color).toBe(
+      colorOf(accent ? ACCENT : 'text-gray-500 dark:text-gray-400')
+    );
+  }
+  expect(getComputedStyle(chevron).color).toBe(colorOf(accent ? ACCENT : 'text-gray-400'));
+};
+
+const expectTones = (triggers: [HTMLElement, 'accent' | 'plain'][]) =>
+  inEachTheme(() => triggers.forEach(([trigger, tone]) => expectTone(trigger, tone)));
+
+export const IconAndAccentKeepKeyboardAndAria: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Accordion type="single" collapsible accentOpen>
+      {FAQ.slice(0, 3).map((row, i) => (
+        <Accordion.Item key={i} value={`item-${i}`}>
+          <Accordion.Trigger icon={FAQ_ICONS[i]}>{row.q}</Accordion.Trigger>
+          <Accordion.Content>{row.a}</Accordion.Content>
+        </Accordion.Item>
+      ))}
+    </Accordion>
+  ),
+  play: async ({ canvas }) => {
+    // The icon is decorative: the name of a trigger stays its title.
+    const first = canvas.getByRole('button', { name: FAQ[0].q });
+    const second = canvas.getByRole('button', { name: FAQ[1].q });
+    const third = canvas.getByRole('button', { name: FAQ[2].q });
+
+    await userEvent.tab();
+    await expect(first).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(second).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(third).toHaveFocus();
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(second).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(first).toHaveFocus();
+
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard('{Enter}');
+    await expect(first).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('region', { name: FAQ[0].q })).toBeVisible();
+
+    // type=single: opening the second with Space closes the first.
+    await userEvent.keyboard('{ArrowDown}');
+    await userEvent.keyboard(' ');
+    await expect(second).toHaveAttribute('aria-expanded', 'true');
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard(' ');
+    await expect(second).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+export const AccentOpenColorsTheOpenItemOnly: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Accordion type="multiple" defaultValue={['a']} accentOpen>
+      <Accordion.Item value="a">
+        <Accordion.Trigger icon={Info}>Row A</Accordion.Trigger>
+        <Accordion.Content>Body A</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="b">
+        <Accordion.Trigger icon={Bug}>Row B</Accordion.Trigger>
+        <Accordion.Content>Body B</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="c">
+        <Accordion.Trigger>Row C, no icon</Accordion.Trigger>
+        <Accordion.Content>Body C</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  ),
+  play: async ({ canvas }) => {
+    const a = canvas.getByRole('button', { name: 'Row A' });
+    const b = canvas.getByRole('button', { name: 'Row B' });
+    const c = canvas.getByRole('button', { name: 'Row C, no icon' });
+    // The accent and the plain colors differ, or the checks below would prove nothing.
+    inEachTheme(() => expect(colorOf(ACCENT)).not.toBe(colorOf('text-gray-900 dark:text-white')));
+
+    expectTones([
+      [a, 'accent'],
+      [b, 'plain'],
+      [c, 'plain'],
+    ]);
+
+    // type=multiple: B and C open next to A, and every open row takes the accent.
+    await userEvent.click(b);
+    await userEvent.click(c);
+    expectTones([
+      [a, 'accent'],
+      [b, 'accent'],
+      [c, 'accent'],
+    ]);
+
+    // Closing A takes its accent back; the others keep theirs.
+    await userEvent.click(a);
+    await expect(a).toHaveAttribute('aria-expanded', 'false');
+    expectTones([
+      [a, 'plain'],
+      [b, 'accent'],
+      [c, 'accent'],
+    ]);
+  },
+};
+
+export const AccentOpenIsOffByDefault: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Accordion type="multiple" defaultValue={['a']}>
+      <Accordion.Item value="a">
+        <Accordion.Trigger icon={Info}>Open row</Accordion.Trigger>
+        <Accordion.Content>Body A</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="b">
+        <Accordion.Trigger icon={Bug}>Closed row</Accordion.Trigger>
+        <Accordion.Content>Body B</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  ),
+  play: ({ canvas }) => {
+    const open = canvas.getByRole('button', { name: 'Open row' });
+    const closed = canvas.getByRole('button', { name: 'Closed row' });
+    expect(open).toHaveAttribute('aria-expanded', 'true');
+    // Without the prop, the open row is as plain as the closed one.
+    expectTones([
+      [open, 'plain'],
+      [closed, 'plain'],
+    ]);
+  },
+};
+
+// Where the text of `el` starts, whatever its padding.
+const textLeft = (el: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  return range.getBoundingClientRect().left;
+};
+
+export const ContentAlignsUnderTheTitle: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <div className="space-y-6">
+      {(['sm', 'md'] as const).map((size) => (
+        <Accordion key={size} type="multiple" size={size} defaultValue={['with', 'without']}>
+          <Accordion.Item value="with">
+            <Accordion.Trigger icon={Bug}>{`With icon ${size}`}</Accordion.Trigger>
+            <Accordion.Content>{`Body with icon ${size}`}</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="without">
+            <Accordion.Trigger>{`Without icon ${size}`}</Accordion.Trigger>
+            <Accordion.Content>{`Body without icon ${size}`}</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const size of ['sm', 'md']) {
+      const withTitle = canvas.getByText(`With icon ${size}`);
+      const withBody = await canvas.findByText(`Body with icon ${size}`);
+      const withoutTitle = canvas.getByText(`Without icon ${size}`);
+      const withoutBody = await canvas.findByText(`Body without icon ${size}`);
+
+      // The text of the content starts where the title starts, icon or not.
+      await expect(textLeft(withBody)).toBeCloseTo(textLeft(withTitle), 0);
+      await expect(textLeft(withoutBody)).toBeCloseTo(textLeft(withoutTitle), 0);
+
+      // The indent is the icon (16px) and its gap (8px), and only the item with an icon has it.
+      const paddingStart = (el: HTMLElement) => parseFloat(getComputedStyle(el).paddingLeft);
+      await expect(paddingStart(withBody) - paddingStart(withoutBody)).toBe(24);
+    }
+  },
+};
+
+export const ContentFollowsTheIcon: Story = {
+  tags: ['!dev'],
+  render: () => {
+    const [withIcon, setWithIcon] = useState(true);
+    return (
+      <div className="space-y-3">
+        <Button onClick={() => setWithIcon((v) => !v)}>Toggle icon</Button>
+        <Accordion type="single" collapsible defaultValue="a">
+          <Accordion.Item value="a">
+            <Accordion.Trigger icon={withIcon ? Bug : undefined}>Row</Accordion.Trigger>
+            <Accordion.Content>Body</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const body = await canvas.findByText('Body');
+    const paddingStart = () => parseFloat(getComputedStyle(body).paddingLeft);
+    await expect(paddingStart()).toBe(40);
+    await expect(textLeft(body)).toBeCloseTo(textLeft(canvas.getByText('Row')), 0);
+
+    // Taking the icon away takes the indent with it, and putting it back restores it.
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle icon' }));
+    await waitFor(() => expect(paddingStart()).toBe(16));
+    await expect(textLeft(body)).toBeCloseTo(textLeft(canvas.getByText('Row')), 0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle icon' }));
+    await waitFor(() => expect(paddingStart()).toBe(40));
   },
 };
