@@ -1,6 +1,8 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useId,
   useState,
   type ComponentType,
@@ -38,6 +40,8 @@ type SidebarContextValue = {
   inDrawer: boolean;
   inset: RowInset;
   activeStyle: SidebarActiveStyle;
+  /** Where the first nested level's label starts, when not under a top-level row (px). */
+  labelOrigin?: number;
 };
 
 const SidebarContext = createContext<SidebarContextValue>({
@@ -70,17 +74,77 @@ const ROW_INSET: Record<RowInset, { margin: string; width: string; px: number }>
   none: { margin: 'mx-0', width: 'w-full', px: 0 },
 };
 
-// Left padding of a row at `depth`, and where the guide line of its children
-// sits (under the centre of the row's 20 px icon, inside the row margin).
-const rowPadding = (depth: number) => 12 + depth * 20;
-const guideLeft = (depth: number, inset: RowInset) => ROW_INSET[inset].px + rowPadding(depth) + 10;
+// ─── Tree levels ──────────────────────────────────────────────────────────────
+// The top level shows an icon. Nested levels show the label alone, smaller and shorter as they go
+// down, so the depth reads at a glance: 40, 32, 28 then 26 px rows. Three levels read best; a
+// fourth takes the third's text.
+
+const LEVEL = [
+  { text: 'text-sm', py: 'py-2.5' },
+  { text: 'text-sm', py: 'py-1.5' },
+  { text: 'text-xs', py: 'py-1.5' },
+  { text: 'text-xs', py: 'py-1.25' },
+] as const;
+const level = (depth: number) => LEVEL[Math.min(depth, LEVEL.length - 1)];
+
+// Where a nested row's label starts, from the edge of the rows' container. The first nested level
+// lines up under the top-level label (12 px padding, 20 px icon and 12 px gap past the row margin),
+// or, in the collapsed sub-menu's panel, which has no top-level row, at the panel's edge; each
+// level after it is 16 px further. A nested row's pill starts 10 px before its label, so the guide
+// lines on its left stay visible.
+const NESTED_PADDING = 10;
+
+const useNestedGeometry = (inset: RowInset) => {
+  const { labelOrigin } = useContext(SidebarContext);
+  const origin = labelOrigin ?? ROW_INSET[inset].px + 44;
+  const labelX = (depth: number) => origin + 16 * (depth - 1);
+  return {
+    /** Margin (and, for a `<button>`, width) that puts a nested row's pill at its own indent. */
+    rowStyle: (depth: number, button: boolean) => {
+      const left = labelX(depth) - NESTED_PADDING;
+      return button
+        ? { marginLeft: left, width: `calc(100% - ${left + ROW_INSET[inset].px}px)` }
+        : { marginLeft: left };
+    },
+    /** The guide line under a row's children: under a top-level icon, or 4 px before the label. */
+    guideLeft: (depth: number) => (depth === 0 ? ROW_INSET[inset].px + 22 : labelX(depth) - 4),
+  };
+};
 
 const ACTIVE_ROW: Record<SidebarActiveStyle, string> = {
   tint: 'bg-brand-500/10 text-brand-600 dark:text-brand-400',
   solid: 'bg-brand-500 text-white',
 };
-const IDLE_ROW =
-  'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5';
+const HOVER_ROW = 'hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5';
+const IDLE_ROW = clsx('text-[var(--color-text-secondary)]', HOVER_ROW);
+// A sub-menu that holds the active row: the accent on the text, without the pill.
+const TRAIL_ROW = 'text-brand-600 dark:text-brand-400 hover:bg-black/5 dark:hover:bg-white/5';
+// A nested sub-menu without a page of its own only groups rows.
+const GROUPING_ROW = clsx('font-normal text-[var(--color-text-muted)]', HOVER_ROW);
+
+// ─── Active trail ─────────────────────────────────────────────────────────────
+// Each row tells the sub-menu around it whether it is active, and each sub-menu passes on whether
+// it holds an active row, so every sub-menu on the way to the current page knows it.
+
+type ReportActive = (key: string, active: boolean) => void;
+const TrailContext = createContext<ReportActive | null>(null);
+
+const useReportActive = (active: boolean) => {
+  const report = useContext(TrailContext);
+  const key = useId();
+  useEffect(() => {
+    if (!report) return;
+    report(key, active);
+    return () => report(key, false);
+  }, [report, key, active]);
+};
+
+// A 20 px box with a dot: the top-level row's icon when none is given.
+const DotIcon = ({ className }: { className?: string }) => (
+  <span className={clsx('flex items-center justify-center', className)}>
+    <span className="size-1.5 rounded-full bg-current" />
+  </span>
+);
 
 /** Line drawn above the footer and the collapse row. */
 export type SidebarFooterDivider = 'full' | 'inset' | 'none';
@@ -372,8 +436,12 @@ const SidebarBrand = ({
 // ─── Sidebar.Item ─────────────────────────────────────────────────────────────
 
 export type SidebarItemProps = {
-  /** Icon component (lucide-react or any React component accepting className). */
-  icon: ComponentType<{ className?: string }>;
+  /**
+   * Icon component (lucide-react or any React component accepting className). Drawn at the top
+   * level only, where it stays as the collapsed rail's mark (a dot without one); nested rows show
+   * their label alone.
+   */
+  icon?: ComponentType<{ className?: string }>;
   /** Item label. */
   label: string;
   /** Whether the item is active (highlighted). */
@@ -399,7 +467,7 @@ export type SidebarItemProps = {
 };
 
 const SidebarItem = ({
-  icon: Icon,
+  icon: Icon = DotIcon,
   label,
   active = false,
   href,
@@ -412,22 +480,27 @@ const SidebarItem = ({
   const collapsed = useSidebarCollapsed(collapsedProp);
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
+  useReportActive(active);
   // Picking an item in the Shell's drawer navigates: the drawer closes behind it.
   const shell = useShell();
   const ctx = useContext(SidebarContext);
   const closeDrawer = ctx.inDrawer && shell ? () => shell.setOpen(false) : undefined;
   const inset = useRowInset(collapsed);
+  const geometry = useNestedGeometry(inset);
+  const nested = !collapsed && depth > 0;
   const baseClass = clsx(
-    'group focus-visible:focus-indicator flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors',
+    'group focus-visible:focus-indicator flex items-center gap-3 rounded-lg font-medium transition-colors',
+    nested ? 'px-2.5' : collapsed ? 'justify-center px-2' : 'px-3',
+    level(nested ? depth : 0).py,
+    level(nested ? depth : 0).text,
     ROW_INSET[inset].margin,
-    collapsed ? 'justify-center px-2' : 'px-3',
     active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
   );
-  const style = !collapsed && depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined;
+  const style = nested ? geometry.rowStyle(depth, !href) : undefined;
 
   const content = (
     <>
-      <Icon className="h-5 w-5 shrink-0" />
+      {!nested && <Icon className="h-5 w-5 shrink-0" />}
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{label}</span>
@@ -480,14 +553,24 @@ const SidebarItem = ({
 };
 
 // ─── Sidebar.SubMenu ──────────────────────────────────────────────────────────
-// Expandable menu — clicking the trigger toggles a list of nested items. Sub-
-// menus nest (up to three levels reads well): each level indents its rows and
-// draws a guide line under them. In collapsed mode the trigger is icon-only and
-// opens the whole tree in a panel to its right.
+// Expandable menu: its trigger toggles a list of nested rows. Sub-menus nest (three levels read
+// best, a fourth works): nested rows show their label alone, smaller at each level, with a guide
+// line on their left. A sub-menu with a page of its own (`href` or `onClick`) splits its row: the
+// label opens the page and unfolds the list, a chevron only toggles it. A sub-menu that holds the
+// active row turns to the accent; a nested one without a page, which only groups rows, is muted.
+// In collapsed mode the trigger is icon-only and opens the whole tree in a panel to its right.
 
 export type SidebarSubMenuProps = {
-  icon: ComponentType<{ className?: string }>;
+  /** Icon component. Drawn at the top level only, like `Sidebar.Item`'s. */
+  icon?: ComponentType<{ className?: string }>;
   label: string;
+  /**
+   * The sub-menu's own page. The label then opens it, and unfolds the list, while a separate
+   * chevron only toggles the list. Without `href` or `onClick` the whole row toggles.
+   */
+  href?: string;
+  /** Click handler of the label, instead of `href`. It also unfolds the list. */
+  onClick?: () => void;
   /**
    * Open state of the nested list, when controlled. The panel the collapsed
    * sidebar opens beside the icon keeps its own state.
@@ -499,7 +582,11 @@ export type SidebarSubMenuProps = {
   onOpenChange?: (open: boolean) => void;
   /** Override the inherited collapsed state. */
   collapsed?: boolean;
-  /** Whether any child item is active. */
+  /**
+   * Highlights the row with the active pill: for a sub-menu whose own page is open. A sub-menu
+   * holding an active row shows it without this, with the accent on its text. In the collapsed
+   * rail the nested rows aren't mounted: pass `active` there to mark the sub-menu.
+   */
   active?: boolean;
   /** Optional badge shown right of label (hidden when collapsed). */
   badge?: ReactNode;
@@ -507,17 +594,11 @@ export type SidebarSubMenuProps = {
   children: ReactNode;
 };
 
-const SUBMENU_ROW = (active: boolean, activeStyle: SidebarActiveStyle, inset: RowInset) =>
-  clsx(
-    'group focus-visible:focus-indicator flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors',
-    ROW_INSET[inset].margin,
-    ROW_INSET[inset].width,
-    active ? ACTIVE_ROW[activeStyle] : IDLE_ROW
-  );
-
 const SidebarSubMenu = ({
-  icon: Icon,
+  icon: Icon = DotIcon,
   label,
+  href,
+  onClick,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
@@ -528,8 +609,11 @@ const SidebarSubMenu = ({
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
   const ctx = useContext(SidebarContext);
+  const shell = useShell();
   const inset = useRowInset(collapsed);
+  const geometry = useNestedGeometry(inset);
   const depth = useContext(SidebarDepthContext);
+  const listId = useId();
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen || active,
@@ -537,29 +621,49 @@ const SidebarSubMenu = ({
     name: 'Sidebar.SubMenu.open',
   });
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  // The rows below that say they are active, by key.
+  const [activeRows, setActiveRows] = useState<ReadonlySet<string>>(() => new Set());
+  const report = useCallback<ReportActive>((key, on) => {
+    setActiveRows((rows) => {
+      if (rows.has(key) === on) return rows;
+      const next = new Set(rows);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
+  const inTrail = activeRows.size > 0;
+  useReportActive(active || inTrail);
 
   // Collapsed mode: an icon-only trigger opening the tree in a panel to its
-  // right, rendered expanded and from the top level. Picking an item closes it.
+  // right, rendered expanded. Picking a row closes it.
   if (collapsed) {
     return (
       <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
         <Popover.Trigger
           title={label}
           aria-label={label}
-          className={clsx(SUBMENU_ROW(active, ctx.activeStyle, inset), 'justify-center px-2')}
+          className={clsx(
+            'group focus-visible:focus-indicator flex items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium transition-colors',
+            ROW_INSET[inset].margin,
+            ROW_INSET[inset].width,
+            active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
+          )}
         >
           <Icon className="h-5 w-5 shrink-0" />
         </Popover.Trigger>
         <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
+          {/* The panel has no top-level row: its rows are the first nested level, from its edge. */}
           <SidebarContext.Provider
             value={{
               collapsed: false,
               inDrawer: false,
               inset: 'tight',
               activeStyle: ctx.activeStyle,
+              labelOrigin: ROW_INSET.tight.px + NESTED_PADDING,
             }}
           >
-            <SidebarDepthContext.Provider value={0}>
+            <SidebarDepthContext.Provider value={1}>
               <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
                 {label}
               </p>
@@ -579,35 +683,125 @@ const SidebarSubMenu = ({
     );
   }
 
-  return (
-    <div>
+  const nested = depth > 0;
+  const ownPage = href !== undefined || onClick !== undefined;
+  const { text, py } = level(depth);
+  const padding = nested ? 'px-2.5' : 'px-3';
+  const tone = active
+    ? ACTIVE_ROW[ctx.activeStyle]
+    : inTrail
+      ? TRAIL_ROW
+      : nested && !ownPage
+        ? GROUPING_ROW
+        : IDLE_ROW;
+  const row = clsx(
+    'group flex items-center rounded-lg font-medium transition-colors',
+    text,
+    ROW_INSET[inset].margin,
+    tone
+  );
+  const toggle = () => setOpen((v) => !v);
+  const content = (
+    <>
+      {!nested && <Icon className="h-5 w-5 shrink-0" />}
+      <span className="flex-1 truncate">{label}</span>
+      {badge && <span className="shrink-0">{badge}</span>}
+    </>
+  );
+  const chevron = (
+    <ChevronRight
+      aria-hidden
+      className={clsx(
+        'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform',
+        open && 'rotate-90'
+      )}
+    />
+  );
+
+  let trigger;
+  if (ownPage) {
+    // The label opens the sub-menu's page and its list; picking it in the drawer closes the drawer.
+    const go = () => {
+      setOpen(true);
+      onClick?.();
+      if (ctx.inDrawer && shell) shell.setOpen(false);
+    };
+    const labelClass = clsx(
+      'focus-visible:focus-indicator flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left',
+      py,
+      padding
+    );
+    trigger = (
+      <div className={row} style={nested ? geometry.rowStyle(depth, false) : undefined}>
+        {href ? (
+          <a
+            href={href}
+            onClick={go}
+            className={labelClass}
+            aria-current={active ? 'page' : undefined}
+            data-sidebar-item=""
+          >
+            {content}
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={go}
+            className={labelClass}
+            aria-current={active ? 'page' : undefined}
+            data-sidebar-item=""
+          >
+            {content}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-label={`${label} sub-menu`}
+          className="focus-visible:focus-indicator mr-1 flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          {chevron}
+        </button>
+      </div>
+    );
+  } else {
+    trigger = (
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-expanded={open}
-        className={clsx(SUBMENU_ROW(active, ctx.activeStyle, inset), 'gap-3 px-3 text-left')}
-        style={depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined}
+        aria-controls={listId}
+        className={clsx(
+          row,
+          'focus-visible:focus-indicator gap-3 text-left',
+          py,
+          padding,
+          !nested && ROW_INSET[inset].width
+        )}
+        style={nested ? geometry.rowStyle(depth, true) : undefined}
       >
-        <Icon className="h-5 w-5 shrink-0" />
-        <span className="flex-1 truncate">{label}</span>
-        {badge && <span className="shrink-0">{badge}</span>}
-        <ChevronDown
-          className={clsx(
-            'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform',
-            open && 'rotate-180'
-          )}
-        />
+        {content}
+        {chevron}
       </button>
-      {open && (
-        <div className="relative">
-          <span
-            aria-hidden
-            className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-            style={{ left: guideLeft(depth, inset) }}
-          />
-          <SidebarDepthContext.Provider value={depth + 1}>{children}</SidebarDepthContext.Provider>
-        </div>
-      )}
+    );
+  }
+
+  // The list stays mounted while closed, so its active row still marks the trail.
+  return (
+    <div>
+      {trigger}
+      <div id={listId} hidden={!open} className="relative">
+        <span
+          aria-hidden
+          className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
+          style={{ left: geometry.guideLeft(depth) }}
+        />
+        <SidebarDepthContext.Provider value={depth + 1}>
+          <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
+        </SidebarDepthContext.Provider>
+      </div>
     </div>
   );
 };
