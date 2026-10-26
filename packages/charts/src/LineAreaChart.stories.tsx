@@ -237,6 +237,131 @@ export const ReferenceLineInChildren: Story = {
   },
 };
 
+// The point a series curve ends on, from its path: the last pair of numbers.
+const curveEnd = (curve: SVGPathElement) => {
+  const numbers = (curve.getAttribute('d') ?? '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  return { x: numbers[numbers.length - 2], y: numbers[numbers.length - 1] };
+};
+
+const SERIES_COUNT = 3;
+
+const curves = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGPathElement>('.recharts-area-curve'),
+];
+
+/** `variant="line"` draws the lines alone, with no fill under them. */
+export const LineVariant: Story = {
+  args: { ...MultiSeries.args, variant: 'line' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    // No gradient, and the area under each line has no fill.
+    await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(0);
+    for (const area of canvasElement.querySelectorAll('.recharts-area-area')) {
+      await expect(getComputedStyle(area).fill).toBe('none');
+    }
+  },
+};
+
+/** The default is still the area, with a gradient fill under each line. */
+export const AreaIsTheDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(SERIES_COUNT);
+    for (const area of canvasElement.querySelectorAll('.recharts-area-area')) {
+      await expect(getComputedStyle(area).fill).toMatch(/^url\(/);
+    }
+  },
+};
+
+/**
+ * `stacked` piles the series on each other, so the top line is their sum: the
+ * share of each in a total.
+ */
+export const Stacked: Story = {
+  args: {
+    categories: HOURS,
+    stacked: true,
+    yTitle: 'Requests / s',
+    series: [
+      { name: 'Reads', data: [120, 90, 160, 210, 180, 240, 200, 170, 130] },
+      { name: 'Writes', data: [40, 30, 70, 90, 80, 110, 90, 60, 50] },
+      { name: 'Other', data: [20, 25, 15, 30, 35, 25, 40, 30, 20] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    // The last point of the top line sits at the sum 130 + 50 + 20 = 200.
+    await waitFor(() => {
+      const top = curves(canvasElement)[2];
+      expect(curveEnd(top).y).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 200), 0);
+    });
+  },
+};
+
+/** Without `stacked`, the same series are drawn each from zero. */
+export const NotStackedByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Stacked.args, stacked: false },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    await waitFor(() => {
+      const top = curves(canvasElement)[2];
+      expect(curveEnd(top).y).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 20), 0);
+    });
+  },
+};
+
+/** `markers` draws a dot on every point. */
+export const Markers: Story = {
+  args: { ...MultiSeries.args, variant: 'line', markers: true },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.recharts-area-dot')).toHaveLength(
+        SERIES_COUNT * HOURS.length
+      )
+    );
+  },
+};
+
+/** No dot is drawn by default. */
+export const NoMarkersByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    await expect(canvasElement.querySelectorAll('.recharts-area-dot')).toHaveLength(0);
+  },
+};
+
+/**
+ * A series `style` is `solid` (the default smooth curve), `dashed`, or `step`,
+ * a line that jumps from one value to the next: a quota, a replica count.
+ */
+export const SeriesStyles: Story = {
+  args: {
+    categories: HOURS,
+    variant: 'line',
+    yTitle: 'Pods',
+    series: [
+      { name: 'Used', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] },
+      { name: 'Forecast', style: 'dashed', data: [14, 18, 24, 29, 25, 21, 24, 30, 32] },
+      { name: 'Quota', style: 'step', data: [20, 20, 25, 25, 30, 30, 35, 35, 40] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    const [solid, dashed, step] = curves(canvasElement);
+    await expect(solid.getAttribute('stroke-dasharray')).toBeNull();
+    await expect(dashed.getAttribute('stroke-dasharray')).toBe('6 4');
+    // A step line has square corners only; the others are smooth curves.
+    await expect(step.getAttribute('d')).not.toContain('C');
+    await expect(solid.getAttribute('d')).toContain('C');
+    await expect(dashed.getAttribute('d')).toContain('C');
+  },
+};
+
 /**
  * `referenceLines` draws a line at a value of the vertical axis, `intent`
  * picks its color from the theme (`neutral` by default), `dashed` dashes it and
