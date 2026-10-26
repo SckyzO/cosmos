@@ -214,6 +214,13 @@ label that needs more ends in an ellipsis and its row shows the full label in a 
 `maxWidth` to the same value as `width` for a fixed width. The collapsed rail (`collapsedWidth`)
 and the drawer keep their own widths.
 
+A collapsed `Sidebar` can open while the pointer rests on it, with `expandOnHover`:
+`"overlay"` opens it above the page after 150 ms, with a shadow, and the page does not move;
+`"push"` widens it and the page makes room. Keyboard focus entering the sidebar does the same,
+and Escape closes it. It only applies from `lg` up, on a pointer that can hover, never in the
+drawer, and it does not touch the collapsed state: `onCollapsedChange` is not called and the
+toggles keep their state.
+
 `SidebarToggle` is that toggle, to place anywhere else in the Shell (a header of
 your own, the Topbar's `leftActions`, the Sidebar's `footer`) with no props: it
 reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass it

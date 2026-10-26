@@ -17,9 +17,15 @@ import {
   User,
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectFocusRing, expectRefFocuses, transitionsEnd } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectRefFocuses,
+  mobileViewport,
+  transitionsEnd,
+} from '../storybook-helpers';
+import { Popover } from '../ui/Popover';
 import { Shell } from './Shell';
-import { Sidebar } from './Sidebar';
+import { Sidebar, type SidebarExpandOnHover } from './Sidebar';
 import { SidebarToggle } from './SidebarToggle';
 import { Topbar } from './Topbar';
 
@@ -1684,5 +1690,489 @@ export const ForwardsRefAndShowsTheFocusRing: Story = {
     await expectRefFocuses(panelRef, panel);
     await expectFocusRing(hamburger);
     await expectFocusRing(panel);
+  },
+};
+
+// ── Expand on hover ──────────────────────────────────────────────────────────
+
+const HoverNav = () => (
+  <>
+    <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+    <div className="py-3">
+      <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
+      <Sidebar.SubMenu icon={Layers} label="Library">
+        <Sidebar.Item label="Tokens" />
+        <Sidebar.Item label="Components" />
+      </Sidebar.SubMenu>
+      <Sidebar.Item icon={Settings} label="Settings" />
+    </div>
+  </>
+);
+
+// Cards from the page's left edge, so the sidebar is seen over them or pushing them.
+const HoverPage = () => (
+  <div className="p-6">
+    <div className="grid grid-cols-3 gap-4">
+      {[1, 2, 3, 4, 5, 6].map((n) => (
+        <div
+          key={n}
+          className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6"
+        >
+          <p className="text-2xs tracking-wider text-[var(--color-text-muted)] uppercase">
+            Card {n}
+          </p>
+          <p className="text-brand-600 dark:text-brand-400 mt-2 text-3xl font-bold">{n * 12}</p>
+        </div>
+      ))}
+    </div>
+    <button
+      type="button"
+      className="focus-visible:focus-indicator mt-6 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-secondary)]"
+    >
+      Page action
+    </button>
+  </div>
+);
+
+type HoverShellProps = Omit<React.ComponentProps<typeof Shell>, 'children' | 'sidebar'> & {
+  mode: SidebarExpandOnHover;
+  footer?: React.ReactNode;
+};
+
+// A Shell with a collapsed sidebar: the page beside it is what shows the mode.
+const HoverShell = ({ mode, footer, ...shell }: HoverShellProps) => (
+  <Shell
+    defaultSidebarCollapsed
+    topbar={<Topbar pageTitle="Servers" />}
+    sidebar={
+      <Sidebar expandOnHover={mode} footer={footer}>
+        <HoverNav />
+      </Sidebar>
+    }
+    {...shell}
+  >
+    <HoverPage />
+  </Shell>
+);
+
+const RAIL = 72;
+const EXPANDED = 264;
+
+const mainNav = (canvas: ReturnType<typeof within>) =>
+  canvas.getByRole('navigation', { name: 'Main navigation' });
+const navWidth = (nav: HTMLElement) => nav.getBoundingClientRect().width;
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// The test browser's pointer rests in the page's corner, over the sidebar, and Chromium reports it
+// once the page has laid out: a stray hover that would hold the sidebar open. Send it away first,
+// so that only what the test does counts.
+const settlePointer = async (nav: HTMLElement) => {
+  await pause(300);
+  await userEvent.unhover(nav);
+  await pause(150);
+};
+
+// Past the open delay and the width transition: what shows is the rail, or the expanded sidebar.
+const expectRail = (nav: HTMLElement) =>
+  waitFor(() => {
+    expect(navWidth(nav)).toBe(RAIL);
+    expect(within(nav).queryByText('Dashboard')).toBeNull();
+  });
+const expectExpanded = (nav: HTMLElement) =>
+  waitFor(() => {
+    expect(navWidth(nav)).toBe(EXPANDED);
+    expect(within(nav).getByText('Dashboard')).toBeVisible();
+  });
+
+/**
+ * `expandOnHover="overlay"`: after 150 ms over the collapsed rail, the sidebar opens at its
+ * expanded width above the page, with a shadow. The page does not move: the rail keeps its
+ * place in the layout. It closes when the pointer leaves. The collapsed state is not touched, so
+ * the toggles keep saying "Expand sidebar".
+ */
+export const HoverOverlaysThePage: Story = {
+  render: () => <HoverShell mode="overlay" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    const main = canvas.getByRole('main');
+    const pageLeft = main.getBoundingClientRect().left;
+    await expect(navWidth(nav)).toBe(RAIL);
+
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+    await transitionsEnd(nav);
+    // The page stays where it was, under the sidebar, which is on top of it.
+    await expect(main.getBoundingClientRect().left).toBe(pageLeft);
+    const box = nav.getBoundingClientRect();
+    await expect(nav).toContainElement(
+      document.elementFromPoint(box.left + EXPANDED - 24, box.top + 300) as HTMLElement
+    );
+    await expect(getComputedStyle(nav).boxShadow).not.toBe('none');
+
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+    await expect(main.getBoundingClientRect().left).toBe(pageLeft);
+  },
+};
+
+/**
+ * `expandOnHover="push"`: the sidebar's width grows over 300 ms, after the same 150 ms, and the
+ * page makes room for it, then moves back when the pointer leaves.
+ */
+export const HoverPushesThePage: Story = {
+  render: () => <HoverShell mode="push" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    const main = canvas.getByRole('main');
+    await expect(main.getBoundingClientRect().left).toBe(RAIL);
+
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+    await waitFor(() => expect(main.getBoundingClientRect().left).toBe(EXPANDED));
+    await expect(getComputedStyle(nav).boxShadow).toBe('none');
+
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+    await waitFor(() => expect(main.getBoundingClientRect().left).toBe(RAIL));
+  },
+};
+
+/** The pointer must rest on the rail for a moment: right after it arrives, it is still the rail. */
+export const HoverOpensAfterTheDelayAndLeavingCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="overlay" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await expect(navWidth(nav)).toBe(RAIL);
+    await expect(within(nav).queryByText('Dashboard')).toBeNull();
+    await expectExpanded(nav);
+
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+  },
+};
+
+/** Crossing the rail on the way to the page opens nothing, in either mode. */
+export const CrossingTheRailOpensNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="push" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    const main = canvas.getByRole('main');
+    await settlePointer(nav);
+    await userEvent.hover(nav);
+    await pause(40);
+    await userEvent.unhover(nav);
+    await pause(400);
+    await expect(navWidth(nav)).toBe(RAIL);
+    await expect(main.getBoundingClientRect().left).toBe(RAIL);
+  },
+};
+
+/** The keyboard opens it with no delay, Escape closes it, and leaving closes it. */
+export const FocusOpensAndEscapeOrLeavingCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="overlay" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    const inNav = () => nav.contains(document.activeElement);
+    const leave = async () => {
+      for (let i = 0; i < 8 && inNav(); i += 1) await userEvent.tab();
+      await expect(inNav()).toBe(false);
+      // Past the delay that tells leaving from moving to another element.
+      await pause(250);
+    };
+
+    await settlePointer(nav);
+    // Tab onto the first row: it opens, and focus stays on that row, not on <body>.
+    await userEvent.tab();
+    await expect(inNav()).toBe(true);
+    await expectExpanded(nav);
+    await expect(within(nav).getByRole('button', { name: 'Dashboard' })).toHaveFocus();
+
+    // Escape closes it, with focus where it was.
+    await userEvent.keyboard('{Escape}');
+    await expectRail(nav);
+    await expect(within(nav).getByRole('button', { name: 'Dashboard' })).toHaveFocus();
+
+    // It stays closed while focus moves inside, and until focus comes back.
+    await userEvent.tab();
+    await expect(inNav()).toBe(true);
+    await pause(300);
+    await expect(navWidth(nav), 'closed while focus moves inside').toBe(RAIL);
+    await leave();
+    await expect(navWidth(nav), 'closed after focus left').toBe(RAIL);
+    await userEvent.tab({ shift: true });
+    await userEvent.tab({ shift: true });
+    await expect(inNav()).toBe(true);
+    await expectExpanded(nav);
+
+    // Focus leaving closes it.
+    await leave();
+    await expectRail(nav);
+  },
+};
+
+/**
+ * Pressing Escape with the pointer inside closes it too, and it stays closed until the pointer
+ * leaves and comes back.
+ */
+export const EscapeClosesUntilThePointerReturns: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="push" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+
+    await userEvent.keyboard('{Escape}');
+    await expectRail(nav);
+    // Still over it: nothing re-opens it.
+    await userEvent.hover(within(nav).getByRole('button', { name: 'Settings' }));
+    await pause(400);
+    await expect(navWidth(nav)).toBe(RAIL);
+
+    await userEvent.unhover(nav);
+    await pause(250);
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+  },
+};
+
+const AccountMenu = () => (
+  <Popover>
+    <Popover.Trigger
+      aria-label="Account"
+      className="flex size-8 items-center justify-center rounded-full bg-[var(--color-bg-base)] text-[var(--color-text-secondary)]"
+    >
+      <User className="h-4 w-4" />
+    </Popover.Trigger>
+    <Popover.Content position="right" aria-label="Account menu">
+      <button type="button" className="px-3 py-2 text-sm">
+        Sign out
+      </button>
+    </Popover.Content>
+  </Popover>
+);
+
+/**
+ * A popover open inside the sidebar takes the first Escape, as the top overlay: the sidebar stays
+ * open, and the second Escape closes it.
+ */
+export const EscapeGoesToAnOpenPopoverFirst: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="overlay" footer={<AccountMenu />} />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+
+    await userEvent.click(within(nav).getByRole('button', { name: 'Account' }));
+    const signOut = await within(document.body).findByRole('button', { name: 'Sign out' });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(signOut).not.toBeVisible());
+    // The popover took it. The pointer is still over the sidebar, which is open.
+    await pause(250);
+    await expect(navWidth(nav)).toBe(EXPANDED);
+
+    await userEvent.keyboard('{Escape}');
+    await expectRail(nav);
+  },
+};
+
+/**
+ * Expanding on hover does not move the collapsed state: no `onCollapsedChange`, and every toggle
+ * still says the sidebar is collapsed.
+ */
+export const HoverKeepsTheShellCollapsed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <HoverShell
+      mode="overlay"
+      onCollapsedChange={args.onCollapsedChange}
+      footer={<SidebarToggle variant="panel" />}
+    />
+  ),
+  play: async ({ args, canvas }) => {
+    const nav = mainNav(canvas);
+    const toggles = () => canvas.getAllByRole('button', { name: /^(Collapse|Expand) sidebar$/ });
+    const expectCollapsedToggles = async () => {
+      await expect(toggles()).toHaveLength(2);
+      for (const toggle of toggles()) {
+        await expect(toggle).toHaveAccessibleName('Expand sidebar');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      }
+    };
+    await expectCollapsedToggles();
+
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+    await expectCollapsedToggles();
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+    await expectCollapsedToggles();
+    await expect(args.onCollapsedChange).not.toHaveBeenCalled();
+  },
+};
+
+/** Outside a Shell too: a controlled `collapsed` stays, and `onCollapsedChange` is not called. */
+export const HoverKeepsAControlledSidebarCollapsed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <Sidebar collapsed expandOnHover="push" onCollapsedChange={args.onCollapsedChange}>
+        <HoverNav />
+      </Sidebar>
+      <main className="flex-1">
+        <HoverPage />
+      </main>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const nav = mainNav(canvas);
+    const toggle = () => canvas.getByRole('button', { name: /^(Collapse|Expand) sidebar$/ });
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+    await expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+    await expect(args.onCollapsedChange).not.toHaveBeenCalled();
+  },
+};
+
+/**
+ * The toggle works under the pointer: pressed while the sidebar is open on hover, it keeps it
+ * open for good; pressed again, it shows the rail at once, even with the pointer still over it,
+ * and the next hover opens it again.
+ */
+export const ToggleUnderThePointerPinsThenShowsTheRail: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() },
+  render: (args) => (
+    <HoverShell
+      mode="overlay"
+      onCollapsedChange={args.onCollapsedChange}
+      footer={<SidebarToggle variant="panel" />}
+    />
+  ),
+  play: async ({ args, canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+
+    await userEvent.click(within(nav).getByRole('button', { name: 'Expand sidebar' }));
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
+    const collapse = within(nav).getByRole('button', { name: 'Collapse sidebar' });
+    await expect(collapse).toHaveAttribute('aria-expanded', 'true');
+    // Open for good: no longer over the page, its shadow fades out.
+    await waitFor(() => expect(getComputedStyle(nav).boxShadow).toBe('none'));
+    await expect(navWidth(nav)).toBe(EXPANDED);
+
+    await userEvent.click(collapse);
+    await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(true);
+    await expectRail(nav);
+    await pause(400);
+    await expect(navWidth(nav)).toBe(RAIL);
+
+    await userEvent.unhover(nav);
+    await pause(250);
+    await userEvent.hover(nav);
+    await expectExpanded(nav);
+    await userEvent.unhover(nav);
+    await expectRail(nav);
+  },
+};
+
+/** The default is off: the rail stays a rail under the pointer and under focus. */
+export const RailStaysARailByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode={false} />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await userEvent.tab();
+    await expect(nav).toContainElement(document.activeElement as HTMLElement);
+    await pause(400);
+    await expect(navWidth(nav)).toBe(RAIL);
+    await expect(within(nav).queryByText('Dashboard')).toBeNull();
+  },
+};
+
+/** Below `lg` there is no hover to expand on: the standalone rail stays a rail. */
+export const BelowLgNothingExpands: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar collapsed expandOnHover="overlay">
+        <HoverNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await userEvent.tab();
+    await pause(500);
+    await expect(navWidth(nav)).toBe(RAIL);
+    await expect(within(nav).queryByText('Dashboard')).toBeNull();
+  },
+};
+
+// A device with no hover (a touch screen), whatever its width: the media query says so.
+const realMatchMedia = window.matchMedia.bind(window);
+
+/** A pointer that cannot hover (a touch screen) never expands it, at any width. */
+export const TouchScreenNothingExpands: Story = {
+  tags: ['!dev', '!autodocs'],
+  beforeEach: () => {
+    window.matchMedia = (query: string) =>
+      query.includes('(hover: hover)')
+        ? ({
+            media: query,
+            matches: false,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+          } as unknown as MediaQueryList)
+        : realMatchMedia(query);
+    return () => {
+      window.matchMedia = realMatchMedia;
+    };
+  },
+  render: () => <HoverShell mode="push" />,
+  play: async ({ canvas }) => {
+    const nav = mainNav(canvas);
+    await userEvent.hover(nav);
+    await userEvent.tab();
+    await pause(500);
+    await expect(navWidth(nav)).toBe(RAIL);
+    await expect(canvas.getByRole('main').getBoundingClientRect().left).toBe(RAIL);
+  },
+};
+
+/**
+ * The Shell's drawer is already expanded: the option changes nothing there, and the sidebar
+ * stays a panel that fills the drawer, not an overlay of its own.
+ */
+export const DrawerIgnoresExpandOnHover: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <HoverShell mode="overlay" defaultSidebarOpen />,
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Navigation menu' });
+    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    const nav = within(dialog).getByRole('navigation', { name: 'Main navigation' });
+    const width = navWidth(nav);
+    // The panel's width, less a pixel.
+    await expect(width).toBeGreaterThanOrEqual(dialog.getBoundingClientRect().width - 1);
+    await userEvent.hover(nav);
+    await pause(500);
+    await expect(navWidth(nav)).toBe(width);
+    await expect(getComputedStyle(nav).position).not.toBe('absolute');
+    await expect(getComputedStyle(nav).boxShadow).toBe('none');
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
   },
 };
