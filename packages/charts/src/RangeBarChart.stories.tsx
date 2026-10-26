@@ -7,6 +7,7 @@ import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
+  expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
   legendTexts,
@@ -395,12 +396,26 @@ export const NoHorizontalOverflow: Story = {
   },
 };
 
-/**
- * Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its rows.
- * Recharts reads left and right the other way round when the rows are vertical.
- */
+/** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its rows, ArrowDown to the next. */
 export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...MaintenanceWindows.args, ariaLabel: 'Maintenance windows' },
-  play: expectAccessibleChart({ keyboard: true, next: '{ArrowLeft}' }),
+  play: expectAccessibleChart({ keyboard: true, next: '{ArrowDown}' }),
+};
+
+/**
+ * The rows run down the chart: ArrowDown and ArrowRight go to the next row,
+ * ArrowUp and ArrowLeft to the previous one. Recharts 3.10.1 reads them the
+ * other way round and ignores Up and Down: the frame corrects it.
+ */
+export const ArrowKeysWalkTheRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...MaintenanceWindows.args, ariaLabel: 'Maintenance windows' },
+  play: expectCategoryArrowKeys([
+    'PAR1 rack A12',
+    'PAR1 rack B03',
+    'FRA2 rack C07',
+    'LON1 rack D01',
+    'TYO1 rack E09',
+  ]),
 };

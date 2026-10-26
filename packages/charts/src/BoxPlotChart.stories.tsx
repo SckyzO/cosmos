@@ -7,6 +7,7 @@ import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
+  expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
   legendTexts,
@@ -435,4 +436,14 @@ export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...ResponseTimes.args, ariaLabel: 'Response times per service' },
   play: expectAccessibleChart({ keyboard: true }),
+};
+
+/**
+ * A horizontal chart has its categories down the chart: ArrowDown and
+ * ArrowRight go to the next one, ArrowUp and ArrowLeft to the previous one.
+ */
+export const HorizontalArrowKeysWalkTheCategories: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Horizontal.args, ariaLabel: 'Response times per service' },
+  play: expectCategoryArrowKeys(SERVICES),
 };

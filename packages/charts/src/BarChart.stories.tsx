@@ -14,6 +14,7 @@ import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
+  expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
   expectTextFollowsTextSize,
@@ -640,13 +641,24 @@ export const NamedAndKeyboardReachable: Story = {
 
 /**
  * Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys
- * walk its bars. Recharts reads left and right the other way round when the
- * bars are horizontal.
+ * walk its bars. With the bars horizontal the categories run down the chart,
+ * and ArrowDown goes to the next one.
  */
 export const HorizontalNamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...Horizontal.args, ariaLabel: 'Active racks per datacenter' },
-  play: expectAccessibleChart({ keyboard: true, next: '{ArrowLeft}' }),
+  play: expectAccessibleChart({ keyboard: true, next: '{ArrowDown}' }),
+};
+
+/**
+ * With the categories on the vertical axis, ArrowDown and ArrowRight go to the
+ * next category and ArrowUp and ArrowLeft to the previous one. Recharts 3.10.1
+ * reads them the other way round and ignores Up and Down: the frame corrects it.
+ */
+export const HorizontalArrowKeysWalkTheCategories: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Horizontal.args, ariaLabel: 'Active racks per datacenter' },
+  play: expectCategoryArrowKeys(DCS),
 };
 
 const LATE_FAMILY = 'CosmosLateFont';

@@ -107,6 +107,45 @@ export const expectAccessibleChart =
     await closeTooltip(canvasElement);
   };
 
+/**
+ * Play function for a chart with its categories on the vertical axis (a
+ * horizontal `BarChart`, `RangeBarChart`, `BoxPlotChart`): Tab reaches the
+ * chart, which announces `categories[0]`, then ArrowDown and ArrowRight go to
+ * the next category and ArrowUp and ArrowLeft to the previous one, and the ends
+ * stay put. The tooltip names the category it is on.
+ */
+export const expectCategoryArrowKeys =
+  (categories: string[]) =>
+  async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const svg = () => surface(canvasElement) as SVGSVGElement;
+    await waitFor(() => expect(svg()).toHaveAttribute('role', 'application'));
+    // A legend before the chart takes its Tab stops first.
+    for (let i = 0; i < 12 && document.activeElement !== svg(); i++) await userEvent.tab();
+    await expect(svg()).toHaveFocus();
+    const on = (index: number) =>
+      waitFor(() => expect(tooltipCard(canvasElement)).toHaveTextContent(categories[index]));
+    await on(0);
+    // Up at the first category stays on it.
+    await userEvent.keyboard('{ArrowUp}');
+    await on(0);
+    const walk: [key: string, index: number][] = [
+      ['{ArrowDown}', 1],
+      ['{ArrowDown}', 2],
+      ['{ArrowUp}', 1],
+      ['{ArrowRight}', 2],
+      ['{ArrowLeft}', 1],
+      ['{ArrowRight}', 2],
+      ['{ArrowUp}', 1],
+      ['{ArrowLeft}', 0],
+    ];
+    for (const [key, index] of walk) {
+      await userEvent.keyboard(key);
+      await on(index);
+    }
+    await userEvent.tab();
+    await closeTooltip(canvasElement);
+  };
+
 const px = (el: Element | null | undefined) => parseFloat(el ? getComputedStyle(el).fontSize : '');
 
 /** The sizes, in px, of the chart text in `root`: tick labels, axis title, legend. */
