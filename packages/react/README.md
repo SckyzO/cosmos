@@ -260,6 +260,27 @@ the messages and answers `onSend`:
 
 A bot message with `streaming: true` shows a caret while its text grows.
 
+## Slider
+
+`Slider` is a position on a scale, or a range of it. One `value` (with `defaultValue` and
+`onChange(value)`): a number draws one handle, a pair `[minimum, maximum]` draws two, which can meet
+but never cross. `min`, `max` and `step` default to 0, 100 and 1. `label` sits on the left of the
+header, the current value on the right, and `min` and `max` under the track; `formatValue(n)` writes
+all of them and the value a screen reader announces. `label` also names the handles ("Price minimum"
+and "Price maximum" for a range): without a visible label, give `aria-label`. `marks` draws a tick at
+every `step`, `intent` colors the fill (`brand`, `success`, `warning` or `danger`).
+
+```tsx
+<Slider
+  label="Price"
+  defaultValue={[200, 800]}
+  max={1000}
+  step={10}
+  formatValue={(n) => `$${n}`}
+  onChange={(range) => setPrice(range)}
+/>
+```
+
 ## Application shell
 
 `Shell` lays out a `Topbar`, a `Sidebar` and the page, and owns the sidebar's
