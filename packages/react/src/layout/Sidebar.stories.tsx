@@ -572,6 +572,360 @@ export const TreeRowsSplitAndTrail: Story = {
   },
 };
 
+// ── Content width ────────────────────────────────────────────────────────────
+
+const ROOM_A = 'Room A, compute and storage';
+const ROOM_B = 'Room B, GPU and high-density hall';
+// Wider than the default maximum (320 px) at its level: the sidebar stops growing, the label ends
+// in an ellipsis.
+const ROOM_C = 'Room C, GPU and high-density hall, mezzanine';
+
+// Sites hold rooms. Paris is open, with a room that already asks for more than the minimum width;
+// Lyon is folded, with a wider one; `longRoom` adds one no width holds, under Paris.
+const SitesNav = ({ longRoom = false }: { longRoom?: boolean }) => (
+  <Sidebar.Section label="Infrastructure">
+    <Sidebar.Item icon={LayoutDashboard} label="Overview" />
+    <Sidebar.SubMenu icon={Globe} label="Paris HPC Datacenter" defaultOpen>
+      <Sidebar.Item label={ROOM_A} />
+      {longRoom && <Sidebar.Item label={ROOM_C} />}
+    </Sidebar.SubMenu>
+    <Sidebar.SubMenu icon={Globe} label="Lyon Datacenter">
+      <Sidebar.Item label={ROOM_B} />
+    </Sidebar.SubMenu>
+  </Sidebar.Section>
+);
+
+const widthOf = (el: Element) => el.getBoundingClientRect().width;
+
+// The width once it has stopped moving: no transition on the nav, and the same over two reads
+// a frame apart (the width is set a render after the change that moves it).
+const settledWidth = async (nav: Element) => {
+  await nav.ownerDocument.fonts.ready;
+  let last = -1;
+  await waitFor(
+    async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const width = widthOf(nav);
+      const settled = width === last && nav.getAnimations().length === 0;
+      last = width;
+      await expect(settled).toBe(true);
+    },
+    { timeout: 4000 }
+  );
+  return last;
+};
+
+/**
+ * The expanded sidebar is as wide as its widest visible row, deep levels included: from `width`
+ * (264 px) up to `maxWidth` (320 px). Unfold Lyon and the sidebar widens for its longer room; fold
+ * it and it narrows back, never below `width`.
+ */
+export const WidthFollowsContent: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Rackscope" subtitle="Datacenter" />
+        <SitesNav />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+/**
+ * Past `maxWidth` a label ends in an ellipsis, and its row shows the full label in a tooltip on
+ * hover and on keyboard focus. Rows whose label shows whole have no tooltip.
+ */
+export const LongLabelsHitTheMaxWidth: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Rackscope" subtitle="Datacenter" />
+        <SitesNav longRoom />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+/** With short labels the expanded sidebar keeps `width`, whatever `maxWidth` allows. */
+export const ShortLabelsKeepTheMinimumWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [width, setWidth] = useState(264);
+    return (
+      <Wrap>
+        <Sidebar width={width}>
+          <Nav />
+        </Sidebar>
+        <button type="button" onClick={() => setWidth(300)} className="h-9 self-start">
+          Raise width
+        </button>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(await settledWidth(nav)).toBe(264);
+    // `width` is the minimum, so a larger one raises it.
+    await userEvent.click(canvas.getByRole('button', { name: 'Raise width' }));
+    await waitFor(() => expect(widthOf(nav)).toBe(300), { timeout: 3000 });
+    // Nothing is cut, so nothing has a tooltip.
+    await expect(
+      within(canvasElement.ownerDocument.body).queryAllByRole('tooltip', { hidden: true })
+    ).toHaveLength(0);
+  },
+};
+
+/** Unfolding a sub-menu with a longer label widens the sidebar, folding it narrows it back. */
+export const WidthGrowsWithTheUnfoldedRows: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <SitesNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    // Paris's room asks for more than the 264 px minimum, and less than the 320 px maximum.
+    const open = await settledWidth(nav);
+    await expect(open).toBeGreaterThan(264);
+    await expect(open).toBeLessThan(320);
+    // Lyon's room is folded away: it does not count yet.
+    await expect(canvas.getByText(ROOM_B)).not.toBeVisible();
+
+    const lyon = canvas.getByRole('button', { name: 'Lyon Datacenter' });
+    await userEvent.click(lyon);
+    await waitFor(() => expect(widthOf(nav)).toBeGreaterThan(open), { timeout: 3000 });
+    const wider = await settledWidth(nav);
+    await expect(wider).toBeGreaterThan(open);
+    await expect(wider).toBeLessThanOrEqual(320);
+    // Whole in the room it asked for: no ellipsis, no tooltip.
+    const label = canvas.getByText(ROOM_B);
+    await expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+    await expect(
+      within(canvasElement.ownerDocument.body).queryAllByRole('tooltip', { hidden: true })
+    ).toHaveLength(0);
+
+    await userEvent.click(lyon);
+    await waitFor(() => expect(widthOf(nav)).toBeLessThan(wider), { timeout: 3000 });
+    await expect(await settledWidth(nav)).toBe(open);
+  },
+};
+
+/** A label longer than the maximum is cut at it, and its row names it in full in a tooltip. */
+export const CutLabelShowsItsFullNameInATooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <SitesNav longRoom />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const tip = (name: string) => body.queryByRole('tooltip', { name, hidden: true });
+    await expect(await settledWidth(nav)).toBe(320);
+
+    // The label is cut with an ellipsis; the row that shows another label whole is not.
+    const cut = canvas.getByRole('button', { name: ROOM_C });
+    const label = within(cut).getByText(ROOM_C);
+    await expect(getComputedStyle(label).textOverflow).toBe('ellipsis');
+    await expect(label.scrollWidth).toBeGreaterThan(label.clientWidth);
+    const whole = canvas.getByRole('button', { name: ROOM_A });
+    await expect(within(whole).getByText(ROOM_A).scrollWidth).toBeLessThanOrEqual(
+      within(whole).getByText(ROOM_A).clientWidth
+    );
+    // The tooltip's wrapper leaves the row where it is: the same indent, margin and height.
+    const box = (row: Element) => row.getBoundingClientRect();
+    await expect(box(cut).left).toBe(box(whole).left);
+    await expect(box(cut).right).toBe(box(whole).right);
+    await expect(box(cut).height).toBe(box(whole).height);
+    await expect(nav.getBoundingClientRect().right - box(cut).right).toBe(21);
+    // Only the cut row has a tooltip.
+    await expect(tip(ROOM_C)).not.toBeNull();
+    await expect(tip(ROOM_A)).toBeNull();
+    await expect(whole).not.toHaveAttribute('aria-describedby');
+    await expect(tip(ROOM_C)).toHaveClass('opacity-0');
+
+    // Hover shows it, to the right of the sidebar.
+    await userEvent.hover(cut);
+    await waitFor(() => expect(tip(ROOM_C)).toHaveClass('opacity-100'));
+    await expect(cut).toHaveAttribute('aria-describedby', tip(ROOM_C)!.id);
+    await expect(tip(ROOM_C)!.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      nav.getBoundingClientRect().right
+    );
+    await userEvent.unhover(cut);
+    await waitFor(() => expect(tip(ROOM_C)).toHaveClass('opacity-0'));
+
+    // So does keyboard focus.
+    for (let i = 0; i < 12 && cut !== document.activeElement; i += 1) await userEvent.tab();
+    await expect(cut).toHaveFocus();
+    await waitFor(() => expect(tip(ROOM_C)).toHaveClass('opacity-100'));
+  },
+};
+
+const SUB_PLAIN = 'Room D, GPU and high-density hall, mezzanine';
+const SUB_SPLIT = 'Room E, storage and backup hall, north mezzanine';
+
+/** A sub-menu's row, plain or split in a label and a chevron, names its cut label like an item. */
+export const CutSubMenuLabelsShowTheirFullName: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.SubMenu icon={Globe} label="Paris HPC Datacenter" defaultOpen>
+          <Sidebar.SubMenu label={SUB_PLAIN}>
+            <Sidebar.Item label="Rack C01" />
+          </Sidebar.SubMenu>
+          <Sidebar.SubMenu label={SUB_SPLIT} onClick={() => {}}>
+            <Sidebar.Item label="Rack S01" />
+          </Sidebar.SubMenu>
+        </Sidebar.SubMenu>
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const tip = (name: string) => body.queryByRole('tooltip', { name, hidden: true });
+    await expect(
+      await settledWidth(canvas.getByRole('navigation', { name: 'Main navigation' }))
+    ).toBe(320);
+
+    // The plain trigger shows its tooltip, and still toggles its list.
+    const plain = canvas.getByRole('button', { name: SUB_PLAIN });
+    await expect(getComputedStyle(within(plain).getByText(SUB_PLAIN)).textOverflow).toBe(
+      'ellipsis'
+    );
+    await userEvent.hover(plain);
+    await waitFor(() => expect(tip(SUB_PLAIN)).toHaveClass('opacity-100'));
+    await userEvent.unhover(plain);
+    await userEvent.click(plain);
+    await expect(canvas.getByRole('button', { name: SUB_PLAIN })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+    await expect(canvas.getByRole('button', { name: 'Rack C01' })).toBeVisible();
+
+    // So does the label of a split row, whose chevron still only toggles.
+    const split = canvas.getByRole('button', { name: SUB_SPLIT });
+    await userEvent.hover(split);
+    await waitFor(() => expect(tip(SUB_SPLIT)).toHaveClass('opacity-100'));
+    await userEvent.unhover(split);
+    const chevron = canvas.getByRole('button', { name: `${SUB_SPLIT} sub-menu` });
+    await userEvent.click(chevron);
+    await expect(chevron).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('button', { name: 'Rack S01' })).toBeVisible();
+  },
+};
+
+/** A custom `maxWidth` moves the cap, and one equal to `width` gives back a fixed width. */
+export const MaxWidthIsHonoured: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [maxWidth, setMaxWidth] = useState(400);
+    return (
+      <Wrap>
+        <Sidebar maxWidth={maxWidth}>
+          <SitesNav longRoom />
+        </Sidebar>
+        <div className="flex gap-2 self-start p-2">
+          {[400, 300, 264].map((value) => (
+            <button key={value} type="button" onClick={() => setMaxWidth(value)}>
+              {`maxWidth ${value}`}
+            </button>
+          ))}
+        </div>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const tip = () => body.queryByRole('tooltip', { name: ROOM_C, hidden: true });
+    const pick = (value: number) =>
+      userEvent.click(canvas.getByRole('button', { name: `maxWidth ${value}` }));
+
+    // 400 px holds the room that 320 px cuts: wider than the default maximum, and no tooltip.
+    const roomy = await settledWidth(nav);
+    await expect(roomy).toBeGreaterThan(320);
+    await expect(roomy).toBeLessThanOrEqual(400);
+    await expect(tip()).toBeNull();
+    const label = canvas.getByText(ROOM_C);
+    await expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+
+    // A lower cap holds the sidebar at it, and cuts the room again.
+    await pick(300);
+    await waitFor(() => expect(widthOf(nav)).toBe(300), { timeout: 3000 });
+    await waitFor(() => expect(tip()).not.toBeNull());
+    await expect(canvas.getByText(ROOM_C).scrollWidth).toBeGreaterThan(
+      canvas.getByText(ROOM_C).clientWidth
+    );
+
+    // As low as `width`: the fixed width of before the sidebar followed its content.
+    await pick(264);
+    await waitFor(() => expect(widthOf(nav)).toBe(264), { timeout: 3000 });
+
+    await pick(400);
+    await waitFor(() => expect(widthOf(nav)).toBe(roomy), { timeout: 3000 });
+    await waitFor(() => expect(tip()).toBeNull());
+  },
+};
+
+/**
+ * Collapsed, the rail keeps `collapsedWidth` whatever the labels need. Expanded from a rail the
+ * sidebar was mounted as, it grows to the width of its rows once it has opened.
+ */
+export const CollapsedWidthIgnoresTheContent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar defaultCollapsed collapsedWidth={80} onCollapsedChange={() => {}}>
+        <SitesNav longRoom />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(await settledWidth(nav)).toBe(80);
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await waitFor(() => expect(widthOf(nav)).toBe(320), { timeout: 4000 });
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await waitFor(() => expect(widthOf(nav)).toBe(80), { timeout: 3000 });
+    // Back to the width it had: its rows are the same.
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await waitFor(() => expect(widthOf(nav)).toBe(320), { timeout: 3000 });
+  },
+};
+
+/** The width measured at mount shows at once: the sidebar does not grow from `width` on load. */
+export const FirstWidthShowsWithoutATransition: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [shown, setShown] = useState(false);
+    return (
+      <Wrap>
+        <button type="button" onClick={() => setShown(true)} className="h-9 self-start">
+          Show sidebar
+        </button>
+        {shown && (
+          <Sidebar>
+            <SitesNav />
+          </Sidebar>
+        )}
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Show sidebar' }));
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.getAnimations()).toHaveLength(0);
+    await expect(widthOf(nav)).toBeGreaterThan(264);
+  },
+};
+
 /** Collapsed, a sub-menu opens its whole tree in a panel to its right. */
 export const CollapsedSubMenuOpensFlyout: Story = {
   tags: ['!dev', '!autodocs'],
