@@ -7,8 +7,8 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { Avatar, type AvatarProps, type AvatarSize } from './Avatar';
-import { AVATAR_SIZE_CLASS } from './avatarSizes';
+import { Avatar, type AvatarProps, type AvatarShape, type AvatarSize } from './Avatar';
+import { AVATAR_SHAPE_CLASS, AVATAR_SIZE_CLASS } from './avatarSizes';
 
 export type AvatarGroupProps = {
   /** `Avatar` elements. Ignored when `avatars` is set. */
@@ -62,7 +62,7 @@ const OVERLAP_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string>> = {
 
 // Neutral, so the count reads apart from the accent-tinted people. The gray scale follows the theme.
 const OVERFLOW_CLASS =
-  'inline-flex shrink-0 items-center justify-center rounded-full bg-gray-100 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200';
+  'inline-flex shrink-0 items-center justify-center bg-gray-100 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200';
 
 const overflowName = (hidden: number) => (hidden === 1 ? '1 more person' : `${hidden} more people`);
 
@@ -70,7 +70,8 @@ const overflowName = (hidden: number) => (hidden === 1 ? '1 more person' : `${hi
  * AvatarGroup — overlapping avatars with a "+N" for the rest.
  *
  * Each avatar is ringed with the surface color (`--color-bg-panel`), so the stack reads on any
- * theme. The group is `role="group"`; the "+N" is an `img` named "N more people", or a button
+ * theme. The ring follows each avatar's `shape`, and the "+N" takes the shape of the avatar before
+ * it. The group is `role="group"`; the "+N" is an `img` named "N more people", or a button
  * with `onOverflowClick`.
  */
 export const AvatarGroup = ({
@@ -92,11 +93,15 @@ export const AvatarGroup = ({
   const visible = items.slice(0, shown);
   const hidden = items.length - visible.length;
 
-  const slot = (key: string | number, index: number, node: ReactNode) => (
+  // The "+N" follows the avatar before it, so a group of squares does not end on a circle.
+  const overflowShape = visible[visible.length - 1]?.props.shape ?? 'circle';
+
+  const slot = (key: string | number, index: number, shape: AvatarShape, node: ReactNode) => (
     <span
       key={key}
       className={clsx(
-        'relative inline-flex shrink-0 rounded-full ring-2 ring-[var(--color-bg-panel)] has-focus-visible:z-10',
+        'relative inline-flex shrink-0 ring-2 ring-[var(--color-bg-panel)] has-focus-visible:z-10',
+        AVATAR_SHAPE_CLASS[shape],
         index > 0 && OVERLAP_CLASS[spacing][size]
       )}
     >
@@ -118,6 +123,7 @@ export const AvatarGroup = ({
           onClick={() => onOverflowClick(hidden)}
           className={clsx(
             OVERFLOW_CLASS,
+            AVATAR_SHAPE_CLASS[overflowShape],
             AVATAR_SIZE_CLASS[size],
             'focus-visible:focus-indicator cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'
           )}
@@ -130,7 +136,11 @@ export const AvatarGroup = ({
         <span
           role="img"
           aria-label={label}
-          className={clsx(OVERFLOW_CLASS, AVATAR_SIZE_CLASS[size])}
+          className={clsx(
+            OVERFLOW_CLASS,
+            AVATAR_SHAPE_CLASS[overflowShape],
+            AVATAR_SIZE_CLASS[size]
+          )}
         >
           +{hidden}
         </span>
@@ -144,8 +154,10 @@ export const AvatarGroup = ({
       aria-label={ariaLabel}
       className={clsx('inline-flex items-center', className)}
     >
-      {visible.map((item, i) => slot(item.key ?? i, i, cloneElement(item, { size })))}
-      {overflow !== null && slot('overflow', visible.length, overflow)}
+      {visible.map((item, i) =>
+        slot(item.key ?? i, i, item.props.shape ?? 'circle', cloneElement(item, { size }))
+      )}
+      {overflow !== null && slot('overflow', visible.length, overflowShape, overflow)}
     </div>
   );
 };
