@@ -1441,6 +1441,375 @@ export const CellHelpers: Story = {
   },
 };
 
+type Teammate = {
+  id: string;
+  name: string;
+  email: string;
+  status: 'Active' | 'Suspended' | 'Invited';
+};
+
+const TEAMMATE_STATUSES: Teammate['status'][] = [
+  'Active',
+  'Active',
+  'Suspended',
+  'Active',
+  'Invited',
+  'Active',
+  'Active',
+  'Invited',
+  'Suspended',
+  'Active',
+  'Invited',
+  'Active',
+];
+
+const teammates: Teammate[] = TEAMMATE_STATUSES.map((status, i) => ({
+  id: `member-${i + 1}`,
+  name: `Member ${i + 1}`,
+  email: `member${i + 1}@example.org`,
+  status,
+}));
+
+const teammateColumns: ColumnDef<Teammate>[] = [
+  {
+    key: 'name',
+    label: 'Name',
+    width: '45%',
+    render: (r) => <TableIdentityCell title={r.name} subtitle={r.email} />,
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    width: '30%',
+    filterable: true,
+    filterValue: (r) => r.status,
+    render: (r) => r.status,
+  },
+];
+
+// The host owns the counts (they may come from a server); here they are read off the sample.
+const countOf = (status: Teammate['status']) => teammates.filter((m) => m.status === status).length;
+
+const statusTabs = {
+  columnKey: 'status',
+  allCount: teammates.length,
+  options: (['Active', 'Suspended', 'Invited'] as const).map((status) => ({
+    value: status,
+    label: status,
+    count: countOf(status),
+  })),
+};
+
+const teammateNames = (canvas: { getAllByText: (re: RegExp) => HTMLElement[] }) =>
+  canvas.getAllByText(/^Member \d+$/).map((el) => el.textContent);
+
+export const WithStatusTabs: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        searchPlaceholder="Search members…"
+        defaultSearchValue=""
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const all = canvas.getByRole('tab', { name: 'All 12' });
+    await expect(all).toHaveAttribute('aria-selected', 'true');
+    await expect(canvas.getByRole('tab', { name: 'Active 7' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('tab', { name: 'Suspended 2' }));
+    await expect(canvas.getByRole('tab', { name: 'Suspended 2' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(all).toHaveAttribute('aria-selected', 'false');
+    await expect(teammateNames(canvas)).toEqual(['Member 3', 'Member 9']);
+    await userEvent.click(all);
+    await expect(teammateNames(canvas)).toHaveLength(12);
+  },
+};
+
+export const TabsAreOnTopOfTheCard: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        defaultSearchValue=""
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const tablist = canvas.getByRole('tablist');
+    const card = tablist.closest('.rounded-2xl') as HTMLElement;
+    // Above the toolbar: the strip is the first thing in the card, the search follows it.
+    await expect(card.firstElementChild?.contains(tablist)).toBe(true);
+    await expect(
+      tablist.compareDocumentPosition(canvas.getByRole('searchbox', { name: 'Search rows' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    await expect(getComputedStyle(tablist).borderBottomWidth).toBe('1px');
+    const active = canvas.getByRole('tab', { name: /^All/ });
+    await expect(getComputedStyle(active).borderBottomWidth).toBe('2px');
+  },
+};
+
+export const ClearingTheFilterMovesTheTabBackToAll: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('tab', { name: 'Invited 3' }));
+    await expect(canvas.getByText('Active filters:')).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear Status filter' }));
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(teammateNames(canvas)).toHaveLength(12);
+    // And the other way: a filter picked in the chips bar's "Clear all" does the same.
+    await userEvent.click(canvas.getByRole('tab', { name: 'Active 7' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear all' }));
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+export const ColumnHeaderFilterSelectsItsTab: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /Status/ }));
+    await userEvent.click(
+      await within(document.body).findByRole('checkbox', { name: /Suspended/ })
+    );
+    await expect(canvas.getByRole('tab', { name: 'Suspended 2' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  },
+};
+
+export const StatusTabsKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // Roving tabindex: only the active tab is a tab stop.
+    const tabs = canvas.getAllByRole('tab');
+    await expect(tabs.map((t) => t.tabIndex)).toEqual([0, -1, -1, -1]);
+    tabs[0].focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('tab', { name: 'Active 7' })).toHaveFocus();
+    await expect(canvas.getByRole('tab', { name: 'Active 7' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(teammateNames(canvas)).toHaveLength(7);
+    await userEvent.keyboard('{End}');
+    await expect(canvas.getByRole('tab', { name: 'Invited 3' })).toHaveFocus();
+    await expect(teammateNames(canvas)).toHaveLength(3);
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveFocus();
+    await expect(teammateNames(canvas)).toHaveLength(12);
+  },
+};
+
+export const ControlledFilters: Story = {
+  render: function Render() {
+    const [filters, setFilters] = useState<Record<string, Set<string>>>({
+      status: new Set(['Suspended']),
+    });
+    return (
+      <Wrap>
+        <div className="mb-3 flex items-center gap-3 text-sm">
+          <Button variant="secondary" size="sm" onClick={() => setFilters({})}>
+            Reset from the host
+          </Button>
+          <span data-testid="host-filters">
+            {Object.entries(filters)
+              .map(([k, v]) => `${k}: ${Array.from(v).join(', ')}`)
+              .join(' | ') || 'no filter'}
+          </span>
+        </div>
+        <DataTable
+          rows={teammates}
+          columns={teammateColumns}
+          rowKey={(r) => r.id}
+          filterTabs={statusTabs}
+          filters={filters}
+          onFiltersChange={setFilters}
+          aria-label="Members"
+        />
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('tab', { name: 'Suspended 2' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await userEvent.click(canvas.getByRole('tab', { name: 'Invited 3' }));
+    await expect(canvas.getByTestId('host-filters')).toHaveTextContent('status: Invited');
+    await userEvent.click(canvas.getByRole('button', { name: 'Reset from the host' }));
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(teammateNames(canvas)).toHaveLength(12);
+  },
+};
+
+export const ControlledFiltersWaitForTheHost: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onFiltersChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        filters={{}}
+        onFiltersChange={args.onFiltersChange}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByRole('tab', { name: 'Active 7' }));
+    await expect(args.onFiltersChange).toHaveBeenCalledTimes(1);
+    const next = (args.onFiltersChange as ReturnType<typeof fn>).mock.calls[0][0] as Record<
+      string,
+      Set<string>
+    >;
+    await expect(Array.from(next.status)).toEqual(['Active']);
+    // The host passed nothing back: the table still shows everything.
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(teammateNames(canvas)).toHaveLength(12);
+  },
+};
+
+export const DefaultFiltersStartUncontrolled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onFiltersChange: fn() },
+  render: (args) => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        defaultFilters={{ status: new Set(['Invited']) }}
+        onFiltersChange={args.onFiltersChange}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas, args }) => {
+    await expect(canvas.getByRole('tab', { name: 'Invited 3' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(teammateNames(canvas)).toHaveLength(3);
+    // Uncontrolled: the table moves on its own, and still reports it.
+    await userEvent.click(canvas.getByRole('tab', { name: 'All 12' }));
+    await expect(args.onFiltersChange).toHaveBeenCalledWith({});
+    await expect(teammateNames(canvas)).toHaveLength(12);
+  },
+};
+
+export const StatusTabsMobile: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={{
+          ...statusTabs,
+          options: [
+            ...statusTabs.options,
+            { value: 'Archived', label: 'Archived', count: 0 },
+            { value: 'Pending review', label: 'Pending review', count: 0 },
+          ],
+        }}
+        aria-label="Members"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const list = canvas.getByRole('tablist');
+    // The strip scrolls inside the card instead of widening the page.
+    await expect(list.parentElement!.scrollWidth).toBeGreaterThan(list.parentElement!.clientWidth);
+  },
+};
+
+export const MultiValueFilterKeepsTheStripReachable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={teammates}
+        columns={teammateColumns}
+        rowKey={(r) => r.id}
+        filterTabs={statusTabs}
+        defaultFilters={{ status: new Set(['Active', 'Invited']) }}
+        aria-label="Teammates"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // Two values match no single tab: none is selected, and Tab still lands on the strip.
+    await expect(canvas.queryAllByRole('tab', { selected: true })).toHaveLength(0);
+    await userEvent.tab();
+    await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveFocus();
+  },
+};
+
 // ── Rows per page ────────────────────────────────────────────────────────────
 
 const PAGE_SIZES = [10, 25, 50];
