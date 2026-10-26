@@ -24,7 +24,12 @@ export type TabsVariant =
    * drawn as a bordered surface; inactive tabs sit recessed behind it, on the
    * panel's edge. Works in both orientations.
    */
-  | 'folder';
+  | 'folder'
+  /**
+   * Rounded triggers on a tinted track; the active one is filled with the
+   * accent. The panel has no surface of its own. Works in both orientations.
+   */
+  | 'pills';
 
 type TabsContextValue = {
   value: string;
@@ -68,6 +73,10 @@ const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
     horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--folder-border)]',
     vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--folder-border)]',
   },
+  pills: {
+    horizontal: 'flex w-max items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
+    vertical: 'flex shrink-0 flex-col gap-1 self-start rounded-xl bg-gray-100 p-1 dark:bg-gray-800',
+  },
 };
 
 type TriggerClasses = {
@@ -77,6 +86,10 @@ type TriggerClasses = {
   inactive: string;
   /** Hover feedback of an inactive tab, left out of a disabled one. */
   hover: string;
+  /** Text colors of an inactive tab, when `IDLE_TEXT` doesn't hold on its surface. */
+  idle?: string;
+  /** Focus indicator of the active tab, when it sits on an accent fill. */
+  activeFocus?: string;
 };
 
 const IDLE_TEXT = 'text-gray-500 dark:text-gray-400';
@@ -122,6 +135,26 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       hover: IDLE_HOVER,
     },
   },
+  // The track is gray-100 / gray-800, the active pill is filled with the accent: its ring is
+  // white, since a brand ring would vanish on the fill.
+  pills: {
+    horizontal: {
+      base: 'rounded-lg px-3.5 py-1.5',
+      active: 'bg-brand-500 text-white',
+      inactive: '',
+      hover: 'hover:text-gray-900 dark:hover:text-white',
+      idle: 'text-gray-600 dark:text-gray-300',
+      activeFocus: 'focus-visible:focus-indicator-on-accent',
+    },
+    vertical: {
+      base: 'justify-start rounded-lg px-3 py-2 text-left whitespace-nowrap',
+      active: 'bg-brand-500 text-white',
+      inactive: '',
+      hover: 'hover:text-gray-900 dark:hover:text-white',
+      idle: 'text-gray-600 dark:text-gray-300',
+      activeFocus: 'focus-visible:focus-indicator-on-accent',
+    },
+  },
 };
 
 const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
@@ -133,6 +166,7 @@ const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
     vertical:
       'flex-1 rounded-r-xl border border-l-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
   },
+  pills: { horizontal: 'pt-5', vertical: 'flex-1' },
 };
 
 export type TabsProps = {
@@ -147,7 +181,8 @@ export type TabsProps = {
   /**
    * Visual style. `underline` (default) marks the active tab with an accent
    * line. `folder` draws file-folder tabs attached to their panel, which then
-   * gets its own border, background and padding.
+   * gets its own border, background and padding. `pills` puts rounded
+   * triggers on a tinted track and fills the active one with the accent.
    */
   variant?: TabsVariant;
   children: ReactNode;
@@ -329,11 +364,12 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       disabled={disabled}
       onClick={() => onChange(value)}
       className={clsx(
-        'focus-visible:focus-indicator flex shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed',
+        'flex shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed',
+        isActive && styles.activeFocus ? styles.activeFocus : 'focus-visible:focus-indicator',
         styles.base,
         isActive
           ? styles.active
-          : [styles.inactive, disabled ? DISABLED_TEXT : [IDLE_TEXT, styles.hover]],
+          : [styles.inactive, disabled ? DISABLED_TEXT : [styles.idle ?? IDLE_TEXT, styles.hover]],
         className
       )}
     >
@@ -344,8 +380,12 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
           className={clsx(
             'text-3xs ms-auto rounded-full px-1.5 py-0.5 font-bold',
             isActive
-              ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+              ? variant === 'pills'
+                ? 'bg-black/20 text-white'
+                : 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400'
+              : variant === 'pills'
+                ? 'bg-white text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
           )}
         >
           {badge}
