@@ -20,6 +20,7 @@ import { SemiCircleGauge } from './SemiCircleGauge';
 import { Sparkline } from './Sparkline';
 import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
+import { WaterfallChart } from './WaterfallChart';
 import {
   expectNoInjectedImage,
   HOSTILE,
@@ -122,6 +123,18 @@ const CHARTS: Record<string, Chart> = {
       />
     ),
     empty: (props) => <FunnelChart stages={[]} {...props} />,
+  },
+  WaterfallChart: {
+    filled: () => (
+      <WaterfallChart
+        data={[
+          { label: 'Opening', value: 10, kind: 'total' },
+          { label: 'a', value: 5 },
+          { label: 'Closing', kind: 'total' },
+        ]}
+      />
+    ),
+    empty: (props) => <WaterfallChart data={[]} {...props} />,
   },
   RadarChart: {
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
