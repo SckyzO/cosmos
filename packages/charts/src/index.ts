@@ -18,3 +18,4 @@ export * from './BoxPlotChart';
 export * from './RangeBarChart';
 export * from './MixedChart';
 export * from './BumpChart';
+export * from './FunnelChart';
