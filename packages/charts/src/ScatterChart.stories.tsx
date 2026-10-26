@@ -2,17 +2,25 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceArea } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BubbleChart, ScatterChart, type BubblePoint, type ScatterPoint } from './ScatterChart';
+import type { ChartReferenceLine } from './types';
 import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
+  expectMarksAtTheirValues,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   HOSTILE,
   LegendSides,
   legendTexts,
+  NarrowBox,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   scatterFills,
   scatterSymbols,
@@ -184,6 +192,63 @@ export const ReferenceAreaInChildren: Story = {
   },
 };
 
+const INTENT_LINES: ChartReferenceLine[] = [
+  { value: 40, intent: 'success' },
+  { value: 70, intent: 'warning' },
+  { value: 100, intent: 'danger' },
+  { value: 55 },
+];
+
+/**
+ * `referenceLines` and `referenceBands` read the vertical axis: an SLO line
+ * and the band of latencies that are fine.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    ...LatencyVsLoad.args,
+    referenceBands: [{ from: 20, to: 60, label: 'Healthy', intent: 'success' }],
+    referenceLines: [{ value: 90, label: 'SLO 90 ms', intent: 'danger', dashed: true }],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('yAxis', { lines: [90], bands: [[20, 60]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual(['Healthy', 'SLO 90 ms'])
+    );
+  },
+};
+
+/** The colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, referenceLines: INTENT_LINES, referenceBands: [] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <ScatterChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 const firstSymbol = (root: HTMLElement) => scatterSymbols(root).flat()[0] as Element;
@@ -219,9 +284,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: 'Normal', data: [{ x: 20, y: 80 }] },
     ],
     xTitle: HOSTILE,
+    referenceLines: [{ value: 60, label: HOSTILE }],
+    referenceBands: [{ from: 10, to: 30, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await hoverFirstPoint(canvasElement);
     // The point's label is the title; then the series, the x row (titled by xTitle) and y.
