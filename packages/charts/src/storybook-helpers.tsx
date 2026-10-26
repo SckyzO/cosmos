@@ -5,7 +5,7 @@ import type { ChartLegendPosition } from './types';
 /**
  * Loads the woff2 of an `@font-face` rule already on the page (`sourceFamily`)
  * under a new `family` name, after the chart rendered with the fallback: a web
- * font arriving late.
+ * font arriving late. Returns the function that unregisters it.
  */
 export const loadLateFont = async (family: string, sourceFamily: string) => {
   const rule = [...document.styleSheets]
@@ -13,7 +13,9 @@ export const loadLateFont = async (family: string, sourceFamily: string) => {
     .find(
       (r): r is CSSFontFaceRule =>
         r instanceof CSSFontFaceRule &&
-        r.style.getPropertyValue('font-family').replace(/['"]/g, '') === sourceFamily
+        r.style.getPropertyValue('font-family').replace(/['"]/g, '') === sourceFamily &&
+        // The Latin subset: the other subsets of the family have no ASCII glyphs.
+        r.style.getPropertyValue('unicode-range').includes('U+0-FF')
     );
   if (!rule) throw new Error(`No @font-face for ${sourceFamily}`);
   const url = /url\(["']?([^"')]+\.woff2)/.exec(rule.style.getPropertyValue('src'))?.[1];
@@ -21,6 +23,7 @@ export const loadLateFont = async (family: string, sourceFamily: string) => {
   const face = new FontFace(family, `url(${url})`);
   document.fonts.add(face);
   await face.load();
+  return () => document.fonts.delete(face);
 };
 
 // Series names, categories and labels are data, not markup: the charts draw
