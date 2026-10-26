@@ -153,6 +153,13 @@ allCount }`) puts underlined status tabs at the top of the card, each setting
 that column's filter ("All" clears it) and staying in sync with the active
 filters bar; the counts come from you, the table never computes them.
 
+`DataTable` takes `mobileLayout="cards"` to show each row as a block below `sm`
+instead of scrolling: the checkbox, the column marked `mobile: 'title'` and the
+row action on the first line, then a label/value pair per other column
+(`mobileLabel` renames a label, `mobile: 'hidden'` drops a column). The toolbar
+gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
+the table.
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data

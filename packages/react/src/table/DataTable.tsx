@@ -3,6 +3,7 @@ import { Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
+import { DataTableMobileCards, DataTableMobileSort } from './DataTableMobileCards';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
 import { PageSizeSelect } from './PageSizeSelect';
@@ -141,6 +142,17 @@ export type DataTableProps<T> = {
   defaultColumnVisibility?: ColumnVisibility;
   /** Called with the visibility of every column when one is toggled from the menu. */
   onColumnVisibilityChange?: (visibility: ColumnVisibility) => void;
+
+  // ── Narrow screens ─────────────────────────────────────────────────────────
+  /**
+   * What the rows become below `sm` (640px). `scroll` (the default) keeps the table, scrolling
+   * sideways. `cards` swaps it for a list of blocks: the selection checkbox, the `mobile: 'title'`
+   * column and the row action on the first line, then one label/value pair per remaining column
+   * (`mobileLabel`, else the column header; `mobile: 'hidden'` leaves a column out). The toolbar
+   * gets a second line with a "Sort by" select for the sortable columns and the columns button.
+   * From `sm` up the table is the same either way.
+   */
+  mobileLayout?: 'scroll' | 'cards';
 };
 
 // The selection and action columns keep these widths whatever the data columns add up to.
@@ -201,7 +213,9 @@ export const DataTable = <T,>({
   columnVisibility: columnVisibilityProp,
   defaultColumnVisibility,
   onColumnVisibilityChange,
+  mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
+  const mobileCards = mobileLayout === 'cards';
   const [columnVisibility, setColumnVisibility] = useControllableState<ColumnVisibility>({
     value: columnVisibilityProp,
     defaultValue: () => defaultColumnVisibility ?? {},
@@ -344,6 +358,8 @@ export const DataTable = <T,>({
   const firstColumnTakesTheRest =
     (selectable || Boolean(renderRowAction)) && columns.length > 0 && columns.every((c) => c.width);
 
+  const mobileSortable = columns.some((c) => c.sortable);
+
   const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
@@ -455,19 +471,63 @@ export const DataTable = <T,>({
               </button>
             )}
           </div>
-          {columnsMenuNode}
+          {mobileCards ? <div className="max-sm:hidden">{columnsMenuNode}</div> : columnsMenuNode}
         </div>
       ) : columnsMenu ? (
-        <div className="flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800">
+        <div
+          className={clsx(
+            'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+            mobileCards && 'max-sm:hidden'
+          )}
+        >
           {columnsMenuNode}
         </div>
       ) : null}
+
+      {mobileCards && (mobileSortable || columnsMenu) && (
+        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800">
+          {mobileSortable && (
+            <DataTableMobileSort
+              columns={columns}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortChange={(key, dir) => {
+                setSortKey(key);
+                setSortDir(dir);
+              }}
+            />
+          )}
+          {columnsMenuNode}
+        </div>
+      )}
 
       <ActiveFiltersBar
         filters={activeFilters}
         onClearOne={clearFilter}
         onClearAll={clearAllFilters}
       />
+
+      {mobileCards && (
+        <DataTableMobileCards
+          rows={pageRows}
+          columns={columns}
+          rowKey={rowKey}
+          selectable={selectable}
+          isSelected={(key) => selection.has(key)}
+          onToggleRow={toggleRow}
+          renderRowAction={renderRowAction}
+          onRowClick={onRowClick}
+          rowHref={rowHref}
+          loading={loading}
+          loadingRows={loadingRows}
+          error={error}
+          onRetry={onRetry}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
+        />
+      )}
 
       <div
         ref={scrollerRef}
@@ -478,7 +538,10 @@ export const DataTable = <T,>({
         aria-label={region ? ariaLabel : undefined}
         aria-labelledby={region ? ariaLabelledBy : undefined}
         style={fade}
-        className="focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset"
+        className={clsx(
+          'focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset',
+          mobileCards && 'max-sm:hidden'
+        )}
       >
         {loading && (
           <span role="status" className="sr-only">
