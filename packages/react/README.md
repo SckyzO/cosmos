@@ -283,7 +283,7 @@ useEffect(() => {
 Saving the choice (local storage, user profile) is left to the app.
 
 Charts live in a separate package, [`@sckyzo/cosmos-charts`](../charts), so apps
-that don't render charts don't ship the ApexCharts bundle.
+that don't render charts don't ship a chart library.
 
 ## License
 
