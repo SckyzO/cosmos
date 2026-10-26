@@ -1,10 +1,9 @@
-import { useRef } from 'react';
 import { PolarAngleAxis, RadialBar, RadialBarChart, usePlotArea } from 'recharts';
 import { ANIMATION } from './core/animation';
 import { MUTED, SERIES, TEXT, TRACK } from './core/colors';
 import { frameProps } from './core/frame';
 import { clampTo, gaugeName, percent, statusColor } from './core/gauge';
-import { useWidth } from './useWidth';
+import { useElementWidth } from './core/useElementWidth';
 import type { ChartProps } from './types';
 
 export type SemiCircleGaugeProps = Omit<ChartProps, 'height'> & {
@@ -121,8 +120,7 @@ export const SemiCircleGauge = ({
   height = 120,
   width,
 }: SemiCircleGaugeProps) => {
-  const box = useRef<HTMLDivElement>(null);
-  const boxWidth = useWidth(box);
+  const { ref: box, width: boxWidth } = useElementWidth();
   const text = formatValue(value);
   const row = showRange ? RANGE_ROW : EDGE_ROW;
   // The arc fills the width, up to the height it is allowed.
