@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import {
+  expectBorderToken,
   expectFocusBorder,
   expectPlaceholderContrast,
+  expectSuccessBorder,
   expectTextContrast,
   inEachTheme,
 } from '../storybook-helpers';
@@ -257,5 +259,131 @@ export const TurningAutoResizeOffRestoresRows: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Fixed height' }));
     await expect(field.style.height).toBe('');
     await expect(getComputedStyle(field).resize).toBe('vertical');
+  },
+};
+
+// ── Success (#405) ───────────────────────────────────────────────────────────
+
+/**
+ * `success` is the message under the field once its text is valid: a green border and message,
+ * and no icon. `error` wins when both are set, and so does going over `maxLength`.
+ */
+export const WithSuccess: Story = {
+  args: {
+    label: 'Release notes',
+    defaultValue: 'Adds a success state to the fields.',
+    success: 'Looks good.',
+  },
+};
+
+export const SuccessIsLinkedAndAnnounced: Story = {
+  ...WithSuccess,
+  tags: ['!dev'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Release notes' });
+    const message = canvas.getByText('Looks good.');
+    await expect(field).toHaveAccessibleDescription('Looks good.');
+    await expect(field.getAttribute('aria-describedby')).toBe(message.id);
+    await expect(message.closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+    // A valid text is not an invalid one: nothing marks the field as such.
+    await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
+
+export const ErrorWinsOverSuccess: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: {
+    label: 'Release notes',
+    error: 'Release notes cannot be empty.',
+    success: 'Looks good.',
+  },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Release notes' });
+    await expect(field).toHaveAccessibleDescription('Release notes cannot be empty.');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(canvas.queryByText('Looks good.')).toBeNull();
+    await expect(canvas.getByText('Release notes cannot be empty.')).not.toHaveAttribute(
+      'aria-live'
+    );
+    expectBorderToken(field, '--color-red-400');
+  },
+};
+
+/** Past `maxLength` the field is invalid, so the success gives way, border and message. */
+export const OverLimitWinsOverSuccess: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: {
+    label: 'Release notes',
+    maxLength: 10,
+    defaultValue: 'Over the limit',
+    success: 'Looks good.',
+    description: 'Up to 10 characters.',
+  },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Release notes' });
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(canvas.queryByText('Looks good.')).toBeNull();
+    await expect(field).toHaveAccessibleDescription('Up to 10 characters.');
+    expectBorderToken(field, '--color-red-400');
+  },
+};
+
+export const SuccessColorsInEveryTheme: Story = {
+  ...WithSuccess,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Release notes' });
+    const message = canvas.getByText('Looks good.');
+    expectSuccessBorder(field);
+    inEachTheme(() => expectTextContrast(message));
+  },
+};
+
+export const SuccessFocusShowsAccentBorderInDark: Story = {
+  ...WithSuccess,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('textbox', { name: 'Release notes' }));
+  },
+};
+
+/** The border and the message only: the textarea draws no icon. */
+export const SuccessHasNoIcon: Story = {
+  ...WithSuccess,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('svg')).toBeNull();
+  },
+};
+
+/** The success border follows a field that grows with its content. */
+export const SuccessWithAutoResize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Release notes', autoResize: true, rows: 2, success: 'Looks good.' },
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Release notes' });
+    const minimum = heightOf(field);
+    await userEvent.type(field, 'one{Enter}two{Enter}three{Enter}four');
+    await expect(heightOf(field)).toBeGreaterThan(minimum);
+    await expect(field.scrollHeight).toBeLessThanOrEqual(field.clientHeight);
+    await expect(field).toHaveAccessibleDescription('Looks good.');
+    // Typing took the focus: blur it, the border is the success one again.
+    field.blur();
+    expectSuccessBorder(field);
+  },
+};
+
+/** Without `success` the field is what it was: neutral border, no icon, no live region. */
+export const NoSuccessKeepsTheNeutralLook: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: { label: 'Bio', description: 'A short description.' },
+  play: async ({ canvas, canvasElement }) => {
+    expectBorderToken(canvas.getByRole('textbox', { name: 'Bio' }), '--color-gray-200');
+    await expect(canvasElement.querySelector('svg')).toBeNull();
+    await expect(canvas.getByText('A short description.')).not.toHaveAttribute('aria-live');
   },
 };
