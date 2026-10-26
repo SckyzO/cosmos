@@ -280,6 +280,18 @@ The same prop means the same thing on every component.
 - **Refs are props.** React 19 passes `ref` like any other prop, so no component uses `forwardRef`.
   A component whose root is focusable (a button, a link, a field) takes `ref` and attaches it to
   that element.
+- **An internal link is an `AppLink`, never a raw `<a>`.** An app mounts `LinkProvider`
+  (`ui/LinkProvider.tsx`) once to send the links of the components through its router, and the
+  internal `AppLink` (`ui/AppLink.tsx`) is what draws them: the provided component, given every prop
+  the `<a>` would have had (`ref`, `className`, `onClick`, the `aria-*` and `data-*` attributes), or a
+  plain `<a>` when there is no provider. A component with an `href` renders `<AppLink>` with the
+  props it would have given the `<a>`, and follows the router with nothing else to do.
+  What it reads back from its own link (`DataTable`'s `[data-row-link]`) goes in a `data-*` attribute,
+  which the provided component hands on. External links are the exception. `AppLink` leaves a link with
+  `target="_blank"`, no `href` or a bare `#` a plain `<a>` by itself; the links of user content (a chat
+  message, `chat/MessageText`) are written as a raw `<a>` with a comment that says why. `AppLink` is
+  not exported from the package, which imports no router: the app's adapter is its own. The
+  `Navigation/LinkProvider` stories show the behaviour with a fake router.
 - **One sidebar toggle: `SidebarToggle`** (`layout/SidebarToggle.tsx`). The Topbar renders it as a
   `hamburger`, the bottom of the Sidebar as a `panel` row, and a custom header, a Topbar's
   `leftActions` or the Sidebar's `footer` can place one more. `Shell` owns the collapsed state and
