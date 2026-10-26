@@ -12,7 +12,8 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, xAxisTitle, yAxisTitle } from './core/axes';
+import { useAxis, xAxisTitle, yAxisTitle } from './core/axes';
+import { useCategoryKeys } from './core/categoryKeys';
 import { TooltipCard } from './core/ChartTooltip';
 import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
@@ -147,6 +148,9 @@ export const RangeBarChart = ({
   width,
 }: RangeBarChartProps) => {
   const hidden = useHiddenSeries();
+  const axis = useAxis();
+  // Recharts names the layout after the axis the categories sit on.
+  const categoryKeys = useCategoryKeys('vertical');
   const name = ariaLabel ?? `Range chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -200,6 +204,7 @@ export const RangeBarChart = ({
 
   return (
     <BarChart
+      ref={categoryKeys}
       {...frameProps({ height, width, ariaLabel: name })}
       data={rows}
       layout="vertical"
@@ -214,10 +219,10 @@ export const RangeBarChart = ({
         domain={[ticks[0], ticks[ticks.length - 1]]}
         ticks={ticks}
         tickFormatter={tickLabel}
-        {...AXIS}
+        {...axis}
         {...xAxisTitle(xTitle)}
       />
-      <YAxis type="category" dataKey="category" width="auto" {...AXIS} {...yAxisTitle(yTitle)} />
+      <YAxis type="category" dataKey="category" width="auto" {...axis} {...yAxisTitle(yTitle)} />
       {(showLegend ?? series.length > 1) && (
         <Legend
           {...legendProps(legendPosition, hidden)}

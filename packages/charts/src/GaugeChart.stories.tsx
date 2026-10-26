@@ -6,9 +6,7 @@ import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
-import { resolveColor, switchTheme, themeColor } from './storybook-helpers';
-import { centerText } from './storybook-polar';
-import { surface } from './storybook-recharts';
+import { centerText, resolveColor, surface, switchTheme, themeColor } from './storybook-recharts';
 
 const celsius = (v: number) => `${v} °C`;
 const watts = (v: number) => `${v} W`;

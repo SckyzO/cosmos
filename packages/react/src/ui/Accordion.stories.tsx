@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 const FAQ = [
   {
     q: 'What is Cosmos?',
-    a: 'Cosmos is the design system used across sckyzo projects — a Tailwind 4 theme + a React 19 component library + opinionated ApexCharts wrappers.',
+    a: 'Cosmos is the design system used across sckyzo projects — a Tailwind 4 theme + a React 19 component library + opinionated chart wrappers.',
   },
   {
     q: 'Is it production-ready?',

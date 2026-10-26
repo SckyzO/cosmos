@@ -2,20 +2,25 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MixedChart } from './MixedChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
+  barFills,
+  barShapes,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
+  LegendSides,
   legendTexts,
   openTooltip,
+  resolveColor,
   seriesStrokes,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
-import { barFills, barShapes, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const EVERY_2H = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, '0')}:00`);
 const EVERY_4H = ['00h', '04h', '08h', '12h', '16h', '20h'];

@@ -101,8 +101,6 @@ test('capture stories', async ({ context, page, baseURL }) => {
       seed = (seed * 16807) % 2147483647;
       return (seed - 1) / 2147483646;
     };
-    // Charts animate their first draw: capture the final state.
-    (window as unknown as { Apex: object }).Apex = { chart: { animations: { enabled: false } } };
   });
   // Nothing comes from the network but Storybook: a third-party frame (the
   // YouTube player of VideoEmbed) gets a plain gray page, and anything else

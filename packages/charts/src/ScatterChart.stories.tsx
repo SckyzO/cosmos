@@ -2,19 +2,24 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceArea } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BubbleChart, ScatterChart, type BubblePoint, type ScatterPoint } from './ScatterChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
+  LegendSides,
   legendTexts,
+  resolveColor,
+  scatterFills,
+  scatterSymbols,
   surface,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
-import { expectRepaintsWithThemeOf, scatterFills, scatterSymbols } from './storybook-cartesian';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
 const noise = (i: number) => (Math.sin(i * 12.9898) * 43758.5453) % 1;

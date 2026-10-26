@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { Area, AreaChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { GRID_PROPS, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { ChartTooltip } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, PANEL, seriesColor } from './core/colors';
@@ -40,6 +40,7 @@ export const LineAreaChart = ({
 }: LineAreaChartProps) => {
   const uid = safeId(useId());
   const hidden = useHiddenSeries();
+  const axis = useAxis();
   const name = ariaLabel ?? `Area chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -60,8 +61,8 @@ export const LineAreaChart = ({
         ))}
       </defs>
       <CartesianGrid {...GRID_PROPS} />
-      <XAxis dataKey="category" {...AXIS} {...xAxisTitle(xTitle)} />
-      <YAxis width="auto" tickFormatter={formatValue} {...AXIS} {...yAxisTitle(yTitle)} />
+      <XAxis dataKey="category" {...axis} {...xAxisTitle(xTitle)} />
+      <YAxis width="auto" tickFormatter={formatValue} {...axis} {...yAxisTitle(yTitle)} />
       {legendVisible && <Legend {...legendProps(legendPosition, hidden)} />}
       <Tooltip
         content={<ChartTooltip format={formatValue} />}

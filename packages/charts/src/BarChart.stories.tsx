@@ -1,22 +1,30 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
+  barFills,
+  barShapes,
   closeTooltip,
   expectAccessibleChart,
+  expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
   expectTextFollowsTextSize,
+  HOSTILE,
+  LegendSides,
   legendTexts,
+  loadLateFont,
   openTooltip,
+  resolveColor,
   surface,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
-import { barFills, barShapes, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -633,11 +641,90 @@ export const NamedAndKeyboardReachable: Story = {
 
 /**
  * Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys
- * walk its bars. Recharts reads left and right the other way round when the
- * bars are horizontal.
+ * walk its bars. With the bars horizontal the categories run down the chart,
+ * and ArrowDown goes to the next one.
  */
 export const HorizontalNamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...Horizontal.args, ariaLabel: 'Active racks per datacenter' },
-  play: expectAccessibleChart({ keyboard: true, next: '{ArrowLeft}' }),
+  play: expectAccessibleChart({ keyboard: true, next: '{ArrowDown}' }),
+};
+
+/**
+ * With the categories on the vertical axis, ArrowDown and ArrowRight go to the
+ * next category and ArrowUp and ArrowLeft to the previous one. Recharts 3.10.1
+ * reads them the other way round and ignores Up and Down: the frame corrects it.
+ */
+export const HorizontalArrowKeysWalkTheCategories: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Horizontal.args, ariaLabel: 'Active racks per datacenter' },
+  play: expectCategoryArrowKeys(DCS),
+};
+
+const LATE_FAMILY = 'CosmosLateFont';
+
+const lateFontChart = (id: string) => (
+  <div data-testid={id} style={{ fontFamily: `${LATE_FAMILY}, sans-serif` }}>
+    <BarChart
+      orientation="horizontal"
+      categories={SERVICES}
+      series={[
+        { name: 'Errors (24 h)', data: [182, 64, 23, 41, 137, 58, 12, 96, 151, 37, 44, 19] },
+      ]}
+      height={420}
+    />
+  </div>
+);
+
+/**
+ * The same chart twice, in a font that is not loaded yet; the second one mounts
+ * on demand. The first is one element, made once: React leaves it alone when
+ * the second mounts, so only the font can make it measure its labels again.
+ */
+const LateFontCharts = () => {
+  const [second, setSecond] = useState(false);
+  const [early] = useState(() => lateFontChart('early'));
+  return (
+    <div>
+      <button type="button" onClick={() => setSecond(true)}>
+        Mount the second chart
+      </button>
+      {early}
+      {second && lateFontChart('late')}
+    </div>
+  );
+};
+
+/** Where the plot starts, from the left edge of the chart: the room the axis labels take. */
+const plotLeft = (root: HTMLElement) => {
+  const grid = root.querySelector('.recharts-cartesian-grid')?.getBoundingClientRect();
+  const left = surface(root)?.getBoundingClientRect().left;
+  return grid && left !== undefined ? Math.round(grid.left - left) : NaN;
+};
+
+/**
+ * `YAxis width="auto"` measures its labels when the chart mounts. A web font
+ * that arrives later changes their width, so the frame mounts the chart again
+ * once: a chart drawn before the font loaded ends up with the axis of one drawn
+ * after.
+ */
+export const AxisWidthFollowsALateFont: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ManyCategories.args,
+  render: () => <LateFontCharts />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const chart = (id: string) =>
+      canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => expect(tickTexts(chart('early'), 'yAxis')).toHaveLength(SERVICES.length));
+    // A monospace font, much wider than the fallback: the labels need more room.
+    const unload = await loadLateFont(LATE_FAMILY, 'JetBrains Mono');
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Mount the second chart' }));
+      await waitFor(() => expect(tickTexts(chart('late'), 'yAxis')).toHaveLength(SERVICES.length));
+      await waitFor(() => expect(plotLeft(chart('early'))).toBe(plotLeft(chart('late'))));
+    } finally {
+      unload();
+    }
+  },
 };

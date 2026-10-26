@@ -1,33 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
-import { readdirSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const chartsSrc = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../packages/charts/src'
-);
-
-// Every `apexcharts/<subpath>` and `react-apexcharts/<subpath>` the charts
-// sources import, read from the sources so the list can't drift. Vite only
-// discovers a deep import when a story first loads it, then re-optimizes and
-// reloads mid-run: after pulling a new subpath, the first story-test run
-// failed in unrelated files. Pre-bundling them all up front avoids that.
-// charts is a linked workspace package, so they resolve through it (`>`).
-const chartsDeepImports = [
-  ...new Set(
-    readdirSync(chartsSrc)
-      .filter((file) => /\.tsx?$/.test(file))
-      .flatMap((file) => [
-        ...readFileSync(path.join(chartsSrc, file), 'utf8').matchAll(
-          /^import\s+(?:[^'"]*\s+from\s+)?['"]((?:react-)?apexcharts\/[^'"]+)['"]/gm
-        ),
-      ])
-      .map(([, specifier]) => `@sckyzo/cosmos-charts > ${specifier}`)
-  ),
-].sort();
 
 const config: StorybookConfig = {
   // Allowlist for Origin/Host header validation (Storybook 10+ default = []).
@@ -82,8 +55,10 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return mergeConfig(config, {
       plugins: [tailwindcss()],
-      // `recharts` too: its first import in a story run reloads the same way.
-      optimizeDeps: { include: [...chartsDeepImports, '@sckyzo/cosmos-charts > recharts'] },
+      // Vite only discovers a dependency when a story first imports it, then
+      // re-optimizes and reloads mid-run: pre-bundling `recharts` up front avoids
+      // that. charts is a linked workspace package, so it resolves through it (`>`).
+      optimizeDeps: { include: ['@sckyzo/cosmos-charts > recharts'] },
       // When deployed under a sub-path (GitHub Pages serves the site at
       // https://sckyzo.github.io/cosmos/), Vite needs to know the prefix so
       // every asset URL — JS chunks, fonts, the docs iframe, lazy imports —

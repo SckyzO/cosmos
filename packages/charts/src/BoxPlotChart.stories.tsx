@@ -2,19 +2,24 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BoxPlotChart } from './BoxPlotChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
+  barFills,
   closeTooltip,
   expectAccessibleChart,
+  expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
+  LegendSides,
   legendTexts,
   openTooltip,
+  resolveColor,
   surface,
   tooltipCard,
 } from './storybook-recharts';
-import { barFills, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -435,4 +440,14 @@ export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...ResponseTimes.args, ariaLabel: 'Response times per service' },
   play: expectAccessibleChart({ keyboard: true }),
+};
+
+/**
+ * A horizontal chart has its categories down the chart: ArrowDown and
+ * ArrowRight go to the next one, ArrowUp and ArrowLeft to the previous one.
+ */
+export const HorizontalArrowKeysWalkTheCategories: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Horizontal.args, ariaLabel: 'Response times per service' },
+  play: expectCategoryArrowKeys(SERVICES),
 };

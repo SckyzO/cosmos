@@ -10,7 +10,7 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, GRID_PROPS, TEXT_SIZE, xAxisTitle, yAxisTitle } from './core/axes';
+import { GRID_PROPS, TEXT_SIZE, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { categoryAxis } from './core/categoryAxis';
 import { TooltipCard } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
@@ -89,6 +89,7 @@ export const MixedChart = ({
   width,
 }: MixedChartProps) => {
   const hidden = useHiddenSeries();
+  const axis = useAxis();
   const name = ariaLabel ?? `Mixed chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -127,7 +128,7 @@ export const MixedChart = ({
       <CartesianGrid {...GRID_PROPS} />
       <XAxis
         dataKey="category"
-        {...AXIS}
+        {...axis}
         {...xAxisTitle(xTitle)}
         {...categoryAxis(categories, xTitle)}
       />
@@ -138,7 +139,7 @@ export const MixedChart = ({
           orientation={side}
           width="auto"
           tickFormatter={formatters[side]}
-          {...AXIS}
+          {...axis}
           {...(side === 'left' ? yAxisTitle(yTitle) : rightAxisTitle(yRightTitle))}
         />
       ))}

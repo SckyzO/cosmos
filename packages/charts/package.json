@@ -1,7 +1,7 @@
 {
   "name": "@sckyzo/cosmos-charts",
   "version": "0.2.0",
-  "description": "React chart components for the Cosmos design system — themeable ApexCharts wrappers (bar, line, area, donut, radial gauges, sparkline, treemap, realtime, heatmap, radar, scatter, bubble, box plot, range bar, mixed) that follow the Cosmos theme and accent.",
+  "description": "React chart components for the Cosmos design system — themeable Recharts wrappers (bar, line, area, donut, radial gauges, sparkline, treemap, realtime, heatmap, radar, scatter, bubble, box plot, range bar, mixed) that follow the Cosmos theme and accent.",
   "license": "MIT",
   "author": "SckyzO",
   "homepage": "https://github.com/SckyzO/cosmos/tree/main/packages/charts",
@@ -48,8 +48,6 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "apexcharts": "^8.4.1",
-    "react-apexcharts": "^2.1.1",
     "recharts": "3.10.1"
   },
   "devDependencies": {
@@ -71,7 +69,6 @@
     "react-19",
     "charts",
     "recharts",
-    "apexcharts",
     "cosmos"
   ]
 }

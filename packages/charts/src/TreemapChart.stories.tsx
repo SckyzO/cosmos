@@ -2,15 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { TreemapChart } from './TreemapChart';
 import {
-  HOSTILE,
   contrastRatio,
   expectColorInThemes,
+  expectEmptyMessage,
   expectNoInjectedImage,
+  HOSTILE,
   resolveColor,
   switchTheme,
   themeColor,
-} from './storybook-helpers';
-import { expectEmptyMessage } from './storybook-recharts';
+} from './storybook-recharts';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
 const tb = (v: number) => `${v} TB`;

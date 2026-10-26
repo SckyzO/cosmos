@@ -2,14 +2,19 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RadarChart } from './RadarChart';
 import {
+  closeTooltip,
+  expectEmptyMessage,
+  expectKeyboardWalk,
+  expectLegendsAround,
+  expectNoInjectedImage,
   HOSTILE,
   LegendSides,
-  expectNoInjectedImage,
+  legendTexts,
+  openTooltipAt,
   resolveColor,
   themeColor,
-} from './storybook-helpers';
-import { expectKeyboardWalk, expectLegendsAround, openTooltipAt } from './storybook-polar';
-import { closeTooltip, expectEmptyMessage, legendTexts, tooltipCard } from './storybook-recharts';
+  tooltipCard,
+} from './storybook-recharts';
 
 const percent = (v: number) => `${v}%`;
 const SCORES = ['Latency', 'Uptime', 'Capacity', 'Cost', 'Security'];

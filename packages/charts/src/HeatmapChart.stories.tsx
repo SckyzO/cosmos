@@ -2,15 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { HeatmapChart } from './HeatmapChart';
 import {
+  contrastRatio,
+  expectEmptyMessage,
+  expectNoInjectedImage,
   HOSTILE,
   LegendSides,
-  contrastRatio,
-  expectNoInjectedImage,
   resolveColor,
   switchTheme,
   themeColor,
-} from './storybook-helpers';
-import { expectEmptyMessage } from './storybook-recharts';
+} from './storybook-recharts';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

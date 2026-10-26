@@ -1,7 +1,7 @@
 # Cosmos
 
 Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 components and
-ApexCharts wrappers, documented in Storybook 10.
+Recharts-based chart wrappers, documented in Storybook 10.
 
 **Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/): every component with its docs and
 stories (more than 1,000), in four themes and twelve accent colors.
@@ -19,11 +19,11 @@ portals, and rackscope itself eventually).
 
 ## Packages
 
-| Package                                    | Description                                                                | npm                                                                                                               |
-| ------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, 4 themes, 12 accents              | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
-| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — ESM + CJS + DTS                               | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
-| [`@sckyzo/cosmos-charts`](packages/charts) | ApexCharts wrappers that follow the theme and accent, published separately | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
+| Package                                    | Description                                                                      | npm                                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [`@sckyzo/cosmos-theme`](packages/theme)   | Tailwind 4 theme — design tokens, fonts, 4 themes, 12 accents                    | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)   |
+| [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — ESM + CJS + DTS                                     | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
+| [`@sckyzo/cosmos-charts`](packages/charts) | Chart wrappers (Recharts) that follow the theme and accent, published separately | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
 
 ## Themes and accents
 

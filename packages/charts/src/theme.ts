@@ -1,55 +1,20 @@
-import type { ApexOptions } from 'apexcharts';
-import { useEffect, useState } from 'react';
-import { axisTitle as titleStyle } from './axisTitle';
 import { categoricalPalette } from './palette';
-import { AXIS_LABEL_PX, CHART_TEXT_PX, parseTextScale, scaledPx } from './textSize';
 
-/** Default brand color (the blue accent). Prefer `useChartTheme().brand`, which follows the accent. */
+/** Default brand color (the blue accent). The charts themselves follow the accent through `--color-brand-500`. */
 export const COSMOS_BRAND = '#465fff';
-
-// What the status colors are when the theme CSS isn't loaded or during SSR. With
-// the theme, `useChartTheme()` reads them from its tokens instead
-// (`--color-success-500`, `--color-warning-500`, `--color-error-500`).
-const SUCCESS = '#10b981';
-const WARNING = '#f59e0b';
-const ERROR = '#ef4444';
 
 /**
  * The default series colors without the theme CSS: eight categorical colors,
- * the blue accent first. With it, `useChartTheme().palette` is the same list
- * with the accent's brand color in first place, and without the colors that
- * look like that accent (a cyan accent drops the cyan and the teal).
+ * the blue accent first. With the theme, the charts draw `--color-brand-500`
+ * and `--color-chart-2` to `--color-chart-8` instead, and each accent skips the
+ * hues that look like it (a cyan accent drops the cyan and the teal).
  *
  * Series do not read as statuses: green, amber and red are absent from the
  * first four places, and the status colors are never the default. A chart that
- * means a status passes them as `colors`, for example
- * `useChartTheme().statusPalette` (success, warning, error). A palette is a
- * categorical scale: it names things, it does not rank them. For a quantity,
- * use `brandScale`.
+ * means a status passes them as `colors`. A palette is a categorical scale: it
+ * names things, it does not rank them.
  */
 export const COSMOS_PALETTE = categoricalPalette(COSMOS_BRAND);
-
-// Theme classes that enable the dark variant (see @sckyzo/cosmos-theme).
-const DARK_THEME_CLASSES = ['dark', 'deep-blue'];
-
-// Brand steps of the sequential scale, low to high. Light themes run from a
-// pale tint to a deep shade, dark themes from a dark tint to a bright one, so
-// low values stay a muted cell on the card instead of a glaring one. The steps
-// skip neighbors that look alike in some accents (100 and 200, 600 and 700),
-// and the dark scale starts at 800: 900 sits at 1.3:1 to 1.4:1 of the dark
-// card in most accents and the lowest cells vanish into it.
-const BRAND_SCALE_LIGHT = [100, 300, 400, 500, 700];
-const BRAND_SCALE_DARK = [800, 600, 500, 400, 300];
-// The blue accent's steps, used when the theme CSS isn't loaded or during SSR.
-const BLUE_STEPS: Record<number, string> = {
-  100: '#dde9ff',
-  300: '#9cb9ff',
-  400: '#7592ff',
-  500: COSMOS_BRAND,
-  600: '#3641f5',
-  700: '#2a31d8',
-  800: '#252dae',
-};
 
 const relativeLuminance = (hex: string): number => {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -69,152 +34,4 @@ export const readableOn = (background: string): string => {
   if (!/^#[0-9a-f]{6}$/i.test(background)) return '#ffffff';
   const luminance = relativeLuminance(background);
   return 1.05 / (luminance + 0.05) >= (luminance + 0.05) / 0.05 ? '#ffffff' : '#000000';
-};
-
-const detectDark = (): boolean => {
-  if (typeof document === 'undefined') return false;
-  const { classList } = document.documentElement;
-  return DARK_THEME_CLASSES.some((c) => classList.contains(c));
-};
-
-/** A CSS custom property on `<html>`, or `fallback` when it's unset or during SSR. */
-const readCssVar = (name: string, fallback: string): string => {
-  if (typeof document === 'undefined') return fallback;
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-};
-
-const readChartColors = () => {
-  const dark = detectDark();
-  // Grid lines, and the empty part of a radial arc: a soft step of the gray scale.
-  const line = dark
-    ? readCssVar('--color-gray-800', '#1f2937')
-    : readCssVar('--color-gray-200', '#e5e7eb');
-  return {
-    dark,
-    brand: readCssVar('--color-brand-500', COSMOS_BRAND),
-    brandScale: (dark ? BRAND_SCALE_DARK : BRAND_SCALE_LIGHT).map((step) =>
-      readCssVar(`--color-brand-${step}`, BLUE_STEPS[step])
-    ),
-    // The card background (`bg-white dark:bg-gray-900`).
-    surface: dark ? readCssVar('--color-gray-900', '#111827') : readCssVar('--color-white', '#fff'),
-    grid: line,
-    axis: dark
-      ? readCssVar('--color-gray-400', '#9ca3af')
-      : readCssVar('--color-gray-500', '#6b7280'),
-    // Text on the card: legends, center values, secondary labels.
-    text: readCssVar('--color-text-primary', dark ? '#fff' : '#101828'),
-    textMuted: readCssVar('--color-text-secondary', dark ? '#98a2b3' : '#667085'),
-    success: readCssVar('--color-success-500', SUCCESS),
-    warning: readCssVar('--color-warning-500', WARNING),
-    error: readCssVar('--color-error-500', ERROR),
-    // Monitoring statuses (`--color-status-*`), for thresholds: a WARN or CRIT
-    // line is a status, not a series color.
-    statusWarn: readCssVar('--color-status-warn', WARNING),
-    statusCrit: readCssVar('--color-status-crit', ERROR),
-    track: line,
-    textScale: parseTextScale(readCssVar('--cosmos-text-scale', '')),
-  };
-};
-
-/**
- * Returns `read()` and calls it again whenever `<html>` changes theme, accent or
- * text size (the Cosmos convention: a theme class, `data-accent`,
- * `data-text-size`). `read` must be stable.
- * Fonts do not change the colors: `ApexChart` redraws for them.
- */
-const useHtmlAppearance = <T>(read: () => T): T => {
-  const [value, setValue] = useState(read);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const update = () => setValue(read);
-    const observer = new MutationObserver(update);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-accent', 'data-text-size'],
-    });
-    return () => observer.disconnect();
-  }, [read]);
-
-  return value;
-};
-
-/**
- * Subscribes to dark-mode toggles on `<html>` (the Cosmos convention).
- * Returns the current `isDark` value.
- */
-export const useDarkMode = (): boolean => useHtmlAppearance(detectDark);
-
-/**
- * Returns ApexCharts grid + axis options and colors matching the Cosmos
- * design tokens for the current theme and accent: `brandScale` is a
- * sequential scale (five brand steps, low to high) and `surface` the card
- * background. `text` and `textMuted` are the primary and secondary text colors.
- * `success`, `warning` and `error` are the theme's status colors, and
- * `statusPalette` the three in that order, for a chart whose series are
- * statuses (`colors={statusPalette}`). `statusWarn` and `statusCrit` are its
- * monitoring statuses (thresholds), `track` the empty part of a radial arc, and
- * `palette` the default series colors: eight categorical colors, the brand
- * color first and none of the status hues among the first four.
- * `tooltipTheme` is the ApexCharts tooltip theme matching the Cosmos theme.
- *
- * The chart text follows the text size setting (`data-text-size` on `<html>`):
- * `axisLabels` carries the size of the axis labels, `axisTitle(text)` builds an
- * axis title in the axis color and `textSize` is the size of the legend and the
- * tooltip, all scaled as the page's `text-*` sizes are.
- */
-export const useChartTheme = () => {
-  const {
-    dark,
-    brand,
-    brandScale,
-    surface,
-    grid: gridColor,
-    axis,
-    text,
-    textMuted,
-    success,
-    warning,
-    error,
-    statusWarn,
-    statusCrit,
-    track,
-    textScale,
-  } = useHtmlAppearance(readChartColors);
-  const grid: ApexOptions['grid'] = {
-    borderColor: gridColor,
-    strokeDashArray: 4,
-  };
-  const axisLabels = {
-    style: {
-      colors: axis,
-      fontSize: scaledPx(AXIS_LABEL_PX, textScale),
-      fontFamily: 'inherit',
-    },
-  };
-  // The size of the axis titles, the legend and the tooltip.
-  const textSize = scaledPx(CHART_TEXT_PX, textScale);
-  const axisTitle = (title: string | undefined) => titleStyle(title, axis, textSize);
-  const tooltipTheme: 'dark' | 'light' = dark ? 'dark' : 'light';
-  return {
-    dark,
-    grid,
-    axisLabels,
-    axisTitle,
-    textSize,
-    brand,
-    brandScale,
-    surface,
-    text,
-    textMuted,
-    success,
-    warning,
-    error,
-    statusWarn,
-    statusCrit,
-    track,
-    tooltipTheme,
-    statusPalette: [success, warning, error],
-    palette: categoricalPalette(brand),
-  };
 };

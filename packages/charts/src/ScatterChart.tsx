@@ -10,7 +10,7 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, xAxisTitle, yAxisTitle } from './core/axes';
+import { useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { TooltipCard } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
@@ -91,6 +91,7 @@ const XYChart = ({
   width,
 }: XYProps) => {
   const hidden = useHiddenSeries();
+  const axis = useAxis();
   const name =
     ariaLabel ?? `${bubbles ? 'Bubble' : 'Scatter'} chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
@@ -132,7 +133,7 @@ const XYChart = ({
         name={xTitle ?? 'x'}
         domain={['auto', 'auto']}
         tickFormatter={formatX}
-        {...AXIS}
+        {...axis}
         {...xAxisTitle(xTitle)}
       />
       <YAxis
@@ -142,7 +143,7 @@ const XYChart = ({
         domain={['auto', 'auto']}
         width="auto"
         tickFormatter={formatY}
-        {...AXIS}
+        {...axis}
         {...yAxisTitle(yTitle)}
       />
       {bubbles ? (

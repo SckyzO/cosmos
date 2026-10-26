@@ -51,8 +51,8 @@ export const InlineEmphasis: Story = {
     <p className="max-w-prose text-base leading-relaxed text-gray-700 dark:text-gray-300">
       Cosmos ships{' '}
       <strong className="font-semibold text-gray-900 dark:text-white">three packages</strong>: a
-      Tailwind theme, a React component library, and <em className="italic">opinionated</em>{' '}
-      ApexCharts wrappers. Everything plugs into the same{' '}
+      Tailwind theme, a React component library, and <em className="italic">opinionated</em> chart
+      wrappers. Everything plugs into the same{' '}
       <code className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
         --color-*
       </code>{' '}

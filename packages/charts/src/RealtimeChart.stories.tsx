@@ -4,21 +4,19 @@ import { useState } from 'react';
 import { ReferenceArea } from 'recharts';
 import { RealtimeChart, type RealtimeChartProps } from './RealtimeChart';
 import {
-  HOSTILE,
-  contrastRatio,
-  expectColorsFromTokens,
-  expectNoInjectedImage,
-  resolveColor,
-  themeColor,
-} from './storybook-helpers';
-import { expectRepaintsWithThemeOf } from './storybook-cartesian';
-import {
   axisTitles,
   closeTooltip,
+  contrastRatio,
   expectAccessibleChart,
+  expectColorsFromTokens,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
   openTooltip,
+  resolveColor,
   seriesStrokes,
   surface,
+  themeColor,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';

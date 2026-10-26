@@ -9,7 +9,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from 'recharts';
-import { AXIS, GRID_PROPS, TEXT_SIZE, xAxisTitle, yAxisTitle } from './core/axes';
+import { GRID_PROPS, TEXT_SIZE, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, PANEL, SERIES, STATUS_CRIT, STATUS_WARN, TEXT } from './core/colors';
 import { frameProps } from './core/frame';
@@ -103,6 +103,7 @@ export const RealtimeChart = ({
   height = 240,
   width,
 }: RealtimeChartProps) => {
+  const axis = useAxis();
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
   // Each sample with the time it was taken, for the time axis. A window that
@@ -174,7 +175,7 @@ export const RealtimeChart = ({
         domain={['dataMin', 'dataMax']}
         hide={!showTimeAxis}
         tickFormatter={clock}
-        {...AXIS}
+        {...axis}
         {...(showTimeAxis ? xAxisTitle(xTitle) : {})}
       />
       <YAxis
@@ -184,7 +185,7 @@ export const RealtimeChart = ({
         interval={0}
         width="auto"
         tickFormatter={formatValue}
-        {...AXIS}
+        {...axis}
         {...yAxisTitle(yTitle)}
       />
       <Threshold y={warnThreshold} label={warnLabel} color={STATUS_WARN} />

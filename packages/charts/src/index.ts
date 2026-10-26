@@ -1,8 +1,5 @@
 export * from './theme';
 export * from './types';
-// For the formatters of `apexOptions`, which must escape what they write.
-export { escapeHtml } from './escape';
-export { tooltipHtml, type TooltipContent, type TooltipRow } from './tooltip';
 export * from './LineAreaChart';
 export * from './RealtimeChart';
 export * from './RadialBarChart';

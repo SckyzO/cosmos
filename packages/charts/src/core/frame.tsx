@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { MUTED } from './colors';
 import type { ChartSize } from '../types';
 
@@ -31,6 +31,36 @@ export const frameProps = ({
   // `maxWidth`: a chart wider than its parent would widen the page.
   style: { width, height, maxWidth: '100%' } satisfies CSSProperties,
 });
+
+/**
+ * `0` until a web font finishes loading after the chart mounted, then `1`
+ * (one more render of the chart, no more). `YAxis width="auto"` measures its
+ * labels once, in the fallback font if the web font is not there yet, and a
+ * label set in the real font can overrun the axis: `useAxis` (axes.ts) hands
+ * the axes a new object when this turns `1`, and they measure again. A chart
+ * that mounts with the font ready never changes, and nothing runs where
+ * `document.fonts` is missing (SSR, old browsers).
+ */
+export const useFontsLoaded = (): 0 | 1 => {
+  const [loaded, setLoaded] = useState<0 | 1>(0);
+  useEffect(() => {
+    const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+    if (!fonts?.addEventListener) return;
+    let active = true;
+    const done = () => {
+      if (active) setLoaded(1);
+    };
+    fonts.addEventListener('loadingdone', done);
+    // A font already loading when the chart mounts: its event may be on its way
+    // or already gone, `ready` settles once it has loaded.
+    if (fonts.status === 'loading') void fonts.ready.then(done);
+    return () => {
+      active = false;
+      fonts.removeEventListener('loadingdone', done);
+    };
+  }, []);
+  return loaded;
+};
 
 type EmptyProps = ChartSize & {
   /** Plain text. An empty string draws nothing. */
