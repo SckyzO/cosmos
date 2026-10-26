@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ComponentType,
@@ -13,10 +14,14 @@ import {
 } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { mergeRefs } from '../ui/mergeRefs';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
+import { OverlayLayerProvider, useOverlayLayer } from '../ui/overlayA11y';
 import { fitLabel, useContentWidth } from '../hooks/useContentWidth';
 import { useControllableState } from '../hooks/useControllableState';
+import { useExpandOnHover } from '../hooks/useExpandOnHover';
+import { useKeepFocus } from '../hooks/useKeepFocus';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
 
@@ -31,6 +36,13 @@ import { SidebarToggle } from './SidebarToggle';
 
 /** How the active row is drawn: a tinted pill (default) or a filled one. */
 export type SidebarActiveStyle = 'tint' | 'solid';
+
+/**
+ * How the collapsed sidebar expands while the pointer rests on it or keyboard focus is inside:
+ * `false` (never), `overlay` (opens above the page, which stays put) or `push` (the page makes
+ * room for it).
+ */
+export type SidebarExpandOnHover = false | 'overlay' | 'push';
 
 // How far rows sit from the edge of their container: 20 px (`wide`), or less where 20 doesn't fit
 // or is already given. `tight` (8 px): the collapsed rail, the collapsed sub-menu's panel, and the
@@ -209,6 +221,28 @@ export type SidebarProps = {
   collapsedWidth?: number;
   /** Sidebar content — typically Sidebar.Brand / .Item / .SubMenu / .Group / .Section. */
   children: ReactNode;
+  /**
+   * Expands the collapsed sidebar while the pointer rests on it, so the labels are one move away;
+   * the collapsed state doesn't change, and the toggles keep theirs.
+   *
+   * - `false` (default): the rail stays a rail, with a tooltip on each icon.
+   * - `'overlay'`: after 150 ms over the rail the sidebar opens at its expanded width above the
+   *   page, with a shadow. The page doesn't move: the rail keeps its place in the layout.
+   * - `'push'`: the width grows (300 ms) and the page makes room for it. The same 150 ms apply, so
+   *   crossing the rail on the way to the page doesn't reflow it.
+   *
+   * It closes 100 ms after the pointer leaves (a wobble at the edge doesn't flicker it). Focus
+   * does the same from the keyboard: it opens as soon as focus enters the sidebar with the
+   * keyboard (a click that focuses a row doesn't hold it open) and closes when focus leaves.
+   * Escape closes it, after an open popover or tooltip inside it, and it stays closed until focus
+   * leaves and comes back or the pointer re-enters. The tooltips stay for the rest.
+   *
+   * Desktop only: from `lg` up and on a pointer that can hover (`(hover: hover) and
+   * (pointer: fine)`). Never on a touch screen, nor in the Shell's drawer, which is already
+   * expanded. A `footer` of your own that follows the collapsed state keeps showing its collapsed
+   * form: it reads your state, not the hover.
+   */
+  expandOnHover?: SidebarExpandOnHover;
   /** Footer content (sticks to bottom — e.g. user profile + collapse btn). */
   footer?: ReactNode;
   /**
@@ -243,6 +277,9 @@ export type SidebarProps = {
  * visible label, in a sub-menu that unfolds or a row that changes, and narrows back when that row
  * goes. Past `maxWidth` a label ends in an ellipsis and its row shows the full label in a tooltip.
  *
+ * With `expandOnHover` the collapsed sidebar opens while the pointer rests on it or focus is
+ * inside, above the page (`overlay`) or pushing it (`push`), without touching the collapsed state.
+ *
  * Inside a `Shell`, the collapsed state is the Shell's: every SidebarToggle
  * in the Shell (the Topbar's, this footer's, a custom header's) moves it. Below `lg` the Shell
  * shows the sidebar as a drawer: it then fills the panel, is always expanded, and `Sidebar.Brand`
@@ -255,6 +292,7 @@ const SidebarRoot = ({
   maxWidth = 320,
   collapsedWidth = 72,
   children,
+  expandOnHover = false,
   footer,
   footerDivider = 'full',
   activeStyle = 'tint',
@@ -278,60 +316,96 @@ const SidebarRoot = ({
   // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
   const showToggle =
     !inDrawer && (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
+  // A collapsed sidebar the pointer rests on, or keyboard focus is in, shows in its expanded form
+  // (`expandOnHover`). Only what the rows draw changes: `collapsed` stays the state, and the toggles
+  // keep reading it.
+  const hover = useExpandOnHover(expandOnHover !== false && collapsed && !inDrawer);
+  // Joins the stack of overlays while open, so Escape reaches a popover or tooltip inside it first.
+  const layer = useOverlayLayer(hover.expanded, hover.dismiss);
+  const rail = collapsed && !hover.expanded;
   // The width follows the rows when expanded: collapsed there are no labels, and in the drawer the
   // panel sets the width.
   const navRef = useRef<HTMLElement>(null);
   const fit = useContentWidth(navRef, {
     min: width,
     max: maxWidth,
-    enabled: !collapsed && !inDrawer,
+    enabled: !rail && !inDrawer,
   });
   const context: SidebarContextValue = {
-    collapsed,
+    collapsed: rail,
     inDrawer,
-    inset: collapsed ? 'tight' : 'wide',
+    inset: rail ? 'tight' : 'wide',
     activeStyle,
     truncated: fit.truncated,
   };
+  const overlay = expandOnHover === 'overlay' && !inDrawer;
+  const nav = (
+    <nav
+      ref={navRef}
+      id={navId}
+      aria-label="Main navigation"
+      style={inDrawer ? undefined : { width: rail ? collapsedWidth : fit.width }}
+      className={clsx(
+        'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
+        // The drawer panel draws the edge and the shadow, and sets the width.
+        inDrawer ? 'w-full' : 'border-r border-[var(--color-border)]',
+        // Not before the first frames: the width measured at mount shows at once.
+        fit.animated &&
+          clsx(
+            overlay ? 'transition-[width,box-shadow]' : 'transition-[width]',
+            'duration-300 ease-in-out'
+          ),
+        // Over the page, out of the layout: the wrapper below keeps the rail's place.
+        overlay && 'absolute inset-y-0 left-0',
+        overlay && hover.expanded && 'shadow-2xl',
+        className
+      )}
+      {...hover.props}
+    >
+      <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+      {footer && (
+        <div className={clsx('shrink-0 overflow-hidden p-3', FOOTER_DIVIDER[footerDivider])}>
+          <SidebarContext.Provider value={{ ...context, inset: rail ? 'none' : 'tight' }}>
+            {footer}
+          </SidebarContext.Provider>
+        </div>
+      )}
+      {showToggle && (
+        <div className={clsx('shrink-0 px-2 py-2', FOOTER_DIVIDER[footerDivider])}>
+          {shell ? (
+            <SidebarToggle variant="panel" onCollapsedChange={onCollapsedChange} />
+          ) : (
+            <SidebarToggle
+              variant="panel"
+              collapsed={collapsed}
+              onCollapsedChange={setOwnCollapsed}
+              controls={navId}
+            />
+          )}
+        </div>
+      )}
+    </nav>
+  );
   return (
     <SidebarContext.Provider value={context}>
-      <nav
-        ref={navRef}
-        id={navId}
-        aria-label="Main navigation"
-        style={inDrawer ? undefined : { width: collapsed ? collapsedWidth : fit.width }}
-        className={clsx(
-          'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
-          // The drawer panel draws the edge and the shadow, and sets the width.
-          inDrawer ? 'w-full' : 'border-r border-[var(--color-border)]',
-          // Not before the first frames: the width measured at mount shows at once.
-          fit.animated && 'transition-[width] duration-300 ease-in-out',
-          className
-        )}
-      >
-        <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
-        {footer && (
-          <div className={clsx('shrink-0 overflow-hidden p-3', FOOTER_DIVIDER[footerDivider])}>
-            <SidebarContext.Provider value={{ ...context, inset: collapsed ? 'none' : 'tight' }}>
-              {footer}
-            </SidebarContext.Provider>
-          </div>
-        )}
-        {showToggle && (
-          <div className={clsx('shrink-0 px-2 py-2', FOOTER_DIVIDER[footerDivider])}>
-            {shell ? (
-              <SidebarToggle variant="panel" onCollapsedChange={onCollapsedChange} />
-            ) : (
-              <SidebarToggle
-                variant="panel"
-                collapsed={collapsed}
-                onCollapsedChange={setOwnCollapsed}
-                controls={navId}
-              />
+      <OverlayLayerProvider value={layer}>
+        {overlay ? (
+          // What the layout sees: the width of the sidebar as the toggles left it, hover or not.
+          // Above the sticky headers of the page (z-10, z-20), under the fixed buttons and banners
+          // (z-40) and the modal layer (z-50: Modal, Drawer).
+          <div
+            className={clsx(
+              'relative z-30 h-full shrink-0',
+              fit.animated && 'transition-[width] duration-300 ease-in-out'
             )}
+            style={{ width: collapsed ? collapsedWidth : fit.width }}
+          >
+            {nav}
           </div>
+        ) : (
+          nav
         )}
-      </nav>
+      </OverlayLayerProvider>
     </SidebarContext.Provider>
   );
 };
@@ -535,6 +609,9 @@ const SidebarItem = ({
   const depth = depthProp ?? contextDepth;
   const labelId = useId();
   useReportActive(active);
+  // The row is a new element when the sidebar collapses or expands: focus follows it.
+  const keepFocus = useKeepFocus();
+  const rowRef = useMemo(() => mergeRefs(ref, keepFocus), [ref, keepFocus]);
   // Picking an item in the Shell's drawer navigates: the drawer closes behind it.
   const shell = useShell();
   const ctx = useContext(SidebarContext);
@@ -571,7 +648,7 @@ const SidebarItem = ({
   const name = collapsed ? label : undefined;
   const row = href ? (
     <a
-      ref={ref as Ref<HTMLAnchorElement>}
+      ref={rowRef as Ref<HTMLAnchorElement>}
       href={href}
       onClick={closeDrawer}
       aria-label={name}
@@ -584,7 +661,7 @@ const SidebarItem = ({
     </a>
   ) : (
     <button
-      ref={ref as Ref<HTMLButtonElement>}
+      ref={rowRef as Ref<HTMLButtonElement>}
       type="button"
       onClick={() => {
         onClick?.();
@@ -673,6 +750,8 @@ const SidebarSubMenu = ({
   const depth = useContext(SidebarDepthContext);
   const listId = useId();
   const labelId = useId();
+  // The trigger is a new element when the sidebar collapses or expands: focus follows it.
+  const triggerRef = useKeepFocus();
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen || active,
@@ -700,6 +779,7 @@ const SidebarSubMenu = ({
     return (
       <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
         <Popover.Trigger
+          ref={triggerRef}
           title={label}
           aria-label={label}
           className={clsx(
@@ -796,6 +876,7 @@ const SidebarSubMenu = ({
       <div className={row} style={nested ? geometry.rowStyle(depth, false) : undefined}>
         {href ? (
           <a
+            ref={triggerRef}
             href={href}
             onClick={go}
             className={labelClass}
@@ -806,6 +887,7 @@ const SidebarSubMenu = ({
           </a>
         ) : (
           <button
+            ref={triggerRef}
             type="button"
             onClick={go}
             className={labelClass}
@@ -830,6 +912,7 @@ const SidebarSubMenu = ({
   } else {
     trigger = (
       <button
+        ref={triggerRef}
         type="button"
         onClick={toggle}
         aria-expanded={open}
