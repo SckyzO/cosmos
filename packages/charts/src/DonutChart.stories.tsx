@@ -6,12 +6,14 @@ import {
   centerText,
   closeTooltip,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectKeyboardWalk,
   expectLegendsAround,
   expectNoInjectedImage,
   HOSTILE,
   LegendSides,
   legendTexts,
+  NarrowBox,
   resolveColor,
   switchTheme,
   themeColor,
@@ -103,6 +105,245 @@ export const UpdatingSeries: Story = {
   },
 };
 
+/** `variant="pie"` fills the disc: no hole, no center text. */
+export const Pie: Story = {
+  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, variant: 'pie' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(5));
+    await waitFor(() => {
+      // Nothing is written over the pie, and the middle of it is a slice.
+      expect(centerText(canvasElement)).toBeNull();
+      const pie = (canvasElement.querySelector('.recharts-pie') as Element).getBoundingClientRect();
+      const middle = [-6, 6].flatMap((dx) =>
+        [-6, 6].map((dy) =>
+          document.elementFromPoint(pie.x + pie.width / 2 + dx, pie.y + pie.height / 2 + dy)
+        )
+      );
+      expect(middle.filter((el) => el?.closest('.recharts-pie-sector'))).not.toHaveLength(0);
+    });
+  },
+};
+
+/** A donut has a hole: the middle of it is no slice. */
+export const DonutHasAHole: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(5));
+    const pie = (canvasElement.querySelector('.recharts-pie') as Element).getBoundingClientRect();
+    const middle = document.elementFromPoint(pie.x + pie.width / 2, pie.y + pie.height / 2);
+    await expect(middle?.closest('.recharts-pie-sector')).toBeNull();
+  },
+};
+
+/** A pie still tells its slices in the tooltip and the legend, and the legend still hides a slice. */
+export const PieKeepsItsLegendAndTooltip: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'], variant: 'pie' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(3));
+    await hoverSlice(canvasElement, 2, '50');
+    await userEvent.unhover(slices(canvasElement)[2]);
+    await closeTooltip(canvasElement);
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'b' }));
+    await waitFor(() =>
+      expect(within(canvasElement).getByRole('button', { name: 'b' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      )
+    );
+    await expect(canvasElement.querySelector('[data-chart-center]')).toBeNull();
+  },
+};
+
+/** `centerLabel` and `centerValue` replace "Total" and the sum; a hovered slice still shows its own. */
+export const CenterText: Story = {
+  args: {
+    series: [732, 268],
+    labels: ['Used', 'Free'],
+    formatValue: gib,
+    centerValue: '1 TB',
+    centerLabel: 'Capacity',
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(centerText(canvasElement)).toEqual({ value: '1 TB', label: 'Capacity' })
+    );
+    await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
+    await hoverSlice(canvasElement, 0, '732 GiB');
+    await waitFor(() =>
+      expect(centerText(canvasElement)).toEqual({ value: '732 GiB', label: 'Used' })
+    );
+    await userEvent.unhover(slices(canvasElement)[0]);
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('1 TB'));
+    await closeTooltip(canvasElement);
+  },
+};
+
+/** Each of the two replaces its own half; an empty `centerLabel` draws no label. */
+export const CenterTextOverridesOneHalf: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [10, 30], labels: ['a', 'b'] },
+  render: (args) => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="value">
+        <DonutChart {...args} centerValue="40 items" />
+      </div>
+      <div data-case="label">
+        <DonutChart {...args} centerLabel="Open" />
+      </div>
+      <div data-case="none">
+        <DonutChart {...args} centerLabel="" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const center = (name: string) =>
+      centerText(canvasElement.querySelector(`[data-case="${name}"]`) as HTMLElement);
+    await waitFor(() => {
+      expect(center('value')).toEqual({ value: '40 items', label: 'Total' });
+      expect(center('label')).toEqual({ value: '40', label: 'Open' });
+      expect(center('none')).toEqual({ value: '40', label: '' });
+    });
+  },
+};
+
+/**
+ * `legendValues` writes each slice's value and its share of the total in the
+ * legend. The shares are whole percents that add up to 100.
+ */
+export const LegendValues: Story = {
+  args: {
+    series: [44, 23, 18, 9, 6],
+    labels: SEVERITIES,
+    legendValues: true,
+    formatValue: (v) => `${v} alerts`,
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(legendFigures(canvasElement)).toEqual([
+        { name: 'CRIT', value: '44 alerts', share: '44%' },
+        { name: 'WARN', value: '23 alerts', share: '23%' },
+        { name: 'OK', value: '18 alerts', share: '18%' },
+        { name: 'INFO', value: '9 alerts', share: '9%' },
+        { name: 'UNK', value: '6 alerts', share: '6%' },
+      ])
+    );
+  },
+};
+
+/** The shares add up to 100 even when each rounds the other way. */
+export const LegendSharesAddUpTo100: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [1, 1, 1], labels: ['a', 'b', 'c'], legendValues: true },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const shares = legendFigures(canvasElement).map((entry) => parseInt(entry.share, 10));
+      expect(shares).toEqual([34, 33, 33]);
+      expect(shares.reduce((sum, share) => sum + share, 0)).toBe(100);
+    });
+  },
+};
+
+/** Hiding a slice keeps its figures and the others' shares: they are the series', not the visible ones'. */
+export const LegendFiguresSurviveHidingASlice: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'], legendValues: true },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(legendFigures(canvasElement)).toHaveLength(3));
+    const before = legendFigures(canvasElement);
+    await userEvent.click(within(canvasElement).getAllByRole('button', { name: /^b/ })[0]);
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('80'));
+    await expect(legendFigures(canvasElement)).toEqual(before);
+    await userEvent.click(within(canvasElement).getAllByRole('button', { name: /^b/ })[0]);
+    await waitFor(() => expect(centerText(canvasElement)?.value).toBe('100'));
+  },
+};
+
+/** In a column the figures reach the right edge of the legend, so the values and the shares line up. */
+export const LegendValuesAlignInAColumn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [4400, 230, 18, 9, 6],
+    labels: ['Long service name', 'B', 'C', 'D', 'E'],
+    legendValues: true,
+  },
+  render: (args) => (
+    <LegendSides>
+      {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
+    </LegendSides>
+  ),
+  play: async ({ canvasElement }) => {
+    const rightEdges = (side: string, cell: 1 | 2) =>
+      [
+        ...canvasElement.querySelectorAll(`[data-side="${side}"] .recharts-legend-wrapper button`),
+      ].map((button) => button.querySelectorAll('span')[cell + 1].getBoundingClientRect().right);
+    await waitFor(() => {
+      for (const side of ['left', 'right']) {
+        for (const cell of [1, 2] as const) {
+          const edges = rightEdges(side, cell);
+          expect(edges, side).toHaveLength(5);
+          // Same right edge for the five values, and for the five shares.
+          expect(Math.max(...edges) - Math.min(...edges), `${side} ${cell}`).toBeLessThan(1);
+        }
+      }
+      // On the top and the bottom the figures follow the name instead.
+      for (const side of ['top', 'bottom']) {
+        const names = [
+          ...canvasElement.querySelectorAll(
+            `[data-side="${side}"] .recharts-legend-wrapper button`
+          ),
+        ].map((b) => b.textContent);
+        expect(names[0], side).toContain('Long service name');
+        expect(names[0], side).toContain('%');
+      }
+    });
+  },
+};
+
+/** The legend figures are plain text, in each side: markup in a label or a formatted value shows as written. */
+export const HtmlInLegendValuesRendersAsText: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [40, 60],
+    labels: [HOSTILE, 'Normal'],
+    legendValues: true,
+    formatValue: (v) => `${HOSTILE}${v}`,
+    centerLabel: HOSTILE,
+    centerValue: HOSTILE,
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(legendFigures(canvasElement)).toEqual([
+        { name: HOSTILE, value: `${HOSTILE}40`, share: '40%' },
+        { name: 'Normal', value: `${HOSTILE}60`, share: '60%' },
+      ])
+    );
+    await waitFor(() =>
+      expect(centerText(canvasElement)).toEqual({ value: HOSTILE, label: HOSTILE })
+    );
+    await expectNoInjectedImage(canvasElement);
+  },
+};
+
+/** The legend with figures does not widen the page on a narrow screen. */
+export const LegendValuesFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [44, 23, 18, 9, 6],
+    labels: ['Production cluster', 'Staging cluster', 'Development', 'Sandbox', 'Unknown'],
+    legendValues: true,
+    legendPosition: 'left',
+    width: 900,
+  },
+  render: (args) => (
+    <NarrowBox>
+      <DonutChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], labels: [] },
@@ -115,6 +356,13 @@ export const Empty: Story = {
 const slices = (root: HTMLElement) => [
   ...root.querySelectorAll<SVGPathElement>('.recharts-pie-sector path'),
 ];
+
+// The legend entries as name, value and share, for a legend written with `legendValues`.
+const legendFigures = (root: HTMLElement) =>
+  [...root.querySelectorAll('.recharts-legend-wrapper button')].map((button) => {
+    const [name, value, share] = [...button.querySelectorAll('span')].slice(1);
+    return { name: name?.textContent, value: value?.textContent, share: share?.textContent };
+  });
 
 /**
  * Hovers slice `index` until the tooltip shows `text`. While the slices draw
