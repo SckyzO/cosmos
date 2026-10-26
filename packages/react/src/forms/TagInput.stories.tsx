@@ -60,7 +60,7 @@ export const WithValidation: Story = {
         label="Invite by email"
         placeholder="name@example.com"
         defaultValue={['leslie@example.com']}
-        validate={(text) => /^\S+@\S+\.\S+$/.test(text)}
+        validate={(text) => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(text)}
         invalidMessage="Enter a valid email address."
         helperText="Press Enter or comma to add an address."
         separators={['Enter', ',', ' ']}
