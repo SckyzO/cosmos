@@ -96,6 +96,7 @@ to for `SegmentedControl`, in either appearance (the selected one, else the firs
 ## Variants worth knowing
 
 - `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
+- `Tabs variant="raised"`: the same neutral gray track, but the active tab is raised on it in white (a lighter gray in the dark themes) with no accent, horizontal or vertical.
 - `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
 - `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
 - `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
