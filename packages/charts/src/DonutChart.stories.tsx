@@ -3,15 +3,20 @@ import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { DonutChart } from './DonutChart';
 import {
+  centerText,
+  closeTooltip,
+  expectEmptyMessage,
+  expectKeyboardWalk,
+  expectLegendsAround,
+  expectNoInjectedImage,
   HOSTILE,
   LegendSides,
-  expectNoInjectedImage,
+  legendTexts,
   resolveColor,
   switchTheme,
   themeColor,
-} from './storybook-helpers';
-import { centerText, expectKeyboardWalk, expectLegendsAround } from './storybook-polar';
-import { closeTooltip, expectEmptyMessage, legendTexts, tooltipCard } from './storybook-recharts';
+  tooltipCard,
+} from './storybook-recharts';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
 const REGIONS = ['eu-west', 'eu-central', 'us-east', 'us-west', 'ap-south'];

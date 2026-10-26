@@ -18,13 +18,13 @@ import { Sparkline } from './Sparkline';
 import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
 import {
-  HOSTILE,
   expectNoInjectedImage,
+  HOSTILE,
   resolveColor,
   switchTheme,
   themeColor,
-} from './storybook-helpers';
-import { tickTexts } from './storybook-recharts';
+  tickTexts,
+} from './storybook-recharts';
 import type { ChartEmptyProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper

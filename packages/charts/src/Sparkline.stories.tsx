@@ -2,11 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, waitFor } from 'storybook/test';
 import { Sparkline } from './Sparkline';
-import { HOSTILE, expectNoInjectedImage } from './storybook-helpers';
 import {
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectNoInjectedImage,
+  HOSTILE,
   openTooltip,
   surface,
   tooltipCard,

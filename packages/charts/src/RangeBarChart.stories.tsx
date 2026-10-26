@@ -2,25 +2,26 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RangeBarChart } from './RangeBarChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
+  barFills,
+  barShapes,
   closeTooltip,
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
+  LegendSides,
   legendTexts,
+  openTooltipAt,
+  resolveColor,
   surface,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
-import {
-  barFills,
-  barShapes,
-  expectRepaintsWithThemeOf,
-  openTooltipAt,
-} from './storybook-cartesian';
 
 // Fixed dates (UTC, October 2026) keep the stories and their tests deterministic.
 const at = (day: number, hour: number, minute = 0) => Date.UTC(2026, 9, day, hour, minute);

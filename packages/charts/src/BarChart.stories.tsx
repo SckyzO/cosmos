@@ -4,27 +4,27 @@ import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
 import {
-  HOSTILE,
-  LegendSides,
-  expectNoInjectedImage,
-  loadLateFont,
-  resolveColor,
-} from './storybook-helpers';
-import {
   axisTitles,
+  barFills,
+  barShapes,
   closeTooltip,
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
   expectTextFollowsTextSize,
+  HOSTILE,
+  LegendSides,
   legendTexts,
+  loadLateFont,
   openTooltip,
+  resolveColor,
   surface,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
-import { barFills, barShapes, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];

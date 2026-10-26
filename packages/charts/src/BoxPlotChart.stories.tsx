@@ -2,20 +2,24 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BoxPlotChart } from './BoxPlotChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
+  barFills,
   closeTooltip,
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
+  expectRepaintsWithThemeOf,
+  HOSTILE,
+  LegendSides,
   legendTexts,
   openTooltip,
+  resolveColor,
   surface,
   tooltipCard,
 } from './storybook-recharts';
-import { barFills, expectRepaintsWithThemeOf } from './storybook-cartesian';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];

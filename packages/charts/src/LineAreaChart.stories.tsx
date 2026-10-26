@@ -3,17 +3,20 @@ import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SERIES_FALLBACKS } from './core/colors';
 import { LineAreaChart } from './LineAreaChart';
-import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
   axisTitles,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
   expectLegendsOnTheirSide,
+  expectNoInjectedImage,
   expectRepaintsWithTheme,
   expectTextFollowsTextSize,
+  HOSTILE,
+  LegendSides,
   legendTexts,
   openTooltip,
+  resolveColor,
   seriesStrokes,
   surface,
   tickTexts,
