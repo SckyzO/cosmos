@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useId, useLayoutEffect, useState } from 'react';
-import type { ElementType, ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
+import type { ElementType, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DialogTitleProvider,
@@ -42,6 +42,22 @@ const SIDE_TRANSFORM: Record<DrawerSide, { open: string; closed: string }> = {
   right: { open: 'translate-x-0', closed: 'translate-x-full' },
 };
 
+// A swipe closes the drawer past a third of the panel's width, or when it ends as a flick: faster
+// than FLICK_SPEED px/ms over the last FLICK_WINDOW ms. Below SWIPE_SLOP px of travel it is a tap.
+const SWIPE_SLOP = 8;
+const FLICK_SPEED = 0.5;
+const FLICK_WINDOW = 100;
+
+type Swipe = {
+  pointerId: number;
+  x: number;
+  y: number;
+  /** Whether the finger moved far enough, along the closing direction, to drag the panel. */
+  dragging: boolean;
+  /** Recent positions along the closing direction, for the release velocity. */
+  samples: { dx: number; t: number }[];
+};
+
 export type DrawerProps = {
   open: boolean;
   onClose: () => void;
@@ -63,6 +79,15 @@ export type DrawerProps = {
    */
   closeOutside?: boolean;
   /**
+   * Let a touch or pen swipe on the panel, toward its edge (left for `side="left"`, right for
+   * `side="right"`), close the drawer. The panel follows the finger and never goes past its
+   * open position; released past a third of its width, or as a fast flick, it calls `onClose`,
+   * otherwise it springs back (without the animation under `prefers-reduced-motion`). A mouse
+   * does not swipe, and vertical scrolling inside the panel is left to the browser. Default
+   * `false`.
+   */
+  swipeToClose?: boolean;
+  /**
    * Accessible name for the drawer when it has no `Drawer.Header` title to
    * point at. With a `Drawer.Header title=…` present the drawer is labelled by
    * it automatically and this is unnecessary.
@@ -79,6 +104,7 @@ const Root = ({
   size = 'md',
   withBackdrop = true,
   closeOutside = false,
+  swipeToClose = false,
   ariaLabel,
   className,
   children,
@@ -105,6 +131,74 @@ const Root = ({
   useLayoutEffect(() => {
     setContainer(isClient ? trapRef.current : null);
   }, [isClient, trapRef]);
+
+  // Swipe to close: the panel's offset while the finger drags it (`null` at rest), and whether
+  // the spring-back skips its animation (`prefers-reduced-motion`).
+  const swipe = useRef<Swipe | null>(null);
+  const [dragX, setDragX] = useState<number | null>(null);
+  const [instant, setInstant] = useState(false);
+  // Toward the edge the panel slides out through: -1 for the left side, 1 for the right.
+  const direction = side === 'left' ? -1 : 1;
+
+  const swipeHandlers = swipeToClose
+    ? {
+        onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
+          if (!open || e.pointerType === 'mouse' || !e.isPrimary) return;
+          swipe.current = {
+            pointerId: e.pointerId,
+            x: e.clientX,
+            y: e.clientY,
+            dragging: false,
+            samples: [{ dx: 0, t: e.timeStamp }],
+          };
+        },
+        onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
+          const s = swipe.current;
+          if (!s || e.pointerId !== s.pointerId) return;
+          const along = (e.clientX - s.x) * direction;
+          if (!s.dragging) {
+            // A vertical move is a scroll of the panel's content: not a swipe.
+            if (Math.abs(e.clientY - s.y) > Math.abs(e.clientX - s.x)) {
+              if (Math.abs(e.clientY - s.y) > SWIPE_SLOP) swipe.current = null;
+              return;
+            }
+            if (along < SWIPE_SLOP) return;
+            s.dragging = true;
+            setInstant(false);
+          }
+          s.samples.push({ dx: along, t: e.timeStamp });
+          // Never past the open position: only toward the edge.
+          setDragX(Math.max(0, along) * direction);
+        },
+        onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
+          const s = swipe.current;
+          if (!s || e.pointerId !== s.pointerId) return;
+          swipe.current = null;
+          if (!s.dragging) return;
+          const along = Math.max(0, (e.clientX - s.x) * direction);
+          // Speed over the last FLICK_WINDOW ms of the gesture, toward the edge.
+          // A finger that stopped before lifting (no move in the window) leaves at speed 0.
+          const from = s.samples.find((p) => e.timeStamp - p.t <= FLICK_WINDOW);
+          const elapsed = from ? e.timeStamp - from.t : 0;
+          const speed = from && elapsed > 0 ? (along - from.dx) / elapsed : 0;
+          const width = e.currentTarget.getBoundingClientRect().width;
+          const close = along > width / 3 || speed > FLICK_SPEED;
+          // Closing keeps the panel where the finger left it: `open` turning false in the same
+          // render lets the slide-out continue from there. A drawer the host keeps open springs back.
+          if (!close && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            setInstant(true);
+            requestAnimationFrame(() => setInstant(false));
+          }
+          setDragX(null);
+          if (close) onClose();
+        },
+        onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => {
+          if (swipe.current?.pointerId !== e.pointerId) return;
+          swipe.current = null;
+          setDragX(null);
+        },
+      }
+    : undefined;
 
   if (!isClient) return null;
 
@@ -134,6 +228,18 @@ const Root = ({
         tabIndex={-1}
         inert={!open}
         aria-hidden={open ? undefined : true}
+        {...swipeHandlers}
+        style={
+          swipeToClose
+            ? {
+                // The panel slides with the `translate` property; `pan-y` leaves vertical scrolling
+                // to the browser and delivers the horizontal pointer moves to the swipe.
+                touchAction: 'pan-y',
+                translate: dragX === null ? undefined : `${dragX}px`,
+                transition: dragX !== null || instant ? 'none' : undefined,
+              }
+            : undefined
+        }
         onTransitionEnd={(e) => {
           // Tailwind 4 slides the panel with the `translate` property, so that
           // is the one that ends, not `transform`.

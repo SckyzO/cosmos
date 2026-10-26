@@ -6,6 +6,15 @@ export type ShellContextValue = {
   collapsed: boolean;
   /** Moves the sidebar to `collapsed`; the Shell reports it through its `onCollapsedChange`. */
   setCollapsed: (collapsed: boolean) => void;
+  /**
+   * Whether the viewport is below `lg`, where the sidebar leaves the layout and opens as a
+   * drawer. The collapsed state only applies from `lg` up, the open state only below.
+   */
+  isMobile: boolean;
+  /** Whether the sidebar drawer is open. Only shown while `isMobile`. */
+  open: boolean;
+  /** Opens or closes the sidebar drawer; the Shell reports it through its `onSidebarOpenChange`. */
+  setOpen: (open: boolean) => void;
   /** `id` of the Sidebar's `nav`, which the toggles name in `aria-controls`. */
   navId: string;
   /** Where the Shell puts its built-in toggle: in the Topbar or at the bottom of the Sidebar. */

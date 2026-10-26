@@ -44,7 +44,9 @@ export type SidebarToggleProps = {
  * inside a Shell also takes over from the Shell, for a toggle that drives something else.
  *
  * Named "Collapse sidebar" or "Expand sidebar", it says the current state with
- * `aria-expanded` and the element it collapses with `aria-controls`.
+ * `aria-expanded` and the element it collapses with `aria-controls`. Below `lg`, inside a Shell,
+ * the sidebar is a drawer: the toggle is named "Open navigation" or "Close navigation", opens and
+ * closes it, and `onCollapsedChange` is not called (the collapsed state doesn't move).
  */
 export const SidebarToggle = ({
   variant = 'hamburger',
@@ -57,10 +59,20 @@ export const SidebarToggle = ({
   const shell = useShell();
   // `collapsed` set means the host owns the state; otherwise the Shell's, if any.
   const fromShell = collapsedProp === undefined ? shell : null;
-  const collapsed = collapsedProp ?? fromShell?.collapsed;
+  // Below `lg` the Shell's sidebar is a drawer: the toggle opens and closes it, and the collapsed
+  // state is not in play.
+  const drawer = fromShell?.isMobile ? fromShell : null;
+  const collapsed = drawer ? false : (collapsedProp ?? fromShell?.collapsed);
   if (collapsed === undefined) return null;
 
-  const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  const label = drawer
+    ? drawer.open
+      ? 'Close navigation'
+      : 'Open navigation'
+    : collapsed
+      ? 'Expand sidebar'
+      : 'Collapse sidebar';
+  const expanded = drawer ? drawer.open : !collapsed;
   const panel = variant === 'panel';
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -68,15 +80,21 @@ export const SidebarToggle = ({
     <button
       ref={ref}
       type="button"
-      onClick={() => {
+      onClick={(e) => {
+        if (drawer) {
+          // Some browsers don't focus a clicked button: the drawer returns focus to it on close.
+          e.currentTarget.focus();
+          drawer.setOpen(!drawer.open);
+          return;
+        }
         fromShell?.setCollapsed(!collapsed);
         onCollapsedChange?.(!collapsed);
       }}
       aria-label={label}
-      aria-expanded={!collapsed}
+      aria-expanded={expanded}
       aria-controls={controls ?? fromShell?.navId}
       // The panel row shows "Collapse" while expanded: the tooltip only adds to the icon alone.
-      title={panel && !collapsed ? undefined : label}
+      title={panel && !collapsed && !drawer ? undefined : label}
       className={clsx(
         'focus-visible:focus-indicator flex shrink-0 items-center text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 dark:hover:bg-white/5',
         panel
@@ -91,7 +109,7 @@ export const SidebarToggle = ({
       {panel ? (
         <>
           <Icon className="h-5 w-5 shrink-0" aria-hidden />
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{drawer ? 'Close' : 'Collapse'}</span>}
         </>
       ) : (
         // TailAdmin asymmetric hamburger — distinctive 3-line glyph
