@@ -1,18 +1,15 @@
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/line';
-import 'apexcharts/features/legend';
-import { ApexChart } from './ApexChart';
-import { seriesTitle, useCategoryTitle, useOptionalValueFormat } from './formatters';
-import { chartLegend } from './legend';
-import { useChartTheme } from './theme';
-import type {
-  ChartAxisTitleProps,
-  ChartBaseProps,
-  ChartEmptyProps,
-  ChartLegendProps,
-} from './types';
+import { useId } from 'react';
+import { Area, AreaChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts';
+import { ANIMATION } from './core/animation';
+import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { ChartTooltip } from './core/ChartTooltip';
+import { legendProps, useHiddenSeries } from './core/ChartLegend';
+import { BORDER, PANEL, seriesColor } from './core/colors';
+import { hasNoData, safeId, seriesKey, toRows } from './core/data';
+import { ChartEmpty, frameProps } from './core/frame';
+import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
 
-export type LineAreaChartProps = ChartBaseProps &
+export type LineAreaChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
   ChartAxisTitleProps & {
@@ -20,10 +17,7 @@ export type LineAreaChartProps = ChartBaseProps &
     categories: (string | number)[];
     /** Override the default Cosmos palette. */
     colors?: string[];
-    /**
-     * Format the y-axis labels and the tooltip values.
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the y-axis labels and the tooltip values. */
     formatValue?: (value: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
@@ -36,68 +30,60 @@ export const LineAreaChart = ({
   formatValue,
   xTitle,
   yTitle,
-  emptyMessage,
+  emptyMessage = 'No data',
   ariaLabel,
-  apexOptions,
+  children,
   height = 280,
-  width = '100%',
+  width,
   showLegend,
   legendPosition = 'top',
 }: LineAreaChartProps) => {
-  const { grid, axisLabels, axisTitle, palette, tooltipTheme } = useChartTheme();
+  const uid = safeId(useId());
+  const hidden = useHiddenSeries();
+  const name = ariaLabel ?? `Area chart: ${series.map((s) => s.name).join(', ')}`;
+  if (hasNoData(series)) {
+    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
   const legendVisible = showLegend ?? series.length > 1;
-  const categoryTitle = useCategoryTitle(categories);
-  const format = useOptionalValueFormat(formatValue);
-  const options: ApexOptions = {
-    chart: {
-      type: 'area',
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      fontFamily: 'inherit',
-      // ApexCharts keeps 15px free under the drawing: dead space in a card.
-      parentHeightOffset: 0,
-    },
-    colors: colors ?? palette,
-    dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: 2 },
-    fill: { type: 'gradient', gradient: { opacityFrom: 0.45, opacityTo: 0.05 } },
-    grid,
-    // One labels object per axis: ApexCharts writes the x-axis category
-    // formatter onto it, which blanked the y labels on the next update.
-    xaxis: {
-      categories,
-      title: axisTitle(xTitle),
-      labels: { ...axisLabels },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      title: axisTitle(yTitle),
-      labels: { ...axisLabels, formatter: format.axis },
-    },
-    legend: chartLegend({
-      show: legendVisible,
-      position: legendPosition,
-      color: axisLabels.style.colors,
-    }),
-    // The tooltip and the legend are HTML: escape the category, the series
-    // name and the formatted value.
-    tooltip: {
-      theme: tooltipTheme,
-      x: { formatter: categoryTitle },
-      y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
-    },
-  };
   return (
-    <ApexChart
-      type="area"
-      options={options}
-      series={series}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-    />
+    <AreaChart
+      {...frameProps({ height, width, ariaLabel: name })}
+      data={toRows(categories, series)}
+      margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+    >
+      <defs>
+        {series.map((_, i) => (
+          <linearGradient key={seriesKey(i)} id={`${uid}-${i}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={seriesColor(i, colors)} stopOpacity={0.32} />
+            <stop offset="100%" stopColor={seriesColor(i, colors)} stopOpacity={0} />
+          </linearGradient>
+        ))}
+      </defs>
+      <CartesianGrid {...GRID_PROPS} />
+      <XAxis dataKey="category" {...AXIS} {...xAxisTitle(xTitle)} />
+      <YAxis width="auto" tickFormatter={formatValue} {...AXIS} {...yAxisTitle(yTitle)} />
+      {legendVisible && <Legend {...legendProps(legendPosition, hidden)} />}
+      <Tooltip
+        content={<ChartTooltip format={formatValue} />}
+        cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}
+        animationDuration={150}
+      />
+      {series.map((s, i) => (
+        <Area
+          key={seriesKey(i)}
+          name={s.name}
+          dataKey={seriesKey(i)}
+          type="monotone"
+          stroke={seriesColor(i, colors)}
+          strokeWidth={2.25}
+          fill={`url(#${uid}-${i})`}
+          dot={false}
+          activeDot={{ r: 5, fill: PANEL, stroke: seriesColor(i, colors), strokeWidth: 2.5 }}
+          hide={hidden.hidden.has(seriesKey(i))}
+          {...ANIMATION}
+        />
+      ))}
+      {children}
+    </AreaChart>
   );
 };

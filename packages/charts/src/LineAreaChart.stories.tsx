@@ -1,29 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-// The toolbar is an ApexCharts feature the charts do not load.
-import 'apexcharts/features/toolbar';
-import { expect, waitFor } from 'storybook/test';
+import { ReferenceLine } from 'recharts';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { SERIES_FALLBACKS } from './core/colors';
 import { LineAreaChart } from './LineAreaChart';
+import { HOSTILE, LegendSides, expectNoInjectedImage, resolveColor } from './storybook-helpers';
 import {
-  HOSTILE,
-  closeTooltip,
-  expectNoInjectedImage,
-  expectTooltipFollowsTheme,
-  hover,
-  legendTexts,
-  resolveColor,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
-  expectAccessibleChart,
-  expectPaletteFromTheme,
-  LegendSides,
-  expectLegendsOnTheirSide,
-  expectMessageOnly,
-  expectRedrawOnRerender,
   axisTitles,
-  expectAxisTitles,
+  closeTooltip,
+  expectAccessibleChart,
+  expectEmptyMessage,
+  expectLegendsOnTheirSide,
+  expectRepaintsWithTheme,
   expectTextFollowsTextSize,
-} from './storybook-helpers';
+  legendTexts,
+  openTooltip,
+  seriesStrokes,
+  surface,
+  tickTexts,
+  tooltipCard,
+} from './storybook-recharts';
 
 const HOURS = ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
 const WEEKS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
@@ -94,7 +89,7 @@ export const NegativeValues: Story = {
 
 /**
  * A day of hourly samples. There is no datetime axis: the timestamps are
- * categories, and ApexCharts rotates them when they don't fit.
+ * categories, and the axis skips the labels that don't fit.
  */
 export const HourlySamples: Story = {
   args: {
@@ -144,7 +139,11 @@ export const FormattedValues: Story = {
 /** `xTitle` and `yTitle` name the axes, so the tick labels need no unit. */
 export const AxisTitles: Story = {
   args: { ...Basic.args, xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
-  play: expectAxisTitles({ x: 'Hour of day', y: ['CPU usage (%)'] }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(axisTitles(canvasElement)).toEqual({ x: ['Hour of day'], y: ['CPU usage (%)'] })
+    );
+  },
 };
 
 /**
@@ -162,14 +161,13 @@ export const TextFollowsTheTextSize: Story = {
       { name: 'Memory', data: [11, 32, 45, 32, 34, 52, 41, 60, 66] },
     ],
   },
-  play: ({ canvasElement }) =>
-    expectTextFollowsTextSize(canvasElement, () => canvasElement.querySelector('.apexcharts-grid')),
+  play: ({ canvasElement }) => expectTextFollowsTextSize(canvasElement),
 };
 
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
-  play: expectMessageOnly('No data'),
+  play: expectEmptyMessage('No data'),
 };
 
 /** A chart with no data draws its message without the axis titles. */
@@ -177,7 +175,7 @@ export const EmptyDrawsNoAxisTitles: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [], categories: [], xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
   play: async (context) => {
-    await expectMessageOnly('No data')(context);
+    await expectEmptyMessage('No data')(context);
     await expect(axisTitles(context.canvasElement)).toEqual({ x: [], y: [] });
   },
 };
@@ -189,31 +187,40 @@ export const EmptyWithMessage: Story = {
     categories: [],
     emptyMessage: 'No samples in the last hour',
   },
-  play: expectMessageOnly('No samples in the last hour'),
+  play: expectEmptyMessage('No samples in the last hour'),
 };
 
 /**
- * `apexOptions` merges raw ApexCharts options over the chart's own, last: here
- * the toolbar, and the grid color, which keeps the dashes the chart sets. The
- * toolbar is one of the ApexCharts features the charts do not load: this file
- * imports `apexcharts/features/toolbar`.
+ * `children` takes Recharts elements, drawn inside the chart after the ones it
+ * builds: here a `ReferenceLine` for a threshold, in the units of the series.
+ * Colors are CSS variables, so the line follows the theme.
  */
-export const RawApexOptions: Story = {
+export const ReferenceLineInChildren: Story = {
   args: {
     series: [{ name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }],
     categories: HOURS,
-    apexOptions: { chart: { toolbar: { show: true } }, grid: { borderColor: '#f59e0b' } },
+    yTitle: 'CPU usage (%)',
+    children: (
+      <ReferenceLine
+        y={28}
+        stroke="var(--color-status-warn)"
+        strokeDasharray="6 4"
+        label={{ value: 'WARN 28%', position: 'insideTopLeft', fill: 'var(--color-text-muted)' }}
+      />
+    ),
   },
   play: async ({ canvasElement }) => {
-    await waitFor(() =>
-      expect(canvasElement.querySelector('.apexcharts-menu-icon')).not.toBeNull()
-    );
-    const gridlines = () => [...canvasElement.querySelectorAll('.apexcharts-gridline')];
-    await waitFor(() => expect(gridlines().length).toBeGreaterThan(0));
-    for (const line of gridlines()) {
-      expect(resolveColor(line.getAttribute('stroke') ?? '')).toBe(resolveColor('#f59e0b'));
-      expect(line.getAttribute('stroke-dasharray')).toBe('4');
-    }
+    await waitFor(() => {
+      const line = canvasElement.querySelector('.recharts-reference-line line');
+      expect(line).not.toBeNull();
+      expect(resolveColor(getComputedStyle(line as Element).stroke)).toBe(
+        resolveColor(
+          getComputedStyle(document.documentElement).getPropertyValue('--color-status-warn')
+        )
+      );
+      // The label is drawn in a layer of its own, above the series.
+      expect(canvasElement.textContent).toContain('WARN 28%');
+    });
   },
 };
 
@@ -239,8 +246,34 @@ export const SingleSeriesHasNoLegend: Story = {
   tags: ['!dev', '!autodocs'],
   args: Basic.args,
   play: async ({ canvasElement }) => {
-    await waitFor(() => expect(canvasElement.querySelector('.apexcharts-series')).not.toBeNull());
+    await waitFor(() => expect(canvasElement.querySelector('.recharts-area')).not.toBeNull());
     await expect(legendTexts(canvasElement)).toEqual([]);
+  },
+};
+
+/** A click on a legend entry hides its series and shows it again; the keyboard does the same. */
+export const LegendTogglesSeries: Story = {
+  tags: ['!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const curves = () => canvasElement.querySelectorAll('.recharts-area-curve').length;
+    await waitFor(() => expect(curves()).toBe(3));
+    const p95 = canvas.getByRole('button', { name: 'p95 latency (ms)' });
+    await expect(p95).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(p95);
+    await waitFor(() => expect(curves()).toBe(2));
+    await expect(p95).toHaveAttribute('aria-pressed', 'false');
+    // Series keep their order and their color when one is hidden.
+    await expect(legendTexts(canvasElement)).toEqual([
+      'p50 latency (ms)',
+      'p95 latency (ms)',
+      'p99 latency (ms)',
+    ]);
+    p95.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(curves()).toBe(3));
+    await expect(p95).toHaveAttribute('aria-pressed', 'true');
   },
 };
 
@@ -249,14 +282,11 @@ export const ColorsOverridePalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: CustomColors.args,
   play: async ({ canvasElement }) => {
-    // Each series draws its gradient fill, then its line: an unfilled path.
-    const strokes = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-series')].map((series) =>
-        resolveColor(
-          series.querySelector('.apexcharts-area[fill="none"]')?.getAttribute('stroke') ?? ''
-        )
-      );
-    await waitFor(() => expect(strokes()).toEqual(STATUS_COLORS));
+    await waitFor(() =>
+      expect(seriesStrokes(canvasElement).map(resolveColor)).toEqual(
+        STATUS_COLORS.map(resolveColor)
+      )
+    );
   },
 };
 
@@ -265,57 +295,17 @@ export const FormatValueFormatsLabels: Story = {
   tags: ['!dev', '!autodocs'],
   args: FormattedValues.args,
   play: async ({ canvasElement }) => {
-    const yLabels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
-    await waitFor(() => expect(yLabels().length).toBeGreaterThan(1));
-    for (const label of yLabels()) expect(label).toMatch(/^\d+ ms$/);
-
-    await waitFor(() => {
-      hover(canvasElement.querySelector('.apexcharts-grid') as Element, 0.05);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-value')?.textContent).toBe(
-        '118 ms'
-      );
-    });
+    await waitFor(() => expect(tickTexts(canvasElement, 'yAxis').length).toBeGreaterThan(1));
+    for (const label of tickTexts(canvasElement, 'yAxis')) expect(label).toMatch(/^\d+ ms$/);
+    await openTooltip(canvasElement, 0.07);
+    await expect(tooltipCard(canvasElement)).toHaveTextContent('118 ms');
+    await closeTooltip(canvasElement);
   },
 };
 
 /**
- * Charts re-read their colors when the theme or accent changes on `<html>`. The
- * y-axis labels used to come back empty after that update: LineAreaChart
- * shared one labels object between both axes and ApexCharts wrote the
- * category formatter onto it.
- */
-export const AccentSwitchKeepsYAxisLabels: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: Basic.args,
-  play: async ({ canvasElement }) => {
-    const yLabels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
-    await waitFor(() => expect(yLabels().length).toBeGreaterThan(0));
-
-    const root = document.documentElement;
-    const previous = root.dataset.accent;
-    root.dataset.accent = 'teal';
-    try {
-      // Wait for the update: the series turns teal (brand-500).
-      await waitFor(
-        () => expect(canvasElement.querySelector('[stroke="#038378"]')).not.toBeNull(),
-        {
-          timeout: 3000,
-        }
-      );
-      await expect(yLabels()).not.toContain('');
-    } finally {
-      if (previous) root.dataset.accent = previous;
-      else delete root.dataset.accent;
-    }
-  },
-};
-
-/**
- * The legend and the tooltip are HTML. The tooltip title is the category, not
- * the point's position on the axis, and the first point sits at the left edge
- * of the plot.
+ * The legend and the tooltip are React text: a series name, a category or an
+ * axis title with markup shows as written, and nothing is injected.
  */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
@@ -329,40 +319,46 @@ export const HtmlInLabelsRendersAsText: Story = {
     categories: [HOSTILE, 'B', 'C'],
   },
   play: async ({ canvasElement }) => {
-    // Legends render on mount: the name must show up as literal text.
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
     await expectNoInjectedImage(canvasElement);
-    // Axis titles are SVG text: the same string, drawn as written.
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
+    await openTooltip(canvasElement, 0.07);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    // The title is the category, and the first row is the first series' name.
+    await expect(card.querySelector('p')).toHaveTextContent(HOSTILE);
+    await expect(card.querySelector('li')).toHaveTextContent(HOSTILE);
     await expectNoInjectedImage(canvasElement);
-
-    const grid = () => canvasElement.querySelector('.apexcharts-grid');
-    await waitFor(() => {
-      hover(grid() as Element, 0.05);
-      expect(canvasElement.querySelector('.apexcharts-tooltip-title')?.textContent).toBe(HOSTILE);
-      // The shared tooltip fills its series rows after the title.
-      expect(canvasElement.querySelector('.apexcharts-tooltip-text-y-label')?.textContent).toBe(
-        `${HOSTILE}: `
-      );
-    });
-    await expectNoInjectedImage(canvasElement);
-    await closeTooltip(canvasElement, grid);
+    await closeTooltip(canvasElement);
   },
 };
 
-/** The tooltip follows the Cosmos theme: dark in the dark themes, light in the others. */
-export const TooltipFollowsTheme: Story = {
+/** The tooltip is a card in the colors of the theme, a live region for screen readers. */
+export const TooltipCardShowsTheSeries: Story = {
   tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
   args: { categories: HOURS, series: [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }] },
   play: async ({ canvasElement }) => {
-    await expectTooltipFollowsTheme(canvasElement, () =>
-      canvasElement.querySelector('.apexcharts-grid')
-    );
+    await openTooltip(canvasElement, 0.07);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    await expect(card).toHaveAttribute('aria-live', 'polite');
+    await expect(card).toHaveTextContent('00h');
+    await expect(card).toHaveTextContent('CPU');
+    await expect(card).toHaveTextContent('3');
+    await closeTooltip(canvasElement);
   },
 };
 
-/** The lines take the default palette of the theme. */
+/**
+ * Colors are CSS variables handed to the SVG: a theme or accent switch on
+ * `<html>` repaints the chart with no observer and no redraw.
+ */
+export const RepaintsWithTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: Basic.args,
+  play: ({ canvasElement }) => expectRepaintsWithTheme(canvasElement),
+};
+
+/** The lines take the default palette of the theme: the accent, then the hues after it. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -370,11 +366,73 @@ export const PaletteFromTheme: Story = {
     series: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name, data: [3, 5, 4] })),
   },
   play: async ({ canvasElement }) => {
-    await expectPaletteFromTheme(() =>
-      [...canvasElement.querySelectorAll('.apexcharts-area[fill="none"]')].map((el) =>
-        el.getAttribute('stroke')
-      )
+    const tokens = [
+      '--color-brand-500',
+      '--color-chart-2',
+      '--color-chart-3',
+      '--color-chart-4',
+      '--color-chart-5',
+    ];
+    const css = (token: string) =>
+      resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
+    await waitFor(() =>
+      expect(seriesStrokes(canvasElement).map(resolveColor)).toEqual(tokens.map(css))
     );
+  },
+};
+
+/**
+ * The hex a series color falls back to is what the theme gives in the default
+ * accent: the fallback is a safety net that looks the same.
+ */
+export const PaletteFallbacksMatchTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: Basic.args,
+  play: async () => {
+    const tokens = [
+      '--color-brand-500',
+      ...SERIES_FALLBACKS.slice(1).map((_, i) => `--color-chart-${i + 2}`),
+    ];
+    const html = document.documentElement;
+    const previous = html.getAttribute('data-accent');
+    html.removeAttribute('data-accent');
+    try {
+      for (const [i, token] of tokens.entries()) {
+        await expect(
+          resolveColor(getComputedStyle(html).getPropertyValue(token).trim()),
+          token
+        ).toBe(resolveColor(SERIES_FALLBACKS[i]));
+      }
+    } finally {
+      if (previous !== null) html.setAttribute('data-accent', previous);
+    }
+  },
+};
+
+/** An accent that looks like a palette hue takes its place: the teal accent has no teal series. */
+export const PaletteSkipsTheAccentHue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['A', 'B', 'C'],
+    series: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((name) => ({ name, data: [3, 5, 4] })),
+  },
+  play: async ({ canvasElement }) => {
+    const html = document.documentElement;
+    const previous = html.getAttribute('data-accent');
+    html.setAttribute('data-accent', 'teal');
+    try {
+      await waitFor(() => {
+        const strokes = seriesStrokes(canvasElement).map(resolveColor);
+        expect(strokes).toHaveLength(8);
+        expect(strokes[0]).toBe(resolveColor('#038378'));
+        // The default palette's teal (#14b8a6) is gone; the reserve (#d946ef) is in.
+        expect(strokes).not.toContain(resolveColor('#14b8a6'));
+        expect(strokes).toContain(resolveColor('#d946ef'));
+      });
+    } finally {
+      if (previous === null) html.removeAttribute('data-accent');
+      else html.setAttribute('data-accent', previous);
+    }
   },
 };
 
@@ -396,103 +454,25 @@ export const LegendOnEachSide: Story = {
   play: expectLegendsOnTheirSide,
 };
 
-/** An `apexOptions` that does not override the formatters leaves the escaping of the chart in place. */
-export const ApexOptionsKeepLabelsEscaped: Story = {
+/** A chart wider than its box is cut to it, so a narrow screen never scrolls sideways. */
+export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
-  args: {
-    ...HtmlInLabelsRendersAsText.args,
-    apexOptions: {
-      chart: { toolbar: { show: true } },
-      legend: { fontSize: '16px' },
-      tooltip: { x: { show: true } },
-    },
-  },
-  play: HtmlInLabelsRendersAsText.play,
-};
-
-/** A function in `apexOptions` replaces the chart's own, here the y-axis label formatter. */
-export const ApexOptionsReplaceAFormatter: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: {
-    categories: HOURS,
-    series: [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }],
-    apexOptions: { yaxis: { labels: { formatter: ms } } },
-  },
+  args: { ...MultiSeries.args, width: 900 },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 375 }}>
+      <LineAreaChart {...args} />
+    </div>
+  ),
   play: async ({ canvasElement }) => {
-    const labels = () =>
-      [...canvasElement.querySelectorAll('.apexcharts-yaxis-label')].map((el) => el.textContent);
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(surface(canvasElement)).not.toBeNull());
     await waitFor(() => {
-      expect(labels().length).toBeGreaterThan(1);
-      for (const label of labels()) expect(label).toMatch(/ ms$/);
+      expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+      expect(surface(canvasElement)?.getBoundingClientRect().width).toBeLessThanOrEqual(375);
     });
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
   },
-};
-
-const RAW_SERIES = [{ name: 'CPU', data: [3, 5, 2, 6, 4, 7, 5, 6, 4] }];
-
-const RAW_OPTIONS = {
-  chart: { toolbar: { show: true } },
-  grid: { borderColor: '#f59e0b' },
-  colors: ['#7c3aed'],
-  xaxis: { labels: { rotate: -45 } },
-  yaxis: { labels: { formatter: ms } },
-};
-
-/**
- * Equal `apexOptions` on a parent render leave the chart as drawn, a copy of it
- * as well as the same object: ApexCharts compares the options deeply, the
- * functions in them by identity.
- */
-export const RerenderWithEqualApexOptionsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { categories: HOURS, series: RAW_SERIES, apexOptions: RAW_OPTIONS },
-  render: (args) => (
-    <Rerender>
-      {(grown) => <LineAreaChart {...freshCopy(args)} height={grown ? 360 : 320} />}
-    </Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
-export const RerenderWithTheSameApexOptionsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { categories: HOURS, series: RAW_SERIES, apexOptions: RAW_OPTIONS },
-  render: (args) => (
-    <Rerender>{(grown) => <LineAreaChart {...args} height={grown ? 360 : 320} />}</Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
-};
-
-/** A function made during render in `apexOptions` redraws the chart on every render, like `formatValue`. */
-export const InlineFunctionInApexOptionsRedraws: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { categories: HOURS, series: RAW_SERIES },
-  render: (args) => (
-    <Rerender>
-      {() => (
-        <LineAreaChart
-          {...freshCopy(args)}
-          apexOptions={{ yaxis: { labels: { formatter: (value: number) => `${value} ms` } } }}
-        />
-      )}
-    </Rerender>
-  ),
-  play: expectRedrawOnRerender,
-};
-
-/**
- * A parent render with equal props leaves the chart as drawn; a new height
- * still redraws it.
- */
-export const RerenderWithEqualPropsDoesNotRedraw: Story = {
-  tags: ['!dev', '!autodocs'],
-  args: { ...Basic.args, colors: STATUS_COLORS, formatValue: ms },
-  render: (args) => (
-    <Rerender>
-      {(grown) => <LineAreaChart {...freshCopy(args)} height={grown ? 400 : 320} />}
-    </Rerender>
-  ),
-  play: expectNoRedrawOnRerender,
 };
 
 /** Screen readers read `ariaLabel` as the chart's name; Tab and the arrow keys walk its points. */

@@ -62,8 +62,9 @@ const tokensCss = readFileSync(join(cssDir, 'tailwind-tokens.css'), 'utf8');
 const vars = blocks(varsCss);
 const tokens = blocks(tokensCss);
 
-const themeTokens = tokens.get('@theme');
-if (!themeTokens) throw new Error('No @theme block in tailwind-tokens.css');
+// The colors are in the `static` block (always emitted), the rest in the plain one.
+const themeTokens = { ...tokens.get('@theme'), ...tokens.get('@theme static') };
+if (!tokens.get('@theme static')) throw new Error('No @theme static block in tailwind-tokens.css');
 
 const BRAND_STEPS = '25 50 100 200 300 400 500 600 700 800 900 950'.split(' ');
 const accent = (id, decls) => {

@@ -134,9 +134,13 @@ Both attributes also work on an element below `<html>`, for one part of a page.
 
 See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.
 
+The brand palette, the status colors and the semantic colors are always in the CSS (`@theme static`): Tailwind
+only emits a theme variable that a utility uses, and the charts read these as plain `var(--color-…)`.
+
 Categories:
 
 - **Brand palette** : `--color-brand-25` to `--color-brand-950`
+- **Chart series** : `--color-chart-2` to `--color-chart-8`, the series colors after the accent (the first series is `--color-brand-500`). Each accent lists its own seven, skipping the hues that look like it
 - **Semantic colors** : `--color-success-*`, `--color-error-*`, `--color-warning-*`
 - **Status** : `--color-status-{ok,warn,crit,unknown}`
 - **Typography** : `--font-sans` (Outfit), `--font-mono` (JetBrains Mono), `--text-2xs` (11px), `--text-3xs` (10px)

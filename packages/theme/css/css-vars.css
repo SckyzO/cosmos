@@ -58,6 +58,19 @@
 
   /* ── Accent ────────────────────────────────────────────────────────────── */
   --color-accent: var(--color-brand-500);
+
+  /* ── Chart series ──────────────────────────────────────────────────────── */
+  /* Series 2 to 8 of the charts, after the accent (series 1 is
+   * --color-brand-500, which the accents redefine). Each accent below lists its
+   * own seven: the hues that look like it are skipped and a reserve takes
+   * their place, so no series is mistaken for the accent. */
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #8b5cf6;
+  --color-chart-4: #ec4899;
+  --color-chart-5: #64748b;
+  --color-chart-6: #f97316;
+  --color-chart-7: #14b8a6;
+  --color-chart-8: #84cc16;
 }
 
 /* ── Themes ────────────────────────────────────────────────────────────── */
@@ -192,6 +205,13 @@
   --color-brand-800: #2f25ab;
   --color-brand-900: #24257a;
   --color-brand-950: #160b63;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #ec4899;
+  --color-chart-4: #64748b;
+  --color-chart-5: #f97316;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #d946ef;
 }
 
 [data-accent='violet'] {
@@ -207,6 +227,13 @@
   --color-brand-800: #5200a4;
   --color-brand-900: #3f097e;
   --color-brand-950: #2b005b;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #ec4899;
+  --color-chart-4: #64748b;
+  --color-chart-5: #f97316;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #3b82f6;
 }
 
 [data-accent='purple'] {
@@ -237,6 +264,13 @@
   --color-brand-800: #7f013d;
   --color-brand-900: #64002f;
   --color-brand-950: #45001e;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #8b5cf6;
+  --color-chart-4: #64748b;
+  --color-chart-5: #f97316;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #3b82f6;
 }
 
 [data-accent='teal'] {
@@ -252,6 +286,13 @@
   --color-brand-800: #024a43;
   --color-brand-900: #003833;
   --color-brand-950: #002723;
+  --color-chart-2: #8b5cf6;
+  --color-chart-3: #ec4899;
+  --color-chart-4: #64748b;
+  --color-chart-5: #f97316;
+  --color-chart-6: #84cc16;
+  --color-chart-7: #3b82f6;
+  --color-chart-8: #d946ef;
 }
 
 [data-accent='cyan'] {
@@ -267,6 +308,13 @@
   --color-brand-800: #014759;
   --color-brand-900: #003645;
   --color-brand-950: #002631;
+  --color-chart-2: #8b5cf6;
+  --color-chart-3: #ec4899;
+  --color-chart-4: #64748b;
+  --color-chart-5: #f97316;
+  --color-chart-6: #84cc16;
+  --color-chart-7: #3b82f6;
+  --color-chart-8: #d946ef;
 }
 
 [data-accent='graphite'] {
@@ -282,6 +330,13 @@
   --color-brand-800: #3c414b;
   --color-brand-900: #2e3138;
   --color-brand-950: #1f2228;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #8b5cf6;
+  --color-chart-4: #ec4899;
+  --color-chart-5: #f97316;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #3b82f6;
 }
 
 [data-accent='red'] {
@@ -312,6 +367,13 @@
   --color-brand-800: #712b00;
   --color-brand-900: #592000;
   --color-brand-950: #3d1300;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #8b5cf6;
+  --color-chart-4: #ec4899;
+  --color-chart-5: #64748b;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #3b82f6;
 }
 
 [data-accent='amber'] {
@@ -327,6 +389,13 @@
   --color-brand-800: #5d3900;
   --color-brand-900: #482b00;
   --color-brand-950: #321c00;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #8b5cf6;
+  --color-chart-4: #ec4899;
+  --color-chart-5: #64748b;
+  --color-chart-6: #14b8a6;
+  --color-chart-7: #84cc16;
+  --color-chart-8: #3b82f6;
 }
 
 [data-accent='green'] {
