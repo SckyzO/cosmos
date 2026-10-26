@@ -6,6 +6,7 @@ import { useControllableState } from '../hooks/useControllableState';
 
 export type PaginationVariant = 'text' | 'compact';
 export type PaginationSize = 'sm' | 'md';
+export type PaginationPrevNextLabel = 'icon' | 'text';
 
 export type PaginationProps = {
   /** 1-indexed current page, when controlled. */
@@ -22,6 +23,13 @@ export type PaginationProps = {
   /** `text` (default) shows numbered buttons. `compact` shows chevrons + "Page X of Y". */
   variant?: PaginationVariant;
   size?: PaginationSize;
+  /**
+   * How Previous and Next read. `icon` (default) is a chevron alone; `text` adds the word beside the
+   * chevron ("‹ Previous", "Next ›"), for a long list or readers who don't take a chevron for a
+   * direction. The accessible names stay "Previous page" and "Next page", and the words stay below
+   * `sm`. The buttons of `showEdges` keep their icon.
+   */
+  prevNextLabel?: PaginationPrevNextLabel;
   /**
    * Add "First page" and "Last page" buttons around Previous and Next, for long lists. They stay
    * below `sm`, where Previous and Next do. Default `false`.
@@ -60,6 +68,7 @@ export const Pagination = ({
   total,
   variant = 'text',
   size = 'sm',
+  prevNextLabel = 'icon',
   showEdges = false,
   showAll = false,
   onShowAllChange,
@@ -88,6 +97,8 @@ export const Pagination = ({
     'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
   const activeClass =
     'border-brand-500 bg-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400';
+  const withText = prevNextLabel === 'text';
+  const stepClass = clsx(btnClass, idleClass, 'inline-flex', withText && 'gap-1', SIZE_BTN[size]);
 
   const strong = 'font-medium text-gray-700 dark:text-gray-200';
   let infoNode: ReactNode = null;
@@ -159,9 +170,10 @@ export const Pagination = ({
               aria-label="Previous page"
               disabled={isFirst}
               onClick={() => goTo(safePage - 1)}
-              className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+              className={stepClass}
             >
               <ChevronLeft className="h-4 w-4" />
+              {withText && 'Previous'}
             </button>
 
             {variant === 'compact' ? (
@@ -213,8 +225,9 @@ export const Pagination = ({
               aria-label="Next page"
               disabled={isLast}
               onClick={() => goTo(safePage + 1)}
-              className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
+              className={stepClass}
             >
+              {withText && 'Next'}
               <ChevronRight className="h-4 w-4" />
             </button>
             {showEdges && (
