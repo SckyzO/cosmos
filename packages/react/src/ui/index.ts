@@ -3,6 +3,7 @@ export * from './Button';
 export * from './Card';
 export * from './Badge';
 export * from './Avatar';
+export * from './AvatarGroup';
 export * from './Tooltip';
 export * from './Dropdown';
 export * from './Modal';
