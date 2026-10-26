@@ -4,12 +4,25 @@ import type { ReactNode } from 'react';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
 
 export type AlertBannerIntent = Extract<Intent, 'success' | 'danger' | 'warning' | 'info'>;
+export type AlertBannerAppearance = 'tinted' | 'accent';
+export type AlertBannerBodyTone = 'intent' | 'neutral';
 
 export type AlertBannerProps = {
   /** Color and icon of the banner. Default `info`. */
   intent?: AlertBannerIntent;
+  /**
+   * Surface. `tinted` (default) = a full border and the tinted background. `accent` = the same
+   * background with a 4px edge on the left in the intent color and no other border.
+   */
+  appearance?: AlertBannerAppearance;
   /** Bold first line. The icon aligns with it instead of centering on the whole banner. */
   title?: ReactNode;
+  /**
+   * Color of the body under the `title`. `intent` (default) = the intent color, as the title.
+   * `neutral` = gray, while the title keeps the intent color: for a long body. Without a `title`
+   * the body is the only line and keeps the intent color.
+   */
+  bodyTone?: AlertBannerBodyTone;
   children: ReactNode;
   /** Right-side slot: a Link or a Button. */
   action?: ReactNode;
@@ -20,7 +33,9 @@ export type AlertBannerProps = {
 
 export const AlertBanner = ({
   intent = 'info',
+  appearance = 'tinted',
   title,
+  bodyTone = 'intent',
   children,
   action,
   onDismiss,
@@ -29,13 +44,14 @@ export const AlertBanner = ({
   const v = INTENT_STYLE[intent];
   const Icon = v.icon;
   const hasTitle = title !== undefined && title !== null && title !== false;
+  const bodyText = hasTitle && bodyTone === 'neutral' ? INTENT_STYLE.neutral.text : v.text;
   return (
     <div
       role="alert"
       className={clsx(
-        'flex gap-3 rounded-lg border px-5 py-3.5',
+        'flex gap-3 rounded-lg px-5 py-3.5',
         hasTitle ? 'items-start' : 'items-center',
-        v.surface,
+        appearance === 'accent' ? ['border-l-4', v.edge, v.fill] : ['border', v.surface],
         className
       )}
     >
@@ -44,7 +60,7 @@ export const AlertBanner = ({
       />
       <div className="min-w-0 flex-1">
         {hasTitle && <p className={clsx('text-sm font-semibold', v.text)}>{title}</p>}
-        <p className={clsx('text-sm', hasTitle ? 'mt-0.5 font-normal' : 'font-medium', v.text)}>
+        <p className={clsx('text-sm', hasTitle ? 'mt-0.5 font-normal' : 'font-medium', bodyText)}>
           {children}
         </p>
       </div>
