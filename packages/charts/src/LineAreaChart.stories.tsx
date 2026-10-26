@@ -5,17 +5,27 @@ import { SERIES_FALLBACKS } from './core/colors';
 import { LineAreaChart } from './LineAreaChart';
 import {
   axisTitles,
+  bandSpan,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithTheme,
   expectTextFollowsTextSize,
   HOSTILE,
   LegendSides,
   legendTexts,
+  linePixel,
+  NarrowBox,
   openTooltip,
+  pixelOnAxis,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   seriesStrokes,
   surface,
@@ -227,6 +237,162 @@ export const ReferenceLineInChildren: Story = {
   },
 };
 
+/**
+ * `referenceLines` draws a line at a value of the vertical axis, `intent`
+ * picks its color from the theme (`neutral` by default), `dashed` dashes it and
+ * `label` names it. A line the data does not reach makes the axis reach it.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    series: [{ name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }],
+    categories: HOURS,
+    yTitle: 'CPU usage (%)',
+    referenceLines: [
+      { value: 40, label: 'Critical 40%', intent: 'danger' },
+      { value: 28, label: 'Warning 28%', intent: 'warning', dashed: true },
+      { value: 15, label: 'Baseline', dashed: true },
+      { value: 8, label: 'Floor', intent: 'success' },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await waitFor(() =>
+      expect(referenceLabels(canvasElement)).toEqual([
+        'Baseline',
+        'Critical 40%',
+        'Floor',
+        'Warning 28%',
+      ])
+    );
+    const lines = referenceLineEls(canvasElement);
+    // Only the lines asked to be dashed are.
+    await expect(lines.map((line) => line.getAttribute('stroke-dasharray'))).toEqual([
+      null,
+      '6 4',
+      '6 4',
+      null,
+    ]);
+  },
+};
+
+/** Each intent takes its color from the theme, and follows a theme switch. */
+export const ReferenceLineIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...ReferenceLines.args,
+    referenceLines: [
+      { value: 8, intent: 'success' },
+      { value: 28, intent: 'warning' },
+      { value: 40, intent: 'danger' },
+      { value: 15 },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+  },
+};
+
+/** A line sits at the pixel its value has on the axis: the ticks and the line share one scale. */
+export const ReferenceLinesSitAtTheirValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Basic.args,
+    referenceLines: [{ value: 10 }, { value: 22.5 }, { value: 30 }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const lines = referenceLineEls(canvasElement);
+      expect(lines).toHaveLength(3);
+      [10, 22.5, 30].forEach((value, i) =>
+        expect(linePixel(lines[i], 'yAxis')).toBeCloseTo(
+          pixelOnAxis(canvasElement, 'yAxis', value),
+          0
+        )
+      );
+    });
+  },
+};
+
+/** A line beyond the data stretches the axis to reach it, instead of vanishing. */
+export const ReferenceLineBeyondTheDataExtendsTheAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Basic.args, referenceLines: [{ value: 80, label: 'Limit 80%', intent: 'danger' }] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [line] = referenceLineEls(canvasElement);
+      expect(line).toBeDefined();
+      const ticks = tickTexts(canvasElement, 'yAxis').map(Number);
+      expect(Math.max(...ticks)).toBeGreaterThanOrEqual(80);
+      expect(linePixel(line, 'yAxis')).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 80), 0);
+    });
+  },
+};
+
+/**
+ * `referenceBands` shades the plot between two values, behind the series, in
+ * the color of its `intent`.
+ */
+export const ReferenceBands: Story = {
+  args: {
+    series: [
+      { name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] },
+      { name: 'Memory', data: [34, 36, 41, 39, 44, 47, 43, 49, 52] },
+    ],
+    categories: HOURS,
+    yTitle: 'Usage (%)',
+    referenceBands: [
+      { from: 0, to: 20, label: 'Idle', intent: 'success' },
+      { from: 20, to: 40, label: 'Busy' },
+      { from: 40, to: 60, label: 'Saturated', intent: 'danger' },
+    ],
+    referenceLines: [{ value: 40, label: 'Alert at 40%', intent: 'warning', dashed: true }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceBandEls(canvasElement)).toHaveLength(3));
+    await waitFor(() =>
+      expect(referenceLabels(canvasElement)).toEqual(['Alert at 40%', 'Busy', 'Idle', 'Saturated'])
+    );
+    // A band covers its values on the axis, from the lower to the higher.
+    const bands = referenceBandEls(canvasElement);
+    [
+      [0, 20],
+      [20, 40],
+      [40, 60],
+    ].forEach(([from, to], i) => {
+      const [top, bottom] = bandSpan(bands[i], 'yAxis');
+      expect(top).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', to), 0);
+      expect(bottom).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', from), 0);
+    });
+    // The band sits behind the series: the area is drawn after it.
+    const order = [...canvasElement.querySelectorAll('.recharts-reference-area, .recharts-area')];
+    const isBand = order.map((el) => el.classList.contains('recharts-reference-area'));
+    await expect(isBand.indexOf(false)).toBeGreaterThan(isBand.lastIndexOf(true));
+  },
+};
+
+/** The text of a label follows the text size setting, as the axes do. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceBands.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceBands.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <LineAreaChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** A multi-series chart shows one legend entry per series, in order. */
@@ -320,9 +486,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: 'B', data: [1, 2, 4] },
     ],
     categories: [HOSTILE, 'B', 'C'],
+    referenceLines: [{ value: 4, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await openTooltip(canvasElement, 0.07);

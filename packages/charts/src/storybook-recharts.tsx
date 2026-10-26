@@ -226,7 +226,7 @@ export const tickTexts = (root: HTMLElement, axis: 'xAxis' | 'yAxis') =>
 
 /** The axis titles in `root`: the x one under the plot, and the y one, which Recharts rotates, beside it. */
 export const axisTitles = (root: HTMLElement) => {
-  const titles = [...root.querySelectorAll('.recharts-label')];
+  const titles = [...root.querySelectorAll('.recharts-label:not(.recharts-reference-label)')];
   const text = (rotated: boolean) =>
     titles.filter((el) => el.hasAttribute('transform') === rotated).map((el) => el.textContent);
   return { x: text(false), y: text(true) };
@@ -367,6 +367,109 @@ export const scatterSymbols = (root: HTMLElement) =>
 /** The fill of the first symbol of each scatter series, in series order. */
 export const scatterFills = (root: HTMLElement) =>
   scatterSymbols(root).map((symbols) => (symbols[0] ? getComputedStyle(symbols[0]).fill : ''));
+
+// ── Reference lines and bands ─────────────────────────────────────────────────
+
+/** The lines of the chart's `referenceLines`, in the order they were given. */
+export const referenceLineEls = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGLineElement>('.recharts-reference-line-line'),
+];
+
+/** The rectangles of the chart's `referenceBands`, in the order they were given. */
+export const referenceBandEls = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGPathElement>('.recharts-reference-area-rect'),
+];
+
+/**
+ * The labels of the reference lines and bands, sorted (Recharts draws them in
+ * layers, not in the order of the props); the axis titles are not among them.
+ */
+export const referenceLabels = (root: HTMLElement) =>
+  [...root.querySelectorAll('.recharts-reference-label')].map((el) => el.textContent).sort();
+
+/**
+ * Where `value` sits on the numeric axis `axis`, in the chart's pixels, read
+ * from two of the tick labels (the ticks are laid out on the same scale the
+ * reference marks are). Tick labels must be plain numbers.
+ */
+export const pixelOnAxis = (root: HTMLElement, axis: 'xAxis' | 'yAxis', value: number) => {
+  const at = axis === 'yAxis' ? 'y' : 'x';
+  const ticks = [
+    ...root.querySelectorAll(`.recharts-${axis}-tick-labels .recharts-cartesian-axis-tick-value`),
+  ].map((el) => [parseFloat(el.textContent ?? ''), parseFloat(el.getAttribute(at) ?? '')]);
+  // Recharts nudges the labels at the two ends of the axis inward: the inner ticks are exact.
+  const [[v0, p0], [v1, p1]] =
+    ticks.length >= 4 ? [ticks[1], ticks[ticks.length - 2]] : [ticks[0], ticks[ticks.length - 1]];
+  return p0 + ((value - v0) * (p1 - p0)) / (v1 - v0);
+};
+
+/** The pixel a reference line is drawn at, across its axis (`y1` of a horizontal line, `x1` of a vertical one). */
+export const linePixel = (line: SVGLineElement, axis: 'xAxis' | 'yAxis') =>
+  parseFloat(line.getAttribute(axis === 'yAxis' ? 'y1' : 'x1') ?? '');
+
+/** The span of a reference band on its axis, as `[from, to]` in pixels, from lowest to highest. */
+export const bandSpan = (band: SVGPathElement, axis: 'xAxis' | 'yAxis') => {
+  const [start, size] = axis === 'yAxis' ? ['y', 'height'] : (['x', 'width'] as const);
+  const from = parseFloat(band.getAttribute(start) ?? '');
+  return [from, from + parseFloat(band.getAttribute(size) ?? '')] as const;
+};
+
+/** The font size, in px, of every label of the reference marks in `root`. */
+export const referenceLabelSizes = (root: HTMLElement) =>
+  [...root.querySelectorAll('.recharts-reference-label')].map((el) =>
+    parseFloat(getComputedStyle(el).fontSize)
+  );
+
+/**
+ * Asserts the labels of the reference marks in `root` follow the text size
+ * setting: 12px (`text-xs`) at the normal size, 13.5px once `<html>` takes
+ * `data-text-size="lg"`.
+ */
+export const expectReferenceLabelsFollowTextSize = async (root: HTMLElement) => {
+  const html = document.documentElement;
+  const previous = html.getAttribute('data-text-size');
+  await waitFor(() => {
+    const sizes = referenceLabelSizes(root);
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(new Set(sizes)).toEqual(new Set([12]));
+  });
+  try {
+    html.setAttribute('data-text-size', 'lg');
+    await waitFor(() => expect(new Set(referenceLabelSizes(root))).toEqual(new Set([13.5])));
+  } finally {
+    if (previous === null) html.removeAttribute('data-text-size');
+    else html.setAttribute('data-text-size', previous);
+  }
+};
+
+/**
+ * Asserts the stroke of the reference line `index` is `token` (a theme custom
+ * property) in each of the four themes.
+ */
+export const expectLineIntentColor = (root: HTMLElement, index: number, token: string) =>
+  expectColorInThemes(
+    () => referenceLineEls(root)[index] && getComputedStyle(referenceLineEls(root)[index]).stroke,
+    { '': token, sand: token, dark: token, 'deep-blue': token }
+  );
+
+/** A box 375px wide, the width of a phone: what the "narrow" stories render a chart in. */
+export const NarrowBox = ({ children }: { children: ReactNode }) => (
+  <div data-testid="box" style={{ width: 375 }}>
+    {children}
+  </div>
+);
+
+/** Play function for a story rendered in `NarrowBox`: the chart stays inside the box, and the page does not scroll sideways. */
+export const expectFitsNarrowBox = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+  await waitFor(() => expect(surface(canvasElement)).not.toBeNull());
+  await waitFor(() => {
+    expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
+    expect(surface(canvasElement)?.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+  });
+  const root = document.documentElement;
+  await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+};
 
 /**
  * Asserts a theme switch repaints the chart in `root` with no observer and no
