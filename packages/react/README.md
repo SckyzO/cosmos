@@ -245,6 +245,38 @@ spins a quarter arc, except under reduced motion.
 </ProgressRing>
 ```
 
+## Kanban board
+
+`KanbanBoard` shows columns of cards that move between columns: a sprint board, a pipeline, tasks by
+status. Cards are plain data (`id`, `title`, an optional `description`, and `badges` and `footer`
+slots for `Tag`s and an `AvatarGroup`), columns are `{ id, title, cards }`. It follows the usual
+controlled/uncontrolled pair (`value`, `defaultValue`, `onChange(columns)`), and owns no data: the
+host saves the move. `onCardMove` carries just the move, after `onChange`, which is what a server
+needs.
+
+```tsx
+<KanbanBoard
+  ariaLabel="Sprint board"
+  defaultValue={columns}
+  onChange={setColumns}
+  onCardMove={({ cardId, fromColumnId, toColumnId, index }) => save(cardId, toColumnId, index)}
+  onCardOpen={(card) => setOpen(card)}
+  onAddCard={(columnId) => openForm(columnId)}
+/>
+```
+
+A card is dragged by its grip, with a pointer or a finger. From the keyboard, focus the grip, press
+Space or Enter to pick the card up, the arrow keys to move it between positions and columns, Space
+or Enter to drop it, Escape to put it back; a live region announces each step. Every card also has
+an actions menu ("Move to" the other columns, "Move up", "Move down"), so the board works without
+dragging. `onCardOpen` makes the whole card a button, `onAddCard` adds an "Add card" button to each
+column, `renderCard` replaces what is inside a card (the grip and the actions menu stay), and
+`loading` shows skeleton columns. A column takes an `intent` for the dot before its title and an
+`empty` node for when it has no cards. Below `sm` the columns scroll sideways, one column wide.
+
+Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
+is pre-1.0. It is a regular dependency of the package, not a peer.
+
 ## Chat
 
 Building blocks for a conversation view: `ChatThread` (a `role="log"` live

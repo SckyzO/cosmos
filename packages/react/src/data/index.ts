@@ -7,3 +7,4 @@ export * from './Timeline';
 export * from './MiniCalendar';
 export * from './EventCalendar';
 export * from './IntegrationCard';
+export * from './KanbanBoard';
