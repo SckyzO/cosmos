@@ -116,7 +116,7 @@ export const AvatarUploader = ({
             aria-label="Uploading"
             className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40"
           >
-            <Spinner size="sm" className="border-white/30 border-t-white" />
+            <Spinner size="sm" onDark />
           </div>
         )}
       </div>
