@@ -12,6 +12,12 @@ import {
 import { formatBytes } from './formatBytes';
 import { useControllableState } from '../hooks/useControllableState';
 
+/** A file `Dropzone` turned down, and why, in the words it would have shown. */
+export type DropzoneRejection = {
+  file: File;
+  reason: string;
+};
+
 export type DropzoneProps = {
   label?: string;
   description?: string;
@@ -23,6 +29,19 @@ export type DropzoneProps = {
   onChange?: (files: File[]) => void;
   /** Controlled file list. */
   value?: File[];
+  /**
+   * Called with only the files just accepted, in the order they came, so the host can start
+   * uploading them. `onChange` and `value` are unchanged: they carry the whole list. Not called when
+   * nothing was accepted.
+   */
+  onFilesAdded?: (files: File[]) => void;
+  /**
+   * Switches the zone to per-file validation: the valid files of a drop are accepted, and the
+   * others come here one by one with their reason (type, size, or `maxFiles` once the list is
+   * full). The zone then draws no error line of its own, the host reports them (`error`, a toast,
+   * an `UploadQueue` row). Without it, one invalid file rejects the whole drop, as before.
+   */
+  onReject?: (rejections: DropzoneRejection[]) => void;
   /** Cap on file count when `multiple` is true. */
   maxFiles?: number;
   /** Max bytes per file. */
@@ -56,6 +75,8 @@ export const Dropzone = ({
   disabled = false,
   onChange,
   value,
+  onFilesAdded,
+  onReject,
   maxFiles,
   maxSize,
   children,
@@ -96,8 +117,38 @@ export const Dropzone = ({
     [accept, files, maxFiles, maxSize, multiple]
   );
 
+  // Per-file validation, for a host that handles `onReject`: nothing rejects the drop as a whole.
+  const handleEachFile = (incoming: File[], reject: (rejections: DropzoneRejection[]) => void) => {
+    const rejected: DropzoneRejection[] = [];
+    let added: File[] = [];
+    for (const file of incoming) {
+      if (accept && !matchesAccept(file, accept))
+        rejected.push({ file, reason: `Type not allowed (${accept}).` });
+      else if (maxSize !== undefined && file.size > maxSize)
+        rejected.push({ file, reason: `Exceeds ${formatBytes(maxSize)}.` });
+      else added.push(file);
+    }
+    if (!multiple) added = added.slice(0, 1);
+    else if (maxFiles !== undefined) {
+      const room = Math.max(0, maxFiles - files.length);
+      for (const file of added.slice(room))
+        rejected.push({ file, reason: `Too many files (max ${maxFiles}).` });
+      added = added.slice(0, room);
+    }
+    setInternalError(null);
+    if (added.length > 0) {
+      apply(multiple ? [...files, ...added] : added);
+      onFilesAdded?.(added);
+    }
+    if (rejected.length > 0) reject(rejected);
+  };
+
   const handleFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
+    if (onReject) {
+      handleEachFile(incoming, onReject);
+      return;
+    }
     const { ok, error: validationError } = validate(incoming);
     if (validationError) {
       setInternalError(validationError);
@@ -105,6 +156,8 @@ export const Dropzone = ({
     }
     setInternalError(null);
     apply(ok);
+    // `ok` is the whole list when `multiple`: the new files are its tail.
+    onFilesAdded?.(multiple ? ok.slice(files.length) : ok);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
