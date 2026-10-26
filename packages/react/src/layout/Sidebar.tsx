@@ -4,8 +4,10 @@ import {
   useContext,
   useEffect,
   useId,
+  useRef,
   useState,
   type ComponentType,
+  type ReactElement,
   type ReactNode,
   type Ref,
 } from 'react';
@@ -13,6 +15,7 @@ import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
+import { fitLabel, useContentWidth } from '../hooks/useContentWidth';
 import { useControllableState } from '../hooks/useControllableState';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
@@ -42,6 +45,8 @@ type SidebarContextValue = {
   activeStyle: SidebarActiveStyle;
   /** Where the first nested level's label starts, when not under a top-level row (px). */
   labelOrigin?: number;
+  /** The rows (by label id) whose label the width cap cuts: they show it in a tooltip. */
+  truncated?: ReadonlySet<string>;
 };
 
 const SidebarContext = createContext<SidebarContextValue>({
@@ -139,6 +144,28 @@ const useReportActive = (active: boolean) => {
   }, [report, key, active]);
 };
 
+// A row whose label the sidebar's `maxWidth` cuts shows the whole label in a tooltip, on hover and
+// on keyboard focus. The others have none: a tooltip repeating a label that shows whole would only
+// be noise, and it is read twice by assistive technology.
+const LabelTip = ({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: ReactElement;
+}) => {
+  const { truncated } = useContext(SidebarContext);
+  return truncated?.has(id) ? (
+    <Tooltip content={label} position="right" block>
+      {children}
+    </Tooltip>
+  ) : (
+    children
+  );
+};
+
 // A 20 px box with a dot: the top-level row's icon when none is given.
 const DotIcon = ({ className }: { className?: string }) => (
   <span className={clsx('flex items-center justify-center', className)}>
@@ -166,8 +193,18 @@ export type SidebarProps = {
   collapsed?: boolean;
   /** Initial collapsed state, when uncontrolled. Default `false`. Not read inside a Shell. */
   defaultCollapsed?: boolean;
-  /** Width when expanded (px). Default: 264 */
+  /**
+   * Width when expanded (px), and the narrowest it gets: the sidebar grows to fit its widest row,
+   * up to `maxWidth`. Default: 264
+   */
   width?: number;
+  /**
+   * The widest the expanded sidebar grows to fit its rows (px), deep levels of a tree included.
+   * A label that needs more is cut with an ellipsis and shows in full in a tooltip. Set it to the
+   * same value as `width` for a fixed width; a smaller value is raised to `width`. Not read
+   * collapsed, nor in the Shell's drawer, where the panel sets the width. Default: 320
+   */
+  maxWidth?: number;
   /** Width when collapsed (px). Default: 72 */
   collapsedWidth?: number;
   /** Sidebar content — typically Sidebar.Brand / .Item / .SubMenu / .Group / .Section. */
@@ -202,6 +239,10 @@ export type SidebarProps = {
  * is automatically threaded to every subcomponent via React context, so
  * children don't need to receive it as a prop.
  *
+ * Expanded, the width follows the rows: from `width` up to `maxWidth`, it grows to fit the widest
+ * visible label, in a sub-menu that unfolds or a row that changes, and narrows back when that row
+ * goes. Past `maxWidth` a label ends in an ellipsis and its row shows the full label in a tooltip.
+ *
  * Inside a `Shell`, the collapsed state is the Shell's: every SidebarToggle
  * in the Shell (the Topbar's, this footer's, a custom header's) moves it. Below `lg` the Shell
  * shows the sidebar as a drawer: it then fills the panel, is always expanded, and `Sidebar.Brand`
@@ -211,6 +252,7 @@ const SidebarRoot = ({
   collapsed: collapsedProp,
   defaultCollapsed = false,
   width = 264,
+  maxWidth = 320,
   collapsedWidth = 72,
   children,
   footer,
@@ -236,23 +278,34 @@ const SidebarRoot = ({
   // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
   const showToggle =
     !inDrawer && (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
+  // The width follows the rows when expanded: collapsed there are no labels, and in the drawer the
+  // panel sets the width.
+  const navRef = useRef<HTMLElement>(null);
+  const fit = useContentWidth(navRef, {
+    min: width,
+    max: maxWidth,
+    enabled: !collapsed && !inDrawer,
+  });
   const context: SidebarContextValue = {
     collapsed,
     inDrawer,
     inset: collapsed ? 'tight' : 'wide',
     activeStyle,
+    truncated: fit.truncated,
   };
   return (
     <SidebarContext.Provider value={context}>
       <nav
+        ref={navRef}
         id={navId}
         aria-label="Main navigation"
-        style={inDrawer ? undefined : { width: collapsed ? collapsedWidth : width }}
+        style={inDrawer ? undefined : { width: collapsed ? collapsedWidth : fit.width }}
         className={clsx(
           'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
           // The drawer panel draws the edge and the shadow, and sets the width.
           inDrawer ? 'w-full' : 'border-r border-[var(--color-border)]',
-          'transition-[width] duration-300 ease-in-out',
+          // Not before the first frames: the width measured at mount shows at once.
+          fit.animated && 'transition-[width] duration-300 ease-in-out',
           className
         )}
       >
@@ -480,6 +533,7 @@ const SidebarItem = ({
   const collapsed = useSidebarCollapsed(collapsedProp);
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
+  const labelId = useId();
   useReportActive(active);
   // Picking an item in the Shell's drawer navigates: the drawer closes behind it.
   const shell = useShell();
@@ -503,7 +557,9 @@ const SidebarItem = ({
       {!nested && <Icon className="h-5 w-5 shrink-0" />}
       {!collapsed && (
         <>
-          <span className="flex-1 truncate">{label}</span>
+          <span className="flex-1 truncate" {...fitLabel(labelId)}>
+            {label}
+          </span>
           {badge && <span className="shrink-0">{badge}</span>}
         </>
       )}
@@ -548,7 +604,9 @@ const SidebarItem = ({
       {row}
     </Tooltip>
   ) : (
-    row
+    <LabelTip id={labelId} label={label}>
+      {row}
+    </LabelTip>
   );
 };
 
@@ -614,6 +672,7 @@ const SidebarSubMenu = ({
   const geometry = useNestedGeometry(inset);
   const depth = useContext(SidebarDepthContext);
   const listId = useId();
+  const labelId = useId();
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen || active,
@@ -704,7 +763,9 @@ const SidebarSubMenu = ({
   const content = (
     <>
       {!nested && <Icon className="h-5 w-5 shrink-0" />}
-      <span className="flex-1 truncate">{label}</span>
+      <span className="flex-1 truncate" {...fitLabel(labelId)}>
+        {label}
+      </span>
       {badge && <span className="shrink-0">{badge}</span>}
     </>
   );
@@ -791,7 +852,9 @@ const SidebarSubMenu = ({
   // The list stays mounted while closed, so its active row still marks the trail.
   return (
     <div>
-      {trigger}
+      <LabelTip id={labelId} label={label}>
+        {trigger}
+      </LabelTip>
       <div id={listId} hidden={!open} className="relative">
         <span
           aria-hidden
