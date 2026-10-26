@@ -10,7 +10,7 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { GRID_PROPS, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { categoryAxis, trimLabel } from './core/categoryAxis';
 import { TooltipCard, type TooltipRow } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
@@ -125,6 +125,7 @@ export const BoxPlotChart = ({
   width,
 }: BoxPlotChartProps) => {
   const hidden = useHiddenSeries();
+  const axis = useAxis();
   const name = ariaLabel ?? `Box plot: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -185,7 +186,7 @@ export const BoxPlotChart = ({
             type="number"
             domain={['auto', 'auto']}
             tickFormatter={formatValue}
-            {...AXIS}
+            {...axis}
             {...xAxisTitle(xTitle)}
           />
           <YAxis
@@ -193,7 +194,7 @@ export const BoxPlotChart = ({
             dataKey="category"
             width="auto"
             tickFormatter={trimLabel}
-            {...AXIS}
+            {...axis}
             {...yAxisTitle(yTitle)}
           />
         </>
@@ -201,7 +202,7 @@ export const BoxPlotChart = ({
         <>
           <XAxis
             dataKey="category"
-            {...AXIS}
+            {...axis}
             {...xAxisTitle(xTitle)}
             {...categoryAxis(categories, xTitle)}
           />
@@ -210,7 +211,7 @@ export const BoxPlotChart = ({
             domain={['auto', 'auto']}
             width="auto"
             tickFormatter={formatValue}
-            {...AXIS}
+            {...axis}
             {...yAxisTitle(yTitle)}
           />
         </>

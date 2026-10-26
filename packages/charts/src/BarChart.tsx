@@ -8,7 +8,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { AXIS, GRID_PROPS, xAxisTitle, yAxisTitle } from './core/axes';
+import { GRID_PROPS, useAxis, xAxisTitle, yAxisTitle } from './core/axes';
 import { categoryAxis, trimLabel } from './core/categoryAxis';
 import { ChartTooltip } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
@@ -59,6 +59,7 @@ export const BarChart = ({
   width,
 }: BarChartProps) => {
   const hidden = useHiddenSeries();
+  const axis = useAxis();
   const name = ariaLabel ?? `Bar chart: ${series.map((s) => s.name).join(', ')}`;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
@@ -84,13 +85,13 @@ export const BarChart = ({
       />
       {horizontal ? (
         <>
-          <XAxis type="number" tickFormatter={formatValue} {...AXIS} {...xAxisTitle(xTitle)} />
+          <XAxis type="number" tickFormatter={formatValue} {...axis} {...xAxisTitle(xTitle)} />
           <YAxis
             type="category"
             dataKey="category"
             width="auto"
             tickFormatter={trimLabel}
-            {...AXIS}
+            {...axis}
             {...yAxisTitle(yTitle)}
           />
         </>
@@ -98,11 +99,11 @@ export const BarChart = ({
         <>
           <XAxis
             dataKey="category"
-            {...AXIS}
+            {...axis}
             {...xAxisTitle(xTitle)}
             {...categoryAxis(categories, xTitle)}
           />
-          <YAxis width="auto" tickFormatter={formatValue} {...AXIS} {...yAxisTitle(yTitle)} />
+          <YAxis width="auto" tickFormatter={formatValue} {...axis} {...yAxisTitle(yTitle)} />
         </>
       )}
       {(showLegend ?? series.length > 1) && <Legend {...legendProps(legendPosition, hidden)} />}

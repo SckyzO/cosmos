@@ -1,4 +1,5 @@
 import { GRID, MUTED } from './colors';
+import { useFontsLoaded } from './frame';
 
 // Axis text is 12px at the normal text size and follows the text size setting:
 // `--text-xs` is rescaled on <html> by `data-text-size`. The fallback is the
@@ -12,6 +13,20 @@ export const AXIS = {
   tickMargin: 8,
   tick: { fill: MUTED, style: { fontSize: TEXT_SIZE } },
 } as const;
+
+// `AXIS` again, with a `tick` object of its own. Recharts measures a
+// `width="auto"` axis when its settings change, and reads the same `tick`
+// object as no change: handing it a new one after a web font has loaded makes
+// the axis measure its labels again, in the font that is drawn.
+const AXIS_AFTER_FONTS = { ...AXIS, tick: { ...AXIS.tick } } as const;
+
+/**
+ * `AXIS` for the axes of a chart. Once a web font has finished loading after
+ * the chart mounted it is another object, once: the labels were measured in
+ * the fallback font, and an axis with `width="auto"` makes room for them in
+ * the font that is drawn (recharts 3.10.1 measures on a settings change).
+ */
+export const useAxis = () => (useFontsLoaded() ? AXIS_AFTER_FONTS : AXIS);
 
 /** The grid: horizontal dashed lines only. */
 export const GRID_PROPS = {
