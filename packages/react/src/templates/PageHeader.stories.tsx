@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import { Clock, Cpu, MapPin, Plus, RefreshCw, Server } from 'lucide-react';
+import { Clock, Cpu, MapPin, Plug, Plus, RefreshCw, Server, ShieldAlert } from 'lucide-react';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { PageHeader } from './PageHeader';
 import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
@@ -168,5 +169,86 @@ export const NoMetaOmitsMetaContainer: Story = {
   play: async ({ canvasElement }) => {
     const metaRow = canvasElement.querySelector('.mt-2.flex.flex-wrap');
     await expect(metaRow).toBeNull();
+  },
+};
+
+// ── Leading icon tile ────────────────────────────────────────────────────────
+
+export const WithIcon: Story = {
+  args: {
+    title: 'Integrations',
+    as: 'h1',
+    description: 'Connect the tools your team already uses.',
+    icon: Plug,
+    actions: (
+      <PageActionButton icon={Plus} variant="primary">
+        Add integration
+      </PageActionButton>
+    ),
+  },
+};
+
+/** The tile is tinted from the intent: `brand` by default. */
+export const IconIntents: Story = {
+  render: () => (
+    <div className="space-y-6">
+      {(['brand', 'info', 'success', 'warning', 'danger', 'neutral'] as const).map((intent) => (
+        <PageHeader
+          key={intent}
+          title={`iconIntent="${intent}"`}
+          description="Connect the tools your team already uses."
+          icon={intent === 'danger' ? ShieldAlert : Plug}
+          iconIntent={intent}
+        />
+      ))}
+    </div>
+  ),
+};
+
+export const IconTileIsDecorativeAnd48px: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'Integrations', description: 'Connect the tools.', icon: Plug },
+  play: async ({ canvasElement, canvas }) => {
+    const tile = canvasElement.querySelector('[aria-hidden="true"]') as HTMLElement;
+    await expect(tile.querySelector('svg')).not.toBeNull();
+    const box = tile.getBoundingClientRect();
+    await expect([box.width, box.height]).toEqual([48, 48]);
+    // To the left of the title, and the title is still the page's only name for itself.
+    await expect(box.right).toBeLessThanOrEqual(
+      canvas.getByRole('heading', { name: 'Integrations' }).getBoundingClientRect().left
+    );
+    await expect(canvas.getAllByRole('heading')).toHaveLength(1);
+  },
+};
+
+export const WithoutIconHasNoTile: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'Integrations', description: 'Connect the tools.' },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('[aria-hidden="true"]')).toBeNull();
+  },
+};
+
+/** Below `sm` the tile drops to 40px and the title column keeps its wrap behaviour. */
+export const MobileWithIcon: Story = {
+  globals: mobileViewport,
+  args: {
+    title: 'Integrations',
+    description: 'Connect the tools your team already uses.',
+    icon: Plug,
+    actions: (
+      <PageActionButton icon={Plus} variant="primary">
+        Add integration
+      </PageActionButton>
+    ),
+  },
+  play: async ({ canvasElement, canvas }) => {
+    expectNoHorizontalOverflow();
+    const tile = canvasElement.querySelector('[aria-hidden="true"]') as HTMLElement;
+    await expect(tile.getBoundingClientRect().width).toBe(40);
+    const title = canvas.getByRole('heading', { name: 'Integrations' }).getBoundingClientRect();
+    const button = canvas.getByRole('button', { name: 'Add integration' }).getBoundingClientRect();
+    // The actions wrap under the title column instead of squeezing it.
+    await expect(button.top).toBeGreaterThanOrEqual(title.bottom);
   },
 };
