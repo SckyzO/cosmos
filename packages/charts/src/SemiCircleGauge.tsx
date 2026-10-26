@@ -1,24 +1,18 @@
 import { useRef } from 'react';
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/radialBar';
-import { ApexChart } from './ApexChart';
-import { percent, useValueFormat } from './formatters';
-import { useChartTheme } from './theme';
+import { PolarAngleAxis, RadialBar, RadialBarChart, usePlotArea } from 'recharts';
+import { ANIMATION } from './core/animation';
+import { MUTED, SERIES, STATUS_CRIT, STATUS_WARN, SUCCESS, TEXT, TRACK } from './core/colors';
+import { frameProps } from './core/frame';
+import { clampTo, gaugeName, percent } from './core/radial';
 import { useWidth } from './useWidth';
-import type { ChartBaseProps } from './types';
+import type { ChartProps } from './types';
 
-export type SemiCircleGaugeProps = Omit<ChartBaseProps, 'height'> & {
+export type SemiCircleGaugeProps = Omit<ChartProps, 'height'> & {
   value: number;
   label?: string;
   /**
-   * Color of the arc. Default: the accent. The gauge has no threshold zones of its own: pick
-   * the color from the value, with the theme's status colors from `useChartTheme()`:
-   *
-   * ```tsx
-   * const { success, statusWarn, statusCrit } = useChartTheme();
-   * const color = value >= 90 ? statusCrit : value >= 70 ? statusWarn : success;
-   * <SemiCircleGauge value={value} color={color} />
-   * ```
+   * Color of the arc. Default: the accent, or the theme's status colors when
+   * `warnAt` or `critAt` is set.
    */
   color?: string;
   /** Value at the start of the arc. Default 0. */
@@ -26,9 +20,18 @@ export type SemiCircleGaugeProps = Omit<ChartBaseProps, 'height'> & {
   /** Value at the end of the arc, above `min`. Default 100. Out of range, the arc stops at an end. */
   max?: number;
   /**
+   * Value from which the arc turns to the theme's warning color. Setting it (or
+   * `critAt`) colors the arc by status: the theme's success color below, the
+   * warning color from `warnAt`, the critical color from `critAt`. Without
+   * either, the arc keeps one color, so a gauge where higher is better (an
+   * uptime, a score) does not turn red.
+   */
+  warnAt?: number;
+  /** Value from which the arc turns to the theme's critical color. See `warnAt`. */
+  critAt?: number;
+  /**
    * Format the center value, from `value` itself (not its share of the range), and the
    * `showRange` labels. Default: `67%`.
-   * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
    */
   formatValue?: (value: number) => string;
   /** Write `min` and `max`, formatted, under the two ends of the arc. Default off. */
@@ -40,17 +43,68 @@ export type SemiCircleGaugeProps = Omit<ChartBaseProps, 'height'> & {
   height?: number;
 };
 
-// ApexCharts draws a radial plot as a full circle in a square, and the gauge
-// keeps its upper half: the arc is a fraction of the plot's size, whichever of
-// its width and height is smaller, and the lower half of the plot stays empty.
-// The gauge sizes the plot to the arc it wants, moves the arc to the top of it
-// and clips the rest. Measured on ApexCharts' plot: the arc's outer radius, and
-// the thickness of its ring, as fractions of that size.
-const ARC_RADIUS = 0.39;
-const ARC_THICKNESS = 0.0976;
 // Room under the arc: the `showRange` labels, and a margin without them.
 const RANGE_ROW = 20;
 const EDGE_ROW = 4;
+// The value, from the text tokens, large enough for the arc it sits in.
+const valueSize = (radius: number) =>
+  radius >= 110
+    ? 'var(--text-3xl, 1.875rem)'
+    : radius >= 80
+      ? 'var(--text-2xl, 1.5rem)'
+      : 'var(--text-xl, 1.25rem)';
+
+type FaceProps = {
+  radius: number;
+  value: string;
+  label: string;
+  showRange: boolean;
+  range: [string, string];
+};
+
+// The value over its label on the base of the arc, inside its hollow, and the
+// ends of the range under the two ends of the arc, starting at its outer edge
+// so a long one is not cut by the box. Plain SVG text.
+const Face = ({ radius, value, label, showRange, range }: FaceProps) => {
+  const area = usePlotArea();
+  if (!area) return null;
+  const cx = area.x + area.width / 2;
+  return (
+    <>
+      <text data-chart-center="" textAnchor="middle" pointerEvents="none">
+        <tspan
+          x={cx}
+          y={radius - (label ? 24 : 8)}
+          fill={TEXT}
+          fontWeight={700}
+          style={{ fontSize: valueSize(radius) }}
+        >
+          {value}
+        </tspan>
+        {label && (
+          <tspan x={cx} y={radius - 6} fill={MUTED} style={{ fontSize: 'var(--text-xs, 0.75rem)' }}>
+            {label}
+          </tspan>
+        )}
+      </text>
+      {showRange &&
+        ([-1, 1] as const).map((side, i) => (
+          <text
+            key={side}
+            data-chart-range=""
+            x={cx + side * radius}
+            y={radius + 14}
+            textAnchor={side < 0 ? 'start' : 'end'}
+            fill={MUTED}
+            pointerEvents="none"
+            style={{ fontSize: 'var(--text-2xs, 0.6875rem)' }}
+          >
+            {range[i]}
+          </text>
+        ))}
+    </>
+  );
+};
 
 export const SemiCircleGauge = ({
   value,
@@ -58,104 +112,72 @@ export const SemiCircleGauge = ({
   color,
   min = 0,
   max = 100,
+  warnAt,
+  critAt,
   formatValue = percent,
   showRange = false,
   ariaLabel,
-  apexOptions,
+  children,
   height = 120,
-  width = '100%',
+  width,
 }: SemiCircleGaugeProps) => {
-  const { brand, text, textMuted, track } = useChartTheme();
-  const format = useValueFormat(formatValue);
   const box = useRef<HTMLDivElement>(null);
   const boxWidth = useWidth(box);
-
+  const text = formatValue(value);
+  const row = showRange ? RANGE_ROW : EDGE_ROW;
   // The arc fills the width, up to the height it is allowed.
-  const radius =
-    boxWidth === undefined
-      ? 0
-      : Math.floor(Math.min(boxWidth * ARC_RADIUS, height - (showRange ? RANGE_ROW : EDGE_ROW)));
-  const plot = Math.round(radius / ARC_RADIUS);
-  const thickness = plot * ARC_THICKNESS;
-  const valueSize = Math.min(28, Math.max(14, Math.round(radius * 0.24)));
-  // Text sits on the base of the arc, inside its hollow: the value over the
-  // label, which only takes room when there is one. ApexCharts offsets text
-  // from the arc's center, by the middle of its line (measured: the value's
-  // is 7px under it at 24px, the label's 4.5px above).
-  const labelRow = label ? 18 : 0;
-  const options: ApexOptions = {
-    chart: {
-      type: 'radialBar',
-      fontFamily: 'inherit',
-      foreColor: text,
-      sparkline: { enabled: true },
-    },
-    colors: [color ?? brand],
-    fill: { opacity: 1 },
-    plotOptions: {
-      radialBar: {
-        startAngle: -90,
-        endAngle: 90,
-        // The arc's top edge on the top edge of the box.
-        offsetY: radius - plot / 2,
-        // ApexCharts maps the value onto the arc, clamped to the range, and
-        // hands the formatter the value itself.
-        min,
-        max,
-        hollow: { size: '60%' },
-        track: { background: track, strokeWidth: '100%', margin: 0 },
-        dataLabels: {
-          name: { offsetY: -6, fontSize: '12px', color: textMuted },
-          value: {
-            offsetY: -(labelRow + 4 + valueSize * 0.625) - valueSize * 0.29,
-            fontSize: `${valueSize}px`,
-            fontWeight: 700,
-            formatter: format.axis,
-          },
-        },
-      },
-    },
-    labels: [label],
-  };
-  // The ends of the arc, under the middle of its ring.
-  const rangeStyle = {
-    color: textMuted,
-    position: 'absolute',
-    top: radius + 2,
-    transform: 'translateX(-50%)',
-  } as const;
-  const end = (side: -1 | 1) => `calc(50% + ${side * (radius - thickness / 2)}px)`;
+  const radius = boxWidth === undefined ? 0 : Math.floor(Math.min(boxWidth / 2, height - row));
+  const thickness = Math.min(24, Math.max(8, Math.round(radius * 0.2)));
+  const byStatus = warnAt !== undefined || critAt !== undefined;
+  const arc =
+    color ??
+    (!byStatus
+      ? SERIES[0]
+      : value >= (critAt ?? Infinity)
+        ? STATUS_CRIT
+        : value >= (warnAt ?? Infinity)
+          ? STATUS_WARN
+          : SUCCESS);
   return (
     <div
       ref={box}
-      style={{
-        position: 'relative',
-        height: radius + (showRange ? RANGE_ROW : EDGE_ROW),
-        overflow: 'hidden',
-        width,
-      }}
+      style={{ width: width ?? '100%', maxWidth: '100%', height: radius + row, minHeight: row }}
     >
       {radius > 0 && (
-        <ApexChart
-          type="radialBar"
-          options={options}
-          series={[value]}
-          height={plot}
-          width="100%"
-          ariaLabel={ariaLabel}
-          apexOptions={apexOptions}
-          keyboard={false}
-        />
-      )}
-      {radius > 0 && showRange && (
-        <>
-          <span className="text-2xs" style={{ ...rangeStyle, left: end(-1) }}>
-            {format.axis(min)}
-          </span>
-          <span className="text-2xs" style={{ ...rangeStyle, left: end(1) }}>
-            {format.axis(max)}
-          </span>
-        </>
+        <RadialBarChart
+          {...frameProps({
+            height: radius + row,
+            width: '100%',
+            ariaLabel: gaugeName(ariaLabel ?? (label || 'Gauge'), text),
+            keyboard: false,
+          })}
+          data={[{ name: label || 'value', value: clampTo(value, min, max) }]}
+          cx="50%"
+          cy={radius}
+          startAngle={180}
+          endAngle={0}
+          innerRadius={radius - thickness}
+          outerRadius={radius}
+          barSize={thickness}
+          margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        >
+          <PolarAngleAxis type="number" domain={[min, max]} tick={false} axisLine={false} />
+          <RadialBar
+            dataKey="value"
+            fill={arc}
+            cornerRadius={thickness / 2}
+            background={{ fill: TRACK, cornerRadius: thickness / 2 }}
+            {...ANIMATION}
+          />
+          <Face
+            radius={radius}
+            value={text}
+            label={label}
+            showRange={showRange}
+            range={[formatValue(min), formatValue(max)]}
+          />
+          {children}
+        </RadialBarChart>
       )}
     </div>
   );

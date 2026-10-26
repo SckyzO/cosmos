@@ -1,18 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import type { ComponentType } from 'react';
+import { expect, waitFor } from 'storybook/test';
 import { TRACK } from './core/colors';
 import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
-import { useChartTheme } from './theme';
-import {
-  opaqueColor,
-  resolveColor,
-  switchTheme,
-  themeColor,
-  expectAccessibleChart,
-} from './storybook-helpers';
+import { resolveColor, switchTheme, themeColor, expectAccessibleChart } from './storybook-helpers';
 import { centerText } from './storybook-polar';
 import { surface } from './storybook-recharts';
 
@@ -84,31 +78,43 @@ export const SemiCircle: Story = {
   ),
 };
 
-// The recipe for threshold zones: the gauge takes one color, so the host picks
-// it from the value with the theme's status colors.
-const ThresholdGauge = ({ value }: { value: number }) => {
-  const { success, statusWarn, statusCrit } = useChartTheme();
-  const color = value >= 90 ? statusCrit : value >= 70 ? statusWarn : success;
-  return <SemiCircleGauge value={value} label="CPU" color={color} />;
-};
-
 /**
- * Threshold zones are not a prop: `color` takes one color, picked from the
- * value. Here green under 70, amber from 70 and red from 90, read from the
- * theme as `useChartTheme()`'s `success`, `statusWarn` and `statusCrit`.
+ * `warnAt` and `critAt` color the arc by status, in the units of the value:
+ * the theme's success color below `warnAt`, amber from it, red from `critAt`.
+ * Without them the arc keeps one color, so a gauge where higher is better does
+ * not turn red; `color` replaces either.
  */
 export const SemiCircleStatusColors: Story = {
   render: () => (
     <div className="grid gap-4 md:grid-cols-3">
       <Card title="web-01">
-        <ThresholdGauge value={42} />
+        <SemiCircleGauge value={42} label="CPU" warnAt={70} critAt={90} />
       </Card>
       <Card title="web-02">
-        <ThresholdGauge value={78} />
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} />
       </Card>
       <Card title="db-01">
-        <ThresholdGauge value={94} />
+        <SemiCircleGauge value={94} label="CPU" warnAt={70} critAt={90} />
       </Card>
+    </div>
+  ),
+};
+
+/** `warnAt` and `critAt` are in the units of the value: here, a temperature that is fine to 60 °C. */
+export const SemiCircleCustomThresholds: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      {[48, 66, 83].map((temperature) => (
+        <Card key={temperature} title={`GPU ${temperature} °C`}>
+          <SemiCircleGauge
+            value={temperature}
+            label="Core"
+            warnAt={60}
+            critAt={80}
+            formatValue={celsius}
+          />
+        </Card>
+      ))}
     </div>
   ),
 };
@@ -193,94 +199,18 @@ export const CustomRange: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** The recipe colors each gauge from its value, with the theme's status colors. */
-export const ThresholdColorsComeFromTheTheme: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: SemiCircleStatusColors.render,
-  play: async ({ canvasElement }) => {
-    await waitFor(() => {
-      const strokes = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')].map(
-        (el) => opaqueColor(el.getAttribute('stroke') ?? '')
-      );
-      expect(strokes).toEqual([
-        themeColor('--color-success-500'),
-        themeColor('--color-status-warn'),
-        themeColor('--color-status-crit'),
-      ]);
-    });
-  },
-};
-
-/**
- * The value and the label sit inside the hollow of the arc, which takes the
- * box: no empty half under it. `showRange` labels sit under the arc's ends.
- */
-export const SemiCircleFitsItsBox: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="w-80" data-testid="gauge">
-      <SemiCircleGauge value={1450} max={2000} label="PDU 3" formatValue={watts} showRange />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const gauge = canvasElement.querySelector('[data-testid="gauge"]')!;
-    await waitFor(() => {
-      const box = gauge.firstElementChild!.getBoundingClientRect();
-      const track = gauge.querySelector('.apexcharts-radialbar-track path');
-      const value = gauge.querySelector('.apexcharts-datalabel-value')?.getBoundingClientRect();
-      const label = gauge.querySelector('.apexcharts-datalabel-label')?.getBoundingClientRect();
-      expect(track && value && label).toBeTruthy();
-      if (!track || !value || !label) return;
-      const arc = track.getBoundingClientRect();
-      const ring = parseFloat(track.getAttribute('stroke-width') ?? '0');
-      // The arc's base, and the top of the inner edge of its ring.
-      const base = arc.bottom;
-      const hollowTop = arc.top + ring / 2;
-      expect(value.top).toBeGreaterThan(hollowTop);
-      expect(label.bottom).toBeLessThanOrEqual(base);
-      expect(value.bottom).toBeLessThanOrEqual(label.top + 2);
-      // The arc starts at the top of the box and the labels fit under it.
-      expect(arc.top - ring / 2).toBeLessThanOrEqual(box.top + 2);
-      expect(box.bottom - base).toBeLessThanOrEqual(24);
-    });
-    await expect(within(gauge as HTMLElement).getByText('0 W')).toBeVisible();
-    await expect(within(gauge as HTMLElement).getByText('2000 W')).toBeVisible();
-  },
-};
-
-/** The range labels are off by default, and follow `min`, `max` and `formatValue`. */
-export const SemiCircleRangeIsOptIn: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div data-testid="plain">
-        <SemiCircleGauge value={67} label="Load" />
-      </div>
-      <div data-testid="ranged">
-        <SemiCircleGauge
-          value={27}
-          min={10}
-          max={45}
-          label="Rack A12"
-          formatValue={celsius}
-          showRange
-        />
-      </div>
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const root = (id: string) =>
-      within(canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!);
-    await waitFor(() => expect(root('plain').getByText('Load')).toBeVisible());
-    await expect(root('plain').queryByText('0%')).toBeNull();
-    await expect(root('plain').queryByText('100%')).toBeNull();
-    await expect(root('ranged').getByText('10 °C')).toBeVisible();
-    await expect(root('ranged').getByText('45 °C')).toBeVisible();
-  },
-};
-
 // The gauges drawn with Recharts: the tests below run on each.
-const RECHARTS_GAUGES = { GradientRadial };
+type GaugeProps = {
+  value: number;
+  label?: string;
+  min?: number;
+  max?: number;
+  formatValue?: (value: number) => string;
+  ariaLabel?: string;
+};
+type GaugeComponent = ComponentType<GaugeProps>;
+
+const RECHARTS_GAUGES: Record<string, GaugeComponent> = { GradientRadial, SemiCircleGauge };
 
 const GaugeGrid = ({
   children,
@@ -392,17 +322,157 @@ export const GradientFadesToSuccess: Story = {
   },
 };
 
-const GAUGES = { GradientRadial, SemiCircleGauge, StrokedGauge };
+const rangeLabels = (root: Element) =>
+  [...root.querySelectorAll('[data-chart-range]')].map((el) => el.textContent);
 
-type GaugeComponent = typeof GradientRadial;
-
-type GaugeProps = {
-  value: number;
-  label?: string;
-  min?: number;
-  max?: number;
-  formatValue?: (value: number) => string;
+/** With `warnAt` and `critAt` the arc is green, then amber and red, in the theme's status colors. */
+export const SemiCircleStatusColorsComeFromTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: SemiCircleStatusColors.render,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const arcs = [...canvasElement.querySelectorAll('.recharts-radial-bar-sector')].map((el) =>
+        resolveColor(getComputedStyle(el).fill)
+      );
+      expect(arcs).toEqual([
+        themeColor('--color-success-500'),
+        themeColor('--color-status-warn'),
+        themeColor('--color-status-crit'),
+      ]);
+    });
+  },
 };
+
+/** The arc keeps the accent without thresholds; either threshold switches to status colors, and `color` replaces them. */
+export const SemiCircleThresholdProps: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <SemiCircleGauge value={95} />
+      <SemiCircleGauge value={95} critAt={90} />
+      <SemiCircleGauge value={55} warnAt={50} critAt={80} />
+      <SemiCircleGauge value={85} warnAt={50} critAt={80} />
+      <SemiCircleGauge value={30} warnAt={20} critAt={90} />
+      <SemiCircleGauge value={95} color="#8b5cf6" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const arcs = [...canvasElement.querySelectorAll('.recharts-radial-bar-sector')].map((el) =>
+        resolveColor(getComputedStyle(el).fill)
+      );
+      expect(arcs).toEqual([
+        themeColor('--color-brand-500'),
+        themeColor('--color-status-crit'),
+        themeColor('--color-status-warn'),
+        themeColor('--color-status-crit'),
+        themeColor('--color-status-warn'),
+        resolveColor('#8b5cf6'),
+      ]);
+    });
+  },
+};
+
+/**
+ * The value and the label sit inside the hollow of the arc, which takes the
+ * box: no empty half under it. `showRange` labels sit under the arc's ends.
+ */
+export const SemiCircleFitsItsBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="w-80" data-testid="gauge">
+      <SemiCircleGauge value={1450} max={2000} label="PDU 3" formatValue={watts} showRange />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const root = canvasElement.querySelector('[data-testid="gauge"]') as HTMLElement;
+    await waitFor(() => {
+      const box = (root.firstElementChild as Element).getBoundingClientRect();
+      const track = trackOf(root)?.getBoundingClientRect();
+      const [value, label] = [...root.querySelectorAll('[data-chart-center] tspan')].map((el) =>
+        el.getBoundingClientRect()
+      );
+      const ends = [...root.querySelectorAll('[data-chart-range]')].map((el) =>
+        el.getBoundingClientRect()
+      );
+      expect(track && value && label && ends.length === 2).toBeTruthy();
+      if (!track || !value || !label) return;
+      // The arc starts at the top of the box, and its base is the middle of the text's row.
+      expect(Math.abs(track.top - box.top)).toBeLessThanOrEqual(2);
+      expect(track.width).toBeLessThanOrEqual(box.width);
+      // The value is in the hollow, above its label, which is above the base.
+      expect(value.top).toBeGreaterThan(track.top + 20);
+      expect(value.bottom).toBeLessThanOrEqual(label.top + 4);
+      expect(label.bottom).toBeLessThanOrEqual(track.bottom);
+      // The range labels sit under the two ends and fit in the box.
+      for (const end of ends) {
+        expect(end.top).toBeGreaterThanOrEqual(track.bottom - 8);
+        expect(end.left).toBeGreaterThanOrEqual(box.left - 1);
+        expect(end.right).toBeLessThanOrEqual(box.right + 1);
+      }
+      expect(box.bottom - track.bottom).toBeLessThanOrEqual(24);
+    });
+    await expect(rangeLabels(root)).toEqual(['0 W', '2000 W']);
+  },
+};
+
+/** The range labels are off by default, and follow `min`, `max` and `formatValue`. */
+export const SemiCircleRangeIsOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="plain">
+        <SemiCircleGauge value={67} label="Load" />
+      </div>
+      <div data-testid="ranged">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          showRange
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const root = (id: string) =>
+      canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => expect(centerText(root('plain'))?.label).toBe('Load'));
+    await expect(rangeLabels(root('plain'))).toEqual([]);
+    await waitFor(() => expect(rangeLabels(root('ranged'))).toEqual(['10 °C', '45 °C']));
+  },
+};
+
+/** The gauge is as wide as its box allows, up to `height`: a narrow box gets a shorter gauge. */
+export const SemiCircleHeightIsTheMost: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex items-start gap-4">
+      <div className="w-32" data-testid="narrow">
+        <SemiCircleGauge value={50} height={200} />
+      </div>
+      <div className="w-96" data-testid="wide">
+        <SemiCircleGauge value={50} height={120} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const height = (id: string) =>
+      (
+        canvasElement.querySelector(`[data-testid="${id}"] svg.recharts-surface`) as Element
+      ).getBoundingClientRect().height;
+    await waitFor(() => {
+      // A narrow box: half its width, plus the margin. A wide one: the `height`.
+      expect(height('narrow')).toBeLessThan(80);
+      expect(height('wide')).toBeLessThanOrEqual(120);
+      expect(height('wide')).toBeGreaterThan(100);
+    });
+  },
+};
+
+const GAUGES = { GradientRadial, SemiCircleGauge, StrokedGauge };
 
 /**
  * Each gauge twice: with `props`, and at `reference` on the default range,
@@ -513,7 +583,7 @@ export const GaugesAreNamedImages: Story = {
       <div data-label="Health score" data-value="84%">
         <GradientRadial value={84} label="Health" ariaLabel="Health score" />
       </div>
-      <div data-label="Cluster load">
+      <div data-label="Cluster load" data-value="67%">
         <SemiCircleGauge value={67} label="Load" ariaLabel="Cluster load" />
       </div>
       <div data-label="Monthly uptime">

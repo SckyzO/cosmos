@@ -179,7 +179,8 @@ const CHARTS: Record<string, Chart> = {
     filled: () => <GradientRadial value={84} />,
   },
   SemiCircleGauge: {
-    filled: (apexOptions) => <SemiCircleGauge value={42} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <SemiCircleGauge value={42} />,
   },
   StrokedGauge: {
     filled: (apexOptions) => <StrokedGauge value={92} apexOptions={apexOptions} />,
