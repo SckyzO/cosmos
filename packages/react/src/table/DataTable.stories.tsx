@@ -1809,3 +1809,154 @@ export const MultiValueFilterKeepsTheStripReachable: Story = {
     await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveFocus();
   },
 };
+
+// ── Rows per page ────────────────────────────────────────────────────────────
+
+const PAGE_SIZES = [10, 25, 50];
+
+type Canvas = Parameters<NonNullable<Story['play']>>[0]['canvas'];
+
+const findRange = (canvas: Canvas, range: string) =>
+  canvas.getByText((_, el) => el?.tagName === 'SPAN' && el.textContent === `Showing ${range}`);
+
+export const WithPageSizeOptions: Story = {
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultPageSize={10}
+        pageSizeOptions={PAGE_SIZES}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const select = canvas.getByRole('combobox', { name: 'Rows per page' });
+    await expect(select).toHaveValue('10');
+    await expect(canvas.getAllByRole('row')).toHaveLength(11);
+    await userEvent.selectOptions(select, '25');
+    await expect(canvas.getAllByRole('row')).toHaveLength(26);
+    await expect(findRange(canvas, '1 to 25 of 60')).toBeInTheDocument();
+  },
+};
+
+export const PageSizeChangeGoesBackToPageOne: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultPageSize={10}
+      pageSizeOptions={PAGE_SIZES}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Page 3' }));
+    await expect(findRange(canvas, '21 to 30 of 60')).toBeInTheDocument();
+    await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Rows per page' }), '25');
+    await expect(findRange(canvas, '1 to 25 of 60')).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+  },
+};
+
+export const PageSizeControlled: Story = {
+  render: () => {
+    const [size, setSize] = useState(10);
+    return (
+      <Wrap>
+        <DataTable
+          rows={rows}
+          columns={columns}
+          rowKey={(r) => r.id}
+          pageSize={size}
+          onPageSizeChange={setSize}
+          pageSizeOptions={PAGE_SIZES}
+        />
+        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+          Page size held by the host: <span data-testid="host-size">{size}</span>
+        </p>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Rows per page' }), '50');
+    await expect(canvas.getByTestId('host-size')).toHaveTextContent('50');
+    await expect(canvas.getByRole('combobox', { name: 'Rows per page' })).toHaveValue('50');
+    await expect(findRange(canvas, '1 to 50 of 60')).toBeInTheDocument();
+  },
+};
+
+const pickedSizes = fn();
+
+export const PageSizeWithoutCallbackStaysFixed: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={10}
+      onPageSizeChange={pickedSizes}
+      pageSizeOptions={PAGE_SIZES}
+    />
+  ),
+  play: async ({ canvas }) => {
+    // A controlled size the host never updates: the pick is reported, the size stays.
+    await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Rows per page' }), '25');
+    await expect(pickedSizes).toHaveBeenCalledWith(25);
+    await expect(findRange(canvas, '1 to 10 of 60')).toBeInTheDocument();
+    await expect(canvas.getByRole('combobox', { name: 'Rows per page' })).toHaveValue('10');
+  },
+};
+
+export const PageSizeOutsideTheOptionsIsListed: Story = {
+  tags: ['!dev'],
+  render: () => (
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={15}
+      pageSizeOptions={PAGE_SIZES}
+    />
+  ),
+  play: async ({ canvas }) => {
+    const select = canvas.getByRole('combobox', { name: 'Rows per page' });
+    await expect(select).toHaveValue('15');
+    await expect(within(select).getAllByRole('option')).toHaveLength(4);
+  },
+};
+
+export const NoPageSizeSelectByDefault: Story = {
+  tags: ['!dev'],
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('combobox', { name: 'Rows per page' })).not.toBeInTheDocument();
+  },
+};
+
+export const PageSizeOptionsMobile: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultPageSize={10}
+        pageSizeOptions={PAGE_SIZES}
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const nav = canvas.getByRole('navigation', { name: 'Pagination' });
+    await expect(within(nav).getByRole('combobox', { name: 'Rows per page' })).toBeVisible();
+    await expect(within(nav).getByRole('button', { name: 'Next page' })).toBeVisible();
+  },
+};

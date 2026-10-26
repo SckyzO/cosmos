@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
 import { SlidersHorizontal } from 'lucide-react';
 import {
   expectBelow,
@@ -647,5 +647,205 @@ export const CloseButtonContrastInEveryTheme: Story = {
   play: async () => {
     const close = await within(document.body).findByRole('button', { name: 'Close drawer' });
     inEachTheme(() => expectGraphicContrast(close, 'color'));
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Swipe to close
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * `swipeToClose`: on a touch screen, a swipe toward the panel's edge follows the finger and
+ * closes the drawer past a third of its width or as a fast flick; a shorter one springs back.
+ * Try it with the touch emulation of your browser's devtools.
+ */
+export const SwipeToClose: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <Wrap>
+        <Button onClick={() => setOpen(true)}>Open drawer</Button>
+        <Drawer open={open} onClose={() => setOpen(false)} side="left" size="sm" swipeToClose>
+          <Drawer.Header title="Swipe me" onClose={() => setOpen(false)} />
+          <Drawer.Body>
+            Swipe this panel to the left with a finger, or use the close button.
+          </Drawer.Body>
+        </Drawer>
+      </Wrap>
+    );
+  },
+};
+
+type Touch = { pointerType?: string; pointerId?: number };
+const touch = (clientX: number, init: Touch = {}) => ({
+  pointerType: 'touch',
+  pointerId: 1,
+  isPrimary: true,
+  clientX,
+  clientY: 200,
+  ...init,
+});
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const swipePanel = async () => {
+  const panel = await within(document.body).findByRole('dialog', { name: 'Swipe' });
+  await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
+  return panel;
+};
+
+/** A swipe past a third of the panel closes it, and the panel follows the finger until then. */
+export const SwipePastAThirdCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const panel = await swipePanel();
+    const width = panel.getBoundingClientRect().width;
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(250 - 60));
+    // The panel is where the finger took it, with no transition in the way.
+    await waitFor(() => expect(panel.getBoundingClientRect().left).toBeCloseTo(-60, 0));
+    // Never past its open position: the other way does nothing.
+    await fireEvent.pointerMove(panel, touch(250 + 80));
+    await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
+    await fireEvent.pointerMove(panel, touch(250 - width / 3 - 20));
+    await sleep(150);
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await fireEvent.pointerUp(panel, touch(250 - width / 3 - 20));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** A short swipe, slow, springs back to the open position and does not close. */
+export const ShortSwipeSpringsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipePastAThirdCloses.render,
+  play: async ({ args }) => {
+    const panel = await swipePanel();
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(250 - 50));
+    await waitFor(() => expect(panel.getBoundingClientRect().left).toBeCloseTo(-50, 0));
+    await sleep(250);
+    await fireEvent.pointerUp(panel, touch(250 - 50));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
+    await expect(panel.style.translate).toBe('');
+  },
+};
+
+/** A fast flick closes even a short swipe. */
+export const FastFlickCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipePastAThirdCloses.render,
+  play: async ({ args }) => {
+    const panel = await swipePanel();
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(250 - 40));
+    await fireEvent.pointerUp(panel, touch(250 - 40));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** A mouse does not swipe, and nor does a drawer without `swipeToClose`. */
+export const MouseAndDefaultDrawerDoNotSwipe: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <>
+      <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+        <Drawer.Body>Content</Drawer.Body>
+      </Drawer>
+    </>
+  ),
+  play: async ({ args }) => {
+    const panel = await swipePanel();
+    const mouse: Touch = { pointerType: 'mouse' };
+    await fireEvent.pointerDown(panel, touch(250, mouse));
+    await fireEvent.pointerMove(panel, touch(100, mouse));
+    await fireEvent.pointerUp(panel, touch(100, mouse));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await expect(panel.getBoundingClientRect().left).toBe(0);
+  },
+};
+
+export const DrawerWithoutSwipeToCloseIgnoresSwipes: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="left" size="sm" ariaLabel="Swipe">
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const panel = await swipePanel();
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(30));
+    await fireEvent.pointerUp(panel, touch(30));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await expect(panel.style.translate).toBe('');
+  },
+};
+
+/** A right drawer closes on a swipe to the right, not to the left. */
+export const RightDrawerSwipesToTheRight: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="right" size="sm" swipeToClose ariaLabel="Swipe">
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const panel = await within(document.body).findByRole('dialog', { name: 'Swipe' });
+    await waitFor(() => expect(panel.getBoundingClientRect().right).toBe(window.innerWidth));
+    const x = window.innerWidth - 100;
+    await fireEvent.pointerDown(panel, touch(x));
+    await fireEvent.pointerMove(panel, touch(x - 120));
+    await sleep(150);
+    await fireEvent.pointerUp(panel, touch(x - 120));
+    await expect(args.onClose).not.toHaveBeenCalled();
+
+    await fireEvent.pointerDown(panel, touch(x));
+    await fireEvent.pointerMove(panel, touch(x + 60));
+    await waitFor(() =>
+      expect(panel.getBoundingClientRect().right).toBeCloseTo(window.innerWidth + 60, 0)
+    );
+    await fireEvent.pointerMove(panel, touch(x + 130));
+    await sleep(150);
+    await fireEvent.pointerUp(panel, touch(x + 130));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Under `prefers-reduced-motion` the gesture still works; only the spring-back is not animated. */
+export const ReducedMotionSkipsTheSpring: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipePastAThirdCloses.render,
+  play: async () => {
+    const realMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) =>
+      query.includes('prefers-reduced-motion')
+        ? ({ ...realMatchMedia(query), matches: true } as MediaQueryList)
+        : realMatchMedia(query);
+    try {
+      const panel = await swipePanel();
+      await fireEvent.pointerDown(panel, touch(250));
+      await fireEvent.pointerMove(panel, touch(250 - 50));
+      await sleep(250);
+      await fireEvent.pointerUp(panel, touch(250 - 50));
+      await waitFor(() => expect(panel.style.transition).toBe('none'));
+      await expect(panel.getBoundingClientRect().left).toBe(0);
+      // Not left on: the next slide animates again.
+      await waitFor(() => expect(panel.style.transition).toBe(''));
+    } finally {
+      window.matchMedia = realMatchMedia;
+    }
   },
 };

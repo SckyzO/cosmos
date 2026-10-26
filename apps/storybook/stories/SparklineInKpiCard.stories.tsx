@@ -106,7 +106,7 @@ export const ChartFillsTheCard: Story = {
   play: async ({ canvasElement }) => {
     const card = canvasElement.querySelector<HTMLElement>('.rounded-2xl')!;
     await waitFor(() => {
-      const svg = card.querySelector('.apexcharts-svg')!;
+      const svg = card.querySelector('svg.recharts-surface')!;
       expect(svg).not.toBeNull();
       // 20px of padding on each side of the 320px card.
       expect(svg.getBoundingClientRect().width).toBeCloseTo(280, -1);

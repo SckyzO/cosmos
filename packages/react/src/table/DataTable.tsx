@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
+import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
@@ -39,6 +40,9 @@ export type DataTableProps<T> = {
   rowHref?: (row: T) => string | undefined;
   /** Optional right-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
   renderRowAction?: (row: T) => React.ReactNode;
+  /**
+   * Rows per page, when controlled. Without `pageSizeOptions` it is the fixed size. Default 25.
+   */
   pageSize?: number;
   /**
    * Keeps the header and shows `loadingRows` placeholder rows in place of the body, so the
@@ -108,6 +112,18 @@ export type DataTableProps<T> = {
    * come from the host (they may come from a server), the table never computes them.
    */
   filterTabs?: DataTableFilterTabsConfig;
+
+  // ── Rows per page ──────────────────────────────────────────────────────────
+  /** Rows per page when uncontrolled. Default 25. */
+  defaultPageSize?: number;
+  /** Called with the size to move to, in both modes; the table goes back to the first page. */
+  onPageSizeChange?: (size: number) => void;
+  /**
+   * The sizes a "Rows per page" select offers in the footer, before "Show all" and the pager. The
+   * select is shown only when this is set. A `pageSize` passed without `onPageSizeChange` is a
+   * controlled value that never moves: the select then reports the pick and keeps the size.
+   */
+  pageSizeOptions?: number[];
 };
 
 // The selection and action columns keep these widths whatever the data columns add up to.
@@ -136,7 +152,7 @@ export const DataTable = <T,>({
   onRowClick,
   rowHref,
   renderRowAction,
-  pageSize = 25,
+  pageSize: pageSizeProp,
   loading = false,
   loadingRows = 5,
   error = null,
@@ -161,6 +177,9 @@ export const DataTable = <T,>({
   defaultFilters,
   onFiltersChange,
   filterTabs,
+  defaultPageSize = 25,
+  onPageSizeChange,
+  pageSizeOptions,
 }: DataTableProps<T>) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
@@ -201,6 +220,17 @@ export const DataTable = <T,>({
     },
     [setSearchState]
   );
+
+  const [pageSize, setPageSizeState] = useControllableState({
+    value: pageSizeProp,
+    defaultValue: defaultPageSize,
+    onChange: onPageSizeChange,
+    name: 'DataTable.pageSize',
+  });
+  const setPageSize = (size: number) => {
+    setPageSizeState(size);
+    setPage(0);
+  };
 
   const handleSortToggle = (key: string) => {
     if (sortKey !== key) {
@@ -643,6 +673,11 @@ export const DataTable = <T,>({
           onPageChange={(next) => setPage(next - 1)}
           showAll={showAll}
           onShowAllChange={setShowAll}
+          controls={
+            pageSizeOptions && pageSizeOptions.length > 0 ? (
+              <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />
+            ) : undefined
+          }
           className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800"
         />
       )}

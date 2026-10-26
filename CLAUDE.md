@@ -117,23 +117,46 @@ charts ───────────── storybook      (charts imports ne
   drops an esbuild banner. `exports` gives `import` and `require` their own types (`index.d.ts` /
   `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
   files.
-- **`packages/charts`** — ApexCharts wrappers. **Deliberately standalone** so `cosmos-react`
-  consumers who don't need charts don't ship ApexCharts. This is why it re-derives the theme from
-  the DOM (`MutationObserver` on `<html>`'s `class` and `data-accent` in `src/theme.ts`) instead of
-  using a React context, and reads `--color-brand-500` / grays with `getComputedStyle`, falling back
-  to hardcoded hexes, rather than importing tokens. Give each ApexCharts axis its own `labels`
-  object: ApexCharts mutates it, and a shared one blanked the y-axis on every options update.
-  Functions in the options must keep their identity: react-apexcharts compares them by reference
-  and redraws on a new one. Use `formatters.ts` (`useValueFormat`, `useStableCallback`) and render
-  through the internal `ApexChart`, which also redraws when a web font loads.
-  Every series name, category, label and value reaching a legend or tooltip goes through
-  `escapeHtml` (ApexCharts writes them with innerHTML, GHSA-f4hm-pcxh-hcvv); custom tooltips use
-  `tooltipHtml()` from `src/tooltip.ts`. One `<Name>.stories.tsx` per wrapper, each with an
-  `HtmlInLabelsRendersAsText` story built on `src/storybook-helpers.tsx`. Colors come from the theme
-  (status thresholds from `--color-status-warn/crit`). Every wrapper takes `ariaLabel` and
-  `apexOptions` (deep-merged last by `mergeOptions`) through `ChartBaseProps`; the series charts add
-  `emptyMessage`, the ones with a legend `legendPosition` (`src/types.ts`). One build entry per
-  wrapper and `sideEffects: false`; `apexcharts` stays a dependency, not a peer.
+- **`packages/charts`** — chart wrappers, moving from ApexCharts to Recharts 3 (#360). `LineAreaChart`
+  and `Sparkline` are on Recharts; the other 14 stay on ApexCharts until #362-#365 (the second half
+  of this paragraph, until #365 removes it). **Deliberately standalone** so `cosmos-react` consumers
+  who don't need charts don't ship a chart library: it imports neither `theme` nor `react`. One build
+  entry per wrapper and `sideEffects: false`; `recharts` and `apexcharts` stay dependencies, not peers.
+  Rules for a wrapper on Recharts, built on the internal `src/core/`:
+  - **Colours are CSS variables** with a hex fallback (`var(--color-brand-500, #465fff)`,
+    `core/colors.ts`), handed to `fill` / `stroke` / `stopColor` / `cursor`. No `getComputedStyle`, no
+    `MutationObserver`, no colour in JS state: a theme, accent or text size switch repaints on its own.
+    `theme` emits every variable the charts read (`@theme static` for the brand, status and semantic
+    colours; `--color-chart-2` to `--color-chart-8` for the series after the accent, one list per accent
+    that skips the hues looking like it), so the fallbacks are a safety net. A colour a chart reads
+    goes there first.
+  - **Text** is `var(--text-xs, 0.75rem)` (ticks, titles, legend, tooltip); the font is inherited.
+  - **Shared pieces**: `frameProps` (responsive size from `height` / `width`, `ariaLabel`,
+    `accessibilityLayer`, `maxWidth: 100%`) and `ChartEmpty` (`emptyMessage`), `ChartTooltip` /
+    `TooltipCard` (React, `role="status"`, `formatValue`), `ChartLegend` via `legendProps` (buttons that
+    hide a series, `legendPosition`, series order kept with `itemSorter={null}`), `AXIS` / `GRID_PROPS` /
+    `xAxisTitle` / `yAxisTitle`, `ANIMATION` (500 ms, `'auto'` off for reduced motion).
+  - **Series are keyed `s0`, `s1`…** (`seriesKey`, `toRows`): a name with a dot is a path to Recharts.
+  - **`children` replaces `apexOptions`**: Recharts elements rendered inside the chart (reference line,
+    brush, extra axis). Consumers add `recharts` at the same version as the package (two copies don't
+    share a chart's context). Tooltip and legend are React text, so no `escapeHtml` there.
+  - **Stories** use `storybook-recharts.tsx` (Recharts DOM: `.recharts-*`); `storybook-helpers.tsx`
+    keeps the ApexCharts ones and the engine-agnostic ones (`hover`, `switchTheme`, `HOSTILE`…). Each
+    wrapper keeps an `HtmlInLabelsRendersAsText` story, a theme-repaint story and an empty-state story.
+    Rules for the 14 wrappers still on ApexCharts (until #365): it re-derives the theme from the DOM
+    (`MutationObserver` on `<html>`'s `class` and `data-accent` in `src/theme.ts`, `useChartTheme()`) and
+    reads `--color-brand-500` / grays with `getComputedStyle`, falling back to hardcoded hexes. Give each
+    ApexCharts axis its own `labels` object: ApexCharts mutates it, and a shared one blanked the y-axis on
+    every options update. Functions in the options must keep their identity: react-apexcharts compares them
+    by reference and redraws on a new one. Use `formatters.ts` (`useValueFormat`, `useStableCallback`) and
+    render through the internal `ApexChart`, which also redraws when a web font loads. Every series name,
+    category, label and value reaching a legend or tooltip goes through `escapeHtml` (ApexCharts writes them
+    with innerHTML, GHSA-f4hm-pcxh-hcvv); custom tooltips use `tooltipHtml()` from `src/tooltip.ts`. One
+    `<Name>.stories.tsx` per wrapper, each with an `HtmlInLabelsRendersAsText` story built on
+    `src/storybook-helpers.tsx`. Colors come from the theme (status thresholds from
+    `--color-status-warn/crit`). Every wrapper takes `ariaLabel` and `apexOptions` (deep-merged last by
+    `mergeOptions`) through `ChartBaseProps`; the series charts add `emptyMessage`, the ones with a legend
+    `legendPosition` (`src/types.ts`).
 - **`apps/storybook`** — the canonical component reference; typechecks the packages **from source**,
   never from `dist`.
 
