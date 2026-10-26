@@ -9,13 +9,21 @@ import {
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
+  expectMarksAtTheirValues,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   HOSTILE,
   LegendSides,
   legendTexts,
+  NarrowBox,
   openTooltip,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   seriesStrokes,
   tickTexts,
@@ -182,6 +190,76 @@ export const RightAxisOnly: Story = {
   },
 };
 
+/**
+ * `referenceLines` and `referenceBands` read the left axis: here a weekly
+ * incident budget and the band the mean should stay in.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    ...SingleAxis.args,
+    referenceBands: [{ from: 8, to: 14, label: 'Expected', intent: 'success' }],
+    referenceLines: [{ value: 20, label: 'Budget 20', intent: 'danger', dashed: true }],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('yAxis', { lines: [20], bands: [[8, 14]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual(['Budget 20', 'Expected'])
+    );
+  },
+};
+
+/** With every series on the right, that axis is the one the marks read. */
+export const ReferenceLinesOnTheRightAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...RightAxisOnly.args,
+    referenceLines: [{ value: 260, label: 'Target' }],
+    referenceBands: [{ from: 240, to: 255, intent: 'success' }],
+  },
+  play: expectMarksAtTheirValues('yAxis', { lines: [260], bands: [[240, 255]] }),
+};
+
+/** The colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...SingleAxis.args,
+    referenceLines: [
+      { value: 5, intent: 'success' },
+      { value: 12, intent: 'warning' },
+      { value: 20, intent: 'danger' },
+      { value: 16 },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+    await expect(referenceBandEls(canvasElement)).toHaveLength(0);
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <MixedChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
@@ -230,9 +308,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: HOSTILE, type: 'column', data: [3, 5, 2] },
       { name: 'Normal', type: 'line', axis: 'right', data: [40, 10, 60] },
     ],
+    referenceLines: [{ value: 4, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE, HOSTILE] })
