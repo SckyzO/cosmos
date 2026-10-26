@@ -7,12 +7,20 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, PANEL, seriesColor } from './core/colors';
 import { hasNoData, safeId, seriesKey, toRows } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import { referenceMarks } from './core/reference';
+import type {
+  ChartAxisTitleProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type LineAreaChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
-  ChartAxisTitleProps & {
+  ChartAxisTitleProps &
+  ChartReferenceProps & {
     series: { name: string; data: number[] }[];
     categories: (string | number)[];
     /** Override the default Cosmos palette. */
@@ -30,6 +38,8 @@ export const LineAreaChart = ({
   formatValue,
   xTitle,
   yTitle,
+  referenceLines,
+  referenceBands,
   emptyMessage = 'No data',
   ariaLabel,
   children,
@@ -84,6 +94,7 @@ export const LineAreaChart = ({
           {...ANIMATION}
         />
       ))}
+      {referenceMarks({ referenceLines, referenceBands })}
       {children}
     </AreaChart>
   );

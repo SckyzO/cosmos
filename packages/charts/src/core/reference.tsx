@@ -19,6 +19,7 @@ const BAND_LAYER = 50;
 const labelOf = (value: string, position: 'insideTopRight' | 'insideTopLeft') => ({
   value,
   position,
+  className: 'recharts-reference-label',
   fill: MUTED,
   style: { fontSize: TEXT_SIZE },
 });
