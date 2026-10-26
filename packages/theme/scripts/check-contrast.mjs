@@ -329,6 +329,8 @@ for (const theme of THEMES) {
       }
     }
     check(theme.id, 'white on accent', color('white'), brand('500'), 4.5);
+    // The default AuthLayout aside: white text on a brand-600 panel.
+    check(theme.id, 'white on accent panel', color('white'), brand('600'), 4.5);
     // The focus indicator (a field's border, the ring of any other control) is
     // brand-500 against what surrounds it: WCAG 1.4.11 asks 3:1.
     for (const surface of focusSurfaces) {
