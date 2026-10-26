@@ -21,15 +21,20 @@ import { TreemapChart } from './TreemapChart';
 import {
   HOSTILE,
   expectLegendMarkersUnstroked,
+  resolveColor,
   expectNoFrame,
   expectNoInjectedImage,
   switchTheme,
   themeColor,
 } from './storybook-helpers';
+import { tickTexts } from './storybook-recharts';
 import type { ChartEmptyProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper
 // that forgets to pass a prop on to ApexChart drops it without a type error.
+// `LineAreaChart` and `Sparkline` draw with Recharts: they take `children`, not
+// `apexOptions`, and have their own empty state, so the checks of the ApexCharts
+// options leave them out.
 
 const CATEGORIES = ['A', 'B', 'C'];
 const TWO_SERIES = [
@@ -43,6 +48,8 @@ const BOX = [
 const RANGE = [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }];
 
 type Chart = {
+  /** Drawn with Recharts: no `apexOptions`, no ApexCharts DOM. */
+  recharts?: true;
   /** Drawn with data. */
   filled: (apexOptions?: ApexOptions) => ReactNode;
   /** Drawn with no data, for the wrappers that can have none. */
@@ -51,9 +58,8 @@ type Chart = {
 
 const CHARTS: Record<string, Chart> = {
   LineAreaChart: {
-    filled: (apexOptions) => (
-      <LineAreaChart series={TWO_SERIES} categories={CATEGORIES} apexOptions={apexOptions} />
-    ),
+    recharts: true,
+    filled: () => <LineAreaChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <LineAreaChart series={[]} categories={[]} {...props} />,
   },
   BarChart: {
@@ -166,7 +172,8 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <MixedChart series={[]} categories={[]} {...props} />,
   },
   Sparkline: {
-    filled: (apexOptions) => <Sparkline data={[1, 3, 2, 4]} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <Sparkline data={[1, 3, 2, 4]} />,
     empty: (props) => <Sparkline data={[]} {...props} />,
   },
   // Always have data: no empty state.
@@ -184,8 +191,9 @@ const CHARTS: Record<string, Chart> = {
   },
 };
 
-const NAMES = Object.keys(CHARTS);
-const EMPTY_NAMES = NAMES.filter((name) => CHARTS[name].empty);
+// The ones that take `apexOptions`.
+const NAMES = Object.keys(CHARTS).filter((name) => !CHARTS[name].recharts);
+const EMPTY_NAMES = Object.keys(CHARTS).filter((name) => CHARTS[name].empty);
 
 const Grid = ({ names, children }: { names: string[]; children: (name: string) => ReactNode }) => (
   <div className="grid gap-4 md:grid-cols-2">
@@ -207,7 +215,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const noData = (root: HTMLElement, name: string) =>
-  root.querySelector(`[data-chart="${name}"] .apexcharts-text-nodata`);
+  root.querySelector(
+    `[data-chart="${name}"] ${CHARTS[name].recharts ? '[data-chart-empty]' : '.apexcharts-text-nodata'}`
+  );
+
+// The Recharts wrappers draw a plot with an SVG; the ApexCharts ones always do.
+const plot = (name: string) => (CHARTS[name].recharts ? 'svg.recharts-surface' : '.apexcharts-svg');
 
 const expectEveryNoData = (root: HTMLElement, text: string) =>
   waitFor(() =>
@@ -240,9 +253,19 @@ export const EmptyStringDrawsNothing: Story = {
   render: () => emptyCharts({ emptyMessage: '' }),
   play: async ({ canvasElement }) => {
     await waitFor(() =>
-      expect(canvasElement.querySelectorAll('.apexcharts-svg')).toHaveLength(EMPTY_NAMES.length)
+      expect(
+        EMPTY_NAMES.filter((name) =>
+          CHARTS[name].recharts
+            ? noData(canvasElement, name) !== null
+            : canvasElement.querySelector(`[data-chart="${name}"] ${plot(name)}`) !== null
+        )
+      ).toEqual(EMPTY_NAMES)
     );
-    for (const name of EMPTY_NAMES) await expect(noData(canvasElement, name)).toBeNull();
+    for (const name of EMPTY_NAMES) {
+      const message = noData(canvasElement, name);
+      if (CHARTS[name].recharts) await expect(message).toBeEmptyDOMElement();
+      else await expect(message).toBeNull();
+    }
   },
 };
 
@@ -264,10 +287,17 @@ export const EmptyMessageFollowsTheme: Story = {
       const restore = switchTheme(theme);
       try {
         await waitFor(() => {
+          const message = (name: string) => noData(canvasElement, name);
           const fills = EMPTY_NAMES.map((name) =>
-            noData(canvasElement, name)?.getAttribute('fill')
+            CHARTS[name].recharts
+              ? resolveColor(getComputedStyle(message(name) as Element).color)
+              : message(name)?.getAttribute('fill')
           );
-          expect(fills).toEqual(EMPTY_NAMES.map(() => themeColor('--color-text-secondary')));
+          expect(fills).toEqual(
+            EMPTY_NAMES.map((name) =>
+              themeColor(CHARTS[name].recharts ? '--color-text-muted' : '--color-text-secondary')
+            )
+          );
         });
       } finally {
         restore();
@@ -301,7 +331,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     const canvas = within(canvasElement);
     const showing = (name: string) => noData(canvasElement, name) !== null;
     const drawn = (name: string) =>
-      canvasElement.querySelector(`[data-chart="${name}"] .apexcharts-svg`) !== null;
+      canvasElement.querySelector(`[data-chart="${name}"] ${plot(name)}`) !== null;
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     expect(EMPTY_NAMES.filter(showing)).toEqual([]);
     for (const name of EMPTY_NAMES) await userEvent.click(canvas.getByRole('button', { name }));
@@ -310,7 +340,7 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
     await waitFor(() => expect(EMPTY_NAMES.filter(showing)).toEqual([]));
     await waitFor(() => expect(EMPTY_NAMES.filter(drawn)).toEqual(EMPTY_NAMES));
     // The axes hidden for the message come back with the data.
-    for (const name of ['LineAreaChart', 'BarChart', 'MixedChart']) {
+    for (const name of ['BarChart', 'MixedChart']) {
       await waitFor(() =>
         expect(
           [...canvasElement.querySelectorAll(`[data-chart="${name}"] .apexcharts-yaxis-label`)]
@@ -320,12 +350,16 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
         ).not.toBe('')
       );
     }
+    await waitFor(() => {
+      const chart = canvasElement.querySelector<HTMLElement>('[data-chart="LineAreaChart"]');
+      expect(chart).not.toBeNull();
+      expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
+    });
   },
 };
 
 // The wrappers that draw a legend with two series, through `chartLegend`.
 const LEGEND_NAMES = [
-  'LineAreaChart',
   'BarChart',
   'DonutChart',
   'HeatmapChart',

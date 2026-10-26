@@ -1,21 +1,21 @@
-import type { ApexOptions } from 'apexcharts';
-import 'apexcharts/line';
-import { ApexChart } from './ApexChart';
-import { seriesTitle, useOptionalValueFormat } from './formatters';
-import { useChartTheme } from './theme';
-import type { ChartBaseProps, ChartEmptyProps } from './types';
+import { useId } from 'react';
+import { Area, AreaChart, Tooltip, YAxis } from 'recharts';
+import { ANIMATION } from './core/animation';
+import { ChartTooltip } from './core/ChartTooltip';
+import { PANEL, SERIES } from './core/colors';
+import { hasNoData, safeId } from './core/data';
+import { ChartEmpty, frameProps } from './core/frame';
+import type { ChartEmptyProps, ChartProps } from './types';
 
-export type SparklineProps = ChartBaseProps &
+export type SparklineProps = ChartProps &
   ChartEmptyProps & {
     data: number[];
+    /** A CSS color. Default: the accent. */
     color?: string;
     variant?: 'line' | 'area';
     /** Names the value in the tooltip. Default `value`. Drawn as plain text. */
     label?: string;
-    /**
-     * Format the tooltip value (default: as ApexCharts writes it).
-     * A new function redraws the chart: define it outside the component or wrap it in `useCallback`.
-     */
+    /** Format the tooltip value (default `String`). */
     formatValue?: (value: number) => string;
     /**
      * Bottom of the scale. Default: the lowest value of `data`, so each sparkline fills its
@@ -28,50 +28,57 @@ export type SparklineProps = ChartBaseProps &
 
 export const Sparkline = ({
   data,
-  color,
+  color = SERIES[0],
   variant = 'area',
   label = 'value',
   formatValue,
   min,
   max,
-  emptyMessage,
+  emptyMessage = 'No data',
   ariaLabel,
-  apexOptions,
+  children,
   height = 60,
-  width = '100%',
+  width,
 }: SparklineProps) => {
-  const { brand, tooltipTheme } = useChartTheme();
-  const format = useOptionalValueFormat(formatValue);
-  const options: ApexOptions = {
-    chart: { sparkline: { enabled: true }, fontFamily: 'inherit', type: variant },
-    colors: [color ?? brand],
-    stroke: { curve: 'smooth', width: 2 },
-    fill:
-      variant === 'area'
-        ? { type: 'gradient', gradient: { opacityFrom: 0.45, opacityTo: 0.05 } }
-        : undefined,
-    // The scale is ApexCharts' own, from the data, unless pinned.
-    yaxis: { min, max },
-    // The tooltip is HTML: escape the label and the formatted value.
-    tooltip: {
-      theme: tooltipTheme,
-      fixed: { enabled: false },
-      x: { show: false },
-      marker: { show: false },
-      y: { formatter: format.tooltip, title: { formatter: seriesTitle } },
-    },
-  };
+  const uid = safeId(useId());
+  const name = ariaLabel ?? `Trend of ${label}`;
+  if (hasNoData([{ data }])) {
+    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+  }
   return (
-    <ApexChart
-      type={variant}
-      options={options}
-      series={[{ name: label, data }]}
-      height={height}
-      width={width}
-      ariaLabel={ariaLabel}
-      apexOptions={apexOptions}
-      emptyMessage={emptyMessage}
-      keyboard={false}
-    />
+    <AreaChart
+      // A sparkline is an image: the tooltip follows the pointer, and Tab skips it.
+      {...frameProps({ height, width, ariaLabel: name, keyboard: false })}
+      data={data.map((value, i) => ({ i, value }))}
+      margin={{ top: 6, right: 4, bottom: 4, left: 4 }}
+    >
+      <defs>
+        <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.32} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      {/* The scale fits the data unless pinned. */}
+      <YAxis hide domain={[min ?? 'dataMin', max ?? 'dataMax']} />
+      <Tooltip
+        content={<ChartTooltip format={formatValue} hideTitle />}
+        cursor={false}
+        offset={12}
+        allowEscapeViewBox={{ x: true, y: true }}
+        animationDuration={100}
+      />
+      <Area
+        name={label}
+        dataKey="value"
+        type="monotone"
+        stroke={color}
+        strokeWidth={2}
+        fill={variant === 'area' ? `url(#${uid})` : 'none'}
+        dot={false}
+        activeDot={{ r: 4, fill: PANEL, stroke: color, strokeWidth: 2 }}
+        {...ANIMATION}
+      />
+      {children}
+    </AreaChart>
   );
 };

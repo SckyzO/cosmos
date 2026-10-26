@@ -1,5 +1,6 @@
 export * from './types';
 export * from './DataTable';
+export type { DataTableFilterTabsConfig, DataTableFilterTabOption } from './DataTableFilterTabs';
 export * from './Table';
 export * from './ColumnHeader';
 export * from './ColumnFilterDropdown';

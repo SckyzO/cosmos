@@ -146,6 +146,13 @@ fades, and `stickyFirstColumn` pins its first column (after the checkbox on
 `DataTable`). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
 `TableAmountCell` are the cells tables keep rebuilding.
 
+`DataTable`'s column filters can be controlled: `filters`, `defaultFilters` and
+`onFiltersChange(filters)` hold a record of column `key` to the set of selected
+values. `filterTabs` (`{ columnKey, options: [{ value, label, count }], allLabel,
+allCount }`) puts underlined status tabs at the top of the card, each setting
+that column's filter ("All" clears it) and staying in sync with the active
+filters bar; the counts come from you, the table never computes them.
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
@@ -185,6 +192,14 @@ A bot message with `streaming: true` shows a caret while its text grows.
 collapsed state: `defaultSidebarCollapsed`, or `sidebarCollapsed` and
 `onCollapsedChange` to control it. The Topbar shows the toggle, or the bottom of
 the Sidebar does with `collapseControl="sidebar"`.
+
+Below `lg` the sidebar leaves the layout and the Topbar's hamburger opens it as a 288px
+drawer over a scrim (`defaultSidebarOpen`, or `sidebarOpen` and `onSidebarOpenChange`
+to control it). It is always expanded there, with a close button in `Sidebar.Brand`, and it
+closes on the scrim, Escape, a swipe to the left, a click on a `Sidebar.Item` and when the
+viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
+view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
+`swipeToClose`.
 
 `SidebarToggle` is that toggle, to place anywhere else in the Shell (a header of
 your own, the Topbar's `leftActions`, the Sidebar's `footer`) with no props: it

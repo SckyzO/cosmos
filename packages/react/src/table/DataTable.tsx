@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
+import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
+import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
@@ -40,6 +42,9 @@ export type DataTableProps<T> = {
   rowHref?: (row: T) => string | undefined;
   /** Optional right-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
   renderRowAction?: (row: T) => React.ReactNode;
+  /**
+   * Rows per page, when controlled. Without `pageSizeOptions` it is the fixed size. Default 25.
+   */
   pageSize?: number;
   /**
    * Keeps the header and shows `loadingRows` placeholder rows in place of the body, so the
@@ -94,6 +99,34 @@ export type DataTableProps<T> = {
 
   className?: string;
 
+  // ── Column filters ─────────────────────────────────────────────────────────
+  /**
+   * Controlled column filters: column `key` → the selected values. Pass this or `defaultFilters`;
+   * a filter picked in a column header, a status tab or the active filters bar goes through
+   * `onFiltersChange`, and a controlled table shows it once the host passes it back.
+   */
+  filters?: Record<string, Set<string>>;
+  defaultFilters?: Record<string, Set<string>>;
+  onFiltersChange?: (filters: Record<string, Set<string>>) => void;
+  /**
+   * Underlined tabs at the top of the card ("All", then one per option) that set the filter of
+   * one column; "All" clears it. The tabs and the active filters bar stay in sync. The counts
+   * come from the host (they may come from a server), the table never computes them.
+   */
+  filterTabs?: DataTableFilterTabsConfig;
+
+  // ── Rows per page ──────────────────────────────────────────────────────────
+  /** Rows per page when uncontrolled. Default 25. */
+  defaultPageSize?: number;
+  /** Called with the size to move to, in both modes; the table goes back to the first page. */
+  onPageSizeChange?: (size: number) => void;
+  /**
+   * The sizes a "Rows per page" select offers in the footer, before "Show all" and the pager. The
+   * select is shown only when this is set. A `pageSize` passed without `onPageSizeChange` is a
+   * controlled value that never moves: the select then reports the pick and keeps the size.
+   */
+  pageSizeOptions?: number[];
+
   // ── Column visibility ──────────────────────────────────────────────────────
   /**
    * Shows a "Columns" button at the end of the toolbar, with a checkbox per column. The toolbar
@@ -136,7 +169,7 @@ export const DataTable = <T,>({
   onRowClick,
   rowHref,
   renderRowAction,
-  pageSize = 25,
+  pageSize: pageSizeProp,
   loading = false,
   loadingRows = 5,
   error = null,
@@ -157,6 +190,13 @@ export const DataTable = <T,>({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   className,
+  filters: filtersProp,
+  defaultFilters,
+  onFiltersChange,
+  filterTabs,
+  defaultPageSize = 25,
+  onPageSizeChange,
+  pageSizeOptions,
   columnsMenu = false,
   columnVisibility: columnVisibilityProp,
   defaultColumnVisibility,
@@ -189,7 +229,12 @@ export const DataTable = <T,>({
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
-  const [filters, setFilters] = useState<Record<string, Set<string>>>({});
+  const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
+    value: filtersProp,
+    defaultValue: () => defaultFilters ?? {},
+    onChange: onFiltersChange,
+    name: 'DataTable.filters',
+  });
   const [page, setPage] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
@@ -215,6 +260,17 @@ export const DataTable = <T,>({
     },
     [setSearchState]
   );
+
+  const [pageSize, setPageSizeState] = useControllableState({
+    value: pageSizeProp,
+    defaultValue: defaultPageSize,
+    onChange: onPageSizeChange,
+    name: 'DataTable.pageSize',
+  });
+  const setPageSize = (size: number) => {
+    setPageSizeState(size);
+    setPage(0);
+  };
 
   const handleSortToggle = (key: string) => {
     if (sortKey !== key) {
@@ -247,6 +303,15 @@ export const DataTable = <T,>({
       return out;
     });
     setPage(0);
+  };
+
+  const selectFilterTab = (value: string | undefined) => {
+    if (!filterTabs) return;
+    if (value === undefined) clearFilter(filterTabs.columnKey);
+    else {
+      setFilters((prev) => ({ ...prev, [filterTabs.columnKey]: new Set([value]) }));
+      setPage(0);
+    }
   };
 
   const clearAllFilters = () => {
@@ -334,6 +399,14 @@ export const DataTable = <T,>({
         className
       )}
     >
+      {filterTabs && (
+        <DataTableFilterTabsStrip
+          tabs={filterTabs}
+          selected={filters[filterTabs.columnKey]}
+          onSelect={selectFilterTab}
+        />
+      )}
+
       {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
       {selectable && selection.size > 0 ? (
         <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
@@ -650,6 +723,11 @@ export const DataTable = <T,>({
           onPageChange={(next) => setPage(next - 1)}
           showAll={showAll}
           onShowAllChange={setShowAll}
+          controls={
+            pageSizeOptions && pageSizeOptions.length > 0 ? (
+              <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />
+            ) : undefined
+          }
           className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800"
         />
       )}

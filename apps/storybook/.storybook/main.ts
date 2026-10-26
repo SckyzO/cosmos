@@ -82,7 +82,8 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return mergeConfig(config, {
       plugins: [tailwindcss()],
-      optimizeDeps: { include: chartsDeepImports },
+      // `recharts` too: its first import in a story run reloads the same way.
+      optimizeDeps: { include: [...chartsDeepImports, '@sckyzo/cosmos-charts > recharts'] },
       // When deployed under a sub-path (GitHub Pages serves the site at
       // https://sckyzo.github.io/cosmos/), Vite needs to know the prefix so
       // every asset URL — JS chunks, fonts, the docs iframe, lazy imports —

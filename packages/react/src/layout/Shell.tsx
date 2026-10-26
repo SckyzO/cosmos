@@ -1,6 +1,9 @@
-import { useId, useMemo, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { Drawer } from '../ui/Drawer';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { ShellContext } from './shellContext';
 
 export type ShellProps = {
@@ -43,6 +46,19 @@ export type ShellProps = {
    * `footer`, a custom header): it needs no props in a Shell.
    */
   collapseControl?: 'topbar' | 'sidebar';
+  /** Initial open state of the sidebar drawer, below `lg`. Default: `false`. */
+  defaultSidebarOpen?: boolean;
+  /**
+   * Whether the sidebar drawer is open, when you control it. Below `lg` the sidebar is off
+   * screen and opens as a drawer; the collapsed state does not apply there, and this state does
+   * not apply from `lg` up. When set, `defaultSidebarOpen` is ignored.
+   */
+  sidebarOpen?: boolean;
+  /**
+   * Fired when the sidebar drawer opens or closes (a toggle, the scrim, the close button, Escape,
+   * a click on a `Sidebar.Item`, or the viewport growing past `lg`), with the new open state.
+   */
+  onSidebarOpenChange?: (open: boolean) => void;
   /** Optional className override on the root element. */
   className?: string;
 };
@@ -60,6 +76,11 @@ export type ShellProps = {
  *       …
  *     </Shell>
  *
+ * The Shell owns two sidebar states: collapsed from `lg` up (the rail) and open below `lg`,
+ * where the sidebar leaves the layout and the toggle opens it as a 288px drawer over a scrim
+ * (`sidebarOpen`). It closes on the scrim, the close button, Escape, a swipe toward the left
+ * edge, a click on a `Sidebar.Item` and when the viewport grows past `lg`.
+ *
  * The Shell's state is the only one inside it: the Topbar's
  * `sidebarCollapsed` and the Sidebar's `collapsed` are not read there, so a
  * value left on them can't freeze a toggle. Their `onCollapsedChange` still
@@ -75,6 +96,9 @@ export const Shell = ({
   sidebarCollapsed: controlledCollapsed,
   onCollapsedChange,
   collapseControl = 'topbar',
+  defaultSidebarOpen = false,
+  sidebarOpen: controlledOpen,
+  onSidebarOpenChange,
   className,
 }: ShellProps) => {
   // Every SidebarToggle passes the state to move to.
@@ -84,12 +108,28 @@ export const Shell = ({
     onChange: onCollapsedChange,
     name: 'Shell.sidebarCollapsed',
   });
+  const [open, setOpen] = useControllableState({
+    value: controlledOpen,
+    defaultValue: defaultSidebarOpen,
+    onChange: onSidebarOpenChange,
+    name: 'Shell.sidebarOpen',
+  });
+  // The desktop layout is the server's, so the markup most visitors get does not change.
+  const isMobile = !useMediaQuery('(min-width: 64rem)', true);
+  const drawerOpen = isMobile && open;
+  useBodyScrollLock(drawerOpen);
+  // Growing past `lg` closes the drawer: its state would otherwise be open again on the way back.
+  const wasMobile = useRef(isMobile);
+  useEffect(() => {
+    if (wasMobile.current && !isMobile && open) setOpen(false);
+    wasMobile.current = isMobile;
+  }, [isMobile, open, setOpen]);
   const navId = useId();
   // Read by the Topbar, the Sidebar and every SidebarToggle in the Shell. Without a
   // sidebar there is nothing to collapse: no context, so a toggle without props shows nothing.
   const shell = useMemo(
-    () => ({ collapsed, setCollapsed, navId, collapseControl }),
-    [collapsed, setCollapsed, navId, collapseControl]
+    () => ({ collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl }),
+    [collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl]
   );
 
   return (
@@ -100,7 +140,23 @@ export const Shell = ({
           className
         )}
       >
-        {sidebar && <aside className="shrink-0">{sidebar}</aside>}
+        {sidebar &&
+          (isMobile ? (
+            // Off screen until opened. The Drawer brings the portal, scrim, focus trap, Escape
+            // and the slide; the Sidebar fills its 288px panel, always expanded.
+            <Drawer
+              open={drawerOpen}
+              onClose={() => setOpen(false)}
+              side="left"
+              size="sm"
+              swipeToClose
+              ariaLabel="Navigation menu"
+            >
+              {sidebar}
+            </Drawer>
+          ) : (
+            <aside className="shrink-0">{sidebar}</aside>
+          ))}
         <div className="flex min-w-0 flex-1 flex-col">
           {topbar && <div className="shrink-0">{topbar}</div>}
           {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}

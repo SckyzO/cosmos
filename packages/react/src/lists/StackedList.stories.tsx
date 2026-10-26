@@ -3,6 +3,7 @@ import { Activity, MessageCircle, MoreVertical } from 'lucide-react';
 import { Fragment } from 'react';
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
+import { AvatarGroup } from '../ui/AvatarGroup';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { StackedList } from './StackedList';
@@ -282,18 +283,16 @@ const STATUS_INTENT = {
 };
 
 // Hidden on phones, where it would squeeze the issue title into a narrow column.
-const AvatarGroup = ({ names }: { names: string[] }) => (
-  <div className="hidden -space-x-0.5 sm:flex">
+const Commenters = ({ names }: { names: string[] }) => (
+  <div className="hidden sm:block">
     <dt className="sr-only">Commenters</dt>
-    {names.map((name) => (
-      <dd key={name}>
-        <img
-          alt={name}
-          src={placeholderAvatar(name, 64)}
-          className="size-6 rounded-full bg-gray-50 ring-2 ring-white dark:ring-gray-900"
-        />
-      </dd>
-    ))}
+    <dd>
+      <AvatarGroup
+        aria-label="Commenters"
+        size="xs"
+        avatars={names.map((name) => ({ name, src: placeholderAvatar(name, 64) }))}
+      />
+    </dd>
   </div>
 );
 
@@ -333,7 +332,7 @@ export const IssuesWithAvatarGroup: Story = {
           ]}
           trailing={
             <dl className="flex items-center gap-x-6 sm:gap-x-8">
-              <AvatarGroup names={i.commenters} />
+              <Commenters names={i.commenters} />
               <CommentCount count={i.comments} />
             </dl>
           }

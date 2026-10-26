@@ -12,11 +12,16 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Shell } from './Shell';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
-import { transitionsEnd } from '../storybook-helpers';
+import {
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+  transitionsEnd,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Shell',
@@ -419,5 +424,342 @@ export const SidebarButtonReportsEachNextState: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
     await expect(args.onCollapsedChange).toHaveBeenLastCalledWith(false);
     await expect(args.onCollapsedChange).toHaveBeenCalledTimes(2);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Below `lg`: the sidebar is a drawer
+//
+// The sidebar leaves the layout. The Topbar shows the hamburger, then the product logo
+// (`brand`), and the hamburger opens the sidebar as a 288px panel over a scrim.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AppLogo = () => (
+  <span className="flex items-center gap-2">
+    <span className="bg-brand-500/10 text-brand-500 flex size-9 shrink-0 items-center justify-center rounded-lg">
+      <Box className="size-5" aria-hidden />
+    </span>
+    <span className="font-bold tracking-tight">Cosmos</span>
+  </span>
+);
+
+const MobileNav = () => (
+  <div className="py-3">
+    <Sidebar.Item icon={LayoutDashboard} label="Dashboard" href="#dashboard" active />
+    <Sidebar.SubMenu icon={Layers} label="Library">
+      <Sidebar.Item icon={Box} label="Tokens" href="#tokens" depth={1} />
+    </Sidebar.SubMenu>
+    <Sidebar.Section label="Account">
+      <Sidebar.Item icon={Settings} label="Settings" href="#settings" />
+    </Sidebar.Section>
+  </div>
+);
+
+const MobileShell = (props: Partial<React.ComponentProps<typeof Shell>>) => (
+  <Shell
+    topbar={
+      <Topbar
+        brand={<AppLogo />}
+        pageTitle="Analytics Dashboard"
+        rightActions={<IconButton icon={User} label="User profile" />}
+      />
+    }
+    sidebar={
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <MobileNav />
+      </Sidebar>
+    }
+    {...props}
+  >
+    <div className="p-4">
+      <h1 className="text-xl font-bold">Dashboard</h1>
+      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+        Below the lg breakpoint the sidebar is off screen.
+      </p>
+    </div>
+  </Shell>
+);
+
+const mobileDocs = { ...portalDocsParams.full() };
+
+const body = () => within(document.body);
+const openDrawer = async () => {
+  await userEvent.click(body().getByRole('button', { name: 'Open navigation' }));
+  const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
+  await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+  return dialog;
+};
+const expectClosed = async (dialog: HTMLElement) => {
+  await waitFor(() => expect(dialog).not.toBeVisible());
+  await expect(body().queryByRole('dialog')).toBeNull();
+};
+const scrim = () =>
+  document.body.querySelector<HTMLElement>('div[aria-hidden][class*="bg-gray-500"]')!;
+
+/** At 375px the sidebar is off screen: the Topbar shows the hamburger and the logo. */
+export const Mobile: Story = {
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => <MobileShell />,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(body().queryByRole('navigation', { name: 'Main navigation' })).toBeNull();
+    const bar = canvas.getByRole('banner');
+    await expect(within(bar).getByText('Cosmos')).toBeVisible();
+    await expect(within(bar).getByRole('button', { name: 'Open navigation' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+  },
+};
+
+/** The hamburger opens the sidebar as a panel from the left, over a scrim, with a close button. */
+export const MobileOpen: Story = {
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => <MobileShell defaultSidebarOpen />,
+  play: async () => {
+    const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
+    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    expectNoHorizontalOverflow();
+    await expect(dialog.getBoundingClientRect().width).toBe(288);
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(within(dialog).getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(within(dialog).getByRole('button', { name: 'Close navigation' })).toBeVisible();
+  },
+};
+
+/** The host owns the open state: `sidebarOpen` and `onSidebarOpenChange`. */
+export const MobileControlled: Story = {
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <MobileShell
+        sidebarOpen={open}
+        onSidebarOpenChange={setOpen}
+        topbar={
+          <Topbar
+            brand={<AppLogo />}
+            rightActions={<span className="text-xs">open = {String(open)}</span>}
+          />
+        }
+      />
+    );
+  },
+  play: async () => {
+    await openDrawer();
+    await expect(body().getByText('open = true')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body().getByText('open = false')).toBeVisible());
+  },
+};
+
+/** Opening: the hamburger says what it does and what it controls, and the drawer is a modal dialog. */
+export const HamburgerOpensTheDrawer: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell />,
+  play: async () => {
+    const hamburger = body().getByRole('button', { name: 'Open navigation' });
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+    const dialog = await openDrawer();
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+    await expect(hamburger).toHaveAccessibleName('Close navigation');
+    const nav = within(dialog).getByRole('navigation', { name: 'Main navigation' });
+    await expect(hamburger).toHaveAttribute('aria-controls', nav.id);
+    // The sidebar is expanded and fills the panel; focus moved into it.
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
+    await expect(nav.getBoundingClientRect().width).toBeGreaterThanOrEqual(287);
+    await expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  },
+};
+
+/** Escape closes it and focus returns to the hamburger. */
+export const EscapeClosesAndFocusReturns: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  args: { onSidebarOpenChange: fn() },
+  render: (args) => <MobileShell onSidebarOpenChange={args.onSidebarOpenChange} />,
+  play: async ({ args }) => {
+    const hamburger = body().getByRole('button', { name: 'Open navigation' });
+    const dialog = await openDrawer();
+    await userEvent.keyboard('{Escape}');
+    await expectClosed(dialog);
+    await expect(args.onSidebarOpenChange).toHaveBeenLastCalledWith(false);
+    await expect(hamburger).toHaveFocus();
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+/** The scrim, the close button and a click on a link each close it. */
+export const ScrimCloseButtonAndLinkClose: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell />,
+  play: async () => {
+    const hamburger = body().getByRole('button', { name: 'Open navigation' });
+
+    let dialog = await openDrawer();
+    await userEvent.click(scrim());
+    await expectClosed(dialog);
+    await expect(hamburger).toHaveFocus();
+
+    dialog = await openDrawer();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close navigation' }));
+    await expectClosed(dialog);
+    await expect(hamburger).toHaveFocus();
+
+    dialog = await openDrawer();
+    // A sub-menu only expands: the drawer stays.
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Library' }));
+    await expect(dialog).toBeVisible();
+    // The link would navigate the test page: keep its default action, not the click.
+    const keepPage = (e: Event) => e.preventDefault();
+    window.addEventListener('click', keepPage);
+    try {
+      await userEvent.click(within(dialog).getByRole('link', { name: 'Tokens' }));
+    } finally {
+      window.removeEventListener('click', keepPage);
+    }
+    await expectClosed(dialog);
+    await expect(hamburger).toHaveFocus();
+  },
+};
+
+/** The page does not scroll behind the drawer, and scrolls again once it is closed. */
+export const BodyScrollIsLockedWhileOpen: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell />,
+  play: async () => {
+    await expect(document.body.style.overflow).toBe('');
+    const dialog = await openDrawer();
+    await expect(document.body.style.overflow).toBe('hidden');
+    await userEvent.keyboard('{Escape}');
+    await expectClosed(dialog);
+    await expect(document.body.style.overflow).toBe('');
+  },
+};
+
+/** A swipe toward the left edge closes it; a short one springs back. */
+export const SwipeLeftClosesTheDrawer: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell />,
+  play: async () => {
+    const touch = (clientX: number) => ({
+      pointerType: 'touch',
+      pointerId: 1,
+      isPrimary: true,
+      clientX,
+      clientY: 300,
+    });
+    const dialog = await openDrawer();
+    await fireEvent.pointerDown(dialog, touch(200));
+    await fireEvent.pointerMove(dialog, touch(170));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await fireEvent.pointerUp(dialog, touch(170));
+    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    await expect(dialog).toBeVisible();
+
+    await fireEvent.pointerDown(dialog, touch(200));
+    await fireEvent.pointerMove(dialog, touch(60));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await fireEvent.pointerUp(dialog, touch(60));
+    await expectClosed(dialog);
+    await expect(body().getByRole('button', { name: 'Open navigation' })).toHaveFocus();
+  },
+};
+
+// A controllable stand-in for the `(min-width: 64rem)` query, installed before the Shell mounts,
+// to grow the viewport past `lg` in a story.
+let desktop = false;
+const listeners = new Set<() => void>();
+const realMatchMedia = window.matchMedia.bind(window);
+const growPastLg = () => {
+  desktop = true;
+  listeners.forEach((listener) => listener());
+};
+
+/** Growing past `lg` closes the drawer, unlocks the page and puts the sidebar back in the layout. */
+export const GrowingPastLgClosesTheDrawer: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  beforeEach: () => {
+    desktop = false;
+    listeners.clear();
+    window.matchMedia = (query: string) =>
+      query === '(min-width: 64rem)'
+        ? ({
+            media: query,
+            get matches() {
+              return desktop;
+            },
+            addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+            removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+          } as unknown as MediaQueryList)
+        : realMatchMedia(query);
+    return () => {
+      window.matchMedia = realMatchMedia;
+    };
+  },
+  args: { onSidebarOpenChange: fn() },
+  render: (args) => <MobileShell onSidebarOpenChange={args.onSidebarOpenChange} />,
+  play: async ({ args, canvas }) => {
+    await openDrawer();
+    await expect(document.body.style.overflow).toBe('hidden');
+    growPastLg();
+    await waitFor(() => expect(args.onSidebarOpenChange).toHaveBeenLastCalledWith(false));
+    await expect(body().queryByRole('dialog')).toBeNull();
+    await expect(document.body.style.overflow).toBe('');
+    // The sidebar is in the layout, with the collapse hamburger; no logo in the Topbar.
+    await expect(canvas.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+    await expect(within(canvas.getByRole('banner')).queryByText('Cosmos')).toBeNull();
+  },
+};
+
+/** The drawer is always expanded, whatever the desktop collapsed state, and has no bottom toggle. */
+export const DrawerIgnoresTheCollapsedState: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell defaultSidebarCollapsed collapseControl="sidebar" />,
+  play: async () => {
+    // `collapseControl="sidebar"` puts no toggle in the drawer: the Topbar hamburger opens it.
+    const dialog = await openDrawer();
+    const nav = within(dialog).getByRole('navigation', { name: 'Main navigation' });
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
+    await expect(within(nav).queryByRole('button', { name: /collapse|expand/i })).toBeNull();
+  },
+};
+
+/** Controlled: the Shell reports the state to move to and shows it once the host passes it back. */
+export const ControlledOpenFollowsItsProp: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  args: { sidebarOpen: false, onSidebarOpenChange: fn() },
+  render: (args) => <MobileShell {...args} />,
+  play: async ({ args }) => {
+    await userEvent.click(body().getByRole('button', { name: 'Open navigation' }));
+    await expect(args.onSidebarOpenChange).toHaveBeenLastCalledWith(true);
+    // The host did not pass it back: still closed.
+    await expect(body().queryByRole('dialog')).toBeNull();
+  },
+};
+
+/** From `lg` up the open state does nothing: the sidebar stays in the layout, no drawer. */
+export const DesktopIgnoresTheOpenState: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MobileShell defaultSidebarOpen />,
+  play: async ({ canvas }) => {
+    await expect(body().queryByRole('dialog')).toBeNull();
+    await expect(canvas.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+    await expect(document.body.style.overflow).toBe('');
+    // The Topbar logo is for the screens where the sidebar's own brand is out of sight.
+    await expect(within(canvas.getByRole('banner')).queryByText('Cosmos')).toBeNull();
   },
 };
