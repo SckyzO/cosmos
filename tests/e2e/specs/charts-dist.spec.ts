@@ -62,6 +62,20 @@ test('Recharts stays external: imported by name, never bundled', () => {
   }
 });
 
+test('the map libraries are imported by WorldMap alone', () => {
+  // d3-geo and topojson-client are dependencies only WorldMap needs: any other
+  // file importing them, or a chunk shared with the other wrappers, would load
+  // them for every consumer of the package.
+  for (const format of ['js', 'cjs']) {
+    for (const name of readdirSync(dist).filter((file) => file.endsWith(`.${format}`))) {
+      const code = read(`${dist}${name}`);
+      const imported = [...importsOf(code, 'd3-geo'), ...importsOf(code, 'topojson-client')];
+      if (name === `WorldMap.${format}`) expect(imported, name).toHaveLength(2);
+      else expect(imported, name).toEqual([]);
+    }
+  }
+});
+
 test('every entry and chunk starts with the "use client" directive', () => {
   // React Server Components bundlers read it to treat the charts as client
   // modules. tsup's Rollup pass drops it from the build, so the tsup config
