@@ -123,13 +123,11 @@ const drawn = (root: HTMLElement, lineCount: number) =>
  */
 export const Basic: Story = {
   args: { series: PRODUCTS, ariaLabel: 'Revenue rank of five products, January to August' },
-  render: (args) => <Box {...args} width={880} />,
 };
 
 /** `points="dot"` draws a small filled dot with a ring in the card's color instead of the disc. */
 export const DotPoints: Story = {
   args: { series: PRODUCTS, points: 'dot' },
-  render: (args) => <Box {...args} width={880} />,
 };
 
 /**
@@ -138,13 +136,11 @@ export const DotPoints: Story = {
  */
 export const EntersAndLeaves: Story = {
   args: { series: WITH_ENTRIES },
-  render: (args) => <Box {...args} width={880} />,
 };
 
 /** Ties are allowed: products on the same rank are drawn apart around it, and both say the rank. */
 export const Ties: Story = {
   args: { series: WITH_TIES },
-  render: (args) => <Box {...args} width={880} />,
 };
 
 /** `colors` overrides the palette, and `formatValue` writes the rank in the tooltip. */
@@ -154,7 +150,6 @@ export const CustomColorsAndRankFormat: Story = {
     colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
     formatValue: (rank) => `rank ${rank}`,
   },
-  render: (args) => <Box {...args} width={880} />,
 };
 
 /**
@@ -173,7 +168,6 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
-  render: (args) => <Box {...args} width={880} />,
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
