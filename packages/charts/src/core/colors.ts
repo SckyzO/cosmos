@@ -63,3 +63,29 @@ export const TRACK = `color-mix(in srgb, ${BORDER} 70%, transparent)`;
 export const SEQUENTIAL = [42, 56, 70, 84, 100].map(
   (share) => `color-mix(in oklab, ${SERIES[0]} ${share}%, ${PANEL})`
 );
+
+// A calendar step: a share of the accent over the card. The shares and the top
+// step are variables so that the dark themes can set their own on the chart's
+// root (`CalendarChart`); the fallbacks are the light themes' values.
+const calendarStep = (index: number, share: number) =>
+  `color-mix(in oklab, ${SERIES[0]} calc(var(--calendar-share-${index}, ${share}) * 1%), ${PANEL})`;
+
+/**
+ * Five steps for a calendar of days: the neutral track for a day with no
+ * value, then four of the accent. A day without activity is a cell of its own,
+ * not a hole, and the four steps stay apart on any theme and accent. In the
+ * light themes they are 48, 65, 82 and 100% of the accent over the card; the
+ * dark themes set lower shares and a light accent for the top step through
+ * `--calendar-share-1` to `-3` and `--calendar-top`.
+ */
+export const CALENDAR_STEPS = [
+  TRACK,
+  calendarStep(1, 48),
+  calendarStep(2, 65),
+  calendarStep(3, 82),
+  `var(--calendar-top, ${SERIES[0]})`,
+];
+
+/** Sets the dark themes' calendar scale on the chart's root: Tailwind's `dark:` covers both of them. */
+export const CALENDAR_DARK_CLASS =
+  'dark:[--calendar-share-1:50] dark:[--calendar-share-2:70] dark:[--calendar-share-3:100] dark:[--calendar-top:var(--color-brand-400)]';

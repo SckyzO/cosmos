@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { TEXT_SIZE } from './axes';
 import { TooltipCard } from './ChartTooltip';
-import { MUTED, TEXT } from './colors';
+import { MUTED, PANEL, TEXT } from './colors';
 import { textOn } from './readable';
 
 /** One cell of a `HeatGrid`. A slot with no cell stays empty. */
@@ -20,7 +20,7 @@ export type HeatCell = {
   color: string;
   /** Heads the tooltip, such as the column's category. */
   title: string;
-  /** Names the cell in the tooltip, such as the row. */
+  /** Names the cell in the tooltip, such as the row. May be empty when the value says it all. */
   label: string;
   /** The value, formatted: the tooltip's value, and the end of the cell's accessible name. */
   value: string;
@@ -45,9 +45,30 @@ type HeatGridProps = {
   xTitle?: string;
   /** Title beside the rows. Drawn as plain text. */
   yTitle?: string;
+  /** Space between two cells in px. Default 3. */
+  gap?: number;
+  /** Corner radius of a cell in px. Default 5. */
+  cellRadius?: number;
+  /**
+   * Width of a column in px. Without it the columns share the width of the
+   * parent; with it they keep this width, and the grid scrolls sideways inside
+   * its own box when it is wider than the parent. The row labels stay in view.
+   */
+  columnWidth?: number;
+  /** Draw the column labels above the rows instead of under them. */
+  labelsAbove?: boolean;
+  /**
+   * Draw every column label, as given. By default the labels are centered on
+   * their column and every n-th one is drawn so that none touches the next.
+   * Off, each starts at the left of its column and may run over the columns
+   * after it, which an empty label leaves free: for labels such as the months
+   * of a calendar, where the caller decides which columns carry one.
+   */
+  thinLabels?: boolean;
 };
 
 const GAP = 3;
+const RADIUS = 5;
 // Clear space kept between two column labels.
 const LABEL_GAP = 6;
 // Room the tooltip card leaves the pointer or the cell.
@@ -60,7 +81,7 @@ const key = (row: number, column: number) => `${row}:${column}`;
  * 1 when they all fit. Measured on the page, since the text size, the font and
  * the width all change it.
  */
-const useLabelStride = (probe: string) => {
+const useLabelStride = (probe: string, gap: number) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLSpanElement>(null);
   const columnRef = useRef<HTMLDivElement>(null);
@@ -69,13 +90,13 @@ const useLabelStride = (probe: string) => {
     const read = () => {
       const label = probeRef.current?.offsetWidth ?? 0;
       const column = columnRef.current?.offsetWidth ?? 0;
-      setStride(column > 0 ? Math.max(1, Math.ceil((label + LABEL_GAP) / (column + GAP))) : 1);
+      setStride(column > 0 ? Math.max(1, Math.ceil((label + LABEL_GAP) / (column + gap))) : 1);
     };
     read();
     const observer = new ResizeObserver(read);
     for (const el of [gridRef.current, probeRef.current]) if (el) observer.observe(el);
     return () => observer.disconnect();
-  }, [probe]);
+  }, [probe, gap]);
   return { gridRef, probeRef, columnRef, stride };
 };
 
@@ -109,10 +130,16 @@ export const HeatGrid = ({
   ariaLabel,
   xTitle,
   yTitle,
+  gap = GAP,
+  cellRadius = RADIUS,
+  columnWidth,
+  labelsAbove = false,
+  thinLabels = true,
 }: HeatGridProps) => {
   const frame = useRef<HTMLDivElement>(null);
   const longest = columns.reduce((a, b) => (b.length > a.length ? b : a), '');
-  const { gridRef, probeRef, columnRef, stride } = useLabelStride(longest);
+  const { gridRef, probeRef, columnRef, stride: measured } = useLabelStride(longest, gap);
+  const stride = thinLabels ? measured : 1;
   const byPosition = new Map(cells.map((cell) => [key(cell.row, cell.column), cell]));
   const cellsByRow = new Map<number, HeatCell[]>();
   for (const cell of cells) cellsByRow.set(cell.row, [...(cellsByRow.get(cell.row) ?? []), cell]);
@@ -194,7 +221,9 @@ export const HeatGrid = ({
   };
 
   const rowOffset = yTitle ? 2 : 1;
-  const labelsRow = rows.length + 1;
+  // The rows start under the labels when these sit above them.
+  const top = labelsAbove ? 1 : 0;
+  const labelsRow = labelsAbove ? 1 : rows.length + 1;
   const tipStyle: CSSProperties | undefined = tip && {
     position: 'absolute',
     left: tip.x,
@@ -204,138 +233,152 @@ export const HeatGrid = ({
     pointerEvents: 'none',
   };
 
+  const grid = (
+    <div
+      ref={gridRef}
+      role="grid"
+      aria-label={ariaLabel}
+      onKeyDown={move}
+      onBlur={focusOut}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `${yTitle ? 'auto ' : ''}${columnWidth ? 'auto' : 'fit-content(40%)'} repeat(${columns.length}, ${columnWidth ? `${columnWidth}px` : 'minmax(0, 1fr)'})`,
+        gridTemplateRows: `${labelsAbove ? 'auto ' : ''}repeat(${rows.length}, ${cellHeight ? `${cellHeight}px` : 'minmax(0, 1fr)'})${labelsAbove ? '' : ' auto'}${xTitle ? ' auto' : ''}`,
+        gap,
+        width: columnWidth ? 'max-content' : '100%',
+        height: cellHeight ? undefined : '100%',
+        fontSize: TEXT_SIZE,
+        color: MUTED,
+      }}
+    >
+      {yTitle && (
+        <div
+          aria-hidden
+          style={{
+            gridRow: `${1 + top} / ${rows.length + 1 + top}`,
+            gridColumn: 1,
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            textAlign: 'center',
+            alignSelf: 'center',
+          }}
+        >
+          {yTitle}
+        </div>
+      )}
+      {rows.map((name, r) => (
+        <div key={r} role="row" style={{ display: 'contents' }}>
+          <div
+            aria-hidden
+            data-heat-row=""
+            style={{
+              gridRow: r + 1 + top,
+              gridColumn: rowOffset,
+              alignSelf: 'center',
+              paddingRight: '0.5rem',
+              // Stays in view when the grid scrolls sideways under it.
+              ...(columnWidth ? { position: 'sticky', left: 0, zIndex: 2, background: PANEL } : {}),
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {name}
+          </div>
+          {(cellsByRow.get(r) ?? []).map((cell) => {
+            const position = key(cell.row, cell.column);
+            const active = tip?.cell === cell;
+            return (
+              <div
+                key={position}
+                role="gridcell"
+                data-heat-cell=""
+                data-position={position}
+                data-row={cell.row}
+                data-column={cell.column}
+                tabIndex={position === tabbable ? 0 : -1}
+                aria-label={`${cell.label ? `${cell.label}, ` : ''}${cell.title}: ${cell.value}`}
+                onFocus={(event) => focusIn(cell, event)}
+                onMouseEnter={(event) => setHover(tipFor(cell, event.currentTarget))}
+                onMouseLeave={() => setHover(undefined)}
+                style={{
+                  gridRow: r + 1 + top,
+                  gridColumn: cell.column + rowOffset + 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  borderRadius: cellRadius,
+                  background: cell.color,
+                  color: textOn(cell.color),
+                  fontSize: 'var(--text-2xs, 0.6875rem)',
+                  fontWeight: 500,
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                  // The same ring for the pointer and the keyboard, in the text color
+                  // since an accent ring would vanish on the cells that are the accent.
+                  outline: active ? `2px solid ${TEXT}` : 'none',
+                  zIndex: active ? 1 : undefined,
+                }}
+              >
+                {cell.text}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {columns.map((name, c) => (
+        <div
+          key={c}
+          ref={c === 0 ? columnRef : undefined}
+          aria-hidden
+          data-heat-column=""
+          style={{
+            gridRow: labelsRow,
+            gridColumn: c + rowOffset + 1,
+            display: 'flex',
+            justifyContent: thinLabels ? 'center' : 'flex-start',
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+          }}
+        >
+          {c % stride === 0 ? name : null}
+        </div>
+      ))}
+      {xTitle && (
+        <div
+          aria-hidden
+          style={{
+            gridRow: (labelsAbove ? rows.length + 1 : labelsRow) + 1,
+            gridColumn: `${rowOffset + 1} / -1`,
+            textAlign: 'center',
+          }}
+        >
+          {xTitle}
+        </div>
+      )}
+      <span
+        ref={probeRef}
+        aria-hidden
+        style={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap' }}
+      >
+        {longest}
+      </span>
+    </div>
+  );
+
   return (
     <div ref={frame} style={{ position: 'relative', width: '100%', height: '100%', minWidth: 0 }}>
-      <div
-        ref={gridRef}
-        role="grid"
-        aria-label={ariaLabel}
-        onKeyDown={move}
-        onBlur={focusOut}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `${yTitle ? 'auto ' : ''}fit-content(40%) repeat(${columns.length}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rows.length}, ${cellHeight ? `${cellHeight}px` : 'minmax(0, 1fr)'}) auto${xTitle ? ' auto' : ''}`,
-          gap: GAP,
-          width: '100%',
-          height: cellHeight ? undefined : '100%',
-          fontSize: TEXT_SIZE,
-          color: MUTED,
-        }}
-      >
-        {yTitle && (
-          <div
-            aria-hidden
-            style={{
-              gridRow: `1 / ${rows.length + 1}`,
-              gridColumn: 1,
-              writingMode: 'vertical-rl',
-              transform: 'rotate(180deg)',
-              textAlign: 'center',
-              alignSelf: 'center',
-            }}
-          >
-            {yTitle}
-          </div>
-        )}
-        {rows.map((name, r) => (
-          <div key={r} role="row" style={{ display: 'contents' }}>
-            <div
-              aria-hidden
-              data-heat-row=""
-              style={{
-                gridRow: r + 1,
-                gridColumn: rowOffset,
-                alignSelf: 'center',
-                paddingRight: '0.5rem',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {name}
-            </div>
-            {(cellsByRow.get(r) ?? []).map((cell) => {
-              const position = key(cell.row, cell.column);
-              const active = tip?.cell === cell;
-              return (
-                <div
-                  key={position}
-                  role="gridcell"
-                  data-heat-cell=""
-                  data-position={position}
-                  data-row={cell.row}
-                  data-column={cell.column}
-                  tabIndex={position === tabbable ? 0 : -1}
-                  aria-label={`${cell.label}, ${cell.title}: ${cell.value}`}
-                  onFocus={(event) => focusIn(cell, event)}
-                  onMouseEnter={(event) => setHover(tipFor(cell, event.currentTarget))}
-                  onMouseLeave={() => setHover(undefined)}
-                  style={{
-                    gridRow: r + 1,
-                    gridColumn: cell.column + rowOffset + 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    borderRadius: 5,
-                    background: cell.color,
-                    color: textOn(cell.color),
-                    fontSize: 'var(--text-2xs, 0.6875rem)',
-                    fontWeight: 500,
-                    lineHeight: 1,
-                    whiteSpace: 'nowrap',
-                    // The same ring for the pointer and the keyboard, in the text color
-                    // since an accent ring would vanish on the cells that are the accent.
-                    outline: active ? `2px solid ${TEXT}` : 'none',
-                    zIndex: active ? 1 : undefined,
-                  }}
-                >
-                  {cell.text}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-        {columns.map((name, c) => (
-          <div
-            key={c}
-            ref={c === 0 ? columnRef : undefined}
-            aria-hidden
-            data-heat-column=""
-            style={{
-              gridRow: labelsRow,
-              gridColumn: c + rowOffset + 1,
-              display: 'flex',
-              justifyContent: 'center',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-            }}
-          >
-            {c % stride === 0 ? name : null}
-          </div>
-        ))}
-        {xTitle && (
-          <div
-            aria-hidden
-            style={{
-              gridRow: labelsRow + 1,
-              gridColumn: `${rowOffset + 1} / -1`,
-              textAlign: 'center',
-            }}
-          >
-            {xTitle}
-          </div>
-        )}
-        <span
-          ref={probeRef}
-          aria-hidden
-          style={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap' }}
-        >
-          {longest}
-        </span>
-      </div>
+      {columnWidth ? (
+        // The padding leaves room for the focus outline of the cells at the edges,
+        // which the scrolling box would cut.
+        <div data-heat-scroll="" style={{ overflowX: 'auto', padding: 3 }}>
+          {grid}
+        </div>
+      ) : (
+        grid
+      )}
       {tip && tipStyle && (
         <div data-heat-tooltip="" aria-hidden style={tipStyle}>
           <TooltipCard

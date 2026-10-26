@@ -62,6 +62,8 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `HeatmapChart` is a grid of rounded cells, not a Recharts chart, so it takes no `children`. Its default scale is five steps of the accent mixed over the card, each told apart from the next and the lowest still a cell of its own on a dark card; `colors` replaces the steps and `ranges` sets thresholds with their own colors (a value on a bound shared by two ranges takes the later one). The grid is one tab stop: the arrow keys move between cells and show the tooltip of the cell they land on, Home and End go to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid. Each cell is named `row, column: value` for screen readers.
 
+`CalendarChart` is a day-by-day heatmap built on the same grid, so it takes no `children` either. `data` is `{ day: 'YYYY-MM-DD', value }[]` (a day listed twice adds up, a day with no entry is empty), `from` and `to` bound the days shown. The `calendar` layout draws one block per year, with the months named above their first full week and Mon / Wed / Fri beside the rows; `range` draws one continuous grid, with larger cells when it is short. Weeks start on Monday, or on Sunday with `weekStart={0}`; `locale` names the months, weekdays and dates. Days are read and drawn in UTC. The scale is the neutral track for a day with nothing, then four steps of the accent (the dark themes use lower shares and a light accent for the top one) splitting `(0, max]` evenly, with a "Less … More" key under the grid, right-aligned with it (`lessLabel` and `moreLabel` replace the words). A grid wider than its box scrolls inside it, the weekday names staying in view. The title and the total are the host's. Keyboard as `HeatmapChart`, one tab stop per year block.
+
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place; `RadialBarChart` does the same with the average and the ring.
 
 The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`.
@@ -89,6 +91,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `Sparkline`                    | Mini line or area trend, no axes                              |
 | `TreemapChart`                 | Repartition treemap                                           |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges (HTML grid) |
+| `CalendarChart`                | Day-by-day heatmap over a year or any range (HTML grid)       |
 | `RadarChart`                   | One polygon per series over named axes                        |
 | `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure              |
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
