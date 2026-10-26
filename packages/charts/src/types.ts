@@ -25,6 +25,46 @@ export type ChartAxisTitleProps = {
   yTitle?: string;
 };
 
+/** The meaning of a reference line or band: its color comes from the theme. */
+export type ChartIntent = 'neutral' | 'warning' | 'danger' | 'success';
+
+/** A line across the plot at a value of the value axis: a threshold, a target, a limit. */
+export type ChartReferenceLine = {
+  /** Where the line sits, in the units of the value axis. */
+  value: number;
+  /** Written next to the line, as plain text: markup in it shows as written. */
+  label?: string;
+  /** `neutral` (default) is the muted text color; the others are the theme's status colors. */
+  intent?: ChartIntent;
+  /** Draw the line dashed. Default solid. */
+  dashed?: boolean;
+};
+
+/** A band across the plot between two values of the value axis: a target range, a safe zone. */
+export type ChartReferenceBand = {
+  /** One end of the band, in the units of the value axis. */
+  from: number;
+  /** The other end of the band. */
+  to: number;
+  /** Written in the band, as plain text: markup in it shows as written. */
+  label?: string;
+  /** `neutral` (default) is the muted text color; the others are the theme's status colors. */
+  intent?: ChartIntent;
+};
+
+/** Props of the charts that can draw lines and bands at values of their value axis. */
+export type ChartReferenceProps = {
+  /**
+   * Lines across the plot at a value of the value axis: the vertical axis,
+   * or the horizontal one on a chart of horizontal bars. A line outside the
+   * data makes the axis reach it. On `MixedChart` they read the left axis (the
+   * right one when no series is on the left). Drawn above the series.
+   */
+  referenceLines?: ChartReferenceLine[];
+  /** Bands across the plot between two values of the value axis, behind the series. Same axis rules as `referenceLines`. */
+  referenceBands?: ChartReferenceBand[];
+};
+
 export type ChartLegendPosition = 'top' | 'right' | 'bottom' | 'left';
 
 /** Props of the charts that draw a legend. */

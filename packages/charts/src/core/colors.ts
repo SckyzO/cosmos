@@ -1,3 +1,5 @@
+import type { ChartIntent } from '../types';
+
 // The colors every Recharts-based chart draws with. Each one is a CSS variable
 // string handed straight to the SVG (`fill`, `stroke`, `stopColor`, `cursor`):
 // a theme, accent or text size switch on <html> repaints the chart with no
@@ -52,6 +54,14 @@ export const BORDER = token('--color-border', '#d0d5dd');
 // empty part of a gauge are lighter steps of it.
 export const GRID = `color-mix(in srgb, ${BORDER} 55%, transparent)`;
 export const TRACK = `color-mix(in srgb, ${BORDER} 70%, transparent)`;
+
+/** The color of a reference line or band by its meaning: muted text for `neutral`, the status colors otherwise. */
+export const INTENT_COLORS: Record<ChartIntent, string> = {
+  neutral: MUTED,
+  warning: STATUS_WARN,
+  danger: STATUS_CRIT,
+  success: SUCCESS,
+};
 
 /**
  * Five sequential steps of the accent over the card, low to high, on any
