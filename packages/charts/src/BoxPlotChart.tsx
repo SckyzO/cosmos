@@ -18,7 +18,14 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import { referenceMarks } from './core/reference';
+import type {
+  ChartAxisTitleProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 
@@ -28,7 +35,8 @@ export type BoxPlotSummary = [min: number, q1: number, median: number, q3: numbe
 export type BoxPlotChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
-  ChartAxisTitleProps & {
+  ChartAxisTitleProps &
+  ChartReferenceProps & {
     /** One summary per category, in the order of `categories`. */
     series: { name: string; data: BoxPlotSummary[] }[];
     categories: string[];
@@ -117,6 +125,8 @@ export const BoxPlotChart = ({
   formatValue = String,
   xTitle,
   yTitle,
+  referenceLines,
+  referenceBands,
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
@@ -238,6 +248,7 @@ export const BoxPlotChart = ({
           {...ANIMATION}
         />
       ))}
+      {referenceMarks({ referenceLines, referenceBands, axis: horizontal ? 'x' : 'y' })}
       {children}
     </BarChart>
   );
