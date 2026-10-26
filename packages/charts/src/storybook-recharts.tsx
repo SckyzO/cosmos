@@ -656,16 +656,25 @@ export const ringSectors = (root: HTMLElement) => [
  * name it: the ring reports the hover to the center, the chart's own pointer
  * tracking opens the tooltip.
  * `inner` is the share of the radius the rings leave empty in the middle.
+ * `RadialBar` keys its sectors by their angles, so while the entrance animation
+ * runs every frame replaces them: a hover on one is lost with it. Each try
+ * enters the sector in the DOM now unless it is the one already entered, until
+ * one outlives its frame. The tooltip opens a frame after the pointer moves, so
+ * a sector still in place is not left and entered again.
  */
-export const hoverRing = (root: HTMLElement, index: number, names: string[], inner = 0.4) =>
-  waitFor(async () => {
+export const hoverRing = (root: HTMLElement, index: number, names: string[], inner = 0.4) => {
+  let entered: Element | undefined;
+  return waitFor(async () => {
     const svg = surface(root) as SVGSVGElement;
     const { left, top, width, height } = svg.getBoundingClientRect();
     const radius = Math.min(width, height) / 2;
     const at = radius - ((index + 0.5) * radius * (1 - inner)) / names.length;
     const sector = ringSectors(root)[index];
     expect(sector).toBeTruthy();
-    await userEvent.hover(sector);
+    if (sector !== entered) {
+      await userEvent.hover(sector);
+      entered = sector;
+    }
     svg.dispatchEvent(
       new MouseEvent('mousemove', {
         bubbles: true,
@@ -676,6 +685,7 @@ export const hoverRing = (root: HTMLElement, index: number, names: string[], inn
     expect(tooltipCard(root)).toHaveTextContent(names[index]);
     expect(centerText(root)?.label).toBe(names[index]);
   });
+};
 
 /** Takes the pointer off ring `index` and waits until the tooltip is gone. */
 export const leaveRing = (root: HTMLElement, index: number) => {

@@ -1,4 +1,6 @@
 import { setProjectAnnotations } from '@storybook/react-vite';
+import type { ProjectAnnotations, Renderer } from 'storybook/internal/types';
+import { configure } from 'storybook/test';
 import { afterEach, beforeAll } from 'vitest';
 
 import { a11yGateAnnotations, contrastPassAnnotations, recordA11yViolations } from './a11y-gate';
@@ -27,6 +29,42 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// A story test waits on timers, CSS transitions and React effects, and the margin that holds on an
+// idle machine does not on a busy one (several vitest runs at once, a `make ci` next to other
+// containers): `waitFor` and `findBy*` give up after 1 s by default, and a re-run alone passes. 3 s
+// still fails a wrong assertion, only later. A story never gets a `timeout` of its own for this.
+configure({ asyncUtilTimeout: 3000 });
+
+// Transitions and animations are settled in the story tests: a computed style read after a state
+// change (a focus border, a sidebar width) is the final one, not a frame of `transition-colors`
+// that a loaded machine stretches. A story that tests the motion itself opts out with
+// `parameters: { settleMotion: false }`.
+//
+// Durations and delays go to 0 s: a transition never starts, so `getAnimations()` is empty and
+// `transitionend` never fires. A story whose component waits for that event (the Drawer hides once
+// its slide ends, `useContentWidth` measures once the sidebar's width settled) opts out as well.
+// A duration of 1 ms would keep the events, but it would also start a transition on every property
+// of every element that has none (the default `transition-property` is `all`). Recharts animates
+// in JavaScript and is out of reach of this: see `hoverRing` in `src/storybook-recharts.tsx`.
+const SETTLE_MOTION_STYLE = `
+*, *::before, *::after {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}`;
+
+const settleMotionAnnotations: ProjectAnnotations<Renderer> = {
+  beforeEach: ({ parameters }) => {
+    if (parameters.settleMotion === false) return;
+    const style = document.createElement('style');
+    style.dataset.settleMotion = '';
+    style.textContent = SETTLE_MOTION_STYLE;
+    document.head.append(style);
+    return () => style.remove();
+  },
+};
+
 // Wire the framework's preview annotations into the Vitest test runner so
 // `context.renderToCanvas` is available when stories mount in browser mode.
 //
@@ -46,6 +84,7 @@ if (typeof window !== 'undefined') {
 const project = setProjectAnnotations([
   a11yGateAnnotations,
   projectAnnotations.default,
+  settleMotionAnnotations,
   contrastPassAnnotations,
 ]);
 

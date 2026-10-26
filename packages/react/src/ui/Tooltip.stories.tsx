@@ -372,6 +372,8 @@ export const WithTitle: Story = {
 
 // ── Timing ───────────────────────────────────────────────────────────────────
 
+const DELAY = 300;
+
 /**
  * `delay` waits before showing, so crossing a toolbar doesn't flash every
  * tooltip; leaving or Escape cancels it. `arrow={false}` drops the pointer.
@@ -380,12 +382,12 @@ export const DelayedWithoutArrow: Story = {
   render: () => (
     <Wrap>
       <div className="flex gap-3">
-        <Tooltip content="Refresh the data" delay={300} arrow={false}>
+        <Tooltip content="Refresh the data" delay={DELAY} arrow={false}>
           <Button variant="secondary" size="sm">
             Refresh
           </Button>
         </Tooltip>
-        <Tooltip content="Export as CSV" delay={300} arrow={false}>
+        <Tooltip content="Export as CSV" delay={DELAY} arrow={false}>
           <Button variant="secondary" size="sm">
             Export
           </Button>
@@ -398,9 +400,23 @@ export const DelayedWithoutArrow: Story = {
     const tip = page.getByRole('tooltip', { name: /Refresh the data/ });
     await expect(tip.querySelector('[aria-hidden]')).toBeNull();
 
-    // Shows only after the delay.
-    await userEvent.hover(trigger);
+    // Shows only after the delay. The delay's timer is held back until the
+    // check is done, so how long the hover takes (a loaded machine) can't let
+    // it elapse before the tooltip is asserted hidden.
+    const realSetTimeout = window.setTimeout;
+    const held: Array<() => void> = [];
+    window.setTimeout = ((handler: TimerHandler, ms?: number, ...rest: unknown[]) =>
+      ms === DELAY
+        ? held.push(() => (handler as (...args: unknown[]) => void)(...rest))
+        : realSetTimeout(handler, ms, ...rest)) as typeof window.setTimeout;
+    try {
+      await userEvent.hover(trigger);
+    } finally {
+      window.setTimeout = realSetTimeout;
+    }
+    await expect(held).toHaveLength(1);
     await expect(tip).not.toBeVisible();
+    held[0]();
     await waitFor(() => expect(tip).toBeVisible());
     await userEvent.unhover(trigger);
     await waitFor(() => expect(tip).not.toBeVisible());
@@ -508,14 +524,17 @@ export const TooltipFlipsAndStaysOnScreen: Story = {
     const anchor = canvas.getByRole('button', { name: 'Delete' }).parentElement!;
     const tip = page.getByRole('tooltip');
     await waitFor(() => expect(tip).toBeVisible());
-    const a = anchor.getBoundingClientRect();
-    const t = tip.getBoundingClientRect();
-    await expect(t.top).toBeCloseTo(a.bottom + 10, 0);
-    await expect(t.left).toBeCloseTo(16, 0);
-    // The arrow sits on the tooltip's top edge, under the trigger's center.
-    const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
-    await expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);
-    await expect(arrow.left + arrow.width / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+    // The tooltip is visible from its first frame, before the flip and the shift back inside.
+    await waitFor(() => {
+      const a = anchor.getBoundingClientRect();
+      const t = tip.getBoundingClientRect();
+      expect(t.top).toBeCloseTo(a.bottom + 10, 0);
+      expect(t.left).toBeCloseTo(16, 0);
+      // The arrow sits on the tooltip's top edge, under the trigger's center.
+      const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
+      expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);
+      expect(arrow.left + arrow.width / 2).toBeCloseTo((a.left + a.right) / 2, 0);
+    });
   },
 };
 
