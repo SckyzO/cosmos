@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fireEvent, fn, userEvent } from 'storybook/test';
+import { expect, fireEvent, fn, userEvent, within } from 'storybook/test';
 import { AvatarUploader } from './AvatarUploader';
-import { expectTextContrast } from '../storybook-helpers';
+import { expectTextContrast, inEachTheme } from '../storybook-helpers';
 
 const SAMPLE_AVATAR =
   'data:image/svg+xml;utf8,' +
@@ -106,6 +106,42 @@ export const LoadingShowsSpinner: Story = {
   args: { src: SAMPLE_AVATAR, loading: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('status', { name: /uploading/i })).toBeInTheDocument();
+  },
+};
+
+// A color as the browser resolves it, read off a probe so the comparison does not depend on how
+// the browser writes it (`rgb()`, `color(srgb …)`).
+const colorOf = (value: string) => {
+  const probe = document.createElement('div');
+  probe.style.color = value;
+  document.body.appendChild(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+// The spinner is white on the dark overlay in every theme: a white arc over a 30% white track. It
+// is read in all four themes, so a color that wins by its place in the generated CSS (as the
+// spinner's own arc did in the dark themes) shows up as the wrong color.
+export const SpinnerIsWhiteOnOverlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { src: SAMPLE_AVATAR, loading: true },
+  play: async ({ canvas }) => {
+    const overlay = canvas.getByRole('status', { name: /uploading/i });
+    const spinner = within(overlay).getByRole('status', { name: 'Loading' });
+    inEachTheme(() => {
+      const style = getComputedStyle(spinner);
+      expect(style.borderTopColor, 'arc').toBe(colorOf('var(--color-white)'));
+      for (const track of [
+        style.borderRightColor,
+        style.borderBottomColor,
+        style.borderLeftColor,
+      ]) {
+        expect(track, 'track').toBe(
+          colorOf('color-mix(in oklab, var(--color-white) 30%, transparent)')
+        );
+      }
+    });
   },
 };
 
