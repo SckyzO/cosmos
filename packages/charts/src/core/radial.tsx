@@ -50,3 +50,10 @@ export const CenterText = ({
 
 /** A value as a percentage, the default `formatValue` of the radial charts. */
 export const percent = (value: number) => `${value}%`;
+
+/** The value clamped to `min`–`max`: a gauge's arc stops at an end, its text still gives the value. */
+export const clampTo = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+/** The name a gauge is read by: `name` (the host's `ariaLabel`, else the label) and the formatted value. */
+export const gaugeName = (name: string, formatted: string) => `${name}: ${formatted}`;

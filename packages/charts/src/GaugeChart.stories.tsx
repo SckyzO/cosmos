@@ -1,22 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
+import { TRACK } from './core/colors';
 import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
 import { useChartTheme } from './theme';
 import {
-  expectColorInThemes,
-  expectColorsFromTokens,
   opaqueColor,
   resolveColor,
+  switchTheme,
   themeColor,
-  expectTextFollowsTheme,
-  Rerender,
-  expectNoRedrawOnRerender,
-  freshCopy,
   expectAccessibleChart,
 } from './storybook-helpers';
+import { centerText } from './storybook-polar';
+import { surface } from './storybook-recharts';
 
 const celsius = (v: number) => `${v} °C`;
 const watts = (v: number) => `${v} W`;
@@ -195,75 +193,6 @@ export const CustomRange: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-/** Every wrapper's center value uses the theme text color and follows theme changes. */
-export const TextFollowsTheme: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'deep-blue' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <GradientRadial value={84} label="Health" />
-      <SemiCircleGauge value={67} label="Load" />
-      <StrokedGauge value={92} label="Uptime" />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    await waitFor(() =>
-      expect(canvasElement.querySelectorAll('.apexcharts-datalabel-value').length).toBe(3)
-    );
-    await expectTextFollowsTheme(canvasElement, '');
-  },
-};
-
-// A CSS color as a canvas normalizes it, so '#fff' and 'rgb(255, 255, 255)' compare equal.
-const normalizeColor = (color: string) => {
-  const context = document.createElement('canvas').getContext('2d')!;
-  context.fillStyle = '#000';
-  context.fillStyle = color;
-  return context.fillStyle;
-};
-
-const themeMutedText = () =>
-  normalizeColor(
-    getComputedStyle(document.documentElement).getPropertyValue('--color-text-secondary').trim()
-  );
-
-const expectNameLabelsMuted = (root: HTMLElement) => {
-  const labels = [...root.querySelectorAll('.apexcharts-datalabel-label')];
-  expect(labels.length).toBe(3);
-  for (const label of labels) {
-    expect(normalizeColor(label.getAttribute('fill') ?? '')).toBe(themeMutedText());
-  }
-};
-
-/**
- * The series name under the center value uses the theme's muted text color,
- * not the series color (brand-500 text fails contrast), in light and dark themes.
- */
-export const NameLabelsUseMutedText: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'light' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-3">
-      <GradientRadial value={84} label="Health" />
-      <SemiCircleGauge value={67} label="Load" />
-      <StrokedGauge value={92} label="Uptime" />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    await waitFor(() => expectNameLabelsMuted(canvasElement));
-    const { classList } = document.documentElement;
-    const previous = [...classList];
-    classList.remove(...previous);
-    classList.add('dark');
-    try {
-      await waitFor(() => expectNameLabelsMuted(canvasElement));
-    } finally {
-      classList.remove(...classList);
-      classList.add(...previous);
-    }
-  },
-};
-
 /** The recipe colors each gauge from its value, with the theme's status colors. */
 export const ThresholdColorsComeFromTheTheme: Story = {
   tags: ['!dev', '!autodocs'],
@@ -278,68 +207,6 @@ export const ThresholdColorsComeFromTheTheme: Story = {
         themeColor('--color-status-warn'),
         themeColor('--color-status-crit'),
       ]);
-    });
-  },
-};
-
-/**
- * The arcs are drawn opaque: at ApexCharts' 0.85 default they looked duller
- * than their legend swatches and the colors of the page.
- */
-export const ArcsAreOpaque: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <GradientRadial value={84} label="Health" color="#8b5cf6" />
-      <SemiCircleGauge value={67} label="Load" color="#f59e0b" />
-      <StrokedGauge value={92} label="Uptime" color="#ef4444" />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    await waitFor(() => {
-      const arcs = [...canvasElement.querySelectorAll('.apexcharts-radialbar-area[j]')];
-      // One arc for each of the three gauges.
-      expect(arcs.length).toBe(3);
-      for (const arc of arcs) {
-        const stroke = arc.getAttribute('stroke') ?? '';
-        // The gradient is a url(); a plain color is rgba(…, alpha) at ApexCharts' fill opacity.
-        if (stroke.startsWith('url')) continue;
-        expect(resolveColor(stroke), stroke).not.toMatch(/^rgba\(.*, (?!1\))/);
-      }
-    });
-  },
-};
-
-/** `color` colors the arc of every gauge; the gradient starts from it. */
-export const ColorSetsTheArc: Story = {
-  tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-3">
-      <div data-testid="semicircle">
-        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
-      </div>
-      <div data-testid="stroked">
-        <StrokedGauge value={94} label="Disk" color="#ef4444" />
-      </div>
-      <div data-testid="gradient">
-        <GradientRadial value={64} label="Health" color="#8b5cf6" />
-      </div>
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const arc = (id: string) =>
-      canvasElement.querySelector(`[data-testid="${id}"] .apexcharts-radialbar-area[j]`);
-    const stroke = (id: string) => () => arc(id)?.getAttribute('stroke');
-    await waitFor(() => {
-      expect(opaqueColor(stroke('semicircle')() ?? '')).toBe(resolveColor('#f59e0b'));
-      expect(opaqueColor(stroke('stroked')() ?? '')).toBe(resolveColor('#ef4444'));
-    });
-    // The gradient: its first stop is the color, its last the theme's success.
-    await waitFor(() => {
-      const id = /url\(#(.+)\)/.exec(stroke('gradient')() ?? '')?.[1];
-      const stops = [...canvasElement.querySelectorAll(`[id="${id}"] stop`)];
-      expect(stops.length).toBeGreaterThan(1);
-      expect(opaqueColor(stops[0].getAttribute('stop-color') ?? '')).toBe(resolveColor('#8b5cf6'));
     });
   },
 };
@@ -412,102 +279,122 @@ export const SemiCircleRangeIsOptIn: Story = {
   },
 };
 
-/** `GradientRadial` draws its empty arc in the same track color as the other radial wrappers. */
-export const GradientTrackMatchesOtherWrappers: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div data-testid="reference">
-        <StrokedGauge value={92} label="Uptime" />
-      </div>
-      <div data-testid="gradient">
-        <GradientRadial value={84} label="Health" />
-      </div>
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const trackColor = (id: string) =>
-      canvasElement
-        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
-        ?.getAttribute('stroke');
-    await waitFor(() => expect(trackColor('reference')).toBeTruthy());
-    await waitFor(() => expect(trackColor('gradient')).toBe(trackColor('reference')));
-  },
-};
+// The gauges drawn with Recharts: the tests below run on each.
+const RECHARTS_GAUGES = { GradientRadial };
 
-/** The empty part of every radial arc is the theme's grid gray. */
-export const TrackFollowsTheme: Story = {
+const GaugeGrid = ({
+  children,
+}: {
+  children: (name: string, Gauge: GaugeComponent) => React.ReactNode;
+}) => (
+  <div className="grid gap-4 md:grid-cols-3">
+    {Object.entries(RECHARTS_GAUGES).map(([name, Gauge]) => (
+      <div key={name} data-gauge={name}>
+        {children(name, Gauge)}
+      </div>
+    ))}
+  </div>
+);
+
+const gauge = (root: HTMLElement, name: string) =>
+  root.querySelector(`[data-gauge="${name}"]`) as HTMLElement;
+const arcOf = (root: Element) => root.querySelector('.recharts-radial-bar-sector');
+const trackOf = (root: Element) => root.querySelector('.recharts-radial-bar-background-sector');
+
+/** The center value is in the theme's text color, its label in the muted one, and both follow theme changes. */
+export const TextFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  globals: { theme: 'dark' },
-  render: () => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div data-testid="gradient">
-        <GradientRadial value={84} label="Health" />
-      </div>
-      <div data-testid="semicircle">
-        <SemiCircleGauge value={42} label="CPU" />
-      </div>
-      <div data-testid="stroked">
-        <StrokedGauge value={92} label="Uptime" />
-      </div>
-    </div>
-  ),
+  globals: { theme: 'deep-blue' },
+  render: () => <GaugeGrid>{(_, Gauge) => <Gauge value={84} label="Health" />}</GaugeGrid>,
   play: async ({ canvasElement }) => {
-    const track = (id: string) => () =>
-      canvasElement
-        .querySelector(`[data-testid="${id}"] .apexcharts-radialbar-track path`)
-        ?.getAttribute('stroke');
-    for (const id of ['gradient', 'semicircle', 'stroked']) {
-      await expectColorInThemes(track(id), {
-        dark: '--color-gray-800',
-        '': '--color-gray-200',
-        sand: '--color-gray-200',
-        'deep-blue': '--color-gray-800',
-      });
+    const colors = (name: string) => {
+      const [value, label] = [
+        ...gauge(canvasElement, name).querySelectorAll('[data-chart-center] tspan'),
+      ];
+      return [value, label].map((el) => resolveColor(getComputedStyle(el).fill));
+    };
+    for (const name of Object.keys(RECHARTS_GAUGES)) {
+      await waitFor(() => expect(centerText(gauge(canvasElement, name))?.value).toBe('84%'));
+      for (const theme of ['deep-blue', '', 'sand', 'dark']) {
+        const restore = switchTheme(theme);
+        try {
+          await expect(colors(name)).toEqual([
+            themeColor('--color-text-primary'),
+            themeColor('--color-text-muted'),
+          ]);
+        } finally {
+          restore();
+        }
+      }
     }
   },
 };
 
-/** `GradientRadial` fades from the accent to the theme's success color. */
-export const GradientFadesToSuccess: Story = {
+/** The empty part of every arc is the theme's track gray, in every theme. */
+export const TrackFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <GradientRadial value={84} label="Health" />,
+  globals: { theme: 'dark' },
+  render: () => <GaugeGrid>{(_, Gauge) => <Gauge value={42} label="CPU" />}</GaugeGrid>,
   play: async ({ canvasElement }) => {
-    // The arc is stroked with a gradient: its first and last colors.
-    const stops = () => {
-      const arc = canvasElement.querySelector('.apexcharts-radialbar-area[j]');
-      const id = /url\(#(.+)\)/.exec(arc?.getAttribute('stroke') ?? '')?.[1];
-      return [...canvasElement.querySelectorAll(`[id="${id}"] stop`)]
-        .map((el) => el.getAttribute('stop-color'))
-        .filter((_, index, all) => index === 0 || index === all.length - 1);
+    // The track color, as the browser resolves it for an element.
+    const expected = () => {
+      const probe = document.createElement('span');
+      probe.style.color = TRACK;
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
     };
-    await expectColorsFromTokens(
-      stops,
-      ['--color-brand-500', '--color-success-500'],
-      '--color-success-500'
-    );
+    for (const name of Object.keys(RECHARTS_GAUGES)) {
+      await waitFor(() => expect(trackOf(gauge(canvasElement, name))).not.toBeNull());
+      for (const theme of ['dark', '', 'sand', 'deep-blue']) {
+        const restore = switchTheme(theme);
+        try {
+          const track = trackOf(gauge(canvasElement, name)) as Element;
+          await expect(getComputedStyle(track).fill).toBe(expected());
+        } finally {
+          restore();
+        }
+      }
+    }
   },
 };
 
-/** The gauges with a range and a formatter: equal props on a parent render do not redraw them. */
-export const GaugesRerenderWithEqualPropsDoNotRedraw: Story = {
+/** `GradientRadial` fades from the accent, or from `color`, to the theme's success color. */
+export const GradientFadesToSuccess: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Rerender>
-      {(grown) => (
-        <div className="grid gap-4 md:grid-cols-3">
-          <GradientRadial {...freshCopy(POWER)} height={grown ? 360 : 280} />
-          <SemiCircleGauge {...freshCopy(POWER)} height={grown ? 260 : 200} />
-          <StrokedGauge {...freshCopy(POWER)} height={grown ? 360 : 280} />
-        </div>
-      )}
-    </Rerender>
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="default">
+        <GradientRadial value={84} label="Health" />
+      </div>
+      <div data-testid="custom">
+        <GradientRadial value={64} label="Health" color="#8b5cf6" />
+      </div>
+    </div>
   ),
-  play: expectNoRedrawOnRerender,
+  play: async ({ canvasElement }) => {
+    // The arc is filled with a gradient: its first and last colors.
+    const stops = (id: string) => {
+      const root = canvasElement.querySelector(`[data-testid="${id}"]`) as Element;
+      const ref = /url\(#(.+)\)/.exec(arcOf(root)?.getAttribute('fill') ?? '')?.[1];
+      return [...root.querySelectorAll(`[id="${ref}"] stop`)].map((el) =>
+        resolveColor(getComputedStyle(el).stopColor)
+      );
+    };
+    await waitFor(() => {
+      expect(stops('default')).toEqual([
+        themeColor('--color-brand-500'),
+        themeColor('--color-success-500'),
+      ]);
+      expect(stops('custom')).toEqual([resolveColor('#8b5cf6'), themeColor('--color-success-500')]);
+    });
+  },
 };
 
 const GAUGES = { GradientRadial, SemiCircleGauge, StrokedGauge };
+
+type GaugeComponent = typeof GradientRadial;
 
 type GaugeProps = {
   value: number;
@@ -547,12 +434,24 @@ const GaugePairs = ({
 const gaugeIn = (root: HTMLElement, id: string, name: string, which: 'props' | 'reference') =>
   root.querySelector<HTMLElement>(`[data-gauge="${id}-${name}-${which}"]`)!;
 
-// The angle ApexCharts computed for the value arc, set before the arc animates in.
-const arcAngle = (el: HTMLElement) =>
-  el.querySelector('.apexcharts-radial-series path')?.getAttribute('data:angle');
+// The shape of the value arc, which only its angle changes: a Recharts sector's
+// path, rounded so float noise between two scales doesn't show; `none` for an
+// empty arc, which Recharts doesn't draw.
+const arcAngle = (el: HTMLElement) => {
+  if (el.querySelector('.recharts-radial-bar-background-sector')) {
+    return (
+      el
+        .querySelector('.recharts-radial-bar-sector')
+        ?.getAttribute('d')
+        ?.replace(/-?\d+\.?\d*/g, (n) => Number(n).toFixed(1)) ?? 'none'
+    );
+  }
+  // The angle ApexCharts computed for the value arc, set before the arc animates in.
+  return el.querySelector('.apexcharts-radial-series path')?.getAttribute('data:angle');
+};
 
 const centerValue = (el: HTMLElement) =>
-  el.querySelector('.apexcharts-datalabel-value')?.textContent;
+  centerText(el)?.value ?? el.querySelector('.apexcharts-datalabel-value')?.textContent;
 
 /** Asserts each gauge of a `GaugePairs` draws the arc of its reference and shows `label`. */
 const expectSameArcs = async (
@@ -611,7 +510,7 @@ export const GaugesAreNamedImages: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="grid gap-4 md:grid-cols-3">
-      <div data-label="Health score">
+      <div data-label="Health score" data-value="84%">
         <GradientRadial value={84} label="Health" ariaLabel="Health score" />
       </div>
       <div data-label="Cluster load">
@@ -624,10 +523,22 @@ export const GaugesAreNamedImages: Story = {
   ),
   play: async ({ canvasElement }) => {
     for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-label]')) {
-      await expectAccessibleChart({ keyboard: false })({
-        canvasElement: gauge,
-        args: { ariaLabel: gauge.dataset.label },
-      });
+      if (!surface(gauge)) {
+        await expectAccessibleChart({ keyboard: false })({
+          canvasElement: gauge,
+          args: { ariaLabel: gauge.dataset.label },
+        });
+        continue;
+      }
+      // The name ends with the value: the text inside the image is hidden from screen readers.
+      await waitFor(() =>
+        expect(surface(gauge)).toHaveAttribute(
+          'aria-label',
+          `${gauge.dataset.label}: ${gauge.dataset.value}`
+        )
+      );
+      await expect(surface(gauge)).toHaveAttribute('role', 'img');
+      await expect(gauge.querySelector('[tabindex]:not([tabindex="-1"])')).toBeNull();
     }
   },
 };

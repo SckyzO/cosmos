@@ -175,7 +175,8 @@ const CHARTS: Record<string, Chart> = {
   },
   // Always have data: no empty state.
   GradientRadial: {
-    filled: (apexOptions) => <GradientRadial value={84} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <GradientRadial value={84} />,
   },
   SemiCircleGauge: {
     filled: (apexOptions) => <SemiCircleGauge value={42} apexOptions={apexOptions} />,
