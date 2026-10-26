@@ -34,6 +34,7 @@ export * from './Popover';
 export * from './ProgressBar';
 export * from './Ribbon';
 export * from './Link';
+export * from './LinkProvider';
 export * from './List';
 export * from './Accordion';
 export * from './ImageGrid';
