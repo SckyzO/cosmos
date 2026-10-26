@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ElementType, Ref } from 'react';
+import type { ElementType, ReactNode, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
@@ -8,6 +8,11 @@ export type SegmentOption<T extends string> = {
   label: string;
   value: T;
   icon?: ElementType;
+  /**
+   * A count or short text in a small pill after the label. It is part of the radio's accessible
+   * name ("Active 4").
+   */
+  badge?: ReactNode;
 };
 
 export type SegmentedControlProps<T extends string> = FieldA11yProps & {
@@ -131,6 +136,20 @@ export const SegmentedControl = <T extends string>({
           >
             {Icon && <Icon className={sm ? 'h-3.5 w-3.5' : 'h-4 w-4'} />}
             {opt.label}
+            {opt.badge !== undefined && (
+              <span
+                className={clsx(
+                  'text-3xs rounded-full px-1.5 py-0.5 font-bold',
+                  // The active segment is filled with the accent: a darker veil keeps white text
+                  // above 4.5:1, which a lighter one does not.
+                  isActive
+                    ? 'bg-black/20 text-white'
+                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                )}
+              >
+                {opt.badge}
+              </span>
+            )}
           </button>
         );
       })}
