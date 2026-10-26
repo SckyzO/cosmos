@@ -168,6 +168,27 @@ loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells tak
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
 
+## Progress
+
+`ProgressBar` shows one value (`value`, `max`, `intent`) or a list of parts
+(`segments`), never both. Each segment has a `value`, a `label` and an `intent`
+you pick yourself; the parts sit 2px apart, and their sum is held to `max`, so
+show the overflow yourself ("112%"). `legend` adds a row of swatch, label and value
+under the bar, with what is left on the track. `aria-valuetext` lists the parts
+("Documents 40, Images 25, Free 35"); `valueLabel` puts a unit on a part.
+
+```tsx
+<ProgressBar
+  aria-label="Storage"
+  legend
+  segments={[
+    { label: 'Documents', value: 40, valueLabel: '40 GB' },
+    { label: 'Images', value: 25, intent: 'success', valueLabel: '25 GB' },
+  ]}
+  free={{ valueLabel: '35 GB' }}
+/>
+```
+
 ## Chat
 
 Building blocks for a conversation view: `ChatThread` (a `role="log"` live
