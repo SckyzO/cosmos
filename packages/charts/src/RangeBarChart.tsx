@@ -19,7 +19,14 @@ import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import { referenceMarks } from './core/reference';
+import type {
+  ChartAxisTitleProps,
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type RangeBarPoint = {
   /** Row label: the service, rack or host the range belongs to. */
@@ -31,7 +38,8 @@ export type RangeBarPoint = {
 export type RangeBarChartProps = ChartProps &
   ChartEmptyProps &
   ChartLegendProps &
-  ChartAxisTitleProps & {
+  ChartAxisTitleProps &
+  ChartReferenceProps & {
     /** One series per kind of range (maintenance, deploy, incident…), drawn on a time axis. */
     series: { name: string; data: RangeBarPoint[] }[];
     /** Draw every series of a row on one lane, instead of one lane per series. */
@@ -139,6 +147,8 @@ export const RangeBarChart = ({
   formatDate = defaultFormatDate,
   xTitle,
   yTitle,
+  referenceLines,
+  referenceBands,
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
@@ -267,6 +277,7 @@ export const RangeBarChart = ({
           />
         ))
       )}
+      {referenceMarks({ referenceLines, referenceBands, axis: 'x' })}
       {children}
     </BarChart>
   );
