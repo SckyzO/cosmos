@@ -41,7 +41,7 @@ export function ChatComposer({
   const inner = useRef<HTMLTextAreaElement | null>(null);
   const canSend = !disabled && value.trim() !== '';
 
-  useAutoGrow(inner, value, maxHeight);
+  useAutoGrow(inner, { value, maxHeight });
 
   const send = () => {
     if (!canSend) return;
