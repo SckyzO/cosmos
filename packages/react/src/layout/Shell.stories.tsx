@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
   Bell,
   Box,
-  FileText,
   LayoutDashboard,
   Layers,
   Moon,
@@ -85,12 +84,12 @@ const NavItems = () => (
   <div className="py-3">
     <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
     <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
-      <Sidebar.Item icon={Box} label="Tokens" depth={1} />
-      <Sidebar.Item icon={Layers} label="Components" depth={1} />
+      <Sidebar.Item label="Tokens" />
+      <Sidebar.Item label="Components" />
     </Sidebar.SubMenu>
     <Sidebar.SubMenu icon={Server} label="Infrastructure">
-      <Sidebar.Item icon={Server} label="Servers" depth={1} />
-      <Sidebar.Item icon={FileText} label="Documentation" depth={1} />
+      <Sidebar.Item label="Servers" />
+      <Sidebar.Item label="Documentation" />
     </Sidebar.SubMenu>
     <Sidebar.Section label="Account">
       <Sidebar.Item icon={Settings} label="Settings" />
@@ -447,7 +446,7 @@ const MobileNav = () => (
   <div className="py-3">
     <Sidebar.Item icon={LayoutDashboard} label="Dashboard" href="#dashboard" active />
     <Sidebar.SubMenu icon={Layers} label="Library">
-      <Sidebar.Item icon={Box} label="Tokens" href="#tokens" depth={1} />
+      <Sidebar.Item label="Tokens" href="#tokens" />
     </Sidebar.SubMenu>
     <Sidebar.Section label="Account">
       <Sidebar.Item icon={Settings} label="Settings" href="#settings" />

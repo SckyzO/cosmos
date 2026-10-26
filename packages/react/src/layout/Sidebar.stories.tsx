@@ -4,8 +4,6 @@ import { createRef, useId, useState } from 'react';
 import {
   Bell,
   Box,
-  Building2,
-  Cpu,
   FileText,
   Globe,
   Info,
@@ -16,7 +14,6 @@ import {
   PanelLeftOpen,
   Server,
   Settings,
-  ShieldCheck,
   User,
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
@@ -55,14 +52,14 @@ const Nav = () => (
   <div className="py-3">
     <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
     <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
-      <Sidebar.Item icon={Box} label="Tokens" depth={1} />
-      <Sidebar.Item icon={Layers} label="Components" depth={1} />
-      <Sidebar.Item icon={FileText} label="Templates" depth={1} />
+      <Sidebar.Item label="Tokens" />
+      <Sidebar.Item label="Components" />
+      <Sidebar.Item label="Templates" />
     </Sidebar.SubMenu>
     <Sidebar.SubMenu icon={Globe} label="Monitoring">
-      <Sidebar.Item icon={Server} label="Servers" depth={1} />
-      <Sidebar.Item icon={Network} label="Network" depth={1} />
-      <Sidebar.Item icon={ShieldCheck} label="Health checks" depth={1} />
+      <Sidebar.Item label="Servers" />
+      <Sidebar.Item label="Network" />
+      <Sidebar.Item label="Health checks" />
     </Sidebar.SubMenu>
     <Sidebar.Section label="Account">
       <Sidebar.Item
@@ -205,7 +202,7 @@ const SectionedNav = () => (
       <Sidebar.Item icon={Bell} label="Notifications" active />
     </Sidebar.Section>
     <Sidebar.Section label="Infrastructure">
-      <Sidebar.Item icon={Server} label="Servers" />
+      <Sidebar.Item label="Servers" />
       <Sidebar.Item icon={Network} label="Network" />
     </Sidebar.Section>
   </>
@@ -406,13 +403,13 @@ export const SubMenuExpanded: Story = {
         <div className="py-3">
           <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
           <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
-            <Sidebar.Item icon={Box} label="Tokens" depth={1} active />
-            <Sidebar.Item icon={Layers} label="Components" depth={1} />
-            <Sidebar.Item icon={FileText} label="Templates" depth={1} />
+            <Sidebar.Item label="Tokens" active />
+            <Sidebar.Item label="Components" />
+            <Sidebar.Item label="Templates" />
           </Sidebar.SubMenu>
           <Sidebar.SubMenu icon={Globe} label="Monitoring">
-            <Sidebar.Item icon={Server} label="Servers" depth={1} />
-            <Sidebar.Item icon={Network} label="Network" depth={1} />
+            <Sidebar.Item label="Servers" />
+            <Sidebar.Item label="Network" />
           </Sidebar.SubMenu>
         </div>
       </Sidebar>
@@ -426,21 +423,24 @@ const ThreeLevelNav = ({ onPick }: { onPick?: (label: string) => void }) => (
   <div className="py-3">
     <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
     <Sidebar.SubMenu icon={Network} label="Infrastructure" defaultOpen>
-      <Sidebar.SubMenu icon={Building2} label="Datacenters" defaultOpen>
-        <Sidebar.Item icon={Server} label="Paris-1" active onClick={() => onPick?.('Paris-1')} />
-        <Sidebar.Item icon={Server} label="Frankfurt-2" onClick={() => onPick?.('Frankfurt-2')} />
+      <Sidebar.SubMenu label="Datacenters" defaultOpen>
+        <Sidebar.Item label="Paris-1" active onClick={() => onPick?.('Paris-1')} />
+        <Sidebar.Item label="Frankfurt-2" onClick={() => onPick?.('Frankfurt-2')} />
       </Sidebar.SubMenu>
-      <Sidebar.SubMenu icon={Cpu} label="Clusters">
-        <Sidebar.Item icon={Box} label="prod-eu" onClick={() => onPick?.('prod-eu')} />
-        <Sidebar.Item icon={Box} label="staging" onClick={() => onPick?.('staging')} />
+      <Sidebar.SubMenu label="Clusters">
+        <Sidebar.Item label="prod-eu" onClick={() => onPick?.('prod-eu')} />
+        <Sidebar.Item label="staging" onClick={() => onPick?.('staging')} />
       </Sidebar.SubMenu>
-      <Sidebar.Item icon={Globe} label="DNS zones" onClick={() => onPick?.('DNS zones')} />
+      <Sidebar.Item label="DNS zones" onClick={() => onPick?.('DNS zones')} />
     </Sidebar.SubMenu>
     <Sidebar.Item icon={Settings} label="Settings" />
   </div>
 );
 
-/** Sub-menus nest up to three levels: each level indents, with a guide line. */
+/**
+ * Sub-menus nest, three levels reading best: nested rows show their label alone, smaller at each
+ * level, with a guide line on their left.
+ */
 export const ThreeLevelMenu: Story = {
   render: () => (
     <Wrap>
@@ -451,14 +451,124 @@ export const ThreeLevelMenu: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    const left = (name: string) =>
-      canvas.getByRole('button', { name }).querySelector('svg')!.getBoundingClientRect().left;
-    // Each level sits one step (20 px) further right.
-    await expect(left('Datacenters') - left('Infrastructure')).toBe(20);
-    await expect(left('Paris-1') - left('Datacenters')).toBe(20);
+    const left = (name: string) => canvas.getByText(name).getBoundingClientRect().left;
+    // The first nested level lines up under the top-level label, the next one 16 px further.
+    await expect(left('Datacenters')).toBe(left('Infrastructure'));
+    await expect(left('Paris-1') - left('Datacenters')).toBe(16);
+    // No icon below the top level, and smaller rows as they go down.
+    await expect(
+      canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg.h-5')
+    ).toBeNull();
+    const height = (name: string) =>
+      canvas.getByRole('button', { name }).getBoundingClientRect().height;
+    await expect(height('Infrastructure')).toBe(40);
+    await expect(height('Datacenters')).toBe(32);
+    await expect(height('Paris-1')).toBe(28);
     // A closed sub-menu opens on click, its items one level in.
     await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
-    await expect(left('prod-eu') - left('Clusters')).toBe(20);
+    await expect(left('prod-eu') - left('Clusters')).toBe(16);
+  },
+};
+
+// Data from an app, rackscope's infrastructure: sites and rooms have a page of their own (their
+// row splits into the label and a chevron), aisles only group racks (muted), racks are pages.
+const TreeNav = ({ onNavigate }: { onNavigate?: (page: string) => void }) => (
+  <Sidebar.Section label="Infrastructure">
+    <Sidebar.SubMenu
+      icon={Globe}
+      label="Paris HPC Datacenter"
+      onClick={() => onNavigate?.('site')}
+      defaultOpen
+    >
+      <Sidebar.SubMenu label="Room A, compute" onClick={() => onNavigate?.('room-a')} defaultOpen>
+        <Sidebar.SubMenu label="Aisle Compute Std" defaultOpen>
+          <Sidebar.Item label="Compute Rack C01" active onClick={() => onNavigate?.('c01')} />
+          <Sidebar.Item label="Compute Rack C02" onClick={() => onNavigate?.('c02')} />
+          <Sidebar.Item label="Compute Rack C03" onClick={() => onNavigate?.('c03')} />
+        </Sidebar.SubMenu>
+        <Sidebar.SubMenu label="Aisle GPU">
+          <Sidebar.Item label="GPU Rack G01" onClick={() => onNavigate?.('g01')} />
+        </Sidebar.SubMenu>
+      </Sidebar.SubMenu>
+      <Sidebar.SubMenu label="Room B, services" onClick={() => onNavigate?.('room-b')}>
+        <Sidebar.Item label="Storage Rack S01" onClick={() => onNavigate?.('s01')} />
+      </Sidebar.SubMenu>
+    </Sidebar.SubMenu>
+  </Sidebar.Section>
+);
+
+/**
+ * A tree of four levels. A sub-menu with a page splits its row (the label opens the page, the
+ * chevron only toggles), the sub-menus on the way to the active row take the accent, and a
+ * nested sub-menu without a page is muted.
+ */
+export const Tree: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Rackscope" subtitle="Datacenter" />
+        <TreeNav />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+export const TreeRowsSplitAndTrail: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onNavigate: fn() } as never,
+  render: (args) => (
+    <Wrap>
+      <Sidebar>
+        <Sidebar.Brand title="Rackscope" />
+        <TreeNav onNavigate={(args as unknown as { onNavigate: (p: string) => void }).onNavigate} />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onNavigate = (args as unknown as { onNavigate: ReturnType<typeof fn> }).onNavigate;
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const fromNav = (el: Element) =>
+      el.getBoundingClientRect().left - nav.getBoundingClientRect().left;
+
+    // The trail: the site and the room hold the active rack and take the accent; the aisle too.
+    await expect(
+      canvas.getByRole('button', { name: 'Paris HPC Datacenter' }).parentElement
+    ).toHaveClass('text-brand-600');
+    await expect(canvas.getByRole('button', { name: 'Aisle Compute Std' })).toHaveClass(
+      'text-brand-600'
+    );
+    // A nested sub-menu without a page, off the trail, is muted.
+    await expect(canvas.getByRole('button', { name: 'Aisle GPU' })).toHaveClass(
+      'text-[var(--color-text-muted)]'
+    );
+
+    // The active pill starts at its own indent: 16 px per level past the first nested label.
+    const rack = canvas.getByRole('button', { name: 'Compute Rack C01' });
+    await expect(fromNav(rack)).toBe(86);
+    await expect(fromNav(canvas.getByText('Compute Rack C01'))).toBe(96);
+    await expect(rack.getBoundingClientRect().height).toBe(26);
+
+    // The chevron only toggles, without opening the page.
+    const chevron = canvas.getByRole('button', { name: 'Room B, services sub-menu' });
+    await expect(chevron).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.queryByRole('button', { name: 'Storage Rack S01' })).toBeNull();
+    await userEvent.click(chevron);
+    await expect(chevron).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByRole('button', { name: 'Storage Rack S01' })).toBeVisible();
+    await expect(onNavigate).not.toHaveBeenCalled();
+    await userEvent.click(chevron);
+    await expect(canvas.queryByRole('button', { name: 'Storage Rack S01' })).toBeNull();
+
+    // The label opens the page and unfolds the list.
+    await userEvent.click(canvas.getByRole('button', { name: 'Room B, services' }));
+    await expect(onNavigate).toHaveBeenCalledWith('room-b');
+    await expect(chevron).toHaveAttribute('aria-expanded', 'true');
+
+    // The chevron names the list it controls.
+    await expect(chevron).toHaveAttribute(
+      'aria-controls',
+      canvas.getByRole('button', { name: 'Storage Rack S01' }).closest('[id]')!.id
+    );
   },
 };
 
@@ -528,7 +638,7 @@ const GroupedNav = ({ collapsed }: { collapsed?: boolean }) => (
   <Wrap>
     <Sidebar collapsed={collapsed}>
       <Sidebar.Group label="Workspace">
-        <Sidebar.Item icon={Server} label="Servers" />
+        <Sidebar.Item label="Servers" />
       </Sidebar.Group>
       <Sidebar.Group label="Archive" defaultOpen={false}>
         <Sidebar.Item icon={FileText} label="Old reports" />
@@ -715,7 +825,7 @@ export const UncontrolledFromDefaultCollapsed: Story = {
   render: (args) => (
     <Wrap>
       <Sidebar defaultCollapsed onCollapsedChange={args.onCollapsedChange}>
-        <Sidebar.Item icon={Server} label="Servers" />
+        <Sidebar.Item label="Servers" />
       </Sidebar>
     </Wrap>
   ),
@@ -733,7 +843,7 @@ export const ControlledCollapsedOnlyReports: Story = {
   render: (args) => (
     <Wrap>
       <Sidebar collapsed defaultCollapsed={false} onCollapsedChange={args.onCollapsedChange}>
-        <Sidebar.Item icon={Server} label="Servers" />
+        <Sidebar.Item label="Servers" />
       </Sidebar>
     </Wrap>
   ),
@@ -760,10 +870,10 @@ export const SubMenuAndGroupOpenState: Story = {
       <Wrap>
         <Sidebar>
           <Sidebar.SubMenu icon={Layers} label="Own menu" onOpenChange={onOpenChange}>
-            <Sidebar.Item icon={Box} label="Tokens" />
+            <Sidebar.Item label="Tokens" />
           </Sidebar.SubMenu>
           <Sidebar.SubMenu icon={Globe} label="Held menu" open={false} onOpenChange={onOpenChange}>
-            <Sidebar.Item icon={Server} label="Servers" />
+            <Sidebar.Item label="Servers" />
           </Sidebar.SubMenu>
           <Sidebar.Group label="Own group" onOpenChange={onOpenChange}>
             <Sidebar.Item icon={FileText} label="Reports" />
@@ -839,7 +949,7 @@ const ToggleNav = () => (
     <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
     <div className="py-3">
       <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
-      <Sidebar.Item icon={Server} label="Servers" />
+      <Sidebar.Item label="Servers" />
       <Sidebar.Item icon={Settings} label="Settings" />
     </div>
   </>
