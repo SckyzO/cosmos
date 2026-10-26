@@ -255,3 +255,21 @@ export const GroupHorizontalWithoutDescriptionsKeepsItemsAligned: Story = {
   render: GroupHorizontal.render,
   play: ({ canvasElement }) => expectItemsAligned(canvasElement),
 };
+
+/** The default vertical group stacks its options, one under the other, 8px apart (#388). */
+export const GroupVerticalStacksItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Group.render,
+  play: async ({ canvasElement }) => {
+    const items = [...canvasElement.querySelectorAll<HTMLElement>('fieldset label')];
+    await expect(items).toHaveLength(PLANS.length);
+    for (const [i, item] of items.entries()) {
+      if (i === 0) continue;
+      const above = items[i - 1]!.getBoundingClientRect();
+      const box = item.getBoundingClientRect();
+      await expect(box.top).toBeGreaterThanOrEqual(above.bottom);
+      await expect(Math.abs(box.top - above.bottom - 8)).toBeLessThanOrEqual(1);
+      await expect(Math.abs(box.left - above.left)).toBeLessThanOrEqual(1);
+    }
+  },
+};
