@@ -1,6 +1,14 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { ElementType, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -13,9 +21,10 @@ import {
 } from './overlayA11y';
 import { useIsClient } from '../hooks/useIsClient';
 
-export type DrawerSide = 'left' | 'right';
+export type DrawerSide = 'left' | 'right' | 'bottom';
 export type DrawerSize = 'sm' | 'md' | 'lg';
 
+// The width of a `left` or `right` drawer. A bottom sheet ignores it: its height follows its content.
 const SIZE_CLASS: Record<DrawerSize, string> = {
   sm: 'w-72',
   md: 'w-96',
@@ -24,26 +33,35 @@ const SIZE_CLASS: Record<DrawerSize, string> = {
 
 // The close-outside button lives inside the panel (so the focus trap covers
 // it) and sits just past its inner edge, on the backdrop.
+// On a bottom sheet it sits above the top edge, at the right.
 const OUTSIDE_POSITION: Record<DrawerSide, string> = {
-  left: 'left-full',
-  right: 'right-full',
+  left: 'top-4 left-full',
+  right: 'top-4 right-full',
+  bottom: 'right-4 bottom-full mb-2',
 };
 
 // The portal needs `document`: render nothing on the server and during
 // hydration, then portal once on the client (`useIsClient`).
 
+// The bottom sheet is as wide as the viewport and as tall as its content, up to 85% of it: the
+// scrim stays visible above it, which shows that a tap outside closes it. The padding keeps the
+// content out of the home-indicator area of a phone (`viewport-fit=cover`).
 const SIDE_CLASS: Record<DrawerSide, string> = {
-  left: 'left-0 border-r',
-  right: 'right-0 border-l',
+  left: 'top-0 bottom-0 left-0 border-r',
+  right: 'top-0 right-0 bottom-0 border-l',
+  bottom:
+    'inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl border-t pb-[env(safe-area-inset-bottom)]',
 };
 
 const SIDE_TRANSFORM: Record<DrawerSide, { open: string; closed: string }> = {
   left: { open: 'translate-x-0', closed: '-translate-x-full' },
   right: { open: 'translate-x-0', closed: 'translate-x-full' },
+  bottom: { open: 'translate-y-0', closed: 'translate-y-full' },
 };
 
-// A swipe closes the drawer past a third of the panel's width, or when it ends as a flick: faster
-// than FLICK_SPEED px/ms over the last FLICK_WINDOW ms. Below SWIPE_SLOP px of travel it is a tap.
+// A swipe closes the drawer past a third of the panel's size along the closing axis (its width, or
+// the height of a bottom sheet), or when it ends as a flick: faster than FLICK_SPEED px/ms over the
+// last FLICK_WINDOW ms. Below SWIPE_SLOP px of travel it is a tap.
 const SWIPE_SLOP = 8;
 const FLICK_SPEED = 0.5;
 const FLICK_WINDOW = 100;
@@ -55,14 +73,32 @@ type Swipe = {
   /** Whether the finger moved far enough, along the closing direction, to drag the panel. */
   dragging: boolean;
   /** Recent positions along the closing direction, for the release velocity. */
-  samples: { dx: number; t: number }[];
+  samples: { along: number; t: number }[];
 };
+
+// Whether the drawer is a bottom sheet that swipes down: its `Drawer.Body` then decides who owns a
+// vertical drag (see `Body`).
+const SheetSwipeContext = createContext(false);
 
 export type DrawerProps = {
   open: boolean;
   onClose: () => void;
+  /**
+   * The edge the panel slides in from. `left` and `right` give a full-height panel, `bottom` a
+   * sheet: full width, as tall as its content up to 85% of the viewport (`Drawer.Body` scrolls
+   * past that), rounded on top, with a grab `handle`, and the scrim stays visible above it. All
+   * three are the same dialog, with the same focus trap, Escape and `Drawer.Header`, `Body` and
+   * `Footer`. Default `right`.
+   */
   side?: DrawerSide;
+  /** The width of a `left` or `right` drawer. Ignored on `bottom`, where the content sets the height. Default `md`. */
   size?: DrawerSize;
+  /**
+   * Show a grab handle at the top of a bottom sheet: a visual cue that the sheet can be dragged
+   * away, not a control (`aria-hidden`). Set `false` to remove it. Only `side="bottom"` has one.
+   * Default `true`.
+   */
+  handle?: boolean;
   /**
    * Render a translucent overlay behind the panel that closes on click.
    * Default `true`, which makes the drawer a modal dialog (`aria-modal`).
@@ -80,11 +116,13 @@ export type DrawerProps = {
   closeOutside?: boolean;
   /**
    * Let a touch or pen swipe on the panel, toward its edge (left for `side="left"`, right for
-   * `side="right"`), close the drawer. The panel follows the finger and never goes past its
-   * open position; released past a third of its width, or as a fast flick, it calls `onClose`,
-   * otherwise it springs back (without the animation under `prefers-reduced-motion`). A mouse
-   * does not swipe, and vertical scrolling inside the panel is left to the browser. Default
-   * `false`.
+   * `side="right"`, down for `side="bottom"`), close the drawer. The panel follows the finger and
+   * never goes past its open position; released past a third of its width (its height for
+   * `bottom`), or as a fast flick, it calls `onClose`, otherwise it springs back (without the
+   * animation under `prefers-reduced-motion`). A mouse does not swipe. Scrolling inside the panel
+   * is left to the browser: vertical on `left` and `right`; on `bottom`, a `Drawer.Body` that
+   * scrolls keeps the vertical drag, so the sheet is dragged by its handle, header, footer or a
+   * body that fits. Default `false`.
    */
   swipeToClose?: boolean;
   /**
@@ -102,6 +140,7 @@ const Root = ({
   onClose,
   side = 'right',
   size = 'md',
+  handle = true,
   withBackdrop = true,
   closeOutside = false,
   swipeToClose = false,
@@ -135,9 +174,11 @@ const Root = ({
   // Swipe to close: the panel's offset while the finger drags it (`null` at rest), and whether
   // the spring-back skips its animation (`prefers-reduced-motion`).
   const swipe = useRef<Swipe | null>(null);
-  const [dragX, setDragX] = useState<number | null>(null);
+  const [offset, setOffset] = useState<number | null>(null);
   const [instant, setInstant] = useState(false);
-  // Toward the edge the panel slides out through: -1 for the left side, 1 for the right.
+  // A bottom sheet closes along the vertical axis, the other sides along the horizontal one.
+  const vertical = side === 'bottom';
+  // Toward the edge the panel slides out through: -1 for the left side, 1 for the right and bottom.
   const direction = side === 'left' ? -1 : 1;
 
   const swipeHandlers = swipeToClose
@@ -149,53 +190,55 @@ const Root = ({
             x: e.clientX,
             y: e.clientY,
             dragging: false,
-            samples: [{ dx: 0, t: e.timeStamp }],
+            samples: [{ along: 0, t: e.timeStamp }],
           };
         },
         onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
           const s = swipe.current;
           if (!s || e.pointerId !== s.pointerId) return;
-          const along = (e.clientX - s.x) * direction;
+          const along = (vertical ? e.clientY - s.y : e.clientX - s.x) * direction;
           if (!s.dragging) {
-            // A vertical move is a scroll of the panel's content: not a swipe.
-            if (Math.abs(e.clientY - s.y) > Math.abs(e.clientX - s.x)) {
-              if (Math.abs(e.clientY - s.y) > SWIPE_SLOP) swipe.current = null;
+            // A move across the closing axis is not a swipe: a scroll of the panel's content
+            // (vertical, for the side drawers), or a sideways drift of the finger on a sheet.
+            const across = Math.abs(vertical ? e.clientX - s.x : e.clientY - s.y);
+            if (across > Math.abs(along)) {
+              if (across > SWIPE_SLOP) swipe.current = null;
               return;
             }
             if (along < SWIPE_SLOP) return;
             s.dragging = true;
             setInstant(false);
           }
-          s.samples.push({ dx: along, t: e.timeStamp });
+          s.samples.push({ along, t: e.timeStamp });
           // Never past the open position: only toward the edge.
-          setDragX(Math.max(0, along) * direction);
+          setOffset(Math.max(0, along) * direction);
         },
         onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
           const s = swipe.current;
           if (!s || e.pointerId !== s.pointerId) return;
           swipe.current = null;
           if (!s.dragging) return;
-          const along = Math.max(0, (e.clientX - s.x) * direction);
+          const along = Math.max(0, (vertical ? e.clientY - s.y : e.clientX - s.x) * direction);
           // Speed over the last FLICK_WINDOW ms of the gesture, toward the edge.
           // A finger that stopped before lifting (no move in the window) leaves at speed 0.
           const from = s.samples.find((p) => e.timeStamp - p.t <= FLICK_WINDOW);
           const elapsed = from ? e.timeStamp - from.t : 0;
-          const speed = from && elapsed > 0 ? (along - from.dx) / elapsed : 0;
-          const width = e.currentTarget.getBoundingClientRect().width;
-          const close = along > width / 3 || speed > FLICK_SPEED;
+          const speed = from && elapsed > 0 ? (along - from.along) / elapsed : 0;
+          const panel = e.currentTarget.getBoundingClientRect();
+          const close = along > (vertical ? panel.height : panel.width) / 3 || speed > FLICK_SPEED;
           // Closing keeps the panel where the finger left it: `open` turning false in the same
           // render lets the slide-out continue from there. A drawer the host keeps open springs back.
           if (!close && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             setInstant(true);
             requestAnimationFrame(() => setInstant(false));
           }
-          setDragX(null);
+          setOffset(null);
           if (close) onClose();
         },
         onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => {
           if (swipe.current?.pointerId !== e.pointerId) return;
           swipe.current = null;
-          setDragX(null);
+          setOffset(null);
         },
       }
     : undefined;
@@ -232,11 +275,13 @@ const Root = ({
         style={
           swipeToClose
             ? {
-                // The panel slides with the `translate` property; `pan-y` leaves vertical scrolling
-                // to the browser and delivers the horizontal pointer moves to the swipe.
-                touchAction: 'pan-y',
-                translate: dragX === null ? undefined : `${dragX}px`,
-                transition: dragX !== null || instant ? 'none' : undefined,
+                // The panel slides with the `translate` property. On the side drawers `pan-y` leaves
+                // vertical scrolling to the browser and delivers the horizontal pointer moves to
+                // the swipe; on a sheet `none` delivers the vertical ones (a body that scrolls
+                // takes its own `pan-y` back, see `Body`).
+                touchAction: vertical ? 'none' : 'pan-y',
+                translate: offset === null ? undefined : vertical ? `0 ${offset}px` : `${offset}px`,
+                transition: offset !== null || instant ? 'none' : undefined,
               }
             : undefined
         }
@@ -248,9 +293,9 @@ const Root = ({
           }
         }}
         className={clsx(
-          'fixed top-0 bottom-0 z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
+          'fixed z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
           SIDE_CLASS[side],
-          SIZE_CLASS[size],
+          !vertical && SIZE_CLASS[size],
           open ? SIDE_TRANSFORM[side].open : SIDE_TRANSFORM[side].closed,
           hidden && 'invisible',
           className
@@ -260,9 +305,18 @@ const Root = ({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabel ? undefined : titleId}
       >
+        {vertical && handle && (
+          <div
+            aria-hidden
+            data-slot="handle"
+            className="mx-auto mt-2.5 mb-0.5 h-1 w-10 shrink-0 rounded-full bg-gray-300 dark:bg-gray-600"
+          />
+        )}
         <OverlayLayerProvider value={layer}>
           <PortalContainerProvider value={container}>
-            <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+            <SheetSwipeContext.Provider value={vertical && swipeToClose}>
+              <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+            </SheetSwipeContext.Provider>
           </PortalContainerProvider>
         </OverlayLayerProvider>
         {withBackdrop && closeOutside && (
@@ -271,7 +325,7 @@ const Root = ({
             onClick={onClose}
             aria-label="Close drawer"
             className={clsx(
-              'absolute top-4 flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+              'absolute flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
               OUTSIDE_POSITION[side],
               open ? 'opacity-100' : 'opacity-0'
             )}
@@ -347,9 +401,35 @@ const Header = ({
   );
 };
 
-const Body = ({ children, className }: { children: ReactNode; className?: string }) => (
-  <div className={clsx('flex-1 overflow-y-auto p-5', className)}>{children}</div>
-);
+const Body = ({ children, className }: { children: ReactNode; className?: string }) => {
+  // On a bottom sheet that swipes down, the panel takes every vertical drag (`touch-action: none`).
+  // A body that scrolls keeps its own vertical pan, and one that fits takes the drag too: as a
+  // scroll container it would otherwise claim the touch itself and cancel the swipe.
+  const sheetSwipes = useContext(SheetSwipeContext);
+  const [scrolls, setScrolls] = useState(false);
+  const watchOverflow = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el || !sheetSwipes) return;
+      const measure = () => setScrolls(el.scrollHeight > el.clientHeight);
+      const observer = new ResizeObserver(measure);
+      observer.observe(el);
+      return () => observer.disconnect();
+    },
+    [sheetSwipes]
+  );
+  return (
+    <div
+      ref={watchOverflow}
+      className={clsx(
+        'flex-1 overflow-y-auto p-5',
+        sheetSwipes && (scrolls ? 'touch-pan-y' : 'touch-none'),
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+};
 
 const Footer = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div

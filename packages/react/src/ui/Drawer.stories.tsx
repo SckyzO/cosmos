@@ -5,10 +5,13 @@ import { SlidersHorizontal } from 'lucide-react';
 import {
   expectBelow,
   expectGraphicContrast,
+  expectNoHorizontalOverflow,
   inEachTheme,
+  mobileViewport,
   portalDocsParams,
 } from '../storybook-helpers';
 import { Drawer } from './Drawer';
+import type { DrawerProps } from './Drawer';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 import { Popover } from './Popover';
@@ -43,7 +46,7 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 export const Sides: Story = {
   render: () => {
-    const [side, setSide] = useState<'left' | 'right' | null>(null);
+    const [side, setSide] = useState<'left' | 'right' | 'bottom' | null>(null);
     return (
       <Wrap>
         <SectionCard title="Drawer sides">
@@ -54,11 +57,14 @@ export const Sides: Story = {
             <Button variant="secondary" onClick={() => setSide('right')}>
               Open right
             </Button>
+            <Button variant="secondary" onClick={() => setSide('bottom')}>
+              Open bottom
+            </Button>
           </div>
         </SectionCard>
         {/* One drawer per side: a drawer's side is fixed, so switching it while
             the panel slides would send it in or out by the wrong edge. */}
-        {(['left', 'right'] as const).map((drawerSide) => (
+        {(['left', 'right', 'bottom'] as const).map((drawerSide) => (
           <Drawer
             key={drawerSide}
             open={side === drawerSide}
@@ -220,6 +226,105 @@ export const FormInDrawer: Story = {
     await expect(save).toBeEnabled();
     await userEvent.clear(dialog.getByRole('textbox', { name: /^Name/ }));
     await expect(save).toBeDisabled();
+  },
+};
+
+type SheetDemoProps = Pick<DrawerProps, 'handle' | 'swipeToClose'> & {
+  /** Rows in the body: a few fit, many make `Drawer.Body` scroll. */
+  rows?: number;
+};
+
+/** A bottom sheet open on mount, with a button to open it again once closed. */
+const SheetDemo = ({ rows = 3, ...props }: SheetDemoProps) => {
+  const [open, setOpen] = useState(true);
+  const close = () => setOpen(false);
+  return (
+    <Wrap>
+      <SectionCard title="Closed it? Open it again">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Open sheet
+        </Button>
+      </SectionCard>
+      <Drawer {...props} side="bottom" open={open} onClose={close}>
+        <Drawer.Header
+          title="Server actions"
+          description="web-01 · Europe (West)"
+          onClose={close}
+        />
+        <Drawer.Body>
+          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            {Array.from({ length: rows }, (_, i) => (
+              <li key={i} className="flex items-center justify-between gap-3">
+                <span>web-{String(i + 1).padStart(2, '0')}</span>
+                <Button variant="secondary" size="sm">
+                  Restart
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Button variant="secondary" size="sm" onClick={close}>
+            Cancel
+          </Button>
+        </Drawer.Footer>
+      </Drawer>
+    </Wrap>
+  );
+};
+
+/**
+ * `side="bottom"`: a sheet as wide as the viewport and as tall as its content, rounded on top,
+ * with a grab handle. The scrim stays visible above it, and a tap there closes it. The focus
+ * trap, Escape and the header, body and footer are those of the other sides.
+ */
+export const BottomSheet: Story = {
+  render: () => <SheetDemo />,
+  play: async () => {
+    const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
+    await expect(sheet).toBeVisible();
+    // The handle is a visual cue: hidden from assistive technology, not a control.
+    await expect(sheet.querySelector('[data-slot="handle"]')).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
+  },
+};
+
+/** Past 85% of the viewport height the sheet stops growing and `Drawer.Body` scrolls; the header and the footer stay in place. */
+export const BottomSheetScrolls: Story = {
+  tags: ['!autodocs'],
+  render: () => <SheetDemo rows={40} />,
+  play: async () => {
+    const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
+    await expect(sheet).toBeVisible();
+  },
+};
+
+/** `handle={false}` removes the grab handle. */
+export const BottomSheetWithoutHandle: Story = {
+  tags: ['!autodocs'],
+  render: () => <SheetDemo handle={false} />,
+  play: async () => {
+    const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
+    await expect(sheet.querySelector('[data-slot="handle"]')).toBeNull();
+  },
+};
+
+/** At the `mobile` viewport the sheet spans the screen, stays under 85% of its height and does not widen the page. */
+export const BottomSheetOnMobile: Story = {
+  tags: ['!autodocs'],
+  globals: mobileViewport,
+  render: () => <SheetDemo rows={40} swipeToClose />,
+  play: async () => {
+    const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
+    await waitFor(() => expect(window.innerWidth).toBeLessThanOrEqual(400));
+    await waitFor(() => expect(sheet.getBoundingClientRect().bottom).toBe(window.innerHeight));
+    const box = sheet.getBoundingClientRect();
+    await expect(box.left).toBe(0);
+    await expect(box.width).toBe(document.documentElement.clientWidth);
+    await expect(box.height).toBeLessThanOrEqual(window.innerHeight * 0.85 + 1);
+    expectNoHorizontalOverflow(sheet);
   },
 };
 
@@ -851,5 +956,403 @@ export const ReducedMotionSkipsTheSpring: Story = {
     } finally {
       window.matchMedia = realMatchMedia;
     }
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+const findSheet = (name: string) => within(document.body).findByRole('dialog', { name });
+const viewportBottom = () => document.documentElement.clientHeight;
+/** The sheet has slid in: its bottom edge is the bottom of the viewport. */
+const sheetOpen = async (name: string) => {
+  const sheet = await findSheet(name);
+  await waitFor(() => expect(sheet.getBoundingClientRect().bottom).toBe(viewportBottom()));
+  return sheet;
+};
+const scrim = () =>
+  document.body.querySelector<HTMLElement>('div[aria-hidden][class*="bg-gray-500"]')!;
+
+/** The sheet enters and leaves by the bottom edge, never the top or a side. */
+export const BottomSheetSlidesFromTheBottom: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  parameters: { settleMotion: false },
+  render: Sides.render,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open bottom' }));
+    const sheet = within(document.body)
+      .getByText('This drawer slides in from the bottom.')
+      .closest<HTMLElement>('[role="dialog"]')!;
+    const box = () => sheet.getBoundingClientRect();
+    // A frame into the slide the sheet is still coming in from below the viewport, and in line.
+    await nextFrame();
+    await expect(box().bottom).toBeGreaterThan(viewportBottom());
+    await waitFor(() => expect(box().bottom).toBe(viewportBottom()));
+    await expect(box().left).toBe(0);
+
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Cancel' }));
+    await nextFrame();
+    await expect(box().top).toBeGreaterThanOrEqual(viewportBottom() - box().height);
+    await waitFor(() => expect(box().top).toBe(viewportBottom()));
+    await expect(box().left).toBe(0);
+  },
+};
+
+/**
+ * The sheet is as wide as the viewport whatever `size` says, anchored to the bottom, rounded on
+ * top only, and as tall as its content. The scrim stays visible above it and closes it.
+ */
+export const BottomSheetFillsTheWidthAndFollowsItsContent: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="bottom" size="sm" ariaLabel="Sheet">
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const sheet = await sheetOpen('Sheet');
+    const box = sheet.getBoundingClientRect();
+    // `size="sm"` is a 288px width on the side drawers: ignored here.
+    await expect(box.left).toBe(0);
+    await expect(box.width).toBe(document.documentElement.clientWidth);
+    // A line of text and a handle, not a panel that fills the screen.
+    await expect(box.height).toBeLessThan(window.innerHeight / 3);
+    await expect(sheet.scrollHeight).toBeLessThanOrEqual(sheet.clientHeight);
+    const style = getComputedStyle(sheet);
+    await expect(style.borderTopLeftRadius).toBe('16px');
+    await expect(style.borderTopRightRadius).toBe('16px');
+    await expect(style.borderBottomLeftRadius).toBe('0px');
+    await expect(style.borderTopWidth).toBe('1px');
+    await expect(style.borderBottomWidth).toBe('0px');
+
+    // The scrim shows above the sheet, and a tap there closes it.
+    const above = document.elementFromPoint(window.innerWidth / 2, box.top / 2);
+    await expect(above).toBe(scrim());
+    await userEvent.click(above!);
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** A sheet with a long body stops at 85% of the viewport height: the body scrolls, the header and footer stay. */
+export const BottomSheetStaysUnder85PercentOfTheViewport: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SheetDemo rows={60} />,
+  play: async () => {
+    const sheet = await sheetOpen('Server actions');
+    const cap = window.innerHeight * 0.85;
+    await expect(sheet.getBoundingClientRect().height).toBeLessThanOrEqual(cap + 1);
+    // The content is far taller than that: the sheet reaches its cap.
+    await expect(sheet.getBoundingClientRect().height).toBeGreaterThan(cap - 2);
+
+    const body = sheet.querySelector<HTMLElement>('.overflow-y-auto')!;
+    await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+    const header = within(sheet).getByRole('heading', { name: 'Server actions' });
+    const footer = within(sheet).getByRole('button', { name: 'Cancel' });
+    const headerTop = header.getBoundingClientRect().top;
+    body.scrollTop = body.scrollHeight;
+    await expect(body.scrollTop).toBeGreaterThan(0);
+    await expect(header.getBoundingClientRect().top).toBe(headerTop);
+    await expect(footer.getBoundingClientRect().bottom).toBeLessThanOrEqual(viewportBottom());
+    await expect(footer).toBeVisible();
+    // The scrim keeps room above the sheet.
+    await expect(sheet.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      window.innerHeight * 0.15 - 1
+    );
+  },
+};
+
+/** The left and right drawers keep their size, their full height and their square corners, and have no handle. */
+export const SideDrawersAreUnchangedByTheBottomSheet: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <Drawer open onClose={() => {}} side="left" ariaLabel="Left" withBackdrop={false}>
+        <Drawer.Body>Left</Drawer.Body>
+      </Drawer>
+      <Drawer open onClose={() => {}} side="right" size="sm" ariaLabel="Right" withBackdrop={false}>
+        <Drawer.Body>Right</Drawer.Body>
+      </Drawer>
+    </>
+  ),
+  play: async () => {
+    const left = await findSheet('Left');
+    const right = await findSheet('Right');
+    await waitFor(() => expect(left.getBoundingClientRect().left).toBe(0));
+    await waitFor(() =>
+      expect(right.getBoundingClientRect().right).toBe(document.documentElement.clientWidth)
+    );
+    for (const panel of [left, right]) {
+      const box = panel.getBoundingClientRect();
+      await expect(box.top).toBe(0);
+      await expect(box.bottom).toBe(viewportBottom());
+      await expect(getComputedStyle(panel).borderTopLeftRadius).toBe('0px');
+      await expect(panel.querySelector('[data-slot="handle"]')).toBeNull();
+    }
+    await expect(left.getBoundingClientRect().width).toBe(384);
+    await expect(right.getBoundingClientRect().width).toBe(288);
+  },
+};
+
+/** `closeOutside` puts the close button on the scrim, above the sheet's top edge. */
+export const BottomSheetCloseOutsideSitsAboveTheSheet: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="bottom" closeOutside ariaLabel="Sheet">
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const sheet = await sheetOpen('Sheet');
+    const close = within(sheet).getByRole('button', { name: 'Close drawer' });
+    const button = close.getBoundingClientRect();
+    const box = sheet.getBoundingClientRect();
+    await expect(button.bottom).toBeLessThanOrEqual(box.top);
+    await expect(button.top).toBeGreaterThanOrEqual(0);
+    await expect(button.right).toBeLessThanOrEqual(box.right);
+    await userEvent.click(close);
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Tab and Shift+Tab cycle inside the open sheet, as they do in the other sides. */
+export const BottomSheetTrapsFocus: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Button variant="secondary">Page button</Button>
+      <Drawer open onClose={() => {}} side="bottom">
+        <Drawer.Header title="Panel" onClose={() => {}} />
+        <Drawer.Body>
+          <Button size="sm" variant="secondary">
+            Restart
+          </Button>
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Button size="sm">Apply</Button>
+        </Drawer.Footer>
+      </Drawer>
+    </Wrap>
+  ),
+  play: async () => {
+    const sheet = within(await findSheet('Panel'));
+    // Focus starts on the first control, the header's close icon.
+    await waitFor(() => expect(sheet.getByRole('button', { name: 'Close drawer' })).toHaveFocus());
+    // Three controls: two laps of Tab never leave the sheet.
+    for (let i = 0; i < 6; i++) {
+      await userEvent.tab();
+      await expect(inDialog(document.activeElement)).toBe(true);
+    }
+    await expect(sheet.getByRole('button', { name: 'Close drawer' })).toHaveFocus();
+    // Shift+Tab from the first control wraps to the last, Tab from the last back to the first.
+    await userEvent.tab({ shift: true });
+    await expect(sheet.getByRole('button', { name: 'Apply' })).toHaveFocus();
+    await userEvent.tab();
+    await expect(sheet.getByRole('button', { name: 'Close drawer' })).toHaveFocus();
+  },
+};
+
+/** Escape closes a popover open in the sheet first, and the sheet on the next press. */
+export const BottomSheetEscapeClosesOnlyTheTopmostOverlay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+    const close = () => {
+      args.onClose();
+      setOpen(false);
+    };
+    return (
+      <Drawer open={open} onClose={close} side="bottom">
+        <Drawer.Header title="Filters" />
+        <Drawer.Body>
+          <Popover>
+            <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Help</Popover.Trigger>
+            <Popover.Content aria-label="Filter help">
+              <p>Filters apply to every table.</p>
+            </Popover.Content>
+          </Popover>
+        </Drawer.Body>
+      </Drawer>
+    );
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const sheet = within(await findSheet('Filters'));
+    await userEvent.click(sheet.getByRole('button', { name: 'Help' }));
+    await body.findByRole('dialog', { name: 'Filter help' });
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filter help' })).toBeNull());
+    await expect(body.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+    await expect(args.onClose).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Filters' })).toBeNull());
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+// A downward touch, at the same horizontal position.
+const touchY = (clientY: number, init: Touch & { clientX?: number } = {}) => ({
+  pointerType: 'touch',
+  pointerId: 1,
+  isPrimary: true,
+  clientX: 200,
+  clientY,
+  ...init,
+});
+
+const SwipeSheet = (args: DrawerProps) => (
+  <Drawer {...args} side="bottom" swipeToClose ariaLabel="Swipe">
+    <Drawer.Body>
+      <div className="h-48">Content</div>
+    </Drawer.Body>
+  </Drawer>
+);
+
+/** A downward swipe past a third of the sheet's height closes it, and the sheet follows the finger until then. */
+export const BottomSheetSwipePastAThirdCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipeSheet,
+  play: async ({ args }) => {
+    const panel = await sheetOpen('Swipe');
+    const { top, height } = panel.getBoundingClientRect();
+    await fireEvent.pointerDown(panel, touchY(300));
+    await fireEvent.pointerMove(panel, touchY(300 + 60));
+    // The sheet is where the finger took it, with no transition in the way.
+    await waitFor(() => expect(panel.getBoundingClientRect().top).toBeCloseTo(top + 60, 0));
+    // Never above its open position: the other way does nothing.
+    await fireEvent.pointerMove(panel, touchY(300 - 80));
+    await waitFor(() => expect(panel.getBoundingClientRect().top).toBe(top));
+    await fireEvent.pointerMove(panel, touchY(300 + height / 3 + 20));
+    await sleep(150);
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await fireEvent.pointerUp(panel, touchY(300 + height / 3 + 20));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** A short, slow swipe springs back to the open position and does not close. */
+export const BottomSheetShortSwipeSpringsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipeSheet,
+  play: async ({ args }) => {
+    const panel = await sheetOpen('Swipe');
+    const { top, height } = panel.getBoundingClientRect();
+    // Short of a third, so that only the distance is tested.
+    await expect(40).toBeLessThan(height / 3);
+    await fireEvent.pointerDown(panel, touchY(300));
+    await fireEvent.pointerMove(panel, touchY(340));
+    await waitFor(() => expect(panel.getBoundingClientRect().top).toBeCloseTo(top + 40, 0));
+    await sleep(250);
+    await fireEvent.pointerUp(panel, touchY(340));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(panel.getBoundingClientRect().top).toBe(top));
+    await expect(panel.style.translate).toBe('');
+  },
+};
+
+/** A fast downward flick closes even a short swipe. */
+export const BottomSheetFastFlickCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipeSheet,
+  play: async ({ args }) => {
+    const panel = await sheetOpen('Swipe');
+    await fireEvent.pointerDown(panel, touchY(300));
+    await fireEvent.pointerMove(panel, touchY(340));
+    await fireEvent.pointerUp(panel, touchY(340));
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** A drag that goes sideways is not a swipe: the sheet stays put, even if the finger then goes down. */
+export const BottomSheetIgnoresASidewaysDrag: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipeSheet,
+  play: async ({ args }) => {
+    const panel = await sheetOpen('Swipe');
+    await fireEvent.pointerDown(panel, touchY(300));
+    await fireEvent.pointerMove(panel, touchY(310, { clientX: 320 }));
+    await fireEvent.pointerMove(panel, touchY(500, { clientX: 320 }));
+    await sleep(150);
+    await fireEvent.pointerUp(panel, touchY(500, { clientX: 320 }));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await expect(panel.style.translate).toBe('');
+    await expect(panel.getBoundingClientRect().bottom).toBe(viewportBottom());
+  },
+};
+
+/** `swipeToClose` stays off by default on the sheet: a swipe does nothing, and the browser keeps every touch. */
+export const BottomSheetWithoutSwipeToCloseIgnoresSwipes: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: (args) => (
+    <Drawer {...args} side="bottom" ariaLabel="Swipe">
+      <Drawer.Body>
+        <div className="h-48">Content</div>
+      </Drawer.Body>
+    </Drawer>
+  ),
+  play: async ({ args }) => {
+    const panel = await sheetOpen('Swipe');
+    await fireEvent.pointerDown(panel, touchY(300));
+    await fireEvent.pointerMove(panel, touchY(420));
+    await fireEvent.pointerUp(panel, touchY(420));
+    await expect(args.onClose).not.toHaveBeenCalled();
+    await expect(panel.style.translate).toBe('');
+    await expect(panel.style.touchAction).toBe('');
+    const body = panel.querySelector<HTMLElement>('.overflow-y-auto')!;
+    await expect(getComputedStyle(body).touchAction).toBe('auto');
+  },
+};
+
+/**
+ * On a sheet that swipes down, the panel takes the vertical drag (`touch-action: none`), but a
+ * body that scrolls keeps its own pan, or a swipe would never let a long list scroll on a phone.
+ * A body that fits takes the drag, and follows the content when it grows past the sheet.
+ */
+export const BottomSheetBodyKeepsItsScrollOnTouch: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [rows, setRows] = useState(2);
+    return (
+      <Drawer open onClose={() => {}} side="bottom" swipeToClose ariaLabel="Swipe">
+        <Drawer.Body>
+          <ul>
+            {Array.from({ length: rows }, (_, i) => (
+              <li key={i}>
+                <Button variant="ghost" size="sm">
+                  Row {i + 1}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Button size="sm" onClick={() => setRows(80)}>
+            Add rows
+          </Button>
+        </Drawer.Footer>
+      </Drawer>
+    );
+  },
+  play: async () => {
+    const panel = await sheetOpen('Swipe');
+    const body = panel.querySelector<HTMLElement>('.overflow-y-auto')!;
+    await expect(getComputedStyle(panel).touchAction).toBe('none');
+    await waitFor(() => expect(getComputedStyle(body).touchAction).toBe('none'));
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add rows' }));
+    await waitFor(() => expect(body.scrollHeight).toBeGreaterThan(body.clientHeight));
+    await waitFor(() => expect(getComputedStyle(body).touchAction).toBe('pan-y'));
+    await expect(getComputedStyle(panel).touchAction).toBe('none');
   },
 };

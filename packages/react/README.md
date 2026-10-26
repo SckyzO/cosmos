@@ -250,7 +250,9 @@ to control it). It is always expanded there, with a close button in `Sidebar.Bra
 closes on the scrim, Escape, a swipe to the left, a click on a `Sidebar.Item` and when the
 viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
 view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
-`swipeToClose`.
+`swipeToClose`: toward its edge on `left` and `right`, downward on `side="bottom"`, the
+bottom sheet (full width, as tall as its content up to 85% of the viewport, a grab `handle`
+you can turn off with `handle={false}`, and a `Drawer.Body` that scrolls past that height).
 
 The expanded `Sidebar` follows its content: from `width` (264px, its minimum) it grows to
 fit its widest visible row, the deep levels of a tree included, up to `maxWidth` (320px). A
