@@ -243,3 +243,161 @@ export const SavingLeavesStayAndDiscard: Story = {
     await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
+
+// ── Danger and type-to-confirm ───────────────────────────────────────────────
+
+/** `danger`: a red tile with a trash icon and a solid red action. */
+export const ConfirmDanger: Story = {
+  args: {
+    open: true,
+    intent: 'danger',
+    title: 'Delete this rack?',
+    message: 'This deletes the rack and its 14 devices. It cannot be undone.',
+    discardLabel: 'Delete rack',
+    stayLabel: 'Cancel',
+    hideSave: true,
+    onClose: () => {},
+    onDiscard: () => {},
+  },
+};
+
+/** With `requireText`, the action stays disabled until the exact text is typed. */
+export const ConfirmDangerTypeToConfirm: Story = {
+  args: {
+    open: true,
+    intent: 'danger',
+    title: 'Delete project?',
+    message: 'This deletes cosmos-prod, its 14 dashboards and their history. It cannot be undone.',
+    discardLabel: 'Delete project',
+    stayLabel: 'Cancel',
+    hideSave: true,
+    requireText: 'cosmos-prod',
+    onClose: () => {},
+    onDiscard: () => {},
+  },
+};
+
+export const TypeToConfirmGatesTheAction: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ConfirmDangerTypeToConfirm.args, onClose: fn(), onDiscard: fn() },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const field = await body.findByRole('textbox', { name: 'Type "cosmos-prod" to confirm' });
+    const action = body.getByRole('button', { name: 'Delete project' });
+    await expect(action).toBeDisabled();
+    await userEvent.type(field, 'cosmos');
+    await expect(action).toBeDisabled();
+    // Case-sensitive: the right letters in the wrong case do not count.
+    await userEvent.clear(field);
+    await userEvent.type(field, 'COSMOS-PROD');
+    await expect(action).toBeDisabled();
+    await userEvent.click(action);
+    await expect(args.onDiscard).not.toHaveBeenCalled();
+    await userEvent.clear(field);
+    await userEvent.type(field, 'cosmos-prod');
+    await expect(action).toBeEnabled();
+    // Solid red once enabled.
+    const probe = document.createElement('span');
+    probe.className = 'bg-red-600';
+    document.body.append(probe);
+    await expect(getComputedStyle(action).backgroundColor).toBe(
+      getComputedStyle(probe).backgroundColor
+    );
+    probe.remove();
+    await userEvent.click(action);
+    await expect(args.onDiscard).toHaveBeenCalledTimes(1);
+    await expect(args.onClose).not.toHaveBeenCalled();
+  },
+};
+
+/** Enter in the field acts only when the text matches. */
+export const EnterInTheFieldActsOnlyOnAMatch: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ConfirmDangerTypeToConfirm.args, onClose: fn(), onDiscard: fn() },
+  play: async ({ args }) => {
+    const field = await within(document.body).findByRole('textbox');
+    await userEvent.type(field, 'cosmos-pro{Enter}');
+    await expect(args.onDiscard).not.toHaveBeenCalled();
+    await userEvent.type(field, 'd{Enter}');
+    await expect(args.onDiscard).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** The dialog is still described by its message; the field is named by its instruction. */
+export const TypeToConfirmKeepsTheDialogAccessible: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...ConfirmDangerTypeToConfirm.args,
+    requireTextLabel: 'Tapez « cosmos-prod » pour confirmer',
+  },
+  play: async () => {
+    const body = within(document.body);
+    const dialog = await body.findByRole('alertdialog', { name: 'Delete project?' });
+    await expect(dialog).toHaveAccessibleDescription(/deletes cosmos-prod/);
+    await expect(
+      body.getByRole('textbox', { name: 'Tapez « cosmos-prod » pour confirmer' })
+    ).toBeVisible();
+  },
+};
+
+const TypeToConfirmHarness = () => {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="p-6">
+      <Button onClick={() => setOpen(true)}>Delete project</Button>
+      <ConfirmationModal
+        open={open}
+        intent="danger"
+        title="Delete project?"
+        message="This cannot be undone."
+        discardLabel="Delete"
+        hideSave
+        requireText="cosmos-prod"
+        onClose={() => setOpen(false)}
+        onDiscard={() => setOpen(false)}
+      />
+    </div>
+  );
+};
+
+/** What was typed does not survive a close: the field is empty when the dialog opens again. */
+export const TypedTextResetsWhenTheDialogCloses: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <TypeToConfirmHarness />,
+  play: async () => {
+    const body = within(document.body);
+    const field = await body.findByRole('textbox');
+    await userEvent.type(field, 'cosmos-prod');
+    await expect(body.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    await userEvent.click(body.getByRole('button', { name: 'Stay' }));
+    await waitFor(() => expect(body.queryByRole('alertdialog')).toBeNull());
+    await userEvent.click(body.getByRole('button', { name: 'Delete project' }));
+    await expect(await body.findByRole('textbox')).toHaveValue('');
+    await expect(body.getByRole('button', { name: 'Delete' })).toBeDisabled();
+  },
+};
+
+/** Without `requireText` the action is never gated, in either intent. */
+export const WithoutRequireTextTheActionIsEnabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ConfirmDanger.args, onClose: fn(), onDiscard: fn() },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await expect(body.queryByRole('textbox')).toBeNull();
+    const action = await body.findByRole('button', { name: 'Delete rack' });
+    await expect(action).toBeEnabled();
+    await userEvent.click(action);
+    await expect(args.onDiscard).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** The default intent keeps the amber triangle and the quiet discard button. */
+export const WarningIsTheDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn(), onDiscard: fn(), onSave: fn() },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog');
+    await expect(dialog.querySelector('svg.text-amber-500')).not.toBeNull();
+    await expect(dialog.querySelector('svg.text-red-500')).toBeNull();
+  },
+};
