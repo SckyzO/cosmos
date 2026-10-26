@@ -181,7 +181,9 @@ export const CheckboxGroup = ({
       )}
       <div
         className={clsx(
-          orientation === 'horizontal' ? 'flex flex-wrap gap-x-6 gap-y-2' : 'space-y-2'
+          orientation === 'horizontal'
+            ? 'flex flex-wrap gap-x-6 gap-y-2'
+            : 'flex flex-col items-start gap-2'
         )}
       >
         {options.map((opt) => (
