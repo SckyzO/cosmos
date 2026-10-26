@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
+import {
+  expectBorderToken,
+  expectFocusBorder,
+  expectRefFocuses,
+  expectSuccessBorder,
+} from '../storybook-helpers';
 import { OtpInput } from './OtpInput';
 
 const meta = {
@@ -43,6 +48,20 @@ export const Masked: Story = {
 
 export const ErrorState: Story = {
   args: { value: '999999', error: true },
+};
+
+/**
+ * `success`: a green border on every cell, once the code is accepted. The component has no message
+ * of its own, so the message sits next to it, as it does for `error`.
+ */
+export const SuccessState: Story = {
+  args: { value: '123456', success: true },
+  render: (args) => (
+    <div className="space-y-2">
+      <OtpInput {...args} />
+      <p className="text-xs text-green-700 dark:text-green-400">Code verified.</p>
+    </div>
+  ),
 };
 
 export const Disabled: Story = {
@@ -221,5 +240,65 @@ export const DefaultValueOrControlled: Story = {
     await userEvent.keyboard('9');
     await expect(args.onChange).toHaveBeenLastCalledWith('9');
     await expect(canvas.getByRole('textbox', { name: 'Controlled digit 1' })).toHaveValue('');
+  },
+};
+
+// ── Success (#405) ───────────────────────────────────────────────────────────
+
+export const SuccessCellsHaveGreenBorders: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: '123456', success: true },
+  play: async ({ canvas }) => {
+    const cells = canvas.getAllByRole('textbox');
+    await expect(cells).toHaveLength(6);
+    for (const cell of cells) expectSuccessBorder(cell);
+  },
+};
+
+/** `error` wins when both are set: the cells stay red. */
+export const ErrorWinsOverSuccess: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: { value: '999999', error: true, success: true },
+  play: async ({ canvas }) => {
+    for (const cell of canvas.getAllByRole('textbox')) expectBorderToken(cell, '--color-red-400');
+  },
+};
+
+/** No tint: a success cell is a neutral cell with another border. */
+export const SuccessDoesNotTintTheCells: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  render: () => (
+    <div className="space-y-3">
+      <OtpInput ariaLabel="Neutral" length={2} value="12" onChange={() => {}} />
+      <OtpInput ariaLabel="Verified" length={2} value="12" onChange={() => {}} success />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const neutral = getComputedStyle(canvas.getByLabelText('Neutral digit 1'));
+    const verified = getComputedStyle(canvas.getByLabelText('Verified digit 1'));
+    await expect(verified.backgroundColor).toBe(neutral.backgroundColor);
+    await expect(verified.color).toBe(neutral.color);
+    await expect(verified.borderTopColor).not.toBe(neutral.borderTopColor);
+  },
+};
+
+export const SuccessFocusShowsAccentBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { value: '123456', success: true },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getAllByRole('textbox')[0]);
+  },
+};
+
+/** Without `success` the cells are what they were: the neutral border. */
+export const NoSuccessKeepsTheNeutralLook: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: { value: '123456' },
+  play: async ({ canvas }) => {
+    for (const cell of canvas.getAllByRole('textbox')) expectBorderToken(cell, '--color-gray-200');
   },
 };

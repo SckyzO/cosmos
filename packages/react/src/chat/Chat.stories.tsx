@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Paperclip } from 'lucide-react';
+import { ArrowLeft, Paperclip } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
+import { Button } from '../ui/Button';
+import { SplitView } from '../layout/SplitView';
 import { expectGraphicContrast, expectTextContrast, inEachTheme } from '../storybook-helpers';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
@@ -297,32 +299,70 @@ const conversations: ChatConversation[] = [
   },
 ];
 
-/** Conversation list on the left, the open thread on the right. Stacks on small screens. */
+/**
+ * Conversation list on the left, the open thread on the right, in a `SplitView`. Below `lg` one
+ * pane shows at a time: picking a conversation opens the thread and Back returns to the list.
+ */
 export const TwoPane: Story = {
+  globals: { viewport: { value: 'laptop', isRotated: false } },
   parameters: { layout: 'fullscreen' },
   render: function Render() {
     const [selected, setSelected] = useState('ana');
+    const [pane, setPane] = useState('list');
     const current = conversations.find((c) => c.id === selected);
     return (
-      <div className="flex h-[560px] flex-col bg-[var(--color-bg-panel)] sm:flex-row">
-        <ChatConversationList
-          conversations={conversations}
-          selectedId={selected}
-          onSelect={setSelected}
-          className="max-h-48 shrink-0 border-b border-[var(--color-border)] sm:max-h-none sm:w-72 sm:border-r sm:border-b-0"
-        />
-        <div className="flex min-h-0 flex-1 flex-col">
-          <h2 className="border-b border-[var(--color-border)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)]">
-            {current?.name}
-          </h2>
-          <ChatThread label={`Conversation with ${current?.name}`} className="flex-1">
-            <ChatDaySeparator>Today</ChatDaySeparator>
-            {renderMessages(conversation)}
-          </ChatThread>
-          <ChatComposer onSend={() => {}} />
-        </div>
+      <div className="h-[560px] p-4">
+        <SplitView activePane={pane} onActivePaneChange={setPane}>
+          <SplitView.Pane id="list" label="Conversations" width="w-72">
+            <ChatConversationList
+              conversations={conversations}
+              selectedId={selected}
+              onSelect={(id) => {
+                setSelected(id);
+                setPane('thread');
+              }}
+            />
+          </SplitView.Pane>
+          <SplitView.Pane id="thread" label="Thread">
+            <div className="flex h-full flex-col">
+              <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={ArrowLeft}
+                  onClick={() => setPane('list')}
+                  className="lg:hidden"
+                >
+                  Back
+                </Button>
+                <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {current?.name}
+                </h2>
+              </div>
+              <ChatThread label={`Conversation with ${current?.name}`} className="min-h-0 flex-1">
+                <ChatDaySeparator>Today</ChatDaySeparator>
+                {renderMessages(conversation)}
+              </ChatThread>
+              <ChatComposer onSend={() => {}} />
+            </div>
+          </SplitView.Pane>
+        </SplitView>
       </div>
     );
+  },
+};
+
+/** Picking a conversation opens its thread; at this width the list stays beside it. */
+export const TwoPanePicksAConversation: Story = {
+  ...TwoPane,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { name: 'Ana Ruiz' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: /Ops on-call/ }));
+    await expect(canvas.getByRole('heading', { name: 'Ops on-call' })).toBeVisible();
+    await expect(canvas.getByRole('log', { name: 'Conversation with Ops on-call' })).toBeVisible();
+    // Side by side at this width: the list stays on screen.
+    await expect(canvas.getByRole('navigation', { name: 'Conversations' })).toBeVisible();
   },
 };
 

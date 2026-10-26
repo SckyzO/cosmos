@@ -30,6 +30,7 @@ export * from './ThemeToggle';
 export * from './ThemeToggleTri';
 export * from './ButtonGroup';
 export * from './Carousel';
+export * from './Rating';
 export * from './Popover';
 export * from './ProgressBar';
 export * from './ProgressRing';

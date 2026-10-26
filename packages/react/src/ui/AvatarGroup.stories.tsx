@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import { SectionCard } from '../templates/SectionCard';
 import { Avatar } from './Avatar';
@@ -74,6 +74,47 @@ export const WithChildrenAndStatus: Story = {
       <Avatar name="Priya Singh" status="offline" />
       <Avatar name="Marcus Bell" />
     </AvatarGroup>
+  ),
+};
+
+const SHAPES = ['circle', 'rounded', 'square'] as const;
+const RINGS = ['brand', 'success', 'warning', 'danger'] as const;
+
+export const Shapes: Story = {
+  render: (args) => (
+    <Wrap>
+      <SectionCard title="circle, rounded and square">
+        <div className="flex flex-col gap-4">
+          {SHAPES.map((shape) => (
+            <AvatarGroup
+              key={shape}
+              {...args}
+              avatars={PEOPLE.map((person) => ({ ...person, shape }))}
+              max={4}
+            />
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
+export const Rings: Story = {
+  render: (args) => (
+    <Wrap>
+      <SectionCard title="A ring on each avatar, over the surface ring">
+        <div className="flex flex-col gap-6">
+          {SHAPES.map((shape) => (
+            <AvatarGroup key={shape} {...args} size="lg" max={4}>
+              {RINGS.map((ring, i) => (
+                <Avatar key={ring} shape={shape} ring={ring} name={NAMES[i]} />
+              ))}
+              <Avatar shape={shape} name={NAMES[4]} />
+            </AvatarGroup>
+          ))}
+        </div>
+      </SectionCard>
+    </Wrap>
   ),
 };
 
@@ -199,6 +240,70 @@ export const OverflowIsNeutral: Story = {
     await expect(getComputedStyle(more!).backgroundColor).not.toBe(
       getComputedStyle(person!).backgroundColor
     );
+  },
+};
+
+const radiusOf = (el: Element) => getComputedStyle(el).borderTopLeftRadius;
+
+export const SlotsAndOverflowFollowTheShape: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div className="flex flex-col gap-4">
+      {/* No `shape`: the group looks as it always did. */}
+      <div data-case="default">
+        <AvatarGroup {...args} avatars={INITIALS} max={3} />
+      </div>
+      {SHAPES.map((shape) => (
+        <div key={shape} data-case={shape}>
+          <AvatarGroup
+            {...args}
+            avatars={INITIALS.map((person) => ({ ...person, shape }))}
+            max={3}
+          />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const RADIUS = { default: null, circle: null, rounded: '8px', square: '6px' } as const;
+    for (const name of ['default', ...SHAPES] as const) {
+      // Three avatars and the "+4": each has the radius of its shape, and so has the slot that
+      // carries the surface ring around it.
+      const items = canvasElement.querySelectorAll(`[data-case="${name}"] [role="img"]`);
+      await expect(items).toHaveLength(4);
+      for (const item of items) {
+        for (const el of [item, item.parentElement!]) {
+          const expected = RADIUS[name];
+          if (expected === null) await expect(parseFloat(radiusOf(el)), name).toBeGreaterThan(20);
+          else await expect(radiusOf(el), name).toBe(expected);
+        }
+      }
+    }
+  },
+};
+
+export const RingedAvatarsKeepTheSurfaceRing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div data-testid="group">
+      <AvatarGroup {...args} size="lg" max={9}>
+        <Avatar name="Ana Costa" ring="success" shape="rounded" />
+        <Avatar name="Mei Tanaka" ring="warning" shape="rounded" />
+        <Avatar name="Aiden Park" ring="danger" shape="rounded" />
+      </AvatarGroup>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const surface = surfaceColor();
+    for (const avatar of within(canvas.getByTestId('group')).getAllByRole('img')) {
+      const slot = avatar.parentElement!;
+      // The slot keeps its ring of the surface color, and the avatar adds its own over it.
+      await expect(getComputedStyle(slot).boxShadow).toContain(`${surface} 0px 0px 0px 2px`);
+      await expect(getComputedStyle(avatar).boxShadow).toContain(`${surface} 0px 0px 0px 2px`);
+      await expect(getComputedStyle(avatar).boxShadow).toContain('0px 0px 0px 4px');
+      // Neither ring changes the slot's size: the overlap stays what the spacing says.
+      await expect(slot.getBoundingClientRect().width).toBe(avatar.getBoundingClientRect().width);
+    }
   },
 };
 

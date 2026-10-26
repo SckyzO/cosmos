@@ -119,10 +119,15 @@ chat messages stay a plain `<a>`, and a provider inside another one replaces it 
 ## Variants worth knowing
 
 - `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
+- `Tabs variant="raised"`: the same neutral gray track, but the active tab is raised on it in white (a lighter gray in the dark themes) with no accent, horizontal or vertical.
 - `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
 - `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
+- `Input`, `Select` and `Textarea` `success="Username is available."`: the message under a field whose value is valid, with a green border (and a check icon on `Input` and `Select`). It is linked as the description and announced politely; `error` wins when both are set. `OtpInput success`: a green border on every cell, the message is yours.
 - `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
 - `PageHeader icon={Plug} iconIntent="brand"`: a decorative icon tile left of the title.
+- `Rating value={4.5} allowHalf readOnly showValue count="(128 reviews)"`: stars on the warning hue with an outlined empty star, announced as `role="img"` ("Rated 4.5 out of 5"). Without `readOnly` it is a `radiogroup` (one tab stop, arrows, Home/End, hover preview) with `defaultValue`/`value` and `onChange(value)`; `0` is "no rating".
+- `Carousel.Thumbnails`: a scrolling row of buttons under the slides, one child per slide, named "Go to slide N" with `aria-current` on the current one and scrolled into view as it changes.
+- `ProfileHeader`: the top of a profile page. A `cover` (a gradient of the accent's tints by default), an `avatar` overlapping its bottom edge, the `name` with `badges`, a `headline` and `meta`, `actions`, `stats` read as a `<dl>`, and a `tabs` slot for a `Tabs.List` under a border. Below `sm` it stacks and the actions share the width.
 - `ImageGrid layout="masonry"`: CSS columns, each picture keeping its aspect with its caption under it. Items flow down the first column, then the next; give the images `width` and `height` so the columns don't rebalance as they load.
 - `ConfirmationModal intent="danger" requireText="my-project"`: a red tile and a solid action, disabled until the exact (case-sensitive) text is typed; `requireTextLabel` replaces the label.
 - `SecretValue label="API key" value={key} visibleSuffix={4}`: a stored secret, masked until revealed. While masked the real value is not in the DOM (20 bullets plus the suffix, at most half of the value); the Copy button copies the real value without revealing it. `autoHideAfter` (ms) masks it again.
@@ -307,6 +312,27 @@ reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass i
 >
   {/* page */}
 </Shell>
+```
+
+## Split panes
+
+`SplitView` puts two or three `SplitView.Pane` side by side in one bordered frame (mail,
+chat, a file manager). It fills the height of its parent and each pane scrolls on its own;
+`width` is a Tailwind class (`w-56`), and a pane without one takes the remaining space. Below
+`collapseBelow` (`md`, `lg` by default, `xl`) only the active pane shows. Control it with
+`activePane` and `onActivePaneChange`, or start it with `defaultActivePane` and switch from
+inside with `useSplitView()`; the pane that appears takes focus. A Back button is yours to
+place.
+
+```tsx
+<SplitView activePane={pane} onActivePaneChange={setPane}>
+  <SplitView.Pane id="list" label="Messages" width="w-80">
+    {/* list */}
+  </SplitView.Pane>
+  <SplitView.Pane id="detail" label="Message">
+    {/* detail */}
+  </SplitView.Pane>
+</SplitView>
 ```
 
 ## Themes and accents

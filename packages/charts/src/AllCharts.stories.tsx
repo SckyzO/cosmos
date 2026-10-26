@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type ReactNode } from 'react';
+import type { Topology } from 'topojson-specification';
+import world from 'world-atlas/countries-110m.json';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BarChart } from './BarChart';
 import { BoxPlotChart } from './BoxPlotChart';
@@ -20,6 +22,8 @@ import { SemiCircleGauge } from './SemiCircleGauge';
 import { Sparkline } from './Sparkline';
 import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
+import { WaterfallChart } from './WaterfallChart';
+import { WorldMap } from './WorldMap';
 import {
   expectNoInjectedImage,
   HOSTILE,
@@ -123,6 +127,18 @@ const CHARTS: Record<string, Chart> = {
     ),
     empty: (props) => <FunnelChart stages={[]} {...props} />,
   },
+  WaterfallChart: {
+    filled: () => (
+      <WaterfallChart
+        data={[
+          { label: 'Opening', value: 10, kind: 'total' },
+          { label: 'a', value: 5 },
+          { label: 'Closing', kind: 'total' },
+        ]}
+      />
+    ),
+    empty: (props) => <WaterfallChart data={[]} {...props} />,
+  },
   RadarChart: {
     filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
@@ -195,6 +211,12 @@ const CHARTS: Record<string, Chart> = {
   },
   RealtimeChart: {
     filled: () => <RealtimeChart />,
+  },
+  // An empty `data` draws the bare map: no empty message.
+  WorldMap: {
+    filled: () => (
+      <WorldMap data={{ FR: 5, DE: 3, US: 9 }} geography={world as unknown as Topology} />
+    ),
   },
 };
 

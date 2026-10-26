@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import {
+  expectBorderToken,
+  expectFocusBorder,
+  expectRefFocuses,
+  expectSuccessBorder,
+  expectTextContrast,
+  inEachTheme,
+} from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { Select } from './Select';
 
@@ -324,5 +331,136 @@ export const ForwardsRef: Story = {
   ),
   play: async ({ canvas }) => {
     await expectRefFocuses(selectRef, canvas.getByRole('combobox', { name: 'Interval' }));
+  },
+};
+
+// ── Success (#405) ───────────────────────────────────────────────────────────
+
+/**
+ * `success` is the message under the field once its choice is valid: a green border and message,
+ * and a check icon beside the chevron. `error` wins when both are set.
+ */
+export const WithSuccess: Story = {
+  args: {
+    label: 'Region',
+    options: REGIONS,
+    defaultValue: 'eu-west-3',
+    success: 'Available in your plan.',
+  },
+};
+
+export const SuccessIsLinkedAndAnnounced: Story = {
+  ...WithSuccess,
+  tags: ['!dev'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    const message = canvas.getByText('Available in your plan.');
+    await expect(field).toHaveAccessibleDescription('Available in your plan.');
+    await expect(field.getAttribute('aria-describedby')).toBe(message.id);
+    await expect(message.closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+    // A valid choice is not an invalid one: nothing marks the field as such.
+    await expect(field).not.toHaveAttribute('aria-invalid');
+  },
+};
+
+export const ErrorWinsOverSuccess: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: {
+    label: 'Region',
+    options: REGIONS,
+    defaultValue: 'eu-west-3',
+    error: 'Region not available in your plan.',
+    success: 'Available in your plan.',
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    await expect(field).toHaveAccessibleDescription('Region not available in your plan.');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(canvas.queryByText('Available in your plan.')).toBeNull();
+    await expect(canvas.getByText('Region not available in your plan.')).not.toHaveAttribute(
+      'aria-live'
+    );
+    // The border stays red, and only the chevron is drawn.
+    expectBorderToken(field, '--color-red-400');
+    await expect(canvasElement.querySelectorAll('svg')).toHaveLength(1);
+  },
+};
+
+export const SuccessColorsInEveryTheme: Story = {
+  ...WithSuccess,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    const message = canvas.getByText('Available in your plan.');
+    expectSuccessBorder(field);
+    inEachTheme(() => expectTextContrast(message));
+  },
+};
+
+export const SuccessFocusShowsAccentBorderInDark: Story = {
+  ...WithSuccess,
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  play: async ({ canvas }) => {
+    await expectFocusBorder(canvas.getByRole('combobox', { name: 'Region' }));
+  },
+};
+
+/** In each size the check clears the chevron, and the selected text clears the check. */
+export const SuccessIconSitsBesideTheChevron: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <Select
+          key={size}
+          size={size}
+          aria-label={size}
+          options={REGIONS}
+          defaultValue="eu-west-3"
+          success="Available."
+        />
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const size of ['sm', 'md', 'lg']) {
+      const select = canvas.getByRole('combobox', { name: size });
+      // The check is drawn first, the chevron after it.
+      const [check, chevron] = Array.from(select.parentElement!.querySelectorAll('svg'));
+      await expect(check).toHaveAttribute('aria-hidden', 'true');
+      const box = select.getBoundingClientRect();
+      const c = check.getBoundingClientRect();
+      const v = chevron.getBoundingClientRect();
+      await expect(v.left - c.right, `${size}: gap between the icons`).toBeCloseTo(6, 0);
+      await expect(c.top + c.height / 2, `${size}: vertical centre`).toBeCloseTo(
+        v.top + v.height / 2,
+        0
+      );
+      const pad = parseFloat(getComputedStyle(select).paddingRight);
+      await expect(pad, `${size}: the text clears the check`).toBeGreaterThanOrEqual(
+        box.right - c.left
+      );
+    }
+  },
+};
+
+/** Without `success` the field is what it was: neutral border, the chevron alone, no live region. */
+export const NoSuccessKeepsTheNeutralLook: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'light' },
+  args: {
+    label: 'Region',
+    options: REGIONS,
+    defaultValue: 'eu-west-1',
+    description: 'Where to deploy the agent.',
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const field = canvas.getByRole('combobox', { name: 'Region' });
+    expectBorderToken(field, '--color-gray-200');
+    await expect(canvasElement.querySelectorAll('svg')).toHaveLength(1);
+    await expect(parseFloat(getComputedStyle(field).paddingRight)).toBe(36);
+    await expect(canvas.getByText('Where to deploy the agent.')).not.toHaveAttribute('aria-live');
   },
 };

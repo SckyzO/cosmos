@@ -240,8 +240,8 @@ The same prop means the same thing on every component.
   one vocabulary: `neutral | brand | info | success | warning | danger`, the shared `Intent` type of
   `packages/react/src/ui/intent.ts`. There are no synonyms: `error` and `crit` are `danger`, `warn`
   is `warning`. A component may accept a documented subset, written as an `Extract<Intent, …>` (a
-  `Button` takes `brand | danger`). `variant` only describes structure or emphasis (`primary`,
-  `ghost`, `outline`, a layout), never a meaning: a destructive button is
+  `Button` takes `brand | success | warning | danger`). `variant` only describes structure or
+  emphasis (`primary`, `ghost`, `outline`, a layout), never a meaning: a destructive button is
   `variant="primary" intent="danger"`, not a `danger` variant. A component that mixes a surface and
   a meaning splits them in two props, as `Tooltip` does with `variant` (`dark | white`) and
   `intent`. Two things stay out of this: the monitoring `status` of the health components (`OK`,

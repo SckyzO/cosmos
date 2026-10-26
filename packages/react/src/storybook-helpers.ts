@@ -423,6 +423,34 @@ export const inEachTheme = (check: () => void) => {
 };
 
 /**
+ * Play-function assertion: the border of `el` is the theme colour `token` (read from <html>), at
+ * `alpha` when it is translucent. Check an element that is not focused: focus turns its border to
+ * the accent.
+ */
+export const expectBorderToken = (
+  el: Element,
+  token: string,
+  { alpha = 1 }: { alpha?: number } = {}
+) => {
+  const [r, g, b, a] = toRgba(getComputedStyle(el).borderTopColor);
+  expect(closeTo([r, g, b], tokenRgb(token)), `the border is not ${token}`).toBe(true);
+  expect(Math.abs(a / 255 - alpha), `the border is not at ${alpha} alpha`).toBeLessThan(0.02);
+};
+
+/**
+ * Play-function assertion for a field (or an OTP cell, or the wrapper that draws a field's border)
+ * in its success state, under each Cosmos theme: `green-600` in light and sand, `green-500` at 60%
+ * in the dark themes. The element must not be focused.
+ */
+export const expectSuccessBorder = (el: Element) =>
+  inEachTheme(() => {
+    const root = document.documentElement;
+    const dark = root.classList.contains('dark') || root.classList.contains('deep-blue');
+    if (dark) expectBorderToken(el, '--color-green-500', { alpha: 0.6 });
+    else expectBorderToken(el, '--color-green-600');
+  });
+
+/**
  * Waits for the CSS transitions running on `el` to end. A size that animates
  * (the sidebar's 300ms width) is checked once its transition has finished, not
  * polled against `waitFor`'s 1s deadline: a loaded run, such as the contrast
