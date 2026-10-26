@@ -320,3 +320,79 @@ export const FullWidthFillsItsContainer: Story = {
     await expect(shrunk).toBeLessThan(box);
   },
 };
+
+// ── Badges ───────────────────────────────────────────────────────────────────
+
+const STATUS_COUNTS = [
+  { value: 'all', label: 'All', badge: 128 },
+  { value: 'active', label: 'Active', badge: 4 },
+  { value: 'archived', label: 'Archived', badge: 32 },
+] as const;
+
+export const WithBadges: Story = {
+  args: {
+    options: STATUS_COUNTS as unknown as never,
+    value: 'all',
+    'aria-label': 'Status',
+  },
+};
+
+export const PillsWithBadges: Story = {
+  args: {
+    options: STATUS_COUNTS as unknown as never,
+    value: 'all',
+    appearance: 'pills',
+    'aria-label': 'Status',
+  },
+};
+
+/** The count is part of the radio's accessible name, on a segment and on a pill. */
+export const BadgeIsPartOfTheName: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <SegmentedControl<string>
+        aria-label="Status"
+        options={[...STATUS_COUNTS]}
+        defaultValue="all"
+      />
+      <div>
+        <SegmentedControl<string>
+          aria-label="Status, pills"
+          appearance="pills"
+          options={[...STATUS_COUNTS]}
+          defaultValue="all"
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const group of ['Status', 'Status, pills']) {
+      const radios = within(canvas.getByRole('radiogroup', { name: group }));
+      await expect(radios.getByRole('radio', { name: 'All 128', checked: true })).toBeVisible();
+      await expect(radios.getByRole('radio', { name: 'Active 4' })).toBeVisible();
+      await expect(radios.getByRole('radio', { name: 'Archived 32' })).toBeVisible();
+    }
+  },
+};
+
+/** The pill of the active segment is a veil over the accent; the others sit on a gray tint. */
+export const BadgeOfTheActiveSegmentIsTinted: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    options: STATUS_COUNTS as unknown as never,
+    value: 'active',
+    'aria-label': 'Status',
+  },
+  play: async ({ canvas }) => {
+    const badge = (name: string) =>
+      canvas.getByRole('radio', { name }).querySelector('span') as HTMLElement;
+    await expect(getComputedStyle(badge('Active 4')).color).toBe(
+      getComputedStyle(canvas.getByRole('radio', { name: 'Active 4' })).color
+    );
+    await expect(getComputedStyle(badge('Active 4')).backgroundColor).not.toBe(
+      getComputedStyle(badge('All 128')).backgroundColor
+    );
+    await expect(getComputedStyle(badge('All 128')).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+};
