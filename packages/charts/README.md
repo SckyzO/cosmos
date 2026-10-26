@@ -6,7 +6,7 @@ Cosmos charts — opinionated chart wrappers themed for the Cosmos design system
 
 Kept in a dedicated subpackage so that `@sckyzo/cosmos-react` consumers who don't render charts don't ship a chart library.
 
-Each chart is a module of its own and the package declares no side effects, so a bundler ships the charts you import and leaves the others out: `import { DonutChart } from '@sckyzo/cosmos-charts'` brings the donut, not the line or bar charts. `recharts` is a dependency of the package, installed with it.
+Each chart is a module of its own and the package declares no side effects, so a bundler ships the charts you import and leaves the others out: `import { DonutChart } from '@sckyzo/cosmos-charts'` brings the donut, not the line or bar charts. `recharts` is a dependency of the package, installed with it. So are `d3-geo` and `topojson-client`, which only `WorldMap` loads: a bundler leaves them out unless you import it.
 
 ## Install
 
@@ -17,7 +17,7 @@ pnpm add react react-dom   # peers, react 19+
 
 ## How the charts are drawn
 
-Every chart is drawn with Recharts, except `HeatmapChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow). The rules every chart follows:
+Every chart is drawn with Recharts, except `HeatmapChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow), and `WorldMap`, an SVG of its own (Recharts has no map). The rules every chart follows:
 
 - **Colors are CSS variables** handed straight to the SVG, with a hex fallback: a theme, accent or text size switch on `<html>` repaints the chart with no observer and no redraw. `@sckyzo/cosmos-theme` always emits what the charts read (`--color-brand-500`, the status and semantic colors, `--color-chart-2` to `--color-chart-8`).
 - **The default palette** is the accent, then seven hues. Each accent lists its own seven in the theme CSS, skipping the hues that look like it (the teal accent has no teal series), and none of the first four reads as a status. `colors` overrides it.
@@ -76,13 +76,31 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `WaterfallChart` walks a running total through gains and losses: `data` is `{ label, value?, kind? }[]`. A step (the default `kind`) carries a signed `value` and floats between the total before and after it; a `subtotal` is drawn from 0 to the running total at that point (never the sum since the last cut); a `total` is drawn the same way, and a `value` on it sets the running total to it, which is how an opening balance, or a known balance mid-walk, is written. A step without a `value` counts as 0. Increases take the theme's success color, decreases its error color and totals the accent (subtotals the same, lighter); `colors: { positive, negative, total }` overrides them. The color is never alone: the value above a bar and the tooltip carry the sign (`+310k`, `−265k`, with a real minus; `formatValue` gets the magnitude) and the kind in words (Increase, Decrease, Subtotal, Total), and the tooltip of a step adds the running total after it. `showLabels` forces the values above the bars on or off (by default they show with 12 bars or fewer in a chart at least 480px wide), `showConnectors` (default on) draws the dashed line from the top of a bar to the next one. Below 480px the category names tilt. It takes `xTitle`, `yTitle` and `children`.
 
+`WorldMap` colors the countries of a world map by value: `data` is `{ FR: 16400, US: 48200 }`, keyed by ISO 3166-1 alpha-2 code in upper case, and `geography` is a TopoJSON `Topology` with a `countries` object. The package ships no map data: you pass `world-atlas` (ISC), and the `110m` file is enough for a dashboard card (105 kB, 39 kB gzipped; `countries-50m.json` draws the small countries too). Antarctica is left out, and a code the map does not hold is not drawn.
+
+```tsx
+import { WorldMap } from '@sckyzo/cosmos-charts';
+import type { Topology } from 'topojson-specification';
+import world from 'world-atlas/countries-110m.json';
+
+// An imported JSON file is typed as plain strings: the cast says it is a Topology.
+<WorldMap
+  data={{ FR: 16400, US: 48200, DE: 21300 }}
+  geography={world as unknown as Topology}
+  label="visitors"
+  formatValue={(value) => `${(value / 1000).toFixed(1)}k`}
+/>;
+```
+
+The scale has five steps of the accent, cut by quantiles of the values so that each holds about as many countries (a linear scale lets one large country wash the others out); a country without a value is gray. `min` and `max` clamp every value before the steps are cut, so a value over `max` counts as `max`: they pin the ends of the scale, and the legend starts at `min`. The legend gives the lower bound of each step (`2.7k+`, through `formatValue`) and a "No data" swatch; `showLegend={false}` hides it. It is its own SVG, so it takes no `children`, and a map with no value (an empty `data`, or no code the map holds) draws the bare map, with no legend and no `emptyMessage`. The map scales with the width it is given and keeps its proportions (about 2:1) unless `height` is set. It is one tab stop: the arrow keys walk the countries that have a value, largest first (Home and End go to the largest and the smallest), the one in focus is outlined and shows its card, and `onSelect(code)` is called by a click, or by Enter or Space on the country in focus. For screen readers the map is an image named by `ariaLabel`, and a visually hidden table (country, value, largest first) lists the data. `geography` needs `@types/topojson-specification` for its type, installed with the package.
+
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place (`centerValue` and `centerLabel` replace the sum and "Total"; `variant="pie"` fills the disc and writes nothing in it; `legendValues` adds each slice's value and its share, in whole percents that add up to 100, to the legend, in columns when the legend is on a side); `RadialBarChart` does the same with the average and the ring.
 
 The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`.
 
 A chart with no series, or only empty ones, draws `emptyMessage` (default `No data`, an empty string for nothing) in place of the plot. The gauges, which always have a value, and `RealtimeChart`, which fills its own window, have no such prop.
 
-For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart` and `FunnelChart` takes `children` (see above).
+For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart`, `FunnelChart` and `WorldMap` takes `children` (see above).
 
 Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, the chart is named from its type and its series. Tab reaches a chart, and the arrow keys move from point to point and announce each one: ArrowRight goes to the next point, ArrowLeft to the previous one, and on a chart with its categories on the vertical axis (a horizontal `BarChart` or `BoxPlotChart`, `RangeBarChart`) ArrowDown and ArrowRight go to the next category and ArrowUp and ArrowLeft to the previous one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
 
@@ -110,9 +128,10 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
 | `FunnelChart`                  | Centred bars joined by a flow, with the conversion per stage  |
 | `WaterfallChart`               | Running total through gains, losses, subtotals and totals     |
+| `WorldMap`                     | Countries colored by value in five quantile steps (own SVG)   |
 
 ## License
 
 MIT — see [LICENSE](../../LICENSE).
 
-The charts are drawn with [Recharts](https://github.com/recharts/recharts) (MIT), which pulls in modules of [d3](https://d3js.org/) (ISC, and BSD-3-Clause for `d3-ease`). Their licenses apply to the code they ship.
+The charts are drawn with [Recharts](https://github.com/recharts/recharts) (MIT), which pulls in modules of [d3](https://d3js.org/) (ISC, and BSD-3-Clause for `d3-ease`). `WorldMap` also uses [d3-geo](https://github.com/d3/d3-geo) (ISC) and [topojson-client](https://github.com/topojson/topojson-client) (ISC). Their licenses apply to the code they ship. `d3-geo` ships ES modules only, so the CommonJS build carries it inside `WorldMap.cjs`, with the `d3-array` and `internmap` it pulls; `THIRD_PARTY_NOTICES.md` holds their licenses.

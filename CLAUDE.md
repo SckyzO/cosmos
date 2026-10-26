@@ -121,7 +121,12 @@ charts ───────────── storybook      (charts imports ne
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a
   chart library: it imports neither `theme` nor `react`. One build entry per wrapper and
-  `sideEffects: false`; `recharts` stays a dependency, not a peer. Built on the internal `src/core/`:
+  `sideEffects: false`; `recharts` stays a dependency, not a peer, and so do `d3-geo` and
+  `topojson-client`, which only `WorldMap` imports: a consumer who doesn't use it ships neither.
+  `d3-geo` ships ESM only: the CJS build bundles it into `WorldMap.cjs` (`noExternal` plus a plugin
+  that keeps it external in the ESM pass, `tsup.config.ts`), and `THIRD_PARTY_NOTICES.md` carries the
+  licences of what it bundles. `tests/e2e/specs/charts-dist.spec.ts` checks both.
+  Built on the internal `src/core/`:
   - **Colours are CSS variables** with a hex fallback (`var(--color-brand-500, #465fff)`), only through
     `core/colors.ts`, handed to `fill` / `stroke` / `stopColor` / `cursor`. No `getComputedStyle`, no
     `MutationObserver`, no colour in JS state: a theme, accent or text size switch repaints on its own.
@@ -141,10 +146,10 @@ charts ───────────── storybook      (charts imports ne
     once a release fixes it).
   - **Series are keyed `s0`, `s1`…** (`seriesKey`, `toRows`): a name with a dot is a path to Recharts.
   - **`children`** (`ChartProps`): Recharts elements rendered inside the chart (reference line, brush,
-    extra axis), except on `HeatmapChart`, `CalendarChart` and `FunnelChart`, drawn in HTML and SVG of
-    their own. Tooltip and legend are React text, so nothing is escaped by hand. Every wrapper takes
-    `ariaLabel`; the series charts add `emptyMessage`, the ones with a legend `legendPosition`
-    (`src/types.ts`).
+    extra axis), except on `HeatmapChart`, `CalendarChart`, `FunnelChart` and `WorldMap`, drawn in HTML
+    and SVG of their own. Tooltip and legend are React text, so nothing is escaped by hand. Every
+    wrapper takes `ariaLabel`; the series charts add `emptyMessage`, the ones with a legend
+    `legendPosition` (`src/types.ts`).
   - **Stories**: one `<Name>.stories.tsx` per wrapper, helpers in `src/storybook-recharts.tsx` (the
     Recharts DOM, `HOSTILE`, theme and colour checks). Each wrapper keeps an `HtmlInLabelsRendersAsText`
     story, a theme-repaint story and an empty-state story.
