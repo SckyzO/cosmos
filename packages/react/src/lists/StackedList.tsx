@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { AppLink } from '../ui/AppLink';
 
 // The `card` mode of the list reaches its items without a prop on each of them.
 const CardContext = createContext(false);
@@ -205,11 +206,11 @@ function StackedListItem({
 
   const titleEl = isLinked ? (
     <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">
-      <a href={href} className="focus:outline-hidden">
+      <AppLink href={href} className="focus:outline-hidden">
         {/* Full-row click target */}
         <span className="absolute inset-x-0 -top-px bottom-0" aria-hidden />
         {title}
-      </a>
+      </AppLink>
     </p>
   ) : (
     <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>

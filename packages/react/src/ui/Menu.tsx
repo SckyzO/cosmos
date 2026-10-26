@@ -13,6 +13,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { AppLink } from './AppLink';
 import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
@@ -310,7 +311,7 @@ function MenuItem({
   };
   if (isLink) {
     return (
-      <a
+      <AppLink
         {...(rest as ComponentPropsWithRef<'a'>)}
         ref={ref as Ref<HTMLAnchorElement>}
         role="menuitem"
@@ -324,7 +325,7 @@ function MenuItem({
         className={classes}
       >
         {content}
-      </a>
+      </AppLink>
     );
   }
   return (

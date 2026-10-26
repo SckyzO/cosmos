@@ -5,6 +5,7 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { AppLink } from '../ui/AppLink';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <nav class="flex flex-1 flex-col">
@@ -43,7 +44,7 @@ function Item({
 }: VerticalNavigationItemProps) {
   return (
     <li>
-      <a
+      <AppLink
         ref={ref}
         aria-current={active ? 'page' : undefined}
         className={clsx(
@@ -79,7 +80,7 @@ function Item({
             {badge}
           </span>
         )}
-      </a>
+      </AppLink>
     </li>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { AppLink } from '../ui/AppLink';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
@@ -509,14 +510,14 @@ const SidebarBrand = ({
   let brand;
   if (href) {
     brand = (
-      <a
+      <AppLink
         ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         className={baseClass}
         data-sidebar-brand={marker}
       >
         {inner}
-      </a>
+      </AppLink>
     );
   } else if (onClick) {
     brand = (
@@ -647,7 +648,7 @@ const SidebarItem = ({
   // `title` showed on hover only) and names the icon-only row for assistive technology.
   const name = collapsed ? label : undefined;
   const row = href ? (
-    <a
+    <AppLink
       ref={rowRef as Ref<HTMLAnchorElement>}
       href={href}
       onClick={closeDrawer}
@@ -658,7 +659,7 @@ const SidebarItem = ({
       data-sidebar-item=""
     >
       {content}
-    </a>
+    </AppLink>
   ) : (
     <button
       ref={rowRef as Ref<HTMLButtonElement>}
@@ -875,7 +876,7 @@ const SidebarSubMenu = ({
     trigger = (
       <div className={row} style={nested ? geometry.rowStyle(depth, false) : undefined}>
         {href ? (
-          <a
+          <AppLink
             ref={triggerRef}
             href={href}
             onClick={go}
@@ -884,7 +885,7 @@ const SidebarSubMenu = ({
             data-sidebar-item=""
           >
             {content}
-          </a>
+          </AppLink>
         ) : (
           <button
             ref={triggerRef}

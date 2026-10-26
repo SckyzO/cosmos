@@ -1,6 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
 import { ChevronRight, Ellipsis, Home } from 'lucide-react';
 import { clsx } from 'clsx';
+import { AppLink } from '../ui/AppLink';
 import { Menu } from '../ui/Menu';
 
 export type BreadcrumbItem = {
@@ -141,10 +142,10 @@ export const Breadcrumb = ({
                 <span className="truncate">{label}</span>
               </button>
             ) : (
-              <a href={href ?? '#'} className={linkClass}>
+              <AppLink href={href ?? '#'} className={linkClass}>
                 {renderIcon('h-4 w-4 shrink-0')}
                 <span className="truncate">{label}</span>
-              </a>
+              </AppLink>
             )}
           </div>
         );

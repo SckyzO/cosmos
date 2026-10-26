@@ -10,6 +10,7 @@ import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
+import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
@@ -748,9 +749,9 @@ export const DataTable = <T,>({
                         )}
                       >
                         {href && i === 0 ? (
-                          <a href={href} data-row-link className={ROW_LINK}>
+                          <AppLink href={href} data-row-link className={ROW_LINK}>
                             {col.render(row)}
-                          </a>
+                          </AppLink>
                         ) : (
                           col.render(row)
                         )}

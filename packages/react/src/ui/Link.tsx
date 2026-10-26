@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { ExternalLink } from 'lucide-react';
 import type { ReactNode, ComponentPropsWithRef } from 'react';
+import { AppLink } from './AppLink';
 
 export type LinkVariant = 'colored' | 'underline' | 'opacity' | 'opacity-hover' | 'subtle';
 
@@ -52,7 +53,7 @@ export function Link({
   const finalTarget = external ? (target ?? '_blank') : target;
   const finalRel = external ? mergeRel(rel) : rel;
   return (
-    <a
+    <AppLink
       ref={ref}
       target={finalTarget}
       rel={finalRel}
@@ -67,6 +68,6 @@ export function Link({
       {external && !hideExternalIcon && (
         <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
       )}
-    </a>
+    </AppLink>
   );
 }
