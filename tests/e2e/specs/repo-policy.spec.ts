@@ -224,6 +224,27 @@ test('the dev image pins what it installs as root', () => {
   expect(code).not.toMatch(/@latest\b/);
 });
 
+test('the CI jobs that open a browser run in the Playwright image the dev image matches', () => {
+  // No apt in CI (`install --with-deps` hit the job timeout on a slow mirror),
+  // and Chromium gets the system libraries the dev image installs for `make ci`.
+  const version = read('config/docker/Dockerfile.dev').match(
+    /playwright@(\d+\.\d+\.\d+) install-deps/
+  )?.[1];
+  expect(version, 'dev image playwright version').toBeTruthy();
+  const tag = `v${version?.replaceAll('.', '\\.')}-noble`;
+  const jobs = read('.github/workflows/ci.yml')
+    .split(/\n(?= {2}[\w-]+:\n)/)
+    .filter((job) => job.includes('exec playwright install'));
+  expect(jobs.length, 'jobs that install a browser').toBeGreaterThan(0);
+  for (const job of jobs) {
+    const name = job.match(/^ {2}([\w-]+):/)?.[1];
+    expect(job, `${name}: image`).toMatch(
+      new RegExp(`\\n {6}image: mcr\\.microsoft\\.com/playwright:${tag}@sha256:[0-9a-f]{64}\\n`)
+    );
+    expect(job, `${name}: apt`).not.toContain('--with-deps');
+  }
+});
+
 test('the dev container cannot write the repo metadata', () => {
   // Code running in the container could otherwise plant a hook in .git that
   // git runs on the host.

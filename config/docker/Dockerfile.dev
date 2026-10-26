@@ -37,7 +37,8 @@ RUN npm install -g corepack@0.36.0 \
  && corepack enable
 
 # --- Root: install Playwright system deps (most accurate list comes from playwright itself)
-# Same version as the workspace's playwright / @playwright/test (see the lockfile).
+# Same version as the workspace's playwright / @playwright/test (see the lockfile)
+# and as the Playwright image CI's browser jobs run in (repo-policy.spec.ts).
 RUN npx -y playwright@1.64.1 install-deps chromium \
  && rm -rf /var/lib/apt/lists/*
 
