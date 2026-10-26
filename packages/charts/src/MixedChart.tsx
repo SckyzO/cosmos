@@ -1,4 +1,6 @@
+import { useId } from 'react';
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -15,10 +17,10 @@ import { categoryAxis } from './core/categoryAxis';
 import { TooltipCard } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, MUTED, PANEL, seriesColor } from './core/colors';
-import { hasNoData, seriesKey, toRows } from './core/data';
+import { hasNoData, safeId, seriesKey, toRows } from './core/data';
 import { ChartEmpty, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
-import { roundedBarShape } from './core/roundedBar';
+import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
@@ -31,8 +33,8 @@ export type MixedChartAxis = 'left' | 'right';
 
 export type MixedChartSeries = {
   name: string;
-  /** `column` draws bars, `line` draws a line over them. */
-  type: 'line' | 'column';
+  /** `column` draws bars, `line` draws a line over them, `area` fills under a line, behind the bars. */
+  type: 'line' | 'column' | 'area';
   data: number[];
   /** The y axis the series is read on. Any `right` series adds a second axis. Default `left`. */
   axis?: MixedChartAxis;
@@ -59,6 +61,8 @@ export type MixedChartProps = ChartProps &
     yRightTitle?: string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
+    /** Pile the `column` series on each other instead of grouping them side by side; the columns of each axis stack apart. */
+    stackedColumns?: boolean;
   };
 
 const SIDES: MixedChartAxis[] = ['left', 'right'];
@@ -92,12 +96,14 @@ export const MixedChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
+  stackedColumns = false,
   emptyMessage = 'No data',
   ariaLabel,
   children,
   height = 320,
   width,
 }: MixedChartProps) => {
+  const uid = safeId(useId());
   const hidden = useHiddenSeries();
   const axis = useAxis();
   const name = ariaLabel ?? `Mixed chart: ${series.map((s) => s.name).join(', ')}`;
@@ -127,14 +133,36 @@ export const MixedChart = ({
     );
   };
 
+  // The columns on each axis stack apart, and only the outer segment of a stack is rounded.
+  const stackKeys = (side: MixedChartAxis) =>
+    series.flatMap((s, i) =>
+      s.type === 'column' && axisOf(s) === side && !hidden.hidden.has(seriesKey(i))
+        ? [seriesKey(i)]
+        : []
+    );
+
   return (
     <ComposedChart
       {...frameProps({ height, width, ariaLabel: name })}
       data={toRows(categories, series)}
+      // Stacks of both signs: the negative values stack down from zero, apart from the positive ones.
+      {...(stackedColumns ? { stackOffset: 'sign' as const } : {})}
       margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
       barGap={4}
       barCategoryGap="22%"
     >
+      {series.some((s) => s.type === 'area') && (
+        <defs>
+          {series.map((s, i) =>
+            s.type === 'area' ? (
+              <linearGradient key={seriesKey(i)} id={`${uid}-${i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={seriesColor(i, colors)} stopOpacity={0.32} />
+                <stop offset="100%" stopColor={seriesColor(i, colors)} stopOpacity={0} />
+              </linearGradient>
+            ) : null
+          )}
+        </defs>
+      )}
       <CartesianGrid {...GRID_PROPS} />
       <XAxis
         dataKey="category"
@@ -162,6 +190,24 @@ export const MixedChart = ({
       {series.map((s, i) => {
         const key = seriesKey(i);
         const color = seriesColor(i, colors);
+        if (s.type === 'area') {
+          return (
+            <Area
+              key={key}
+              name={s.name}
+              dataKey={key}
+              yAxisId={axisOf(s)}
+              type="monotone"
+              stroke={color}
+              strokeWidth={2.25}
+              fill={`url(#${uid}-${i})`}
+              dot={false}
+              activeDot={{ r: 5, fill: PANEL, stroke: color, strokeWidth: 2.5 }}
+              hide={hidden.hidden.has(key)}
+              {...ANIMATION}
+            />
+          );
+        }
         return s.type === 'line' ? (
           <Line
             key={key}
@@ -183,8 +229,14 @@ export const MixedChart = ({
             dataKey={key}
             yAxisId={axisOf(s)}
             fill={color}
+            stackId={stackedColumns ? `stack-${axisOf(s)}` : undefined}
             maxBarSize={44}
-            shape={roundedBarShape({ layout: 'horizontal', radius: 4, dataKey: key })}
+            shape={roundedBarShape({
+              layout: 'horizontal',
+              radius: 4,
+              dataKey: key,
+              isOuter: stackedColumns ? isOuterInStack(stackKeys(axisOf(s)), key) : undefined,
+            })}
             hide={hidden.hidden.has(key)}
             {...ANIMATION}
           />
