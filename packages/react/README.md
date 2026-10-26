@@ -98,6 +98,7 @@ to for `SegmentedControl`, in either appearance (the selected one, else the firs
 - `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
 - `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
 - `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
+- `Input`, `Select` and `Textarea` `success="Username is available."`: the message under a field whose value is valid, with a green border (and a check icon on `Input` and `Select`). It is linked as the description and announced politely; `error` wins when both are set. `OtpInput success`: a green border on every cell, the message is yours.
 - `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
 - `PageHeader icon={Plug} iconIntent="brand"`: a decorative icon tile left of the title.
 - `ImageGrid layout="masonry"`: CSS columns, each picture keeping its aspect with its caption under it. Items flow down the first column, then the next; give the images `width` and `height` so the columns don't rebalance as they load.
