@@ -93,7 +93,7 @@ export const WithImage: Story = {
         <Card.Body>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Design system v1</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Tailwind 4 tokens, React 19 components and ApexCharts wrappers.
+            Tailwind 4 tokens, React 19 components and chart wrappers.
           </p>
         </Card.Body>
       </Card>
