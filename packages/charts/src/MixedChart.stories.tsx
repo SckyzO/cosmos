@@ -9,15 +9,24 @@ import {
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
+  expectMarksAtTheirValues,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   HOSTILE,
   LegendSides,
   legendTexts,
+  NarrowBox,
   openTooltip,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   seriesStrokes,
+  themeColor,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
@@ -182,6 +191,205 @@ export const RightAxisOnly: Story = {
   },
 };
 
+/**
+ * A series of `type: 'area'` fills under its line, behind the columns: here the
+ * capacity as an area, the traffic as columns and the mean as a line.
+ */
+export const AreaSeries: Story = {
+  args: {
+    categories: WEEKS,
+    series: [
+      { name: 'Capacity', type: 'area', data: INCIDENTS.map((v) => v + 8) },
+      { name: 'Incidents', type: 'column', data: INCIDENTS },
+      { name: '4-week mean', type: 'line', data: ROLLING_4W },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelectorAll('.recharts-area-curve')).toHaveLength(1);
+      expect(canvasElement.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+      expect(barShapes(canvasElement)).toHaveLength(1);
+    });
+    // The area has a gradient fill, in the first color of the palette.
+    const area = canvasElement.querySelector('.recharts-area-area') as Element;
+    await expect(getComputedStyle(area).fill).toMatch(/^url\(/);
+    await expect(resolveColor(seriesStrokes(canvasElement)[0])).toBe(
+      themeColor('--color-brand-500')
+    );
+    // Behind the columns and the line.
+    const layers = [
+      ...canvasElement.querySelectorAll('.recharts-area, .recharts-bar, .recharts-line'),
+    ];
+    await expect(layers[0].classList.contains('recharts-area')).toBe(true);
+  },
+};
+
+/** An area on the right axis reads that axis. */
+export const AreaOnTheRightAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: EVERY_4H,
+    formatRightValue: (v) => `${Math.round(v)} ms`,
+    series: [
+      { name: 'Requests', type: 'column', data: [820, 520, 1810, 2460, 2050, 1050] },
+      { name: 'p95 latency', type: 'area', axis: 'right', data: [112, 104, 164, 205, 158, 119] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(canvasElement.querySelectorAll('.recharts-area-curve')).toHaveLength(1);
+      expect(tickTexts(canvasElement, 'yAxis').some((t) => t?.endsWith(' ms'))).toBe(true);
+    });
+  },
+};
+
+const STACKED_COLUMNS = [
+  { name: 'Reads', type: 'column' as const, data: [30, 24, 36, 28] },
+  { name: 'Writes', type: 'column' as const, data: [12, 10, 14, 11] },
+];
+
+/**
+ * `stackedColumns` piles the column series on each other instead of grouping
+ * them; a line or an area stays free of the stack.
+ */
+export const StackedColumns: Story = {
+  args: {
+    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+    stackedColumns: true,
+    series: [...STACKED_COLUMNS, { name: 'Target', type: 'line', data: [45, 36, 52, 41] }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(reads).toHaveLength(4);
+      expect(writes).toHaveLength(4);
+      // Once the columns have grown.
+      expect(reads[0].height).toBeGreaterThan(20);
+      reads.forEach((read, i) => {
+        // The writes sit on the reads, in the same column.
+        expect(writes[i].bottom).toBeCloseTo(read.top, 0);
+        expect(writes[i].left).toBeCloseTo(read.left, 0);
+      });
+    });
+    // Only the outer segment of a stack is rounded.
+    const [reads, writes] = barShapes(canvasElement);
+    await expect(reads[0].getAttribute('d')).not.toContain('a4,4');
+    await expect(writes[0].getAttribute('d')).toContain('a4,4');
+  },
+};
+
+/** Without `stackedColumns`, the columns are grouped side by side, as before. */
+export const ColumnsAreGroupedByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { categories: ['Q1', 'Q2', 'Q3', 'Q4'], series: STACKED_COLUMNS },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(reads).toHaveLength(4);
+      expect(writes[0].left).toBeGreaterThanOrEqual(reads[0].right - 1);
+      expect(writes[0].bottom).toBeCloseTo(reads[0].bottom, 0);
+    });
+  },
+};
+
+/** The columns of each axis stack apart: two stacks side by side when two axes hold columns. */
+export const StackedColumnsPerAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+    stackedColumns: true,
+    series: [
+      ...STACKED_COLUMNS,
+      { name: 'Latency', type: 'column', axis: 'right', data: [120, 140, 160, 130] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [reads, writes, latency] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      expect(latency).toHaveLength(4);
+      // Writes sit on reads; the right-axis column rests on the baseline.
+      expect(writes[0].bottom).toBeCloseTo(reads[0].top, 0);
+      expect(latency[0].bottom).toBeCloseTo(reads[0].bottom, 0);
+    });
+  },
+};
+
+/**
+ * `referenceLines` and `referenceBands` read the left axis: here a weekly
+ * incident budget and the band the mean should stay in.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    ...SingleAxis.args,
+    referenceBands: [{ from: 8, to: 14, label: 'Expected', intent: 'success' }],
+    referenceLines: [{ value: 20, label: 'Budget 20', intent: 'danger', dashed: true }],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('yAxis', { lines: [20], bands: [[8, 14]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual(['Budget 20', 'Expected'])
+    );
+  },
+};
+
+/** With every series on the right, that axis is the one the marks read. */
+export const ReferenceLinesOnTheRightAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...RightAxisOnly.args,
+    referenceLines: [{ value: 260, label: 'Target' }],
+    referenceBands: [{ from: 240, to: 255, intent: 'success' }],
+  },
+  play: expectMarksAtTheirValues('yAxis', { lines: [260], bands: [[240, 255]] }),
+};
+
+/** The colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...SingleAxis.args,
+    referenceLines: [
+      { value: 5, intent: 'success' },
+      { value: 12, intent: 'warning' },
+      { value: 20, intent: 'danger' },
+      { value: 16 },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+    await expect(referenceBandEls(canvasElement)).toHaveLength(0);
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <MixedChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
@@ -230,9 +438,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: HOSTILE, type: 'column', data: [3, 5, 2] },
       { name: 'Normal', type: 'line', axis: 'right', data: [40, 10, 60] },
     ],
+    referenceLines: [{ value: 4, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE, HOSTILE] })

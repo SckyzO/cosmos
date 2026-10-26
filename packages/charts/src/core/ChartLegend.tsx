@@ -1,7 +1,7 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import type { LegendPayload, LegendProps } from 'recharts';
 import type { ChartLegendPosition } from '../types';
-import { MUTED } from './colors';
+import { MUTED, TEXT } from './colors';
 import { TEXT_SIZE } from './axes';
 
 /**
@@ -28,6 +28,12 @@ type ChartLegendProps = {
   onToggle: (key: string) => void;
   /** Items in a column (`left`, `right`) or a row (`top`, `bottom`). */
   column?: boolean;
+  /**
+   * A figure written after the name of the entry at `index`: a value and its
+   * share. In a column the figures sit at the right edge, aligned on their
+   * last digit; in a row they follow the name.
+   */
+  detail?: (index: number) => { value: string; share: string };
 };
 
 /**
@@ -37,7 +43,7 @@ type ChartLegendProps = {
  * `<Legend content={…} itemSorter={null} />`: Recharts sorts the items by name
  * unless told not to, and the series keep their order.
  */
-export const ChartLegend = ({ payload, hidden, onToggle, column }: ChartLegendProps) => (
+export const ChartLegend = ({ payload, hidden, onToggle, column, detail }: ChartLegendProps) => (
   <ul
     style={{
       display: 'flex',
@@ -51,8 +57,9 @@ export const ChartLegend = ({ payload, hidden, onToggle, column }: ChartLegendPr
       color: MUTED,
     }}
   >
-    {payload?.map((entry) => {
+    {payload?.map((entry, index) => {
       const key = String(entry.dataKey);
+      const figures = detail?.(index);
       const off = hidden.has(key);
       return (
         <li key={key}>
@@ -73,6 +80,8 @@ export const ChartLegend = ({ payload, hidden, onToggle, column }: ChartLegendPr
               borderRadius: '0.25rem',
               cursor: 'pointer',
               textDecoration: off ? 'line-through' : undefined,
+              // The figures of a column reach its right edge, which aligns them.
+              ...(figures && column ? { display: 'flex', width: '100%', gap: '0.75rem' } : {}),
             }}
           >
             <span
@@ -86,7 +95,34 @@ export const ChartLegend = ({ payload, hidden, onToggle, column }: ChartLegendPr
                 opacity: off ? 0.35 : 1,
               }}
             />
-            {entry.value as ReactNode}
+            {figures ? (
+              <>
+                <span style={column ? { flex: 1, textAlign: 'start' } : undefined}>
+                  {entry.value as ReactNode}
+                </span>
+                <span
+                  style={{
+                    color: TEXT,
+                    fontWeight: 600,
+                    fontVariantNumeric: 'tabular-nums',
+                    textAlign: 'end',
+                  }}
+                >
+                  {figures.value}
+                </span>
+                <span
+                  style={{
+                    minWidth: column ? '3.5ch' : undefined,
+                    fontVariantNumeric: 'tabular-nums',
+                    textAlign: 'end',
+                  }}
+                >
+                  {figures.share}
+                </span>
+              </>
+            ) : (
+              (entry.value as ReactNode)
+            )}
           </button>
         </li>
       );

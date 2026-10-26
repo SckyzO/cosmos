@@ -71,6 +71,8 @@ type ChartTooltipProps = Partial<TooltipContentProps> & {
   format?: (value: number) => string;
   /** Leave out the title (the category), for a chart that has no axis to read it from. */
   hideTitle?: boolean;
+  /** The color of a row's chip from its value and the index of the point, when a bar has a color of its own. `undefined` keeps the series color. */
+  colorOf?: (value: number, index: number) => string | undefined;
 };
 
 /** `<Tooltip content={<ChartTooltip />} />`: the card for the series at the point under the cursor. */
@@ -80,12 +82,16 @@ export const ChartTooltip = ({
   label,
   format = String,
   hideTitle,
+  colorOf,
+  activeIndex,
 }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
   const rows = payload.map((item) => ({
     name: String(item.name),
     value: format(Number(item.value)),
-    color: String(item.color ?? item.payload?.fill ?? item.fill),
+    color:
+      colorOf?.(Number(item.value), Number(activeIndex)) ??
+      String(item.color ?? item.payload?.fill ?? item.fill),
   }));
   return <TooltipCard title={hideTitle ? undefined : label} rows={rows} />;
 };

@@ -27,19 +27,26 @@ type RoundedBarOptions = {
    * stack, or the last of it on its side of the axis, is. Default: always.
    */
   isOuter?: (row: Record<string, unknown>) => boolean;
+  /**
+   * The fill of a bar from its value and the index of its category, or
+   * `undefined` for the series' own color.
+   */
+  fillFor?: (value: number, index: number) => string | undefined;
 };
 
 /**
  * The `shape` of a `Bar` that rounds the end away from the axis only: the top
  * of a column, the right of a horizontal bar, and the other end when the value
  * is negative. In a stack only the outermost segment on each side is rounded,
- * so the stack reads as one bar. The radius shrinks to fit a short bar.
+ * so the stack reads as one bar. The radius shrinks to fit a short bar. With
+ * `fillFor`, a bar can take a color of its own.
  */
 export const roundedBarShape =
-  ({ layout, radius, dataKey, isOuter }: RoundedBarOptions) =>
+  ({ layout, radius, dataKey, isOuter, fillFor }: RoundedBarOptions) =>
   (props: BarShapeProps) => {
-    const { x, y, width, height, fill } = props;
+    const { x, y, width, height } = props;
     const row = (props.payload ?? {}) as Record<string, unknown>;
+    const fill = fillFor?.(Number(row[dataKey]), props.index) ?? props.fill;
     // The rectangle has a negative size when the value is below zero.
     const left = Math.min(x, x + width);
     const top = Math.min(y, y + height);

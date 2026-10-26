@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RangeBarChart } from './RangeBarChart';
+import type { ChartReferenceLine } from './types';
 import {
   axisTitles,
   barFills,
@@ -10,13 +11,22 @@ import {
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   HOSTILE,
   LegendSides,
+  bandSpan,
   legendTexts,
+  linePixel,
+  NarrowBox,
   openTooltipAt,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   surface,
   tickTexts,
@@ -198,6 +208,97 @@ export const ReferenceLineInChildren: Story = {
   },
 };
 
+// The pixels of the vertical grid lines: one per tick of the time axis.
+const timeTickPixels = (root: HTMLElement) =>
+  [...root.querySelectorAll('.recharts-cartesian-grid-vertical line')].map((line) =>
+    parseFloat(line.getAttribute('x1') ?? '')
+  );
+
+const INTENT_LINES: ChartReferenceLine[] = [
+  { value: at(13, 6), intent: 'success' },
+  { value: at(13, 12), intent: 'warning' },
+  { value: at(13, 18), intent: 'danger' },
+  { value: at(14, 0) },
+];
+
+/**
+ * The value axis is time, so the marks take timestamps in milliseconds: here
+ * "now", and the change freeze window.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    series: CHANGES,
+    referenceBands: [
+      { from: at(13, 18), to: at(14, 6), label: 'Change freeze', intent: 'warning' },
+    ],
+    referenceLines: [{ value: at(14, 12), label: 'Now', intent: 'danger', dashed: true }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(referenceLineEls(canvasElement)).toHaveLength(1);
+      expect(referenceBandEls(canvasElement)).toHaveLength(1);
+    });
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual(['Change freeze', 'Now']));
+  },
+};
+
+/** A mark sits at the pixel of its time: a timestamp that is a tick sits on its grid line. */
+export const ReferenceMarksSitAtTheirTime: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: CHANGES,
+    referenceBands: [{ from: at(13, 6), to: at(13, 18) }],
+    referenceLines: [{ value: at(14, 0) }],
+  },
+  play: async ({ canvasElement }) => {
+    const near = (pixel: number) =>
+      timeTickPixels(canvasElement).some((x) => Math.abs(x - pixel) < 1);
+    await waitFor(() => {
+      expect(timeTickPixels(canvasElement).length).toBeGreaterThan(2);
+      const [line] = referenceLineEls(canvasElement);
+      expect(near(linePixel(line, 'xAxis'))).toBe(true);
+      const [start, end] = bandSpan(referenceBandEls(canvasElement)[0], 'xAxis');
+      expect(near(start)).toBe(true);
+      expect(near(end)).toBe(true);
+      // The band is 12 hours wide on a 6 hour grid: two steps.
+      const ticks = timeTickPixels(canvasElement);
+      expect(end - start).toBeCloseTo(2 * (ticks[1] - ticks[0]), 0);
+    });
+  },
+};
+
+/** The colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: CHANGES, referenceLines: INTENT_LINES },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <RangeBarChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /**
@@ -219,9 +320,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       },
       { name: 'Normal', data: [{ x: 'B', y: [at(14, 9), at(14, 12)] }] },
     ],
+    referenceLines: [{ value: at(14, 10), label: HOSTILE }],
+    referenceBands: [{ from: at(14, 3), to: at(14, 5), label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     // The first row sits in the top half of the plot.

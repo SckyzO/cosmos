@@ -657,8 +657,9 @@ export const HtmlInLabelsRendersAsText: Story = {
   play: async ({ canvasElement }) => {
     await drawn(canvasElement, 2);
     await expectNoInjectedImage(canvasElement);
-    // The name is cut short on the chart; the tooltip has it whole.
-    await expect(nameTexts(canvasElement)[0]).toBe(HOSTILE.slice(0, 11) + '…');
+    // The name is cut short on the chart; the tooltip has it whole. Each line adds its names
+    // when its own animation ends, so their order in the page is not the series order.
+    await expect(nameTexts(canvasElement)).toContain(HOSTILE.slice(0, 11) + '…');
     await userEvent.tab();
     await waitFor(() => expect(tooltipCard(canvasElement)).not.toBeNull());
     const card = tooltipCard(canvasElement) as HTMLElement;

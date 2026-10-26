@@ -11,17 +11,26 @@ import {
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
+  expectMarksAtTheirValues,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   expectTextFollowsTextSize,
   HOSTILE,
   LegendSides,
   legendTexts,
   loadLateFont,
+  NarrowBox,
   openTooltip,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   surface,
+  themeColor,
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
@@ -297,6 +306,212 @@ export const ReferenceLineInChildren: Story = {
   },
 };
 
+// The fill of every bar of the first series, as the browser resolves it.
+const fills = (root: HTMLElement) =>
+  (barShapes(root)[0] ?? []).map((bar) => resolveColor(getComputedStyle(bar).fill));
+
+const INCIDENTS = [12, 18, 14, 22, 28, 19, 24, 31, 16];
+
+/**
+ * `colorByValue` gives a bar its own color from its value and the index of its
+ * category: here the months above 25 turn to the critical color. Return
+ * `undefined` to keep the series color.
+ */
+export const ColorByValue: Story = {
+  args: {
+    categories: MONTHS,
+    series: [{ name: 'Incidents', data: INCIDENTS }],
+    colorByValue: (value) => (value > 25 ? 'var(--color-status-crit)' : undefined),
+  },
+  play: async ({ canvasElement }) => {
+    const crit = themeColor('--color-status-crit');
+    const brand = themeColor('--color-brand-500');
+    await waitFor(() => {
+      expect(fills(canvasElement)).toEqual(INCIDENTS.map((v) => (v > 25 ? crit : brand)));
+    });
+    // The tooltip chip of a bar is the color of the bar.
+    await openTooltip(canvasElement, 0.83);
+    const chip = tooltipCard(canvasElement)?.querySelector('li span');
+    await expect(resolveColor(getComputedStyle(chip as Element).backgroundColor)).toBe(crit);
+    await closeTooltip(canvasElement);
+  },
+};
+
+/** `distributed` gives every category a color of the palette (`colors` cycles), where a series has one. */
+export const Distributed: Story = {
+  args: {
+    categories: DCS,
+    series: [{ name: 'Active racks', data: [42, 38, 26, 19] }],
+    distributed: true,
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(fills(canvasElement)).toEqual(
+        ['--color-brand-500', '--color-chart-2', '--color-chart-3', '--color-chart-4'].map(
+          themeColor
+        )
+      )
+    );
+  },
+};
+
+/** `colors` sets the palette `distributed` draws from, and starts over after the last. */
+export const DistributedWithColors: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: DCS,
+    series: [{ name: 'Active racks', data: [42, 38, 26, 19] }],
+    distributed: true,
+    colors: ['#10b981', '#f59e0b', '#ef4444'],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(fills(canvasElement)).toEqual(
+        ['#10b981', '#f59e0b', '#ef4444', '#10b981'].map(resolveColor)
+      )
+    );
+  },
+};
+
+/** `negativeColor` colors the bars below zero, for diverging bars. */
+export const NegativeColor: Story = {
+  args: {
+    categories: MONTHS,
+    series: [{ name: 'Net rack change', data: [6, 4, -3, 8, -5, 2, -7, 5, 3] }],
+    negativeColor: 'var(--color-status-crit)',
+  },
+  play: async ({ canvasElement }) => {
+    const crit = themeColor('--color-status-crit');
+    const brand = themeColor('--color-brand-500');
+    await waitFor(() =>
+      expect(fills(canvasElement)).toEqual(
+        [6, 4, -3, 8, -5, 2, -7, 5, 3].map((v) => (v < 0 ? crit : brand))
+      )
+    );
+  },
+};
+
+/** On horizontal bars the negative color applies the same way. */
+export const HorizontalNegativeColor: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    orientation: 'horizontal',
+    categories: DCS,
+    series: [{ name: 'Delta', data: [12, -8, 5, -14] }],
+    negativeColor: 'var(--color-status-warn)',
+  },
+  play: async ({ canvasElement }) => {
+    const warn = themeColor('--color-status-warn');
+    const brand = themeColor('--color-brand-500');
+    await waitFor(() => expect(fills(canvasElement)).toEqual([brand, warn, brand, warn]));
+  },
+};
+
+/** `colorByValue` wins over `negativeColor` and `distributed` when it returns a color. */
+export const ColorByValueWinsOverTheOtherRules: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: DCS,
+    series: [{ name: 'Delta', data: [12, -8, 5, -14] }],
+    distributed: true,
+    negativeColor: '#ef4444',
+    colorByValue: (_value, index) => (index === 1 ? '#10b981' : undefined),
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(fills(canvasElement)).toEqual([
+        themeColor('--color-brand-500'),
+        resolveColor('#10b981'),
+        themeColor('--color-chart-3'),
+        resolveColor('#ef4444'),
+      ])
+    );
+  },
+};
+
+/** `referenceLines` and `referenceBands` read the vertical axis: a budget, a safe range. */
+export const ReferenceLines: Story = {
+  args: {
+    ...SingleSeries.args,
+    yTitle: 'Incidents',
+    referenceBands: [{ from: 0, to: 15, label: 'Within target', intent: 'success' }],
+    referenceLines: [
+      { value: 25, label: 'Budget 25', intent: 'warning', dashed: true },
+      { value: 35, label: 'Breach', intent: 'danger' },
+    ],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('yAxis', { lines: [25, 35], bands: [[0, 15]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual([
+        'Breach',
+        'Budget 25',
+        'Within target',
+      ])
+    );
+    await expect(
+      referenceLineEls(context.canvasElement).map((line) => line.getAttribute('stroke-dasharray'))
+    ).toEqual(['6 4', null]);
+  },
+};
+
+/** On horizontal bars the values run along the horizontal axis, and so do the lines and bands. */
+export const HorizontalReferenceLines: Story = {
+  args: {
+    ...Horizontal.args,
+    xTitle: 'Racks',
+    referenceBands: [{ from: 30, to: 50, label: 'Target', intent: 'success' }],
+    referenceLines: [{ value: 40, label: 'Capacity 40', intent: 'danger', dashed: true }],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('xAxis', { lines: [40], bands: [[30, 50]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual(['Capacity 40', 'Target'])
+    );
+  },
+};
+
+/** The line and band colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...SingleSeries.args,
+    referenceLines: [
+      { value: 8, intent: 'success' },
+      { value: 25, intent: 'warning' },
+      { value: 35, intent: 'danger' },
+      { value: 15 },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+    await expect(referenceBandEls(canvasElement)).toHaveLength(0);
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <BarChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** One legend entry per series, in order. */
@@ -342,9 +557,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: 'Normal', data: [4, 1, 6] },
     ],
     categories: [HOSTILE, 'B', 'C'],
+    referenceLines: [{ value: 5, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await openTooltip(canvasElement, 0.1);

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReferenceLine } from 'recharts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { BoxPlotChart } from './BoxPlotChart';
+import type { ChartReferenceLine } from './types';
 import {
   axisTitles,
   barFills,
@@ -9,13 +10,20 @@ import {
   expectAccessibleChart,
   expectCategoryArrowKeys,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
+  expectMarksAtTheirValues,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithThemeOf,
   HOSTILE,
   LegendSides,
   legendTexts,
+  NarrowBox,
   openTooltip,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   surface,
   tooltipCard,
@@ -203,6 +211,72 @@ export const ReferenceLineInChildren: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
+const INTENT_LINES: ChartReferenceLine[] = [
+  { value: 40, intent: 'success' },
+  { value: 100, intent: 'warning' },
+  { value: 250, intent: 'danger' },
+  { value: 60 },
+];
+
+/**
+ * `referenceLines` and `referenceBands` read the value axis: a latency
+ * budget, and the band the medians should stay in.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    ...ResponseTimes.args,
+    referenceBands: [{ from: 0, to: 60, label: 'Fast', intent: 'success' }],
+    referenceLines: [{ value: 200, label: 'Budget 200 ms', intent: 'danger', dashed: true }],
+  },
+  play: async (context) => {
+    await expectMarksAtTheirValues('yAxis', { lines: [200], bands: [[0, 60]] })(context);
+    await waitFor(() =>
+      expect(referenceLabels(context.canvasElement)).toEqual(['Budget 200 ms', 'Fast'])
+    );
+  },
+};
+
+/** Horizontal boxes run along the horizontal axis, and so do the marks. */
+export const HorizontalReferenceLines: Story = {
+  args: {
+    ...ReferenceLines.args,
+    orientation: 'horizontal',
+  },
+  play: expectMarksAtTheirValues('xAxis', { lines: [200], bands: [[0, 60]] }),
+};
+
+/** The colors come from the theme in each of the four themes. */
+export const ReferenceIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ResponseTimes.args, referenceLines: INTENT_LINES },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+  },
+};
+
+/** The text of a label follows the text size setting. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceLines.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceLines.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <BoxPlotChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 /**
  * The legend and the tooltip are React text: a series name, a category or an
  * axis title with markup shows as written, and nothing is injected.
@@ -229,9 +303,12 @@ export const HtmlInLabelsRendersAsText: Story = {
         ],
       },
     ],
+    referenceLines: [{ value: 8, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await openTooltip(canvasElement, 0.3);

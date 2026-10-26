@@ -5,17 +5,27 @@ import { SERIES_FALLBACKS } from './core/colors';
 import { LineAreaChart } from './LineAreaChart';
 import {
   axisTitles,
+  bandSpan,
   closeTooltip,
   expectAccessibleChart,
   expectEmptyMessage,
+  expectFitsNarrowBox,
   expectLegendsOnTheirSide,
+  expectLineIntentColor,
   expectNoInjectedImage,
+  expectReferenceLabelsFollowTextSize,
   expectRepaintsWithTheme,
   expectTextFollowsTextSize,
   HOSTILE,
   LegendSides,
   legendTexts,
+  linePixel,
+  NarrowBox,
   openTooltip,
+  pixelOnAxis,
+  referenceBandEls,
+  referenceLabels,
+  referenceLineEls,
   resolveColor,
   seriesStrokes,
   surface,
@@ -227,6 +237,287 @@ export const ReferenceLineInChildren: Story = {
   },
 };
 
+// The point a series curve ends on, from its path: the last pair of numbers.
+const curveEnd = (curve: SVGPathElement) => {
+  const numbers = (curve.getAttribute('d') ?? '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  return { x: numbers[numbers.length - 2], y: numbers[numbers.length - 1] };
+};
+
+const SERIES_COUNT = 3;
+
+const curves = (root: HTMLElement) => [
+  ...root.querySelectorAll<SVGPathElement>('.recharts-area-curve'),
+];
+
+/** `variant="line"` draws the lines alone, with no fill under them. */
+export const LineVariant: Story = {
+  args: { ...MultiSeries.args, variant: 'line' },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    // No gradient, and the area under each line has no fill.
+    await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(0);
+    for (const area of canvasElement.querySelectorAll('.recharts-area-area')) {
+      await expect(getComputedStyle(area).fill).toBe('none');
+    }
+  },
+};
+
+/** The default is still the area, with a gradient fill under each line. */
+export const AreaIsTheDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(SERIES_COUNT);
+    for (const area of canvasElement.querySelectorAll('.recharts-area-area')) {
+      await expect(getComputedStyle(area).fill).toMatch(/^url\(/);
+    }
+  },
+};
+
+/**
+ * `stacked` piles the series on each other, so the top line is their sum: the
+ * share of each in a total.
+ */
+export const Stacked: Story = {
+  args: {
+    categories: HOURS,
+    stacked: true,
+    yTitle: 'Requests / s',
+    series: [
+      { name: 'Reads', data: [120, 90, 160, 210, 180, 240, 200, 170, 130] },
+      { name: 'Writes', data: [40, 30, 70, 90, 80, 110, 90, 60, 50] },
+      { name: 'Other', data: [20, 25, 15, 30, 35, 25, 40, 30, 20] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    // The last point of the top line sits at the sum 130 + 50 + 20 = 200.
+    await waitFor(() => {
+      const top = curves(canvasElement)[2];
+      expect(curveEnd(top).y).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 200), 0);
+    });
+  },
+};
+
+/** Without `stacked`, the same series are drawn each from zero. */
+export const NotStackedByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Stacked.args, stacked: false },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    await waitFor(() => {
+      const top = curves(canvasElement)[2];
+      expect(curveEnd(top).y).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 20), 0);
+    });
+  },
+};
+
+/** `markers` draws a dot on every point. */
+export const Markers: Story = {
+  args: { ...MultiSeries.args, variant: 'line', markers: true },
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.recharts-area-dot')).toHaveLength(
+        SERIES_COUNT * HOURS.length
+      )
+    );
+  },
+};
+
+/** No dot is drawn by default. */
+export const NoMarkersByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: MultiSeries.args,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
+    await expect(canvasElement.querySelectorAll('.recharts-area-dot')).toHaveLength(0);
+  },
+};
+
+/**
+ * A series `style` is `solid` (the default smooth curve), `dashed`, or `step`,
+ * a line that jumps from one value to the next: a quota, a replica count.
+ */
+export const SeriesStyles: Story = {
+  args: {
+    categories: HOURS,
+    variant: 'line',
+    yTitle: 'Pods',
+    series: [
+      { name: 'Used', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] },
+      { name: 'Forecast', style: 'dashed', data: [14, 18, 24, 29, 25, 21, 24, 30, 32] },
+      { name: 'Quota', style: 'step', data: [20, 20, 25, 25, 30, 30, 35, 35, 40] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
+    const [solid, dashed, step] = curves(canvasElement);
+    await expect(solid.getAttribute('stroke-dasharray')).toBeNull();
+    await expect(dashed.getAttribute('stroke-dasharray')).toBe('6 4');
+    // A step line has square corners only; the others are smooth curves.
+    await expect(step.getAttribute('d')).not.toContain('C');
+    await expect(solid.getAttribute('d')).toContain('C');
+    await expect(dashed.getAttribute('d')).toContain('C');
+  },
+};
+
+/**
+ * `referenceLines` draws a line at a value of the vertical axis, `intent`
+ * picks its color from the theme (`neutral` by default), `dashed` dashes it and
+ * `label` names it. A line the data does not reach makes the axis reach it.
+ */
+export const ReferenceLines: Story = {
+  args: {
+    series: [{ name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] }],
+    categories: HOURS,
+    yTitle: 'CPU usage (%)',
+    referenceLines: [
+      { value: 40, label: 'Critical 40%', intent: 'danger' },
+      { value: 28, label: 'Warning 28%', intent: 'warning', dashed: true },
+      { value: 15, label: 'Baseline', dashed: true },
+      { value: 8, label: 'Floor', intent: 'success' },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await waitFor(() =>
+      expect(referenceLabels(canvasElement)).toEqual([
+        'Baseline',
+        'Critical 40%',
+        'Floor',
+        'Warning 28%',
+      ])
+    );
+    const lines = referenceLineEls(canvasElement);
+    // Only the lines asked to be dashed are.
+    await expect(lines.map((line) => line.getAttribute('stroke-dasharray'))).toEqual([
+      null,
+      '6 4',
+      '6 4',
+      null,
+    ]);
+  },
+};
+
+/** Each intent takes its color from the theme, and follows a theme switch. */
+export const ReferenceLineIntentsFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...ReferenceLines.args,
+    referenceLines: [
+      { value: 8, intent: 'success' },
+      { value: 28, intent: 'warning' },
+      { value: 40, intent: 'danger' },
+      { value: 15 },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
+    await expectLineIntentColor(canvasElement, 0, '--color-success-500');
+    await expectLineIntentColor(canvasElement, 1, '--color-status-warn');
+    await expectLineIntentColor(canvasElement, 2, '--color-status-crit');
+    await expectLineIntentColor(canvasElement, 3, '--color-text-muted');
+  },
+};
+
+/** A line sits at the pixel its value has on the axis: the ticks and the line share one scale. */
+export const ReferenceLinesSitAtTheirValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Basic.args,
+    referenceLines: [{ value: 10 }, { value: 22.5 }, { value: 30 }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const lines = referenceLineEls(canvasElement);
+      expect(lines).toHaveLength(3);
+      [10, 22.5, 30].forEach((value, i) =>
+        expect(linePixel(lines[i], 'yAxis')).toBeCloseTo(
+          pixelOnAxis(canvasElement, 'yAxis', value),
+          0
+        )
+      );
+    });
+  },
+};
+
+/** A line beyond the data stretches the axis to reach it, instead of vanishing. */
+export const ReferenceLineBeyondTheDataExtendsTheAxis: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...Basic.args, referenceLines: [{ value: 80, label: 'Limit 80%', intent: 'danger' }] },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const [line] = referenceLineEls(canvasElement);
+      expect(line).toBeDefined();
+      const ticks = tickTexts(canvasElement, 'yAxis').map(Number);
+      expect(Math.max(...ticks)).toBeGreaterThanOrEqual(80);
+      expect(linePixel(line, 'yAxis')).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', 80), 0);
+    });
+  },
+};
+
+/**
+ * `referenceBands` shades the plot between two values, behind the series, in
+ * the color of its `intent`.
+ */
+export const ReferenceBands: Story = {
+  args: {
+    series: [
+      { name: 'CPU', data: [12, 19, 23, 31, 22, 18, 25, 33, 30] },
+      { name: 'Memory', data: [34, 36, 41, 39, 44, 47, 43, 49, 52] },
+    ],
+    categories: HOURS,
+    yTitle: 'Usage (%)',
+    referenceBands: [
+      { from: 0, to: 20, label: 'Idle', intent: 'success' },
+      { from: 20, to: 40, label: 'Busy' },
+      { from: 40, to: 60, label: 'Saturated', intent: 'danger' },
+    ],
+    referenceLines: [{ value: 40, label: 'Alert at 40%', intent: 'warning', dashed: true }],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(referenceBandEls(canvasElement)).toHaveLength(3));
+    await waitFor(() =>
+      expect(referenceLabels(canvasElement)).toEqual(['Alert at 40%', 'Busy', 'Idle', 'Saturated'])
+    );
+    // A band covers its values on the axis, from the lower to the higher.
+    const bands = referenceBandEls(canvasElement);
+    [
+      [0, 20],
+      [20, 40],
+      [40, 60],
+    ].forEach(([from, to], i) => {
+      const [top, bottom] = bandSpan(bands[i], 'yAxis');
+      expect(top).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', to), 0);
+      expect(bottom).toBeCloseTo(pixelOnAxis(canvasElement, 'yAxis', from), 0);
+    });
+    // The band sits behind the series: the area is drawn after it.
+    const order = [...canvasElement.querySelectorAll('.recharts-reference-area, .recharts-area')];
+    const isBand = order.map((el) => el.classList.contains('recharts-reference-area'));
+    await expect(isBand.indexOf(false)).toBeGreaterThan(isBand.lastIndexOf(true));
+  },
+};
+
+/** The text of a label follows the text size setting, as the axes do. */
+export const ReferenceLabelsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: ReferenceBands.args,
+  play: ({ canvasElement }) => expectReferenceLabelsFollowTextSize(canvasElement),
+};
+
+/** Labels do not widen the page on a narrow screen. */
+export const ReferenceLabelsFitNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ReferenceBands.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <LineAreaChart {...args} />
+    </NarrowBox>
+  ),
+  play: expectFitsNarrowBox,
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 /** A multi-series chart shows one legend entry per series, in order. */
@@ -320,9 +611,12 @@ export const HtmlInLabelsRendersAsText: Story = {
       { name: 'B', data: [1, 2, 4] },
     ],
     categories: [HOSTILE, 'B', 'C'],
+    referenceLines: [{ value: 4, label: HOSTILE }],
+    referenceBands: [{ from: 1, to: 2, label: HOSTILE }],
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toContain(HOSTILE));
+    await waitFor(() => expect(referenceLabels(canvasElement)).toEqual([HOSTILE, HOSTILE]));
     await expectNoInjectedImage(canvasElement);
     await waitFor(() => expect(axisTitles(canvasElement)).toEqual({ x: [HOSTILE], y: [HOSTILE] }));
     await openTooltip(canvasElement, 0.07);

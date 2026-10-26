@@ -1,8 +1,8 @@
 import { PolarAngleAxis, RadialBar, RadialBarChart, usePlotArea } from 'recharts';
 import { ANIMATION } from './core/animation';
-import { MUTED, SERIES, TEXT, TRACK } from './core/colors';
+import { MUTED, PANEL, SERIES, TEXT, TRACK } from './core/colors';
 import { frameProps } from './core/frame';
-import { clampTo, gaugeName, percent, statusColor } from './core/gauge';
+import { arcMark, clampTo, gaugeName, percent, rangeShare, statusColor } from './core/gauge';
 import { useElementWidth } from './core/useElementWidth';
 import type { ChartProps } from './types';
 
@@ -35,6 +35,12 @@ export type SemiCircleGaugeProps = Omit<ChartProps, 'height'> & {
   formatValue?: (value: number) => string;
   /** Write `min` and `max`, formatted, under the two ends of the arc. Default off. */
   showRange?: boolean;
+  /**
+   * A goal on the scale of `min`–`max`, drawn as a mark across the arc. Out of range, the mark
+   * stops at an end of the arc, as the arc does. The target, formatted by `formatValue`, is read
+   * after the value in the name of the gauge.
+   */
+  target?: number;
   /**
    * The most the gauge takes, in pixels (default 120). The arc is as wide as the box allows, up
    * to this height: in a narrower box the gauge is shorter, never taller.
@@ -105,6 +111,26 @@ const Face = ({ radius, value, label, showRange, range }: FaceProps) => {
   );
 };
 
+type TargetProps = { radius: number; thickness: number; share: number };
+
+// A radial mark across the arc, a little longer than it is thick: a dark line over a
+// halo in the card's color, so it reads on the arc, on the track and on the card.
+const Target = ({ radius, thickness, share }: TargetProps) => {
+  const area = usePlotArea();
+  if (!area) return null;
+  const mark = arcMark(
+    { cx: area.x + area.width / 2, cy: radius },
+    { inner: radius - thickness - 4, outer: radius + 4 },
+    share
+  );
+  return (
+    <g data-chart-target="" pointerEvents="none" strokeLinecap="round">
+      <line {...mark} stroke={PANEL} strokeWidth={6} />
+      <line {...mark} stroke={TEXT} strokeWidth={3} />
+    </g>
+  );
+};
+
 export const SemiCircleGauge = ({
   value,
   label = '',
@@ -115,6 +141,7 @@ export const SemiCircleGauge = ({
   critAt,
   formatValue = percent,
   showRange = false,
+  target,
   ariaLabel,
   children,
   height = 120,
@@ -138,7 +165,9 @@ export const SemiCircleGauge = ({
           {...frameProps({
             height: radius + row,
             width: '100%',
-            ariaLabel: gaugeName(ariaLabel ?? (label || 'Gauge'), text),
+            ariaLabel:
+              gaugeName(ariaLabel ?? (label || 'Gauge'), text) +
+              (target === undefined ? '' : `, target ${formatValue(target)}`),
             keyboard: false,
           })}
           data={[{ name: label || 'value', value: clampTo(value, min, max) }]}
@@ -166,6 +195,9 @@ export const SemiCircleGauge = ({
             showRange={showRange}
             range={[formatValue(min), formatValue(max)]}
           />
+          {target !== undefined && (
+            <Target radius={radius} thickness={thickness} share={rangeShare(target, min, max)} />
+          )}
           {children}
         </RadialBarChart>
       )}

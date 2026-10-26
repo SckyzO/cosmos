@@ -6,7 +6,14 @@ import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
-import { centerText, resolveColor, surface, switchTheme, themeColor } from './storybook-recharts';
+import {
+  centerText,
+  expectColorInThemes,
+  resolveColor,
+  surface,
+  switchTheme,
+  themeColor,
+} from './storybook-recharts';
 
 const celsius = (v: number) => `${v} °C`;
 const watts = (v: number) => `${v} W`;
@@ -163,6 +170,161 @@ export const SemiCircleRange: Story = {
       </Card>
     </div>
   ),
+};
+
+/**
+ * `target` marks a goal on the arc, on the same scale as the value: here 80%
+ * of a load that is at 67%. The target is read after the value in the name of
+ * the gauge.
+ */
+export const SemiCircleTarget: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="Load">
+        <SemiCircleGauge value={67} label="Load" target={80} />
+      </Card>
+      <Card title="Power draw">
+        <SemiCircleGauge
+          value={1450}
+          max={2000}
+          label="PDU 3"
+          formatValue={watts}
+          target={1800}
+          showRange
+        />
+      </Card>
+      <Card title="Inlet temperature">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          target={22}
+          warnAt={30}
+          critAt={38}
+          showRange
+        />
+      </Card>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(3)
+    );
+    const names = [...canvasElement.querySelectorAll('svg.recharts-surface')].map((svg) =>
+      svg.getAttribute('aria-label')
+    );
+    await expect(names).toEqual([
+      'Load: 67%, target 80%',
+      'PDU 3: 1450 W, target 1800 W',
+      'Rack A12: 27 °C, target 22 °C',
+    ]);
+  },
+};
+
+// The angle of the target mark, in degrees counted from the right end of the arc
+// (0 on the right, 90 straight up, 180 on the left), from the direction of the line.
+const targetAngle = (root: HTMLElement) => {
+  const line = root.querySelector('[data-chart-target] line:last-child') as SVGLineElement;
+  const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map((a) => Number(line.getAttribute(a)));
+  return (Math.atan2(y1 - y2, x2 - x1) * 180) / Math.PI;
+};
+
+/** The mark stands at the angle of its place in the range: 80% is 36° from the right end. */
+export const SemiCircleTargetAngle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="percent" data-angle="36">
+        <SemiCircleGauge value={67} target={80} />
+      </div>
+      <div data-case="range" data-angle="90">
+        <SemiCircleGauge value={20} min={10} max={50} target={30} formatValue={celsius} />
+      </div>
+      <div data-case="third" data-angle="120">
+        <SemiCircleGauge value={20} max={300} target={100} formatValue={watts} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(3)
+    );
+    for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-angle]')) {
+      await waitFor(() =>
+        expect(targetAngle(gauge), gauge.dataset.case).toBeCloseTo(Number(gauge.dataset.angle), 0)
+      );
+    }
+  },
+};
+
+/** A target out of the range stops at an end of the arc, as the arc of a value does. */
+export const SemiCircleTargetOutOfRange: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-case="above" data-angle="0">
+        <SemiCircleGauge value={50} max={2000} target={2600} formatValue={watts} />
+      </div>
+      <div data-case="below" data-angle="180">
+        <SemiCircleGauge value={700} min={500} max={2000} target={120} formatValue={watts} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(2)
+    );
+    for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-angle]')) {
+      await waitFor(() =>
+        expect(targetAngle(gauge), gauge.dataset.case).toBeCloseTo(Number(gauge.dataset.angle), 0)
+      );
+    }
+    // The name still gives the target as it is.
+    await expect(
+      surface(canvasElement.querySelector('[data-case="above"]') as HTMLElement)
+    ).toHaveAttribute('aria-label', 'Gauge: 50 W, target 2600 W');
+  },
+};
+
+/** The target is part of the name of the gauge, after the value; `ariaLabel` still replaces the label. */
+export const SemiCircleTargetJoinsTheName: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SemiCircleGauge value={67} label="Load" ariaLabel="Cluster load" target={80} />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(surface(canvasElement)).toHaveAttribute('aria-label', 'Cluster load: 67%, target 80%')
+    );
+    await expect(surface(canvasElement)).toHaveAttribute('role', 'img');
+  },
+};
+
+/** Without `target`, nothing is drawn on the arc and the name is as before. */
+export const SemiCircleHasNoTargetByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SemiCircleGauge value={67} label="Load" />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(surface(canvasElement)).toHaveAttribute('aria-label', 'Load: 67%'));
+    await expect(canvasElement.querySelector('[data-chart-target]')).toBeNull();
+  },
+};
+
+/** The mark is in the text color of the theme, over a halo in the card's color, in each of the four themes. */
+export const SemiCircleTargetFollowsTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SemiCircleGauge value={67} label="Load" target={80} />,
+  play: async ({ canvasElement }) => {
+    const mark = () =>
+      canvasElement.querySelector('[data-chart-target] line:last-child') as SVGLineElement | null;
+    await waitFor(() => expect(mark()).not.toBeNull());
+    await expectColorInThemes(() => mark() && getComputedStyle(mark() as Element).stroke, {
+      '': '--color-text-primary',
+      sand: '--color-text-primary',
+      dark: '--color-text-primary',
+      'deep-blue': '--color-text-primary',
+    });
+  },
 };
 
 /** `StrokedGauge` splits the arc into dashes with round caps. */
