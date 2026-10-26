@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useEffect, useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { RadarChart } from './RadarChart';
+import { RadarChart, type RadarChartProps } from './RadarChart';
 import {
   closeTooltip,
   expectEmptyMessage,
@@ -158,6 +159,45 @@ export const PlotFillsItsBox: Story = {
       expect(widths.length).toBeGreaterThan(0);
       // The outer polygon is a pentagon: its width is 1.9 times its radius.
       expect(Math.max(...widths)).toBeGreaterThan(235);
+    });
+  },
+};
+
+// Two radars side by side, the second with no series until it has mounted.
+const SERIES = CompareDatacenters.args?.series ?? [];
+const LateSeries = () => {
+  const [late, setLate] = useState<RadarChartProps['series']>([]);
+  useEffect(() => setLate(SERIES), []);
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div data-testid="from-start">
+        <RadarChart {...CompareDatacenters.args} series={SERIES} />
+      </div>
+      <div data-testid="after-empty">
+        <RadarChart {...CompareDatacenters.args} series={late} />
+      </div>
+    </div>
+  );
+};
+
+/** A radar that mounts empty and then gets its series is sized like one that had them from the start. */
+export const SizedAfterAnEmptyStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...CompareDatacenters.args },
+  render: () => <LateSeries />,
+  play: async ({ canvasElement }) => {
+    const outer = (id: string) =>
+      Math.max(
+        0,
+        ...[
+          ...canvasElement.querySelectorAll(
+            `[data-testid="${id}"] .recharts-polar-grid-concentric-polygon`
+          ),
+        ].map((el) => el.getBoundingClientRect().width)
+      );
+    await waitFor(() => {
+      expect(outer('from-start')).toBeGreaterThan(0);
+      expect(Math.abs(outer('after-empty') - outer('from-start'))).toBeLessThan(1);
     });
   },
 };
