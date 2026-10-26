@@ -24,10 +24,34 @@ import { SidebarToggle } from './SidebarToggle';
 // context — useful for one-off overrides or stories that mount a child in
 // isolation.
 
-const SidebarContext = createContext<{ collapsed: boolean; inDrawer: boolean }>({
+/** How the active row is drawn: a tinted pill (default) or a filled one. */
+export type SidebarActiveStyle = 'tint' | 'solid';
+
+// How far rows sit from the edge of their container: 20 px (`wide`), or less where 20 doesn't fit
+// or is already given. `tight` (8 px): the collapsed rail, the collapsed sub-menu's panel, and the
+// footer, whose own 12 px padding brings its rows to 20 px. `none`: the collapsed footer, whose
+// padding alone fills the 72 px rail.
+type RowInset = 'wide' | 'tight' | 'none';
+
+type SidebarContextValue = {
+  collapsed: boolean;
+  inDrawer: boolean;
+  inset: RowInset;
+  activeStyle: SidebarActiveStyle;
+};
+
+const SidebarContext = createContext<SidebarContextValue>({
   collapsed: false,
   inDrawer: false,
+  inset: 'wide',
+  activeStyle: 'tint',
 });
+
+// A row collapsed on its own (the `collapsed` prop) can't keep the wide margin.
+const useRowInset = (collapsed: boolean): RowInset => {
+  const { inset } = useContext(SidebarContext);
+  return inset === 'wide' && collapsed ? 'tight' : inset;
+};
 
 const useSidebarCollapsed = (override?: boolean): boolean => {
   const ctx = useContext(SidebarContext);
@@ -38,10 +62,35 @@ const useSidebarCollapsed = (override?: boolean): boolean => {
 // nested items indent without a `depth` prop.
 const SidebarDepthContext = createContext(0);
 
+// Margin of a row, the width a `<button>` row needs to keep it (an `<a>` row is a block and fills
+// the rest by itself), and the margin in px.
+const ROW_INSET: Record<RowInset, { margin: string; width: string; px: number }> = {
+  wide: { margin: 'mx-5', width: 'w-[calc(100%-2.5rem)]', px: 20 },
+  tight: { margin: 'mx-2', width: 'w-[calc(100%-1rem)]', px: 8 },
+  none: { margin: 'mx-0', width: 'w-full', px: 0 },
+};
+
 // Left padding of a row at `depth`, and where the guide line of its children
-// sits (under the centre of the row's 20 px icon, inside the 8 px row margin).
+// sits (under the centre of the row's 20 px icon, inside the row margin).
 const rowPadding = (depth: number) => 12 + depth * 20;
-const guideLeft = (depth: number) => 8 + rowPadding(depth) + 10;
+const guideLeft = (depth: number, inset: RowInset) => ROW_INSET[inset].px + rowPadding(depth) + 10;
+
+const ACTIVE_ROW: Record<SidebarActiveStyle, string> = {
+  tint: 'bg-brand-500/10 text-brand-600 dark:text-brand-400',
+  solid: 'bg-brand-500 text-white',
+};
+const IDLE_ROW =
+  'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5';
+
+/** Line drawn above the footer and the collapse row. */
+export type SidebarFooterDivider = 'full' | 'inset' | 'none';
+
+const FOOTER_DIVIDER: Record<SidebarFooterDivider, string> = {
+  full: 'border-t border-[var(--color-border)]',
+  inset:
+    'relative before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-[var(--color-border)]',
+  none: '',
+};
 
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
@@ -61,6 +110,13 @@ export type SidebarProps = {
   children: ReactNode;
   /** Footer content (sticks to bottom — e.g. user profile + collapse btn). */
   footer?: ReactNode;
+  /**
+   * The line above the footer and the collapse button: `full` (default), `inset` (20 px in from
+   * each edge) or `none`.
+   */
+  footerDivider?: SidebarFooterDivider;
+  /** How the active row is drawn: `tint` (default) or `solid` (filled with the accent). */
+  activeStyle?: SidebarActiveStyle;
   /**
    * Renders a collapse button (a `SidebarToggle`, `panel` variant) at the very
    * bottom, under `footer`, and fires with the next state when it is clicked;
@@ -94,6 +150,8 @@ const SidebarRoot = ({
   collapsedWidth = 72,
   children,
   footer,
+  footerDivider = 'full',
+  activeStyle = 'tint',
   onCollapsedChange,
   className,
 }: SidebarProps) => {
@@ -114,8 +172,14 @@ const SidebarRoot = ({
   // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
   const showToggle =
     !inDrawer && (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
+  const context: SidebarContextValue = {
+    collapsed,
+    inDrawer,
+    inset: collapsed ? 'tight' : 'wide',
+    activeStyle,
+  };
   return (
-    <SidebarContext.Provider value={{ collapsed, inDrawer }}>
+    <SidebarContext.Provider value={context}>
       <nav
         id={navId}
         aria-label="Main navigation"
@@ -130,12 +194,14 @@ const SidebarRoot = ({
       >
         <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
         {footer && (
-          <div className="shrink-0 overflow-hidden border-t border-[var(--color-border)] p-3">
-            {footer}
+          <div className={clsx('shrink-0 overflow-hidden p-3', FOOTER_DIVIDER[footerDivider])}>
+            <SidebarContext.Provider value={{ ...context, inset: collapsed ? 'none' : 'tight' }}>
+              {footer}
+            </SidebarContext.Provider>
           </div>
         )}
         {showToggle && (
-          <div className="shrink-0 border-t border-[var(--color-border)] px-2 py-2">
+          <div className={clsx('shrink-0 px-2 py-2', FOOTER_DIVIDER[footerDivider])}>
             {shell ? (
               <SidebarToggle variant="panel" onCollapsedChange={onCollapsedChange} />
             ) : (
@@ -171,10 +237,27 @@ export type SidebarBrandProps = {
   /** Override the inherited collapsed state (defaults to `useContext`). */
   collapsed?: boolean;
   /**
+   * Draws a line under the brand, at the height of the Topbar's bottom line. Default `false`: the
+   * Topbar's line stops at the sidebar's edge.
+   */
+  divider?: boolean;
+  /**
+   * The square behind `logo`: `tint` (default, the accent at 10 %), `solid` (filled with the
+   * accent, the logo in white) or `none` (no square: the logo as given).
+   */
+  logoStyle?: SidebarLogoStyle;
+  /**
    * Ref to the brand's root: an `<a>` when `href` is set, a `<button>` with
    * `onClick`, otherwise a plain `<div>` (not focusable).
    */
   ref?: Ref<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>;
+};
+
+export type SidebarLogoStyle = 'tint' | 'solid' | 'none';
+
+const LOGO_SQUARE: Record<Exclude<SidebarLogoStyle, 'none'>, string> = {
+  tint: 'bg-brand-500/10 text-brand-500',
+  solid: 'bg-brand-500 text-white',
 };
 
 const SidebarBrand = ({
@@ -184,6 +267,8 @@ const SidebarBrand = ({
   href,
   onClick,
   collapsed: collapsedProp,
+  divider = false,
+  logoStyle = 'tint',
   ref,
 }: SidebarBrandProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
@@ -193,11 +278,19 @@ const SidebarBrand = ({
   const inDrawer = useContext(SidebarContext).inDrawer && shell !== null;
   const inner = (
     <>
-      {logo && (
-        <div className="bg-brand-500/10 text-brand-500 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          {logo}
-        </div>
-      )}
+      {logo &&
+        (logoStyle === 'none' ? (
+          <span className="flex shrink-0 items-center">{logo}</span>
+        ) : (
+          <div
+            className={clsx(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+              LOGO_SQUARE[logoStyle]
+            )}
+          >
+            {logo}
+          </div>
+        ))}
       <div
         className={clsx(
           'min-w-0 overflow-hidden text-left transition-[max-width,opacity] duration-300',
@@ -213,11 +306,14 @@ const SidebarBrand = ({
   );
 
   const baseClass = clsx(
-    'focus-visible:focus-indicator flex h-[72px] items-center gap-3 px-4 focus-visible:ring-inset',
-    inDrawer ? 'min-w-0 flex-1' : 'shrink-0 border-b border-[var(--color-border)]'
+    'focus-visible:focus-indicator flex h-[72px] items-center gap-3 px-5 focus-visible:ring-inset',
+    inDrawer
+      ? 'min-w-0 flex-1'
+      : clsx('shrink-0', divider && 'border-b border-[var(--color-border)]')
   );
-  // The marker sits on the outermost element of the row (`Sidebar.Section` reads it).
-  const marker = inDrawer ? undefined : '';
+  // The marker sits on the outermost element of the row, and only under a line: a
+  // `Sidebar.Section` with its own line right below then leaves it out.
+  const marker = inDrawer || !divider ? undefined : '';
 
   let brand;
   if (href) {
@@ -254,8 +350,11 @@ const SidebarBrand = ({
 
   return (
     <div
-      className="flex h-[72px] shrink-0 items-center border-b border-[var(--color-border)] pr-3"
-      data-sidebar-brand=""
+      className={clsx(
+        'flex h-[72px] shrink-0 items-center pr-3',
+        divider && 'border-b border-[var(--color-border)]'
+      )}
+      data-sidebar-brand={divider ? '' : undefined}
     >
       {brand}
       <button
@@ -315,14 +414,14 @@ const SidebarItem = ({
   const depth = depthProp ?? contextDepth;
   // Picking an item in the Shell's drawer navigates: the drawer closes behind it.
   const shell = useShell();
-  const closeDrawer =
-    useContext(SidebarContext).inDrawer && shell ? () => shell.setOpen(false) : undefined;
+  const ctx = useContext(SidebarContext);
+  const closeDrawer = ctx.inDrawer && shell ? () => shell.setOpen(false) : undefined;
+  const inset = useRowInset(collapsed);
   const baseClass = clsx(
-    'group focus-visible:focus-indicator mx-2 flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors',
+    'group focus-visible:focus-indicator flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors',
+    ROW_INSET[inset].margin,
     collapsed ? 'justify-center px-2' : 'px-3',
-    active
-      ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-      : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
+    active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
   );
   const style = !collapsed && depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined;
 
@@ -363,7 +462,7 @@ const SidebarItem = ({
         closeDrawer?.();
       }}
       aria-label={name}
-      className={clsx(baseClass, 'w-[calc(100%-1rem)] text-left')}
+      className={clsx(baseClass, ROW_INSET[inset].width, 'text-left')}
       style={style}
       aria-current={active ? 'page' : undefined}
       data-sidebar-item=""
@@ -408,12 +507,12 @@ export type SidebarSubMenuProps = {
   children: ReactNode;
 };
 
-const SUBMENU_ROW = (active: boolean) =>
+const SUBMENU_ROW = (active: boolean, activeStyle: SidebarActiveStyle, inset: RowInset) =>
   clsx(
-    'group focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg py-2 text-sm font-medium transition-colors',
-    active
-      ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-      : 'text-[var(--color-text-secondary)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5'
+    'group focus-visible:focus-indicator flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors',
+    ROW_INSET[inset].margin,
+    ROW_INSET[inset].width,
+    active ? ACTIVE_ROW[activeStyle] : IDLE_ROW
   );
 
 const SidebarSubMenu = ({
@@ -428,6 +527,8 @@ const SidebarSubMenu = ({
   children,
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const ctx = useContext(SidebarContext);
+  const inset = useRowInset(collapsed);
   const depth = useContext(SidebarDepthContext);
   const [open, setOpen] = useControllableState({
     value: openProp,
@@ -445,18 +546,25 @@ const SidebarSubMenu = ({
         <Popover.Trigger
           title={label}
           aria-label={label}
-          className={clsx(SUBMENU_ROW(active), 'justify-center px-2')}
+          className={clsx(SUBMENU_ROW(active, ctx.activeStyle, inset), 'justify-center px-2')}
         >
           <Icon className="h-5 w-5 shrink-0" />
         </Popover.Trigger>
         <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
-          <SidebarContext.Provider value={{ collapsed: false, inDrawer: false }}>
+          <SidebarContext.Provider
+            value={{
+              collapsed: false,
+              inDrawer: false,
+              inset: 'tight',
+              activeStyle: ctx.activeStyle,
+            }}
+          >
             <SidebarDepthContext.Provider value={0}>
               <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
                 {label}
               </p>
               <div
-                className="-mx-2 space-y-0.5"
+                className="-mx-2"
                 onClick={(e) => {
                   if ((e.target as HTMLElement).closest('[data-sidebar-item]'))
                     setFlyoutOpen(false);
@@ -477,7 +585,7 @@ const SidebarSubMenu = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={clsx(SUBMENU_ROW(active), 'gap-3 px-3 text-left')}
+        className={clsx(SUBMENU_ROW(active, ctx.activeStyle, inset), 'gap-3 px-3 text-left')}
         style={depth > 0 ? { paddingLeft: rowPadding(depth) } : undefined}
       >
         <Icon className="h-5 w-5 shrink-0" />
@@ -491,11 +599,11 @@ const SidebarSubMenu = ({
         />
       </button>
       {open && (
-        <div className="relative mt-0.5 space-y-0.5">
+        <div className="relative">
           <span
             aria-hidden
             className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-            style={{ left: guideLeft(depth) }}
+            style={{ left: guideLeft(depth, inset) }}
           />
           <SidebarDepthContext.Provider value={depth + 1}>{children}</SidebarDepthContext.Provider>
         </div>
@@ -546,38 +654,75 @@ const SidebarGroup = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-3xs focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
+        className="text-2xs focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 py-1.5 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {label}
       </button>
-      {open && <div className="space-y-0.5">{children}</div>}
+      {open && <div>{children}</div>}
     </div>
   );
 };
 
 // ─── Sidebar.Section ──────────────────────────────────────────────────────────
-// Visual separator + optional non-collapsible label. Label hides automatically
-// when the sidebar is collapsed. Right under the Brand, whose bottom border
-// already separates it, the section draws no line of its own: two lines 8px
-// apart would sit there otherwise.
+// A titled block of rows, set apart by space (16 px) rather than a line. The title hides when the
+// sidebar is collapsed, where a "···" mark keeps the blocks apart. With `divider`, a line opens the
+// section instead and stays alone when collapsed. Right under a Brand that draws its own line, a
+// divided section leaves its line out: two lines 8px apart would sit there otherwise.
 
 export type SidebarSectionProps = {
   label?: string;
+  /**
+   * Opens the section with a line, which stays alone when the sidebar is collapsed. Default
+   * `false`: space sets the section apart, and a "···" mark when collapsed.
+   */
+  divider?: boolean;
   collapsed?: boolean;
   children: ReactNode;
 };
 
-const SidebarSection = ({ label, collapsed: collapsedProp, children }: SidebarSectionProps) => {
+const SectionTitle = ({ label, className }: { label: string; className: string }) => (
+  <p
+    className={clsx(
+      'text-2xs px-5 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase',
+      className
+    )}
+  >
+    {label}
+  </p>
+);
+
+const SidebarSection = ({
+  label,
+  divider = false,
+  collapsed: collapsedProp,
+  children,
+}: SidebarSectionProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  if (divider) {
+    return (
+      <div className="my-2 border-t border-[var(--color-border)] pt-2 [[data-sidebar-brand]+&]:mt-0 [[data-sidebar-brand]+&]:border-t-0">
+        {label && !collapsed && <SectionTitle label={label} className="py-1.5" />}
+        <div>{children}</div>
+      </div>
+    );
+  }
+  // The "···" mark (40 px) takes the place of the title and the space above it (38 px), so rows
+  // barely move when the sidebar collapses.
   return (
-    <div className="my-2 border-t border-[var(--color-border)] pt-2 [[data-sidebar-brand]+&]:mt-0 [[data-sidebar-brand]+&]:border-t-0">
-      {label && !collapsed && (
-        <p className="text-3xs px-5 py-1.5 font-bold tracking-wider text-[var(--color-text-muted)] uppercase">
-          {label}
-        </p>
+    <div className={collapsed ? undefined : 'mt-4'}>
+      {collapsed ? (
+        <div className="flex justify-center py-2 text-[var(--color-text-muted)]" aria-hidden>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="6" cy="12" r="1.75" />
+            <circle cx="12" cy="12" r="1.75" />
+            <circle cx="18" cy="12" r="1.75" />
+          </svg>
+        </div>
+      ) : (
+        label && <SectionTitle label={label} className="mb-1.5" />
       )}
-      <div className="space-y-0.5">{children}</div>
+      <div>{children}</div>
     </div>
   );
 };
