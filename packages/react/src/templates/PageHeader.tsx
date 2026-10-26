@@ -1,4 +1,6 @@
-import { type ReactNode } from 'react';
+import { clsx } from 'clsx';
+import { type ElementType, type ReactNode } from 'react';
+import { INTENT_STYLE, type Intent } from '../ui/intent';
 
 export type PageHeaderProps = {
   /** Main page title */
@@ -19,6 +21,13 @@ export type PageHeaderProps = {
    * `description`.
    */
   meta?: ReactNode;
+  /**
+   * Icon in a rounded tile left of the title and description: 48px, 40px below `sm`. It is
+   * decorative (`aria-hidden`); the title says what the page is.
+   */
+  icon?: ElementType;
+  /** Color of the icon tile, from `INTENT_STYLE`. Default `brand`. Needs `icon`. */
+  iconIntent?: Intent;
   /** Right-aligned actions (buttons, icon buttons, etc.) */
   actions?: ReactNode;
   className?: string;
@@ -37,14 +46,13 @@ const Root = ({
   description,
   breadcrumb,
   meta,
+  icon: Icon,
+  iconIntent = 'brand',
   actions,
   className,
-}: PageHeaderProps) => (
-  // The title column asks for 16rem: when that and the actions don't both fit
-  // (a phone, a narrow pane), the actions wrap under the title instead of
-  // squeezing it until its words run under the buttons.
-  <div className={`flex flex-wrap items-start justify-between gap-4 ${className ?? ''}`}>
-    <div className="min-w-0 grow basis-64">
+}: PageHeaderProps) => {
+  const text = (
+    <>
       <Heading className="text-xl font-bold text-[var(--color-text-primary)]">{title}</Heading>
       {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
       {!breadcrumb && description && (
@@ -55,10 +63,34 @@ const Root = ({
           {meta}
         </div>
       )}
+    </>
+  );
+  const intent = INTENT_STYLE[iconIntent];
+  return (
+    // The title column asks for 16rem: when that and the actions don't both fit
+    // (a phone, a narrow pane), the actions wrap under the title instead of
+    // squeezing it until its words run under the buttons.
+    <div className={`flex flex-wrap items-start justify-between gap-4 ${className ?? ''}`}>
+      {Icon ? (
+        <div className="flex min-w-0 grow basis-64 items-start gap-3.5">
+          <span
+            aria-hidden="true"
+            className={clsx(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12',
+              intent.tile
+            )}
+          >
+            <Icon className={clsx('h-5 w-5 sm:h-6 sm:w-6', intent.iconColor)} />
+          </span>
+          <div className="min-w-0 flex-1">{text}</div>
+        </div>
+      ) : (
+        <div className="min-w-0 grow basis-64">{text}</div>
+      )}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
-    {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-  </div>
-);
+  );
+};
 
 export type PageHeaderMetaItemProps = {
   /** Lucide icon (or any component accepting `className`). */
