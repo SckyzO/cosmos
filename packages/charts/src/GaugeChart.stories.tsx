@@ -6,7 +6,7 @@ import { GradientRadial } from './GradientRadial';
 import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
-import { resolveColor, switchTheme, themeColor, expectAccessibleChart } from './storybook-helpers';
+import { resolveColor, switchTheme, themeColor } from './storybook-helpers';
 import { centerText } from './storybook-polar';
 import { surface } from './storybook-recharts';
 
@@ -199,7 +199,7 @@ export const CustomRange: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-// The gauges drawn with Recharts: the tests below run on each.
+// The tests below run on each gauge.
 type GaugeProps = {
   value: number;
   label?: string;
@@ -210,7 +210,7 @@ type GaugeProps = {
 };
 type GaugeComponent = ComponentType<GaugeProps>;
 
-const RECHARTS_GAUGES: Record<string, GaugeComponent> = { GradientRadial, SemiCircleGauge };
+const GAUGES: Record<string, GaugeComponent> = { GradientRadial, SemiCircleGauge, StrokedGauge };
 
 const GaugeGrid = ({
   children,
@@ -218,7 +218,7 @@ const GaugeGrid = ({
   children: (name: string, Gauge: GaugeComponent) => React.ReactNode;
 }) => (
   <div className="grid gap-4 md:grid-cols-3">
-    {Object.entries(RECHARTS_GAUGES).map(([name, Gauge]) => (
+    {Object.entries(GAUGES).map(([name, Gauge]) => (
       <div key={name} data-gauge={name}>
         {children(name, Gauge)}
       </div>
@@ -243,7 +243,7 @@ export const TextFollowsTheme: Story = {
       ];
       return [value, label].map((el) => resolveColor(getComputedStyle(el).fill));
     };
-    for (const name of Object.keys(RECHARTS_GAUGES)) {
+    for (const name of Object.keys(GAUGES)) {
       await waitFor(() => expect(centerText(gauge(canvasElement, name))?.value).toBe('84%'));
       for (const theme of ['deep-blue', '', 'sand', 'dark']) {
         const restore = switchTheme(theme);
@@ -275,13 +275,15 @@ export const TrackFollowsTheme: Story = {
       probe.remove();
       return color;
     };
-    for (const name of Object.keys(RECHARTS_GAUGES)) {
+    for (const name of Object.keys(GAUGES)) {
       await waitFor(() => expect(trackOf(gauge(canvasElement, name))).not.toBeNull());
       for (const theme of ['dark', '', 'sand', 'deep-blue']) {
         const restore = switchTheme(theme);
         try {
           const track = trackOf(gauge(canvasElement, name)) as Element;
-          await expect(getComputedStyle(track).fill).toBe(expected());
+          const style = getComputedStyle(track);
+          // A sector is filled; the dashed track is stroked.
+          await expect(style.fill === 'none' ? style.stroke : style.fill).toBe(expected());
         } finally {
           restore();
         }
@@ -472,8 +474,6 @@ export const SemiCircleHeightIsTheMost: Story = {
   },
 };
 
-const GAUGES = { GradientRadial, SemiCircleGauge, StrokedGauge };
-
 /**
  * Each gauge twice: with `props`, and at `reference` on the default range,
  * in elements found by `gaugeIn(root, id, name, 'props' | 'reference')`.
@@ -504,24 +504,16 @@ const GaugePairs = ({
 const gaugeIn = (root: HTMLElement, id: string, name: string, which: 'props' | 'reference') =>
   root.querySelector<HTMLElement>(`[data-gauge="${id}-${name}-${which}"]`)!;
 
-// The shape of the value arc, which only its angle changes: a Recharts sector's
-// path, rounded so float noise between two scales doesn't show; `none` for an
-// empty arc, which Recharts doesn't draw.
-const arcAngle = (el: HTMLElement) => {
-  if (el.querySelector('.recharts-radial-bar-background-sector')) {
-    return (
-      el
-        .querySelector('.recharts-radial-bar-sector')
-        ?.getAttribute('d')
-        ?.replace(/-?\d+\.?\d*/g, (n) => Number(n).toFixed(1)) ?? 'none'
-    );
-  }
-  // The angle ApexCharts computed for the value arc, set before the arc animates in.
-  return el.querySelector('.apexcharts-radial-series path')?.getAttribute('data:angle');
-};
+// The shape of the value arc, which only its angle changes: its path, rounded
+// so float noise between two scales doesn't show; `none` for an empty arc,
+// which is not drawn.
+const arcAngle = (el: HTMLElement) =>
+  el
+    .querySelector('.recharts-radial-bar-sector')
+    ?.getAttribute('d')
+    ?.replace(/-?\d+\.?\d*/g, (n) => Number(n).toFixed(1)) ?? 'none';
 
-const centerValue = (el: HTMLElement) =>
-  centerText(el)?.value ?? el.querySelector('.apexcharts-datalabel-value')?.textContent;
+const centerValue = (el: HTMLElement) => centerText(el)?.value;
 
 /** Asserts each gauge of a `GaugePairs` draws the arc of its reference and shows `label`. */
 const expectSameArcs = async (
@@ -540,6 +532,63 @@ const expectSameArcs = async (
       expect(centerValue(reference)).toBe(referenceLabel);
     });
   }
+};
+
+/** `color` colors the arc of the semicircle and of the stroked gauge; the gradient starts from it. */
+export const ColorSetsTheArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div data-testid="semicircle">
+        <SemiCircleGauge value={78} label="CPU" color="#f59e0b" />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={94} label="Disk" color="#ef4444" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const arc = (id: string) =>
+      arcOf(canvasElement.querySelector(`[data-testid="${id}"]`) as Element);
+    await waitFor(() => {
+      expect(resolveColor(getComputedStyle(arc('semicircle') as Element).fill)).toBe(
+        resolveColor('#f59e0b')
+      );
+      expect(resolveColor(getComputedStyle(arc('stroked') as Element).stroke)).toBe(
+        resolveColor('#ef4444')
+      );
+    });
+  },
+};
+
+/** `StrokedGauge` splits the ring into round dashes, the arc lighting those of the track. */
+export const StrokedArcIsDashed: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <StrokedGauge value={50} label="Uptime" />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      for (const path of [arcOf(canvasElement), trackOf(canvasElement)]) {
+        expect(path).not.toBeNull();
+        const style = getComputedStyle(path as Element);
+        expect(style.strokeLinecap).toBe('round');
+        expect(style.strokeDasharray).not.toBe('none');
+      }
+      // The arc and the track dash alike, so the dashes of the arc sit on the track's.
+      expect(getComputedStyle(arcOf(canvasElement) as Element).strokeDasharray).toBe(
+        getComputedStyle(trackOf(canvasElement) as Element).strokeDasharray
+      );
+    });
+  },
+};
+
+/** An empty stroked gauge draws its track and no arc, not a stray cap. */
+export const StrokedEmptyArcDrawsNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <StrokedGauge value={0} label="Uptime" />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(trackOf(canvasElement)).not.toBeNull());
+    await expect(arcOf(canvasElement)).toBeNull();
+  },
 };
 
 /**
@@ -586,20 +635,13 @@ export const GaugesAreNamedImages: Story = {
       <div data-label="Cluster load" data-value="67%">
         <SemiCircleGauge value={67} label="Load" ariaLabel="Cluster load" />
       </div>
-      <div data-label="Monthly uptime">
+      <div data-label="Monthly uptime" data-value="92%">
         <StrokedGauge value={92} label="Uptime" ariaLabel="Monthly uptime" />
       </div>
     </div>
   ),
   play: async ({ canvasElement }) => {
     for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-label]')) {
-      if (!surface(gauge)) {
-        await expectAccessibleChart({ keyboard: false })({
-          canvasElement: gauge,
-          args: { ariaLabel: gauge.dataset.label },
-        });
-        continue;
-      }
       // The name ends with the value: the text inside the image is hidden from screen readers.
       await waitFor(() =>
         expect(surface(gauge)).toHaveAttribute(

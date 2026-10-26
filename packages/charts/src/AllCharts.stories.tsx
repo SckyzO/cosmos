@@ -183,7 +183,8 @@ const CHARTS: Record<string, Chart> = {
     filled: () => <SemiCircleGauge value={42} />,
   },
   StrokedGauge: {
-    filled: (apexOptions) => <StrokedGauge value={92} apexOptions={apexOptions} />,
+    recharts: true,
+    filled: () => <StrokedGauge value={92} />,
   },
   RealtimeChart: {
     filled: (apexOptions) => <RealtimeChart apexOptions={apexOptions} />,
