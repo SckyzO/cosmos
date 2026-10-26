@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useId, useState } from 'react';
 import { expect } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  expectGraphicContrast,
+  expectNoHorizontalOverflow,
+  expectTextContrast,
+  inEachTheme,
+  mobileViewport,
+} from '../storybook-helpers';
 import {
   ProgressBar,
   type ProgressBarIntent,
@@ -36,10 +42,12 @@ export const Sizes: Story = {
   ),
 };
 
+const INTENTS: ProgressBarIntent[] = ['neutral', 'brand', 'success', 'warning', 'danger'];
+
 export const Intents: Story = {
   render: () => (
     <div className="space-y-3">
-      {(['brand', 'success', 'warning', 'danger'] as ProgressBarIntent[]).map((i) => (
+      {INTENTS.map((i) => (
         <div key={i} className="flex items-center gap-3">
           <SectionLabel className="w-16">{i}</SectionLabel>
           <ProgressBar
@@ -53,6 +61,18 @@ export const Intents: Story = {
       ))}
     </div>
   ),
+};
+
+export const NeutralGauge: Story = {
+  args: { value: 64, intent: 'neutral', label: 'inside', size: 'lg', 'aria-label': 'Space used' },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '`neutral` is for a gauge that carries no meaning (space used, a quota): a gray fill on the same track, with no color to read as good or bad.',
+      },
+    },
+  },
 };
 
 export const LabelOutside: Story = {
@@ -195,6 +215,53 @@ export const ClampsOverflow: Story = {
     const bar = canvas.getByRole('progressbar');
     // Value 250/100 → clamps to 100%
     await expect(bar).toHaveAttribute('aria-valuenow', '100');
+  },
+};
+
+/** The fill of `neutral` is gray and set apart from its track in every theme; the track is the same as ever. */
+export const NeutralFillIsGray: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="w-80 space-y-2">
+      <ProgressBar value={50} intent="neutral" label="inside" size="lg" aria-label="Neutral" />
+      <ProgressBar value={50} aria-label="Brand" />
+      <ProgressBar value={50} intent="brand" aria-label="Explicit brand" />
+      <ProgressBar
+        aria-label="Neutral part"
+        segments={[
+          { label: 'Used', value: 30, intent: 'neutral' },
+          { label: 'Cached', value: 20 },
+        ]}
+      />
+      {/* What the fill is meant to be: the gray palette of the issue, drawn by a plain element. */}
+      <div data-probe="" className="h-2 bg-gray-500 dark:bg-gray-400" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const fillOf = (name: string) =>
+      canvas.getByRole('progressbar', { name }).firstElementChild as HTMLElement;
+    const colorOf = (el: Element) => getComputedStyle(el).backgroundColor;
+    const probe = document.querySelector<HTMLElement>('[data-probe]')!;
+    inEachTheme(() => {
+      const neutral = fillOf('Neutral');
+      expect(colorOf(neutral)).toBe(colorOf(probe));
+      expect(colorOf(neutral)).not.toBe(colorOf(fillOf('Brand')));
+      // The track doesn't change with the intent.
+      expect(colorOf(canvas.getByRole('progressbar', { name: 'Neutral' }))).toBe(
+        colorOf(canvas.getByRole('progressbar', { name: 'Brand' }))
+      );
+      // The fill still reads against the track (WCAG 1.4.11).
+      expectGraphicContrast(neutral, 'backgroundColor');
+      // So does the label inside it (white on the light fill, dark on the light gray of dark).
+      expectTextContrast(canvas.getByText('50%'));
+      // A neutral part of a segmented bar is the same gray.
+      const part = canvas
+        .getByRole('progressbar', { name: 'Neutral part' })
+        .querySelector<HTMLElement>('[data-segment]')!;
+      expect(colorOf(part)).toBe(colorOf(probe));
+    });
+    // `brand` is the default, as before.
+    await expect(fillOf('Brand').className).toBe(fillOf('Explicit brand').className);
   },
 };
 
