@@ -189,6 +189,18 @@ under the bar, with what is left on the track. `aria-valuetext` lists the parts
 />
 ```
 
+`ProgressRing` is the same meter as an SVG ring (no dependency): `value`, `max`,
+`intent`, `size` (`sm` 32px, `md` 56px, `lg` 96px, or a number of pixels), `thickness`,
+and `children` for the centre (a value, an icon). It is a `progressbar` too, so name it
+with `aria-label` or `aria-labelledby`; the centre is not read a second time. `indeterminate`
+spins a quarter arc, except under reduced motion.
+
+```tsx
+<ProgressRing aria-label="Course progress" value={68} intent="success">
+  68%
+</ProgressRing>
+```
+
 ## Chat
 
 Building blocks for a conversation view: `ChatThread` (a `role="log"` live

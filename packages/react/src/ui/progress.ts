@@ -34,3 +34,30 @@ export const fitSegments = (values: readonly number[], max: number): FittedSegme
   });
   return { segments, rest: left, percent: toPercent(total - left, total) };
 };
+
+export type RingGeometry = {
+  radius: number;
+  circumference: number;
+  /** `stroke-dasharray` that draws the whole circle as one dash. */
+  dashArray: string;
+  /** `stroke-dashoffset` that hides the part of the dash past `percent`. */
+  dashOffset: number;
+};
+
+/**
+ * Circle of a ring drawn with a stroke of `thickness` inside a square of
+ * `size`: the stroke is centred on the radius, so it stays inside the box.
+ * One full-circle dash, offset to show `percent` of it, lets the offset
+ * animate with a CSS transition.
+ */
+export const ringGeometry = (size: number, thickness: number, percent: number): RingGeometry => {
+  const radius = Math.max(0, (size - thickness) / 2);
+  const circumference = 2 * Math.PI * radius;
+  const shown = Math.max(0, Math.min(100, percent));
+  return {
+    radius,
+    circumference,
+    dashArray: `${circumference} ${circumference}`,
+    dashOffset: circumference * (1 - shown / 100),
+  };
+};
