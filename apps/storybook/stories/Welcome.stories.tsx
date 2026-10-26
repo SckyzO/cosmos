@@ -387,8 +387,9 @@ const WelcomePage = ({
       Cosmos design system
     </h1>
     <p className="max-w-prose text-base leading-relaxed text-gray-500 dark:text-gray-400">
-      React 19 components, a Tailwind 4 theme and ApexCharts wrappers, built for dashboards and
-      monitoring tools. Four themes, twelve accent colors, six fonts and four text sizes.
+      React 19 components, a Tailwind 4 theme and Recharts-based chart wrappers, built for
+      dashboards and monitoring tools. Four themes, twelve accent colors, six fonts and four text
+      sizes.
     </p>
     <div className="mt-6 flex flex-wrap gap-2.5">
       <a href="./?path=/docs/atoms-button--docs" className={`${CTA} ${CTA_VARIANT.primary}`}>
@@ -618,7 +619,7 @@ const WelcomePage = ({
         <PkgCard
           name="@sckyzo/cosmos-charts"
           version={`v${chartsPkg.version}`}
-          what="ApexCharts wrappers that follow the Cosmos theme and accent. Optional, shipped separately."
+          what="Chart wrappers, drawn with Recharts, that follow the Cosmos theme and accent. Optional, shipped separately."
           install="pnpm add @sckyzo/cosmos-charts"
         />
       </div>
