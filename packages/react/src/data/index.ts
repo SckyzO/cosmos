@@ -1,3 +1,4 @@
+export * from './BarList';
 export * from './DescriptionList';
 export * from './KpiCard';
 export * from './TrendDelta';
