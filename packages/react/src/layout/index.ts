@@ -14,6 +14,13 @@ export {
   type MediaObjectPosition,
 } from './MediaObject';
 export { PageContainer, type PageContainerProps, type PageContainerWidth } from './PageContainer';
+export {
+  SplitView,
+  useSplitView,
+  type SplitViewProps,
+  type SplitViewPaneProps,
+  type SplitViewBreakpoint,
+} from './SplitView';
 export { Shell, type ShellProps } from './Shell';
 export { Topbar, type TopbarProps } from './Topbar';
 export {
