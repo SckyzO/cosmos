@@ -19,6 +19,7 @@ import {
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectFocusRing,
+  expectNoHorizontalOverflow,
   expectRefFocuses,
   mobileViewport,
   transitionsEnd,
@@ -2180,5 +2181,199 @@ export const DrawerIgnoresExpandOnHover: Story = {
     await expect(getComputedStyle(nav).position).not.toBe('absolute');
     await expect(getComputedStyle(nav).boxShadow).toBe('none');
     await expect(within(nav).getByText('Dashboard')).toBeVisible();
+  },
+};
+
+// ── Compact rail ─────────────────────────────────────────────────────────────
+
+const COMPACT_LONG = 'Infrastructure monitoring';
+
+const CompactNav = () => (
+  <div className="py-2">
+    <Sidebar.Item icon={LayoutDashboard} label="Dashboard" active />
+    <Sidebar.Item icon={Server} label="Servers" />
+    <Sidebar.Item
+      icon={Bell}
+      label="Notifications"
+      badge={<span className="size-2 rounded-full bg-red-500" />}
+    />
+    <Sidebar.Item icon={Network} label={COMPACT_LONG} />
+    <Sidebar.SubMenu icon={Layers} label="Library">
+      <Sidebar.Item label="Tokens" />
+      <Sidebar.Item label="Components" />
+      <Sidebar.Item label="Templates" />
+    </Sidebar.SubMenu>
+    <Sidebar.Section label="Account">
+      <Sidebar.Item icon={Settings} label="Settings" />
+    </Sidebar.Section>
+  </div>
+);
+
+/**
+ * `variant="compact"`: an 88 px rail with the label under each icon, on two lines at most (the
+ * full name shows in a tooltip when it is cut). A sub-menu opens in a flyout.
+ */
+export const Compact: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar variant="compact">
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+        <CompactNav />
+      </Sidebar>
+      <main className="flex-1 p-6 text-[var(--color-text-secondary)]">
+        <p>The compact rail has one width: it has no collapsed state.</p>
+      </main>
+    </Wrap>
+  ),
+};
+
+/** In a Shell the rail has no collapse control: the Topbar keeps no hamburger on desktop. */
+export const CompactInShell: Story = {
+  render: () => (
+    <Shell
+      collapseControl="sidebar"
+      topbar={<Topbar pageTitle="Dashboard" />}
+      sidebar={
+        <Sidebar variant="compact">
+          <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+          <CompactNav />
+        </Sidebar>
+      }
+    >
+      <div className="p-6 text-[var(--color-text-secondary)]">Page content</div>
+    </Shell>
+  ),
+};
+
+/** Below `lg` the sidebar is the Shell's drawer, expanded: the compact variant gives way to it. */
+export const CompactMobile: Story = {
+  ...CompactInShell,
+  globals: mobileViewport,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+  },
+};
+
+export const CompactLabelsWrapAndNeverOverflow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Compact.render,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.getBoundingClientRect().width).toBe(88);
+    const navBox = nav.getBoundingClientRect();
+    for (const label of ['Dashboard', 'Servers', 'Notifications', COMPACT_LONG, 'Library']) {
+      const text = within(nav).getByText(label);
+      const style = getComputedStyle(text);
+      // Centred under the icon, on a button row as on a link row.
+      await expect(style.textAlign).toBe('center');
+      // Two lines at most, and nothing wider than the box.
+      await expect(text.getBoundingClientRect().height).toBeLessThanOrEqual(
+        2 * parseFloat(style.lineHeight) + 1
+      );
+      await expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth);
+      const row = text.closest('a, button') as HTMLElement;
+      const box = row.getBoundingClientRect();
+      await expect(box.left).toBeGreaterThanOrEqual(navBox.left);
+      await expect(box.right).toBeLessThanOrEqual(navBox.right);
+      await expect(parseFloat(style.fontSize)).toBeLessThan(12);
+    }
+    // A short label stays on one line; the long one wraps to two.
+    const oneLine = within(nav).getByText('Servers').getBoundingClientRect().height;
+    await expect(
+      within(nav).getByText(COMPACT_LONG).getBoundingClientRect().height
+    ).toBeGreaterThan(oneLine * 1.5);
+    // Icon above the label.
+    const icon = within(nav).getByText('Servers').closest('a, button')!.querySelector('svg')!;
+    await expect(icon.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      within(nav).getByText('Servers').getBoundingClientRect().top
+    );
+    // The collapse controls are not there.
+    await expect(canvas.queryByRole('button', { name: /collapse|expand/i })).toBeNull();
+  },
+};
+
+/** The tooltip carries the full name of a label the clamp cuts, and of no other. */
+export const CompactTooltipOnlyWhenCut: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar variant="compact">
+        <Sidebar.Item icon={Server} label="Servers" href="#servers" />
+        <Sidebar.Item
+          icon={Network}
+          label="Infrastructure monitoring and capacity planning"
+          href="#long"
+        />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const long = 'Infrastructure monitoring and capacity planning';
+    const tip = (name: string) => body.queryByRole('tooltip', { name, hidden: true });
+    const cut = canvas.getByRole('link', { name: long });
+    const whole = canvas.getByRole('link', { name: 'Servers' });
+    const label = within(cut).getByText(long);
+    await expect(label.scrollHeight).toBeGreaterThan(label.clientHeight);
+    await expect(tip(long)).not.toBeNull();
+    await expect(tip('Servers')).toBeNull();
+    await expect(whole).not.toHaveAttribute('aria-describedby');
+    await userEvent.hover(cut);
+    await waitFor(() => expect(tip(long)).toHaveClass('opacity-100'));
+    await userEvent.unhover(cut);
+    await waitFor(() => expect(tip(long)).toHaveClass('opacity-0'));
+    // Keyboard focus shows it too.
+    for (let i = 0; i < 4 && cut !== document.activeElement; i += 1) await userEvent.tab();
+    await expect(cut).toHaveFocus();
+    await waitFor(() => expect(tip(long)).toHaveClass('opacity-100'));
+  },
+};
+
+/** A sub-menu of the compact rail opens its tree in a flyout, expanded, and Escape closes it. */
+export const CompactSubMenuOpensInAFlyout: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Compact.render,
+  play: async ({ canvas, canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const trigger = within(nav).getByRole('button', { name: 'Library' });
+    await userEvent.click(trigger);
+    const flyout = await body.findByRole('dialog', { name: 'Library' });
+    await expect(within(flyout).getByText('Components')).toBeVisible();
+    // It opens beside the row, not over it, and the rail keeps its width.
+    await expect(flyout.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      trigger.getBoundingClientRect().right
+    );
+    await expect(nav.getBoundingClientRect().width).toBe(88);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Library' })).toBeNull());
+    await expect(trigger).toHaveFocus();
+  },
+};
+
+/** The compact rail has no hover expansion and no bottom button, whatever the props say. */
+export const CompactIgnoresCollapseProps: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar
+        variant="compact"
+        collapsed
+        expandOnHover="overlay"
+        onCollapsedChange={() => {}}
+        width={320}
+      >
+        <CompactNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await userEvent.hover(nav);
+    await pause(400);
+    await expect(nav.getBoundingClientRect().width).toBe(88);
+    await expect(within(nav).getByText('Dashboard')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: /collapse|expand/i })).toBeNull();
   },
 };

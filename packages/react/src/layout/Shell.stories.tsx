@@ -762,3 +762,108 @@ export const DesktopIgnoresTheOpenState: Story = {
     await expect(within(canvas.getByRole('banner')).queryByText('Cosmos')).toBeNull();
   },
 };
+
+// ── Boxed container ──────────────────────────────────────────────────────────
+
+const BoxedShell = (props: Partial<React.ComponentProps<typeof Shell>>) => (
+  <Shell
+    container="boxed"
+    topbar={<Topbar pageTitle="Analytics Dashboard" />}
+    sidebar={
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <NavItems />
+      </Sidebar>
+    }
+    {...props}
+  >
+    <PageContent
+      title="Dashboard"
+      description="The topbar, the sidebar and the content sit in a column of at most 1440px, centred; the page background shows on both sides."
+    />
+  </Shell>
+);
+
+const desktopViewport = { viewport: { value: 'desktop', isRotated: false } } as const;
+
+/** `container="boxed"` on a 1920px window: a 1440px column, the page background on both sides. */
+export const Boxed: Story = {
+  globals: desktopViewport,
+  render: () => <BoxedShell />,
+};
+
+/** Narrower than the column (1280px here), the boxed Shell fills the window like the fluid one. */
+export const BoxedFillsANarrowWindow: Story = {
+  render: () => <BoxedShell />,
+};
+
+/** Below `lg` the boxed Shell is the phone layout: a topbar, the page, the drawer. */
+export const BoxedMobile: Story = {
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => <BoxedShell />,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+  },
+};
+
+export const BoxedCentersTheColumn: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: desktopViewport,
+  render: () => <BoxedShell />,
+  play: async ({ canvas }) => {
+    const width = document.documentElement.clientWidth;
+    await expect(width).toBeGreaterThan(1440);
+    const left = (width - 1440) / 2;
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const bar = canvas.getByRole('banner');
+    const main = canvas.getByRole('main');
+    // The sidebar starts at the column's edge (less its 1px hairline), the topbar ends at the other.
+    await expect(nav.getBoundingClientRect().left).toBeCloseTo(left + 1, 0);
+    await expect(bar.getBoundingClientRect().right).toBeCloseTo(width - left - 1, 0);
+    await expect(main.getBoundingClientRect().right).toBeCloseTo(width - left - 1, 0);
+    // The two sides are the page itself: its background, and nothing of the Shell's panels.
+    const root = document.elementFromPoint(left / 2, 300) as HTMLElement;
+    await expect(root.contains(nav)).toBe(true);
+    await expect(getComputedStyle(root).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    await expect(document.elementFromPoint(width - left / 2, 300)).toBe(root);
+    // A hairline marks each edge of the column.
+    const column = nav.closest('div[class*="max-w-"]') as HTMLElement;
+    await expect(column.getBoundingClientRect().width).toBe(1440);
+    await expect(getComputedStyle(column).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(column).borderRightWidth).toBe('1px');
+  },
+};
+
+export const BoxedFillsTheWindowUnder1440: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <BoxedShell />,
+  play: async ({ canvas }) => {
+    const width = document.documentElement.clientWidth;
+    await expect(width).toBeLessThanOrEqual(1440);
+    await expect(
+      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().left
+    ).toBe(0);
+    await expect(canvas.getByRole('banner').getBoundingClientRect().right).toBe(width);
+    expectNoHorizontalOverflow();
+    const column = canvas
+      .getByRole('navigation', { name: 'Main navigation' })
+      .closest('div[class*="max-w-"]') as HTMLElement;
+    await expect(getComputedStyle(column).borderLeftWidth).toBe('0px');
+  },
+};
+
+/** `fluid`, the default, spans any window: nothing is centred. */
+export const FluidSpansTheWholeWindow: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: desktopViewport,
+  render: () => <BoxedShell container="fluid" />,
+  play: async ({ canvas }) => {
+    const width = document.documentElement.clientWidth;
+    await expect(canvas.getByRole('banner').getBoundingClientRect().right).toBe(width);
+    await expect(
+      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().left
+    ).toBe(0);
+  },
+};

@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Bell, Plus } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
 import { expectFocusRing } from '../storybook-helpers';
 import { Navbar } from './Navbar';
 import { Button } from '../ui/Button';
+import { Menu } from '../ui/Menu';
 
 const meta = {
   title: 'Navigation/Navbar',
@@ -13,6 +14,7 @@ const meta = {
     'Navbar.Brand': Navbar.Brand,
     'Navbar.Items': Navbar.Items,
     'Navbar.Item': Navbar.Item,
+    'Navbar.Menu': Navbar.Menu,
     'Navbar.Actions': Navbar.Actions,
     'Navbar.MobileMenuButton': Navbar.MobileMenuButton,
   },
@@ -139,6 +141,70 @@ export const Light: Story = {
       </Navbar.Actions>
     </Navbar>
   ),
+};
+
+// A dropdown group of links: the trigger shows as active while one of its links is the page.
+export const WithMenus: Story = {
+  render: () => (
+    <Navbar>
+      <Navbar.Brand>
+        <Navbar.MobileMenuButton />
+        <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
+        <Navbar.Items>
+          <Navbar.Item active href="#">
+            Dashboard
+          </Navbar.Item>
+          <Navbar.Menu label="Monitoring">
+            <Menu.Item href="#">Hosts</Menu.Item>
+            <Menu.Item href="#">Alerts</Menu.Item>
+            <Menu.Item href="#">Logs</Menu.Item>
+          </Navbar.Menu>
+          <Navbar.Menu label="Settings" active>
+            <Menu.Item href="#">Profile</Menu.Item>
+            <Menu.Item href="#" aria-current="page">
+              Team
+            </Menu.Item>
+            <Menu.Item href="#">Billing</Menu.Item>
+          </Navbar.Menu>
+        </Navbar.Items>
+      </Navbar.Brand>
+      <Navbar.Actions>
+        <BellIcon tone="light" />
+        <Avatar />
+      </Navbar.Actions>
+    </Navbar>
+  ),
+};
+
+const OVERFLOW_ITEMS = ['Dashboard', 'Hosts', 'Alerts', 'Logs', 'Reports', 'Billing', 'Team'];
+
+const OverflowBar = ({ width }: { width?: number | string }) => (
+  <div style={{ width }} data-testid="frame">
+    <Navbar theme="dark" aria-label="Main">
+      <Navbar.Brand>
+        <span className="text-lg font-semibold text-white">Acme</span>
+        <Navbar.Items>
+          {OVERFLOW_ITEMS.map((label, i) => (
+            <Navbar.Item key={label} theme="dark" active={i === 0} href="#">
+              {label}
+            </Navbar.Item>
+          ))}
+          <Navbar.Menu label="Settings" theme="dark">
+            <Menu.Item href="#">Profile</Menu.Item>
+            <Menu.Item href="#">Security</Menu.Item>
+          </Navbar.Menu>
+        </Navbar.Items>
+      </Navbar.Brand>
+      <Navbar.Actions>
+        <Avatar />
+      </Navbar.Actions>
+    </Navbar>
+  </div>
+);
+
+// The items that do not fit leave for a "More" menu, and come back when the bar has room.
+export const OverflowsIntoMore: Story = {
+  render: () => <OverflowBar width={760} />,
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -299,5 +365,161 @@ export const MenuButtonFocusRingFollowsAccent: Story = {
   ),
   play: async ({ canvas }) => {
     await expectFocusRing(canvas.getByRole('button', { name: 'Toggle menu' }));
+  },
+};
+
+// The menu button pattern: Enter opens on the first link, the arrows move, Escape closes and gives
+// the focus back to the trigger, Tab leaves it.
+export const MenuOpensAndClosesByKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Navbar aria-label="Main">
+      <Navbar.Items className="md:ml-0 md:block">
+        <Navbar.Menu label="Monitoring">
+          <Menu.Item href="#hosts">Hosts</Menu.Item>
+          <Menu.Item href="#alerts">Alerts</Menu.Item>
+          <Menu.Item href="#logs">Logs</Menu.Item>
+        </Navbar.Menu>
+        <Navbar.Item href="#after">After</Navbar.Item>
+      </Navbar.Items>
+    </Navbar>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Monitoring' });
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    const menu = await within(document.body).findByRole('menu', { name: 'Monitoring' });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    const items = within(menu).getAllByRole('menuitem');
+    await waitFor(() => expect(items[0]).toHaveFocus());
+
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(items[1]).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    await expect(items[2]).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(items[0]).toHaveFocus();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveFocus();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    // ArrowUp on the trigger opens on the last link.
+    await userEvent.keyboard('{ArrowUp}');
+    const again = await within(document.body).findByRole('menu', { name: 'Monitoring' });
+    const last = within(again).getAllByRole('menuitem')[2];
+    await waitFor(() => expect(last).toHaveFocus());
+
+    // Tab closes the menu and moves on.
+    await userEvent.tab();
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+// A group holding the current page shows like an active item; the others stay idle.
+export const ActiveGroupShows: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Navbar aria-label="Main">
+      <Navbar.Items className="md:ml-0 md:block">
+        <Navbar.Menu label="Monitoring" active>
+          <Menu.Item href="#">Hosts</Menu.Item>
+        </Navbar.Menu>
+        <Navbar.Menu label="Settings">
+          <Menu.Item href="#">Profile</Menu.Item>
+        </Navbar.Menu>
+      </Navbar.Items>
+    </Navbar>
+  ),
+  play: async ({ canvas }) => {
+    const active = canvas.getByRole('button', { name: 'Monitoring' });
+    const idle = canvas.getByRole('button', { name: 'Settings' });
+    await expect(active).toHaveAttribute('aria-current', 'true');
+    await expect(idle).not.toHaveAttribute('aria-current');
+    await expect(getComputedStyle(active).backgroundColor).not.toBe(
+      getComputedStyle(idle).backgroundColor
+    );
+  },
+};
+
+const sizeOf = (el: HTMLElement) => el.getBoundingClientRect();
+
+// The bar's width is set by the test: items that do not fit move into "More", a link of the menu
+// still works, and they come back when the bar grows.
+export const OverflowMovesItemsToMoreAndBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OverflowBar />,
+  play: async ({ canvas, canvasElement }) => {
+    const frame = canvasElement.querySelector<HTMLElement>('[data-testid="frame"]');
+    if (!frame) throw new Error('no frame');
+    const bar = within(canvas.getByRole('navigation', { name: 'Main' }));
+    const shown = (name: string) => {
+      const el = bar.queryByRole('link', { name });
+      return el !== null && getComputedStyle(el).visibility !== 'hidden';
+    };
+    const moreVisible = () => {
+      const el = bar.queryByRole('button', { name: 'More' });
+      return el !== null && getComputedStyle(el).visibility !== 'hidden';
+    };
+
+    frame.style.width = '1100px';
+    await waitFor(() => expect(shown('Team')).toBe(true));
+    await expect(moreVisible()).toBe(false);
+
+    frame.style.width = '640px';
+    await waitFor(() => expect(moreVisible()).toBe(true));
+    await expect(shown('Dashboard')).toBe(true);
+    await expect(shown('Team')).toBe(false);
+    // Nothing spills out of the bar.
+    const row = canvas.getByRole('navigation', { name: 'Main' });
+    await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
+
+    const more = bar.getByRole('button', { name: 'More' });
+    more.focus();
+    await userEvent.keyboard('{Enter}');
+    const menu = await within(document.body).findByRole('menu', { name: 'More' });
+    await expect(within(menu).getByRole('menuitem', { name: 'Team' })).toHaveAttribute('href', '#');
+    // A menu that does not fit comes along as a labelled group of its links.
+    await expect(within(menu).getByRole('group', { name: 'Settings' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    frame.style.width = '1100px';
+    await waitFor(() => expect(shown('Team')).toBe(true));
+    await waitFor(() => expect(moreVisible()).toBe(false));
+    await expect(sizeOf(bar.getByRole('link', { name: 'Team' })).width).toBeGreaterThan(0);
+  },
+};
+
+// The active page that left the bar keeps showing on "More".
+export const ActiveItemInMoreMarksIt: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="frame">
+      <Navbar aria-label="Main">
+        <Navbar.Brand>
+          <Navbar.Items>
+            {OVERFLOW_ITEMS.map((label) => (
+              <Navbar.Item key={label} active={label === 'Team'} href="#">
+                {label}
+              </Navbar.Item>
+            ))}
+          </Navbar.Items>
+        </Navbar.Brand>
+      </Navbar>
+    </div>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const frame = canvasElement.querySelector<HTMLElement>('[data-testid="frame"]');
+    if (!frame) throw new Error('no frame');
+    frame.style.width = '420px';
+    // Invisible while nothing overflows, so it has no accessible name yet.
+    const more = canvas.getByRole('button', { hidden: true });
+    await waitFor(() => expect(canvas.getByRole('button', { name: 'More' })).toBe(more));
+    await expect(more).toHaveAttribute('aria-current', 'true');
   },
 };

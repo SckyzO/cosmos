@@ -6,7 +6,20 @@ import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { ShellContext } from './shellContext';
 
+/**
+ * How the Shell spans the window: `fluid` (the whole width) or `boxed` (a column of at most
+ * 1440px, centred).
+ */
+export type ShellContainer = 'fluid' | 'boxed';
+
 export type ShellProps = {
+  /**
+   * `fluid` (default): the topbar, the sidebar and the content take the whole window.
+   * `boxed`: they sit together in a centred column of at most 1440px, with the page background
+   * on both sides and a hairline on the column's edges once the window is wider. Below 1440px
+   * the two are the same. The sidebar's drawer, below `lg`, is not part of the column.
+   */
+  container?: ShellContainer;
   /**
    * Top header bar: typically `<Topbar />`, or any header (a `<Navbar>`). Shell
    * passes it no props: a Topbar or a `SidebarToggle` reads the sidebar state
@@ -96,6 +109,7 @@ export const Shell = ({
   sidebarCollapsed: controlledCollapsed,
   onCollapsedChange,
   collapseControl = 'topbar',
+  container = 'fluid',
   defaultSidebarOpen = false,
   sidebarOpen: controlledOpen,
   onSidebarOpenChange,
@@ -132,50 +146,65 @@ export const Shell = ({
     [collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl]
   );
 
+  const layout = (
+    <>
+      {sidebar &&
+        (isMobile ? (
+          // Off screen until opened. The Drawer brings the portal, scrim, focus trap, Escape
+          // and the slide; the Sidebar fills its 288px panel, always expanded.
+          <Drawer
+            open={drawerOpen}
+            onClose={() => setOpen(false)}
+            side="left"
+            size="sm"
+            swipeToClose
+            ariaLabel="Navigation menu"
+          >
+            {sidebar}
+          </Drawer>
+        ) : (
+          <aside className="shrink-0">{sidebar}</aside>
+        ))}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {topbar && <div className="shrink-0">{topbar}</div>}
+        {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
+          <main className="min-w-0 flex-1 lg:overflow-auto">{children}</main>
+          {secondary && (
+            <aside
+              className={clsx(
+                'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-t-0 lg:border-l',
+                // `max-lg:` sorts after the plain width utility: full width while stacked.
+                secondaryWidthClassName,
+                'max-lg:w-full'
+              )}
+            >
+              {secondary}
+            </aside>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <ShellContext.Provider value={sidebar ? shell : null}>
       <div
         className={clsx(
           'flex h-screen w-screen overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-base)]',
+          container === 'boxed' && 'justify-center',
           className
         )}
       >
-        {sidebar &&
-          (isMobile ? (
-            // Off screen until opened. The Drawer brings the portal, scrim, focus trap, Escape
-            // and the slide; the Sidebar fills its 288px panel, always expanded.
-            <Drawer
-              open={drawerOpen}
-              onClose={() => setOpen(false)}
-              side="left"
-              size="sm"
-              swipeToClose
-              ariaLabel="Navigation menu"
-            >
-              {sidebar}
-            </Drawer>
-          ) : (
-            <aside className="shrink-0">{sidebar}</aside>
-          ))}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {topbar && <div className="shrink-0">{topbar}</div>}
-          {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
-            <main className="min-w-0 flex-1 lg:overflow-auto">{children}</main>
-            {secondary && (
-              <aside
-                className={clsx(
-                  'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-t-0 lg:border-l',
-                  // `max-lg:` sorts after the plain width utility: full width while stacked.
-                  secondaryWidthClassName,
-                  'max-lg:w-full'
-                )}
-              >
-                {secondary}
-              </aside>
-            )}
+        {container === 'boxed' ? (
+          // The column's hairlines only show where the page background does: the window is
+          // wider than the column.
+          <div className="flex h-full w-full max-w-[1440px] min-w-0 border-[var(--color-border)] min-[1441px]:border-x">
+            {layout}
           </div>
-        </div>
+        ) : (
+          layout
+        )}
       </div>
     </ShellContext.Provider>
   );
