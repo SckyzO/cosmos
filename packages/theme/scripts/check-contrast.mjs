@@ -214,6 +214,16 @@ const luminance = (value) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 
+/** `fg` at `percent`% over `bg`, as CSS `color-mix(in srgb, fg percent%, bg)`: a hex colour. */
+const mix = (fg, bg, percent) => {
+  const [a, b] = [parseColor(fg), parseColor(bg)];
+  const channel = (i) =>
+    Math.round((a[i] * percent + b[i] * (100 - percent)) * 2.55)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${channel(0)}${channel(1)}${channel(2)}`;
+};
+
 const contrast = (fg, bg) => {
   const [hi, lo] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
@@ -262,6 +272,11 @@ const CODE_TOKENS = [
   'token-deleted',
   'token-changed',
 ];
+
+// CodeBlock's tinted rows are the tint colour at this percent over the page's white (light themes)
+// or over black (dark ones), not over the block's own gray: keep in step with CodeBlock.tsx. A tint
+// over the gray would darken the surface the text tokens were checked on, and they have no room.
+const CODE_TINT = { light: { diff: 5, emphasis: 5 }, dark: { diff: 14, emphasis: 14 } };
 
 for (const theme of THEMES) {
   const own = vars.get(theme.selector);
@@ -319,7 +334,25 @@ for (const theme of THEMES) {
     check(theme.id, 'code token', color(`code-${token}`), codeSurface, 4.5);
   }
 
+  // The tinted rows of CodeBlock (a diff's added and removed lines, `highlightLines`): the same
+  // percentages as the classes in packages/react/src/ui/CodeBlock.tsx. The tint is under the
+  // text, so every token must still read on it.
+  const tintBase = theme.dark ? '#000000' : color('white').value;
+  const tinted = (label, tint, percent) => {
+    const surface = { name: `${label} row`, value: mix(tint.value, tintBase, percent) };
+    for (const token of CODE_TOKENS) {
+      check(theme.id, 'code token on tint', color(`code-${token}`), surface, 4.5);
+    }
+  };
+  tinted('inserted', color('code-token-inserted'), CODE_TINT[theme.dark ? 'dark' : 'light'].diff);
+  tinted('deleted', color('code-token-deleted'), CODE_TINT[theme.dark ? 'dark' : 'light'].diff);
+
   for (const { id, brand: shades } of accents) {
+    tinted(
+      `${id} emphasis`,
+      { value: shades['500'] },
+      CODE_TINT[theme.dark ? 'dark' : 'light'].emphasis
+    );
     const brand = (step) => ({ name: `${id} brand-${step}`, value: shades[step] });
     if (theme.dark) {
       for (const surface of surfaces) check(theme.id, 'accent text', brand('400'), surface, 4.5);
