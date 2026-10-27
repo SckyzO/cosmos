@@ -309,7 +309,9 @@ time, and nothing opens while a save is pending. The table never changes
 ```
 
 `DataTable`'s `density` is controllable like the rest: `density`, `defaultDensity`
-and `onDensityChange(density)`. As with `pageSize`, a `density` passed without
+and `onDensityChange(density)`: `compact`, `default` or `comfortable`. Without
+`density` and `defaultDensity` the table follows the page's `data-density`; set,
+it is a local override of the page. As with `pageSize`, a `density` passed without
 `onDensityChange` is a controlled value that never moves, so a saved view
 reports its density and the table keeps the one you pass.
 
@@ -436,8 +438,8 @@ scrolling. Its limits:
 
 - The table needs a height (`className="max-h-96"`): its own area is what
   scrolls, and without a height every row is in view.
-- Every row has one fixed height, from `density`: 49px, or 61px when
-  `comfortable`, at the default text size, and growing with the text size
+- Every row has one fixed height, from the density: 41px when `compact`, 49px,
+  or 61px when `comfortable`, at the default text size, and growing with the text size
   setting. Content taller than that is clipped, so keep a cell to a line of text
   or a control, as in a standard row.
 - It applies to the table layout only: with `mobileLayout="cards"` below `sm`
@@ -456,7 +458,8 @@ scrolling. Its limits:
 />
 ```
 
-`Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
+`Table` takes `density` (`compact`, `default` or `comfortable`, as on `DataTable`; the
+page's by default),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
 loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
@@ -1212,10 +1215,113 @@ A `highlight` prop still replaces the built-in highlighter. The main entry never
 an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
 throws an error that names the package.
 
+## Editor
+
+`RichTextEditor` is a formatted text field: bold, italic, strike, headings, bulleted and numbered
+lists, quotes, code, links, undo and redo. It lives in the `/editor` entry and is built on
+[Tiptap](https://tiptap.dev) (MIT), whose packages are optional peer dependencies that only the apps
+using this entry install:
+
+```bash
+pnpm add @tiptap/react @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extensions
+```
+
+```tsx
+import { RichTextEditor } from '@sckyzo/cosmos-react/editor';
+
+<RichTextEditor
+  label="Reply"
+  placeholder="Write a reply…"
+  value={html}
+  onChange={setHtml}
+  maxLength={2000}
+/>;
+```
+
+`value`, `defaultValue` and `onChange` carry HTML by default, or the ProseMirror JSON document with
+`format="json"`; an empty HTML document is `''`. `variant` picks the chrome: `toolbar` (default,
+buttons on top; `toolbar={['bold', 'italic', 'link']}` picks them), `bubble` (a small toolbar over
+the selection; Alt+F10 moves the focus into it, Escape gives it back) or `minimal` (no toolbar, the
+shortcuts and Markdown-like input rules only: `##` and a space, `-` and a space, `**bold**`).
+`labels` replaces every text the editor draws, tooltips included. `readOnly`, `disabled`, `rows`,
+`autoFocus` and `name` (a hidden input, for a native form) work as on a Textarea, and so do `label`,
+`description`, `error` and `required`: the label and the error are linked to the editable text.
+`maxLength` counts the text characters and stops typing and pasting at the limit.
+
+Links accept `http(s):`, `mailto:` and relative URLs only: a
+`javascript:` link is refused whether it is typed in the link field, typed as Markdown, pasted or
+passed in `value`. The schema holds paragraphs, headings 2 and 3, lists, quotes, hard breaks and the
+marks above; images, tables and anything else are dropped on paste. **That is the editor's
+guarantee, not yours: sanitise the stored HTML again on the server before you render it elsewhere.**
+The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
+
+## Map
+
+`MapView` draws places on a map: pins in the theme's colours with an icon or a number, a popup per
+pin, groups of close pins as a counted circle, zoom buttons and a fit to the markers. It lives in
+the `/map` entry and needs [MapLibre GL JS](https://maplibre.org) (BSD-3), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add maplibre-gl
+```
+
+Load MapLibre's stylesheet once in the app, and import the component from `/map`:
+
+```tsx
+import { useState } from 'react';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { MapMarkerList, MapView, type MapMarker } from '@sckyzo/cosmos-react/map';
+
+const stores: MapMarker[] = [
+  { id: 'harbour', label: 'Harbour', position: [4.81, 45.71], description: '12 quay street' },
+  { id: 'station', label: 'Station', position: [4.9, 45.75], intent: 'success', icon: 3 },
+];
+
+export const Stores = () => {
+  const [selected, setSelected] = useState<string | null>(null);
+  return (
+    <>
+      <MapMarkerList markers={stores} selectedId={selected} onSelect={setSelected} />
+      <MapView
+        markers={stores}
+        style="https://tiles.example.com/styles/light.json"
+        darkStyle="https://tiles.example.com/styles/dark.json"
+        ariaLabel="Stores"
+        selectedId={selected}
+        onSelectedIdChange={setSelected}
+      />
+    </>
+  );
+};
+```
+
+- **The base map is yours.** Cosmos ships no tiles: a tile server has its own terms and sees every
+  visitor. `style` is a MapLibre style (a URL or an object) and its attribution stays visible.
+  `darkStyle` is optional: under the dark themes (`.dark`, `.deep-blue`) the map switches to it,
+  and without it keeps `style`. Pass constants, not a new object on each render. A markers array
+  is the same: define it once, or the pins are redrawn each time.
+- **Pins, popups and buttons are React and HTML**, coloured by `intent` with the theme's classes,
+  so a theme, accent or text size switch repaints them with no code. A title or description with
+  markup shows as text.
+- **`variant="static"`** is a fixed view for a card or a detail page: no gesture, no zoom buttons,
+  no focus stop, no popup, and the pins are pictures.
+- **Keyboard and screen readers.** The interactive map is one focus stop with the name given by
+  `ariaLabel`: the arrow keys pan, `+` and `-` zoom. A map alone cannot be used with a screen
+  reader, so show the same `markers` as a `MapMarkerList` next to it: choosing a row opens the
+  popup on the map. On a static map, the list is the only way to the places.
+- `cluster` (default on) groups close pins; a click on a group zooms in to split it. `fit` frames
+  the markers on the first draw and when the set of markers changes; otherwise `initialCenter` and
+  `initialZoom` give the view. `onViewChange` reports each pan or zoom.
+- A browser without WebGL shows `unavailableMessage` in place of the map. The main entry never
+  imports MapLibre: an app that does not use `/map` ships none of it. Imported without
+  `maplibre-gl` installed, a map throws an error that names the package.
+
 ## Themes and accents
 
-The theme is a class on `<html>`; the accent, the font and the text size are
-the `data-accent`, `data-font` and `data-text-size` attributes, see the
+The theme is a class on `<html>`; the accent, the font, the text size and the
+density are the `data-accent`, `data-font`, `data-text-size` and `data-density`
+attributes, see the
 [theme README](../theme#themes--accents). `AppearanceSettings` renders a picker
 for each, and `applyAppearance` sets them on the document:
 
@@ -1229,6 +1335,7 @@ function Appearance() {
     accent: 'blue',
     font: 'outfit',
     textSize: 'md',
+    density: 'default',
   });
   useEffect(() => applyAppearance(appearance), [appearance]);
   const update = (patch: Partial<CosmosAppearance>) => setAppearance((a) => ({ ...a, ...patch }));
@@ -1239,12 +1346,13 @@ function Appearance() {
       onAccentChange={(accent) => update({ accent })}
       onFontChange={(font) => update({ font })}
       onTextSizeChange={(textSize) => update({ textSize })}
+      onDensityChange={(density) => update({ density })}
     />
   );
 }
 ```
 
-The font and text size groups show only when their handlers are set. Pass
+The font, text size and density groups show only when their handlers are set. Pass
 `fonts` to offer only the fonts whose CSS the app imports
 (`@sckyzo/cosmos-theme/fonts/<name>`).
 

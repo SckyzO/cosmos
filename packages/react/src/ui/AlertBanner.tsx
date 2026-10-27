@@ -71,7 +71,7 @@ export const AlertBanner = ({
           aria-label="Dismiss alert"
           onClick={onDismiss}
           className={clsx(
-            'focus-visible:focus-indicator -my-1 -mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',
+            'focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 -my-1 -mr-2 flex shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',
             v.text
           )}
         >

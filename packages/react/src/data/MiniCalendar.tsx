@@ -81,7 +81,7 @@ export const MiniCalendar = ({
           type="button"
           onClick={goPrev}
           aria-label="Previous month"
-          className="focus-visible:focus-indicator flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
+          className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -96,7 +96,7 @@ export const MiniCalendar = ({
           type="button"
           onClick={goNext}
           aria-label="Next month"
-          className="focus-visible:focus-indicator flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
+          className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -128,7 +128,7 @@ export const MiniCalendar = ({
               aria-current={isToday ? 'date' : undefined}
               className={clsx(
                 // The number sits above the middle of the cell (`pb-1.5`) to leave room for the event dot under it.
-                'relative flex h-9 items-center justify-center rounded-md border pb-1.5 text-xs font-medium transition-colors focus-visible:ring-inset',
+                'h-ctrl-36 relative flex items-center justify-center rounded-md border pb-1.5 text-xs font-medium transition-colors focus-visible:ring-inset',
                 isSelected
                   ? 'bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator-on-accent border-transparent text-white'
                   : isToday

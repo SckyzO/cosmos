@@ -271,7 +271,7 @@ export const Dropzone = ({
           {files.map((f, idx) => (
             <li
               key={`${f.name}-${idx}`}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+              className="py-row-8 flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-700 dark:bg-gray-800"
             >
               <FileIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
               <div className="min-w-0 flex-1">
@@ -285,7 +285,7 @@ export const Dropzone = ({
                   removeAt(idx);
                 }}
                 aria-label={`Remove ${f.name}`}
-                className="focus-visible:focus-indicator flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               >
                 <X className="h-4 w-4" />
               </button>

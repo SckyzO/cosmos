@@ -74,7 +74,7 @@ export const AnnouncementBar = ({
             onDismiss?.();
           }}
           className={clsx(
-            'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
+            'h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md transition-colors',
             // The brand bar is brand-500: a brand-500 ring would vanish on it.
             intent === 'brand'
               ? 'focus-visible:focus-indicator-on-accent text-white/80 hover:bg-white/15 hover:text-white'

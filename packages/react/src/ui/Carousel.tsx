@@ -160,11 +160,11 @@ const CarouselControls = ({
 }: CarouselControlsProps) => {
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCtx();
   const baseBtn =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 focus-visible:focus-indicator';
+    'flex h-ctrl-36 w-ctrl-36 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 focus-visible:focus-indicator';
   // Over a slide (an image, a card) the arrows must read whatever the theme: a dark scrim with
   // white glyphs, not the surface colors of the buttons below the viewport.
   const overlayBtn =
-    'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:focus-indicator-on-accent';
+    'flex h-ctrl-36 w-ctrl-36 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:focus-indicator-on-accent';
   if (position === 'outside') {
     return (
       <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>

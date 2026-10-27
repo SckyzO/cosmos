@@ -56,7 +56,16 @@ test('every JS file starts with the "use client" directive', () => {
     /\.c?js$/.test(name)
   );
   expect(files).toEqual(
-    expect.arrayContaining(['index.js', 'index.cjs', 'code/index.js', 'code/index.cjs'])
+    expect.arrayContaining([
+      'index.js',
+      'index.cjs',
+      'code/index.js',
+      'code/index.cjs',
+      'editor/index.js',
+      'editor/index.cjs',
+      'map/index.js',
+      'map/index.cjs',
+    ])
   );
   for (const name of files) {
     const code = readFileSync(`${pkgDir}dist/${name}`, 'utf8');
@@ -80,15 +89,16 @@ const distFiles = () =>
 test('Shiki is an optional peer dependency, and a dev dependency of the repo only', () => {
   const pkg = JSON.parse(read(`${pkgDir}package.json`));
   expect(pkg.peerDependencies.shiki).toMatch(/^\^4\./);
-  expect(pkg.peerDependenciesMeta).toEqual({ shiki: { optional: true } });
+  expect(pkg.peerDependenciesMeta.shiki).toEqual({ optional: true });
   expect(pkg.dependencies.shiki).toBeUndefined();
 });
 
-test('the root entry carries no Shiki and does not import the code entry', () => {
-  for (const name of distFiles().filter((file) => !file.startsWith('code/'))) {
+test('the root entry carries no Shiki nor MapLibre and does not import a sub-path entry', () => {
+  for (const name of distFiles().filter((file) => !/^(?:code|editor|map)\//.test(file))) {
     const code = read(`${pkgDir}dist/${name}`);
     expect(code, name).not.toMatch(/shiki/i);
-    expect(code, name).not.toMatch(/['"]\.{1,2}\/code\//);
+    expect(code, name).not.toMatch(/maplibre/i);
+    expect(code, name).not.toMatch(/['"]\.{1,2}\/(?:code|editor|map)\//);
     expect(code, name).not.toContain('@sckyzo/cosmos-react');
   }
 });
@@ -156,6 +166,202 @@ test('the code entry loads in Node as ESM and as CJS, next to the root entry', (
     coloured: true,
     plain: 'a: 1',
   };
+  expect(JSON.parse(esmOut)).toEqual(expected);
+  expect(JSON.parse(cjsOut)).toEqual(expected);
+});
+
+// ── `@sckyzo/cosmos-react/editor`: formatted text, with Tiptap as optional peers ────────────────
+// Same contract as the code entry: the root entry ships no Tiptap, and the editor entry imports the
+// root entry as the package itself. It also takes by value a few internal helpers the root entry
+// does not export, so every name it asks of the root entry has to exist there.
+
+const editorEsm = `${pkgDir}dist/editor/index.js`;
+const editorCjs = `${pkgDir}dist/editor/index.cjs`;
+const TIPTAP_PEERS = [
+  '@tiptap/core',
+  '@tiptap/extensions',
+  '@tiptap/pm',
+  '@tiptap/react',
+  '@tiptap/starter-kit',
+];
+
+test('Tiptap is made of optional peer dependencies, and dev dependencies of the repo only', () => {
+  const pkg = JSON.parse(read(`${pkgDir}package.json`));
+  for (const name of TIPTAP_PEERS) {
+    expect(pkg.peerDependencies[name], name).toMatch(/^\^3\./);
+    expect(pkg.peerDependenciesMeta[name], name).toEqual({ optional: true });
+    expect(pkg.dependencies[name], name).toBeUndefined();
+    expect(pkg.devDependencies[name], name).toMatch(/^3\.\d+\.\d+$/);
+  }
+});
+
+test('no entry but the editor one carries Tiptap or ProseMirror', () => {
+  for (const name of distFiles().filter((file) => !file.startsWith('editor/'))) {
+    const code = read(`${pkgDir}dist/${name}`);
+    expect(code, name).not.toMatch(/tiptap|prosemirror/i);
+  }
+});
+
+test('the editor entry resolves for import and require, each with its own types', () => {
+  expectSubpathOwnTypes(pkgDir, 'editor');
+});
+
+test('the editor entry leaves Tiptap and the root entry external', () => {
+  for (const file of [editorEsm, editorCjs]) {
+    const code = read(file);
+    expect(code, file).toMatch(/(?:from |require\()['"]@sckyzo\/cosmos-react['"]/);
+    for (const name of [
+      '@tiptap/react',
+      '@tiptap/react/menus',
+      '@tiptap/starter-kit',
+      '@tiptap/extensions',
+    ]) {
+      expect(code, file).toMatch(new RegExp(`(?:from |require\\()['"]${name}['"]`));
+    }
+    // Neither Tiptap, ProseMirror nor a component of the root entry is bundled in.
+    expect(code, file).not.toMatch(/class \w*(?:EditorView|Schema)\b/);
+    expect(code, file).not.toContain('Clipboard');
+    expect(code.length, file).toBeLessThan(60_000);
+  }
+});
+
+test('the editor entry only asks the root entry for names it exports', () => {
+  const cosmos: string[] = JSON.parse(
+    execFileSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `const c = await import(${JSON.stringify(esm)}); console.log(JSON.stringify(Object.keys(c)));`,
+      ],
+      { encoding: 'utf8', cwd: pkgDir }
+    )
+  );
+  const esmSource = read(editorEsm);
+  const imported = [
+    ...esmSource.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@sckyzo\/cosmos-react['"]/g),
+  ].flatMap(([, list]) =>
+    list
+      .split(',')
+      .map((item) => item.split(' as ')[0].trim())
+      .filter(Boolean)
+  );
+  expect(imported.length).toBeGreaterThan(0);
+  expect(imported.filter((name) => !cosmos.includes(name))).toEqual([]);
+
+  const cjsSource = read(editorCjs);
+  const binding =
+    /(?:var|const|let) (\w+) = (?:__toESM\()?require\(['"]@sckyzo\/cosmos-react['"]\)/.exec(
+      cjsSource
+    )?.[1];
+  expect(binding).toBeTruthy();
+  const used = [...cjsSource.matchAll(new RegExp(`\\b${binding}\\.(\\w+)`, 'g'))].map(
+    ([, name]) => name
+  );
+  expect(used.length).toBeGreaterThan(0);
+  expect(used.filter((name) => !cosmos.includes(name))).toEqual([]);
+});
+
+test('the editor entry loads in Node as ESM and as CJS, next to the root entry', () => {
+  const script = (load: string) => `
+    ${load}
+    console.log(JSON.stringify({
+      editor: typeof editor.RichTextEditor,
+      actions: editor.RICH_TEXT_ACTIONS.length,
+    }));
+  `;
+  const esmOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`await import(${JSON.stringify(esm)});
+        const editor = await import(${JSON.stringify(editorEsm)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const cjsOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`import { createRequire } from 'node:module';
+        const require = createRequire(import.meta.url);
+        require(${JSON.stringify(cjs)});
+        const editor = require(${JSON.stringify(editorCjs)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  expect(JSON.parse(esmOut)).toEqual({ editor: 'function', actions: 11 });
+  expect(JSON.parse(cjsOut)).toEqual({ editor: 'function', actions: 11 });
+});
+
+// ── `@sckyzo/cosmos-react/map`: the map, with `maplibre-gl` as an optional peer ─────────────────
+// Same contract as the code entry: the root entry and the other entries never import MapLibre, so
+// an app that draws no map ships none of it.
+
+const mapEsm = `${pkgDir}dist/map/index.js`;
+const mapCjs = `${pkgDir}dist/map/index.cjs`;
+
+test('MapLibre is an optional peer dependency, and an exact dev dependency of the repo only', () => {
+  const pkg = JSON.parse(read(`${pkgDir}package.json`));
+  expect(pkg.peerDependencies['maplibre-gl']).toMatch(/^\^5\./);
+  expect(pkg.peerDependenciesMeta['maplibre-gl']).toEqual({ optional: true });
+  expect(pkg.dependencies['maplibre-gl']).toBeUndefined();
+  expect(pkg.devDependencies['maplibre-gl']).toMatch(/^5\.\d+\.\d+$/);
+});
+
+test('the code and editor entries carry no MapLibre either', () => {
+  for (const file of [codeEsm, codeCjs, editorEsm, editorCjs]) {
+    expect(read(file), file).not.toMatch(/maplibre/i);
+  }
+});
+
+test('the map entry resolves for import and require, each with its own types', () => {
+  expectSubpathOwnTypes(pkgDir, 'map');
+});
+
+test('the map entry leaves MapLibre external and imports it on demand', () => {
+  for (const file of [mapEsm, mapCjs]) {
+    const code = read(file);
+    // Only a dynamic import: the app's bundler splits MapLibre off, and Node loads the entry
+    // without it.
+    expect(code, file).toContain("import('maplibre-gl')");
+    expect(code, file).not.toMatch(/(?:from |require\()['"]maplibre-gl/);
+    // Nothing of the rest of the package is copied into it.
+    expect(code, file).not.toContain('Clipboard');
+    expect(code, file).not.toContain('OverlayLayer');
+    expect(code.length, file).toBeLessThan(60_000);
+    // A stylesheet is the app's to load, never bundled.
+    expect(code, file).not.toMatch(/\.css['"]/);
+  }
+});
+
+test('the map entry loads in Node as ESM and as CJS, without importing MapLibre', () => {
+  const script = (load: string) => `
+    ${load}
+    console.log(JSON.stringify({
+      view: typeof map.MapView,
+      list: typeof map.MapMarkerList,
+      names: Object.keys(map).sort(),
+    }));
+  `;
+  const esmOut = execFileSync(
+    process.execPath,
+    ['--input-type=module', '-e', script(`const map = await import(${JSON.stringify(mapEsm)});`)],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const cjsOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`import { createRequire } from 'node:module';
+        const map = createRequire(import.meta.url)(${JSON.stringify(mapCjs)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const expected = { view: 'function', list: 'function', names: ['MapMarkerList', 'MapView'] };
   expect(JSON.parse(esmOut)).toEqual(expected);
   expect(JSON.parse(cjsOut)).toEqual(expected);
 });

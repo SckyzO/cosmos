@@ -8,7 +8,8 @@
  *
  * Before that, it checks that the themes and accents of the CSS are the ones
  * COSMOS_THEMES and COSMOS_ACCENTS list in react/src/settings/appearance.ts
- * (read as text), with the same `dark` flag and the same brand-500 as `hex`.
+ * (read as text), with the same `dark` flag and the same brand-500 as `hex`,
+ * and that the [data-density] blocks are the COSMOS_DENSITIES.
  *
  *   node scripts/check-contrast.mjs
  */
@@ -162,16 +163,48 @@ for (const id of metaAccents.keys()) {
   }
 }
 
+// The densities: the same ids in the [data-density='…'] blocks and in COSMOS_DENSITIES, and
+// every token the @theme block declares for them is rebuilt under [data-density].
+const DENSITY_TOKEN = /^(?:ctrl|row|cell)-/;
+const metaDensities = metaEntries('COSMOS_DENSITIES');
+const densities = [...vars.keys()]
+  .map((sel) => sel.match(/^\[data-density='([\w-]+)'\]$/)?.[1])
+  .filter(Boolean);
+for (const id of densities) {
+  if (!metaDensities.has(id)) {
+    drift.push(`density '${id}' is in the CSS but not in COSMOS_DENSITIES`);
+  }
+}
+for (const id of metaDensities.keys()) {
+  if (!densities.includes(id)) {
+    drift.push(
+      `density '${id}' is in COSMOS_DENSITIES but has no [data-density='${id}'] block in css-vars.css`
+    );
+  }
+}
+const spacingNames = (decls) =>
+  Object.keys(decls ?? {})
+    .filter((name) => name.startsWith('spacing-') && DENSITY_TOKEN.test(name.slice(8)))
+    .sort();
+const densityTokens = spacingNames(tokens.get('@theme'));
+const rebuiltTokens = spacingNames(vars.get('[data-density]'));
+for (const name of densityTokens.filter((n) => !rebuiltTokens.includes(n))) {
+  drift.push(`--${name} is in @theme but [data-density] does not rebuild it`);
+}
+for (const name of rebuiltTokens.filter((n) => !densityTokens.includes(n))) {
+  drift.push(`--${name} is rebuilt under [data-density] but has no default in @theme`);
+}
+
 if (drift.length) {
   console.error(
     `\nThe theme metadata and the CSS disagree (packages/react/src/settings/appearance.ts vs packages/theme/css):\n` +
       drift.map((d) => `  - ${d}`).join('\n') +
-      `\n\nUpdate appearance.ts or the CSS so that both list the same themes and accents.`
+      `\n\nUpdate appearance.ts or the CSS so that both list the same themes, accents and densities.`
   );
   process.exit(1);
 }
 console.log(
-  `ok   metadata   ${THEMES.length} themes and ${accents.length} accents match appearance.ts`
+  `ok   metadata   ${THEMES.length} themes, ${accents.length} accents and ${densities.length} densities match appearance.ts`
 );
 
 // ── Color math ────────────────────────────────────────────────────────────

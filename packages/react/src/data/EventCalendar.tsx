@@ -250,7 +250,7 @@ export const EventCalendar = ({
             onClick={() => goTo(new Date(shown.getFullYear(), shown.getMonth() - 1, 1))}
             aria-label="Previous month"
             className={clsx(
-              'flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+              'h-ctrl-32 w-ctrl-32 flex items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
               'focus-visible:focus-indicator'
             )}
           >
@@ -261,7 +261,7 @@ export const EventCalendar = ({
             onClick={() => goTo(new Date(shown.getFullYear(), shown.getMonth() + 1, 1))}
             aria-label="Next month"
             className={clsx(
-              'flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+              'h-ctrl-32 w-ctrl-32 flex items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
               'focus-visible:focus-indicator'
             )}
           >

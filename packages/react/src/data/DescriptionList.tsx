@@ -48,7 +48,7 @@ function Item({
     return (
       <div
         ref={ref}
-        className={clsx('flex items-center justify-between gap-x-4 py-2.5', className)}
+        className={clsx('py-row-10 flex items-center justify-between gap-x-4', className)}
         {...rest}
       >
         <dt className="text-sm text-[var(--color-text-secondary)]">{label}</dt>
@@ -66,7 +66,7 @@ function Item({
   return (
     <div
       ref={ref}
-      className={clsx('px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0', className)}
+      className={clsx('py-row-24 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0', className)}
       {...rest}
     >
       <dt className="text-sm/6 font-medium text-gray-900 dark:text-white">{label}</dt>

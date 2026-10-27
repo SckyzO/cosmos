@@ -179,7 +179,7 @@ export const OtpInput = ({
             onPaste={handlePaste(i)}
             onFocus={(e) => e.target.select()}
             className={clsx(
-              'h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+              'h-ctrl-48 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
               fieldStateClass({ invalid: error, success })
             )}
           />

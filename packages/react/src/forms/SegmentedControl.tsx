@@ -77,7 +77,7 @@ export const SegmentedControl = <T extends string>({
         fullWidth ? 'flex w-full' : 'inline-flex',
         'overflow-hidden rounded-lg border',
         pills
-          ? clsx('items-center gap-1 border-[var(--color-border)]', sm ? 'h-8' : 'h-9')
+          ? clsx('items-center gap-1 border-[var(--color-border)]', sm ? 'h-ctrl-32' : 'h-ctrl-36')
           : 'border-gray-200 dark:border-gray-700',
         className
       )}
@@ -121,7 +121,7 @@ export const SegmentedControl = <T extends string>({
                     sm ? 'h-6 px-2.5' : 'h-7 px-3'
                   )
                 : clsx(
-                    sm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm',
+                    sm ? 'py-row-6 px-2.5 text-xs' : 'py-row-8 px-3 text-sm',
                     i > 0 && 'border-l border-gray-200 dark:border-gray-700'
                   ),
               isActive

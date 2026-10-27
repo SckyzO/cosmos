@@ -23,7 +23,7 @@ export type ChatMessageActionsProps = {
 };
 
 const BUTTON =
-  'focus-visible:focus-indicator inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors';
+  'focus-visible:focus-indicator inline-flex h-ctrl-28 w-ctrl-28 shrink-0 items-center justify-center rounded-lg transition-colors';
 const IDLE =
   'text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)] dark:hover:bg-gray-800';
 const PRESSED = 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400';

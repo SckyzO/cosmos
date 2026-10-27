@@ -53,7 +53,7 @@ const ROOT_BG: Record<NavbarTheme, string> = {
   dark: 'bg-gray-800 text-white',
 };
 
-const ITEM_BASE = 'rounded-md px-3 py-2 text-sm font-medium focus-visible:focus-indicator';
+const ITEM_BASE = 'rounded-md px-3 py-row-8 text-sm font-medium focus-visible:focus-indicator';
 
 // Idle and active styles are exclusive: an idle item's hover background would
 // otherwise repaint the active item under the pointer.

@@ -16,7 +16,6 @@ import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } 
 import type { DataTableDensity } from './types';
 
 type TableContextValue = {
-  density: DataTableDensity;
   striped: boolean;
   stickyHeader: boolean;
   /** The id a `TableCaption` takes unless the host passes its own. */
@@ -26,7 +25,6 @@ type TableContextValue = {
 type TableSection = 'head' | 'body' | 'foot';
 
 const TableContext = createContext<TableContextValue>({
-  density: 'default',
   striped: false,
   stickyHeader: false,
 });
@@ -53,8 +51,9 @@ const alignClass = ({ align, numeric }: CellAlignProps) =>
 
 export type TableProps = ComponentProps<'table'> & {
   /**
-   * Row height, shared with `DataTable`. `default` keeps the standard rows,
-   * `comfortable` pads the cells more for rows with two lines of content.
+   * Row height, shared with `DataTable`. Without it the table follows the page's
+   * `data-density`. `default` keeps the standard rows whatever the page says, `compact` pads the
+   * cells less, `comfortable` more, for rows with two lines of content.
    */
   density?: DataTableDensity;
   /** Shade every other body row. */
@@ -115,7 +114,7 @@ const useCaptionId = (containerRef: RefObject<HTMLElement | null>) => {
  * sorting, filtering or pagination, use `DataTable`.
  */
 export const Table = ({
-  density = 'default',
+  density,
   striped = false,
   stickyHeader = false,
   stickyFirstColumn = false,
@@ -130,9 +129,10 @@ export const Table = ({
   const fade = useScrollFade(containerRef, { start: !stickyFirstColumn });
   const namedBy = useCaptionId(containerRef);
   return (
-    <TableContext.Provider value={{ density, striped, stickyHeader, captionId }}>
+    <TableContext.Provider value={{ striped, stickyHeader, captionId }}>
       <div
         ref={containerRef}
+        data-density={density}
         // Focusable only while it scrolls: a scroll container with no control inside is out of
         // reach of the keyboard, and one that fits would add a tab stop that does nothing. It is
         // a region only with a caption to be named by: a region with no name is no landmark, and
@@ -257,7 +257,6 @@ export const TableHeaderCell = ({
   className,
   ...rest
 }: TableHeaderCellProps) => {
-  const { density } = useContext(TableContext);
   const section = useContext(SectionContext);
   const inHead = section === 'head';
   return (
@@ -265,9 +264,7 @@ export const TableHeaderCell = ({
       scope={scope ?? (inHead ? 'col' : 'row')}
       className={clsx(
         alignClass({ align, numeric }),
-        inHead
-          ? [HEADER_CELL, HEADER_CELL_PADDING[density]]
-          : ['px-4', BODY_CELL_PADDING[density], 'font-medium'],
+        inHead ? [HEADER_CELL, HEADER_CELL_PADDING] : ['px-4', BODY_CELL_PADDING, 'font-medium'],
         className
       )}
       {...rest}
@@ -278,20 +275,12 @@ export const TableHeaderCell = ({
 export type TableCellProps = ComponentProps<'td'> & CellAlignProps;
 
 /** TableCell — a `<td>`, padded to the table's `density`. */
-export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps) => {
-  const { density } = useContext(TableContext);
-  return (
-    <td
-      className={clsx(
-        'px-4',
-        BODY_CELL_PADDING[density],
-        alignClass({ align, numeric }),
-        className
-      )}
-      {...rest}
-    />
-  );
-};
+export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps) => (
+  <td
+    className={clsx('px-4', BODY_CELL_PADDING, alignClass({ align, numeric }), className)}
+    {...rest}
+  />
+);
 
 export type TableSkeletonRowsProps = {
   /** How many placeholder rows. Default 4. */

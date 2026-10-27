@@ -55,7 +55,7 @@ export const PageActionButton = ({
     ref={ref}
     type={type}
     className={clsx(
-      'focus-visible:focus-indicator flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      'focus-visible:focus-indicator py-row-8 flex items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
       variantClass(variant, intent),
       className
     )}

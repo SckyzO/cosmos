@@ -214,7 +214,9 @@ export const Combobox = ({
           className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
         >
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</li>
+            <li className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400">
+              {emptyMessage}
+            </li>
           ) : (
             filtered.map((opt, i) => {
               const isActive = i === activeIndex;
@@ -234,7 +236,7 @@ export const Combobox = ({
                     pick(opt);
                   }}
                   className={clsx(
-                    'flex items-center gap-2 px-3 py-2 select-none',
+                    'py-row-8 flex items-center gap-2 px-3 select-none',
                     isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
                     opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   )}

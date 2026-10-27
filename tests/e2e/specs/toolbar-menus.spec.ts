@@ -27,6 +27,12 @@ const MENUS = [
     pick: 'Size: Large',
     check: (html: Element) => html.getAttribute('data-text-size') === 'lg',
   },
+  {
+    description: 'Density',
+    label: 'Density:',
+    pick: 'Density: Compact',
+    check: (html: Element) => html.getAttribute('data-density') === 'compact',
+  },
 ];
 
 for (const menu of MENUS) {

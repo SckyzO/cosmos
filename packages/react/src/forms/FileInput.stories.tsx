@@ -66,7 +66,7 @@ export const AriaDisabledFollowsDisabled: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    const field = (label: string) => canvas.getByLabelText(label).closest('.h-9');
+    const field = (label: string) => canvas.getByLabelText(label).closest('.h-ctrl-36');
     await expect(field('Enabled')).not.toHaveAttribute('aria-disabled');
     await expect(field('Disabled')).toHaveClass('opacity-50');
     await expect(field('Disabled')).toHaveAttribute('aria-disabled', 'true');

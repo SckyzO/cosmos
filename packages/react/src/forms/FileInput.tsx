@@ -73,7 +73,7 @@ export function FileInput({
         // axe it belongs to an inactive control, exempt from contrast (WCAG 1.4.3).
         aria-disabled={disabled || undefined}
         className={clsx(
-          'flex h-9 w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
+          'h-ctrl-36 flex w-full items-stretch overflow-hidden rounded-lg border bg-white transition-colors dark:bg-gray-800',
           error
             ? 'focus-within:field-focus-error border-red-400 dark:border-red-500/60'
             : 'focus-within:field-focus border-gray-200 dark:border-gray-700',

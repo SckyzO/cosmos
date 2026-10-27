@@ -63,7 +63,7 @@ export const Row = ({
     </>
   );
   const baseClass = clsx(
-    'focus-visible:focus-indicator flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-inset',
+    'focus-visible:focus-indicator py-row-10 flex w-full items-center gap-3 rounded-lg px-3 text-left transition-colors focus-visible:ring-inset',
     'hover:bg-black/5 dark:hover:bg-white/5',
     className
   );

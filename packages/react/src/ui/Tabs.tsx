@@ -139,13 +139,13 @@ const RAISED_ACTIVE = 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:te
 const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasses>> = {
   underline: {
     horizontal: {
-      base: '-mb-px border-b-2 px-3 py-2',
+      base: '-mb-px border-b-2 px-3 py-row-8',
       active: 'border-brand-500 text-brand-600 dark:text-brand-400',
       inactive: 'border-transparent',
       hover: IDLE_HOVER,
     },
     vertical: {
-      base: '-mr-px justify-start rounded-l-lg border-r-2 px-3 py-2 text-left whitespace-nowrap',
+      base: '-mr-px justify-start rounded-l-lg border-r-2 px-3 py-row-8 text-left whitespace-nowrap',
       active:
         'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
       inactive: 'border-transparent',
@@ -159,14 +159,14 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
   // background. The padding moves with the size so the labels don't shift.
   folder: {
     horizontal: {
-      base: '-mb-px rounded-t-lg border border-[var(--folder-border)] px-3 pb-2',
+      base: '-mb-px rounded-t-lg border border-[var(--folder-border)] px-3 pb-row-8',
       active:
-        'border-b-transparent bg-[var(--color-bg-panel)] pt-3 text-brand-600 dark:text-brand-400',
-      inactive: 'bg-[var(--color-bg-base)] pt-2',
+        'border-b-transparent bg-[var(--color-bg-panel)] pt-row-12 text-brand-600 dark:text-brand-400',
+      inactive: 'bg-[var(--color-bg-base)] pt-row-8',
       hover: IDLE_HOVER,
     },
     vertical: {
-      base: '-mr-px justify-start rounded-l-lg border border-[var(--folder-border)] py-2 pr-3 text-left whitespace-nowrap',
+      base: '-mr-px justify-start rounded-l-lg border border-[var(--folder-border)] py-row-8 pr-3 text-left whitespace-nowrap',
       active:
         'border-r-transparent bg-[var(--color-bg-panel)] pl-4 text-brand-600 dark:text-brand-400',
       inactive: 'ml-1 bg-[var(--color-bg-base)] pl-3',
@@ -177,7 +177,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
   // white, since a brand ring would vanish on the fill.
   pills: {
     horizontal: {
-      base: 'rounded-lg px-3.5 py-1.5',
+      base: 'rounded-lg px-3.5 py-row-6',
       active: 'bg-brand-500 text-white',
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
@@ -185,7 +185,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       activeFocus: 'focus-visible:focus-indicator-on-accent',
     },
     vertical: {
-      base: 'justify-start rounded-lg px-3 py-2 text-left whitespace-nowrap',
+      base: 'justify-start rounded-lg px-3 py-row-8 text-left whitespace-nowrap',
       active: 'bg-brand-500 text-white',
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
@@ -199,14 +199,14 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
   // idle text takes gray-600.
   raised: {
     horizontal: {
-      base: 'rounded-lg px-3 py-1.5',
+      base: 'rounded-lg px-3 py-row-6',
       active: RAISED_ACTIVE,
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
       idle: 'text-gray-600 dark:text-gray-400',
     },
     vertical: {
-      base: 'justify-start rounded-lg px-3 py-1.5 text-left whitespace-nowrap',
+      base: 'justify-start rounded-lg px-3 py-row-6 text-left whitespace-nowrap',
       active: RAISED_ACTIVE,
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
