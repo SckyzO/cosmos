@@ -12,6 +12,54 @@ export type DataTableDensity = 'default' | 'comfortable';
 /** The edge of a `DataTable` a column is pinned to. */
 export type ColumnPin = 'start' | 'end';
 
+/**
+ * What `ColumnEdit.render` gets to draw an editor: the draft and what to do with it. The draft is
+ * a string, what a form field holds: parse it in `onCellEdit` / `onRowEdit`.
+ */
+export type CellEditor<T> = {
+  /** The row being edited. */
+  row: T;
+  /** The draft value: `initialValue(row)` until `setValue` changes it. */
+  value: string;
+  /** Changes the draft. */
+  setValue: (value: string) => void;
+  /**
+   * Saves the draft: what Enter does (and blur, with `editTrigger` `'cell'` and `'button'`). With
+   * `editTrigger="row"` it saves the whole row.
+   */
+  commit: () => void;
+  /** Drops the draft and closes the editor: what Escape does. With `'row'`, for the whole row. */
+  cancel: () => void;
+  /** A save is waiting for its promise (`'row'` only: a cell editor is closed meanwhile). */
+  saving: boolean;
+  /**
+   * What the field needs, spread on it: its name (`aria-label`, "Rack for node-a02"), the error
+   * tie (`aria-describedby`, `aria-invalid`), `disabled` while saving and a `className` that turns
+   * the border red on `aria-invalid`. An `Input`, a `Select` or any field that takes these props
+   * accepts the object as it is.
+   */
+  fieldProps: {
+    'aria-label': string;
+    'aria-describedby': string | undefined;
+    'aria-invalid': true | undefined;
+    disabled: boolean | undefined;
+    /** Turns the border red while `aria-invalid` is set. */
+    className: string;
+  };
+};
+
+/** The editor of a column (`ColumnDef.edit`). */
+export type ColumnEdit<T> = {
+  /** The draft the editor starts from, for a row: usually the plain text of the cell. */
+  initialValue: (row: T) => string;
+  /**
+   * Draws the editor from the existing form fields:
+   * `(e) => <Input {...e.fieldProps} size="sm" value={e.value} onChange={(ev) => e.setValue(ev.target.value)} />`.
+   * Enter, Escape and blur are handled by the table around it, not by the field.
+   */
+  render: (editor: CellEditor<T>) => ReactNode;
+};
+
 export type ColumnDef<T> = {
   /** Stable key — used for sort/filter identity. */
   key: string;
@@ -68,6 +116,13 @@ export type ColumnDef<T> = {
    * above `sm` only: the cards of `mobileLayout="cards"` ignore it.
    */
   pin?: ColumnPin;
+  /**
+   * Makes the cells of the column editable (see `DataTable`'s `editTrigger`, `onCellEdit` and
+   * `onRowEdit`): the editor to draw, and the draft it starts from. A cell's content is drawn
+   * inside a button with `editTrigger` `'cell'`, so keep it to text and badges, with no link or
+   * button of its own. Not in the cards of `mobileLayout="cards"`.
+   */
+  edit?: ColumnEdit<T>;
   /** The label of the column's pair in a card, in place of `label` (a short or plain-text one). */
   mobileLabel?: ReactNode;
 };
