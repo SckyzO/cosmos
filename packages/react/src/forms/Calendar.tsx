@@ -68,7 +68,10 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         month: clsx(def.month, 'space-y-2'),
         // Reserve horizontal padding so the absolute Nav prev/next chevrons sit
         // OUTSIDE of the caption content (dropdowns or label), never overlapping.
-        month_caption: clsx(def.month_caption, 'flex min-h-9 items-center justify-center px-9'),
+        month_caption: clsx(
+          def.month_caption,
+          'min-h-ctrl-36 flex items-center justify-center px-9'
+        ),
         // The `label` layout (the default) shows the month and year here. A dropdown
         // layout shows them in its selects, so the raw label would double them: it
         // stays for screen readers only (`sr-only`).
@@ -85,9 +88,9 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         // At its first or last month react-day-picker sets `aria-disabled`, not
         // `disabled`: the dimming has to follow both.
         button_previous:
-          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:focus-indicator disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+          'pointer-events-auto inline-flex h-ctrl-28 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:focus-indicator disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
         button_next:
-          'pointer-events-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:focus-indicator disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
+          'pointer-events-auto inline-flex h-ctrl-28 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:focus-indicator disabled:opacity-30 aria-disabled:opacity-30 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200',
         // Caption dropdowns (when `captionLayout="dropdown"` etc.)
         // The `dropdown` key targets the actual `<select>` element. `appearance-none`
         // hides the browser-native chevron; we layer a Lucide ChevronDown via a
@@ -95,7 +98,7 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         dropdowns: 'flex items-center justify-center gap-1.5',
         dropdown_root: 'relative inline-flex items-center',
         dropdown: clsx(
-          'cursor-pointer appearance-none rounded-md border border-gray-200 bg-white py-1 pr-6 pl-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50',
+          'py-row-4 cursor-pointer appearance-none rounded-md border border-gray-200 bg-white pr-6 pl-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50',
           'focus:field-focus',
           'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
           // Custom chevron-down via inline SVG (text-gray-400 in light, text-gray-500 in dark — single SVG, neutral color works for both).
@@ -104,11 +107,11 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
         months_dropdown: '',
         years_dropdown: '',
         weekdays: clsx(def.weekdays, ''),
-        weekday: 'h-8 w-8 text-center text-2xs font-medium text-gray-500 dark:text-gray-400',
+        weekday: 'h-ctrl-32 w-8 text-center text-2xs font-medium text-gray-500 dark:text-gray-400',
         week: clsx(def.week, ''),
-        day: 'h-8 w-8 p-0 text-center align-middle',
+        day: 'h-ctrl-32 w-8 p-0 text-center align-middle',
         day_button:
-          'inline-flex h-8 w-8 items-center justify-center rounded-md text-sm text-gray-700 transition-colors hover:bg-gray-100 focus-visible:ring-inset focus-visible:focus-indicator dark:text-gray-200 dark:hover:bg-white/5',
+          'inline-flex h-ctrl-32 w-8 items-center justify-center rounded-md text-sm text-gray-700 transition-colors hover:bg-gray-100 focus-visible:ring-inset focus-visible:focus-indicator dark:text-gray-200 dark:hover:bg-white/5',
         today: 'font-semibold text-brand-600 dark:text-brand-400',
         selected:
           '[&_button]:bg-brand-500 [&_button]:text-white [&_button]:hover:bg-brand-600 dark:[&_button]:hover:bg-brand-400 [&_button:focus-visible]:ring-white',

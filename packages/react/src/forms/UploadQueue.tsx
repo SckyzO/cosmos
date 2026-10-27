@@ -147,7 +147,7 @@ const UploadRow = ({
     <li
       data-status={status}
       className={clsx(
-        'flex items-center gap-3 py-3 pr-3 pl-4',
+        'py-row-12 flex items-center gap-3 pr-3 pl-4',
         status === 'failed' && 'bg-red-50/40 dark:bg-red-500/5'
       )}
     >

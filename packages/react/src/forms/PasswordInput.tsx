@@ -39,7 +39,7 @@ export function PasswordInput({
           disabled={disabled}
           aria-label={show ? hideLabel : showLabel}
           aria-pressed={show}
-          className="focus-visible:focus-indicator pointer-events-auto -my-0.5 inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+          className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 pointer-events-auto -my-0.5 inline-flex items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-gray-200"
         >
           <ToggleIcon className="h-4 w-4" aria-hidden />
         </button>
