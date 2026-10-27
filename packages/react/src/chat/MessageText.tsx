@@ -1,8 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import { URL_PATTERN } from './httpUrl';
-
-// Punctuation that ends a sentence rather than the URL.
-const TRAILING = /[.,;:!?)\]]+$/;
+import { URL_PATTERN, trimTrailingPunctuation } from './httpUrl';
 
 /**
  * Renders message text as text, turning http(s) URLs into links. Every part
@@ -13,7 +10,7 @@ export const MessageText = ({ text }: { text: string }) => {
   const parts: ReactNode[] = [];
   let last = 0;
   for (const match of text.matchAll(URL_PATTERN)) {
-    const url = match[0].replace(TRAILING, '');
+    const url = trimTrailingPunctuation(match[0]);
     const start = match.index;
     if (start > last) parts.push(text.slice(last, start));
     // A raw `<a>`, never `AppLink`: the URL is the sender's, so it opens a page of another site in a

@@ -1,6 +1,7 @@
 export * from './Breadcrumb';
 export * from './Navbar';
 export * from './Pagination';
+export * from './RecordPager';
 export * from './Stepper';
 export * from './VerticalNavigation';
 export * from './StickyScrollNav';

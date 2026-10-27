@@ -477,6 +477,36 @@ drawn under a dark scrim (`cover.alt` is empty unless set), and without it the c
 gradient of the accent. In every variant the built-in title is a paragraph: the forms carry the
 page's `h1`.
 
+## Record pager
+
+`RecordPager` moves through the records of a list from a detail page: "12 of 340", Previous, Next
+and an optional "Back to list". `Pagination` stays for pages of a list; the order and filters of the
+list are the host's to keep (URL or state).
+
+```tsx
+<RecordPager
+  position={12}
+  total={340}
+  noun="order"
+  previousHref="/orders/20430"
+  nextHref="/orders/20432"
+  backHref="/orders"
+  hotkeys={{ previous: '[', next: ']' }}
+/>
+```
+
+- Links when `previousHref` / `nextHref` are given (through `LinkProvider`), buttons with
+  `onPrevious` / `onNext` otherwise. A side with nowhere to go, or at the first or last record, is a
+  disabled button, never a link.
+- `noun` builds the labels ("Previous order"); `labels` (`previous`, `next`, `back`, `count`)
+  replaces any of them, for another language.
+- `variant="compact"` draws icon buttons (still named) and the count, for a `PageHeader`'s `actions`.
+- Below `sm`, the default variant shows the icons only too, so a long label never wraps; the label
+  stays the button's name.
+- Shortcuts are off unless `hotkeys` is given. They listen on the document, do nothing while a
+  field is being typed in, and click the control, so a link goes through your router. List them
+  yourself in a `HelpOverlay`.
+
 ## Files and uploads
 
 `FileTile` is one file or folder as a `<li>`: `layout="tile"` (the default) is the card of a grid, with a
@@ -558,6 +588,52 @@ Markdown itself.
   is a disclosure row for what the assistant did; `ChatSources` (`sources`, `label`) lists where
   an answer comes from. Only http(s) sources become links.
 - `Clipboard plain` is the borderless copy button of that row.
+
+## Comments
+
+`CommentThread`, `Comment` and `CommentComposer` build the discussion under a record (a ticket, a
+task, an order). The host owns the data: the components take callbacks and keep only which
+replies are unfolded and which composer is open. Body text is rendered as text, never HTML, and
+only http(s) URLs become links.
+
+```tsx
+<CommentThread composer={<CommentComposer onSubmit={(text) => add(text)} />}>
+  {comments.map((c) => (
+    <Comment
+      key={c.id}
+      author={c.author}
+      role={c.role}
+      time={<time dateTime={c.createdAt}>{format(c.createdAt)}</time>}
+      edited={c.edited}
+      variant={c.internal ? 'internal' : 'default'}
+      text={c.text}
+      onReply={(text) => reply(c.id, text)}
+      onEdit={c.mine ? (text) => edit(c.id, text) : undefined}
+      onDelete={c.mine ? () => remove(c.id) : undefined}
+      replies={c.replies.map((r) => (
+        <Comment key={r.id} author={r.author} text={r.text} />
+      ))}
+    />
+  ))}
+</CommentThread>
+```
+
+- An action shows only when its callback is given, so a host lets people edit only their own
+  comments. Reply and Edit open a `CommentComposer` in place (the edit one starts with the
+  comment's text; `editText` when the body is `children`) and call back with the trimmed text;
+  Cancel and Escape return the focus to the button that opened it. Delete calls back at once:
+  confirm in the host if needed.
+- Replies are one level, `Comment`s passed as `replies`, folded beyond `maxReplies` (default
+  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own.
+- `variant="internal"` tints a note and labels it "Internal note" with a lock, so it reads as one
+  without the color.
+- `CommentComposer` is a `Textarea` with `autoResize`: Enter adds a line, Ctrl or Cmd+Enter and the
+  submit button send, Escape cancels when `onCancel` is given. Submit is disabled while the text
+  is empty or `submitting`. `value` / `defaultValue` / `onChange` work as on other fields.
+- `time` is a node, as in `Timeline`: a `RelativeTime`, a `<time>` or your own text.
+- Every text can be translated: `labels` on `CommentThread` reaches all its comments (a
+  comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
+  `label`, `placeholder`, `submitLabel` and `cancelLabel`.
 
 ## Slider
 
