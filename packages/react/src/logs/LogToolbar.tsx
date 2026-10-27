@@ -375,7 +375,12 @@ export const LogToolbar = ({
   const sourceField = (visibleLabel: boolean): ReactNode =>
     sources && (
       <MultiSelect
-        size="sm"
+        size="md"
+        // In the bar the label and the count are not drawn: take their row and the margin that
+        // separates them from the field out of the layout, so the field sits where the others do.
+        className={
+          visibleLabel ? undefined : '[&>div:first-child]:sr-only [&>div:nth-child(2)]:mt-0'
+        }
         label={visibleLabel ? 'Sources' : <span className="sr-only">Sources</span>}
         placeholder="All sources"
         emptyMessage="No such source."
