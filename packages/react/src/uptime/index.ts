@@ -7,6 +7,7 @@ export {
   type UptimePeriod,
   type UptimeCertificate,
 } from './UptimeStat';
+export { MonitorRow, type MonitorRowProps, type MonitorState } from './MonitorRow';
 export {
   BEAT_NAME,
   BEAT_STATUSES,
