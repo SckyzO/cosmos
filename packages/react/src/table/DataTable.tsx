@@ -901,7 +901,7 @@ export const DataTable = <T,>({
             'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
             isSelected
               ? 'bg-brand-50/40 dark:bg-brand-500/5'
-              : (isOpen || rowInEdit) && 'bg-gray-50 dark:bg-white/5',
+              : (isOpen || rowInEdit) && 'bg-gray-50 dark:bg-white/[0.03]',
             // The detail or error row below is part of it: no divider between the two.
             (isOpen || rowInEdit?.error) && 'border-b-0',
             (onRowClick || href) && 'cursor-pointer',
@@ -1082,7 +1082,7 @@ export const DataTable = <T,>({
           <RowEditError id={rowErrorId} message={rowInEdit.error} colSpan={columnCount} />
         )}
         {isOpen && renderExpandedRow && (
-          <tr id={detailId} className="bg-gray-50 dark:bg-white/5 print:break-inside-avoid">
+          <tr id={detailId} className="bg-gray-50 dark:bg-white/[0.03] print:break-inside-avoid">
             <td colSpan={columnCount} className="pt-1 pr-4 pb-5 pl-15 text-sm">
               {renderExpandedRow(row)}
             </td>

@@ -55,7 +55,9 @@ export const pinStyle = (offsets: PinOffsets, index: number): CSSProperties | un
 
 const SELECTED =
   'bg-[color-mix(in_srgb,var(--color-brand-50)_40%,var(--color-white))] dark:bg-[color-mix(in_srgb,var(--color-brand-500)_5%,var(--color-gray-900))]';
-const OPEN = 'bg-gray-50 dark:bg-gray-800';
+// The open row's tint, as an opaque fill: a hair of white over the dark surface, so that the muted
+// text of the row and its detail keeps its contrast in every dark theme.
+const OPEN = 'bg-gray-50 dark:bg-[color-mix(in_srgb,white_3%,var(--color-gray-900))]';
 const IDLE =
   'bg-white group-hover/row:bg-gray-50 dark:bg-gray-900 dark:group-hover/row:bg-gray-800';
 

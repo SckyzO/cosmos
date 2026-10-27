@@ -162,7 +162,7 @@ export const DataTableMobileCards = <T,>({
               'px-4 py-3',
               selected
                 ? 'bg-brand-50/40 dark:bg-brand-500/5'
-                : open && 'bg-gray-50 dark:bg-white/5',
+                : open && 'bg-gray-50 dark:bg-white/[0.03]',
               (onRowClick || href) && 'cursor-pointer',
               focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
               href &&
