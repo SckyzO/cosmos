@@ -360,6 +360,38 @@ loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells tak
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
 
+## Audit diff
+
+`AuditDiff` shows what an audit log entry changed: `changes` is a list of
+`{ field, label?, before?, after? }`. The default `table` variant is a real
+table (Field, Before, After) that stacks each change as a block below `sm`; the
+old value is struck through on a red tint and the new one sits on a green tint.
+`variant="inline"` is one line per field (`Role: Viewer → Admin`), for an entry
+of an `ActivityFeed` or a `Timeline`.
+
+```tsx
+import { AuditDiff } from '@sckyzo/cosmos-react';
+
+<AuditDiff
+  variant="inline"
+  changes={[
+    { field: 'role', label: 'Role', before: 'Viewer', after: 'Admin' },
+    { field: 'phone', label: 'Phone', after: '+33 1 23 45 67 89' },
+  ]}
+/>;
+```
+
+Values are rendered as text (markup in one shows as written): strings as they
+are, numbers and booleans with `String`, objects and arrays as compact JSON
+(there is no nested diff). `null`, `undefined` and `''` mean the field was
+empty on that side and show "—", which a screen reader reads as "empty".
+`formatValue(value, change, side)` draws a value yourself. When both sides are
+strings of a few words or more, the cells mark the words that moved with `<del>`
+and `<ins>`, each with a visually hidden "removed:" / "added:"; past about 500
+tokens on each side the whole values are shown instead. `labels` rewords every
+text the component writes (`field`, `before`, `after`, `empty`, `removed`,
+`added`), for another language.
+
 ## Progress
 
 `ProgressBar` shows one value (`value`, `max`, `intent`) or a list of parts
