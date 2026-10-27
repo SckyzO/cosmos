@@ -818,6 +818,46 @@ A `highlight` prop still replaces the built-in highlighter. The main entry never
 an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
 throws an error that names the package.
 
+## Editor
+
+`RichTextEditor` is a formatted text field: bold, italic, strike, headings, bulleted and numbered
+lists, quotes, code, links, undo and redo. It lives in the `/editor` entry and is built on
+[Tiptap](https://tiptap.dev) (MIT), whose packages are optional peer dependencies that only the apps
+using this entry install:
+
+```bash
+pnpm add @tiptap/react @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extensions
+```
+
+```tsx
+import { RichTextEditor } from '@sckyzo/cosmos-react/editor';
+
+<RichTextEditor
+  label="Reply"
+  placeholder="Write a reply…"
+  value={html}
+  onChange={setHtml}
+  maxLength={2000}
+/>;
+```
+
+`value`, `defaultValue` and `onChange` carry HTML by default, or the ProseMirror JSON document with
+`format="json"`; an empty HTML document is `''`. `variant` picks the chrome: `toolbar` (default,
+buttons on top; `toolbar={['bold', 'italic', 'link']}` picks them), `bubble` (a small toolbar over
+the selection; Alt+F10 moves the focus into it, Escape gives it back) or `minimal` (no toolbar, the
+shortcuts and Markdown-like input rules only: `##` and a space, `-` and a space, `**bold**`).
+`labels` replaces every text the editor draws, tooltips included. `readOnly`, `disabled`, `rows`,
+`autoFocus` and `name` (a hidden input, for a native form) work as on a Textarea, and so do `label`,
+`description`, `error` and `required`: the label and the error are linked to the editable text.
+`maxLength` counts the text characters and stops typing and pasting at the limit.
+
+Links accept `http(s):`, `mailto:` and relative URLs only: a
+`javascript:` link is refused whether it is typed in the link field, typed as Markdown, pasted or
+passed in `value`. The schema holds paragraphs, headings 2 and 3, lists, quotes, hard breaks and the
+marks above; images, tables and anything else are dropped on paste. **That is the editor's
+guarantee, not yours: sanitise the stored HTML again on the server before you render it elsewhere.**
+The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are
