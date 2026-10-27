@@ -1764,8 +1764,9 @@ const navWidth = (nav: HTMLElement) => nav.getBoundingClientRect().width;
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // The test browser's pointer rests in the page's corner, over the sidebar, and Chromium reports it
-// once the page has laid out: a stray hover that would hold the sidebar open. Send it away first,
-// so that only what the test does counts.
+// once the page has laid out: a stray hover that would hold the sidebar open. Under load that report
+// can come after the test's own unhover, and the sidebar opens again. Every story that hovers or
+// focuses the rail sends it away first, so that only what the test does counts.
 const settlePointer = async (nav: HTMLElement) => {
   await pause(300);
   await userEvent.unhover(nav);
@@ -1794,6 +1795,7 @@ export const HoverOverlaysThePage: Story = {
   render: () => <HoverShell mode="overlay" />,
   play: async ({ canvas }) => {
     const nav = mainNav(canvas);
+    await settlePointer(nav);
     const main = canvas.getByRole('main');
     const pageLeft = main.getBoundingClientRect().left;
     await expect(navWidth(nav)).toBe(RAIL);
@@ -1823,6 +1825,7 @@ export const HoverPushesThePage: Story = {
   render: () => <HoverShell mode="push" />,
   play: async ({ canvas }) => {
     const nav = mainNav(canvas);
+    await settlePointer(nav);
     const main = canvas.getByRole('main');
     await expect(main.getBoundingClientRect().left).toBe(RAIL);
 
@@ -1843,6 +1846,7 @@ export const HoverOpensAfterTheDelayAndLeavingCloses: Story = {
   render: () => <HoverShell mode="overlay" />,
   play: async ({ canvas }) => {
     const nav = mainNav(canvas);
+    await settlePointer(nav);
     await userEvent.hover(nav);
     await expect(navWidth(nav)).toBe(RAIL);
     await expect(within(nav).queryByText('Dashboard')).toBeNull();
@@ -1997,6 +2001,7 @@ export const HoverKeepsTheShellCollapsed: Story = {
   ),
   play: async ({ args, canvas }) => {
     const nav = mainNav(canvas);
+    await settlePointer(nav);
     const toggles = () => canvas.getAllByRole('button', { name: /^(Collapse|Expand) sidebar$/ });
     const expectCollapsedToggles = async () => {
       await expect(toggles()).toHaveLength(2);
@@ -2033,6 +2038,7 @@ export const HoverKeepsAControlledSidebarCollapsed: Story = {
   ),
   play: async ({ args, canvas }) => {
     const nav = mainNav(canvas);
+    await settlePointer(nav);
     const toggle = () => canvas.getByRole('button', { name: /^(Collapse|Expand) sidebar$/ });
     await userEvent.hover(nav);
     await expectExpanded(nav);
