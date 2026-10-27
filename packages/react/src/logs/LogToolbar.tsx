@@ -105,7 +105,7 @@ const LEVEL_NAME = (level: LogLevelKey) =>
   LOG_LEVEL_LABEL[level].charAt(0) + LOG_LEVEL_LABEL[level].slice(1).toLowerCase();
 
 const CONTROL =
-  'focus-visible:focus-indicator inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium whitespace-nowrap';
+  'focus-visible:focus-indicator inline-flex h-9 items-center justify-center gap-2 rounded-lg border text-sm font-medium whitespace-nowrap';
 const CONTROL_IDLE =
   'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
 const CONTROL_ON =
@@ -137,7 +137,7 @@ const ToggleButton = ({
     className={clsx(
       CONTROL,
       pressed ? CONTROL_ON : CONTROL_IDLE,
-      iconOnly && 'w-9 px-0',
+      iconOnly ? 'w-9' : 'px-3',
       className
     )}
   >
@@ -247,7 +247,7 @@ export const LogToolbar = ({
       aria-pressed={live}
       aria-label={live ? 'Live, pause the stream' : 'Paused, resume the stream'}
       onClick={() => setLive(!live)}
-      className={clsx(CONTROL, live ? CONTROL_ON : CONTROL_IDLE)}
+      className={clsx(CONTROL, 'px-3', live ? CONTROL_ON : CONTROL_IDLE)}
     >
       <span aria-hidden>
         <HealthDot status={live ? 'OK' : 'UNKNOWN'} pulse={live} />
@@ -299,13 +299,7 @@ export const LogToolbar = ({
   );
 
   const regexToggle = onSearchRegexChange !== undefined && (
-    <ToggleButton
-      pressed={regex}
-      onToggle={() => setRegex(!regex)}
-      icon={Regex}
-      iconOnly
-      className="h-9"
-    >
+    <ToggleButton pressed={regex} onToggle={() => setRegex(!regex)} icon={Regex} iconOnly>
       Regular expression
     </ToggleButton>
   );
@@ -328,20 +322,12 @@ export const LogToolbar = ({
             ? 'No matches'
             : `${format(Math.min(activeMatch, matchCount - 1) + 1)} of ${format(matchCount)}`;
 
-  const searchInput = hasSearch && (
-    <div onKeyDown={onSearchKeyDown} className="min-w-0 flex-1 sm:max-w-xs">
-      <SearchInput
-        aria-label="Search logs"
-        placeholder="Search…"
-        size="md"
-        value={search}
-        onChange={setSearch}
-      />
-    </div>
-  );
-  // The count and the arrows follow the field in the bar; narrow, they get a row under it.
+  // The count and the arrows sit at the end of the field in the bar, so the field keeps its width
+  // whether they show or not; narrow, they get a row under it.
   const searchNav = hasSearch && search !== '' && (matchText !== null || hasNav) && (
-    <div className="flex shrink-0 items-center gap-1">
+    <div
+      className={clsx('flex items-center gap-1', wide ? 'absolute inset-y-0 right-1' : 'shrink-0')}
+    >
       {matchText !== null && (
         <span
           aria-live="polite"
@@ -378,11 +364,29 @@ export const LogToolbar = ({
     </div>
   );
 
+  const searchInput = hasSearch && (
+    <div className="relative min-w-0 flex-1 sm:max-w-xs">
+      <div onKeyDown={onSearchKeyDown}>
+        <SearchInput
+          aria-label="Search logs"
+          placeholder="Search…"
+          size="md"
+          value={search}
+          onChange={setSearch}
+          className={wide && searchNav ? '[&_input]:pr-32' : undefined}
+        />
+      </div>
+      {wide && searchNav}
+    </div>
+  );
+
   const sourceField = (visibleLabel: boolean): ReactNode =>
     sources && (
       <MultiSelect
-        size="sm"
-        label={visibleLabel ? 'Sources' : <span className="sr-only">Sources</span>}
+        size="md"
+        // In the bar the label and the count are not drawn, so the field sits where the others do.
+        label="Sources"
+        labelHidden={!visibleLabel}
         placeholder="All sources"
         emptyMessage="No such source."
         options={sources.map((source) => ({ value: source, label: source }))}
@@ -445,7 +449,6 @@ export const LogToolbar = ({
         {searchInput && (
           <div className="flex min-w-0 flex-1 items-center gap-1 sm:max-w-lg">
             {searchInput}
-            {searchNav}
             {regexToggle}
           </div>
         )}
@@ -487,7 +490,7 @@ export const LogToolbar = ({
           <Popover>
             <Popover.Trigger
               aria-label={activeFilters > 0 ? `Filters, ${activeFilters} active` : 'Filters'}
-              className={clsx(CONTROL, CONTROL_IDLE)}
+              className={clsx(CONTROL, 'px-3', CONTROL_IDLE)}
             >
               <SlidersHorizontal aria-hidden className="h-4 w-4" />
               Filters

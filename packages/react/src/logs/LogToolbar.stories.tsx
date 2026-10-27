@@ -80,3 +80,85 @@ export const NarrowFiltersCountActiveFilters: Story = {
     await waitFor(() => expect(canvas.getByRole('button', { name: 'Filters' })).toBeVisible());
   },
 };
+
+/** The bar with every control, a search that finds twelve lines, and a width that is not the screen's. */
+const FullBar = ({ width }: { width: number }) => {
+  const [search, setSearch] = useState('');
+  return (
+    <div style={{ width }}>
+      <LogToolbar
+        onLiveChange={() => {}}
+        levels={LEVELS}
+        levelCounts={{ debug: 1204, info: 8412, warn: 214, error: 37 }}
+        onActiveLevelsChange={() => {}}
+        search={search}
+        onSearchChange={setSearch}
+        onSearchRegexChange={() => {}}
+        matchCount={search === '' ? undefined : 12}
+        activeMatch={2}
+        onActiveMatchChange={() => {}}
+        sources={['api', 'worker', 'scheduler']}
+        onWrapChange={() => {}}
+        onOrderChange={() => {}}
+        onDownload={() => {}}
+        onClear={() => {}}
+      />
+    </div>
+  );
+};
+
+const FullBarWide: Story = { render: () => <FullBar width={1100} /> };
+
+/** The icon of an icon-only toggle keeps its size, in a square button of the control height. */
+export const IconToggleKeepsItsSize: Story = {
+  ...FullBarWide,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvas }) => {
+    for (const name of ['Regular expression', 'Wrap lines', 'Newest first']) {
+      const button = canvas.getByRole('button', { name });
+      const box = button.getBoundingClientRect();
+      const icon = button.querySelector('svg')!.getBoundingClientRect();
+      expect(icon.width).toBeCloseTo(16, 0);
+      expect(icon.height).toBeCloseTo(16, 0);
+      expect(box.width).toBeCloseTo(36, 0);
+      expect(box.height).toBeCloseTo(36, 0);
+    }
+  },
+};
+
+/** Every control of the bar has the height of the others and the same top edge. */
+export const ControlsShareHeightAndTop: Story = {
+  ...FullBarWide,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvas }) => {
+    const levels = canvas.getByRole('group', { name: 'Levels' });
+    const boxes = [
+      canvas.getByRole('button', { name: /^Live/ }),
+      levels,
+      canvas.getByRole('textbox', { name: 'Search logs' }).parentElement!,
+      canvas.getByRole('button', { name: 'Regular expression' }),
+      canvas.getByRole('combobox', { name: 'Sources' }).parentElement!,
+      canvas.getByRole('button', { name: 'Wrap lines' }),
+      canvas.getByRole('button', { name: 'Newest first' }),
+      canvas.getByRole('button', { name: 'Download' }),
+      canvas.getByRole('button', { name: 'Clear' }),
+    ].map((el) => el.getBoundingClientRect());
+    for (const box of boxes) {
+      expect(box.height).toBeCloseTo(36, 0);
+      expect(box.top).toBeCloseTo(boxes[0]!.top, 0);
+    }
+  },
+};
+
+/** The search field keeps its width when the match counter appears. */
+export const SearchWidthIgnoresMatchCounter: Story = {
+  render: () => <FullBar width={1100} />,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Search logs' });
+    const before = field.getBoundingClientRect().width;
+    await userEvent.type(field, 'timeout');
+    await expect(canvas.findByText('3 of 12')).resolves.toBeVisible();
+    expect(field.getBoundingClientRect().width).toBeCloseTo(before, 0);
+  },
+};

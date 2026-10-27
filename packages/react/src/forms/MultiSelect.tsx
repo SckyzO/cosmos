@@ -32,6 +32,11 @@ export type MultiSelectOption = ComboboxOption;
 
 export type MultiSelectProps = {
   label?: ReactNode;
+  /**
+   * Keeps the label for assistive technology only: the label and the count row leave the layout,
+   * so the field's top edge is the component's, for a toolbar where it lines up with buttons.
+   */
+  labelHidden?: boolean;
   /** Chosen option values, when controlled. */
   value?: string[];
   /** Initial option values, when uncontrolled. None chosen when omitted. */
@@ -75,6 +80,7 @@ const NONE: string[] = [];
  */
 export const MultiSelect = ({
   label,
+  labelHidden = false,
   value: valueProp,
   defaultValue = NONE,
   onChange,
@@ -180,7 +186,13 @@ export const MultiSelect = ({
     >
       <div className="flex items-baseline justify-between gap-3">
         {label ? (
-          <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
+          <label
+            htmlFor={id}
+            className={clsx(
+              'block text-sm font-medium text-gray-900 dark:text-white',
+              labelHidden && 'sr-only'
+            )}
+          >
             {label}
             {required && <RequiredMark />}
           </label>
@@ -191,7 +203,7 @@ export const MultiSelect = ({
           id={countId}
           className={clsx(
             'text-xs text-gray-500 dark:text-gray-400',
-            values.length === 0 && 'sr-only'
+            (values.length === 0 || labelHidden) && 'sr-only'
           )}
         >
           {values.length === 0 ? 'None selected' : `${countText} selected`}
@@ -202,7 +214,7 @@ export const MultiSelect = ({
         onMouseDown={(e) => !disabled && focusInputOnBoxPress(e, inputRef.current)}
         className={clsx(
           'relative',
-          (label || values.length > 0) && 'mt-2',
+          (label || values.length > 0) && !labelHidden && 'mt-2',
           tagFieldClass({
             size,
             invalid: !!error,

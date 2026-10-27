@@ -556,3 +556,24 @@ export const MobileKeepsTheInputUsable: Story = {
     await expect(input.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
   },
 };
+
+/** `labelHidden` keeps the label for assistive technology and takes its row out of the layout. */
+export const LabelHiddenTakesNoRoom: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Roles',
+    labelHidden: true,
+    options: ROLES,
+    defaultValue: ['admin', 'editor'],
+    className: 'w-72',
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const input = canvas.getByRole('combobox', { name: 'Roles' });
+    const root = canvasElement.querySelector<HTMLElement>('.w-72')!;
+    const field = input.closest<HTMLElement>('.relative')!;
+    await expect(Math.round(field.getBoundingClientRect().top)).toBe(
+      Math.round(root.getBoundingClientRect().top)
+    );
+    await expect(canvas.getByText('2 selected')).toHaveClass('sr-only');
+  },
+};
