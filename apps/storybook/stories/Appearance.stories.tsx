@@ -1,12 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import {
   AppearanceSettings,
   Button,
   applyAppearance,
   type CosmosAccent,
   type CosmosAppearance,
+  type CosmosDensity,
   type CosmosFont,
   type CosmosTextSize,
   type CosmosTheme,
@@ -19,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Pick a theme, an accent, a font and a text size: `applyAppearance` sets them on ' +
+          'Pick a theme, an accent, a font, a text size and a density: `applyAppearance` sets them on ' +
           '`<html>`, so the whole page follows. The toolbar menus reset the page to their own ' +
           'values.',
       },
@@ -43,6 +44,7 @@ const AppearancePlayground = ({ initial }: { initial: CosmosAppearance }) => {
         onAccentChange={(accent) => update({ accent })}
         onFontChange={(font) => update({ font })}
         onTextSizeChange={(textSize) => update({ textSize })}
+        onDensityChange={(density) => update({ density })}
       />
       <section aria-label="Sample" className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -72,6 +74,7 @@ const renderPlayground: Story['render'] = (_args, { globals }) => {
     accent: (globals.accent || 'blue') as CosmosAccent,
     font: (globals.font || 'outfit') as CosmosFont,
     textSize: (globals.textSize || 'md') as CosmosTextSize,
+    density: (globals.density || 'default') as CosmosDensity,
   };
   return <AppearancePlayground key={Object.values(initial).join('-')} initial={initial} />;
 };
@@ -97,14 +100,22 @@ export const PickingAppliesToDocument: Story = {
     await expect(root).toHaveAttribute('data-font', 'inter');
     await expect(root).toHaveAttribute('data-text-size', 'lg');
 
+    await userEvent.click(canvas.getByRole('radio', { name: 'Compact' }));
+    await expect(root).toHaveAttribute('data-density', 'compact');
+
     await userEvent.click(canvas.getByRole('radio', { name: 'Light' }));
     await userEvent.click(canvas.getByRole('radio', { name: 'Blue' }));
     await userEvent.click(canvas.getByRole('radio', { name: 'Outfit' }));
-    await userEvent.click(canvas.getByRole('radio', { name: 'Default' }));
+    // "Default" is the text size's and the density's.
+    for (const group of ['Text size', 'Density']) {
+      const picker = within(canvas.getByRole('radiogroup', { name: group }));
+      await userEvent.click(picker.getByRole('radio', { name: 'Default' }));
+    }
     await expect(root).not.toHaveClass('sand');
     await expect(root).not.toHaveAttribute('data-accent');
     await expect(root).not.toHaveAttribute('data-font');
     await expect(root).not.toHaveAttribute('data-text-size');
+    await expect(root).not.toHaveAttribute('data-density');
   },
 };
 
