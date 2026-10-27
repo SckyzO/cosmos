@@ -88,7 +88,10 @@ const BACKGROUND: Record<LogTone, Record<AnsiColor, string>> = {
   },
 };
 
-/** The text colour that reads on each background, when the style sets no foreground. */
+/**
+ * The text colour that reads on each background. It replaces the foreground the style sets: a
+ * foreground is checked on the ground of the tone, not on every background.
+ */
 const ON_BACKGROUND: Record<LogTone, Record<AnsiColor, string>> = {
   terminal: {
     black: 'text-slate-100',
@@ -135,11 +138,14 @@ const DIM: Record<LogTone, string> = {
 
 /** The classes of a run of text: its colours and attributes, on the given tone. */
 export const ansiClass = (style: AnsiStyle, tone: LogTone): string | undefined => {
+  // On a background the text takes the colour that reads on it (`31;47` is a dark text on the
+  // light fill, not red on it). Dim mutes the default text only: a fainter colour would drop
+  // under 4.5:1 on some grounds.
   const foreground =
-    style.fg !== null
-      ? FOREGROUND[tone][style.fg]
-      : style.bg !== null
-        ? ON_BACKGROUND[tone][style.bg]
+    style.bg !== null
+      ? ON_BACKGROUND[tone][style.bg]
+      : style.fg !== null
+        ? FOREGROUND[tone][style.fg]
         : style.dim
           ? DIM[tone]
           : null;
@@ -147,8 +153,6 @@ export const ansiClass = (style: AnsiStyle, tone: LogTone): string | undefined =
     clsx(
       style.bg !== null && BACKGROUND[tone][style.bg],
       foreground,
-      // A dim colour is the colour a little fainter; a dim default is the muted text of the tone.
-      style.dim && (style.fg !== null || style.bg !== null) && 'opacity-80',
       style.bold && 'font-semibold',
       style.italic && 'italic',
       style.underline && 'underline underline-offset-2'
