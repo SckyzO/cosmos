@@ -907,7 +907,7 @@ place.
 the copy button), `wrap`, `maxHeight` (the block scrolls inside, takes a Tab stop and scrolls with the
 arrow keys), `diff` (the first column of each line is its sign, `+`, `-` or a space; changes are
 tinted and marked, the sign column is not copied) and `variant="terminal"` (a line starting with
-`$ ` is a command, the others are its output; only the commands are copied). A block that a long line
+`$` and a space is a command, the others are its output; only the commands are copied). A block that a long line
 makes scroll sideways is a Tab stop too. The copy button copies the code, never the line numbers, the
 signs or the prompts.
 
