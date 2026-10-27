@@ -795,6 +795,122 @@ only http(s) URLs become links.
   comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
   `label`, `placeholder`, `submitLabel` and `cancelLabel`.
 
+## Log views
+
+`LogViewer`, `LogToolbar`, `LogLevelBadge` and `LogEntryDetail` read a log: the live tail, its
+controls, a level label and one record in full. The host owns the data: it fetches the snapshot,
+streams the new lines (SSE, WebSocket), trims the buffer and decides what "clear" and "download"
+do. The components draw what they are given.
+
+```tsx
+const [lines, setLines] = useState<LogLine[]>([]); // oldest first, ids unique and stable
+const [follow, setFollow] = useState(true);
+const [levels, setLevels] = useState<readonly LogLevelKey[]>(['debug', 'info', 'warn', 'error']);
+const [search, setSearch] = useState('');
+const [active, setActive] = useState(0);
+const [matches, setMatches] = useState(0);
+
+<LogToolbar
+  live={follow}
+  onLiveChange={setFollow}
+  levels={['debug', 'info', 'warn', 'error']}
+  levelCounts={countLogLevels(lines)}
+  activeLevels={levels}
+  onActiveLevelsChange={setLevels}
+  search={search}
+  onSearchChange={(text) => {
+    setSearch(text);
+    setActive(0); // a new search starts at its first match
+  }}
+  matchCount={matches}
+  activeMatch={active}
+  onActiveMatchChange={setActive}
+  onClear={() => setLines([])}
+/>
+<LogViewer
+  aria-label="Backend logs"
+  lines={lines}
+  follow={follow}
+  onFollowChange={setFollow}
+  activeLevels={levels}
+  search={search}
+  activeMatch={active}
+  onMatchCountChange={setMatches}
+/>
+```
+
+**Data model.** A `LogLine` is `{ id, time, level?, source?, message, fields?, stack? }`. `time` is
+a `Date`, a timestamp in milliseconds or an ISO string, shown with milliseconds. `level` is
+`trace`, `debug`, `info`, `warn`, `error` or `fatal` in any case; anything else (`warning`,
+`notice`, nothing) is `unknown`. `lines` is always oldest first, whatever the `order` it is drawn
+in, and each `id` must stay the same from one render to the next: the viewer uses it to key rows
+and to count the lines that arrived while it was paused.
+
+**`LogViewer`**
+
+- `tone`: `terminal` (default) is a dark panel in every theme, as a console is; `surface` follows
+  the theme, for a card on a dashboard. `density`: `compact` (default) is one line per record,
+  `comfortable` puts the message under its time, level and source. `columns` hides parts of the
+  row (`['time']`), `lineNumbers` numbers the lines in the order of `lines`.
+- `follow` / `defaultFollow` / `onFollowChange`: it stays at the newest line while lines arrive.
+  Scrolling away from the end pauses it and shows "Jump to latest (12 new)"; the button, or
+  scrolling back to the end, resumes it. `order` puts the newest line last (`newest-last`, the
+  default, a tail) or first.
+- `activeLevels` and `activeSources` filter the lines (left out or, for sources, empty, shows
+  all). `search` highlights a case-insensitive term in the messages and sources, `searchRegex`
+  reads it as a pattern (one that does not compile finds nothing). `activeMatch` is the active
+  match, counted from 0 among the lines that match; it is drawn stronger and scrolled into view
+  when it changes. `onMatchCountChange` reports how many lines match. Reset `activeMatch` to 0
+  when the search changes, as the example does; `LogToolbar` steps it with previous and next
+  (and Enter / Shift+Enter), wrapping around the ends.
+- A row with `fields` or a `stack` has a button that expands it in place
+  (`expandedIds` / `defaultExpandedIds` / `onExpandedIdsChange`). `onOpenLine` adds an "Open
+  details" button to the expanded row, to open a `LogEntryDetail` in a drawer.
+- Messages, sources, fields and stacks are text, never HTML. A bidirectional control character
+  stays inside its own message.
+
+**`LogToolbar`.** Each control is there when its props are given: Live / Paused
+(`onLiveChange`), level toggles with counts (`levels`), search (`onSearchChange`) with a regex
+toggle (`onSearchRegexChange`) and previous / next (`matchCount` and `onActiveMatchChange`), a
+source filter on `MultiSelect` (`sources`), `onWrapChange`, `onOrderChange`, `onDownload` and
+`onClear`. From `sm` up it is one bar. Below, Live / Paused and the search stay in the bar and
+the levels, sources and view options move into a "Filters" popover; its button shows how many
+filters are active (levels narrowed, sources chosen). The state pairs (`live`, `activeLevels`,
+`search`, `searchRegex`, `activeSources`, `wrap`, `order`) work controlled or not, as on other
+fields. It holds none of the log: pass the same filters to the viewer.
+
+**`LogLevelBadge`** is the level as a word in its colour (`ERROR`, `WARN`), on the `surface` tone
+by default or the `terminal` one. Use it in a table cell, a card or a detail.
+
+**`LogEntryDetail`** shows one record in full for a drawer or a side panel: level, time, source
+and message, the fields as key / value pairs with a copy button each, the stack trace, the raw
+JSON, and "Show context", the lines around it (a `context` prop, or fetched through
+`onShowContext`). `onFilterValue` and `onExcludeValue` add "Filter on this value" and "Exclude
+this value" buttons to each field. A structured table is a `DataTable` with a `LogLevelBadge`
+column and, once rows can expand, a `LogEntryDetail` in them.
+
+**Accessibility.** The viewer is `role="log"` with `aria-live="off"`: a fast stream read aloud
+line by line cannot be followed, so new lines are not announced. `announceErrors` reads the
+error and fatal lines that arrive (three at most, then the count of the rest) in a polite live
+region of its own. The scroller takes a tab stop, so the arrow keys scroll it, and every level is
+a word, not only a colour. Each level colour holds 4.5:1 on both tones in the four themes.
+
+**Limits.**
+
+- The default mode is windowed: only the rows in view are drawn, so tens of thousands of lines
+  stay smooth. The row height is measured, so it follows the text size, and a row that scrolls out
+  of view and back is redrawn: a button on it loses the focus when it leaves the window.
+- An expanded row takes a fixed room of up to 12 rows (a row per field and per stack line); a
+  longer detail scrolls inside it.
+- `wrap` lines have no fixed height, so they cannot be windowed: all of them are drawn (the
+  browser skips the ones out of view with `content-visibility`). Keep the buffer to a few
+  thousand lines with `wrap` on, as rackscope does with 2,000. Newest first and paused, wrapped
+  lines do not stay put when new ones arrive.
+- Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn.
+- The labels ("Jump to latest", "Filters"…) are English.
+- Not here: the log volume chart (stacked `BarChart` of `@sckyzo/cosmos-charts`, as the lines per
+  level over time), a structured logs table and `JobLog`, the output of a job.
+
 ## Slider
 
 `Slider` is a position on a scale, or a range of it. One `value` (with `defaultValue` and
@@ -911,6 +1027,40 @@ place.
   </SplitView.Pane>
 </SplitView>
 ```
+
+## Code
+
+`CodeBlock` shows a snippet with a copy button. It needs no highlighter, and takes a few variants:
+`lineNumbers`, `highlightLines={[3, '5-7']}`, `filename` (a header with the name, the language and
+the copy button), `wrap`, `maxHeight` (the block scrolls inside, takes a Tab stop and scrolls with the
+arrow keys), `diff` (the first column of each line is its sign, `+`, `-` or a space; changes are
+tinted and marked, the sign column is not copied) and `variant="terminal"` (a line starting with
+`$` and a space is a command, the others are its output; only the commands are copied). A block that a long line
+makes scroll sideways is a Tab stop too. The copy button copies the code, never the line numbers, the
+signs or the prompts.
+
+To colour it, use the `/code` entry. It needs [Shiki](https://shiki.style), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add shiki
+```
+
+```tsx
+import { CodeBlock } from '@sckyzo/cosmos-react/code';
+
+<CodeBlock language="yaml" filename="deployment.yaml" code={manifest} lineNumbers />;
+```
+
+The colours are the `--color-code-*` tokens of the theme, so they follow the theme, accent and text
+size. The JavaScript regex engine is used (no WebAssembly), and each language is its own chunk,
+loaded when a block shows it: until then, and for a language Cosmos has no grammar for, the block
+shows plain text. The languages are shell (`bash`, `sh`, `zsh`), `shellsession`, `yaml`, `json`,
+`toml`, `ini`, `dockerfile`, `sql`, `typescript`, `javascript`, `tsx`, `jsx`, `python`, `go`, `html`,
+`xml`, `css`, `diff`, `nginx`, `hcl`, `terraform`, `rust`, `java`, `php`, `markdown` and `promql`.
+A `highlight` prop still replaces the built-in highlighter. The main entry never imports Shiki:
+an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
+throws an error that names the package.
 
 ## Themes and accents
 

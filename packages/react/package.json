@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React 19 + Tailwind 4 UI component library — 135+ themeable, accessible components (forms, overlays, navigation, tables, data display) with built-in light/dark mode.",
   "license": "MIT",
   "author": "SckyzO",
@@ -26,8 +26,25 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./code": {
+      "import": {
+        "types": "./dist/code/index.d.ts",
+        "default": "./dist/code/index.js"
+      },
+      "require": {
+        "types": "./dist/code/index.d.cts",
+        "default": "./dist/code/index.cjs"
+      }
+    },
     "./calendar.css": "./calendar.css",
     "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "code": [
+        "./dist/code/index.d.ts"
+      ]
+    }
   },
   "sideEffects": [
     "*.css"
@@ -49,7 +66,13 @@
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "shiki": "^4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "shiki": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@dnd-kit/abstract": "0.5.1",
