@@ -763,6 +763,52 @@ reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass i
 </Shell>
 ```
 
+### Layout modes
+
+`Sidebar variant="compact"` is a fixed 88px rail with the label under each icon, on two lines
+at most (a tooltip carries the full name of a label that is cut). A `Sidebar.SubMenu` opens in a
+flyout, as in the collapsed rail. It has no collapsed state, so `collapsed`, `expandOnHover` and
+the bottom button do nothing: inside a Shell, set `collapseControl="sidebar"` so the Topbar shows
+no hamburger that would do nothing. Below `lg` the drawer shows the default sidebar.
+
+`Shell container="boxed"` centres the topbar, the sidebar and the page in a column of at most
+1440px, with the page background on both sides. `fluid`, the default, spans the window.
+
+A top navigation is a composition: a `Shell` with no `sidebar` and a `Navbar` in `topbar`. Its
+`Navbar.Items` take `Navbar.Item` and `Navbar.Menu`, a dropdown group of links (`Menu.Item` with
+an `href`, a `Menu.Group`, a `Menu.Separator`) that follows the menu button pattern: Enter, Space
+and the arrows open it, the arrows move between the links, Escape closes it and gives the focus
+back to the trigger, Tab leaves it. Mark the group `active` while one of its links is the current
+page, and that link with `aria-current="page"`. Items that do not fit move, from the last, into a
+"More" menu (`moreLabel` renames it) and come back when there is room. Only `Navbar.Item` and
+`Navbar.Menu` placed directly in `Navbar.Items` move; `Navbar.Items` inside a `Navbar.Brand` takes
+the room the bar leaves, and anywhere else it needs a bounded width (`min-w-0 flex-1`) to measure
+against. Below `md` the items leave the bar and `Navbar.MobileMenuButton` opens your own menu.
+
+```tsx
+<Shell
+  container="boxed"
+  topbar={
+    <Navbar>
+      <Navbar.Brand>
+        <Navbar.MobileMenuButton />
+        <Navbar.Items>
+          <Navbar.Item href="/" active>
+            Dashboard
+          </Navbar.Item>
+          <Navbar.Menu label="Settings">
+            <Menu.Item href="/profile">Profile</Menu.Item>
+            <Menu.Item href="/team">Team</Menu.Item>
+          </Navbar.Menu>
+        </Navbar.Items>
+      </Navbar.Brand>
+    </Navbar>
+  }
+>
+  {/* page */}
+</Shell>
+```
+
 ## Split panes
 
 `SplitView` puts two or three `SplitView.Pane` side by side in one bordered frame (mail,
