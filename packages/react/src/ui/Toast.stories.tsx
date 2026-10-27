@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expectFocusRing, expectTextContrast, portalDocsParams } from '../storybook-helpers';
+import { AlertBanner } from './AlertBanner';
 import { Button } from './Button';
 import { Toaster, toast } from './Toast';
 
@@ -14,6 +15,38 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+type ToastId = string | number;
+
+// Toasts live in sonner's store, which outlives a story: one an earlier story left (a click test's
+// closes on its own after 4 s) would count among these. Dismiss them first; what a story opens, it
+// dismisses on unmount.
+const keepOpen = (show: () => ToastId[]) => {
+  toast.dismiss();
+  const ids = show();
+  return () => {
+    for (const id of ids) toast.dismiss(id);
+  };
+};
+
+// The four status toasts, kept open (`duration: Infinity`): a title in the intent color, a neutral
+// description, and an action on the info one.
+const showStatusToasts = (): ToastId[] => [
+  toast.success('Backup completed', {
+    description: '3.2 GB transferred to S3 in 8.4 s.',
+    duration: Infinity,
+  }),
+  toast.info('New version available', {
+    description: 'Reload the page to update.',
+    duration: Infinity,
+    action: { label: 'Reload', onClick: () => {} },
+  }),
+  toast.warning('Disk space low', { description: '4% left on /var.', duration: Infinity }),
+  toast.error('Could not save changes', {
+    description: 'The server returned a 503.',
+    duration: Infinity,
+  }),
+];
 
 // Each story embeds its own <Toaster /> so multiple stories on one page can coexist.
 
@@ -185,35 +218,44 @@ export const ProgrammaticDismiss: Story = {
 
 /**
  * The toasts as they look on screen, kept (`duration: Infinity`) and expanded (`expand` on the
- * Toaster) instead of stacked: a title, a description, an action. The status toasts are left
- * out: their rich colors fail the contrast check in the light and sand themes.
+ * Toaster) instead of stacked: a title, a description, an action, then the four status toasts
+ * (success, info, warning, error), which take the `AlertBanner` palette on an opaque surface.
  */
 export const Open: Story = {
   parameters: portalDocsParams.lg(),
   render: function Render() {
-    useEffect(() => {
-      const ids = [
-        toast('Settings updated', { duration: Infinity }),
-        toast('Invite sent', {
-          description: 'sarah@example.com will get a link that expires in 7 days.',
-          duration: Infinity,
-        }),
-        toast('Export ready', {
-          description: 'servers-2026-01.csv, 1.2 MB.',
-          duration: Infinity,
-          action: { label: 'Download', onClick: () => {} },
-        }),
-      ];
-      return () => {
-        for (const id of ids) toast.dismiss(id);
-      };
-    }, []);
-    return <Toaster expand />;
+    useEffect(
+      () =>
+        keepOpen(() => [
+          toast('Settings updated', { duration: Infinity }),
+          toast('Invite sent', {
+            description: 'sarah@example.com will get a link that expires in 7 days.',
+            duration: Infinity,
+          }),
+          toast('Export ready', {
+            description: 'servers-2026-01.csv, 1.2 MB.',
+            duration: Infinity,
+            action: { label: 'Download', onClick: () => {} },
+          }),
+          ...showStatusToasts(),
+        ]),
+      []
+    );
+    return <Toaster expand visibleToasts={7} />;
   },
   play: async () => {
-    await waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(3));
+    await waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(7));
     // Each toast fades in once mounted.
     await waitFor(() => expect(within(document.body).getByText('Settings updated')).toBeVisible());
+    await waitFor(() =>
+      expect(within(document.body).getByText('Could not save changes')).toBeVisible()
+    );
+    // Unstyled, sonner gives a toast no width: they all take the toaster's, whatever they say.
+    const widths = [...document.querySelectorAll('[data-sonner-toast]')].map(
+      (toastEl) => toastEl.getBoundingClientRect().width
+    );
+    expect(Math.min(...widths)).toBeGreaterThan(300);
+    expect(Math.max(...widths)).toBe(Math.min(...widths));
   },
 };
 
@@ -293,5 +335,326 @@ export const ActionFiresHandler: Story = {
     // rejects the synthetic pointer id of userEvent.click ("Invalid pointer id").
     fireEvent.click(undoBtn);
     await expect(extra.onUndo).toHaveBeenCalledTimes(1);
+  },
+};
+
+// ── Palette tests ────────────────────────────────────────────────────────────
+
+const THEMES = ['light', 'sand', 'dark', 'deep-blue'] as const;
+const isDarkTheme = (theme: string) => theme === 'dark' || theme === 'deep-blue';
+
+// The toast type sonner puts in `data-type`, the Cosmos theme token of its tint, and the intent an
+// `AlertBanner` takes for the same meaning (`error` is `danger`).
+const STATUS = [
+  { type: 'success', tint: '--color-green-500', intent: 'success' },
+  { type: 'info', tint: '--color-blue-500', intent: 'info' },
+  { type: 'warning', tint: '--color-amber-500', intent: 'warning' },
+  { type: 'error', tint: '--color-red-500', intent: 'danger' },
+] as const;
+
+// Canvas round trip: any CSS color (oklch, color-mix, hex…) as RGBA bytes.
+const rgba = (color: string) => {
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) throw new Error('No 2D canvas context');
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 1, 1);
+  return Array.from(ctx.getImageData(0, 0, 1, 1).data);
+};
+
+// A theme token as the current theme resolves it (a missing one would read as black).
+const tokenRgba = (token: string) => {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  if (!value) throw new Error(`${token} is not defined`);
+  return rgba(value);
+};
+
+// `fg` laid over the opaque `bg`, as the browser blends an alpha layer.
+const over = (fg: number[], bg: number[]) =>
+  [0, 1, 2].map((i) => Math.round((fg[i] * fg[3] + bg[i] * (255 - fg[3])) / 255));
+
+const near = (a: number[], b: number[], tolerance = 3) =>
+  a.slice(0, 3).every((channel, i) => Math.abs(channel - b[i]) <= tolerance);
+
+const toastOfType = (type: string) => {
+  const found = document.querySelector<HTMLElement>(`[data-sonner-toast][data-type="${type}"]`);
+  if (!found) throw new Error(`No ${type} toast`);
+  return found;
+};
+
+// A toast with no type (`toast('…')`) has no `data-type`: found by what it says.
+const toastWithText = (text: string) => {
+  const found = within(document.body).getByText(text).closest<HTMLElement>('[data-sonner-toast]');
+  if (!found) throw new Error(`No toast says "${text}"`);
+  return found;
+};
+
+const toastPart = (toastEl: Element, selector: string) => {
+  const found = toastEl.querySelector<HTMLElement>(selector);
+  if (!found) throw new Error(`No ${selector} in the toast`);
+  return found;
+};
+
+/**
+ * Runs `check` under each Cosmos theme: switches the class on <html>, waits for the Toaster to
+ * take the matching `data-sonner-theme` (it follows the class after a render, and sonner's dark
+ * rules key on that attribute), then calls it. Transitions are off meanwhile. A failure names its
+ * theme.
+ */
+const eachTheme = async (check: (theme: (typeof THEMES)[number]) => void) => {
+  const root = document.documentElement;
+  const saved = root.className;
+  const noTransitions = document.createElement('style');
+  noTransitions.textContent = '*, *::before, *::after { transition: none !important; }';
+  document.head.append(noTransitions);
+  try {
+    for (const theme of THEMES) {
+      root.classList.remove('sand', 'dark', 'deep-blue');
+      if (theme !== 'light') root.classList.add(theme);
+      await waitFor(() =>
+        expect(document.querySelector('[data-sonner-toaster]')).toHaveAttribute(
+          'data-sonner-theme',
+          isDarkTheme(theme) ? 'dark' : 'light'
+        )
+      );
+      try {
+        check(theme);
+      } catch (error) {
+        throw new Error(`[${theme}] ${(error as Error).message}`, { cause: error });
+      }
+    }
+  } finally {
+    root.className = saved;
+    noTransitions.remove();
+  }
+};
+
+const waitForToasts = (count: number) =>
+  waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(count));
+
+export const StatusToastsAreOpaque: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(() => keepOpen(showStatusToasts), []);
+    return <Toaster expand visibleToasts={4} />;
+  },
+  play: async () => {
+    await waitForToasts(4);
+    await eachTheme((theme) => {
+      for (const { type, tint } of STATUS) {
+        const background = rgba(getComputedStyle(toastOfType(type)).backgroundColor);
+        expect(background[3], `${type}: the background lets the page through`).toBe(255);
+        // In the dark themes, the `-500/10` tint on the panel, in one layer. The tolerance covers
+        // the success tint, which is outside sRGB: mixed as it is, it lands a few levels off the
+        // same color clamped first.
+        if (isDarkTheme(theme)) {
+          const expected = over(
+            [...tokenRgba(tint).slice(0, 3), 25.5],
+            tokenRgba('--color-bg-panel')
+          );
+          expect(near(background, expected, 8), `${type}: ${background} is not ${expected}`).toBe(
+            true
+          );
+        }
+      }
+    });
+  },
+};
+
+export const StatusToastsMatchAlertBanner: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(() => keepOpen(showStatusToasts), []);
+    return (
+      <div className="flex max-w-md flex-col gap-2">
+        {STATUS.map(({ type, intent }) => (
+          <AlertBanner key={type} intent={intent} title={`${type} banner`}>
+            Same intent as the {type} toast.
+          </AlertBanner>
+        ))}
+        <Toaster expand visibleToasts={4} />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    await waitForToasts(4);
+    const banners = canvas.getAllByRole('alert');
+    expect(banners).toHaveLength(STATUS.length);
+    await eachTheme(() => {
+      STATUS.forEach(({ type }, i) => {
+        const banner = banners[i];
+        const toastEl = toastOfType(type);
+        const bannerTitle = toastPart(banner, 'p');
+        expect(getComputedStyle(toastPart(toastEl, '[data-title]')).color, `${type} text`).toBe(
+          getComputedStyle(bannerTitle).color
+        );
+        expect(getComputedStyle(toastEl).borderTopColor, `${type} border`).toBe(
+          getComputedStyle(banner).borderTopColor
+        );
+        // The banner's translucent tint, on the panel the toast mixes it with.
+        const expected = over(
+          rgba(getComputedStyle(banner).backgroundColor),
+          tokenRgba('--color-bg-panel')
+        );
+        const background = rgba(getComputedStyle(toastEl).backgroundColor);
+        expect(near(background, expected, 8), `${type}: ${background} is not ${expected}`).toBe(
+          true
+        );
+      });
+    });
+  },
+};
+
+export const StatusToastsAreReadable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(() => keepOpen(showStatusToasts), []);
+    return <Toaster expand visibleToasts={4} />;
+  },
+  play: async () => {
+    await waitForToasts(4);
+    // The contrast pass renders light, sand and deep-blue; `dark` is not part of it.
+    await eachTheme(() => {
+      for (const { type } of STATUS) {
+        const toastEl = toastOfType(type);
+        expectTextContrast(toastPart(toastEl, '[data-title]'));
+        expectTextContrast(toastPart(toastEl, '[data-description]'));
+      }
+      expectTextContrast(toastPart(toastOfType('info'), 'button[data-action]'));
+    });
+  },
+};
+
+export const NeutralToastsShareTheCard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(
+      () =>
+        keepOpen(() => [
+          toast('Plain toast', { duration: Infinity }),
+          toast.loading('Loading toast', { duration: Infinity }),
+        ]),
+      []
+    );
+    return <Toaster expand />;
+  },
+  play: async () => {
+    await waitForToasts(2);
+    await eachTheme((theme) => {
+      const dark = isDarkTheme(theme);
+      const card = {
+        backgroundColor: tokenRgba(dark ? '--color-gray-900' : '--color-white'),
+        borderTopColor: tokenRgba(dark ? '--color-gray-700' : '--color-gray-200'),
+        color: tokenRgba(dark ? '--color-white' : '--color-gray-900'),
+      };
+      const colors = ['backgroundColor', 'borderTopColor', 'color'] as const;
+      for (const [name, toastEl] of [
+        ['default', toastWithText('Plain toast')],
+        ['loading', toastOfType('loading')],
+      ] as const) {
+        for (const property of colors) {
+          const actual = rgba(getComputedStyle(toastEl)[property]);
+          expect(near(actual, card[property], 1), `${name} ${property}`).toBe(true);
+          expect(actual[3], `${name} ${property} is translucent`).toBe(255);
+        }
+      }
+    });
+  },
+};
+
+// Sonner hides the content of the toasts behind the front one in its own styled mode: unstyled,
+// the card does it.
+export const StackedToastsHideBehindContent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(
+      () =>
+        keepOpen(() => [
+          toast.success('First', { duration: Infinity }),
+          toast.info('Second', { duration: Infinity }),
+          toast.warning('Third', { duration: Infinity }),
+        ]),
+      []
+    );
+    return <Toaster />;
+  },
+  play: async () => {
+    await waitForToasts(3);
+    const toasts = [...document.querySelectorAll<HTMLElement>('[data-sonner-toast]')];
+    for (const toastEl of toasts) expect(toastEl).toHaveAttribute('data-expanded', 'false');
+    await waitFor(() => {
+      for (const toastEl of toasts) {
+        const front = toastEl.getAttribute('data-front') === 'true';
+        for (const part of toastEl.children) {
+          expect(getComputedStyle(part).opacity, `${toastEl.textContent}: ${part.tagName}`).toBe(
+            front ? '1' : '0'
+          );
+        }
+      }
+    });
+  },
+};
+
+// Sonner's dark theme sets the description and the close button to its own grays, with rules that
+// are not scoped to its styled mode: the toast takes the Cosmos neutrals in spite of them.
+export const DarkThemeKeepsCosmosNeutrals: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(
+      () =>
+        keepOpen(() => [
+          toast.success('Backup completed', {
+            description: '3.2 GB transferred to S3 in 8.4 s.',
+            duration: Infinity,
+          }),
+        ]),
+      []
+    );
+    return <Toaster expand />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    await eachTheme((theme) => {
+      const dark = isDarkTheme(theme);
+      const toastEl = toastOfType('success');
+      const description = rgba(getComputedStyle(toastPart(toastEl, '[data-description]')).color);
+      expect(near(description, tokenRgba(dark ? '--color-gray-400' : '--color-gray-600'), 1)).toBe(
+        true
+      );
+      const closeButton = getComputedStyle(toastPart(toastEl, '[data-close-button]'));
+      const colors = {
+        backgroundColor: dark ? '--color-gray-900' : '--color-white',
+        borderTopColor: dark ? '--color-gray-700' : '--color-gray-200',
+        color: dark ? '--color-gray-400' : '--color-gray-500',
+      };
+      for (const [property, token] of Object.entries(colors)) {
+        const actual = rgba(closeButton[property as keyof typeof colors]);
+        expect(near(actual, tokenRgba(token), 1), `close button ${property}`).toBe(true);
+      }
+    });
+  },
+};
+
+export const ButtonsShowFocusRing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    useEffect(
+      () =>
+        keepOpen(() => [
+          toast('Email moved to Trash.', {
+            duration: Infinity,
+            action: { label: 'Undo', onClick: () => {} },
+            cancel: { label: 'Keep', onClick: () => {} },
+          }),
+        ]),
+      []
+    );
+    return <Toaster expand />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    const toastEl = toastWithText('Email moved to Trash.');
+    await expectFocusRing(toastPart(toastEl, 'button[data-action]'));
+    await expectFocusRing(toastPart(toastEl, 'button[data-cancel]'));
+    await expectFocusRing(toastPart(toastEl, 'button[data-close-button]'));
   },
 };
