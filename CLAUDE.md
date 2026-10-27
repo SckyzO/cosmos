@@ -133,17 +133,18 @@ charts ───────────── storybook      (charts imports ne
   drops an esbuild banner. `exports` gives `import` and `require` their own types (`index.d.ts` /
   `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
   files.
-  **Sub-path entries** (`@sckyzo/cosmos-react/code` with `shiki`, `/editor` with Tiptap) are a
-  folder of `src/` built next to the root one (`tsup.config.ts`: `code/index` → `dist/code/`,
-  `exports["./code"]`, `typesVersions`), with their library as an optional peer, kept external. The
-  root entry imports none of them. What the folder imports from the rest of the package is rewritten
-  to an import of `@sckyzo/cosmos-react` itself (`config/tsup/self-reference.ts`, one plugin instance
-  per folder), so contexts and the overlay stack are never duplicated; the source keeps relative
-  imports, which means the names it imports must be exported by the root entry (`Popover`,
-  `Tooltip`, `Button`). An internal helper the root does not export, and that shares no state with
-  it, is listed in that entry's `bundle` option and copied in by value (`/editor` takes
-  `useControllableState`, `mergeRefs`, `fieldRecipe`, `RequiredMark` and `httpUrl` that way); never
-  list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
+  **Sub-path entries** (`@sckyzo/cosmos-react/code` with `shiki`, `/editor` with Tiptap, `/map`
+  with `maplibre-gl`) are a folder of `src/` built next to the root one (`tsup.config.ts`:
+  `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with their library as an
+  optional peer, kept external. The root entry imports none of them. What the folder imports from
+  the rest of the package is rewritten to an import of `@sckyzo/cosmos-react` itself
+  (`config/tsup/self-reference.ts`, one plugin instance per folder), so contexts and the overlay
+  stack are never duplicated; the source keeps relative imports, which means the names it imports
+  must be exported by the root entry (`Popover`, `Tooltip`, `Button`). An internal helper the root
+  does not export, and that shares no state with it, is listed in that entry's `bundle` option and
+  copied in by value (`/editor` takes `useControllableState`, `mergeRefs`, `fieldRecipe`,
+  `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
+  never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a

@@ -1255,6 +1255,68 @@ marks above; images, tables and anything else are dropped on paste. **That is th
 guarantee, not yours: sanitise the stored HTML again on the server before you render it elsewhere.**
 The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
 
+## Map
+
+`MapView` draws places on a map: pins in the theme's colours with an icon or a number, a popup per
+pin, groups of close pins as a counted circle, zoom buttons and a fit to the markers. It lives in
+the `/map` entry and needs [MapLibre GL JS](https://maplibre.org) (BSD-3), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add maplibre-gl
+```
+
+Load MapLibre's stylesheet once in the app, and import the component from `/map`:
+
+```tsx
+import { useState } from 'react';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { MapMarkerList, MapView, type MapMarker } from '@sckyzo/cosmos-react/map';
+
+const stores: MapMarker[] = [
+  { id: 'harbour', label: 'Harbour', position: [4.81, 45.71], description: '12 quay street' },
+  { id: 'station', label: 'Station', position: [4.9, 45.75], intent: 'success', icon: 3 },
+];
+
+export const Stores = () => {
+  const [selected, setSelected] = useState<string | null>(null);
+  return (
+    <>
+      <MapMarkerList markers={stores} selectedId={selected} onSelect={setSelected} />
+      <MapView
+        markers={stores}
+        style="https://tiles.example.com/styles/light.json"
+        darkStyle="https://tiles.example.com/styles/dark.json"
+        ariaLabel="Stores"
+        selectedId={selected}
+        onSelectedIdChange={setSelected}
+      />
+    </>
+  );
+};
+```
+
+- **The base map is yours.** Cosmos ships no tiles: a tile server has its own terms and sees every
+  visitor. `style` is a MapLibre style (a URL or an object) and its attribution stays visible.
+  `darkStyle` is optional: under the dark themes (`.dark`, `.deep-blue`) the map switches to it,
+  and without it keeps `style`. Pass constants, not a new object on each render. A markers array
+  is the same: define it once, or the pins are redrawn each time.
+- **Pins, popups and buttons are React and HTML**, coloured by `intent` with the theme's classes,
+  so a theme, accent or text size switch repaints them with no code. A title or description with
+  markup shows as text.
+- **`variant="static"`** is a fixed view for a card or a detail page: no gesture, no zoom buttons,
+  no focus stop, no popup, and the pins are pictures.
+- **Keyboard and screen readers.** The interactive map is one focus stop with the name given by
+  `ariaLabel`: the arrow keys pan, `+` and `-` zoom. A map alone cannot be used with a screen
+  reader, so show the same `markers` as a `MapMarkerList` next to it: choosing a row opens the
+  popup on the map. On a static map, the list is the only way to the places.
+- `cluster` (default on) groups close pins; a click on a group zooms in to split it. `fit` frames
+  the markers on the first draw and when the set of markers changes; otherwise `initialCenter` and
+  `initialZoom` give the view. `onViewChange` reports each pan or zoom.
+- A browser without WebGL shows `unavailableMessage` in place of the map. The main entry never
+  imports MapLibre: an app that does not use `/map` ships none of it. Imported without
+  `maplibre-gl` installed, a map throws an error that names the package.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font, the text size and the
