@@ -291,3 +291,163 @@ export const MobileWithEdges: Story = {
     await expect(canvas.getByText(/^Page/)).toHaveTextContent('Page 2 / 9');
   },
 };
+
+// ── Previous and Next as text (#411) ─────────────────────────────────────────
+// `prevNextLabel="text"` adds the word beside the chevron. The accessible names stay
+// "Previous page" and "Next page": they contain the visible word (WCAG 2.5.3).
+
+/** The box of the word inside a Previous or Next button: its text node, not the chevron. */
+const wordRect = (button: HTMLElement) => {
+  const text = [...button.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+  const range = document.createRange();
+  range.selectNodeContents(text!);
+  return range.getBoundingClientRect();
+};
+
+const expectWordsAndChevrons = async (
+  canvas: Parameters<NonNullable<Story['play']>>[0]['canvas']
+) => {
+  const prev = canvas.getByRole('button', { name: 'Previous page' });
+  const next = canvas.getByRole('button', { name: 'Next page' });
+  // The word is visible, and it is added to the chevron, not put in its place.
+  await expect(prev).toHaveTextContent('Previous');
+  await expect(next).toHaveTextContent('Next');
+  await expect(prev).toBeVisible();
+  await expect(next).toBeVisible();
+  const prevIcon = prev.querySelector('svg')!.getBoundingClientRect();
+  const nextIcon = next.querySelector('svg')!.getBoundingClientRect();
+  // "‹ Previous" and "Next ›": the chevron is on the outer side of the word.
+  await expect(prevIcon.right).toBeLessThanOrEqual(wordRect(prev).left);
+  await expect(wordRect(next).right).toBeLessThanOrEqual(nextIcon.left);
+  // The accessible name is unchanged, and it contains the visible word.
+  await expect(prev).toHaveAttribute('aria-label', 'Previous page');
+  await expect(next).toHaveAttribute('aria-label', 'Next page');
+  await expect(prev.getAttribute('aria-label')).toContain(prev.textContent);
+  await expect(next.getAttribute('aria-label')).toContain(next.textContent);
+};
+
+export const TextLabels: Story = {
+  args: { page: 5, totalPages: 10, prevNextLabel: 'text' },
+  play: async ({ canvas }) => {
+    await expectWordsAndChevrons(canvas);
+  },
+};
+
+export const TextLabelsSizeMd: Story = {
+  args: { page: 5, totalPages: 10, prevNextLabel: 'text', size: 'md' },
+  play: async ({ canvas }) => {
+    await expectWordsAndChevrons(canvas);
+    // Same height as the page buttons, whatever the size: the word does not grow the button.
+    await expect(canvas.getByRole('button', { name: 'Previous page' }).offsetHeight).toBe(
+      canvas.getByRole('button', { name: 'Page 5' }).offsetHeight
+    );
+  },
+};
+
+export const TextLabelsCompact: Story = {
+  args: { page: 7, totalPages: 25, variant: 'compact', prevNextLabel: 'text' },
+};
+
+export const TextLabelsWithInfo: Story = {
+  args: {
+    page: 2,
+    totalPages: 9,
+    showInfo: true,
+    pageSize: 10,
+    total: 87,
+    prevNextLabel: 'text',
+  },
+};
+
+/** The words stay below `sm`: "Previous · Page 5 / 10 · Next" fits on one row. */
+export const MobileTextLabels: Story = {
+  globals: mobileViewport,
+  args: {
+    page: 5,
+    totalPages: 10,
+    showInfo: true,
+    pageSize: 10,
+    total: 100,
+    prevNextLabel: 'text',
+  },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
+    await expectWordsAndChevrons(canvas);
+    await expect(canvas.queryByRole('button', { name: 'Page 6' })).toBeNull();
+    await expect(canvas.getByText(/^Page/)).toHaveTextContent('Page 5 / 10');
+    // Previous, "Page 5 / 10" and Next share a row.
+    const prev = canvas.getByRole('button', { name: 'Previous page' }).getBoundingClientRect();
+    const next = canvas.getByRole('button', { name: 'Next page' }).getBoundingClientRect();
+    await expect(Math.abs(prev.top - next.top)).toBeLessThan(1);
+  },
+};
+
+/** The widest case below `sm`: the edges keep their icons around the two words. */
+export const MobileTextLabelsWithEdges: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  args: { page: 5, totalPages: 10, showEdges: true, prevNextLabel: 'text' },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
+    await expectWordsAndChevrons(canvas);
+    await expect(canvas.getByRole('button', { name: 'First page' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Last page' })).toBeVisible();
+  },
+};
+
+export const IconLabelsByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 5, totalPages: 10 },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Previous page' })).toHaveTextContent('');
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toHaveTextContent('');
+  },
+};
+
+export const TextLabelsLeaveEdgesAlone: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 25, totalPages: 50, showEdges: true, prevNextLabel: 'text' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'First page' })).toHaveTextContent('');
+    await expect(canvas.getByRole('button', { name: 'Last page' })).toHaveTextContent('');
+    await expectWordsAndChevrons(canvas);
+  },
+};
+
+export const TextPrevDisabledOnFirstPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 1, totalPages: 10, prevNextLabel: 'text', onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    const prev = canvas.getByRole('button', { name: 'Previous page' });
+    await expect(prev).toBeDisabled();
+    // Same disabled state as the page buttons: dimmed to 40%, not clickable.
+    await expect(getComputedStyle(prev).opacity).toBe('0.4');
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toBeEnabled();
+    await userEvent.click(prev).catch(() => undefined);
+    await expect(args.onPageChange).not.toHaveBeenCalled();
+  },
+};
+
+export const TextNextDisabledOnLastPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 10, totalPages: 10, prevNextLabel: 'text', onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    const next = canvas.getByRole('button', { name: 'Next page' });
+    await expect(next).toBeDisabled();
+    await expect(getComputedStyle(next).opacity).toBe('0.4');
+    await expect(canvas.getByRole('button', { name: 'Previous page' })).toBeEnabled();
+    await userEvent.click(next).catch(() => undefined);
+    await expect(args.onPageChange).not.toHaveBeenCalled();
+  },
+};
+
+export const TextLabelsGoToNeighbourPage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 5, totalPages: 10, prevNextLabel: 'text', onPageChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Previous page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(4);
+    await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
+    await expect(args.onPageChange).toHaveBeenLastCalledWith(6);
+  },
+};
