@@ -112,11 +112,11 @@ const TEXT_CLASS: Record<ButtonSize, string> = {
 };
 
 const HEIGHT_CLASS: Record<ButtonSize, string> = {
-  xs: 'h-7',
-  sm: 'h-8',
-  md: 'h-9',
-  lg: 'h-11',
-  xl: 'h-12',
+  xs: 'h-ctrl-28',
+  sm: 'h-ctrl-32',
+  md: 'h-ctrl-36',
+  lg: 'h-ctrl-44',
+  xl: 'h-ctrl-48',
 };
 
 // Horizontal padding, for every shape but `circle` and `square`. Kept apart from HEIGHT_CLASS:
@@ -133,11 +133,11 @@ const PADDING_X: Record<ButtonSize, string> = {
 // Width of an icon-only button (`circle` and `square`): the height of its size, with no
 // horizontal padding.
 const ICON_ONLY_WIDTH: Record<ButtonSize, string> = {
-  xs: 'w-7',
-  sm: 'w-8',
-  md: 'w-9',
-  lg: 'w-11',
-  xl: 'w-12',
+  xs: 'w-ctrl-28',
+  sm: 'w-ctrl-32',
+  md: 'w-ctrl-36',
+  lg: 'w-ctrl-44',
+  xl: 'w-ctrl-48',
 };
 
 const SHAPE_CLASS: Record<ButtonShape, string> = {
