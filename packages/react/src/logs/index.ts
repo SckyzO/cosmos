@@ -1,3 +1,4 @@
+export { LogViewer, type LogViewerProps, type LogDensity } from './LogViewer';
 export {
   LogLevelBadge,
   LOG_LEVEL_LABEL,
