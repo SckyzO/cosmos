@@ -6,7 +6,7 @@ import { Card } from '../ui/Card';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { LogViewer } from './LogViewer';
 import { LogConsole, SOURCES, fakeLine, fakeLines } from './storybook-logs';
-import type { LogLine } from './types';
+import type { LogLevelKey, LogLine } from './types';
 
 const meta = {
   title: 'Monitoring/Log Viewer',
@@ -404,5 +404,64 @@ export const LargeBufferDrawsTheWindowOnly: Story = {
     log.scrollTop = 0;
     await waitFor(() => expect(canvas.getByText('Jump to latest', { exact: false })).toBeVisible());
     expect(rows()).toBeLessThan(150);
+  },
+};
+
+/**
+ * The test of a paused viewer, hidden: a filter that shortens the list makes the browser clamp the
+ * scroll position, which lands at the end. That scroll is not the reader's: the viewer stays paused.
+ */
+export const PausedStaysPausedWhenAFilterChanges: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [lines] = useState(() => fakeLines(200));
+    const [follow, setFollow] = useState(false);
+    const [levels, setLevels] = useState<readonly LogLevelKey[] | undefined>(undefined);
+    return (
+      <div>
+        <button type="button" onClick={() => setLevels(['fatal'])}>
+          Fatal only
+        </button>
+        <p>{follow ? 'Following' : 'Paused'}</p>
+        <LogViewer
+          lines={lines}
+          aria-label="Backend logs"
+          follow={follow}
+          onFollowChange={setFollow}
+          activeLevels={levels}
+          height={300}
+        />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    log.scrollTop = 1200;
+    await waitFor(() => expect(log.scrollTop).toBeGreaterThan(1000));
+    const rows = () => log.querySelectorAll('[data-level]').length;
+    const before = rows();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Fatal only' }));
+    // The list is a handful of rows now, which the browser clamps the scroll position to.
+    await waitFor(() => expect(log.scrollHeight).toBeLessThan(log.clientHeight + 24));
+    expect(rows()).toBeLessThan(before);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(canvas.getByText('Paused')).toBeVisible();
+    expect(canvas.getByRole('button', { name: /Jump to latest/ })).toBeVisible();
+  },
+};
+
+/** The test of resuming, hidden: the reader scrolling back to the end follows again. */
+export const ScrollingBackToTheEndResumes: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LogConsole count={200} height={300} paused />,
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await canvas.findByRole('button', { name: /Jump to latest/ });
+    log.scrollTop = log.scrollHeight;
+    await waitFor(() =>
+      expect(canvas.queryByRole('button', { name: /Jump to latest/ })).toBeNull()
+    );
+    await waitFor(() => expect(atEnd(log)).toBe(true));
   },
 };
