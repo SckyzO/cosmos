@@ -12,13 +12,16 @@ export const LOG_LEVELS: readonly LogLevel[] = ['trace', 'debug', 'info', 'warn'
 /** Every level key, `unknown` last: the default set of the level filters. */
 export const LOG_LEVEL_KEYS: readonly LogLevelKey[] = [...LOG_LEVELS, 'unknown'];
 
+/** The id of a line: stable and unique in the buffer. */
+export type LogLineId = string | number;
+
 /**
  * One record of a log. The host owns the data: it fetches, streams and trims the lines, the
  * components draw what they are given.
  */
 export type LogLine = {
   /** Stable and unique in the buffer: it keys the row, and tells which lines are new. */
-  id: string | number;
+  id: LogLineId;
   /** A `Date`, a timestamp in milliseconds or an ISO 8601 string. Shown with milliseconds. */
   time: DateTimeValue;
   /**

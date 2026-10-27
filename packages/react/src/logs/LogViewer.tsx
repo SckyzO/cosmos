@@ -31,7 +31,7 @@ import {
   splitLogMatches,
 } from './log-lines';
 import { detailSlots, lineWindow, slotOf, totalSlots, type ExpandedBlock } from './log-window';
-import type { LogColumn, LogLevelKey, LogLine, LogOrder } from './types';
+import type { LogColumn, LogLevelKey, LogLine, LogLineId, LogOrder } from './types';
 
 export type LogDensity = 'compact' | 'comfortable';
 
@@ -98,18 +98,18 @@ export type LogViewerProps = {
   /** Called with the number of lines that match, whenever it changes (also to 0). */
   onMatchCountChange?: (count: number) => void;
   /** Ids of the expanded lines, when controlled. */
-  expandedIds?: readonly LogLine['id'][];
+  expandedIds?: readonly LogLineId[];
   /** Ids of the lines expanded at first, when uncontrolled. None by default. */
-  defaultExpandedIds?: readonly LogLine['id'][];
+  defaultExpandedIds?: readonly LogLineId[];
   /** Called with the ids to move to when a line is expanded or collapsed. */
-  onExpandedIdsChange?: (ids: readonly LogLine['id'][]) => void;
+  onExpandedIdsChange?: (ids: readonly LogLineId[]) => void;
   /**
    * Adds an "Open details" button to an expanded line, called with it: open a `LogEntryDetail` in
    * a drawer or a side panel.
    */
   onOpenLine?: (line: LogLine) => void;
   /** The line to mark as the one in focus (`aria-current`), as in the context of an entry. */
-  currentId?: LogLine['id'];
+  currentId?: LogLineId;
   /**
    * Announce the error and fatal lines that arrive to screen readers, in a polite live region of
    * their own: up to three, then the count of the rest. Off by default, as is every other line: a

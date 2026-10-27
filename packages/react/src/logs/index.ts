@@ -14,6 +14,7 @@ export {
   type LogLevel,
   type LogLevelKey,
   type LogLine,
+  type LogLineId,
   type LogColumn,
   type LogOrder,
 } from './types';
