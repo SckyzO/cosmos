@@ -108,7 +108,7 @@ function StackedListHeader({ sticky, className, children, ref, ...rest }: Stacke
     <li
       ref={ref}
       className={clsx(
-        'border-t border-b border-t-gray-200 border-b-gray-200 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
+        'py-row-6 border-t border-b border-t-gray-200 border-b-gray-200 px-3 text-sm/6 font-semibold text-gray-900 dark:border-t-white/10 dark:border-b-white/10 dark:bg-gray-800 dark:text-white',
         // A pinned heading is a band over the rows that scroll under it: a deeper fill and a
         // shadow on its lower edge set it apart from them, where a loose one needs neither.
         sticky ? 'sticky top-0 z-10 bg-gray-100 shadow-xs' : 'bg-gray-50',
@@ -228,7 +228,7 @@ function StackedListItem({
     <li
       ref={ref}
       className={clsx(
-        'flex justify-between gap-x-6 py-5',
+        'py-row-20 flex justify-between gap-x-6',
         (badge || detailItems.length > 0) && 'items-center',
         isLinked && 'has-focus-visible:focus-indicator relative has-focus-visible:ring-inset',
         inCard && 'px-4 sm:px-6',
