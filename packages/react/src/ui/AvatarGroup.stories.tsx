@@ -345,3 +345,50 @@ export const CustomOverflowReplacesTheCount: Story = {
     await expect(canvas.queryByRole('img', { name: '2 more people' })).toBeNull();
   },
 };
+
+const SIZES = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'] as const;
+// Two initials of the usual widths. The "MI" is the one Kanban's xs cards cut ("MI(").
+const PAIRS = [
+  { name: 'Mei Ito' },
+  { name: 'Ana Costa' },
+  { name: 'Olivier Dubois' },
+  { name: 'Marcus Bell' },
+];
+
+/** Two initials stay whole: the next avatar and its ring stop short of them, at every size. */
+export const InitialsClearTheNextAvatar: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex flex-col gap-4">
+      {SIZES.flatMap((size) =>
+        (['normal', 'tight'] as const).map((spacing) => (
+          <AvatarGroup
+            key={`${size} ${spacing}`}
+            aria-label={`${size} ${spacing}`}
+            avatars={PAIRS}
+            size={size}
+            spacing={spacing}
+          />
+        ))
+      )}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await document.fonts.ready;
+    const covered: string[] = [];
+    for (const group of canvas.getAllByRole('group')) {
+      const avatars = within(group).getAllByRole('img');
+      avatars.slice(0, -1).forEach((avatar, i) => {
+        const initials = avatar.querySelector('span') as HTMLElement;
+        // The ring is 2px of surface colour around the next avatar, over this one.
+        const free = avatars[i + 1]!.getBoundingClientRect().left - 2;
+        const right = initials.getBoundingClientRect().right;
+        // Half a pixel is antialiasing, not a cut letter.
+        if (right - free > 0.5) {
+          covered.push(`${group.getAttribute('aria-label')}: ${(right - free).toFixed(1)}px`);
+        }
+      });
+    }
+    await expect(covered).toEqual([]);
+  },
+};
