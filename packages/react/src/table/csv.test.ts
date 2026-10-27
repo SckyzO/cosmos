@@ -83,6 +83,12 @@ describe('toCsv', () => {
     it('quotes a header that holds a comma', () => {
       expect(toCsv([], [{ ...base, key: 'k', label: 'Size, MB' }])).toBe('"Size, MB"\r\n');
     });
+    it('guards a header that starts like a formula', () => {
+      expect(toCsv([], [{ ...base, key: 'k', label: '=SUM(A1:A9)' }])).toBe("'=SUM(A1:A9)\r\n");
+      expect(toCsv([], [{ ...base, key: '@cmd', label: { type: 'span' } as never }])).toBe(
+        "'@cmd\r\n"
+      );
+    });
   });
 
   describe('value fallback', () => {

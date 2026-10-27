@@ -8,6 +8,9 @@ const FORMULA_START = /^[=+\-@\t\r]/;
 const quote = (text: string): string =>
   /["\r\n,]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 
+// A header can come from data too (columns named by the users of an app), so it is guarded as well.
+const field = (text: string): string => quote(FORMULA_START.test(text) ? `'${text}` : text);
+
 /** The header of a column: its `label` when plain text, else `mobileLabel`, else its `key`. */
 const headerText = <T>(col: ColumnDef<T>): string => {
   if (typeof col.label === 'string' || typeof col.label === 'number') return String(col.label);
@@ -25,7 +28,7 @@ const cellText = (value: string | number | null | undefined): string => {
   if (value === null || value === undefined) return '';
   // A number cannot carry a formula, and `-5` has to stay a number.
   if (typeof value === 'number') return String(value);
-  return quote(FORMULA_START.test(value) ? `'${value}` : value);
+  return field(value);
 };
 
 /**
@@ -35,16 +38,16 @@ const cellText = (value: string | number | null | undefined): string => {
  * The header of a column is its `label` when that is a string or a number, else its
  * `mobileLabel` when that is a string, else its `key`. A cell takes the column's `exportValue`,
  * else its `sortValue`, `searchValue` or `filterValue` (the first one it has); `null`,
- * `undefined` and a column with none of them give an empty cell. A string that starts with `=`,
- * `+`, `-`, `@`, a tab or a carriage return gets a `'` prefix, so a spreadsheet never runs it as
- * a formula; a `number` is left as it is.
+ * `undefined` and a column with none of them give an empty cell. A header or a string value that
+ * starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a `'` prefix, so a spreadsheet
+ * never runs it as a formula; a `number` is left as it is.
  *
  * The text has no byte order mark: a file meant for spreadsheets should start with `"\uFEFF"`
  * (as `DataTable`'s export does) so that they read it as UTF-8.
  */
 export const toCsv = <T>(rows: T[], columns: ColumnDef<T>[]): string => {
   const records = [
-    columns.map((col) => quote(headerText(col))),
+    columns.map((col) => field(headerText(col))),
     ...rows.map((row) => columns.map((col) => cellText(cellValue(col, row)))),
   ];
   return records.map((record) => `${record.join(',')}\r\n`).join('');
