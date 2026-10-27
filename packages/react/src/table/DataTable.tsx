@@ -133,6 +133,24 @@ export type DataTableProps<T> = {
    */
   filterTabs?: DataTableFilterTabsConfig;
 
+  // ── Server mode ────────────────────────────────────────────────────────────
+  /**
+   * Turns the in-memory search, column filters, sort and pagination off: `rows` is the current
+   * page as the host fetched it, drawn in its order, and nothing is filtered, reordered or sliced
+   * here. The controls still report every change (`onSearchChange`, `onFiltersChange`,
+   * `onSortChange`, `onPageChange`, `onPageSizeChange`), and the host fetches the next page.
+   * Pass `rowCount` for the pager, and `filterOptions` on a filterable column (its values cannot
+   * be read from one page). The built-in CSV export (`exportable`) holds only the loaded rows
+   * here: pass `onExport` to export on the server. Selection works on the loaded rows; "Show
+   * all" is not offered. Default `false`.
+   */
+  manual?: boolean;
+  /**
+   * With `manual`, the total number of rows across every page, for the pager and its "Showing X
+   * to Y of Z". Without it the pager counts `rows.length`. Ignored without `manual`.
+   */
+  rowCount?: number;
+
   // ── Sort and page ──────────────────────────────────────────────────────────
   /**
    * The sort, when controlled: `{ key, direction }` of a column, or `null` for the order of
@@ -188,7 +206,8 @@ export type DataTableProps<T> = {
    * Shows an "Export" button in the toolbar, before the "Columns" one; the toolbar then shows even
    * without a search field. It downloads a CSV of every page of the rows that the search, the
    * filters and the sort keep, in the visible columns and their order (the selection and action
-   * columns are not data). A column's header is its `label` when that is a string or a number,
+   * columns are not data). With `manual` it holds the loaded rows only, one page: pass `onExport`
+   * to export on the server. A column's header is its `label` when that is a string or a number,
    * else its `mobileLabel` when that is a string, else its `key`; its cells come from `exportValue`
    * (see `ColumnDef`, and `toCsv` for the format). The file is UTF-8 with a byte order mark, so
    * that spreadsheets read accents. Default `false`.
@@ -261,6 +280,8 @@ export const DataTable = <T,>({
   rowHref,
   renderRowAction,
   pageSize: pageSizeProp,
+  manual = false,
+  rowCount,
   loading = false,
   loadingRows = 5,
   error = null,
@@ -454,19 +475,20 @@ export const DataTable = <T,>({
   const filterValues = useMemo(() => columnFilterValues(rows, columns), [rows, columns]);
 
   // Pipeline: search → column filters → sort.
+  // With `manual` the host did it: `rows` is the page to draw, in its order.
   const searchedRows = useMemo(
-    () => (searchEnabled ? searchRows(rows, columns, searchValue) : rows),
-    [rows, columns, searchEnabled, searchValue]
+    () => (searchEnabled && !manual ? searchRows(rows, columns, searchValue) : rows),
+    [rows, columns, searchEnabled, manual, searchValue]
   );
 
   const filteredRows = useMemo(
-    () => filterRows(searchedRows, allColumns, filters),
-    [searchedRows, allColumns, filters]
+    () => (manual ? searchedRows : filterRows(searchedRows, allColumns, filters)),
+    [searchedRows, allColumns, manual, filters]
   );
 
   const sortedRows = useMemo(
-    () => sortRows(filteredRows, columns, sortKey, sortDir),
-    [filteredRows, columns, sortKey, sortDir]
+    () => (manual ? filteredRows : sortRows(filteredRows, columns, sortKey, sortDir)),
+    [filteredRows, columns, manual, sortKey, sortDir]
   );
 
   // In a fixed layout the width the columns leave over is shared among all of them, the selection
@@ -479,11 +501,16 @@ export const DataTable = <T,>({
 
   const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  // The rows the pager counts: all of them in memory, the host's total in `manual`.
+  const totalRows = manual ? (rowCount ?? rows.length) : sortedRows.length;
+  // "Show all" has no meaning when the host holds the rows.
+  const showAllRows = showAll && !manual;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const safePage = Math.min(Math.max(page, 1), totalPages);
-  const pageRows = showAll
-    ? sortedRows
-    : sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageRows =
+    manual || showAllRows
+      ? sortedRows
+      : sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Selection helpers — operate on the *currently visible* rows so "select all"
   // never touches rows hidden by the search/filter pipeline.
@@ -542,7 +569,7 @@ export const DataTable = <T,>({
     filters: filtersToRecord(filters),
     sort,
     columnVisibility: shown,
-    pageSize: showAll ? 'all' : pageSize,
+    pageSize: showAllRows ? 'all' : pageSize,
     density,
   };
   const applyView = (view: DataTableView) => {
@@ -551,7 +578,8 @@ export const DataTable = <T,>({
     setFilters(recordToFilters(view.filters));
     setSortState(view.sort);
     setColumnVisibility(view.columnVisibility);
-    if (view.pageSize === 'all') setShowAll(true);
+    // A server holds the rows: "Show all" is not a thing the table can do there.
+    if (view.pageSize === 'all') setShowAll(!manual);
     else {
       setShowAll(false);
       setPageSizeState(view.pageSize);
@@ -996,11 +1024,11 @@ export const DataTable = <T,>({
           totalPages={totalPages}
           aria-label={ariaLabel ? `${ariaLabel} pagination` : undefined}
           showInfo
-          total={sortedRows.length}
+          total={totalRows}
           pageSize={pageSize}
           onPageChange={setPage}
-          showAll={showAll}
-          onShowAllChange={setShowAll}
+          showAll={showAllRows}
+          onShowAllChange={manual ? undefined : setShowAll}
           controls={
             pageSizeOptions && pageSizeOptions.length > 0 ? (
               <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />

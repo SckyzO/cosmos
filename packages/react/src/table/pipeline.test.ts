@@ -72,6 +72,28 @@ describe('columnFilterValues', () => {
     const bare: ColumnDef<Person>[] = [{ key: 'role', label: 'Role', render, filterable: true }];
     expect(columnFilterValues(people, bare)).toEqual({ role: [] });
   });
+
+  it('offers filterOptions as given, in place of the values of the rows', () => {
+    const withOptions: ColumnDef<Person>[] = [
+      { ...columns[1], filterOptions: ['Director', 'Admiral', 'Intern'] },
+      columns[2],
+    ];
+    const values = columnFilterValues([ada], withOptions);
+    // Their own order, not sorted, and a value no row has.
+    expect(values.role).toEqual(['Director', 'Admiral', 'Intern']);
+    // A column without them still reads the rows.
+    expect(values.team).toEqual(['Core']);
+  });
+
+  it('offers filterOptions with no rows at all, as a server page can be empty', () => {
+    const withOptions: ColumnDef<Person>[] = [{ ...columns[1], filterOptions: ['Engineer'] }];
+    expect(columnFilterValues([], withOptions)).toEqual({ role: ['Engineer'] });
+  });
+
+  it('ignores filterOptions on a column that is not filterable', () => {
+    const off: ColumnDef<Person>[] = [{ ...columns[1], filterable: false, filterOptions: ['x'] }];
+    expect(columnFilterValues(people, off)).toEqual({});
+  });
 });
 
 describe('searchRows', () => {
