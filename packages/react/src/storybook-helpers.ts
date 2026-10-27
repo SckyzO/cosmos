@@ -1,6 +1,8 @@
 import type { Decorator } from '@storybook/react-vite';
-import { createElement } from 'react';
+import { clsx } from 'clsx';
+import { createElement, Fragment, type ElementType, type ReactNode } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
+import type { Direction } from './hooks/direction';
 
 /**
  * Storybook docs parameters preset for components that render via portals
@@ -83,6 +85,82 @@ export const expectNoHorizontalOverflow = (box?: HTMLElement) => {
   if (box) expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
 };
 
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * `Icon` turned around under `dir="rtl"`, for an icon a story gives a component's `icon` prop
+ * that points along the line: a forward arrow, a back chevron, undo. The component draws the
+ * icon it is given as it is, so the icon carries `rtl:-scale-x-100` itself, as in an app.
+ */
+export const mirroredIcon = (Icon: ElementType<{ className?: string }>) => {
+  const Mirrored = ({ className, ...rest }: { className?: string }) =>
+    createElement(Icon, { ...rest, className: clsx(className, 'rtl:-scale-x-100') });
+  return Mirrored;
+};
+
+/**
+ * `content` rendered twice, in a `dir="ltr"` box and a `dir="rtl"` box one under the other, for a
+ * story that checks a component mirrors. The boxes set the direction themselves, so the story
+ * holds in the direction pass (`dir="rtl"` on `<html>`) as well. Read them back with
+ * `directionBox`, compare them with `expectMirrored`.
+ */
+export const bothDirections = (content: () => ReactNode) =>
+  createElement(
+    Fragment,
+    null,
+    (['ltr', 'rtl'] as const).map((dir) =>
+      createElement('div', { key: dir, dir, 'data-direction': dir, className: 'mb-4' }, content())
+    )
+  );
+
+/** The box of `bothDirections` for `dir`. */
+export const directionBox = (canvasElement: HTMLElement, dir: Direction) => {
+  const box = canvasElement.querySelector<HTMLElement>(`[data-direction="${dir}"]`);
+  if (!box) throw new Error(`no ${dir} box: render the story with bothDirections`);
+  return box;
+};
+
+/**
+ * How far `element` is from the edge of `box` its text starts at: the left one in left to right,
+ * the right one in right to left. The same layout, mirrored, gives the same value in both.
+ */
+export const startOffset = (element: Element, box: Element) => {
+  const e = element.getBoundingClientRect();
+  const b = box.getBoundingClientRect();
+  return getComputedStyle(box).direction === 'rtl' ? b.right - e.right : e.left - b.left;
+};
+
+/** The same, from the edge the text ends at. */
+export const endOffset = (element: Element, box: Element) => {
+  const e = element.getBoundingClientRect();
+  const b = box.getBoundingClientRect();
+  return getComputedStyle(box).direction === 'rtl' ? e.left - b.left : b.right - e.right;
+};
+
+/**
+ * Play-function assertion for a story rendered with `bothDirections`: the element `find` picks
+ * in each box sits at the same distance from the start edge (so it moved to the other side when
+ * the direction flipped), by `precision` decimal places. Returns both elements, for the
+ * assertions that are about the element itself.
+ */
+export const expectMirrored = (
+  canvasElement: HTMLElement,
+  find: (box: HTMLElement) => Element | null | undefined,
+  precision = 0
+) => {
+  const ltr = directionBox(canvasElement, 'ltr');
+  const rtl = directionBox(canvasElement, 'rtl');
+  const inLtr = find(ltr);
+  const inRtl = find(rtl);
+  expect(inLtr, 'the element in the ltr box').toBeTruthy();
+  expect(inRtl, 'the element in the rtl box').toBeTruthy();
+  expect(startOffset(inRtl!, rtl), 'distance from the start edge in rtl').toBeCloseTo(
+    startOffset(inLtr!, ltr),
+    precision
+  );
+  return { ltr: inLtr as HTMLElement, rtl: inRtl as HTMLElement };
+};
+
 /**
  * Padding for a story that sits in the `fullscreen` layout `portalDocsParams`
  * sets but has no frame of its own: without it the content is drawn against the
@@ -118,9 +196,9 @@ export const expectOutsideClip = (panel: HTMLElement, box: HTMLElement) => {
 };
 
 /**
- * Play-function assertion: `panel` sits `offset` px under `anchor`, flush with its left edge
- * (`start`) or its right edge (`end`). Wrap it in `waitFor` after a scroll: the panel follows
- * on the scroll event.
+ * Play-function assertion: `panel` sits `offset` px under `anchor`, flush with the edge its text
+ * starts at (`start`: the left one, the right one in right to left) or ends at (`end`). Wrap it
+ * in `waitFor` after a scroll: the panel follows on the scroll event.
  */
 export const expectBelow = (
   panel: Element,
@@ -130,7 +208,8 @@ export const expectBelow = (
   const p = panel.getBoundingClientRect();
   const a = anchor.getBoundingClientRect();
   expect(p.top).toBeCloseTo(a.bottom + offset, 0);
-  if (align === 'start') expect(p.left).toBeCloseTo(a.left, 0);
+  const rtl = getComputedStyle(anchor).direction === 'rtl';
+  if ((align === 'start') !== rtl) expect(p.left).toBeCloseTo(a.left, 0);
   else expect(p.right).toBeCloseTo(a.right, 0);
 };
 
