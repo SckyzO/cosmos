@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Download, Search, X } from 'lucide-react';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -173,8 +173,9 @@ export type DataTableProps<T> = {
    * drawn while it is scrolled out of view, so focus and selection survive scrolling.
    *
    * Every row has one fixed height, set by `density` (49px, or 61px when `comfortable`, at the
-   * default text size): content taller than that is clipped, so keep each cell to the one line
-   * of text (or a control) it has in a standard row. The rows scroll in the table's own area:
+   * default text size, and growing with the text size setting): content taller than that is
+   * clipped, so keep each cell to the one line of text (or a control) it has in a standard row.
+   * The rows scroll in the table's own area:
    * give it a height (`className="max-h-96"`), or the window has no end. Table layout only: with
    * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows. On
    * paper only the drawn rows print. Default `false`.
@@ -552,23 +553,48 @@ export const DataTable = <T,>({
   // Windowed (`virtualize`): the body draws a slice of `pageRows` between spacers.
   const showRows = !showSkeleton && !((error && !dimRows) || !hasRows);
   const windowed = virtualize && showRows;
+  // The height of a row in px: the default text size's until a drawn row is measured, then what
+  // it really is, which follows the text size.
+  const [rowHeight, setRowHeight] = useState(VIRTUAL_ROW_HEIGHT[density]);
   const slice = useVirtualWindow({
     scrollerRef,
     count: pageRows.length,
-    rowHeight: VIRTUAL_ROW_HEIGHT[density],
+    rowHeight,
     enabled: windowed,
   });
+  // All the rows share one height, measured as the distance between two drawn rows in the middle
+  // of the longest run of rows that follow each other: the divider is part of it, and the rows
+  // next to a spacer or to the top of the table sit half a pixel off, so they are not measured. A
+  // text size change resizes them. Observed again whenever other rows are the ones measured; with
+  // no such run, the last measurement stands.
+  useLayoutEffect(() => {
+    const body = scrollerRef.current?.querySelector('tbody');
+    if (!windowed || !body) return;
+    const at = (tr: HTMLElement) => Number(tr.getAttribute('aria-rowindex'));
+    let run: HTMLElement[] = [];
+    let best: HTMLElement[] = [];
+    for (const tr of body.querySelectorAll<HTMLElement>('tr[aria-rowindex]')) {
+      run = run.length > 0 && at(run[run.length - 1]) + 1 === at(tr) ? [...run, tr] : [tr];
+      if (run.length > best.length) best = run;
+    }
+    if (best.length < 4) return;
+    const mid = Math.floor(best.length / 2);
+    const [row, next] = [best[mid - 1], best[mid]];
+    const measure = () => {
+      const height = next.getBoundingClientRect().top - row.getBoundingClientRect().top;
+      if (height > 0) setRowHeight((prev) => (Math.abs(prev - height) < 0.01 ? prev : height));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [windowed, density, slice.start, slice.end]);
   // The row that holds the focus is drawn wherever the scroll is, or scrolling would drop it.
   const [focusedKey, setFocusedKey] = useState<string | number | null>(null);
   const pinnedIndex =
     windowed && focusedKey !== null ? pageRows.findIndex((r) => rowKey(r) === focusedKey) : -1;
   const virtualParts = windowed
-    ? windowParts(
-        slice,
-        pageRows.length,
-        VIRTUAL_ROW_HEIGHT[density],
-        pinnedIndex < 0 ? null : pinnedIndex
-      )
+    ? windowParts(slice, pageRows.length, rowHeight, pinnedIndex < 0 ? null : pinnedIndex)
     : null;
   // A windowed cell is a box of one fixed height, so every row is as tall as the others.
   const bodyPadding = windowed ? VIRTUAL_CELL_PADDING : BODY_CELL_PADDING[density];
@@ -761,6 +787,8 @@ export const DataTable = <T,>({
             className={clsx(
               'px-4 print:hidden',
               bodyPadding,
+              // The cell box is in em of this size, as in the data cells.
+              windowed && 'text-sm',
               href && 'relative z-[1]',
               stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
             )}
@@ -819,7 +847,14 @@ export const DataTable = <T,>({
           );
         })}
         {renderRowAction && (
-          <td className={clsx('px-4 print:hidden', bodyPadding, href && 'relative z-[1]')}>
+          <td
+            className={clsx(
+              'px-4 print:hidden',
+              bodyPadding,
+              windowed && 'text-sm',
+              href && 'relative z-[1]'
+            )}
+          >
             <div className="flex items-center justify-end" style={cellBox}>
               {renderRowAction(row)}
             </div>
