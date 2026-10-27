@@ -125,7 +125,7 @@ export const Topbar = ({
               <Menu align="right">
                 <Menu.Trigger
                   aria-label="More actions"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
+                  className="h-ctrl-40 w-ctrl-40 flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
                 >
                   <Ellipsis className="h-4 w-4" aria-hidden />
                 </Menu.Trigger>
