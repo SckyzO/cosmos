@@ -86,7 +86,7 @@ export const Tag = ({
   const content = (
     <>
       {Icon && <Icon className={clsx('shrink-0', sizing.icon)} aria-hidden />}
-      <span className="min-w-0 truncate">{children}</span>
+      <bdi className="min-w-0 truncate">{children}</bdi>
     </>
   );
   const mainClass = clsx('flex min-w-0 items-center rounded-sm', sizing.gap);

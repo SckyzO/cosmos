@@ -7,7 +7,11 @@ export type RibbonIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'da
 export type RibbonShape = 'flat' | 'angled' | 'pill';
 
 export type RibbonProps = {
-  /** Corner of the parent to anchor to. Parent must be `position: relative` (and `overflow-hidden` for `angled`). */
+  /**
+   * Corner of the parent to anchor to. Parent must be `position: relative` (and `overflow-hidden`
+   * for `angled`). `left` and `right` are the start and the end of the line: under `dir="rtl"` a
+   * `top-right` ribbon sits in the top-left corner.
+   */
   position?: RibbonPosition;
   intent?: RibbonIntent;
   /**
@@ -29,29 +33,32 @@ const INTENT_BG: Record<RibbonIntent, string> = {
 };
 
 // `flat`: round the OUTER corners (away from the parent edge), keep the
-// touching corner sharp so it sits flush against the card edge.
+// touching corner sharp so it sits flush against the card edge. The corners are logical
+// (`ss` top-left in left to right, `se` top-right, `ee` bottom-right, `es` bottom-left), like
+// the sides: `right` is the end of the line.
 const FLAT_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-0 right-0 rounded-bl-lg rounded-tr-[inherit]',
-  'top-left': 'top-0 left-0 rounded-br-lg rounded-tl-[inherit]',
-  'bottom-right': 'bottom-0 right-0 rounded-tl-lg rounded-br-[inherit]',
-  'bottom-left': 'bottom-0 left-0 rounded-tr-lg rounded-bl-[inherit]',
+  'top-right': 'top-0 inset-e-0 rounded-es-lg rounded-se-[inherit]',
+  'top-left': 'top-0 inset-s-0 rounded-ee-lg rounded-ss-[inherit]',
+  'bottom-right': 'bottom-0 inset-e-0 rounded-ss-lg rounded-ee-[inherit]',
+  'bottom-left': 'bottom-0 inset-s-0 rounded-se-lg rounded-es-[inherit]',
 };
 
 // `angled`: 45° banner across the corner. The parent must be
-// `overflow-hidden` so the banner ends are clipped by the card edge.
+// `overflow-hidden` so the banner ends are clipped by the card edge. The rotation has no
+// logical form: the banner leans the other way when the corner swaps sides.
 const ANGLED_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-5 -right-12 rotate-45',
-  'top-left': 'top-5 -left-12 -rotate-45',
-  'bottom-right': 'bottom-5 -right-12 -rotate-45',
-  'bottom-left': 'bottom-5 -left-12 rotate-45',
+  'top-right': 'top-5 -inset-e-12 rotate-45 rtl:-rotate-45',
+  'top-left': 'top-5 -inset-s-12 -rotate-45 rtl:rotate-45',
+  'bottom-right': 'bottom-5 -inset-e-12 -rotate-45 rtl:rotate-45',
+  'bottom-left': 'bottom-5 -inset-s-12 rotate-45 rtl:-rotate-45',
 };
 
 // `pill`: a label set in the card, 12px from the corner, not stuck to it.
 const PILL_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-3 right-3',
-  'top-left': 'top-3 left-3',
-  'bottom-right': 'bottom-3 right-3',
-  'bottom-left': 'bottom-3 left-3',
+  'top-right': 'top-3 inset-e-3',
+  'top-left': 'top-3 inset-s-3',
+  'bottom-right': 'bottom-3 inset-e-3',
+  'bottom-left': 'bottom-3 inset-s-3',
 };
 
 export const Ribbon = ({
@@ -65,7 +72,7 @@ export const Ribbon = ({
     return (
       <span
         className={clsx(
-          'text-2xs absolute z-10 w-40 px-2 py-1 text-center font-bold tracking-wide uppercase shadow-md',
+          'text-2xs absolute z-10 w-40 px-2 py-1 text-center font-bold tracking-wide uppercase shadow-md rtl:tracking-normal',
           INTENT_BG[intent],
           ANGLED_POSITION[position],
           className
@@ -79,7 +86,7 @@ export const Ribbon = ({
     return (
       <span
         className={clsx(
-          'text-2xs absolute z-10 rounded-full px-2.5 py-1 font-bold tracking-wide uppercase shadow',
+          'text-2xs absolute z-10 rounded-full px-2.5 py-1 font-bold tracking-wide uppercase shadow rtl:tracking-normal',
           INTENT_BG[intent],
           PILL_POSITION[position],
           className
@@ -92,7 +99,7 @@ export const Ribbon = ({
   return (
     <span
       className={clsx(
-        'text-2xs absolute z-10 px-2.5 py-1 font-bold tracking-wide uppercase shadow',
+        'text-2xs absolute z-10 px-2.5 py-1 font-bold tracking-wide uppercase shadow rtl:tracking-normal',
         INTENT_BG[intent],
         FLAT_POSITION[position],
         className

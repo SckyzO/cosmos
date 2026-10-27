@@ -41,46 +41,47 @@ export type AvatarGroupProps = {
 // About a quarter of each size, and about a third for `tight`. Whole class names, for Tailwind.
 const OVERLAP_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string>> = {
   normal: {
-    xs: '-ml-1.5',
-    sm: '-ml-2',
-    md: '-ml-2.5',
-    lg: '-ml-3',
-    xl: '-ml-4',
-    '2xl': '-ml-5',
-    '3xl': '-ml-6',
+    xs: '-ms-1.5',
+    sm: '-ms-2',
+    md: '-ms-2.5',
+    lg: '-ms-3',
+    xl: '-ms-4',
+    '2xl': '-ms-5',
+    '3xl': '-ms-6',
   },
   tight: {
-    xs: '-ml-2',
-    sm: '-ml-2.5',
-    md: '-ml-3.5',
-    lg: '-ml-4',
-    xl: '-ml-5',
-    '2xl': '-ml-7',
-    '3xl': '-ml-8',
+    xs: '-ms-2',
+    sm: '-ms-2.5',
+    md: '-ms-3.5',
+    lg: '-ms-4',
+    xl: '-ms-5',
+    '2xl': '-ms-7',
+    '3xl': '-ms-8',
   },
 };
 
 // Initials sit in the middle of the part the next avatar leaves visible: half its overlap plus
 // its 2px ring. Centred on the whole avatar, two wide capitals ran under the next one at every
-// size. Whole class names, for Tailwind.
+// size. A margin on the end side moves a centred box by half of it: twice the shift, and it
+// follows the direction, where a translate would not. Whole class names, for Tailwind.
 const INITIALS_SHIFT_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string>> = {
   normal: {
-    xs: '[&>[role=img]>span:first-child]:-translate-x-1',
-    sm: '[&>[role=img]>span:first-child]:-translate-x-1.25',
-    md: '[&>[role=img]>span:first-child]:-translate-x-1.5',
-    lg: '[&>[role=img]>span:first-child]:-translate-x-1.75',
-    xl: '[&>[role=img]>span:first-child]:-translate-x-2.25',
-    '2xl': '[&>[role=img]>span:first-child]:-translate-x-2.75',
-    '3xl': '[&>[role=img]>span:first-child]:-translate-x-3.25',
+    xs: '[&>[role=img]>span:first-child]:me-2',
+    sm: '[&>[role=img]>span:first-child]:me-2.5',
+    md: '[&>[role=img]>span:first-child]:me-3',
+    lg: '[&>[role=img]>span:first-child]:me-3.5',
+    xl: '[&>[role=img]>span:first-child]:me-4.5',
+    '2xl': '[&>[role=img]>span:first-child]:me-5.5',
+    '3xl': '[&>[role=img]>span:first-child]:me-6.5',
   },
   tight: {
-    xs: '[&>[role=img]>span:first-child]:-translate-x-1.25',
-    sm: '[&>[role=img]>span:first-child]:-translate-x-1.5',
-    md: '[&>[role=img]>span:first-child]:-translate-x-2',
-    lg: '[&>[role=img]>span:first-child]:-translate-x-2.25',
-    xl: '[&>[role=img]>span:first-child]:-translate-x-2.75',
-    '2xl': '[&>[role=img]>span:first-child]:-translate-x-3.75',
-    '3xl': '[&>[role=img]>span:first-child]:-translate-x-4.25',
+    xs: '[&>[role=img]>span:first-child]:me-2.5',
+    sm: '[&>[role=img]>span:first-child]:me-3',
+    md: '[&>[role=img]>span:first-child]:me-4',
+    lg: '[&>[role=img]>span:first-child]:me-4.5',
+    xl: '[&>[role=img]>span:first-child]:me-5.5',
+    '2xl': '[&>[role=img]>span:first-child]:me-7.5',
+    '3xl': '[&>[role=img]>span:first-child]:me-8.5',
   },
 };
 
@@ -120,7 +121,7 @@ export const AvatarGroup = ({
   // The "+N" follows the avatar before it, so a group of squares does not end on a circle.
   const overflowShape = visible[visible.length - 1]?.props.shape ?? 'circle';
 
-  // Every slot but the last one has another slot over its right side.
+  // Every slot but the last one has another slot over its end side.
   const last = visible.length - (hidden > 0 ? 0 : 1);
   const slot = (key: string | number, index: number, shape: AvatarShape, node: ReactNode) => (
     <span
