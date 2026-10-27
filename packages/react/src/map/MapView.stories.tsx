@@ -327,17 +327,22 @@ export const StyleFollowsTheTheme: Story = {
   play: async ({ canvasElement, canvas }) => {
     const setStyle = spyOn(MapLibreMap.prototype, 'setStyle');
     const root = document.documentElement;
-    const dark = root.classList.contains('dark');
+    const themeClasses = root.className;
+    // The run may start in any theme (the contrast passes use light, sand and deep-blue): start
+    // from light, so each step below is a change the map has to answer.
+    const startsDark = root.classList.contains('dark') || root.classList.contains('deep-blue');
     try {
       await mapCanvas(canvasElement);
       await canvas.findAllByRole('button', { name: /places, zoom in$/ });
-      // The Storybook theme is dark: the map was created with the dark style.
-      expect(setStyle.mock.calls[0]![0]).toBe(CITY_DARK);
-      // The light theme swaps it, and the dark one swaps it back.
-      root.classList.remove('dark');
-      await waitFor(() => expect(setStyle).toHaveBeenLastCalledWith(CITY_LIGHT, { diff: false }));
+      root.classList.remove('dark', 'deep-blue');
+      if (startsDark) {
+        await waitFor(() => expect(setStyle).toHaveBeenLastCalledWith(CITY_LIGHT, { diff: false }));
+      }
+      // A dark theme swaps in the dark style, and the light theme swaps it back.
       root.classList.add('dark');
       await waitFor(() => expect(setStyle).toHaveBeenLastCalledWith(CITY_DARK, { diff: false }));
+      root.classList.remove('dark');
+      await waitFor(() => expect(setStyle).toHaveBeenLastCalledWith(CITY_LIGHT, { diff: false }));
 
       // The markers survive the swap: zooming in still splits the groups.
       const groups = (await canvas.findAllByRole('button', { name: /places, zoom in$/ })).length;
@@ -351,7 +356,7 @@ export const StyleFollowsTheTheme: Story = {
       expect(groups).toBeGreaterThan(0);
     } finally {
       setStyle.mockRestore();
-      root.classList.toggle('dark', dark);
+      root.className = themeClasses;
     }
   },
 };
