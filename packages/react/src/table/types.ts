@@ -48,3 +48,14 @@ export type ColumnDef<T> = {
   /** The label of the column's pair in a card, in place of `label` (a short or plain-text one). */
   mobileLabel?: ReactNode;
 };
+
+/** What `DataTable` hands to `onExport`: the table as the user has set it, not the file. */
+export type DataTableExportQuery = {
+  /** The search text (empty without a search). */
+  search: string;
+  /** Column `key` → the selected filter values. */
+  filters: Record<string, string[]>;
+  sort: DataTableSort;
+  /** The keys of the visible data columns, in the order they are drawn. */
+  columns: string[];
+};

@@ -1,5 +1,6 @@
 import { ChevronDown, Columns3 } from 'lucide-react';
 import { Menu } from '../ui/Menu';
+import { TOOLBAR_BUTTON } from './toolbarButton';
 import { canToggleColumn, type ColumnVisibility } from './columnVisibility';
 import type { ColumnDef } from './types';
 
@@ -21,7 +22,7 @@ export const DataTableColumnsMenu = <T,>({
   <Menu align="right">
     <Menu.Trigger
       aria-label="Columns"
-      className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:px-3.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+      className={TOOLBAR_BUTTON}
     >
       <Columns3 aria-hidden className="h-4 w-4" />
       <span className="max-sm:hidden">Columns</span>

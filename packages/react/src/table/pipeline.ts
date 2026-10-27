@@ -6,6 +6,18 @@ import type { ColumnDef, SortDirection } from './types';
 /** The values selected per column key; a column without a selection filters nothing. */
 export type ColumnFilters = Record<string, Set<string>>;
 
+/**
+ * The filters as plain JSON: column key → the selected values, sorted. A column with nothing
+ * selected is left out.
+ */
+export const filtersToRecord = (filters: ColumnFilters): Record<string, string[]> => {
+  const out: Record<string, string[]> = {};
+  for (const [key, values] of Object.entries(filters)) {
+    if (values.size > 0) out[key] = Array.from(values).sort();
+  }
+  return out;
+};
+
 /** The unique, non-empty filter values of each filterable column, sorted. */
 export const columnFilterValues = <T>(
   rows: T[],
