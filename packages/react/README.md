@@ -219,9 +219,9 @@ is a string or a number, else `mobileLabel` when that is a string, else the
 named by `exportFileName` (default `export.csv`) and is UTF-8 with a byte order
 mark (U+FEFF), so that spreadsheets read accents. Fields follow RFC 4180
 (quoted when they hold `"`, `,` or a line break, records end with CRLF), and a
-string that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a
-`'` prefix so a spreadsheet never runs it as a formula; a `number` is left
-alone. To export on the server, `onExport(query)` receives `{ search, filters,
+header or string value that starts with `=`, `+`, `-`, `@`, a tab or a carriage
+return gets a `'` prefix so a spreadsheet never runs it as a formula; a
+`number` is left alone. To export on the server, `onExport(query)` receives `{ search, filters,
 sort, columns }` (the visible column keys, in order) and builds no file.
 `toCsv(rows, columns)` gives the same text, without the byte order mark, for an
 export outside a table (prepend U+FEFF for a file meant for spreadsheets).
