@@ -4,6 +4,7 @@ import { Shell } from '../layout/Shell';
 import { Navbar } from '../navigation/Navbar';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Button } from '../ui/Button';
+import { Menu } from '../ui/Menu';
 import { PageHeader } from '../templates/PageHeader';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { expect } from 'storybook/test';
@@ -134,6 +135,65 @@ export const WithPageHeaderActions: Story = {
       </div>
     </Shell>
   ),
+};
+
+// Horizontal layout with dropdown groups: a `Shell` with no sidebar and a `Navbar` in `topbar`.
+// The group holding the current page shows as active, and what does not fit goes into "More".
+export const WithMenus: Story = {
+  render: () => (
+    <Shell
+      topbar={
+        <Navbar theme="dark">
+          <Navbar.Brand>
+            <Navbar.MobileMenuButton theme="dark" />
+            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <Navbar.Items>
+              <Navbar.Item theme="dark" href="#">
+                Dashboard
+              </Navbar.Item>
+              <Navbar.Menu label="Projects" active>
+                <Menu.Item href="#" aria-current="page">
+                  All projects
+                </Menu.Item>
+                <Menu.Item href="#">Archived</Menu.Item>
+                <Menu.Item href="#">Templates</Menu.Item>
+              </Navbar.Menu>
+              <Navbar.Menu label="Reports">
+                <Menu.Item href="#">Usage</Menu.Item>
+                <Menu.Item href="#">Billing</Menu.Item>
+              </Navbar.Menu>
+              <Navbar.Item theme="dark" href="#">
+                Team
+              </Navbar.Item>
+              <Navbar.Item theme="dark" href="#">
+                Calendar
+              </Navbar.Item>
+            </Navbar.Items>
+          </Navbar.Brand>
+          <Navbar.Actions>
+            <BellIcon />
+            <Avatar />
+          </Navbar.Actions>
+        </Navbar>
+      }
+    >
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">Projects</h1>
+        <div className="mt-4 h-96 rounded-lg border-2 border-dashed border-[var(--color-border)]" />
+      </div>
+    </Shell>
+  ),
+};
+
+// Below `lg` the items leave the bar: the menu button stays, and the bar never widens the page.
+export const WithMenusMobile: Story = {
+  ...WithMenus,
+  globals: mobileViewport,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('button', { name: 'Toggle menu' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Projects' })).toBeNull();
+  },
 };
 
 // Multi-column variant — Shell + sidebar + secondary panel (TUI "Multi-column").
