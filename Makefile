@@ -20,7 +20,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WOR
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci check-changed compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -100,7 +100,10 @@ compose-down: ## Stop and remove all compose services
 clean: ## Remove node_modules, dist, build artifacts, screenshots
 	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "rm -rf node_modules packages/*/node_modules apps/*/node_modules tests/*/node_modules packages/*/dist apps/*/storybook-static playwright-report test-results coverage screenshots/*/ screenshots/problems.txt"
 
-ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml (run BEFORE every push)
+check-changed: ## Before every push: make ci cut down to what the branch changed (the full make ci when it cannot be): [BASE=<ref>]
+	@tests/e2e/checks/check-changed.sh
+
+ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml
 	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "set -e; \
 	  echo '── 1. lint ──' && pnpm lint && \
 	  echo '── 2. format:check ──' && pnpm format:check && \
