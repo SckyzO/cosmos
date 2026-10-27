@@ -18,11 +18,18 @@ type Story = StoryObj<typeof meta>;
 
 type ToastId = string | number;
 
-// Toasts live in sonner's store, which outlives a story: one an earlier story left (a click test's
-// closes on its own after 4 s) would count among these. Dismiss them first; what a story opens, it
-// dismisses on unmount.
-const keepOpen = (show: () => ToastId[]) => {
+// Toasts live in sonner's store, which outlives a story: a click test's toast stays active there
+// once its Toaster unmounts, before its 4 s are up, and the next Toaster to subscribe gets it
+// replayed. A story that counts its toasts dismisses them before it renders (`beforeEach`): a
+// dismissal sent once its Toaster has subscribed can reach it before the replay does, and the old
+// toasts then stay for their 4 s. Not in the meta: on the docs page it would close the toasts of
+// `Open` when a later story renders.
+const dismissLeftovers = () => {
   toast.dismiss();
+};
+
+// What a story opens, it dismisses on unmount.
+const keepOpen = (show: () => ToastId[]) => {
   const ids = show();
   return () => {
     for (const id of ids) toast.dismiss(id);
@@ -222,6 +229,7 @@ export const ProgrammaticDismiss: Story = {
  * (success, info, warning, error), which take the `AlertBanner` palette on an opaque surface.
  */
 export const Open: Story = {
+  beforeEach: dismissLeftovers,
   parameters: portalDocsParams.lg(),
   render: function Render() {
     useEffect(
@@ -432,6 +440,7 @@ const waitForToasts = (count: number) =>
   waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(count));
 
 export const StatusToastsAreOpaque: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(() => keepOpen(showStatusToasts), []);
@@ -461,6 +470,7 @@ export const StatusToastsAreOpaque: Story = {
 };
 
 export const StatusToastsMatchAlertBanner: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(() => keepOpen(showStatusToasts), []);
@@ -505,6 +515,7 @@ export const StatusToastsMatchAlertBanner: Story = {
 };
 
 export const StatusToastsAreReadable: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(() => keepOpen(showStatusToasts), []);
@@ -525,6 +536,7 @@ export const StatusToastsAreReadable: Story = {
 };
 
 export const NeutralToastsShareTheCard: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(
@@ -564,6 +576,7 @@ export const NeutralToastsShareTheCard: Story = {
 // Sonner hides the content of the toasts behind the front one in its own styled mode: unstyled,
 // the card does it.
 export const StackedToastsHideBehindContent: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(
@@ -597,6 +610,7 @@ export const StackedToastsHideBehindContent: Story = {
 // Sonner's dark theme sets the description and the close button to its own grays, with rules that
 // are not scoped to its styled mode: the toast takes the Cosmos neutrals in spite of them.
 export const DarkThemeKeepsCosmosNeutrals: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(
@@ -635,6 +649,7 @@ export const DarkThemeKeepsCosmosNeutrals: Story = {
 };
 
 export const ButtonsShowFocusRing: Story = {
+  beforeEach: dismissLeftovers,
   tags: ['!dev', '!autodocs'],
   render: function Render() {
     useEffect(
