@@ -784,6 +784,40 @@ place.
 </SplitView>
 ```
 
+## Code
+
+`CodeBlock` shows a snippet with a copy button. It needs no highlighter, and takes a few variants:
+`lineNumbers`, `highlightLines={[3, '5-7']}`, `filename` (a header with the name, the language and
+the copy button), `wrap`, `maxHeight` (the block scrolls inside, takes a Tab stop and scrolls with the
+arrow keys), `diff` (the first column of each line is its sign, `+`, `-` or a space; changes are
+tinted and marked, the sign column is not copied) and `variant="terminal"` (a line starting with
+`$ ` is a command, the others are its output; only the commands are copied). A block that a long line
+makes scroll sideways is a Tab stop too. The copy button copies the code, never the line numbers, the
+signs or the prompts.
+
+To colour it, use the `/code` entry. It needs [Shiki](https://shiki.style), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add shiki
+```
+
+```tsx
+import { CodeBlock } from '@sckyzo/cosmos-react/code';
+
+<CodeBlock language="yaml" filename="deployment.yaml" code={manifest} lineNumbers />;
+```
+
+The colours are the `--color-code-*` tokens of the theme, so they follow the theme, accent and text
+size. The JavaScript regex engine is used (no WebAssembly), and each language is its own chunk,
+loaded when a block shows it: until then, and for a language Cosmos has no grammar for, the block
+shows plain text. The languages are shell (`bash`, `sh`, `zsh`), `shellsession`, `yaml`, `json`,
+`toml`, `ini`, `dockerfile`, `sql`, `typescript`, `javascript`, `tsx`, `jsx`, `python`, `go`, `html`,
+`xml`, `css`, `diff`, `nginx`, `hcl`, `terraform`, `rust`, `java`, `php`, `markdown` and `promql`.
+A `highlight` prop still replaces the built-in highlighter. The main entry never imports Shiki:
+an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
+throws an error that names the package.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font and the text size are
