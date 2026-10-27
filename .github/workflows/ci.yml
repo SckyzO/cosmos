@@ -17,6 +17,13 @@ concurrency:
 # all passed. `make ci` runs the same commands one after the other in the dev
 # container. Each job builds what it tests: no artifact passes between jobs, so
 # none can be swapped.
+#
+# The jobs that open a browser run in Playwright's image, pinned by digest like
+# the actions. It holds Chromium's system libraries, the ones the dev image gets
+# from `playwright install-deps` at the same version, so no job runs apt:
+# `install --with-deps` did, and a slow Ubuntu mirror made it take 10 to 13
+# minutes on some runs, past the 15-minute timeout. `--user 1001` is the
+# runner's user, who owns the workspace and the caches.
 jobs:
   static:
     name: Lint + format + typecheck
@@ -58,6 +65,9 @@ jobs:
     name: Build + e2e
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --user 1001
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -82,9 +92,10 @@ jobs:
         run: pnpm storybook:build
 
       # Chromium only: the sole Playwright project. tests/e2e installs the
-      # revision its own `@playwright/test` pins.
+      # revision its own `@playwright/test` pins; nothing to download while it
+      # is the image's.
       - name: Install Playwright browsers
-        run: pnpm --filter @cosmos/e2e exec playwright install --with-deps chromium
+        run: pnpm --filter @cosmos/e2e exec playwright install chromium
 
       # With CI set, Playwright serves storybook-static: the dev server compiles
       # pages on first visit and its dep optimizer reloads mid-test. The dist
@@ -104,6 +115,9 @@ jobs:
     name: Unit + story tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --user 1001
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,7 +138,7 @@ jobs:
       # Vitest's browser provider is apps/storybook's `playwright`, which pins
       # its own revision (a patch bump of one package can change it).
       - name: Install Playwright browsers
-        run: pnpm --filter @cosmos/storybook exec playwright install --with-deps chromium
+        run: pnpm --filter @cosmos/storybook exec playwright install chromium
 
       # Both Vitest projects: the `node` unit tests and the stories in Chromium,
       # axe included. They compile the packages from source: no build needed.
@@ -138,6 +152,9 @@ jobs:
     name: Story contrast (${{ matrix.theme }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --user 1001
     strategy:
       # Report every theme, not only the first one that fails.
       fail-fast: false
@@ -161,7 +178,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm --filter @cosmos/storybook exec playwright install --with-deps chromium
+        run: pnpm --filter @cosmos/storybook exec playwright install chromium
 
       - name: Story contrast pass
         env:

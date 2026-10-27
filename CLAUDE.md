@@ -34,7 +34,9 @@ make lint / lint-fix / format / format-check / typecheck
 `make test-contrast`, one theme with `A11Y_THEME=sand`). This mirrors `.github/workflows/ci.yml`,
 which runs the same steps as parallel jobs (`static`, `build-e2e`, `stories`, `contrast` once per
 theme) plus an aggregator job, `ci`, named "Lint + typecheck + test + build": that name is the
-required check, so keep it when touching the workflow.
+required check, so keep it when touching the workflow. The jobs that open a browser run in
+Playwright's image, pinned by digest, at the version the dev image's `install-deps` uses: CI runs
+no apt. A Playwright bump moves the Dockerfile and the image together (`repo-policy.spec.ts`).
 
 Visual review is local and per component, validated by eye; nothing visual runs in CI.
 `make visual-diff STORIES=<id substrings> [THEMES=…] [BASE=main]` captures those stories at BASE (a
