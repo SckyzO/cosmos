@@ -134,7 +134,7 @@ const NONE: readonly never[] = [];
 const OVERSCAN = 8;
 // What the first render assumes for a row, before the real one is measured, in px.
 const ESTIMATE: Record<LogDensity, number> = { compact: 20, comfortable: 52 };
-const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+export const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
   hour: '2-digit',
   minute: '2-digit',
   second: '2-digit',
@@ -142,7 +142,7 @@ const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
   hourCycle: 'h23',
 };
 
-const TONE = {
+export const TONE = {
   terminal: {
     root: 'bg-slate-950 text-slate-300',
     muted: 'text-slate-400',
@@ -176,7 +176,7 @@ const hasDetails = (line: LogLine) =>
   (line.fields !== undefined && Object.keys(line.fields).length > 0) || !!line.stack;
 
 /** Text with the matches of the search drawn as `<mark>`s. Only ever text nodes: nothing is parsed as HTML. */
-const Highlighted = ({
+export const Highlighted = ({
   text,
   expression,
   active,
