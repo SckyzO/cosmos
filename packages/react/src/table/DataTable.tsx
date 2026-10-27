@@ -616,6 +616,19 @@ export const DataTable = <T,>({
   // takes what is left, so those two stay as wide as asked.
   const firstColumnTakesTheRest =
     (selectable || actionColumn) && columns.length > 0 && columns.every((c) => c.width);
+  // What is left is nothing once the stated widths add up to more than the box, as in a table that
+  // scrolls under pinned columns: the table is then at least as wide as all of them, so the first
+  // column keeps its own width.
+  const statedMinWidth = firstColumnTakesTheRest
+    ? `calc(${[
+        expandable && EXPAND_COLUMN_WIDTH,
+        selectable && SELECT_COLUMN_WIDTH,
+        ...columns.map((c) => c.width),
+        actionColumn && (rowEditing ? EDIT_ACTION_COLUMN_WIDTH : ACTION_COLUMN_WIDTH),
+      ]
+        .filter(Boolean)
+        .join(' + ')})`
+    : undefined;
 
   const mobileSortable = columns.some((c) => c.sortable);
 
@@ -1251,6 +1264,7 @@ export const DataTable = <T,>({
             aria-labelledby={ariaLabelledBy}
             aria-busy={loading || undefined}
             aria-rowcount={windowed ? pageRows.length + 1 : undefined}
+            style={statedMinWidth ? { minWidth: statedMinWidth } : undefined}
             className="w-full table-fixed"
           >
             <colgroup>
