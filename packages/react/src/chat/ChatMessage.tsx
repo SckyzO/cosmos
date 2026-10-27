@@ -53,6 +53,12 @@ type ChatMessageBaseProps = {
    * keeps its bubble either way.
    */
   bubble?: boolean;
+  /**
+   * Actions under the message, in a row after the time: a `ChatMessageActions`. With a pointer they
+   * stay out of sight (their space is kept) until the message is hovered or holds the focus; on
+   * touch they always show, and keyboard focus always reveals them.
+   */
+  actions?: ReactNode;
   className?: string;
 };
 
@@ -84,6 +90,7 @@ export const ChatMessage = ({
   firstInGroup = true,
   streaming = false,
   bubble = true,
+  actions,
   className,
 }: ChatMessageProps) => {
   const outgoing = direction === 'outgoing';
@@ -100,6 +107,31 @@ export const ChatMessage = ({
         />
       )}
     </>
+  );
+  const meta = (time || state) && (
+    <span
+      aria-hidden={!state || undefined}
+      className={clsx(
+        'text-3xs flex items-center gap-1 px-1',
+        !actions && 'mt-0.5',
+        status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-[var(--color-text-muted)]'
+      )}
+    >
+      {time && (
+        <time aria-hidden dateTime={dateTime}>
+          {time}
+        </time>
+      )}
+      {state && (
+        <>
+          <state.icon
+            aria-hidden
+            className={clsx('h-3 w-3', status === 'read' && 'text-brand-600 dark:text-brand-400')}
+          />
+          <span className="sr-only">{state.label}</span>
+        </>
+      )}
+    </span>
   );
   // Text keeps its `<p>`; rich content may hold blocks, which a `<p>` cannot.
   const Content = text === undefined ? 'div' : 'p';
@@ -124,7 +156,8 @@ export const ChatMessage = ({
           'flex flex-col',
           flat ? 'min-w-0 flex-1' : 'max-w-[80%]',
           !flat && text === undefined && 'min-w-0',
-          outgoing ? 'items-end' : 'items-start'
+          outgoing ? 'items-end' : 'items-start',
+          actions && 'group/reply'
         )}
       >
         {firstInGroup && !outgoing && (
@@ -151,34 +184,19 @@ export const ChatMessage = ({
         >
           {body}
         </Content>
-        {(time || state) && (
-          <span
-            aria-hidden={!state || undefined}
-            className={clsx(
-              'text-3xs mt-0.5 flex items-center gap-1 px-1',
-              status === 'failed'
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-[var(--color-text-muted)]'
-            )}
-          >
-            {time && (
-              <time aria-hidden dateTime={dateTime}>
-                {time}
-              </time>
-            )}
-            {state && (
-              <>
-                <state.icon
-                  aria-hidden
-                  className={clsx(
-                    'h-3 w-3',
-                    status === 'read' && 'text-brand-600 dark:text-brand-400'
-                  )}
-                />
-                <span className="sr-only">{state.label}</span>
-              </>
-            )}
-          </span>
+        {actions ? (
+          <div className="mt-1 flex items-center gap-1">
+            {/* The time first: after the hidden actions it would float mid-row. */}
+            {meta}
+            {/* Hidden by opacity, not removed: the row keeps its height. One rule, not a hidden default
+                overridden by hover and focus, so no two opacities compete. Only where the device
+                can hover; touch always shows it. Focus anywhere in the message shows it too. */}
+            <div className="transition-opacity [@media(hover:hover)]:group-[:not(:hover):not(:focus-within)]/reply:opacity-0">
+              {actions}
+            </div>
+          </div>
+        ) : (
+          meta
         )}
       </div>
     </div>
