@@ -111,17 +111,21 @@ export const SurfaceNewestFirst: Story = {
   ),
 };
 
+// Every fifth line is long enough to wrap.
+const longLines = () =>
+  fakeLines(40).map((line, i) =>
+    i % 5 === 0
+      ? {
+          ...line,
+          message: `${line.message}: ${'the collector could not reach the target. '.repeat(6)}`,
+        }
+      : line
+  );
+
 /** `wrap` keeps long lines in view instead of scrolling sideways. */
 export const Wrapped: Story = {
   render: () => {
-    const lines = fakeLines(40).map((line, i) =>
-      i % 5 === 0
-        ? {
-            ...line,
-            message: `${line.message}: ${'the collector could not reach the target. '.repeat(6)}`,
-          }
-        : line
-    );
+    const lines = longLines();
     return (
       <Card padding="none" className="overflow-hidden">
         <LogViewer lines={lines} aria-label="Backend logs" wrap height={360} />
@@ -226,6 +230,32 @@ export const HostileLine: Story = {
 /** 50,000 lines: only the rows in view are drawn, so scrolling stays smooth. */
 export const LargeBuffer: Story = {
   render: () => <LogConsole count={50000} height={420} />,
+};
+
+/**
+ * A viewer 375px wide, in a card or a split view, whatever the screen: the row adapts to the width
+ * of the viewer itself. The source column goes, and the row stays on one line; the viewer scrolls
+ * sideways inside itself.
+ */
+export const NarrowViewer: Story = {
+  render: () => (
+    <div style={{ width: 375 }}>
+      <Card padding="none" className="overflow-hidden">
+        <LogViewer lines={fakeLines(60)} aria-label="Backend logs" height={300} />
+      </Card>
+    </div>
+  ),
+};
+
+/** The same narrow viewer with `wrap`: the message goes on its own line, under the time and the level. */
+export const NarrowWrapped: Story = {
+  render: () => (
+    <div style={{ width: 375 }}>
+      <Card padding="none" className="overflow-hidden">
+        <LogViewer lines={longLines()} aria-label="Backend logs" wrap height={360} />
+      </Card>
+    </div>
+  ),
 };
 
 /** At 375px the toolbar keeps Live and the search in the bar, and the rest goes into Filters. */
@@ -463,5 +493,72 @@ export const ScrollingBackToTheEndResumes: Story = {
       expect(canvas.queryByRole('button', { name: /Jump to latest/ })).toBeNull()
     );
     await waitFor(() => expect(atEnd(log)).toBe(true));
+  },
+};
+
+// The first row that is drawn, not the hidden one that measures the others.
+const firstRow = (log: HTMLElement) =>
+  [...log.querySelectorAll<HTMLElement>('[data-level]')].find(
+    (row) => !row.closest('[aria-hidden="true"]')
+  )!;
+const isDrawn = (el: Element) => el.getClientRects().length > 0;
+
+/** The test of `NarrowViewer`, hidden: no source, one line per row, and the page does not scroll. */
+export const NarrowViewerScrollsInsideItself: Story = {
+  ...NarrowViewer,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await waitFor(() => expect(log.clientWidth).toBeLessThanOrEqual(375));
+    expectNoHorizontalOverflow();
+    expect(log.querySelectorAll('[title]')).not.toHaveLength(0);
+    for (const source of log.querySelectorAll('[title]')) expect(isDrawn(source)).toBe(false);
+    // One line a row (the probe row measures the same), and the viewer scrolls, not the page.
+    for (const row of log.querySelectorAll<HTMLElement>('[data-level]'))
+      expect(row.offsetHeight).toBeLessThanOrEqual(24);
+    expect(log.scrollWidth).toBeGreaterThan(log.clientWidth);
+    // The hidden row that measures the others is narrow too: the window counts rows of its height.
+    const probe = log.querySelector<HTMLElement>('[aria-hidden="true"]')!;
+    expect(probe.offsetHeight).toBe(firstRow(log).offsetHeight);
+  },
+};
+
+/** The test of `NarrowWrapped`, hidden: the message has the full width, on a line of its own. */
+export const NarrowWrappedMessageHasTheFullWidth: Story = {
+  ...NarrowWrapped,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await waitFor(() => expect(log.clientWidth).toBeLessThanOrEqual(375));
+    expectNoHorizontalOverflow();
+    for (const source of log.querySelectorAll('[title]')) expect(isDrawn(source)).toBe(false);
+    expect(log.scrollWidth).toBeLessThanOrEqual(log.clientWidth);
+    const row = firstRow(log);
+    const message = row.querySelector<HTMLElement>('.whitespace-pre-wrap')!;
+    const time = row.querySelector<HTMLElement>('time')!;
+    // The message is as wide as the viewer less its padding, not a column of one word.
+    expect(message.getBoundingClientRect().width).toBeGreaterThan(log.clientWidth * 0.8);
+    // And it sits under the time and the level.
+    expect(message.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      time.getBoundingClientRect().bottom
+    );
+  },
+};
+
+/** The test of the wide viewer, hidden: from `md` up the source column is back. */
+export const WideViewerKeepsTheSource: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 720 }}>
+      <LogViewer lines={fakeLines(20)} aria-label="Backend logs" height={200} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    const sources = [...log.querySelectorAll('[title]')].filter(
+      (el) => !el.closest('[aria-hidden="true"]')
+    );
+    expect(sources.length).toBeGreaterThan(5);
+    for (const source of sources) expect(isDrawn(source)).toBe(true);
   },
 };
