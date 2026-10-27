@@ -643,3 +643,82 @@ export const CheckboxItemControlled: Story = {
     await expect(item).toHaveAttribute('aria-checked', 'true');
   },
 };
+
+// ── Radio items ──────────────────────────────────────────────────────────────
+
+const RadioMenu = ({ defaultOpen }: { defaultOpen?: boolean }) => {
+  const [density, setDensity] = useState('Default');
+  return (
+    <Spot>
+      <Menu defaultOpen={defaultOpen}>
+        <Menu.Trigger className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+          Density
+        </Menu.Trigger>
+        <Menu.Content aria-label="Density options">
+          <Menu.Group label="Row height">
+            {['Compact', 'Default', 'Comfortable'].map((name) => (
+              <Menu.RadioItem
+                key={name}
+                checked={density === name}
+                disabled={name === 'Compact' && density !== name}
+                onSelect={() => setDensity(name)}
+              >
+                {name}
+              </Menu.RadioItem>
+            ))}
+          </Menu.Group>
+        </Menu.Content>
+      </Menu>
+    </Spot>
+  );
+};
+
+/** Radio items pick one option of a set: the checked one shows an accent dot. The host owns `checked`. */
+export const RadioItems: Story = {
+  render: () => <RadioMenu defaultOpen />,
+};
+
+/** The role and the state are exposed; a pick moves the check, closes the menu and takes the focus back. */
+export const RadioItemPicksOneAndCloses: Story = {
+  tags: ['!autodocs'],
+  render: () => <RadioMenu />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Density' });
+    await userEvent.click(trigger);
+    const inside = within(await waitFor(() => menu()!));
+    const items = inside.getAllByRole('menuitemradio');
+    await expect(items.map((i) => i.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'true',
+      'false',
+    ]);
+    await expect(inside.getByRole('menuitemradio', { name: 'Compact' })).toBeDisabled();
+    await userEvent.click(inside.getByRole('menuitemradio', { name: 'Comfortable' }));
+    await waitFor(() => expect(menu()).toBeNull());
+    await expect(trigger).toHaveFocus();
+    await userEvent.click(trigger);
+    const again = within(await waitFor(() => menu()!));
+    await expect(again.getByRole('menuitemradio', { name: 'Comfortable' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+  },
+};
+
+/** The arrows reach the radio items and skip the disabled one. */
+export const RadioItemsTakeTheArrowKeys: Story = {
+  tags: ['!autodocs'],
+  render: () => <RadioMenu />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Density' }));
+    const inside = within(await waitFor(() => menu()!));
+    // Compact is disabled: the first item is Default.
+    await waitFor(() =>
+      expect(inside.getByRole('menuitemradio', { name: 'Default' })).toHaveFocus()
+    );
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(inside.getByRole('menuitemradio', { name: 'Comfortable' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(inside.getByRole('menuitemradio', { name: 'Default' })).toHaveFocus();
+  },
+};
