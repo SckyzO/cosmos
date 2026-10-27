@@ -1,11 +1,14 @@
 import { clsx } from 'clsx';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
+import { Button } from '../ui/Button';
 import { Select } from '../forms/Select';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
+import { detailRowId } from './expandedRows';
 import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
@@ -37,6 +40,12 @@ type DataTableMobileCardsProps<T> = {
   isSelected: (key: string | number) => boolean;
   onToggleRow: (key: string | number) => void;
   renderRowAction?: (row: T) => ReactNode;
+  /** The detail content of an expandable row; with it a card gets a chevron on its title line. */
+  renderExpandedRow?: (row: T) => ReactNode;
+  isExpanded: (key: string | number) => boolean;
+  onToggleExpanded: (key: string | number) => void;
+  /** The table's id, which the detail ids are built from. */
+  idBase: string;
   onRowClick?: (row: T) => void;
   rowHref?: (row: T) => string | undefined;
   /** Placeholder cards in place of the rows (nothing to show yet). */
@@ -62,6 +71,10 @@ export const DataTableMobileCards = <T,>({
   isSelected,
   onToggleRow,
   renderRowAction,
+  renderExpandedRow,
+  isExpanded,
+  onToggleExpanded,
+  idBase,
   onRowClick,
   rowHref,
   loading,
@@ -120,6 +133,8 @@ export const DataTableMobileCards = <T,>({
         const key = rowKey(row);
         const selected = isSelected(key);
         const href = rowHref?.(row);
+        const open = Boolean(renderExpandedRow) && isExpanded(key);
+        const detailId = detailRowId(idBase, key);
         // A link is the focusable thing of its card; without one, the card itself is.
         const focusableRow = onRowClick && !href;
         return (
@@ -145,7 +160,9 @@ export const DataTableMobileCards = <T,>({
             }
             className={clsx(
               'px-4 py-3',
-              selected && 'bg-brand-50/40 dark:bg-brand-500/5',
+              selected
+                ? 'bg-brand-50/40 dark:bg-brand-500/5'
+                : open && 'bg-gray-50 dark:bg-white/[0.03]',
               (onRowClick || href) && 'cursor-pointer',
               focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
               href &&
@@ -153,6 +170,20 @@ export const DataTableMobileCards = <T,>({
             )}
           >
             <div className="flex items-center gap-3 text-sm">
+              {renderExpandedRow && (
+                // A 44px target, pulled out to the card's edge so the chevron lines up with the text.
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  shape="square"
+                  icon={open ? ChevronDown : ChevronRight}
+                  aria-expanded={open}
+                  aria-controls={open ? detailId : undefined}
+                  aria-label={`${open ? 'Hide' : 'Show'} details for ${key}`}
+                  onClick={() => onToggleExpanded(key)}
+                  className={clsx('-my-2.5 -mr-2 -ml-3 shrink-0', href && 'relative z-[1]')}
+                />
+              )}
               {selectable && (
                 <div className={clsx('flex shrink-0 items-center', href && 'relative z-[1]')}>
                   <Checkbox
@@ -196,6 +227,14 @@ export const DataTableMobileCards = <T,>({
                   </div>
                 ))}
               </dl>
+            )}
+            {open && renderExpandedRow && (
+              <div
+                id={detailId}
+                className="mt-3 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700"
+              >
+                {renderExpandedRow(row)}
+              </div>
             )}
           </li>
         );

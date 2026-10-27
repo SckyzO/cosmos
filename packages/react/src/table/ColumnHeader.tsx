@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Filter } from 'lucide-react';
 import { useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { HEADER_CELL, HEADER_CELL_PADDING } from './density';
@@ -23,6 +23,8 @@ export type ColumnHeaderProps = {
   /** Cell padding, matching the `density` of the table it heads. Default `default`. */
   density?: DataTableDensity;
   className?: string;
+  /** Inline style of the header cell (a pinned column's offset). */
+  style?: CSSProperties;
 };
 
 const ALIGN_CLASS = {
@@ -49,6 +51,7 @@ export const ColumnHeader = ({
   onFilterClear,
   density = 'default',
   className,
+  style,
 }: ColumnHeaderProps) => {
   const [open, setOpen] = useState(false);
   const filterCount = filterSelected.size;
@@ -61,6 +64,7 @@ export const ColumnHeader = ({
 
   return (
     <th
+      style={style}
       aria-sort={sortable ? ARIA_SORT[sortDir ?? 'none'] : undefined}
       className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], ALIGN_CLASS[align], className)}
     >

@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
-import { Download, Search, X } from 'lucide-react';
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight, Download, Search, X } from 'lucide-react';
+import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -10,6 +10,7 @@ import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './Data
 import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
+import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
 import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { AppLink } from '../ui/AppLink';
@@ -34,10 +35,17 @@ import { TOOLBAR_BUTTON } from './toolbarButton';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
+import { detailRowId, toggleKey } from './expandedRows';
+import { CellEditorBox, CellTrigger, RowEditActions, RowEditError } from './InlineEdit';
+import { useInlineEdit } from './useInlineEdit';
+import { rowInitials, triggerId } from './editing';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
-import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
+import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
+import { usePinnedWidths } from './usePinnedWidths';
+import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
   ColumnDef,
+  ColumnPin,
   DataTableDensity,
   DataTableExportQuery,
   DataTableSort,
@@ -94,13 +102,60 @@ export type DataTableProps<T> = {
   defaultDensity?: DataTableDensity;
   /** Called with the density to move to, in both modes (a saved view sets it). */
   onDensityChange?: (density: DataTableDensity) => void;
+
+  // ── Expandable rows ────────────────────────────────────────────────────────
   /**
-   * Pins the first data column (and the selection column before it) to the start while the table
-   * scrolls sideways, so the row stays identified on a narrow screen. With `rowHref`, the link
-   * of the row then covers its own column, and a click on the rest of the row follows it from a
-   * handler: middle click and the context menu work on the first column only.
+   * Makes the rows expandable: a first column holds a chevron button per row (`aria-expanded`,
+   * `aria-controls` the detail row while it is open, named "Show details for <row key>"), and the
+   * content this returns is drawn in a row below it that spans every column. Opening a row never
+   * selects it nor counts as a click on it. Not combined with `virtualize`: the rows of a
+   * virtualized table have one fixed height, so nothing expands there (the prop is ignored).
+   * With `mobileLayout="cards"` below `sm` the chevron sits on the card's title line and the
+   * content opens inside the card, under its fields.
    */
-  stickyFirstColumn?: boolean;
+  renderExpandedRow?: (row: T) => ReactNode;
+  /**
+   * The keys (`rowKey`) of the open rows, when controlled. A controlled table shows a toggle once
+   * the host passes the new set back through `onExpandedRowsChange`.
+   */
+  expandedRows?: Set<string | number>;
+  defaultExpandedRows?: Set<string | number>;
+  /** Called with the set of open row keys after a row is toggled, in both modes. */
+  onExpandedRowsChange?: (expanded: Set<string | number>) => void;
+
+  // ── Inline editing ─────────────────────────────────────────────────────────
+  /**
+   * How an editable cell (a column with `edit`) opens its editor. Only one cell, or one row, edits
+   * at a time. Not combined with `virtualize` (its fixed-height cells would clip an editor and its
+   * error) nor with the cards of `mobileLayout="cards"`: the prop is ignored there.
+   * - `'cell'` (default): the cell's content is a button that fills it; a click, Enter or F2 on it
+   *   opens the editor in place, focused. Enter or blur saves, Escape cancels and puts the focus
+   *   back on the cell's button.
+   * - `'button'`: a pencil button in each editable cell, shown on the hovered or focused row and
+   *   always on a screen with no hover, opens the editor, which has Save and Cancel buttons too.
+   *   Keys and blur as in `'cell'`.
+   * - `'row'`: an Edit button in the row's action column turns every editable cell of the row into
+   *   its field, with Cancel and Save in their place. Save (or Enter in a field) calls
+   *   `onRowEdit` once with the cells that changed; Escape or Cancel drops the changes.
+   */
+  editTrigger?: 'cell' | 'button' | 'row';
+  /**
+   * Saves one cell, with `editTrigger` `'cell'` or `'button'`: the row, the column `key` and the
+   * draft string (parse it yourself). Not called when the draft did not change. Without it those
+   * cells are not editable. Return a promise to show the save: the cell is `aria-busy` with a
+   * spinner until it settles, then the editor closes. If it rejects (or throws), the editor opens
+   * again with the value the user typed, and the error's message shows under the cell, tied to the
+   * field by `aria-describedby`. The table never changes `rows`: update them from here.
+   */
+  onCellEdit?: (row: T, columnKey: string, value: string) => void | PromiseLike<unknown>;
+  /**
+   * Saves a row, with `editTrigger="row"`: the row and its changes, column `key` → draft string,
+   * for the cells that changed only (not called when none did). Without it the Edit button is not
+   * shown. Return a promise to show the save: the row's Save button spins and the fields are
+   * disabled until it settles. If it rejects (or throws) the fields stay open with what was typed,
+   * and the error's message shows in a row under the row.
+   */
+  onRowEdit?: (row: T, changes: Record<string, string>) => void | PromiseLike<unknown>;
 
   // ── Selection ──────────────────────────────────────────────────────────────
   /** Show a checkbox column and enable row selection. */
@@ -177,8 +232,8 @@ export type DataTableProps<T> = {
    * clipped, so keep each cell to the one line of text (or a control) it has in a standard row.
    * The rows scroll in the table's own area:
    * give it a height (`className="max-h-96"`), or the window has no end. Table layout only: with
-   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows. On
-   * paper only the drawn rows print. Default `false`.
+   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows nor
+   * inline editing: both are off with it. On paper only the drawn rows print. Default `false`.
    */
   virtualize?: boolean;
 
@@ -286,7 +341,10 @@ export type DataTableProps<T> = {
 
 // The selection and action columns keep these widths whatever the data columns add up to.
 const SELECT_COLUMN_WIDTH = '44px';
+const EXPAND_COLUMN_WIDTH = '44px';
 const ACTION_COLUMN_WIDTH = '96px';
+// Room for Cancel and Save, in a row being edited.
+const EDIT_ACTION_COLUMN_WIDTH = '176px';
 
 const ALIGN_CELL = {
   left: 'text-left',
@@ -323,7 +381,13 @@ export const DataTable = <T,>({
   density: densityProp,
   defaultDensity = 'default',
   onDensityChange,
-  stickyFirstColumn = false,
+  editTrigger = 'cell',
+  onCellEdit,
+  onRowEdit,
+  renderExpandedRow,
+  expandedRows: expandedRowsProp,
+  defaultExpandedRows,
+  onExpandedRowsChange,
   selectable = false,
   selection: selectionProp,
   defaultSelection,
@@ -395,7 +459,16 @@ export const DataTable = <T,>({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
   // An edge fades where the table goes on, as the Tabs' do; not the start one under a pinned column.
-  const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
+  const scrollEdges = useScrollEdges(scrollerRef);
+  // Pinned columns. A cell's index counts the toggle and selection columns before the data
+  // columns and the action column after them; those follow the data columns' pins.
+  const dataPins = columns.map((col) => col.pin);
+  const hasStartPin = dataPins.includes('start');
+  const hasEndPin = dataPins.includes('end');
+  // The link of a row covers its own column, which is a box of its own once that is pinned.
+  const linkColumnPinned = dataPins[0] !== undefined;
+  // An edge fades where the table goes on, as the Tabs' do; not under a pinned column.
+  const fade = useScrollFade(scrollerRef, { start: !hasStartPin, end: !hasEndPin });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sort, setSortState] = useControllableState<DataTableSort>({
@@ -425,6 +498,21 @@ export const DataTable = <T,>({
     if (page !== 1) setPage(1);
   };
   const [showAll, setShowAll] = useState(false);
+
+  const expandable = Boolean(renderExpandedRow) && !virtualize;
+  const [expanded, updateExpanded] = useControllableState<Set<string | number>>({
+    value: expandedRowsProp,
+    defaultValue: () => defaultExpandedRows ?? new Set(),
+    onChange: onExpandedRowsChange,
+    name: 'DataTable.expandedRows',
+  });
+  const tableId = useId();
+  // Editing is off where an editor would not fit: windowed cells and cards.
+  const anyEditable = !virtualize && columns.some((c) => c.edit);
+  const rowEditing = anyEditable && editTrigger === 'row' && Boolean(onRowEdit);
+  const cellEditing = anyEditable && editTrigger !== 'row' && Boolean(onCellEdit);
+  const edit = useInlineEdit<T>({ onCellEdit, onRowEdit });
+  const actionColumn = Boolean(renderRowAction) || rowEditing;
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
     value: selectionProp,
@@ -527,7 +615,20 @@ export const DataTable = <T,>({
   // and action columns too. When every data column states a width, the first one gives it up and
   // takes what is left, so those two stay as wide as asked.
   const firstColumnTakesTheRest =
-    (selectable || Boolean(renderRowAction)) && columns.length > 0 && columns.every((c) => c.width);
+    (selectable || actionColumn) && columns.length > 0 && columns.every((c) => c.width);
+  // What is left is nothing once the stated widths add up to more than the box, as in a table that
+  // scrolls under pinned columns: the table is then at least as wide as all of them, so the first
+  // column keeps its own width.
+  const statedMinWidth = firstColumnTakesTheRest
+    ? `calc(${[
+        expandable && EXPAND_COLUMN_WIDTH,
+        selectable && SELECT_COLUMN_WIDTH,
+        ...columns.map((c) => c.width),
+        actionColumn && (rowEditing ? EDIT_ACTION_COLUMN_WIDTH : ACTION_COLUMN_WIDTH),
+      ]
+        .filter(Boolean)
+        .join(' + ')})`
+    : undefined;
 
   const mobileSortable = columns.some((c) => c.sortable);
 
@@ -537,7 +638,34 @@ export const DataTable = <T,>({
   const showSkeleton = loading && !hasRows;
   const dimRows = loading && hasRows;
 
-  const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
+  const columnCount =
+    columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (actionColumn ? 1 : 0);
+
+  const leadCount = (expandable ? 1 : 0) + (selectable ? 1 : 0);
+  const cellPins: (ColumnPin | undefined)[] = [
+    ...Array.from({ length: leadCount }, () => (hasStartPin ? ('start' as const) : undefined)),
+    ...dataPins,
+    ...(actionColumn ? [hasEndPin ? ('end' as const) : undefined] : []),
+  ];
+  const headRowRef = useRef<HTMLTableRowElement>(null);
+  const cellWidths = usePinnedWidths(headRowRef, hasStartPin || hasEndPin, cellPins.length);
+  const offsets = pinOffsets(cellWidths, cellPins);
+  const edges = pinEdges(cellPins);
+  // The `sticky` classes and the offset of the cell at `index` (none for one that scrolls).
+  const pinOf = (index: number, state?: 'idle' | 'selected' | 'open') => {
+    const pinned = cellPins[index] !== undefined;
+    return {
+      style: pinStyle(offsets, index),
+      className: pinned
+        ? pinnedCell({
+            head: state === undefined,
+            state,
+            edgeSide: index === edges.start ? 'start' : index === edges.end ? 'end' : undefined,
+            scrolled: index === edges.start ? scrollEdges.start : scrollEdges.end,
+          })
+        : undefined,
+    };
+  };
 
   // The rows the pager counts: all of them in memory, the host's total in `manual`.
   const totalRows = manual ? (rowCount ?? rows.length) : sortedRows.length;
@@ -730,137 +858,250 @@ export const DataTable = <T,>({
     const href = rowHref?.(row);
     // A link is the focusable thing of its row; without one, the row itself is.
     const focusableRow = onRowClick && !href;
+    const isOpen = expandable && expanded.has(key);
+    const detailId = detailRowId(tableId, key);
+    const state = edit.state;
+    const editedHere = state?.key === key ? state : null;
+    const rowInEdit = rowEditing && editedHere?.kind === 'row' ? editedHere : null;
+    // The row an editor is open in, or a detail is open under, is lifted like a hovered one.
+    const cellState = isSelected ? 'selected' : isOpen || rowInEdit ? 'open' : 'idle';
+    const rowErrorId = detailId.replace('-detail-', '-edit-error-');
+    const firstEditable = rowInEdit ? columns.find((c) => c.edit)?.key : undefined;
     return (
-      <tr
-        key={key}
-        // The header is row 1; a windowed table says where each drawn row sits in the whole list.
-        aria-rowindex={windowed ? index + 2 : undefined}
-        onFocus={windowed ? () => setFocusedKey(key) : undefined}
-        onBlur={
-          windowed
-            ? (e) => {
-                // Focus that moved inside the row (or into a menu portaled out of it) stays.
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                  setFocusedKey((prev) => (prev === key ? null : prev));
+      <Fragment key={key}>
+        <tr
+          // The header is row 1; a windowed table says where each drawn row sits in the whole list.
+          aria-rowindex={windowed ? index + 2 : undefined}
+          aria-busy={rowInEdit?.saving || undefined}
+          onFocus={windowed ? () => setFocusedKey(key) : undefined}
+          onBlur={
+            windowed
+              ? (e) => {
+                  // Focus that moved inside the row (or into a menu portaled out of it) stays.
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setFocusedKey((prev) => (prev === key ? null : prev));
+                  }
                 }
-              }
-            : undefined
-        }
-        tabIndex={focusableRow ? 0 : undefined}
-        onClick={
-          onRowClick || (href && stickyFirstColumn)
-            ? (e) => {
-                if (!isRowClick(e)) return;
-                // The link covers its own column only: follow it from the rest of
-                // the row. Its click comes back here, and calls onRowClick.
-                const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
-                if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
-                  link.click();
-                  return;
+              : undefined
+          }
+          tabIndex={focusableRow ? 0 : undefined}
+          onClick={
+            onRowClick || (href && linkColumnPinned)
+              ? (e) => {
+                  if (!isRowClick(e)) return;
+                  // The link covers its own column only: follow it from the rest of
+                  // the row. Its click comes back here, and calls onRowClick.
+                  const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
+                  if (link && linkColumnPinned && !link.contains(e.target as Node)) {
+                    link.click();
+                    return;
+                  }
+                  onRowClick?.(row);
                 }
-                onRowClick?.(row);
-              }
-            : undefined
-        }
-        onKeyDown={
-          focusableRow
-            ? (e) => {
-                if (e.target !== e.currentTarget) return;
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                e.preventDefault();
-                onRowClick(row);
-              }
-            : undefined
-        }
-        className={clsx(
-          'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
-          isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
-          (onRowClick || href) && 'cursor-pointer',
-          stickyFirstColumn && 'group',
-          focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
-          href &&
-            'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
-        )}
-      >
-        {selectable && (
-          <td
-            className={clsx(
-              'px-4 print:hidden',
-              bodyPadding,
-              // The cell box is in em of this size, as in the data cells.
-              windowed && 'text-sm',
-              href && 'relative z-[1]',
-              stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
-            )}
-          >
-            {/* A flex box centres the checkbox; inline, it sat on the
-              text baseline and moved with the font metrics. */}
-            <div className="flex items-center" style={cellBox}>
-              <Checkbox
-                aria-label={`Select row ${key}`}
-                checked={isSelected}
-                onChange={() => toggleRow(key)}
-              />
-            </div>
-          </td>
-        )}
-        {columns.map((col, i) => {
-          const cell =
-            href && i === 0 ? (
-              <AppLink href={href} data-row-link className={ROW_LINK}>
-                {col.render(row)}
-              </AppLink>
-            ) : (
-              col.render(row)
-            );
-          return (
+              : undefined
+          }
+          onKeyDown={
+            focusableRow
+              ? (e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  onRowClick(row);
+                }
+              : undefined
+          }
+          className={clsx(
+            'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
+            isSelected
+              ? 'bg-brand-50/40 dark:bg-brand-500/5'
+              : (isOpen || rowInEdit) && 'bg-gray-50 dark:bg-white/[0.03]',
+            // The detail or error row below is part of it: no divider between the two.
+            (isOpen || rowInEdit?.error) && 'border-b-0',
+            (onRowClick || href) && 'cursor-pointer',
+            'group/row',
+            focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+            href &&
+              'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
+          )}
+        >
+          {expandable && (
             <td
-              key={col.key}
+              style={pinOf(0, cellState).style}
               className={clsx(
-                'px-4',
+                'px-2 print:hidden',
                 bodyPadding,
-                'text-sm',
-                ALIGN_CELL[col.align ?? 'left'],
-                href && i > 0 && RAISE_CONTROLS,
-                stickyFirstColumn &&
-                  i === 0 && [
-                    stickyBodyCell(isSelected, true),
-                    selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                  ]
+                href && 'relative z-[1]',
+                pinOf(0, cellState).className
               )}
             >
-              {windowed ? (
-                <div
-                  className={clsx(
-                    'flex items-center overflow-hidden',
-                    col.align === 'right' && 'justify-end',
-                    col.align === 'center' && 'justify-center'
-                  )}
-                  style={cellBox}
-                >
-                  {cell}
-                </div>
-              ) : (
-                cell
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                shape="square"
+                icon={isOpen ? ChevronDown : ChevronRight}
+                aria-expanded={isOpen}
+                // Only while the detail row exists: an id that is not there names nothing.
+                aria-controls={isOpen ? detailId : undefined}
+                aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${key}`}
+                onClick={() => updateExpanded(toggleKey(expanded, key))}
+                className="-my-1.5"
+              />
             </td>
-          );
-        })}
-        {renderRowAction && (
-          <td
-            className={clsx(
-              'px-4 print:hidden',
-              bodyPadding,
-              windowed && 'text-sm',
-              href && 'relative z-[1]'
-            )}
-          >
-            <div className="flex items-center justify-end" style={cellBox}>
-              {renderRowAction(row)}
-            </div>
-          </td>
+          )}
+          {selectable && (
+            <td
+              style={pinOf(expandable ? 1 : 0, cellState).style}
+              className={clsx(
+                'px-4 print:hidden',
+                bodyPadding,
+                // The cell box is in em of this size, as in the data cells.
+                windowed && 'text-sm',
+                href && 'relative z-[1]',
+                pinOf(expandable ? 1 : 0, cellState).className
+              )}
+            >
+              {/* A flex box centres the checkbox; inline, it sat on the
+              text baseline and moved with the font metrics. */}
+              <div className="flex items-center" style={cellBox}>
+                <Checkbox
+                  aria-label={`Select row ${key}`}
+                  checked={isSelected}
+                  onChange={() => toggleRow(key)}
+                />
+              </div>
+            </td>
+          )}
+          {columns.map((col, i) => {
+            const editable = Boolean(col.edit) && (rowEditing || cellEditing);
+            const cellInEdit =
+              cellEditing && editedHere?.kind === 'cell' && editedHere.column === col.key
+                ? editedHere
+                : null;
+            const savingHere = Boolean(cellInEdit?.saving);
+            const content = col.render(row);
+            const cell =
+              rowInEdit && editable ? (
+                <CellEditorBox
+                  col={col}
+                  row={row}
+                  rowKey={key}
+                  mode="row"
+                  draft={rowInEdit.drafts[col.key] ?? ''}
+                  setDraft={(v) => edit.setDraft(col.key, v)}
+                  commit={() => edit.saveRow(row)}
+                  cancel={edit.cancel}
+                  saving={rowInEdit.saving}
+                  error={rowInEdit.error}
+                  errorId={rowInEdit.error ? rowErrorId : undefined}
+                  focusField={col.key === firstEditable}
+                />
+              ) : cellInEdit && !savingHere && editable ? (
+                <CellEditorBox
+                  col={col}
+                  row={row}
+                  rowKey={key}
+                  mode={editTrigger === 'button' ? 'button' : 'cell'}
+                  draft={cellInEdit.draft}
+                  setDraft={(v) => edit.setDraft(col.key, v)}
+                  commit={(refocus) => edit.commitCell(row, refocus)}
+                  cancel={edit.cancel}
+                  saving={false}
+                  error={cellInEdit.error}
+                  focusField={cellInEdit.focusField}
+                />
+              ) : cellEditing && editable ? (
+                <CellTrigger
+                  col={col}
+                  row={row}
+                  rowKey={key}
+                  mode={editTrigger === 'button' ? 'button' : 'cell'}
+                  saving={savingHere}
+                  locked={Boolean(state?.saving)}
+                  open={() => edit.openCell(key, col.key, col.edit!.initialValue(row))}
+                  register={edit.registerTrigger(triggerId(key, col.key))}
+                />
+              ) : href && i === 0 ? (
+                <AppLink href={href} data-row-link className={ROW_LINK}>
+                  {content}
+                </AppLink>
+              ) : (
+                content
+              );
+            return (
+              <td
+                key={col.key}
+                aria-busy={savingHere || undefined}
+                style={pinOf(leadCount + i, cellState).style}
+                className={clsx(
+                  'px-4',
+                  bodyPadding,
+                  'text-sm',
+                  ALIGN_CELL[col.align ?? 'left'],
+                  href && i > 0 && RAISE_CONTROLS,
+                  pinOf(leadCount + i, cellState).className
+                )}
+              >
+                {windowed ? (
+                  <div
+                    className={clsx(
+                      'flex items-center overflow-hidden',
+                      col.align === 'right' && 'justify-end',
+                      col.align === 'center' && 'justify-center'
+                    )}
+                    style={cellBox}
+                  >
+                    {cell}
+                  </div>
+                ) : (
+                  cell
+                )}
+              </td>
+            );
+          })}
+          {actionColumn && (
+            <td
+              style={pinOf(leadCount + columns.length, cellState).style}
+              className={clsx(
+                'px-4 print:hidden',
+                bodyPadding,
+                windowed && 'text-sm',
+                href && 'relative z-[1]',
+                pinOf(leadCount + columns.length, cellState).className
+              )}
+            >
+              <div className="flex items-center justify-end" style={cellBox}>
+                {rowEditing ? (
+                  <RowEditActions
+                    rowKey={key}
+                    editing={Boolean(rowInEdit)}
+                    saving={Boolean(rowInEdit?.saving)}
+                    locked={Boolean(state?.saving)}
+                    open={() => edit.openRow(key, rowInitials(columns, row))}
+                    save={() => edit.saveRow(row)}
+                    cancel={edit.cancel}
+                    registerEdit={edit.registerTrigger(edit.rowButtonId(key))}
+                    registerSave={edit.registerTrigger(edit.rowSaveId(key))}
+                  >
+                    {renderRowAction?.(row)}
+                  </RowEditActions>
+                ) : (
+                  renderRowAction?.(row)
+                )}
+              </div>
+            </td>
+          )}
+        </tr>
+        {rowInEdit?.error && (
+          <RowEditError id={rowErrorId} message={rowInEdit.error} colSpan={columnCount} />
         )}
-      </tr>
+        {isOpen && renderExpandedRow && (
+          <tr id={detailId} className="bg-gray-50 dark:bg-white/[0.03] print:break-inside-avoid">
+            <td colSpan={columnCount} className="pt-1 pr-4 pb-5 pl-15 text-sm">
+              {renderExpandedRow(row)}
+            </td>
+          </tr>
+        )}
+      </Fragment>
     );
   };
 
@@ -974,6 +1215,10 @@ export const DataTable = <T,>({
           isSelected={(key) => selection.has(key)}
           onToggleRow={toggleRow}
           renderRowAction={renderRowAction}
+          renderExpandedRow={expandable ? renderExpandedRow : undefined}
+          isExpanded={(key) => expanded.has(key)}
+          onToggleExpanded={(key) => updateExpanded(toggleKey(expanded, key))}
+          idBase={tableId}
           onRowClick={onRowClick}
           rowHref={rowHref}
           loading={showSkeleton}
@@ -1019,9 +1264,13 @@ export const DataTable = <T,>({
             aria-labelledby={ariaLabelledBy}
             aria-busy={loading || undefined}
             aria-rowcount={windowed ? pageRows.length + 1 : undefined}
+            style={statedMinWidth ? { minWidth: statedMinWidth } : undefined}
             className="w-full table-fixed"
           >
             <colgroup>
+              {expandable && (
+                <col style={{ width: EXPAND_COLUMN_WIDTH }} className="print:hidden" />
+              )}
               {selectable && (
                 <col style={{ width: SELECT_COLUMN_WIDTH }} className="print:hidden" />
               )}
@@ -1035,22 +1284,40 @@ export const DataTable = <T,>({
                   }
                 />
               ))}
-              {renderRowAction && (
-                <col style={{ width: ACTION_COLUMN_WIDTH }} className="print:hidden" />
+              {actionColumn && (
+                <col
+                  style={{ width: rowEditing ? EDIT_ACTION_COLUMN_WIDTH : ACTION_COLUMN_WIDTH }}
+                  className="print:hidden"
+                />
               )}
             </colgroup>
             <thead className="sticky top-0 z-10 print:static">
               <tr
+                ref={headRowRef}
                 aria-rowindex={windowed ? 1 : undefined}
                 className="border-b border-gray-100 dark:border-gray-800"
               >
-                {selectable && (
+                {expandable && (
                   <th
+                    style={pinOf(0).style}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
                       'print:hidden',
-                      stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
+                      pinOf(0).className
+                    )}
+                  >
+                    <span className="sr-only">Details</span>
+                  </th>
+                )}
+                {selectable && (
+                  <th
+                    style={pinOf(expandable ? 1 : 0).style}
+                    className={clsx(
+                      HEADER_CELL,
+                      HEADER_CELL_PADDING[density],
+                      'print:hidden',
+                      pinOf(expandable ? 1 : 0).className
                     )}
                   >
                     <div className="flex items-center">
@@ -1066,13 +1333,8 @@ export const DataTable = <T,>({
                 {columns.map((col, i) => (
                   <ColumnHeader
                     key={col.key}
-                    className={clsx(
-                      stickyFirstColumn &&
-                        i === 0 && [
-                          stickyHeadCell(true),
-                          selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                        ]
-                    )}
+                    style={pinOf(leadCount + i).style}
+                    className={pinOf(leadCount + i).className}
                     label={col.label}
                     align={col.align}
                     sortable={col.sortable}
@@ -1086,12 +1348,14 @@ export const DataTable = <T,>({
                     density={density}
                   />
                 ))}
-                {renderRowAction && (
+                {actionColumn && (
                   <th
+                    style={pinOf(leadCount + columns.length).style}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
-                      'text-right print:hidden'
+                      'text-right print:hidden',
+                      pinOf(leadCount + columns.length).className
                     )}
                   >
                     Action
@@ -1131,7 +1395,7 @@ export const DataTable = <T,>({
                         </div>
                       </td>
                     ))}
-                    {renderRowAction && (
+                    {actionColumn && (
                       <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])}>
                         <div className="flex h-5 items-center justify-end">
                           <Sk h="h-5" w="w-12" round="rounded-lg" />
