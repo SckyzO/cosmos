@@ -147,12 +147,18 @@ export const Calendar = ({ classNames, components, className, ...rest }: Calenda
           Root: CalendarRoot,
           Day: NamedDay,
           DayButton: NamedDayButton,
-          Chevron: ({ orientation }) =>
-            orientation === 'left' ? (
-              <ChevronLeft className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            ),
+          // The default navigation always asks for `left` on the previous month and `right` on the
+          // next one, and leaves it to react-day-picker's own stylesheet to turn them around in
+          // right to left. Cosmos draws its own icons, so it turns them. With `navLayout="around"`
+          // the library already swaps the orientation itself.
+          Chevron: ({ orientation }) => {
+            const Icon = orientation === 'left' ? ChevronLeft : ChevronRight;
+            return (
+              <Icon
+                className={clsx('h-4 w-4', rest.navLayout !== 'around' && 'rtl:-scale-x-100')}
+              />
+            );
+          },
           ...components,
         }}
         {...rest}
