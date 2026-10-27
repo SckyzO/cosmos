@@ -99,13 +99,6 @@ export type DataTableProps<T> = {
   defaultDensity?: DataTableDensity;
   /** Called with the density to move to, in both modes (a saved view sets it). */
   onDensityChange?: (density: DataTableDensity) => void;
-  /**
-   * Pins the first data column (and the selection column before it) to the start while the table
-   * scrolls sideways, so the row stays identified on a narrow screen. With `rowHref`, the link
-   * of the row then covers its own column, and a click on the rest of the row follows it from a
-   * handler: middle click and the context menu work on the first column only.
-   */
-  stickyFirstColumn?: boolean;
 
   // ── Expandable rows ────────────────────────────────────────────────────────
   /**
@@ -349,7 +342,6 @@ export const DataTable = <T,>({
   density: densityProp,
   defaultDensity = 'default',
   onDensityChange,
-  stickyFirstColumn = false,
   renderExpandedRow,
   expandedRows: expandedRowsProp,
   defaultExpandedRows,
@@ -428,9 +420,7 @@ export const DataTable = <T,>({
   const scrollEdges = useScrollEdges(scrollerRef);
   // Pinned columns. A cell's index counts the toggle and selection columns before the data
   // columns and the action column after them; those follow the data columns' pins.
-  const effectivePin = (col: ColumnDef<T>, i: number): ColumnPin | undefined =>
-    col.pin ?? (stickyFirstColumn && i === 0 ? 'start' : undefined);
-  const dataPins = columns.map(effectivePin);
+  const dataPins = columns.map((col) => col.pin);
   const hasStartPin = dataPins.includes('start');
   const hasEndPin = dataPins.includes('end');
   // The link of a row covers its own column, which is a box of its own once that is pinned.
