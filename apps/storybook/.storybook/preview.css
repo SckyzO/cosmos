@@ -15,6 +15,9 @@
 @import '@sckyzo/cosmos-theme/tailwind';
 @import '@sckyzo/cosmos-theme/vars';
 @import '@sckyzo/cosmos-react/calendar.css';
+/* MapLibre's own stylesheet, for Media/Map View, loaded as an app using the map entry
+ * loads it. */
+@import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* Force the iframe body to use the Cosmos background colour. Without this,
  * stories with `layout: 'fullscreen'` (Modal/Drawer/ConfirmationModal docs

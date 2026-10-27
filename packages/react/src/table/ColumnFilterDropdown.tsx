@@ -43,7 +43,7 @@ export const ColumnFilterDropdown = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search…"
-            className="focus:field-focus h-7 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+            className="focus:field-focus h-ctrl-28 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
           />
         </div>
       )}
@@ -54,7 +54,7 @@ export const ColumnFilterDropdown = ({
           visible.map((val) => (
             <label
               key={val}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-xs hover:bg-gray-50 dark:hover:bg-white/5"
+              className="py-row-6 flex cursor-pointer items-center gap-2.5 px-3 text-xs hover:bg-gray-50 dark:hover:bg-white/5"
             >
               <input
                 type="checkbox"
@@ -72,7 +72,7 @@ export const ColumnFilterDropdown = ({
           <button
             type="button"
             onClick={onClear}
-            className="focus-visible:focus-indicator w-full rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+            className="focus-visible:focus-indicator py-row-6 w-full rounded-lg px-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
           >
             Clear ({selected.size} selected)
           </button>

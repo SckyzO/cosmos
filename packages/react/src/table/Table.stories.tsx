@@ -162,7 +162,7 @@ export const Densities: Story = {
   render: () => (
     <Wrap>
       <div className="grid gap-6 lg:grid-cols-2">
-        {(['default', 'comfortable'] as const).map((density) => (
+        {(['compact', 'default', 'comfortable'] as const).map((density) => (
           <Table key={density} density={density}>
             <TableCaption>Density: {density}</TableCaption>
             <NodeHead />
@@ -515,6 +515,41 @@ export const LoadingRowsFollowTheDensity: Story = {
       canvas.getByRole('table', { name, hidden: true }).querySelector('tr')!.getBoundingClientRect()
         .height;
     await expect(height('comfortable')).toBeGreaterThan(height('default'));
+  },
+};
+
+/** Without a `density` a table takes the page's `data-density`, and `compact` pads the cells less. */
+export const CellsFollowThePageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      {(['compact', 'default', 'comfortable'] as const).map((page) => (
+        <div key={page} data-density={page}>
+          <Table aria-label={`${page} page`} className="mb-4">
+            <TableBody>
+              <TableRow>
+                <TableCell>Cell</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ))}
+      <Table density="compact" aria-label="compact on a default page" className="mb-4">
+        <TableBody>
+          <TableRow>
+            <TableCell>Cell</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const padding = (name: string) =>
+      getComputedStyle(canvas.getByRole('table', { name }).querySelector('td')!).paddingTop;
+    await expect(padding('compact page')).toBe('10px');
+    await expect(padding('default page')).toBe('14px');
+    await expect(padding('comfortable page')).toBe('20px');
+    await expect(padding('compact on a default page')).toBe('10px');
   },
 };
 

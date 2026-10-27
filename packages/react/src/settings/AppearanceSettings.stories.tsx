@@ -9,6 +9,7 @@ import {
   COSMOS_THEMES,
   type CosmosAccent,
   type CosmosFont,
+  type CosmosDensity,
   type CosmosTextSize,
   type CosmosTheme,
   type CosmosThemeChoice,
@@ -57,6 +58,14 @@ export const WithFontAndTextSize: Story = {
   args: { font: 'inter', textSize: 'lg', onFontChange: fn(), onTextSizeChange: fn() },
 };
 
+/**
+ * `onDensityChange` adds the density group: how tight the controls and rows are. Each card draws
+ * three rows, closer or further apart.
+ */
+export const WithDensity: Story = {
+  args: { density: 'compact', onDensityChange: fn() },
+};
+
 /** `fonts` narrows the font choice to the ones the app loads. */
 export const RestrictedFonts: Story = {
   args: {
@@ -71,6 +80,7 @@ export const Controlled: Story = {
     const [accent, setAccent] = useState<CosmosAccent>('blue');
     const [font, setFont] = useState<CosmosFont>('outfit');
     const [textSize, setTextSize] = useState<CosmosTextSize>('md');
+    const [density, setDensity] = useState<CosmosDensity>('default');
     return (
       <div className="space-y-4">
         <AppearanceSettings
@@ -78,14 +88,16 @@ export const Controlled: Story = {
           accent={accent}
           font={font}
           textSize={textSize}
+          density={density}
           onThemeChange={setTheme}
           onAccentChange={setAccent}
           onFontChange={setFont}
           onTextSizeChange={setTextSize}
+          onDensityChange={setDensity}
         />
         <p className="text-xs text-[var(--color-text-secondary)]">
           Selected: <code>{theme}</code> / <code>{accent}</code> / <code>{font}</code> /{' '}
-          <code>{textSize}</code>
+          <code>{textSize}</code> / <code>{density}</code>
         </p>
       </div>
     );
@@ -161,6 +173,24 @@ export const FontAndTextSizeNeedHandlers: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('radiogroup', { name: 'Font' })).toBeNull();
     await expect(canvas.queryByRole('radiogroup', { name: 'Text size' })).toBeNull();
+    await expect(canvas.queryByRole('radiogroup', { name: 'Density' })).toBeNull();
+  },
+};
+
+export const PickingDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onDensityChange: fn() },
+  play: async ({ args, canvas }) => {
+    // The default is selected when nothing is passed.
+    await expect(canvas.getByRole('radio', { name: 'Default' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    await userEvent.click(canvas.getByRole('radio', { name: 'Compact' }));
+    await expect(args.onDensityChange).toHaveBeenCalledWith('compact');
+    await userEvent.click(canvas.getByRole('radio', { name: 'Comfortable' }));
+    await expect(args.onDensityChange).toHaveBeenCalledWith('comfortable');
+    await expect(args.onThemeChange).not.toHaveBeenCalled();
   },
 };
 

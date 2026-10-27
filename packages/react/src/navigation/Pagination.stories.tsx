@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Pagination } from './Pagination';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 
@@ -449,5 +449,33 @@ export const TextLabelsGoToNeighbourPage: Story = {
     await expect(args.onPageChange).toHaveBeenLastCalledWith(4);
     await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
     await expect(args.onPageChange).toHaveBeenLastCalledWith(6);
+  },
+};
+
+/** A page button follows the density in height, and its minimum width follows with it: square. */
+export const PageButtonsStaySquareInEachDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 2, totalPages: 3 },
+  render: (args) => (
+    <div className="flex flex-col gap-4">
+      {(['compact', 'default', 'comfortable'] as const).map((density) => (
+        <div key={density} data-density={density} className="flex flex-col gap-2">
+          <Pagination {...args} aria-label={`${density} sm`} />
+          <Pagination {...args} size="md" aria-label={`${density} md`} />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const heights = new Set<number>();
+    for (const nav of canvas.getAllByRole('navigation')) {
+      const { width, height } = within(nav)
+        .getByRole('button', { name: 'Page 1' })
+        .getBoundingClientRect();
+      await expect(width, nav.getAttribute('aria-label') ?? '').toBe(height);
+      heights.add(height);
+    }
+    // Six paginations, two sizes in three densities: the heights do move.
+    await expect(heights.size).toBeGreaterThan(2);
   },
 };

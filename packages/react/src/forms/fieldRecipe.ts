@@ -3,14 +3,15 @@ import { clsx } from 'clsx';
 // The look every form field shares, so no field drifts from the others. A field
 // takes its look from `fieldClass` and its dimensions from the maps below, all
 // keyed by `FieldSize`. The scale follows Button's `sm` / `md` / `lg` (same
-// heights and text sizes); `md` is the default.
+// heights and text sizes); `md` is the default. The heights and the vertical padding are theme
+// tokens, so the page's `data-density` moves them.
 
 export type FieldSize = 'sm' | 'md' | 'lg';
 
 export const FIELD_HEIGHT: Record<FieldSize, string> = {
-  sm: 'h-8',
-  md: 'h-9',
-  lg: 'h-11',
+  sm: 'h-ctrl-32',
+  md: 'h-ctrl-36',
+  lg: 'h-ctrl-44',
 };
 
 export const FIELD_TEXT: Record<FieldSize, string> = {
@@ -41,9 +42,9 @@ export const FIELD_PAD_RIGHT: Record<FieldSize, string> = {
 
 /** Vertical padding of a field with no fixed height (a Textarea). */
 export const FIELD_PAD_Y: Record<FieldSize, string> = {
-  sm: 'py-1.5',
-  md: 'py-2',
-  lg: 'py-2.5',
+  sm: 'py-row-6',
+  md: 'py-row-8',
+  lg: 'py-row-10',
 };
 
 /** Left padding that clears an icon drawn over the field's left edge. */

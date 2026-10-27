@@ -33,13 +33,13 @@ export type ClipboardProps = Omit<ComponentPropsWithRef<'button'>, 'onCopy'> & {
 };
 
 const SIZE_ICON: Record<ClipboardSize, { box: string; icon: string }> = {
-  sm: { box: 'h-7 w-7', icon: 'h-3.5 w-3.5' },
-  md: { box: 'h-9 w-9', icon: 'h-4 w-4' },
+  sm: { box: 'h-ctrl-28 w-ctrl-28', icon: 'h-3.5 w-3.5' },
+  md: { box: 'h-ctrl-36 w-ctrl-36', icon: 'h-4 w-4' },
 };
 
 const SIZE_BUTTON: Record<ClipboardSize, string> = {
-  sm: 'h-7 px-2 text-xs gap-1.5',
-  md: 'h-9 px-3 text-sm gap-2',
+  sm: 'h-ctrl-28 px-2 text-xs gap-1.5',
+  md: 'h-ctrl-36 px-3 text-sm gap-2',
 };
 
 export function Clipboard({

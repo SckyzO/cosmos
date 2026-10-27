@@ -136,7 +136,7 @@ function AccordionTrigger({
         className={clsx(
           'group focus-visible:focus-indicator flex w-full items-center justify-between gap-2 text-left font-medium transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
           TITLE_COLOR[tone],
-          size === 'md' ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm',
+          size === 'md' ? 'py-row-16 px-5 text-base' : 'py-row-12 px-4 text-sm',
           // Hover only on a live trigger: a disabled one must not invite a click.
           'enabled:hover:bg-gray-50 dark:enabled:hover:bg-white/5',
           className

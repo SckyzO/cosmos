@@ -27,3 +27,17 @@ export const trimTrailingPunctuation = (url: string) => {
   while (end > 0 && TRAILING.has(url[end - 1])) end -= 1;
   return url.slice(0, end);
 };
+
+// mailto: and the relative forms a link may point at: a path ("/a", "./a", "../a"), a fragment or a
+// query. "//host" is protocol-relative, so it is another site, and a backslash is read as a slash by
+// browsers ("/\host"): both stay out.
+const MAILTO = /^mailto:[^\s<>"'\\]+$/i;
+const RELATIVE = /^(?:\/(?!\/)|\.\.?\/|#|\?)[^\s<>"'\\]*$/;
+
+/**
+ * Whether `value` may be the target of a link a user writes: an http(s) URL, a `mailto:` address
+ * or a relative URL. The rule of `RichTextEditor`, which extends the chat's (`isHttpUrl`) with the
+ * two kinds a form field needs. `javascript:`, `data:` and every other scheme are refused.
+ */
+export const isSafeLinkUrl = (value: string) =>
+  isHttpUrl(value) || MAILTO.test(value) || RELATIVE.test(value);

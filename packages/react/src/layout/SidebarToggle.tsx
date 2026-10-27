@@ -99,10 +99,10 @@ export const SidebarToggle = ({
         'focus-visible:focus-indicator flex shrink-0 items-center text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 dark:hover:bg-white/5',
         panel
           ? [
-              'w-full gap-3 rounded-lg py-2 text-sm font-medium hover:text-[var(--color-text-primary)]',
+              'py-row-8 w-full gap-3 rounded-lg text-sm font-medium hover:text-[var(--color-text-primary)]',
               collapsed ? 'justify-center px-2' : 'px-3',
             ]
-          : 'h-10 w-10 justify-center rounded-lg border border-[var(--color-border)]',
+          : 'h-ctrl-40 w-ctrl-40 justify-center rounded-lg border border-[var(--color-border)]',
         className
       )}
     >

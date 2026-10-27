@@ -17,7 +17,7 @@ const ROW_HEIGHT: Record<FieldSize, string> = { sm: 'h-5.5', md: 'h-5.5', lg: 'h
 
 // Less padding on the sides than a plain field: a tag sits closer to the border than a text.
 const PAD_X: Record<FieldSize, string> = { sm: 'px-1.5', md: 'px-1.5', lg: 'px-2' };
-const PAD_Y: Record<FieldSize, string> = { sm: 'py-1', md: 'py-1.5', lg: 'py-2' };
+const PAD_Y: Record<FieldSize, string> = { sm: 'py-row-4', md: 'py-row-6', lg: 'py-row-8' };
 
 type TagFieldClassOptions = {
   size: FieldSize;

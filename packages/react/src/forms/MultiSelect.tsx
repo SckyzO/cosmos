@@ -292,7 +292,7 @@ export const MultiSelect = ({
               role="option"
               aria-selected={false}
               aria-disabled
-              className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400"
+              className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400"
             >
               {emptyMessage}
             </li>
@@ -314,7 +314,7 @@ export const MultiSelect = ({
                     toggle(opt);
                   }}
                   className={clsx(
-                    'flex items-center gap-2.5 px-3 py-2 text-gray-900 select-none dark:text-gray-100',
+                    'py-row-8 flex items-center gap-2.5 px-3 text-gray-900 select-none dark:text-gray-100',
                     isActive && 'bg-gray-50 dark:bg-white/5',
                     opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   )}
