@@ -60,6 +60,30 @@ const OVERLAP_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string>> = {
   },
 };
 
+// Initials sit in the middle of the part the next avatar leaves visible: half its overlap plus
+// its 2px ring. Centred on the whole avatar, two wide capitals ran under the next one at every
+// size. Whole class names, for Tailwind.
+const INITIALS_SHIFT_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string>> = {
+  normal: {
+    xs: '[&>[role=img]>span:first-child]:-translate-x-1',
+    sm: '[&>[role=img]>span:first-child]:-translate-x-1.25',
+    md: '[&>[role=img]>span:first-child]:-translate-x-1.5',
+    lg: '[&>[role=img]>span:first-child]:-translate-x-1.75',
+    xl: '[&>[role=img]>span:first-child]:-translate-x-2.25',
+    '2xl': '[&>[role=img]>span:first-child]:-translate-x-2.75',
+    '3xl': '[&>[role=img]>span:first-child]:-translate-x-3.25',
+  },
+  tight: {
+    xs: '[&>[role=img]>span:first-child]:-translate-x-1.25',
+    sm: '[&>[role=img]>span:first-child]:-translate-x-1.5',
+    md: '[&>[role=img]>span:first-child]:-translate-x-2',
+    lg: '[&>[role=img]>span:first-child]:-translate-x-2.25',
+    xl: '[&>[role=img]>span:first-child]:-translate-x-2.75',
+    '2xl': '[&>[role=img]>span:first-child]:-translate-x-3.75',
+    '3xl': '[&>[role=img]>span:first-child]:-translate-x-4.25',
+  },
+};
+
 // Neutral, so the count reads apart from the accent-tinted people. The gray scale follows the theme.
 const OVERFLOW_CLASS =
   'inline-flex shrink-0 items-center justify-center bg-gray-100 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200';
@@ -96,13 +120,16 @@ export const AvatarGroup = ({
   // The "+N" follows the avatar before it, so a group of squares does not end on a circle.
   const overflowShape = visible[visible.length - 1]?.props.shape ?? 'circle';
 
+  // Every slot but the last one has another slot over its right side.
+  const last = visible.length - (hidden > 0 ? 0 : 1);
   const slot = (key: string | number, index: number, shape: AvatarShape, node: ReactNode) => (
     <span
       key={key}
       className={clsx(
         'relative inline-flex shrink-0 ring-2 ring-[var(--color-bg-panel)] has-focus-visible:z-10',
         AVATAR_SHAPE_CLASS[shape],
-        index > 0 && OVERLAP_CLASS[spacing][size]
+        index > 0 && OVERLAP_CLASS[spacing][size],
+        index < last && INITIALS_SHIFT_CLASS[spacing][size]
       )}
     >
       {node}
