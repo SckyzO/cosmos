@@ -36,6 +36,25 @@ describe('anchoredStyle', () => {
     });
   });
 
+  it('swaps `start` and `end` in rtl, and leaves the centered and vertical sides alone', () => {
+    const rtl = (placement: Parameters<typeof anchoredStyle>[1]) =>
+      anchoredStyle(rect, placement, undefined, 'rtl');
+    // `start` is the right edge in rtl: the panel hangs from it, as an `end` one does in ltr.
+    expect(rtl({ align: 'start' })).toEqual(anchoredStyle(rect, { align: 'end' }));
+    expect(rtl({ align: 'end' })).toEqual(anchoredStyle(rect, { align: 'start' }));
+    expect(rtl({ align: 'start', side: 'top' })).toEqual(
+      anchoredStyle(rect, { align: 'end', side: 'top' })
+    );
+    expect(rtl({})).toEqual(anchoredStyle(rect));
+    expect(rtl({ side: 'right', align: 'end' })).toEqual(
+      anchoredStyle(rect, { side: 'right', align: 'end' })
+    );
+    // ltr is the default.
+    expect(anchoredStyle(rect, { align: 'start' }, undefined, 'ltr')).toEqual(
+      anchoredStyle(rect, { align: 'start' })
+    );
+  });
+
   it('lifts a `top` panel by its own height, whatever the alignment', () => {
     expect(anchoredStyle(rect, { side: 'top' }).transform).toBe('translate(-50%, -100%)');
     expect(anchoredStyle(rect, { side: 'top', align: 'start' }).transform).toBe(

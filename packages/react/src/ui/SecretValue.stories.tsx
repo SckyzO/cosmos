@@ -222,3 +222,36 @@ export const MobileButtonsWrapUnderTheValue: Story = {
     }
   },
 };
+
+/**
+ * The value is an island: a key stays in its own direction (here left to right) in a right to
+ * left page, and the end of it does not jump to the other side.
+ */
+export const ValueIsIsolatedInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <SecretValue value="sk_live-4eC39H-" label="API key" defaultRevealed visibleSuffix={4} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const code = canvas.getByRole('group', { name: 'API key' }).querySelector('code')!;
+    const island = code.querySelector('bdi')!;
+    await expect(island).toHaveTextContent('sk_live-4eC39H-');
+    await expect(getComputedStyle(island).direction).toBe('ltr');
+    await expect(getComputedStyle(island).unicodeBidi).toBe('isolate');
+    await userEvent.click(canvas.getByRole('button', { name: 'Hide API key' }));
+    // Masked, the dots and the visible suffix are one island: the suffix stays at the end of
+    // the value, on the right of the dots, where on its own it would go to their left.
+    const mask = code.querySelector('[aria-hidden="true"]')!;
+    const masked = mask.closest('bdi');
+    await expect(masked).toHaveTextContent(/•39H-$/);
+    await expect(getComputedStyle(masked!).direction).toBe('ltr');
+    const suffix = document.createRange();
+    suffix.selectNodeContents(masked!);
+    suffix.setStartAfter(mask);
+    await expect(suffix.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      mask.getBoundingClientRect().right - 1
+    );
+  },
+};

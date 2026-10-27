@@ -122,7 +122,7 @@ export const Badge = ({
       {Icon && iconPosition === 'left' && (
         <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
       )}
-      <span>{children}</span>
+      <bdi>{children}</bdi>
       {Icon && iconPosition === 'right' && (
         <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
       )}

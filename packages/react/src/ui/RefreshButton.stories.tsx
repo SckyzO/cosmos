@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectBelow, expectOutsideClip, scrollAnchor } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectBelow,
+  expectOutsideClip,
+  scrollAnchor,
+} from '../storybook-helpers';
 import { RefreshButton, useAutoRefresh } from './RefreshButton';
 
 const meta = {
@@ -119,5 +126,31 @@ export const IntervalMenuFollowsAndCloses: Story = {
     await expect(args.onIntervalChange).toHaveBeenCalledWith(60_000);
     await waitFor(() => expect(intervalMenu()).toBeNull());
     await expect(trigger).toHaveFocus();
+  },
+};
+
+/**
+ * The two halves of the button swap sides, and the menu hangs from the end of the chevron: its
+ * left edge in right to left, where it is the right edge in left to right.
+ */
+export const MenuAlignsToTheEndInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'padded' },
+  render: (args) => bothDirections(() => <RefreshButton {...args} />),
+  play: async ({ canvasElement }) => {
+    const [ltr, rtl] = (['ltr', 'rtl'] as const).map((dir) => directionBox(canvasElement, dir));
+    for (const box of [ltr!, rtl!]) {
+      const trigger = within(box).getByRole('button', { name: 'Choose refresh interval' });
+      const refresh = within(box).getByRole('button', { name: /Refresh/ });
+      await userEvent.click(trigger);
+      await waitFor(() => expect(intervalMenu()).not.toBeNull());
+      // The menu is aligned with the end of the chevron, and the chevron ends the group.
+      await waitFor(() => expectBelow(intervalMenu()!, trigger, { offset: 4, align: 'end' }));
+      await expect(endOffset(intervalMenu()!, trigger)).toBeCloseTo(0, 0);
+      await expect(intervalMenu()!.closest('[dir]')).toHaveAttribute('dir', box.dir);
+      await expect(endOffset(trigger, box)).toBeLessThan(endOffset(refresh, box));
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() => expect(intervalMenu()).toBeNull());
+    }
   },
 };

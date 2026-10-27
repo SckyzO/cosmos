@@ -55,10 +55,10 @@ export const ButtonGroup = ({
         // Bring the focused button on top so its focus ring is fully visible.
         '[&>button:focus]:z-10 [&>button:focus-visible]:z-10',
         orientation === 'horizontal' && [
-          '[&>button:first-child]:rounded-l-lg',
-          '[&>button:last-child]:rounded-r-lg',
-          // Collapse adjacent borders by pulling each subsequent button 1px left.
-          '[&>button:not(:first-child)]:-ml-px',
+          '[&>button:first-child]:rounded-s-lg',
+          '[&>button:last-child]:rounded-e-lg',
+          // Collapse adjacent borders by pulling each subsequent button 1px toward the start.
+          '[&>button:not(:first-child)]:-ms-px',
         ],
         orientation === 'vertical' && [
           '[&>button:first-child]:rounded-t-lg',

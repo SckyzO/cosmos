@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expectTextContrast } from '../storybook-helpers';
+import { bothDirections, directionBox, expectTextContrast } from '../storybook-helpers';
+import { expect } from 'storybook/test';
 import { SectionLabel } from './SectionLabel';
 
 const meta = {
@@ -38,3 +39,15 @@ export const ContrastInLight = contrastIn('light');
 export const ContrastInSand = contrastIn('sand');
 export const ContrastInDark = contrastIn('dark');
 export const ContrastInDeepBlue = contrastIn('deep-blue');
+
+/** Letter spacing breaks the joins of Arabic script: right to left sets none. */
+export const NoLetterSpacingInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <SectionLabel>Section title example</SectionLabel>),
+  play: ({ canvasElement }) => {
+    const spacing = (dir: 'ltr' | 'rtl') =>
+      getComputedStyle(directionBox(canvasElement, dir).querySelector('p')!).letterSpacing;
+    expect(spacing('ltr')).not.toBe('normal');
+    expect(spacing('rtl')).toBe('normal');
+  },
+};

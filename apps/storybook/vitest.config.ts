@@ -22,6 +22,16 @@ if (a11yTheme && !COSMOS_THEMES.some(({ id }) => id === a11yTheme)) {
 }
 
 /**
+ * `STORY_DIR=rtl` turns the story run into the direction pass (`pnpm a11y:rtl`): every story
+ * renders under `dir="rtl"`, with every axe rule and a check for sideways scrolling, see
+ * `.storybook/direction-pass.ts`.
+ */
+const storyDir = process.env.STORY_DIR ?? '';
+if (storyDir && storyDir !== 'rtl') {
+  throw new Error(`STORY_DIR=${storyDir}: expected rtl.`);
+}
+
+/**
  * Vitest config for the Storybook app, two projects:
  *
  * - `storybook`: browser mode via Playwright. Runs all `*.stories.tsx` as
@@ -62,7 +72,7 @@ export default defineConfig({
         optimizeDeps: { include: ['@storybook/addon-a11y/preview'] },
         test: {
           name: 'storybook',
-          provide: { a11yTheme },
+          provide: { a11yTheme, storyDir },
           browser: {
             enabled: true,
             provider: playwright({}),

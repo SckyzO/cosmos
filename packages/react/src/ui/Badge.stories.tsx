@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Check, Info, Star, X, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
-import { inEachTheme } from '../storybook-helpers';
+import { bothDirections, expectMirrored, inEachTheme } from '../storybook-helpers';
 import { Badge } from './Badge';
 import type { Intent } from './intent';
 import { SectionCard } from '../templates/SectionCard';
@@ -482,5 +482,45 @@ export const RoundedShapeKeepsThePillDefault: Story = {
       radius(badgeOf(canvas.getByText('md default')))
     );
     await expect(radius(badgeOf(canvas.getByText('dot rounded')))).toBe(roundedMd);
+  },
+};
+
+/** An icon before the label is on the right in right to left, one after it on the left. */
+export const IconsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="flex gap-3">
+        <Badge icon={Star}>Before</Badge>
+        <Badge icon={Zap} iconPosition="right">
+          After
+        </Badge>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const nth of [0, 1]) {
+      expectMirrored(canvasElement, (box) => box.querySelectorAll('svg')[nth]);
+    }
+  },
+};
+
+/** A label in the other script is an island: its own direction, whatever the badge's. */
+export const LabelIsIsolated: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-3">
+      <div dir="rtl">
+        <Badge>Beta</Badge>
+      </div>
+      <div dir="ltr">
+        <Badge>تجريبي</Badge>
+      </div>
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const [latin, arabic] = [...canvasElement.querySelectorAll('bdi')];
+    expect(getComputedStyle(latin!).direction).toBe('ltr');
+    expect(getComputedStyle(arabic!).direction).toBe('rtl');
+    expect(getComputedStyle(latin!).unicodeBidi).toBe('isolate');
   },
 };

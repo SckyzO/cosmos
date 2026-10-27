@@ -4,6 +4,7 @@ import { configure } from 'storybook/test';
 import { afterEach, beforeAll } from 'vitest';
 
 import { a11yGateAnnotations, contrastPassAnnotations, recordA11yViolations } from './a11y-gate';
+import { directionPassAnnotations } from './direction-pass';
 import * as projectAnnotations from './preview';
 
 // Silence Vite HMR client noise in browser test mode.
@@ -80,12 +81,14 @@ const settleMotionAnnotations: ProjectAnnotations<Renderer> = {
 // (a story edit under packages/ counts as a release of the package). It goes
 // before preview: parameters merge left to right, as in Storybook, so
 // preview's `a11y: { test: 'error' }` overrides the addon's default `'todo'`.
-// The contrast pass comes last, to override preview's theme (empty otherwise).
+// The contrast and direction passes come last, to override preview's theme and direction (empty
+// otherwise).
 const project = setProjectAnnotations([
   a11yGateAnnotations,
   projectAnnotations.default,
   settleMotionAnnotations,
   contrastPassAnnotations,
+  directionPassAnnotations,
 ]);
 
 beforeAll(project.beforeAll);

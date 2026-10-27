@@ -16,6 +16,15 @@
    `focus:border-brand-500`, so form controls lost their focus border in the dark themes. */
 @custom-variant dark (&:where(.dark, .dark *, .deep-blue, .deep-blue *));
 
+/* Tailwind rtl variant: the nearest `dir` attribute. Not `:dir(rtl)`: Tailwind's build lowers
+   it to a list of `:lang()` for its browser targets, which a page that only sets `dir` never
+   matches (the dev server skips that step, so only a build shows it). Tailwind's default adds
+   `[dir="rtl"] *`, which also holds in a `dir="ltr"` island inside a right-to-left page (a code
+   sample, a phone number field) and would flip its icons: the `:not()` leaves the island out.
+   Not followed: `dir="auto"`, and a `dir="rtl"` nested in such an island.
+   `tests/e2e/specs/rtl-variant.spec.ts` checks it in the static build. */
+@custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *):not(:where([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)));
+
 /* The colors the charts read as plain CSS variables (var(--color-brand-500),
  * var(--color-status-warn)…), with no utility behind them. Tailwind only emits
  * a theme variable that a utility uses, so these are `static`: always in the

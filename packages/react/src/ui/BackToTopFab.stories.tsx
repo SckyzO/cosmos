@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronUp, Rocket } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { bothDirections, directionBox, expectRefFocuses } from '../storybook-helpers';
 import { BackToTopFab } from './BackToTopFab';
 
 const meta = {
@@ -255,5 +255,33 @@ export const ScrolledPastThreshold: Story = {
       expect(btn).not.toHaveAttribute('aria-hidden');
       expect(getComputedStyle(btn).opacity).toBe('1');
     });
+  },
+};
+
+const fabIn = (canvasElement: HTMLElement, dir: 'ltr' | 'rtl') =>
+  directionBox(canvasElement, dir).querySelector('button')!.getBoundingClientRect();
+
+/**
+ * `bottom-right` is the end corner: in right to left the button sits 24px from the left edge of
+ * the viewport, where it sits 24px from the right one in left to right.
+ */
+export const BottomRightMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <BackToTopFab />),
+  play: async ({ canvasElement }) => {
+    const width = document.documentElement.clientWidth;
+    await expect(width - fabIn(canvasElement, 'ltr').right).toBeCloseTo(24, 0);
+    await expect(fabIn(canvasElement, 'rtl').left).toBeCloseTo(24, 0);
+  },
+};
+
+/** `bottom-left` is the start corner: the right side in right to left. */
+export const BottomLeftMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <BackToTopFab position="bottom-left" />),
+  play: async ({ canvasElement }) => {
+    const width = document.documentElement.clientWidth;
+    await expect(fabIn(canvasElement, 'ltr').left).toBeCloseTo(24, 0);
+    await expect(width - fabIn(canvasElement, 'rtl').right).toBeCloseTo(24, 0);
   },
 };

@@ -1,11 +1,13 @@
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
+import { directionOf, type Direction } from './direction';
 
 /** Side of the anchor a floating panel opens on. */
 export type AnchorSide = 'top' | 'right' | 'bottom' | 'left';
 
 /**
- * Alignment with the anchor for the `top` and `bottom` sides: left edges (`start`), centers, or
- * right edges (`end`). The `left` and `right` sides always center the panel vertically.
+ * Alignment with the anchor for the `top` and `bottom` sides: the edges the text starts at
+ * (`start`: left edges, right edges under `dir="rtl"`), centers, or the edges it ends at (`end`).
+ * The `left` and `right` sides stay physical and always center the panel vertically.
  */
 export type AnchorAlign = 'start' | 'center' | 'end';
 
@@ -37,6 +39,9 @@ const OPPOSITE: Record<AnchorSide, AnchorSide> = {
   bottom: 'top',
   left: 'right',
 };
+
+// `start` and `end` seen from the other side of the line, for `rtl`.
+const SWAPPED = { start: 'end', end: 'start' } as const;
 
 const isVertical = (side: AnchorSide) => side === 'top' || side === 'bottom';
 
@@ -79,8 +84,8 @@ const withShift = (style: CSSProperties, shift: number): CSSProperties =>
 
 /**
  * The `position: fixed` style that puts a panel on `side` of an anchor whose viewport rect is
- * `rect`. An `end`-aligned panel also gets a `maxWidth` that keeps it 16px from the left of
- * the screen. The style sets `--anchor-width` too, for a part of the panel that points at
+ * `rect`. A panel aligned to the right edges (`end`, or `start` in `rtl`) also gets a `maxWidth`
+ * that keeps it 16px from the left of the screen. The style sets `--anchor-width` too, for a part of the panel that points at
  * the anchor (an arrow).
  *
  * With `bounds`, collisions with the viewport: the panel flips to the opposite side when the
@@ -88,13 +93,18 @@ const withShift = (style: CSSProperties, shift: number): CSSProperties =>
  * axis moves back inside, 16px from the edge. A panel that is all in view stays where its
  * placement puts it. A moved panel's style sets `--anchor-shift`, how far it moved along
  * the anchor, so an arrow can keep pointing at the anchor.
+ *
+ * `direction` is the anchor's: in `rtl` the `start` and `end` alignments swap sides.
  */
 export function anchoredStyle(
   rect: AnchorRect,
   placement: AnchorPlacement = {},
-  bounds?: AnchorBounds
+  bounds?: AnchorBounds,
+  direction: Direction = 'ltr'
 ): CSSProperties {
-  const { align = 'center', offset = 0, matchWidth = false } = placement;
+  const { align: logicalAlign = 'center', offset = 0, matchWidth = false } = placement;
+  const align =
+    direction === 'rtl' && logicalAlign !== 'center' ? SWAPPED[logicalAlign] : logicalAlign;
   const side = resolveSide(rect, placement, bounds);
   const style = { '--anchor-width': `${rect.width}px` } as CSSProperties;
   if (matchWidth) style.width = rect.width;
@@ -138,7 +148,13 @@ export function anchoredStyle(
 
 type Point = { x: number; y: number };
 
-type Measures = { anchor: AnchorRect; viewport: BoxSize; panel: BoxSize | null; origin: Point };
+type Measures = {
+  anchor: AnchorRect;
+  viewport: BoxSize;
+  panel: BoxSize | null;
+  origin: Point;
+  direction: Direction;
+};
 
 const sameSize = (a: BoxSize | null, b: BoxSize | null) =>
   a === b || (!!a && !!b && a.width === b.width && a.height === b.height);
@@ -151,7 +167,8 @@ const sameMeasures = (a: Measures | null, b: Measures) =>
   sameSize(a.viewport, b.viewport) &&
   sameSize(a.panel, b.panel) &&
   a.origin.x === b.origin.x &&
-  a.origin.y === b.origin.y;
+  a.origin.y === b.origin.y &&
+  a.direction === b.direction;
 
 // The viewport point the fixed position of a panel in `container` is relative to: the
 // container's padding box (its border doesn't count), or the viewport's own origin.
@@ -176,6 +193,8 @@ export type AnchorPosition = {
   style: CSSProperties | null;
   /** The side the panel opens on, once flipped (see `resolveSide`). */
   side: AnchorSide;
+  /** The anchor's direction, for the panel to take (it is portaled out of the anchor's subtree). */
+  direction: Direction;
   /** Callback ref for the panel, measured for the collision handling. */
   panelRef: (panel: HTMLElement | null) => void;
 };
@@ -228,6 +247,7 @@ export function useAnchorPosition(
         // Layout size, which the panel's own translate doesn't change.
         panel: panel && { width: panel.offsetWidth, height: panel.offsetHeight },
         origin: originOf(container ?? undefined),
+        direction: directionOf(anchor),
       };
       // Most scrolls happen in containers the anchor isn't in: don't re-render for nothing.
       setMeasures((prev) => (sameMeasures(prev, next) ? prev : next));
@@ -245,13 +265,19 @@ export function useAnchorPosition(
     };
   }, [open, anchorRef, missed, panel, container]);
 
-  if (!measures) return { style: null, side: placement.side ?? 'bottom', panelRef: setPanel };
+  if (!measures) {
+    return { style: null, side: placement.side ?? 'bottom', direction: 'ltr', panelRef: setPanel };
+  }
   const bounds = measures.panel
     ? { panel: measures.panel, viewport: measures.viewport }
     : undefined;
   return {
-    style: fromOrigin(anchoredStyle(measures.anchor, placement, bounds), measures.origin),
+    style: fromOrigin(
+      anchoredStyle(measures.anchor, placement, bounds, measures.direction),
+      measures.origin
+    ),
     side: resolveSide(measures.anchor, placement, bounds),
+    direction: measures.direction,
     panelRef: setPanel,
   };
 }

@@ -16,7 +16,10 @@ export type BackToTopFabIntent = Extract<Intent, 'brand' | 'neutral'>;
 export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   /** Pixels of vertical scroll before the FAB fades in. Default `300`. */
   threshold?: number;
-  /** Anchor corner. Default `bottom-right`. */
+  /**
+   * Anchor corner. Default `bottom-right`. The side is the end of the line: under `dir="rtl"`
+   * `bottom-right` is the bottom-left corner and `bottom-left` the bottom-right one.
+   */
   position?: BackToTopFabPosition;
   /** Use smooth scrolling. Default `true`. */
   smoothScroll?: boolean;
@@ -34,8 +37,8 @@ export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'o
 };
 
 const POSITION_CLASS: Record<BackToTopFabPosition, string> = {
-  'bottom-right': 'right-0',
-  'bottom-left': 'left-0',
+  'bottom-right': 'inset-e-0',
+  'bottom-left': 'inset-s-0',
 };
 
 const INTENT_CLASS: Record<BackToTopFabIntent, string> = {
@@ -77,7 +80,7 @@ export const BackToTopFab = ({
 
   const positionStyle = {
     bottom: offset,
-    [position === 'bottom-right' ? 'right' : 'left']: offset,
+    [position === 'bottom-right' ? 'insetInlineEnd' : 'insetInlineStart']: offset,
     ...style,
   };
 

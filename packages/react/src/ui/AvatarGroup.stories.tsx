@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
+import { bothDirections, expectMirrored, directionBox } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import { Avatar } from './Avatar';
 import { AvatarGroup } from './AvatarGroup';
@@ -223,7 +224,12 @@ export const OverlapAndSurfaceRing: Story = {
   args: { avatars: INITIALS, max: 2, size: 'lg' },
   play: async ({ canvas }) => {
     const [first, second, more] = canvas.getAllByRole('img');
-    const gap = second!.getBoundingClientRect().left - first!.getBoundingClientRect().right;
+    const [one, two] = [first!, second!].map((avatar) => avatar.getBoundingClientRect());
+    // The second avatar is on the end side of the first.
+    const gap =
+      getComputedStyle(first!).direction === 'rtl'
+        ? one!.left - two!.right
+        : two!.left - one!.right;
     // About a quarter of 48px.
     await expect(gap).toBeCloseTo(-12, 0);
     const ring = getComputedStyle(more!.parentElement!).boxShadow;
@@ -355,24 +361,28 @@ const PAIRS = [
   { name: 'Marcus Bell' },
 ];
 
-/** Two initials stay whole: the next avatar and its ring stop short of them, at every size. */
+/**
+ * Two initials stay whole: the next avatar and its ring stop short of them, at every size, in
+ * both directions (the next avatar is on the right in left to right, on the left otherwise).
+ */
 export const InitialsClearTheNextAvatar: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <div className="flex flex-col gap-4">
-      {SIZES.flatMap((size) =>
-        (['normal', 'tight'] as const).map((spacing) => (
-          <AvatarGroup
-            key={`${size} ${spacing}`}
-            aria-label={`${size} ${spacing}`}
-            avatars={PAIRS}
-            size={size}
-            spacing={spacing}
-          />
-        ))
-      )}
-    </div>
-  ),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex flex-col gap-4">
+        {SIZES.flatMap((size) =>
+          (['normal', 'tight'] as const).map((spacing) => (
+            <AvatarGroup
+              key={`${size} ${spacing}`}
+              aria-label={`${size} ${spacing}`}
+              avatars={PAIRS}
+              size={size}
+              spacing={spacing}
+            />
+          ))
+        )}
+      </div>
+    )),
   play: async ({ canvas }) => {
     await document.fonts.ready;
     const covered: string[] = [];
@@ -381,14 +391,38 @@ export const InitialsClearTheNextAvatar: Story = {
       avatars.slice(0, -1).forEach((avatar, i) => {
         const initials = avatar.querySelector('span') as HTMLElement;
         // The ring is 2px of surface colour around the next avatar, over this one.
-        const free = avatars[i + 1]!.getBoundingClientRect().left - 2;
-        const right = initials.getBoundingClientRect().right;
+        const next = avatars[i + 1]!.getBoundingClientRect();
+        const letters = initials.getBoundingClientRect();
+        const rtl = getComputedStyle(group).direction === 'rtl';
+        const hidden = rtl ? next.right + 2 - letters.left : letters.right - (next.left - 2);
         // Half a pixel is antialiasing, not a cut letter.
-        if (right - free > 0.5) {
-          covered.push(`${group.getAttribute('aria-label')}: ${(right - free).toFixed(1)}px`);
+        if (hidden > 0.5) {
+          covered.push(
+            `${group.getAttribute('aria-label')} (${rtl ? 'rtl' : 'ltr'}): ${hidden.toFixed(1)}px`
+          );
         }
       });
     }
     await expect(covered).toEqual([]);
+  },
+};
+
+/** In right to left the stack starts at the right and each avatar overlaps the one before it on its left. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <AvatarGroup avatars={INITIALS} max={2} size="lg" />),
+  play: async ({ canvasElement }) => {
+    // The two avatars and the "+N": each at the same distance from the start edge as in ltr.
+    for (const nth of [0, 1, 2]) {
+      expectMirrored(canvasElement, (box) => within(box).getAllByRole('img')[nth]);
+    }
+    const [first, second] = within(directionBox(canvasElement, 'rtl')).getAllByRole('img');
+    // About a quarter of 48px, over the first avatar's left side.
+    await expect(
+      first!.getBoundingClientRect().left - second!.getBoundingClientRect().right
+    ).toBeCloseTo(-12, 0);
+    await expect(first!.getBoundingClientRect().right).toBeGreaterThan(
+      second!.getBoundingClientRect().right
+    );
   },
 };
