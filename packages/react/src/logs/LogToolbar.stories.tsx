@@ -125,3 +125,27 @@ export const IconToggleKeepsItsSize: Story = {
     }
   },
 };
+
+/** Every control of the bar has the height of the others and the same top edge. */
+export const ControlsShareHeightAndTop: Story = {
+  ...FullBarWide,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvas }) => {
+    const levels = canvas.getByRole('group', { name: 'Levels' });
+    const boxes = [
+      canvas.getByRole('button', { name: /^Live/ }),
+      levels,
+      canvas.getByRole('textbox', { name: 'Search logs' }).parentElement!,
+      canvas.getByRole('button', { name: 'Regular expression' }),
+      canvas.getByRole('combobox', { name: 'Sources' }).parentElement!,
+      canvas.getByRole('button', { name: 'Wrap lines' }),
+      canvas.getByRole('button', { name: 'Newest first' }),
+      canvas.getByRole('button', { name: 'Download' }),
+      canvas.getByRole('button', { name: 'Clear' }),
+    ].map((el) => el.getBoundingClientRect());
+    for (const box of boxes) {
+      expect(box.height).toBeCloseTo(36, 0);
+      expect(box.top).toBeCloseTo(boxes[0]!.top, 0);
+    }
+  },
+};
