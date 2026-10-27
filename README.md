@@ -89,15 +89,17 @@ no Playwright on the host.
 make build-image    # Build cosmos-dev image (first time only)
 make install        # pnpm install + Playwright browsers, inside the container
 make storybook      # Start Storybook on http://localhost:6006
-make ci             # Run the FULL CI pipeline locally — RUN THIS BEFORE EVERY PUSH
+make check-changed  # Before every push: the CI pipeline cut down to what you changed
+make ci             # Run the FULL CI pipeline locally
 make test           # Unit + e2e tests only
 make build          # Build all package dists
 make help           # See every available target
 ```
 
 `make ci` mirrors `.github/workflows/ci.yml` (lint, format:check, typecheck,
-build, storybook:build, tests) and bails on the first failure. Running it
-before `git push` catches what CI would catch.
+build, storybook:build, tests) and bails on the first failure. `make
+check-changed` runs the part of it the changed files can break, and all of
+it when a change touches the theme, the config or the dependencies.
 
 Playwright browsers are not baked into the dev image: their revision is tied to
 the exact Playwright version in the lockfile. `make install` fetches them into
