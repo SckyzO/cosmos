@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DataTable } from './DataTable';
+import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import type { ColumnDef } from './types';
 
 // `virtualize` has its own file, in the `Tables/DataTable` family: DataTable.stories.tsx is already
@@ -320,5 +321,58 @@ export const SelectionWorksInTheWindow: Story = {
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row node-00003' }));
     await expect(args.onSelectionChange).toHaveBeenLastCalledWith(new Set(['node-00003']));
     await expect(canvas.getByText('1 selected')).toBeInTheDocument();
+  },
+};
+
+/** At 375px the windowed table scrolls in its own area and the page does not move sideways. */
+export const OnAPhone: Story = {
+  tags: ['!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={COUNT}
+        virtualize
+        aria-label="Nodes"
+        className="max-h-96"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(bodyRows(canvas.getByRole('table', { name: 'Nodes' })).length).toBeLessThan(40);
+    expectNoHorizontalOverflow();
+  },
+};
+
+/**
+ * `virtualize` is for the table layout. With `mobileLayout="cards"` below `sm` the cards are the
+ * rows, and they keep the pagination: a page of them, not the 10,000.
+ */
+export const CardsKeepThePagination: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        virtualize
+        mobileLayout="cards"
+        aria-label="Nodes"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    // The default page size: 25 cards, and the pager that goes to the others.
+    await expect(canvas.getAllByRole('listitem')).toHaveLength(25);
+    await expect(canvas.getByRole('button', { name: 'Next page' })).toBeInTheDocument();
+    // The table is not what shows.
+    const table = canvas.getByRole('table', { hidden: true });
+    await expect(getComputedStyle(table.parentElement!.parentElement!).display).toBe('none');
+    expectNoHorizontalOverflow();
   },
 };
