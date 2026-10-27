@@ -17,7 +17,7 @@ import { LinkForm } from './LinkForm';
 import type { ResolvedLabels } from './labels';
 
 const BUTTON =
-  'focus-visible:focus-indicator flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40';
+  'focus-visible:focus-indicator flex size-ctrl-28 shrink-0 items-center justify-center rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40';
 const PRESSED = 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400';
 const IDLE =
   'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 aria-disabled:hover:bg-transparent dark:aria-disabled:hover:bg-transparent';
