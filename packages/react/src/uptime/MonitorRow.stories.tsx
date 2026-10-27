@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { beatsFrom, FLAPPING_BEATS, GAPPY_BEATS, MIXED_BEATS } from '../storybook-uptime';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { MonitorRow, type MonitorRowProps } from './MonitorRow';
 
 const ALL_UP = beatsFrom('u'.repeat(60));
@@ -243,5 +244,18 @@ export const BeatsAreReachableInARow: Story = {
     await expect(await body.findByRole('tooltip')).toBeVisible();
     // The bar of a row is 24px high.
     await expect(group.getBoundingClientRect().height).toBe(24);
+  },
+};
+
+/** A monitor row follows the page's `data-density`. */
+export const RowFollowsPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <InEachDensity>
+      <MonitorRow {...args} />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (_scope, region) => region.firstElementChild!);
   },
 };

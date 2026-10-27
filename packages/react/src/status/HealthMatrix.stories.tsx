@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { HEALTH_NOW, MATRIX_COLUMNS, MATRIX_ROWS } from '../storybook-health';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthMatrix } from './HealthMatrix';
 
 const meta = {
@@ -235,5 +236,25 @@ export const MissingCellOpensNothing: Story = {
     await userEvent.click(none);
     await expect(within(canvasElement.ownerDocument.body).queryByRole('dialog')).toBeNull();
     await expect(none).not.toHaveAttribute('aria-haspopup');
+  },
+};
+
+/** The header cells and the cell buttons follow the page's `data-density`. */
+export const CellsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <InEachDensity>
+      <HealthMatrix {...args} />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getAllByRole('columnheader')[0]!);
+    await expectDensitySteps(
+      canvas,
+      (scope) => scope.getAllByRole('gridcell')[0]!.firstElementChild!,
+      {
+        control: true,
+      }
+    );
   },
 };
