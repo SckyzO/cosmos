@@ -322,20 +322,12 @@ export const LogToolbar = ({
             ? 'No matches'
             : `${format(Math.min(activeMatch, matchCount - 1) + 1)} of ${format(matchCount)}`;
 
-  const searchInput = hasSearch && (
-    <div onKeyDown={onSearchKeyDown} className="min-w-0 flex-1 sm:max-w-xs">
-      <SearchInput
-        aria-label="Search logs"
-        placeholder="Search…"
-        size="md"
-        value={search}
-        onChange={setSearch}
-      />
-    </div>
-  );
-  // The count and the arrows follow the field in the bar; narrow, they get a row under it.
+  // The count and the arrows sit at the end of the field in the bar, so the field keeps its width
+  // whether they show or not; narrow, they get a row under it.
   const searchNav = hasSearch && search !== '' && (matchText !== null || hasNav) && (
-    <div className="flex shrink-0 items-center gap-1">
+    <div
+      className={clsx('flex items-center gap-1', wide ? 'absolute inset-y-0 right-1' : 'shrink-0')}
+    >
       {matchText !== null && (
         <span
           aria-live="polite"
@@ -369,6 +361,22 @@ export const LogToolbar = ({
           />
         </>
       )}
+    </div>
+  );
+
+  const searchInput = hasSearch && (
+    <div className="relative min-w-0 flex-1 sm:max-w-xs">
+      <div onKeyDown={onSearchKeyDown}>
+        <SearchInput
+          aria-label="Search logs"
+          placeholder="Search…"
+          size="md"
+          value={search}
+          onChange={setSearch}
+          className={wide && searchNav ? '[&_input]:pr-32' : undefined}
+        />
+      </div>
+      {wide && searchNav}
     </div>
   );
 
@@ -444,7 +452,6 @@ export const LogToolbar = ({
         {searchInput && (
           <div className="flex min-w-0 flex-1 items-center gap-1 sm:max-w-lg">
             {searchInput}
-            {searchNav}
             {regexToggle}
           </div>
         )}
