@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Download, Search, X } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -133,6 +133,29 @@ export type DataTableProps<T> = {
    */
   filterTabs?: DataTableFilterTabsConfig;
 
+  // ── Sort and page ──────────────────────────────────────────────────────────
+  /**
+   * The sort, when controlled: `{ key, direction }` of a column, or `null` for the order of
+   * `rows`. A click on a sortable header, the "Sort by" select of the cards and a saved view go
+   * through `onSortChange`, and a controlled table shows the new sort once the host passes it
+   * back. Works with or without `manual`.
+   */
+  sort?: DataTableSort;
+  /** The sort when uncontrolled. Default `null`. */
+  defaultSort?: DataTableSort;
+  /** Called with the sort to move to, in both modes. The table then goes back to the first page. */
+  onSortChange?: (sort: DataTableSort) => void;
+  /**
+   * The current page, 1-indexed like `Pagination`, when controlled. Works with or without
+   * `manual`. A change of the search, the filters, the sort or the page size goes back to page 1,
+   * and a controlled table reports it through `onPageChange` (not when it is on page 1 already).
+   */
+  page?: number;
+  /** The page when uncontrolled, 1-indexed. Default `1`. */
+  defaultPage?: number;
+  /** Called with the page to go to, in both modes. */
+  onPageChange?: (page: number) => void;
+
   // ── Rows per page ──────────────────────────────────────────────────────────
   /** Rows per page when uncontrolled. Default 25. */
   defaultPageSize?: number;
@@ -264,6 +287,12 @@ export const DataTable = <T,>({
   defaultFilters,
   onFiltersChange,
   filterTabs,
+  sort: sortProp,
+  defaultSort = null,
+  onSortChange,
+  page: pageProp,
+  defaultPage = 1,
+  onPageChange,
   defaultPageSize = 25,
   onPageSizeChange,
   pageSizeOptions,
@@ -316,7 +345,12 @@ export const DataTable = <T,>({
   const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
-  const [sort, setSort] = useState<DataTableSort>(null);
+  const [sort, setSortState] = useControllableState<DataTableSort>({
+    value: sortProp,
+    defaultValue: defaultSort,
+    onChange: onSortChange,
+    name: 'DataTable.sort',
+  });
   const sortKey = sort?.key ?? null;
   const sortDir = sort?.direction ?? 'asc';
   const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
@@ -325,7 +359,18 @@ export const DataTable = <T,>({
     onChange: onFiltersChange,
     name: 'DataTable.filters',
   });
-  const [page, setPage] = useState(0);
+  // 1-indexed, as `Pagination`'s; `safePage` below keeps it inside the pages that exist.
+  const [page, setPage] = useControllableState({
+    value: pageProp,
+    defaultValue: defaultPage,
+    onChange: onPageChange,
+    name: 'DataTable.page',
+  });
+  // A change of search, filters, sort or page size shows page 1 again. Through the setter, so a
+  // controlled host hears it; not when it is there already, so a keystroke is not a page change.
+  const goToFirstPage = () => {
+    if (page !== 1) setPage(1);
+  };
   const [showAll, setShowAll] = useState(false);
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
@@ -343,13 +388,10 @@ export const DataTable = <T,>({
   });
   const searchEnabled =
     isSearchControlled || defaultSearchValue !== undefined || onSearchChange !== undefined;
-  const setSearch = useCallback(
-    (value: string) => {
-      setSearchState(value);
-      setPage(0);
-    },
-    [setSearchState]
-  );
+  const setSearch = (value: string) => {
+    setSearchState(value);
+    goToFirstPage();
+  };
 
   const [pageSize, setPageSizeState] = useControllableState({
     value: pageSizeProp,
@@ -359,7 +401,11 @@ export const DataTable = <T,>({
   });
   const setPageSize = (size: number) => {
     setPageSizeState(size);
-    setPage(0);
+    goToFirstPage();
+  };
+  const setSort = (next: DataTableSort) => {
+    setSortState(next);
+    goToFirstPage();
   };
 
   const handleSortToggle = (key: string) => {
@@ -378,7 +424,7 @@ export const DataTable = <T,>({
       else out[key] = next;
       return out;
     });
-    setPage(0);
+    goToFirstPage();
   };
 
   const clearFilter = (key: string) => {
@@ -387,7 +433,7 @@ export const DataTable = <T,>({
       delete out[key];
       return out;
     });
-    setPage(0);
+    goToFirstPage();
   };
 
   const selectFilterTab = (value: string | undefined) => {
@@ -395,13 +441,13 @@ export const DataTable = <T,>({
     if (value === undefined) clearFilter(filterTabs.columnKey);
     else {
       setFilters((prev) => ({ ...prev, [filterTabs.columnKey]: new Set([value]) }));
-      setPage(0);
+      goToFirstPage();
     }
   };
 
   const clearAllFilters = () => {
     setFilters({});
-    setPage(0);
+    goToFirstPage();
   };
 
   // Build filter values per column (unique values currently present)
@@ -434,10 +480,10 @@ export const DataTable = <T,>({
   const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
-  const safePage = Math.min(page, totalPages - 1);
+  const safePage = Math.min(Math.max(page, 1), totalPages);
   const pageRows = showAll
     ? sortedRows
-    : sortedRows.slice(safePage * pageSize, (safePage + 1) * pageSize);
+    : sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Selection helpers — operate on the *currently visible* rows so "select all"
   // never touches rows hidden by the search/filter pipeline.
@@ -500,17 +546,18 @@ export const DataTable = <T,>({
     density,
   };
   const applyView = (view: DataTableView) => {
-    setSearch(view.search);
+    // Each part through its own setter, then one trip back to the first page.
+    setSearchState(view.search);
     setFilters(recordToFilters(view.filters));
-    setSort(view.sort);
+    setSortState(view.sort);
     setColumnVisibility(view.columnVisibility);
     if (view.pageSize === 'all') setShowAll(true);
     else {
       setShowAll(false);
-      setPageSize(view.pageSize);
+      setPageSizeState(view.pageSize);
     }
     setDensity(view.density);
-    setPage(0);
+    goToFirstPage();
     setActiveViewId(view.id);
   };
   const saveView = (name: string) => {
@@ -945,13 +992,13 @@ export const DataTable = <T,>({
 
       {!loading && !error && sortedRows.length > 0 && (
         <Pagination
-          page={safePage + 1}
+          page={safePage}
           totalPages={totalPages}
           aria-label={ariaLabel ? `${ariaLabel} pagination` : undefined}
           showInfo
           total={sortedRows.length}
           pageSize={pageSize}
-          onPageChange={(next) => setPage(next - 1)}
+          onPageChange={setPage}
           showAll={showAll}
           onShowAllChange={setShowAll}
           controls={
