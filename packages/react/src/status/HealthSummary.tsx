@@ -47,7 +47,10 @@ export type HealthSummaryProps = {
   checkedAt?: DateTimeValue;
   /** Draws a `RefreshButton` with these props. Without it there is no refresh action. */
   refresh?: RefreshButtonProps;
-  /** Accessible name of the region. Default "System health". */
+  /**
+   * Accessible name of the group. Default "System health". It is a group, not a landmark, so
+   * several summaries on a page need no distinct name.
+   */
   ariaLabel?: string;
   /** Freezes the "last check" text at this moment. For stories and tests. */
   now?: Date | number;
@@ -141,7 +144,8 @@ export const HealthSummary = ({
 
   if (variant === 'compact') {
     return (
-      <section
+      <div
+        role="group"
         aria-label={ariaLabel}
         className={clsx(
           'flex min-h-12 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-3.5 py-2 text-sm',
@@ -159,13 +163,14 @@ export const HealthSummary = ({
           {lastCheck}
         </span>
         {refresh && <RefreshButton {...refresh} className={clsx('ml-auto', refresh.className)} />}
-      </section>
+      </div>
     );
   }
 
   const Icon = ICON[shown];
   return (
-    <section
+    <div
+      role="group"
       aria-label={ariaLabel}
       className={clsx(
         'flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border px-5 py-4',
@@ -198,6 +203,6 @@ export const HealthSummary = ({
         ))}
       </div>
       {refresh && <RefreshButton {...refresh} />}
-    </section>
+    </div>
   );
 };
