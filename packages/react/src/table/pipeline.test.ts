@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
+import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
 import type { ColumnDef } from './types';
 
 type Person = {
@@ -278,5 +278,23 @@ describe('sortRows', () => {
     expect(sorted).not.toBe(rows);
     expect(ids(sorted)).toEqual([1, 3]);
     expect(ids(rows)).toEqual([3, 1]);
+  });
+});
+
+describe('filtersToRecord', () => {
+  it('turns the sets into sorted arrays', () => {
+    expect(
+      filtersToRecord({ role: new Set(['Ops', 'Engineer']), team: new Set(['Core']) })
+    ).toEqual({
+      role: ['Engineer', 'Ops'],
+      team: ['Core'],
+    });
+  });
+
+  it('leaves out a column with nothing selected', () => {
+    expect(filtersToRecord({ role: new Set(), team: new Set(['Core']) })).toEqual({
+      team: ['Core'],
+    });
+    expect(filtersToRecord({})).toEqual({});
   });
 });

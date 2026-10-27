@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
+import type { ColumnVisibility } from './columnVisibility';
 
 export type SortDirection = 'asc' | 'desc';
+
+/** The column a `DataTable` is sorted by and the direction, or `null` for the order of `rows`. */
+export type DataTableSort = { key: string; direction: SortDirection } | null;
 
 /** Row height of a `DataTable`: the standard rows, or taller `comfortable` ones. */
 export type DataTableDensity = 'default' | 'comfortable';
@@ -21,6 +25,12 @@ export type ColumnDef<T> = {
   filterValue?: (row: T) => string;
   /** Returns the searchable string for the row. Falls back to `filterValue` if absent. */
   searchValue?: (row: T) => string;
+  /**
+   * The cell's value in a CSV export (`exportable`, `toCsv`). Without it the export takes
+   * `sortValue`, then `searchValue`, then `filterValue`, then an empty cell. `null` is an empty
+   * cell too.
+   */
+  exportValue?: (row: T) => string | number | null;
   sortable?: boolean;
   filterable?: boolean;
   /**
@@ -38,4 +48,35 @@ export type ColumnDef<T> = {
   mobile?: 'title' | 'hidden';
   /** The label of the column's pair in a card, in place of `label` (a short or plain-text one). */
   mobileLabel?: ReactNode;
+};
+
+/** What `DataTable` hands to `onExport`: the table as the user has set it, not the file. */
+export type DataTableExportQuery = {
+  /** The search text (empty without a search). */
+  search: string;
+  /** Column `key` → the selected filter values. */
+  filters: Record<string, string[]>;
+  sort: DataTableSort;
+  /** The keys of the visible data columns, in the order they are drawn. */
+  columns: string[];
+};
+
+/**
+ * A saved view of a `DataTable`: a name and every part of the state a user sets. Plain JSON, so
+ * the host can keep it anywhere (local storage, a server).
+ */
+export type DataTableView = {
+  /** Identifies the view; `activeView` holds it. Unique among the views of a table. */
+  id: string;
+  name: string;
+  /** The search text. */
+  search: string;
+  /** Column `key` → the selected filter values. */
+  filters: Record<string, string[]>;
+  sort: DataTableSort;
+  /** Column `key` → shown. */
+  columnVisibility: ColumnVisibility;
+  /** Rows per page; `'all'` is "Show all". */
+  pageSize: number | 'all';
+  density: DataTableDensity;
 };

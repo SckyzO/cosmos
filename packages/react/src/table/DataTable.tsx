@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
-import { Search, X } from 'lucide-react';
+import { Download, Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
+import { DataTableViews } from './DataTableViews';
 import { DataTableMobileCards, DataTableMobileSort } from './DataTableMobileCards';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
@@ -15,13 +16,23 @@ import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
-import { columnFilterValues, filterRows, searchRows, sortRows } from './pipeline';
+import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
+import { newViewId, recordToFilters, type ViewState } from './savedViews';
 import { useControllableState } from '../hooks/useControllableState';
+import { toCsv } from './csv';
+import { downloadCsv } from './download';
+import { TOOLBAR_BUTTON } from './toolbarButton';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
-import type { ColumnDef, DataTableDensity, SortDirection } from './types';
+import type {
+  ColumnDef,
+  DataTableDensity,
+  DataTableExportQuery,
+  DataTableSort,
+  DataTableView,
+} from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
@@ -62,9 +73,14 @@ export type DataTableProps<T> = {
   /**
    * Row height. `default` keeps the standard rows. `comfortable` pads the
    * header and body cells more, for rows that carry two lines (a name over an
-   * email, an avatar) or need more room. Cell content stays vertically centred.
+   * email, an avatar) or need more room. Cell content stays vertically centred. A `density`
+   * passed without `onDensityChange` is a controlled value that never moves: applying a saved view
+   * then reports its density and keeps this one.
    */
   density?: DataTableDensity;
+  defaultDensity?: DataTableDensity;
+  /** Called with the density to move to, in both modes (a saved view sets it). */
+  onDensityChange?: (density: DataTableDensity) => void;
   /**
    * Pins the first data column (and the selection column before it) to the start while the table
    * scrolls sideways, so the row stays identified on a narrow screen. With `rowHref`, the link
@@ -144,6 +160,45 @@ export type DataTableProps<T> = {
   /** Called with the visibility of every column when one is toggled from the menu. */
   onColumnVisibilityChange?: (visibility: ColumnVisibility) => void;
 
+  // ── Export ─────────────────────────────────────────────────────────────────
+  /**
+   * Shows an "Export" button in the toolbar, before the "Columns" one; the toolbar then shows even
+   * without a search field. It downloads a CSV of every page of the rows that the search, the
+   * filters and the sort keep, in the visible columns and their order (the selection and action
+   * columns are not data). A column's header is its `label` when that is a string or a number,
+   * else its `mobileLabel` when that is a string, else its `key`; its cells come from `exportValue`
+   * (see `ColumnDef`, and `toCsv` for the format). The file is UTF-8 with a byte order mark, so
+   * that spreadsheets read accents. Default `false`.
+   */
+  exportable?: boolean;
+  /** Name of the downloaded file. Default `'export.csv'`. */
+  exportFileName?: string;
+  /**
+   * Makes the Export button call this with what the table shows (search, filters, sort, visible
+   * column keys) and build no file: for a host that exports on the server.
+   */
+  onExport?: (query: DataTableExportQuery) => void;
+
+  // ── Saved views ────────────────────────────────────────────────────────────
+  /**
+   * The saved views, when controlled. Passing this or `defaultViews` shows a "Views" button in the
+   * toolbar (which then shows even without a search field): its menu applies a view, saves the
+   * current state as a new one, renames the active view or deletes it. A view holds the search,
+   * filters, sort, visible columns, page size and density as plain JSON; the host keeps it
+   * (`onViewsChange`). Applying a view sets each part through the table's own setters, so a
+   * controlled part reports its `on*Change` (a part the host does not let move, such as a `pageSize`
+   * with no `onPageSizeChange`, stays where it is), and goes back to the first page.
+   */
+  views?: DataTableView[];
+  defaultViews?: DataTableView[];
+  /** Called with the whole list after a view is saved, renamed or deleted. */
+  onViewsChange?: (views: DataTableView[]) => void;
+  /** The `id` of the active view, or `null` for none; when controlled. */
+  activeView?: string | null;
+  defaultActiveView?: string | null;
+  /** Called with the `id` of the view that became active, or `null` (the active view was deleted). */
+  onActiveViewChange?: (id: string | null) => void;
+
   // ── Narrow screens ─────────────────────────────────────────────────────────
   /**
    * What the rows become below `sm` (640px). `scroll` (the default) keeps the table, scrolling
@@ -189,7 +244,9 @@ export const DataTable = <T,>({
   onRetry,
   emptyTitle = 'No results',
   emptyDescription,
-  density = 'default',
+  density: densityProp,
+  defaultDensity = 'default',
+  onDensityChange,
   stickyFirstColumn = false,
   selectable = false,
   selection: selectionProp,
@@ -211,12 +268,27 @@ export const DataTable = <T,>({
   onPageSizeChange,
   pageSizeOptions,
   columnsMenu = false,
+  exportable = false,
+  exportFileName = 'export.csv',
+  onExport,
+  views: viewsProp,
+  defaultViews,
+  onViewsChange,
+  activeView: activeViewProp,
+  defaultActiveView = null,
+  onActiveViewChange,
   columnVisibility: columnVisibilityProp,
   defaultColumnVisibility,
   onColumnVisibilityChange,
   mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
   const mobileCards = mobileLayout === 'cards';
+  const [density, setDensity] = useControllableState<DataTableDensity>({
+    value: densityProp,
+    defaultValue: defaultDensity,
+    onChange: onDensityChange,
+    name: 'DataTable.density',
+  });
   const [columnVisibility, setColumnVisibility] = useControllableState<ColumnVisibility>({
     value: columnVisibilityProp,
     defaultValue: () => defaultColumnVisibility ?? {},
@@ -228,6 +300,8 @@ export const DataTable = <T,>({
     () => resolveColumnVisibility(allColumns, columnVisibility),
     [allColumns, columnVisibility]
   );
+  const viewsEnabled = viewsProp !== undefined || defaultViews !== undefined;
+  const hasToolbarControls = columnsMenu || exportable || viewsEnabled;
   const columnsMenuNode = columnsMenu ? (
     <DataTableColumnsMenu
       columns={allColumns}
@@ -242,8 +316,9 @@ export const DataTable = <T,>({
   const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [sort, setSort] = useState<DataTableSort>(null);
+  const sortKey = sort?.key ?? null;
+  const sortDir = sort?.direction ?? 'asc';
   const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
     value: filtersProp,
     defaultValue: () => defaultFilters ?? {},
@@ -288,14 +363,9 @@ export const DataTable = <T,>({
   };
 
   const handleSortToggle = (key: string) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
-    } else {
-      setSortKey(null);
-    }
+    if (sortKey !== key) setSort({ key, direction: 'asc' });
+    else if (sortDir === 'asc') setSort({ key, direction: 'desc' });
+    else setSort(null);
   };
 
   const handleFilterToggle = (key: string, value: string) => {
@@ -409,24 +479,111 @@ export const DataTable = <T,>({
     value: Array.from(vals).join(', '),
   }));
 
+  const [savedViews, setSavedViews] = useControllableState<DataTableView[]>({
+    value: viewsProp,
+    defaultValue: () => defaultViews ?? [],
+    onChange: onViewsChange,
+    name: 'DataTable.views',
+  });
+  const [activeViewId, setActiveViewId] = useControllableState<string | null>({
+    value: activeViewProp,
+    defaultValue: defaultActiveView,
+    onChange: onActiveViewChange,
+    name: 'DataTable.activeView',
+  });
+  const currentState: ViewState = {
+    search: searchValue,
+    filters: filtersToRecord(filters),
+    sort,
+    columnVisibility: shown,
+    pageSize: showAll ? 'all' : pageSize,
+    density,
+  };
+  const applyView = (view: DataTableView) => {
+    setSearch(view.search);
+    setFilters(recordToFilters(view.filters));
+    setSort(view.sort);
+    setColumnVisibility(view.columnVisibility);
+    if (view.pageSize === 'all') setShowAll(true);
+    else {
+      setShowAll(false);
+      setPageSize(view.pageSize);
+    }
+    setDensity(view.density);
+    setPage(0);
+    setActiveViewId(view.id);
+  };
+  const saveView = (name: string) => {
+    const view: DataTableView = { id: newViewId(savedViews), name, ...currentState };
+    setSavedViews([...savedViews, view]);
+    setActiveViewId(view.id);
+  };
+  const renameActiveView = (name: string) =>
+    setSavedViews(savedViews.map((v) => (v.id === activeViewId ? { ...v, name } : v)));
+  const deleteActiveView = () => {
+    setSavedViews(savedViews.filter((v) => v.id !== activeViewId));
+    setActiveViewId(null);
+  };
+
+  const handleExport = () => {
+    if (onExport) {
+      onExport({
+        search: searchEnabled ? searchValue : '',
+        filters: filtersToRecord(filters),
+        sort,
+        columns: columns.map((c) => c.key),
+      });
+      return;
+    }
+    downloadCsv(toCsv(sortedRows, columns), exportFileName);
+  };
+  const toolbarControls = hasToolbarControls ? (
+    <div className="flex shrink-0 items-center gap-2">
+      {viewsEnabled && (
+        <DataTableViews
+          views={savedViews}
+          activeId={activeViewId}
+          current={currentState}
+          columns={allColumns}
+          onApply={applyView}
+          onSave={saveView}
+          onRename={renameActiveView}
+          onDelete={deleteActiveView}
+        />
+      )}
+      {exportable && (
+        <button type="button" aria-label="Export" onClick={handleExport} className={TOOLBAR_BUTTON}>
+          <Download aria-hidden className="h-4 w-4" />
+          <span className="max-sm:hidden">Export</span>
+        </button>
+      )}
+      {columnsMenuNode}
+    </div>
+  ) : null;
+
   return (
     <div
       className={clsx(
         'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] dark:border-gray-800',
+        // On paper every row prints: no height to scroll in, nothing clipped, so that the header
+        // repeats on each page.
+        'print:h-auto print:max-h-none print:overflow-visible',
         className
       )}
     >
       {filterTabs && (
-        <DataTableFilterTabsStrip
-          tabs={filterTabs}
-          selected={filters[filterTabs.columnKey]}
-          onSelect={selectFilterTab}
-        />
+        <div className="print:hidden">
+          <DataTableFilterTabsStrip
+            tabs={filterTabs}
+            selected={filters[filterTabs.columnKey]}
+            onSelect={selectFilterTab}
+          />
+        </div>
       )}
 
       {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
       {selectable && selection.size > 0 ? (
-        <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
+        <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden">
           <span className="text-brand-700 dark:text-brand-300 text-sm font-medium">
             {selection.size} selected
           </span>
@@ -444,11 +601,11 @@ export const DataTable = <T,>({
       ) : searchEnabled ? (
         <div
           className={clsx(
-            'border-b border-gray-100 px-4 py-2 dark:border-gray-800',
-            columnsMenu && 'flex items-center gap-2'
+            'border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
+            hasToolbarControls && 'flex items-center gap-2'
           )}
         >
-          <div className={clsx('relative h-9', columnsMenu && 'min-w-0 flex-1')}>
+          <div className={clsx('relative h-9', hasToolbarControls && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -472,33 +629,30 @@ export const DataTable = <T,>({
               </button>
             )}
           </div>
-          {mobileCards ? <div className="max-sm:hidden">{columnsMenuNode}</div> : columnsMenuNode}
+          {mobileCards ? <div className="max-sm:hidden">{toolbarControls}</div> : toolbarControls}
         </div>
-      ) : columnsMenu ? (
+      ) : hasToolbarControls ? (
         <div
           className={clsx(
-            'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+            'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
             mobileCards && 'max-sm:hidden'
           )}
         >
-          {columnsMenuNode}
+          {toolbarControls}
         </div>
       ) : null}
 
-      {mobileCards && (mobileSortable || columnsMenu) && (
-        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800">
+      {mobileCards && (mobileSortable || hasToolbarControls) && (
+        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800 print:hidden">
           {mobileSortable && (
             <DataTableMobileSort
               columns={columns}
               sortKey={sortKey}
               sortDir={sortDir}
-              onSortChange={(key, dir) => {
-                setSortKey(key);
-                setSortDir(dir);
-              }}
+              onSortChange={(key, direction) => setSort(key === null ? null : { key, direction })}
             />
           )}
-          {columnsMenuNode}
+          {toolbarControls}
         </div>
       )}
 
@@ -541,6 +695,8 @@ export const DataTable = <T,>({
         style={fade}
         className={clsx(
           'focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset',
+          // The edge fade is set inline; `!` lets paper drop it.
+          'print:overflow-visible print:mask-none!',
           mobileCards && 'max-sm:hidden'
         )}
       >
@@ -556,7 +712,7 @@ export const DataTable = <T,>({
           className="w-full table-fixed"
         >
           <colgroup>
-            {selectable && <col style={{ width: SELECT_COLUMN_WIDTH }} />}
+            {selectable && <col style={{ width: SELECT_COLUMN_WIDTH }} className="print:hidden" />}
             {columns.map((c, i) => (
               <col
                 key={c.key}
@@ -565,15 +721,18 @@ export const DataTable = <T,>({
                 }
               />
             ))}
-            {renderRowAction && <col style={{ width: ACTION_COLUMN_WIDTH }} />}
+            {renderRowAction && (
+              <col style={{ width: ACTION_COLUMN_WIDTH }} className="print:hidden" />
+            )}
           </colgroup>
-          <thead className="sticky top-0 z-10">
+          <thead className="sticky top-0 z-10 print:static">
             <tr className="border-b border-gray-100 dark:border-gray-800">
               {selectable && (
                 <th
                   className={clsx(
                     HEADER_CELL,
                     HEADER_CELL_PADDING[density],
+                    'print:hidden',
                     stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
                   )}
                 >
@@ -611,7 +770,13 @@ export const DataTable = <T,>({
                 />
               ))}
               {renderRowAction && (
-                <th className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], 'text-right')}>
+                <th
+                  className={clsx(
+                    HEADER_CELL,
+                    HEADER_CELL_PADDING[density],
+                    'text-right print:hidden'
+                  )}
+                >
                   Action
                 </th>
               )}
@@ -621,7 +786,9 @@ export const DataTable = <T,>({
             {loading ? (
               Array.from({ length: loadingRows }, (_, i) => (
                 <tr key={i}>
-                  {selectable && <td className={clsx('px-4', BODY_CELL_PADDING[density])} />}
+                  {selectable && (
+                    <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])} />
+                  )}
                   {columns.map((col, c) => (
                     <td
                       key={col.key}
@@ -645,7 +812,7 @@ export const DataTable = <T,>({
                     </td>
                   ))}
                   {renderRowAction && (
-                    <td className={clsx('px-4', BODY_CELL_PADDING[density])}>
+                    <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])}>
                       <div className="flex h-5 items-center justify-end">
                         <Sk h="h-5" w="w-12" round="rounded-lg" />
                       </div>
@@ -703,7 +870,7 @@ export const DataTable = <T,>({
                         : undefined
                     }
                     className={clsx(
-                      'hover:bg-gray-50 dark:hover:bg-white/5',
+                      'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
                       isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
                       (onRowClick || href) && 'cursor-pointer',
                       stickyFirstColumn && 'group',
@@ -715,7 +882,7 @@ export const DataTable = <T,>({
                     {selectable && (
                       <td
                         className={clsx(
-                          'px-4',
+                          'px-4 print:hidden',
                           BODY_CELL_PADDING[density],
                           href && 'relative z-[1]',
                           stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
@@ -760,7 +927,7 @@ export const DataTable = <T,>({
                     {renderRowAction && (
                       <td
                         className={clsx(
-                          'px-4',
+                          'px-4 print:hidden',
                           BODY_CELL_PADDING[density],
                           href && 'relative z-[1]'
                         )}
@@ -792,7 +959,7 @@ export const DataTable = <T,>({
               <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />
             ) : undefined
           }
-          className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800"
+          className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800 print:hidden"
         />
       )}
     </div>
