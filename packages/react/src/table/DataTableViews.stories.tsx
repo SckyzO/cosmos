@@ -90,7 +90,10 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
 );
 
-type Canvas = ReturnType<typeof within>;
+type Canvas = {
+  getByRole: (role: string, options?: { name: string | RegExp }) => HTMLElement;
+  getAllByRole: (role: string) => HTMLElement[];
+};
 const body = within(document.body);
 
 const openViews = async (canvas: Canvas, button: string | RegExp = 'Views') => {
