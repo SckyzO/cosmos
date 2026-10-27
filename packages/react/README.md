@@ -204,6 +204,82 @@ row action on the first line, then a label/value pair per other column
 gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
 the table.
 
+`DataTable`'s `density` is controllable like the rest: `density`, `defaultDensity`
+and `onDensityChange(density)`. As with `pageSize`, a `density` passed without
+`onDensityChange` is a controlled value that never moves, so a saved view
+reports its density and the table keeps the one you pass.
+
+`exportable` adds an Export button before Columns (the toolbar shows even
+without a search field). It downloads a CSV of every page of the rows that the
+search, filters and sort keep, in the visible columns and their order; the
+selection and action columns stay out. A header is the column's `label` when it
+is a string or a number, else `mobileLabel` when that is a string, else the
+`key`. A cell takes `exportValue(row)`, else `sortValue`, `searchValue` or
+`filterValue` (the first the column has); `null` is an empty cell. The file is
+named by `exportFileName` (default `export.csv`) and is UTF-8 with a byte order
+mark (U+FEFF), so that spreadsheets read accents. Fields follow RFC 4180
+(quoted when they hold `"`, `,` or a line break, records end with CRLF), and a
+string that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a
+`'` prefix so a spreadsheet never runs it as a formula; a `number` is left
+alone. To export on the server, `onExport(query)` receives `{ search, filters,
+sort, columns }` (the visible column keys, in order) and builds no file.
+`toCsv(rows, columns)` gives the same text, without the byte order mark, for an
+export outside a table (prepend U+FEFF for a file meant for spreadsheets).
+
+```tsx
+<DataTable
+  rows={rows}
+  columns={[
+    { key: 'name', label: 'Name', render: (r) => r.name, sortValue: (r) => r.name },
+    {
+      key: 'cpu',
+      label: 'CPU %',
+      render: (r) => <Gauge value={r.cpu} />,
+      exportValue: (r) => r.cpu,
+    },
+  ]}
+  rowKey={(r) => r.id}
+  exportable
+  exportFileName="nodes.csv"
+/>
+```
+
+On paper a `DataTable` drops its toolbar, bulk-action bar, filter tabs, pager
+and the selection and action columns, prints every row of the page instead of
+scrolling, repeats the header on each page and keeps a row on one page. There is
+no Print button: use the browser's. The theme is not switched, so a dark theme
+prints its own colours: pick a light one for print (or `@media print` in your CSS).
+
+Saved views: `views` (or `defaultViews`) shows a Views button in the toolbar.
+A view is plain JSON, `{ id, name, search, filters, sort, columnVisibility,
+pageSize, density }` (`filters` maps a column key to an array of values, `sort`
+is `{ key, direction }` or `null`, `pageSize` is a number or `'all'` for "Show
+all"), so you can keep the list anywhere: the table never stores it. Pass
+`views` and `onViewsChange(views)`, or `defaultViews` and listen to
+`onViewsChange`; `activeView` / `defaultActiveView` / `onActiveViewChange(id)`
+hold the `id` of the applied view, or `null`. The menu applies a view, saves the
+current state as a new one ("Save as…"), renames the active one or deletes it
+(after a confirmation); a name must be filled and not used by another view.
+Applying a view sets each part through the table's own state, so a part you
+control reports its own `on*Change`, and the table goes back to the first page.
+The button shows the active view's name, with "(modified)" once the table no
+longer matches it. The `DataTableView`, `DataTableSort` and `DataTableExportQuery`
+types are exported.
+
+```tsx
+const [views, setViews] = useState<DataTableView[]>(() => load());
+<DataTable
+  rows={rows}
+  columns={columns}
+  rowKey={(r) => r.id}
+  views={views}
+  onViewsChange={(next) => {
+    setViews(next);
+    save(next);
+  }}
+/>;
+```
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
