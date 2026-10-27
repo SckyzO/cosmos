@@ -277,6 +277,28 @@ column, `renderCard` replaces what is inside a card (the grip and the actions me
 Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
 is pre-1.0. It is a regular dependency of the package, not a peer.
 
+## Auth layouts
+
+`AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
+`card` (default, unchanged) is a centred card; `split` puts the form beside a brand panel; `cover`
+centres the card over a full-bleed image.
+
+```tsx
+<AuthLayout variant="split" logo={Activity} title="Cosmos Cloud" subtitle="Monitor every rack.">
+  <SignInForm />
+</AuthLayout>
+<AuthLayout variant="cover" cover={{ src: '/login.jpg' }} logo={Activity} title="Cosmos Cloud">
+  <SignInForm />
+</AuthLayout>
+```
+
+In `split`, `aside` replaces the default panel (an accent surface with the `logo`, `title` and
+`subtitle`; `null` for none), `asidePosition` (`start` | `end`, default `end`) picks its side. The
+panel shows from `lg` up; below, the brand block sits above the form. In `cover`, `cover.src` is
+drawn under a dark scrim (`cover.alt` is empty unless set), and without it the card sits on a
+gradient of the accent. Outside `card` the built-in title is a paragraph, since the forms bring
+their own `h1`.
+
 ## Chat
 
 Building blocks for a conversation view: `ChatThread` (a `role="log"` live
