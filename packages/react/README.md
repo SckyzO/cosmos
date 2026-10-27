@@ -280,7 +280,7 @@ is pre-1.0. It is a regular dependency of the package, not a peer.
 ## Auth layouts
 
 `AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
-`card` (default, unchanged) is a centred card; `split` puts the form beside a brand panel; `cover`
+`card` (default) is a centred card; `split` puts the form beside a brand panel; `cover`
 centres the card over a full-bleed image.
 
 ```tsx
@@ -296,8 +296,8 @@ In `split`, `aside` replaces the default panel (an accent surface with the `logo
 `subtitle`; `null` for none), `asidePosition` (`start` | `end`, default `end`) picks its side. The
 panel shows from `lg` up; below, the brand block sits above the form. In `cover`, `cover.src` is
 drawn under a dark scrim (`cover.alt` is empty unless set), and without it the card sits on a
-gradient of the accent. Outside `card` the built-in title is a paragraph, since the forms bring
-their own `h1`.
+gradient of the accent. In every variant the built-in title is a paragraph: the forms carry the
+page's `h1`.
 
 ## Files and uploads
 

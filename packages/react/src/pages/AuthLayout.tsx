@@ -18,8 +18,8 @@ export type AuthLayoutProps = {
   /**
    * Page structure: `card` (default) is a centered card, `split` puts the form beside a brand
    * panel (`aside`), `cover` centers the card over a full-bleed image or gradient (`cover`).
-   * In `split` and `cover` the built-in title is a paragraph, not a heading: the form brings its
-   * own `h1`. A `brand` node of your own is rendered as written.
+   * In every variant the built-in title is a paragraph, not a heading: the form brings its own
+   * `h1`. A `brand` node of your own is rendered as written.
    */
   variant?: AuthLayoutVariant;
   /**
@@ -54,8 +54,6 @@ export type AuthLayoutProps = {
  *
  * `variant="split"` and `variant="cover"` keep the same brand block and children; see the props.
  */
-const TITLE_CLASS = 'text-xl font-bold text-gray-900 dark:text-white';
-
 export const AuthLayout = ({
   logo: Logo,
   title,
@@ -79,12 +77,7 @@ export const AuthLayout = ({
             <Logo className="h-6 w-6" />
           </div>
         )}
-        {title &&
-          (variant === 'card' ? (
-            <h1 className={TITLE_CLASS}>{title}</h1>
-          ) : (
-            <p className={TITLE_CLASS}>{title}</p>
-          ))}
+        {title && <p className="text-xl font-bold text-gray-900 dark:text-white">{title}</p>}
         {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
       </div>
     ) : null;
