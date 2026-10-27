@@ -1,14 +1,29 @@
 import { clsx } from 'clsx';
 import { AlertCircle, Check, CheckCheck, Clock } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 import { MessageText } from './MessageText';
 
 export type ChatMessageDirection = 'incoming' | 'outgoing';
 export type ChatMessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 
-export type ChatMessageProps = {
-  /** Message text. Rendered as text (never HTML); http(s) URLs become links. */
-  text: string;
+// `text` and `children` are two ways to give the content, never both.
+type ChatMessageContent =
+  | {
+      /** Message text. Rendered as text (never HTML); http(s) URLs become links. */
+      text: string;
+      children?: undefined;
+    }
+  | {
+      text?: undefined;
+      /**
+       * Rich content in place of `text`: rendered nodes (a code block, a list, a table, an image
+       * grid). Markdown rendering stays in the app; it passes what it rendered.
+       */
+      children: ReactNode;
+    };
+
+type ChatMessageBaseProps = {
   /** `outgoing` (right, accent) for the current user, `incoming` (left) otherwise. */
   direction: ChatMessageDirection;
   /** Sender name: shown on the first message of a group, always read by screen readers. */
@@ -26,10 +41,22 @@ export type ChatMessageProps = {
    * Set `false` on the following ones to group them. Default `true`.
    */
   firstInGroup?: boolean;
-  /** Text is still arriving: shows a blinking caret after it. */
+  /**
+   * Content is still arriving: shows a blinking caret after it, and marks the message
+   * `aria-busy` so assistive tech can wait for the whole reply.
+   */
   streaming?: boolean;
+  /**
+   * Draw an incoming message in a bubble. Default `true`. `false` drops the bubble: the content
+   * takes the whole column next to the avatar, with the avatar and the name at the top, so a code
+   * block, a table or an image grid gets the full width (an assistant reply). An outgoing message
+   * keeps its bubble either way.
+   */
+  bubble?: boolean;
   className?: string;
 };
+
+export type ChatMessageProps = ChatMessageBaseProps & ChatMessageContent;
 
 const STATUS: Record<ChatMessageStatus, { icon: typeof Check; label: string }> = {
   sending: { icon: Clock, label: 'Sending' },
@@ -47,6 +74,7 @@ const STATUS: Record<ChatMessageStatus, { icon: typeof Check; label: string }> =
  */
 export const ChatMessage = ({
   text,
+  children,
   direction,
   sender,
   time,
@@ -55,14 +83,32 @@ export const ChatMessage = ({
   avatarSrc,
   firstInGroup = true,
   streaming = false,
+  bubble = true,
   className,
 }: ChatMessageProps) => {
   const outgoing = direction === 'outgoing';
+  const flat = !outgoing && !bubble;
   const state = status && STATUS[status];
+  const body = (
+    <>
+      <span className="sr-only">{`${sender}${time ? `, ${time}` : ''}: `}</span>
+      {text === undefined ? children : <MessageText text={text} />}
+      {streaming && (
+        <span
+          aria-hidden
+          className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 bg-current motion-safe:animate-pulse"
+        />
+      )}
+    </>
+  );
+  // Text keeps its `<p>`; rich content may hold blocks, which a `<p>` cannot.
+  const Content = text === undefined ? 'div' : 'p';
   return (
     <div
+      aria-busy={streaming || undefined}
       className={clsx(
-        'flex items-end gap-2',
+        'flex gap-2',
+        flat ? 'items-start' : 'items-end',
         outgoing ? 'flex-row-reverse' : 'flex-row',
         firstInGroup && 'mt-2',
         className
@@ -73,7 +119,14 @@ export const ChatMessage = ({
           {firstInGroup && <Avatar name={sender} src={avatarSrc} size="sm" />}
         </span>
       )}
-      <div className={clsx('flex max-w-[80%] flex-col', outgoing ? 'items-end' : 'items-start')}>
+      <div
+        className={clsx(
+          'flex flex-col',
+          flat ? 'min-w-0 flex-1' : 'max-w-[80%]',
+          !flat && text === undefined && 'min-w-0',
+          outgoing ? 'items-end' : 'items-start'
+        )}
+      >
         {firstInGroup && !outgoing && (
           <span
             aria-hidden
@@ -82,23 +135,22 @@ export const ChatMessage = ({
             {sender}
           </span>
         )}
-        <p
+        <Content
           className={clsx(
-            'rounded-2xl px-3.5 py-2 text-sm break-words whitespace-pre-wrap',
-            outgoing
-              ? 'bg-brand-500 rounded-br-md text-white'
-              : 'rounded-bl-md bg-gray-100 text-[var(--color-text-primary)] dark:bg-gray-800'
+            flat
+              ? 'w-full min-w-0 px-1 py-0.5 text-sm break-words text-[var(--color-text-primary)]'
+              : 'rounded-2xl px-3.5 py-2 text-sm break-words',
+            // A bubble around blocks (a code block) stays inside its column.
+            !flat && text === undefined && 'max-w-full',
+            text !== undefined && 'whitespace-pre-wrap',
+            !flat &&
+              (outgoing
+                ? 'bg-brand-500 rounded-br-md text-white'
+                : 'rounded-bl-md bg-gray-100 text-[var(--color-text-primary)] dark:bg-gray-800')
           )}
         >
-          <span className="sr-only">{`${sender}${time ? `, ${time}` : ''}: `}</span>
-          <MessageText text={text} />
-          {streaming && (
-            <span
-              aria-hidden
-              className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 bg-current motion-safe:animate-pulse"
-            />
-          )}
-        </p>
+          {body}
+        </Content>
         {(time || state) && (
           <span
             aria-hidden={!state || undefined}
