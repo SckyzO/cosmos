@@ -65,6 +65,13 @@ describe('parseLineRanges', () => {
     expect([...parseLineRanges(['7-5'])]).toEqual([5, 6, 7]);
     expect([...parseLineRanges([0, -1, 1.5, 'a', '', '3-'])]).toEqual([]);
   });
+
+  it('takes linear time on a long run of spaces that does not match', () => {
+    // Two `\s*` side by side made the old regex backtrack quadratically on a host's string.
+    const start = performance.now();
+    expect([...parseLineRanges([`9${' '.repeat(30_000)}x`])]).toEqual([]);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
 });
 
 const span = (...children: ReactNode[]) => createElement('span', null, ...children);

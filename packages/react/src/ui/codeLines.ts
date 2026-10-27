@@ -79,7 +79,8 @@ export const parseLineRanges = (spec: ReadonlyArray<number | string>): Set<numbe
       if (Number.isInteger(item) && item > 0) lines.add(item);
       continue;
     }
-    const match = /^\s*(\d+)\s*(?:-\s*(\d+))?\s*$/.exec(item);
+    // Trimmed first: no two `\s*` meet, so a long run of spaces can't make the regex backtrack.
+    const match = /^(\d+)(?:\s*-\s*(\d+))?$/.exec(item.trim());
     if (!match) continue;
     const from = Number(match[1]);
     const to = match[2] === undefined ? from : Number(match[2]);
