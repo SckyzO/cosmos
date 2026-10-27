@@ -21,6 +21,7 @@ import { Tooltip } from '../ui/Tooltip';
 import { OverlayLayerProvider, useOverlayLayer } from '../ui/overlayA11y';
 import { fitLabel, useContentWidth } from '../hooks/useContentWidth';
 import { useControllableState } from '../hooks/useControllableState';
+import { useClamped } from '../hooks/useClamped';
 import { useExpandOnHover } from '../hooks/useExpandOnHover';
 import { useKeepFocus } from '../hooks/useKeepFocus';
 import { useShell } from './shellContext';
@@ -45,6 +46,15 @@ export type SidebarActiveStyle = 'tint' | 'solid';
  */
 export type SidebarExpandOnHover = false | 'overlay' | 'push';
 
+/**
+ * The shape of the sidebar: `default` (expanded, or collapsed to an icon rail) or `compact`, a
+ * fixed narrow rail with the label under each icon.
+ */
+export type SidebarVariant = 'default' | 'compact';
+
+// The compact rail's width (px).
+const COMPACT_WIDTH = 88;
+
 // How far rows sit from the edge of their container: 20 px (`wide`), or less where 20 doesn't fit
 // or is already given. `tight` (8 px): the collapsed rail, the collapsed sub-menu's panel, and the
 // footer, whose own 12 px padding brings its rows to 20 px. `none`: the collapsed footer, whose
@@ -53,6 +63,8 @@ type RowInset = 'wide' | 'tight' | 'none';
 
 type SidebarContextValue = {
   collapsed: boolean;
+  /** The compact rail: top-level rows stack their icon over a short label. */
+  compact: boolean;
   inDrawer: boolean;
   inset: RowInset;
   activeStyle: SidebarActiveStyle;
@@ -64,6 +76,7 @@ type SidebarContextValue = {
 
 const SidebarContext = createContext<SidebarContextValue>({
   collapsed: false,
+  compact: false,
   inDrawer: false,
   inset: 'wide',
   activeStyle: 'tint',
@@ -186,6 +199,32 @@ const DotIcon = ({ className }: { className?: string }) => (
   </span>
 );
 
+// The label under an icon of the compact rail: two lines at most, a long word hyphenated where the
+// page's language allows it, broken otherwise, rather than cut. `labelRef` gives the element to the
+// row, which measures whether the clamp cut the text.
+const CompactLabel = ({
+  label,
+  labelRef,
+}: {
+  label: string;
+  labelRef: (node: HTMLSpanElement | null) => void;
+}) => (
+  <span
+    ref={labelRef}
+    className="line-clamp-2 w-full min-w-0 leading-tight break-words hyphens-auto"
+  >
+    {label}
+  </span>
+);
+
+// The full name of a compact row whose label the clamp cuts: the others show it whole, and a
+// tooltip repeating it would only be read twice.
+const CompactTip = ({ label, children }: { label: string; children: ReactElement }) => (
+  <Tooltip content={label} position="right" block>
+    {children}
+  </Tooltip>
+);
+
 /** Line drawn above the footer and the collapse row. */
 export type SidebarFooterDivider = 'full' | 'inset' | 'none';
 
@@ -199,6 +238,16 @@ const FOOTER_DIVIDER: Record<SidebarFooterDivider, string> = {
 // ─── Sidebar root ──────────────────────────────────────────────────────────────
 
 export type SidebarProps = {
+  /**
+   * `default` (default): expanded, or collapsed to an icon rail. `compact`: a fixed 88 px rail
+   * with the label under each icon, on at most two lines (the full name shows in a tooltip when
+   * it is cut). A sub-menu opens in a flyout, as in the collapsed rail. It has no collapsed
+   * state (`collapsed`, the Shell's toggles, `expandOnHover` and the bottom button do nothing
+   * there: with a Shell, set `collapseControl="sidebar"` to keep the Topbar free of a hamburger
+   * that would do nothing), and ignores `width`, `maxWidth` and `collapsedWidth`. Below `lg`, in
+   * the Shell's drawer, the sidebar is the default one.
+   */
+  variant?: SidebarVariant;
   /**
    * Whether the sidebar is in collapsed (icons-only) state, when controlled. Not read inside
    * a `Shell`, which owns the state: control it with the Shell's `sidebarCollapsed`.
@@ -287,6 +336,7 @@ export type SidebarProps = {
  * gets a close button.
  */
 const SidebarRoot = ({
+  variant = 'default',
   collapsed: collapsedProp,
   defaultCollapsed = false,
   width = 264,
@@ -311,12 +361,16 @@ const SidebarRoot = ({
   const shell = useShell();
   // In the Shell's drawer the sidebar is always expanded, whatever the desktop state.
   const inDrawer = shell?.isMobile === true;
-  const collapsed = inDrawer ? false : shell ? shell.collapsed : ownCollapsed;
+  // The compact rail has one width: no collapsed state, no hover expansion, no toggle.
+  const compact = variant === 'compact' && !inDrawer;
+  const collapsed = inDrawer || compact ? false : shell ? shell.collapsed : ownCollapsed;
   const ownNavId = useId();
   const navId = shell ? shell.navId : ownNavId;
   // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
   const showToggle =
-    !inDrawer && (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
+    !inDrawer &&
+    !compact &&
+    (onCollapsedChange !== undefined || shell?.collapseControl === 'sidebar');
   // A collapsed sidebar the pointer rests on, or keyboard focus is in, shows in its expanded form
   // (`expandOnHover`). Only what the rows draw changes: `collapsed` stays the state, and the toggles
   // keep reading it.
@@ -330,22 +384,27 @@ const SidebarRoot = ({
   const fit = useContentWidth(navRef, {
     min: width,
     max: maxWidth,
-    enabled: !rail && !inDrawer,
+    enabled: !rail && !inDrawer && !compact,
   });
   const context: SidebarContextValue = {
     collapsed: rail,
+    compact,
     inDrawer,
-    inset: rail ? 'tight' : 'wide',
+    inset: rail || compact ? 'tight' : 'wide',
     activeStyle,
     truncated: fit.truncated,
   };
-  const overlay = expandOnHover === 'overlay' && !inDrawer;
+  const overlay = expandOnHover === 'overlay' && !inDrawer && !compact;
   const nav = (
     <nav
       ref={navRef}
       id={navId}
       aria-label="Main navigation"
-      style={inDrawer ? undefined : { width: rail ? collapsedWidth : fit.width }}
+      style={
+        inDrawer
+          ? undefined
+          : { width: compact ? COMPACT_WIDTH : rail ? collapsedWidth : fit.width }
+      }
       className={clsx(
         'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
         // The drawer panel draws the edge and the shadow, and sets the width.
@@ -365,8 +424,16 @@ const SidebarRoot = ({
     >
       <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
       {footer && (
-        <div className={clsx('shrink-0 overflow-hidden p-3', FOOTER_DIVIDER[footerDivider])}>
-          <SidebarContext.Provider value={{ ...context, inset: rail ? 'none' : 'tight' }}>
+        <div
+          className={clsx(
+            'shrink-0 overflow-hidden',
+            compact ? 'p-2' : 'p-3',
+            FOOTER_DIVIDER[footerDivider]
+          )}
+        >
+          <SidebarContext.Provider
+            value={{ ...context, inset: rail || compact ? 'none' : 'tight' }}
+          >
             {footer}
           </SidebarContext.Provider>
         </div>
@@ -463,11 +530,14 @@ const SidebarBrand = ({
   logoStyle = 'tint',
   ref,
 }: SidebarBrandProps) => {
-  const collapsed = useSidebarCollapsed(collapsedProp);
+  const ctx = useContext(SidebarContext);
+  // The compact rail shows the logo alone, like the collapsed one.
+  const compact = ctx.compact && collapsedProp === undefined;
+  const collapsed = useSidebarCollapsed(collapsedProp) || compact;
   const shell = useShell();
   // In the Shell's drawer the brand row also holds the close button, a sibling of the brand's own
   // link or button (which can't contain one).
-  const inDrawer = useContext(SidebarContext).inDrawer && shell !== null;
+  const inDrawer = ctx.inDrawer && shell !== null;
   const inner = (
     <>
       {logo &&
@@ -498,7 +568,9 @@ const SidebarBrand = ({
   );
 
   const baseClass = clsx(
-    'focus-visible:focus-indicator flex h-[72px] items-center gap-3 px-5 focus-visible:ring-inset',
+    'focus-visible:focus-indicator flex h-[72px] items-center focus-visible:ring-inset',
+    // The logo alone has the row to itself: centred, with no gap for the hidden title.
+    compact ? 'justify-center' : 'gap-3 px-5',
     inDrawer
       ? 'min-w-0 flex-1'
       : clsx('shrink-0', divider && 'border-b border-[var(--color-border)]')
@@ -609,6 +681,8 @@ const SidebarItem = ({
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
   const labelId = useId();
+  const [compactLabel, setCompactLabel] = useState<HTMLSpanElement | null>(null);
+  const clamped = useClamped(compactLabel);
   useReportActive(active);
   // The row is a new element when the sidebar collapses or expands: focus follows it.
   const keepFocus = useKeepFocus();
@@ -619,18 +693,32 @@ const SidebarItem = ({
   const closeDrawer = ctx.inDrawer && shell ? () => shell.setOpen(false) : undefined;
   const inset = useRowInset(collapsed);
   const geometry = useNestedGeometry(inset);
+  // The compact rail stacks the icon over the label; only the top level is there, the nested
+  // rows live in the flyout of a sub-menu, which is not compact.
+  const compact = ctx.compact && !collapsed && depth === 0;
   const nested = !collapsed && depth > 0;
   const baseClass = clsx(
-    'group focus-visible:focus-indicator flex items-center gap-3 rounded-lg font-medium transition-colors',
-    nested ? 'px-2.5' : collapsed ? 'justify-center px-2' : 'px-3',
-    level(nested ? depth : 0).py,
-    level(nested ? depth : 0).text,
+    'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
+    compact
+      ? 'text-2xs relative flex-col gap-1 py-2 text-center'
+      : clsx(
+          'gap-3',
+          nested ? 'px-2.5' : collapsed ? 'justify-center px-2' : 'px-3',
+          level(nested ? depth : 0).py,
+          level(nested ? depth : 0).text
+        ),
     ROW_INSET[inset].margin,
     active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
   );
   const style = nested ? geometry.rowStyle(depth, !href) : undefined;
 
-  const content = (
+  const content = compact ? (
+    <>
+      <Icon className="h-5 w-5 shrink-0" />
+      <CompactLabel label={label} labelRef={setCompactLabel} />
+      {badge && <span className="absolute top-1 right-1">{badge}</span>}
+    </>
+  ) : (
     <>
       {!nested && <Icon className="h-5 w-5 shrink-0" />}
       {!collapsed && (
@@ -669,7 +757,7 @@ const SidebarItem = ({
         closeDrawer?.();
       }}
       aria-label={name}
-      className={clsx(baseClass, ROW_INSET[inset].width, 'text-left')}
+      className={clsx(baseClass, ROW_INSET[inset].width, !compact && 'text-left')}
       style={style}
       aria-current={active ? 'page' : undefined}
       data-sidebar-item=""
@@ -677,6 +765,7 @@ const SidebarItem = ({
       {content}
     </button>
   );
+  if (compact) return clamped ? <CompactTip label={label}>{row}</CompactTip> : row;
   return collapsed ? (
     <Tooltip content={label} position="right" block>
       {row}
@@ -760,6 +849,8 @@ const SidebarSubMenu = ({
     name: 'Sidebar.SubMenu.open',
   });
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [compactLabel, setCompactLabel] = useState<HTMLSpanElement | null>(null);
+  const clamped = useClamped(compactLabel);
   // The rows below that say they are active, by key.
   const [activeRows, setActiveRows] = useState<ReadonlySet<string>>(() => new Set());
   const report = useCallback<ReportActive>((key, on) => {
@@ -775,28 +866,39 @@ const SidebarSubMenu = ({
   useReportActive(active || inTrail);
 
   // Collapsed mode: an icon-only trigger opening the tree in a panel to its
-  // right, rendered expanded. Picking a row closes it.
-  if (collapsed) {
+  // right, rendered expanded. Picking a row closes it. The compact rail does the same
+  // from a trigger that stacks the label under the icon, at the top level.
+  const compact = ctx.compact && !collapsed && depth === 0;
+  if (collapsed || compact) {
+    const trigger = (
+      <Popover.Trigger
+        ref={triggerRef}
+        // Compact: the label is the name, and a tooltip carries it whole only when cut.
+        title={compact ? undefined : label}
+        aria-label={compact ? undefined : label}
+        className={clsx(
+          'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
+          compact
+            ? 'text-2xs flex-col gap-1 py-2 text-center'
+            : 'justify-center px-2 py-2.5 text-sm',
+          ROW_INSET[inset].margin,
+          ROW_INSET[inset].width,
+          active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
+        )}
+      >
+        <Icon className="h-5 w-5 shrink-0" />
+        {compact && <CompactLabel label={label} labelRef={setCompactLabel} />}
+      </Popover.Trigger>
+    );
     return (
       <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
-        <Popover.Trigger
-          ref={triggerRef}
-          title={label}
-          aria-label={label}
-          className={clsx(
-            'group focus-visible:focus-indicator flex items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium transition-colors',
-            ROW_INSET[inset].margin,
-            ROW_INSET[inset].width,
-            active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
-          )}
-        >
-          <Icon className="h-5 w-5 shrink-0" />
-        </Popover.Trigger>
+        {compact && clamped ? <CompactTip label={label}>{trigger}</CompactTip> : trigger}
         <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
           {/* The panel has no top-level row: its rows are the first nested level, from its edge. */}
           <SidebarContext.Provider
             value={{
               collapsed: false,
+              compact: false,
               inDrawer: false,
               inset: 'tight',
               activeStyle: ctx.activeStyle,
@@ -977,7 +1079,9 @@ const SidebarGroup = ({
   collapsed: collapsedProp,
   children,
 }: SidebarGroupProps) => {
-  const collapsed = useSidebarCollapsed(collapsedProp);
+  // The compact rail has no room for a header either: the rows run on, as collapsed.
+  const compact = useContext(SidebarContext).compact;
+  const collapsed = useSidebarCollapsed(collapsedProp) || compact;
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -1039,7 +1143,9 @@ const SidebarSection = ({
   collapsed: collapsedProp,
   children,
 }: SidebarSectionProps) => {
-  const collapsed = useSidebarCollapsed(collapsedProp);
+  // The compact rail has no room for a title: a "···" mark keeps the blocks apart, as collapsed.
+  const compact = useContext(SidebarContext).compact;
+  const collapsed = useSidebarCollapsed(collapsedProp) || compact;
   if (divider) {
     return (
       <div className="my-2 border-t border-[var(--color-border)] pt-2 [[data-sidebar-brand]+&]:mt-0 [[data-sidebar-brand]+&]:border-t-0">
