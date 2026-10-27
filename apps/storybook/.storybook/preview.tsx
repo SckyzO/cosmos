@@ -1,4 +1,4 @@
-import type { Decorator, Preview } from '@storybook/react-vite';
+import type { Decorator, Loader, Preview } from '@storybook/react-vite';
 
 import {
   COSMOS_ACCENTS,
@@ -125,6 +125,22 @@ const withDirection: Decorator = (Story, ctx) => {
   if (ctx.globals.direction === 'rtl') root.dir = 'rtl';
   else root.removeAttribute('dir');
   return <Story />;
+};
+
+/**
+ * maplibre-gl 6 looks for its worker next to its own module, where no bundle puts it: without
+ * this, a map draws nothing in the built Storybook. A story that sets `parameters.maplibre` gets
+ * the worker bundled by Vite and handed to `setWorkerUrl`, as the react README tells apps to do.
+ * The other stories never load MapLibre.
+ */
+const withMapLibreWorker: Loader = async ({ parameters }) => {
+  if (!parameters.maplibre) return {};
+  const [{ setWorkerUrl }, { default: workerUrl }] = await Promise.all([
+    import('maplibre-gl'),
+    import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
+  ]);
+  setWorkerUrl(workerUrl);
+  return {};
 };
 
 /**
@@ -259,6 +275,7 @@ const preview: Preview = {
       },
     },
   },
+  loaders: [withMapLibreWorker],
   decorators: [
     withCosmosSurface,
     withAppearanceAttributes,

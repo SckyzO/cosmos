@@ -69,10 +69,7 @@ export default defineConfig({
         // Only vitest.setup.ts imports addon-a11y's preview: pre-bundle it, or
         // Vite discovers it mid-run, reloads, and the files already loading
         // fail with "Failed to fetch dynamically imported module".
-        //
-        // maplibre-gl 6 is ESM only and starts its worker from `new URL(…, import.meta.url)`:
-        // pre-bundled, the worker file is not copied next to the bundle and the map never loads.
-        optimizeDeps: { include: ['@storybook/addon-a11y/preview'], exclude: ['maplibre-gl'] },
+        optimizeDeps: { include: ['@storybook/addon-a11y/preview'] },
         test: {
           name: 'storybook',
           provide: { a11yTheme, storyDir },
