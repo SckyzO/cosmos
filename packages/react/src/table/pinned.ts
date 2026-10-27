@@ -61,14 +61,22 @@ const IDLE =
 
 // The line between a pinned column and the rest is a shadow in place of a border (a collapsed
 // border stays behind when the cell is pinned). While content scrolls under the edge it grows a
-// soft shadow on the side the content is on.
-const edge = (side: 'start' | 'end', scrolled: boolean) => {
-  const line =
-    side === 'start' ? 'inset_-1px_0_0_var(--color-border)' : 'inset_1px_0_0_var(--color-border)';
-  if (!scrolled) return `[box-shadow:${line}]`;
-  const x = side === 'start' ? '8px' : '-8px';
-  return `[box-shadow:${line},${x}_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:${line},${x}_0_8px_-8px_rgb(0_0_0/0.6)]`;
-};
+// soft shadow on the side the content is on. Written out in full: Tailwind reads class names from
+// the source and cannot see one built from pieces.
+const EDGE = {
+  start: {
+    rest: '[box-shadow:inset_-1px_0_0_var(--color-border)]',
+    scrolled:
+      '[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(0_0_0/0.6)]',
+  },
+  end: {
+    rest: '[box-shadow:inset_1px_0_0_var(--color-border)]',
+    scrolled:
+      '[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(0_0_0/0.6)]',
+  },
+} as const;
+const edge = (side: 'start' | 'end', scrolled: boolean) =>
+  EDGE[side][scrolled ? 'scrolled' : 'rest'];
 
 /** What a pinned cell needs besides its offset: `sticky`, an opaque body fill, the edge. */
 export const pinnedCell = ({
