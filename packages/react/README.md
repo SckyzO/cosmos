@@ -333,9 +333,9 @@ scrolling. Its limits:
 - The table needs a height (`className="max-h-96"`): its own area is what
   scrolls, and without a height every row is in view.
 - Every row has one fixed height, from `density`: 49px, or 61px when
-  `comfortable`, at the default text size. Content taller than that is clipped,
-  so keep a cell to a line of text or a control, as in a standard row. A larger
-  text size makes standard rows taller than the window counts, and clips them.
+  `comfortable`, at the default text size, and growing with the text size
+  setting. Content taller than that is clipped, so keep a cell to a line of text
+  or a control, as in a standard row.
 - It applies to the table layout only: with `mobileLayout="cards"` below `sm`
   the cards keep the pagination.
 - It is not for expandable rows.
