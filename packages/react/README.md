@@ -280,6 +280,78 @@ const [views, setViews] = useState<DataTableView[]>(() => load());
 />;
 ```
 
+Server mode: `manual` turns the in-memory search, filters, sort and pagination
+off. `rows` is the page you fetched, drawn in its order, and the controls only
+report: `onSearchChange`, `onFiltersChange`, `onSortChange`, `onPageChange` and
+`onPageSizeChange` (a change of search, filters, sort or page size goes back to
+page 1 first). `rowCount` is the total across every page, for the pager and its
+"Showing X to Y of Z"; without it the pager counts `rows.length`. A filter
+dropdown lists the values found in `rows`, which in `manual` are one page, so a
+filterable column takes `filterOptions` (`['Paid', 'Pending']`, in the order to
+show) instead; it works without `manual` too. "Show all" is not offered, and
+the built-in CSV export only holds the loaded rows: pass `onExport` to export on
+the server.
+
+The sort and the page are controlled with or without `manual`: `sort`,
+`defaultSort` and `onSortChange(sort)` hold a `DataTableSort` (`{ key,
+direction }` or `null`), and `page`, `defaultPage` and `onPageChange(page)` are
+1-indexed like `Pagination`. A controlled table shows a new value once you pass
+it back, and a change that resets the page calls `onPageChange(1)` (not when it
+is on page 1 already).
+
+`loading` with rows on screen keeps them, dimmed and inert (nothing in them can
+be clicked meanwhile), under a centred spinner, with the pager still there and
+`aria-busy` on the table; with no rows yet it draws the `loadingRows`
+placeholders as before. Use it for every request, the first or the next page.
+
+```tsx
+const [sort, setSort] = useState<DataTableSort>(null);
+const [page, setPage] = useState(1);
+const { data, isFetching } = useOrders({ sort, page });
+<DataTable
+  manual
+  rows={data?.rows ?? []}
+  rowCount={data?.total}
+  loading={isFetching}
+  columns={columns}
+  rowKey={(o) => o.id}
+  sort={sort}
+  onSortChange={setSort}
+  page={page}
+  onPageChange={setPage}
+/>;
+```
+
+`virtualize` draws only the rows in view and a few around them, for thousands of
+rows on one page (a large `pageSize`, or "Show all"). Two `aria-hidden` spacer
+rows stand for the rest, so the scroll bar measures the whole list, and the
+header stays sticky. The table says where the window is (`aria-rowcount`, and
+`aria-rowindex` on each drawn row), and the row that holds the keyboard focus
+stays drawn while it is scrolled out of view, so focus and selection survive
+scrolling. Its limits:
+
+- The table needs a height (`className="max-h-96"`): its own area is what
+  scrolls, and without a height every row is in view.
+- Every row has one fixed height, from `density`: 49px, or 61px when
+  `comfortable`, at the default text size. Content taller than that is clipped,
+  so keep a cell to a line of text or a control, as in a standard row. A larger
+  text size makes standard rows taller than the window counts, and clips them.
+- It applies to the table layout only: with `mobileLayout="cards"` below `sm`
+  the cards keep the pagination.
+- It is not for expandable rows.
+- On paper only the drawn rows print.
+
+```tsx
+<DataTable
+  rows={tenThousandRows}
+  columns={columns}
+  rowKey={(r) => r.id}
+  pageSize={10_000}
+  virtualize
+  className="max-h-96"
+/>
+```
+
 `Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
