@@ -175,7 +175,7 @@ export const RendersCardAndBrand: Story = {
     </AuthLayout>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Cosmos' })).toBeInTheDocument();
+    await expect(canvas.getByText('Cosmos')).toBeInTheDocument();
     await expect(canvas.getByText(/sign in to continue/i)).toBeInTheDocument();
     await expect(canvas.getByLabelText('Username')).toBeInTheDocument();
   },
@@ -202,8 +202,6 @@ export const CardVariantIsTheDefault: Story = {
     const markup = (id: string) =>
       canvas.getByTestId(id).innerHTML.replace(/_r_[0-9a-z]+_/g, '_id_');
     await expect(markup('explicit')).toBe(markup('implicit'));
-    // The card keeps its heading: a title that is an h1 today stays one.
-    await expect(canvas.getAllByRole('heading', { level: 1, name: 'Cosmos' })).toHaveLength(2);
   },
 };
 
@@ -211,6 +209,20 @@ const oneHeading = async (canvas: { getAllByRole: (role: string, o: object) => H
   const h1s = canvas.getAllByRole('heading', { level: 1 });
   await expect(h1s).toHaveLength(1);
   await expect(h1s[0]).toHaveTextContent('Sign in');
+};
+
+// The form carries the page's h1: the built-in title is a paragraph in the card too.
+export const CardHasOneHeading: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <AuthLayout logo={Activity} title="Cosmos Cloud" subtitle="Sign in to continue">
+      <SignIn />
+    </AuthLayout>
+  ),
+  play: async ({ canvas }) => {
+    await oneHeading(canvas);
+    await expect(canvas.getByText('Cosmos Cloud').tagName).toBe('P');
+  },
 };
 
 export const SplitShowsAsideFromLg: Story = {
