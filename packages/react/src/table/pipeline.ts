@@ -18,7 +18,10 @@ export const filtersToRecord = (filters: ColumnFilters): Record<string, string[]
   return out;
 };
 
-/** The unique, non-empty filter values of each filterable column, sorted. */
+/**
+ * The values each filterable column's dropdown offers: its `filterOptions` as given, else the
+ * unique, non-empty `filterValue`s of the rows, sorted.
+ */
 export const columnFilterValues = <T>(
   rows: T[],
   columns: ColumnDef<T>[]
@@ -26,6 +29,10 @@ export const columnFilterValues = <T>(
   const out: Record<string, string[]> = {};
   for (const col of columns) {
     if (!col.filterable) continue;
+    if (col.filterOptions) {
+      out[col.key] = col.filterOptions;
+      continue;
+    }
     const vals = new Set<string>();
     for (const row of rows) {
       const v = col.filterValue ? col.filterValue(row) : '';

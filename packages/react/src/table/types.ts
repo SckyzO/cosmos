@@ -34,6 +34,13 @@ export type ColumnDef<T> = {
   sortable?: boolean;
   filterable?: boolean;
   /**
+   * The values this column's filter dropdown offers, in this order, in place of the distinct
+   * `filterValue`s found in `rows` (sorted). Without `manual` they come from every row; with it
+   * `rows` is one page, so list the values here or the dropdown offers that page's only. Valid in
+   * both modes; a column with it still needs `filterable`.
+   */
+  filterOptions?: string[];
+  /**
    * With `columnsMenu`, whether the column can be hidden from the menu. Default `true`; `false`
    * keeps it shown and its checkbox disabled (the column that names the row).
    */

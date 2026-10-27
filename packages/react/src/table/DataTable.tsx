@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Download, Search, X } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -11,10 +11,19 @@ import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Sk } from '../feedback/Skeleton';
+import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
-import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import {
+  BODY_CELL_PADDING,
+  HEADER_CELL,
+  HEADER_CELL_PADDING,
+  SKELETON_WIDTHS,
+  VIRTUAL_CELL_HEIGHT,
+  VIRTUAL_CELL_PADDING,
+  VIRTUAL_ROW_HEIGHT,
+} from './density';
 import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
 import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
 import { newViewId, recordToFilters, type ViewState } from './savedViews';
@@ -24,6 +33,7 @@ import { downloadCsv } from './download';
 import { TOOLBAR_BUTTON } from './toolbarButton';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
 import type {
@@ -60,8 +70,11 @@ export type DataTableProps<T> = {
    */
   pageSize?: number;
   /**
-   * Keeps the header and shows `loadingRows` placeholder rows in place of the body, so the
-   * columns and the page do not jump when the rows arrive.
+   * The table is waiting for rows. With none on screen yet, it keeps the header and shows
+   * `loadingRows` placeholder rows in place of the body, so the columns and the page do not jump
+   * when the rows arrive. With rows on screen (the next page, a new sort), they stay, dimmed and
+   * inert so nothing in them can be clicked meanwhile, under a centred spinner. The table is
+   * `aria-busy` either way. The same in both modes.
    */
   loading?: boolean;
   /** How many placeholder rows `loading` draws. Default 5. */
@@ -133,6 +146,65 @@ export type DataTableProps<T> = {
    */
   filterTabs?: DataTableFilterTabsConfig;
 
+  // ── Server mode ────────────────────────────────────────────────────────────
+  /**
+   * Turns the in-memory search, column filters, sort and pagination off: `rows` is the current
+   * page as the host fetched it, drawn in its order, and nothing is filtered, reordered or sliced
+   * here. The controls still report every change (`onSearchChange`, `onFiltersChange`,
+   * `onSortChange`, `onPageChange`, `onPageSizeChange`), and the host fetches the next page.
+   * Pass `rowCount` for the pager, and `filterOptions` on a filterable column (its values cannot
+   * be read from one page). The built-in CSV export (`exportable`) holds only the loaded rows
+   * here: pass `onExport` to export on the server. Selection works on the loaded rows; "Show
+   * all" is not offered. Default `false`.
+   */
+  manual?: boolean;
+  /**
+   * With `manual`, the total number of rows across every page, for the pager and its "Showing X
+   * to Y of Z". Without it the pager counts `rows.length`. Ignored without `manual`.
+   */
+  rowCount?: number;
+
+  // ── Long lists ─────────────────────────────────────────────────────────────
+  /**
+   * Draws only the rows in view and a few around them, for thousands of rows on one page (a large
+   * `pageSize`, or "Show all"): the rest are two spacers, so the scroll bar still stands for the
+   * whole list. The header stays sticky, `aria-rowcount` and each row's `aria-rowindex` tell
+   * assistive technology where the window is, and the row that holds the keyboard focus stays
+   * drawn while it is scrolled out of view, so focus and selection survive scrolling.
+   *
+   * Every row has one fixed height, set by `density` (49px, or 61px when `comfortable`, at the
+   * default text size, and growing with the text size setting): content taller than that is
+   * clipped, so keep each cell to the one line of text (or a control) it has in a standard row.
+   * The rows scroll in the table's own area:
+   * give it a height (`className="max-h-96"`), or the window has no end. Table layout only: with
+   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows. On
+   * paper only the drawn rows print. Default `false`.
+   */
+  virtualize?: boolean;
+
+  // ── Sort and page ──────────────────────────────────────────────────────────
+  /**
+   * The sort, when controlled: `{ key, direction }` of a column, or `null` for the order of
+   * `rows`. A click on a sortable header, the "Sort by" select of the cards and a saved view go
+   * through `onSortChange`, and a controlled table shows the new sort once the host passes it
+   * back. Works with or without `manual`.
+   */
+  sort?: DataTableSort;
+  /** The sort when uncontrolled. Default `null`. */
+  defaultSort?: DataTableSort;
+  /** Called with the sort to move to, in both modes. The table then goes back to the first page. */
+  onSortChange?: (sort: DataTableSort) => void;
+  /**
+   * The current page, 1-indexed like `Pagination`, when controlled. Works with or without
+   * `manual`. A change of the search, the filters, the sort or the page size goes back to page 1,
+   * and a controlled table reports it through `onPageChange` (not when it is on page 1 already).
+   */
+  page?: number;
+  /** The page when uncontrolled, 1-indexed. Default `1`. */
+  defaultPage?: number;
+  /** Called with the page to go to, in both modes. */
+  onPageChange?: (page: number) => void;
+
   // ── Rows per page ──────────────────────────────────────────────────────────
   /** Rows per page when uncontrolled. Default 25. */
   defaultPageSize?: number;
@@ -165,7 +237,8 @@ export type DataTableProps<T> = {
    * Shows an "Export" button in the toolbar, before the "Columns" one; the toolbar then shows even
    * without a search field. It downloads a CSV of every page of the rows that the search, the
    * filters and the sort keep, in the visible columns and their order (the selection and action
-   * columns are not data). A column's header is its `label` when that is a string or a number,
+   * columns are not data). With `manual` it holds the loaded rows only, one page: pass `onExport`
+   * to export on the server. A column's header is its `label` when that is a string or a number,
    * else its `mobileLabel` when that is a string, else its `key`; its cells come from `exportValue`
    * (see `ColumnDef`, and `toCsv` for the format). The file is UTF-8 with a byte order mark, so
    * that spreadsheets read accents. Default `false`.
@@ -238,6 +311,9 @@ export const DataTable = <T,>({
   rowHref,
   renderRowAction,
   pageSize: pageSizeProp,
+  manual = false,
+  rowCount,
+  virtualize = false,
   loading = false,
   loadingRows = 5,
   error = null,
@@ -264,6 +340,12 @@ export const DataTable = <T,>({
   defaultFilters,
   onFiltersChange,
   filterTabs,
+  sort: sortProp,
+  defaultSort = null,
+  onSortChange,
+  page: pageProp,
+  defaultPage = 1,
+  onPageChange,
   defaultPageSize = 25,
   onPageSizeChange,
   pageSizeOptions,
@@ -316,7 +398,12 @@ export const DataTable = <T,>({
   const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
-  const [sort, setSort] = useState<DataTableSort>(null);
+  const [sort, setSortState] = useControllableState<DataTableSort>({
+    value: sortProp,
+    defaultValue: defaultSort,
+    onChange: onSortChange,
+    name: 'DataTable.sort',
+  });
   const sortKey = sort?.key ?? null;
   const sortDir = sort?.direction ?? 'asc';
   const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
@@ -325,7 +412,18 @@ export const DataTable = <T,>({
     onChange: onFiltersChange,
     name: 'DataTable.filters',
   });
-  const [page, setPage] = useState(0);
+  // 1-indexed, as `Pagination`'s; `safePage` below keeps it inside the pages that exist.
+  const [page, setPage] = useControllableState({
+    value: pageProp,
+    defaultValue: defaultPage,
+    onChange: onPageChange,
+    name: 'DataTable.page',
+  });
+  // A change of search, filters, sort or page size shows page 1 again. Through the setter, so a
+  // controlled host hears it; not when it is there already, so a keystroke is not a page change.
+  const goToFirstPage = () => {
+    if (page !== 1) setPage(1);
+  };
   const [showAll, setShowAll] = useState(false);
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
@@ -343,13 +441,10 @@ export const DataTable = <T,>({
   });
   const searchEnabled =
     isSearchControlled || defaultSearchValue !== undefined || onSearchChange !== undefined;
-  const setSearch = useCallback(
-    (value: string) => {
-      setSearchState(value);
-      setPage(0);
-    },
-    [setSearchState]
-  );
+  const setSearch = (value: string) => {
+    setSearchState(value);
+    goToFirstPage();
+  };
 
   const [pageSize, setPageSizeState] = useControllableState({
     value: pageSizeProp,
@@ -359,7 +454,11 @@ export const DataTable = <T,>({
   });
   const setPageSize = (size: number) => {
     setPageSizeState(size);
-    setPage(0);
+    goToFirstPage();
+  };
+  const setSort = (next: DataTableSort) => {
+    setSortState(next);
+    goToFirstPage();
   };
 
   const handleSortToggle = (key: string) => {
@@ -378,7 +477,7 @@ export const DataTable = <T,>({
       else out[key] = next;
       return out;
     });
-    setPage(0);
+    goToFirstPage();
   };
 
   const clearFilter = (key: string) => {
@@ -387,7 +486,7 @@ export const DataTable = <T,>({
       delete out[key];
       return out;
     });
-    setPage(0);
+    goToFirstPage();
   };
 
   const selectFilterTab = (value: string | undefined) => {
@@ -395,32 +494,33 @@ export const DataTable = <T,>({
     if (value === undefined) clearFilter(filterTabs.columnKey);
     else {
       setFilters((prev) => ({ ...prev, [filterTabs.columnKey]: new Set([value]) }));
-      setPage(0);
+      goToFirstPage();
     }
   };
 
   const clearAllFilters = () => {
     setFilters({});
-    setPage(0);
+    goToFirstPage();
   };
 
   // Build filter values per column (unique values currently present)
   const filterValues = useMemo(() => columnFilterValues(rows, columns), [rows, columns]);
 
   // Pipeline: search → column filters → sort.
+  // With `manual` the host did it: `rows` is the page to draw, in its order.
   const searchedRows = useMemo(
-    () => (searchEnabled ? searchRows(rows, columns, searchValue) : rows),
-    [rows, columns, searchEnabled, searchValue]
+    () => (searchEnabled && !manual ? searchRows(rows, columns, searchValue) : rows),
+    [rows, columns, searchEnabled, manual, searchValue]
   );
 
   const filteredRows = useMemo(
-    () => filterRows(searchedRows, allColumns, filters),
-    [searchedRows, allColumns, filters]
+    () => (manual ? searchedRows : filterRows(searchedRows, allColumns, filters)),
+    [searchedRows, allColumns, manual, filters]
   );
 
   const sortedRows = useMemo(
-    () => sortRows(filteredRows, columns, sortKey, sortDir),
-    [filteredRows, columns, sortKey, sortDir]
+    () => (manual ? filteredRows : sortRows(filteredRows, columns, sortKey, sortDir)),
+    [filteredRows, columns, manual, sortKey, sortDir]
   );
 
   // In a fixed layout the width the columns leave over is shared among all of them, the selection
@@ -431,13 +531,74 @@ export const DataTable = <T,>({
 
   const mobileSortable = columns.some((c) => c.sortable);
 
+  // Rows on screen stay while a reload waits (dimmed, under a spinner); placeholders are for the
+  // first load only. An error is not drawn over the rows of a load that is still going.
+  const hasRows = sortedRows.length > 0;
+  const showSkeleton = loading && !hasRows;
+  const dimRows = loading && hasRows;
+
   const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
-  const safePage = Math.min(page, totalPages - 1);
-  const pageRows = showAll
-    ? sortedRows
-    : sortedRows.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  // The rows the pager counts: all of them in memory, the host's total in `manual`.
+  const totalRows = manual ? (rowCount ?? rows.length) : sortedRows.length;
+  // "Show all" has no meaning when the host holds the rows.
+  const showAllRows = showAll && !manual;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const pageRows =
+    manual || showAllRows
+      ? sortedRows
+      : sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  // Windowed (`virtualize`): the body draws a slice of `pageRows` between spacers.
+  const showRows = !showSkeleton && !((error && !dimRows) || !hasRows);
+  const windowed = virtualize && showRows;
+  // The height of a row in px: the default text size's until a drawn row is measured, then what
+  // it really is, which follows the text size.
+  const [rowHeight, setRowHeight] = useState(VIRTUAL_ROW_HEIGHT[density]);
+  const slice = useVirtualWindow({
+    scrollerRef,
+    count: pageRows.length,
+    rowHeight,
+    enabled: windowed,
+  });
+  // All the rows share one height, measured as the distance between two drawn rows in the middle
+  // of the longest run of rows that follow each other: the divider is part of it, and the rows
+  // next to a spacer or to the top of the table sit half a pixel off, so they are not measured. A
+  // text size change resizes them. Observed again whenever other rows are the ones measured; with
+  // no such run, the last measurement stands.
+  useLayoutEffect(() => {
+    const body = scrollerRef.current?.querySelector('tbody');
+    if (!windowed || !body) return;
+    const at = (tr: HTMLElement) => Number(tr.getAttribute('aria-rowindex'));
+    let run: HTMLElement[] = [];
+    let best: HTMLElement[] = [];
+    for (const tr of body.querySelectorAll<HTMLElement>('tr[aria-rowindex]')) {
+      run = run.length > 0 && at(run[run.length - 1]) + 1 === at(tr) ? [...run, tr] : [tr];
+      if (run.length > best.length) best = run;
+    }
+    if (best.length < 4) return;
+    const mid = Math.floor(best.length / 2);
+    const [row, next] = [best[mid - 1], best[mid]];
+    const measure = () => {
+      const height = next.getBoundingClientRect().top - row.getBoundingClientRect().top;
+      if (height > 0) setRowHeight((prev) => (Math.abs(prev - height) < 0.01 ? prev : height));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [windowed, density, slice.start, slice.end]);
+  // The row that holds the focus is drawn wherever the scroll is, or scrolling would drop it.
+  const [focusedKey, setFocusedKey] = useState<string | number | null>(null);
+  const pinnedIndex =
+    windowed && focusedKey !== null ? pageRows.findIndex((r) => rowKey(r) === focusedKey) : -1;
+  const virtualParts = windowed
+    ? windowParts(slice, pageRows.length, rowHeight, pinnedIndex < 0 ? null : pinnedIndex)
+    : null;
+  // A windowed cell is a box of one fixed height, so every row is as tall as the others.
+  const bodyPadding = windowed ? VIRTUAL_CELL_PADDING : BODY_CELL_PADDING[density];
+  const cellBox = windowed ? { height: VIRTUAL_CELL_HEIGHT[density] } : undefined;
 
   // Selection helpers — operate on the *currently visible* rows so "select all"
   // never touches rows hidden by the search/filter pipeline.
@@ -496,21 +657,23 @@ export const DataTable = <T,>({
     filters: filtersToRecord(filters),
     sort,
     columnVisibility: shown,
-    pageSize: showAll ? 'all' : pageSize,
+    pageSize: showAllRows ? 'all' : pageSize,
     density,
   };
   const applyView = (view: DataTableView) => {
-    setSearch(view.search);
+    // Each part through its own setter, then one trip back to the first page.
+    setSearchState(view.search);
     setFilters(recordToFilters(view.filters));
-    setSort(view.sort);
+    setSortState(view.sort);
     setColumnVisibility(view.columnVisibility);
-    if (view.pageSize === 'all') setShowAll(true);
+    // A server holds the rows: "Show all" is not a thing the table can do there.
+    if (view.pageSize === 'all') setShowAll(!manual);
     else {
       setShowAll(false);
-      setPageSize(view.pageSize);
+      setPageSizeState(view.pageSize);
     }
     setDensity(view.density);
-    setPage(0);
+    goToFirstPage();
     setActiveViewId(view.id);
   };
   const saveView = (name: string) => {
@@ -560,6 +723,146 @@ export const DataTable = <T,>({
       {columnsMenuNode}
     </div>
   ) : null;
+
+  const renderRow = (row: T, index: number) => {
+    const key = rowKey(row);
+    const isSelected = selection.has(key);
+    const href = rowHref?.(row);
+    // A link is the focusable thing of its row; without one, the row itself is.
+    const focusableRow = onRowClick && !href;
+    return (
+      <tr
+        key={key}
+        // The header is row 1; a windowed table says where each drawn row sits in the whole list.
+        aria-rowindex={windowed ? index + 2 : undefined}
+        onFocus={windowed ? () => setFocusedKey(key) : undefined}
+        onBlur={
+          windowed
+            ? (e) => {
+                // Focus that moved inside the row (or into a menu portaled out of it) stays.
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setFocusedKey((prev) => (prev === key ? null : prev));
+                }
+              }
+            : undefined
+        }
+        tabIndex={focusableRow ? 0 : undefined}
+        onClick={
+          onRowClick || (href && stickyFirstColumn)
+            ? (e) => {
+                if (!isRowClick(e)) return;
+                // The link covers its own column only: follow it from the rest of
+                // the row. Its click comes back here, and calls onRowClick.
+                const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
+                if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
+                  link.click();
+                  return;
+                }
+                onRowClick?.(row);
+              }
+            : undefined
+        }
+        onKeyDown={
+          focusableRow
+            ? (e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                onRowClick(row);
+              }
+            : undefined
+        }
+        className={clsx(
+          'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
+          isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
+          (onRowClick || href) && 'cursor-pointer',
+          stickyFirstColumn && 'group',
+          focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+          href &&
+            'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
+        )}
+      >
+        {selectable && (
+          <td
+            className={clsx(
+              'px-4 print:hidden',
+              bodyPadding,
+              // The cell box is in em of this size, as in the data cells.
+              windowed && 'text-sm',
+              href && 'relative z-[1]',
+              stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
+            )}
+          >
+            {/* A flex box centres the checkbox; inline, it sat on the
+              text baseline and moved with the font metrics. */}
+            <div className="flex items-center" style={cellBox}>
+              <Checkbox
+                aria-label={`Select row ${key}`}
+                checked={isSelected}
+                onChange={() => toggleRow(key)}
+              />
+            </div>
+          </td>
+        )}
+        {columns.map((col, i) => {
+          const cell =
+            href && i === 0 ? (
+              <AppLink href={href} data-row-link className={ROW_LINK}>
+                {col.render(row)}
+              </AppLink>
+            ) : (
+              col.render(row)
+            );
+          return (
+            <td
+              key={col.key}
+              className={clsx(
+                'px-4',
+                bodyPadding,
+                'text-sm',
+                ALIGN_CELL[col.align ?? 'left'],
+                href && i > 0 && RAISE_CONTROLS,
+                stickyFirstColumn &&
+                  i === 0 && [
+                    stickyBodyCell(isSelected, true),
+                    selectable ? STICKY_AFTER_SELECT : STICKY_START,
+                  ]
+              )}
+            >
+              {windowed ? (
+                <div
+                  className={clsx(
+                    'flex items-center overflow-hidden',
+                    col.align === 'right' && 'justify-end',
+                    col.align === 'center' && 'justify-center'
+                  )}
+                  style={cellBox}
+                >
+                  {cell}
+                </div>
+              ) : (
+                cell
+              )}
+            </td>
+          );
+        })}
+        {renderRowAction && (
+          <td
+            className={clsx(
+              'px-4 print:hidden',
+              bodyPadding,
+              windowed && 'text-sm',
+              href && 'relative z-[1]'
+            )}
+          >
+            <div className="flex items-center justify-end" style={cellBox}>
+              {renderRowAction(row)}
+            </div>
+          </td>
+        )}
+      </tr>
+    );
+  };
 
   return (
     <div
@@ -673,7 +976,8 @@ export const DataTable = <T,>({
           renderRowAction={renderRowAction}
           onRowClick={onRowClick}
           rowHref={rowHref}
-          loading={loading}
+          loading={showSkeleton}
+          dimmed={dimRows}
           loadingRows={loadingRows}
           error={error}
           onRetry={onRetry}
@@ -684,276 +988,200 @@ export const DataTable = <T,>({
         />
       )}
 
+      {/* The wrapper holds the spinner over the scrolling area, which would carry it away. */}
       <div
-        ref={scrollerRef}
-        // Focusable only while it scrolls: a scroll container with no control inside is out of
-        // reach of the keyboard, and one that fits would add a tab stop that does nothing.
-        tabIndex={scrolls ? 0 : undefined}
-        role={region ? 'region' : undefined}
-        aria-label={region ? ariaLabel : undefined}
-        aria-labelledby={region ? ariaLabelledBy : undefined}
-        style={fade}
-        className={clsx(
-          'focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset',
-          // The edge fade is set inline; `!` lets paper drop it.
-          'print:overflow-visible print:mask-none!',
-          mobileCards && 'max-sm:hidden'
-        )}
+        className={clsx('relative flex min-h-0 flex-1 flex-col', mobileCards && 'max-sm:hidden')}
       >
-        {loading && (
-          <span role="status" className="sr-only">
-            Loading…
-          </span>
-        )}
-        <table
-          aria-label={ariaLabel}
-          aria-labelledby={ariaLabelledBy}
-          aria-busy={loading || undefined}
-          className="w-full table-fixed"
+        <div
+          ref={scrollerRef}
+          // Focusable only while it scrolls: a scroll container with no control inside is out of
+          // reach of the keyboard, and one that fits would add a tab stop that does nothing.
+          tabIndex={scrolls ? 0 : undefined}
+          role={region ? 'region' : undefined}
+          aria-label={region ? ariaLabel : undefined}
+          aria-labelledby={region ? ariaLabelledBy : undefined}
+          style={fade}
+          className={clsx(
+            'focus-visible:focus-indicator min-h-0 flex-1 overflow-y-auto focus-visible:ring-inset',
+            // The edge fade is set inline; `!` lets paper drop it.
+            'print:overflow-visible print:mask-none!',
+            // The wrapper hides too; the scroller keeps its own, which the cards' stories read.
+            mobileCards && 'max-sm:hidden'
+          )}
         >
-          <colgroup>
-            {selectable && <col style={{ width: SELECT_COLUMN_WIDTH }} className="print:hidden" />}
-            {columns.map((c, i) => (
-              <col
-                key={c.key}
-                style={
-                  c.width && !(i === 0 && firstColumnTakesTheRest) ? { width: c.width } : undefined
-                }
-              />
-            ))}
-            {renderRowAction && (
-              <col style={{ width: ACTION_COLUMN_WIDTH }} className="print:hidden" />
-            )}
-          </colgroup>
-          <thead className="sticky top-0 z-10 print:static">
-            <tr className="border-b border-gray-100 dark:border-gray-800">
+          {loading && (
+            <span role="status" className="sr-only">
+              Loading…
+            </span>
+          )}
+          <table
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
+            aria-busy={loading || undefined}
+            aria-rowcount={windowed ? pageRows.length + 1 : undefined}
+            className="w-full table-fixed"
+          >
+            <colgroup>
               {selectable && (
-                <th
-                  className={clsx(
-                    HEADER_CELL,
-                    HEADER_CELL_PADDING[density],
-                    'print:hidden',
-                    stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
-                  )}
-                >
-                  <div className="flex items-center">
-                    <Checkbox
-                      aria-label="Select all rows"
-                      checked={allVisibleSelected}
-                      indeterminate={someVisibleSelected}
-                      onChange={toggleAllVisible}
-                    />
-                  </div>
-                </th>
+                <col style={{ width: SELECT_COLUMN_WIDTH }} className="print:hidden" />
               )}
-              {columns.map((col, i) => (
-                <ColumnHeader
-                  key={col.key}
-                  className={clsx(
-                    stickyFirstColumn &&
-                      i === 0 && [
-                        stickyHeadCell(true),
-                        selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                      ]
-                  )}
-                  label={col.label}
-                  align={col.align}
-                  sortable={col.sortable}
-                  filterable={col.filterable}
-                  sortDir={sortKey === col.key ? sortDir : null}
-                  onSortToggle={() => handleSortToggle(col.key)}
-                  filterValues={filterValues[col.key]}
-                  filterSelected={filters[col.key]}
-                  onFilterToggle={(v) => handleFilterToggle(col.key, v)}
-                  onFilterClear={() => clearFilter(col.key)}
-                  density={density}
+              {columns.map((c, i) => (
+                <col
+                  key={c.key}
+                  style={
+                    c.width && !(i === 0 && firstColumnTakesTheRest)
+                      ? { width: c.width }
+                      : undefined
+                  }
                 />
               ))}
               {renderRowAction && (
-                <th
-                  className={clsx(
-                    HEADER_CELL,
-                    HEADER_CELL_PADDING[density],
-                    'text-right print:hidden'
-                  )}
-                >
-                  Action
-                </th>
+                <col style={{ width: ACTION_COLUMN_WIDTH }} className="print:hidden" />
               )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
-              Array.from({ length: loadingRows }, (_, i) => (
-                <tr key={i}>
-                  {selectable && (
-                    <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])} />
-                  )}
-                  {columns.map((col, c) => (
-                    <td
-                      key={col.key}
-                      className={clsx(
-                        'px-4',
-                        BODY_CELL_PADDING[density],
-                        // The cell's own line height, so a row is as tall loading as loaded.
-                        'text-sm',
-                        ALIGN_CELL[col.align ?? 'left']
-                      )}
-                    >
-                      <div
-                        className={clsx(
-                          'flex h-5 items-center',
-                          col.align === 'right' && 'justify-end',
-                          col.align === 'center' && 'justify-center'
-                        )}
-                      >
-                        <Sk h="h-3" w={SKELETON_WIDTHS[(i + c) % SKELETON_WIDTHS.length]} />
-                      </div>
-                    </td>
-                  ))}
-                  {renderRowAction && (
-                    <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])}>
-                      <div className="flex h-5 items-center justify-end">
-                        <Sk h="h-5" w="w-12" round="rounded-lg" />
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
-            ) : error || sortedRows.length === 0 ? (
-              <tr>
-                <td colSpan={columnCount} className="px-4">
-                  <div className="flex justify-center">
-                    {error ? (
-                      <ErrorState message={error} onRetry={onRetry} />
-                    ) : (
-                      <EmptyState title={emptyTitle} description={emptyDescription} />
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((row) => {
-                const key = rowKey(row);
-                const isSelected = selection.has(key);
-                const href = rowHref?.(row);
-                // A link is the focusable thing of its row; without one, the row itself is.
-                const focusableRow = onRowClick && !href;
-                return (
-                  <tr
-                    key={key}
-                    tabIndex={focusableRow ? 0 : undefined}
-                    onClick={
-                      onRowClick || (href && stickyFirstColumn)
-                        ? (e) => {
-                            if (!isRowClick(e)) return;
-                            // The link covers its own column only: follow it from the rest of
-                            // the row. Its click comes back here, and calls onRowClick.
-                            const link =
-                              e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
-                            if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
-                              link.click();
-                              return;
-                            }
-                            onRowClick?.(row);
-                          }
-                        : undefined
-                    }
-                    onKeyDown={
-                      focusableRow
-                        ? (e) => {
-                            if (e.target !== e.currentTarget) return;
-                            if (e.key !== 'Enter' && e.key !== ' ') return;
-                            e.preventDefault();
-                            onRowClick(row);
-                          }
-                        : undefined
-                    }
+            </colgroup>
+            <thead className="sticky top-0 z-10 print:static">
+              <tr
+                aria-rowindex={windowed ? 1 : undefined}
+                className="border-b border-gray-100 dark:border-gray-800"
+              >
+                {selectable && (
+                  <th
                     className={clsx(
-                      'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
-                      isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
-                      (onRowClick || href) && 'cursor-pointer',
-                      stickyFirstColumn && 'group',
-                      focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
-                      href &&
-                        'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
+                      HEADER_CELL,
+                      HEADER_CELL_PADDING[density],
+                      'print:hidden',
+                      stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
                     )}
                   >
-                    {selectable && (
-                      <td
-                        className={clsx(
-                          'px-4 print:hidden',
-                          BODY_CELL_PADDING[density],
-                          href && 'relative z-[1]',
-                          stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
-                        )}
-                      >
-                        {/* A flex box centres the checkbox; inline, it sat on the
-                            text baseline and moved with the font metrics. */}
-                        <div className="flex items-center">
-                          <Checkbox
-                            aria-label={`Select row ${key}`}
-                            checked={isSelected}
-                            onChange={() => toggleRow(key)}
-                          />
-                        </div>
-                      </td>
+                    <div className="flex items-center">
+                      <Checkbox
+                        aria-label="Select all rows"
+                        checked={allVisibleSelected}
+                        indeterminate={someVisibleSelected}
+                        onChange={toggleAllVisible}
+                      />
+                    </div>
+                  </th>
+                )}
+                {columns.map((col, i) => (
+                  <ColumnHeader
+                    key={col.key}
+                    className={clsx(
+                      stickyFirstColumn &&
+                        i === 0 && [
+                          stickyHeadCell(true),
+                          selectable ? STICKY_AFTER_SELECT : STICKY_START,
+                        ]
                     )}
-                    {columns.map((col, i) => (
+                    label={col.label}
+                    align={col.align}
+                    sortable={col.sortable}
+                    filterable={col.filterable}
+                    sortDir={sortKey === col.key ? sortDir : null}
+                    onSortToggle={() => handleSortToggle(col.key)}
+                    filterValues={filterValues[col.key]}
+                    filterSelected={filters[col.key]}
+                    onFilterToggle={(v) => handleFilterToggle(col.key, v)}
+                    onFilterClear={() => clearFilter(col.key)}
+                    density={density}
+                  />
+                ))}
+                {renderRowAction && (
+                  <th
+                    className={clsx(
+                      HEADER_CELL,
+                      HEADER_CELL_PADDING[density],
+                      'text-right print:hidden'
+                    )}
+                  >
+                    Action
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody
+              inert={dimRows || undefined}
+              className={clsx('divide-y divide-gray-100 dark:divide-gray-800', dimRows && DIMMED)}
+            >
+              {showSkeleton ? (
+                Array.from({ length: loadingRows }, (_, i) => (
+                  <tr key={i}>
+                    {selectable && (
+                      <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])} />
+                    )}
+                    {columns.map((col, c) => (
                       <td
                         key={col.key}
                         className={clsx(
                           'px-4',
                           BODY_CELL_PADDING[density],
+                          // The cell's own line height, so a row is as tall loading as loaded.
                           'text-sm',
-                          ALIGN_CELL[col.align ?? 'left'],
-                          href && i > 0 && RAISE_CONTROLS,
-                          stickyFirstColumn &&
-                            i === 0 && [
-                              stickyBodyCell(isSelected, true),
-                              selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                            ]
+                          ALIGN_CELL[col.align ?? 'left']
                         )}
                       >
-                        {href && i === 0 ? (
-                          <AppLink href={href} data-row-link className={ROW_LINK}>
-                            {col.render(row)}
-                          </AppLink>
-                        ) : (
-                          col.render(row)
-                        )}
+                        <div
+                          className={clsx(
+                            'flex h-5 items-center',
+                            col.align === 'right' && 'justify-end',
+                            col.align === 'center' && 'justify-center'
+                          )}
+                        >
+                          <Sk h="h-3" w={SKELETON_WIDTHS[(i + c) % SKELETON_WIDTHS.length]} />
+                        </div>
                       </td>
                     ))}
                     {renderRowAction && (
-                      <td
-                        className={clsx(
-                          'px-4 print:hidden',
-                          BODY_CELL_PADDING[density],
-                          href && 'relative z-[1]'
-                        )}
-                      >
-                        <div className="flex items-center justify-end">{renderRowAction(row)}</div>
+                      <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])}>
+                        <div className="flex h-5 items-center justify-end">
+                          <Sk h="h-5" w="w-12" round="rounded-lg" />
+                        </div>
                       </td>
                     )}
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ))
+              ) : !showRows ? (
+                <tr>
+                  <td colSpan={columnCount} className="px-4">
+                    <div className="flex justify-center">
+                      {error ? (
+                        <ErrorState message={error} onRetry={onRetry} />
+                      ) : (
+                        <EmptyState title={emptyTitle} description={emptyDescription} />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : virtualParts ? (
+                virtualParts.map((part, n) =>
+                  part.kind === 'spacer' ? (
+                    <tr key={`__spacer-${n}`} aria-hidden className="border-b-0">
+                      <td colSpan={columnCount} className="p-0" style={{ height: part.height }} />
+                    </tr>
+                  ) : (
+                    renderRow(pageRows[part.index], part.index)
+                  )
+                )
+              ) : (
+                pageRows.map(renderRow)
+              )}
+            </tbody>
+          </table>
+        </div>
+        {dimRows && <LoadingVeil />}
       </div>
 
-      {!loading && !error && sortedRows.length > 0 && (
+      {hasRows && (loading || !error) && (
         <Pagination
-          page={safePage + 1}
+          page={safePage}
           totalPages={totalPages}
           aria-label={ariaLabel ? `${ariaLabel} pagination` : undefined}
           showInfo
-          total={sortedRows.length}
+          total={totalRows}
           pageSize={pageSize}
-          onPageChange={(next) => setPage(next - 1)}
-          showAll={showAll}
-          onShowAllChange={setShowAll}
+          onPageChange={setPage}
+          showAll={showAllRows}
+          onShowAllChange={manual ? undefined : setShowAll}
           controls={
             pageSizeOptions && pageSizeOptions.length > 0 ? (
               <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />

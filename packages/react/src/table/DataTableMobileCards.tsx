@@ -6,6 +6,7 @@ import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
+import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
   mobileLabelOf,
@@ -38,7 +39,10 @@ type DataTableMobileCardsProps<T> = {
   renderRowAction?: (row: T) => ReactNode;
   onRowClick?: (row: T) => void;
   rowHref?: (row: T) => string | undefined;
+  /** Placeholder cards in place of the rows (nothing to show yet). */
   loading: boolean;
+  /** The rows stay, dimmed and inert, under a spinner: a reload with rows on screen. */
+  dimmed: boolean;
   loadingRows: number;
   error: string | null;
   onRetry?: () => void;
@@ -61,6 +65,7 @@ export const DataTableMobileCards = <T,>({
   onRowClick,
   rowHref,
   loading,
+  dimmed,
   loadingRows,
   error,
   onRetry,
@@ -91,7 +96,7 @@ export const DataTableMobileCards = <T,>({
     );
   }
 
-  if (error || rows.length === 0) {
+  if ((error && !dimmed) || rows.length === 0) {
     return (
       <div className="flex justify-center px-4 sm:hidden">
         {error ? (
@@ -103,12 +108,13 @@ export const DataTableMobileCards = <T,>({
     );
   }
 
-  return (
+  const list = (
     <ul
       role="list"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
-      className={clsx(ROW_DIVIDER, 'sm:hidden')}
+      inert={dimmed || undefined}
+      className={clsx(ROW_DIVIDER, !dimmed && 'sm:hidden', dimmed && DIMMED)}
     >
       {rows.map((row) => {
         const key = rowKey(row);
@@ -195,6 +201,14 @@ export const DataTableMobileCards = <T,>({
         );
       })}
     </ul>
+  );
+
+  if (!dimmed) return list;
+  return (
+    <div className="relative sm:hidden">
+      {list}
+      <LoadingVeil sticky />
+    </div>
   );
 };
 
