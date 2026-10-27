@@ -307,7 +307,8 @@ const LogRow = ({
         <span
           title={line.source}
           className={clsx(
-            'shrink-0 truncate',
+            // Below 28rem of viewer the source goes: the message needs the room.
+            'shrink-0 truncate @max-md:hidden',
             comfortable ? 'max-w-[16rem]' : 'w-28',
             palette.source
           )}
@@ -321,7 +322,10 @@ const LogRow = ({
     <span
       className={clsx(
         'min-w-0 [unicode-bidi:isolate]',
+        // Narrow and wrapped, a compact row breaks after the time and the level: the message takes
+        // a line of its own, as wide as the row less the toggle.
         wrap ? 'flex-1 break-words whitespace-pre-wrap' : 'whitespace-pre',
+        wrap && !comfortable && '@max-md:ml-6 @max-md:basis-[calc(100%-1.5rem)]',
         LOG_MESSAGE_CLASS[tone][level]
       )}
     >
@@ -338,6 +342,7 @@ const LogRow = ({
       className={clsx(
         'flex gap-x-2 px-3 font-mono text-xs leading-5',
         wrap ? 'w-full' : 'w-max min-w-full',
+        wrap && !comfortable && '@max-md:flex-wrap',
         comfortable ? 'items-start py-1.5' : wrap ? 'items-start' : 'items-center',
         comfortable && clsx('border-b', palette.divider),
         // A wrapped row is as tall as its text, so the browser may skip those out of view.
@@ -753,7 +758,7 @@ export const LogViewer = ({
   return (
     <div
       style={{ height }}
-      className={clsx('relative min-h-0 overflow-hidden', palette.root, className)}
+      className={clsx('@container relative min-h-0 overflow-hidden', palette.root, className)}
     >
       <div
         ref={mergedRef}
