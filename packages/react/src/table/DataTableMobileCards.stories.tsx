@@ -425,3 +425,87 @@ export const ScrollIsTheDefault: Story = {
     await expect(canvas.queryByRole('combobox', { name: 'Sort by' })).toBeNull();
   },
 };
+
+const userDetail = (r: User) => (
+  <div className="flex flex-col gap-3">
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+      <div>
+        <dt className="text-xs text-[var(--color-text-muted)]">Email</dt>
+        <dd className="break-all">{r.email}</dd>
+      </div>
+      <div>
+        <dt className="text-xs text-[var(--color-text-muted)]">Last seen</dt>
+        <dd>{r.lastSeen}</dd>
+      </div>
+    </dl>
+    <p>
+      {r.name} joined the {r.team} team as {r.role}.
+    </p>
+  </div>
+);
+
+/**
+ * With `renderExpandedRow`, a card gets a chevron button on its title line, before the checkbox:
+ * the detail opens inside the card, under its fields. Editing (`edit`) is not offered in cards.
+ */
+export const ExpandableCards: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        aria-label="Users"
+        rows={rows.slice(0, 4)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        selectable
+        renderRowAction={rowAction()}
+        renderExpandedRow={userDetail}
+        defaultExpandedRows={new Set(['user-2'])}
+      />
+    </Wrap>
+  ),
+};
+
+export const CardChevronExpandsAndCollapses: Story = {
+  ...ExpandableCards,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const list = canvas.getByRole('list', { name: 'Users' });
+    const card = (id: string) => cards(within(list))[Number(id) - 1];
+    const chevron = (id: string, open: boolean) =>
+      within(card(id)).getByRole('button', {
+        name: `${open ? 'Hide' : 'Show'} details for user-${id}`,
+      });
+    // The chevron is on the title line, before the checkbox, and a 44px target.
+    const first = chevron('1', false);
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await expect(first.getBoundingClientRect().height).toBe(44);
+    await expect(
+      first.compareDocumentPosition(
+        within(card('1')).getByRole('checkbox', { name: 'Select row user-1' })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    await expect(within(card('1')).queryByText(/joined the/)).toBeNull();
+    await userEvent.click(first);
+    const open = chevron('1', true);
+    await expect(open).toHaveAttribute('aria-expanded', 'true');
+    // The detail is inside the card, below its fields, and what the chevron controls.
+    const detailBox = document.getElementById(open.getAttribute('aria-controls')!)!;
+    await expect(card('1').contains(detailBox)).toBe(true);
+    await expect(within(detailBox).getByText(/joined the Core team/)).toBeVisible();
+    await expect(detailBox.getBoundingClientRect().top).toBeGreaterThan(
+      within(card('1')).getByText('Squad').getBoundingClientRect().bottom
+    );
+    expectNoHorizontalOverflow();
+    // The keyboard does the same, and the toggle does not select the card.
+    chevron('1', true).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(chevron('1', false)).toHaveAttribute('aria-expanded', 'false');
+    await expect(within(card('1')).queryByText(/joined the/)).toBeNull();
+    await expect(
+      within(card('1')).getByRole('checkbox', { name: 'Select row user-1' })
+    ).not.toBeChecked();
+  },
+};
