@@ -75,7 +75,7 @@ const MonitorsContent = () => (
       description="Each monitor checks its target every minute."
     />
 
-    <ul className="m-0 list-none divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-0">
+    <ul className="list-none divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-0">
       {MONITORS.map(({ id, ...monitor }) => (
         <li key={id}>
           <MonitorRow {...monitor} />
