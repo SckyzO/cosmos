@@ -267,7 +267,7 @@ export const HealthCheckList = ({
           aria-controls={panelId}
           onClick={() => toggleGroup(group.id)}
           style={{ paddingInlineStart: `${1 + depth * 1.25}rem` }}
-          className="focus-visible:focus-indicator flex min-h-11 w-full flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[var(--color-border)] bg-gray-50 py-2 pe-4 text-left text-sm font-semibold text-[var(--color-text-primary)] focus-visible:ring-inset dark:bg-white/5"
+          className="focus-visible:focus-indicator flex min-h-11 w-full flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[var(--color-border)] bg-gray-50 py-2 pe-4 text-left text-sm font-semibold text-[var(--color-text-primary)] focus-visible:ring-inset dark:bg-black/20"
         >
           {isCollapsed ? (
             <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
