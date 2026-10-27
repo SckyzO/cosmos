@@ -8,6 +8,7 @@ import {
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { BarList, type BarListItem } from './BarList';
 import { TrendDelta } from './TrendDelta';
@@ -241,7 +242,8 @@ export const Mobile: Story = {
     expectNoHorizontalOverflow();
     const rows = canvas.getAllByRole('listitem');
     const long = rows[0];
-    const label = within(long).getByText(/Getting started/);
+    // The truncating span wraps the label's `<bdi>`.
+    const label = within(long).getByText(/Getting started/).parentElement!;
     expect(label.scrollWidth).toBeGreaterThan(label.clientWidth);
     const value = within(long).getByText('128,430');
     expect(value).toBeVisible();
@@ -378,9 +380,9 @@ export const RankedListIsAnOl: Story = {
       expect.stringMatching(/^3Blog/),
     ]);
     // The bars of every row start at the same place, rank or not.
-    const lefts = rows.map((row) => trackOf(row).getBoundingClientRect().left);
-    expect(new Set(lefts).size).toBe(1);
-    expect(lefts[0]).toBeGreaterThan(ranked.getBoundingClientRect().left);
+    const offsets = rows.map((row) => startOffset(trackOf(row), ranked));
+    expect(new Set(offsets).size).toBe(1);
+    expect(offsets[0]).toBeGreaterThan(0);
   },
 };
 
@@ -392,7 +394,7 @@ export const BarIsThin: Story = {
     const row = canvas.getAllByRole('listitem')[0];
     expect(trackOf(row).getBoundingClientRect().height).toBe(6);
     expect(getComputedStyle(trackOf(row)).borderTopLeftRadius).not.toBe('0px');
-    expect(within(row).getByText('Home')).toHaveAttribute('title', 'Home');
+    expect(within(row).getByText('Home').closest('[title]')).toHaveAttribute('title', 'Home');
   },
 };
 

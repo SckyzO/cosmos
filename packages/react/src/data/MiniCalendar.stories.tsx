@@ -326,8 +326,10 @@ export const WeekdayLabelsDoNotTouch: Story = {
       canvas.getByTitle(name)
     );
     for (let i = 1; i < labels.length; i++) {
-      const gap =
-        labels[i].getBoundingClientRect().left - labels[i - 1].getBoundingClientRect().right;
+      // The gap to the previous label, which is on the right of this one in right to left.
+      const a = labels[i - 1].getBoundingClientRect();
+      const b = labels[i].getBoundingClientRect();
+      const gap = Math.max(b.left - a.right, a.left - b.right);
       const textWidth = (el: HTMLElement) => {
         const range = document.createRange();
         range.selectNodeContents(el);

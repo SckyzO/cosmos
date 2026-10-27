@@ -142,7 +142,8 @@ export const Mobile: Story = {
 export const RendersTimeElement: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
-    const time = canvas.getByText('5 minutes ago');
+    // The text sits in a `<bdi>` inside the `<time>`.
+    const time = canvas.getByText('5 minutes ago').closest('time')!;
     expect(time.tagName).toBe('TIME');
     expect(time.getAttribute('dateTime')).toBe(new Date(NOW - 5 * MINUTE).toISOString());
     expect(time.hasAttribute('tabindex')).toBe(false);
@@ -208,7 +209,7 @@ export const TooltipOnFocus: Story = {
   args: { tooltip: true, timeZone: 'Asia/Tokyo', locale: 'en-US' },
   play: async ({ canvas }) => {
     await userEvent.tab();
-    expect(canvas.getByText('5 minutes ago')).toHaveFocus();
+    expect(canvas.getByText('5 minutes ago').closest('time')).toHaveFocus();
     const tooltip = await within(document.body).findByRole('tooltip');
     expect(tooltip.textContent?.replace(/\s/g, ' ')).toBe(
       'Thursday, January 15, 2026 at 8:55:00 PM GMT+9'

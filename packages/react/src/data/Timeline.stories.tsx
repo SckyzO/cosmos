@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Bell, CheckCircle2, Database, Rocket, Server, Wrench } from 'lucide-react';
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
-import { expectGraphicContrast, expectTextContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectGraphicContrast,
+  expectTextContrast,
+  inEachTheme,
+  startOffset,
+} from '../storybook-helpers';
 import { Timeline, type TimelineIntent, type TimelineItem } from './Timeline';
 
 const meta = {
@@ -233,16 +238,16 @@ export const CardWithIntent: Story = {
       for (const item of intentItems) {
         const card = getComputedStyle(rowOf(canvas, item));
         if (item.intent) {
-          expect(card.borderLeftWidth).toBe('4px');
-          expect(card.borderLeftColor).toBe(markerColor(item.intent));
+          expect(card.borderInlineStartWidth).toBe('4px');
+          expect(card.borderInlineStartColor).toBe(markerColor(item.intent));
           // The other sides keep the 1px gray of a card with no intent.
-          for (const side of ['Top', 'Right', 'Bottom'] as const) {
+          for (const side of ['BlockStart', 'InlineEnd', 'BlockEnd'] as const) {
             expect(card[`border${side}Width`]).toBe('1px');
             expect(card[`border${side}Color`]).toBe(plain[`border${side}Color`]);
           }
         } else {
-          expect(card.borderLeftWidth).toBe('1px');
-          expect(card.borderLeftColor).toBe(card.borderTopColor);
+          expect(card.borderInlineStartWidth).toBe('1px');
+          expect(card.borderInlineStartColor).toBe(card.borderBlockStartColor);
         }
       }
     });
@@ -471,7 +476,7 @@ export const AvatarWithImageKeepsTheRing: Story = {
   },
 };
 
-/** The thicker edge of an `intent` card takes its padding from the left: titles start at the same place. */
+/** The thicker edge of an `intent` card takes its padding from the start: titles start at the same place. */
 export const CardTitlesAlign: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -483,8 +488,7 @@ export const CardTitlesAlign: Story = {
   },
   play: async ({ canvas }) => {
     const offset = (title: string) =>
-      canvas.getByText(title).getBoundingClientRect().left -
-      canvas.getByText(title).closest('li')!.getBoundingClientRect().left;
+      startOffset(canvas.getByText(title), canvas.getByText(title).closest('li')!);
     await expect(offset('Card with intent')).toBe(offset('Plain card'));
     // 1px border + 12px padding.
     await expect(offset('Plain card')).toBe(13);
@@ -521,7 +525,7 @@ export const DotLayout: Story = {
     await expect(indicator.height).toBe(24);
     // The time is a sibling of the title, not a line under the description.
     const time = canvas.getByText('5m ago');
-    const title = canvas.getByText('server-prod-01 marked CRIT');
+    const title = canvas.getByText('server-prod-01 marked CRIT').closest('p')!;
     await expect(time.parentElement).toBe(title.parentElement);
     // Entries are apart: the gap under an entry's last line, none under the last entry.
     const body = (row: HTMLElement) => row.lastElementChild as HTMLElement;

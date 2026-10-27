@@ -3,6 +3,7 @@ import { Activity, MessageCircle, MoreVertical } from 'lucide-react';
 import { Fragment } from 'react';
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
+import { startOffset } from '../storybook-helpers';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -881,9 +882,11 @@ export const RankRendersBeforeTheTitle: Story = {
   play: async ({ canvas }) => {
     const first = canvas.getByText('1');
     const title = canvas.getByText('First');
-    await expect(first.getBoundingClientRect().right).toBeLessThanOrEqual(
-      title.getBoundingClientRect().left
-    );
+    // Before it along the line: the rank ends where the title starts, or earlier.
+    const list = first.closest('ul')!;
+    await expect(
+      startOffset(first, list) + first.getBoundingClientRect().width
+    ).toBeLessThanOrEqual(startOffset(title, list));
     await expect(canvas.getByText('2')).toBeVisible();
   },
 };
@@ -1054,14 +1057,14 @@ export const CardHeaderSlotsRender: Story = {
     await expect(canvas.getByText('p95 over the last hour')).toBeVisible();
     const action = canvas.getByRole('button', { name: 'View all' });
     await expect(action).toBeVisible();
-    // The header sits above the list, and the action at its right edge.
+    // The header sits above the list, and the action at its end edge.
     const heading = canvas.getByRole('heading', { name: 'Slowest endpoints' });
     const list = canvas.getByTestId('with-header');
     await expect(heading.getBoundingClientRect().bottom).toBeLessThanOrEqual(
       list.getBoundingClientRect().top
     );
-    await expect(action.getBoundingClientRect().left).toBeGreaterThan(
-      heading.getBoundingClientRect().right
+    await expect(startOffset(action, list)).toBeGreaterThan(
+      startOffset(heading, list) + heading.getBoundingClientRect().width
     );
     await expect(within(canvas.getByTestId('without')).queryByRole('heading')).toBeNull();
   },

@@ -133,7 +133,8 @@ export const TooltipOnFocus: Story = {
   tags: ['!dev', '!autodocs'],
   args: { tooltip: true, format: 'date' },
   play: async ({ canvas }) => {
-    const time = canvas.getByText('Jan 15, 2026');
+    // The text sits in a `<bdi>` inside the `<time>`.
+    const time = canvas.getByText('Jan 15, 2026').closest('time')!;
     expect(time.getAttribute('tabindex')).toBe('0');
     await userEvent.tab();
     expect(time).toHaveFocus();

@@ -6,6 +6,8 @@ import {
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  keyToEnd,
+  keyToStart,
   mobileViewport,
 } from '../storybook-helpers';
 import { PipelineStages, type PipelineStage } from './PipelineStages';
@@ -220,8 +222,9 @@ export const StagesShareOneRow: Story = {
       expect(Math.round(box.top)).toBe(Math.round(boxes[0].top));
       expect(Math.abs(box.width - boxes[0].width)).toBeLessThan(1.5);
     }
-    // Room for the arrow between two cards.
-    expect(boxes[1].left - boxes[0].right).toBeGreaterThanOrEqual(60);
+    // Room for the arrow between two cards, whichever side the next one is on.
+    const gap = Math.max(boxes[1].left - boxes[0].right, boxes[0].left - boxes[1].right);
+    expect(gap).toBeGreaterThanOrEqual(60);
   },
 };
 
@@ -285,13 +288,13 @@ export const KeyboardWithNothingChecked: Story = {
     const radios = canvas.getAllByRole('radio');
     expect(radios.filter((radio) => radio.tabIndex === 0)).toEqual([radios[0]]);
     await expectFocusRing(radios[0]);
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     expect(radios[1]).toHaveFocus();
     expect(radios[1]).toBeChecked();
     await userEvent.keyboard('{ArrowDown}');
     expect(radios[2]).toHaveFocus();
     expect(radios[2]).toBeChecked();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     expect(radios[1]).toHaveFocus();
     await userEvent.keyboard('{ArrowUp}');
     expect(radios[0]).toHaveFocus();
@@ -315,7 +318,7 @@ export const TabLandsOnTheCheckedStage: Story = {
     expect(radios.filter((radio) => radio.tabIndex === 0)).toEqual([radios[2]]);
     await userEvent.tab();
     expect(radios[2]).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     expect(radios[3]).toHaveFocus();
     expect(radios[3]).toBeChecked();
     expect(radios[2]).not.toBeChecked();

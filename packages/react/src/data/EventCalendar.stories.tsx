@@ -158,7 +158,8 @@ export const MultiDayEventRepeats: Story = {
     // Saturday to Tuesday, across a week boundary: the title is written once, on the
     // first day; the other days keep a bare chip that still names the event.
     const title = (day: string) =>
-      within(canvas.getByRole('group', { name: day })).getByText('KubeCon trip');
+      // The text sits in a `<bdi>` inside the span that hides or shows it.
+      within(canvas.getByRole('group', { name: day })).getByText('KubeCon trip').parentElement!;
     for (const day of ['Sunday, May 10, 2026', 'Monday, May 11, 2026', 'Tuesday, May 12, 2026']) {
       await expect(title(day)).toHaveClass('sr-only');
     }
@@ -168,12 +169,12 @@ export const MultiDayEventRepeats: Story = {
     await expect(
       within(canvas.getByRole('group', { name: 'Wednesday, April 29, 2026' })).getByText(
         'Datacenter migration'
-      )
+      ).parentElement
     ).not.toHaveClass('sr-only');
     await expect(
       within(canvas.getByRole('group', { name: 'Thursday, April 30, 2026' })).getByText(
         'Datacenter migration'
-      )
+      ).parentElement
     ).toHaveClass('sr-only');
   },
 };

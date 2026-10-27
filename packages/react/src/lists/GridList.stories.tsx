@@ -125,7 +125,7 @@ export const ColsPropMapsToGridCols: Story = {
 
 /**
  * Each footer action rounds the card corner it sits in, so its hover background
- * follows the card: the first the bottom-left, the last the bottom-right.
+ * follows the card: the first the bottom corner at the start, the last the one at the end.
  */
 export const FooterActionsRoundTheirOuterCorner: Story = {
   tags: ['!dev'],
@@ -151,7 +151,7 @@ export const FooterActionsRoundTheirOuterCorner: Story = {
   play: async ({ canvas }) => {
     const corners = (name: string) => {
       const style = getComputedStyle(canvas.getByRole('link', { name }));
-      return [style.borderBottomLeftRadius !== '0px', style.borderBottomRightRadius !== '0px'];
+      return [style.borderEndStartRadius !== '0px', style.borderEndEndRadius !== '0px'];
     };
     await expect(corners('Email')).toEqual([true, false]);
     await expect(corners('Call')).toEqual([false, true]);
@@ -159,7 +159,7 @@ export const FooterActionsRoundTheirOuterCorner: Story = {
   },
 };
 
-export const FooterActionAddsMlPxAfterFirst: Story = {
+export const FooterActionAddsMsPxAfterFirst: Story = {
   tags: ['!dev'],
   render: () => (
     <GridList>
@@ -175,6 +175,6 @@ export const FooterActionAddsMlPxAfterFirst: Story = {
   ),
   play: async ({ canvasElement }) => {
     const wrap = canvasElement.querySelector('[data-testid="b"]')?.parentElement;
-    await expect(wrap?.className ?? '').toMatch(/-ml-px/);
+    await expect(wrap?.className ?? '').toMatch(/-ms-px/);
   },
 };

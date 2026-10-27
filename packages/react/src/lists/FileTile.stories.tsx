@@ -366,7 +366,10 @@ export const NameIsTextWithoutHandler: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button')).toBeNull();
     await expect(canvas.queryByRole('link')).toBeNull();
-    await expect(canvas.getByText('Q3 report.pdf')).toHaveAttribute('title', 'Q3 report.pdf');
+    await expect(canvas.getByText('Q3 report.pdf').closest('[title]')).toHaveAttribute(
+      'title',
+      'Q3 report.pdf'
+    );
   },
 };
 

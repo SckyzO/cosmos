@@ -7,6 +7,7 @@ import {
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  keyToEnd,
   mobileViewport,
   portalDocsParams,
 } from '../storybook-helpers';
@@ -317,8 +318,12 @@ export const OnNarrowScreen: Story = {
     // One column wide, at most 300px, with the next column peeking in.
     expect(todo.getBoundingClientRect().width).toBeLessThanOrEqual(300);
     expect(todo.getBoundingClientRect().width).toBeGreaterThan(window.innerWidth * 0.6);
-    expect(doing.getBoundingClientRect().left).toBeLessThan(window.innerWidth);
-    expect(doing.getBoundingClientRect().right).toBeGreaterThan(window.innerWidth);
+    // Its start edge is in view and its end edge past the screen's end (the left edge in right to
+    // left, where the board starts on the right).
+    const next = doing.getBoundingClientRect();
+    const rtl = getComputedStyle(scroller).direction === 'rtl';
+    expect(rtl ? window.innerWidth - next.right : next.left).toBeLessThan(window.innerWidth);
+    expect(rtl ? window.innerWidth - next.left : next.right).toBeGreaterThan(window.innerWidth);
     // The board scrolls, the page does not, and the snap is on.
     expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
     expect(getComputedStyle(scroller).overflowX).toBe('auto');
@@ -615,7 +620,7 @@ export const KeyboardPickUpMoveAndDrop: Story = {
     await waitFor(() =>
       expect(titlesIn(canvas, 'To do').slice(0, 2)).toEqual([TITLES.export, TITLES.billing])
     );
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     // Nothing is reported until the drop.
     expect(calls(args.onChange)).toHaveLength(0);
@@ -644,7 +649,7 @@ export const KeyboardEnterAndEmptyColumn: Story = {
   play: async ({ canvas, args }) => {
     gripOf(canvas, TITLES.sso).focus();
     await keys('{Enter}');
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'Review')).toEqual([TITLES.sso]));
     await keys('{Enter}');
     await waitFor(() =>
@@ -665,7 +670,7 @@ export const KeyboardCancel: Story = {
     await keys('{ArrowDown}');
     // Each move lands before the next key: the sensor measures the card again after it.
     await waitFor(() => expect(titlesIn(canvas, 'To do').indexOf(TITLES.billing)).toBe(1));
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('{Escape}');
     await waitFor(() => expect(board(canvas)).toEqual(SPRINT_ORDER));
@@ -699,7 +704,7 @@ export const KeyboardDropDoesNotWaitForTheRender: Story = {
   },
   play: async ({ canvas, args }) => {
     await pickUp(gripOf(canvas, TITLES.billing));
-    await keys('{ArrowRight}[Space]');
+    await keys(`{${keyToEnd()}}[Space]`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
     expect(calls(args.onCardMove)[0][0]).toMatchObject({
@@ -732,7 +737,7 @@ export const AnnouncesPickUpMoveDropAndCancel: Story = {
     );
     await keys('{ArrowDown}');
     await waitFor(() => expect(announcement(grip)).toBe('Column To do, position 3 of 4.'));
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() =>
       expect(announcement(grip)).toMatch(/^Column In progress, position \d of 4\.$/)
     );
@@ -748,7 +753,7 @@ export const AnnouncesPickUpMoveDropAndCancel: Story = {
     await waitFor(() => expect(moved).toHaveFocus());
     await waitFor(() => expect(document.querySelector('[data-dnd-overlay]')).toBeEmptyDOMElement());
     await pickUp(moved);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'Review')).toContain(TITLES.export));
     await keys('{Escape}');
     await waitFor(() =>
@@ -931,7 +936,7 @@ export const ControlledBoardWaitsForTheHost: Story = {
   play: async ({ canvas, args }) => {
     const grip = gripOf(canvas, TITLES.billing);
     await pickUp(grip);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('[Space]');
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
@@ -1039,7 +1044,7 @@ export const OnNarrowScreenMovesCards: Story = {
   play: async ({ canvas, args }) => {
     const grip = gripOf(canvas, TITLES.billing);
     await pickUp(grip);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('[Space]');
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
