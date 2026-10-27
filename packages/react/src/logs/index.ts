@@ -1,4 +1,5 @@
 export { LogViewer, type LogViewerProps, type LogDensity } from './LogViewer';
+export { LogToolbar, type LogToolbarProps } from './LogToolbar';
 export {
   LogLevelBadge,
   LOG_LEVEL_LABEL,
