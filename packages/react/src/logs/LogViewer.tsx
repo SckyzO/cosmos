@@ -31,7 +31,7 @@ import {
   splitLogMatches,
 } from './log-lines';
 import { detailSlots, lineWindow, slotOf, totalSlots, type ExpandedBlock } from './log-window';
-import type { LogColumn, LogLevelKey, LogLine, LogOrder } from './types';
+import type { LogColumn, LogLevelKey, LogLine, LogLineId, LogOrder } from './types';
 
 export type LogDensity = 'compact' | 'comfortable';
 
@@ -98,18 +98,18 @@ export type LogViewerProps = {
   /** Called with the number of lines that match, whenever it changes (also to 0). */
   onMatchCountChange?: (count: number) => void;
   /** Ids of the expanded lines, when controlled. */
-  expandedIds?: readonly LogLine['id'][];
+  expandedIds?: readonly LogLineId[];
   /** Ids of the lines expanded at first, when uncontrolled. None by default. */
-  defaultExpandedIds?: readonly LogLine['id'][];
+  defaultExpandedIds?: readonly LogLineId[];
   /** Called with the ids to move to when a line is expanded or collapsed. */
-  onExpandedIdsChange?: (ids: readonly LogLine['id'][]) => void;
+  onExpandedIdsChange?: (ids: readonly LogLineId[]) => void;
   /**
    * Adds an "Open details" button to an expanded line, called with it: open a `LogEntryDetail` in
    * a drawer or a side panel.
    */
   onOpenLine?: (line: LogLine) => void;
   /** The line to mark as the one in focus (`aria-current`), as in the context of an entry. */
-  currentId?: LogLine['id'];
+  currentId?: LogLineId;
   /**
    * Announce the error and fatal lines that arrive to screen readers, in a polite live region of
    * their own: up to three, then the count of the rest. Off by default, as is every other line: a
@@ -307,7 +307,8 @@ const LogRow = ({
         <span
           title={line.source}
           className={clsx(
-            'shrink-0 truncate',
+            // Below 28rem of viewer the source goes: the message needs the room.
+            'shrink-0 truncate @max-md:hidden',
             comfortable ? 'max-w-[16rem]' : 'w-28',
             palette.source
           )}
@@ -321,7 +322,10 @@ const LogRow = ({
     <span
       className={clsx(
         'min-w-0 [unicode-bidi:isolate]',
+        // Narrow and wrapped, a compact row breaks after the time and the level: the message takes
+        // a line of its own, as wide as the row less the toggle.
         wrap ? 'flex-1 break-words whitespace-pre-wrap' : 'whitespace-pre',
+        wrap && !comfortable && '@max-md:ml-6 @max-md:basis-[calc(100%-1.5rem)]',
         LOG_MESSAGE_CLASS[tone][level]
       )}
     >
@@ -338,6 +342,7 @@ const LogRow = ({
       className={clsx(
         'flex gap-x-2 px-3 font-mono text-xs leading-5',
         wrap ? 'w-full' : 'w-max min-w-full',
+        wrap && !comfortable && '@max-md:flex-wrap',
         comfortable ? 'items-start py-1.5' : wrap ? 'items-start' : 'items-center',
         comfortable && clsx('border-b', palette.divider),
         // A wrapped row is as tall as its text, so the browser may skip those out of view.
@@ -593,13 +598,22 @@ export const LogViewer = ({
     return () => observer.disconnect();
   }, [follow, stick]);
 
+  // Where the scroll position was left by the last change of content or by our own code. A scroll
+  // event that finds it there is theirs, not the reader's: a filter that shortens the list makes
+  // the browser clamp the position, often to the end, and that must not resume a paused viewer.
+  const settled = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollerRef.current;
+    if (el) settled.current = el.scrollTop;
+  }, [visible, slots, rowHeight, wrap, newest]);
+
   const onScroll = () => {
     const el = scrollerRef.current;
     if (!el) return;
     const distance = newest ? el.scrollHeight - el.scrollTop - el.clientHeight : el.scrollTop;
     const atEnd = distance <= Math.max(24, rowHeight);
     if (follow && !atEnd) setFollow(false);
-    else if (!follow && atEnd) setFollow(true);
+    else if (!follow && atEnd && el.scrollTop !== settled.current) setFollow(true);
   };
 
   // Paused: remember the newest line, to count the ones that arrive after it.
@@ -626,7 +640,10 @@ export const LogViewer = ({
     lastSeen.current = { id: newestId, lines: visible };
     if (!el || newest || follow || wrap || before.id === null || before.id === newestId) return;
     const added = newLinesSince(visible, before.id).length;
-    if (added > 0 && added < visible.length) el.scrollTop += added * rowHeight;
+    if (added > 0 && added < visible.length) {
+      el.scrollTop += added * rowHeight;
+      settled.current = el.scrollTop;
+    }
   }, [visible, newestId, newest, follow, wrap, rowHeight]);
 
   // ── The active match ──────────────────────────────────────────────────────
@@ -651,6 +668,7 @@ export const LogViewer = ({
       top = slotOf(drawn, state.blocks) * state.rowHeight - (el.clientHeight - state.rowHeight) / 2;
     }
     el.scrollTop = Math.max(0, top);
+    settled.current = el.scrollTop;
   }, [activeId, expression]);
 
   // ── Announcing the errors ─────────────────────────────────────────────────
@@ -740,7 +758,7 @@ export const LogViewer = ({
   return (
     <div
       style={{ height }}
-      className={clsx('relative min-h-0 overflow-hidden', palette.root, className)}
+      className={clsx('@container relative min-h-0 overflow-hidden', palette.root, className)}
     >
       <div
         ref={mergedRef}

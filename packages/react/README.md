@@ -961,8 +961,13 @@ and to count the lines that arrived while it was paused.
   row (`['time']`), `lineNumbers` numbers the lines in the order of `lines`.
 - `follow` / `defaultFollow` / `onFollowChange`: it stays at the newest line while lines arrive.
   Scrolling away from the end pauses it and shows "Jump to latest (12 new)"; the button, or
-  scrolling back to the end, resumes it. `order` puts the newest line last (`newest-last`, the
-  default, a tail) or first.
+  scrolling back to the end, resumes it; a filter that shortens the list does not. `order` puts
+  the newest line last (`newest-last`, the default, a tail) or first.
+- The row follows the width of the viewer, not the screen's: the viewer is a container. Under
+  28rem the source column is hidden; without `wrap` the row stays on one line and the viewer
+  scrolls sideways inside itself, with `wrap` the message goes on a line of its own under the
+  time and the level. Give the viewer a width (it fills a block parent; in a flex row, a `flex-1`
+  or a width class), since a container takes none from its content.
 - `activeLevels` and `activeSources` filter the lines (left out or, for sources, empty, shows
   all). `search` highlights a case-insensitive term in the messages and sources, `searchRegex`
   reads it as a pattern (one that does not compile finds nothing). `activeMatch` is the active
