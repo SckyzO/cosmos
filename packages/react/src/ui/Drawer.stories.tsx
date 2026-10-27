@@ -333,7 +333,7 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 /** The left drawer enters and leaves by the left edge, never the right. */
 export const LeftDrawerStaysOnTheLeft: Story = {
   tags: ['!dev', '!autodocs'],
-  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  // The story watches the slide itself: keep it in the story tests.
   parameters: { settleMotion: false },
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
@@ -502,7 +502,8 @@ export const ClosedDrawerIsNotFocusable: Story = {
  */
 export const ClosedDrawerIsInvisible: Story = {
   tags: ['!dev', '!autodocs'],
-  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  // The end of a real slide (`transitionend`): keep the slide in the story tests.
+  // `ClosedDrawerIsInvisibleWithoutASlide` covers a close that runs none.
   parameters: { settleMotion: false },
   render: () => {
     const [open, setOpen] = useState(false);
@@ -526,6 +527,25 @@ export const ClosedDrawerIsInvisible: Story = {
 
     await userEvent.click(within(panel).getByRole('button', { name: 'Close drawer' }));
     await slideEnds();
+    await waitFor(() => expect(panel).not.toBeVisible());
+  },
+};
+
+/**
+ * With transitions at `0s` (a reduced-motion reset, a user stylesheet, and these story tests), the
+ * slide-out starts no transition and fires no `transitionend`: the closed drawer is still no longer
+ * painted.
+ */
+export const ClosedDrawerIsInvisibleWithoutASlide: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: ClosedDrawerIsInvisible.render,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open drawer' }));
+    const panel = await within(document.body).findByRole('dialog');
+    await expect(panel.getAnimations()).toHaveLength(0);
+    await expect(panel).toBeVisible();
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Close drawer' }));
     await waitFor(() => expect(panel).not.toBeVisible());
   },
 };
@@ -977,7 +997,7 @@ const scrim = () =>
 /** The sheet enters and leaves by the bottom edge, never the top or a side. */
 export const BottomSheetSlidesFromTheBottom: Story = {
   tags: ['!dev', '!autodocs'],
-  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
+  // The story watches the slide itself: keep it in the story tests.
   parameters: { settleMotion: false },
   render: Sides.render,
   play: async ({ canvas }) => {

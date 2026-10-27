@@ -454,8 +454,6 @@ export const WithoutAProvider: Story = {
 export const DrawerClosesOnAProvidedLink: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
-  // The Drawer hides once its slide ends (`transitionend`): keep the slide in the story tests.
-  parameters: { settleMotion: false },
   render: () => (
     <FakeRouter>
       <LinkProvider component={RouterLink}>
