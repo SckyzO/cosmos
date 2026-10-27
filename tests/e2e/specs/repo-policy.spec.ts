@@ -270,7 +270,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -278,6 +278,9 @@ const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
  */
 const RTL_EXTRA_FILES = [
   'packages/react/src/ui/Button.tsx', // Buttons.stories.tsx
+  'packages/react/src/forms/fieldRecipe.ts', // the padding and icon places of every field
+  'packages/react/src/forms/RequiredMark.tsx', // the asterisk after a label
+  'packages/react/src/forms/tagField.tsx', // the box and input of MultiSelect and TagInput
 ];
 
 /**
@@ -291,7 +294,12 @@ const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [];
  * is changing them). They are left out of the check. An entry fails once its file is no longer
  * in a converted group or holds no physical utility any more: the list only shrinks.
  */
-const RTL_DEFERRED: { file: string; reason: string }[] = [];
+const RTL_DEFERRED: { file: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/editor/RichTextEditor.tsx',
+    reason: 'editor/ is converted after #486, which is changing FormattingToolbar and LinkForm',
+  },
+];
 
 // A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
 // `[&>button:first-child]:`), or an inline-style key that does: `left: 0`, `marginRight`.
