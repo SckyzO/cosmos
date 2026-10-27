@@ -108,6 +108,25 @@ const withAppearanceAttributes: Decorator = (Story, ctx) => {
   return <Story />;
 };
 
+/** The Direction menu: `dir` on <html>, the native attribute (no `data-*`). */
+const DIRECTIONS = [
+  { id: 'ltr', label: 'Left to right' },
+  { id: 'rtl', label: 'Right to left' },
+];
+
+/**
+ * Apply the `direction` toolbar global as `dir` on <html>; the default (ltr)
+ * removes the attribute, so left to right renders as it did before the menu.
+ * Set before the story renders, like the appearance attributes, so components
+ * that read the direction in JavaScript get the right one on mount.
+ */
+const withDirection: Decorator = (Story, ctx) => {
+  const root = document.documentElement;
+  if (ctx.globals.direction === 'rtl') root.dir = 'rtl';
+  else root.removeAttribute('dir');
+  return <Story />;
+};
+
 /**
  * Viewport presets — first the Tailwind 4 breakpoints (the canonical contract
  * for any responsive utility used in Cosmos components), then a handful of
@@ -176,6 +195,15 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    direction: {
+      description: 'Text direction',
+      toolbar: {
+        title: 'Direction',
+        icon: 'transfer',
+        items: menuItems('Direction', DIRECTIONS),
+        dynamicTitle: true,
+      },
+    },
   },
   // `theme` set here so stories and the manager always read a value.
   initialGlobals: {
@@ -184,6 +212,7 @@ const preview: Preview = {
     font: 'outfit',
     textSize: 'md',
     density: 'default',
+    direction: 'ltr',
   },
   parameters: {
     controls: {
@@ -233,6 +262,7 @@ const preview: Preview = {
   decorators: [
     withCosmosSurface,
     withAppearanceAttributes,
+    withDirection,
     // The manager and the docs chrome follow the same global (manager.ts,
     // CosmosDocsContainer.tsx).
     withThemeClass,
