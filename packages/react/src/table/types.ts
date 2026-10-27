@@ -9,6 +9,9 @@ export type DataTableSort = { key: string; direction: SortDirection } | null;
 /** Row height of a `DataTable`: the standard rows, or taller `comfortable` ones. */
 export type DataTableDensity = 'default' | 'comfortable';
 
+/** The edge of a `DataTable` a column is pinned to. */
+export type ColumnPin = 'start' | 'end';
+
 export type ColumnDef<T> = {
   /** Stable key — used for sort/filter identity. */
   key: string;
@@ -53,6 +56,18 @@ export type ColumnDef<T> = {
    * the card. The others become label/value pairs. The table above `sm` ignores it.
    */
   mobile?: 'title' | 'hidden';
+  /**
+   * Pins the column to the `start` or the `end` of the table while it scrolls sideways, so a row
+   * stays identified (a name at the start) or its status and actions stay in reach (at the end).
+   * Several columns can sit on each side. List the pinned columns first (`start`) or last (`end`)
+   * in `columns`: a pinned column keeps its place in the order. The selection and toggle columns
+   * stay first, and pinned with the start columns; the action column is pinned with the end ones.
+   * A shadow marks the edge while content scrolls under it. With `rowHref`, the link of the row
+   * covers its own column only when that one is pinned, and a click on the rest of the row follows
+   * it from a handler (middle click and the context menu work on that column only). The table
+   * above `sm` only: the cards of `mobileLayout="cards"` ignore it.
+   */
+  pin?: ColumnPin;
   /** The label of the column's pair in a card, in place of `label` (a short or plain-text one). */
   mobileLabel?: ReactNode;
 };

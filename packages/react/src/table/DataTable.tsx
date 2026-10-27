@@ -37,9 +37,12 @@ import { useScrollFade } from '../hooks/useScrollFade';
 import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
 import { detailRowId, toggleKey } from './expandedRows';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
-import { stickyBodyCell, stickyHeadCell } from './stickyColumn';
+import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
+import { usePinnedWidths } from './usePinnedWidths';
+import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
   ColumnDef,
+  ColumnPin,
   DataTableDensity,
   DataTableExportQuery,
   DataTableSort,
@@ -422,7 +425,18 @@ export const DataTable = <T,>({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrolls = useOverflows(scrollerRef);
   // An edge fades where the table goes on, as the Tabs' do; not the start one under a pinned column.
-  const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
+  const scrollEdges = useScrollEdges(scrollerRef);
+  // Pinned columns. A cell's index counts the toggle and selection columns before the data
+  // columns and the action column after them; those follow the data columns' pins.
+  const effectivePin = (col: ColumnDef<T>, i: number): ColumnPin | undefined =>
+    col.pin ?? (stickyFirstColumn && i === 0 ? 'start' : undefined);
+  const dataPins = columns.map(effectivePin);
+  const hasStartPin = dataPins.includes('start');
+  const hasEndPin = dataPins.includes('end');
+  // The link of a row covers its own column, which is a box of its own once that is pinned.
+  const linkColumnPinned = dataPins[0] !== undefined;
+  // An edge fades where the table goes on, as the Tabs' do; not under a pinned column.
+  const fade = useScrollFade(scrollerRef, { start: !hasStartPin, end: !hasEndPin });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
   const [sort, setSortState] = useControllableState<DataTableSort>({
@@ -461,8 +475,6 @@ export const DataTable = <T,>({
     name: 'DataTable.expandedRows',
   });
   const tableId = useId();
-  // Where a pinned cell sticks: after the toggle and selection columns before it, 44px each.
-  const leadWidth = (expandable ? 44 : 0) + (selectable ? 44 : 0);
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
     value: selectionProp,
@@ -577,6 +589,32 @@ export const DataTable = <T,>({
 
   const columnCount =
     columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
+
+  const leadCount = (expandable ? 1 : 0) + (selectable ? 1 : 0);
+  const cellPins: (ColumnPin | undefined)[] = [
+    ...Array.from({ length: leadCount }, () => (hasStartPin ? ('start' as const) : undefined)),
+    ...dataPins,
+    ...(renderRowAction ? [hasEndPin ? ('end' as const) : undefined] : []),
+  ];
+  const headRowRef = useRef<HTMLTableRowElement>(null);
+  const cellWidths = usePinnedWidths(headRowRef, hasStartPin || hasEndPin, cellPins.length);
+  const offsets = pinOffsets(cellWidths, cellPins);
+  const edges = pinEdges(cellPins);
+  // The `sticky` classes and the offset of the cell at `index` (none for one that scrolls).
+  const pinOf = (index: number, state?: 'idle' | 'selected' | 'open') => {
+    const pinned = cellPins[index] !== undefined;
+    return {
+      style: pinStyle(offsets, index),
+      className: pinned
+        ? pinnedCell({
+            head: state === undefined,
+            state,
+            edgeSide: index === edges.start ? 'start' : index === edges.end ? 'end' : undefined,
+            scrolled: index === edges.start ? scrollEdges.start : scrollEdges.end,
+          })
+        : undefined,
+    };
+  };
 
   // The rows the pager counts: all of them in memory, the host's total in `manual`.
   const totalRows = manual ? (rowCount ?? rows.length) : sortedRows.length;
@@ -789,13 +827,13 @@ export const DataTable = <T,>({
           }
           tabIndex={focusableRow ? 0 : undefined}
           onClick={
-            onRowClick || (href && stickyFirstColumn)
+            onRowClick || (href && linkColumnPinned)
               ? (e) => {
                   if (!isRowClick(e)) return;
                   // The link covers its own column only: follow it from the rest of
                   // the row. Its click comes back here, and calls onRowClick.
                   const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
-                  if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
+                  if (link && linkColumnPinned && !link.contains(e.target as Node)) {
                     link.click();
                     return;
                   }
@@ -821,7 +859,7 @@ export const DataTable = <T,>({
             // The detail row below is part of it: no divider between the two.
             isOpen && 'border-b-0',
             (onRowClick || href) && 'cursor-pointer',
-            stickyFirstColumn && 'group',
+            'group/row',
             focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
             href &&
               'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
@@ -829,12 +867,12 @@ export const DataTable = <T,>({
         >
           {expandable && (
             <td
-              style={stickyFirstColumn ? { left: 0 } : undefined}
+              style={pinOf(0, isSelected ? 'selected' : isOpen ? 'open' : 'idle').style}
               className={clsx(
                 'px-2 print:hidden',
                 bodyPadding,
                 href && 'relative z-[1]',
-                stickyFirstColumn && stickyBodyCell(isSelected, false)
+                pinOf(0, isSelected ? 'selected' : isOpen ? 'open' : 'idle').className
               )}
             >
               <Button
@@ -853,14 +891,17 @@ export const DataTable = <T,>({
           )}
           {selectable && (
             <td
-              style={stickyFirstColumn ? { left: expandable ? 44 : 0 } : undefined}
+              style={
+                pinOf(expandable ? 1 : 0, isSelected ? 'selected' : isOpen ? 'open' : 'idle').style
+              }
               className={clsx(
                 'px-4 print:hidden',
                 bodyPadding,
                 // The cell box is in em of this size, as in the data cells.
                 windowed && 'text-sm',
                 href && 'relative z-[1]',
-                stickyFirstColumn && stickyBodyCell(isSelected, false)
+                pinOf(expandable ? 1 : 0, isSelected ? 'selected' : isOpen ? 'open' : 'idle')
+                  .className
               )}
             >
               {/* A flex box centres the checkbox; inline, it sat on the
@@ -886,14 +927,16 @@ export const DataTable = <T,>({
             return (
               <td
                 key={col.key}
-                style={stickyFirstColumn && i === 0 ? { left: leadWidth } : undefined}
+                style={
+                  pinOf(leadCount + i, isSelected ? 'selected' : isOpen ? 'open' : 'idle').style
+                }
                 className={clsx(
                   'px-4',
                   bodyPadding,
                   'text-sm',
                   ALIGN_CELL[col.align ?? 'left'],
                   href && i > 0 && RAISE_CONTROLS,
-                  stickyFirstColumn && i === 0 && stickyBodyCell(isSelected, true)
+                  pinOf(leadCount + i, isSelected ? 'selected' : isOpen ? 'open' : 'idle').className
                 )}
               >
                 {windowed ? (
@@ -915,11 +958,21 @@ export const DataTable = <T,>({
           })}
           {renderRowAction && (
             <td
+              style={
+                pinOf(
+                  leadCount + columns.length,
+                  isSelected ? 'selected' : isOpen ? 'open' : 'idle'
+                ).style
+              }
               className={clsx(
                 'px-4 print:hidden',
                 bodyPadding,
                 windowed && 'text-sm',
-                href && 'relative z-[1]'
+                href && 'relative z-[1]',
+                pinOf(
+                  leadCount + columns.length,
+                  isSelected ? 'selected' : isOpen ? 'open' : 'idle'
+                ).className
               )}
             >
               <div className="flex items-center justify-end" style={cellBox}>
@@ -1119,17 +1172,18 @@ export const DataTable = <T,>({
             </colgroup>
             <thead className="sticky top-0 z-10 print:static">
               <tr
+                ref={headRowRef}
                 aria-rowindex={windowed ? 1 : undefined}
                 className="border-b border-gray-100 dark:border-gray-800"
               >
                 {expandable && (
                   <th
-                    style={stickyFirstColumn ? { left: 0 } : undefined}
+                    style={pinOf(0).style}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
                       'print:hidden',
-                      stickyFirstColumn && stickyHeadCell(false)
+                      pinOf(0).className
                     )}
                   >
                     <span className="sr-only">Details</span>
@@ -1137,12 +1191,12 @@ export const DataTable = <T,>({
                 )}
                 {selectable && (
                   <th
-                    style={stickyFirstColumn ? { left: expandable ? 44 : 0 } : undefined}
+                    style={pinOf(expandable ? 1 : 0).style}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
                       'print:hidden',
-                      stickyFirstColumn && stickyHeadCell(false)
+                      pinOf(expandable ? 1 : 0).className
                     )}
                   >
                     <div className="flex items-center">
@@ -1158,8 +1212,8 @@ export const DataTable = <T,>({
                 {columns.map((col, i) => (
                   <ColumnHeader
                     key={col.key}
-                    style={stickyFirstColumn && i === 0 ? { left: leadWidth } : undefined}
-                    className={clsx(stickyFirstColumn && i === 0 && stickyHeadCell(true))}
+                    style={pinOf(leadCount + i).style}
+                    className={pinOf(leadCount + i).className}
                     label={col.label}
                     align={col.align}
                     sortable={col.sortable}
@@ -1175,10 +1229,12 @@ export const DataTable = <T,>({
                 ))}
                 {renderRowAction && (
                   <th
+                    style={pinOf(leadCount + columns.length).style}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
-                      'text-right print:hidden'
+                      'text-right print:hidden',
+                      pinOf(leadCount + columns.length).className
                     )}
                   >
                     Action
