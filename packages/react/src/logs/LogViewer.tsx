@@ -176,7 +176,7 @@ const hasDetails = (line: LogLine) =>
   (line.fields !== undefined && Object.keys(line.fields).length > 0) || !!line.stack;
 
 /** Text with the matches of the search drawn as `<mark>`s. Only ever text nodes: nothing is parsed as HTML. */
-export const Highlighted = ({
+const Highlighted = ({
   text,
   expression,
   active,
