@@ -591,6 +591,67 @@ the locale nor the zone, and keep the room of their text until then.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for
 stories, screenshots and tests.
 
+## Health checks
+
+`HealthSummary`, `HealthCheckList` and `HealthMatrix` show whether a system and its parts are
+healthy, and why not. They build on `HealthStatus` (`OK`, `WARN`, `CRIT`, `UNKNOWN`, `INFO`) and on
+the dots and badges of the same folder.
+
+A check is plain data. A group holds checks and, below them, other groups: one level per dependency
+reads as a tree. A group has no status of its own, it is the worst status under it.
+
+```tsx
+const checks: HealthCheck[] = [
+  {
+    id: 'queue',
+    name: 'Job queue',
+    status: 'WARN',
+    target: 'redis://queue:6379/0',
+    message: '312 jobs waiting (limit 200)',
+    latency: 4, // milliseconds
+    checkedAt: '2026-01-15T09:59:30Z', // a Date, a timestamp or an ISO string
+    output: 'queue=default depth=312 oldest=94s', // shown in a code block, on demand
+  },
+];
+const groups: HealthCheckGroup[] = [{ id: 'queue', name: 'Queue', checks, groups: [] }];
+
+<HealthSummary checks={flattenChecks(groups)} refresh={{ onRefresh, autoRefreshMs, onIntervalChange }} />
+<HealthCheckList groups={groups} sort="severity" />
+<HealthMatrix ariaLabel="Services by node" columns={nodes} rows={services} />
+```
+
+Everything that sorts or rolls up uses one **severity order**, worst first: `CRIT`, `WARN`,
+`UNKNOWN`, `INFO`, `OK`. A check nobody could run weighs more than one that passes. `SEVERITY_ORDER`,
+`compareSeverity` and `worstStatus` are exported, as are `flattenChecks` and `groupWorst`. A set with
+nothing in it is `UNKNOWN`.
+
+- `HealthSummary` takes the worst status of its `checks`, and `status` overrides it when you weigh the
+  checks differently (the counts still come from `checks`). The headlines are "All systems
+  operational", "Degraded performance", "Major outage", "Status unknown" and "Operational, with
+  notices"; `labels` replaces any of them. It also shows the count per status, the last check
+  (`RelativeTime`, from the latest `checkedAt`, or `checkedAt`) and, with `refresh` (the props of
+  `RefreshButton`), a refresh action. `variant="banner"` is full width and tinted by the status,
+  `variant="compact"` is one line for a card or a topbar.
+- `HealthCheckList` draws rows with the status in words, the name, target, message, latency and last
+  check. A check with an `output` has a toggle on its name. Pass `checks`, `groups` or both. A group
+  header shows the worst status and the counts under it and collapses
+  (`collapsedGroups` / `defaultCollapsedGroups` / `onCollapsedGroupsChange`, by group id).
+  `sort="severity"` puts the failing checks, and the groups holding them, first. `variant="list"` is
+  rows, `variant="grid"` one small card per check, for a wall screen.
+- `HealthMatrix` is one cell per service (`rows`) and per environment, node or region (`columns`),
+  with sticky headers, in a `role="grid"` that takes one tab stop: arrow keys move between cells,
+  Home and End go to the ends of the row. A cell opens its detail in a popover (`message`, `latency`,
+  `checkedAt`, and a `detail` node of your own) with Enter, Space or a click; Escape closes it and the
+  focus returns to the cell. Each cell is named like "API on par-2b: Warning", and a column with no
+  entry is an empty cell. `variant="dots"` is dense, and every dot has a shape as well as a colour: OK a
+  filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
+  legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
+  grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
+  vertically.
+
+Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
+card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
+
 ## Auth layouts
 
 `AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
@@ -887,6 +948,40 @@ place.
   </SplitView.Pane>
 </SplitView>
 ```
+
+## Code
+
+`CodeBlock` shows a snippet with a copy button. It needs no highlighter, and takes a few variants:
+`lineNumbers`, `highlightLines={[3, '5-7']}`, `filename` (a header with the name, the language and
+the copy button), `wrap`, `maxHeight` (the block scrolls inside, takes a Tab stop and scrolls with the
+arrow keys), `diff` (the first column of each line is its sign, `+`, `-` or a space; changes are
+tinted and marked, the sign column is not copied) and `variant="terminal"` (a line starting with
+`$` and a space is a command, the others are its output; only the commands are copied). A block that a long line
+makes scroll sideways is a Tab stop too. The copy button copies the code, never the line numbers, the
+signs or the prompts.
+
+To colour it, use the `/code` entry. It needs [Shiki](https://shiki.style), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add shiki
+```
+
+```tsx
+import { CodeBlock } from '@sckyzo/cosmos-react/code';
+
+<CodeBlock language="yaml" filename="deployment.yaml" code={manifest} lineNumbers />;
+```
+
+The colours are the `--color-code-*` tokens of the theme, so they follow the theme, accent and text
+size. The JavaScript regex engine is used (no WebAssembly), and each language is its own chunk,
+loaded when a block shows it: until then, and for a language Cosmos has no grammar for, the block
+shows plain text. The languages are shell (`bash`, `sh`, `zsh`), `shellsession`, `yaml`, `json`,
+`toml`, `ini`, `dockerfile`, `sql`, `typescript`, `javascript`, `tsx`, `jsx`, `python`, `go`, `html`,
+`xml`, `css`, `diff`, `nginx`, `hcl`, `terraform`, `rust`, `java`, `php`, `markdown` and `promql`.
+A `highlight` prop still replaces the built-in highlighter. The main entry never imports Shiki:
+an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
+throws an error that names the package.
 
 ## Themes and accents
 

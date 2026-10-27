@@ -194,6 +194,7 @@ const preview: Preview = {
           'Data',
           'Media',
           'Status',
+          'Monitoring',
           'Feedback',
           'Overlays',
           'Navigation',

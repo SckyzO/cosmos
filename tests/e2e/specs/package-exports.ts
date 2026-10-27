@@ -33,3 +33,23 @@ export const expectOwnTypesPerFormat = (pkgDir: string) => {
     expect(existsSync(`${pkgDir}${file}`), `${file} is built`).toBe(true);
   }
 };
+
+/**
+ * Checks that a sub-path entry (`@sckyzo/cosmos-react/code`, built as `dist/code/index.*`) gives
+ * `import` and `require` each their own types, as the root entry does, that the files it names
+ * were built, and that `typesVersions` points the resolvers that ignore `exports` at its types.
+ */
+export const expectSubpathOwnTypes = (pkgDir: string, subpath: string) => {
+  const pkg = JSON.parse(readFileSync(`${pkgDir}package.json`, 'utf8'));
+  const entry = pkg.exports[`./${subpath}`];
+  expect(entry).toEqual({
+    import: { types: `./dist/${subpath}/index.d.ts`, default: `./dist/${subpath}/index.js` },
+    require: { types: `./dist/${subpath}/index.d.cts`, default: `./dist/${subpath}/index.cjs` },
+  });
+  expect(Object.keys(entry.import)).toEqual(['types', 'default']);
+  expect(Object.keys(entry.require)).toEqual(['types', 'default']);
+  expect(pkg.typesVersions['*'][subpath]).toEqual([`./dist/${subpath}/index.d.ts`]);
+  for (const file of [...Object.values(entry.import), ...Object.values(entry.require)]) {
+    expect(existsSync(`${pkgDir}${file}`), `${file} is built`).toBe(true);
+  }
+};

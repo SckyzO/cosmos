@@ -129,6 +129,13 @@ charts ───────────── storybook      (charts imports ne
   drops an esbuild banner. `exports` gives `import` and `require` their own types (`index.d.ts` /
   `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
   files.
+  **Sub-path entries** (`@sckyzo/cosmos-react/code`, the first) are a folder of `src/` built next to the
+  root one (`tsup.config.ts`: `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with
+  their library (`shiki`) as an optional peer, imported dynamically and kept external. The root
+  entry imports none of them. What the folder imports from the rest of the package is rewritten to
+  an import of `@sckyzo/cosmos-react` itself (`config/tsup/self-reference.ts`), so contexts and the
+  overlay stack are never duplicated; the source keeps relative imports, which means the names it
+  imports must be exported by the root entry. `react-dist.spec.ts` guards the pattern.
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a
@@ -229,7 +236,8 @@ titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group tha
 
 ```text
 Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
-→ Feedback → Overlays → Navigation → Layout → Lists → Chat → Tables → Settings → Charts
+→ Monitoring → Feedback → Overlays → Navigation → Layout → Lists → Chat → Tables → Settings
+→ Charts
 ```
 
 Adding a top-level group means updating `storySort`; the Welcome page builds its group table from
