@@ -5,11 +5,12 @@ import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useControllableState } from '../hooks/useControllableState';
 import {
   FIELD_HEIGHT,
-  FIELD_ICON_LEFT,
+  FIELD_ICON_START,
   FIELD_ICON_SIZE,
-  FIELD_PAD_LEFT_ICON,
-  FIELD_PAD_RIGHT,
+  FIELD_PAD_START_ICON,
+  FIELD_PAD_END,
   FIELD_PLACEHOLDER,
+  FIELD_PLAINTEXT,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -58,7 +59,7 @@ export const SearchInput = ({
         aria-hidden
         className={clsx(
           'pointer-events-none absolute text-gray-400',
-          FIELD_ICON_LEFT[size],
+          FIELD_ICON_START[size],
           FIELD_ICON_SIZE[size]
         )}
       />
@@ -75,8 +76,9 @@ export const SearchInput = ({
           'h-full w-full',
           fieldClass({ size, fixedHeight: false }),
           FIELD_PLACEHOLDER,
-          FIELD_PAD_LEFT_ICON[size],
-          FIELD_PAD_RIGHT[size]
+          FIELD_PLAINTEXT,
+          FIELD_PAD_START_ICON[size],
+          FIELD_PAD_END[size]
         )}
       />
     </div>

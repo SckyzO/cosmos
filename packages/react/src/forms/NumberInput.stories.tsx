@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusBorder, expectRefFocuses } from '../storybook-helpers';
+import {
+  bothDirections,
+  endOffset,
+  expectFocusBorder,
+  expectMirrored,
+  expectRefFocuses,
+} from '../storybook-helpers';
 import { NumberInput, type NumberInputProps } from './NumberInput';
 
 const meta = {
@@ -94,7 +100,7 @@ export const MinusFiresOnChange: Story = {
   },
 };
 
-/** `controls="stacked"`: ↑ / ↓ arrows stacked inside the right edge, left-aligned text. */
+/** `controls="stacked"`: ↑ / ↓ arrows stacked inside the end edge, start-aligned text. */
 export const StackedDefault: Story = {
   args: {
     controls: 'stacked',
@@ -192,9 +198,7 @@ export const StackedNarrowWidthKeepsArrowsInside: Story = {
     const increase = canvas.getByRole('button', { name: 'Increase' });
     const control = increase.closest('div')?.parentElement as HTMLElement;
     await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
-    await expect(increase.getBoundingClientRect().right).toBeLessThanOrEqual(
-      control.getBoundingClientRect().right
-    );
+    await expect(endOffset(increase, control)).toBeGreaterThanOrEqual(0);
   },
 };
 
@@ -374,5 +378,37 @@ export const DefaultValueOrControlled: Story = {
     // Without a default, 0 brought within min…max.
     const bare = within(canvas.getByRole('group', { name: 'No default' }));
     await expect(bare.getByRole('spinbutton')).toHaveValue(3);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The minus is at the start and the plus at the end, or the arrows inside the end edge. */
+export const ControlsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <NumberInput value={8} onChange={() => {}} aria-label="Sides" unit="s" />
+        <NumberInput
+          value={8}
+          onChange={() => {}}
+          aria-label="Stacked"
+          controls="stacked"
+          unit="s"
+        />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    const control = (box: HTMLElement, name: string) =>
+      within(box).getByRole('spinbutton', { name }).closest('[class*="rounded-lg"]')!;
+    for (const name of ['Sides', 'Stacked']) {
+      expectMirrored(canvasElement, (box) =>
+        within(control(box, name) as HTMLElement).getByRole('button', { name: 'Increase' })
+      );
+    }
+    expectMirrored(canvasElement, (box) =>
+      within(control(box, 'Sides') as HTMLElement).getByRole('button', { name: 'Decrease' })
+    );
   },
 };

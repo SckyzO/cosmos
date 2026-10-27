@@ -259,7 +259,7 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Trigger rendering ───────────────────────────────────────────────────────
   const triggerClass = clsx(
-    'items-center gap-2 text-left',
+    'items-center gap-2 text-start',
     fieldClass({ size, invalid: !!error }),
     FIELD_PAD_X[size]
   );
@@ -294,7 +294,7 @@ export const DatePicker = (props: DatePickerProps) => {
           date ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
         )}
       >
-        {date ? format(date) : placeholder}
+        <bdi>{date ? format(date) : placeholder}</bdi>
       </span>
     </button>
   );

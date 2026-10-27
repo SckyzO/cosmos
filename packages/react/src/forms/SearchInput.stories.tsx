@@ -2,7 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import {
+  bothDirections,
   expectFocusBorder,
+  expectMirrored,
   expectPlaceholderContrast,
   expectRefFocuses,
   inEachTheme,
@@ -103,5 +105,20 @@ export const DefaultValueOrControlled: Story = {
     await userEvent.type(held, 's');
     await expect(args.onChange).toHaveBeenLastCalledWith('nodes');
     await expect(held).toHaveValue('node');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The magnifier sits on the start edge, and what is typed follows its own direction. */
+export const IconSitsOnTheStartEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => <SearchInput aria-label="Search" value="" onChange={() => {}} />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg'));
+    for (const input of canvasElement.querySelectorAll('input')) {
+      expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
+    }
   },
 };

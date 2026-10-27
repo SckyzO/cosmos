@@ -1,6 +1,7 @@
 import * as RadixSlider from '@radix-ui/react-slider';
 import { clsx } from 'clsx';
 import { useMemo } from 'react';
+import { useParentDirection } from '../hooks/direction';
 import { useControllableState } from '../hooks/useControllableState';
 import type { Intent } from '../ui/intent';
 
@@ -29,7 +30,7 @@ export type SliderProps = {
   /** What the arrow keys and the pointer snap to. Default `1`. */
   step?: number;
   /**
-   * Names the slider, on the left of the header row. The handles take it as their accessible
+   * Names the slider, at the start of the header row. The handles take it as their accessible
    * name; a range names them "<label> minimum" and "<label> maximum".
    */
   label?: string;
@@ -67,7 +68,7 @@ const INTENT_CLASSES: Record<SliderIntent, { fill: string; handle: string }> = {
 };
 
 // The handle is `size-5`. Radix keeps it inside the track: its center travels from half a handle
-// from the left edge to half a handle from the right one, so a tick takes the same offset.
+// from the start edge to half a handle from the end one, so a tick takes the same offset.
 const HANDLE_REM = 1.25;
 
 const tickPosition = (percent: number) =>
@@ -110,6 +111,9 @@ export const Slider = ({
     onChange,
     name: 'Slider.value',
   });
+  // Radix lays the handles out, reads the pointer and swaps ArrowLeft and ArrowRight from a `dir`
+  // prop, not from the page: the minimum is on the right in right to left.
+  const [direction, directionRef] = useParentDirection<HTMLSpanElement>();
   const isRange = Array.isArray(value);
   // Radix takes and gives arrays. The array of a range is the value itself, so Radix sees the
   // same one until it changes.
@@ -140,11 +144,13 @@ export const Slider = ({
             {label}
           </span>
         )}
-        <span className="text-brand-600 dark:text-brand-400 ml-auto shrink-0 text-sm font-semibold tabular-nums">
-          {values.map((n) => format(n)).join(' – ')}
+        <span className="text-brand-600 dark:text-brand-400 ms-auto shrink-0 text-sm font-semibold tabular-nums">
+          <bdi>{values.map((n) => format(n)).join(' – ')}</bdi>
         </span>
       </div>
       <RadixSlider.Root
+        ref={directionRef}
+        dir={direction}
         value={values}
         onValueChange={(next) => setValue(isRange ? [next[0], next[1]] : next[0])}
         min={min}
@@ -180,8 +186,8 @@ export const Slider = ({
             <span
               key={tick}
               data-slider-tick=""
-              style={{ left: tickPosition(((tick - min) / (max - min)) * 100) }}
-              className="absolute top-0 h-full w-0.5 -translate-x-1/2 rounded-full bg-gray-400 dark:bg-gray-500"
+              style={{ insetInlineStart: tickPosition(((tick - min) / (max - min)) * 100) }}
+              className="absolute top-0 -ms-px h-full w-0.5 rounded-full bg-gray-400 dark:bg-gray-500"
             />
           ))}
         </div>

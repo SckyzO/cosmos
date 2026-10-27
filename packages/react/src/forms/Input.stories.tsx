@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  endOffset,
   expectBorderToken,
   expectFocusBorder,
+  expectMirrored,
+  expectNoHorizontalOverflow,
   expectPlaceholderContrast,
   expectSuccessBorder,
   expectTextContrast,
@@ -313,7 +317,7 @@ export const ErrorIconIsDecorative: Story = {
     await expect(icon).toHaveAttribute('aria-hidden', 'true');
     // The input keeps room for it: its text can't run under the icon.
     const input = canvasElement.querySelector('input')!;
-    const pad = parseFloat(getComputedStyle(input).paddingRight);
+    const pad = parseFloat(getComputedStyle(input).paddingInlineEnd);
     await expect(pad).toBeGreaterThanOrEqual(icon.getBoundingClientRect().width + 12);
   },
 };
@@ -322,7 +326,7 @@ export const ErrorIconIsDecorative: Story = {
 
 /**
  * `success` is the message under the field once its value is valid: a green border and message,
- * and a check icon on the right edge. `error` wins when both are set.
+ * and a check icon on the end edge. `error` wins when both are set.
  */
 export const WithSuccess: Story = {
   args: {
@@ -453,14 +457,14 @@ export const SuccessIconIsDecorativeOnTheRightEdge: Story = {
     const icon = canvasElement.querySelector('svg')!;
     await expect(icon).toHaveAttribute('aria-hidden', 'true');
     const input = canvasElement.querySelector('input')!;
-    // 12px from the edge (`right-3`), and the text can't run under it.
-    await expect(input.getBoundingClientRect().right - icon.getBoundingClientRect().right).toBe(12);
-    const pad = parseFloat(getComputedStyle(input).paddingRight);
+    // 12px from the end edge (`inset-e-3`), and the text can't run under it.
+    await expect(endOffset(icon, input)).toBe(12);
+    const pad = parseFloat(getComputedStyle(input).paddingInlineEnd);
     await expect(pad).toBeGreaterThanOrEqual(icon.getBoundingClientRect().width + 12);
   },
 };
 
-/** The right slot owns the right edge: it replaces the check, the rest of the state stays. */
+/** The right slot owns the end edge: it replaces the check, the rest of the state stays. */
 export const SuccessIconYieldsToRightSlot: Story = {
   tags: ['!dev', '!autodocs'],
   args: { label: 'Scrape interval', rightSlot: 'seconds', success: 'Target reachable.' },
@@ -496,5 +500,86 @@ export const NoSuccessKeepsTheNeutralLook: Story = {
     await expect(canvas.getByText('We will never share your email.')).not.toHaveAttribute(
       'aria-live'
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * A text field follows the direction of what is typed in it (`unicode-bidi: plaintext`), and keeps
+ * the page's own direction, so the room it leaves for a trailing icon stays under the icon: a URL
+ * in a right-to-left page reads left to right, and its end padding is still on the icon's side.
+ */
+export const TextFollowsWhatIsTypedInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" className="space-y-4">
+      <Input
+        label="Website"
+        defaultValue="https://example.com/a-long-path-to-a-page"
+        error="Not reachable."
+        errorIcon
+      />
+      <Input label="الاسم" defaultValue="محمد" error="مطلوب." errorIcon />
+    </div>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    for (const name of ['Website', 'الاسم']) {
+      const input = canvas.getByRole('textbox', { name });
+      const style = getComputedStyle(input);
+      await expect(style.unicodeBidi).toBe('plaintext');
+      // The field keeps the page's direction: the padding that clears the icon is where the icon is.
+      await expect(style.direction).toBe('rtl');
+      const icon = input.parentElement!.querySelector('svg')!;
+      await expect(icon).toHaveAttribute('aria-hidden', 'true');
+      await expect(parseFloat(style.paddingLeft)).toBeGreaterThanOrEqual(
+        icon.getBoundingClientRect().width + 12
+      );
+      await expect(icon.getBoundingClientRect().left).toBeLessThan(
+        input.getBoundingClientRect().left + 28
+      );
+    }
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** The icon, the addons and the slot sit on the same edge of the field, mirrored. */
+export const AdornmentsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <Input label="Email" icon={Mail} defaultValue="user@example.com" />
+        <Input label="Endpoint" prefix="https://" suffix=".com" defaultValue="example" />
+        <Input label="Interval" rightSlot="seconds" defaultValue="30" />
+        <Input label="Username" defaultValue="sckyzo" success="Available." />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    const input = (box: HTMLElement, name: string) => within(box).getByRole('textbox', { name });
+    expectMirrored(canvasElement, (box) => input(box, 'Email').parentElement!.querySelector('svg'));
+    expectMirrored(canvasElement, (box) => input(box, 'Endpoint').parentElement!.firstElementChild);
+    expectMirrored(canvasElement, (box) => input(box, 'Endpoint').parentElement!.lastElementChild);
+    expectMirrored(canvasElement, (box) => input(box, 'Interval').nextElementSibling);
+    expectMirrored(canvasElement, (box) => input(box, 'Username').nextElementSibling);
+  },
+};
+
+/** An addon is an island: `https://` keeps its slashes after the colon in a right-to-left page. */
+export const AddonsAreIsolatedInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <Input label="Endpoint" prefix="https://" suffix=".com" defaultValue="example" />
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const [prefix, suffix] = [...canvasElement.querySelectorAll('bdi')];
+    expect(prefix).toHaveTextContent('https://');
+    expect(suffix).toHaveTextContent('.com');
+    for (const island of [prefix!, suffix!]) {
+      expect(getComputedStyle(island).direction).toBe('ltr');
+      expect(getComputedStyle(island).unicodeBidi).toBe('isolate');
+    }
   },
 };

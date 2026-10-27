@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 
 describe('radioTabIndex', () => {
@@ -20,12 +20,17 @@ describe('onRadioGroupKeyDown', () => {
   // The node project has no DOM: radios are spies, and the group answers
   // `querySelectorAll` with them. The `[role="radio"]:not(:disabled)` selector
   // itself is covered by the stories, in a real browser.
+  // `directionOf` reads the computed style of the group: the node project has none, so a stub
+  // answers with the direction the test asks for (left to right unless it says otherwise).
+  afterEach(() => vi.unstubAllGlobals());
   const setup = (
     count: number,
     focused: number,
     key: string,
-    mods: Record<string, boolean> = {}
+    mods: Record<string, boolean> = {},
+    direction = 'ltr'
   ) => {
+    vi.stubGlobal('getComputedStyle', () => ({ direction }));
     const radios = Array.from({ length: count }, () => ({ focus: vi.fn(), click: vi.fn() }));
     const preventDefault = vi.fn();
     const event = {
@@ -62,6 +67,22 @@ describe('onRadioGroupKeyDown', () => {
   it('wraps from the last radio to the first and back', () => {
     expect(moved(setup(3, 2, 'ArrowRight').radios)).toEqual([0]);
     expect(moved(setup(3, 0, 'ArrowLeft').radios)).toEqual([2]);
+  });
+
+  it('follows the reading direction: in rtl ArrowLeft is next and ArrowRight is previous', () => {
+    const next = setup(4, 1, 'ArrowLeft', {}, 'rtl');
+    expect(moved(next.radios)).toEqual([2]);
+    expect(next.radios[2].click).toHaveBeenCalledOnce();
+    expect(moved(setup(4, 2, 'ArrowRight', {}, 'rtl').radios)).toEqual([1]);
+    expect(moved(setup(3, 2, 'ArrowLeft', {}, 'rtl').radios)).toEqual([0]);
+    expect(moved(setup(3, 0, 'ArrowRight', {}, 'rtl').radios)).toEqual([2]);
+  });
+
+  it('keeps ArrowUp, ArrowDown, Home and End the same in rtl', () => {
+    expect(moved(setup(4, 1, 'ArrowDown', {}, 'rtl').radios)).toEqual([2]);
+    expect(moved(setup(4, 2, 'ArrowUp', {}, 'rtl').radios)).toEqual([1]);
+    expect(moved(setup(4, 2, 'Home', {}, 'rtl').radios)).toEqual([0]);
+    expect(moved(setup(4, 1, 'End', {}, 'rtl').radios)).toEqual([3]);
   });
 
   it('wraps on a group of one radio', () => {
@@ -101,6 +122,7 @@ describe('onRadioGroupKeyDown', () => {
   it('ignores a key pressed outside the radios', () => {
     const radios = [{ focus: vi.fn(), click: vi.fn() }];
     const preventDefault = vi.fn();
+    vi.stubGlobal('getComputedStyle', () => ({ direction: 'ltr' }));
     onRadioGroupKeyDown({
       key: 'ArrowRight',
       altKey: false,

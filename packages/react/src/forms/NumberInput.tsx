@@ -4,7 +4,7 @@ import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 import { useControllableState } from '../hooks/useControllableState';
-import { FIELD_PAD_LEFT, FIELD_TEXT, fieldClass, type FieldSize } from './fieldRecipe';
+import { FIELD_PAD_START, FIELD_TEXT, fieldClass, type FieldSize } from './fieldRecipe';
 
 export type NumberInputProps = FieldA11yProps & {
   name?: string;
@@ -23,8 +23,8 @@ export type NumberInputProps = FieldA11yProps & {
   required?: boolean;
   /**
    * Where the step buttons sit. `sides` (default): `−` / `+` on the outer edges,
-   * centered text. `stacked`: ↑ / ↓ arrows stacked in a column inside the right
-   * edge, left-aligned text: the compact form for settings panels.
+   * centered text. `stacked`: ↑ / ↓ arrows stacked in a column inside the end
+   * edge, start-aligned text: the compact form for settings panels.
    */
   controls?: 'sides' | 'stacked';
   /** Tailwind width class for the inner input — default `w-20`. */
@@ -116,19 +116,19 @@ export const NumberInput = ({
             step={step}
             className={clsx(
               // min-w-0: in a narrower container the input gives way, not the arrows.
-              'h-full min-w-0 [appearance:textfield] bg-transparent pr-1 font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+              'h-full min-w-0 [appearance:textfield] bg-transparent pe-1 font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
               FIELD_TEXT[size],
-              FIELD_PAD_LEFT[size],
+              FIELD_PAD_START[size],
               fullWidth ? 'flex-1' : width
             )}
           />
           {unit && (
-            <span className="flex shrink-0 items-center pr-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
+            <span className="flex shrink-0 items-center pe-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
               {unit}
             </span>
           )}
           {/* Fixed width keeps the chevrons clear of the rounded corner. */}
-          <div className="flex w-7 shrink-0 flex-col border-l border-gray-200 dark:border-gray-700">
+          <div className="flex w-7 shrink-0 flex-col border-s border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={() => setValue(clamp(value + step))}
@@ -159,7 +159,7 @@ export const NumberInput = ({
             disabled={disabled || value <= min}
             tabIndex={-1}
             aria-label="Decrease"
-            className={clsx('border-r border-gray-200 dark:border-gray-700', sideButton)}
+            className={clsx('border-e border-gray-200 dark:border-gray-700', sideButton)}
           >
             <span className="text-base leading-none font-semibold text-gray-500 dark:text-gray-400">
               −
@@ -184,7 +184,7 @@ export const NumberInput = ({
               )}
             />
             {unit && (
-              <span className="pr-1.5 text-xs text-gray-500 dark:text-gray-400">{unit}</span>
+              <span className="pe-1.5 text-xs text-gray-500 dark:text-gray-400">{unit}</span>
             )}
           </div>
           <button
@@ -193,7 +193,7 @@ export const NumberInput = ({
             disabled={disabled || value >= max}
             tabIndex={-1}
             aria-label="Increase"
-            className={clsx('border-l border-gray-200 dark:border-gray-700', sideButton)}
+            className={clsx('border-s border-gray-200 dark:border-gray-700', sideButton)}
           >
             <span className="text-base leading-none font-semibold text-gray-500 dark:text-gray-400">
               +

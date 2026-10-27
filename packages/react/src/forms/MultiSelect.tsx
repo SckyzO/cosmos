@@ -14,7 +14,7 @@ import { mergeRefs } from '../ui/mergeRefs';
 import { Tag } from '../ui/Tag';
 import { useControllableState } from '../hooks/useControllableState';
 import type { ComboboxOption } from './Combobox';
-import { FIELD_LISTBOX_PANEL, FIELD_PAD_RIGHT_ICON, type FieldSize } from './fieldRecipe';
+import { FIELD_LISTBOX_PANEL, FIELD_PAD_END_ICON, type FieldSize } from './fieldRecipe';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 import {
@@ -206,7 +206,7 @@ export const MultiSelect = ({
             (values.length === 0 || labelHidden) && 'sr-only'
           )}
         >
-          {values.length === 0 ? 'None selected' : `${countText} selected`}
+          <bdi>{values.length === 0 ? 'None selected' : `${countText} selected`}</bdi>
         </span>
       </div>
       <div
@@ -219,7 +219,7 @@ export const MultiSelect = ({
             size,
             invalid: !!error,
             disabled,
-            padRight: FIELD_PAD_RIGHT_ICON[size],
+            padEnd: FIELD_PAD_END_ICON[size],
           })
         )}
       >
@@ -265,7 +265,7 @@ export const MultiSelect = ({
           tabIndex={-1}
           disabled={disabled}
           onClick={() => setOpen(!open)}
-          className="focus-visible:focus-indicator absolute inset-y-0 right-0 flex items-center rounded-r-lg pr-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
+          className="focus-visible:focus-indicator inset-e-0 absolute inset-y-0 flex items-center rounded-e-lg pe-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
         >
           <ChevronsUpDown className="size-5" aria-hidden />
         </button>

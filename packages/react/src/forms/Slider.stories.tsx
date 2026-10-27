@@ -1,12 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectFocusRing,
   expectGraphicContrast,
+  expectMirrored,
   expectNoHorizontalOverflow,
   inEachTheme,
+  keyToEnd,
+  keyToStart,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { Slider, type SliderIntent, type SliderValue } from './Slider';
 
@@ -148,16 +155,16 @@ export const KeyboardMovesTheValue: Story = {
     const handle = canvas.getByRole('slider', { name: 'Volume' });
     await expect(handle).toHaveFocus();
 
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(valueOf(handle)).toBe(55);
     await userEvent.keyboard('{ArrowUp}');
     await expect(valueOf(handle)).toBe(60);
-    await userEvent.keyboard('{ArrowLeft}{ArrowDown}{ArrowDown}');
+    await userEvent.keyboard(`{${keyToStart()}}{ArrowDown}{ArrowDown}`);
     await expect(valueOf(handle)).toBe(45);
 
     await userEvent.keyboard('{Home}');
     await expect(valueOf(handle)).toBe(0);
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(valueOf(handle), 'it stops at min').toBe(0);
     await userEvent.keyboard('{PageUp}');
     await expect(valueOf(handle)).toBe(50);
@@ -165,7 +172,7 @@ export const KeyboardMovesTheValue: Story = {
     await expect(valueOf(handle)).toBe(0);
     await userEvent.keyboard('{End}');
     await expect(valueOf(handle)).toBe(100);
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(valueOf(handle), 'it stops at max').toBe(100);
 
     // Every move reported a number, and a move that changed nothing reported nothing.
@@ -187,7 +194,7 @@ export const RangeHandlesCannotCross: Story = {
 
     await userEvent.tab();
     await expect(lower).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}{${keyToEnd()}}{${keyToEnd()}}{${keyToEnd()}}`);
     await expect([valueOf(lower), valueOf(upper)]).toEqual([60, 60]);
     // The focus stayed on the handle that was moved, and the pair is still ordered.
     await expect(lower).toHaveFocus();
@@ -195,11 +202,11 @@ export const RangeHandlesCannotCross: Story = {
 
     await userEvent.tab();
     await expect(upper).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
     await expect([valueOf(lower), valueOf(upper)], 'the upper handle stops at the lower').toEqual([
       60, 60,
     ]);
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect([valueOf(lower), valueOf(upper)]).toEqual([60, 70]);
     await expect(upper).toHaveFocus();
 
@@ -222,14 +229,14 @@ export const OnChangeReceivesANumberOrAPair: Story = {
   ),
   play: async ({ args, canvas }) => {
     canvas.getByRole('slider', { name: 'Single' }).focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(11);
 
     canvas.getByRole('slider', { name: 'Range maximum' }).focus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith([20, 79]);
     canvas.getByRole('slider', { name: 'Range minimum' }).focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith([21, 79]);
     await expect(args.onChange).toHaveBeenCalledTimes(3);
   },
@@ -254,25 +261,25 @@ export const DefaultValueOrControlled: Story = {
   play: async ({ args, canvas }) => {
     const own = canvas.getByRole('slider', { name: 'Uncontrolled' });
     own.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(31);
     await expect(valueOf(own)).toBe(31);
 
     const held = canvas.getByRole('slider', { name: 'Held' });
     held.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(31);
     await expect(valueOf(held)).toBe(30);
 
     const ownMax = canvas.getByRole('slider', { name: 'Uncontrolled range maximum' });
     ownMax.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith([10, 21]);
     await expect(valueOf(ownMax)).toBe(21);
 
     const heldMax = canvas.getByRole('slider', { name: 'Held range maximum' });
     heldMax.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith([10, 21]);
     await expect(valueOf(heldMax)).toBe(20);
   },
@@ -297,7 +304,7 @@ export const ControlledFollowsTheHost: Story = {
   play: async ({ canvas }) => {
     const upper = canvas.getByRole('slider', { name: 'Price maximum' });
     upper.focus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(valueOf(upper)).toBe(700);
     await expect(canvas.getByText('$200 – $700')).toBeInTheDocument();
   },
@@ -404,9 +411,9 @@ export const LookGeometry: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    for (const [name, edge] of [
-      ['At min', 'left'],
-      ['At max', 'right'],
+    for (const [name, offset] of [
+      ['At min', startOffset],
+      ['At max', endOffset],
     ] as const) {
       const handle = canvas.getByRole('slider', { name });
       const root = rootOf(handle);
@@ -416,13 +423,9 @@ export const LookGeometry: Story = {
       await expect(getComputedStyle(handle).borderTopWidth).toBe('2px');
       await expect(track.getBoundingClientRect().height).toBe(8);
       await expect(getComputedStyle(track).borderRadius).not.toBe('0px');
-      // The handle sits against the end of the track, not half out of it.
-      await waitFor(() =>
-        expect(handle.getBoundingClientRect()[edge]).toBeCloseTo(
-          root.getBoundingClientRect()[edge],
-          0
-        )
-      );
+      // The handle sits against the end of the track, not half out of it: the start edge at the
+      // minimum, the end edge at the maximum, whichever side of the page those are on.
+      await waitFor(() => expect(offset(handle, root)).toBeCloseTo(0, 0));
     }
   },
 };
@@ -488,24 +491,26 @@ export const IntentColorsInEveryTheme: Story = {
   },
 };
 
-/** The header shows the label on the left and the value on the right, against the track's ends. */
-export const HeaderLabelLeftValueRight: Story = {
+/** The header shows the label at the start and the value at the end, against the track's ends. */
+export const HeaderLabelStartValueEnd: Story = {
   tags: ['!dev', '!autodocs'],
   args: { label: 'Price', defaultValue: [200, 800], max: 1000, formatValue: dollars },
   play: async ({ canvas }) => {
     const label = canvas.getByText('Price');
     const value = canvas.getByText('$200 – $800');
     const handle = canvas.getByRole('slider', { name: 'Price minimum' });
-    const root = rootOf(handle).getBoundingClientRect();
-    await expect(label.getBoundingClientRect().left).toBeCloseTo(root.left, 0);
-    await expect(value.getBoundingClientRect().right).toBeCloseTo(root.right, 0);
+    const root = rootOf(handle);
+    await expect(startOffset(label, root)).toBeCloseTo(0, 0);
+    await expect(endOffset(value, root)).toBeCloseTo(0, 0);
     // The end labels sit under the track, at its two ends.
     const ends = [canvas.getByText('$0'), canvas.getByText('$1,000')];
     for (const end of ends) {
-      await expect(end.getBoundingClientRect().top).toBeGreaterThan(root.bottom - 1);
+      await expect(end.getBoundingClientRect().top).toBeGreaterThan(
+        root.getBoundingClientRect().bottom - 1
+      );
     }
-    await expect(ends[0].getBoundingClientRect().left).toBeCloseTo(root.left, 0);
-    await expect(ends[1].getBoundingClientRect().right).toBeCloseTo(root.right, 0);
+    await expect(startOffset(ends[0], root)).toBeCloseTo(0, 0);
+    await expect(endOffset(ends[1], root)).toBeCloseTo(0, 0);
   },
 };
 
@@ -518,7 +523,7 @@ export const DisabledBlocksInteraction: Story = {
     await userEvent.tab();
     await expect(handle).not.toHaveFocus();
     handle.focus();
-    await userEvent.keyboard('{ArrowRight}{End}');
+    await userEvent.keyboard(`{${keyToEnd()}}{End}`);
     await userEvent.click(handle);
     await expect(args.onChange).not.toHaveBeenCalled();
     await expect(valueOf(handle)).toBe(40);
@@ -542,4 +547,52 @@ export const FocusShowsRingInDark: Story = {
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The minimum is at the start: on the right in right to left. The filled part grows from there,
+ * the handle sits at the same distance from the start edge, ArrowLeft raises the value, and a
+ * press on the track picks the value at that place.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Slider label="Volume" defaultValue={25} step={25} marks onChange={() => {}} />
+    )),
+  play: async ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('slider'));
+    expectMirrored(canvasElement, (box) => box.querySelector('[data-slider-tick]:nth-child(3)'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const handle = within(box).getByRole('slider');
+      const track = rootOf(handle).firstElementChild as HTMLElement;
+      const fill = track.firstElementChild as HTMLElement;
+      await expect(startOffset(fill, track), `${dir}: the fill starts at the start`).toBeCloseTo(
+        0,
+        0
+      );
+      await expect(fill.getBoundingClientRect().width).toBeCloseTo(
+        track.getBoundingClientRect().width * 0.25,
+        0
+      );
+      handle.focus();
+      await userEvent.keyboard(`{${keyToEnd(box)}}`);
+      await expect(valueOf(handle)).toBe(50);
+      await userEvent.keyboard(`{${keyToStart(box)}}{${keyToStart(box)}}`);
+      await expect(valueOf(handle)).toBe(0);
+
+      // A press 75% along the track, counted from its start edge.
+      const rect = track.getBoundingClientRect();
+      const x = dir === 'rtl' ? rect.right - rect.width * 0.75 : rect.left + rect.width * 0.75;
+      const y = rect.top + rect.height / 2;
+      await userEvent.pointer([
+        { target: track, coords: { clientX: x, clientY: y } },
+        { keys: '[MouseLeft]', target: track, coords: { clientX: x, clientY: y } },
+      ]);
+      await waitFor(() => expect(valueOf(handle)).toBe(75));
+    }
+  },
 };

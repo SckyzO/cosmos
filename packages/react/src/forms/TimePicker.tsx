@@ -3,10 +3,10 @@ import { Clock } from 'lucide-react';
 import { useId, type ChangeEvent, type ComponentPropsWithRef } from 'react';
 import {
   FIELD_HEIGHT,
-  FIELD_ICON_LEFT,
+  FIELD_ICON_START,
   FIELD_ICON_SIZE,
-  FIELD_PAD_LEFT_ICON,
-  FIELD_PAD_RIGHT,
+  FIELD_PAD_START_ICON,
+  FIELD_PAD_END,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -90,7 +90,7 @@ export function TimePicker({
           aria-hidden
           className={clsx(
             'pointer-events-none absolute text-gray-400',
-            FIELD_ICON_LEFT[size],
+            FIELD_ICON_START[size],
             FIELD_ICON_SIZE[size]
           )}
         />
@@ -111,9 +111,9 @@ export function TimePicker({
           className={clsx(
             'h-full w-full',
             fieldClass({ size, invalid: !!error, fixedHeight: false }),
-            FIELD_PAD_LEFT_ICON[size],
-            FIELD_PAD_RIGHT[size],
-            // Hide the browser-native time picker icon (Chrome adds an extra clock on the right) so only our left-icon shows.
+            FIELD_PAD_START_ICON[size],
+            FIELD_PAD_END[size],
+            // Hide the browser-native time picker icon (Chrome adds an extra clock on the end edge) so only our start-edge icon shows.
             '[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0',
             className
           )}

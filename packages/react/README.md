@@ -1340,8 +1340,21 @@ it swaps sides under `dir="rtl"`. Left to right renders as it always did.
 
 Text that comes from you and sits inside a label or a sentence (a name, a value, a key) is
 wrapped in `<bdi>`, so a Latin name in an Arabic page, or the reverse, keeps its own order
-and does not drag the punctuation around it. Text fields take `dir="auto"` as the Forms group lands. The package's
-own copy stays in English, as it is everywhere else.
+and does not drag the punctuation around it. The package's own copy stays in English, as it
+is everywhere else.
+
+A text field (`Input`, `SearchInput`, `Textarea`, the inputs of `Combobox`, `MultiSelect` and
+`TagInput`) follows the direction of what is typed in it: Arabic aligns and flows right to
+left, a URL left to right, each paragraph of a `Textarea` on its own. It does that with
+`unicode-bidi: plaintext` rather than `dir="auto"`, which would also turn the field's own
+direction around for a Latin text and leave the room reserved for a trailing icon or button
+on the wrong side. A `PasswordInput` does the same once its value is shown; hidden, it keeps
+the page's direction, as HTML leaves password fields out of `dir="auto"`, so how it aligns
+says nothing of what is typed. A value that is a code reads left to right in any page: the cells of
+`OtpInput`, the country button and number of `PhoneInput`, and the swatch and hex of
+`ColorInput` are `dir="ltr"` islands. `Slider` and `Calendar` hand the direction to Radix and
+react-day-picker, which lay out the handles and read the arrow keys from a `dir` prop and not
+from the page.
 
 Tailwind's `rtl:` variant (redefined by the theme to follow the nearest `dir`) is the tool
 for what has no logical form, such as `rtl:-scale-x-100` on an arrow. In your own markup,
@@ -1365,9 +1378,9 @@ const Forward = ({ className, ...props }: LucideProps) => (
 ```
 
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms** and **Actions**. The others still lay out for left to right and are the next
-ones in line: Forms, Data and Lists, Feedback and Overlays, Navigation and Layout, Chat,
-Tables and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
+**Atoms**, **Actions** and **Forms** (apart from the rich text editor, which follows). The
+others still lay out for left to right and are the next ones in line: Data and Lists,
+Feedback and Overlays, Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
 (`&globals=direction:rtl`) renders any story right to left.
 
 ## Themes and accents

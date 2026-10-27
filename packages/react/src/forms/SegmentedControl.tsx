@@ -86,7 +86,7 @@ export const SegmentedControl = <T extends string>({
         <span
           aria-hidden="true"
           className={clsx(
-            'flex items-center self-stretch border-r bg-gray-50 dark:bg-gray-800/60',
+            'flex items-center self-stretch border-e bg-gray-50 dark:bg-gray-800/60',
             pills
               ? 'border-[var(--color-border)] px-2.5'
               : 'border-gray-200 px-3 dark:border-gray-700'
@@ -117,12 +117,12 @@ export const SegmentedControl = <T extends string>({
               'flex items-center gap-1.5 font-medium transition-colors focus-visible:ring-inset',
               pills
                 ? clsx(
-                    'rounded-md text-xs first-of-type:ml-1.5 last-of-type:mr-1.5',
+                    'rounded-md text-xs first-of-type:ms-1.5 last-of-type:me-1.5',
                     sm ? 'h-6 px-2.5' : 'h-7 px-3'
                   )
                 : clsx(
                     sm ? 'py-row-6 px-2.5 text-xs' : 'py-row-8 px-3 text-sm',
-                    i > 0 && 'border-l border-gray-200 dark:border-gray-700'
+                    i > 0 && 'border-s border-gray-200 dark:border-gray-700'
                   ),
               isActive
                 ? 'bg-brand-500 focus-visible:focus-indicator-on-accent text-white'

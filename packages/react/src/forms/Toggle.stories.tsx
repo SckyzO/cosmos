@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  endOffset,
   expectFocusRing,
   expectGraphicContrast,
+  expectMirrored,
   expectRefFocuses,
   inEachTheme,
+  startOffset,
 } from '../storybook-helpers';
 import { Toggle } from './Toggle';
 
@@ -127,9 +131,9 @@ export const ThumbIsCenteredInTheTrack: Story = {
         await expect([h.width, h.height]).toEqual([diameter, diameter]);
         await expect(h.top - t.top).toBeCloseTo(2, 1);
         await expect(t.bottom - h.bottom).toBeCloseTo(2, 1);
-        await expect(on ? t.right - h.right : h.left - t.left).toBeCloseTo(2, 1);
+        await expect(on ? endOffset(thumb, track) : startOffset(thumb, track)).toBeCloseTo(2, 1);
         // On travels the whole track: the gap on the other side is the track minus the thumb.
-        await expect(on ? h.left - t.left : t.right - h.right).toBeCloseTo(
+        await expect(on ? startOffset(thumb, track) : endOffset(thumb, track)).toBeCloseTo(
           dims[0] - diameter - 2,
           1
         );
@@ -264,4 +268,28 @@ export const FocusShowsRingInLight: Story = {
   tags: ['!dev'],
   ...FocusShowsRingInDark,
   globals: { theme: 'light' },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The thumb starts at the start edge and travels to the end one, then the label follows. */
+export const ThumbTravelsFromTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <Toggle checked={false} onChange={() => {}} label="Off" />
+        <Toggle checked onChange={() => {}} label="On" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const name of ['Off', 'On']) {
+      expectMirrored(
+        canvasElement,
+        (box) => within(box).getByRole('switch', { name }).firstElementChild,
+        1
+      );
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('Off'));
+  },
 };

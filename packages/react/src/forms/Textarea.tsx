@@ -7,6 +7,7 @@ import {
   FIELD_PAD_X,
   FIELD_PAD_Y,
   FIELD_PLACEHOLDER,
+  FIELD_PLAINTEXT,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -130,6 +131,7 @@ export function Textarea({
           FIELD_PAD_X[size],
           FIELD_PAD_Y[size],
           FIELD_PLACEHOLDER,
+          FIELD_PLAINTEXT,
           RESIZE_CLASS[autoResize ? 'none' : resize],
           className
         )}
@@ -151,7 +153,9 @@ export function Textarea({
           {successText ?? error ?? description ?? ''}
         </span>
         {counterEnabled && (
+          // A count is a code: "12 / 100" reads in this order whatever the page's direction.
           <span
+            dir="ltr"
             aria-live="polite"
             className={clsx(
               'shrink-0 font-mono text-xs tabular-nums',

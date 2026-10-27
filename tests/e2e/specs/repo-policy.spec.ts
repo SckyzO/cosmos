@@ -270,7 +270,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -278,6 +278,9 @@ const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
  */
 const RTL_EXTRA_FILES = [
   'packages/react/src/ui/Button.tsx', // Buttons.stories.tsx
+  'packages/react/src/forms/fieldRecipe.ts', // the padding and icon places of every field
+  'packages/react/src/forms/RequiredMark.tsx', // the asterisk after a label
+  'packages/react/src/forms/tagField.tsx', // the box and input of MultiSelect and TagInput
 ];
 
 /**
@@ -285,6 +288,18 @@ const RTL_EXTRA_FILES = [
  * exception is a decision and not a leftover. An entry that no longer matches fails too.
  */
 const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [];
+
+/**
+ * Component sources of a converted group that wait for later, with the reason (another branch
+ * is changing them). They are left out of the check. An entry fails once its file is no longer
+ * in a converted group or holds no physical utility any more: the list only shrinks.
+ */
+const RTL_DEFERRED: { file: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/editor/RichTextEditor.tsx',
+    reason: 'editor/ is converted after #486, which is changing FormattingToolbar and LinkForm',
+  },
+];
 
 // A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
 // `[&>button:first-child]:`), or an inline-style key that does: `left: 0`, `marginRight`.
@@ -298,8 +313,8 @@ const physicalUtilities = (source: string) => [
   ...new Set(withoutComments(source).match(PHYSICAL_UTILITY) ?? []),
 ];
 
-/** The converted component sources: the stories of `RTL_GROUPS` and their component files. */
-const convertedFiles = () => {
+/** The component sources of `RTL_GROUPS`: their stories' components and `RTL_EXTRA_FILES`. */
+const groupFiles = () => {
   const root = 'packages/react/src';
   const files = new Set(RTL_GROUPS.length > 0 ? RTL_EXTRA_FILES : []);
   const stories = readdirSync(new URL(`../../../${root}`, import.meta.url), {
@@ -315,6 +330,10 @@ const convertedFiles = () => {
   }
   return [...files].sort();
 };
+
+/** The sources the check reads: those of the groups, less the deferred ones. */
+const convertedFiles = () =>
+  groupFiles().filter((file) => !RTL_DEFERRED.some((deferred) => deferred.file === file));
 
 test('the physical-utility check sees what it must and lets the logical forms through', () => {
   const classes = (...names: string[]) => `className="${names.join(' ')}"`;
@@ -376,6 +395,18 @@ test('the converted groups use logical utilities only', () => {
     expect(
       found.some((hit) => hit.file === file && hit.token === token),
       `RTL_ALLOWED entry no longer needed: ${file}: ${token}`
+    ).toBe(true);
+  }
+});
+
+test('the deferred files are still in a converted group and still need converting', () => {
+  const inGroups = groupFiles();
+  for (const { file, reason } of RTL_DEFERRED) {
+    expect(reason, file).not.toBe('');
+    expect(inGroups, `RTL_DEFERRED entry not in a converted group: ${file}`).toContain(file);
+    expect(
+      physicalUtilities(read(file)).length > 0,
+      `RTL_DEFERRED entry no longer needed: ${file}`
     ).toBe(true);
   }
 });

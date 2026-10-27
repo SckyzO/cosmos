@@ -21,12 +21,12 @@ const ZoomBtn = ({
   onClick,
   title,
   children,
-  dividerLeft = false,
+  dividerStart = false,
 }: {
   onClick: () => void;
   title: string;
   children: ReactNode;
-  dividerLeft?: boolean;
+  dividerStart?: boolean;
 }) => (
   <button
     type="button"
@@ -34,7 +34,7 @@ const ZoomBtn = ({
     title={title}
     className={clsx(
       'focus-visible:focus-indicator py-row-8 flex items-center px-2.5 text-gray-500 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/5',
-      dividerLeft && 'border-l border-gray-200 dark:border-gray-700'
+      dividerStart && 'border-s border-gray-200 dark:border-gray-700'
     )}
   >
     {children}
@@ -71,12 +71,12 @@ export const ZoomBar = ({
       <Plus className="h-4 w-4" />
     </ZoomBtn>
     {onFit && (
-      <ZoomBtn onClick={onFit} title="Fit to canvas" dividerLeft>
+      <ZoomBtn onClick={onFit} title="Fit to canvas" dividerStart>
         <Maximize2 className="h-4 w-4" />
       </ZoomBtn>
     )}
     {onReset && (
-      <ZoomBtn onClick={onReset} title="Reset to 100%" dividerLeft>
+      <ZoomBtn onClick={onReset} title="Reset to 100%" dividerStart>
         <RotateCcw className="h-4 w-4" />
       </ZoomBtn>
     )}

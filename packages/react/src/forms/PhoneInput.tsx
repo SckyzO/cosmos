@@ -288,6 +288,9 @@ export const PhoneInput = ({
       )}
       <div
         ref={fieldRef}
+        // A phone number reads left to right in any page: the country button and the number are
+        // an island, so the "+" and the digits keep their order and the list opens as one.
+        dir="ltr"
         data-open={open || undefined}
         className={clsx(
           'flex w-full items-stretch overflow-hidden',
@@ -311,10 +314,10 @@ export const PhoneInput = ({
             }
           }}
           className={clsx(
-            'flex shrink-0 items-center gap-2 border-r bg-transparent whitespace-nowrap outline-hidden hover:bg-gray-50 disabled:cursor-not-allowed dark:hover:bg-gray-900',
+            'flex shrink-0 items-center gap-2 border-e bg-transparent whitespace-nowrap outline-hidden hover:bg-gray-50 disabled:cursor-not-allowed dark:hover:bg-gray-900',
             divider,
             FIELD_PAD_X[size],
-            'pr-2.5'
+            'pe-2.5'
           )}
         >
           {/* The accessible name starts with what the button is for and ends with the visible text. */}

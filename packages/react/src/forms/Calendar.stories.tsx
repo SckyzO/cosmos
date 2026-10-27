@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { DateRange, Matcher } from 'react-day-picker';
 import { fr, ja } from 'react-day-picker/locale';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { bothDirections, directionBox, expectMirrored, keyToEnd } from '../storybook-helpers';
 import { Calendar } from './Calendar';
 
 const meta = {
@@ -52,9 +53,17 @@ export const Range: Story = {
           selected={range}
           onSelect={setRange}
           footer={
-            range?.from && range?.to
-              ? `${range.from.toLocaleDateString()} → ${range.to.toLocaleDateString()}`
-              : 'Pick a start date, then an end date.'
+            range?.from && range?.to ? (
+              <>
+                {range.from.toLocaleDateString()}{' '}
+                <span aria-hidden className="inline-block rtl:-scale-x-100">
+                  →
+                </span>{' '}
+                {range.to.toLocaleDateString()}
+              </>
+            ) : (
+              'Pick a start date, then an end date.'
+            )
           }
         />
       </div>
@@ -235,7 +244,7 @@ export const KeyboardPicksADay: Story = {
     canvas.getByRole('button', { name: 'Go to the Next Month' }).focus();
     await userEvent.tab();
     await expect(canvas.getByRole('button', { name: /May 7th, 2026/ })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('button', { name: /May 8th, 2026/ })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(canvas.getByRole('button', { name: /May 15th, 2026/ })).toHaveFocus();
@@ -391,5 +400,86 @@ export const RangeFillsTheDaysBetween: Story = {
     await expect(canvas.getByText('Range: 2026-05-11 to 2026-05-14')).toBeVisible();
     // 11, 12, 13 and 14 are all marked.
     await expect(canvas.getAllByRole('gridcell', { selected: true })).toHaveLength(4);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The previous month is at the start with a chevron that points to it (right in right to left),
+ * the week starts at the start edge, and the arrow keys move along the line.
+ */
+export const NavigationFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // The two calendars are both on the page: each navigation landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => {
+      const nav = `Navigation ${++count}`;
+      return (
+        <Calendar
+          mode="single"
+          defaultMonth={new Date(2026, 4)}
+          today={new Date(2026, 4, 7)}
+          labels={{ labelNav: () => nav }}
+        />
+      );
+    });
+  },
+  play: async ({ canvasElement }) => {
+    const previous = (box: HTMLElement) =>
+      within(box).getByRole('button', { name: 'Go to the Previous Month' });
+    expectMirrored(canvasElement, previous);
+    expectMirrored(canvasElement, (box) => box.querySelector('th'));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: /May 1st/ }));
+    for (const [dir, scale] of [
+      ['ltr', 'none'],
+      ['rtl', '-1 1'],
+    ] as const) {
+      const box = directionBox(canvasElement, dir);
+      // The icon is the left chevron, turned around in right to left so it points at the start.
+      await expect(previous(box).querySelector('svg')).toHaveClass('lucide-chevron-left');
+      await expect(getComputedStyle(previous(box).querySelector('svg')!).scale).toBe(scale);
+      await expect(box.querySelector('[data-day]')!.closest('[dir]')).toHaveAttribute('dir', dir);
+      await userEvent.tab();
+      const today = within(box).getByRole('button', { name: /May 7th, 2026/ });
+      today.focus();
+      await userEvent.keyboard(`{${keyToEnd(box)}}`);
+      await expect(within(box).getByRole('button', { name: /May 8th, 2026/ })).toHaveFocus();
+    }
+  },
+};
+
+/** The first day of a range rounds on its start side, the last on its end side. */
+export const RangeEndsRoundOnTheirLogicalSides: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    let count = 0;
+    return bothDirections(() => {
+      const nav = `Navigation ${++count}`;
+      return (
+        <Calendar
+          mode="range"
+          defaultMonth={new Date(2026, 4)}
+          selected={{ from: new Date(2026, 4, 12), to: new Date(2026, 4, 14) }}
+          labels={{ labelNav: () => nav }}
+        />
+      );
+    });
+  },
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const button = (day: string) =>
+        box.querySelector<HTMLElement>(`[data-day="2026-05-${day}"] button`)!;
+      const radius = (day: string, corner: 'StartStart' | 'StartEnd') =>
+        getComputedStyle(button(day)).getPropertyValue(
+          corner === 'StartStart' ? 'border-start-start-radius' : 'border-start-end-radius'
+        );
+      await expect(radius('12', 'StartEnd'), `${dir}: first day, end side`).toBe('0px');
+      await expect(radius('12', 'StartStart')).not.toBe('0px');
+      await expect(radius('14', 'StartStart'), `${dir}: last day, start side`).toBe('0px');
+      await expect(radius('14', 'StartEnd')).not.toBe('0px');
+    }
   },
 };
