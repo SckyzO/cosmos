@@ -41,8 +41,8 @@ configure({ asyncUtilTimeout: 3000 });
 // `parameters: { settleMotion: false }`.
 //
 // Durations and delays go to 0 s: a transition never starts, so `getAnimations()` is empty and
-// `transitionend` never fires. A story whose component waits for that event (the Drawer hides once
-// its slide ends, `useContentWidth` measures once the sidebar's width settled) opts out as well.
+// `transitionend` never fires. A story whose component waits for that event (`useContentWidth`
+// measures once the sidebar's width settled) opts out as well.
 // A duration of 1 ms would keep the events, but it would also start a transition on every property
 // of every element that has none (the default `transition-property` is `all`). Recharts animates
 // in JavaScript and is out of reach of this: see `hoverRing` in `src/storybook-recharts.tsx`.

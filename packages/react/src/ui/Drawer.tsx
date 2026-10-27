@@ -171,6 +171,19 @@ const Root = ({
     setContainer(isClient ? trapRef.current : null);
   }, [isClient, trapRef]);
 
+  // A slide-out that starts no transition fires no `transitionend`: transitions at `0s` (a
+  // reduced-motion reset, a user stylesheet) or a drawer closed before its slide-in moved. Once
+  // the closed position is committed, `getAnimations()`, which applies the pending style first,
+  // tells whether the slide runs; when it doesn't, the drawer hides at once.
+  useLayoutEffect(() => {
+    const panel = trapRef.current;
+    if (open || hidden || !panel) return;
+    const slides = panel
+      .getAnimations()
+      .some((a) => a instanceof CSSTransition && a.transitionProperty === 'translate');
+    if (!slides) setHidden(true);
+  }, [open, hidden, trapRef]);
+
   // Swipe to close: the panel's offset while the finger drags it (`null` at rest), and whether
   // the spring-back skips its animation (`prefers-reduced-motion`).
   const swipe = useRef<Swipe | null>(null);
