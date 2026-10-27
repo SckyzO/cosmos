@@ -269,7 +269,7 @@ function MenuItem({
   const danger = intent === 'danger';
   const isLink = href !== undefined;
   const classes = clsx(
-    'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus-visible:ring-inset',
+    'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm transition-colors focus-visible:ring-inset',
     danger
       ? 'text-red-600 focus-visible:bg-red-50 dark:text-red-400 dark:focus-visible:bg-red-500/10'
       : 'text-gray-700 focus-visible:bg-gray-50 dark:text-gray-300 dark:focus-visible:bg-white/5',
@@ -399,7 +399,7 @@ function MenuCheckboxItem({
         if (closeOnSelect) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
         disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
         className
       )}
@@ -468,7 +468,7 @@ function MenuRadioItem({
         if (closeOnSelect) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
         disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
         className
       )}
