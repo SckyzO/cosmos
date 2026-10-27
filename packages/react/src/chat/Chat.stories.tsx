@@ -18,6 +18,7 @@ import { ChatMessage, type ChatMessageProps } from './ChatMessage';
 import { ChatMessageActions } from './ChatMessageActions';
 import { ChatSuggestions } from './ChatSuggestions';
 import { CodeBlock } from '../ui/CodeBlock';
+import { ImageGrid } from '../ui/ImageGrid';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
 
 const meta = {
@@ -648,8 +649,8 @@ const ActionsReply = ({ actions }: { actions: React.ReactNode }) => (
 );
 
 /**
- * Under a reply, in the `actions` slot of its `ChatMessage`: copy, regenerate, good and bad
- * response, then the time. With a pointer they appear when the reply is hovered or holds the
+ * Under a reply, in the `actions` slot of its `ChatMessage`: the time, then copy, regenerate,
+ * good and bad response. With a pointer they appear when the reply is hovered or holds the
  * focus, and the row keeps its space; on touch they are always there.
  */
 export const ReplyActions: Story = {
@@ -1020,5 +1021,170 @@ export const FooterSitsInsideThePanel: Story = {
       field.getBoundingClientRect().bottom
     );
     await expect(getComputedStyle(panel).borderTopWidth).toBe('1px');
+  },
+};
+
+const AssistantReply = ({
+  children,
+  streaming,
+  actions,
+}: {
+  children: React.ReactNode;
+  streaming?: boolean;
+  actions?: React.ReactNode;
+}) => (
+  <ChatMessage
+    direction="incoming"
+    sender="Assistant"
+    time="10:42"
+    bubble={false}
+    streaming={streaming}
+    actions={actions}
+  >
+    {children}
+  </ChatMessage>
+);
+
+const replyActions = (
+  <ChatMessageActions
+    text={`${REPLY}\n\n${SNIPPET}`}
+    onRegenerate={() => {}}
+    defaultFeedback={null}
+  />
+);
+
+/**
+ * An AI assistant page: flat replies that take the whole column, a code block, the actions under
+ * the last reply, suggested follow-ups and a composer with a model picker and an attach button.
+ */
+export const AiAssistant: Story = {
+  render: () => (
+    <Frame height={640}>
+      <ChatThread label="Conversation with the assistant" className="flex-1">
+        <ChatMessage
+          direction="outgoing"
+          sender={ME}
+          time="10:41"
+          text="How do I debounce a search field in React?"
+        />
+        <AssistantReply actions={replyActions}>{richReply}</AssistantReply>
+      </ChatThread>
+      <ChatSuggestions suggestions={PROMPTS.slice(0, 2)} onSelect={() => {}} />
+      <ChatComposer placeholder="Ask anything…" onSend={() => {}} footer={<ComposerFooter />} />
+    </Frame>
+  ),
+};
+
+/** The same page on a phone: nothing widens, the footer keeps its line. */
+export const AiAssistantOnMobile: Story = {
+  ...AiAssistant,
+  globals: mobileViewport,
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+const PHOTO = new URL('../storybook-assets/snow-mountain-under-stars.jpg', import.meta.url).href;
+const DUNES = new URL('../storybook-assets/pale-dunes.svg', import.meta.url).href;
+
+/** An image generator: the pictures are the reply, in a grid across the full column. */
+export const ImageGenerator: Story = {
+  render: () => (
+    <Frame height={560}>
+      <ChatThread label="Conversation with the image generator" className="flex-1">
+        <ChatMessage
+          direction="outgoing"
+          sender={ME}
+          time="10:41"
+          text="A starry night over snowy mountains, and pale dunes at dawn"
+        />
+        <AssistantReply
+          actions={<ChatMessageActions onRegenerate={() => {}} defaultFeedback={null} />}
+        >
+          <p>Here are four variations:</p>
+          <ImageGrid columns={2} gap="sm" aspectRatio="aspect-video" className="my-2">
+            <ImageGrid.Item>
+              <img src={PHOTO} alt="Starry night over snowy mountains, variation 1" />
+            </ImageGrid.Item>
+            <ImageGrid.Item>
+              <img src={DUNES} alt="Pale dunes at dawn, variation 2" />
+            </ImageGrid.Item>
+            <ImageGrid.Item>
+              <img src={DUNES} alt="Pale dunes at dawn, variation 3" />
+            </ImageGrid.Item>
+            <ImageGrid.Item>
+              <img src={PHOTO} alt="Starry night over snowy mountains, variation 4" />
+            </ImageGrid.Item>
+          </ImageGrid>
+        </AssistantReply>
+      </ChatThread>
+      <ChatComposer
+        placeholder="Describe an image…"
+        onSend={() => {}}
+        footer={<ComposerFooter />}
+      />
+    </Frame>
+  ),
+};
+
+export const ImageGeneratorOnMobile: Story = {
+  ...ImageGenerator,
+  globals: mobileViewport,
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+const PARTIAL = 'Keep the input controlled and debounce the value you search with, not the';
+
+const StreamingWithStop = () => {
+  const [generating, setGenerating] = useState(true);
+  return (
+    <Frame height={420}>
+      <ChatThread className="flex-1">
+        <ChatMessage direction="outgoing" sender={ME} time="10:41" text="How do I debounce?" />
+        <AssistantReply streaming={generating}>
+          <p>{PARTIAL}</p>
+        </AssistantReply>
+      </ChatThread>
+      <ChatComposer
+        onSend={() => {}}
+        generating={generating}
+        onStop={() => setGenerating(false)}
+        footer={<ComposerFooter />}
+      />
+    </Frame>
+  );
+};
+
+/**
+ * A reply mid-stream: the caret after the text, the message `aria-busy`, and Stop in place of
+ * Send. Stopping ends the stream: the caret goes and Send comes back.
+ */
+export const StreamingWithStopButton: Story = {
+  render: () => <StreamingWithStop />,
+};
+
+export const StopEndsTheStream: Story = {
+  ...StreamingWithStopButton,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const reply = canvas.getByText(PARTIAL).closest('[aria-busy]');
+    await expect(reply).toHaveAttribute('aria-busy', 'true');
+    await userEvent.click(canvas.getByRole('button', { name: 'Stop generating' }));
+    await expect(reply).not.toHaveAttribute('aria-busy');
+    await expect(canvas.getByRole('button', { name: 'Send message' })).toBeVisible();
+    await expect(canvas.getByRole('textbox', { name: 'Message' })).toHaveFocus();
+  },
+};
+
+export const AiPagesInEveryTheme: Story = {
+  ...AiAssistant,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    inEachTheme(() => {
+      for (const reply of canvasElement.querySelectorAll('p')) expectTextContrast(reply);
+      for (const chip of canvasElement.querySelectorAll('li button')) expectTextContrast(chip);
+    });
   },
 };
