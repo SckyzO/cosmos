@@ -1,14 +1,23 @@
 import { clsx } from 'clsx';
+import { ChevronDown } from 'lucide-react';
 import {
+  Children,
   createContext,
+  isValidElement,
   useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
+  type MouseEvent,
+  type ReactElement,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
 import { AppLink } from '../ui/AppLink';
+import { Menu } from '../ui/Menu';
 
 // TUI Plus reference (Pattern 1 — "Simple dark with menu button on left"):
 //   <nav class="bg-gray-800">
@@ -100,19 +109,274 @@ function NavbarRoot({
 
 // ── Brand ────────────────────────────────────────────────────────────────────
 
-const Brand = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement>) => (
-  <div className={clsx('flex shrink-0 items-center', className)} {...rest}>
-    {children}
-  </div>
-);
+// Tells a Brand that an `Items` sits inside it: the Brand then takes the room the bar leaves
+// (`Items` measures its own width to move what does not fit into "More") instead of staying as
+// wide as its content.
+const BrandContext = createContext<((hasItems: boolean) => void) | null>(null);
+
+const Brand = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement>) => {
+  const [hasItems, setHasItems] = useState(false);
+  return (
+    <div
+      className={clsx('flex items-center', hasItems ? 'min-w-0 flex-1' : 'shrink-0', className)}
+      {...rest}
+    >
+      <BrandContext.Provider value={setHasItems}>{children}</BrandContext.Provider>
+    </div>
+  );
+};
+
+// ── Trigger (the button of a Menu and of "More") ────────────────────────────
+
+type NavbarTriggerProps = {
+  label: ReactNode;
+  active: boolean;
+  theme: NavbarTheme;
+  className?: string;
+};
+
+function NavbarTrigger({ label, active, theme, className }: NavbarTriggerProps) {
+  return (
+    <Menu.Trigger
+      // A button has no "current page": `true` marks the group that holds it.
+      aria-current={active ? 'true' : undefined}
+      className={clsx(
+        ITEM_BASE,
+        'group inline-flex items-center gap-1',
+        active ? ITEM_ACTIVE[theme] : ITEM_IDLE[theme],
+        className
+      )}
+    >
+      {label}
+      <ChevronDown
+        className="size-4 shrink-0 transition-transform group-aria-expanded:rotate-180"
+        aria-hidden
+      />
+    </Menu.Trigger>
+  );
+}
+
+// ── Menu (a dropdown group of links) ────────────────────────────────────────
+
+export type NavbarMenuProps = {
+  /** Text of the trigger. It also names the group in the "More" menu when the bar is full. */
+  label: string;
+  /**
+   * Marks the group as holding the current page, the way `Navbar.Item`'s `active` marks a page.
+   * Mark the current link itself with `aria-current="page"`.
+   */
+  active?: boolean;
+  /** Defaults to the theme of the parent `<Navbar>`. */
+  theme?: NavbarTheme;
+  /** Open state, when controlled. */
+  open?: boolean;
+  /** Initial open state, when uncontrolled. Default `false`. */
+  defaultOpen?: boolean;
+  /** Called with the open state to move to. */
+  onOpenChange?: (open: boolean) => void;
+  /** Edge of the trigger the panel lines up with. Default `left`. */
+  align?: 'left' | 'right';
+  /** Tailwind width class of the panel. Default `w-56` (224px). */
+  width?: string;
+  className?: string;
+  /** The links: `Menu.Item` with an `href`, `Menu.Group`, `Menu.Separator`. */
+  children: ReactNode;
+};
+
+/**
+ * A dropdown group of links in a `Navbar`: a trigger with a chevron that opens a `Menu` (the
+ * menu button pattern: Enter, Space and the arrows open it, the arrows move between the links,
+ * Escape closes it and gives the focus back to the trigger, Tab leaves it).
+ */
+const NavbarMenu = ({
+  label,
+  active = false,
+  theme,
+  open,
+  defaultOpen,
+  onOpenChange,
+  align,
+  width,
+  className,
+  children,
+}: NavbarMenuProps) => {
+  const inherited = useContext(NavbarThemeContext);
+  return (
+    <Menu open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} align={align}>
+      <NavbarTrigger
+        label={label}
+        active={active}
+        theme={theme ?? inherited}
+        className={className}
+      />
+      <Menu.Content width={width}>{children}</Menu.Content>
+    </Menu>
+  );
+};
 
 // ── Items (the horizontal main nav, hidden on mobile by default) ────────────
 
-const Items = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement>) => (
-  <div className={clsx('hidden md:ml-10 md:block', className)} {...rest}>
-    <div className="flex items-baseline space-x-4">{children}</div>
-  </div>
-);
+export type NavbarItemsProps = HTMLAttributes<HTMLDivElement> & {
+  /** Label of the menu that takes the items that do not fit. Default `More`. */
+  moreLabel?: string;
+};
+
+type Movable = ReactElement<NavbarItemProps> | ReactElement<NavbarMenuProps>;
+
+// Only these can go into the "More" menu: any other child stays in the bar.
+const isMovable = (node: ReactNode): node is Movable =>
+  isValidElement(node) && (node.type === Item || node.type === NavbarMenu);
+
+/** How many movable entries, counted from the last, do not fit in `available` px. */
+function countHidden(
+  widths: number[],
+  movable: boolean[],
+  more: number,
+  gap: number,
+  available: number
+) {
+  const slots = widths.length;
+  const movableCount = movable.filter(Boolean).length;
+  const flow = (hidden: number) => {
+    // The last `hidden` movable entries leave the row; "More" joins it.
+    let skip = hidden;
+    let width = hidden > 0 ? more : 0;
+    let count = hidden > 0 ? 1 : 0;
+    for (let i = slots - 1; i >= 0; i -= 1) {
+      if (movable[i] && skip > 0) {
+        skip -= 1;
+        continue;
+      }
+      width += widths[i];
+      count += 1;
+    }
+    return width + gap * Math.max(count - 1, 0);
+  };
+  let hidden = 0;
+  while (hidden < movableCount && flow(hidden) > available) hidden += 1;
+  return hidden;
+}
+
+const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItemsProps) => {
+  const theme = useContext(NavbarThemeContext);
+  const setHasItems = useContext(BrandContext);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [hidden, setHidden] = useState(0);
+  const entries = Children.toArray(children);
+
+  useLayoutEffect(() => {
+    setHasItems?.(true);
+    return () => setHasItems?.(false);
+  }, [setHasItems]);
+
+  const slotCount = entries.length;
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const row = root.firstElementChild as HTMLElement;
+    const measure = () => {
+      // Out of the layout below `md`: nothing to fit, and the last count stays.
+      const available = root.clientWidth;
+      if (available === 0) return;
+      const slots = Array.from(row.querySelectorAll<HTMLElement>(':scope > [data-navbar-slot]'));
+      const more = row.querySelector<HTMLElement>(':scope > [data-navbar-more]');
+      const widths = slots.map((slot) => slot.getBoundingClientRect().width);
+      const movable = slots.map((slot) => slot.dataset.navbarSlot === 'movable');
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      const next = countHidden(
+        widths,
+        movable,
+        more?.getBoundingClientRect().width ?? 0,
+        gap,
+        available
+      );
+      setHidden(next);
+    };
+    // The first report of the observer comes after paint: measure now, so the first frame fits.
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(root);
+    for (const child of row.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [slotCount]);
+
+  // The last `hidden` movable entries leave the bar for "More".
+  const movableKeys = entries.filter(isMovable).map((entry) => entry.key);
+  const hiddenKeys = new Set(hidden > 0 ? movableKeys.slice(-hidden) : []);
+  const overflow = entries.filter(isMovable).filter((entry) => hiddenKeys.has(entry.key));
+  const moreActive = overflow.some((entry) => entry.props.active);
+
+  return (
+    <div
+      ref={rootRef}
+      className={clsx('hidden md:ml-10 md:block', setHasItems && 'min-w-0 flex-1', className)}
+      {...rest}
+    >
+      <div className="relative flex items-baseline gap-x-4 whitespace-nowrap">
+        {entries.map((entry) => {
+          const movable = isMovable(entry);
+          const out = movable && hiddenKeys.has(entry.key);
+          return (
+            // A hidden entry keeps its box (out of the flow, invisible, not focusable): its width
+            // is what brings it back when there is room.
+            <div
+              key={isValidElement(entry) ? entry.key : undefined}
+              data-navbar-slot={movable ? 'movable' : 'fixed'}
+              className={clsx(
+                // flex keeps the entry a block box, so its padding sizes the slot.
+                'flex shrink-0',
+                out && 'pointer-events-none invisible absolute top-0 left-0'
+              )}
+            >
+              {entry}
+            </div>
+          );
+        })}
+        {movableKeys.length > 0 && (
+          <div
+            data-navbar-more=""
+            className={clsx(
+              'flex shrink-0',
+              hidden === 0 && 'pointer-events-none invisible absolute top-0 left-0'
+            )}
+          >
+            <Menu>
+              <NavbarTrigger label={moreLabel} active={moreActive} theme={theme} />
+              <Menu.Content>
+                {overflow.map((entry) => (
+                  <OverflowEntry key={entry.key} entry={entry} />
+                ))}
+              </Menu.Content>
+            </Menu>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// An entry that left the bar, as it reads in the "More" menu: an item is a link, a menu is a
+// labelled group of its links.
+function OverflowEntry({ entry }: { entry: Movable }) {
+  if (entry.type === NavbarMenu) {
+    const { label, children } = entry.props as NavbarMenuProps;
+    return <Menu.Group label={label}>{children}</Menu.Group>;
+  }
+  // The menu has its own surface: the bar's `theme` and classes do not apply to it.
+  const { active, children, ...rest } = { ...(entry.props as NavbarItemProps) };
+  delete rest.className;
+  delete rest.theme;
+  return (
+    <Menu.Item
+      {...(rest as Record<string, unknown>)}
+      onClick={rest.onClick as ((e: MouseEvent<HTMLElement>) => void) | undefined}
+      aria-current={active ? 'page' : undefined}
+      className={active ? 'font-semibold' : undefined}
+    >
+      {children}
+    </Menu.Item>
+  );
+}
 
 // ── Item (anchor or button) ─────────────────────────────────────────────────
 
@@ -193,6 +457,7 @@ export const Navbar = Object.assign(NavbarRoot, {
   Brand,
   Items,
   Item,
+  Menu: NavbarMenu,
   Actions,
   MobileMenuButton,
 });
