@@ -37,6 +37,21 @@ export const Floating: Story = {
   args: { value: 'npm install @sckyzo/cosmos-react', floating: true },
 };
 
+/** No border and no fill: the copy button of a row of actions, as under a chat reply. */
+export const Plain: Story = {
+  args: { plain: true },
+};
+
+export const PlainHasNoBorderNorFill: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { plain: true },
+  play: async ({ canvas }) => {
+    const style = getComputedStyle(canvas.getByRole('button', { name: 'Copy' }));
+    await expect(style.borderTopWidth).toBe('0px');
+    await expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+  },
+};
+
 export const CustomLabels: Story = {
   args: {
     variant: 'button',

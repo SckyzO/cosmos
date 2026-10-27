@@ -1,7 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
+import { URL_PATTERN } from './httpUrl';
 
-// http(s) URLs only: other schemes (javascript:, data:) stay plain text.
-const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;
 // Punctuation that ends a sentence rather than the URL.
 const TRAILING = /[.,;:!?)\]]+$/;
 

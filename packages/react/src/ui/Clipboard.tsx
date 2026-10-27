@@ -24,6 +24,12 @@ export type ClipboardProps = Omit<ComponentPropsWithRef<'button'>, 'onCopy'> & {
    * positioning. Default `false`.
    */
   floating?: boolean;
+  /**
+   * No border and no fill, a muted icon with a tint on hover: for a row of actions (the copy
+   * button of a chat reply). The `copied` check turns green. Ignored with `floating`. Default
+   * `false`.
+   */
+  plain?: boolean;
 };
 
 const SIZE_ICON: Record<ClipboardSize, { box: string; icon: string }> = {
@@ -45,6 +51,7 @@ export function Clipboard({
   duration = 1500,
   onCopy,
   floating = false,
+  plain = false,
   className,
   onClick,
   ref,
@@ -79,11 +86,17 @@ export function Clipboard({
 
   const Icon = copied ? Check : Copy;
   const label = copied ? copiedLabel : copyLabel;
-  const iconClass = clsx(SIZE_ICON[size].icon, copied && 'text-green-500');
+  const flatStyle = plain && !floating;
+  const iconClass = clsx(
+    SIZE_ICON[size].icon,
+    copied && (flatStyle ? 'text-green-600 dark:text-green-400' : 'text-green-500')
+  );
 
   const baseClass = floating
     ? 'border border-gray-200 bg-white/90 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-700 focus-visible:opacity-100 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800/90 dark:text-gray-400 dark:hover:text-gray-200'
-    : 'border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
+    : flatStyle
+      ? 'text-[var(--color-text-muted)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text-primary)] focus-visible:focus-indicator dark:hover:bg-gray-800'
+      : 'border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
 
   if (variant === 'icon') {
     return (
@@ -93,7 +106,8 @@ export function Clipboard({
         aria-label={label}
         onClick={handleClick}
         className={clsx(
-          'inline-flex items-center justify-center rounded-md',
+          'inline-flex items-center justify-center',
+          flatStyle ? 'rounded-lg' : 'rounded-md',
           SIZE_ICON[size].box,
           baseClass,
           className

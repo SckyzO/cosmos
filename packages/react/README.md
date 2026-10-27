@@ -362,6 +362,25 @@ the messages and answers `onSend`:
 
 A bot message with `streaming: true` shows a caret while its text grows.
 
+### Rich replies (AI assistant, generators)
+
+The same blocks build an assistant page; the app owns the conversation and renders any
+Markdown itself.
+
+- `ChatMessage` takes `children` in place of `text` (rendered nodes: a `CodeBlock`, a list, an
+  `ImageGrid`). `bubble={false}` drops the bubble of an incoming reply so it takes the whole
+  column, with the avatar and name on top. While `streaming` the message is `aria-busy`.
+- `actions={<ChatMessageActions text={reply} onRegenerate={…} feedback={…} onFeedbackChange={…} />}`
+  adds Copy reply, Regenerate and Good/Bad response under the reply (`aria-pressed`, also
+  `defaultFeedback`). With a pointer they show on hover and focus; on touch they always show.
+- `ChatSuggestions` is the row of chips `Chatbot` uses (`suggestions`, `onSelect`).
+- `ChatComposer` takes `footer` (a line under the field: attach, a model `Select`, a hint) and
+  `generating` + `onStop`: the send button becomes Stop (`stopLabel`), and Enter does not send.
+- `ChatToolCall` (`name`, `status` of `running | done | failed`, `duration`, `input`, `output`)
+  is a disclosure row for what the assistant did; `ChatSources` (`sources`, `label`) lists where
+  an answer comes from. Only http(s) sources become links.
+- `Clipboard plain` is the borderless copy button of that row.
+
 ## Slider
 
 `Slider` is a position on a scale, or a range of it. One `value` (with `defaultValue` and

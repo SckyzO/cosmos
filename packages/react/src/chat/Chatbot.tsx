@@ -6,6 +6,7 @@ import { useOverlayLayer, usePortalFocus } from '../ui/overlayA11y';
 import { useControllableState } from '../hooks/useControllableState';
 import { ChatComposer } from './ChatComposer';
 import { ChatMessage, type ChatMessageStatus } from './ChatMessage';
+import { ChatSuggestions } from './ChatSuggestions';
 import { ChatThread, ChatTypingIndicator } from './ChatThread';
 
 export type ChatbotMessage = {
@@ -184,21 +185,7 @@ export const Chatbot = ({
             </div>
           )}
 
-          {suggestions && suggestions.length > 0 && (
-            <ul aria-label="Suggested replies" className="flex flex-wrap gap-2 px-3 pb-2">
-              {suggestions.map((s) => (
-                <li key={s}>
-                  <button
-                    type="button"
-                    onClick={() => onSend(s)}
-                    className="border-brand-500/40 text-brand-600 dark:text-brand-400 hover:bg-brand-500/10 focus-visible:focus-indicator rounded-full border px-3 py-1 text-xs font-medium"
-                  >
-                    {s}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          {suggestions && <ChatSuggestions suggestions={suggestions} onSelect={onSend} />}
 
           <ChatComposer onSend={onSend} />
         </div>
