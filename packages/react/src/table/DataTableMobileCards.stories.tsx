@@ -5,6 +5,7 @@ import { Menu } from '../ui/Menu';
 import { Badge } from '../ui/Badge';
 import { placeholderAvatar } from '../storybook-avatars';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { DataTable } from './DataTable';
 import { TableIdentityCell } from './cells';
 import { RowActionsMenu } from './RowActionsMenu';
@@ -507,5 +508,33 @@ export const CardChevronExpandsAndCollapses: Story = {
     await expect(
       within(card('1')).getByRole('checkbox', { name: 'Select row user-1' })
     ).not.toBeChecked();
+  },
+};
+
+/** A card and a label/value pair of the cards layout follow the page's `data-density`. */
+export const CardsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <InEachDensity>
+        {(density) => (
+          <DataTable
+            aria-label={`Users, ${density}`}
+            rows={rows.slice(0, 3)}
+            columns={columns}
+            rowKey={(r) => r.id}
+            mobileLayout="cards"
+          />
+        )}
+      </InEachDensity>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getAllByRole('listitem')[0]!);
+    await expectDensitySteps(
+      canvas,
+      (_scope, region) => region.querySelectorAll<HTMLElement>('dl > div')[1]!
+    );
   },
 };

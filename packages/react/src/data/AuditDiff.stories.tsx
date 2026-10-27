@@ -10,6 +10,7 @@ import {
 import { Pencil } from 'lucide-react';
 import { AuditDiff, type AuditChange } from './AuditDiff';
 import { Timeline } from './Timeline';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 
 const meta = {
   title: 'Data/Audit Diff',
@@ -407,5 +408,19 @@ export const ColoursInEveryTheme: Story = {
         getComputedStyle(cells[1]).backgroundColor
       );
     });
+  },
+};
+
+/** The header and the rows of the table follow the page's `data-density`. */
+export const TableFollowsPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <InEachDensity>
+      <AuditDiff changes={userChanges} aria-label="Changes to Bob" />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getAllByRole('columnheader')[0]!);
+    await expectDensitySteps(canvas, (scope) => scope.getAllByRole('row')[1]!);
   },
 };
