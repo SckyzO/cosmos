@@ -500,6 +500,59 @@
   }
 }
 
+/* ── Density ───────────────────────────────────────────────────────────────
+ * data-density moves the vertical rhythm only: the height of controls
+ * (--spacing-ctrl-*), the vertical padding of rows (--spacing-row-*) and of
+ * table cells (--spacing-cell-*). Panel padding, gaps and the horizontal
+ * padding stay. compact takes 4px off a control (the smallest, 28px, stays at
+ * 24px, the WCAG 2.5.8 floor) and 2px off each side of a row; comfortable adds
+ * as much. No attribute keeps today's values; 'default' is the same, spelled
+ * out so a part of the page (a DataTable) can opt out of its parent's density.
+ *
+ * Declared again here for the same reason as the text sizes: a custom property
+ * resolves var() on the element that declares it, so the tokens are rebuilt
+ * on every element that carries the attribute. */
+[data-density] {
+  --spacing-ctrl-28: calc(1.75rem + var(--cosmos-density-control, 0rem));
+  --spacing-ctrl-32: calc(2rem + var(--cosmos-density-control, 0rem));
+  --spacing-ctrl-36: calc(2.25rem + var(--cosmos-density-control, 0rem));
+  --spacing-ctrl-40: calc(2.5rem + var(--cosmos-density-control, 0rem));
+  --spacing-ctrl-44: calc(2.75rem + var(--cosmos-density-control, 0rem));
+  --spacing-ctrl-48: calc(3rem + var(--cosmos-density-control, 0rem));
+  --spacing-row-6: calc(0.375rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-8: calc(0.5rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-10: calc(0.625rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-12: calc(0.75rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-14: calc(0.875rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-16: calc(1rem + var(--cosmos-density-row, 0rem));
+  --spacing-cell-head: calc(0.75rem + var(--cosmos-density-cell-head, 0rem));
+  --spacing-cell-body: calc(0.875rem + var(--cosmos-density-cell-body, 0rem));
+}
+
+[data-density='default'] {
+  --cosmos-density-control: 0rem;
+  --cosmos-density-row: 0rem;
+  --cosmos-density-cell-head: 0rem;
+  --cosmos-density-cell-body: 0rem;
+  --cosmos-density-virtual-cell: calc(48em / 14);
+}
+
+[data-density='compact'] {
+  --cosmos-density-control: -0.25rem;
+  --cosmos-density-row: -0.125rem;
+  --cosmos-density-cell-head: -0.25rem;
+  --cosmos-density-cell-body: -0.25rem;
+  --cosmos-density-virtual-cell: calc(40em / 14);
+}
+
+[data-density='comfortable'] {
+  --cosmos-density-control: 0.25rem;
+  --cosmos-density-row: 0.125rem;
+  --cosmos-density-cell-head: 0.25rem;
+  --cosmos-density-cell-body: 0.375rem;
+  --cosmos-density-virtual-cell: calc(60em / 14);
+}
+
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class
    on the app shell (not body, to avoid transitioning every DOM element). */
 .cosmos-bg-transition {
