@@ -36,7 +36,7 @@ type Ctx = {
 
 // A disabled item is skipped by the arrows, Home, End and the typeahead.
 const ITEM_SELECTOR =
-  '[role="menuitem"]:not([disabled]):not([aria-disabled="true"]), [role="menuitemcheckbox"]:not([disabled]):not([aria-disabled="true"])';
+  '[role="menuitem"]:not([disabled]):not([aria-disabled="true"]), [role="menuitemcheckbox"]:not([disabled]):not([aria-disabled="true"]), [role="menuitemradio"]:not([disabled]):not([aria-disabled="true"])';
 const menuItems = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR));
 
@@ -420,6 +420,75 @@ function MenuCheckboxItem({
   );
 }
 
+// ── Radio item ───────────────────────────────────────────────────────────────
+
+export type MenuRadioItemProps = Omit<
+  ComponentPropsWithRef<'button'>,
+  'children' | 'onSelect' | 'type' | 'role'
+> & {
+  children: ReactNode;
+  /** Whether this is the picked item of its group. The host owns it: the item never flips itself. */
+  checked: boolean;
+  /** Runs when the item is chosen, by click, Enter or Space (also when it is already checked). */
+  onSelect?: () => void;
+  /** Closes the menu once the item is chosen. Default true: picking an option is a choice made. */
+  closeOnSelect?: boolean;
+};
+
+/**
+ * One option of a set where a single one is picked (`role="menuitemradio"`), as the views of a
+ * table. Put them in a `Menu.Group` with a `label`. It takes the same arrows, Home, End and
+ * typeahead as `Menu.Item`.
+ */
+function MenuRadioItem({
+  checked,
+  onSelect,
+  closeOnSelect = true,
+  disabled,
+  onClick,
+  className,
+  children,
+  ref,
+  ...rest
+}: MenuRadioItemProps) {
+  const { setOpen } = useCtx();
+  return (
+    <button
+      type="button"
+      {...rest}
+      ref={ref}
+      role="menuitemradio"
+      aria-checked={checked}
+      tabIndex={-1}
+      disabled={disabled}
+      onClick={(e) => {
+        onClick?.(e);
+        if (e.defaultPrevented) return;
+        onSelect?.();
+        if (closeOnSelect) setOpen(false);
+      }}
+      className={clsx(
+        'focus-visible:focus-indicator flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
+        className
+      )}
+    >
+      <span
+        aria-hidden
+        className={clsx(
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors',
+          checked
+            ? 'border-brand-500 bg-white dark:bg-gray-800'
+            : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+        )}
+      >
+        {checked && <span className="bg-brand-500 h-2 w-2 rounded-full" />}
+      </span>
+      <span className="flex-1 truncate">{children}</span>
+    </button>
+  );
+}
+
 // ── Separator ────────────────────────────────────────────────────────────────
 
 const MenuSeparator = () => (
@@ -434,5 +503,6 @@ export const Menu = Object.assign(MenuRoot, {
   Group: MenuGroup,
   Item: MenuItem,
   CheckboxItem: MenuCheckboxItem,
+  RadioItem: MenuRadioItem,
   Separator: MenuSeparator,
 });
