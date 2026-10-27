@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Paperclip } from 'lucide-react';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import { SplitView } from '../layout/SplitView';
 import {
@@ -14,6 +14,7 @@ import {
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
+import { ChatMessageActions } from './ChatMessageActions';
 import { ChatSuggestions } from './ChatSuggestions';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
@@ -624,5 +625,207 @@ export const EmptySuggestionsRenderNothing: Story = {
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByTestId('box')).toBeEmptyDOMElement();
+  },
+};
+
+const REPLY = 'Only the last value after 300 ms reaches the search.';
+
+const ActionsReply = ({ actions }: { actions: React.ReactNode }) => (
+  <Frame height={200}>
+    <ChatThread className="flex-1">
+      <ChatMessage
+        direction="incoming"
+        sender="Assistant"
+        time="10:42"
+        bubble={false}
+        actions={actions}
+      >
+        <p>{REPLY}</p>
+      </ChatMessage>
+    </ChatThread>
+  </Frame>
+);
+
+/**
+ * Under a reply, in the `actions` slot of its `ChatMessage`: copy, regenerate, good and bad
+ * response, then the time. With a pointer they appear when the reply is hovered or holds the
+ * focus, and the row keeps its space; on touch they are always there.
+ */
+export const ReplyActions: Story = {
+  render: () => (
+    <ActionsReply
+      actions={<ChatMessageActions text={REPLY} onRegenerate={() => {}} defaultFeedback={null} />}
+    />
+  ),
+};
+
+/** On their own the actions are always shown. */
+export const ActionsAlone: Story = {
+  render: () => (
+    <div className="p-4">
+      <ChatMessageActions text={REPLY} onRegenerate={() => {}} defaultFeedback="up" />
+    </div>
+  ),
+};
+
+const reveal = (canvas: ReturnType<typeof within>) =>
+  canvas.getByRole('group', { name: 'Reply actions' }).parentElement as HTMLElement;
+
+// Every rule of the page that hides the reveal wrapper, with the media query it sits in.
+const hidingRules = () => {
+  const found: { media: string; selector: string }[] = [];
+  const visit = (rules: CSSRuleList, media: string) => {
+    for (const rule of rules) {
+      if (rule instanceof CSSMediaRule) visit(rule.cssRules, `${media} ${rule.conditionText}`);
+      else if (rule instanceof CSSStyleRule && rule.style.opacity === '0') {
+        if (rule.selectorText.includes('reply')) found.push({ media, selector: rule.selectorText });
+      } else if ('cssRules' in rule) visit(rule.cssRules as CSSRuleList, media);
+    }
+  };
+  for (const sheet of document.styleSheets) visit(sheet.cssRules, '');
+  return found;
+};
+
+export const ActionsRevealOnHoverAndFocus: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: ReplyActions.render,
+  play: async ({ canvas }) => {
+    const row = reveal(canvas);
+    const height = row.getBoundingClientRect().height;
+    // At rest with a pointer: out of sight, but the space is kept.
+    await expect(getComputedStyle(row).opacity).toBe('0');
+    await expect(height).toBeGreaterThanOrEqual(28);
+    // Hidden only where the device can hover, and only while the reply is not hovered: a real
+    // :hover cannot be forced from a play function, so the rule itself is checked.
+    const rules = hidingRules();
+    await expect(rules).toHaveLength(1);
+    await expect(rules[0].media).toContain('hover: hover');
+    await expect(rules[0].selector).toContain(':not(:hover)');
+    await expect(rules[0].selector).toContain(':not(:focus-within)');
+    // A keyboard user tabbing into it sees it.
+    for (let i = 0; i < 5 && !row.contains(document.activeElement); i += 1) await userEvent.tab();
+    await expect(canvas.getByRole('button', { name: 'Copy reply' })).toHaveFocus();
+    await expect(getComputedStyle(row).opacity).toBe('1');
+    await expect(row.getBoundingClientRect().height).toBe(height);
+    (document.activeElement as HTMLElement).blur();
+    await waitFor(() => expect(getComputedStyle(row).opacity).toBe('0'));
+  },
+};
+
+/** Focus on a link in the reply shows its actions too, not only focus on the actions. */
+export const ActionsRevealWhenTheReplyHoldsTheFocus: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame height={200}>
+      <ChatThread className="flex-1">
+        <ChatMessage
+          direction="incoming"
+          sender="Assistant"
+          time="10:42"
+          bubble={false}
+          actions={<ChatMessageActions text={REPLY} onRegenerate={() => {}} />}
+        >
+          <p>
+            See <a href="https://react.dev">the React docs</a>.
+          </p>
+        </ChatMessage>
+      </ChatThread>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const row = reveal(canvas);
+    await expect(getComputedStyle(row).opacity).toBe('0');
+    canvas.getByRole('link', { name: 'the React docs' }).focus();
+    await waitFor(() => expect(getComputedStyle(row).opacity).toBe('1'));
+  },
+};
+
+export const FeedbackTogglesPressed: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatMessageActions defaultFeedback={null} />,
+  play: async ({ canvas }) => {
+    const good = canvas.getByRole('button', { name: 'Good response' });
+    const bad = canvas.getByRole('button', { name: 'Bad response' });
+    await expect(good).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(good);
+    await expect(good).toHaveAttribute('aria-pressed', 'true');
+    await expect(bad).toHaveAttribute('aria-pressed', 'false');
+    // The other one takes over; the pressed one again clears it.
+    await userEvent.click(bad);
+    await expect(good).toHaveAttribute('aria-pressed', 'false');
+    await expect(bad).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(bad);
+    await expect(bad).toHaveAttribute('aria-pressed', 'false');
+  },
+};
+
+const onFeedbackChange = fn();
+
+export const FeedbackControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  // Controlled to `down`: the host decides, the button reports the move.
+  render: () => <ChatMessageActions feedback="down" onFeedbackChange={onFeedbackChange} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Bad response' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Good response' }));
+    await expect(onFeedbackChange).toHaveBeenCalledWith('up');
+    // Still `down`: it only moves once the host passes the new value back.
+    await expect(canvas.getByRole('button', { name: 'Bad response' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Bad response' }));
+    await expect(onFeedbackChange).toHaveBeenCalledWith(null);
+  },
+};
+
+export const CopyReplyCopiesTheText: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatMessageActions text={REPLY} />,
+  play: async ({ canvas }) => {
+    const original = navigator.clipboard;
+    const writeText = fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Copy reply' }));
+      await expect(writeText).toHaveBeenCalledWith(REPLY);
+      await expect(canvas.getByRole('button', { name: 'Copied' })).toBeVisible();
+      // The check goes back to the copy icon after 2 s.
+      await waitFor(
+        () => expect(canvas.getByRole('button', { name: 'Copy reply' })).toBeVisible(),
+        { timeout: 3000 }
+      );
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: original });
+    }
+  },
+};
+
+const onRegenerate = fn();
+
+export const RegenerateCallsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatMessageActions onRegenerate={onRegenerate} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Regenerate' }));
+    await expect(onRegenerate).toHaveBeenCalledTimes(1);
+    // Only the actions that were asked for.
+    await expect(canvas.queryByRole('button', { name: 'Copy reply' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'Good response' })).toBeNull();
+  },
+};
+
+export const ActionsContrastInEveryTheme: Story = {
+  ...ActionsAlone,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    inEachTheme(() => {
+      for (const icon of canvasElement.querySelectorAll('svg')) {
+        expectGraphicContrast(icon, 'color', 3);
+      }
+    });
   },
 };
