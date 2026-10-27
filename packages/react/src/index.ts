@@ -4,6 +4,7 @@ export * from './layout';
 export * from './templates';
 export * from './feedback';
 export * from './status';
+export * from './uptime';
 export * from './lists';
 export * from './navigation';
 export * from './ui';
