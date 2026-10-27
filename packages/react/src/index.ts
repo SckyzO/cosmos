@@ -15,3 +15,4 @@ export * from './settings';
 export * from './typography';
 export * from './chat';
 export * from './comments';
+export * from './logs';
