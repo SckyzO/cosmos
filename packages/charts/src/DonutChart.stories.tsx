@@ -130,9 +130,15 @@ export const DonutHasAHole: Story = {
   args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(5));
-    const pie = (canvasElement.querySelector('.recharts-pie') as Element).getBoundingClientRect();
-    const middle = document.elementFromPoint(pie.x + pie.width / 2, pie.y + pie.height / 2);
-    await expect(middle?.closest('.recharts-pie-sector')).toBeNull();
+    // The pie can still be taking its size when its slices exist: read its middle until it has.
+    await waitFor(() => {
+      const pie = (canvasElement.querySelector('.recharts-pie') as Element).getBoundingClientRect();
+      const middle = document.elementFromPoint(pie.x + pie.width / 2, pie.y + pie.height / 2);
+      expect(middle !== null && canvasElement.contains(middle), 'the middle is in the chart').toBe(
+        true
+      );
+      expect(middle?.closest('.recharts-pie-sector')).toBeNull();
+    });
   },
 };
 

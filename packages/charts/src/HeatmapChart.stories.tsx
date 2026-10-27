@@ -345,9 +345,9 @@ export const RepaintsWithTheme: Story = {
   },
 };
 
-/** The value printed in a cell reads on it, white or black, in every theme and for a custom scale. */
-export const ValuesReadOnCells: Story = {
-  tags: ['!dev', '!autodocs'],
+// The value printed in a cell reads on it, white or black, on the scale and on custom ranges, in
+// every accent of one theme. One story per theme: all 16 pairs in one test took half its timeout.
+const valuesReadOnCellsIn = (theme: '' | 'sand' | 'dark' | 'deep-blue'): Story => ({
   args: { ...CpuPerNode.args, ranges: Thresholds.args?.ranges },
   render: (args) => (
     <div className="grid gap-4 md:grid-cols-2">
@@ -360,29 +360,51 @@ export const ValuesReadOnCells: Story = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    for (const theme of ['', 'sand', 'dark', 'deep-blue']) {
-      const restore = switchTheme(theme);
-      try {
-        for (const accent of ['blue', 'teal', 'amber', 'graphite']) {
-          document.documentElement.setAttribute('data-accent', accent);
-          await waitFor(() => {
-            const printed = cellsOf(canvasElement).filter((cell) => cell.textContent);
-            expect(printed.length).toBeGreaterThan(60);
-            for (const cell of printed) {
-              const ratio = contrastRatio(toHex(getComputedStyle(cell).color), fillOf(cell));
-              expect(
-                ratio,
-                `${theme || 'light'} ${accent} ${cell.textContent}`
-              ).toBeGreaterThanOrEqual(4.5);
-            }
-          });
-        }
-      } finally {
-        document.documentElement.removeAttribute('data-accent');
-        restore();
+    const restore = switchTheme(theme);
+    try {
+      for (const accent of ['blue', 'teal', 'amber', 'graphite']) {
+        document.documentElement.setAttribute('data-accent', accent);
+        await waitFor(() => {
+          const printed = cellsOf(canvasElement).filter((cell) => cell.textContent);
+          expect(printed.length).toBeGreaterThan(60);
+          for (const cell of printed) {
+            const ratio = contrastRatio(toHex(getComputedStyle(cell).color), fillOf(cell));
+            expect(
+              ratio,
+              `${theme || 'light'} ${accent} ${cell.textContent}`
+            ).toBeGreaterThanOrEqual(4.5);
+          }
+        });
       }
+    } finally {
+      document.documentElement.removeAttribute('data-accent');
+      restore();
     }
   },
+});
+
+/** The value printed in a cell reads on it in the light theme, in every accent. */
+export const ValuesReadOnCellsLight: Story = {
+  ...valuesReadOnCellsIn(''),
+  tags: ['!dev', '!autodocs'],
+};
+
+/** The value printed in a cell reads on it in the sand theme, in every accent. */
+export const ValuesReadOnCellsSand: Story = {
+  ...valuesReadOnCellsIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+
+/** The value printed in a cell reads on it in the dark theme, in every accent. */
+export const ValuesReadOnCellsDark: Story = {
+  ...valuesReadOnCellsIn('dark'),
+  tags: ['!dev', '!autodocs'],
+};
+
+/** The value printed in a cell reads on it in the deep-blue theme, in every accent. */
+export const ValuesReadOnCellsDeepBlue: Story = {
+  ...valuesReadOnCellsIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
 };
 
 /**
