@@ -652,6 +652,73 @@ nothing in it is `UNKNOWN`.
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
 
+## Uptime monitoring
+
+`HeartbeatBar`, `UptimeBars`, `UptimeStat` and `MonitorRow` draw what a monitor found: its recent
+checks, its uptime over days and periods, and one monitor as a line or a tile. A monitor checks a
+target every N seconds; these show the result, and the host brings the data.
+
+A **beat** is one check, and a **day** is one day of history. `time` and `date` take a `Date`, a
+timestamp in milliseconds or an ISO 8601 string (a bare `YYYY-MM-DD` names that calendar day for every
+reader, whatever their time zone).
+
+```tsx
+const beats: Beat[] = [
+  { time: '2026-01-15T06:41:10Z', status: 'up', latency: 182 },
+  { time: '2026-01-15T06:42:10Z', status: 'down', latency: 5003, message: 'Timeout after 5 s' },
+]; // oldest first; status: 'up' | 'down' | 'degraded' | 'maintenance' | 'pending'
+const days: UptimeDay[] = [
+  { date: '2026-01-14', uptime: 0.9995, incidents: 1 }, // 0 to 1; null is a day with no data
+  { date: '2026-01-15', uptime: null },
+];
+
+<HeartbeatBar beats={beats} />
+<UptimeBars days={days} title="API" legend />
+<UptimeStat periods={[{ label: '30 days', uptime: 0.9991 }]} responseTime={182} certificate={{ daysLeft: 12 }} />
+<MonitorRow name="API" type="HTTP" beats={beats} uptime={0.9992} />
+```
+
+**Thresholds.** An uptime is coloured by one shared rule: 99.9 % and up is green, 99 % up to 99.9 %
+is amber, below 99 % is red, and `null` is grey ("No data"). Every component that colours by uptime
+(`UptimeBars`, `UptimeStat`, `MonitorRow`) takes `thresholds`, a partial `{ good, warning }` in shares
+from 0 to 1 (`{ good: 0.9999, warning: 0.999 }`), and the legend of `UptimeBars` follows it. A
+`warning` limit above `good` is lowered to it. `DEFAULT_THRESHOLDS`, `resolveThresholds` and
+`uptimeLevel` are exported, to colour your own figures the same way. The status colours are the
+theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaints them.
+
+- `HeartbeatBar` draws one mark per beat, the newest at the end. `variant` is `bars` (default),
+  `blocks` or `dots`; `size` is `md` (32px, default) or `sm` (24px, the height inside a `MonitorRow`).
+  It holds as many beats as its width allows and drops the oldest, so a 375px screen still shows the
+  latest history: give it the width of its container. A `down` beat differs by shape as well as
+  colour (a taller bar, a block crossed by a diagonal, a square dot) and every beat is named in words
+  (status, time, latency, message). The bar is one tab stop on the newest beat; the arrow keys, Home
+  and End move between beats, and hovering or focusing one shows its tooltip (Escape hides it).
+  `legend` writes the key of the statuses under the bar.
+- `UptimeBars` draws one bar per day over `period` 30, 60 or 90 days (default 90), coloured by the
+  thresholds. The header gives `title` and the uptime of the period (the mean of the days with data,
+  or `uptime` when you have the exact figure), the captions read "90 days ago" and "Today". When the
+  width cannot hold every day, the oldest are dropped and the caption and the figure describe what is
+  drawn. Days are named ("Jan 15, 2026: 99.95% uptime, 1 incident"), reached with the same keyboard
+  model as `HeartbeatBar`, and `legend` writes the thresholds. `compact` is the form for a card: lower
+  bars, no header, captions or legend.
+- `UptimeStat` has two variants. `row` (default) puts the uptime of each of your `periods` side by
+  side (`{ label: '24 hours', uptime }`: you name the periods), then `responseTime` and the
+  `certificate`: days left, a warning (an icon, and the amber colour) under `warnBelow` days, 14 by
+  default. `card` is one figure for a dashboard tile: the first period, and the downtime it stands for
+  ("39 min down") when the period has a `duration` in milliseconds, with `days` drawn as compact bars.
+  It is a variant of its own, not a `KpiCard` preset.
+- `MonitorRow` shows the state (the status of the last beat, `status` to force it, `paused` to
+  pause it), the name (a link with `href`) and `type` (any string: `HTTP`, `TCP`, `DNS`, `ping`,
+  `keyword`), a 24px `HeartbeatBar`, the uptime over 24 hours, and the current latency (default: the
+  last beat's). `variant="row"` is a line of a list, which the host draws: it stacks on a narrow
+  screen. `variant="card"` is a tile for a grid.
+
+The response time (a `LineAreaChart` from `@sckyzo/cosmos-charts`, its `referenceBands` shading the
+down periods; the stories draw a plain SVG, since this package has no chart dependency), the timeline
+of an incident (`Timeline`) and a maintenance notice (`AlertBanner`) need no component of their own:
+see the stories of the Monitoring group, and the two example pages (a public status page and a
+monitors dashboard).
+
 ## Auth layouts
 
 `AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
