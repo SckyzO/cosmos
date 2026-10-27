@@ -6,8 +6,11 @@ export type SortDirection = 'asc' | 'desc';
 /** The column a `DataTable` is sorted by and the direction, or `null` for the order of `rows`. */
 export type DataTableSort = { key: string; direction: SortDirection } | null;
 
-/** Row height of a `DataTable`: the standard rows, or taller `comfortable` ones. */
-export type DataTableDensity = 'default' | 'comfortable';
+/**
+ * Row height of a `DataTable`: the standard rows, tighter `compact` ones or taller `comfortable`
+ * ones. Same names as the page's `data-density`.
+ */
+export type DataTableDensity = 'compact' | 'default' | 'comfortable';
 
 /** The edge of a `DataTable` a column is pinned to. */
 export type ColumnPin = 'start' | 'end';
