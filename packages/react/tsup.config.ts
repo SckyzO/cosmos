@@ -5,11 +5,12 @@ import { prependUseClient } from '../../config/tsup/use-client';
 export default defineConfig({
   // Each sub-path entry of the package is a folder of src/ built next to the root one:
   // `@sckyzo/cosmos-react/code` is dist/code/index.*. Its optional peers stay external: shiki for
-  // `code`, Tiptap for `editor`.
+  // `code`, Tiptap for `editor`, maplibre-gl for `map`.
   entry: {
     index: 'src/index.ts',
     'code/index': 'src/code/index.ts',
     'editor/index': 'src/editor/index.ts',
+    'map/index': 'src/map/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
@@ -25,9 +26,10 @@ export default defineConfig({
     /^shiki\//,
     /^@tiptap\//,
     /^@floating-ui\//,
+    'maplibre-gl',
   ],
   // A sub-path entry imports the root entry of the package, never a copy of it: see the plugin.
-  // The editor takes by value the few internal helpers the root entry does not export.
+  // The editor and the map take by value the few internal helpers the root entry does not export.
   esbuildPlugins: [
     externalizeOutside('src/code', '@sckyzo/cosmos-react'),
     externalizeOutside('src/editor', '@sckyzo/cosmos-react', {
@@ -38,6 +40,9 @@ export default defineConfig({
         'forms/RequiredMark',
         'chat/httpUrl',
       ],
+    }),
+    externalizeOutside('src/map', '@sckyzo/cosmos-react', {
+      bundle: ['hooks/useControllableState', 'settings/useCosmosTheme'],
     }),
   ],
   // Mark the bundle as a client module for React Server Components bundlers.
