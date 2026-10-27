@@ -16,7 +16,9 @@ import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
 import { ChatMessageActions } from './ChatMessageActions';
+import { ChatSources } from './ChatSources';
 import { ChatSuggestions } from './ChatSuggestions';
+import { ChatToolCall } from './ChatToolCall';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ImageGrid } from '../ui/ImageGrid';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
@@ -1185,6 +1187,73 @@ export const AiPagesInEveryTheme: Story = {
     inEachTheme(() => {
       for (const reply of canvasElement.querySelectorAll('p')) expectTextContrast(reply);
       for (const chip of canvasElement.querySelectorAll('li button')) expectTextContrast(chip);
+    });
+  },
+};
+
+/**
+ * The assistant page with what the assistant did and where the answer comes from: a finished tool
+ * call above the text of the reply, the sources under it, then the actions.
+ */
+export const AiAssistantWithToolsAndSources: Story = {
+  render: () => (
+    <Frame height={640}>
+      <ChatThread label="Conversation with the assistant" className="flex-1">
+        <ChatMessage
+          direction="outgoing"
+          sender={ME}
+          time="10:41"
+          text="How do I debounce a search field in React?"
+        />
+        <AssistantReply actions={replyActions}>
+          <ChatToolCall
+            name="search_docs"
+            status="done"
+            duration="1.2s"
+            className="my-1"
+            input={<CodeBlock code={'{ "query": "debounce search input" }'} />}
+            output={<CodeBlock code={'[{ "title": "useDebounce" }]'} />}
+          />
+          {richReply}
+          <ChatSources
+            className="mt-2"
+            sources={[
+              {
+                title: 'useDebounce: a hook for delayed values',
+                href: 'https://usehooks.example.com/debounce',
+              },
+              {
+                title: 'Debouncing and throttling explained',
+                href: 'https://blog.example.org/debounce',
+              },
+            ]}
+          />
+        </AssistantReply>
+        <AssistantReply>
+          <ChatToolCall name="run_tests" status="running" className="my-1" />
+        </AssistantReply>
+      </ChatThread>
+      <ChatComposer placeholder="Ask anything…" onSend={() => {}} footer={<ComposerFooter />} />
+    </Frame>
+  ),
+};
+
+export const AiAssistantWithToolsOnMobile: Story = {
+  ...AiAssistantWithToolsAndSources,
+  globals: mobileViewport,
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const ToolsAndSourcesInEveryTheme: Story = {
+  ...AiAssistantWithToolsAndSources,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    inEachTheme(() => {
+      for (const live of canvasElement.querySelectorAll('[aria-live]:not([role="log"])')) {
+        expectTextContrast(live);
+      }
     });
   },
 };
