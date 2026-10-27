@@ -128,7 +128,7 @@ export const Countdown = ({
             )}
           >
             <span className="text-2xl font-bold tracking-tight text-gray-900 tabular-nums sm:text-4xl dark:text-white">
-              <bdi>{digits(unit)}</bdi>
+              {digits(unit)}
             </span>
             <span className="text-3xs mt-1 max-w-full truncate tracking-wider text-gray-500 uppercase sm:text-xs dark:text-gray-400">
               {long[unit]}
