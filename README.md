@@ -36,7 +36,9 @@ Settings on the `<html>` element restyle every component:
 - the **font**, a `data-font` attribute: none for Outfit, or `inter`, `plex`,
   `montserrat`, `open-sans`, `system`;
 - the **text size**, a `data-text-size` attribute: none for the default, or `sm`, `lg`,
-  `xl`. It scales the text, not the spacing.
+  `xl`. It scales the text, not the spacing;
+- the **density**, a `data-density` attribute: none for the default, or `compact`,
+  `comfortable`. It moves the height of controls and the padding of rows, not the gaps.
 
 ```html
 <html class="sand" data-accent="teal" data-font="inter" data-text-size="lg"></html>
