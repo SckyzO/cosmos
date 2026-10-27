@@ -27,17 +27,17 @@ export const FIELD_PAD_X: Record<FieldSize, string> = {
   lg: 'px-4',
 };
 
-/** Left and right padding of a field whose other side is free (an icon on one edge). */
-export const FIELD_PAD_LEFT: Record<FieldSize, string> = {
-  sm: 'pl-2.5',
-  md: 'pl-3',
-  lg: 'pl-4',
+/** Start and end padding of a field whose other side is free (an icon on one edge). */
+export const FIELD_PAD_START: Record<FieldSize, string> = {
+  sm: 'ps-2.5',
+  md: 'ps-3',
+  lg: 'ps-4',
 };
 
-export const FIELD_PAD_RIGHT: Record<FieldSize, string> = {
-  sm: 'pr-2.5',
-  md: 'pr-3',
-  lg: 'pr-4',
+export const FIELD_PAD_END: Record<FieldSize, string> = {
+  sm: 'pe-2.5',
+  md: 'pe-3',
+  lg: 'pe-4',
 };
 
 /** Vertical padding of a field with no fixed height (a Textarea). */
@@ -47,32 +47,32 @@ export const FIELD_PAD_Y: Record<FieldSize, string> = {
   lg: 'py-row-10',
 };
 
-/** Left padding that clears an icon drawn over the field's left edge. */
-export const FIELD_PAD_LEFT_ICON: Record<FieldSize, string> = {
-  sm: 'pl-8',
-  md: 'pl-9',
-  lg: 'pl-11',
+/** Start padding that clears an icon drawn over the field's start edge. */
+export const FIELD_PAD_START_ICON: Record<FieldSize, string> = {
+  sm: 'ps-8',
+  md: 'ps-9',
+  lg: 'ps-11',
 };
 
-/** Right padding that clears a chevron drawn over the field's right edge. */
-export const FIELD_PAD_RIGHT_ICON: Record<FieldSize, string> = {
-  sm: 'pr-8',
-  md: 'pr-9',
-  lg: 'pr-10',
+/** End padding that clears a chevron drawn over the field's end edge. */
+export const FIELD_PAD_END_ICON: Record<FieldSize, string> = {
+  sm: 'pe-8',
+  md: 'pe-9',
+  lg: 'pe-10',
 };
 
-/** Where an icon sits on the left edge, and how big it is. */
-export const FIELD_ICON_LEFT: Record<FieldSize, string> = {
-  sm: 'left-2.5',
-  md: 'left-3',
-  lg: 'left-3.5',
+/** Where an icon sits on the start edge. */
+export const FIELD_ICON_START: Record<FieldSize, string> = {
+  sm: 'inset-s-2.5',
+  md: 'inset-s-3',
+  lg: 'inset-s-3.5',
 };
 
-/** Where an icon sits on the right edge. */
-export const FIELD_ICON_RIGHT: Record<FieldSize, string> = {
-  sm: 'right-2.5',
-  md: 'right-3',
-  lg: 'right-3.5',
+/** Where an icon sits on the end edge. */
+export const FIELD_ICON_END: Record<FieldSize, string> = {
+  sm: 'inset-e-2.5',
+  md: 'inset-e-3',
+  lg: 'inset-e-3.5',
 };
 
 export const FIELD_ICON_SIZE: Record<FieldSize, string> = {
@@ -159,6 +159,16 @@ export const fieldClass = ({
     fixedHeight && FIELD_HEIGHT[size],
     fieldStateClass({ invalid, success, within })
   );
+
+/**
+ * A text field follows the direction of what is typed in it: Arabic aligns and flows right to
+ * left, a URL left to right, each paragraph of a Textarea on its own. `plaintext` and not
+ * `dir="auto"`, which would also flip the field's own `direction` to left to right for a URL
+ * and move its end padding (the room for a trailing icon or button, laid out by the page's
+ * direction) to the side opposite the adornment. With `plaintext` the field keeps the page's
+ * direction and its padding stays under the adornment.
+ */
+export const FIELD_PLAINTEXT = '[unicode-bidi:plaintext]';
 
 /** Placeholder color of a text field, readable in light and dark. */
 export const FIELD_PLACEHOLDER = 'placeholder:text-gray-500 dark:placeholder:text-gray-400';

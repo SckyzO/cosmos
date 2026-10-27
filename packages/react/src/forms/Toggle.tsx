@@ -6,19 +6,26 @@ import { useControllableState } from '../hooks/useControllableState';
 export type ToggleSize = 'sm' | 'md';
 
 // Track and thumb: the thumb sits 2px from every edge of the track, on or off, so it travels the
-// track's width minus the thumb's and minus 4px.
+// track's width minus the thumb's and minus 4px: to the right in left to right, to the left in
+// right to left, where it starts on the right.
 const SIZE_CLASSES: Record<
   ToggleSize,
   { gap: string; track: string; thumb: string; thumbOn: string; hit: string }
 > = {
-  md: { gap: 'gap-3', track: 'h-6 w-11', thumb: 'h-5 w-5', thumbOn: 'translate-x-5', hit: '' },
+  md: {
+    gap: 'gap-3',
+    track: 'h-6 w-11',
+    thumb: 'h-5 w-5',
+    thumbOn: 'translate-x-5 rtl:-translate-x-5',
+    hit: '',
+  },
   // A 20px track is under the 24px pointer target of WCAG 2.5.8: an invisible 2px on each side
   // brings the hit area to 24px.
   sm: {
     gap: 'gap-2',
     track: 'h-5 w-9',
     thumb: 'h-4 w-4',
-    thumbOn: 'translate-x-4',
+    thumbOn: 'translate-x-4 rtl:-translate-x-4',
     hit: 'before:absolute before:-inset-y-0.5 before:inset-x-0 before:content-[""]',
   },
 };
@@ -84,7 +91,7 @@ export const Toggle = ({
       >
         <span
           className={clsx(
-            'absolute top-0.5 left-0.5 rounded-full bg-white shadow transition-transform',
+            'inset-s-0.5 absolute top-0.5 rounded-full bg-white shadow transition-transform',
             sizeClasses.thumb,
             checked ? sizeClasses.thumbOn : 'translate-x-0'
           )}

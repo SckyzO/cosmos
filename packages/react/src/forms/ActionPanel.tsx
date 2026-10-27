@@ -29,7 +29,7 @@ export type ActionPanelProps = ComponentPropsWithRef<'div'> & {
   action?: ReactNode;
   /**
    * Layout. `stacked` (default): action sits below the description.
-   * `inline`: action floats top-right (TUI "With button at top right").
+   * `inline`: action floats at the top end (TUI "With button at top right").
    */
   layout?: ActionPanelLayout;
   /**
@@ -68,7 +68,7 @@ export function ActionPanel({
         <div
           className={clsx(
             layout === 'inline'
-              ? 'mt-3 sm:mt-0 sm:ml-6 sm:flex sm:shrink-0 sm:items-center'
+              ? 'mt-3 sm:ms-6 sm:mt-0 sm:flex sm:shrink-0 sm:items-center'
               : 'mt-5'
           )}
         >

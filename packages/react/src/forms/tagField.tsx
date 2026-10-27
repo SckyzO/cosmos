@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { useCallback, useState, type ReactNode } from 'react';
 import type { TagSize } from '../ui/Tag';
-import { FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
+import { FIELD_PLACEHOLDER, FIELD_PLAINTEXT, fieldClass, type FieldSize } from './fieldRecipe';
 
 // Shared by MultiSelect and TagInput: a field whose values are Tags that wrap onto more lines,
 // followed by a borderless input with a minimum width, so it never collapses at 375px.
@@ -23,18 +23,18 @@ type TagFieldClassOptions = {
   size: FieldSize;
   invalid: boolean;
   disabled: boolean;
-  /** Extra right padding that clears a control drawn over the field's right edge. */
-  padRight?: string;
+  /** Extra end padding that clears a control drawn over the field's end edge. */
+  padEnd?: string;
 };
 
 /** The box: it grows with its tags, and takes the focus state from the input inside it. */
-export const tagFieldClass = ({ size, invalid, disabled, padRight }: TagFieldClassOptions) =>
+export const tagFieldClass = ({ size, invalid, disabled, padEnd }: TagFieldClassOptions) =>
   clsx(
     'flex w-full flex-wrap items-center gap-1.5',
     fieldClass({ size, invalid, within: true, fixedHeight: false }),
     PAD_X[size],
     PAD_Y[size],
-    padRight,
+    padEnd,
     disabled && 'cursor-not-allowed opacity-50'
   );
 
@@ -43,7 +43,8 @@ export const tagInputClass = (size: FieldSize) =>
   clsx(
     'min-w-24 flex-1 bg-transparent px-1.5 text-gray-900 outline-hidden disabled:cursor-not-allowed dark:text-white',
     ROW_HEIGHT[size],
-    FIELD_PLACEHOLDER
+    FIELD_PLACEHOLDER,
+    FIELD_PLAINTEXT
   );
 
 /**

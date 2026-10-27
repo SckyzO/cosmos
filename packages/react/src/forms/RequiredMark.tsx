@@ -6,7 +6,7 @@
  */
 export const RequiredMark = ({ srText }: { srText?: string }) => (
   <>
-    <span aria-hidden className="ml-0.5 text-red-700 dark:text-red-400">
+    <span aria-hidden className="ms-0.5 text-red-700 dark:text-red-400">
       *
     </span>
     {srText && <span className="sr-only">{srText}</span>}

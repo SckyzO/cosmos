@@ -20,7 +20,7 @@ export type FormFooterProps = {
   submitIntent?: ButtonIntent;
   /** Form name attribute (used by submit when the button is outside the form). */
   formId?: string;
-  /** Where to render the buttons. Default `right`. */
+  /** Where to render the buttons: `right` is the end edge (the left one in right to left). Default `right`. */
   align?: FormFooterAlign;
   /** Render a top border separator. Default `true`. */
   bordered?: boolean;
@@ -76,7 +76,7 @@ export const FormFooter = ({
       )}
     >
       {extra && <div className="text-xs text-gray-500 dark:text-gray-400">{extra}</div>}
-      <div className={clsx('flex items-center gap-3', align === 'right' && 'ml-auto')}>
+      <div className={clsx('flex items-center gap-3', align === 'right' && 'ms-auto')}>
         {buttons}
       </div>
     </div>

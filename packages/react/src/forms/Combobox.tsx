@@ -5,8 +5,9 @@ import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
 import {
   FIELD_LISTBOX_PANEL,
-  FIELD_PAD_LEFT,
+  FIELD_PAD_START,
   FIELD_PLACEHOLDER,
+  FIELD_PLAINTEXT,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -180,10 +181,11 @@ export const Combobox = ({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           className={clsx(
-            'w-full pr-10',
+            'w-full pe-10',
             fieldClass({ size, invalid: !!error }),
             FIELD_PLACEHOLDER,
-            FIELD_PAD_LEFT[size]
+            FIELD_PLAINTEXT,
+            FIELD_PAD_START[size]
           )}
         />
         <button
@@ -191,7 +193,7 @@ export const Combobox = ({
           aria-label="Toggle options"
           disabled={disabled}
           onClick={() => setOpen(!open)}
-          className="focus-visible:focus-indicator absolute inset-y-0 right-0 flex items-center rounded-r-lg pr-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
+          className="focus-visible:focus-indicator inset-e-0 absolute inset-y-0 flex items-center rounded-e-lg pe-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
         >
           <ChevronsUpDown className="size-5" aria-hidden />
         </button>

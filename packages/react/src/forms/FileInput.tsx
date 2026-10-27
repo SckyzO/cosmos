@@ -84,7 +84,7 @@ export function FileInput({
           type="button"
           onClick={() => innerRef.current?.click()}
           disabled={disabled}
-          className="flex shrink-0 items-center gap-2 border-r border-inherit bg-gray-50 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none disabled:cursor-not-allowed dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="flex shrink-0 items-center gap-2 border-e border-inherit bg-gray-50 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none disabled:cursor-not-allowed dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <Paperclip className="h-4 w-4" aria-hidden />
           {buttonLabel}
@@ -97,7 +97,9 @@ export function FileInput({
               : 'text-gray-900 dark:text-white'
           )}
         >
-          <span className="truncate">{summary || placeholder}</span>
+          <span className="truncate">
+            <bdi>{summary || placeholder}</bdi>
+          </span>
         </span>
         <input
           ref={mergeRefs(innerRef, ref)}

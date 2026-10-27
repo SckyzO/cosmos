@@ -105,7 +105,9 @@ export const UploadQueue = ({
           {label}
         </span>
         <span className="text-xs text-[var(--color-text-muted)]">
-          {done} of {items.length} done
+          <bdi>
+            {done} of {items.length} done
+          </bdi>
         </span>
       </div>
       <p role="status" aria-live="polite" className="sr-only">
@@ -147,7 +149,7 @@ const UploadRow = ({
     <li
       data-status={status}
       className={clsx(
-        'py-row-12 flex items-center gap-3 pr-3 pl-4',
+        'py-row-12 flex items-center gap-3 ps-4 pe-3',
         status === 'failed' && 'bg-red-50/40 dark:bg-red-500/5'
       )}
     >
@@ -166,11 +168,11 @@ const UploadRow = ({
             title={name}
             className="max-w-full min-w-0 truncate font-semibold text-[var(--color-text-primary)]"
           >
-            {name}
+            <bdi>{name}</bdi>
           </span>
           {sizeText && (
             <span className="shrink-0 text-xs text-[var(--color-text-muted)] tabular-nums">
-              {sizeText}
+              <bdi>{sizeText}</bdi>
             </span>
           )}
         </div>

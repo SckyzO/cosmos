@@ -4,15 +4,16 @@ import { useId } from 'react';
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
 import {
   FIELD_HEIGHT,
-  FIELD_ICON_LEFT,
-  FIELD_ICON_RIGHT,
+  FIELD_ICON_START,
+  FIELD_ICON_END,
   FIELD_ICON_SIZE,
-  FIELD_PAD_LEFT,
-  FIELD_PAD_LEFT_ICON,
-  FIELD_PAD_RIGHT,
-  FIELD_PAD_RIGHT_ICON,
+  FIELD_PAD_START,
+  FIELD_PAD_START_ICON,
+  FIELD_PAD_END,
+  FIELD_PAD_END_ICON,
   FIELD_PAD_X,
   FIELD_PLACEHOLDER,
+  FIELD_PLAINTEXT,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -24,7 +25,7 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   error?: string;
   /**
    * Message shown once the value is valid (a free username, an accepted code):
-   * a green border and message, and a check icon on the right edge, which
+   * a green border and message, and a check icon on the end edge, which
    * `rightSlot` replaces. The message is linked as the description and
    * announced politely when it appears. `error` wins when both are set.
    */
@@ -36,10 +37,10 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   size?: FieldSize;
   /** Marks the field required: an asterisk after the label, `required` and `aria-required` on the input. */
   required?: boolean;
-  /** Optional left icon (lucide-react). Ignored when `prefix` is set. */
+  /** Optional icon at the start edge (lucide-react). Ignored when `prefix` is set. */
   icon?: ElementType;
   /**
-   * Draws an alert icon on the right edge while `error` is set, so the state
+   * Draws an alert icon on the end edge while `error` is set, so the state
    * doesn't rest on the border color alone. Default `false`. Ignored when
    * `rightSlot` is set.
    */
@@ -49,7 +50,7 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
    * one. Unlike `disabled`, the field stays focusable and is submitted.
    */
   readOnly?: boolean;
-  /** Optional right slot — e.g. unit suffix, validation pill. Ignored when `suffix` is set. */
+  /** Optional slot on the end edge — e.g. unit suffix, validation pill. Ignored when `suffix` is set. */
   rightSlot?: ReactNode;
   /** Slot rendered next to the label text (e.g. a TooltipHelp). */
   labelTrailing?: ReactNode;
@@ -79,6 +80,9 @@ export function Input({
   ...rest
 }: InputProps) {
   const generatedId = useId();
+  // HTML keeps `dir="auto"` off password fields, so how a hidden value aligns says nothing of
+  // what is typed: it keeps the page's direction until it is shown.
+  const plaintext = rest.type !== 'password' && FIELD_PLAINTEXT;
   const inputId = id ?? rest.name ?? generatedId;
   const descId = `${inputId}-desc`;
   const successText = error ? undefined : success || undefined;
@@ -92,7 +96,7 @@ export function Input({
   };
   const showErrorIcon = errorIcon && !!error && !rightSlot;
   const showSuccessIcon = !!successText && !rightSlot;
-  // The state icon of the right edge: the alert while in error, the check on success.
+  // The state icon of the end edge: the alert while in error, the check on success.
   const StateIcon = showErrorIcon ? CircleAlert : showSuccessIcon ? CircleCheck : null;
   const stateIconColor = showErrorIcon
     ? 'text-red-600 dark:text-red-400'
@@ -128,7 +132,11 @@ export function Input({
             fieldClass({ size, invalid: !!error, success: !!successText, within: true, readOnly })
           )}
         >
-          {prefix !== undefined && <span className={clsx(addon, 'border-r')}>{prefix}</span>}
+          {prefix !== undefined && (
+            <span className={clsx(addon, 'border-e')}>
+              <bdi>{prefix}</bdi>
+            </span>
+          )}
           <input
             ref={ref}
             id={inputId}
@@ -137,6 +145,7 @@ export function Input({
               'h-full min-w-0 flex-1 border-0 bg-transparent text-gray-900 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white',
               FIELD_PAD_X[size],
               FIELD_PLACEHOLDER,
+              plaintext,
               className
             )}
             {...rest}
@@ -144,10 +153,14 @@ export function Input({
           {StateIcon && (
             <StateIcon
               aria-hidden
-              className={clsx('my-auto mr-3 shrink-0', stateIconColor, FIELD_ICON_SIZE[size])}
+              className={clsx('my-auto me-3 shrink-0', stateIconColor, FIELD_ICON_SIZE[size])}
             />
           )}
-          {suffix !== undefined && <span className={clsx(addon, 'border-l')}>{suffix}</span>}
+          {suffix !== undefined && (
+            <span className={clsx(addon, 'border-s')}>
+              <bdi>{suffix}</bdi>
+            </span>
+          )}
         </div>
       ) : (
         <div className={clsx('relative inline-flex w-full items-center', FIELD_HEIGHT[size])}>
@@ -156,7 +169,7 @@ export function Input({
               aria-hidden
               className={clsx(
                 'pointer-events-none absolute text-gray-400',
-                FIELD_ICON_LEFT[size],
+                FIELD_ICON_START[size],
                 FIELD_ICON_SIZE[size]
               )}
             />
@@ -175,8 +188,9 @@ export function Input({
                 fixedHeight: false,
               }),
               FIELD_PLACEHOLDER,
-              Icon ? FIELD_PAD_LEFT_ICON[size] : FIELD_PAD_LEFT[size],
-              rightSlot ? 'pr-16' : StateIcon ? FIELD_PAD_RIGHT_ICON[size] : FIELD_PAD_RIGHT[size],
+              plaintext,
+              Icon ? FIELD_PAD_START_ICON[size] : FIELD_PAD_START[size],
+              rightSlot ? 'pe-16' : StateIcon ? FIELD_PAD_END_ICON[size] : FIELD_PAD_END[size],
               className
             )}
             {...rest}
@@ -187,13 +201,13 @@ export function Input({
               className={clsx(
                 'pointer-events-none absolute',
                 stateIconColor,
-                FIELD_ICON_RIGHT[size],
+                FIELD_ICON_END[size],
                 FIELD_ICON_SIZE[size]
               )}
             />
           )}
           {rightSlot && (
-            <span className="pointer-events-none absolute right-3 text-xs text-gray-500 dark:text-gray-400">
+            <span className="inset-e-3 pointer-events-none absolute text-xs text-gray-500 dark:text-gray-400">
               {rightSlot}
             </span>
           )}

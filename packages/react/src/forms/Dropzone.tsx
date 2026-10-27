@@ -275,8 +275,12 @@ export const Dropzone = ({
             >
               <FileIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-gray-900 dark:text-white">{f.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{formatBytes(f.size)}</p>
+                <p className="truncate text-sm text-gray-900 dark:text-white">
+                  <bdi>{f.name}</bdi>
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <bdi>{formatBytes(f.size)}</bdi>
+                </p>
               </div>
               <button
                 type="button"

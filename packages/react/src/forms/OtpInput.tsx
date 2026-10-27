@@ -155,36 +155,41 @@ export const OtpInput = ({
 
   return (
     <div className={clsx('flex items-center gap-2', className)} role="group" aria-label={ariaLabel}>
-      {Array.from({ length }).map((_, i) => {
-        const cellChar = value[i] ?? '';
-        const display = mask && cellChar ? '•' : cellChar;
-        return (
-          <input
-            key={i}
-            ref={(el) => {
-              refs.current[i] = el;
-              // The consumer's ref points at the first cell only.
-              if (i === 0) setRef(ref, el);
-            }}
-            type="text"
-            inputMode={alphanumeric ? 'text' : 'numeric'}
-            pattern={alphanumeric ? '[A-Za-z0-9]*' : '[0-9]*'}
-            maxLength={1}
-            autoComplete={i === 0 ? 'one-time-code' : 'off'}
-            value={display}
-            disabled={disabled}
-            aria-label={`${ariaLabel} digit ${i + 1}`}
-            onChange={handleChange(i)}
-            onKeyDown={handleKeyDown(i)}
-            onPaste={handlePaste(i)}
-            onFocus={(e) => e.target.select()}
-            className={clsx(
-              'h-ctrl-48 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
-              fieldStateClass({ invalid: error, success })
-            )}
-          />
-        );
-      })}
+      {/* A code reads left to right in any page: the cells are an island, so the first digit is on
+          the left, ArrowRight and the auto-advance go right, and the row still sits at the start
+          of the group (a `className` that centers or fills the group works as before). */}
+      <div dir="ltr" className="flex items-center gap-2">
+        {Array.from({ length }).map((_, i) => {
+          const cellChar = value[i] ?? '';
+          const display = mask && cellChar ? '•' : cellChar;
+          return (
+            <input
+              key={i}
+              ref={(el) => {
+                refs.current[i] = el;
+                // The consumer's ref points at the first cell only.
+                if (i === 0) setRef(ref, el);
+              }}
+              type="text"
+              inputMode={alphanumeric ? 'text' : 'numeric'}
+              pattern={alphanumeric ? '[A-Za-z0-9]*' : '[0-9]*'}
+              maxLength={1}
+              autoComplete={i === 0 ? 'one-time-code' : 'off'}
+              value={display}
+              disabled={disabled}
+              aria-label={`${ariaLabel} digit ${i + 1}`}
+              onChange={handleChange(i)}
+              onKeyDown={handleKeyDown(i)}
+              onPaste={handlePaste(i)}
+              onFocus={(e) => e.target.select()}
+              className={clsx(
+                'h-ctrl-48 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+                fieldStateClass({ invalid: error, success })
+              )}
+            />
+          );
+        })}
+      </div>
       {name && <input type="hidden" name={name} value={value} />}
     </div>
   );

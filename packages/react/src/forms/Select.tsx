@@ -3,10 +3,10 @@ import { ChevronDown, CircleCheck } from 'lucide-react';
 import { useId, type ComponentPropsWithRef } from 'react';
 import { useFieldA11y } from './fieldA11y';
 import {
-  FIELD_ICON_RIGHT,
+  FIELD_ICON_END,
   FIELD_ICON_SIZE,
-  FIELD_PAD_LEFT,
-  FIELD_PAD_RIGHT_ICON,
+  FIELD_PAD_START,
+  FIELD_PAD_END_ICON,
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
@@ -15,17 +15,17 @@ import { RequiredMark } from './RequiredMark';
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
 // With the check icon beside the chevron: the icon sits one icon width plus a
-// 6px gap left of the chevron, and the text clears both with the chevron's 8px.
-const FIELD_ICON_RIGHT_CHECK: Record<FieldSize, string> = {
-  sm: 'right-7.5',
-  md: 'right-8.5',
-  lg: 'right-10',
+// 6px gap before the chevron, and the text clears both with the chevron's 8px.
+const FIELD_ICON_END_CHECK: Record<FieldSize, string> = {
+  sm: 'inset-e-7.5',
+  md: 'inset-e-8.5',
+  lg: 'inset-e-10',
 };
 
-const FIELD_PAD_RIGHT_CHECK: Record<FieldSize, string> = {
-  sm: 'pr-13',
-  md: 'pr-14.5',
-  lg: 'pr-17',
+const FIELD_PAD_END_CHECK: Record<FieldSize, string> = {
+  sm: 'pe-13',
+  md: 'pe-14.5',
+  lg: 'pe-17',
 };
 
 export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'children' | 'size'> & {
@@ -130,8 +130,8 @@ export function Select({
           className={clsx(
             'appearance-none',
             fieldClass({ size, invalid: !!error, success: !!successText }),
-            successText ? FIELD_PAD_RIGHT_CHECK[size] : FIELD_PAD_RIGHT_ICON[size],
-            FIELD_PAD_LEFT[size],
+            successText ? FIELD_PAD_END_CHECK[size] : FIELD_PAD_END_ICON[size],
+            FIELD_PAD_START[size],
             fullWidth && 'w-full',
             className
           )}
@@ -154,7 +154,7 @@ export function Select({
             aria-hidden
             className={clsx(
               'pointer-events-none absolute top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400',
-              FIELD_ICON_RIGHT_CHECK[size],
+              FIELD_ICON_END_CHECK[size],
               FIELD_ICON_SIZE[size]
             )}
           />
@@ -162,7 +162,7 @@ export function Select({
         <ChevronDown
           className={clsx(
             'pointer-events-none absolute top-1/2 -translate-y-1/2 text-gray-400',
-            FIELD_ICON_RIGHT[size],
+            FIELD_ICON_END[size],
             FIELD_ICON_SIZE[size]
           )}
         />

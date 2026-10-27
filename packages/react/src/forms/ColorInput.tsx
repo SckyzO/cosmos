@@ -176,6 +176,9 @@ export const ColorInput = ({
         </div>
       )}
       <div
+        // A hex colour reads left to right in any page: the swatch and the code are an island, so
+        // the digits, the caret and the swatch beside them keep their order.
+        dir="ltr"
         className={clsx(
           'flex w-50 max-w-full items-center gap-2.5',
           fieldClass({ size, invalid: !!message, within: true }),
