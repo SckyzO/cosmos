@@ -1092,6 +1092,10 @@ export const DataTable = <T,>({
           isSelected={(key) => selection.has(key)}
           onToggleRow={toggleRow}
           renderRowAction={renderRowAction}
+          renderExpandedRow={expandable ? renderExpandedRow : undefined}
+          isExpanded={(key) => expanded.has(key)}
+          onToggleExpanded={(key) => updateExpanded(toggleKey(expanded, key))}
+          idBase={tableId}
           onRowClick={onRowClick}
           rowHref={rowHref}
           loading={showSkeleton}
