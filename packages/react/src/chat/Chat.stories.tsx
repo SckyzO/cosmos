@@ -4,10 +4,17 @@ import { createRef, useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import { SplitView } from '../layout/SplitView';
-import { expectGraphicContrast, expectTextContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectGraphicContrast,
+  expectNoHorizontalOverflow,
+  expectTextContrast,
+  inEachTheme,
+  mobileViewport,
+} from '../storybook-helpers';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
+import { CodeBlock } from '../ui/CodeBlock';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
 
 const meta = {
@@ -21,7 +28,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Msg = Omit<ChatMessageProps, 'firstInGroup'> & { id: string };
+type Msg = Omit<Extract<ChatMessageProps, { text: string }>, 'firstInGroup'> & { id: string };
 
 const ME = 'You';
 const conversation: Msg[] = [
@@ -395,5 +402,174 @@ export const OutgoingContrastInEveryThemeAndAccent: Story = {
       if (saved === null) root.removeAttribute('data-accent');
       else root.setAttribute('data-accent', saved);
     }
+  },
+};
+
+// Short lines: a wider block would scroll inside itself on a phone, and axe wants it focusable.
+const SNIPPET = `const q = useDebounce(v, 300);
+useEffect(() => run(q), [q]);`;
+
+const richReply = (
+  <>
+    <p>Keep the input controlled and debounce the value you search with:</p>
+    <CodeBlock language="tsx" code={SNIPPET} className="my-2" />
+    <p>Only the last value after 300 ms reaches the search.</p>
+  </>
+);
+
+/**
+ * `children` in place of `text`: rendered nodes, here a paragraph around a `CodeBlock`. With the
+ * default `bubble`, the reply keeps its bubble and its 80% column.
+ */
+export const RichContentInABubble: Story = {
+  render: () => (
+    <Frame height={360}>
+      <ChatThread className="flex-1">
+        <ChatMessage
+          direction="outgoing"
+          sender={ME}
+          time="10:42"
+          text="How do I debounce a search?"
+        />
+        <ChatMessage direction="incoming" sender="Assistant" time="10:42">
+          {richReply}
+        </ChatMessage>
+      </ChatThread>
+    </Frame>
+  ),
+};
+
+/**
+ * `bubble={false}`: an incoming reply without a bubble. The content takes the whole column next
+ * to the avatar, which sits at the top with the name; the user's message keeps its bubble.
+ */
+export const FlatReply: Story = {
+  render: () => (
+    <Frame height={360}>
+      <ChatThread className="flex-1">
+        <ChatMessage
+          direction="outgoing"
+          sender={ME}
+          time="10:42"
+          text="How do I debounce a search?"
+        />
+        <ChatMessage direction="incoming" sender="Assistant" time="10:42" bubble={false}>
+          {richReply}
+        </ChatMessage>
+      </ChatThread>
+    </Frame>
+  ),
+};
+
+/** A flat reply fits a 375px screen: the code block scrolls inside itself. */
+export const FlatReplyOnMobile: Story = {
+  ...FlatReply,
+  globals: mobileViewport,
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const ChildrenRenderAndTextEscapes: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame height={300}>
+      <ChatThread className="flex-1">
+        <ChatMessage direction="incoming" sender="Assistant" time="12:00">
+          <ul>
+            <li>first item</li>
+            <li>
+              <b>second</b> item
+            </li>
+          </ul>
+        </ChatMessage>
+        <ChatMessage direction="incoming" sender="Mallory" time="12:01" text={HOSTILE} />
+      </ChatThread>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await expect(within(log).getAllByRole('listitem')).toHaveLength(2);
+    await expect(within(log).getByText('second').tagName).toBe('B');
+    // The text message still shows its markup as text, and its `<p>` is the only one around.
+    await expect(within(log).getByText(HOSTILE, { exact: false })).toBeVisible();
+    await expect(log.querySelectorAll('img')).toHaveLength(0);
+    await expect(log.querySelectorAll('p')).toHaveLength(1);
+  },
+};
+
+/** A text message with the default `bubble` keeps the classes it had before `bubble` existed. */
+export const BubbleDefaultKeepsTheBubble: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame height={200}>
+      <ChatThread className="flex-1">
+        <ChatMessage direction="incoming" sender="Ana Ruiz" time="09:12" text="Hello there" />
+        <ChatMessage direction="outgoing" sender={ME} time="09:13" text="Hi" />
+      </ChatThread>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const incoming = canvas.getByText('Hello there').closest('p');
+    const outgoing = canvas.getByText('Hi').closest('p');
+    await expect(incoming?.className.split(' ').sort()).toEqual(
+      [
+        'rounded-2xl',
+        'px-3.5',
+        'py-2',
+        'text-sm',
+        'break-words',
+        'whitespace-pre-wrap',
+        'rounded-bl-md',
+        'bg-gray-100',
+        'text-[var(--color-text-primary)]',
+        'dark:bg-gray-800',
+      ].sort()
+    );
+    await expect(outgoing?.className).toContain('bg-brand-500');
+    // The same message flat has no bubble: no fill, no radius.
+    await expect(getComputedStyle(incoming as HTMLElement).borderTopLeftRadius).toBe('16px');
+  },
+};
+
+export const FlatReplyHasNoBubble: Story = {
+  ...FlatReply,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const reply = canvas.getByText('Only the last value', { exact: false })
+      .parentElement as HTMLElement;
+    await expect(getComputedStyle(reply).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(reply).borderTopLeftRadius).toBe('0px');
+    // The avatar is level with the name, at the top of the reply.
+    const row = reply.closest('[class*="items-start"]') as HTMLElement;
+    const avatar = row.firstElementChild as HTMLElement;
+    await expect(avatar.getBoundingClientRect().top).toBeLessThanOrEqual(
+      row.getBoundingClientRect().top + 8
+    );
+    // Wider than the 80% of a bubble.
+    const thread = canvas.getByRole('log');
+    await expect(reply.getBoundingClientRect().width).toBeGreaterThan(
+      thread.clientWidth * 0.8 - 40
+    );
+  },
+};
+
+export const StreamingMarksTheMessageBusy: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame height={200}>
+      <ChatThread className="flex-1">
+        <ChatMessage direction="incoming" sender="Assistant" streaming text="Two racks:" />
+        <ChatMessage direction="incoming" sender="Assistant" firstInGroup={false} text="Done." />
+      </ChatThread>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await expect(canvas.getByText('Two racks:').closest('[aria-busy]')).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
+    await expect(log.querySelectorAll('[aria-busy]')).toHaveLength(1);
   },
 };
