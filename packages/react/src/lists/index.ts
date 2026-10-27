@@ -19,3 +19,4 @@ export {
   type GridListFooterActionProps,
   type GridListCols,
 } from './GridList';
+export { FileTile, type FileTileProps, type FileTileLayout, type FileKind } from './FileTile';

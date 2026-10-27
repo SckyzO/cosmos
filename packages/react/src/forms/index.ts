@@ -14,6 +14,7 @@ export * from './Checkbox';
 export * from './Radio';
 export * from './FileInput';
 export * from './Dropzone';
+export * from './UploadQueue';
 export * from './FormFooter';
 export * from './Calendar';
 export * from './DatePicker';

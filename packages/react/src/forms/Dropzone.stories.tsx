@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ImageIcon } from 'lucide-react';
 import { createRef, useState } from 'react';
-import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
-import { Dropzone } from './Dropzone';
+import { expect, fireEvent, fn, userEvent, waitFor } from 'storybook/test';
+import { Dropzone, type DropzoneRejection } from './Dropzone';
 import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 
 const meta = {
@@ -93,6 +93,34 @@ export const Controlled: Story = {
           Total: <code>{files.length}</code> file(s) ·{' '}
           <code>{files.reduce((s, f) => s + f.size, 0)}</code> bytes
         </p>
+      </div>
+    );
+  },
+};
+
+/** With `onReject` the valid files of a drop are kept and the others are reported one by one: the host decides how to show them. */
+export const ReportsRejectedFiles: Story = {
+  render: () => {
+    const [rejected, setRejected] = useState<DropzoneRejection[]>([]);
+    return (
+      <div className="max-w-md space-y-3">
+        <Dropzone
+          label="Photos"
+          description="Images only, up to 1 MB each."
+          multiple
+          accept="image/*"
+          maxSize={1024 * 1024}
+          onReject={setRejected}
+        />
+        {rejected.length > 0 && (
+          <ul className="text-xs text-red-700 dark:text-red-400">
+            {rejected.map(({ file, reason }) => (
+              <li key={file.name}>
+                {file.name}: {reason}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   },
@@ -200,5 +228,138 @@ export const NamedByLabelAndTextDescribedByError: Story = {
     });
     await expect(zone).toHaveAccessibleDescription('The file is too large.');
     await expect(zone).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+// ── onFilesAdded / onReject ──────────────────────────────────────────────────
+
+const png = (name: string, size = 1) =>
+  new File([new Uint8Array(size)], name, { type: 'image/png' });
+const txt = (name: string) => new File(['x'], name, { type: 'text/plain' });
+
+const dropIn = (canvas: { getByLabelText: (l: string, o: object) => HTMLElement }, label: string) =>
+  canvas.getByLabelText(label, { selector: 'input' }) as HTMLInputElement;
+
+/** `onFilesAdded` gets only the files just accepted, while `onChange` keeps carrying the whole list. */
+export const FilesAddedGetsOnlyTheNewFiles: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Docs', multiple: true, onFilesAdded: fn(), onChange: fn() },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Docs');
+    const [a, b, c] = [txt('a.txt'), txt('b.txt'), txt('c.txt')];
+    fireEvent.change(input, { target: { files: [a, b] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenCalledWith([a, b]));
+    fireEvent.change(input, { target: { files: [c] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenLastCalledWith([c]));
+    await expect(args.onFilesAdded).toHaveBeenCalledTimes(2);
+    await expect(args.onChange).toHaveBeenLastCalledWith([a, b, c]);
+  },
+};
+
+/** Without `multiple`, the file that replaces the previous one is the one reported. */
+export const FilesAddedInSingleMode: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Single', onFilesAdded: fn() },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Single');
+    const [a, b] = [txt('a.txt'), txt('b.txt')];
+    fireEvent.change(input, { target: { files: [a] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenLastCalledWith([a]));
+    fireEvent.change(input, { target: { files: [b] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenLastCalledWith([b]));
+  },
+};
+
+/** It fires with a controlled `value` too, with the new files only. */
+export const FilesAddedWhenControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Controlled docs', multiple: true, onFilesAdded: fn() },
+  render: (args) => {
+    const [files, setFiles] = useState<File[]>([]);
+    return <Dropzone {...args} value={files} onChange={setFiles} />;
+  },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Controlled docs');
+    const [a, b] = [txt('a.txt'), txt('b.txt')];
+    fireEvent.change(input, { target: { files: [a] } });
+    fireEvent.change(input, { target: { files: [b] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenCalledTimes(2));
+    await expect(args.onFilesAdded).toHaveBeenNthCalledWith(1, [a]);
+    await expect(args.onFilesAdded).toHaveBeenNthCalledWith(2, [b]);
+  },
+};
+
+/** With `onReject`, one bad file no longer rejects the drop: the rest is accepted and the bad one is reported. */
+export const RejectKeepsTheValidFiles: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Photos',
+    multiple: true,
+    accept: 'image/*',
+    onReject: fn(),
+    onFilesAdded: fn(),
+    onChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Photos');
+    const [good1, bad, good2] = [png('a.png'), txt('notes.txt'), png('b.png')];
+    fireEvent.change(input, { target: { files: [good1, bad, good2] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenCalledWith([good1, good2]));
+    await expect(args.onChange).toHaveBeenLastCalledWith([good1, good2]);
+    await expect(args.onReject).toHaveBeenCalledTimes(1);
+    const [rejections] = (args.onReject as ReturnType<typeof fn>).mock.calls[0] as [
+      DropzoneRejection[],
+    ];
+    await expect(rejections).toHaveLength(1);
+    await expect(rejections[0].file).toBe(bad);
+    await expect(rejections[0].reason).toMatch(/type not allowed/i);
+    await expect(canvas.getByText('a.png')).toBeInTheDocument();
+    await expect(canvas.queryByText('notes.txt')).toBeNull();
+    // The host reports: the zone draws no error line of its own.
+    await expect(canvas.queryByText(/not allowed/i)).toBeNull();
+  },
+};
+
+/** Size and count limits reject file by file too: `maxFiles` keeps what fits and reports the rest. */
+export const RejectBySizeAndCount: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Limited',
+    multiple: true,
+    maxSize: 10,
+    maxFiles: 2,
+    onReject: fn(),
+    onFilesAdded: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Limited');
+    const [ok1, big, ok2, ok3] = [
+      png('1.png', 5),
+      png('big.png', 50),
+      png('2.png', 5),
+      png('3.png', 5),
+    ];
+    fireEvent.change(input, { target: { files: [ok1, big, ok2, ok3] } });
+    await waitFor(() => expect(args.onFilesAdded).toHaveBeenCalledWith([ok1, ok2]));
+    const [rejections] = (args.onReject as ReturnType<typeof fn>).mock.calls[0] as [
+      DropzoneRejection[],
+    ];
+    await expect(rejections.map((r) => r.file)).toEqual([big, ok3]);
+    await expect(rejections[0].reason).toMatch(/exceeds/i);
+    await expect(rejections[1].reason).toMatch(/too many files \(max 2\)/i);
+  },
+};
+
+/** Without `onReject`, one bad file still rejects the whole drop: nothing is accepted nor reported added. */
+export const WithoutRejectTheWholeDropFails: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Strict', multiple: true, accept: 'image/*', onFilesAdded: fn(), onChange: fn() },
+  play: async ({ canvas, args }) => {
+    const input = dropIn(canvas, 'Strict');
+    fireEvent.change(input, { target: { files: [png('a.png'), txt('notes.txt')] } });
+    await expect(canvas.getByText(/"notes\.txt" type not allowed/i)).toBeInTheDocument();
+    await expect(canvas.queryByText('a.png')).toBeNull();
+    await expect(args.onChange).not.toHaveBeenCalled();
+    await expect(args.onFilesAdded).not.toHaveBeenCalled();
   },
 };

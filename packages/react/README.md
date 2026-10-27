@@ -299,6 +299,44 @@ drawn under a dark scrim (`cover.alt` is empty unless set), and without it the c
 gradient of the accent. Outside `card` the built-in title is a paragraph, since the forms bring
 their own `h1`.
 
+## Files and uploads
+
+`FileTile` is one file or folder as a `<li>`: `layout="tile"` (the default) is the card of a grid, with a
+128px preview, `layout="row"` the line of a list. `kind` (`folder`, `image`, `video`, `audio`, `pdf`,
+`document`, `spreadsheet`, `archive`, `code`, `other`) picks the icon and its tint; a `thumbnail` takes
+the icon's place and falls back to it if it fails to load. The name is the only link (`href`) or button
+(`onOpen`) of the tile; the star (`starred` / `defaultStarred` / `onStarredChange`, named "Star {name}")
+and `actions`, typically a `Menu`, are siblings of it. `shared` adds a "Shared" badge and `selected`
+draws the tile as picked.
+
+```tsx
+<GridList cols={4}>
+  <FileTile
+    name="Q3 report.pdf"
+    kind="pdf"
+    meta="2.4 MB · Edited yesterday"
+    defaultStarred
+    onOpen={() => open(file)}
+    actions={<FileMenu file={file} />}
+  />
+</GridList>
+```
+
+`UploadQueue` lists uploads in progress, failed and done in one card. It does no network I/O: the app
+owns the transfer, keeps `items` (`id`, `name`, `size`, `status`, `progress`, `error`) up to date and
+answers `onRetry(id)` and `onRemove(id)`. A row says its status in text first, and a polite live region
+announces the rows that finish or fail. Pair it with a `Dropzone` set to `hideFileList`:
+`onFilesAdded(files)` gets only the files just accepted, so the app can start uploading them, and
+`onReject(rejections)` keeps the valid files of a drop and reports the others one by one with their
+reason, where without it one invalid file rejects the whole drop.
+
+```tsx
+<Dropzone multiple hideFileList accept=".pdf,.png" maxSize={25 * 1024 * 1024}
+  onFilesAdded={(files) => files.forEach(upload)}
+  onReject={(rejections) => report(rejections)} />
+<UploadQueue items={uploads} onRetry={retry} onRemove={cancelOrDismiss} />
+```
+
 ## Chat
 
 Building blocks for a conversation view: `ChatThread` (a `role="log"` live
