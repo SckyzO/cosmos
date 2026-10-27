@@ -309,6 +309,9 @@ const Root = ({
           'fixed z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
           SIDE_CLASS[side],
           !vertical && SIZE_CLASS[size],
+          // On a screen narrower than the size, the panel stops short of the far edge; with the
+          // close-outside button, short enough to leave it on screen.
+          !vertical && (withBackdrop && closeOutside ? 'max-w-[calc(100%-3rem)]' : 'max-w-full'),
           open ? SIDE_TRANSFORM[side].open : SIDE_TRANSFORM[side].closed,
           hidden && 'invisible',
           className
