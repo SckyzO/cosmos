@@ -21,7 +21,7 @@ import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
-import type { ColumnDef, DataTableDensity, SortDirection } from './types';
+import type { ColumnDef, DataTableDensity, DataTableSort } from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
@@ -62,9 +62,14 @@ export type DataTableProps<T> = {
   /**
    * Row height. `default` keeps the standard rows. `comfortable` pads the
    * header and body cells more, for rows that carry two lines (a name over an
-   * email, an avatar) or need more room. Cell content stays vertically centred.
+   * email, an avatar) or need more room. Cell content stays vertically centred. A `density`
+   * passed without `onDensityChange` is a controlled value that never moves: applying a saved view
+   * then reports its density and keeps this one.
    */
   density?: DataTableDensity;
+  defaultDensity?: DataTableDensity;
+  /** Called with the density to move to, in both modes (a saved view sets it). */
+  onDensityChange?: (density: DataTableDensity) => void;
   /**
    * Pins the first data column (and the selection column before it) to the start while the table
    * scrolls sideways, so the row stays identified on a narrow screen. With `rowHref`, the link
@@ -189,7 +194,9 @@ export const DataTable = <T,>({
   onRetry,
   emptyTitle = 'No results',
   emptyDescription,
-  density = 'default',
+  density: densityProp,
+  defaultDensity = 'default',
+  onDensityChange,
   stickyFirstColumn = false,
   selectable = false,
   selection: selectionProp,
@@ -217,6 +224,12 @@ export const DataTable = <T,>({
   mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
   const mobileCards = mobileLayout === 'cards';
+  const [density] = useControllableState<DataTableDensity>({
+    value: densityProp,
+    defaultValue: defaultDensity,
+    onChange: onDensityChange,
+    name: 'DataTable.density',
+  });
   const [columnVisibility, setColumnVisibility] = useControllableState<ColumnVisibility>({
     value: columnVisibilityProp,
     defaultValue: () => defaultColumnVisibility ?? {},
@@ -242,8 +255,9 @@ export const DataTable = <T,>({
   const fade = useScrollFade(scrollerRef, { start: !stickyFirstColumn });
   // A region needs a name to be a landmark, and the table's own content is no name for it.
   const region = scrolls && Boolean(ariaLabel || ariaLabelledBy);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [sort, setSort] = useState<DataTableSort>(null);
+  const sortKey = sort?.key ?? null;
+  const sortDir = sort?.direction ?? 'asc';
   const [filters, setFilters] = useControllableState<Record<string, Set<string>>>({
     value: filtersProp,
     defaultValue: () => defaultFilters ?? {},
@@ -288,14 +302,9 @@ export const DataTable = <T,>({
   };
 
   const handleSortToggle = (key: string) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
-    } else {
-      setSortKey(null);
-    }
+    if (sortKey !== key) setSort({ key, direction: 'asc' });
+    else if (sortDir === 'asc') setSort({ key, direction: 'desc' });
+    else setSort(null);
   };
 
   const handleFilterToggle = (key: string, value: string) => {
@@ -492,10 +501,7 @@ export const DataTable = <T,>({
               columns={columns}
               sortKey={sortKey}
               sortDir={sortDir}
-              onSortChange={(key, dir) => {
-                setSortKey(key);
-                setSortDir(dir);
-              }}
+              onSortChange={(key, direction) => setSort(key === null ? null : { key, direction })}
             />
           )}
           {columnsMenuNode}
