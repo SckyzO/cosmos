@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
-import { Download, Search, X } from 'lucide-react';
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight, Download, Search, X } from 'lucide-react';
+import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -10,6 +10,7 @@ import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './Data
 import { PageSizeSelect } from './PageSizeSelect';
 import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
+import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
 import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { AppLink } from '../ui/AppLink';
@@ -34,8 +35,9 @@ import { TOOLBAR_BUTTON } from './toolbarButton';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
+import { detailRowId, toggleKey } from './expandedRows';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
-import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
+import { stickyBodyCell, stickyHeadCell } from './stickyColumn';
 import type {
   ColumnDef,
   DataTableDensity,
@@ -101,6 +103,26 @@ export type DataTableProps<T> = {
    * handler: middle click and the context menu work on the first column only.
    */
   stickyFirstColumn?: boolean;
+
+  // ── Expandable rows ────────────────────────────────────────────────────────
+  /**
+   * Makes the rows expandable: a first column holds a chevron button per row (`aria-expanded`,
+   * `aria-controls` the detail row while it is open, named "Show details for <row key>"), and the
+   * content this returns is drawn in a row below it that spans every column. Opening a row never
+   * selects it nor counts as a click on it. Not combined with `virtualize`: the rows of a
+   * virtualized table have one fixed height, so nothing expands there (the prop is ignored).
+   * With `mobileLayout="cards"` below `sm` the chevron sits on the card's title line and the
+   * content opens inside the card, under its fields.
+   */
+  renderExpandedRow?: (row: T) => ReactNode;
+  /**
+   * The keys (`rowKey`) of the open rows, when controlled. A controlled table shows a toggle once
+   * the host passes the new set back through `onExpandedRowsChange`.
+   */
+  expandedRows?: Set<string | number>;
+  defaultExpandedRows?: Set<string | number>;
+  /** Called with the set of open row keys after a row is toggled, in both modes. */
+  onExpandedRowsChange?: (expanded: Set<string | number>) => void;
 
   // ── Selection ──────────────────────────────────────────────────────────────
   /** Show a checkbox column and enable row selection. */
@@ -286,6 +308,7 @@ export type DataTableProps<T> = {
 
 // The selection and action columns keep these widths whatever the data columns add up to.
 const SELECT_COLUMN_WIDTH = '44px';
+const EXPAND_COLUMN_WIDTH = '44px';
 const ACTION_COLUMN_WIDTH = '96px';
 
 const ALIGN_CELL = {
@@ -324,6 +347,10 @@ export const DataTable = <T,>({
   defaultDensity = 'default',
   onDensityChange,
   stickyFirstColumn = false,
+  renderExpandedRow,
+  expandedRows: expandedRowsProp,
+  defaultExpandedRows,
+  onExpandedRowsChange,
   selectable = false,
   selection: selectionProp,
   defaultSelection,
@@ -425,6 +452,17 @@ export const DataTable = <T,>({
     if (page !== 1) setPage(1);
   };
   const [showAll, setShowAll] = useState(false);
+
+  const expandable = Boolean(renderExpandedRow) && !virtualize;
+  const [expanded, updateExpanded] = useControllableState<Set<string | number>>({
+    value: expandedRowsProp,
+    defaultValue: () => defaultExpandedRows ?? new Set(),
+    onChange: onExpandedRowsChange,
+    name: 'DataTable.expandedRows',
+  });
+  const tableId = useId();
+  // Where a pinned cell sticks: after the toggle and selection columns before it, 44px each.
+  const leadWidth = (expandable ? 44 : 0) + (selectable ? 44 : 0);
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
     value: selectionProp,
@@ -537,7 +575,8 @@ export const DataTable = <T,>({
   const showSkeleton = loading && !hasRows;
   const dimRows = loading && hasRows;
 
-  const columnCount = columns.length + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
+  const columnCount =
+    columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (renderRowAction ? 1 : 0);
 
   // The rows the pager counts: all of them in memory, the host's total in `manual`.
   const totalRows = manual ? (rowCount ?? rows.length) : sortedRows.length;
@@ -730,137 +769,173 @@ export const DataTable = <T,>({
     const href = rowHref?.(row);
     // A link is the focusable thing of its row; without one, the row itself is.
     const focusableRow = onRowClick && !href;
+    const isOpen = expandable && expanded.has(key);
+    const detailId = detailRowId(tableId, key);
     return (
-      <tr
-        key={key}
-        // The header is row 1; a windowed table says where each drawn row sits in the whole list.
-        aria-rowindex={windowed ? index + 2 : undefined}
-        onFocus={windowed ? () => setFocusedKey(key) : undefined}
-        onBlur={
-          windowed
-            ? (e) => {
-                // Focus that moved inside the row (or into a menu portaled out of it) stays.
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                  setFocusedKey((prev) => (prev === key ? null : prev));
+      <Fragment key={key}>
+        <tr
+          // The header is row 1; a windowed table says where each drawn row sits in the whole list.
+          aria-rowindex={windowed ? index + 2 : undefined}
+          onFocus={windowed ? () => setFocusedKey(key) : undefined}
+          onBlur={
+            windowed
+              ? (e) => {
+                  // Focus that moved inside the row (or into a menu portaled out of it) stays.
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setFocusedKey((prev) => (prev === key ? null : prev));
+                  }
                 }
-              }
-            : undefined
-        }
-        tabIndex={focusableRow ? 0 : undefined}
-        onClick={
-          onRowClick || (href && stickyFirstColumn)
-            ? (e) => {
-                if (!isRowClick(e)) return;
-                // The link covers its own column only: follow it from the rest of
-                // the row. Its click comes back here, and calls onRowClick.
-                const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
-                if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
-                  link.click();
-                  return;
+              : undefined
+          }
+          tabIndex={focusableRow ? 0 : undefined}
+          onClick={
+            onRowClick || (href && stickyFirstColumn)
+              ? (e) => {
+                  if (!isRowClick(e)) return;
+                  // The link covers its own column only: follow it from the rest of
+                  // the row. Its click comes back here, and calls onRowClick.
+                  const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
+                  if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
+                    link.click();
+                    return;
+                  }
+                  onRowClick?.(row);
                 }
-                onRowClick?.(row);
-              }
-            : undefined
-        }
-        onKeyDown={
-          focusableRow
-            ? (e) => {
-                if (e.target !== e.currentTarget) return;
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                e.preventDefault();
-                onRowClick(row);
-              }
-            : undefined
-        }
-        className={clsx(
-          'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
-          isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
-          (onRowClick || href) && 'cursor-pointer',
-          stickyFirstColumn && 'group',
-          focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
-          href &&
-            'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
-        )}
-      >
-        {selectable && (
-          <td
-            className={clsx(
-              'px-4 print:hidden',
-              bodyPadding,
-              // The cell box is in em of this size, as in the data cells.
-              windowed && 'text-sm',
-              href && 'relative z-[1]',
-              stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
-            )}
-          >
-            {/* A flex box centres the checkbox; inline, it sat on the
-              text baseline and moved with the font metrics. */}
-            <div className="flex items-center" style={cellBox}>
-              <Checkbox
-                aria-label={`Select row ${key}`}
-                checked={isSelected}
-                onChange={() => toggleRow(key)}
-              />
-            </div>
-          </td>
-        )}
-        {columns.map((col, i) => {
-          const cell =
-            href && i === 0 ? (
-              <AppLink href={href} data-row-link className={ROW_LINK}>
-                {col.render(row)}
-              </AppLink>
-            ) : (
-              col.render(row)
-            );
-          return (
+              : undefined
+          }
+          onKeyDown={
+            focusableRow
+              ? (e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  onRowClick(row);
+                }
+              : undefined
+          }
+          className={clsx(
+            'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
+            isSelected
+              ? 'bg-brand-50/40 dark:bg-brand-500/5'
+              : isOpen && 'bg-gray-50 dark:bg-white/5',
+            // The detail row below is part of it: no divider between the two.
+            isOpen && 'border-b-0',
+            (onRowClick || href) && 'cursor-pointer',
+            stickyFirstColumn && 'group',
+            focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+            href &&
+              'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
+          )}
+        >
+          {expandable && (
             <td
-              key={col.key}
+              style={stickyFirstColumn ? { left: 0 } : undefined}
               className={clsx(
-                'px-4',
+                'px-2 print:hidden',
                 bodyPadding,
-                'text-sm',
-                ALIGN_CELL[col.align ?? 'left'],
-                href && i > 0 && RAISE_CONTROLS,
-                stickyFirstColumn &&
-                  i === 0 && [
-                    stickyBodyCell(isSelected, true),
-                    selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                  ]
+                href && 'relative z-[1]',
+                stickyFirstColumn && stickyBodyCell(isSelected, false)
               )}
             >
-              {windowed ? (
-                <div
-                  className={clsx(
-                    'flex items-center overflow-hidden',
-                    col.align === 'right' && 'justify-end',
-                    col.align === 'center' && 'justify-center'
-                  )}
-                  style={cellBox}
-                >
-                  {cell}
-                </div>
-              ) : (
-                cell
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                shape="square"
+                icon={isOpen ? ChevronDown : ChevronRight}
+                aria-expanded={isOpen}
+                // Only while the detail row exists: an id that is not there names nothing.
+                aria-controls={isOpen ? detailId : undefined}
+                aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${key}`}
+                onClick={() => updateExpanded(toggleKey(expanded, key))}
+                className="-my-1.5"
+              />
             </td>
-          );
-        })}
-        {renderRowAction && (
-          <td
-            className={clsx(
-              'px-4 print:hidden',
-              bodyPadding,
-              windowed && 'text-sm',
-              href && 'relative z-[1]'
-            )}
-          >
-            <div className="flex items-center justify-end" style={cellBox}>
-              {renderRowAction(row)}
-            </div>
-          </td>
+          )}
+          {selectable && (
+            <td
+              style={stickyFirstColumn ? { left: expandable ? 44 : 0 } : undefined}
+              className={clsx(
+                'px-4 print:hidden',
+                bodyPadding,
+                // The cell box is in em of this size, as in the data cells.
+                windowed && 'text-sm',
+                href && 'relative z-[1]',
+                stickyFirstColumn && stickyBodyCell(isSelected, false)
+              )}
+            >
+              {/* A flex box centres the checkbox; inline, it sat on the
+              text baseline and moved with the font metrics. */}
+              <div className="flex items-center" style={cellBox}>
+                <Checkbox
+                  aria-label={`Select row ${key}`}
+                  checked={isSelected}
+                  onChange={() => toggleRow(key)}
+                />
+              </div>
+            </td>
+          )}
+          {columns.map((col, i) => {
+            const cell =
+              href && i === 0 ? (
+                <AppLink href={href} data-row-link className={ROW_LINK}>
+                  {col.render(row)}
+                </AppLink>
+              ) : (
+                col.render(row)
+              );
+            return (
+              <td
+                key={col.key}
+                style={stickyFirstColumn && i === 0 ? { left: leadWidth } : undefined}
+                className={clsx(
+                  'px-4',
+                  bodyPadding,
+                  'text-sm',
+                  ALIGN_CELL[col.align ?? 'left'],
+                  href && i > 0 && RAISE_CONTROLS,
+                  stickyFirstColumn && i === 0 && stickyBodyCell(isSelected, true)
+                )}
+              >
+                {windowed ? (
+                  <div
+                    className={clsx(
+                      'flex items-center overflow-hidden',
+                      col.align === 'right' && 'justify-end',
+                      col.align === 'center' && 'justify-center'
+                    )}
+                    style={cellBox}
+                  >
+                    {cell}
+                  </div>
+                ) : (
+                  cell
+                )}
+              </td>
+            );
+          })}
+          {renderRowAction && (
+            <td
+              className={clsx(
+                'px-4 print:hidden',
+                bodyPadding,
+                windowed && 'text-sm',
+                href && 'relative z-[1]'
+              )}
+            >
+              <div className="flex items-center justify-end" style={cellBox}>
+                {renderRowAction(row)}
+              </div>
+            </td>
+          )}
+        </tr>
+        {isOpen && renderExpandedRow && (
+          <tr id={detailId} className="bg-gray-50 dark:bg-white/5 print:break-inside-avoid">
+            <td colSpan={columnCount} className="pt-1 pr-4 pb-5 pl-15 text-sm">
+              {renderExpandedRow(row)}
+            </td>
+          </tr>
         )}
-      </tr>
+      </Fragment>
     );
   };
 
@@ -1022,6 +1097,9 @@ export const DataTable = <T,>({
             className="w-full table-fixed"
           >
             <colgroup>
+              {expandable && (
+                <col style={{ width: EXPAND_COLUMN_WIDTH }} className="print:hidden" />
+              )}
               {selectable && (
                 <col style={{ width: SELECT_COLUMN_WIDTH }} className="print:hidden" />
               )}
@@ -1044,13 +1122,27 @@ export const DataTable = <T,>({
                 aria-rowindex={windowed ? 1 : undefined}
                 className="border-b border-gray-100 dark:border-gray-800"
               >
-                {selectable && (
+                {expandable && (
                   <th
+                    style={stickyFirstColumn ? { left: 0 } : undefined}
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING[density],
                       'print:hidden',
-                      stickyFirstColumn && [stickyHeadCell(false), STICKY_START]
+                      stickyFirstColumn && stickyHeadCell(false)
+                    )}
+                  >
+                    <span className="sr-only">Details</span>
+                  </th>
+                )}
+                {selectable && (
+                  <th
+                    style={stickyFirstColumn ? { left: expandable ? 44 : 0 } : undefined}
+                    className={clsx(
+                      HEADER_CELL,
+                      HEADER_CELL_PADDING[density],
+                      'print:hidden',
+                      stickyFirstColumn && stickyHeadCell(false)
                     )}
                   >
                     <div className="flex items-center">
@@ -1066,13 +1158,8 @@ export const DataTable = <T,>({
                 {columns.map((col, i) => (
                   <ColumnHeader
                     key={col.key}
-                    className={clsx(
-                      stickyFirstColumn &&
-                        i === 0 && [
-                          stickyHeadCell(true),
-                          selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                        ]
-                    )}
+                    style={stickyFirstColumn && i === 0 ? { left: leadWidth } : undefined}
+                    className={clsx(stickyFirstColumn && i === 0 && stickyHeadCell(true))}
                     label={col.label}
                     align={col.align}
                     sortable={col.sortable}

@@ -20,7 +20,3 @@ export const stickyBodyCell = (selected: boolean, edge: boolean) =>
   );
 
 export const stickyHeadCell = (edge: boolean) => clsx('sticky z-[1]', edge && EDGE);
-
-// Where a pinned cell sticks: the start, or right after the selection column (its 44px).
-export const STICKY_START = 'left-0';
-export const STICKY_AFTER_SELECT = 'left-[44px]';
