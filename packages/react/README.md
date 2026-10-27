@@ -186,8 +186,8 @@ checkbox, the action column, a link or button in another cell) never counts as a
 row click. `RowActionsMenu` is the ⋮ button and menu of a row, for
 `renderRowAction`: give it `Menu.Item`s, a destructive one with
 `intent="danger"`. On a narrow screen the edge of a table that scrolls sideways
-fades, and `stickyFirstColumn` pins its first column (after the checkbox on
-`DataTable`). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
+fades, and `Table`'s `stickyFirstColumn` pins its first column (`DataTable` pins
+columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
 `TableAmountCell` are the cells tables keep rebuilding.
 
 `DataTable`'s column filters can be controlled: `filters`, `defaultFilters` and
@@ -203,6 +203,110 @@ row action on the first line, then a label/value pair per other column
 (`mobileLabel` renames a label, `mobile: 'hidden'` drops a column). The toolbar
 gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
 the table.
+
+`DataTable` rows can expand: `renderExpandedRow(row)` adds a first column of
+chevron buttons (`aria-expanded`, `aria-controls` the detail row while it is
+open, named "Show details for <row key>") and draws what it returns in a row
+below, spanning every column. The open rows are a set of row keys, like the
+selection: `expandedRows`, `defaultExpandedRows` and
+`onExpandedRowsChange(expanded)`. A toggle never selects a row nor counts as a
+click on it. Limit: with `virtualize` nothing expands (its rows have one fixed
+height), and the prop is ignored. With `mobileLayout="cards"` the chevron sits on
+the card's title line and the content opens inside the card, under its fields.
+
+`pin: 'start' | 'end'` on a column keeps it in place while the table scrolls
+sideways, several per side: list the `start` ones first and the `end` ones last
+in `columns`. A pinned cell sticks after the widths of the pinned columns before
+it, measured, so percentage widths, a resize and the text size keep it right.
+The selection and toggle columns are pinned with the start columns, the action
+column with the end ones. A shadow marks an edge only while content scrolls
+under it, and the scroll fade leaves a pinned side alone. `pin` replaces
+`DataTable`'s `stickyFirstColumn` (removed): put `pin: 'start'` on the first
+column. With `rowHref`, the link covers its own column when that is pinned and
+a click on the rest of the row follows it from a handler. The cards of
+`mobileLayout="cards"` ignore `pin`.
+
+```tsx
+<DataTable
+  rows={hosts}
+  rowKey={(r) => r.host}
+  selectable
+  renderExpandedRow={(r) => <HostDetail host={r} />}
+  columns={[
+    { key: 'host', label: 'Host', pin: 'start', render: (r) => r.host },
+    { key: 'rack', label: 'Rack', render: (r) => r.rack },
+    // …
+    {
+      key: 'status',
+      label: 'Status',
+      pin: 'end',
+      render: (r) => <StatusBadge status={r.status} />,
+    },
+  ]}
+/>
+```
+
+Inline editing: `edit` on a column is `{ initialValue(row), render(editor) }`,
+and `render` draws an existing form field from the editor: `editor.value` (the
+draft, a string: parse it yourself), `setValue`, `commit`, `cancel`, `saving`
+and `fieldProps` (the field's name, "Rack for node-a02", its error tie, `disabled`
+while saving and a red border on `aria-invalid`), which an `Input` or a `Select`
+takes as it is. `editTrigger` picks how an editable cell opens, one per table:
+
+- `'cell'` (default): the cell's content is a button that fills it; a click,
+  Enter or F2 opens the editor in place, focused. Keep that content to text and
+  badges, with no link or button in it.
+- `'button'`: a pencil button in each editable cell ("Edit Rack for node-a02"),
+  shown on the hovered or focused row and always on a screen with no hover; the
+  editor has Save and Cancel buttons beside the field.
+- `'row'`: an Edit button in the row's action column turns every editable cell
+  of the row into its field, with Cancel and Save in place of the button.
+
+In `'cell'` and `'button'`, Enter or blur saves and Escape cancels, putting the
+focus back on the cell's trigger. `onCellEdit(row, columnKey, value)` is called
+only when the draft changed, and may return a promise: the cell is `aria-busy`
+with a spinner until it settles. If it rejects (or throws), the editor opens
+again with what was typed, and the error's message shows under the cell, tied to
+the field by `aria-describedby`. In `'row'`, Save (or Enter in a field) calls
+`onRowEdit(row, changes)` once, `changes` being column `key` to draft for the
+cells that changed only; a promise makes the row `aria-busy` and the fields
+disabled, and a rejection keeps the fields open with the error in a row under
+the row. Escape or Cancel drops the changes. Only one cell or row edits at a
+time, and nothing opens while a save is pending. The table never changes
+`rows`: update them from the handler. Limits: editing is off with `virtualize`
+(a fixed-height cell would clip an editor and its error) and in the cards of
+`mobileLayout="cards"`.
+
+```tsx
+<DataTable
+  rows={hosts}
+  rowKey={(r) => r.host}
+  editTrigger="cell"
+  onCellEdit={async (row, key, value) => {
+    await api.patchHost(row.host, { [key]: value }); // a rejection shows under the cell
+    setHosts((all) => all.map((h) => (h.host === row.host ? { ...h, [key]: value } : h)));
+  }}
+  columns={[
+    { key: 'host', label: 'Host', render: (r) => r.host },
+    {
+      key: 'rack',
+      label: 'Rack',
+      render: (r) => r.rack,
+      edit: {
+        initialValue: (r) => r.rack,
+        render: (e) => (
+          <Input
+            {...e.fieldProps}
+            size="sm"
+            value={e.value}
+            onChange={(ev) => e.setValue(ev.target.value)}
+          />
+        ),
+      },
+    },
+  ]}
+/>
+```
 
 `DataTable`'s `density` is controllable like the rest: `density`, `defaultDensity`
 and `onDensityChange(density)`. As with `pageSize`, a `density` passed without
@@ -338,7 +442,7 @@ scrolling. Its limits:
   or a control, as in a standard row.
 - It applies to the table layout only: with `mobileLayout="cards"` below `sm`
   the cards keep the pagination.
-- It is not for expandable rows.
+- It is not for expandable rows or inline editing: both are off with it.
 - On paper only the drawn rows print.
 
 ```tsx
