@@ -29,13 +29,13 @@ export type StackedListProps = Omit<ComponentPropsWithRef<'ul'>, 'children' | 't
   title?: ReactNode;
   /** Card header text under the title. Only with `card`. */
   description?: ReactNode;
-  /** Card header action at the right of the title (a link, a button). Only with `card`. */
+  /** Card header action at the end of the title row (a link, a button). Only with `card`. */
   action?: ReactNode;
 };
 
 /**
- * Divided list of rows: avatar, title and subtitle on the left; a meta column
- * (hidden on phones), a trailing slot and a chevron on the right. An item with
+ * Divided list of rows: avatar, title and subtitle at the start; a meta column
+ * (hidden on phones), a trailing slot and a chevron at the end. An item with
  * `href` is a link across the whole row.
  *
  * Items also take a `badge` and a line of `details` for content rows (issues,
@@ -151,7 +151,7 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title'> & 
   title: ReactNode;
   /** Secondary text below the title (truncated by default). */
   subtitle?: ReactNode;
-  /** Right-aligned meta column, hidden on mobile (mirrors TUI `hidden sm:flex`). */
+  /** End-aligned meta column, hidden on mobile (mirrors TUI `hidden sm:flex`). */
   meta?: ReactNode;
   /** Trailing slot rendered after `meta` (icon, actions menu, badge…). */
   trailing?: ReactNode;
@@ -171,11 +171,11 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title'> & 
   badge?: ReactNode;
   /**
    * Inline items under the title (author, date, owner…) separated by a dot. Each item stays
-   * on one line; the last one truncates when the row runs out of room. Not the right-hand
-   * `meta` column.
+   * on one line; the last one truncates when the row runs out of room. Not the `meta`
+   * column.
    */
   details?: ReactNode[];
-  /** Timestamp at the right of the title, for a narrow column. */
+  /** Timestamp at the end of the title row, for a narrow column. */
   timestamp?: ReactNode;
   /** Body text under the title, clamped to two lines. Replaces `subtitle`. */
   description?: ReactNode;
@@ -209,11 +209,13 @@ function StackedListItem({
       <AppLink href={href} className="focus:outline-hidden">
         {/* Full-row click target */}
         <span className="absolute inset-x-0 -top-px bottom-0" aria-hidden />
-        {title}
+        <bdi>{title}</bdi>
       </AppLink>
     </p>
   ) : (
-    <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">{title}</p>
+    <p className="text-sm/6 font-semibold text-gray-900 dark:text-white">
+      <bdi>{title}</bdi>
+    </p>
   );
   const titleRow = badge ? (
     <div className="flex items-start gap-x-3">
@@ -254,11 +256,13 @@ function StackedListItem({
           )}
           {description ? (
             <p className="mt-1 line-clamp-2 text-sm/6 text-gray-600 dark:text-gray-400">
-              {description}
+              <bdi>{description}</bdi>
             </p>
           ) : (
             subtitle && (
-              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">{subtitle}</p>
+              <p className="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400">
+                <bdi>{subtitle}</bdi>
+              </p>
             )
           )}
           {detailItems.length > 0 && (
@@ -268,7 +272,7 @@ function StackedListItem({
                   {i > 0 && <Dot />}
                   {/* One line per item; the last one truncates when the row runs out of room. */}
                   <span className={i === detailItems.length - 1 ? 'truncate' : 'whitespace-nowrap'}>
-                    {item}
+                    <bdi>{item}</bdi>
                   </span>
                 </Fragment>
               ))}
@@ -288,7 +292,7 @@ function StackedListItem({
             ))}
           {isLinked && chevron && (
             <ChevronRight
-              className="size-5 flex-none text-gray-400 dark:text-gray-500"
+              className="size-5 flex-none text-gray-400 rtl:-scale-x-100 dark:text-gray-500"
               aria-hidden
             />
           )}

@@ -52,18 +52,24 @@ export const Row = ({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
-        {subtitle && <p className="truncate text-xs text-[var(--color-text-muted)]">{subtitle}</p>}
+        <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+          <bdi>{title}</bdi>
+        </p>
+        {subtitle && (
+          <p className="truncate text-xs text-[var(--color-text-muted)]">
+            <bdi>{subtitle}</bdi>
+          </p>
+        )}
       </div>
       {status ? (
         <StatusBadge status={status} size="sm" className="shrink-0" />
       ) : (
-        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)] rtl:-scale-x-100" />
       )}
     </>
   );
   const baseClass = clsx(
-    'focus-visible:focus-indicator py-row-10 flex w-full items-center gap-3 rounded-lg px-3 text-left transition-colors focus-visible:ring-inset',
+    'focus-visible:focus-indicator py-row-10 flex w-full items-center gap-3 rounded-lg px-3 text-start transition-colors focus-visible:ring-inset',
     'hover:bg-black/5 dark:hover:bg-white/5',
     className
   );

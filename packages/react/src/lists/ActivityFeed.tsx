@@ -58,7 +58,7 @@ export type ActivityFeedItemProps = ComponentPropsWithRef<'li'> & {
   icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** Color of the circle indicator. Default `neutral`. */
   intent?: ActivityFeedIntent;
-  /** Right-aligned timestamp (text or `<time>`). */
+  /** End-aligned timestamp (text or `<time>`). */
   timestamp?: ReactNode;
   /** Main content (paragraph). */
   children: ReactNode;
@@ -82,7 +82,7 @@ function ActivityFeedItem({
         {!__isLast && (
           <span
             aria-hidden
-            className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-white/10"
+            className="absolute start-5 top-5 -ms-px h-full w-0.5 bg-gray-200 dark:bg-white/10"
           />
         )}
         <div className="relative flex space-x-3">
@@ -106,9 +106,7 @@ function ActivityFeedItem({
               <div className="text-sm text-gray-500 dark:text-gray-400">{children}</div>
             </div>
             {timestamp && (
-              <div className={clsx(TIMESTAMP_CLASS, 'text-right whitespace-nowrap')}>
-                {timestamp}
-              </div>
+              <div className={clsx(TIMESTAMP_CLASS, 'text-end whitespace-nowrap')}>{timestamp}</div>
             )}
           </div>
         </div>
