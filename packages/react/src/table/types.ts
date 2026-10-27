@@ -21,6 +21,12 @@ export type ColumnDef<T> = {
   filterValue?: (row: T) => string;
   /** Returns the searchable string for the row. Falls back to `filterValue` if absent. */
   searchValue?: (row: T) => string;
+  /**
+   * The cell's value in a CSV export (`exportable`, `toCsv`). Without it the export takes
+   * `sortValue`, then `searchValue`, then `filterValue`, then an empty cell. `null` is an empty
+   * cell too.
+   */
+  exportValue?: (row: T) => string | number | null;
   sortable?: boolean;
   filterable?: boolean;
   /**

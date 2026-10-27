@@ -1,5 +1,6 @@
 export * from './types';
 export * from './DataTable';
+export { toCsv } from './csv';
 export type { DataTableFilterTabsConfig, DataTableFilterTabOption } from './DataTableFilterTabs';
 export * from './Table';
 export * from './ColumnHeader';
