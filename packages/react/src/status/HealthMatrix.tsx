@@ -195,7 +195,7 @@ export const HealthMatrix = ({
             <tr>
               <th
                 scope="col"
-                className="sticky top-0 left-0 z-20 min-w-28 border-r border-b border-[var(--color-border)] bg-gray-50 px-4 py-2.5 text-left text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
+                className="py-row-10 sticky top-0 left-0 z-20 min-w-28 border-r border-b border-[var(--color-border)] bg-gray-50 px-4 text-left text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
               >
                 Service
               </th>
@@ -203,7 +203,7 @@ export const HealthMatrix = ({
                 <th
                   key={column.id}
                   scope="col"
-                  className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-gray-50 px-2 py-2.5 font-mono text-xs font-medium whitespace-nowrap text-[var(--color-text-secondary)] dark:bg-gray-800"
+                  className="py-row-10 sticky top-0 z-10 border-b border-[var(--color-border)] bg-gray-50 px-2 font-mono text-xs font-medium whitespace-nowrap text-[var(--color-text-secondary)] dark:bg-gray-800"
                 >
                   {column.label}
                 </th>
@@ -243,7 +243,7 @@ export const HealthMatrix = ({
                           setOpen(isOpen ? null : { row: r, col: c });
                         }}
                         className={clsx(
-                          'focus-visible:focus-indicator inline-flex h-10 items-center justify-center rounded-md focus-visible:ring-inset',
+                          'focus-visible:focus-indicator h-ctrl-40 inline-flex items-center justify-center rounded-md focus-visible:ring-inset',
                           variant === 'dots' ? 'w-14' : 'min-w-16 px-1.5',
                           cell && 'cursor-pointer'
                         )}

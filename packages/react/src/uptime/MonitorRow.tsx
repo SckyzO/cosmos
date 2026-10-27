@@ -173,7 +173,7 @@ export const MonitorRow = ({
   return (
     <div
       className={clsx(
-        'grid min-w-0 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-2.5 px-4 py-3 text-sm sm:grid-cols-[28px_minmax(0,13rem)_minmax(0,1fr)_5.5rem_5rem] sm:gap-y-0',
+        'py-row-12 grid min-w-0 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-2.5 px-4 text-sm sm:grid-cols-[28px_minmax(0,13rem)_minmax(0,1fr)_5.5rem_5rem] sm:gap-y-0',
         paused && 'bg-gray-50 dark:bg-gray-900/50',
         className
       )}
