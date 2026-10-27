@@ -58,7 +58,9 @@ const config: StorybookConfig = {
       // Vite only discovers a dependency when a story first imports it, then
       // re-optimizes and reloads mid-run: pre-bundling `recharts` up front avoids
       // that. charts is a linked workspace package, so it resolves through it (`>`).
-      optimizeDeps: { include: ['@sckyzo/cosmos-charts > recharts'] },
+      // maplibre-gl 6 starts its worker from `new URL(…, import.meta.url)`: pre-bundled, the worker
+      // file is not copied next to the bundle, so it stays out of the optimizer.
+      optimizeDeps: { include: ['@sckyzo/cosmos-charts > recharts'], exclude: ['maplibre-gl'] },
       // When deployed under a sub-path (GitHub Pages serves the site at
       // https://sckyzo.github.io/cosmos/), Vite needs to know the prefix so
       // every asset URL — JS chunks, fonts, the docs iframe, lazy imports —
