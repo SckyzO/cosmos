@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isThenable, rowChanges, saveErrorMessage, triggerId } from './inlineEdit';
+import { isThenable, rowChanges, saveErrorMessage, triggerId } from './editing';
 
 describe('rowChanges', () => {
   it('keeps only the cells whose draft moved', () => {

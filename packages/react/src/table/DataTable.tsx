@@ -38,7 +38,7 @@ import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
 import { detailRowId, toggleKey } from './expandedRows';
 import { CellEditorBox, CellTrigger, RowEditActions, RowEditError } from './InlineEdit';
 import { useInlineEdit } from './useInlineEdit';
-import { rowInitials, triggerId } from './inlineEdit';
+import { rowInitials, triggerId } from './editing';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
 import { usePinnedWidths } from './usePinnedWidths';

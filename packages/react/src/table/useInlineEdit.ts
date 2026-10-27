@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { isThenable, rowChanges, saveErrorMessage, triggerId } from './inlineEdit';
+import { isThenable, rowChanges, saveErrorMessage, triggerId } from './editing';
 
 type RowKey = string | number;
 
