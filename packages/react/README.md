@@ -277,6 +277,36 @@ column, `renderCard` replaces what is inside a card (the grip and the actions me
 Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
 is pre-1.0. It is a regular dependency of the package, not a peer.
 
+## Dates, clocks and countdowns
+
+`DateTime`, `RelativeTime`, `Clock` and `Countdown` write a moment the same way everywhere, with
+`Intl` and in the user's language. They render in the browser only, since the server knows neither
+the locale nor the zone, and keep the room of their text until then.
+
+```tsx
+<DateTime value={order.createdAt} format="datetime" timeZone="Europe/Paris" />
+<RelativeTime value={event.at} tooltip />
+<Clock variant="card" timeZone="Asia/Tokyo" label="Tokyo" showDate />
+<Countdown target="2026-03-01T09:00:00Z" onComplete={() => reload()} />
+```
+
+- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, or `Intl.DateTimeFormat`
+  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `tooltip` adds the full date
+  and zone, and makes the `<time>` a tab stop so a keyboard reaches it.
+- `RelativeTime` reads "5 minutes ago", "yesterday", "in 2 days". Every instance shares one timer and
+  wakes only when its text changes: each second in the first minute, each minute in the first hour,
+  and rarely after, so a long list costs nothing.
+- `Clock` has the variants `inline`, `card` and `display`, and takes `hour12`, `showSeconds`,
+  `showDate` and a `label` for the zone. It ticks on the second boundary. A world clock is a grid of
+  `Clock`s.
+- `Countdown` has the variants `tiles`, `inline` and `compact`. `onComplete` is called once, at zero,
+  and the countdown stops there. `labels`, `shortLabels`, `label` and `completedLabel` translate its
+  text.
+
+`Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
+Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for
+stories, screenshots and tests.
+
 ## Auth layouts
 
 `AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
