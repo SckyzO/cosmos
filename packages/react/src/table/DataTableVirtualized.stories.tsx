@@ -376,3 +376,68 @@ export const CardsKeepThePagination: Story = {
     expectNoHorizontalOverflow();
   },
 };
+
+/**
+ * The row height follows the text size: at `xl` the rows are taller, no cell's content overflows
+ * its box, the spacers are the hidden rows times the measured row height, and the last row can be
+ * reached.
+ */
+export const RowsFollowTheTextSize: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The toolbar's Text size menu, set by the story: the appearance decorator puts it on <html>.
+  globals: { textSize: 'xl' },
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={COUNT}
+        selectable
+        virtualize
+        aria-label="Nodes"
+        className="max-h-96"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Nodes' });
+    const scroller = scrollerOf(table);
+    await expect(document.documentElement.getAttribute('data-text-size')).toBe('xl');
+    // A row of the table at xl is taller than the 49px of the default size.
+    await waitFor(() =>
+      expect(bodyRows(table)[1].getBoundingClientRect().height).toBeGreaterThan(55)
+    );
+    const rowHeight = bodyRows(table)[1].getBoundingClientRect().height;
+
+    const noOverflow = () => {
+      for (const box of table.querySelectorAll<HTMLElement>('tbody td > div')) {
+        expect(box.scrollHeight).toBeLessThanOrEqual(box.clientHeight);
+      }
+    };
+    const spacersMatch = () => {
+      const drawn = bodyRows(table);
+      const first = Number(drawn[0].getAttribute('aria-rowindex')) - 2;
+      const last = Number(drawn[drawn.length - 1].getAttribute('aria-rowindex')) - 2;
+      const [above, below] = ['first', 'last'].map((end) => {
+        const tr = table.querySelector<HTMLElement>(`tbody > tr[aria-hidden="true"]:${end}-child`);
+        return tr ? tr.getBoundingClientRect().height : 0;
+      });
+      // One row per index outside the drawn ones, each as tall as a measured row.
+      expect(above).toBeCloseTo(first * rowHeight, 0);
+      expect(below).toBeCloseTo((COUNT - 1 - last) * rowHeight, 0);
+    };
+    noOverflow();
+    spacersMatch();
+
+    scroller.scrollTop = 5000 * rowHeight;
+    await waitFor(() => expect(canvas.getByText('node-05001')).toBeInTheDocument());
+    noOverflow();
+    spacersMatch();
+
+    scroller.scrollTop = scroller.scrollHeight;
+    await waitFor(() => expect(canvas.getByText('node-10000')).toBeInTheDocument());
+    noOverflow();
+    await expect(canvas.getByText('node-10000')).toBeVisible();
+  },
+};
