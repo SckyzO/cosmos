@@ -20,7 +20,8 @@ make help            # every target
 
 ```bash
 make storybook       # Storybook dev server on http://localhost:6006 (docker compose)
-make ci              # full local pipeline — RUN BEFORE EVERY PUSH
+make check-changed   # BEFORE EVERY PUSH: make ci cut down to what the branch changed
+make ci              # full local pipeline (check-changed runs it when it can't scope a change)
 make test            # pnpm -r test
 make test-e2e        # Playwright against the storybook compose service
 make build           # tsup dists for react + charts
@@ -35,6 +36,15 @@ make lint / lint-fix / format / format-check / typecheck
 which runs the same steps as parallel jobs (`static`, `build-e2e`, `stories`, `contrast` once per
 theme) plus an aggregator job, `ci`, named "Lint + typecheck + test + build": that name is the
 required check, so keep it when touching the workflow.
+
+`make check-changed` (`tests/e2e/checks/check-changed.sh`; `BASE`, default `origin/main`;
+uncommitted and untracked files count) runs the steps of `make ci` the changed files can break, on
+them: Prettier and ESLint on those files, the typecheck, the unit tests, and the story files that use
+what changed in the default pass and the three contrast passes. `select-stories.mjs` picks them: the
+names the changed files export, followed through every source file that names one, barrels
+skipped; a change to a widely used helper selects most of the suite. A change outside
+`packages/{react,charts}/src` that isn't Markdown runs the full `make ci` instead: what reaches a
+story through CSS, config or a dependency isn't followed. GitHub's CI stays the merge gate.
 
 Visual review is local and per component, validated by eye; nothing visual runs in CI.
 `make visual-diff STORIES=<id substrings> [THEMES=…] [BASE=main]` captures those stories at BASE (a

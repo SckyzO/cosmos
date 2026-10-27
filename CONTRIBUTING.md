@@ -16,7 +16,8 @@ make install              # pnpm install + Playwright browsers, inside the conta
 ```bash
 make storybook            # http://localhost:6006 — component playground
 make test                 # Unit tests (Vitest, Node), story tests (Vitest browser mode), e2e and the theme contrast check
-make ci                   # Full CI before pushing
+make check-changed        # Before pushing: the CI cut down to what you changed
+make ci                   # Full CI (check-changed runs it when a change needs it)
 ```
 
 ## Tests
@@ -382,7 +383,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 
 ## PR checklist
 
-- [ ] `make ci` passes locally
+- [ ] `make check-changed` passes locally (it runs the full `make ci` when the change needs it)
 - [ ] New components have a Storybook story
 - [ ] New or changed props follow the [Component API](#component-api) rules
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
