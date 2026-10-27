@@ -67,8 +67,8 @@ Stories are organised by **responsibility**, not file location (Storybook
 
 ```text
 Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data
-       → Media → Status → Feedback → Overlays → Navigation → Layout → Lists
-       → Chat → Tables → Settings → Charts
+       → Media → Status → Monitoring → Feedback → Overlays → Navigation
+       → Layout → Lists → Chat → Tables → Settings → Charts
 ```
 
 Notable groups:
