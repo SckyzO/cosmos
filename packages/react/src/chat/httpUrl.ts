@@ -16,3 +16,14 @@ export const hostOf = (value: string) => {
     return undefined;
   }
 };
+
+// Punctuation that ends a sentence rather than the URL. Trimmed with a loop: a regex such as
+// /[.,;:!?)\]]+$/ backtracks quadratically on a long run of them that isn't at the end.
+const TRAILING = new Set(['.', ',', ';', ':', '!', '?', ')', ']']);
+
+/** `url` without the punctuation that ends the sentence around it ("see https://a.b/c." → no dot). */
+export const trimTrailingPunctuation = (url: string) => {
+  let end = url.length;
+  while (end > 0 && TRAILING.has(url[end - 1])) end -= 1;
+  return url.slice(0, end);
+};
