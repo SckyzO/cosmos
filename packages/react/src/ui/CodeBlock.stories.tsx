@@ -187,3 +187,30 @@ export const HighlightedWithShiki: Story = {
     await expect(getComputedStyle(comment).color).not.toBe(getComputedStyle(blocks[0]).color);
   },
 };
+
+/** A line wider than the block scrolls it sideways, and a keyboard can focus it. */
+export const LongLineScrolls: Story = {
+  args: {
+    language: 'json',
+    code: `{ "stack": "${'at PromClient.query (prom/client.py:118) '.repeat(12)}" }`,
+  },
+  render: (args) => (
+    <div className="max-w-md">
+      <CodeBlock {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const region = await canvas.findByRole('region', { name: 'json code' });
+    await expect(region.scrollWidth).toBeGreaterThan(region.clientWidth);
+    await expect(region).toHaveAttribute('tabindex', '0');
+  },
+};
+
+/** A block that fits keeps no tab stop. */
+export const ShortCodeIsNotATabStop: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { code: 'echo hello' },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('pre')).not.toHaveAttribute('tabindex');
+  },
+};
