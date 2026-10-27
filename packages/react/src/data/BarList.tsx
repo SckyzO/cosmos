@@ -151,16 +151,16 @@ export const BarList = ({
                     title={typeof item.label === 'string' ? item.label : undefined}
                     className="min-w-0 truncate text-sm text-[var(--color-text-primary)]"
                   >
-                    {item.label}
+                    <bdi>{item.label}</bdi>
                     {item.hint && (
-                      <span className="text-2xs ml-2 text-[var(--color-text-muted)]">
-                        {item.hint}
+                      <span className="text-2xs ms-2 text-[var(--color-text-muted)]">
+                        <bdi>{item.hint}</bdi>
                       </span>
                     )}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)] tabular-nums">
-                  {formatValue(item.value)}
+                  <bdi>{formatValue(item.value)}</bdi>
                 </span>
                 {item.delta && <span className="shrink-0">{item.delta}</span>}
               </span>
@@ -179,8 +179,8 @@ export const BarList = ({
         // A row with a hover state is inset by the padding it adds, so its content lines up with
         // the rows that have none.
         const rowClass = interactive
-          ? 'focus-visible:focus-indicator -mx-2 flex w-[calc(100%+1rem)] gap-3 rounded-lg px-2 py-row-6 text-left transition-colors hover:bg-black/5 focus-visible:ring-inset dark:hover:bg-white/5'
-          : 'flex w-full gap-3 text-left';
+          ? 'focus-visible:focus-indicator -mx-2 flex w-[calc(100%+1rem)] gap-3 rounded-lg px-2 py-row-6 text-start transition-colors hover:bg-black/5 focus-visible:ring-inset dark:hover:bg-white/5'
+          : 'flex w-full gap-3 text-start';
         return (
           <li key={item.id}>
             {href ? (

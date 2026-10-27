@@ -83,7 +83,7 @@ export const IntegrationCard = ({
         </p>
       )}
       <h3 className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white">
-        {name}
+        <bdi>{name}</bdi>
       </h3>
       {description && (
         <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{description}</p>

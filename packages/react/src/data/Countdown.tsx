@@ -128,7 +128,7 @@ export const Countdown = ({
             )}
           >
             <span className="text-2xl font-bold tracking-tight text-gray-900 tabular-nums sm:text-4xl dark:text-white">
-              {digits(unit)}
+              <bdi>{digits(unit)}</bdi>
             </span>
             <span className="text-3xs mt-1 max-w-full truncate tracking-wider text-gray-500 uppercase sm:text-xs dark:text-gray-400">
               {long[unit]}
@@ -155,7 +155,7 @@ export const Countdown = ({
           className
         )}
       >
-        {blank ? '--:--:--' : formatCountdownCompact(parts, short.days)}
+        <bdi>{blank ? '--:--:--' : formatCountdownCompact(parts, short.days)}</bdi>
       </span>
     );
 
@@ -172,7 +172,7 @@ export const Countdown = ({
           {label}
           {label ? ' ' : null}
           <span className="font-medium text-gray-900 dark:text-white">
-            {blank ? '--' : formatCountdownInline(parts, short)}
+            <bdi>{blank ? '--' : formatCountdownInline(parts, short)}</bdi>
           </span>
         </>
       )}

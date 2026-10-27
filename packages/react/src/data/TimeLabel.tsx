@@ -34,7 +34,7 @@ export const TimeLabel = ({
         className
       )}
     >
-      {text}
+      <bdi>{text}</bdi>
     </time>
   );
   if (!tooltip) return time;

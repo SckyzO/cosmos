@@ -83,7 +83,7 @@ export const MiniCalendar = ({
           aria-label="Previous month"
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
         </button>
         <button
           type="button"
@@ -98,7 +98,7 @@ export const MiniCalendar = ({
           aria-label="Next month"
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
         </button>
       </div>
 

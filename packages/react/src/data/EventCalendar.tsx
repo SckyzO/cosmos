@@ -134,12 +134,12 @@ const EventChip = ({
     <>
       <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', INTENT_DOT[intent])} />
       <span className={clsx('truncate', continuation ? 'sr-only' : compact && 'max-sm:sr-only')}>
-        {event.title}
+        <bdi>{event.title}</bdi>
       </span>
     </>
   );
   const className = clsx(
-    'flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-xs text-gray-700 dark:text-gray-200',
+    'flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-start text-xs text-gray-700 dark:text-gray-200',
     // Without a title the chip keeps the height of one that has it, so the rows stay aligned.
     continuation && 'min-h-5',
     INTENT_CHIP[intent],
@@ -240,7 +240,7 @@ export const EventCalendar = ({
               size="sm"
               onClick={() => goTo(startOfMonth(today))}
               disabled={isTodayMonth}
-              className="mr-1"
+              className="me-1"
             >
               Today
             </Button>
@@ -254,7 +254,7 @@ export const EventCalendar = ({
               'focus-visible:focus-indicator'
             )}
           >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
+            <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
           <button
             type="button"
@@ -265,7 +265,7 @@ export const EventCalendar = ({
               'focus-visible:focus-indicator'
             )}
           >
-            <ChevronRight className="h-4 w-4" aria-hidden />
+            <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
         </div>
       </div>
@@ -306,7 +306,7 @@ export const EventCalendar = ({
               aria-label={label}
               className={clsx(
                 'min-h-20 min-w-0 border-b border-gray-200 p-1.5 sm:min-h-28 dark:border-gray-800',
-                i % 7 !== 6 && 'border-r',
+                i % 7 !== 6 && 'border-e',
                 outside && 'bg-gray-50 dark:bg-white/[0.02]'
               )}
             >
@@ -367,8 +367,10 @@ export const EventCalendar = ({
                       'focus-visible:focus-indicator'
                     )}
                   >
-                    +{hidden}
-                    <span className="max-sm:sr-only"> more</span>
+                    <bdi>
+                      +{hidden}
+                      <span className="max-sm:sr-only"> more</span>
+                    </bdi>
                   </Popover.Trigger>
                   <Popover.Content aria-label={`Events on ${label}`} width="w-60">
                     <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
