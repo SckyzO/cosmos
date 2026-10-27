@@ -329,12 +329,13 @@ export const StyleFollowsTheTheme: Story = {
     const root = document.documentElement;
     const themeClasses = root.className;
     // The run may start in any theme (the contrast passes use light, sand and deep-blue): start
-    // from light, so each step below is a change the map has to answer.
+    // from plain light, with no theme class, so each step below is a change the map has to answer.
+    // `useCosmosTheme` takes the first theme class it finds, so `sand` must go before `dark` comes.
     const startsDark = root.classList.contains('dark') || root.classList.contains('deep-blue');
     try {
       await mapCanvas(canvasElement);
       await canvas.findAllByRole('button', { name: /places, zoom in$/ });
-      root.classList.remove('dark', 'deep-blue');
+      root.classList.remove('sand', 'dark', 'deep-blue');
       if (startsDark) {
         await waitFor(() => expect(setStyle).toHaveBeenLastCalledWith(CITY_LIGHT, { diff: false }));
       }
