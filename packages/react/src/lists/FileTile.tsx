@@ -157,7 +157,7 @@ export const FileTile = ({
         data-layout="row"
         data-selected={selected || undefined}
         className={clsx(
-          'flex items-center gap-3 py-2.5 pr-3 pl-4',
+          'py-row-10 flex items-center gap-3 pr-3 pl-4',
           selected &&
             'bg-brand-50/50 dark:bg-brand-500/10 shadow-[inset_0_0_0_2px_var(--color-brand-500)]',
           className

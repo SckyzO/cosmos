@@ -31,7 +31,7 @@ export type SecretValueProps = {
 const MASK = '•'.repeat(20);
 
 const BUTTON =
-  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
+  'inline-flex h-ctrl-36 w-ctrl-36 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 focus-visible:focus-indicator dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
 
 /**
  * SecretValue — a stored secret (an API key, a webhook token) in a monospace box, masked until the

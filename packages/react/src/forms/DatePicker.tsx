@@ -230,7 +230,7 @@ export const DatePicker = (props: DatePickerProps) => {
       <button
         type="button"
         onClick={handleToday}
-        className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium transition-colors"
+        className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium transition-colors"
       >
         Today
       </button>
@@ -243,14 +243,14 @@ export const DatePicker = (props: DatePickerProps) => {
       <button
         type="button"
         onClick={() => commitRange(EMPTY_RANGE)}
-        className="focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+        className="focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
       >
         Clear
       </button>
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-white transition-colors"
+        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium text-white transition-colors"
       >
         Done
       </button>

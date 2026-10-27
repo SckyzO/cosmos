@@ -20,7 +20,7 @@ export type ColumnHeaderProps = {
   filterSelected?: Set<string>;
   onFilterToggle?: (v: string) => void;
   onFilterClear?: () => void;
-  /** Cell padding, matching the `density` of the table it heads. Default `default`. */
+  /** Cell padding, matching the `density` of the table it heads. Default: the page's. */
   density?: DataTableDensity;
   className?: string;
   /** Inline style of the header cell (a pinned column's offset). */
@@ -49,7 +49,7 @@ export const ColumnHeader = ({
   filterSelected = NO_SELECTION,
   onFilterToggle,
   onFilterClear,
-  density = 'default',
+  density,
   className,
   style,
 }: ColumnHeaderProps) => {
@@ -66,7 +66,8 @@ export const ColumnHeader = ({
     <th
       style={style}
       aria-sort={sortable ? ARIA_SORT[sortDir ?? 'none'] : undefined}
-      className={clsx(HEADER_CELL, HEADER_CELL_PADDING[density], ALIGN_CLASS[align], className)}
+      data-density={density}
+      className={clsx(HEADER_CELL, HEADER_CELL_PADDING, ALIGN_CLASS[align], className)}
     >
       <div ref={anchorRef} className="relative inline-flex items-center gap-1.5">
         {sortable ? (

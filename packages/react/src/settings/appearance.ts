@@ -35,6 +35,9 @@ export type CosmosFont = 'outfit' | 'inter' | 'plex' | 'montserrat' | 'open-sans
 /** A Cosmos text size: the `data-text-size` attribute on `<html>`, none for `md`. */
 export type CosmosTextSize = 'sm' | 'md' | 'lg' | 'xl';
 
+/** A Cosmos density: the `data-density` attribute on `<html>`, none for `default`. */
+export type CosmosDensity = 'compact' | 'default' | 'comfortable';
+
 export type CosmosThemeMeta = PaletteMeta & { id: CosmosTheme; dark: boolean };
 /** The `system` entry for `<PalettePicker>`: see `COSMOS_SYSTEM_THEME`. */
 export type CosmosSystemThemeMeta = PaletteMeta & { id: 'system' };
@@ -43,10 +46,11 @@ export type CosmosAccentMeta = AccentColor & { id: CosmosAccent };
 export type CosmosFontMeta = { id: CosmosFont; label: string; family: string };
 /** `scale` is the factor the theme applies to every text size. */
 export type CosmosTextSizeMeta = { id: CosmosTextSize; label: string; scale: number };
+export type CosmosDensityMeta = { id: CosmosDensity; label: string };
 
 /**
- * The page's appearance. `font` and `textSize` are optional: leave them out
- * and `applyAppearance` doesn't touch their attributes.
+ * The page's appearance. `font`, `textSize` and `density` are optional: leave
+ * them out and `applyAppearance` doesn't touch their attributes.
  */
 export type CosmosAppearance = {
   /** `system` follows `prefers-color-scheme`: see `systemThemes`. */
@@ -56,6 +60,7 @@ export type CosmosAppearance = {
   accent: CosmosAccent;
   font?: CosmosFont;
   textSize?: CosmosTextSize;
+  density?: CosmosDensity;
 };
 
 /** The four themes shipped by `@sckyzo/cosmos-theme`, ready for `<PalettePicker>`. */
@@ -143,6 +148,16 @@ export const COSMOS_TEXT_SIZES: CosmosTextSizeMeta[] = [
   { id: 'xl', label: 'Extra large', scale: 1.25 },
 ];
 
+/**
+ * The three densities of `@sckyzo/cosmos-theme`, tightest first. They move the
+ * height of controls and the vertical padding of rows, nothing else.
+ */
+export const COSMOS_DENSITIES: CosmosDensityMeta[] = [
+  { id: 'compact', label: 'Compact' },
+  { id: 'default', label: 'Default' },
+  { id: 'comfortable', label: 'Comfortable' },
+];
+
 const THEME_CLASSES = COSMOS_THEMES.map((t) => t.id).filter((id) => id !== 'light');
 
 /** `true` for the themes that enable Tailwind's `dark:` variant. */
@@ -181,14 +196,14 @@ export const watchSystemTheme = (onChange: (prefersDark: boolean) => void): (() 
 
 /**
  * Apply an appearance to `root` (default `<html>`): swaps the theme class and
- * sets `data-accent`, `data-font` and `data-text-size`, removing each one for
- * its default (blue, Outfit, `md`). A `system` theme is resolved with
- * `prefers-color-scheme` when applied: call this again on `watchSystemTheme`.
- * A `font` or `textSize` left out keeps its
+ * sets `data-accent`, `data-font`, `data-text-size` and `data-density`,
+ * removing each one for its default (blue, Outfit, `md`, `default`). A `system`
+ * theme is resolved with `prefers-color-scheme` when applied: call this again
+ * on `watchSystemTheme`. A `font`, `textSize` or `density` left out keeps its
  * attribute as it is. No-op during SSR.
  */
 export const applyAppearance = (
-  { theme: choice, systemThemes, accent, font, textSize }: CosmosAppearance,
+  { theme: choice, systemThemes, accent, font, textSize, density }: CosmosAppearance,
   root?: HTMLElement
 ) => {
   const el = root ?? (typeof document === 'undefined' ? undefined : document.documentElement);
@@ -202,4 +217,6 @@ export const applyAppearance = (
   else if (font) el.dataset.font = font;
   if (textSize === 'md') delete el.dataset.textSize;
   else if (textSize) el.dataset.textSize = textSize;
+  if (density === 'default') delete el.dataset.density;
+  else if (density) el.dataset.density = density;
 };

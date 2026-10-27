@@ -187,6 +187,10 @@ export const NoViewsByDefault: Story = {
   },
 };
 
+// The vertical padding of the first body cell: the density, as the cell really has it.
+const bodyPadding = (root: HTMLElement) =>
+  getComputedStyle(root.querySelector('tbody td')!).paddingTop;
+
 /** Applying a view restores the search, filters, sort, visible columns, page size and density. */
 export const ApplyingAViewRestoresEveryPart: Story = {
   tags: ['!dev', '!autodocs'],
@@ -206,7 +210,7 @@ export const ApplyingAViewRestoresEveryPart: Story = {
   ),
   play: async ({ canvas, canvasElement }) => {
     await expect(headers(canvas)).toEqual(['Name', 'Role', 'Team']);
-    await expect(canvasElement.querySelector('tbody td')).toHaveClass('py-3.5');
+    await expect(bodyPadding(canvasElement)).toBe('14px');
 
     await pick(canvas, 'Core engineers');
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toHaveValue('o');
@@ -218,7 +222,7 @@ export const ApplyingAViewRestoresEveryPart: Story = {
     );
     await expect(names(canvas)).toEqual(['Zoë Kowalski', 'Ken Thompson', 'Donald Knuth']);
     await expect(canvas.getByRole('combobox', { name: 'Rows per page' })).toHaveValue('3');
-    await expect(canvasElement.querySelector('tbody td')).toHaveClass('py-5');
+    await expect(bodyPadding(canvasElement)).toBe('20px');
     await expect(canvas.getByRole('button', { name: 'Core engineers' })).toBeVisible();
 
     // Another view puts everything back, and "Show all" shows every row.
@@ -232,7 +236,7 @@ export const ApplyingAViewRestoresEveryPart: Story = {
     );
     await expect(names(canvas)).toHaveLength(rows.length);
     await expect(canvas.getByRole('button', { name: 'Show paginated' })).toBeVisible();
-    await expect(canvasElement.querySelector('tbody td')).toHaveClass('py-3.5');
+    await expect(bodyPadding(canvasElement)).toBe('14px');
   },
 };
 

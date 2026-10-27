@@ -139,7 +139,7 @@ function GridListFooterAction({
       <AppLink
         ref={ref}
         className={clsx(
-          'focus-visible:focus-indicator relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent py-4 text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
+          'focus-visible:focus-indicator py-row-16 relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
           className
         )}
         {...rest}

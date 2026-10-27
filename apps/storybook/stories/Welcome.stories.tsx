@@ -371,6 +371,7 @@ const ThemesShowcase = (initial: CosmosAppearance) => {
         onAccentChange={(accent) => update({ accent })}
         onFontChange={(font) => update({ font })}
         onTextSizeChange={(textSize) => update({ textSize })}
+        onDensityChange={(density) => update({ density })}
       />
     </div>
   );
@@ -685,6 +686,7 @@ export const Default: Story = {
         accent: globals.accent || 'blue',
         font: globals.font || 'outfit',
         textSize: globals.textSize || 'md',
+        density: globals.density || 'default',
       }}
     />
   ),

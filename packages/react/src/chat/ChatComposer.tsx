@@ -101,7 +101,7 @@ export function ChatComposer({
             send();
           }
         }}
-        className="focus:field-focus min-h-10 flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] disabled:opacity-50"
+        className="focus:field-focus min-h-ctrl-40 flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] disabled:opacity-50"
       />
       <button
         ref={action}
@@ -116,7 +116,7 @@ export function ChatComposer({
           // A blur with no target is the browser dropping a button that turned disabled.
           if (e.relatedTarget) actionFocused.current = false;
         }}
-        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator h-ctrl-40 w-ctrl-40 flex shrink-0 items-center justify-center rounded-xl text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
       >
         {generating ? (
           <Square className="h-3.5 w-3.5 fill-current" aria-hidden />

@@ -54,8 +54,8 @@ export type PaginationProps = {
 };
 
 const SIZE_BTN: Record<PaginationSize, string> = {
-  sm: 'h-8 min-w-8 px-2 text-xs',
-  md: 'h-9 min-w-9 px-2.5 text-sm',
+  sm: 'h-ctrl-32 min-w-ctrl-32 px-2 text-xs',
+  md: 'h-ctrl-36 min-w-ctrl-36 px-2.5 text-sm',
 };
 
 export const Pagination = ({

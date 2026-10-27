@@ -309,7 +309,9 @@ time, and nothing opens while a save is pending. The table never changes
 ```
 
 `DataTable`'s `density` is controllable like the rest: `density`, `defaultDensity`
-and `onDensityChange(density)`. As with `pageSize`, a `density` passed without
+and `onDensityChange(density)`: `compact`, `default` or `comfortable`. Without
+`density` and `defaultDensity` the table follows the page's `data-density`; set,
+it is a local override of the page. As with `pageSize`, a `density` passed without
 `onDensityChange` is a controlled value that never moves, so a saved view
 reports its density and the table keeps the one you pass.
 
@@ -436,8 +438,8 @@ scrolling. Its limits:
 
 - The table needs a height (`className="max-h-96"`): its own area is what
   scrolls, and without a height every row is in view.
-- Every row has one fixed height, from `density`: 49px, or 61px when
-  `comfortable`, at the default text size, and growing with the text size
+- Every row has one fixed height, from the density: 41px when `compact`, 49px,
+  or 61px when `comfortable`, at the default text size, and growing with the text size
   setting. Content taller than that is clipped, so keep a cell to a line of text
   or a control, as in a standard row.
 - It applies to the table layout only: with `mobileLayout="cards"` below `sm`
@@ -456,7 +458,8 @@ scrolling. Its limits:
 />
 ```
 
-`Table` takes `density` (`default` or `comfortable`, as on `DataTable`),
+`Table` takes `density` (`compact`, `default` or `comfortable`, as on `DataTable`; the
+page's by default),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
 loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
@@ -1214,8 +1217,9 @@ throws an error that names the package.
 
 ## Themes and accents
 
-The theme is a class on `<html>`; the accent, the font and the text size are
-the `data-accent`, `data-font` and `data-text-size` attributes, see the
+The theme is a class on `<html>`; the accent, the font, the text size and the
+density are the `data-accent`, `data-font`, `data-text-size` and `data-density`
+attributes, see the
 [theme README](../theme#themes--accents). `AppearanceSettings` renders a picker
 for each, and `applyAppearance` sets them on the document:
 
@@ -1229,6 +1233,7 @@ function Appearance() {
     accent: 'blue',
     font: 'outfit',
     textSize: 'md',
+    density: 'default',
   });
   useEffect(() => applyAppearance(appearance), [appearance]);
   const update = (patch: Partial<CosmosAppearance>) => setAppearance((a) => ({ ...a, ...patch }));
@@ -1239,12 +1244,13 @@ function Appearance() {
       onAccentChange={(accent) => update({ accent })}
       onFontChange={(font) => update({ font })}
       onTextSizeChange={(textSize) => update({ textSize })}
+      onDensityChange={(density) => update({ density })}
     />
   );
 }
 ```
 
-The font and text size groups show only when their handlers are set. Pass
+The font, text size and density groups show only when their handlers are set. Pass
 `fonts` to offer only the fonts whose CSS the app imports
 (`@sckyzo/cosmos-theme/fonts/<name>`).
 

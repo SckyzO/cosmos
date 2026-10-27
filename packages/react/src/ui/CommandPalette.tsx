@@ -93,7 +93,7 @@ function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPalett
       <Command.Input
         ref={ref}
         className={clsx(
-          'flex h-12 w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400',
+          'h-ctrl-48 flex w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400',
           className
         )}
         {...rest}
@@ -103,7 +103,7 @@ function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPalett
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="focus-visible:focus-indicator flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -187,7 +187,7 @@ function CommandPaletteItem({
     <Command.Item
       ref={ref}
       className={clsx(
-        'flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm text-gray-700 transition-colors outline-none select-none',
+        'py-row-8 flex cursor-pointer items-center gap-3 rounded-md px-2 text-sm text-gray-700 transition-colors outline-none select-none',
         'data-[selected=true]:bg-gray-100 data-[selected=true]:text-gray-900',
         'dark:text-gray-200 dark:data-[selected=true]:bg-white/5 dark:data-[selected=true]:text-white',
         'data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40',

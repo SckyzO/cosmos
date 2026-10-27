@@ -124,7 +124,7 @@ const HelpOverlayRoot = ({
           type="button"
           onClick={() => setOpen(false)}
           aria-label="Close keyboard shortcuts"
-          className="focus-visible:focus-indicator flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="focus-visible:focus-indicator h-ctrl-32 w-ctrl-32 flex shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" />
         </button>
@@ -180,7 +180,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
   const sequence = Array.isArray(keys) ? keys : [keys];
 
   return (
-    <li className={clsx('flex items-center justify-between gap-3 py-1.5 text-sm', className)}>
+    <li className={clsx('py-row-6 flex items-center justify-between gap-3 text-sm', className)}>
       <span className="text-gray-700 dark:text-gray-300">{description}</span>
       <span className="flex shrink-0 items-center gap-1">
         {sequence.map((combo, idx) => {

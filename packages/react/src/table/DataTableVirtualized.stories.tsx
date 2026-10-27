@@ -77,6 +77,25 @@ export const TenThousandRows: Story = {
   ),
 };
 
+/** `compact` rows are shorter; the window follows the density. */
+export const Compact: Story = {
+  tags: ['!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={COUNT}
+        density="compact"
+        virtualize
+        aria-label="Nodes"
+        className="max-h-96"
+      />
+    </Wrap>
+  ),
+};
+
 /** `comfortable` rows are taller; the window follows the density. */
 export const Comfortable: Story = {
   tags: ['!autodocs'],
@@ -153,7 +172,7 @@ export const RowIsAsTallAsAStandardRow: Story = {
   render: () => (
     <Wrap>
       <div className="flex flex-col gap-6">
-        {(['default', 'comfortable'] as const).map((density) => (
+        {(['compact', 'default', 'comfortable'] as const).map((density) => (
           <div key={density} className="flex gap-6">
             <div className="min-w-0 flex-1">
               <DataTable
@@ -185,7 +204,7 @@ export const RowIsAsTallAsAStandardRow: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    for (const density of ['default', 'comfortable']) {
+    for (const density of ['compact', 'default', 'comfortable']) {
       const standard = bodyRows(canvas.getByRole('table', { name: `Standard ${density}` }));
       const windowed = bodyRows(canvas.getByRole('table', { name: `Windowed ${density}` }));
       // Rows 2 and 3: the first one has no divider above it in either table.
@@ -196,6 +215,52 @@ export const RowIsAsTallAsAStandardRow: Story = {
         standard[1].getBoundingClientRect().height
       );
     }
+  },
+};
+
+/** Without a `density` the window follows the page's: a drawn row is as tall as a standard one. */
+export const RowFollowsThePageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-col gap-6">
+        {(['compact', 'comfortable'] as const).map((page) => (
+          <div key={page} data-density={page} className="flex gap-6">
+            <div className="min-w-0 flex-1">
+              <DataTable
+                rows={rows.slice(0, 20)}
+                columns={columns}
+                rowKey={(r) => r.id}
+                pageSize={20}
+                aria-label={`Standard ${page}`}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <DataTable
+                rows={rows}
+                columns={columns}
+                rowKey={(r) => r.id}
+                pageSize={COUNT}
+                virtualize
+                aria-label={`Windowed ${page}`}
+                className="max-h-96"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const heights: number[] = [];
+    for (const page of ['compact', 'comfortable']) {
+      const standard = bodyRows(canvas.getByRole('table', { name: `Standard ${page}` }));
+      const windowed = bodyRows(canvas.getByRole('table', { name: `Windowed ${page}` }));
+      const height = windowed[1].getBoundingClientRect().height;
+      await expect(height).toBe(standard[1].getBoundingClientRect().height);
+      heights.push(height);
+    }
+    await expect(heights[0]).toBeLessThan(heights[1]);
   },
 };
 

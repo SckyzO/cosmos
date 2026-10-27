@@ -70,8 +70,8 @@ const STEP_CLASS =
   'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white font-medium text-gray-700 transition-colors not-disabled:hover:bg-gray-50 focus-visible:focus-indicator disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:not-disabled:hover:bg-gray-700';
 
 const STEP_SIZE: Record<RecordPagerVariant, string> = {
-  default: 'h-9 gap-1.5 px-3 text-sm',
-  compact: 'size-8',
+  default: 'h-ctrl-36 gap-1.5 px-3 text-sm',
+  compact: 'size-ctrl-32',
 };
 
 export const RecordPager = ({

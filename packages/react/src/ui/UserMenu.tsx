@@ -49,7 +49,7 @@ function UserMenuTrigger({
   return (
     <Menu.Trigger
       className={clsx(
-        'group flex items-center gap-2 rounded-lg border border-gray-200 py-1.5 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
+        'group py-row-6 flex items-center gap-2 rounded-lg border border-gray-200 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
         className
       )}
       {...rest}

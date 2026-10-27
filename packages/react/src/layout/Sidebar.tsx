@@ -107,14 +107,14 @@ const ROW_INSET: Record<RowInset, { margin: string; width: string; px: number }>
 
 // ─── Tree levels ──────────────────────────────────────────────────────────────
 // The top level shows an icon. Nested levels show the label alone, smaller and shorter as they go
-// down, so the depth reads at a glance: 40, 32, 28 then 26 px rows. Three levels read best; a
+// down, so the depth reads at a glance: 40, 32, 28 then 26 px rows at the default density. Three levels read best; a
 // fourth takes the third's text.
 
 const LEVEL = [
-  { text: 'text-sm', py: 'py-2.5' },
-  { text: 'text-sm', py: 'py-1.5' },
-  { text: 'text-xs', py: 'py-1.5' },
-  { text: 'text-xs', py: 'py-1.25' },
+  { text: 'text-sm', py: 'py-row-10' },
+  { text: 'text-sm', py: 'py-row-6' },
+  { text: 'text-xs', py: 'py-row-6' },
+  { text: 'text-xs', py: 'py-row-5' },
 ] as const;
 const level = (depth: number) => LEVEL[Math.min(depth, LEVEL.length - 1)];
 
@@ -879,8 +879,8 @@ const SidebarSubMenu = ({
         className={clsx(
           'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
           compact
-            ? 'text-2xs flex-col gap-1 py-2 text-center'
-            : 'justify-center px-2 py-2.5 text-sm',
+            ? 'text-2xs py-row-8 flex-col gap-1 text-center'
+            : 'py-row-10 justify-center px-2 text-sm',
           ROW_INSET[inset].margin,
           ROW_INSET[inset].width,
           active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
@@ -1099,7 +1099,7 @@ const SidebarGroup = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-2xs focus-visible:focus-indicator mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 py-1.5 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
+        className="text-2xs focus-visible:focus-indicator py-row-6 mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {label}

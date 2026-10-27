@@ -33,7 +33,7 @@ const ZoomBtn = ({
     onClick={onClick}
     title={title}
     className={clsx(
-      'focus-visible:focus-indicator flex items-center px-2.5 py-2 text-gray-500 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/5',
+      'focus-visible:focus-indicator py-row-8 flex items-center px-2.5 text-gray-500 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/5',
       dividerLeft && 'border-l border-gray-200 dark:border-gray-700'
     )}
   >
@@ -64,7 +64,7 @@ export const ZoomBar = ({
     <ZoomBtn onClick={onZoomOut} title="Zoom out">
       <Minus className="h-4 w-4" />
     </ZoomBtn>
-    <span className="flex min-w-[3.5rem] items-center justify-center border-x border-gray-200 px-3 py-2 font-mono text-sm font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300">
+    <span className="py-row-8 flex min-w-[3.5rem] items-center justify-center border-x border-gray-200 px-3 font-mono text-sm font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300">
       {Math.round(zoom * 100)}%
     </span>
     <ZoomBtn onClick={onZoomIn} title="Zoom in">

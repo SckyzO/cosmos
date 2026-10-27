@@ -374,7 +374,7 @@ export const TagInput = ({
                   pickSuggestion(item);
                 }}
                 className={clsx(
-                  'cursor-pointer truncate px-3 py-2 text-gray-900 select-none dark:text-gray-100',
+                  'py-row-8 cursor-pointer truncate px-3 text-gray-900 select-none dark:text-gray-100',
                   i === activeIndex && 'bg-gray-50 dark:bg-white/5'
                 )}
               >

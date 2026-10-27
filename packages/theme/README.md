@@ -130,6 +130,34 @@ Two more settings on `<html>`, both optional:
 
 Both attributes also work on an element below `<html>`, for one part of a page.
 
+## Density
+
+A `data-density` attribute on `<html>` tightens or loosens the vertical rhythm of
+every control and row at once: `compact`, none for the default, or `comfortable`.
+Only the heights and the vertical padding of rows move; panel padding, gaps and
+horizontal padding stay. It applies on touch screens too: the user's choice wins.
+
+| Token                          | Default    | `compact` | `comfortable` | Used by                     |
+| ------------------------------ | ---------- | --------- | ------------- | --------------------------- |
+| `h-ctrl-28` … `h-ctrl-48`      | 28–48px    | 4px less  | 4px more      | buttons, fields, segments   |
+| `py-row-4` … `py-row-24`       | 4–24px     | 2px less  | 2px more      | list rows, menu items, tabs |
+| `py-cell-head`, `py-cell-body` | 12px, 14px | 8px, 10px | 16px, 20px    | table cells                 |
+
+The token is named by its default size: `h-ctrl-36` is today's `h-9`. The smallest
+control, 28px, stays at 24px in `compact`, the WCAG 2.5.8 floor, and `py-row-5`
+stops at 4px for the same reason. They are `--spacing-ctrl-*`, `--spacing-row-*` and
+`--spacing-cell-*` theme variables, so any utility of the spacing scale takes
+them (`h-ctrl-36`, `min-h-ctrl-36`, `size-ctrl-32`, `py-row-8`). Use them for a
+control or a row of your own and it follows the page.
+
+```html
+<html class="sand" data-density="compact"></html>
+```
+
+The attribute also works on an element below `<html>`; `data-density="default"`
+opts a part of a compact or comfortable page out (a `DataTable` with its own
+`density` does this).
+
 ## Tokens
 
 See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.

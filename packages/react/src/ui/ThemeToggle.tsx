@@ -17,8 +17,8 @@ export type ThemeToggleProps = Omit<ComponentPropsWithRef<'button'>, 'onClick' |
 };
 
 const SIZE_CLASS: Record<ThemeToggleSize, { box: string; icon: string }> = {
-  sm: { box: 'h-8 w-8', icon: 'h-4 w-4' },
-  md: { box: 'h-10 w-10', icon: 'h-5 w-5' },
+  sm: { box: 'h-ctrl-32 w-ctrl-32', icon: 'h-4 w-4' },
+  md: { box: 'h-ctrl-40 w-ctrl-40', icon: 'h-5 w-5' },
 };
 
 export function ThemeToggle({

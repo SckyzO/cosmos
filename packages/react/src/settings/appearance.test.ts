@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applyAppearance,
   COSMOS_ACCENTS,
+  COSMOS_DENSITIES,
   COSMOS_FONTS,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
@@ -105,6 +106,29 @@ describe('applyAppearance', () => {
     it('removes data-accent for the default blue', () => {
       const { data } = apply({ theme: 'light', accent: 'blue' }, { dataset: { accent: 'rose' } });
       expect(data).not.toHaveProperty('accent');
+    });
+  });
+
+  describe('density', () => {
+    it('sets data-density', () => {
+      const { data } = apply({ theme: 'light', accent: 'blue', density: 'compact' });
+      expect(data).toEqual({ density: 'compact' });
+    });
+
+    it('removes it for the default density', () => {
+      const { data } = apply(
+        { theme: 'light', accent: 'blue', density: 'default' },
+        { dataset: { density: 'comfortable' } }
+      );
+      expect(data).not.toHaveProperty('density');
+    });
+
+    it('keeps it as it is when left out', () => {
+      const { data } = apply(
+        { theme: 'light', accent: 'blue' },
+        { dataset: { density: 'comfortable' } }
+      );
+      expect(data).toEqual({ density: 'comfortable' });
     });
   });
 
@@ -291,6 +315,12 @@ describe('contract with @sckyzo/cosmos-theme', () => {
   it('has a data-text-size block for every text size but md', () => {
     for (const { id } of COSMOS_TEXT_SIZES) {
       if (id !== 'md') expect(attributeValues('text-size'), id).toContain(id);
+    }
+  });
+
+  it('has a data-density block for every density', () => {
+    for (const { id } of COSMOS_DENSITIES) {
+      expect(attributeValues('density'), id).toContain(id);
     }
   });
 
