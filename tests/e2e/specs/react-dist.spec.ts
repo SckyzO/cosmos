@@ -80,15 +80,15 @@ const distFiles = () =>
 test('Shiki is an optional peer dependency, and a dev dependency of the repo only', () => {
   const pkg = JSON.parse(read(`${pkgDir}package.json`));
   expect(pkg.peerDependencies.shiki).toMatch(/^\^4\./);
-  expect(pkg.peerDependenciesMeta).toEqual({ shiki: { optional: true } });
+  expect(pkg.peerDependenciesMeta.shiki).toEqual({ optional: true });
   expect(pkg.dependencies.shiki).toBeUndefined();
 });
 
-test('the root entry carries no Shiki and does not import the code entry', () => {
-  for (const name of distFiles().filter((file) => !file.startsWith('code/'))) {
+test('the root entry carries no Shiki and does not import a sub-path entry', () => {
+  for (const name of distFiles().filter((file) => !/^(?:code|editor)\//.test(file))) {
     const code = read(`${pkgDir}dist/${name}`);
     expect(code, name).not.toMatch(/shiki/i);
-    expect(code, name).not.toMatch(/['"]\.{1,2}\/code\//);
+    expect(code, name).not.toMatch(/['"]\.{1,2}\/(?:code|editor)\//);
     expect(code, name).not.toContain('@sckyzo/cosmos-react');
   }
 });
@@ -158,4 +158,130 @@ test('the code entry loads in Node as ESM and as CJS, next to the root entry', (
   };
   expect(JSON.parse(esmOut)).toEqual(expected);
   expect(JSON.parse(cjsOut)).toEqual(expected);
+});
+
+// ── `@sckyzo/cosmos-react/editor`: formatted text, with Tiptap as optional peers ────────────────
+// Same contract as the code entry: the root entry ships no Tiptap, and the editor entry imports the
+// root entry as the package itself. It also takes by value a few internal helpers the root entry
+// does not export, so every name it asks of the root entry has to exist there.
+
+const editorEsm = `${pkgDir}dist/editor/index.js`;
+const editorCjs = `${pkgDir}dist/editor/index.cjs`;
+const TIPTAP_PEERS = [
+  '@tiptap/core',
+  '@tiptap/extensions',
+  '@tiptap/pm',
+  '@tiptap/react',
+  '@tiptap/starter-kit',
+];
+
+test('Tiptap is made of optional peer dependencies, and dev dependencies of the repo only', () => {
+  const pkg = JSON.parse(read(`${pkgDir}package.json`));
+  for (const name of TIPTAP_PEERS) {
+    expect(pkg.peerDependencies[name], name).toMatch(/^\^3\./);
+    expect(pkg.peerDependenciesMeta[name], name).toEqual({ optional: true });
+    expect(pkg.dependencies[name], name).toBeUndefined();
+    expect(pkg.devDependencies[name], name).toMatch(/^3\.\d+\.\d+$/);
+  }
+});
+
+test('neither the root entry nor the code entry carries Tiptap or ProseMirror', () => {
+  for (const name of distFiles().filter((file) => !file.startsWith('editor/'))) {
+    const code = read(`${pkgDir}dist/${name}`);
+    expect(code, name).not.toMatch(/tiptap|prosemirror/i);
+  }
+});
+
+test('the editor entry resolves for import and require, each with its own types', () => {
+  expectSubpathOwnTypes(pkgDir, 'editor');
+});
+
+test('the editor entry leaves Tiptap and the root entry external', () => {
+  for (const file of [editorEsm, editorCjs]) {
+    const code = read(file);
+    expect(code, file).toMatch(/(?:from |require\()['"]@sckyzo\/cosmos-react['"]/);
+    for (const name of [
+      '@tiptap/react',
+      '@tiptap/react/menus',
+      '@tiptap/starter-kit',
+      '@tiptap/extensions',
+    ]) {
+      expect(code, file).toMatch(new RegExp(`(?:from |require\\()['"]${name}['"]`));
+    }
+    // Neither Tiptap, ProseMirror nor a component of the root entry is bundled in.
+    expect(code, file).not.toMatch(/class \w*(?:EditorView|Schema)\b/);
+    expect(code, file).not.toContain('Clipboard');
+    expect(code.length, file).toBeLessThan(60_000);
+  }
+});
+
+test('the editor entry only asks the root entry for names it exports', () => {
+  const cosmos: string[] = JSON.parse(
+    execFileSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `const c = await import(${JSON.stringify(esm)}); console.log(JSON.stringify(Object.keys(c)));`,
+      ],
+      { encoding: 'utf8', cwd: pkgDir }
+    )
+  );
+  const esmSource = read(editorEsm);
+  const imported = [
+    ...esmSource.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@sckyzo\/cosmos-react['"]/g),
+  ].flatMap(([, list]) =>
+    list
+      .split(',')
+      .map((item) => item.split(' as ')[0].trim())
+      .filter(Boolean)
+  );
+  expect(imported.length).toBeGreaterThan(0);
+  expect(imported.filter((name) => !cosmos.includes(name))).toEqual([]);
+
+  const cjsSource = read(editorCjs);
+  const binding =
+    /(?:var|const|let) (\w+) = (?:__toESM\()?require\(['"]@sckyzo\/cosmos-react['"]\)/.exec(
+      cjsSource
+    )?.[1];
+  expect(binding).toBeTruthy();
+  const used = [...cjsSource.matchAll(new RegExp(`\\b${binding}\\.(\\w+)`, 'g'))].map(
+    ([, name]) => name
+  );
+  expect(used.length).toBeGreaterThan(0);
+  expect(used.filter((name) => !cosmos.includes(name))).toEqual([]);
+});
+
+test('the editor entry loads in Node as ESM and as CJS, next to the root entry', () => {
+  const script = (load: string) => `
+    ${load}
+    console.log(JSON.stringify({
+      editor: typeof editor.RichTextEditor,
+      actions: editor.RICH_TEXT_ACTIONS.length,
+    }));
+  `;
+  const esmOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`await import(${JSON.stringify(esm)});
+        const editor = await import(${JSON.stringify(editorEsm)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const cjsOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`import { createRequire } from 'node:module';
+        const require = createRequire(import.meta.url);
+        require(${JSON.stringify(cjs)});
+        const editor = require(${JSON.stringify(editorCjs)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  expect(JSON.parse(esmOut)).toEqual({ editor: 'function', actions: 11 });
+  expect(JSON.parse(cjsOut)).toEqual({ editor: 'function', actions: 11 });
 });
