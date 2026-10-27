@@ -7,6 +7,7 @@ import { parseJobLogHash, type JobLogLineRef } from './job-log';
 import {
   ANSI_STEPS,
   BUILD_STEPS,
+  CONTRAST_STEP,
   HOSTILE_STEP,
   longSteps,
   runningSteps,
@@ -406,6 +407,30 @@ export const AnsiColoursBecomeSpans: Story = {
     await expect(canvasElement.textContent).not.toContain('Progress 10%');
     await expect(canvasElement.textContent).not.toContain('window title');
   },
+};
+
+/**
+ * A colour on a background reads in both tones, even on a background of its own colour: the text
+ * takes the background's text colour. A dim colour keeps its contrast too. Axe checks every line.
+ */
+export const ColoursOnColoursReadOnTheTerminalTone: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { tone: 'terminal' },
+  render: (args) => (
+    <JobLog
+      steps={[CONTRAST_STEP]}
+      title={`Colours on colours, ${args.tone}`}
+      tone={args.tone}
+      defaultExpandedSteps={['contrast']}
+      controls={[]}
+      height={760}
+    />
+  ),
+};
+
+export const ColoursOnColoursReadOnTheSurfaceTone: Story = {
+  ...ColoursOnColoursReadOnTheTerminalTone,
+  args: { tone: 'surface' },
 };
 
 /** 20,000 lines: the page holds a bounded number of rows, before and after scrolling a long way. */

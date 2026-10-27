@@ -210,22 +210,24 @@ const label = (color: string) =>
     ? color
     : `bright ${color.replace('bright', '').replace(/^./, (c) => c.toLowerCase())}`;
 
+/** The SGR code of colour `i` of `ANSI_COLORS`: 30 to 37 and 90 to 97, plus 10 for a background. */
+const colorCode = (i: number, background = false) =>
+  (i < 8 ? 30 + i : 82 + i) + (background ? 10 : 0);
+
 /** Every ANSI colour as a foreground and as a background, the attributes, 256 colours and truecolor. */
 export const ANSI_STEPS: readonly JobLogStep[] = [
   {
     id: 'foreground',
     name: 'Foreground colours',
     status: 'passed',
-    lines: ANSI_COLORS.map((_, i) =>
-      sgr(String(i < 8 ? 30 + i : 82 + i), `${label(ANSI_COLORS[i]!)} text`)
-    ),
+    lines: ANSI_COLORS.map((_, i) => sgr(String(colorCode(i)), `${label(ANSI_COLORS[i]!)} text`)),
   },
   {
     id: 'background',
     name: 'Background colours',
     status: 'passed',
     lines: ANSI_COLORS.map((_, i) =>
-      sgr(String(i < 8 ? 40 + i : 92 + i), ` ${label(ANSI_COLORS[i]!)} background `)
+      sgr(String(colorCode(i, true)), ` ${label(ANSI_COLORS[i]!)} background `)
     ),
   },
   {
@@ -241,6 +243,19 @@ export const ANSI_STEPS: readonly JobLogStep[] = [
     ],
   },
 ];
+
+/** The worst cases for contrast: each colour on a background of the same colour, and each dimmed. */
+export const CONTRAST_STEP: JobLogStep = {
+  id: 'contrast',
+  name: 'Colours on colours',
+  status: 'passed',
+  lines: [
+    ...ANSI_COLORS.map((color, i) =>
+      sgr(`${colorCode(i)};${colorCode(i, true)}`, ` ${label(color)} on ${label(color)} `)
+    ),
+    ...ANSI_COLORS.map((color, i) => sgr(`2;${colorCode(i)}`, `dim ${label(color)}`)),
+  ],
+};
 
 /** Lines that are not what they look like: markup and escape-looking text stay text. */
 export const HOSTILE_STEP: JobLogStep = {

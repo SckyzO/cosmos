@@ -1086,8 +1086,9 @@ A 256-colour or truecolor code lands on the nearest of the 16. Every other escap
 moves, window titles, links) and control character is dropped, and a carriage return keeps only the
 last segment of the line, so a progress bar reads as its last state. Black and white are mapped to
 what reads on the tone (a black text on the terminal panel is the muted gray). Each colour holds
-4.5:1 on both tones in the four themes; a text colour set on top of a background colour is the
-host's choice and is not checked.
+4.5:1 on both tones in the four themes. On a background colour, the text takes the colour that
+reads on that background and its own is dropped (`31;47` is dark text on a light fill), and dim
+mutes only the default text: a coloured text keeps its colour.
 
 **Accessibility.** The log is a named `region` with a tab stop. A step header is a button with
 `aria-expanded` and `aria-controls`, its status an image with a text name (never a colour alone),
