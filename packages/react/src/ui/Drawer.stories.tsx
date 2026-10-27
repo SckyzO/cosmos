@@ -328,6 +328,34 @@ export const BottomSheetOnMobile: Story = {
   },
 };
 
+// At the `mobile` viewport a `md` (384px) or `lg` (448px) side drawer is wider than the screen as
+// asked: it stops short of the far edge, the page does not widen and the close-outside button
+// stays on screen.
+const fitsAPhone = (size: 'md' | 'lg', side: 'left' | 'right'): Story => ({
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Drawer open onClose={() => {}} side={side} size={size} closeOutside ariaLabel="Filters">
+      <p className="p-6">A {size} drawer on a phone.</p>
+    </Drawer>
+  ),
+  play: async () => {
+    const panel = await within(document.body).findByRole('dialog', { name: 'Filters' });
+    await waitFor(() => expect(window.innerWidth).toBeLessThanOrEqual(400));
+    const width = document.documentElement.clientWidth;
+    const close = within(panel)
+      .getByRole('button', { name: 'Close drawer' })
+      .getBoundingClientRect();
+    await expect(panel.getBoundingClientRect().width).toBeLessThan(width);
+    await expect(close.left).toBeGreaterThanOrEqual(0);
+    await expect(close.right).toBeLessThanOrEqual(width);
+    expectNoHorizontalOverflow();
+  },
+});
+
+export const MediumDrawerFitsAPhone = fitsAPhone('md', 'right');
+export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'left');
+
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 /** The left drawer enters and leaves by the left edge, never the right. */
