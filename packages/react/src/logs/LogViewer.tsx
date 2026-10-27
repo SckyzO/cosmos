@@ -593,13 +593,22 @@ export const LogViewer = ({
     return () => observer.disconnect();
   }, [follow, stick]);
 
+  // Where the scroll position was left by the last change of content or by our own code. A scroll
+  // event that finds it there is theirs, not the reader's: a filter that shortens the list makes
+  // the browser clamp the position, often to the end, and that must not resume a paused viewer.
+  const settled = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollerRef.current;
+    if (el) settled.current = el.scrollTop;
+  }, [visible, slots, rowHeight, wrap, newest]);
+
   const onScroll = () => {
     const el = scrollerRef.current;
     if (!el) return;
     const distance = newest ? el.scrollHeight - el.scrollTop - el.clientHeight : el.scrollTop;
     const atEnd = distance <= Math.max(24, rowHeight);
     if (follow && !atEnd) setFollow(false);
-    else if (!follow && atEnd) setFollow(true);
+    else if (!follow && atEnd && el.scrollTop !== settled.current) setFollow(true);
   };
 
   // Paused: remember the newest line, to count the ones that arrive after it.
@@ -626,7 +635,10 @@ export const LogViewer = ({
     lastSeen.current = { id: newestId, lines: visible };
     if (!el || newest || follow || wrap || before.id === null || before.id === newestId) return;
     const added = newLinesSince(visible, before.id).length;
-    if (added > 0 && added < visible.length) el.scrollTop += added * rowHeight;
+    if (added > 0 && added < visible.length) {
+      el.scrollTop += added * rowHeight;
+      settled.current = el.scrollTop;
+    }
   }, [visible, newestId, newest, follow, wrap, rowHeight]);
 
   // ── The active match ──────────────────────────────────────────────────────
@@ -651,6 +663,7 @@ export const LogViewer = ({
       top = slotOf(drawn, state.blocks) * state.rowHeight - (el.clientHeight - state.rowHeight) / 2;
     }
     el.scrollTop = Math.max(0, top);
+    settled.current = el.scrollTop;
   }, [activeId, expression]);
 
   // ── Announcing the errors ─────────────────────────────────────────────────
