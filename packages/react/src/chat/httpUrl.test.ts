@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hostOf, isHttpUrl } from './httpUrl';
+import { hostOf, isHttpUrl, trimTrailingPunctuation } from './httpUrl';
 
 describe('isHttpUrl', () => {
   it('accepts http and https URLs', () => {
@@ -43,5 +43,24 @@ describe('hostOf', () => {
     expect(hostOf('javascript:alert(1)')).toBeUndefined();
     expect(hostOf('/relative')).toBeUndefined();
     expect(hostOf('https://')).toBeUndefined();
+  });
+});
+
+describe('trimTrailingPunctuation', () => {
+  it('drops the punctuation that ends a sentence, and only at the end', () => {
+    expect(trimTrailingPunctuation('https://a.example/b.')).toBe('https://a.example/b');
+    expect(trimTrailingPunctuation('https://a.example/b?!).')).toBe('https://a.example/b');
+    expect(trimTrailingPunctuation('https://a.example/(b)')).toBe('https://a.example/(b');
+    expect(trimTrailingPunctuation('https://a.example/b?c=1')).toBe('https://a.example/b?c=1');
+    expect(trimTrailingPunctuation('https://a.example/b')).toBe('https://a.example/b');
+  });
+
+  it('takes linear time on a long run of punctuation inside the URL', () => {
+    // A run of "!" that is not at the end made the old regex backtrack quadratically: a message
+    // writer could freeze every reader's tab.
+    const url = `https://a.example/${'!'.repeat(30_000)}x`;
+    const start = performance.now();
+    expect(trimTrailingPunctuation(url)).toBe(url);
+    expect(performance.now() - start).toBeLessThan(50);
   });
 });
