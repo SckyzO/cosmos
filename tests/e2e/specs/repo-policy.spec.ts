@@ -270,7 +270,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -281,6 +281,9 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/forms/fieldRecipe.ts', // the padding and icon places of every field
   'packages/react/src/forms/RequiredMark.tsx', // the asterisk after a label
   'packages/react/src/forms/tagField.tsx', // the box and input of MultiSelect and TagInput
+  'packages/react/src/comments/Comment.tsx', // what CommentThread draws
+  'packages/react/src/comments/CommentComposer.tsx', // the reply and edit fields of a Comment
+  'packages/react/src/data/TimeLabel.tsx', // the `<time>` of DateTime and RelativeTime
 ];
 
 /**
@@ -298,6 +301,10 @@ const RTL_DEFERRED: { file: string; reason: string }[] = [
   {
     file: 'packages/react/src/editor/RichTextEditor.tsx',
     reason: 'editor/ is converted after #486, which is changing FormattingToolbar and LinkForm',
+  },
+  {
+    file: 'packages/react/src/data/AuditDiff.tsx',
+    reason: 'converted after #486, which is changing it',
   },
 ];
 
