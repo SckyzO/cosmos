@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ColumnVisibility } from './columnVisibility';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -58,4 +59,24 @@ export type DataTableExportQuery = {
   sort: DataTableSort;
   /** The keys of the visible data columns, in the order they are drawn. */
   columns: string[];
+};
+
+/**
+ * A saved view of a `DataTable`: a name and every part of the state a user sets. Plain JSON, so
+ * the host can keep it anywhere (local storage, a server).
+ */
+export type DataTableView = {
+  /** Identifies the view; `activeView` holds it. Unique among the views of a table. */
+  id: string;
+  name: string;
+  /** The search text. */
+  search: string;
+  /** Column `key` → the selected filter values. */
+  filters: Record<string, string[]>;
+  sort: DataTableSort;
+  /** Column `key` → shown. */
+  columnVisibility: ColumnVisibility;
+  /** Rows per page; `'all'` is "Show all". */
+  pageSize: number | 'all';
+  density: DataTableDensity;
 };

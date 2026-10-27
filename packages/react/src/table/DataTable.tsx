@@ -3,6 +3,7 @@ import { Download, Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
+import { DataTableViews } from './DataTableViews';
 import { DataTableMobileCards, DataTableMobileSort } from './DataTableMobileCards';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
@@ -16,6 +17,7 @@ import { ErrorState } from '../feedback/ErrorState';
 import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
 import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
 import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
+import { newViewId, recordToFilters, type ViewState } from './savedViews';
 import { useControllableState } from '../hooks/useControllableState';
 import { toCsv } from './csv';
 import { downloadCsv } from './download';
@@ -24,7 +26,13 @@ import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
-import type { ColumnDef, DataTableDensity, DataTableExportQuery, DataTableSort } from './types';
+import type {
+  ColumnDef,
+  DataTableDensity,
+  DataTableExportQuery,
+  DataTableSort,
+  DataTableView,
+} from './types';
 
 export type DataTableProps<T> = {
   rows: T[];
@@ -171,6 +179,26 @@ export type DataTableProps<T> = {
    */
   onExport?: (query: DataTableExportQuery) => void;
 
+  // ── Saved views ────────────────────────────────────────────────────────────
+  /**
+   * The saved views, when controlled. Passing this or `defaultViews` shows a "Views" button in the
+   * toolbar (which then shows even without a search field): its menu applies a view, saves the
+   * current state as a new one, renames the active view or deletes it. A view holds the search,
+   * filters, sort, visible columns, page size and density as plain JSON; the host keeps it
+   * (`onViewsChange`). Applying a view sets each part through the table's own setters, so a
+   * controlled part reports its `on*Change` (a part the host does not let move, such as a `pageSize`
+   * with no `onPageSizeChange`, stays where it is), and goes back to the first page.
+   */
+  views?: DataTableView[];
+  defaultViews?: DataTableView[];
+  /** Called with the whole list after a view is saved, renamed or deleted. */
+  onViewsChange?: (views: DataTableView[]) => void;
+  /** The `id` of the active view, or `null` for none; when controlled. */
+  activeView?: string | null;
+  defaultActiveView?: string | null;
+  /** Called with the `id` of the view that became active, or `null` (the active view was deleted). */
+  onActiveViewChange?: (id: string | null) => void;
+
   // ── Narrow screens ─────────────────────────────────────────────────────────
   /**
    * What the rows become below `sm` (640px). `scroll` (the default) keeps the table, scrolling
@@ -243,13 +271,19 @@ export const DataTable = <T,>({
   exportable = false,
   exportFileName = 'export.csv',
   onExport,
+  views: viewsProp,
+  defaultViews,
+  onViewsChange,
+  activeView: activeViewProp,
+  defaultActiveView = null,
+  onActiveViewChange,
   columnVisibility: columnVisibilityProp,
   defaultColumnVisibility,
   onColumnVisibilityChange,
   mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
   const mobileCards = mobileLayout === 'cards';
-  const [density] = useControllableState<DataTableDensity>({
+  const [density, setDensity] = useControllableState<DataTableDensity>({
     value: densityProp,
     defaultValue: defaultDensity,
     onChange: onDensityChange,
@@ -266,7 +300,8 @@ export const DataTable = <T,>({
     () => resolveColumnVisibility(allColumns, columnVisibility),
     [allColumns, columnVisibility]
   );
-  const hasToolbarControls = columnsMenu || exportable;
+  const viewsEnabled = viewsProp !== undefined || defaultViews !== undefined;
+  const hasToolbarControls = columnsMenu || exportable || viewsEnabled;
   const columnsMenuNode = columnsMenu ? (
     <DataTableColumnsMenu
       columns={allColumns}
@@ -444,6 +479,52 @@ export const DataTable = <T,>({
     value: Array.from(vals).join(', '),
   }));
 
+  const [savedViews, setSavedViews] = useControllableState<DataTableView[]>({
+    value: viewsProp,
+    defaultValue: () => defaultViews ?? [],
+    onChange: onViewsChange,
+    name: 'DataTable.views',
+  });
+  const [activeViewId, setActiveViewId] = useControllableState<string | null>({
+    value: activeViewProp,
+    defaultValue: defaultActiveView,
+    onChange: onActiveViewChange,
+    name: 'DataTable.activeView',
+  });
+  const currentState: ViewState = {
+    search: searchValue,
+    filters: filtersToRecord(filters),
+    sort,
+    columnVisibility: shown,
+    pageSize: showAll ? 'all' : pageSize,
+    density,
+  };
+  const applyView = (view: DataTableView) => {
+    setSearch(view.search);
+    setFilters(recordToFilters(view.filters));
+    setSort(view.sort);
+    setColumnVisibility(view.columnVisibility);
+    if (view.pageSize === 'all') setShowAll(true);
+    else {
+      setShowAll(false);
+      setPageSize(view.pageSize);
+    }
+    setDensity(view.density);
+    setPage(0);
+    setActiveViewId(view.id);
+  };
+  const saveView = (name: string) => {
+    const view: DataTableView = { id: newViewId(savedViews), name, ...currentState };
+    setSavedViews([...savedViews, view]);
+    setActiveViewId(view.id);
+  };
+  const renameActiveView = (name: string) =>
+    setSavedViews(savedViews.map((v) => (v.id === activeViewId ? { ...v, name } : v)));
+  const deleteActiveView = () => {
+    setSavedViews(savedViews.filter((v) => v.id !== activeViewId));
+    setActiveViewId(null);
+  };
+
   const handleExport = () => {
     if (onExport) {
       onExport({
@@ -458,6 +539,18 @@ export const DataTable = <T,>({
   };
   const toolbarControls = hasToolbarControls ? (
     <div className="flex shrink-0 items-center gap-2">
+      {viewsEnabled && (
+        <DataTableViews
+          views={savedViews}
+          activeId={activeViewId}
+          current={currentState}
+          columns={allColumns}
+          onApply={applyView}
+          onSave={saveView}
+          onRename={renameActiveView}
+          onDelete={deleteActiveView}
+        />
+      )}
       {exportable && (
         <button type="button" aria-label="Export" onClick={handleExport} className={TOOLBAR_BUTTON}>
           <Download aria-hidden className="h-4 w-4" />
