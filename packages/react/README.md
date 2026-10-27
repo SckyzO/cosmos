@@ -383,6 +383,37 @@ every `step`, `intent` colors the fill (`brand`, `success`, `warning` or `danger
 />
 ```
 
+## Colour and phone fields
+
+`ColorInput` picks a colour from named swatches (a radio group, arrows move between them) or a hex
+field with a preview square. The value is the lowercase `#rrggbb`: the field accepts `#abc`, `abc`
+and `#aabbcc`, and only a valid hex reaches `onChange(hex)`. Leaving the field with an invalid draft
+shows an error and keeps the value. `presets` replaces the eight default swatches (`[]` for the hex
+field alone); each is a `{ value, label }`, and the label is what a screen reader announces.
+
+`PhoneInput` joins a country list and the number field in one border. The value is the E.164 number
+(`+33612345678`) or `''`: `onChange(value)` gets `''` until the number is valid, which the light
+check decides (digits only, 4 or more, 15 at most with the country code). The list searches by
+name, ISO code or calling code; names come from `Intl.DisplayNames` in the page language.
+`defaultCountry` (an ISO 3166-1 code, `US` by default) sets the country until a number says
+otherwise, and `countries` limits the list. Typing `+` and a known calling code switches the
+country, picking a country keeps the digits. A calling code shared by several countries keeps the
+current one if it has it, else takes the code's main country. The package carries no phone metadata:
+`format(country, national)` shapes the digits as they are typed and `validate(value)` returns the
+message for a number it rejects, so a host can plug `libphonenumber-js` in.
+
+```tsx
+<ColorInput label="Event colour" value={colour} onChange={setColour} />
+
+<PhoneInput
+  label="Phone number"
+  defaultCountry="FR"
+  value={phone}
+  onChange={setPhone}
+  validate={(v) => (isValidPhoneNumber(v) ? undefined : 'Enter a valid phone number.')}
+/>
+```
+
 ## Application shell
 
 `Shell` lays out a `Topbar`, a `Sidebar` and the page, and owns the sidebar's
