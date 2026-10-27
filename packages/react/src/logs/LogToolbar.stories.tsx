@@ -149,3 +149,16 @@ export const ControlsShareHeightAndTop: Story = {
     }
   },
 };
+
+/** The search field keeps its width when the match counter appears. */
+export const SearchWidthIgnoresMatchCounter: Story = {
+  render: () => <FullBar width={1100} />,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Search logs' });
+    const before = field.getBoundingClientRect().width;
+    await userEvent.type(field, 'timeout');
+    await expect(canvas.findByText('3 of 12')).resolves.toBeVisible();
+    expect(field.getBoundingClientRect().width).toBeCloseTo(before, 0);
+  },
+};
