@@ -232,8 +232,8 @@ export type DataTableProps<T> = {
    * clipped, so keep each cell to the one line of text (or a control) it has in a standard row.
    * The rows scroll in the table's own area:
    * give it a height (`className="max-h-96"`), or the window has no end. Table layout only: with
-   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows. On
-   * paper only the drawn rows print. Default `false`.
+   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows nor
+   * inline editing: both are off with it. On paper only the drawn rows print. Default `false`.
    */
   virtualize?: boolean;
 
