@@ -1156,7 +1156,7 @@ export const DataTable = <T,>({
             hasToolbarControls && 'flex items-center gap-2'
           )}
         >
-          <div className={clsx('relative h-9', hasToolbarControls && 'min-w-0 flex-1')}>
+          <div className={clsx('h-ctrl-36 relative', hasToolbarControls && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
