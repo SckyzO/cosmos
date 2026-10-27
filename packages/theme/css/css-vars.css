@@ -526,6 +526,8 @@
   --spacing-row-12: calc(0.75rem + var(--cosmos-density-row, 0rem));
   --spacing-row-14: calc(0.875rem + var(--cosmos-density-row, 0rem));
   --spacing-row-16: calc(1rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-20: calc(1.25rem + var(--cosmos-density-row, 0rem));
+  --spacing-row-24: calc(1.5rem + var(--cosmos-density-row, 0rem));
   --spacing-cell-head: calc(0.75rem + var(--cosmos-density-cell-head, 0rem));
   --spacing-cell-body: calc(0.875rem + var(--cosmos-density-cell-body, 0rem));
 }
