@@ -270,7 +270,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
