@@ -38,3 +38,19 @@ for (const c of cases) {
     await expect(argsTable).toContainText(c.expectProp, { ignoreCase: true, timeout: 20_000 });
   });
 }
+
+// A prop typed `LogLine['id']` (an indexed access type) reaches Storybook's type converter as a
+// union with no members: the converter throws, logs the error to the console of the page, and the
+// row is left out of the table. Every prop of `LogViewer` must be read without an error.
+test('autodocs: LogViewer reads every prop without an error', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/?path=/docs/monitoring-log-viewer--docs');
+  const frame = page.frameLocator('iframe#storybook-preview-iframe');
+  const argsTable = frame.locator('table.docblock-argstable').first();
+  await expect(argsTable).toContainText('currentId', { timeout: 20_000 });
+  expect(errors).toEqual([]);
+});
