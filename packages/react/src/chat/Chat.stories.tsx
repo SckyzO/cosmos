@@ -3,6 +3,7 @@ import { ArrowLeft, Paperclip } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
+import { Select } from '../forms/Select';
 import { SplitView } from '../layout/SplitView';
 import {
   expectGraphicContrast,
@@ -827,5 +828,197 @@ export const ActionsContrastInEveryTheme: Story = {
         expectGraphicContrast(icon, 'color', 3);
       }
     });
+  },
+};
+
+const ComposerFooter = () => (
+  <>
+    <button
+      type="button"
+      aria-label="Attach a file"
+      className="focus-visible:focus-indicator flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-gray-100 dark:hover:bg-gray-800"
+    >
+      <Paperclip className="h-4 w-4" aria-hidden />
+    </button>
+    <Select
+      aria-label="Model"
+      size="sm"
+      fullWidth={false}
+      options={[
+        { value: 'fast', label: 'Cosmos Fast' },
+        { value: 'deep', label: 'Cosmos Deep' },
+      ]}
+      defaultValue="fast"
+    />
+    <span className="text-2xs ml-auto text-[var(--color-text-muted)]">Enter to send</span>
+  </>
+);
+
+/** `footer`: a line under the field, inside the same panel (attach, model picker, a hint). */
+export const ComposerWithFooter: Story = {
+  render: () => (
+    <Frame height={160}>
+      <div className="flex-1" />
+      <ChatComposer onSend={() => {}} footer={<ComposerFooter />} />
+    </Frame>
+  ),
+};
+
+const onStop = fn();
+
+/** `generating`: the send button is a Stop button; the field stays editable. */
+export const ComposerGenerating: Story = {
+  render: () => (
+    <Frame height={160}>
+      <div className="flex-1" />
+      <ChatComposer onSend={() => {}} generating onStop={onStop} footer={<ComposerFooter />} />
+    </Frame>
+  ),
+};
+
+export const ComposerFooterAtMobile: Story = {
+  ...ComposerGenerating,
+  globals: mobileViewport,
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const ComposerWithoutFooterKeepsItsRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatComposer onSend={() => {}} />,
+  play: async ({ canvas, canvasElement }) => {
+    const field = canvas.getByRole('textbox', { name: 'Message' });
+    const root = field.parentElement as HTMLElement;
+    // Field and button are direct children of the one row, as before the footer existed.
+    await expect(root.parentElement).toBe(canvasElement.firstElementChild);
+    await expect(root.className.split(' ').sort()).toEqual(
+      [
+        'flex',
+        'items-end',
+        'gap-2',
+        'border-t',
+        'border-[var(--color-border)]',
+        'bg-[var(--color-bg-panel)]',
+        'p-3',
+      ].sort()
+    );
+    await expect(root.children).toHaveLength(2);
+  },
+};
+
+export const StopReplacesSend: Story = {
+  ...ComposerGenerating,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox', { name: 'Message' });
+    await expect(canvas.queryByRole('button', { name: 'Send message' })).toBeNull();
+    const stop = canvas.getByRole('button', { name: 'Stop generating' });
+    await expect(stop).toBeEnabled();
+    // Enter does not send, and the field stays editable.
+    await userEvent.type(input, 'next question{Enter}');
+    await expect(input).toHaveValue('next question');
+    await expect(input).toBeEnabled();
+    await userEvent.click(stop);
+    await expect(onStop).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const StopLabelIsTranslatable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatComposer onSend={() => {}} generating stopLabel="Arrêter" />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Arrêter' })).toBeVisible();
+  },
+};
+
+export const StopLooksLikeSend: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const Toggle = () => {
+      const [generating, setGenerating] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setGenerating(!generating)}>
+            toggle
+          </button>
+          <ChatComposer onSend={() => {}} generating={generating} />
+        </>
+      );
+    };
+    return <Toggle />;
+  },
+  play: async ({ canvas }) => {
+    const send = canvas.getByRole('button', { name: 'Send message' });
+    const before = send.getBoundingClientRect();
+    await userEvent.click(canvas.getByRole('button', { name: 'toggle' }));
+    const stop = canvas.getByRole('button', { name: 'Stop generating' });
+    // The same button, in the same place and size, filled the same way.
+    await expect(stop).toBe(send);
+    await expect(stop.getBoundingClientRect().width).toBe(before.width);
+    await expect(stop.getBoundingClientRect().height).toBe(before.height);
+    await expect(getComputedStyle(stop).backgroundColor).toBe(
+      getComputedStyle(send).backgroundColor
+    );
+    await expect(getComputedStyle(stop).opacity).toBe('1');
+  },
+};
+
+const StopFocus = () => {
+  const [generating, setGenerating] = useState(true);
+  return (
+    <ChatComposer onSend={() => {}} generating={generating} onStop={() => setGenerating(false)} />
+  );
+};
+
+/** Stop holds the focus when the reply ends: it goes to the field, not to the page. */
+export const FocusMovesToTheFieldWhenGenerationEnds: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <StopFocus />,
+  play: async ({ canvas }) => {
+    const stop = canvas.getByRole('button', { name: 'Stop generating' });
+    stop.focus();
+    await expect(stop).toHaveFocus();
+    await userEvent.click(stop);
+    await expect(canvas.getByRole('textbox', { name: 'Message' })).toHaveFocus();
+    await expect(canvas.getByRole('button', { name: 'Send message' })).toBeDisabled();
+  },
+};
+
+const FocusElsewhere = () => {
+  const [generating, setGenerating] = useState(true);
+  return (
+    <>
+      <button type="button" onClick={() => setGenerating(false)}>
+        finish
+      </button>
+      <ChatComposer onSend={() => {}} generating={generating} />
+    </>
+  );
+};
+
+export const FocusStaysWhereItWasWhenGenerationEnds: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <FocusElsewhere />,
+  play: async ({ canvas }) => {
+    const finish = canvas.getByRole('button', { name: 'finish' });
+    await userEvent.click(finish);
+    await expect(finish).toHaveFocus();
+  },
+};
+
+export const FooterSitsInsideThePanel: Story = {
+  ...ComposerWithFooter,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Message' });
+    const panel = field.parentElement!.parentElement as HTMLElement;
+    const attach = canvas.getByRole('button', { name: 'Attach a file' });
+    await expect(panel.contains(attach)).toBe(true);
+    // Under the field, not beside it.
+    await expect(attach.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      field.getBoundingClientRect().bottom
+    );
+    await expect(getComputedStyle(panel).borderTopWidth).toBe('1px');
   },
 };
