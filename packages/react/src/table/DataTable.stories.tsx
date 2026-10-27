@@ -1280,17 +1280,16 @@ export const TableThatFitsHasNoFade: Story = {
   },
 };
 
-export const StickyFirstColumn: Story = {
+export const PinnedStartColumn: Story = {
   globals: mobileViewport,
   render: () => (
     <Wrap>
       <DataTable
         rows={rows}
-        columns={[columns[1], columns[0], ...wideColumns.slice(2)]}
+        columns={[{ ...columns[1], pin: 'start' }, columns[0], ...wideColumns.slice(2)]}
         rowKey={(r) => r.id}
         pageSize={5}
         selectable
-        stickyFirstColumn
       />
     </Wrap>
   ),
@@ -1322,17 +1321,16 @@ export const StickyFirstColumn: Story = {
   },
 };
 
-export const StickyFirstColumnKeepsRowLinks: Story = {
+export const PinnedStartColumnKeepsRowLinks: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
     <Wrap>
       <DataTable
         rows={rows.slice(0, 4)}
-        columns={[columns[1], ...wideColumns.slice(2)]}
+        columns={[{ ...columns[1], pin: 'start' }, ...wideColumns.slice(2)]}
         rowKey={(r) => r.id}
         rowHref={(r) => `#${r.id}`}
-        stickyFirstColumn
       />
     </Wrap>
   ),
