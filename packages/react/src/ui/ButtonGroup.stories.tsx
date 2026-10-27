@@ -14,9 +14,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { bothDirections, expectMirrored, mirroredIcon } from '../storybook-helpers';
 import { Button } from './Button';
 import { ButtonGroup } from './ButtonGroup';
 
+// Previous and next point along the line: they turn around in right to left.
+const Previous = mirroredIcon(ChevronLeft);
+const Next = mirroredIcon(ChevronRight);
 const meta = {
   title: 'Atoms/Button Group',
   component: ButtonGroup,
@@ -68,8 +72,8 @@ export const WithIcons: Story = {
 export const IconOnly: Story = {
   render: () => (
     <ButtonGroup>
-      <Button variant="secondary" size="sm" icon={ChevronLeft} aria-label="Previous" />
-      <Button variant="secondary" size="sm" icon={ChevronRight} aria-label="Next" />
+      <Button variant="secondary" size="sm" icon={Previous} aria-label="Previous" />
+      <Button variant="secondary" size="sm" icon={Next} aria-label="Next" />
     </ButtonGroup>
   ),
 };
@@ -216,5 +220,33 @@ export const RoleGroup: Story = {
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('group')).toBeInTheDocument();
+  },
+};
+
+/**
+ * The group starts at the right in right to left: the buttons keep their order along the line,
+ * the 1px overlap is toward the start, and the outer corners are the ones at the two ends.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ButtonGroup>
+        <Button variant="secondary">Day</Button>
+        <Button variant="secondary">Week</Button>
+        <Button variant="secondary">Month</Button>
+      </ButtonGroup>
+    )),
+  play: ({ canvasElement }) => {
+    for (const nth of [0, 1, 2]) {
+      expectMirrored(canvasElement, (box) => box.querySelectorAll('button')[nth]);
+    }
+    const { ltr, rtl } = expectMirrored(canvasElement, (box) => box.querySelector('button'));
+    const radius = (el: HTMLElement, corner: 'TopLeft' | 'TopRight') =>
+      Number.parseFloat(getComputedStyle(el)[`border${corner}Radius`]);
+    expect(radius(ltr, 'TopLeft')).toBeGreaterThan(0);
+    expect(radius(ltr, 'TopRight')).toBe(0);
+    expect(radius(rtl, 'TopRight')).toBeGreaterThan(0);
+    expect(radius(rtl, 'TopLeft')).toBe(0);
   },
 };

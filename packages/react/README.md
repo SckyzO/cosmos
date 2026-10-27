@@ -1322,6 +1322,54 @@ export const Stores = () => {
   imports MapLibre: an app that does not use `/map` ships none of it. Imported without
   `maplibre-gl` installed, a map throws an error that names the package.
 
+## Right to left
+
+Set the native `dir` attribute on `<html>`, or on any ancestor of the components, and
+they follow it. There is no prop and no `data-` attribute:
+
+```html
+<html lang="ar" dir="rtl"></html>
+```
+
+What mirrors is what follows the reading direction: the side an icon, a ribbon, a floating
+panel or a status dot sits on, the padding and margins, the corners of a button group, a
+chevron that points forward, the `start` and `end` alignments of panels. A name that
+holds `left` or `right` (`Ribbon`'s `position="top-right"`, `BackToTopFab`'s
+`position="bottom-right"`, `iconPosition="left"`) means the start or the end of the line, so
+it swaps sides under `dir="rtl"`. Left to right renders as it always did.
+
+Text that comes from you and sits inside a label or a sentence (a name, a value, a key) is
+wrapped in `<bdi>`, so a Latin name in an Arabic page, or the reverse, keeps its own order
+and does not drag the punctuation around it. Text fields take `dir="auto"` as the Forms group lands. The package's
+own copy stays in English, as it is everywhere else.
+
+Tailwind's `rtl:` variant (redefined by the theme to follow the nearest `dir`) is the tool
+for what has no logical form, such as `rtl:-scale-x-100` on an arrow. In your own markup,
+prefer the logical utilities (`ms-`, `pe-`, `text-start`, `border-s`, `rounded-e`, `inset-s-`)
+to the physical ones.
+
+A component draws the icon you pass it as it is. An icon that points along the line (a
+forward arrow, a back chevron, undo) turns around through its own class:
+
+```tsx
+import { clsx } from 'clsx';
+import { ArrowRight, type LucideProps } from 'lucide-react';
+
+const Forward = ({ className, ...props }: LucideProps) => (
+  <ArrowRight {...props} className={clsx(className, 'rtl:-scale-x-100')} />
+);
+
+<Button icon={Forward} iconPosition="right">
+  Continue
+</Button>;
+```
+
+The conversion lands group by group, following the groups of the Storybook sidebar. Done:
+**Atoms** and **Actions**. The others still lay out for left to right and are the next
+ones in line: Forms, Data and Lists, Feedback and Overlays, Navigation and Layout, Chat,
+Tables and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
+(`&globals=direction:rtl`) renders any story right to left.
+
 ## Themes and accents
 
 The theme is a class on `<html>`; the accent, the font, the text size and the

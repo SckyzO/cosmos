@@ -75,12 +75,13 @@ export const SecretValue = ({
     >
       <code className="min-w-0 flex-1 basis-80 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-base)] px-2.5 py-2 font-mono text-sm break-all text-[var(--color-text-primary)]">
         {revealed ? (
-          value
+          <bdi>{value}</bdi>
         ) : (
-          <>
+          // One island for the dots and the suffix, so the suffix stays at the end of the value.
+          <bdi>
             <span aria-hidden="true">{MASK}</span>
             {suffixLength > 0 && value.slice(-suffixLength)}
-          </>
+          </bdi>
         )}
       </code>
       <button

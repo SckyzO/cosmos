@@ -6,7 +6,9 @@ import { Tag } from './Tag';
 import type { Intent } from './intent';
 import { SectionCard } from '../templates/SectionCard';
 import {
+  bothDirections,
   expectFocusRing,
+  expectMirrored,
   expectRefFocuses,
   expectTextContrast,
   inEachTheme,
@@ -308,5 +310,41 @@ export const TruncatesLongText: Story = {
     const box = canvasElement.querySelector<HTMLElement>('.w-48')!.getBoundingClientRect();
     // The X stays inside the tag while the text is cut.
     expect(remove.getBoundingClientRect().right).toBeLessThanOrEqual(box.right);
+    expect(remove.getBoundingClientRect().left).toBeGreaterThanOrEqual(box.left);
+  },
+};
+
+/** The icon leads the label and the remove button ends the tag: on the right and left in right to left. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Tag intent="brand" icon={Zap} onRemove={() => {}}>
+        Design
+      </Tag>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg'));
+    expectMirrored(canvasElement, (box) => box.querySelector('button'));
+  },
+};
+
+/** A name in the other script is an island: its own direction, whatever the tag's. */
+export const LabelIsIsolated: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-3">
+      <div dir="rtl">
+        <Tag>Design</Tag>
+      </div>
+      <div dir="ltr">
+        <Tag>تصميم</Tag>
+      </div>
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const [latin, arabic] = [...canvasElement.querySelectorAll('bdi')];
+    expect(getComputedStyle(latin!).direction).toBe('ltr');
+    expect(getComputedStyle(arabic!).direction).toBe('rtl');
   },
 };
