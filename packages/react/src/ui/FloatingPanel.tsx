@@ -97,6 +97,7 @@ export function FloatingPanel({
   const {
     style: anchored,
     side,
+    direction,
     panelRef,
   } = useAnchorPosition(anchorRef, open, placement, container);
   const { ref: focusRef, onFocusCapture } = usePortalFocus<HTMLDivElement>({
@@ -117,6 +118,8 @@ export function FloatingPanel({
   return createPortal(
     <OverlayLayerProvider value={layer}>
       <div
+        // The portal takes the panel out of the anchor's subtree, and its `dir` with it.
+        dir={direction}
         {...rest}
         ref={ref}
         onFocusCapture={onFocusCapture}

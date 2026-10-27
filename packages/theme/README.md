@@ -55,6 +55,11 @@ Two independent settings, both on the `<html>` element:
 
   `.dark` and `.deep-blue` both enable Tailwind's `dark:` variant.
 
+- **Direction**: the native `dir` attribute, on `<html>` or any ancestor. Tailwind's `rtl:` variant is
+  redefined to follow the nearest `dir` attribute, so a `dir="ltr"` island inside a right-to-left
+  page is not flipped. It does not follow `dir="auto"`, nor a `dir="rtl"` nested inside such an
+  island.
+
 - **Accent**: a `data-accent` attribute that swaps the whole `--color-brand-*`
   scale (and with it `--color-accent` and the focus ring). Leave it off for
   `blue`. The others are `indigo`, `violet`, `purple`, `rose`, `teal`, `cyan`,

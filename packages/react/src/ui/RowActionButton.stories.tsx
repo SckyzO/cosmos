@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { bothDirections, expectMirrored, expectRefFocuses } from '../storybook-helpers';
 import { RowActionButton } from './RowActionButton';
 
 const meta = {
@@ -36,5 +36,16 @@ export const ForwardsRef: Story = {
   render: () => <RowActionButton ref={buttonRef} />,
   play: async ({ canvas }) => {
     await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: /View/ }));
+  },
+};
+
+/** The chevron points along the reading direction: it is flipped in right to left. */
+export const ChevronFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <RowActionButton />),
+  play: ({ canvasElement }) => {
+    const { ltr, rtl } = expectMirrored(canvasElement, (box) => box.querySelector('svg'));
+    expect(getComputedStyle(ltr).scale).toBe('none');
+    expect(getComputedStyle(rtl).scale).toBe('-1 1');
   },
 };

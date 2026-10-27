@@ -34,7 +34,7 @@ export type AvatarProps = {
    */
   intent?: Intent;
   /**
-   * Presence dot at the bottom-right. The status is also text: it joins the accessible name
+   * Presence dot at the bottom-right (bottom-left in right to left). The status is also text: it joins the accessible name
    * ("Ana Costa, online").
    */
   status?: AvatarStatus;
@@ -139,7 +139,7 @@ export const Avatar = ({
           aria-hidden
           data-status={status}
           className={clsx(
-            'absolute right-0 bottom-0 rounded-full ring-2 ring-[var(--color-bg-panel)]',
+            'inset-e-0 absolute bottom-0 rounded-full ring-2 ring-[var(--color-bg-panel)]',
             DOT_SIZE_CLASS[size],
             STATUS_DOT_CLASS[status]
           )}

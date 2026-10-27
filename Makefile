@@ -20,7 +20,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WOR
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci check-changed compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-rtl test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci check-changed compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -60,6 +60,9 @@ test: ## Vitest unit tests
 
 test-contrast: ## axe color-contrast on every story in light, sand and deep-blue. One theme: A11Y_THEME=sand
 	$(DOCKER_RUN) -e A11Y_THEME $(DEV_IMAGE) sh -c "pnpm browsers:install && pnpm --filter @cosmos/storybook a11y:contrast"
+
+test-rtl: ## Every story under dir="rtl": axe, play functions, no sideways scroll that left to right doesn't have
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "pnpm browsers:install && pnpm --filter @cosmos/storybook a11y:rtl"
 
 storybook: ## Start Storybook via docker compose (http://localhost:6006)
 	docker compose up storybook

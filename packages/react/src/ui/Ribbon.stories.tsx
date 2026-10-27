@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { expect } from 'storybook/test';
+import { bothDirections, endOffset, directionBox, expectMirrored } from '../storybook-helpers';
 import { Card as CosmosCard } from './Card';
 import { Ribbon, type RibbonIntent, type RibbonPosition } from './Ribbon';
 
@@ -183,9 +184,10 @@ export const FollowsCardRadius: Story = {
   play: async ({ canvas }) => {
     const ribbon = canvas.getByText('NEW');
     const card = ribbon.parentElement as HTMLElement;
-    await expect(getComputedStyle(ribbon).borderTopRightRadius).toBe(
-      getComputedStyle(card).borderTopRightRadius
-    );
+    // The ribbon's `right` is the end of the line: the top-left corner in right to left.
+    const corner =
+      getComputedStyle(ribbon).direction === 'rtl' ? 'borderTopLeftRadius' : 'borderTopRightRadius';
+    await expect(getComputedStyle(ribbon)[corner]).toBe(getComputedStyle(card)[corner]);
   },
 };
 
@@ -223,7 +225,9 @@ export const PillSitsInsideTheCorner: Story = {
       const box = ribbon.getBoundingClientRect();
       const style = getComputedStyle(card);
       // An absolute box is placed from the padding edge, inside the border.
-      const [side, edge] = INSET[pos];
+      const [named, edge] = INSET[pos];
+      // `left` and `right` name the start and the end of the line.
+      const side = (named === 'left') !== (style.direction === 'rtl') ? 'left' : 'right';
       const fromSide =
         side === 'left'
           ? box.left - (cardBox.left + parseFloat(style.borderLeftWidth))
@@ -242,9 +246,7 @@ export const PillSitsInsideTheCorner: Story = {
     // The flat ribbon still hugs the corner.
     const flat = canvas.getByText('flat');
     const flatCard = flat.parentElement as HTMLElement;
-    await expect(
-      flatCard.getBoundingClientRect().right - flat.getBoundingClientRect().right
-    ).toBeLessThan(12);
+    await expect(endOffset(flat, flatCard)).toBeLessThan(12);
   },
 };
 
@@ -272,5 +274,59 @@ export const PillKeepsTheIntentFill: Story = {
       await expect(pill.backgroundColor).toBe(flat.backgroundColor);
       await expect(pill.color).toBe(flat.color);
     }
+  },
+};
+
+/**
+ * `right` is the end of the line: a top-right ribbon takes the top-left corner in right to left,
+ * with its corners, its lean and its letter spacing following.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="flex gap-4">
+        <Card>
+          <Ribbon>NEW</Ribbon>
+        </Card>
+        <Card>
+          <Ribbon shape="angled" intent="warning">
+            SALE
+          </Ribbon>
+        </Card>
+        <Card>
+          <Ribbon shape="pill" position="bottom-left">
+            PRO
+          </Ribbon>
+        </Card>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    // Flat: flush with the end of the card. Its width differs with the letter spacing, so it is
+    // the end edge that is compared, not the start one.
+    const flat = {
+      ltr: directionBox(canvasElement, 'ltr').querySelectorAll<HTMLElement>('.absolute')[0]!,
+      rtl: directionBox(canvasElement, 'rtl').querySelectorAll<HTMLElement>('.absolute')[0]!,
+    };
+    for (const ribbon of [flat.ltr, flat.rtl]) {
+      // Inside the 1px border of the card.
+      expect(endOffset(ribbon, ribbon.parentElement!)).toBeCloseTo(1, 0);
+    }
+    const angled = expectMirrored(canvasElement, (box) => box.querySelectorAll('.absolute')[1]);
+    expectMirrored(canvasElement, (box) => box.querySelectorAll('.absolute')[2]);
+
+    // The rounded corner is the one at the foot of the ribbon, on its inner side.
+    const corner = (el: HTMLElement, side: 'Left' | 'Right') =>
+      Number.parseFloat(getComputedStyle(el)[`borderBottom${side}Radius`]);
+    expect(corner(flat.ltr, 'Left')).toBeGreaterThan(0);
+    expect(corner(flat.rtl, 'Right')).toBeGreaterThan(0);
+    expect(corner(flat.rtl, 'Left')).toBe(0);
+
+    expect(getComputedStyle(angled.ltr).rotate).toBe('45deg');
+    expect(getComputedStyle(angled.rtl).rotate).toBe('-45deg');
+
+    // Letter spacing breaks the joins of Arabic script.
+    expect(getComputedStyle(flat.ltr).letterSpacing).not.toBe('normal');
+    expect(getComputedStyle(flat.rtl).letterSpacing).toBe('normal');
   },
 };

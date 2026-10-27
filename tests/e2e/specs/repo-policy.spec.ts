@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 // Checks on the repo's supply-chain settings. They guard what reaches npm
@@ -261,4 +261,121 @@ test('the dev container cannot write the repo metadata', () => {
   const metadata = compose.match(/- \.\/\.git:\/workspace\/\.git:ro$/gm) ?? [];
   expect(workspace.length).toBeGreaterThan(0);
   expect(metadata.length).toBe(workspace.length);
+});
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+// A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `start-`,
+// `text-start`, `border-s`, `rounded-s`…) and the `rtl:` variant. This refuses the physical
+// ones, group by group as each Storybook group is converted (#453).
+
+/** The Storybook groups whose components are converted. A group is added when its PR lands. */
+const RTL_GROUPS: string[] = ['Atoms', 'Actions'];
+
+/**
+ * Component sources the story-title rule cannot find: a stories file whose component has
+ * another name, or a helper module the converted components share.
+ */
+const RTL_EXTRA_FILES = [
+  'packages/react/src/ui/Button.tsx', // Buttons.stories.tsx
+];
+
+/**
+ * The few physical utilities that must stay: `file`, the exact `token` and why, so each
+ * exception is a decision and not a leftover. An entry that no longer matches fails too.
+ */
+const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [];
+
+// A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
+// `[&>button:first-child]:`), or an inline-style key that does: `left: 0`, `marginRight`.
+const PHYSICAL_UTILITY =
+  /(?<![\w-])-?(?:(?:scroll-)?[mp][lr]-|(?:left|right)-|border-[lr](?![a-z])|rounded-(?:[lr]|[tb][lr])(?![a-z])|text-(?:left|right)(?![a-z-])|(?:float|clear)-(?:left|right))[^\s'"`]*|\b(?:margin|padding|border)(?:Left|Right)\b|\b(?:left|right)\s*:/g;
+
+const withoutComments = (source: string) =>
+  source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
+
+const physicalUtilities = (source: string) => [
+  ...new Set(withoutComments(source).match(PHYSICAL_UTILITY) ?? []),
+];
+
+/** The converted component sources: the stories of `RTL_GROUPS` and their component files. */
+const convertedFiles = () => {
+  const root = 'packages/react/src';
+  const files = new Set(RTL_GROUPS.length > 0 ? RTL_EXTRA_FILES : []);
+  const stories = readdirSync(new URL(`../../../${root}`, import.meta.url), {
+    recursive: true,
+    encoding: 'utf8',
+  }).filter((path) => path.endsWith('.stories.tsx'));
+  for (const story of stories) {
+    const group = /\btitle:\s*'([^/']+)\//.exec(read(`${root}/${story}`))?.[1];
+    if (!group || !RTL_GROUPS.includes(group)) continue;
+    const component = `${root}/${story.replace('.stories.tsx', '.tsx')}`;
+    // Not every stories file sits next to a component of its name: RTL_EXTRA_FILES has those.
+    if (existsSync(new URL(`../../../${component}`, import.meta.url))) files.add(component);
+  }
+  return [...files].sort();
+};
+
+test('the physical-utility check sees what it must and lets the logical forms through', () => {
+  const classes = (...names: string[]) => `className="${names.join(' ')}"`;
+  for (const physical of [
+    'ml-2',
+    '-ml-px',
+    'mr-auto',
+    'pl-3',
+    'pr-[calc(1rem+2px)]',
+    'left-0',
+    '-right-12',
+    'left-1/2',
+    'border-l',
+    'border-r-2',
+    'rounded-l-lg',
+    'rounded-tr-[inherit]',
+    'rounded-br',
+    'text-left',
+    'text-right',
+    'float-right',
+    'scroll-ml-4',
+  ]) {
+    expect(physicalUtilities(classes('flex', physical)), physical).toEqual([physical]);
+    expect(physicalUtilities(classes(`sm:${physical}`)), `sm:${physical}`).toEqual([physical]);
+  }
+  expect(physicalUtilities("{ marginLeft: 4, right: 0 } position === 'left'")).toEqual([
+    'marginLeft',
+    'right:',
+  ]);
+  const logical = classes(
+    'ms-2 -ms-px me-auto ps-3 pe-4 start-0 -end-12 inset-s-0 border-s border-e-2 rounded-s-lg',
+    'rounded-ss-lg rounded-ee-[inherit] text-start text-end rtl:-scale-x-100 rtl:translate-x-1',
+    'mx-auto px-4 pt-2 pb-1 mt-3 mb-2 inset-x-0 top-0 bottom-0 border-t border-b rounded-t-lg',
+    'rounded-lg rounded-full text-left-ish border-lime-500 bottom-left text-center space-x-2'
+  );
+  expect(physicalUtilities(logical)).toEqual([]);
+  // Words in a comment are not utilities.
+  expect(physicalUtilities('// the left edge, a `pl-2` example\nconst a = 1;')).toEqual([]);
+  expect(physicalUtilities('/* mr-2 and right: 0 */ const a = 1;')).toEqual([]);
+});
+
+test('the converted groups use logical utilities only', () => {
+  const files = convertedFiles();
+  // A group holds components, so an empty list means the story titles stopped matching.
+  expect(files.length > 0, 'converted component files').toBe(RTL_GROUPS.length > 0);
+
+  const found = files.flatMap((file) =>
+    physicalUtilities(read(file)).map((token) => ({ file, token }))
+  );
+  const allowed = (hit: { file: string; token: string }) =>
+    RTL_ALLOWED.some(({ file, token }) => file === hit.file && token === hit.token);
+  expect(
+    found.filter((hit) => !allowed(hit)).map(({ file, token }) => `${file}: ${token}`),
+    'physical utilities: use the logical form (ms-, pe-, start-, text-start, border-s, rounded-s…), or the rtl: variant, or add an RTL_ALLOWED entry with the reason'
+  ).toEqual([]);
+
+  for (const { file, token, reason } of RTL_ALLOWED) {
+    expect(reason, `${file}: ${token}`).not.toBe('');
+    expect(
+      found.some((hit) => hit.file === file && hit.token === token),
+      `RTL_ALLOWED entry no longer needed: ${file}: ${token}`
+    ).toBe(true);
+  }
 });

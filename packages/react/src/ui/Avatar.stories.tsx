@@ -3,7 +3,12 @@ import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { Avatar } from './Avatar';
 import { placeholderAvatar } from '../storybook-avatars';
-import { expectGraphicContrast, inEachTheme } from '../storybook-helpers';
+import {
+  bothDirections,
+  expectGraphicContrast,
+  expectMirrored,
+  inEachTheme,
+} from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import type { Intent } from './intent';
 
@@ -484,5 +489,17 @@ export const IntentTintsInitialsOnly: Story = {
     await expect(getComputedStyle(danger).backgroundColor).toBe(
       getComputedStyle(plain).backgroundColor
     );
+  },
+};
+
+/** The presence dot sits on the end side of the avatar: the bottom-left corner in right to left. */
+export const StatusDotMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Avatar name="Ana Costa" size="lg" status="online" />),
+  play: ({ canvasElement }) => {
+    const { rtl } = expectMirrored(canvasElement, (box) => box.querySelector('[data-status]'));
+    const avatar = rtl.parentElement!.getBoundingClientRect();
+    const dot = rtl.getBoundingClientRect();
+    expect(dot.left + dot.width / 2).toBeLessThan(avatar.left + avatar.width / 2);
   },
 };

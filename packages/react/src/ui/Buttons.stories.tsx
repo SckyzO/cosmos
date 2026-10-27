@@ -3,14 +3,20 @@ import { createRef, Fragment } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Plus, ArrowRight, Trash2, Download, Undo2 } from 'lucide-react';
 import {
+  bothDirections,
   expectFocusRing,
+  expectMirrored,
   expectRefFocuses,
   expectTextContrast,
   inEachTheme,
+  mirroredIcon,
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
+// Icons that point along the line turn around in right to left.
+const Forward = mirroredIcon(ArrowRight);
+const Back = mirroredIcon(Undo2);
 const meta = {
   title: 'Atoms/Button',
   component: Button,
@@ -117,7 +123,7 @@ export const WithIcons: Story = {
           <Button variant="secondary" icon={Download}>
             Download
           </Button>
-          <Button variant="ghost" icon={ArrowRight} iconPosition="right">
+          <Button variant="ghost" icon={Forward} iconPosition="right">
             Continue
           </Button>
           <Button intent="danger" icon={Trash2}>
@@ -413,10 +419,10 @@ export const LinkVariant: Story = {
             <span className="text-2xs w-16 font-mono text-[var(--color-text-muted)] uppercase">
               Icon
             </span>
-            <Button variant="link" icon={Undo2}>
+            <Button variant="link" icon={Back}>
               Undo
             </Button>
-            <Button variant="link" icon={ArrowRight} iconPosition="right">
+            <Button variant="link" icon={Forward} iconPosition="right">
               Continue
             </Button>
           </div>
@@ -739,5 +745,24 @@ export const PrimarySuccessHasDarkTextOnGreen: Story = {
     await expect(bg).toBeGreaterThan(br);
     await expect(bg).toBeGreaterThan(bb);
     expectTextContrast(button);
+  },
+};
+
+/** `iconPosition` names the side in left to right: the icon leads the label, or follows it. */
+export const IconsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="flex gap-3">
+        <Button icon={Plus}>Add</Button>
+        <Button icon={ArrowRight} iconPosition="right">
+          Next
+        </Button>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const nth of [0, 1]) {
+      expectMirrored(canvasElement, (box) => box.querySelectorAll('svg')[nth]);
+    }
   },
 };

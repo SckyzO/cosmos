@@ -237,7 +237,9 @@ theme CSS), applied by the `withAppearanceAttributes` decorator as `data-accent`
 `data-font`, `data-text-size` and `data-density` before the story renders. In URLs:
 `&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact`. A story that needs the current values reads them from the render
 context (`(_args, { globals }) => …`); `Foundations/Appearance` and the Welcome page apply a picked
-combination with `applyAppearance` and remount when the toolbar changes.
+combination with `applyAppearance` and remount when the toolbar changes. The **Direction** menu
+(`direction` global, `ltr` | `rtl`, `&globals=direction:rtl`) is Storybook's own: the `withDirection`
+decorator sets the native `dir` attribute on `<html>` (none for `ltr`).
 
 Stories are grouped **by responsibility, not by file location** — a component in `src/ui/` may be
 titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group that already exists in

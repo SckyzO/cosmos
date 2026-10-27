@@ -81,6 +81,15 @@ make test-contrast                    # light, sand and deep-blue
 A11Y_THEME=sand make test-contrast    # one theme
 ```
 
+The direction pass renders every story again under `dir="rtl"` on `<html>` (the Direction menu of
+the toolbar, `&globals=direction:rtl`), with every axe rule and the play functions, and fails a
+story whose page scrolls sideways in right to left and not in left to right. A story that pins
+`globals.direction` keeps its own. It is not part of `make ci` yet:
+
+```bash
+make test-rtl                         # or: STORY_DIR=rtl, in the container, with the a11y:rtl script
+```
+
 After fixing a story, edit its entry by hand as the failure message says, in the same commit as the
 fix. After a change that fixes many stories at once (a theme token, a shared component), rewrite
 the list instead:

@@ -33,6 +33,12 @@ const MENUS = [
     pick: 'Density: Compact',
     check: (html: Element) => html.getAttribute('data-density') === 'compact',
   },
+  {
+    description: 'Text direction',
+    label: 'Direction:',
+    pick: 'Direction: Right to left',
+    check: (html: Element) => html.getAttribute('dir') === 'rtl',
+  },
 ];
 
 for (const menu of MENUS) {

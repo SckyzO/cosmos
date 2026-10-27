@@ -20,9 +20,10 @@ regexes = ['''keys="[^"]*"''']
 
 # The SecretValue stories need values that look like an API key and a webhook
 # secret: they are made up for the demo. Same tight scope: that file, that
-# rule, only the two constants that hold them. Written as an allowlist of the
-# rule itself, the form gitleaks 8.21 (the pinned hook) reads: it keeps the
-# default rule's regex and adds this exception to it.
+# rule, only the two constants that hold them and the key of the right-to-left
+# story (its trailing `-` is what would jump sides without an isolate). Written
+# as an allowlist of the rule itself, the form gitleaks 8.21 (the pinned hook)
+# reads: it keeps the default rule's regex and adds this exception to it.
 [[rules]]
 id = "generic-api-key"
 
@@ -31,4 +32,4 @@ description = "SecretValue demo values are not secrets"
 condition = "AND"
 paths = ['''packages/react/src/ui/SecretValue\.stories\.tsx''']
 regexTarget = "line"
-regexes = ['''const (API_KEY|WEBHOOK) = '[^']*';''']
+regexes = ['''const (API_KEY|WEBHOOK) = '[^']*';''', '''value="sk_live-4eC39H-"''']

@@ -11,7 +11,7 @@ export type RowActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 /**
  * RowActionButton — compact action button for the right edge of table rows
- * or list items. Defaults to a chevron-right indicator suggesting navigation.
+ * or list items. Defaults to a chevron indicator suggesting navigation, pointing along the reading direction.
  */
 export const RowActionButton = ({
   children = 'View',
@@ -31,6 +31,6 @@ export const RowActionButton = ({
     {...rest}
   >
     {children}
-    {!hideChevron && <ChevronRight className="h-3.5 w-3.5" />}
+    {!hideChevron && <ChevronRight className="h-3.5 w-3.5 rtl:-scale-x-100" />}
   </button>
 );

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Pencil, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { bothDirections, expectMirrored, expectRefFocuses } from '../storybook-helpers';
 import { PageActionButton, PageActionIconButton } from './PageActionButton';
 
 const meta = {
@@ -107,5 +107,14 @@ export const IntentColorsEachVariant: Story = {
 
     await expect(button('icon danger')).toHaveClass('border-red-200', 'text-red-600');
     await expect(button('icon primary')).toHaveClass('bg-brand-500', 'text-white');
+  },
+};
+
+/** The icon leads the label: on the right in right to left. */
+export const IconMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <PageActionButton icon={Plus}>New</PageActionButton>),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg'));
   },
 };
