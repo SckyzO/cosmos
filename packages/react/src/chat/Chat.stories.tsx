@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Paperclip } from 'lucide-react';
 import { createRef, useState } from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import { SplitView } from '../layout/SplitView';
 import {
@@ -14,6 +14,7 @@ import {
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
+import { ChatSuggestions } from './ChatSuggestions';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
 
@@ -571,5 +572,57 @@ export const StreamingMarksTheMessageBusy: Story = {
       'true'
     );
     await expect(log.querySelectorAll('[aria-busy]')).toHaveLength(1);
+  },
+};
+
+const PROMPTS = ['Show the useDebounce hook', 'What about throttling?', 'Explain it simply'];
+
+/** The chips of `Chatbot`, on their own: place them above a `ChatComposer`. */
+export const Suggestions: Story = {
+  render: () => (
+    <Frame height={160}>
+      <div className="flex-1" />
+      <ChatSuggestions suggestions={PROMPTS} onSelect={() => {}} />
+      <ChatComposer onSend={() => {}} />
+    </Frame>
+  ),
+};
+
+export const SuggestionsSelect: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ChatSuggestions suggestions={PROMPTS} onSelect={fn()} label="Follow-ups" />,
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list', { name: 'Follow-ups' });
+    await expect(within(list).getAllByRole('listitem')).toHaveLength(3);
+  },
+};
+
+export const SuggestionsCallOnSelect: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  render: function Render() {
+    const [picked, setPicked] = useState('none');
+    return (
+      <>
+        <ChatSuggestions suggestions={PROMPTS} onSelect={setPicked} />
+        <output className="text-sm">{picked}</output>
+      </>
+    );
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'What about throttling?' }));
+    await expect(canvas.getByRole('status')).toHaveTextContent('What about throttling?');
+  },
+};
+
+export const EmptySuggestionsRenderNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box">
+      <ChatSuggestions suggestions={[]} onSelect={() => {}} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByTestId('box')).toBeEmptyDOMElement();
   },
 };
