@@ -4,6 +4,7 @@ import { expect, userEvent, waitFor } from 'storybook/test';
 import { SplitView } from '../layout/SplitView';
 import { Card } from '../ui/Card';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { LogViewer } from './LogViewer';
 import { LogConsole, SOURCES, fakeLine, fakeLines } from './storybook-logs';
 import type { LogLevelKey, LogLine } from './types';
@@ -560,5 +561,38 @@ export const WideViewerKeepsTheSource: Story = {
     );
     expect(sources.length).toBeGreaterThan(5);
     for (const source of sources) expect(isDrawn(source)).toBe(true);
+  },
+};
+
+const WithDetails = ({ density }: { density?: 'comfortable' }) => (
+  <LogViewer
+    lines={fakeLines(40)}
+    aria-label="Backend logs"
+    density={density}
+    wrap
+    defaultExpandedIds={[8]}
+    follow={false}
+    onFollowChange={() => {}}
+  />
+);
+
+/** A comfortable row and the fields of an expanded one follow the page's `data-density`. */
+export const RowsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <InEachDensity>
+      <WithDetails density="comfortable" />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    // The hidden row that measures the window is a row too: skip it.
+    await expectDensitySteps(canvas, (_scope, region) =>
+      [...region.querySelectorAll<HTMLElement>('[data-index]')].find(
+        (row) => !row.closest('[aria-hidden="true"]')
+      )!
+    );
+    await expectDensitySteps(canvas, (scope) =>
+      scope.getByRole('group', { name: 'Details of line 8' })
+    );
   },
 };
