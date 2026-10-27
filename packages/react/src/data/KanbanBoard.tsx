@@ -409,7 +409,7 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
         <button
           type="button"
           onClick={() => onAddCard(column.id)}
-          className="focus-visible:focus-indicator flex w-full items-center gap-1.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
+          className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-1.5 rounded-lg px-2.5 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
         >
           <Plus className="size-3.5" aria-hidden />
           Add card

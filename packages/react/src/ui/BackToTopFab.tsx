@@ -91,7 +91,7 @@ export const BackToTopFab = ({
       onClick={handleClick}
       style={positionStyle}
       className={clsx(
-        'focus-visible:focus-indicator fixed z-40 flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200',
+        'focus-visible:focus-indicator h-ctrl-48 w-ctrl-48 fixed z-40 flex items-center justify-center rounded-full transition-all duration-200',
         POSITION_CLASS[position],
         INTENT_CLASS[intent],
         visible

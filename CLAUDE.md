@@ -119,6 +119,10 @@ charts ───────────── storybook      (charts imports ne
   vars, the themes and accents, and the fontsource imports (`fonts`, plus `fonts/<name>` per extra
   font). **Fonts** and **text size** are `data-font` (none = Outfit) and `data-text-size`
   (`sm`/`lg`/`xl`, none = md) on `<html>`; text size rescales the `--text-*` tokens, never `rem`.
+  **Density** is `data-density` (`compact`/`comfortable`, none = default): it rebuilds the
+  `--spacing-ctrl-*` (control heights), `--spacing-row-*` and `--spacing-cell-*` (row and cell
+  padding) tokens, which components use as `h-ctrl-36` (= `h-9`) and `py-row-8` (= `py-2`); only
+  the vertical rhythm moves, and compact stays at 24px or more. A new control or row takes them.
   **Themes** are one class on `<html>`: none (light), `.sand`, `.dark` (neutral black/gray),
   `.deep-blue` (the old navy dark); `.dark` and `.deep-blue` enable `dark:`. **Accents** are
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,
@@ -129,13 +133,18 @@ charts ───────────── storybook      (charts imports ne
   drops an esbuild banner. `exports` gives `import` and `require` their own types (`index.d.ts` /
   `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
   files.
-  **Sub-path entries** (`@sckyzo/cosmos-react/code`, the first) are a folder of `src/` built next to the
-  root one (`tsup.config.ts`: `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with
-  their library (`shiki`) as an optional peer, imported dynamically and kept external. The root
-  entry imports none of them. What the folder imports from the rest of the package is rewritten to
-  an import of `@sckyzo/cosmos-react` itself (`config/tsup/self-reference.ts`), so contexts and the
-  overlay stack are never duplicated; the source keeps relative imports, which means the names it
-  imports must be exported by the root entry. `react-dist.spec.ts` guards the pattern.
+  **Sub-path entries** (`@sckyzo/cosmos-react/code` with `shiki`, `/editor` with Tiptap, `/map`
+  with `maplibre-gl`) are a folder of `src/` built next to the root one (`tsup.config.ts`:
+  `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with their library as an
+  optional peer, kept external. The root entry imports none of them. What the folder imports from
+  the rest of the package is rewritten to an import of `@sckyzo/cosmos-react` itself
+  (`config/tsup/self-reference.ts`, one plugin instance per folder), so contexts and the overlay
+  stack are never duplicated; the source keeps relative imports, which means the names it imports
+  must be exported by the root entry (`Popover`, `Tooltip`, `Button`). An internal helper the root
+  does not export, and that shares no state with it, is listed in that entry's `bundle` option and
+  copied in by value (`/editor` takes `useControllableState`, `mergeRefs`, `fieldRecipe`,
+  `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
+  never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a
@@ -221,12 +230,12 @@ The toolbar has a **Theme** menu (a `theme` global put on `<html>` by the `withT
 before the story renders: light, sand, dark, deep-blue; default
 `dark` via `initialGlobals`). The manager and the docs pages follow it too: `manager.ts` re-themes
 the UI on SET_GLOBALS/GLOBALS_UPDATED, `CosmosDocsContainer.tsx` does the same for docs, both from
-the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font** and **Text size** menus
-(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES` in
+the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font**, **Text size** and **Density** menus
+(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES`/`DENSITIES` in
 `packages/react/src/settings/appearance.ts`; `check-contrast.mjs` fails if that file drifts from the
 theme CSS), applied by the `withAppearanceAttributes` decorator as `data-accent`,
-`data-font` and `data-text-size` before the story renders. In URLs:
-`&globals=theme:sand;accent:teal;font:inter;textSize:lg`. A story that needs the current values reads them from the render
+`data-font`, `data-text-size` and `data-density` before the story renders. In URLs:
+`&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact`. A story that needs the current values reads them from the render
 context (`(_args, { globals }) => …`); `Foundations/Appearance` and the Welcome page apply a picked
 combination with `applyAppearance` and remount when the toolbar changes.
 

@@ -92,11 +92,13 @@ export type DataTableProps<T> = {
   emptyTitle?: string;
   emptyDescription?: string;
   /**
-   * Row height. `default` keeps the standard rows. `comfortable` pads the
-   * header and body cells more, for rows that carry two lines (a name over an
-   * email, an avatar) or need more room. Cell content stays vertically centred. A `density`
-   * passed without `onDensityChange` is a controlled value that never moves: applying a saved view
-   * then reports its density and keeps this one.
+   * Row height. Without it (and without `defaultDensity`) the table follows the page's
+   * `data-density`. Set, it is a local override of the page: `default` keeps the standard rows,
+   * `compact` pads the header and body cells less, `comfortable` more, for rows that carry two
+   * lines (a name over an email, an avatar) or need more room. Cell content stays vertically
+   * centred. A `density` passed without `onDensityChange` is a controlled value that never
+   * moves: applying a saved view then reports its density and keeps this one. A table that
+   * follows the page saves `default` in a view.
    */
   density?: DataTableDensity;
   defaultDensity?: DataTableDensity;
@@ -227,7 +229,7 @@ export type DataTableProps<T> = {
    * assistive technology where the window is, and the row that holds the keyboard focus stays
    * drawn while it is scrolled out of view, so focus and selection survive scrolling.
    *
-   * Every row has one fixed height, set by `density` (49px, or 61px when `comfortable`, at the
+   * Every row has one fixed height, set by the density (41px `compact`, 49px, or 61px `comfortable`, at the
    * default text size, and growing with the text size setting): content taller than that is
    * clipped, so keep each cell to the one line of text (or a control) it has in a standard row.
    * The rows scroll in the table's own area:
@@ -379,7 +381,7 @@ export const DataTable = <T,>({
   emptyTitle = 'No results',
   emptyDescription,
   density: densityProp,
-  defaultDensity = 'default',
+  defaultDensity,
   onDensityChange,
   editTrigger = 'cell',
   onCellEdit,
@@ -429,7 +431,11 @@ export const DataTable = <T,>({
   mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
   const mobileCards = mobileLayout === 'cards';
-  const [density, setDensity] = useControllableState<DataTableDensity>({
+  const [density, setDensity] = useControllableState<
+    DataTableDensity,
+    [],
+    DataTableDensity | undefined
+  >({
     value: densityProp,
     defaultValue: defaultDensity,
     onChange: onDensityChange,
@@ -683,7 +689,7 @@ export const DataTable = <T,>({
   const windowed = virtualize && showRows;
   // The height of a row in px: the default text size's until a drawn row is measured, then what
   // it really is, which follows the text size.
-  const [rowHeight, setRowHeight] = useState(VIRTUAL_ROW_HEIGHT[density]);
+  const [rowHeight, setRowHeight] = useState(VIRTUAL_ROW_HEIGHT[density ?? 'default']);
   const slice = useVirtualWindow({
     scrollerRef,
     count: pageRows.length,
@@ -725,8 +731,8 @@ export const DataTable = <T,>({
     ? windowParts(slice, pageRows.length, rowHeight, pinnedIndex < 0 ? null : pinnedIndex)
     : null;
   // A windowed cell is a box of one fixed height, so every row is as tall as the others.
-  const bodyPadding = windowed ? VIRTUAL_CELL_PADDING : BODY_CELL_PADDING[density];
-  const cellBox = windowed ? { height: VIRTUAL_CELL_HEIGHT[density] } : undefined;
+  const bodyPadding = windowed ? VIRTUAL_CELL_PADDING : BODY_CELL_PADDING;
+  const cellBox = windowed ? { height: VIRTUAL_CELL_HEIGHT } : undefined;
 
   // Selection helpers — operate on the *currently visible* rows so "select all"
   // never touches rows hidden by the search/filter pipeline.
@@ -786,7 +792,7 @@ export const DataTable = <T,>({
     sort,
     columnVisibility: shown,
     pageSize: showAllRows ? 'all' : pageSize,
-    density,
+    density: density ?? 'default',
   };
   const applyView = (view: DataTableView) => {
     // Each part through its own setter, then one trip back to the first page.
@@ -1107,6 +1113,7 @@ export const DataTable = <T,>({
 
   return (
     <div
+      data-density={density}
       className={clsx(
         'flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-bg-panel)] dark:border-gray-800',
         // On paper every row prints: no height to scroll in, nothing clipped, so that the header
@@ -1149,7 +1156,7 @@ export const DataTable = <T,>({
             hasToolbarControls && 'flex items-center gap-2'
           )}
         >
-          <div className={clsx('relative h-9', hasToolbarControls && 'min-w-0 flex-1')}>
+          <div className={clsx('h-ctrl-36 relative', hasToolbarControls && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -1302,7 +1309,7 @@ export const DataTable = <T,>({
                     style={pinOf(0).style}
                     className={clsx(
                       HEADER_CELL,
-                      HEADER_CELL_PADDING[density],
+                      HEADER_CELL_PADDING,
                       'print:hidden',
                       pinOf(0).className
                     )}
@@ -1315,7 +1322,7 @@ export const DataTable = <T,>({
                     style={pinOf(expandable ? 1 : 0).style}
                     className={clsx(
                       HEADER_CELL,
-                      HEADER_CELL_PADDING[density],
+                      HEADER_CELL_PADDING,
                       'print:hidden',
                       pinOf(expandable ? 1 : 0).className
                     )}
@@ -1345,7 +1352,6 @@ export const DataTable = <T,>({
                     filterSelected={filters[col.key]}
                     onFilterToggle={(v) => handleFilterToggle(col.key, v)}
                     onFilterClear={() => clearFilter(col.key)}
-                    density={density}
                   />
                 ))}
                 {actionColumn && (
@@ -1353,7 +1359,7 @@ export const DataTable = <T,>({
                     style={pinOf(leadCount + columns.length).style}
                     className={clsx(
                       HEADER_CELL,
-                      HEADER_CELL_PADDING[density],
+                      HEADER_CELL_PADDING,
                       'text-right print:hidden',
                       pinOf(leadCount + columns.length).className
                     )}
@@ -1370,15 +1376,13 @@ export const DataTable = <T,>({
               {showSkeleton ? (
                 Array.from({ length: loadingRows }, (_, i) => (
                   <tr key={i}>
-                    {selectable && (
-                      <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])} />
-                    )}
+                    {selectable && <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING)} />}
                     {columns.map((col, c) => (
                       <td
                         key={col.key}
                         className={clsx(
                           'px-4',
-                          BODY_CELL_PADDING[density],
+                          BODY_CELL_PADDING,
                           // The cell's own line height, so a row is as tall loading as loaded.
                           'text-sm',
                           ALIGN_CELL[col.align ?? 'left']
@@ -1396,7 +1400,7 @@ export const DataTable = <T,>({
                       </td>
                     ))}
                     {actionColumn && (
-                      <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING[density])}>
+                      <td className={clsx('px-4 print:hidden', BODY_CELL_PADDING)}>
                         <div className="flex h-5 items-center justify-end">
                           <Sk h="h-5" w="w-12" round="rounded-lg" />
                         </div>

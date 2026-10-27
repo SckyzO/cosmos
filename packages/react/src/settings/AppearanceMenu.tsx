@@ -17,7 +17,7 @@ export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omi
   size?: AppearanceMenuSize;
   /**
    * Adds a "Reset" button under the groups, always in view. Called with no argument: put the
-   * theme, accent, font and text size back to the app's defaults. The panel stays open.
+   * theme, accent, font, text size and density back to the app's defaults. The panel stays open.
    */
   onReset?: () => void;
   /** Class for the trigger button. */
@@ -25,8 +25,8 @@ export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omi
 };
 
 const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
-  sm: { box: 'h-8 w-8', icon: 'h-4 w-4' },
-  md: { box: 'h-10 w-10', icon: 'h-5 w-5' },
+  sm: { box: 'h-ctrl-32 w-ctrl-32', icon: 'h-4 w-4' },
+  md: { box: 'h-ctrl-40 w-ctrl-40', icon: 'h-5 w-5' },
 };
 
 /**

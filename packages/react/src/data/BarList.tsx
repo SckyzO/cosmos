@@ -179,7 +179,7 @@ export const BarList = ({
         // A row with a hover state is inset by the padding it adds, so its content lines up with
         // the rows that have none.
         const rowClass = interactive
-          ? 'focus-visible:focus-indicator -mx-2 flex w-[calc(100%+1rem)] gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-black/5 focus-visible:ring-inset dark:hover:bg-white/5'
+          ? 'focus-visible:focus-indicator -mx-2 flex w-[calc(100%+1rem)] gap-3 rounded-lg px-2 py-row-6 text-left transition-colors hover:bg-black/5 focus-visible:ring-inset dark:hover:bg-white/5'
           : 'flex w-full gap-3 text-left';
         return (
           <li key={item.id}>

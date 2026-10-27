@@ -86,7 +86,7 @@ export const ChatToolCall = ({
         aria-expanded={open}
         aria-controls={open ? bodyId : undefined}
         onClick={() => setOpen(!open)}
-        className="focus-visible:focus-indicator flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5"
+        className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-3 text-left hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5"
       >
         <ChevronRight
           aria-hidden

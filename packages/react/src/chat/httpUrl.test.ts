@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hostOf, isHttpUrl, trimTrailingPunctuation } from './httpUrl';
+import { hostOf, isHttpUrl, isSafeLinkUrl, trimTrailingPunctuation } from './httpUrl';
 
 describe('isHttpUrl', () => {
   it('accepts http and https URLs', () => {
@@ -62,5 +62,55 @@ describe('trimTrailingPunctuation', () => {
     const start = performance.now();
     expect(trimTrailingPunctuation(url)).toBe(url);
     expect(performance.now() - start).toBeLessThan(50);
+  });
+});
+
+describe('isSafeLinkUrl', () => {
+  it('accepts http(s), mailto and relative URLs', () => {
+    for (const value of [
+      'https://example.com/a?b=1#c',
+      'http://example.com',
+      'mailto:ops@example.com',
+      'MAILTO:ops@example.com?subject=Hi',
+      '/docs/page',
+      './page',
+      '../page?x=1',
+      '#section',
+      '?tab=2',
+      '/',
+    ]) {
+      expect(isSafeLinkUrl(value), value).toBe(true);
+    }
+  });
+
+  it('refuses every other scheme, however it is written', () => {
+    for (const value of [
+      'javascript:alert(1)',
+      'JavaScript:alert(1)',
+      ' javascript:alert(1)',
+      'java\tscript:alert(1)',
+      'data:text/html,<b>x</b>',
+      'vbscript:x',
+      'file:///etc/passwd',
+      'ftp://example.com',
+      'tel:+33100000000',
+      'mailto:',
+    ]) {
+      expect(isSafeLinkUrl(value), value).toBe(false);
+    }
+  });
+
+  it('refuses a protocol-relative URL, a backslash and anything with whitespace or markup', () => {
+    for (const value of [
+      '//example.com',
+      '/\\example.com',
+      '/a b',
+      '/a"onmouseover="x',
+      '/a<b>',
+      'example.com',
+      '',
+    ]) {
+      expect(isSafeLinkUrl(value), value).toBe(false);
+    }
   });
 });

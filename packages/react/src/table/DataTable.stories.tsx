@@ -722,6 +722,23 @@ const memberColumns: ColumnDef<Member>[] = [
   },
 ];
 
+export const CompactDensity: Story = {
+  render: () => (
+    <Wrap>
+      <SectionCard title="DataTable — compact density for long lists">
+        <DataTable
+          rows={members}
+          columns={memberColumns}
+          rowKey={(m) => m.id}
+          renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+          selectable
+          density="compact"
+        />
+      </SectionCard>
+    </Wrap>
+  ),
+};
+
 export const ComfortableDensity: Story = {
   render: () => (
     <Wrap>
@@ -804,6 +821,93 @@ export const ComfortableRowsAreTaller: Story = {
     for (const [i, offset] of offsets(comfortable.firstRow).entries()) {
       await expect(Math.abs(offset)).toBeLessThanOrEqual(1);
       await expect(offset).toBeCloseTo(standardOffsets[i], 0);
+    }
+  },
+};
+
+/** Compact headers and rows are shorter than the default ones, with the padding of the theme's cell tokens. */
+export const CompactRowsAreShorter: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        {(['default', 'compact'] as const).map((density) => (
+          <section key={density} aria-label={`${density} density`}>
+            <DataTable
+              aria-label={`${density} density members`}
+              rows={members.slice(0, 3)}
+              columns={memberColumns}
+              rowKey={(m) => m.id}
+              renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+              selectable
+              density={density}
+            />
+          </section>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const rowsOf = (density: DataTableDensity) => {
+      const region = within(canvas.getByRole('region', { name: `${density} density` }));
+      const [header, firstRow] = within(region.getByRole('table')).getAllByRole('row');
+      return { header, firstRow };
+    };
+    const height = (el: Element) => el.getBoundingClientRect().height;
+    const paddings = (row: Element) =>
+      new Set(Array.from(row.children, (cell) => getComputedStyle(cell).paddingTop));
+    const standard = rowsOf('default');
+    const compact = rowsOf('compact');
+
+    await expect(height(compact.header)).toBeLessThan(height(standard.header));
+    await expect(height(compact.firstRow)).toBeLessThan(height(standard.firstRow));
+    await expect(paddings(compact.header)).toEqual(new Set(['8px']));
+    await expect(paddings(compact.firstRow)).toEqual(new Set(['10px']));
+    // Even compact keeps a row well above the 24px floor of a target.
+    await expect(height(compact.firstRow)).toBeGreaterThanOrEqual(24);
+  },
+};
+
+/**
+ * Without a `density` prop the table follows the page's `data-density`; with one, it keeps its
+ * own whatever the page says. The wrappers stand for the attribute on `<html>`.
+ */
+export const FollowsThePageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="space-y-6">
+        {(['compact', 'default', 'comfortable'] as const).map((page) => (
+          <div key={page} data-density={page} aria-label={`page ${page}`} role="group">
+            <DataTable
+              aria-label={`${page} page, no prop`}
+              rows={members.slice(0, 2)}
+              columns={memberColumns}
+              rowKey={(m) => m.id}
+            />
+            <DataTable
+              aria-label={`${page} page, default prop`}
+              rows={members.slice(0, 2)}
+              columns={memberColumns}
+              rowKey={(m) => m.id}
+              density="default"
+            />
+          </div>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const cellPadding = (name: string) => {
+      const [header, firstRow] = within(canvas.getByRole('table', { name })).getAllByRole('row');
+      return [header, firstRow].map((row) => getComputedStyle(row.children[0]).paddingTop);
+    };
+    await expect(cellPadding('compact page, no prop')).toEqual(['8px', '10px']);
+    await expect(cellPadding('default page, no prop')).toEqual(['12px', '14px']);
+    await expect(cellPadding('comfortable page, no prop')).toEqual(['16px', '20px']);
+    // A density of its own wins over the page.
+    for (const page of ['compact', 'default', 'comfortable']) {
+      await expect(cellPadding(`${page} page, default prop`)).toEqual(['12px', '14px']);
     }
   },
 };

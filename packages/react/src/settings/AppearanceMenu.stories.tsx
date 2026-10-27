@@ -10,6 +10,7 @@ import {
   type CosmosAccent,
   type CosmosAppearance,
   type CosmosFont,
+  type CosmosDensity,
   type CosmosTextSize,
   type CosmosTheme,
 } from './appearance';
@@ -55,8 +56,8 @@ const IconButton = ({ icon: Icon, label }: { icon: typeof Bell; label: string })
 );
 
 /**
- * In a `Topbar`, applying the choice to the page, font and text size
- * included. Starts from the toolbar's values.
+ * In a `Topbar`, applying the choice to the page, font, text size and
+ * density included. Starts from the toolbar's values.
  */
 export const InTopbar: Story = {
   render: (_args, { globals }) => {
@@ -65,6 +66,7 @@ export const InTopbar: Story = {
       accent: (globals.accent || 'blue') as CosmosAccent,
       font: (globals.font || 'outfit') as CosmosFont,
       textSize: (globals.textSize || 'md') as CosmosTextSize,
+      density: (globals.density || 'default') as CosmosDensity,
     });
     const update = (patch: Partial<CosmosAppearance>) => {
       const next = { ...appearance, ...patch };
@@ -83,6 +85,7 @@ export const InTopbar: Story = {
               onAccentChange={(accent) => update({ accent })}
               onFontChange={(font) => update({ font })}
               onTextSizeChange={(textSize) => update({ textSize })}
+              onDensityChange={(density) => update({ density })}
             />
             <IconButton icon={User} label="Profile" />
           </>

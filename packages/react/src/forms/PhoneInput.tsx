@@ -361,7 +361,7 @@ export const PhoneInput = ({
         className="w-80 max-w-[calc(100vw-2rem)]"
       >
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2.5 dark:border-gray-700">
+          <div className="py-row-10 flex items-center gap-2 border-b border-gray-100 px-3 dark:border-gray-700">
             <Search className="size-4 shrink-0 text-gray-500 dark:text-gray-400" aria-hidden />
             <input
               role="combobox"
@@ -405,7 +405,7 @@ export const PhoneInput = ({
                   pick(option.code);
                 }}
                 className={clsx(
-                  'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-gray-900 select-none dark:text-gray-100',
+                  'py-row-8 flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-gray-900 select-none dark:text-gray-100',
                   i === activeIndex ? 'bg-brand-50 dark:bg-brand-500/15' : 'bg-transparent'
                 )}
               >

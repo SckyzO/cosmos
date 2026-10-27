@@ -509,7 +509,7 @@ export const CircleShapeMakesSquare: Story = {
   play: async ({ canvas }) => {
     const btn = canvas.getByRole('button', { name: 'Add' });
     await expect(btn.className).toMatch(/rounded-full/);
-    await expect(btn.className).toMatch(/w-9/); // default md size: w-9 h-9
+    await expect(btn.className).toMatch(/w-ctrl-36/); // default md size: 36px square
   },
 };
 
