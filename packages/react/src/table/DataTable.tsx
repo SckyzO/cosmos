@@ -15,7 +15,15 @@ import { DIMMED, LoadingVeil } from './LoadingVeil';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
-import { BODY_CELL_PADDING, HEADER_CELL, HEADER_CELL_PADDING, SKELETON_WIDTHS } from './density';
+import {
+  BODY_CELL_PADDING,
+  HEADER_CELL,
+  HEADER_CELL_PADDING,
+  SKELETON_WIDTHS,
+  VIRTUAL_CELL_HEIGHT,
+  VIRTUAL_CELL_PADDING,
+  VIRTUAL_ROW_HEIGHT,
+} from './density';
 import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
 import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
 import { newViewId, recordToFilters, type ViewState } from './savedViews';
@@ -25,6 +33,7 @@ import { downloadCsv } from './download';
 import { TOOLBAR_BUTTON } from './toolbarButton';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { stickyBodyCell, stickyHeadCell, STICKY_AFTER_SELECT, STICKY_START } from './stickyColumn';
 import type {
@@ -154,6 +163,23 @@ export type DataTableProps<T> = {
    * to Y of Z". Without it the pager counts `rows.length`. Ignored without `manual`.
    */
   rowCount?: number;
+
+  // ── Long lists ─────────────────────────────────────────────────────────────
+  /**
+   * Draws only the rows in view and a few around them, for thousands of rows on one page (a large
+   * `pageSize`, or "Show all"): the rest are two spacers, so the scroll bar still stands for the
+   * whole list. The header stays sticky, `aria-rowcount` and each row's `aria-rowindex` tell
+   * assistive technology where the window is, and the row that holds the keyboard focus stays
+   * drawn while it is scrolled out of view, so focus and selection survive scrolling.
+   *
+   * Every row has one fixed height, set by `density` (49px, or 61px when `comfortable`, at the
+   * default text size): content taller than that is clipped, so keep each cell to the one line
+   * of text (or a control) it has in a standard row. The rows scroll in the table's own area:
+   * give it a height (`className="max-h-96"`), or the window has no end. Table layout only: with
+   * `mobileLayout="cards"` below `sm` the cards keep the pagination. Not for expandable rows. On
+   * paper only the drawn rows print. Default `false`.
+   */
+  virtualize?: boolean;
 
   // ── Sort and page ──────────────────────────────────────────────────────────
   /**
@@ -286,6 +312,7 @@ export const DataTable = <T,>({
   pageSize: pageSizeProp,
   manual = false,
   rowCount,
+  virtualize = false,
   loading = false,
   loadingRows = 5,
   error = null,
@@ -522,6 +549,31 @@ export const DataTable = <T,>({
       ? sortedRows
       : sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
+  // Windowed (`virtualize`): the body draws a slice of `pageRows` between spacers.
+  const showRows = !showSkeleton && !((error && !dimRows) || !hasRows);
+  const windowed = virtualize && showRows;
+  const slice = useVirtualWindow({
+    scrollerRef,
+    count: pageRows.length,
+    rowHeight: VIRTUAL_ROW_HEIGHT[density],
+    enabled: windowed,
+  });
+  // The row that holds the focus is drawn wherever the scroll is, or scrolling would drop it.
+  const [focusedKey, setFocusedKey] = useState<string | number | null>(null);
+  const pinnedIndex =
+    windowed && focusedKey !== null ? pageRows.findIndex((r) => rowKey(r) === focusedKey) : -1;
+  const virtualParts = windowed
+    ? windowParts(
+        slice,
+        pageRows.length,
+        VIRTUAL_ROW_HEIGHT[density],
+        pinnedIndex < 0 ? null : pinnedIndex
+      )
+    : null;
+  // A windowed cell is a box of one fixed height, so every row is as tall as the others.
+  const bodyPadding = windowed ? VIRTUAL_CELL_PADDING : BODY_CELL_PADDING[density];
+  const cellBox = windowed ? { height: VIRTUAL_CELL_HEIGHT[density] } : undefined;
+
   // Selection helpers — operate on the *currently visible* rows so "select all"
   // never touches rows hidden by the search/filter pipeline.
   const visibleKeys = useMemo(() => sortedRows.map(rowKey), [sortedRows, rowKey]);
@@ -645,6 +697,137 @@ export const DataTable = <T,>({
       {columnsMenuNode}
     </div>
   ) : null;
+
+  const renderRow = (row: T, index: number) => {
+    const key = rowKey(row);
+    const isSelected = selection.has(key);
+    const href = rowHref?.(row);
+    // A link is the focusable thing of its row; without one, the row itself is.
+    const focusableRow = onRowClick && !href;
+    return (
+      <tr
+        key={key}
+        // The header is row 1; a windowed table says where each drawn row sits in the whole list.
+        aria-rowindex={windowed ? index + 2 : undefined}
+        onFocus={windowed ? () => setFocusedKey(key) : undefined}
+        onBlur={
+          windowed
+            ? (e) => {
+                // Focus that moved inside the row (or into a menu portaled out of it) stays.
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setFocusedKey((prev) => (prev === key ? null : prev));
+                }
+              }
+            : undefined
+        }
+        tabIndex={focusableRow ? 0 : undefined}
+        onClick={
+          onRowClick || (href && stickyFirstColumn)
+            ? (e) => {
+                if (!isRowClick(e)) return;
+                // The link covers its own column only: follow it from the rest of
+                // the row. Its click comes back here, and calls onRowClick.
+                const link = e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
+                if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
+                  link.click();
+                  return;
+                }
+                onRowClick?.(row);
+              }
+            : undefined
+        }
+        onKeyDown={
+          focusableRow
+            ? (e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                onRowClick(row);
+              }
+            : undefined
+        }
+        className={clsx(
+          'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
+          isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
+          (onRowClick || href) && 'cursor-pointer',
+          stickyFirstColumn && 'group',
+          focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
+          href &&
+            'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
+        )}
+      >
+        {selectable && (
+          <td
+            className={clsx(
+              'px-4 print:hidden',
+              bodyPadding,
+              href && 'relative z-[1]',
+              stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
+            )}
+          >
+            {/* A flex box centres the checkbox; inline, it sat on the
+              text baseline and moved with the font metrics. */}
+            <div className="flex items-center" style={cellBox}>
+              <Checkbox
+                aria-label={`Select row ${key}`}
+                checked={isSelected}
+                onChange={() => toggleRow(key)}
+              />
+            </div>
+          </td>
+        )}
+        {columns.map((col, i) => {
+          const cell =
+            href && i === 0 ? (
+              <AppLink href={href} data-row-link className={ROW_LINK}>
+                {col.render(row)}
+              </AppLink>
+            ) : (
+              col.render(row)
+            );
+          return (
+            <td
+              key={col.key}
+              className={clsx(
+                'px-4',
+                bodyPadding,
+                'text-sm',
+                ALIGN_CELL[col.align ?? 'left'],
+                href && i > 0 && RAISE_CONTROLS,
+                stickyFirstColumn &&
+                  i === 0 && [
+                    stickyBodyCell(isSelected, true),
+                    selectable ? STICKY_AFTER_SELECT : STICKY_START,
+                  ]
+              )}
+            >
+              {windowed ? (
+                <div
+                  className={clsx(
+                    'flex items-center overflow-hidden',
+                    col.align === 'right' && 'justify-end',
+                    col.align === 'center' && 'justify-center'
+                  )}
+                  style={cellBox}
+                >
+                  {cell}
+                </div>
+              ) : (
+                cell
+              )}
+            </td>
+          );
+        })}
+        {renderRowAction && (
+          <td className={clsx('px-4 print:hidden', bodyPadding, href && 'relative z-[1]')}>
+            <div className="flex items-center justify-end" style={cellBox}>
+              {renderRowAction(row)}
+            </div>
+          </td>
+        )}
+      </tr>
+    );
+  };
 
   return (
     <div
@@ -800,6 +983,7 @@ export const DataTable = <T,>({
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledBy}
             aria-busy={loading || undefined}
+            aria-rowcount={windowed ? pageRows.length + 1 : undefined}
             className="w-full table-fixed"
           >
             <colgroup>
@@ -821,7 +1005,10 @@ export const DataTable = <T,>({
               )}
             </colgroup>
             <thead className="sticky top-0 z-10 print:static">
-              <tr className="border-b border-gray-100 dark:border-gray-800">
+              <tr
+                aria-rowindex={windowed ? 1 : undefined}
+                className="border-b border-gray-100 dark:border-gray-800"
+              >
                 {selectable && (
                   <th
                     className={clsx(
@@ -918,7 +1105,7 @@ export const DataTable = <T,>({
                     )}
                   </tr>
                 ))
-              ) : (error && !dimRows) || !hasRows ? (
+              ) : !showRows ? (
                 <tr>
                   <td colSpan={columnCount} className="px-4">
                     <div className="flex justify-center">
@@ -930,114 +1117,18 @@ export const DataTable = <T,>({
                     </div>
                   </td>
                 </tr>
-              ) : (
-                pageRows.map((row) => {
-                  const key = rowKey(row);
-                  const isSelected = selection.has(key);
-                  const href = rowHref?.(row);
-                  // A link is the focusable thing of its row; without one, the row itself is.
-                  const focusableRow = onRowClick && !href;
-                  return (
-                    <tr
-                      key={key}
-                      tabIndex={focusableRow ? 0 : undefined}
-                      onClick={
-                        onRowClick || (href && stickyFirstColumn)
-                          ? (e) => {
-                              if (!isRowClick(e)) return;
-                              // The link covers its own column only: follow it from the rest of
-                              // the row. Its click comes back here, and calls onRowClick.
-                              const link =
-                                e.currentTarget.querySelector<HTMLAnchorElement>('[data-row-link]');
-                              if (link && stickyFirstColumn && !link.contains(e.target as Node)) {
-                                link.click();
-                                return;
-                              }
-                              onRowClick?.(row);
-                            }
-                          : undefined
-                      }
-                      onKeyDown={
-                        focusableRow
-                          ? (e) => {
-                              if (e.target !== e.currentTarget) return;
-                              if (e.key !== 'Enter' && e.key !== ' ') return;
-                              e.preventDefault();
-                              onRowClick(row);
-                            }
-                          : undefined
-                      }
-                      className={clsx(
-                        'hover:bg-gray-50 dark:hover:bg-white/5 print:break-inside-avoid',
-                        isSelected && 'bg-brand-50/40 dark:bg-brand-500/5',
-                        (onRowClick || href) && 'cursor-pointer',
-                        stickyFirstColumn && 'group',
-                        focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
-                        href &&
-                          'has-[[data-row-link]:focus-visible]:focus-indicator relative has-[[data-row-link]:focus-visible]:ring-inset'
-                      )}
-                    >
-                      {selectable && (
-                        <td
-                          className={clsx(
-                            'px-4 print:hidden',
-                            BODY_CELL_PADDING[density],
-                            href && 'relative z-[1]',
-                            stickyFirstColumn && [stickyBodyCell(isSelected, false), STICKY_START]
-                          )}
-                        >
-                          {/* A flex box centres the checkbox; inline, it sat on the
-                            text baseline and moved with the font metrics. */}
-                          <div className="flex items-center">
-                            <Checkbox
-                              aria-label={`Select row ${key}`}
-                              checked={isSelected}
-                              onChange={() => toggleRow(key)}
-                            />
-                          </div>
-                        </td>
-                      )}
-                      {columns.map((col, i) => (
-                        <td
-                          key={col.key}
-                          className={clsx(
-                            'px-4',
-                            BODY_CELL_PADDING[density],
-                            'text-sm',
-                            ALIGN_CELL[col.align ?? 'left'],
-                            href && i > 0 && RAISE_CONTROLS,
-                            stickyFirstColumn &&
-                              i === 0 && [
-                                stickyBodyCell(isSelected, true),
-                                selectable ? STICKY_AFTER_SELECT : STICKY_START,
-                              ]
-                          )}
-                        >
-                          {href && i === 0 ? (
-                            <AppLink href={href} data-row-link className={ROW_LINK}>
-                              {col.render(row)}
-                            </AppLink>
-                          ) : (
-                            col.render(row)
-                          )}
-                        </td>
-                      ))}
-                      {renderRowAction && (
-                        <td
-                          className={clsx(
-                            'px-4 print:hidden',
-                            BODY_CELL_PADDING[density],
-                            href && 'relative z-[1]'
-                          )}
-                        >
-                          <div className="flex items-center justify-end">
-                            {renderRowAction(row)}
-                          </div>
-                        </td>
-                      )}
+              ) : virtualParts ? (
+                virtualParts.map((part, n) =>
+                  part.kind === 'spacer' ? (
+                    <tr key={`__spacer-${n}`} aria-hidden className="border-b-0">
+                      <td colSpan={columnCount} className="p-0" style={{ height: part.height }} />
                     </tr>
-                  );
-                })
+                  ) : (
+                    renderRow(pageRows[part.index], part.index)
+                  )
+                )
+              ) : (
+                pageRows.map(renderRow)
               )}
             </tbody>
           </table>

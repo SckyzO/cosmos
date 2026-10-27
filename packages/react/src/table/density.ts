@@ -22,3 +22,21 @@ export const BODY_CELL_PADDING: Record<DataTableDensity, string> = {
 
 // Placeholder widths of a loading row, cycled over its cells so the rows do not look stamped.
 export const SKELETON_WIDTHS = ['w-24', 'w-16', 'w-20', 'w-12'] as const;
+
+// With `virtualize` the rows have one fixed height, so the window is arithmetic. Cell padding is
+// gone, the content sits in a box of `VIRTUAL_CELL_HEIGHT` and is clipped to it, and a row is
+// `VIRTUAL_ROW_HEIGHT` from its top to the next one's: the box plus the 1px divider. The heights
+// are those of a standard row (one line of `text-sm`) at the default text size, measured on the
+// rendered table; a story compares them with an ordinary row, so a change here must keep it
+// passing.
+export const VIRTUAL_ROW_HEIGHT: Record<DataTableDensity, number> = {
+  default: 49,
+  comfortable: 61,
+};
+
+export const VIRTUAL_CELL_HEIGHT: Record<DataTableDensity, number> = {
+  default: 48,
+  comfortable: 60,
+};
+
+export const VIRTUAL_CELL_PADDING = 'py-0';
