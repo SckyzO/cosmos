@@ -661,10 +661,12 @@ export const HtmlInLabelsRendersAsText: Story = {
     // when its own animation ends, so their order in the page is not the series order.
     await expect(nameTexts(canvasElement)).toContain(HOSTILE.slice(0, 11) + '…');
     await userEvent.tab();
-    await waitFor(() => expect(tooltipCard(canvasElement)).not.toBeNull());
-    const card = tooltipCard(canvasElement) as HTMLElement;
-    await expect(card.querySelector('p')).toHaveTextContent(HOSTILE);
-    await expect(card.querySelector('li')).toHaveTextContent(HOSTILE);
+    // The checks are the wait: a card found once can be drawn again before it is read.
+    await waitFor(() => {
+      const card = tooltipCard(canvasElement);
+      expect(card?.querySelector('p')).toHaveTextContent(HOSTILE);
+      expect(card?.querySelector('li')).toHaveTextContent(HOSTILE);
+    });
     await expectNoInjectedImage(canvasElement);
     await userEvent.tab();
     await closeTooltip(canvasElement);

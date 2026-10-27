@@ -217,11 +217,10 @@ export const HtmlInLabelsRendersAsText: Story = {
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']));
+    // Wait on the text itself: the axis is drawn again after it first appears, so a second query
+    // can find none.
     await waitFor(() =>
-      expect(canvasElement.querySelector('.recharts-polar-angle-axis')).not.toBeNull()
-    );
-    await expect(canvasElement.querySelector('.recharts-polar-angle-axis')).toHaveTextContent(
-      HOSTILE
+      expect(canvasElement.querySelector('.recharts-polar-angle-axis')).toHaveTextContent(HOSTILE)
     );
     await expectNoInjectedImage(canvasElement);
     // The tooltip's title is the hovered axis, its first row the first series.
