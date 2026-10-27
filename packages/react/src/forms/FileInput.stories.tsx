@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fireEvent, fn, spyOn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  expectFocusBorder,
+  expectMirrored,
+  expectTextContrast,
+} from '../storybook-helpers';
 import { FileInput } from './FileInput';
 
 const meta = {
@@ -164,6 +169,20 @@ export const ForwardsRef: Story = {
       await expect(click).toHaveBeenCalledTimes(1);
     } finally {
       click.mockRestore();
+    }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The button is at the start; the file name is an island of its own script. */
+export const ButtonAtTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <FileInput label="Attachment" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('button'));
+    for (const island of canvasElement.querySelectorAll('bdi')) {
+      expect(getComputedStyle(island).unicodeBidi).toBe('isolate');
     }
   },
 };

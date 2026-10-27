@@ -6,6 +6,7 @@ import {
   expectFocusBorder,
   expectRefFocuses,
   expectSuccessBorder,
+  startOffset,
 } from '../storybook-helpers';
 import { OtpInput } from './OtpInput';
 
@@ -300,5 +301,39 @@ export const NoSuccessKeepsTheNeutralLook: Story = {
   args: { value: '123456' },
   play: async ({ canvas }) => {
     for (const cell of canvas.getAllByRole('textbox')) expectBorderToken(cell, '--color-gray-200');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * A code reads left to right in any page: the first cell is on the left, typing and ArrowRight go
+ * to the cell on its right, and the row still sits at the start of its group.
+ */
+export const CellsStayLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [v, setV] = useState('');
+    return (
+      <div dir="rtl">
+        <OtpInput value={v} onChange={setV} length={4} />
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    const cell = (n: number) =>
+      canvas.getByRole('textbox', { name: `Verification code digit ${n}` });
+    await expect(cell(1).getBoundingClientRect().left).toBeLessThan(
+      cell(2).getBoundingClientRect().left
+    );
+    const group = canvas.getByRole('group', { name: 'Verification code' });
+    await expect(startOffset(group.firstElementChild!, group)).toBeCloseTo(0, 0);
+    await userEvent.click(cell(1));
+    await userEvent.keyboard('1');
+    await expect(cell(2)).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(cell(1)).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(cell(2)).toHaveFocus();
   },
 };

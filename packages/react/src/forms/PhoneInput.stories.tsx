@@ -9,6 +9,7 @@ import {
   inEachTheme,
   mobileViewport,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { PhoneInput } from './PhoneInput';
@@ -446,5 +447,43 @@ export const TextReadsInEveryTheme: Story = {
         expectTextContrast(el);
       }
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * A phone number reads left to right in any page: the country button stays on the left of the
+ * digits and the list opens as an island, under the field, while the label keeps the page's side.
+ */
+export const FieldIsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.lg(),
+  args: { defaultCountry: 'FR', defaultValue: '+33612345678' },
+  render: (args) => (
+    <div dir="rtl">
+      <PhoneInput {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const button = trigger(canvas);
+    const input = numberField(canvas);
+    const field = button.parentElement!;
+    await expect(field).toHaveAttribute('dir', 'ltr');
+    await expect(button.getBoundingClientRect().right).toBeLessThanOrEqual(
+      input.getBoundingClientRect().left + 1
+    );
+    await expect(
+      startOffset(canvas.getByText('Phone number'), button.closest('[dir="rtl"]')!)
+    ).toBeCloseTo(0, 0);
+    await userEvent.click(button);
+    const list = await screen.findByRole('listbox', { name: 'Countries' });
+    const panel = list.closest('[dir]')!;
+    await expect(panel).toHaveAttribute('dir', 'ltr');
+    await expect(panel.getBoundingClientRect().left).toBeCloseTo(
+      field.getBoundingClientRect().left,
+      0
+    );
+    await userEvent.keyboard('{Escape}');
   },
 };

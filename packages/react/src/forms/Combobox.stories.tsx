@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
   expectBelow,
   expectFocusBorder,
+  expectMirrored,
   expectOutsideClip,
   expectPlaceholderContrast,
   expectRefFocuses,
@@ -421,5 +423,21 @@ export const DisabledOptionShowsNotAllowedCursor: Story = {
     await expect(getComputedStyle(options.getByRole('option', { name: 'Alice' })).cursor).toBe(
       'pointer'
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The toggle sits on the end edge of the field, and what is typed follows its own direction. */
+export const ToggleSitsOnTheEndEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Combobox label="Assignee" options={PEOPLE} />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Toggle options' })
+    );
+    for (const input of canvasElement.querySelectorAll('input')) {
+      expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
+    }
   },
 };

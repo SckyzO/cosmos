@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
   expectFocusBorder,
   expectRefFocuses,
   expectTextContrast,
@@ -154,7 +156,11 @@ export const RangeControlled: Story = {
       <div className="space-y-3">
         <DatePicker mode="range" label="Pick a range" value={range} onChange={setRange} />
         <p className="text-xs text-[var(--color-text-muted)]">
-          Selected: <code>{fmt(range.from)}</code> → <code>{fmt(range.to)}</code>
+          Selected: <code>{fmt(range.from)}</code>{' '}
+          <span aria-hidden className="inline-block rtl:-scale-x-100">
+            →
+          </span>{' '}
+          <code>{fmt(range.to)}</code>
         </p>
       </div>
     );
@@ -403,7 +409,9 @@ export const RangeStaysUnderTheTriggerThatOpenedIt: Story = {
     await waitFor(() => {
       const t = to.getBoundingClientRect();
       const panel = calendarDialog()!.getBoundingClientRect();
-      expect(panel.left).toBeCloseTo(t.left, 0);
+      // The edges the text starts at: the left ones, the right ones in right to left.
+      const edge = getComputedStyle(to).direction === 'rtl' ? 'right' : 'left';
+      expect(panel[edge]).toBeCloseTo(t[edge], 0);
       expect(panel.top).toBeCloseTo(t.bottom + 6, 0);
     });
     await userEvent.keyboard('{Escape}');
@@ -422,5 +430,36 @@ export const ControlledClosedOnlyReports: Story = {
     await expect(args.onOpenChange).toHaveBeenCalledWith(true);
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await expect(calendarDialog()).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The calendar opens under the trigger, aligned to the edges the text starts at, in its direction. */
+export const OpensUnderTheTriggerInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <DatePicker label="Day" />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const trigger = within(box).getByRole('button', { name: /Day/ });
+      await userEvent.click(trigger);
+      await waitFor(() => expect(calendarDialog()).not.toBeNull());
+      const dialog = calendarDialog()!;
+      await expect(dialog).toHaveAttribute('dir', dir);
+      // The calendar is told the direction it sits in (left alone in left to right).
+      const calendar = dialog.querySelector('.rdp-root')!;
+      if (dir === 'rtl') await expect(calendar).toHaveAttribute('dir', 'rtl');
+      else await expect(calendar).not.toHaveAttribute('dir');
+      await waitFor(() => {
+        const edge = dir === 'rtl' ? 'right' : 'left';
+        expect(dialog.getBoundingClientRect()[edge]).toBeCloseTo(
+          trigger.getBoundingClientRect()[edge],
+          0
+        );
+      });
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() => expect(calendarDialog()).toBeNull());
+    }
   },
 };

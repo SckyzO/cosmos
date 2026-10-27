@@ -2,7 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { Radio, RadioGroup } from './Radio';
-import { expectFocusRing, expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  endOffset,
+  expectFocusRing,
+  expectMirrored,
+  expectTextContrast,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Radio',
@@ -231,15 +238,15 @@ const expectItemsAligned = async (root: HTMLElement) => {
   await expect(
     new Set(items.map((item) => Math.round(item.getBoundingClientRect().top))).size
   ).toBe(1);
+  const group = items[0]!.closest('fieldset')!;
   for (const [i, item] of items.entries()) {
-    const box = item.getBoundingClientRect();
     for (const text of item.querySelectorAll('span')) {
-      await expect(text.getBoundingClientRect().right).toBeLessThanOrEqual(box.right + 0.5);
+      await expect(endOffset(text, item)).toBeGreaterThanOrEqual(-0.5);
     }
     if (i > 0) {
-      await expect(box.left - items[i - 1]!.getBoundingClientRect().right).toBeGreaterThanOrEqual(
-        24
-      );
+      const previous = items[i - 1]!;
+      const previousEnd = startOffset(previous, group) + previous.getBoundingClientRect().width;
+      await expect(startOffset(item, group) - previousEnd).toBeGreaterThanOrEqual(24);
     }
   }
 };
@@ -263,13 +270,39 @@ export const GroupVerticalStacksItems: Story = {
   play: async ({ canvasElement }) => {
     const items = [...canvasElement.querySelectorAll<HTMLElement>('fieldset label')];
     await expect(items).toHaveLength(PLANS.length);
+    const group = items[0]!.closest('fieldset')!;
     for (const [i, item] of items.entries()) {
       if (i === 0) continue;
       const above = items[i - 1]!.getBoundingClientRect();
       const box = item.getBoundingClientRect();
       await expect(box.top).toBeGreaterThanOrEqual(above.bottom);
       await expect(Math.abs(box.top - above.bottom - 8)).toBeLessThanOrEqual(1);
-      await expect(Math.abs(box.left - above.left)).toBeLessThanOrEqual(1);
+      await expect(
+        Math.abs(startOffset(item, group) - startOffset(items[i - 1]!, group))
+      ).toBeLessThanOrEqual(1);
     }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The dot is at the start of its label, and a horizontal group starts at the start edge. */
+export const DotAndGroupMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <RadioGroup
+        legend="Plan"
+        orientation="horizontal"
+        defaultValue="a"
+        options={[
+          { value: 'a', label: 'Free' },
+          { value: 'b', label: 'Pro' },
+        ]}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('label span[aria-hidden]'));
+    expectMirrored(canvasElement, (box) => box.querySelectorAll('label')[1]);
   },
 };

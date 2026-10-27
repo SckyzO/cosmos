@@ -3,7 +3,7 @@ import { ImageIcon } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor } from 'storybook/test';
 import { Dropzone, type DropzoneRejection } from './Dropzone';
-import { expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import { expectReadsLeftToRight, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Dropzone',
@@ -361,5 +361,26 @@ export const WithoutRejectTheWholeDropFails: Story = {
     await expect(canvas.queryByText('a.png')).toBeNull();
     await expect(args.onChange).not.toHaveBeenCalled();
     await expect(args.onFilesAdded).not.toHaveBeenCalled();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** A chosen file's name is an island: a Latin name keeps its dots and brackets in a right-to-left page. */
+export const FileNamesAreIsolatedInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Doc', multiple: true },
+  render: (args) => (
+    <div dir="rtl">
+      <Dropzone {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByLabelText('Doc', { selector: 'input' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [new File(['x'], 'report (final).pdf')] } });
+    const name = (await canvas.findByText('report (final).pdf')).closest('bdi')!;
+    await expect(getComputedStyle(name).direction).toBe('ltr');
+    await expect(getComputedStyle(name).unicodeBidi).toBe('isolate');
+    expectReadsLeftToRight(canvas.getByText('1 B'));
   },
 };

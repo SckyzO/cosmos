@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { Toggle } from './Toggle';
 import { Select } from './Select';
@@ -136,5 +137,22 @@ export const ExplicitPropsWinOverRow: Story = {
   play: async ({ canvas }) => {
     const toggle = canvas.getByRole('switch', { name: 'Refresh automatically' });
     await expect(toggle).toHaveAttribute('id', 'auto');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The label is at the start of the row and the control at the end. */
+export const LabelAndControlSwapSides: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <FormRow label="Notifications">
+        <Toggle checked onChange={() => {}} />
+      </FormRow>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByText('Notifications'));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('switch'));
   },
 };

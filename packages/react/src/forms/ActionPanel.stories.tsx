@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { ActionPanel } from './ActionPanel';
 import { Button } from '../ui/Button';
 import { Toggle } from './Toggle';
@@ -44,7 +45,10 @@ export const WithLink: Story = {
             href="#"
             className="text-brand-600 dark:text-brand-400 text-sm font-semibold hover:underline"
           >
-            Change plan <span aria-hidden>→</span>
+            Change plan{' '}
+            <span aria-hidden className="inline-block rtl:-scale-x-100">
+              →
+            </span>
           </a>
         }
       />
@@ -130,5 +134,27 @@ export const WellSwitchesSurfaceToGray: Story = {
   play: async ({ canvasElement }) => {
     const panel = canvasElement.querySelector('[data-testid="ap"]');
     await expect(panel?.className ?? '').toMatch(/bg-gray-50/);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The action floats at the end of the title block. */
+export const ActionAtTheEndInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ActionPanel
+        layout="inline"
+        title="Manage subscription"
+        description="Change or cancel your plan."
+        action={<Button>Change plan</Button>}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Change plan' })
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByRole('heading'));
   },
 };

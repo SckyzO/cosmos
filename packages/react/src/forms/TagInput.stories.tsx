@@ -530,3 +530,20 @@ export const MobileKeepsTheInputUsable: Story = {
     await expect(input.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
   },
 };
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** What is typed follows its own direction, and the tags start at the start edge. */
+export const TypedTextFollowsItsOwnDirectionInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <TagInput label="Tags" value={['design']} onChange={() => {}} />
+    </div>
+  ),
+  play: ({ canvas }) => {
+    const input = canvas.getByRole('textbox');
+    expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
+    expect(getComputedStyle(input).direction).toBe('rtl');
+  },
+};

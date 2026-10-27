@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { ZoomBar } from './ZoomBar';
 
 const meta = {
@@ -52,5 +53,26 @@ export const ZoomOutFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByTitle('Zoom out'));
     await expect(args.onZoomOut).toHaveBeenCalled();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The minus is at the start; the divider of the fit button is on its start side. */
+export const ButtonsAndDividersMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ZoomBar zoom={0.85} onZoomIn={() => {}} onZoomOut={() => {}} onFit={() => {}} />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Zoom out' }));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Fit to canvas' })
+    );
+    for (const fit of canvasElement.querySelectorAll('button[title="Fit to canvas"]')) {
+      expect(getComputedStyle(fit).borderInlineStartWidth).toBe('1px');
+      expect(getComputedStyle(fit).borderInlineEndWidth).toBe('0px');
+    }
   },
 };

@@ -2,12 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import {
+  endOffset,
   expectBorderToken,
   expectFocusBorder,
   expectPlaceholderContrast,
   expectSuccessBorder,
   expectTextContrast,
   inEachTheme,
+  startOffset,
 } from '../storybook-helpers';
 import { Textarea } from './Textarea';
 
@@ -385,5 +387,45 @@ export const NoSuccessKeepsTheNeutralLook: Story = {
     expectBorderToken(canvas.getByRole('textbox', { name: 'Bio' }), '--color-gray-200');
     await expect(canvasElement.querySelector('svg')).toBeNull();
     await expect(canvas.getByText('A short description.')).not.toHaveAttribute('aria-live');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Each paragraph follows the direction of what is typed in it, and the counter, a code, reads
+ * "12 / 100" in any page and sits at the end of the row.
+ */
+export const ParagraphsAndCounterInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <Textarea
+        label="Message"
+        defaultValue={'Hello world\nمرحبا بالعالم'}
+        maxLength={100}
+        description="Visible to the team."
+      />
+    </div>
+  ),
+  play: ({ canvas, canvasElement }) => {
+    const field = canvas.getByRole('textbox', { name: 'Message' });
+    expect(getComputedStyle(field).unicodeBidi).toBe('plaintext');
+    expect(getComputedStyle(field).direction).toBe('rtl');
+    const counter = canvasElement.querySelector<HTMLElement>('[aria-live="polite"]')!;
+    expect(counter).toHaveTextContent('25 / 100');
+    expect(getComputedStyle(counter).direction).toBe('ltr');
+    // "23" is read before "100": left of it.
+    const [count, max] = [...counter.childNodes].filter((node) => node.textContent?.match(/\d/));
+    const rect = (node: Node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return range.getBoundingClientRect();
+    };
+    expect(rect(count!).left).toBeLessThan(rect(max!).left);
+    // The description is at the start of the row, the counter at the end.
+    const description = canvas.getByText('Visible to the team.');
+    expect(startOffset(description, field)).toBeCloseTo(0, 0);
+    expect(endOffset(counter, field)).toBeCloseTo(0, 0);
   },
 };

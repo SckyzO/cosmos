@@ -2,12 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import {
+  bothDirections,
+  endOffset,
   expectBorderToken,
   expectFocusBorder,
+  expectMirrored,
   expectRefFocuses,
   expectSuccessBorder,
   expectTextContrast,
   inEachTheme,
+  startOffset,
 } from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { Select } from './Select';
@@ -430,17 +434,19 @@ export const SuccessIconSitsBesideTheChevron: Story = {
       // The check is drawn first, the chevron after it.
       const [check, chevron] = Array.from(select.parentElement!.querySelectorAll('svg'));
       await expect(check).toHaveAttribute('aria-hidden', 'true');
-      const box = select.getBoundingClientRect();
       const c = check.getBoundingClientRect();
       const v = chevron.getBoundingClientRect();
-      await expect(v.left - c.right, `${size}: gap between the icons`).toBeCloseTo(6, 0);
+      await expect(
+        startOffset(chevron, select) - startOffset(check, select) - c.width,
+        `${size}: gap between the icons`
+      ).toBeCloseTo(6, 0);
       await expect(c.top + c.height / 2, `${size}: vertical centre`).toBeCloseTo(
         v.top + v.height / 2,
         0
       );
-      const pad = parseFloat(getComputedStyle(select).paddingRight);
+      const pad = parseFloat(getComputedStyle(select).paddingInlineEnd);
       await expect(pad, `${size}: the text clears the check`).toBeGreaterThanOrEqual(
-        box.right - c.left
+        endOffset(check, select) + c.width
       );
     }
   },
@@ -460,7 +466,24 @@ export const NoSuccessKeepsTheNeutralLook: Story = {
     const field = canvas.getByRole('combobox', { name: 'Region' });
     expectBorderToken(field, '--color-gray-200');
     await expect(canvasElement.querySelectorAll('svg')).toHaveLength(1);
-    await expect(parseFloat(getComputedStyle(field).paddingRight)).toBe(36);
+    await expect(parseFloat(getComputedStyle(field).paddingInlineEnd)).toBe(36);
     await expect(canvas.getByText('Where to deploy the agent.')).not.toHaveAttribute('aria-live');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The chevron, and the check beside it, sit on the end edge, and the text clears them. */
+export const IconsSitOnTheEndEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Select label="Region" options={REGIONS} defaultValue="eu-west-1" success="Available." />
+    )),
+  play: ({ canvasElement }) => {
+    for (const nth of [0, 1]) {
+      expectMirrored(canvasElement, (box) => box.querySelectorAll('select ~ svg')[nth]);
+    }
+    expectMirrored(canvasElement, (box) => box.querySelector('select'));
   },
 };

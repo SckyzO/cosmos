@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusBorder, expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  expectFocusBorder,
+  expectMirrored,
+  expectTextContrast,
+} from '../storybook-helpers';
 import { TimePicker } from './TimePicker';
 
 const meta = {
@@ -116,5 +121,16 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Time must be in the future.'));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The clock sits on the start edge of the field. */
+export const IconSitsOnTheStartEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <TimePicker label="Time" defaultValue="09:30" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg'));
   },
 };

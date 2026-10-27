@@ -7,7 +7,10 @@ import {
   expectNoHorizontalOverflow,
   expectRefFocuses,
   inEachTheme,
+  keyToEnd,
+  keyToStart,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { ColorInput, type ColorPreset } from './ColorInput';
 import { FormRow } from './FormRow';
@@ -109,16 +112,16 @@ export const ArrowKeysMoveAcrossSwatches: Story = {
   args: { defaultValue: '#14b8a6', onChange: fn() },
   play: async ({ canvas, args }) => {
     swatch(canvas, 'Teal').focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(swatch(canvas, 'Blue')).toHaveFocus();
     await expect(swatch(canvas, 'Blue')).toBeChecked();
     await expect(swatch(canvas, 'Teal')).not.toBeChecked();
     await expect(args.onChange).toHaveBeenLastCalledWith('#3b82f6');
     await userEvent.keyboard('{End}');
     await expect(swatch(canvas, 'Pink')).toBeChecked();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(swatch(canvas, 'Red')).toBeChecked();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(swatch(canvas, 'Pink')).toBeChecked();
     await expect(args.onChange).toHaveBeenLastCalledWith('#ec4899');
   },
@@ -312,5 +315,38 @@ export const SelectedSwatchReadsInEveryTheme: Story = {
         'rgb(255, 255, 255)'
       );
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The swatches follow the reading direction (ArrowLeft goes to the next one), and the hex field,
+ * a code, is a left-to-right island: the preview square stays on the left of the digits.
+ */
+export const HexFieldIsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { defaultValue: '#14b8a6', onChange: fn() },
+  render: (args) => (
+    <div dir="rtl">
+      <ColorInput {...args} label="Colour" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Preset colours' });
+    await expect(startOffset(swatch(canvas, 'Teal'), group)).toBeLessThan(
+      startOffset(swatch(canvas, 'Blue'), group)
+    );
+    swatch(canvas, 'Teal').focus();
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(swatch(canvas, 'Blue')).toBeChecked();
+
+    const field = canvas.getByRole('textbox', { name: 'Colour' });
+    await expect(field.parentElement).toHaveAttribute('dir', 'ltr');
+    await expect(getComputedStyle(field).direction).toBe('ltr');
+    const preview = field.previousElementSibling!;
+    await expect(preview.getBoundingClientRect().right).toBeLessThanOrEqual(
+      field.getBoundingClientRect().left + 1
+    );
   },
 };

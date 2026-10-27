@@ -2,7 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Checkbox, CheckboxGroup } from './Checkbox';
-import { expectFocusRing, expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  endOffset,
+  expectFocusRing,
+  expectMirrored,
+  expectTextContrast,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Forms/Checkbox',
@@ -320,16 +327,17 @@ export const GroupHorizontalKeepsItemsApart: Story = {
   play: async ({ canvasElement }) => {
     const items = [...canvasElement.querySelectorAll<HTMLElement>('fieldset label')];
     await expect(items).toHaveLength(3);
+    const group = items[0]!.closest('fieldset')!;
     for (const [i, item] of items.entries()) {
-      const box = item.getBoundingClientRect();
       // The description sits inside its own item, not under a neighbour.
-      const description = within(item).getByText(STATUSES[i]!.description).getBoundingClientRect();
-      await expect(description.left).toBeGreaterThanOrEqual(box.left);
-      await expect(description.right).toBeLessThanOrEqual(box.right + 0.5);
-      if (i > 0)
-        await expect(box.left - items[i - 1]!.getBoundingClientRect().right).toBeGreaterThanOrEqual(
-          24
-        );
+      const description = within(item).getByText(STATUSES[i]!.description);
+      await expect(startOffset(description, item)).toBeGreaterThanOrEqual(0);
+      await expect(endOffset(description, item)).toBeGreaterThanOrEqual(-0.5);
+      if (i > 0) {
+        const previous = items[i - 1]!;
+        const previousEnd = startOffset(previous, group) + previous.getBoundingClientRect().width;
+        await expect(startOffset(item, group) - previousEnd).toBeGreaterThanOrEqual(24);
+      }
     }
   },
 };
@@ -341,13 +349,39 @@ export const GroupVerticalStacksItems: Story = {
   play: async ({ canvasElement }) => {
     const items = [...canvasElement.querySelectorAll<HTMLElement>('fieldset label')];
     await expect(items).toHaveLength(NOTIFICATION_OPTIONS.length);
+    const group = items[0]!.closest('fieldset')!;
     for (const [i, item] of items.entries()) {
       if (i === 0) continue;
       const above = items[i - 1]!.getBoundingClientRect();
       const box = item.getBoundingClientRect();
       await expect(box.top).toBeGreaterThanOrEqual(above.bottom);
       await expect(Math.abs(box.top - above.bottom - 8)).toBeLessThanOrEqual(1);
-      await expect(Math.abs(box.left - above.left)).toBeLessThanOrEqual(1);
+      await expect(
+        Math.abs(startOffset(item, group) - startOffset(items[i - 1]!, group))
+      ).toBeLessThanOrEqual(1);
     }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The box is at the start of its label, and a horizontal group starts at the start edge. */
+export const BoxAndGroupMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <CheckboxGroup
+        legend="Status"
+        orientation="horizontal"
+        options={[
+          { value: 'a', label: 'Open' },
+          { value: 'b', label: 'Closed' },
+        ]}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('label'));
+    expectMirrored(canvasElement, (box) => box.querySelector('label span[aria-hidden]'));
+    expectMirrored(canvasElement, (box) => box.querySelectorAll('label')[1]);
   },
 };

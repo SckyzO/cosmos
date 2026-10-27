@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { Filter, LayoutDashboard, List, Map } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusRing, expectRefFocuses } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectRefFocuses,
+  keyToEnd,
+  keyToStart,
+  startOffset,
+} from '../storybook-helpers';
 import { SegmentedControl } from './SegmentedControl';
 
 const meta = {
@@ -93,9 +99,9 @@ export const ArrowKeysMoveSelection: Story = {
   play: async ({ canvas }) => {
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'List' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
     await expect(canvas.getByRole('radio', { name: 'Map', checked: true })).toHaveFocus();
     await userEvent.keyboard('{Home}');
     await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
@@ -273,7 +279,7 @@ export const PillsArrowKeysMoveSelection: Story = {
     await expect(canvas.getByRole('radio', { name: 'CRIT', checked: true })).toHaveFocus();
     await userEvent.keyboard('{End}');
     await expect(canvas.getByRole('radio', { name: 'OK', checked: true })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'All', checked: true })).toHaveFocus();
   },
 };
@@ -394,5 +400,33 @@ export const BadgeOfTheActiveSegmentIsTinted: Story = {
       getComputedStyle(badge('All 128')).backgroundColor
     );
     await expect(getComputedStyle(badge('All 128')).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * In right to left the first segment is on the right and ArrowLeft moves to the next one; Up and
+ * Down do not change.
+ */
+export const ArrowKeysFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <ControlledView />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'View' });
+    const [list, grid] = ['List', 'Grid'].map((name) => canvas.getByRole('radio', { name }));
+    await expect(startOffset(list!, group)).toBeLessThan(startOffset(grid!, group));
+    await userEvent.tab();
+    await expect(list).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
   },
 };

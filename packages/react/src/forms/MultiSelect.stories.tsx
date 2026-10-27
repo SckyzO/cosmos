@@ -2,9 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
   expectFocusBorder,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectPlaceholderContrast,
+  expectReadsLeftToRight,
   expectRefFocuses,
   inEachTheme,
   mobileViewport,
@@ -574,6 +578,29 @@ export const LabelHiddenTakesNoRoom: Story = {
     await expect(Math.round(field.getBoundingClientRect().top)).toBe(
       Math.round(root.getBoundingClientRect().top)
     );
-    await expect(canvas.getByText('2 selected')).toHaveClass('sr-only');
+    await expect(canvas.getByText('2 selected').closest('span')).toHaveClass('sr-only');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The tags start at the start edge and the toggle sits on the end one. */
+export const TagsAndToggleMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <MultiSelect label="Roles" options={ROLES} defaultValue={['editor']} onChange={() => {}} />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Toggle options' })
+    );
+    expectMirrored(
+      canvasElement,
+      (box) => box.querySelector('[role="combobox"]')!.previousElementSibling
+    );
+    for (const dir of ['ltr', 'rtl'] as const) {
+      expectReadsLeftToRight(within(directionBox(canvasElement, dir)).getByText('1 selected'));
+    }
   },
 };

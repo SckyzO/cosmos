@@ -99,6 +99,17 @@ export const mirroredIcon = (Icon: ElementType<{ className?: string }>) => {
 };
 
 /**
+ * The arrow key that moves toward the end of the line: ArrowRight, and ArrowLeft where the page
+ * reads right to left (the direction pass puts `dir="rtl"` on `<html>`). `keyToStart` is its
+ * opposite. For a play function that checks a horizontal widget in both directions.
+ */
+export const keyToEnd = (at: Element = document.documentElement) =>
+  getComputedStyle(at).direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+
+export const keyToStart = (at: Element = document.documentElement) =>
+  getComputedStyle(at).direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
+
+/**
  * `content` rendered twice, in a `dir="ltr"` box and a `dir="rtl"` box one under the other, for a
  * story that checks a component mirrors. The boxes set the direction themselves, so the story
  * holds in the direction pass (`dir="rtl"` on `<html>`) as well. Read them back with
@@ -159,6 +170,34 @@ export const expectMirrored = (
     precision
   );
   return { ltr: inLtr as HTMLElement, rtl: inRtl as HTMLElement };
+};
+
+/**
+ * Play-function assertion: the text of `element` reads left to right, its first character on the
+ * left of its last one, whatever the direction around it. For a value a component writes in
+ * English around a number ("2 of 5 done", "1.5 MB"), which a right-to-left line would reorder
+ * ("of 5 done 2", "MB 1.5").
+ */
+export const expectReadsLeftToRight = (element: Element) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const texts: Text[] = [];
+  while (walker.nextNode()) {
+    const text = walker.currentNode as Text;
+    if (text.data.trim()) texts.push(text);
+  }
+  expect(texts.length, `text in ${element.outerHTML}`).toBeGreaterThan(0);
+  const first = texts[0]!;
+  const last = texts[texts.length - 1]!;
+  const leftOf = (text: Text, offset: number) => {
+    const range = document.createRange();
+    range.setStart(text, offset);
+    range.setEnd(text, offset + 1);
+    return range.getBoundingClientRect().left;
+  };
+  expect(
+    leftOf(first, first.data.search(/\S/)),
+    `"${element.textContent}" reads left to right`
+  ).toBeLessThan(leftOf(last, last.data.trimEnd().length - 1));
 };
 
 /**

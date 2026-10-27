@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { PasswordInput } from './PasswordInput';
 
 const meta = {
@@ -85,5 +86,35 @@ export const DisabledBlocksToggle: Story = {
   play: async ({ canvas }) => {
     const toggle = canvas.getByRole('button', { name: /show password/i });
     await expect(toggle).toBeDisabled();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The show button sits on the end edge of the field. */
+export const ToggleSitsOnTheEndEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <PasswordInput label="Password" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('button'));
+  },
+};
+
+/**
+ * A hidden password keeps the page's direction, as HTML keeps `dir="auto"` off password fields:
+ * how it aligns says nothing of what is typed. Shown, it follows its text like any field.
+ */
+export const HiddenValueKeepsThePageDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <PasswordInput label="Password" defaultValue="hunter22" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByLabelText('Password', { selector: 'input' });
+    await expect(getComputedStyle(input).unicodeBidi).not.toBe('plaintext');
+    await userEvent.click(canvas.getByRole('button', { name: 'Show password' }));
+    await expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
   },
 };

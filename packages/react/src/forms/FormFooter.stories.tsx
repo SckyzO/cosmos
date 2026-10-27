@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { Button } from '../ui/Button';
 import { Input } from './Input';
 import { FormFooter } from './FormFooter';
@@ -161,5 +162,23 @@ export const SubmitIntentColorsTheSubmit: Story = {
     await expect(submit('Delete account')).not.toHaveClass('bg-brand-500');
     await expect(submit('Delete soft')).toHaveClass('bg-red-50', 'text-red-700');
     await expect(submit('Save')).toHaveClass('bg-brand-500', 'text-white');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The buttons are at the end of the row, with the submit last, and `extra` is at the start. */
+export const ButtonsAtTheEndInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <FormFooter onCancel={() => {}} extra="Saved a minute ago" align="between" />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByText('Saved a minute ago'));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Save changes' })
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Cancel' }));
   },
 };

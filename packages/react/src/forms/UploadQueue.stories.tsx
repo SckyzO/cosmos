@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useEffect, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+} from '../storybook-helpers';
 import { Dropzone, type DropzoneRejection } from './Dropzone';
 import { UploadQueue, type UploadQueueItem } from './UploadQueue';
 
@@ -380,5 +387,51 @@ export const ForwardsRef: Story = {
   render: () => <UploadQueue ref={queueRef} items={ITEMS} label="Transfers" />,
   play: async ({ canvas }) => {
     await expect(queueRef.current).toBe(canvas.getByRole('region', { name: 'Transfers' }));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The file tile is at the start, the remove button at the end, and a file name is an island. */
+export const RowsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { items: [{ id: 'a', name: 'report (final) 2026.pdf', size: 2 * MB, status: 'done' }] },
+  render: (args) => {
+    // Both queues are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => <UploadQueue {...args} label={`Uploads ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('li')!.firstElementChild);
+    expectMirrored(canvasElement, (box) => box.querySelector('li')!.lastElementChild);
+    const names = canvasElement.querySelectorAll('li [title] > bdi');
+    expect(names).toHaveLength(2);
+    for (const name of names) {
+      expect(name).toHaveTextContent('report (final) 2026.pdf');
+      expect(getComputedStyle(name).direction).toBe('ltr');
+    }
+  },
+};
+
+/** The count and the sizes the queue writes keep their order in a right-to-left page. */
+export const CountAndSizesReadLeftToRight: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    items: [
+      { id: 'a', name: 'a.pdf', size: 2 * MB, status: 'done' },
+      { id: 'b', name: 'b.pdf', size: 4 * MB, status: 'uploading', progress: 50 },
+    ],
+  },
+  render: (args) => {
+    let count = 0;
+    return bothDirections(() => <UploadQueue {...args} label={`Uploads ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = within(directionBox(canvasElement, dir));
+      expectReadsLeftToRight(box.getByText('1 of 2 done'));
+      expectReadsLeftToRight(box.getByText('2.0 MB'));
+      expectReadsLeftToRight(box.getByText('2.0 MB of 4.0 MB · 50%'));
+    }
   },
 };
