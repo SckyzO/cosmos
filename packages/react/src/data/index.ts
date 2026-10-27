@@ -12,3 +12,4 @@ export * from './DateTime';
 export * from './RelativeTime';
 export * from './Clock';
 export * from './Countdown';
+export * from './AuditDiff';
