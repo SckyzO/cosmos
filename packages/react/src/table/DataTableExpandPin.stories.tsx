@@ -346,6 +346,19 @@ export const PinnedEdgeShadowsFollowTheScroll: Story = {
   },
 };
 
+/** Wider than its box, the table keeps every stated width: the first column, 150px, too. */
+export const FirstColumnKeepsItsWidthInAWideTable: Story = {
+  ...PinnedStartAndEnd,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Hosts' });
+    await expect(scrollerOf(table).scrollWidth).toBeGreaterThan(scrollerOf(table).clientWidth);
+    const [, host, rack] = within(table).getAllByRole('columnheader');
+    await expect(Math.round(box(host).width)).toBe(150);
+    await expect(Math.round(box(rack).left)).toBe(Math.round(box(host).right));
+  },
+};
+
 export const SeveralPinnedColumnsAddUp: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
