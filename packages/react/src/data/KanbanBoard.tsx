@@ -214,7 +214,7 @@ const CardFrame = ({
         // The brand line that says where the card will land: the hole is the drop place.
         <span
           aria-hidden
-          className="bg-brand-500 before:bg-brand-500 absolute inset-x-1 -top-[5px] h-0.5 rounded-full before:absolute before:-inset-s-1 before:-top-[3px] before:size-2 before:rounded-full"
+          className="bg-brand-500 before:bg-brand-500 before:-inset-s-1 absolute inset-x-1 -top-[5px] h-0.5 rounded-full before:absolute before:-top-[3px] before:size-2 before:rounded-full"
         />
       )}
       <div className={clsx('flex flex-col gap-2', state === 'hole' && 'opacity-0')}>

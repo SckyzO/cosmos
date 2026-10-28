@@ -82,7 +82,7 @@ function ActivityFeedItem({
         {!__isLast && (
           <span
             aria-hidden
-            className="absolute inset-s-5 top-5 -ms-px h-full w-0.5 bg-gray-200 dark:bg-white/10"
+            className="inset-s-5 absolute top-5 -ms-px h-full w-0.5 bg-gray-200 dark:bg-white/10"
           />
         )}
         <div className="relative flex space-x-3">
