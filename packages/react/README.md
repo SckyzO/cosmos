@@ -1475,6 +1475,20 @@ const Forward = ({ className, ...props }: LucideProps) => (
 </Button>;
 ```
 
+The overlays name their sides `start` and `end`, which follow the reading direction: left and
+right under `dir="ltr"`, right and left under `dir="rtl"`. That is `Drawer`'s `side`
+(`start` | `end` | `bottom`, default `end`), the `align` of `Menu`, `Dropdown`, `UserMenu` and
+`NotificationsPanel` (`start` | `end`), and the `position` of `Tooltip` and `Popover.Content`
+(`top` | `bottom` | `start` | `end`). A panel that opens next to a trigger takes the direction of
+that trigger, even though it renders at the end of `<body>`, and flips to the other side as before
+when the screen would cut it. A `Drawer`, a `Modal`, a `ConfirmationModal` and a `CommandPalette` are
+not next to anything: they read the `dir` of `<html>`, so set it there rather than on a wrapper.
+`Toaster` stacks its toasts at the bottom corner at the end of the line (bottom left under
+`dir="rtl"`, from its `dir` prop or `<html>`); sonner's own `position` is a corner of the screen,
+so one you pass is kept as it is. A keyboard shortcut (the `shortcut` of a `Menu.Item`,
+`CommandPalette.Item` or `Tooltip`, the keys of a `HelpOverlay.Shortcut`) keeps the order the keys
+are pressed in.
+
 Two things stay as they are on purpose. A chevron that points down, or turns over when a
 panel opens (`Accordion`), and a trend arrow that points up or down, are not turned around.
 And the arrow keys that move a card across a `KanbanBoard` follow where the columns are, not
@@ -1482,9 +1496,9 @@ the reading direction: with the first column on the right, ArrowLeft takes the c
 next one.
 
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), **Data** and
-**Lists**. The others still lay out for left to right and are the next ones in line: Feedback
-and Overlays, Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the
+**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), **Data**,
+**Lists**, **Feedback** and **Overlays**. The others still lay out for left to right and are the
+next ones in line: Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the
 **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story right to left.
 
 ## Themes and accents
