@@ -405,7 +405,7 @@ export const MapView = ({
       })}
 
       {interactive && !unavailable && (
-        <div className="absolute top-3 right-3 z-10 flex flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] shadow-sm">
+        <div className="inset-e-3 absolute top-3 z-10 flex flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] shadow-sm">
           <button
             type="button"
             aria-label="Zoom in"

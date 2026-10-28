@@ -15,7 +15,7 @@ export type CodeBlockProps = {
    * The copy button always copies the code, not the highlighted nodes.
    */
   highlight?: (code: string, language?: string) => ReactNode;
-  /** Show the copy button (top-right, hover-revealed). Default `true`. */
+  /** Show the copy button (top corner at the end of the line, hover-revealed). Default `true`. */
   showCopy?: boolean;
   /** A line-number gutter. It is not selected and not copied. Default `false`. */
   lineNumbers?: boolean;
@@ -143,14 +143,14 @@ export const CodeBlock = ({
           {lineNumbers && (
             <span
               aria-hidden
-              className="mr-4 shrink-0 text-right text-[var(--color-code-token-comment)] select-none"
+              className="me-4 shrink-0 text-end text-[var(--color-code-token-comment)] select-none"
               style={{ minWidth: `${digits}ch` }}
             >
               {i + 1}
             </span>
           )}
           {mode === 'diff' && (
-            <span className="mr-2 w-[1ch] shrink-0 text-center select-none">
+            <span className="me-2 w-[1ch] shrink-0 text-center select-none">
               {row.kind === 'add' ? '+' : row.kind === 'remove' ? '−' : ''}
             </span>
           )}
@@ -183,7 +183,7 @@ export const CodeBlock = ({
           {filename ? (
             <span className="flex min-w-0 items-baseline gap-2">
               <span className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
-                {filename}
+                <bdi>{filename}</bdi>
               </span>
               {language && (
                 <span className="text-3xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -203,6 +203,9 @@ export const CodeBlock = ({
       )}
       <pre
         ref={ref}
+        // Code reads left to right whatever the page does: its lines, its number gutter and its
+        // scroll origin stay put. The title bar and the copy button around it follow the page.
+        dir="ltr"
         // A region that scrolls is a keyboard stop (axe: scrollable-region-focusable), named
         // after what it holds.
         {...(scrolls && {
@@ -226,9 +229,9 @@ export const CodeBlock = ({
         </code>
       </pre>
       {/* Without a title bar there is nothing to anchor the button to, so we float
-       *  it over the code in the top-right corner (hover-revealed via `group`). */}
+       *  it over the code in the top corner at the end of the line (hover-revealed via `group`). */}
       {showCopy && !hasHeader && (
-        <Clipboard value={copyText} floating className="absolute top-2 right-2" />
+        <Clipboard value={copyText} floating className="inset-e-2 absolute top-2" />
       )}
     </div>
   );

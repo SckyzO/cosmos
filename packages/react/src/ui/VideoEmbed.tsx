@@ -114,6 +114,8 @@ export const VideoEmbed = ({
             <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
           )}
           <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-lg transition-transform group-hover:scale-110">
+            {/* The triangle points right in both directions, as the time of a video runs from the
+                left: its optical offset is a physical one. */}
             <Play aria-hidden className="ml-0.5 h-6 w-6 fill-current" />
           </span>
         </button>
