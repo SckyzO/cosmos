@@ -134,7 +134,8 @@ export const Intents: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 // The tile is the sibling before the text block that holds the title.
-const tileOf = (title: HTMLElement) => title.parentElement!.previousElementSibling!;
+// The title is isolated in a `bdi`: the tile is before the block that holds its paragraph.
+const tileOf = (title: HTMLElement) => title.closest('p')!.parentElement!.previousElementSibling!;
 
 const TILE: Record<EmptyStateIntent, string> = {
   neutral: 'bg-gray-100',
@@ -206,8 +207,9 @@ export const IntentAndIconReachTheTile: Story = {
         await expect(getComputedStyle(tile).backgroundColor).not.toBe(neutralTile);
       }
       // The title carries no color of its own: it would say the meaning twice.
-      await expect(canvas.getByText(title)).toHaveClass('text-[var(--color-text-secondary)]');
-      await expect(canvas.getByText(title).className).not.toMatch(/(amber|green|blue|brand)-/);
+      const titleBox = canvas.getByText(title).closest('p')!;
+      await expect(titleBox).toHaveClass('text-[var(--color-text-secondary)]');
+      await expect(titleBox.className).not.toMatch(/(amber|green|blue|brand)-/);
     }
   },
 };

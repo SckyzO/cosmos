@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { CreditCard, KeyRound, LogOut, Settings, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from '../layout/Topbar';
-import { portalDocsParams } from '../storybook-helpers';
+import { endOffset, portalDocsParams } from '../storybook-helpers';
 import { UserMenu } from './UserMenu';
 
 const meta = {
@@ -357,7 +357,8 @@ export const StaysUnderTriggerOnScroll: Story = {
       const t = trigger.getBoundingClientRect();
       const m = menu.getBoundingClientRect();
       expect(m.top).toBeCloseTo(t.bottom + 8, 0);
-      expect(m.right).toBeCloseTo(t.right, 0);
+      // Flush with the trigger's end edge: its right in ltr, its left in rtl.
+      expect(endOffset(menu, trigger)).toBeCloseTo(0, 0);
     });
   },
 };

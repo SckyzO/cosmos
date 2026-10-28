@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { endOffset, portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 import { Popover, type PopoverPosition } from './Popover';
@@ -252,7 +252,8 @@ export const AlignEndIsFlushWithTrigger: Story = {
     await expect(panel).toHaveAccessibleName('Aligned panel');
     const t = trigger.getBoundingClientRect();
     const p = panel.getBoundingClientRect();
-    await expect(p.right).toBeCloseTo(t.right, 2);
+    // Flush with the trigger's end edge: its right in ltr, its left in rtl.
+    await expect(endOffset(panel, trigger)).toBeCloseTo(0, 2);
     await expect(p.top).toBeCloseTo(t.bottom + 8, 2);
   },
 };
@@ -276,7 +277,7 @@ export const AlignEndFollowsTriggerResize: Story = {
     await userEvent.click(trigger);
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     // A wider trigger (web font swap, new label) must move the arrow with it.
-    trigger.style.paddingLeft = '48px';
+    trigger.style.paddingInlineStart = '48px';
     const arrowCenter = () => {
       const a = document
         .querySelector('[role="dialog"] span[aria-hidden]')!

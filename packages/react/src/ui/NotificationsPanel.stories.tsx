@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { endOffset, portalDocsParams } from '../storybook-helpers';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
 const meta = {
@@ -336,7 +336,8 @@ export const StaysUnderTriggerOnScroll: Story = {
       const t = trigger.getBoundingClientRect();
       const p = panel.getBoundingClientRect();
       expect(p.top).toBeCloseTo(t.bottom + 8, 0);
-      expect(p.right).toBeCloseTo(t.right, 0);
+      // Flush with the trigger's end edge: its right in ltr, its left in rtl.
+      expect(endOffset(panel, trigger)).toBeCloseTo(0, 0);
     });
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());

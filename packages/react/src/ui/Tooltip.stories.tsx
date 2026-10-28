@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectOutsideClip, portalDocsParams, scrollAnchor } from '../storybook-helpers';
+import {
+  expectOutsideClip,
+  portalDocsParams,
+  scrollAnchor,
+  startOffset,
+} from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -366,7 +371,7 @@ export const WithTitle: Story = {
     await userEvent.tab();
     const tip = within(page.getByRole('tooltip'));
     await waitFor(() => expect(page.getByRole('tooltip')).toBeVisible());
-    await expect(tip.getByText('Error budget')).toHaveClass('font-semibold');
+    await expect(tip.getByText('Error budget').parentElement).toHaveClass('font-semibold');
   },
 };
 
@@ -505,7 +510,7 @@ export const TooltipEscapesOverflowHidden: Story = {
 
 /**
  * A `top` tooltip on a trigger at the top of the screen opens below it, arrow included; one
- * the left edge would cut moves right, and its arrow still points at the trigger.
+ * the screen edge would cut moves back inside, and its arrow still points at the trigger.
  */
 export const TooltipFlipsAndStaysOnScreen: Story = {
   tags: ['!dev', '!autodocs'],
@@ -529,7 +534,8 @@ export const TooltipFlipsAndStaysOnScreen: Story = {
       const a = anchor.getBoundingClientRect();
       const t = tip.getBoundingClientRect();
       expect(t.top).toBeCloseTo(a.bottom + 10, 0);
-      expect(t.left).toBeCloseTo(16, 0);
+      // Moved back inside, 16px from the edge the trigger is at (the left one, the right in rtl).
+      expect(startOffset(tip, document.documentElement)).toBeCloseTo(16, 0);
       // The arrow sits on the tooltip's top edge, under the trigger's center.
       const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
       expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);

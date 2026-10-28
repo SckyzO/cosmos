@@ -262,7 +262,7 @@ export const DefaultLooksAsBefore: Story = {
         await expect(style[`border${side}Width`]).toBe('1px');
       }
       await expect(el).toHaveClass('border', 'border-red-200', 'bg-red-50');
-      await expect(el).not.toHaveClass('border-l-4');
+      await expect(el).not.toHaveClass('border-s-4');
     }
     // `tinted` and `intent` are the defaults: spelling them out changes nothing.
     await expect(plain.className).toBe(explicit.className);
@@ -272,8 +272,8 @@ export const DefaultLooksAsBefore: Story = {
   },
 };
 
-/** `accent` has a 4px edge on the left and no border elsewhere, on the same tinted background. */
-export const AccentDrawsLeftEdgeOnly: Story = {
+/** `accent` has a 4px edge at the start of the line and no border elsewhere, on the same tinted background. */
+export const AccentDrawsStartEdgeOnly: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="space-y-2">
@@ -299,15 +299,15 @@ export const AccentDrawsLeftEdgeOnly: Story = {
     for (const [intent, hue] of Object.entries(hues)) {
       const el = banner(`${intent} accent`);
       const style = getComputedStyle(el);
-      await expect(style.borderLeftWidth).toBe('4px');
-      for (const side of ['Top', 'Right', 'Bottom'] as const) {
+      await expect(style.borderInlineStartWidth).toBe('4px');
+      for (const side of ['Top', 'InlineEnd', 'Bottom'] as const) {
         await expect(style[`border${side}Width`]).toBe('0px');
       }
-      await expect(el).toHaveClass('border-l-4', `border-l-${hue}-600`, `bg-${hue}-50`);
+      await expect(el).toHaveClass('border-s-4', `border-s-${hue}-600`, `bg-${hue}-50`);
       await expect(el).not.toHaveClass('border');
       // The edge is -600 in the light themes and -500 in the dark ones; the surface stays tinted.
       inEachTheme(() => {
-        expect(getComputedStyle(el).borderLeftColor).toBe(
+        expect(getComputedStyle(el).borderInlineStartColor).toBe(
           tokenColor(`${hue}-${isDark() ? 500 : 600}`)
         );
       });

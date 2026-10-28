@@ -18,6 +18,7 @@ import {
   expectOutsideClip,
   portalDocsParams,
   scrollAnchor,
+  startOffset,
 } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
@@ -418,11 +419,12 @@ export const OpensUpwardAtTheBottomEdge: Story = {
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Actions' });
     await userEvent.click(trigger);
-    const menu = (await page.findByRole('menu')).getBoundingClientRect();
+    const panel = await page.findByRole('menu');
+    const menu = panel.getBoundingClientRect();
     const anchor = trigger.getBoundingClientRect();
-    // 4px above the trigger, flush with its left edge.
+    // 4px above the trigger, flush with its start edge (the left one, the right in rtl).
     await expect(menu.bottom).toBeCloseTo(anchor.top - 4, 0);
-    await expect(menu.left).toBeCloseTo(anchor.left, 0);
+    await expect(startOffset(panel, trigger)).toBeCloseTo(0, 0);
   },
 };
 

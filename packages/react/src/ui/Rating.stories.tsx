@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusRing, expectGraphicContrast, inEachTheme } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectGraphicContrast,
+  inEachTheme,
+  keyToEnd,
+  keyToStart,
+} from '../storybook-helpers';
 import { Rating } from './Rating';
 import { SectionLabel } from './SectionLabel';
 
@@ -109,14 +115,14 @@ export const InteractiveKeyboard: Story = {
     // One tab stop: the first radio while nothing is picked.
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: '1 star' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(2);
     await expect(canvas.getByRole('radio', { name: '2 stars' })).toHaveFocus();
     await userEvent.keyboard('{End}');
     await expect(args.onChange).toHaveBeenLastCalledWith(5);
     await userEvent.keyboard('{Home}');
     await expect(args.onChange).toHaveBeenLastCalledWith(1);
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(5);
     await expect(canvas.getByRole('radio', { name: '5 stars' })).toBeChecked();
     // The picked radio is the only tab stop.
@@ -145,7 +151,7 @@ export const InteractiveHalfStars: Story = {
     await expect(canvas.getByRole('radio', { name: '3.5 stars' })).toBeChecked();
     await userEvent.click(canvas.getByRole('radio', { name: '4 stars' }));
     await expect(args.onChange).toHaveBeenLastCalledWith(4);
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(3.5);
   },
 };
