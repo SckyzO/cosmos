@@ -56,8 +56,8 @@ export const WithLink: Story = {
   ),
 };
 
-// TUI Plus pattern "With button at top right" — `layout='inline'`.
-export const WithButtonAtTopRight: Story = {
+// TUI Plus pattern "With button at top right" (the end of the line) — `layout='inline'`.
+export const WithButtonAtTopEnd: Story = {
   render: () => (
     <div className="bg-gray-100 p-8 dark:bg-gray-950">
       <ActionPanel

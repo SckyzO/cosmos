@@ -48,9 +48,9 @@ const BellIcon = ({ tone = 'dark' }: { tone?: 'dark' | 'light' }) => (
   </button>
 );
 
-// TUI Plus pattern "Simple dark with menu button on left" — dark bg, hamburger
+// TUI Plus pattern "Simple dark with menu button on left" (the start of the line) — dark bg, hamburger
 // on mobile, brand + items + actions (bell + avatar).
-export const SimpleDarkMenuLeft: Story = {
+export const SimpleDarkMenuAtStart: Story = {
   render: () => (
     <Navbar theme="dark">
       <Navbar.Brand>
