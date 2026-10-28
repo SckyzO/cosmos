@@ -202,7 +202,12 @@ const NavbarMenu = ({
 }: NavbarMenuProps) => {
   const inherited = useContext(NavbarThemeContext);
   return (
-    <Menu open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} align={align}>
+    <Menu
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
+      align={align === 'right' ? 'end' : 'start'}
+    >
       <NavbarTrigger
         label={label}
         active={active}

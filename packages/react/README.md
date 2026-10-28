@@ -1166,10 +1166,11 @@ the Sidebar does with `collapseControl="sidebar"`.
 Below `lg` the sidebar leaves the layout and the Topbar's hamburger opens it as a 288px
 drawer over a scrim (`defaultSidebarOpen`, or `sidebarOpen` and `onSidebarOpenChange`
 to control it). It is always expanded there, with a close button in `Sidebar.Brand`, and it
-closes on the scrim, Escape, a swipe to the left, a click on a `Sidebar.Item` and when the
+closes on the scrim, Escape, a swipe toward its edge, a click on a `Sidebar.Item` and when the
 viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
 view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
-`swipeToClose`: toward its edge on `left` and `right`, downward on `side="bottom"`, the
+`swipeToClose`: toward its edge on `side="start"` and `side="end"` (the left and right, swapped
+under `dir="rtl"`), downward on `side="bottom"`, the
 bottom sheet (full width, as tall as its content up to 85% of the viewport, a grab `handle`
 you can turn off with `handle={false}`, and a `Drawer.Body` that scrolls past that height).
 

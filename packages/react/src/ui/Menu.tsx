@@ -29,7 +29,7 @@ type Ctx = {
   setOpen: (v: boolean) => void;
   triggerRef: RefObject<HTMLButtonElement | null>;
   triggerId: string;
-  align: 'left' | 'right';
+  align: 'start' | 'end';
   /** Item to focus when the menu opens: `last` after ArrowUp on the trigger. */
   initialItemRef: MutableRefObject<'first' | 'last'>;
 };
@@ -53,8 +53,8 @@ export type MenuProps = {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Edge of the trigger the menu lines up with. Default `left`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the menu lines up with: where the text starts or ends, so the right under `dir="rtl"` for `start`. Default `start`. */
+  align?: 'start' | 'end';
   children: ReactNode;
 };
 
@@ -62,7 +62,7 @@ const MenuRoot = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  align = 'left',
+  align = 'start',
   children,
 }: MenuProps) => {
   const [open, setOpen] = useControllableState({
@@ -143,7 +143,7 @@ const MenuContent = ({
       open={open}
       onClose={() => setOpen(false)}
       triggerRef={triggerRef}
-      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      placement={{ side: 'bottom', align, offset: 8 }}
       initialFocus={(menu) => {
         const items = menuItems(menu);
         return initialItemRef.current === 'last' ? items[items.length - 1] : items[0];

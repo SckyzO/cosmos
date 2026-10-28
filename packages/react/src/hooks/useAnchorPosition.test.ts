@@ -55,6 +55,24 @@ describe('anchoredStyle', () => {
     );
   });
 
+  it('puts the `start` and `end` sides left and right in ltr, right and left in rtl', () => {
+    const rtl = (placement: Parameters<typeof anchoredStyle>[1]) =>
+      anchoredStyle(rect, placement, undefined, 'rtl');
+    expect(anchoredStyle(rect, { side: 'end', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'right', offset: 8 })
+    );
+    expect(anchoredStyle(rect, { side: 'start', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'left', offset: 8 })
+    );
+    expect(rtl({ side: 'end', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'left', offset: 8 })
+    );
+    expect(rtl({ side: 'start', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'right', offset: 8 })
+    );
+    expect(resolveSide(rect, { side: 'end' }, undefined, 'rtl')).toBe('left');
+  });
+
   it('lifts a `top` panel by its own height, whatever the alignment', () => {
     expect(anchoredStyle(rect, { side: 'top' }).transform).toBe('translate(-50%, -100%)');
     expect(anchoredStyle(rect, { side: 'top', align: 'start' }).transform).toBe(
@@ -129,6 +147,16 @@ describe('anchoredStyle collision handling', () => {
       transform: 'translate(-100%, -50%)',
     });
     expect(resolveSide(rect, { side: 'left', offset: 8 }, panel(250, 30))).toBe('right');
+  });
+
+  it('flips a logical side the viewport cuts, as the physical side it stands for', () => {
+    const nearRight: AnchorRect = { ...rect, left: 850, right: 950 };
+    // `end` is the right of the anchor in ltr: cut there, it goes to the left.
+    expect(resolveSide(nearRight, { side: 'end', offset: 8 }, panel(120, 30))).toBe('left');
+    // In rtl `start` is the right of the anchor: the same flip, from the other word.
+    expect(resolveSide(nearRight, { side: 'start', offset: 8 }, panel(120, 30), 'rtl')).toBe(
+      'left'
+    );
   });
 
   it('flips only to a side with more room, when the panel fits on neither', () => {

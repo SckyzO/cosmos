@@ -1,19 +1,25 @@
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
 import { directionOf, type Direction } from './direction';
 
-/** Side of the anchor a floating panel opens on. */
+/** Side of the anchor a floating panel opens on, as the screen sees it. */
 export type AnchorSide = 'top' | 'right' | 'bottom' | 'left';
+
+/**
+ * The side a placement asks for: a physical one, or `start` and `end`, which follow the anchor's
+ * reading direction (`end` is the right of the anchor, and its left under `dir="rtl"`).
+ */
+export type PlacementSide = AnchorSide | 'start' | 'end';
 
 /**
  * Alignment with the anchor for the `top` and `bottom` sides: the edges the text starts at
  * (`start`: left edges, right edges under `dir="rtl"`), centers, or the edges it ends at (`end`).
- * The `left` and `right` sides stay physical and always center the panel vertically.
+ * The `left`, `right`, `start` and `end` sides always center the panel vertically.
  */
 export type AnchorAlign = 'start' | 'center' | 'end';
 
 export type AnchorPlacement = {
   /** Default `bottom`. */
-  side?: AnchorSide;
+  side?: PlacementSide;
   /** Default `center`. */
   align?: AnchorAlign;
   /** Gap between the anchor and the panel, in px. Default 0. */
@@ -43,6 +49,13 @@ const OPPOSITE: Record<AnchorSide, AnchorSide> = {
 // `start` and `end` seen from the other side of the line, for `rtl`.
 const SWAPPED = { start: 'end', end: 'start' } as const;
 
+/** `side` as the screen sees it, for an anchor read in `direction`. */
+const physicalSide = (side: PlacementSide, direction: Direction): AnchorSide => {
+  if (side === 'start') return direction === 'rtl' ? 'right' : 'left';
+  if (side === 'end') return direction === 'rtl' ? 'left' : 'right';
+  return side;
+};
+
 const isVertical = (side: AnchorSide) => side === 'top' || side === 'bottom';
 
 // Room between the anchor, offset included, and the edge of the viewport on `side`.
@@ -59,9 +72,11 @@ const roomOn = (side: AnchorSide, rect: AnchorRect, offset: number, viewport: Bo
  */
 export function resolveSide(
   rect: AnchorRect,
-  { side = 'bottom', offset = 0 }: AnchorPlacement = {},
-  bounds?: AnchorBounds
+  { side: requested = 'bottom', offset = 0 }: AnchorPlacement = {},
+  bounds?: AnchorBounds,
+  direction: Direction = 'ltr'
 ): AnchorSide {
+  const side = physicalSide(requested, direction);
   if (!bounds) return side;
   const needed = isVertical(side) ? bounds.panel.height : bounds.panel.width;
   const room = roomOn(side, rect, offset, bounds.viewport);
@@ -94,7 +109,7 @@ const withShift = (style: CSSProperties, shift: number): CSSProperties =>
  * placement puts it. A moved panel's style sets `--anchor-shift`, how far it moved along
  * the anchor, so an arrow can keep pointing at the anchor.
  *
- * `direction` is the anchor's: in `rtl` the `start` and `end` alignments swap sides.
+ * `direction` is the anchor's: in `rtl` the `start` and `end` sides and alignments swap.
  */
 export function anchoredStyle(
   rect: AnchorRect,
@@ -105,7 +120,7 @@ export function anchoredStyle(
   const { align: logicalAlign = 'center', offset = 0, matchWidth = false } = placement;
   const align =
     direction === 'rtl' && logicalAlign !== 'center' ? SWAPPED[logicalAlign] : logicalAlign;
-  const side = resolveSide(rect, placement, bounds);
+  const side = resolveSide(rect, placement, bounds, direction);
   const style = { '--anchor-width': `${rect.width}px` } as CSSProperties;
   if (matchWidth) style.width = rect.width;
 
@@ -266,7 +281,12 @@ export function useAnchorPosition(
   }, [open, anchorRef, missed, panel, container]);
 
   if (!measures) {
-    return { style: null, side: placement.side ?? 'bottom', direction: 'ltr', panelRef: setPanel };
+    return {
+      style: null,
+      side: physicalSide(placement.side ?? 'bottom', 'ltr'),
+      direction: 'ltr',
+      panelRef: setPanel,
+    };
   }
   const bounds = measures.panel
     ? { panel: measures.panel, viewport: measures.viewport }
@@ -276,7 +296,7 @@ export function useAnchorPosition(
       anchoredStyle(measures.anchor, placement, bounds, measures.direction),
       measures.origin
     ),
-    side: resolveSide(measures.anchor, placement, bounds),
+    side: resolveSide(measures.anchor, placement, bounds, measures.direction),
     direction: measures.direction,
     panelRef: setPanel,
   };

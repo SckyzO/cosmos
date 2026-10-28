@@ -19,12 +19,12 @@ export type UserMenuProps = {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Side of the trigger the menu anchors to. Default `right`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the menu lines up with: where the text starts or ends. Default `end`. */
+  align?: 'start' | 'end';
   children: ReactNode;
 };
 
-const UserMenuRoot = ({ align = 'right', ...rest }: UserMenuProps) => (
+const UserMenuRoot = ({ align = 'end', ...rest }: UserMenuProps) => (
   <Menu align={align} {...rest} />
 );
 

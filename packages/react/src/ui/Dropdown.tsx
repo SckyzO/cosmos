@@ -29,7 +29,8 @@ export type DropdownProps = {
   defaultValue?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
-  align?: 'left' | 'right';
+  /** Edge of the trigger the menu lines up with: where the text starts or ends. Default `start`. */
+  align?: 'start' | 'end';
   disabled?: boolean;
   className?: string;
   /** Open state of the menu, when controlled. */
@@ -48,7 +49,7 @@ export const Dropdown = ({
   defaultValue,
   onChange,
   placeholder,
-  align = 'left',
+  align = 'start',
   disabled = false,
   className,
   open: openProp,
@@ -123,7 +124,7 @@ export const Dropdown = ({
         open={open}
         onClose={() => setOpen(false)}
         triggerRef={triggerRef}
-        placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 4 }}
+        placement={{ side: 'bottom', align, offset: 4 }}
         role="menu"
         tabIndex={-1}
         aria-label={label}

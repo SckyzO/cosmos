@@ -122,7 +122,7 @@ export const Topbar = ({
         <div className="flex shrink-0 items-center gap-2">
           {moreActions && (
             <div className="sm:hidden">
-              <Menu align="right">
+              <Menu align="end">
                 <Menu.Trigger
                   aria-label="More actions"
                   className="h-ctrl-40 w-ctrl-40 flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"

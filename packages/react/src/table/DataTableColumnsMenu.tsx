@@ -19,7 +19,7 @@ export const DataTableColumnsMenu = <T,>({
   shown,
   onToggle,
 }: DataTableColumnsMenuProps<T>) => (
-  <Menu align="right">
+  <Menu align="end">
     <Menu.Trigger aria-label="Columns" className={TOOLBAR_BUTTON}>
       <Columns3 aria-hidden className="h-4 w-4" />
       <span className="max-sm:hidden">Columns</span>

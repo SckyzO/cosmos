@@ -155,7 +155,7 @@ export const Shell = ({
           <Drawer
             open={drawerOpen}
             onClose={() => setOpen(false)}
-            side="left"
+            side="start"
             size="sm"
             swipeToClose
             ariaLabel="Navigation menu"

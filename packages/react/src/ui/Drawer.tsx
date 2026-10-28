@@ -19,12 +19,14 @@ import {
   useFocusTrap,
   useOverlayLayer,
 } from './overlayA11y';
+import { directionOf } from '../hooks/direction';
 import { useIsClient } from '../hooks/useIsClient';
 
-export type DrawerSide = 'left' | 'right' | 'bottom';
+/** `start` and `end` are the edges of the line: the left and the right, swapped under `dir="rtl"`. */
+export type DrawerSide = 'start' | 'end' | 'bottom';
 export type DrawerSize = 'sm' | 'md' | 'lg';
 
-// The width of a `left` or `right` drawer. A bottom sheet ignores it: its height follows its content.
+// The width of a `start` or `end` drawer. A bottom sheet ignores it: its height follows its content.
 const SIZE_CLASS: Record<DrawerSize, string> = {
   sm: 'w-72',
   md: 'w-96',
@@ -33,11 +35,11 @@ const SIZE_CLASS: Record<DrawerSize, string> = {
 
 // The close-outside button lives inside the panel (so the focus trap covers
 // it) and sits just past its inner edge, on the backdrop.
-// On a bottom sheet it sits above the top edge, at the right.
+// On a bottom sheet it sits above the top edge, at the end.
 const OUTSIDE_POSITION: Record<DrawerSide, string> = {
-  left: 'top-4 left-full',
-  right: 'top-4 right-full',
-  bottom: 'right-4 bottom-full mb-2',
+  start: 'top-4 inset-s-full',
+  end: 'top-4 inset-e-full',
+  bottom: 'inset-e-4 bottom-full mb-2',
 };
 
 // The portal needs `document`: render nothing on the server and during
@@ -47,15 +49,17 @@ const OUTSIDE_POSITION: Record<DrawerSide, string> = {
 // scrim stays visible above it, which shows that a tap outside closes it. The padding keeps the
 // content out of the home-indicator area of a phone (`viewport-fit=cover`).
 const SIDE_CLASS: Record<DrawerSide, string> = {
-  left: 'top-0 bottom-0 left-0 border-r',
-  right: 'top-0 right-0 bottom-0 border-l',
+  start: 'top-0 bottom-0 inset-s-0 border-e',
+  end: 'top-0 inset-e-0 bottom-0 border-s',
   bottom:
     'inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl border-t pb-[env(safe-area-inset-bottom)]',
 };
 
+// A `translate` has no logical form: the start side leaves toward the left, and toward the right
+// under `rtl:`, which wins over the plain class as a variant.
 const SIDE_TRANSFORM: Record<DrawerSide, { open: string; closed: string }> = {
-  left: { open: 'translate-x-0', closed: '-translate-x-full' },
-  right: { open: 'translate-x-0', closed: 'translate-x-full' },
+  start: { open: 'translate-x-0', closed: '-translate-x-full rtl:translate-x-full' },
+  end: { open: 'translate-x-0', closed: 'translate-x-full rtl:-translate-x-full' },
   bottom: { open: 'translate-y-0', closed: 'translate-y-full' },
 };
 
@@ -68,6 +72,8 @@ const FLICK_WINDOW = 100;
 
 type Swipe = {
   pointerId: number;
+  /** Toward the edge the panel slides out through: -1 for the left, 1 for the right and the bottom. */
+  sign: -1 | 1;
   x: number;
   y: number;
   /** Whether the finger moved far enough, along the closing direction, to drag the panel. */
@@ -84,14 +90,15 @@ export type DrawerProps = {
   open: boolean;
   onClose: () => void;
   /**
-   * The edge the panel slides in from. `left` and `right` give a full-height panel, `bottom` a
+   * The edge the panel slides in from. `start` and `end` give a full-height panel, on the edge
+   * the text starts at and ends at: left and right, swapped under `dir="rtl"`. `bottom` gives a
    * sheet: full width, as tall as its content up to 85% of the viewport (`Drawer.Body` scrolls
    * past that), rounded on top, with a grab `handle`, and the scrim stays visible above it. All
    * three are the same dialog, with the same focus trap, Escape and `Drawer.Header`, `Body` and
-   * `Footer`. Default `right`.
+   * `Footer`. Default `end`.
    */
   side?: DrawerSide;
-  /** The width of a `left` or `right` drawer. Ignored on `bottom`, where the content sets the height. Default `md`. */
+  /** The width of a `start` or `end` drawer. Ignored on `bottom`, where the content sets the height. Default `md`. */
   size?: DrawerSize;
   /**
    * Show a grab handle at the top of a bottom sheet: a visual cue that the sheet can be dragged
@@ -115,12 +122,12 @@ export type DrawerProps = {
    */
   closeOutside?: boolean;
   /**
-   * Let a touch or pen swipe on the panel, toward its edge (left for `side="left"`, right for
-   * `side="right"`, down for `side="bottom"`), close the drawer. The panel follows the finger and
+   * Let a touch or pen swipe on the panel, toward its edge (toward the start of the line for
+   * `side="start"`, the end for `side="end"`, down for `side="bottom"`), close the drawer. The panel follows the finger and
    * never goes past its open position; released past a third of its width (its height for
    * `bottom`), or as a fast flick, it calls `onClose`, otherwise it springs back (without the
    * animation under `prefers-reduced-motion`). A mouse does not swipe. Scrolling inside the panel
-   * is left to the browser: vertical on `left` and `right`; on `bottom`, a `Drawer.Body` that
+   * is left to the browser: vertical on `start` and `end`; on `bottom`, a `Drawer.Body` that
    * scrolls keeps the vertical drag, so the sheet is dragged by its handle, header, footer or a
    * body that fits. Default `false`.
    */
@@ -138,7 +145,7 @@ export type DrawerProps = {
 const Root = ({
   open,
   onClose,
-  side = 'right',
+  side = 'end',
   size = 'md',
   handle = true,
   withBackdrop = true,
@@ -191,15 +198,16 @@ const Root = ({
   const [instant, setInstant] = useState(false);
   // A bottom sheet closes along the vertical axis, the other sides along the horizontal one.
   const vertical = side === 'bottom';
-  // Toward the edge the panel slides out through: -1 for the left side, 1 for the right and bottom.
-  const direction = side === 'left' ? -1 : 1;
 
   const swipeHandlers = swipeToClose
     ? {
         onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
           if (!open || e.pointerType === 'mouse' || !e.isPrimary) return;
+          // The left edge is the start one in ltr and the end one in rtl: read where the panel is.
+          const onLeft = (side === 'start') === (directionOf(e.currentTarget) === 'ltr');
           swipe.current = {
             pointerId: e.pointerId,
+            sign: side !== 'bottom' && onLeft ? -1 : 1,
             x: e.clientX,
             y: e.clientY,
             dragging: false,
@@ -209,7 +217,7 @@ const Root = ({
         onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
           const s = swipe.current;
           if (!s || e.pointerId !== s.pointerId) return;
-          const along = (vertical ? e.clientY - s.y : e.clientX - s.x) * direction;
+          const along = (vertical ? e.clientY - s.y : e.clientX - s.x) * s.sign;
           if (!s.dragging) {
             // A move across the closing axis is not a swipe: a scroll of the panel's content
             // (vertical, for the side drawers), or a sideways drift of the finger on a sheet.
@@ -224,14 +232,14 @@ const Root = ({
           }
           s.samples.push({ along, t: e.timeStamp });
           // Never past the open position: only toward the edge.
-          setOffset(Math.max(0, along) * direction);
+          setOffset(Math.max(0, along) * s.sign);
         },
         onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
           const s = swipe.current;
           if (!s || e.pointerId !== s.pointerId) return;
           swipe.current = null;
           if (!s.dragging) return;
-          const along = Math.max(0, (vertical ? e.clientY - s.y : e.clientX - s.x) * direction);
+          const along = Math.max(0, (vertical ? e.clientY - s.y : e.clientX - s.x) * s.sign);
           // Speed over the last FLICK_WINDOW ms of the gesture, toward the edge.
           // A finger that stopped before lifting (no move in the window) leaves at speed 0.
           const from = s.samples.find((p) => e.timeStamp - p.t <= FLICK_WINDOW);

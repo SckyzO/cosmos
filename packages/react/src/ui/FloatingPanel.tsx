@@ -12,6 +12,7 @@ import {
   type AnchorPlacement,
   type AnchorSide,
 } from '../hooks/useAnchorPosition';
+import type { Direction } from '../hooks/direction';
 import { mergeRefs } from './mergeRefs';
 import {
   OverlayLayerProvider,
@@ -37,10 +38,11 @@ export const TOOLTIP_Z = 'z-[10000]';
 
 export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' | 'children'> & {
   /**
-   * The content, or a function of the side the panel opened on, for a part that points at
-   * the anchor (an arrow): the panel flips to the other side when the viewport cuts it.
+   * The content, or a function of the side the panel opened on (as the screen sees it) and the
+   * anchor's direction, for a part that points at the anchor (an arrow): the panel flips to the
+   * other side when the viewport cuts it.
    */
-  children?: ReactNode | ((side: AnchorSide) => ReactNode);
+  children?: ReactNode | ((side: AnchorSide, direction: Direction) => ReactNode);
   /**
    * Shown while true. Keep the component mounted while closed: the focus handling tells a
    * panel open on mount (which doesn't take focus) from one opened later.
@@ -127,7 +129,7 @@ export function FloatingPanel({
         style={{ ...anchored, ...style }}
         className={clsx('fixed', FLOATING_PANEL_Z, className)}
       >
-        {typeof children === 'function' ? children(side) : children}
+        {typeof children === 'function' ? children(side, direction) : children}
       </div>
     </OverlayLayerProvider>,
     container ?? document.body

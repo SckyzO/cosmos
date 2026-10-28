@@ -59,7 +59,7 @@ type Ctx = {
   open: boolean;
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  align: 'left' | 'right';
+  align: 'start' | 'end';
 };
 
 const NotificationsPanelContext = createContext<Ctx | null>(null);
@@ -77,8 +77,8 @@ export type NotificationsPanelProps = {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Which side of the trigger the panel anchors to. Default `right`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the panel lines up with: where the text starts or ends. Default `end`. */
+  align?: 'start' | 'end';
   children: ReactNode;
 };
 
@@ -86,7 +86,7 @@ const NotificationsPanelRoot = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  align = 'right',
+  align = 'end',
   children,
 }: NotificationsPanelProps) => {
   const [open, setOpen] = useControllableState({
@@ -182,7 +182,7 @@ const NotificationsPanelContent = ({
       open={open}
       onClose={() => setOpen(false)}
       triggerRef={triggerRef}
-      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      placement={{ side: 'bottom', align, offset: 8 }}
       role="dialog"
       tabIndex={-1}
       aria-label="Notifications"
