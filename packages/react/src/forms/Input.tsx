@@ -26,7 +26,7 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   /**
    * Message shown once the value is valid (a free username, an accepted code):
    * a green border and message, and a check icon on the end edge, which
-   * `rightSlot` replaces. The message is linked as the description and
+   * `endSlot` replaces. The message is linked as the description and
    * announced politely when it appears. `error` wins when both are set.
    */
   success?: string;
@@ -42,7 +42,7 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
   /**
    * Draws an alert icon on the end edge while `error` is set, so the state
    * doesn't rest on the border color alone. Default `false`. Ignored when
-   * `rightSlot` is set.
+   * `endSlot` is set.
    */
   errorIcon?: boolean;
   /**
@@ -51,7 +51,7 @@ export type InputProps = Omit<ComponentPropsWithRef<'input'>, 'size'> & {
    */
   readOnly?: boolean;
   /** Optional slot on the end edge — e.g. unit suffix, validation pill. Ignored when `suffix` is set. */
-  rightSlot?: ReactNode;
+  endSlot?: ReactNode;
   /** Slot rendered next to the label text (e.g. a TooltipHelp). */
   labelTrailing?: ReactNode;
   /** Attached prefix addon (e.g. `https://`, `€`, `@`). Renders as a bordered group. */
@@ -70,7 +70,7 @@ export function Input({
   icon: Icon,
   errorIcon = false,
   readOnly,
-  rightSlot,
+  endSlot,
   labelTrailing,
   prefix,
   suffix,
@@ -94,8 +94,8 @@ export function Input({
     'aria-required': required || undefined,
     required,
   };
-  const showErrorIcon = errorIcon && !!error && !rightSlot;
-  const showSuccessIcon = !!successText && !rightSlot;
+  const showErrorIcon = errorIcon && !!error && !endSlot;
+  const showSuccessIcon = !!successText && !endSlot;
   // The state icon of the end edge: the alert while in error, the check on success.
   const StateIcon = showErrorIcon ? CircleAlert : showSuccessIcon ? CircleCheck : null;
   const stateIconColor = showErrorIcon
@@ -190,7 +190,7 @@ export function Input({
               FIELD_PLACEHOLDER,
               plaintext,
               Icon ? FIELD_PAD_START_ICON[size] : FIELD_PAD_START[size],
-              rightSlot ? 'pe-16' : StateIcon ? FIELD_PAD_END_ICON[size] : FIELD_PAD_END[size],
+              endSlot ? 'pe-16' : StateIcon ? FIELD_PAD_END_ICON[size] : FIELD_PAD_END[size],
               className
             )}
             {...rest}
@@ -206,9 +206,9 @@ export function Input({
               )}
             />
           )}
-          {rightSlot && (
+          {endSlot && (
             <span className="inset-e-3 pointer-events-none absolute text-xs text-gray-500 dark:text-gray-400">
-              {rightSlot}
+              {endSlot}
             </span>
           )}
         </div>

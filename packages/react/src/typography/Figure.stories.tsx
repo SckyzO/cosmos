@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
+import { bothDirections, directionBox, endOffset, startOffset } from '../storybook-helpers';
 import { Figure } from './Figure';
 
 // Photo by Benjamin Voros on Unsplash (Unsplash License):
@@ -59,10 +61,33 @@ export const Centered: Story = {
   },
 };
 
-export const Right: Story = {
+export const End: Story = {
   args: {
     size: 'sm',
-    align: 'right',
-    caption: 'Right-aligned with `ms-auto`.',
+    align: 'end',
+    caption: 'Aligned to the end with `ms-auto`.',
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** `start` and `end` name the reading direction: the figure sits on the right in right to left. */
+export const AlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <Figure src={PHOTO} alt="Start" size="xs" align="start" />
+        <Figure src={PHOTO} alt="End" size="xs" align="end" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const start = box.querySelector('img[alt="Start"]')!.closest('figure')!;
+      const end = box.querySelector('img[alt="End"]')!.closest('figure')!;
+      expect(startOffset(start, box), `${dir}: start`).toBeLessThan(endOffset(start, box));
+      expect(endOffset(end, box), `${dir}: end`).toBeLessThan(startOffset(end, box));
+    }
   },
 };

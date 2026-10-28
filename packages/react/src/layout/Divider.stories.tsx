@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { Plus, ArrowRight } from 'lucide-react';
+import { bothDirections, directionBox, endOffset, startOffset } from '../storybook-helpers';
 import { Divider } from './Divider';
 import { Button } from '../ui/Button';
 import { ButtonGroup } from '../ui/ButtonGroup';
@@ -39,7 +40,7 @@ export const WithIcon: Story = {
 export const WithLabelOnLeft: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <Divider inset="Continue" align="left" />
+      <Divider inset="Continue" align="start" />
     </div>
   ),
 };
@@ -57,7 +58,7 @@ export const WithTitle: Story = {
 export const WithTitleOnLeft: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <Divider inset="Section title" emphasis align="left" />
+      <Divider inset="Section title" emphasis align="start" />
     </div>
   ),
 };
@@ -78,7 +79,7 @@ export const WithTitleAndButton: Story = {
       <Divider.Row
         title="Recent activity"
         actions={
-          <Button size="sm" icon={ArrowRight} iconPosition="right">
+          <Button size="sm" icon={ArrowRight} iconPosition="end">
             View all
           </Button>
         }
@@ -141,9 +142,9 @@ export const InsetCenteredByDefault: Story = {
   },
 };
 
-export const AlignLeftMovesInsetToStart: Story = {
+export const AlignStartMovesInsetToStart: Story = {
   tags: ['!dev'],
-  render: () => <Divider inset="X" align="left" />,
+  render: () => <Divider inset="X" align="start" />,
   play: async ({ canvasElement }) => {
     const inner = canvasElement.querySelector('.flex.justify-start');
     await expect(inner).not.toBeNull();
@@ -187,5 +188,36 @@ export const IconVariantRendersIconChip: Story = {
     await expect(root).not.toBeNull();
     const svg = root?.querySelector('svg');
     await expect(svg).not.toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** `start` and `end` name the reading direction: the inset sits on the right in right to left. */
+export const AlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-6">
+        <Divider inset="Start label" align="start" />
+        <Divider inset="End label" align="end" />
+        <Divider.Icon icon={Plus} align="start" data-testid="start-icon" />
+        <Divider.Icon icon={Plus} align="end" data-testid="end-icon" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const start = within(box).getByText('Start label');
+      const end = within(box).getByText('End label');
+      expect(startOffset(start, box), `${dir}: start`).toBeLessThan(endOffset(start, box));
+      expect(endOffset(end, box), `${dir}: end`).toBeLessThan(startOffset(end, box));
+      const startIcon = within(box).getByTestId('start-icon').querySelector('svg')!;
+      const endIcon = within(box).getByTestId('end-icon').querySelector('svg')!;
+      expect(startOffset(startIcon, box), `${dir}: start icon`).toBeLessThan(
+        endOffset(startIcon, box)
+      );
+      expect(endOffset(endIcon, box), `${dir}: end icon`).toBeLessThan(startOffset(endIcon, box));
+    }
   },
 };

@@ -9,7 +9,7 @@ import type { CellEditor, ColumnDef } from './types';
 // its editor with the error under it, and the Edit / Cancel / Save of a row. Internal: not
 // re-exported. The state is `useInlineEdit`'s.
 
-const ALIGN = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
+const ALIGN = { start: 'text-start', end: 'text-end', center: 'text-center' } as const;
 
 // Where a pencil shows: on the hovered or focused row, always when there is no hover.
 const SHOWN_ON_ROW =
@@ -77,7 +77,7 @@ export const CellTrigger = <T,>({
         className={clsx(
           'focus-visible:focus-indicator -mx-2 -my-1.5 block w-[calc(100%+1rem)] cursor-text rounded-md border border-transparent px-[7px] py-[5px]',
           'hover:border-dashed hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/5',
-          ALIGN[col.align ?? 'left'],
+          ALIGN[col.align ?? 'start'],
           saving && 'cursor-progress text-[var(--color-text-muted)]'
         )}
       >

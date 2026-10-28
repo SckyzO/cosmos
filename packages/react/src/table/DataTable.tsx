@@ -349,8 +349,8 @@ const ACTION_COLUMN_WIDTH = '96px';
 const EDIT_ACTION_COLUMN_WIDTH = '176px';
 
 const ALIGN_CELL = {
-  left: 'text-left',
-  right: 'text-right',
+  start: 'text-start',
+  end: 'text-end',
   center: 'text-center',
 } as const;
 
@@ -1042,7 +1042,7 @@ export const DataTable = <T,>({
                   'px-4',
                   bodyPadding,
                   'text-sm',
-                  ALIGN_CELL[col.align ?? 'left'],
+                  ALIGN_CELL[col.align ?? 'start'],
                   href && i > 0 && RAISE_CONTROLS,
                   pinOf(leadCount + i, cellState).className
                 )}
@@ -1051,7 +1051,7 @@ export const DataTable = <T,>({
                   <div
                     className={clsx(
                       'flex items-center overflow-hidden',
-                      col.align === 'right' && 'justify-end',
+                      col.align === 'end' && 'justify-end',
                       col.align === 'center' && 'justify-center'
                     )}
                     style={cellBox}
@@ -1385,13 +1385,13 @@ export const DataTable = <T,>({
                           BODY_CELL_PADDING,
                           // The cell's own line height, so a row is as tall loading as loaded.
                           'text-sm',
-                          ALIGN_CELL[col.align ?? 'left']
+                          ALIGN_CELL[col.align ?? 'start']
                         )}
                       >
                         <div
                           className={clsx(
                             'flex h-5 items-center',
-                            col.align === 'right' && 'justify-end',
+                            col.align === 'end' && 'justify-end',
                             col.align === 'center' && 'justify-center'
                           )}
                         >

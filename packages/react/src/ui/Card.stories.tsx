@@ -121,7 +121,7 @@ export const Horizontal: Story = {
             Active monitoring on every node — scrape every 15 s.
           </p>
           <div className="mt-3 flex justify-end">
-            <Button variant="secondary" size="sm" icon={ArrowRight} iconPosition="right">
+            <Button variant="secondary" size="sm" icon={ArrowRight} iconPosition="end">
               Open
             </Button>
           </div>
@@ -289,7 +289,7 @@ export const WithCTA: Story = {
           Cosmos ships a Prometheus-style exporter for every supported service. Pick one and
           we&apos;ll generate a kubectl manifest.
         </p>
-        <Button variant="primary" icon={ArrowRight} iconPosition="right">
+        <Button variant="primary" icon={ArrowRight} iconPosition="end">
           Browse exporters
         </Button>
       </Card>
@@ -366,7 +366,7 @@ export const CenteredCTA: Story = {
         </p>
         <div className="flex justify-center gap-3">
           <Button variant="secondary">Preview manifest</Button>
-          <Button variant="primary" icon={ArrowRight} iconPosition="right">
+          <Button variant="primary" icon={ArrowRight} iconPosition="end">
             Deploy now
           </Button>
         </div>

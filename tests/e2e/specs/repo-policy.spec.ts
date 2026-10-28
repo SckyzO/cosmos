@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import ts from 'typescript';
 
 // Checks on the repo's supply-chain settings. They guard what reaches npm
 // through publish.yml, and nothing else fails when one of them is dropped.
@@ -411,5 +412,176 @@ test('the deferred files are still in a converted group and still need convertin
       physicalUtilities(read(file)).length > 0,
       `RTL_DEFERRED entry no longer needed: ${file}`
     ).toBe(true);
+  }
+});
+
+// ── Inline sides in prop types ──────────────────────────────────────────────
+
+// A prop that names a side of the line takes `start` and `end` (CONTRIBUTING, "Component API"):
+// the side follows the reading direction, and `'left'` or `'right'` would not. `top` and
+// `bottom` stay physical. This refuses a `'left'` or `'right'` string literal (alone or in a
+// corner such as `'top-right'`) in a type of `packages/react/src`, stories and tests apart (#453).
+
+/**
+ * Types that name a physical side on purpose: `file`, the `holder` (the type alias, interface
+ * or property that holds the literal) and why, so each exception is a decision. An entry that
+ * no longer matches fails.
+ */
+const SIDE_ALLOWED: { file: string; holder: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/hooks/useAnchorPosition.ts',
+    holder: 'AnchorSide',
+    reason:
+      'the side of the trigger rect the panel opens on, in screen coordinates; the logical `align` sits next to it',
+  },
+  {
+    file: 'packages/react/src/hooks/useAnchorPosition.ts',
+    holder: 'AnchorRect',
+    reason: 'the keys of a DOMRect, which are physical by definition',
+  },
+];
+
+/**
+ * Types of the Feedback and Overlays groups, which keep their physical names until the branch
+ * that renames them lands (#453). The list only shrinks: an entry fails once its type is
+ * renamed, so the branch that renames it deletes its line.
+ */
+const SIDE_DEFERRED: { file: string; holder: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/ui/Drawer.tsx',
+    holder: 'DrawerSide',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/Dropdown.tsx',
+    holder: 'DropdownProps.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/Menu.tsx',
+    holder: 'Ctx.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/Menu.tsx',
+    holder: 'MenuProps.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/NotificationsPanel.tsx',
+    holder: 'Ctx.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/NotificationsPanel.tsx',
+    holder: 'NotificationsPanelProps.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/Popover.tsx',
+    holder: 'PopoverPosition',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/Tooltip.tsx',
+    holder: 'TooltipPosition',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+  {
+    file: 'packages/react/src/ui/UserMenu.tsx',
+    holder: 'UserMenuProps.align',
+    reason: 'renamed by the Feedback and Overlays branch',
+  },
+];
+
+const SIDE_LITERAL = /(?:^|-)(?:left|right)(?:-|$)/;
+
+/** The sources the check reads: every module of the package but its stories and tests. */
+const sideSources = () =>
+  readdirSync(new URL('../../../packages/react/src', import.meta.url), {
+    recursive: true,
+    encoding: 'utf8',
+  })
+    .filter((path) => /\.tsx?$/.test(path) && !/\.(?:stories\.tsx|test\.ts)$/.test(path))
+    .map((path) => `packages/react/src/${path}`)
+    .sort();
+
+/**
+ * The `'left'` and `'right'` literal types of `source`, each as the name of what holds it: the
+ * nearest property or parameter, after the type alias or interface around it (`NavbarMenuProps.align`).
+ */
+const sideLiterals = (file: string, source: string) => {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const holders = new Set<string>();
+  const nameOf = (node: ts.Node) =>
+    'name' in node && node.name && ts.isIdentifier(node.name as ts.Node)
+      ? (node.name as ts.Identifier).text
+      : undefined;
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isLiteralTypeNode(node) &&
+      ts.isStringLiteral(node.literal) &&
+      SIDE_LITERAL.test(node.literal.text)
+    ) {
+      const names: string[] = [];
+      for (let up = node.parent; up; up = up.parent) {
+        if (
+          ts.isPropertySignature(up) ||
+          ts.isParameter(up) ||
+          ts.isPropertyDeclaration(up) ||
+          ts.isTypeAliasDeclaration(up) ||
+          ts.isInterfaceDeclaration(up)
+        ) {
+          const name = nameOf(up);
+          if (name) names.unshift(name);
+        }
+      }
+      holders.add(names.join('.') || '(anonymous)');
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return [...holders];
+};
+
+test('the side check sees a physical side in a type and lets start and end through', () => {
+  const found = (code: string) => sideLiterals('x.tsx', code);
+  expect(found("export type Side = 'left' | 'right';")).toEqual(['Side']);
+  expect(found("type Props = { align?: 'start' | 'left' };")).toEqual(['Props.align']);
+  expect(found("export type Corner = 'top-right' | 'bottom-left';")).toEqual(['Corner']);
+  expect(found('interface P { icon: { place: "right" } }')).toEqual(['P.icon.place']);
+  expect(found("const f = (side: 'left' | 'right') => side;")).toEqual(['side']);
+  expect(found("export type Edge = 'start' | 'end' | 'top' | 'bottom' | 'center';")).toEqual([]);
+  // A value is not a type, and a word that holds `left` is not a side.
+  expect(found("const align = side === 'left' ? 'start' : 'end'; type K = 'leftover';")).toEqual(
+    []
+  );
+});
+
+test('no prop type names a physical side of the line', () => {
+  const found = sideSources().flatMap((file) =>
+    sideLiterals(file, read(file)).map((holder) => ({ file, holder }))
+  );
+  const matches =
+    (list: { file: string; holder: string }[]) => (hit: { file: string; holder: string }) =>
+      list.some(({ file, holder }) => file === hit.file && holder === hit.holder);
+  expect(
+    found
+      .filter((hit) => !matches(SIDE_ALLOWED)(hit) && !matches(SIDE_DEFERRED)(hit))
+      .map(({ file, holder }) => `${file}: ${holder}`),
+    'name the side start or end, or add a SIDE_ALLOWED entry with the reason it must stay physical (`top` and `bottom` are fine)'
+  ).toEqual([]);
+
+  for (const [list, name] of [
+    [SIDE_ALLOWED, 'SIDE_ALLOWED'],
+    [SIDE_DEFERRED, 'SIDE_DEFERRED'],
+  ] as const) {
+    for (const entry of list) {
+      expect(entry.reason, `${name}: ${entry.file}: ${entry.holder}`).not.toBe('');
+      expect(
+        found.some(matches([entry])),
+        `${name} entry no longer needed: ${entry.file}: ${entry.holder}`
+      ).toBe(true);
+    }
   }
 });

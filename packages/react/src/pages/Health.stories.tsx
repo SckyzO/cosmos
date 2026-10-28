@@ -85,7 +85,7 @@ const HealthPage = () => (
   <Shell
     topbar={
       <Topbar
-        rightActions={
+        endActions={
           <>
             <button
               type="button"

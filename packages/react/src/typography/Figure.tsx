@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import type { ImgHTMLAttributes, ReactNode } from 'react';
 
-export type FigureAlign = 'left' | 'center' | 'right';
+export type FigureAlign = 'start' | 'center' | 'end';
 export type FigureSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 export type FigureRadius = 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -30,9 +30,9 @@ const SIZE: Record<FigureSize, string> = {
 };
 
 const ALIGN: Record<FigureAlign, string> = {
-  left: '',
+  start: '',
   center: 'mx-auto',
-  right: 'ms-auto',
+  end: 'ms-auto',
 };
 
 const RADIUS: Record<FigureRadius, string> = {
@@ -54,7 +54,7 @@ export const Figure = ({
   src,
   alt,
   caption,
-  align = 'left',
+  align = 'start',
   size = 'full',
   radius = 'lg',
   shadow = false,

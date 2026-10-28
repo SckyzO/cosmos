@@ -463,7 +463,7 @@ page's by default),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
 loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
-(right-aligned, tabular figures). `TableHeaderCell` sets `scope` to `col` in the
+(`start`, `center` or `end`; `numeric` aligns to the end, with tabular figures). `TableHeaderCell` sets `scope` to `col` in the
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens.
 
@@ -1187,7 +1187,7 @@ drawer, and it does not touch the collapsed state: `onCollapsedChange` is not ca
 toggles keep their state.
 
 `SidebarToggle` is that toggle, to place anywhere else in the Shell (a header of
-your own, the Topbar's `leftActions`, the Sidebar's `footer`) with no props: it
+your own, the Topbar's `startActions`, the Sidebar's `footer`) with no props: it
 reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass it
 `collapsed` and `onCollapsedChange`.
 
@@ -1428,10 +1428,11 @@ they follow it. There is no prop and no `data-` attribute:
 
 What mirrors is what follows the reading direction: the side an icon, a ribbon, a floating
 panel or a status dot sits on, the padding and margins, the corners of a button group, a
-chevron that points forward, the `start` and `end` alignments of panels. A name that
-holds `left` or `right` (`Ribbon`'s `position="top-right"`, `BackToTopFab`'s
-`position="bottom-right"`, `iconPosition="left"`) means the start or the end of the line, so
-it swaps sides under `dir="rtl"`. Left to right renders as it always did.
+chevron that points forward, the `start` and `end` alignments of panels. A prop that names
+a side of the line takes `start` or `end`, never `left` or `right` (`Ribbon`'s
+`position="top-end"`, `BackToTopFab`'s `position="bottom-end"`, `iconPosition="start"`,
+`align="end"`), so the side swaps under `dir="rtl"`. `top` and `bottom` stay as they are.
+Left to right renders as it always did.
 
 Text that comes from you and sits inside a label or a sentence (a name, a value, a key) is
 wrapped in `<bdi>`, so a Latin name in an Arabic page, or the reverse, keeps its own order
@@ -1469,7 +1470,7 @@ const Forward = ({ className, ...props }: LucideProps) => (
   <ArrowRight {...props} className={clsx(className, 'rtl:-scale-x-100')} />
 );
 
-<Button icon={Forward} iconPosition="right">
+<Button icon={Forward} iconPosition="end">
   Continue
 </Button>;
 ```
@@ -1526,7 +1527,7 @@ The font, text size and density groups show only when their handlers are set. Pa
 (`@sckyzo/cosmos-theme/fonts/<name>`).
 
 For a top bar, `AppearanceMenu` takes the same props and puts the pickers in a
-panel behind an icon button, for example in `Topbar`'s `rightActions`. Set `onReset`
+panel behind an icon button, for example in `Topbar`'s `endActions`. Set `onReset`
 to add a Reset button under the groups.
 
 To offer a **System** choice that follows the device's `prefers-color-scheme`,

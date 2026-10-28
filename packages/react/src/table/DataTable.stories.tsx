@@ -3,12 +3,15 @@ import { Archive, Copy, Download, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  directionBox,
+  endOffset,
   expectBelow,
   expectFocusBorder,
   expectFocusRing,
   expectOutsideClip,
   portalDocsParams,
   scrollAnchor,
+  startOffset,
 } from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
@@ -1506,7 +1509,7 @@ const customerColumns: ColumnDef<Customer>[] = [
     key: 'balance',
     label: 'Balance',
     width: '22%',
-    align: 'right',
+    align: 'end',
     sortable: true,
     sortValue: (r) => r.balance,
     render: (r) => <TableAmountCell value={r.balance} currency="USD" locale="en-US" />,
@@ -2060,5 +2063,116 @@ export const PageSizeOptionsMobile: Story = {
     const nav = canvas.getByRole('navigation', { name: 'Pagination' });
     await expect(within(nav).getByRole('combobox', { name: 'Rows per page' })).toBeVisible();
     await expect(within(nav).getByRole('button', { name: 'Next page' })).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+type AlignRow = { id: string; a: string; b: string; c: string };
+
+const ALIGN_COLUMNS: ColumnDef<AlignRow>[] = [
+  { key: 'a', label: 'Start column', align: 'start', render: (r) => <span>{r.a}</span> },
+  { key: 'b', label: 'End column', align: 'end', render: (r) => <span>{r.b}</span> },
+  { key: 'c', label: 'Default column', render: (r) => <span>{r.c}</span> },
+];
+
+/**
+ * A column aligned to `start` or `end` follows the reading direction, header and cells: the
+ * default is the start.
+ */
+export const ColumnAlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4">
+          <DataTable
+            aria-label={`Alignment ${dir}`}
+            rows={[{ id: '1', a: 'start cell', b: 'end cell', c: 'default cell' }]}
+            columns={ALIGN_COLUMNS}
+            rowKey={(r) => r.id}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const sit = (text: string, side: 'start' | 'end') => {
+        const span = within(box).getByText(text);
+        const cell = span.closest('td')!;
+        const [near, far] = side === 'start' ? [startOffset, endOffset] : [endOffset, startOffset];
+        expect(near(span, cell), `${dir}: ${text}`).toBeLessThan(far(span, cell));
+      };
+      sit('start cell', 'start');
+      sit('end cell', 'end');
+      sit('default cell', 'start');
+      const header = (name: string) =>
+        within(box).getByRole('columnheader', { name: new RegExp(name) });
+      expect(getComputedStyle(header('Start column')).textAlign).toBe('start');
+      expect(getComputedStyle(header('End column')).textAlign).toBe('end');
+      expect(getComputedStyle(header('Default column')).textAlign).toBe('start');
+    }
+  },
+};
+
+/** `start` lines the menu up with the start edge of its trigger, `end` with the end edge. */
+export const RowActionsMenuAlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mx-auto mb-4 flex w-[600px] gap-4">
+          <RowActionsMenu aria-label={`Start actions ${dir}`} align="start">
+            <Menu.Item>Edit</Menu.Item>
+          </RowActionsMenu>
+          <RowActionsMenu aria-label={`End actions ${dir}`} align="end">
+            <Menu.Item>Edit</Menu.Item>
+          </RowActionsMenu>
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const align of ['start', 'end'] as const) {
+        const name = `${align === 'start' ? 'Start' : 'End'} actions ${dir}`;
+        const trigger = within(box).getByRole('button', { name });
+        await userEvent.click(trigger);
+        const menu = await within(document.body).findByRole('menu');
+        const edge = align === 'start' ? startOffset : endOffset;
+        await waitFor(() =>
+          expect(edge(menu, trigger), `${dir}: ${align} edge of the menu`).toBeCloseTo(0, 0)
+        );
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+      }
+    }
+  },
+};
+
+/** A loading placeholder sits at the end of a column aligned to `end`. */
+export const LoadingPlaceholderFollowsTheColumnAlign: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={[]}
+        columns={ALIGN_COLUMNS}
+        rowKey={(r) => r.id}
+        loading
+        loadingRows={2}
+        aria-label="Loading"
+      />
+    </Wrap>
+  ),
+  play: ({ canvas }) => {
+    const row = canvas.getByRole('table', { name: 'Loading' }).querySelector('tbody > tr')!;
+    const justify = (i: number) =>
+      getComputedStyle(row.children[i].firstElementChild!).justifyContent;
+    expect(justify(1)).toBe('flex-end');
+    expect(justify(0)).toBe('normal');
   },
 };

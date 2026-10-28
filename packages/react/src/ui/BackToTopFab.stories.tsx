@@ -46,10 +46,10 @@ export const Default: Story = {
   ),
 };
 
-export const BottomLeft: Story = {
+export const BottomStart: Story = {
   render: () => (
     <TallContent>
-      <BackToTopFab position="bottom-left" />
+      <BackToTopFab position="bottom-start" />
     </TallContent>
   ),
 };
@@ -262,12 +262,12 @@ const fabIn = (canvasElement: HTMLElement, dir: 'ltr' | 'rtl') =>
   directionBox(canvasElement, dir).querySelector('button')!.getBoundingClientRect();
 
 /**
- * `bottom-right` is the end corner: in right to left the button sits 24px from the left edge of
+ * `bottom-end` is the end corner: in right to left the button sits 24px from the left edge of
  * the viewport, where it sits 24px from the right one in left to right.
  */
-export const BottomRightMirrorsInRightToLeft: Story = {
+export const BottomEndMirrorsInRightToLeft: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => bothDirections(() => <BackToTopFab />),
+  render: () => bothDirections(() => <BackToTopFab position="bottom-end" />),
   play: async ({ canvasElement }) => {
     const width = document.documentElement.clientWidth;
     await expect(width - fabIn(canvasElement, 'ltr').right).toBeCloseTo(24, 0);
@@ -275,10 +275,10 @@ export const BottomRightMirrorsInRightToLeft: Story = {
   },
 };
 
-/** `bottom-left` is the start corner: the right side in right to left. */
-export const BottomLeftMirrorsInRightToLeft: Story = {
+/** `bottom-start` is the start corner: the right side in right to left. */
+export const BottomStartMirrorsInRightToLeft: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => bothDirections(() => <BackToTopFab position="bottom-left" />),
+  render: () => bothDirections(() => <BackToTopFab position="bottom-start" />),
   play: async ({ canvasElement }) => {
     const width = document.documentElement.clientWidth;
     await expect(fabIn(canvasElement, 'ltr').left).toBeCloseTo(24, 0);

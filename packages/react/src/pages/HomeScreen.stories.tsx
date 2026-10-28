@@ -125,7 +125,7 @@ export const Sidebar_: Story = {
               />
             </div>
           }
-          rightActions={
+          endActions={
             <>
               <button
                 type="button"

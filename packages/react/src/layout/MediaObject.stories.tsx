@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
+import { bothDirections, directionBox, endOffset, startOffset } from '../storybook-helpers';
 import { Card } from '../ui/Card';
 import { MediaObject } from './MediaObject';
 
@@ -147,11 +148,11 @@ export const Stretched: Story = {
   ),
 };
 
-// TUI Plus pattern "Media on right".
-export const MediaOnRight: Story = {
+// TUI Plus pattern "Media on right": `end` is the right in left to right.
+export const MediaAtTheEnd: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <MediaObject mediaPosition="right" className="max-w-xs">
+      <MediaObject mediaPosition="end" className="max-w-xs">
         <MediaObject.Image>
           <Placeholder className="size-16" />
         </MediaObject.Image>
@@ -183,17 +184,17 @@ export const RootIsFlexRow: Story = {
   },
 };
 
-export const MediaPositionRightAddsRowReverse: Story = {
+export const MediaPositionEndAddsRowReverse: Story = {
   tags: ['!dev'],
   render: () => (
-    <MediaObject mediaPosition="right" data-testid="mo">
+    <MediaObject mediaPosition="end" data-testid="mo">
       <MediaObject.Image>x</MediaObject.Image>
       <MediaObject.Body>y</MediaObject.Body>
     </MediaObject>
   ),
   play: async ({ canvasElement }) => {
     const root = canvasElement.querySelector('[data-testid="mo"]');
-    await expect(root).toHaveAttribute('data-media-position', 'right');
+    await expect(root).toHaveAttribute('data-media-position', 'end');
     await expect(root?.className ?? '').toMatch(/flex-row-reverse/);
   },
 };
@@ -209,5 +210,42 @@ export const AlignCenterAddsItemsCenter: Story = {
   play: async ({ canvasElement }) => {
     const root = canvasElement.querySelector('[data-testid="mo"]');
     await expect(root?.className ?? '').toMatch(/items-center/);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** `start` puts the media before the body, `end` after it: both mirror in right to left. */
+export const MediaPositionFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <MediaObject mediaPosition="start">
+          <MediaObject.Image>
+            <span data-testid="start-media">A</span>
+          </MediaObject.Image>
+          <MediaObject.Body>Start body</MediaObject.Body>
+        </MediaObject>
+        <MediaObject mediaPosition="end">
+          <MediaObject.Image>
+            <span data-testid="end-media">B</span>
+          </MediaObject.Image>
+          <MediaObject.Body>End body</MediaObject.Body>
+        </MediaObject>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const startMedia = within(box).getByTestId('start-media');
+      const endMedia = within(box).getByTestId('end-media');
+      expect(startOffset(startMedia, box), `${dir}: start media`).toBeLessThan(
+        startOffset(within(box).getByText('Start body'), box)
+      );
+      expect(endOffset(endMedia, box), `${dir}: end media`).toBeLessThan(
+        endOffset(within(box).getByText('End body'), box)
+      );
+    }
   },
 };

@@ -76,7 +76,7 @@ export const InTopbar: Story = {
     return (
       <Topbar
         pageTitle="Analytics Dashboard"
-        rightActions={
+        endActions={
           <>
             <IconButton icon={Bell} label="Notifications" />
             <AppearanceMenu
