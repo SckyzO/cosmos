@@ -456,6 +456,15 @@ export const MirrorsInRightToLeft: Story = {
       const [field, before, after] = within(table(box)).getAllByRole('columnheader');
       expect(startOffset(field!, box)).toBeLessThan(startOffset(before!, box));
       expect(startOffset(before!, box)).toBeLessThan(startOffset(after!, box));
+      // A header's text starts at its cell's start padding: a `th` centres it otherwise.
+      for (const cell of [field!, within(table(box)).getByRole('rowheader', { name: 'Role' })]) {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const edges = cell.getBoundingClientRect();
+        const fromStart = dir === 'rtl' ? edges.right - text.right : text.left - edges.left;
+        expect(fromStart).toBeCloseTo(parseFloat(getComputedStyle(cell).paddingInlineStart), 0);
+      }
       const old = within(list(box)).getByText('Viewer');
       const next = within(list(box)).getByText('Admin');
       expect(startOffset(old, box)).toBeLessThan(startOffset(next, box));
