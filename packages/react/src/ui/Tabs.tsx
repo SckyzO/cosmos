@@ -442,7 +442,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
       )}
     >
       {Icon && <Icon className="h-4 w-4" />}
-      <bdi>{children}</bdi>
+      {children}
       {badge !== undefined && (
         <span
           className={clsx(
