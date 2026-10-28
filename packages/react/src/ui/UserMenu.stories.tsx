@@ -36,21 +36,21 @@ const SAMPLE_AVATAR =
   );
 
 // The menu where it lives: at the end of an app's top bar, with room under it
-// for the open panel. `side="left"` puts the trigger before the page title.
+// for the open panel. `side="start"` puts the trigger before the page title.
 const InTopbar = ({
   children,
   height = 340,
-  side = 'right',
+  side = 'end',
 }: {
   children: ReactNode;
   height?: number;
-  side?: 'left' | 'right';
+  side?: 'start' | 'end';
 }) => (
   <div className="bg-[var(--color-bg-base)]" style={{ minHeight: height }}>
     <Topbar
       pageTitle="Dashboard"
-      startActions={side === 'left' ? children : undefined}
-      endActions={side === 'right' ? children : undefined}
+      startActions={side === 'start' ? children : undefined}
+      endActions={side === 'end' ? children : undefined}
     />
   </div>
 );
@@ -173,9 +173,9 @@ export const HideNameOnTrigger: Story = {
   },
 };
 
-export const AlignLeft: Story = {
+export const AlignStart: Story = {
   render: () => (
-    <InTopbar side="left">
+    <InTopbar side="start">
       <UserMenu defaultOpen align="start">
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>

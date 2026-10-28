@@ -213,7 +213,7 @@ export const HighCount: Story = {
   },
 };
 
-export const AlignLeft: Story = {
+export const AlignStart: Story = {
   render: () => (
     <div className="flex h-[420px] items-start justify-start">
       <NotificationsPanel defaultOpen align="start">

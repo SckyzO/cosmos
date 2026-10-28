@@ -116,7 +116,7 @@ export const Groups: Story = {
   ),
 };
 
-export const AlignRight: Story = {
+export const AlignEnd: Story = {
   render: () => (
     <div className="flex h-80 items-start justify-end px-8 pt-8">
       <Menu defaultOpen align="end">
