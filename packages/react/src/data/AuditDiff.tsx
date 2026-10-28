@@ -149,7 +149,8 @@ const hasWordDiff = ({ before, after }: AuditChange, formatValue: AuditDiffProps
  * on a green tint, and every cue also has a text: the column headers say Before and After, an
  * absent value reads "empty", and the words that moved in a long text are wrapped in `<del>` and
  * `<ins>` with a visually hidden "removed:" / "added:", so colour is never the only signal.
- * Values are React text, so markup in one shows as written.
+ * Values are React text, so markup in one shows as written. Each field name and value is isolated
+ * in a `<bdi>`, so a phone number or a size keeps its order in a right-to-left page.
  */
 export const AuditDiff = ({
   changes,
@@ -184,9 +185,9 @@ export const AuditDiff = ({
               role="listitem"
               className="block min-w-0 break-words"
             >
-              <span className="font-medium text-gray-900 dark:text-white">
+              <bdi className="font-medium text-gray-900 dark:text-white">
                 {change.label ?? change.field}
-              </span>
+              </bdi>
               <span aria-hidden>: </span>
               <span className="sr-only">, {labels.before} </span>
               <span
@@ -195,11 +196,15 @@ export const AuditDiff = ({
                   !wordLevel && !isAbsent(change.before) && REMOVED_CELL
                 )}
               >
-                <span className={clsx(!wordLevel && !isAbsent(change.before) && STRUCK)}>
+                <bdi className={clsx(!wordLevel && !isAbsent(change.before) && STRUCK)}>
                   <Value change={change} side="before" labels={labels} formatValue={formatValue} />
-                </span>
+                </bdi>
               </span>
-              <span aria-hidden> → </span>
+              {/* From the old value to the new one, which swap sides in right to left. */}
+              <span aria-hidden>
+                {' '}
+                <span className="inline-block rtl:-scale-x-100">→</span>{' '}
+              </span>
               <span className="sr-only">, {labels.after} </span>
               <span
                 className={clsx(
@@ -207,7 +212,9 @@ export const AuditDiff = ({
                   !wordLevel && !isAbsent(change.after) && ADDED_CELL
                 )}
               >
-                <Value change={change} side="after" labels={labels} formatValue={formatValue} />
+                <bdi>
+                  <Value change={change} side="after" labels={labels} formatValue={formatValue} />
+                </bdi>
               </span>
             </span>
           );
@@ -229,7 +236,7 @@ export const AuditDiff = ({
     >
       <table
         role="table"
-        className="w-full border-collapse text-left text-sm max-sm:block"
+        className="w-full border-collapse text-start text-sm max-sm:block"
         {...name}
       >
         <thead role="rowgroup" className="max-sm:sr-only">
@@ -263,7 +270,7 @@ export const AuditDiff = ({
                   scope="row"
                   className="py-row-12 max-sm:pb-row-4 min-w-0 px-4 font-medium break-words text-gray-900 max-sm:block dark:text-white"
                 >
-                  {change.label ?? change.field}
+                  <bdi>{change.label ?? change.field}</bdi>
                 </th>
                 {(['before', 'after'] as const).map((side) => {
                   const absent = isAbsent(change[side]);
@@ -290,14 +297,14 @@ export const AuditDiff = ({
                       >
                         {labels[side]}
                       </span>
-                      <span className={clsx(!plain && side === 'before' && STRUCK)}>
+                      <bdi className={clsx(!plain && side === 'before' && STRUCK)}>
                         <Value
                           change={change}
                           side={side}
                           labels={labels}
                           formatValue={formatValue}
                         />
-                      </span>
+                      </bdi>
                     </td>
                   );
                 })}
