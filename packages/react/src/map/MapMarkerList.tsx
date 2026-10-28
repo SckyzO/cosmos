@@ -36,7 +36,7 @@ export const MapMarkerList = ({
             aria-pressed={selected}
             onClick={() => onSelect?.(id)}
             className={clsx(
-              'focus-visible:focus-indicator flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm',
+              'focus-visible:focus-indicator py-row-8 flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 text-left text-sm',
               selected
                 ? 'border-brand-300 bg-brand-50 dark:border-brand-500/40 dark:bg-brand-500/10'
                 : 'border-transparent hover:bg-gray-100 dark:hover:bg-white/5'

@@ -1271,6 +1271,20 @@ dependency that only the apps using this entry install:
 pnpm add maplibre-gl
 ```
 
+MapLibre draws in a web worker. Since `maplibre-gl` 6, an app built with a bundler tells it where
+the worker is, once, before the first map; without that the map stays empty. With Vite:
+
+```ts
+import { setWorkerUrl } from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+
+setWorkerUrl(workerUrl);
+```
+
+MapLibre's [installation guide](https://maplibre.org/maplibre-gl-js/docs/#installation) gives the
+line for webpack, Rollup, esbuild and Next.js, and the extra setting for server rendering.
+`maplibre-gl` 5 needs none of this.
+
 Load MapLibre's stylesheet once in the app, and import the component from `/map`:
 
 ```tsx

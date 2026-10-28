@@ -410,7 +410,7 @@ export const MapView = ({
             type="button"
             aria-label="Zoom in"
             onClick={() => zoomBy(1)}
-            className="focus-visible:focus-indicator flex size-9 cursor-pointer items-center justify-center text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
+            className="focus-visible:focus-indicator size-ctrl-36 flex cursor-pointer items-center justify-center text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
           >
             <Plus className="size-4" aria-hidden="true" />
           </button>
@@ -418,7 +418,7 @@ export const MapView = ({
             type="button"
             aria-label="Zoom out"
             onClick={() => zoomBy(-1)}
-            className="focus-visible:focus-indicator flex size-9 cursor-pointer items-center justify-center border-t border-[var(--color-border)] text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
+            className="focus-visible:focus-indicator size-ctrl-36 flex cursor-pointer items-center justify-center border-t border-[var(--color-border)] text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
           >
             <Minus className="size-4" aria-hidden="true" />
           </button>
