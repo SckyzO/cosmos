@@ -100,8 +100,10 @@ const withShift = (style: CSSProperties, shift: number): CSSProperties =>
 /**
  * The `position: fixed` style that puts a panel on `side` of an anchor whose viewport rect is
  * `rect`. A panel aligned to the right edges (`end`, or `start` in `rtl`) also gets a `maxWidth`
- * that keeps it 16px from the left of the screen. The style sets `--anchor-width` too, for a part of the panel that points at
- * the anchor (an arrow).
+ * that keeps it 16px from the left of the screen. Any other, once measured as wide as the screen
+ * less 16px on each side, gets that width as its `maxWidth`, unless it matches the anchor's
+ * width. The style sets `--anchor-width` too, for a part of the panel that points at the anchor
+ * (an arrow).
  *
  * With `bounds`, collisions with the viewport: the panel flips to the opposite side when the
  * viewport would cut it on its own (`resolveSide`), and one the viewport cuts on the other
@@ -151,6 +153,11 @@ export function anchoredStyle(
   }
   style.left = left + shift;
   if (align === 'end') style.maxWidth = rect.right - VIEWPORT_MARGIN;
+  else if (bounds && !matchWidth) {
+    // `>=`: a panel already narrowed to the screen keeps its maxWidth on the next measure.
+    const screen = bounds.viewport.width - 2 * VIEWPORT_MARGIN;
+    if (bounds.panel.width >= screen) style.maxWidth = screen;
+  }
   if (side === 'top') {
     style.top = rect.top - offset;
     style.transform = `translate(${shiftX}, -100%)`;
