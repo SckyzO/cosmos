@@ -11,7 +11,7 @@ export type BlockquoteProps = {
   /**
    * Visual treatment:
    * - `plain` (default): bare italic quote
-   * - `solid`: muted background + brand-coloured left border
+   * - `solid`: muted background + brand-coloured border on the start edge
    * - `icon`: large quote glyph above the text
    * - `testimonial`: solid background + author block in the footer
    */
@@ -113,7 +113,7 @@ export const Blockquote = ({
     return (
       <blockquote
         className={clsx(
-          'border-brand-500 rounded-r-lg border-l-4 bg-gray-50 p-4 dark:bg-gray-900/50',
+          'border-brand-500 rounded-e-lg border-s-4 bg-gray-50 p-4 dark:bg-gray-900/50',
           ALIGN[align],
           className
         )}
@@ -127,7 +127,7 @@ export const Blockquote = ({
   return (
     <blockquote
       className={clsx(
-        'border-l-4 border-gray-200 pl-4 dark:border-gray-700',
+        'border-s-4 border-gray-200 ps-4 dark:border-gray-700',
         ALIGN[align],
         className
       )}

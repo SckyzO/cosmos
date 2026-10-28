@@ -126,9 +126,20 @@ const ListItem = ({ icon, iconColor, className, children }: ListItemProps) => {
   }
   const Icon = icon ?? MARKER_ICON[marker];
   const color = iconColor ?? MARKER_COLOR[marker] ?? 'text-gray-400';
+  // The built-in arrow points along the line, so it turns around in right to left. An `icon` the
+  // caller passes is drawn as it is: they turn their own around.
   return (
     <li className={clsx('flex items-start gap-2', className)}>
-      {Icon && <Icon className={clsx('mt-0.5 h-4 w-4 shrink-0', color)} aria-hidden />}
+      {Icon && (
+        <Icon
+          className={clsx(
+            'mt-0.5 h-4 w-4 shrink-0',
+            color,
+            !icon && marker === 'arrow' && 'rtl:-scale-x-100'
+          )}
+          aria-hidden
+        />
+      )}
       <span className="flex-1">{children}</span>
     </li>
   );

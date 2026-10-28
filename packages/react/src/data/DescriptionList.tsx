@@ -100,8 +100,8 @@ export type DescriptionListProps = ComponentPropsWithRef<'dl'> & {
    */
   striped?: boolean;
   /**
-   * When `true`, items are flat label/value rows, the label on the left and the value on the
-   * right, for the metadata of a card (ID, template, last seen…). The default items are
+   * When `true`, items are flat label/value rows, the label at the start and the value at the
+   * end, for the metadata of a card (ID, template, last seen…). The default items are
    * wide, with the label above the value on a phone.
    */
   compact?: boolean;
