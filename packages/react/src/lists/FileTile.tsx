@@ -119,7 +119,7 @@ export const FileTile = ({
 
   const metaNode = (meta !== undefined || (shared && !isTile)) && (
     <div className="text-2xs flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[var(--color-text-muted)]">
-      {meta}
+      {meta !== undefined && <bdi>{meta}</bdi>}
       {shared && !isTile && (
         <Badge size="sm" intent="neutral">
           Shared

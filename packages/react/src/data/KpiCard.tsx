@@ -140,7 +140,11 @@ export const KpiCard = ({
           {delta}
         </Slot>
       )}
-      {sub && <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{sub}</span>}
+      {sub && (
+        <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+          <bdi>{sub}</bdi>
+        </span>
+      )}
       {chart && (
         <Slot
           loading={loading}

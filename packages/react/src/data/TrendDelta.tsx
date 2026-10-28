@@ -71,7 +71,9 @@ export const TrendDelta = ({
         <bdi>{format(value)}</bdi>
       </span>
       {label && (
-        <span className={clsx('text-gray-500 dark:text-gray-400', sizes.label)}>{label}</span>
+        <span className={clsx('text-gray-500 dark:text-gray-400', sizes.label)}>
+          <bdi>{label}</bdi>
+        </span>
       )}
     </span>
   );
