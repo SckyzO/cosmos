@@ -137,7 +137,7 @@ export const FileTile = ({
       className={clsx(
         ICON_BUTTON,
         // Over the preview the star sits on a panel-coloured square, so it reads over a photo.
-        isTile ? 'absolute end-2 top-2 size-8 bg-[var(--color-bg-panel)]/85' : 'size-8'
+        isTile ? 'absolute inset-e-2 top-2 size-8 bg-[var(--color-bg-panel)]/85' : 'size-8'
       )}
     >
       {/* warning-600, as on `Rating`: it holds 3:1 on a sand page, where amber-600 does not. */}
@@ -217,7 +217,7 @@ export const FileTile = ({
         )}
       </div>
       {shared && (
-        <span className="absolute start-2 top-2 rounded-full bg-[var(--color-bg-panel)]">
+        <span className="absolute inset-s-2 top-2 rounded-full bg-[var(--color-bg-panel)]">
           <Badge size="sm" intent="neutral">
             Shared
           </Badge>
