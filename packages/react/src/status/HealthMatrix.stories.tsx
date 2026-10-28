@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { HEALTH_NOW, MATRIX_COLUMNS, MATRIX_ROWS } from '../storybook-health';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  expectNoHorizontalOverflow,
+  keyToEnd,
+  keyToStart,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthMatrix } from './HealthMatrix';
 
@@ -157,17 +163,18 @@ export const KeyboardNavigation: Story = {
     await userEvent.tab();
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
-    await userEvent.keyboard('{ArrowRight}');
+    // The columns run along the line, so the arrows along them swap in right to left.
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(cell(canvas, 'API on par-1b: OK')).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(cell(canvas, 'Scheduler on par-1b: OK')).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(cell(canvas, 'Scheduler on par-1a: OK')).toHaveFocus();
     await userEvent.keyboard('{ArrowUp}');
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     // The ends of the grid stop the arrows.
-    await userEvent.keyboard('{ArrowLeft}{ArrowUp}');
+    await userEvent.keyboard(`{${keyToStart()}}{ArrowUp}`);
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     await userEvent.keyboard('{End}');
@@ -176,7 +183,7 @@ export const KeyboardNavigation: Story = {
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     // The tab stop moved with the focus: still one.
-    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}{${keyToEnd()}}`);
     await expect(stops()).toHaveLength(1);
     await expect(stops()[0]).toBe(cell(canvas, 'API on par-1c: OK'));
 

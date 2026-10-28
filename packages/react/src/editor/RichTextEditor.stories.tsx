@@ -6,6 +6,8 @@ import {
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  keyToEnd,
+  keyToStart,
   mobileViewport,
 } from '../storybook-helpers';
 import { RichTextEditor } from './RichTextEditor';
@@ -274,18 +276,18 @@ export const ToolbarIsOneTabStopWithArrowKeys: Story = {
     // Shift+Tab leaves the text for the toolbar's one Tab stop.
     await userEvent.tab({ shift: true });
     await expect(buttons[0]).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(buttons[1]).toHaveFocus();
     await userEvent.keyboard('{End}');
     await expect(buttons[buttons.length - 1]).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(buttons[0]).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(buttons[buttons.length - 1]).toHaveFocus();
     await userEvent.keyboard('{Home}');
     await expect(buttons[0]).toHaveFocus();
     // The stop follows the focus: leaving and coming back lands on the last button used.
-    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}{${keyToEnd()}}`);
     await userEvent.tab();
     await expect(text).toHaveFocus();
     await userEvent.tab({ shift: true });
@@ -624,9 +626,9 @@ export const BubbleOpensOverTheSelection: Story = {
     await userEvent.keyboard('{Alt>}{F10}{/Alt}');
     const bold = within(toolbar).getByRole('button', { name: 'Bold' });
     await expect(bold).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(within(toolbar).getByRole('button', { name: 'Italic' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}{Enter}');
+    await userEvent.keyboard(`{${keyToStart()}}{Enter}`);
     await waitFor(() => expect(lastValue(args.onChange)).toContain('<strong>'));
     await expect(bold).toHaveAttribute('aria-pressed', 'true');
     await userEvent.keyboard('{Escape}');

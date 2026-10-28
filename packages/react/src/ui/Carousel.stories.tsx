@@ -469,13 +469,10 @@ export const ThumbnailsFollowTheCurrentSlide: Story = {
     for (let i = 2; i < thumbs.length; i += 1)
       await userEvent.click(canvas.getByRole('button', { name: /next slide/i }));
     await waitFor(() => expect(thumbs[7]).toHaveAttribute('aria-current', 'true'));
-    // The last thumbnail was off the right edge: the strip scrolled to bring it into view.
-    await waitFor(() => {
-      const strip_ = strip.getBoundingClientRect();
-      const last = thumbs[7]!.getBoundingClientRect();
-      expect(last.right).toBeLessThanOrEqual(strip_.right + 1);
-    });
-    await expect(strip.scrollLeft).toBeGreaterThan(0);
+    // The last thumbnail was off the end edge: the strip scrolled to bring it into view (toward
+    // the left in right to left, where `scrollLeft` counts down from 0).
+    await waitFor(() => expect(endOffset(thumbs[7]!, strip)).toBeGreaterThanOrEqual(-1));
+    await expect(Math.abs(strip.scrollLeft)).toBeGreaterThan(0);
   },
 };
 

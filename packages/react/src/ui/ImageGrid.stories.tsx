@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type ReactNode } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
@@ -341,18 +346,19 @@ export const MasonryKeepsEachPicturesAspect: Story = {
 export const MasonryFlowsDownTheColumns: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <MasonryDemo />,
-  play: async ({ canvas }) => {
-    const lefts = canvas
+  play: async ({ canvas, canvasElement }) => {
+    // How far each picture sits from the start edge: the columns run from the start of the line.
+    const starts = canvas
       .getAllByRole('img')
-      .map((img) => Math.round(img.getBoundingClientRect().left));
-    // DOM order is reading order: the left edge never moves back, column after column.
-    for (let i = 1; i < lefts.length; i += 1)
-      await expect(lefts[i]).toBeGreaterThanOrEqual(lefts[i - 1]);
-    await expect(new Set(lefts).size).toBe(3);
+      .map((img) => Math.round(startOffset(img, canvasElement)));
+    // DOM order is reading order: the start edge never moves back, column after column.
+    for (let i = 1; i < starts.length; i += 1)
+      await expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1]);
+    await expect(new Set(starts).size).toBe(3);
     // Within a column, the next item is lower.
     const tops = canvas.getAllByRole('img').map((img) => img.getBoundingClientRect().top);
-    for (let i = 1; i < lefts.length; i += 1) {
-      if (lefts[i] === lefts[i - 1]) await expect(tops[i]).toBeGreaterThan(tops[i - 1]);
+    for (let i = 1; i < starts.length; i += 1) {
+      if (starts[i] === starts[i - 1]) await expect(tops[i]).toBeGreaterThan(tops[i - 1]);
     }
   },
 };

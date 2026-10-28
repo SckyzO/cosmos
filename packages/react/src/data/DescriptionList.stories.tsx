@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Paperclip } from 'lucide-react';
+import { endOffset, startOffset } from '../storybook-helpers';
 import { StatusBadge } from '../status/StatusBadge';
 import { DescriptionList } from './DescriptionList';
 
@@ -194,7 +195,7 @@ export const StripedAddsAlternatingBg: Story = {
   },
 };
 
-/** A compact item puts the label and the value on one line, the value at the right edge. */
+/** A compact item puts the label and the value on one line, the value at the end edge. */
 export const CompactItemsAreOneLine: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -211,12 +212,8 @@ export const CompactItemsAreOneLine: Story = {
     await expect(
       Math.abs(label.getBoundingClientRect().top - value.getBoundingClientRect().top)
     ).toBeLessThan(8);
-    await expect(
-      row.getBoundingClientRect().right - value.getBoundingClientRect().right
-    ).toBeLessThan(2);
-    await expect(
-      label.getBoundingClientRect().left - row.getBoundingClientRect().left
-    ).toBeLessThan(2);
+    await expect(endOffset(value, row)).toBeLessThan(2);
+    await expect(startOffset(label, row)).toBeLessThan(2);
   },
 };
 

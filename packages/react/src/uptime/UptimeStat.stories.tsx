@@ -170,7 +170,8 @@ export const PeriodsAreLabelledAndColouredByThresholds: Story = {
     certificate: undefined,
   },
   play: async ({ canvas }) => {
-    const value = (label: string) => canvas.getByText(label).nextElementSibling!.firstElementChild!;
+    const value = (label: string) =>
+      canvas.getByText(label).closest('dt')!.nextElementSibling!.firstElementChild!;
     await expect(canvas.getByRole('group', { name: 'Uptime' })).toBeInTheDocument();
     await expect(canvas.getByText('100%')).toBeVisible();
     await expect(canvas.getByText('99.95%')).toBeVisible();
