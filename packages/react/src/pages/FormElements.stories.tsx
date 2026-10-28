@@ -563,7 +563,7 @@ const FormShell = ({ children }: { children: ReactNode }) => {
       topbar={
         <Topbar
           pageTitle="Form Elements"
-          rightActions={
+          endActions={
             <ThemeToggle
               isDark={isDark}
               onChange={(next) => {

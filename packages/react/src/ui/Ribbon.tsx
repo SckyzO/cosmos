@@ -2,15 +2,15 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import type { Intent } from './intent';
 
-export type RibbonPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type RibbonPosition = 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
 export type RibbonIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'neutral'>;
 export type RibbonShape = 'flat' | 'angled' | 'pill';
 
 export type RibbonProps = {
   /**
    * Corner of the parent to anchor to. Parent must be `position: relative` (and `overflow-hidden`
-   * for `angled`). `left` and `right` are the start and the end of the line: under `dir="rtl"` a
-   * `top-right` ribbon sits in the top-left corner.
+   * for `angled`). `start` and `end` follow the reading direction: under `dir="rtl"` a
+   * `top-end` ribbon sits in the top-left corner.
    */
   position?: RibbonPosition;
   intent?: RibbonIntent;
@@ -35,34 +35,34 @@ const INTENT_BG: Record<RibbonIntent, string> = {
 // `flat`: round the OUTER corners (away from the parent edge), keep the
 // touching corner sharp so it sits flush against the card edge. The corners are logical
 // (`ss` top-left in left to right, `se` top-right, `ee` bottom-right, `es` bottom-left), like
-// the sides: `right` is the end of the line.
+// the sides: `end` is the end of the line.
 const FLAT_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-0 inset-e-0 rounded-es-lg rounded-se-[inherit]',
-  'top-left': 'top-0 inset-s-0 rounded-ee-lg rounded-ss-[inherit]',
-  'bottom-right': 'bottom-0 inset-e-0 rounded-ss-lg rounded-ee-[inherit]',
-  'bottom-left': 'bottom-0 inset-s-0 rounded-se-lg rounded-es-[inherit]',
+  'top-end': 'top-0 inset-e-0 rounded-es-lg rounded-se-[inherit]',
+  'top-start': 'top-0 inset-s-0 rounded-ee-lg rounded-ss-[inherit]',
+  'bottom-end': 'bottom-0 inset-e-0 rounded-ss-lg rounded-ee-[inherit]',
+  'bottom-start': 'bottom-0 inset-s-0 rounded-se-lg rounded-es-[inherit]',
 };
 
 // `angled`: 45° banner across the corner. The parent must be
 // `overflow-hidden` so the banner ends are clipped by the card edge. The rotation has no
 // logical form: the banner leans the other way when the corner swaps sides.
 const ANGLED_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-5 -inset-e-12 rotate-45 rtl:-rotate-45',
-  'top-left': 'top-5 -inset-s-12 -rotate-45 rtl:rotate-45',
-  'bottom-right': 'bottom-5 -inset-e-12 -rotate-45 rtl:rotate-45',
-  'bottom-left': 'bottom-5 -inset-s-12 rotate-45 rtl:-rotate-45',
+  'top-end': 'top-5 -inset-e-12 rotate-45 rtl:-rotate-45',
+  'top-start': 'top-5 -inset-s-12 -rotate-45 rtl:rotate-45',
+  'bottom-end': 'bottom-5 -inset-e-12 -rotate-45 rtl:rotate-45',
+  'bottom-start': 'bottom-5 -inset-s-12 rotate-45 rtl:-rotate-45',
 };
 
 // `pill`: a label set in the card, 12px from the corner, not stuck to it.
 const PILL_POSITION: Record<RibbonPosition, string> = {
-  'top-right': 'top-3 inset-e-3',
-  'top-left': 'top-3 inset-s-3',
-  'bottom-right': 'bottom-3 inset-e-3',
-  'bottom-left': 'bottom-3 inset-s-3',
+  'top-end': 'top-3 inset-e-3',
+  'top-start': 'top-3 inset-s-3',
+  'bottom-end': 'bottom-3 inset-e-3',
+  'bottom-start': 'bottom-3 inset-s-3',
 };
 
 export const Ribbon = ({
-  position = 'top-right',
+  position = 'top-end',
   intent = 'brand',
   shape = 'flat',
   children,

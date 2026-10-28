@@ -388,8 +388,8 @@ const ButtonDocBody = () => {
                     <AnatomyTitle>Icon slot</AnatomyTitle>
                     <MediaObject.Description>
                       Pass any Lucide icon component via{' '}
-                      <code className="font-mono text-xs">icon</code>; place it left or right with{' '}
-                      <code className="font-mono text-xs">iconPosition</code>.
+                      <code className="font-mono text-xs">icon</code>; place it at the start or the
+                      end with <code className="font-mono text-xs">iconPosition</code>.
                     </MediaObject.Description>
                   </MediaObject.Body>
                 </MediaObject>
@@ -465,7 +465,7 @@ const ButtonDocBody = () => {
               <div className="mt-6">
                 <PreviewBox>
                   <Button icon={ThumbsUp}>Like</Button>
-                  <Button icon={ChevronRight} iconPosition="right">
+                  <Button icon={ChevronRight} iconPosition="end">
                     Next
                   </Button>
                 </PreviewBox>
@@ -527,9 +527,9 @@ const ButtonDocBody = () => {
                     </span>
                   </DescriptionList.Item>
                   <DescriptionList.Item label={<code className="font-mono">iconPosition</code>}>
-                    <code className="font-mono text-xs">&apos;left&apos; | &apos;right&apos;</code>
+                    <code className="font-mono text-xs">&apos;start&apos; | &apos;end&apos;</code>
                     <span className="block text-[var(--color-text-muted)]">
-                      Default <code className="font-mono">&apos;left&apos;</code>.
+                      Default <code className="font-mono">&apos;start&apos;</code>.
                     </span>
                   </DescriptionList.Item>
                   <DescriptionList.Item label={<code className="font-mono">loading</code>}>

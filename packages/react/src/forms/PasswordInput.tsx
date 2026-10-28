@@ -3,10 +3,7 @@ import { useState } from 'react';
 import { TooltipHelp } from '../ui/Tooltip';
 import { Input, type InputProps } from './Input';
 
-export type PasswordInputProps = Omit<
-  InputProps,
-  'type' | 'icon' | 'rightSlot' | 'labelTrailing'
-> & {
+export type PasswordInputProps = Omit<InputProps, 'type' | 'icon' | 'endSlot' | 'labelTrailing'> & {
   /** Tooltip text shown next to the label (uses TooltipHelp). */
   helpText?: string;
   /** Override the visibility-toggle button labels (defaults: "Show/Hide password"). */
@@ -32,7 +29,7 @@ export function PasswordInput({
       autoComplete={autoComplete}
       disabled={disabled}
       labelTrailing={helpText ? <TooltipHelp text={helpText} /> : undefined}
-      rightSlot={
+      endSlot={
         <button
           type="button"
           onClick={() => setShow((s) => !s)}

@@ -69,8 +69,8 @@ export type ColumnDef<T> = {
   label: ReactNode;
   /** Optional fixed width (CSS value, e.g. `'20%'` or `'180px'`). */
   width?: string;
-  /** Tailwind text alignment override. */
-  align?: 'left' | 'right' | 'center';
+  /** Text alignment override: `start` (the default), `end` or `center`. `end` is for numbers. */
+  align?: 'start' | 'end' | 'center';
   /** Renders the cell for a row. */
   render: (row: T) => ReactNode;
   /** Returns the raw sortable value for the row. */

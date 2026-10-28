@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { bothDirections, expectMirrored } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  startOffset,
+} from '../storybook-helpers';
 import { Button } from '../ui/Button';
 import { Input } from './Input';
 import { FormFooter } from './FormFooter';
@@ -180,5 +186,25 @@ export const ButtonsAtTheEndInRightToLeft: Story = {
       within(box).getByRole('button', { name: 'Save changes' })
     );
     expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Cancel' }));
+  },
+};
+
+/** `end` pushes the buttons to the end edge, and `extra` stays at the start. */
+export const EndAlignMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => <FormFooter onCancel={() => {}} extra="Saved a minute ago" align="end" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Save changes' })
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByText('Saved a minute ago'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const submit = within(box).getByRole('button', { name: 'Save changes' });
+      const extra = within(box).getByText('Saved a minute ago');
+      expect(endOffset(submit, box), `${dir}: submit`).toBeLessThan(startOffset(submit, box));
+      expect(startOffset(extra, box), `${dir}: extra`).toBeLessThan(endOffset(extra, box));
+    }
   },
 };

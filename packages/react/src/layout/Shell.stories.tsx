@@ -111,7 +111,7 @@ export const Default: Story = {
       topbar={
         <Topbar
           pageTitle="Analytics Dashboard"
-          rightActions={
+          endActions={
             <>
               <IconButton icon={Bell} label="Notifications" />
               <ThemeToggle />
@@ -150,7 +150,7 @@ export const CollapseButtonInSidebar: Story = {
   render: () => (
     <Shell
       collapseControl="sidebar"
-      topbar={<Topbar pageTitle="Analytics Dashboard" rightActions={<ThemeToggle />} />}
+      topbar={<Topbar pageTitle="Analytics Dashboard" endActions={<ThemeToggle />} />}
       sidebar={
         <Sidebar>
           <Sidebar.Brand
@@ -191,7 +191,7 @@ export const StartsCollapsed: Story = {
   render: () => (
     <Shell
       defaultSidebarCollapsed
-      topbar={<Topbar pageTitle="Servers" rightActions={<ThemeToggle />} />}
+      topbar={<Topbar pageTitle="Servers" endActions={<ThemeToggle />} />}
       sidebar={
         <Sidebar>
           <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
@@ -218,7 +218,7 @@ export const Controlled: Story = {
       <Shell
         sidebarCollapsed={collapsed}
         onCollapsedChange={setCollapsed}
-        topbar={<Topbar pageTitle="Controlled mode" rightActions={<ThemeToggle />} />}
+        topbar={<Topbar pageTitle="Controlled mode" endActions={<ThemeToggle />} />}
         sidebar={
           <Sidebar>
             <Sidebar.Brand
@@ -245,7 +245,7 @@ export const Controlled: Story = {
 
 export const NoSidebar: Story = {
   render: () => (
-    <Shell topbar={<Topbar pageTitle="Documentation" rightActions={<ThemeToggle />} />}>
+    <Shell topbar={<Topbar pageTitle="Documentation" endActions={<ThemeToggle />} />}>
       <PageContent
         title="Documentation"
         description="A simpler layout for marketing or docs pages — no sidebar, no hamburger."
@@ -460,7 +460,7 @@ const MobileShell = (props: Partial<React.ComponentProps<typeof Shell>>) => (
       <Topbar
         brand={<AppLogo />}
         pageTitle="Analytics Dashboard"
-        rightActions={<IconButton icon={User} label="User profile" />}
+        endActions={<IconButton icon={User} label="User profile" />}
       />
     }
     sidebar={
@@ -542,7 +542,7 @@ export const MobileControlled: Story = {
         topbar={
           <Topbar
             brand={<AppLogo />}
-            rightActions={<span className="text-xs">open = {String(open)}</span>}
+            endActions={<span className="text-xs">open = {String(open)}</span>}
           />
         }
       />

@@ -10,15 +10,15 @@ import {
 } from 'react';
 import type { Intent } from './intent';
 
-export type BackToTopFabPosition = 'bottom-right' | 'bottom-left';
+export type BackToTopFabPosition = 'bottom-end' | 'bottom-start';
 export type BackToTopFabIntent = Extract<Intent, 'brand' | 'neutral'>;
 
 export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   /** Pixels of vertical scroll before the FAB fades in. Default `300`. */
   threshold?: number;
   /**
-   * Anchor corner. Default `bottom-right`. The side is the end of the line: under `dir="rtl"`
-   * `bottom-right` is the bottom-left corner and `bottom-left` the bottom-right one.
+   * Anchor corner. Default `bottom-end`. The side follows the reading direction: under `dir="rtl"`
+   * `bottom-end` is the bottom-left corner and `bottom-start` the bottom-right one.
    */
   position?: BackToTopFabPosition;
   /** Use smooth scrolling. Default `true`. */
@@ -37,8 +37,8 @@ export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'o
 };
 
 const POSITION_CLASS: Record<BackToTopFabPosition, string> = {
-  'bottom-right': 'inset-e-0',
-  'bottom-left': 'inset-s-0',
+  'bottom-end': 'inset-e-0',
+  'bottom-start': 'inset-s-0',
 };
 
 const INTENT_CLASS: Record<BackToTopFabIntent, string> = {
@@ -49,7 +49,7 @@ const INTENT_CLASS: Record<BackToTopFabIntent, string> = {
 
 export const BackToTopFab = ({
   threshold = 300,
-  position = 'bottom-right',
+  position = 'bottom-end',
   smoothScroll = true,
   icon: Icon = ArrowUp,
   intent = 'brand',
@@ -80,7 +80,7 @@ export const BackToTopFab = ({
 
   const positionStyle = {
     bottom: offset,
-    [position === 'bottom-right' ? 'insetInlineEnd' : 'insetInlineStart']: offset,
+    [position === 'bottom-end' ? 'insetInlineEnd' : 'insetInlineStart']: offset,
     ...style,
   };
 

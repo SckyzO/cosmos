@@ -55,7 +55,7 @@ export type ShellProps = {
    * Where the built-in collapse control lives. `topbar` (default): the Topbar's
    * hamburger. `sidebar`: a button at the bottom of the Sidebar, and the
    * Topbar shows no hamburger. For both, or another place, put a
-   * `<SidebarToggle />` there (a Topbar's `leftActions`, the Sidebar's
+   * `<SidebarToggle />` there (a Topbar's `startActions`, the Sidebar's
    * `footer`, a custom header): it needs no props in a Shell.
    */
   collapseControl?: 'topbar' | 'sidebar';

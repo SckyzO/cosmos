@@ -96,7 +96,7 @@ The scale has five steps of the accent, cut by quantiles of the values so that e
 
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place (`centerValue` and `centerLabel` replace the sum and "Total"; `variant="pie"` fills the disc and writes nothing in it; `legendValues` adds each slice's value and its share, in whole percents that add up to 100, to the legend, in columns when the legend is on a side); `RadialBarChart` does the same with the average and the ring.
 
-The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`.
+The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`. `left` and `right` are the sides of the screen, not of the line: a chart keeps its left-to-right axis in a right-to-left page, and its legend stays where you put it.
 
 A chart with no series, or only empty ones, draws `emptyMessage` (default `No data`, an empty string for nothing) in place of the plot. The gauges, which always have a value, and `RealtimeChart`, which fills its own window, have no such prop.
 

@@ -49,8 +49,8 @@ const InTopbar = ({
   <div className="bg-[var(--color-bg-base)]" style={{ minHeight: height }}>
     <Topbar
       pageTitle="Dashboard"
-      leftActions={side === 'left' ? children : undefined}
-      rightActions={side === 'right' ? children : undefined}
+      startActions={side === 'left' ? children : undefined}
+      endActions={side === 'right' ? children : undefined}
     />
   </div>
 );

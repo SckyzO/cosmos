@@ -27,7 +27,7 @@ import type { ElementType, HTMLAttributes, ReactNode } from 'react';
 // Pattern 7-8 — "With title and button" / "With toolbar": title left, buttons
 //   right, both flanking a horizontal border below.
 
-export type DividerAlign = 'left' | 'center' | 'right';
+export type DividerAlign = 'start' | 'center' | 'end';
 
 export type DividerProps = HTMLAttributes<HTMLDivElement> & {
   /**
@@ -70,7 +70,7 @@ const Root = ({
     );
   }
   const justify =
-    align === 'left' ? 'justify-start' : align === 'right' ? 'justify-end' : 'justify-center';
+    align === 'start' ? 'justify-start' : align === 'end' ? 'justify-end' : 'justify-center';
   return (
     <div className={clsx('relative', className)} {...rest}>
       <div aria-hidden="true" className="absolute inset-0 flex items-center">
@@ -110,7 +110,7 @@ const Icon = ({
   ...rest
 }: DividerIconProps) => {
   const justify =
-    align === 'left' ? 'justify-start' : align === 'right' ? 'justify-end' : 'justify-center';
+    align === 'start' ? 'justify-start' : align === 'end' ? 'justify-end' : 'justify-center';
   return (
     <div className={clsx('relative', className)} {...rest}>
       <div aria-hidden="true" className="absolute inset-0 flex items-center">

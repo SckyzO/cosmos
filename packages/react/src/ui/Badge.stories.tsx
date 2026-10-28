@@ -117,10 +117,10 @@ export const WithIconRight: Story = {
     <Wrap>
       <SectionCard title="With right icon">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge intent="brand" icon={Star} iconPosition="right">
+          <Badge intent="brand" icon={Star} iconPosition="end">
             Featured
           </Badge>
-          <Badge intent="success" icon={Check} iconPosition="right">
+          <Badge intent="success" icon={Check} iconPosition="end">
             Done
           </Badge>
         </div>
@@ -492,7 +492,7 @@ export const IconsMirrorInRightToLeft: Story = {
     bothDirections(() => (
       <div className="flex gap-3">
         <Badge icon={Star}>Before</Badge>
-        <Badge icon={Zap} iconPosition="right">
+        <Badge icon={Zap} iconPosition="end">
           After
         </Badge>
       </div>

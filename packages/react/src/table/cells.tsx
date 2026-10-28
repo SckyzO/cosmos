@@ -126,7 +126,7 @@ const defaultFormat = (value: number, currency?: string, locale?: string) =>
 /**
  * TableAmountCell — a signed amount tinted by its sign: green for a gain, red for a loss, plain
  * for zero. The sign is written too, so the colour is never the only cue. Put it in a numeric
- * column (`align="right"`, or `numeric` on `TableCell`).
+ * column (`align="end"`, or `numeric` on `TableCell`).
  */
 export const TableAmountCell = ({ value, currency, locale, format }: TableAmountCellProps) => (
   <span

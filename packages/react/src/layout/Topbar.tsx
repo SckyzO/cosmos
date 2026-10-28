@@ -33,16 +33,16 @@ export type TopbarProps = {
    * it always shows. Keep it compact: it shares the bar with the hamburger and the actions.
    */
   brand?: ReactNode;
-  /** Extra slot rendered between the hamburger and the page title. */
-  leftActions?: ReactNode;
+  /** Extra slot rendered between the hamburger and the page title (at the start of the bar). */
+  startActions?: ReactNode;
   /** Center area — typically search, breadcrumb, or empty. */
   center?: ReactNode;
-  /** Right-aligned actions — theme switcher, notifications, avatar… */
-  rightActions?: ReactNode;
+  /** Actions at the end of the bar — theme switcher, notifications, avatar… */
+  endActions?: ReactNode;
   /**
    * `Menu.Item`s (or `Menu.Group`s) for the actions that do not fit a phone. Below `sm` the
-   * Topbar shows a "More" menu with them, before `rightActions`; from `sm` up the menu is gone.
-   * Hide the matching actions of `rightActions` below `sm` (`max-sm:hidden`) and keep there only
+   * Topbar shows a "More" menu with them, before `endActions`; from `sm` up the menu is gone.
+   * Hide the matching actions of `endActions` below `sm` (`max-sm:hidden`) and keep there only
    * what must stay in reach, such as the profile menu.
    */
   moreActions?: ReactNode;
@@ -53,7 +53,7 @@ export type TopbarProps = {
 /**
  * Topbar — application header bar.
  *
- * Layout: [toggle] [brand] [leftActions] [pageTitle] [center] [rightActions]
+ * Layout: [toggle] [brand] [startActions] [pageTitle] [center] [endActions]
  *
  * The site brand belongs in `<Sidebar.Brand />`; the `brand` prop repeats the logo here while
  * the sidebar is off screen (below `lg` in a Shell). Otherwise the topbar carries only
@@ -70,9 +70,9 @@ export const Topbar = ({
   sidebarCollapsed,
   onCollapsedChange,
   brand,
-  leftActions,
+  startActions,
   center,
-  rightActions,
+  endActions,
   moreActions,
   className,
 }: TopbarProps) => {
@@ -105,7 +105,7 @@ export const Topbar = ({
         <div className="flex min-w-0 shrink items-center">{brand}</div>
       )}
 
-      {leftActions}
+      {startActions}
 
       {pageTitle && (
         // Below `sm` the page shows its own title: the Topbar keeps the width for actions.
@@ -117,8 +117,8 @@ export const Topbar = ({
       {/* Center: stretches */}
       {center ? <div className="min-w-0 flex-1">{center}</div> : <div className="flex-1" />}
 
-      {/* Right: actions */}
-      {(rightActions || moreActions) && (
+      {/* End: actions */}
+      {(endActions || moreActions) && (
         <div className="flex shrink-0 items-center gap-2">
           {moreActions && (
             <div className="sm:hidden">
@@ -133,7 +133,7 @@ export const Topbar = ({
               </Menu>
             </div>
           )}
-          {rightActions}
+          {endActions}
         </div>
       )}
     </header>

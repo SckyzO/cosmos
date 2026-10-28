@@ -174,8 +174,8 @@ export type NavbarMenuProps = {
   defaultOpen?: boolean;
   /** Called with the open state to move to. */
   onOpenChange?: (open: boolean) => void;
-  /** Edge of the trigger the panel lines up with. Default `left`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the panel lines up with. Default `start`. */
+  align?: 'start' | 'end';
   /** Tailwind width class of the panel. Default `w-56` (224px). */
   width?: string;
   className?: string;
@@ -195,19 +195,14 @@ const NavbarMenu = ({
   open,
   defaultOpen,
   onOpenChange,
-  align,
+  align = 'start',
   width,
   className,
   children,
 }: NavbarMenuProps) => {
   const inherited = useContext(NavbarThemeContext);
   return (
-    <Menu
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      align={align === 'right' ? 'end' : 'start'}
-    >
+    <Menu open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} align={align}>
       <NavbarTrigger
         label={label}
         active={active}

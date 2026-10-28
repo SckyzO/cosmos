@@ -21,11 +21,15 @@ import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectFocusRing,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 
 const meta = {
@@ -586,7 +590,7 @@ export const DashboardCells: Story = {
             <TableHeaderCell>Note</TableHeaderCell>
             <TableHeaderCell numeric>Power 24h</TableHeaderCell>
             <TableHeaderCell numeric>Cost, 24h</TableHeaderCell>
-            <TableHeaderCell align="right">Action</TableHeaderCell>
+            <TableHeaderCell align="end">Action</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -619,7 +623,7 @@ export const DashboardCells: Story = {
               <TableCell numeric>
                 <TableAmountCell value={COSTS[n.name]} currency="EUR" locale="en-GB" />
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="end">
                 <RowActionButton aria-label={`View ${n.name}`} />
               </TableCell>
             </TableRow>
@@ -702,5 +706,57 @@ export const MobileStickyFirstColumn: Story = {
     await expect(left(cell)).toBe(start);
     // Opaque even on a striped row, which has a background of its own.
     await expect(getComputedStyle(cell).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * `start` and `end` name the reading direction: a cell aligned to the end hugs the left edge in
+ * right to left, and `numeric` is the end.
+ */
+export const AlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell align="start">Start</TableHeaderCell>
+            <TableHeaderCell align="end">End</TableHeaderCell>
+            <TableHeaderCell numeric>Numeric</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow>
+            <TableCell align="start">
+              <span>start cell</span>
+            </TableCell>
+            <TableCell align="end">
+              <span>end cell</span>
+            </TableCell>
+            <TableCell numeric>
+              <span>numeric cell</span>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const sit = (text: string, side: 'start' | 'end') => {
+        const span = within(box).getByText(text);
+        const cell = span.closest('td')!;
+        const [near, far] = side === 'start' ? [startOffset, endOffset] : [endOffset, startOffset];
+        expect(near(span, cell), `${dir}: ${text}`).toBeLessThan(far(span, cell));
+      };
+      sit('start cell', 'start');
+      sit('end cell', 'end');
+      sit('numeric cell', 'end');
+      expect(getComputedStyle(within(box).getByText('Start')).textAlign).toBe('start');
+      expect(getComputedStyle(within(box).getByText('End')).textAlign).toBe('end');
+      expect(getComputedStyle(within(box).getByText('Numeric')).textAlign).toBe('end');
+    }
   },
 };

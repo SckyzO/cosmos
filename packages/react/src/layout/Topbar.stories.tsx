@@ -39,7 +39,7 @@ export const WithHamburger: Story = {
           sidebarCollapsed={collapsed}
           onCollapsedChange={setCollapsed}
           pageTitle="Analytics Dashboard"
-          rightActions={
+          endActions={
             <>
               <IconBtn icon={Bell} label="Notifications" />
               <IconBtn icon={Sun} label="Toggle theme" />
@@ -76,7 +76,7 @@ export const WithCenterSearch: Story = {
               </div>
             </div>
           }
-          rightActions={<IconBtn icon={User} label="Profile" />}
+          endActions={<IconBtn icon={User} label="Profile" />}
         />
       </Wrap>
     );
@@ -86,7 +86,7 @@ export const WithCenterSearch: Story = {
 export const WithoutHamburger: Story = {
   render: () => (
     <Wrap>
-      <Topbar pageTitle="Documentation" rightActions={<IconBtn icon={User} label="Profile" />} />
+      <Topbar pageTitle="Documentation" endActions={<IconBtn icon={User} label="Profile" />} />
       <p className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
         Pass <code>sidebarCollapsed=&#123;null&#125;</code> (or omit it) to hide the hamburger —
         useful for pages without a sidebar.
@@ -177,7 +177,7 @@ export const WithBrand: Story = {
         onCollapsedChange={() => {}}
         brand={<span className="font-bold tracking-tight">Cosmos</span>}
         pageTitle="Analytics Dashboard"
-        rightActions={<IconBtn icon={User} label="Profile" />}
+        endActions={<IconBtn icon={User} label="Profile" />}
       />
     </Wrap>
   ),
@@ -193,7 +193,7 @@ export const WithBrand: Story = {
   },
 };
 
-/** Keyboard order follows the layout: hamburger, left actions, center, right actions. */
+/** Keyboard order follows the layout: hamburger, start actions, center, end actions. */
 export const SlotsFollowTheLayoutOrder: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -201,10 +201,10 @@ export const SlotsFollowTheLayoutOrder: Story = {
       <Topbar
         sidebarCollapsed={false}
         onCollapsedChange={() => {}}
-        leftActions={<IconBtn icon={Search} label="Left action" />}
+        startActions={<IconBtn icon={Search} label="Start action" />}
         pageTitle="Servers"
         center={<input aria-label="Center search" />}
-        rightActions={<IconBtn icon={User} label="Right action" />}
+        endActions={<IconBtn icon={User} label="End action" />}
       />
     </Wrap>
   ),
@@ -216,9 +216,9 @@ export const SlotsFollowTheLayoutOrder: Story = {
     }
     await expect(reached).toEqual([
       'Collapse sidebar',
-      'Left action',
+      'Start action',
       'Center search',
-      'Right action',
+      'End action',
     ]);
   },
 };
@@ -280,7 +280,7 @@ const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
           <Menu.Item icon={Sun}>Toggle theme</Menu.Item>
         </>
       }
-      rightActions={
+      endActions={
         <>
           <span className="flex gap-2 max-sm:hidden">
             <IconBtn icon={Bell} label="Notifications" />
