@@ -36,8 +36,8 @@ export const WithIcon: Story = {
   ),
 };
 
-// TUI Plus "With label on left" — line with a left-aligned text inset.
-export const WithLabelOnLeft: Story = {
+// TUI Plus "With label on left" — line with a text inset at the start of the line.
+export const WithLabelAtStart: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <Divider inset="Continue" align="start" />
@@ -54,8 +54,8 @@ export const WithTitle: Story = {
   ),
 };
 
-// TUI Plus "With title on left" — emphasized inset, left-aligned.
-export const WithTitleOnLeft: Story = {
+// TUI Plus "With title on left" — emphasized inset at the start of the line.
+export const WithTitleAtStart: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <Divider inset="Section title" emphasis align="start" />
@@ -88,7 +88,7 @@ export const WithTitleAndButton: Story = {
   ),
 };
 
-// TUI Plus "With toolbar" — bordered row with title + button group on the right.
+// TUI Plus "With toolbar" — bordered row with title + button group at the end.
 export const WithToolbar: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">

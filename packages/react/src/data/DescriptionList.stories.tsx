@@ -58,8 +58,8 @@ const SHARED_ITEMS = (
 );
 
 // TUI Plus pattern "Left-aligned" — title + description + dl below, with
-// dividers between items.
-export const LeftAligned: Story = {
+// dividers between items; the term is at the start of the line.
+export const StartAligned: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <DescriptionList
@@ -74,7 +74,7 @@ export const LeftAligned: Story = {
 
 // TUI Plus pattern "Left-aligned in card" — wrapped in a card surface with
 // border + rounded + shadow.
-export const LeftAlignedInCard: Story = {
+export const StartAlignedInCard: Story = {
   render: () => (
     <div className="bg-gray-50 p-8 dark:bg-gray-950">
       <DescriptionList
