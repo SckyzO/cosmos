@@ -276,7 +276,7 @@ export const EventCalendar = ({
             key={i}
             className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
           >
-            <span className="max-sm:hidden">{d}</span>
+            <bdi className="max-sm:hidden">{d}</bdi>
             <span className="sm:hidden">{fmt.weekdaysNarrow[i]}</span>
           </span>
         ))}
