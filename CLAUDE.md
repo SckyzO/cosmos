@@ -142,8 +142,8 @@ charts ───────────── storybook      (charts imports ne
   stack are never duplicated; the source keeps relative imports, which means the names it imports
   must be exported by the root entry (`Popover`, `Tooltip`, `Button`). An internal helper the root
   does not export, and that shares no state with it, is listed in that entry's `bundle` option and
-  copied in by value (`/editor` takes `useControllableState`, `mergeRefs`, `fieldRecipe`,
-  `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
+  copied in by value (`/editor` takes `useControllableState`, `directionOf`, `mergeRefs`,
+  `fieldRecipe`, `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
   never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
