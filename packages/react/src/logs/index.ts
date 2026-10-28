@@ -1,4 +1,15 @@
 export { LogViewer, type LogViewerProps, type LogDensity } from './LogViewer';
+export { JobLog, type JobLogProps } from './JobLog';
+export {
+  parseJobLogHash,
+  jobLogLineHref,
+  type JobStatus,
+  type JobLogStep,
+  type JobLogLine,
+  type JobLogLineRef,
+  type JobLogControl,
+  type JobLogTimestampFormat,
+} from './job-log';
 export { LogToolbar, type LogToolbarProps } from './LogToolbar';
 export { LogEntryDetail, type LogEntryDetailProps, type LogEntryContext } from './LogEntryDetail';
 export {
