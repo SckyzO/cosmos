@@ -1496,11 +1496,34 @@ And the arrow keys that move a card across a `KanbanBoard` follow where the colu
 the reading direction: with the first column on the right, ArrowLeft takes the card to the
 next one.
 
+Output keeps its order. Code (`CodeBlock`), logs (`LogViewer`, `JobLog`, and the message, fields
+and stack of `LogEntryDetail`) and keyboard keys (`Kbd`) read left to right in any page: they are
+`dir="ltr"` islands, so a number gutter stays at the left of its lines and a log scrolls from the
+left. What surrounds them follows the page: the title bar and copy button of a code block, the
+toolbar and the "Jump to latest" button of a log, the step headers of a `JobLog` (their chevron
+turns around). Time keeps its order too, as the axis of a chart does: `HeartbeatBar` and
+`UptimeBars` draw their oldest mark on the left and their newest on the right in both directions,
+with "N days ago" at the left and "Today" at the right, and ArrowLeft moves to the older mark. A
+percentage, a latency or a count the components write (`99.95%`, `182 ms`, `3 of 12`) is wrapped in
+`<bdi>`, so it reads in order inside an Arabic line.
+
+`Carousel` hands the direction to Embla, which lays the slides out from the end of the line: the
+first slide is at the start, the next one comes in from the end, a swipe follows, and the arrows
+and their chevrons sit on their sides. The play triangle of a `VideoEmbed` points right in both
+directions, as the time of a video runs from the left. `MapView` does not mirror the map; its zoom
+buttons and the popup of a pin follow the page. Arabic and Hebrew labels in the tiles of a map
+need MapLibre's RTL text plugin (`setRTLTextPlugin` in `maplibre-gl`), which a host sets once
+for the page: Cosmos adds no dependency for it. In `RichTextEditor`, each block follows what is
+typed in it (the same `unicode-bidi: plaintext` as a `Textarea`), lists are indented and quotes
+edged on the start side, the arrow keys along the toolbar swap, and the link field reads left to
+right.
+
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), **Data**,
-**Lists**, **Feedback** and **Overlays**. The others still lay out for left to right and are the
-next ones in line: Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the
-**Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story right to left.
+**Atoms**, **Actions**, **Forms**, **Data**, **Lists**, **Feedback**, **Overlays**,
+**Monitoring**, **Media**, **Status**, **Typography** and **Foundations**. The others still lay out
+for left to right and are the next ones in line: Navigation and Layout, Chat, Tables and Settings,
+then Pages. In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`)
+renders any story right to left.
 
 ## Themes and accents
 
