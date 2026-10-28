@@ -110,7 +110,7 @@ export const Topbar = ({
       {pageTitle && (
         // Below `sm` the page shows its own title: the Topbar keeps the width for actions.
         <TitleTag className="hidden truncate text-lg font-semibold text-[var(--color-text-primary)] sm:block">
-          {pageTitle}
+          <bdi>{pageTitle}</bdi>
         </TitleTag>
       )}
 

@@ -122,7 +122,7 @@ const level = (depth: number) => LEVEL[Math.min(depth, LEVEL.length - 1)];
 // lines up under the top-level label (12 px padding, 20 px icon and 12 px gap past the row margin),
 // or, in the collapsed sub-menu's panel, which has no top-level row, at the panel's edge; each
 // level after it is 16 px further. A nested row's pill starts 10 px before its label, so the guide
-// lines on its left stay visible.
+// lines on its start side stay visible.
 const NESTED_PADDING = 10;
 
 const useNestedGeometry = (inset: RowInset) => {
@@ -134,11 +134,11 @@ const useNestedGeometry = (inset: RowInset) => {
     rowStyle: (depth: number, button: boolean) => {
       const left = labelX(depth) - NESTED_PADDING;
       return button
-        ? { marginLeft: left, width: `calc(100% - ${left + ROW_INSET[inset].px}px)` }
-        : { marginLeft: left };
+        ? { marginInlineStart: left, width: `calc(100% - ${left + ROW_INSET[inset].px}px)` }
+        : { marginInlineStart: left };
     },
     /** The guide line under a row's children: under a top-level icon, or 4 px before the label. */
-    guideLeft: (depth: number) => (depth === 0 ? ROW_INSET[inset].px + 22 : labelX(depth) - 4),
+    guideStart: (depth: number) => (depth === 0 ? ROW_INSET[inset].px + 22 : labelX(depth) - 4),
   };
 };
 
@@ -316,7 +316,7 @@ export type SidebarProps = {
 };
 
 /**
- * Sidebar — left-side navigation panel.
+ * Sidebar — navigation panel at the start of the line.
  *
  * Compound component: brand + items + groups + sub-menus + footer slot.
  * Smooth width transition when `collapsed` toggles. The `collapsed` state
@@ -408,7 +408,7 @@ const SidebarRoot = ({
       className={clsx(
         'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
         // The drawer panel draws the edge and the shadow, and sets the width.
-        inDrawer ? 'w-full' : 'border-r border-[var(--color-border)]',
+        inDrawer ? 'w-full' : 'border-e border-[var(--color-border)]',
         // Not before the first frames: the width measured at mount shows at once.
         fit.animated &&
           clsx(
@@ -416,7 +416,7 @@ const SidebarRoot = ({
             'duration-300 ease-in-out'
           ),
         // Over the page, out of the layout: the wrapper below keeps the rail's place.
-        overlay && 'absolute inset-y-0 left-0',
+        overlay && 'inset-s-0 absolute inset-y-0',
         overlay && hover.expanded && 'shadow-2xl',
         className
       )}
@@ -555,7 +555,7 @@ const SidebarBrand = ({
         ))}
       <div
         className={clsx(
-          'min-w-0 overflow-hidden text-left transition-[max-width,opacity] duration-300',
+          'min-w-0 overflow-hidden text-start transition-[max-width,opacity] duration-300',
           collapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'
         )}
       >
@@ -597,7 +597,7 @@ const SidebarBrand = ({
         ref={ref as Ref<HTMLButtonElement>}
         type="button"
         onClick={onClick}
-        className={clsx(baseClass, 'w-full text-left')}
+        className={clsx(baseClass, 'w-full text-start')}
         data-sidebar-brand={marker}
       >
         {inner}
@@ -615,7 +615,7 @@ const SidebarBrand = ({
   return (
     <div
       className={clsx(
-        'flex h-[72px] shrink-0 items-center pr-3',
+        'flex h-[72px] shrink-0 items-center pe-3',
         divider && 'border-b border-[var(--color-border)]'
       )}
       data-sidebar-brand={divider ? '' : undefined}
@@ -653,7 +653,7 @@ export type SidebarItemProps = {
    * also closes the drawer, after this runs.
    */
   onClick?: () => void;
-  /** Optional badge (count, "new"…) shown right of label. Hidden when collapsed. */
+  /** Optional badge (count, "new"…) shown after the label. Hidden when collapsed. */
   badge?: ReactNode;
   /** Override the inherited collapsed state. */
   collapsed?: boolean;
@@ -716,7 +716,7 @@ const SidebarItem = ({
     <>
       <Icon className="h-5 w-5 shrink-0" />
       <CompactLabel label={label} labelRef={setCompactLabel} />
-      {badge && <span className="absolute top-1 right-1">{badge}</span>}
+      {badge && <span className="inset-e-1 absolute top-1">{badge}</span>}
     </>
   ) : (
     <>
@@ -757,7 +757,7 @@ const SidebarItem = ({
         closeDrawer?.();
       }}
       aria-label={name}
-      className={clsx(baseClass, ROW_INSET[inset].width, !compact && 'text-left')}
+      className={clsx(baseClass, ROW_INSET[inset].width, !compact && 'text-start')}
       style={style}
       aria-current={active ? 'page' : undefined}
       data-sidebar-item=""
@@ -780,10 +780,10 @@ const SidebarItem = ({
 // ─── Sidebar.SubMenu ──────────────────────────────────────────────────────────
 // Expandable menu: its trigger toggles a list of nested rows. Sub-menus nest (three levels read
 // best, a fourth works): nested rows show their label alone, smaller at each level, with a guide
-// line on their left. A sub-menu with a page of its own (`href` or `onClick`) splits its row: the
+// line on their start side. A sub-menu with a page of its own (`href` or `onClick`) splits its row: the
 // label opens the page and unfolds the list, a chevron only toggles it. A sub-menu that holds the
 // active row turns to the accent; a nested one without a page, which only groups rows, is muted.
-// In collapsed mode the trigger is icon-only and opens the whole tree in a panel to its right.
+// In collapsed mode the trigger is icon-only and opens the whole tree in a panel at its end side.
 
 export type SidebarSubMenuProps = {
   /** Icon component. Drawn at the top level only, like `Sidebar.Item`'s. */
@@ -813,7 +813,7 @@ export type SidebarSubMenuProps = {
    * rail the nested rows aren't mounted: pass `active` there to mark the sub-menu.
    */
   active?: boolean;
-  /** Optional badge shown right of label (hidden when collapsed). */
+  /** Optional badge shown after the label (hidden when collapsed). */
   badge?: ReactNode;
   /** Nested items: Sidebar.Item, or another Sidebar.SubMenu for a deeper level. */
   children: ReactNode;
@@ -865,8 +865,8 @@ const SidebarSubMenu = ({
   const inTrail = activeRows.size > 0;
   useReportActive(active || inTrail);
 
-  // Collapsed mode: an icon-only trigger opening the tree in a panel to its
-  // right, rendered expanded. Picking a row closes it. The compact rail does the same
+  // Collapsed mode: an icon-only trigger opening the tree in a panel at its
+  // end side, rendered expanded. Picking a row closes it. The compact rail does the same
   // from a trigger that stacks the label under the icon, at the top level.
   const compact = ctx.compact && !collapsed && depth === 0;
   if (collapsed || compact) {
@@ -957,7 +957,9 @@ const SidebarSubMenu = ({
       aria-hidden
       className={clsx(
         'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform',
-        open && 'rotate-90'
+        // Closed it points to the end of the line (turned around where that is the left); open it
+        // points down in both directions.
+        open ? 'rotate-90' : 'rtl:rotate-180'
       )}
     />
   );
@@ -971,7 +973,7 @@ const SidebarSubMenu = ({
       if (ctx.inDrawer && shell) shell.setOpen(false);
     };
     const labelClass = clsx(
-      'focus-visible:focus-indicator flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left',
+      'focus-visible:focus-indicator flex min-w-0 flex-1 items-center gap-3 rounded-lg text-start',
       py,
       padding
     );
@@ -1006,7 +1008,7 @@ const SidebarSubMenu = ({
           aria-expanded={open}
           aria-controls={listId}
           aria-label={`${label} sub-menu`}
-          className="focus-visible:focus-indicator mr-1 flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/5"
+          className="focus-visible:focus-indicator me-1 flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/5"
         >
           {chevron}
         </button>
@@ -1022,7 +1024,7 @@ const SidebarSubMenu = ({
         aria-controls={listId}
         className={clsx(
           row,
-          'focus-visible:focus-indicator gap-3 text-left',
+          'focus-visible:focus-indicator gap-3 text-start',
           py,
           padding,
           !nested && ROW_INSET[inset].width
@@ -1045,7 +1047,7 @@ const SidebarSubMenu = ({
         <span
           aria-hidden
           className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-          style={{ left: geometry.guideLeft(depth) }}
+          style={{ insetInlineStart: geometry.guideStart(depth) }}
         />
         <SidebarDepthContext.Provider value={depth + 1}>
           <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
@@ -1101,7 +1103,11 @@ const SidebarGroup = ({
         aria-expanded={open}
         className="text-2xs focus-visible:focus-indicator py-row-6 mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
       >
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        {open ? (
+          <ChevronDown className="h-3 w-3" />
+        ) : (
+          <ChevronRight className="h-3 w-3 rtl:-scale-x-100" />
+        )}
         {label}
       </button>
       {open && <div>{children}</div>}
