@@ -123,7 +123,7 @@ const arrowStyle = (
         };
   const y: CSSProperties = { top: 'calc(50% - var(--anchor-shift, 0px))', marginTop: -4 };
   // The edge of a panel beside the trigger that faces it: its physical `edge`, in logical terms.
-  const facing = (edge: 'left' | 'right'): CSSProperties =>
+  const facing = (edge: AnchorSide): CSSProperties =>
     (edge === 'left') === !rtl ? { insetInlineStart: -4 } : { insetInlineEnd: -4 };
   switch (position) {
     case 'top':
