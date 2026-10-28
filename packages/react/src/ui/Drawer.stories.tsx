@@ -9,6 +9,8 @@ import {
   inEachTheme,
   mobileViewport,
   endOffset,
+  expectReadsLeftToRight,
+  inDirection,
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
@@ -1000,11 +1002,8 @@ export const StartDrawerSwipesTowardTheStartInBothDirections: Story = {
   args: { open: true, onClose: fn() },
   render: SwipePastAThirdCloses.render,
   play: async ({ args }) => {
-    const html = document.documentElement;
-    const was = html.getAttribute('dir');
-    try {
-      for (const dir of ['ltr', 'rtl'] as const) {
-        html.setAttribute('dir', dir);
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
         (args.onClose as ReturnType<typeof fn>).mockClear();
         const panel = await swipePanel();
         // The physical way of the start edge: left in ltr, right in rtl.
@@ -1022,10 +1021,7 @@ export const StartDrawerSwipesTowardTheStartInBothDirections: Story = {
         await fireEvent.pointerUp(panel, touch(250 + toTheStart * 140));
         await expect(args.onClose, `${dir}: toward the edge`).toHaveBeenCalledTimes(1);
         await waitFor(() => expect(startEdge(panel)).toBe(0));
-      }
-    } finally {
-      if (was === null) html.removeAttribute('dir');
-      else html.setAttribute('dir', was);
+      });
     }
   },
 };
@@ -1453,3 +1449,51 @@ export const BottomSheetBodyKeepsItsScrollOnTouch: Story = {
     await expect(getComputedStyle(panel).touchAction).toBe('none');
   },
 };
+
+// What a drawer of `side` looks like at the edge it opens on, in each direction. A drawer is
+// portaled to the end of `<body>`, so the page's direction is the one of `<html>`.
+const drawerMirrors = (side: 'start' | 'end'): Story => ({
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Drawer open onClose={() => {}} side={side} size="sm" closeOutside ariaLabel="Panel">
+      <Drawer.Header title="Server details (3 of 5)." onClose={() => {}} />
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async () => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        const panel = await within(document.body).findByRole('dialog', { name: 'Panel' });
+        // At its own edge of the page: the left one for a start drawer in ltr, and so on.
+        const atLeft = (side === 'start') === (dir === 'ltr');
+        const edge = () =>
+          side === 'start' ? startEdge(panel) : endOffset(panel, document.documentElement);
+        await waitFor(() => expect(edge()).toBe(0));
+        const box = panel.getBoundingClientRect();
+        if (atLeft) expect(box.left).toBe(0);
+        else expect(box.right).toBe(document.documentElement.clientWidth);
+        // The border is on the side that faces the page.
+        const style = getComputedStyle(panel);
+        expect(style[atLeft ? 'borderRightWidth' : 'borderLeftWidth']).toBe('1px');
+        expect(style[atLeft ? 'borderLeftWidth' : 'borderRightWidth']).toBe('0px');
+        // The close button outside the panel sits against the edge facing the page.
+        const outside = [...panel.querySelectorAll('button')].find((b) => b.matches('.absolute'))!;
+        const out = outside.getBoundingClientRect();
+        // Against the edge facing the page, inside the 1px border it is positioned from.
+        if (atLeft) expect(out.left).toBeGreaterThanOrEqual(box.right - 1.5);
+        else expect(out.right).toBeLessThanOrEqual(box.left + 1.5);
+        // The header's close button ends the header, the title starts it.
+        const header = within(panel).getByRole('heading').closest('[class*="justify-between"]')!;
+        const close = within(header as HTMLElement).getByRole('button', { name: 'Close drawer' });
+        expect(endOffset(close, header)).toBeLessThan(startOffset(close, header));
+        expectReadsLeftToRight(within(panel).getByText('Server details (3 of 5).').closest('h3')!);
+      });
+    }
+  },
+});
+
+/** A start drawer sits at the left edge, and at the right one in right to left. */
+export const StartDrawerMirrors: Story = drawerMirrors('start');
+
+/** An end drawer sits at the right edge, and at the left one in right to left. */
+export const EndDrawerMirrors: Story = drawerMirrors('end');

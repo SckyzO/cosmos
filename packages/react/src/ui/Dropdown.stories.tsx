@@ -13,6 +13,9 @@ import {
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectBelow,
   expectFocusRing,
   expectOutsideClip,
@@ -450,5 +453,37 @@ export const TabLeavesTheMenu: Story = {
     await userEvent.tab();
     await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
     await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+  },
+};
+
+/** The menu lines up with the start or the end of its trigger, and the check of the picked option ends its row. */
+export const MenuFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.sm(),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-64 items-start justify-center gap-96 pt-4">
+        <Dropdown label="Start" options={ACCOUNT} defaultOpen defaultValue="profile" />
+        <Dropdown label="End" options={ACCOUNT} defaultOpen defaultValue="profile" align="end" />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [startTrigger, endTrigger] = within(box).getAllByRole('button', { expanded: true });
+      await waitFor(() =>
+        expect(document.querySelectorAll(`[role="menu"][dir="${dir}"]`)).toHaveLength(2)
+      );
+      const [atStart, atEnd] = [
+        ...document.querySelectorAll<HTMLElement>(`[role="menu"][dir="${dir}"]`),
+      ];
+      expect(startOffset(atStart!, startTrigger!), `${dir}: align start`).toBeCloseTo(0, 0);
+      expect(endOffset(atEnd!, endTrigger!), `${dir}: align end`).toBeCloseTo(0, 0);
+      // The picked option: text first, check last.
+      const picked = within(atStart!).getByRole('menuitemradio', { checked: true });
+      const check = picked.querySelector('svg:last-child')!;
+      expect(endOffset(check, picked)).toBeLessThan(startOffset(check, picked));
+      expect(getComputedStyle(picked).textAlign).toBe('start');
+    }
   },
 };

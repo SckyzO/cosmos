@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { bothDirections, directionBox, expectReadsLeftToRight } from '../storybook-helpers';
 import { Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { EmptyState } from './EmptyState';
@@ -116,5 +117,29 @@ export const CompactTightensSpacing: Story = {
       canvas.getByText(label).closest('p')!.parentElement!.parentElement!;
     await expect(box('roomy')).toHaveClass('py-12');
     await expect(box('tight')).toHaveClass('py-6');
+  },
+};
+
+/** A title the host writes, with a number and punctuation, keeps its order in right to left. */
+export const TitlesKeepTheirOrderInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div>
+        <EmptyState title="No results (0 of 12)." description="Try a wider range (1-5)." />
+        <ErrorState title="Backup failed (3 of 5)." description="Retry in 2 min." />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = within(directionBox(canvasElement, dir));
+      for (const text of [
+        'No results (0 of 12).',
+        'Try a wider range (1-5).',
+        'Backup failed (3 of 5).',
+        'Retry in 2 min.',
+      ])
+        expectReadsLeftToRight(box.getByText(text).closest('p')!);
+    }
   },
 };

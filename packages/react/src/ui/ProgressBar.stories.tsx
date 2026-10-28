@@ -1,12 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useId, useState } from 'react';
-import { expect } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
   expectGraphicContrast,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import {
   ProgressBar,
@@ -421,5 +427,106 @@ export const SegmentsOnNarrowScreen: Story = {
   ),
   play: async () => {
     expectNoHorizontalOverflow();
+  },
+};
+
+const trackOf = (box: HTMLElement) => within(box).getAllByRole('progressbar')[0]!;
+
+/** The fill grows from the start edge: the left one, the right one in right to left. */
+export const FillGrowsFromTheStartEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ProgressBar value={40} label="outside" labelContent="2 of 5 done" aria-label="Upload" />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const track = trackOf(box);
+      const fill = track.firstElementChild!;
+      expect(startOffset(fill, track)).toBeCloseTo(0, 1);
+      expect(fill.getBoundingClientRect().width).toBeCloseTo(
+        track.getBoundingClientRect().width * 0.4,
+        0
+      );
+      expect(endOffset(fill, track)).toBeGreaterThan(0);
+      // The label ends the line, and the words in it keep their order.
+      const label = within(box).getByText('2 of 5 done');
+      expect(endOffset(label, box)).toBeLessThan(startOffset(label, box));
+      expectReadsLeftToRight(label.parentElement!);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('2 of 5 done'));
+    expectMirrored(canvasElement, (box) => trackOf(box).firstElementChild);
+  },
+};
+
+/** The parts of a segmented bar are laid out from the start edge, and the legend values keep their order. */
+export const SegmentsAndLegendFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ProgressBar
+        segments={[
+          { value: 30, label: 'Documents', valueLabel: '1.5 MB' },
+          { value: 20, label: 'Photos', valueLabel: '1.0 MB', intent: 'success' },
+        ]}
+        legend
+        aria-label="Storage by type"
+      />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const track = trackOf(box);
+      const [first, second] = [...track.querySelectorAll('[data-segment]')];
+      expect(startOffset(first!, track)).toBeCloseTo(0, 1);
+      expect(startOffset(second!, track)).toBeGreaterThan(startOffset(first!, track));
+      const swatches = box.querySelectorAll('li > span[aria-hidden]');
+      expect(startOffset(swatches[0]!, box)).toBeLessThan(startOffset(swatches[1]!, box));
+      expectReadsLeftToRight(within(box).getByText('1.5 MB').parentElement!);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('Documents'));
+  },
+};
+
+/**
+ * The indeterminate bar enters at the start edge and leaves past the end one: its keyframes move
+ * `inset-inline-start`, so the sweep is mirrored with the direction.
+ */
+export const IndeterminateBarSweepsTowardTheEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  // The story drives the animation itself: keep it running.
+  parameters: { settleMotion: false },
+  render: () => bothDirections(() => <ProgressBar indeterminate aria-label="Loading" />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const track = trackOf(directionBox(canvasElement, dir));
+      const bar = track.firstElementChild!;
+      await waitFor(() => expect(bar.getAnimations().length).toBeGreaterThan(0));
+      const sweep = bar.getAnimations()[0]!;
+      sweep.pause();
+      const duration = Number(sweep.effect!.getComputedTiming().duration);
+      sweep.currentTime = 0;
+      const width = track.getBoundingClientRect().width;
+      // Starting: a third of the track before the start edge.
+      expect(startOffset(bar, track), `${dir}: start of the sweep`).toBeLessThan(-width / 4);
+      sweep.currentTime = duration - 1;
+      // Ending: past the end edge.
+      expect(startOffset(bar, track), `${dir}: end of the sweep`).toBeGreaterThan(width * 0.9);
+      sweep.play();
+    }
+  },
+};
+
+/** The stripes of the fill move toward the end of the line: the other way round in right to left. */
+export const StripesMoveTowardTheEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <ProgressBar value={60} striped aria-label="Syncing" />),
+  play: ({ canvasElement }) => {
+    const names = { ltr: 'progressStripes', rtl: 'progressStripesRtl' } as const;
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const fill = trackOf(directionBox(canvasElement, dir)).firstElementChild!;
+      expect(getComputedStyle(fill).animationName).toBe(names[dir]);
+    }
   },
 };

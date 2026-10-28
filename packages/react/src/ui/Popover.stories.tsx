@@ -3,7 +3,13 @@ import type { ReactNode } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { endOffset, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 import { Popover, type PopoverPosition } from './Popover';
@@ -57,7 +63,7 @@ export const Positions: Story = {
   ),
 };
 
-/** `align="end"` keeps a panel opened from the right edge of the screen inside it. */
+/** `align="end"` keeps a panel opened from the end of the line inside the screen. */
 export const AlignEnd: Story = {
   render: () => (
     <div className="flex h-48 items-start justify-end p-6">
@@ -66,7 +72,7 @@ export const AlignEnd: Story = {
           Settings
         </Popover.Trigger>
         <Popover.Content align="end" arrow width="w-64" aria-label="Settings">
-          <p className="text-xs">Flush with the trigger&apos;s right edge.</p>
+          <p className="text-xs">Flush with the trigger&apos;s end edge.</p>
         </Popover.Content>
       </Popover>
     </div>
@@ -467,5 +473,136 @@ export const PaddingReplacesDefault: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Open' }));
     const panel = within(canvasElement.ownerDocument.body).getByRole('dialog', { name: 'Tight' });
     await expect(getComputedStyle(panel).paddingTop).toBe('8px');
+  },
+};
+
+// The panel opened from `trigger` in the box of `dir`: portaled, and it takes its anchor's direction.
+const dialogsIn = (dir: 'ltr' | 'rtl') => [
+  ...document.querySelectorAll<HTMLElement>(`[role="dialog"][dir="${dir}"]`),
+];
+
+/**
+ * `position="end"` opens after the trigger (on its left in right to left), `start` before it, and
+ * the arrow sits on the edge that faces the trigger, level with its centre.
+ */
+export const SidesFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(400),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-32 items-center justify-center gap-96">
+        {(['start', 'end'] as const).map((position) => (
+          <Popover key={position} defaultOpen>
+            <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">
+              {position}
+            </Popover.Trigger>
+            <Popover.Content
+              position={position}
+              arrow
+              width="w-32"
+              aria-label={`Popover on the ${position} side`}
+            >
+              <p className="text-xs">Panel</p>
+            </Popover.Content>
+          </Popover>
+        ))}
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [startTrigger, endTrigger] = within(box).getAllByRole('button');
+      await waitFor(() => expect(dialogsIn(dir)).toHaveLength(2));
+      const [onStart, onEnd] = dialogsIn(dir);
+      const gap = (trigger: Element, panel: Element, side: 'start' | 'end') => {
+        const t = trigger.getBoundingClientRect();
+        const p = panel.getBoundingClientRect();
+        // The physical side: `end` is the right in ltr and the left in rtl.
+        const right = (side === 'end') === (dir === 'ltr');
+        return right ? p.left - t.right : t.left - p.right;
+      };
+      expect(gap(startTrigger!, onStart!, 'start'), `${dir}: start side`).toBeCloseTo(8, 0);
+      expect(gap(endTrigger!, onEnd!, 'end'), `${dir}: end side`).toBeCloseTo(8, 0);
+      for (const [trigger, panel] of [
+        [startTrigger!, onStart!],
+        [endTrigger!, onEnd!],
+      ] as const) {
+        // Level with the trigger's centre, on the edge of the panel that faces it.
+        const arrow = panel.querySelector('span[aria-hidden]')!.getBoundingClientRect();
+        const t = trigger.getBoundingClientRect();
+        const p = panel.getBoundingClientRect();
+        expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top + t.height / 2, 0);
+        const facing = p.left > t.left ? p.left : p.right;
+        // Within the panel's 1px border, which the arrow's inset is measured inside.
+        expect(Math.abs(arrow.left + arrow.width / 2 - facing)).toBeLessThanOrEqual(1.5);
+      }
+    }
+  },
+};
+
+/** With `align="end"` the arrow keeps pointing at the centre of the trigger, in either direction. */
+export const AlignEndArrowPointsAtTheTrigger: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(400),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-32 items-start justify-center">
+        <Popover defaultOpen>
+          <Popover.Trigger className="rounded-lg border px-12 py-2 text-sm">
+            Settings
+          </Popover.Trigger>
+          <Popover.Content align="end" arrow width="w-72" aria-label="Settings panel">
+            <p className="text-xs">Panel</p>
+          </Popover.Content>
+        </Popover>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const trigger = within(directionBox(canvasElement, dir)).getByRole('button');
+      await waitFor(() => expect(dialogsIn(dir)).toHaveLength(1));
+      const panel = dialogsIn(dir)[0]!;
+      expect(endOffset(panel, trigger), `${dir}: flush with the end edge`).toBeCloseTo(0, 0);
+      const arrow = panel.querySelector('span[aria-hidden]')!.getBoundingClientRect();
+      const t = trigger.getBoundingClientRect();
+      expect(arrow.left + arrow.width / 2).toBeCloseTo(t.left + t.width / 2, 0);
+      // The panel extends from the end edge toward the start of the line.
+      expect(startOffset(panel, trigger)).toBeLessThan(0);
+    }
+  },
+};
+
+/** An `end` panel that the screen edge would cut flips to the other side, and the arrow follows. */
+export const EndSideFlipsAtTheEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(400),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-32 items-center justify-end">
+        <Popover defaultOpen>
+          <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Edge</Popover.Trigger>
+          <Popover.Content position="end" arrow width="w-96" aria-label="Edge panel">
+            <p className="text-xs">Panel</p>
+          </Popover.Content>
+        </Popover>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const trigger = within(directionBox(canvasElement, dir)).getByRole('button');
+      await waitFor(() => expect(dialogsIn(dir)).toHaveLength(1));
+      const panel = dialogsIn(dir)[0]!;
+      const t = trigger.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      // The trigger is at the physical right edge in ltr, so the panel went to its left.
+      if (dir === 'ltr') expect(p.right).toBeLessThanOrEqual(t.left);
+      else expect(p.left).toBeGreaterThanOrEqual(t.right);
+      expect(p.left).toBeGreaterThanOrEqual(0);
+      expect(p.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      const arrow = panel.querySelector('span[aria-hidden]')!.getBoundingClientRect();
+      expect(
+        Math.abs(arrow.left + arrow.width / 2 - (dir === 'ltr' ? p.right : p.left))
+      ).toBeLessThanOrEqual(1.5);
+    }
   },
 };

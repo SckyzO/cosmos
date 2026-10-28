@@ -3,7 +3,15 @@ import type { ReactNode } from 'react';
 import { CreditCard, KeyRound, LogOut, Settings, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from '../layout/Topbar';
-import { endOffset, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { UserMenu } from './UserMenu';
 
 const meta = {
@@ -397,5 +405,53 @@ export const DangerIntentColorsTheItem: Story = {
     await expect(danger).toHaveClass('text-red-600', 'hover:bg-red-50');
     await expect(danger).not.toHaveClass('text-gray-700');
     await expect(danger.querySelector('svg')).toHaveClass('text-red-500');
+  },
+};
+
+/**
+ * The avatar starts the trigger, the chevron ends it, the menu lines up with the trigger's end
+ * edge, and the name and e-mail in its header keep their order.
+ */
+export const TriggerAndPanelFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(380),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-72 justify-center pt-4">
+        <UserMenu defaultOpen>
+          <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+          <UserMenu.Content>
+            <UserMenu.Header
+              name="John Doe (admin)."
+              email="john@example.com"
+              avatarSrc={SAMPLE_AVATAR}
+            />
+            <UserMenu.Items>
+              <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+            </UserMenu.Items>
+          </UserMenu.Content>
+        </UserMenu>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const trigger = within(box).getByRole('button');
+      await waitFor(() =>
+        expect(document.querySelector(`[role="menu"][dir="${dir}"]`)).not.toBeNull()
+      );
+      const menu = document.querySelector<HTMLElement>(`[role="menu"][dir="${dir}"]`)!;
+      expect(endOffset(menu, trigger), `${dir}: flush with the end edge`).toBeCloseTo(0, 0);
+      // The avatar side has the small padding (8px), the chevron side the larger one (12px).
+      const style = getComputedStyle(trigger);
+      expect(style.paddingInlineStart).toBe('8px');
+      expect(style.paddingInlineEnd).toBe('12px');
+      const avatar = trigger.querySelector('span, img')!;
+      expect(startOffset(avatar, trigger)).toBeCloseTo(8 + 1, 0);
+      const chevron = trigger.querySelector('svg')!;
+      expect(endOffset(chevron, trigger)).toBeCloseTo(12 + 1, 0);
+      expectReadsLeftToRight(within(menu).getByText('John Doe (admin).').closest('p')!);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button').querySelector('svg'));
   },
 };

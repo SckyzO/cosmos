@@ -3,7 +3,15 @@ import type { ReactNode } from 'react';
 import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { endOffset, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
 const meta = {
@@ -135,7 +143,10 @@ const FullPanel = ({
           </NotificationsPanel.List>
         )}
         <NotificationsPanel.Footer onClick={() => onViewAll?.()}>
-          View all alerts →
+          View all alerts{' '}
+          <span aria-hidden className="inline-block rtl:-scale-x-100">
+            →
+          </span>
         </NotificationsPanel.Footer>
       </NotificationsPanel.Content>
     </NotificationsPanel>
@@ -442,5 +453,54 @@ export const NoMarkAllReadByDefault: Story = {
   play: async () => {
     const dialog = await within(document.body).findByRole('dialog');
     await expect(within(dialog).queryByRole('button', { name: 'Mark all as read' })).toBeNull();
+  },
+};
+
+/**
+ * The unread badge sits at the end corner of the trigger, the panel lines up with its end edge,
+ * the unread dot and the text start an item and its badge ends it, and the texts keep their order.
+ */
+export const TriggerAndItemsFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.md(),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-[480px] justify-center pt-4">
+        <FullPanel
+          alerts={[
+            { ...SAMPLE_ALERTS[0]!, title: 'rack-a07 (3 of 5).', time: '2 min ago', unread: true },
+          ]}
+        />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const trigger = within(box).getByRole('button', { name: /^notifications/i });
+      await waitFor(() =>
+        expect(document.querySelector(`[role="dialog"][dir="${dir}"]`)).not.toBeNull()
+      );
+      const panel = document.querySelector<HTMLElement>(`[role="dialog"][dir="${dir}"]`)!;
+      expect(endOffset(panel, trigger), `${dir}: flush with the end edge`).toBeCloseTo(0, 0);
+      // The count badge hangs at the end corner of the trigger.
+      const badge = trigger.querySelector('span span:last-child')!;
+      expect(endOffset(badge, trigger)).toBeLessThan(startOffset(badge, trigger));
+      // An item: dot, icon and text from the start, the level badge at the end.
+      const item = within(panel)
+        .getAllByRole('button')
+        .find((b) => b.textContent?.includes('rack-a07'))!;
+      const dot = item.querySelector('.bg-brand-500')!;
+      const level = within(item).getByText('CRIT');
+      expect(startOffset(dot, item)).toBeLessThan(endOffset(dot, item));
+      expect(endOffset(level, item)).toBeLessThan(startOffset(level, item));
+      expect(getComputedStyle(item).textAlign).toBe('start');
+      expectReadsLeftToRight(within(item).getByText('rack-a07 (3 of 5).').closest('p')!);
+      expectReadsLeftToRight(within(item).getByText('2 min ago').closest('p')!);
+    }
+    expectMirrored(canvasElement, (box) =>
+      within(box)
+        .getByRole('button', { name: /^notifications/i })
+        .querySelector('span span:last-child')
+    );
   },
 };

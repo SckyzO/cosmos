@@ -3,7 +3,14 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Copy, Download, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectReadsLeftToRight,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { Badge } from './Badge';
 import { Menu } from './Menu';
 
@@ -720,5 +727,63 @@ export const RadioItemsTakeTheArrowKeys: Story = {
     await expect(inside.getByRole('menuitemradio', { name: 'Comfortable' })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(inside.getByRole('menuitemradio', { name: 'Default' })).toHaveFocus();
+  },
+};
+
+// The panel of the menu aligned to `align` in the box of `dir`: portaled to the end of `<body>`,
+// and it takes the direction of its trigger.
+const panelOf = (dir: 'ltr' | 'rtl', align: 'start' | 'end') =>
+  document.querySelector<HTMLElement>(
+    `[role="menu"][dir="${dir}"][aria-label="Menu aligned to the ${align}"]`
+  );
+
+/**
+ * A menu lines up with the start or the end of its trigger (the left or right edge, swapped in
+ * right to left), its items and group label start the line, and a shortcut ends it and keeps
+ * its keys in order.
+ */
+export const MenuFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(420),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-72 items-start justify-center gap-96 pt-4">
+        {(['start', 'end'] as const).map((align) => (
+          <Menu key={align} defaultOpen align={align}>
+            <Menu.Trigger className="rounded-md border px-3 py-1 text-sm">{align}</Menu.Trigger>
+            <Menu.Content aria-label={`Menu aligned to the ${align}`} width="w-48">
+              <Menu.Group label="File (3 of 5)">
+                <Menu.Item icon={Copy} shortcut="⌘D">
+                  Duplicate
+                </Menu.Item>
+                <Menu.CheckboxItem defaultChecked>Show hidden</Menu.CheckboxItem>
+              </Menu.Group>
+            </Menu.Content>
+          </Menu>
+        ))}
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [startTrigger, endTrigger] = within(box).getAllByRole('button');
+      await waitFor(() => expect(panelOf(dir, 'end')).not.toBeNull());
+      const atStart = panelOf(dir, 'start')!;
+      const atEnd = panelOf(dir, 'end')!;
+      expect(startOffset(atStart, startTrigger!), `${dir}: align start`).toBeCloseTo(0, 0);
+      expect(endOffset(atEnd, endTrigger!), `${dir}: align end`).toBeCloseTo(0, 0);
+      expect(atStart.getAttribute('dir')).toBe(dir);
+
+      const item = within(atStart).getByRole('menuitem', { name: /Duplicate/ });
+      const label = within(item).getByText('Duplicate');
+      const shortcut = item.querySelector('kbd')!;
+      // Text and icon start the line, the shortcut ends it.
+      expect(startOffset(item.querySelector('svg')!, item)).toBeLessThan(startOffset(label, item));
+      expect(endOffset(shortcut, item)).toBeLessThan(startOffset(shortcut, item));
+      expectReadsLeftToRight(shortcut);
+      // The item's text starts where the menu's content does.
+      expect(getComputedStyle(item).textAlign).toBe('start');
+      expectReadsLeftToRight(within(atStart).getByText('File (3 of 5)'));
+    }
   },
 };
