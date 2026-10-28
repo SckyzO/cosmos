@@ -37,7 +37,8 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: ButtonSize;
   shape?: ButtonShape;
   icon?: ElementType;
-  iconPosition?: 'left' | 'right';
+  /** `start` leads the label, `end` follows it. Both follow the reading direction. Default `start`. */
+  iconPosition?: 'start' | 'end';
   loading?: boolean;
   children?: ReactNode;
   /** Ref to the `<button>`. */
@@ -164,7 +165,7 @@ export const Button = ({
   size = 'md',
   shape = 'rounded',
   icon: Icon,
-  iconPosition = 'left',
+  iconPosition = 'start',
   loading = false,
   disabled,
   className,
@@ -192,7 +193,7 @@ export const Button = ({
     )}
     {...rest}
   >
-    {Icon && iconPosition === 'left' && !loading && <Icon className={ICON_SIZE[size]} />}
+    {Icon && iconPosition === 'start' && !loading && <Icon className={ICON_SIZE[size]} />}
     {loading && (
       <span
         aria-hidden
@@ -203,6 +204,6 @@ export const Button = ({
       />
     )}
     {children}
-    {Icon && iconPosition === 'right' && !loading && <Icon className={ICON_SIZE[size]} />}
+    {Icon && iconPosition === 'end' && !loading && <Icon className={ICON_SIZE[size]} />}
   </button>
 );

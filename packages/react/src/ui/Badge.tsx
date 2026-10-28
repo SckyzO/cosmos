@@ -23,7 +23,8 @@ export type BadgeProps = {
   appearance?: BadgeAppearance;
   /** Optional Lucide icon. */
   icon?: ElementType;
-  iconPosition?: 'left' | 'right';
+  /** `start` leads the label, `end` follows it. Both follow the reading direction. Default `start`. */
+  iconPosition?: 'start' | 'end';
   className?: string;
 };
 
@@ -91,7 +92,7 @@ export const Badge = ({
   shape = 'pill',
   appearance = 'light',
   icon: Icon,
-  iconPosition = 'left',
+  iconPosition = 'start',
   className,
 }: BadgeProps) => {
   const intentClass =
@@ -119,11 +120,11 @@ export const Badge = ({
           className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', DOT_COLOR[intent])}
         />
       )}
-      {Icon && iconPosition === 'left' && (
+      {Icon && iconPosition === 'start' && (
         <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
       )}
       <bdi>{children}</bdi>
-      {Icon && iconPosition === 'right' && (
+      {Icon && iconPosition === 'end' && (
         <Icon className={clsx('shrink-0', iconClass)} aria-hidden />
       )}
     </span>
