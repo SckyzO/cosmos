@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { Card } from '../ui/Card';
 import { DescriptionList } from '../data/DescriptionList';
 import {
@@ -11,7 +11,14 @@ import {
   LONG_MESSAGE,
   MANY_GROUPS,
 } from '../storybook-health';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthCheckList } from './HealthCheckList';
 import { StatusBadge } from './StatusBadge';
@@ -293,5 +300,37 @@ export const RowsFollowPageDensity: Story = {
     await expectDensitySteps(canvas, (scope) => scope.getByRole('button', { name: /Queue/ }), {
       control: true,
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The rows and the group headers follow the page: the status first, at the start, and the chevron
+ * of a closed group turns around. The target, the message and the latency keep their order.
+ */
+export const RowsAndGroupsFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { defaultCollapsedGroups: ['db'] },
+  render: (args) => bothDirections(() => <HealthCheckList {...args} />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const closed = canvas
+        .getAllByRole('button', { expanded: false })
+        .find((button) => button.textContent?.includes('Database'))!;
+      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed group`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      const open = canvas
+        .getAllByRole('button', { expanded: true })
+        .find((button) => button.textContent?.includes('Queue'))!;
+      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open group`).toBe('none');
+      expectReadsLeftToRight(canvas.getByText('312 jobs waiting (limit 200)'));
+      expectReadsLeftToRight(canvas.getByText('redis://queue:6379/0'));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('Job queue'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Queue'));
   },
 };

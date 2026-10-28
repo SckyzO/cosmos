@@ -221,3 +221,27 @@ export const AlignFollowsTheReadingDirection: Story = {
     }
   },
 };
+
+/** A row puts its title at the start of the line and its actions at the end. */
+export const RowTitleStartsAndActionsEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Divider.Row title="Members" actions={<Button size="sm">Invite</Button>} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const title = within(box).getByText('Members');
+      const action = within(box).getByRole('button', { name: 'Invite' });
+      expect(startOffset(title, box), `${dir}: title`).toBeLessThan(endOffset(title, box));
+      expect(endOffset(action, box), `${dir}: actions`).toBeLessThan(startOffset(action, box));
+      // The gap before the actions is on their start side.
+      expect(
+        parseFloat(
+          getComputedStyle(action.parentElement!)[dir === 'ltr' ? 'marginLeft' : 'marginRight']
+        )
+      ).toBeGreaterThan(0);
+    }
+  },
+};

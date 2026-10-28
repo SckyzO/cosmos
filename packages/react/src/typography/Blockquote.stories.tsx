@@ -85,3 +85,36 @@ export const AlignFollowsTheReadingDirection: Story = {
     }
   },
 };
+
+/** The quote mark is the edge at the start of the line: the left one, the right one in right to left. */
+export const EdgeSitsOnTheStartSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <Blockquote variant="plain">Plain quote</Blockquote>
+        <Blockquote variant="solid">Solid quote</Blockquote>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const plain = within(box).getByText('Plain quote').closest('blockquote')!;
+      const solid = within(box).getByText('Solid quote').closest('blockquote')!;
+      const [edge, far] =
+        dir === 'ltr' ? (['Left', 'Right'] as const) : (['Right', 'Left'] as const);
+      for (const quote of [plain, solid]) {
+        const style = getComputedStyle(quote);
+        expect(parseFloat(style[`border${edge}Width`]), `${dir}: edge`).toBe(4);
+        expect(parseFloat(style[`border${far}Width`]), `${dir}: far side`).toBe(0);
+      }
+      // The solid quote is rounded on its end side only.
+      const solidStyle = getComputedStyle(solid);
+      expect(
+        parseFloat(solidStyle[`borderTop${far}Radius`]),
+        `${dir}: rounded end`
+      ).toBeGreaterThan(0);
+      expect(parseFloat(solidStyle[`borderTop${edge}Radius`]), `${dir}: square start`).toBe(0);
+    }
+  },
+};

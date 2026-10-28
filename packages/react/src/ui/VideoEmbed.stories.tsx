@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { bothDirections, directionBox } from '../storybook-helpers';
 import { VideoEmbed } from './VideoEmbed';
 
 // Real YouTube embed for the showcase stories. The interaction tests
@@ -187,5 +188,29 @@ export const WithoutFacadeIframeIsImmediate: Story = {
   play: async ({ canvasElement, canvas }) => {
     await expect(canvasElement.querySelector('iframe')).not.toBeNull();
     await expect(canvas.queryByRole('button')).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The play triangle points right in both directions, as the time of a video runs from the left,
+ * so it is not turned around and its optical offset stays on the same side.
+ */
+export const PlayTriangleDoesNotTurnAround: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <VideoEmbed src="about:blank" title="Facade sample" facade poster={POSTER} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const play = within(directionBox(canvasElement, dir)).getByRole('button', {
+        name: 'Play Facade sample',
+      });
+      const triangle = play.querySelector('svg')!;
+      expect(getComputedStyle(triangle).scale, `${dir}: not mirrored`).toBe('none');
+      expect(getComputedStyle(triangle).marginLeft, `${dir}: offset`).toBe('2px');
+    }
   },
 };

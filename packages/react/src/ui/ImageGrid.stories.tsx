@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type ReactNode } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
   expectFocusRing,
   expectNoHorizontalOverflow,
+  bothDirections,
+  directionBox,
+  expectMirrored,
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
@@ -408,5 +411,37 @@ export const MasonryOnAPhone: Story = {
     for (const img of canvas.getAllByRole('img')) {
       await expect(img.getBoundingClientRect().width).toBeGreaterThan(width * 0.8);
     }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The tiles fill the row from the start of the line, and a caption starts at the start of its tile. */
+export const TilesFillTheRowFromTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: null },
+  render: () =>
+    bothDirections(() => (
+      <ImageGrid columns={3}>
+        <ImageGrid.Item caption="First">
+          <img src={gradient(0)} alt="First tile" />
+        </ImageGrid.Item>
+        <ImageGrid.Item onClick={() => {}}>
+          <img src={gradient(1)} alt="Second tile" />
+        </ImageGrid.Item>
+        <ImageGrid.Item href="#there">
+          <img src={gradient(2)} alt="Third tile" />
+        </ImageGrid.Item>
+      </ImageGrid>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [first, second, third] = within(box).getAllByRole('img');
+      expect(startOffset(first!, box), `${dir}: first`).toBeLessThan(startOffset(second!, box));
+      expect(startOffset(second!, box), `${dir}: second`).toBeLessThan(startOffset(third!, box));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByAltText('First tile'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('First'));
   },
 };

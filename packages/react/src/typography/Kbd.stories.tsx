@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
+import { bothDirections, directionBox, expectReadsLeftToRight } from '../storybook-helpers';
 import { Kbd } from './Kbd';
 
 const meta = {
@@ -81,5 +83,28 @@ export const ShortcutLegend: Story = {
         ))}
       </div>
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** A key keeps the order it is pressed in: an island that a right-to-left line does not reorder. */
+export const KeyKeepsItsOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <p>
+        <Kbd>⌘D</Kbd> <Kbd>Ctrl+K</Kbd>
+      </p>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const text of ['⌘D', 'Ctrl+K']) {
+        const key = within(box).getByText(text);
+        expect(getComputedStyle(key).direction, `${dir}: ${text}`).toBe('ltr');
+        expectReadsLeftToRight(key);
+      }
+    }
   },
 };

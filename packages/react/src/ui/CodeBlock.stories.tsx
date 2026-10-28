@@ -7,8 +7,17 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import bash from 'shiki/langs/bash.mjs';
 import typescript from 'shiki/langs/typescript.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
-import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectFocusRing,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { CodeBlock } from './CodeBlock';
 
 const meta = {
@@ -544,5 +553,56 @@ export const LongLineIsAKeyboardStop: Story = {
     await expect(region.scrollWidth).toBeGreaterThan(region.clientWidth);
     await expect(region).toHaveAttribute('tabindex', '0');
     await expectFocusRing(region, { inset: true });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Code reads left to right whatever the page does: the lines, their number gutter and the scroll
+ * origin stay put. The title bar follows the page, so the file name starts it and the copy button
+ * ends it, and so does the floating copy button of a block with no title bar.
+ */
+export const CodeKeepsItsOrderAndChromeFollowsThePage: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <CodeBlock
+          code={'first line\nsecond line'}
+          language="bash"
+          filename="deploy.sh"
+          lineNumbers
+        />
+        <CodeBlock code="no title bar" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    const gutters: number[] = [];
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [titled, bare] = [...box.querySelectorAll<HTMLElement>('pre')].map(
+        (pre) => pre.parentElement!
+      ) as [HTMLElement, HTMLElement];
+      const pre = titled.querySelector('pre')!;
+      expect(getComputedStyle(pre).direction, `${dir}: the code`).toBe('ltr');
+      const row = pre.querySelector<HTMLElement>('[data-line="1"]')!;
+      const gutter = row.firstElementChild!;
+      expect(gutter.getBoundingClientRect().left, `${dir}: gutter before text`).toBeLessThan(
+        row.lastElementChild!.getBoundingClientRect().left
+      );
+      gutters.push(gutter.getBoundingClientRect().left - box.getBoundingClientRect().left);
+      const copy = within(titled).getByRole('button', { name: 'Copy' });
+      expect(endOffset(copy, titled), `${dir}: copy ends the title bar`).toBeLessThan(
+        startOffset(copy, titled)
+      );
+      const floating = within(bare).getByRole('button', { name: 'Copy' });
+      expect(endOffset(floating, bare), `${dir}: floating copy`).toBeLessThan(
+        startOffset(floating, bare)
+      );
+    }
+    expect(gutters[1]).toBeCloseTo(gutters[0]!, 0);
+    expectMirrored(canvasElement, (box) => within(box).getByText('deploy.sh'));
+    expectMirrored(canvasElement, (box) => within(box).getAllByRole('button', { name: 'Copy' })[0]);
   },
 };

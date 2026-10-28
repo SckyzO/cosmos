@@ -2,13 +2,19 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
   expectFocusBorder,
+  expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
+  inDirection,
   inEachTheme,
   keyToEnd,
   keyToStart,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { RichTextEditor } from './RichTextEditor';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
@@ -797,5 +803,124 @@ export const LinkFieldFollowsPageDensity: Story = {
     await expect(compact).toBeLessThan(normal);
     await expect(comfortable).toBeGreaterThan(normal);
     await expect(compact).toBeGreaterThanOrEqual(24);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The frame follows the page (the first button at the start, the character count at the end, the
+ * icons that point along the line turned around) and so does the text it holds: lists are
+ * indented and a quote is edged on the start side.
+ */
+export const ToolbarAndTextFollowTheReadingDirection: Story = {
+  ...test,
+  args: { maxLength: 400, defaultValue: SAMPLE },
+  render: (args) => bothDirections(() => <RichTextEditor {...args} />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const text = await canvas.findByRole('textbox', { name: 'Message' });
+      const bold = canvas.getByRole('button', { name: 'Bold' });
+      const redo = canvas.getByRole('button', { name: 'Redo' });
+      expect(startOffset(bold, box), `${dir}: first button at the start`).toBeLessThan(
+        startOffset(redo, box)
+      );
+      const scale = (name: string) =>
+        getComputedStyle(canvas.getByRole('button', { name }).querySelector('svg')!).scale;
+      expect(scale('Undo'), `${dir}: undo`).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      expect(scale('Bulleted list'), `${dir}: list`).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      expect(scale('Bold'), `${dir}: bold`).toBe('none');
+
+      const [near, far] =
+        dir === 'ltr' ? (['Left', 'Right'] as const) : (['Right', 'Left'] as const);
+      const must = (selector: string) => {
+        const found = text.querySelector(selector);
+        if (!found) throw new Error(`${dir}: no ${selector} in ${text.innerHTML}`);
+        return found;
+      };
+      const list = getComputedStyle(must('ul'));
+      expect(parseFloat(list[`padding${near}`]), `${dir}: list indent`).toBe(20);
+      expect(parseFloat(list[`padding${far}`]), `${dir}: list far side`).toBe(0);
+      const quote = getComputedStyle(must('blockquote'));
+      expect(parseFloat(quote[`border${near}Width`]), `${dir}: quote edge`).toBe(4);
+      expect(parseFloat(quote[`border${far}Width`]), `${dir}: quote far side`).toBe(0);
+
+      expectReadsLeftToRight(canvas.getByText(/^\d+ \/ 400$/));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('Message'));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Bold' }));
+    expectMirrored(canvasElement, (box) => within(box).getByText(/^\d+ \/ 400$/));
+  },
+};
+
+/** The arrows along the toolbar swap in right to left, however the direction was set. */
+export const ToolbarArrowsFollowTheDirectionOfThePage: Story = {
+  ...test,
+  args: { autoFocus: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const button = (name: string) => canvas.getByRole('button', { name });
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        button('Bold').focus();
+        await userEvent.keyboard('{ArrowRight}');
+        // ArrowRight is the next button in left to right and the previous one, wrapping, in right to left.
+        await expect(button(dir === 'ltr' ? 'Italic' : 'Redo')).toHaveFocus();
+        await userEvent.keyboard('{ArrowLeft}');
+        await expect(button('Bold')).toHaveFocus();
+      });
+    }
+  },
+};
+
+/** Each block follows what is typed in it: Arabic starts at the right and Latin at the left, in either page direction. */
+export const BlocksFollowWhatIsTypedInThem: Story = {
+  ...test,
+  args: { defaultValue: '<p>مرحبا بالعالم</p><p>Hello world</p>' },
+  render: (args) => bothDirections(() => <RichTextEditor {...args} />),
+  play: async ({ canvasElement }) => {
+    const textEdges = (block: Element) => {
+      const range = document.createRange();
+      range.selectNodeContents(block);
+      return range.getBoundingClientRect();
+    };
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const text = await within(directionBox(canvasElement, dir)).findByRole('textbox', {
+        name: 'Message',
+      });
+      const [arabic, latin] = [...text.querySelectorAll('p')];
+      if (!arabic || !latin) throw new Error('two paragraphs expected');
+      const field = text.getBoundingClientRect();
+      expect(
+        Math.abs(textEdges(arabic).right - arabic.getBoundingClientRect().right),
+        `${dir}: Arabic ends at the right`
+      ).toBeLessThan(2);
+      expect(
+        Math.abs(textEdges(latin).left - latin.getBoundingClientRect().left),
+        `${dir}: Latin starts at the left`
+      ).toBeLessThan(2);
+      expect(field.width).toBeGreaterThan(textEdges(arabic).width);
+    }
+  },
+};
+
+/** An address reads left to right: the link field keeps that direction in a right-to-left page. */
+export const LinkFieldReadsLeftToRight: Story = {
+  ...test,
+  args: { autoFocus: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await textbox(canvasElement);
+    await inDirection('rtl', async () => {
+      await userEvent.click(canvas.getByRole('button', { name: 'Link' }));
+      const dialog = await within(document.body).findByRole('dialog', { name: 'Edit link' });
+      const url = within(dialog).getByRole('textbox', { name: 'Link URL' });
+      expect(getComputedStyle(url).direction).toBe('ltr');
+      await userEvent.type(url, '{Escape}');
+    });
   },
 };

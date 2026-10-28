@@ -7,7 +7,14 @@ import {
   MIXED_BEATS,
   UPTIME_NOW,
 } from '../storybook-uptime';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectNoHorizontalOverflow,
+  inDirection,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { HeartbeatBar } from './HeartbeatBar';
 import { BEAT_NAME, type BeatStatus } from './types';
 import { beatName, fitCount, formatBeatTime } from './uptime';
@@ -284,5 +291,56 @@ export const DownDotIsSquare: Story = {
       getComputedStyle(down).borderTopLeftRadius
     );
     await expect(parseFloat(getComputedStyle(down).borderTopLeftRadius)).toBeLessThan(3);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Time runs from the left to the right, as the axis of a chart does: the oldest beat is at the
+ * left and the newest at the right in both directions, and the arrow keys follow the screen.
+ */
+export const TimeKeepsItsOrderInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div style={{ width: 300 }}>
+        <HeartbeatBar {...args} />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    const lefts: number[] = [];
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      await waitFor(() => expect(marksOf(box).length).toBeGreaterThan(3));
+      const marks = marksOf(box);
+      const first = marks[0]!.getBoundingClientRect().left;
+      expect(first, `${dir}: oldest at the left`).toBeLessThan(
+        marks.at(-1)!.getBoundingClientRect().left
+      );
+      // From the left edge of the 300px frame, which sits at the end of a right-to-left box.
+      const frame = within(box).getByRole('group').parentElement!.parentElement!;
+      lefts.push(first - frame.getBoundingClientRect().left);
+    }
+    expect(lefts[1]).toBeCloseTo(lefts[0]!, 0);
+  },
+};
+
+/** ArrowLeft goes to the older beat, the one on the left, whatever the direction of the page. */
+export const ArrowsFollowTheScreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: NARROW_BOX,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(marksOf(canvasElement).length).toBeGreaterThan(3));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        const marks = marksOf(canvasElement);
+        marks.at(-1)!.focus();
+        await userEvent.keyboard('{ArrowLeft}');
+        await expect(marks.at(-2)).toHaveFocus();
+        await userEvent.keyboard('{ArrowRight}');
+        await expect(marks.at(-1)).toHaveFocus();
+      });
+    }
   },
 };

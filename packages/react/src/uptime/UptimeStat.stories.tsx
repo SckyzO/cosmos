@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { API_DAYS } from '../storybook-uptime';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { UptimeStat, type UptimePeriod } from './UptimeStat';
 
 const DAY = 24 * 3_600_000;
@@ -232,5 +240,27 @@ export const CardSaysTheDowntime: Story = {
     // Without a duration it cannot say how long, and says nothing.
     await expect(canvas.getAllByText('99.91%')).toHaveLength(2);
     await expect(canvas.getAllByText(/ down$/)).toHaveLength(1);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The periods run from the start of the line, and each figure keeps its percent sign after its number. */
+export const FiguresRunFromTheStartOfTheLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => bothDirections(() => <UptimeStat {...args} />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const day = canvas.getByText('24 hours');
+      const year = canvas.getByText('1 year');
+      expect(startOffset(day, box), `${dir}: first period`).toBeLessThan(startOffset(year, box));
+      for (const figure of ['100%', '99.98%', '99.91%', '99.62%'])
+        expectReadsLeftToRight(canvas.getByText(figure));
+      expectReadsLeftToRight(canvas.getByText('182 ms'));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('24 hours'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('1 year'));
   },
 };

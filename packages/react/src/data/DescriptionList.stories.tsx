@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Paperclip } from 'lucide-react';
-import { endOffset, startOffset } from '../storybook-helpers';
+import { within } from 'storybook/test';
+import { bothDirections, directionBox, endOffset, startOffset } from '../storybook-helpers';
 import { StatusBadge } from '../status/StatusBadge';
 import { DescriptionList } from './DescriptionList';
 
@@ -240,5 +241,41 @@ export const MonoSetsAMonospaceValue: Story = {
     await expect(family('rack-01-a')).toBe(family('9f2c1d'));
     await expect(family('rack-01-a')).not.toBe(family('rack one'));
     await expect(family('rack-01-a')).toMatch(/mono/i);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The term is at the start of its row, and a compact item puts its value at the end. */
+export const TermsStartTheRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="max-w-2xl space-y-6">
+        <DescriptionList>
+          <DescriptionList.Item label="Full name">Margot Foster</DescriptionList.Item>
+        </DescriptionList>
+        <DescriptionList compact>
+          <DescriptionList.Item label="Height">42U</DescriptionList.Item>
+        </DescriptionList>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const term = canvas.getByText('Full name');
+      const value = canvas.getByText('Margot Foster');
+      expect(startOffset(term, box), `${dir}: term first`).toBeLessThan(startOffset(value, box));
+      const height = canvas.getByText('Height');
+      const compact = canvas.getByText('42U');
+      expect(startOffset(height, box), `${dir}: compact term`).toBeLessThan(
+        startOffset(compact, box)
+      );
+      expect(
+        endOffset(compact, height.parentElement!),
+        `${dir}: compact value at the end`
+      ).toBeLessThan(2);
+    }
   },
 };

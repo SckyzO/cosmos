@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { Sparkles, Star, Zap } from 'lucide-react';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
+import { bothDirections, directionBox } from '../storybook-helpers';
 import { List } from './List';
 
 const meta = {
@@ -204,5 +205,49 @@ export const OrderedRendersAsOl: Story = {
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('ol')).not.toBeNull();
     await expect(canvasElement.querySelector('ul')).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The markers and the indent are at the start: the padding of a native list is on the start
+ * side, and the built-in arrow turns around while an icon the caller passes is drawn as it is.
+ */
+export const MarkersSitAtTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <List>
+          <List.Item>Native bullet</List.Item>
+        </List>
+        <List marker="arrow">
+          <List.Item>Built-in arrow</List.Item>
+          <List.Item icon={Star}>Own icon</List.Item>
+        </List>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const native = canvas.getByText('Native bullet').closest('ul')!;
+      const style = getComputedStyle(native);
+      expect(
+        parseFloat(dir === 'ltr' ? style.paddingLeft : style.paddingRight),
+        `${dir}: indent`
+      ).toBe(20);
+      expect(
+        parseFloat(dir === 'ltr' ? style.paddingRight : style.paddingLeft),
+        `${dir}: far side`
+      ).toBe(0);
+      const arrow = canvas.getByText('Built-in arrow').closest('li')!.querySelector('svg')!;
+      expect(getComputedStyle(arrow).scale, `${dir}: built-in arrow`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      const own = canvas.getByText('Own icon').closest('li')!.querySelector('svg')!;
+      expect(getComputedStyle(own).scale, `${dir}: own icon`).toBe('none');
+    }
   },
 };

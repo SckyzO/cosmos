@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { HEALTH_GROUPS, HEALTH_NOW, checksOf } from '../storybook-health';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+} from '../storybook-helpers';
 import { flattenChecks } from './health';
 import { HealthSummary } from './HealthSummary';
 
@@ -142,5 +149,42 @@ export const ConveysStatusAsText: Story = {
     await expect(canvas.getByText('2 Warning')).toBeVisible();
     await expect(canvas.getByText(/2 of 14 checks need attention/)).toBeVisible();
     await expect(canvas.getByRole('group')).toHaveTextContent(/last check 30 seconds ago/);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The icon and the headline start the line and the refresh button ends it; the counts keep their order. */
+export const BannerAndCompactFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <HealthSummary checks={DEGRADED} now={HEALTH_NOW} ariaLabel="Banner" />
+        <HealthSummary
+          checks={DEGRADED}
+          now={HEALTH_NOW}
+          ariaLabel="Compact"
+          variant="compact"
+          refresh={{ autoRefreshMs: 0, onRefresh: fn(), onIntervalChange: fn() }}
+        />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const name of ['Banner', 'Compact']) {
+        const summary = within(box).getByRole('group', { name });
+        expectReadsLeftToRight(summary.querySelector('bdi')!);
+      }
+    }
+    expectMirrored(canvasElement, (box) =>
+      within(within(box).getByRole('group', { name: 'Compact' })).getByRole('button', {
+        name: /Refresh/,
+      })
+    );
+    expectMirrored(canvasElement, (box) =>
+      within(within(box).getByRole('group', { name: 'Banner' })).getByRole('status')
+    );
   },
 };
