@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Bell, Plus } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
-import { expectFocusRing } from '../storybook-helpers';
+import { directionBox, endOffset, expectFocusRing, startOffset } from '../storybook-helpers';
 import { Navbar } from './Navbar';
 import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
@@ -521,5 +521,49 @@ export const ActiveItemInMoreMarksIt: Story = {
     const more = canvas.getByRole('button', { hidden: true });
     await waitFor(() => expect(canvas.getByRole('button', { name: 'More' })).toBe(more));
     await expect(more).toHaveAttribute('aria-current', 'true');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** `start` lines the panel up with the start edge of the trigger, `end` with its end edge. */
+export const MenuAlignFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  // Each box labels its landmark: two unnamed `nav`s would fail axe, and `bothDirections` has
+  // no way to tell its copies apart.
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mx-auto mb-4 w-[600px]">
+          <Navbar aria-label={`Main ${dir}`}>
+            <Navbar.Items className="md:ml-0 md:block">
+              <Navbar.Menu label="Start menu" align="start">
+                <Menu.Item href="#">Hosts</Menu.Item>
+              </Navbar.Menu>
+              <Navbar.Menu label="End menu" align="end">
+                <Menu.Item href="#">Alerts</Menu.Item>
+              </Navbar.Menu>
+            </Navbar.Items>
+          </Navbar>
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const align of ['start', 'end'] as const) {
+        const name = `${align === 'start' ? 'Start' : 'End'} menu`;
+        const trigger = within(box).getByRole('button', { name });
+        await userEvent.click(trigger);
+        const menu = await within(document.body).findByRole('menu', { name });
+        const edge = align === 'start' ? startOffset : endOffset;
+        await waitFor(() =>
+          expect(edge(menu, trigger), `${dir}: ${align} edge of the panel`).toBeCloseTo(0, 0)
+        );
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+      }
+    }
   },
 };
