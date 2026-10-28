@@ -270,7 +270,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists', 'Feedback', 'Overlays'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -284,13 +284,25 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/comments/Comment.tsx', // what CommentThread draws
   'packages/react/src/comments/CommentComposer.tsx', // the reply and edit fields of a Comment
   'packages/react/src/data/TimeLabel.tsx', // the `<time>` of DateTime and RelativeTime
+  'packages/react/src/feedback/Skeleton.tsx', // Sk.stories.tsx, and the presets
+  'packages/react/src/feedback/StateLayout.tsx', // what EmptyState, ErrorState and LoadingState draw
+  'packages/react/src/ui/Dialog.tsx', // the panel of Modal and ConfirmationModal
+  'packages/react/src/ui/FloatingPanel.tsx', // the panel of every popover, menu and picker
+  'packages/react/src/ui/intent.ts', // the edge colour AlertBanner draws on its start side
 ];
 
 /**
  * The few physical utilities that must stay: `file`, the exact `token` and why, so each
  * exception is a decision and not a leftover. An entry that no longer matches fails too.
  */
-const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [];
+const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
+  ...['left-[calc(50%_-_var(--anchor-shift,0px))]', 'left-full', 'right-full'].map((token) => ({
+    file: 'packages/react/src/ui/Tooltip.tsx',
+    token,
+    reason:
+      'the arrow sits on the edge that faces the trigger, picked by the side the viewport left the box on (a screen side, flipped by room), and --anchor-shift is a distance to the right',
+  })),
+];
 
 /**
  * Component sources of a converted group that wait for later, with the reason (another branch
