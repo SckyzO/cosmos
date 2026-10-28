@@ -5,8 +5,8 @@ import { Menu } from '../ui/Menu';
 export type RowActionsMenuProps = {
   /** Name of the trigger. Name the row too ("Actions for node-100"): there is one per row. */
   'aria-label'?: string;
-  /** Edge of the trigger the menu lines up with. Default `right`: the column is the table's last. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the menu lines up with. Default `end`: the column is the table's last. */
+  align?: 'start' | 'end';
   /** Tailwind width class of the menu. Default `w-48`. */
   width?: string;
   open?: boolean;
@@ -23,14 +23,20 @@ export type RowActionsMenuProps = {
  */
 export const RowActionsMenu = ({
   'aria-label': ariaLabel = 'Row actions',
-  align = 'right',
+  align = 'end',
   width = 'w-48',
   open,
   defaultOpen,
   onOpenChange,
   children,
 }: RowActionsMenuProps) => (
-  <Menu open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} align={align}>
+  <Menu
+    open={open}
+    defaultOpen={defaultOpen}
+    onOpenChange={onOpenChange}
+    // Menu still names its edges `left` and `right`; both already follow the direction.
+    align={align === 'end' ? 'right' : 'left'}
+  >
     <Menu.Trigger
       aria-label={ariaLabel}
       className="h-ctrl-32 w-ctrl-32 flex shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200"

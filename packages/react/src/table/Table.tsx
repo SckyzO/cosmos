@@ -34,20 +34,20 @@ const TableContext = createContext<TableContextValue>({
 const SectionContext = createContext<TableSection>('body');
 
 const ALIGN_CLASS = {
-  left: 'text-left',
+  start: 'text-start',
   center: 'text-center',
-  right: 'text-right',
+  end: 'text-end',
 } as const;
 
 type CellAlignProps = {
-  /** Text alignment. Default `left`, or `right` when `numeric` is set. */
-  align?: 'left' | 'center' | 'right';
-  /** Numbers: right-aligned, with tabular figures so the digits line up. */
+  /** Text alignment. Default `start`, or `end` when `numeric` is set. */
+  align?: 'start' | 'center' | 'end';
+  /** Numbers: aligned to the end, with tabular figures so the digits line up. */
   numeric?: boolean;
 };
 
 const alignClass = ({ align, numeric }: CellAlignProps) =>
-  clsx(ALIGN_CLASS[align ?? (numeric ? 'right' : 'left')], numeric && 'tabular-nums');
+  clsx(ALIGN_CLASS[align ?? (numeric ? 'end' : 'start')], numeric && 'tabular-nums');
 
 export type TableProps = ComponentProps<'table'> & {
   /**
@@ -243,7 +243,7 @@ export const TableRow = ({ className, ...rest }: TableRowProps) => {
   );
 };
 
-export type TableHeaderCellProps = ComponentProps<'th'> & CellAlignProps;
+export type TableHeaderCellProps = Omit<ComponentProps<'th'>, 'align'> & CellAlignProps;
 
 /**
  * TableHeaderCell — a `<th>`. `scope` defaults to `col` in `TableHead` and to
@@ -272,7 +272,7 @@ export const TableHeaderCell = ({
   );
 };
 
-export type TableCellProps = ComponentProps<'td'> & CellAlignProps;
+export type TableCellProps = Omit<ComponentProps<'td'>, 'align'> & CellAlignProps;
 
 /** TableCell — a `<td>`, padded to the table's `density`. */
 export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps) => (

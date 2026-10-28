@@ -9,7 +9,7 @@ import type { DataTableDensity, SortDirection } from './types';
 
 export type ColumnHeaderProps = {
   label: ReactNode;
-  align?: 'left' | 'right' | 'center';
+  align?: 'start' | 'end' | 'center';
   sortable?: boolean;
   filterable?: boolean;
   /** Current sort direction for this column, or null if not active. */
@@ -28,8 +28,8 @@ export type ColumnHeaderProps = {
 };
 
 const ALIGN_CLASS = {
-  left: 'text-left',
-  right: 'text-right',
+  start: 'text-start',
+  end: 'text-end',
   center: 'text-center',
 } as const;
 
@@ -40,7 +40,7 @@ const NO_SELECTION: Set<string> = new Set();
 
 export const ColumnHeader = ({
   label,
-  align = 'left',
+  align = 'start',
   sortable,
   filterable,
   sortDir = null,
