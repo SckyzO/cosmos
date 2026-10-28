@@ -43,7 +43,12 @@ export type BreadcrumbProps = {
 
 const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
   if (sep === 'chevron')
-    return <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />;
+    return (
+      <ChevronRight
+        className="h-4 w-4 shrink-0 text-[var(--color-text-muted)] rtl:-scale-x-100"
+        aria-hidden
+      />
+    );
   if (sep === 'slash')
     return (
       <span aria-hidden className="text-sm text-[var(--color-text-muted)] select-none">
@@ -134,17 +139,23 @@ export const Breadcrumb = ({
                 className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
               >
                 {renderIcon('text-brand-500 h-4 w-4 shrink-0')}
-                <span className="truncate">{label}</span>
+                <span className="truncate">
+                  <bdi>{label}</bdi>
+                </span>
               </span>
             ) : onClick ? (
               <button type="button" onClick={onClick} className={linkClass}>
                 {renderIcon('h-4 w-4 shrink-0')}
-                <span className="truncate">{label}</span>
+                <span className="truncate">
+                  <bdi>{label}</bdi>
+                </span>
               </button>
             ) : (
               <AppLink href={href ?? '#'} className={linkClass}>
                 {renderIcon('h-4 w-4 shrink-0')}
-                <span className="truncate">{label}</span>
+                <span className="truncate">
+                  <bdi>{label}</bdi>
+                </span>
               </AppLink>
             )}
           </div>
