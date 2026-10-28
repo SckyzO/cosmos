@@ -103,16 +103,16 @@ export const MonitorRow = ({
           href={href}
           className="focus-visible:focus-indicator min-w-0 truncate rounded font-medium text-[var(--color-text-primary)] hover:underline"
         >
-          {name}
+          <bdi>{name}</bdi>
         </AppLink>
       ) : (
         <span className="min-w-0 truncate font-medium text-[var(--color-text-primary)]">
-          {name}
+          <bdi>{name}</bdi>
         </span>
       )}
       {type && (
         <span className="text-2xs shrink-0 rounded bg-gray-100 px-1.5 font-mono leading-[18px] text-[var(--color-text-secondary)] dark:bg-gray-800">
-          {type}
+          <bdi>{type}</bdi>
         </span>
       )}
     </span>
@@ -125,7 +125,9 @@ export const MonitorRow = ({
       —<span className="sr-only">No data</span>
     </span>
   ) : (
-    <span className={LEVEL_TEXT[level]}>{formatUptime(uptime)}</span>
+    <span className={LEVEL_TEXT[level]}>
+      <bdi>{formatUptime(uptime)}</bdi>
+    </span>
   );
 
   const latencyText =
@@ -135,7 +137,7 @@ export const MonitorRow = ({
         <span className="sr-only">No response time</span>
       </>
     ) : (
-      formatLatency(currentLatency)
+      <bdi>{formatLatency(currentLatency)}</bdi>
     );
 
   const bar = <HeartbeatBar beats={beats} size="sm" ariaLabel={`${name}: recent checks`} />;
@@ -182,11 +184,11 @@ export const MonitorRow = ({
       {title}
       <div className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:row-start-auto">{bar}</div>
       <div className="flex gap-3 sm:contents">
-        <span className="text-right font-semibold tabular-nums sm:font-normal">
+        <span className="text-end font-semibold tabular-nums sm:font-normal">
           <span className="sr-only">24 h uptime: </span>
           {uptimeText}
         </span>
-        <span className="text-right text-[var(--color-text-secondary)] tabular-nums">
+        <span className="text-end text-[var(--color-text-secondary)] tabular-nums">
           <span className="sr-only">Latency: </span>
           {latencyText}
         </span>

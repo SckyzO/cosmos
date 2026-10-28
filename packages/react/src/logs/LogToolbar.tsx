@@ -282,7 +282,7 @@ export const LogToolbar = ({
             aria-pressed={pressed}
             onClick={() => toggleLevel(level)}
             className={clsx(
-              'focus-visible:focus-indicator inline-flex items-center gap-1.5 border-r border-gray-200 px-2.5 text-sm font-medium last:border-r-0 focus-visible:ring-inset dark:border-gray-700',
+              'focus-visible:focus-indicator inline-flex items-center gap-1.5 border-e border-gray-200 px-2.5 text-sm font-medium last:border-e-0 focus-visible:ring-inset dark:border-gray-700',
               pressed
                 ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
@@ -326,7 +326,10 @@ export const LogToolbar = ({
   // whether they show or not; narrow, they get a row under it.
   const searchNav = hasSearch && search !== '' && (matchText !== null || hasNav) && (
     <div
-      className={clsx('flex items-center gap-1', wide ? 'absolute inset-y-0 right-1' : 'shrink-0')}
+      className={clsx(
+        'flex items-center gap-1',
+        wide ? 'inset-e-1 absolute inset-y-0' : 'shrink-0'
+      )}
     >
       {matchText !== null && (
         <span
@@ -336,7 +339,7 @@ export const LogToolbar = ({
             invalid ? 'text-red-700 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
           )}
         >
-          {matchText}
+          <bdi>{matchText}</bdi>
         </span>
       )}
       {hasNav && (
@@ -373,7 +376,7 @@ export const LogToolbar = ({
           size="md"
           value={search}
           onChange={setSearch}
-          className={wide && searchNav ? '[&_input]:pr-32' : undefined}
+          className={wide && searchNav ? '[&_input]:pe-32' : undefined}
         />
       </div>
       {wide && searchNav}
@@ -454,7 +457,7 @@ export const LogToolbar = ({
         )}
         {sources && <div className="w-56">{sourceField(false)}</div>}
         {(wrapToggle || orderToggle || downloadButton || clearButton) && (
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ms-auto flex items-center gap-1.5">
             {wrapToggle}
             {orderToggle}
             {downloadButton}
