@@ -12,7 +12,8 @@ import type { MapMarker } from './types';
 const meta = {
   title: 'Media/Map View',
   component: MapView,
-  parameters: { layout: 'padded' },
+  // `.storybook/preview.tsx` hands MapLibre its worker, bundled.
+  parameters: { layout: 'padded', maplibre: true },
   tags: ['autodocs'],
   args: { markers: CITY_STORES, style: CITY_LIGHT, darkStyle: CITY_DARK, ariaLabel: 'Stores' },
 } satisfies Meta<typeof MapView>;

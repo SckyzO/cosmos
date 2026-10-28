@@ -305,10 +305,10 @@ const mapCjs = `${pkgDir}dist/map/index.cjs`;
 
 test('MapLibre is an optional peer dependency, and an exact dev dependency of the repo only', () => {
   const pkg = JSON.parse(read(`${pkgDir}package.json`));
-  expect(pkg.peerDependencies['maplibre-gl']).toMatch(/^\^5\./);
+  expect(pkg.peerDependencies['maplibre-gl']).toMatch(/^\^5\.\d+\.\d+ \|\| \^6\.\d+\.\d+$/);
   expect(pkg.peerDependenciesMeta['maplibre-gl']).toEqual({ optional: true });
   expect(pkg.dependencies['maplibre-gl']).toBeUndefined();
-  expect(pkg.devDependencies['maplibre-gl']).toMatch(/^5\.\d+\.\d+$/);
+  expect(pkg.devDependencies['maplibre-gl']).toMatch(/^6\.\d+\.\d+$/);
 });
 
 test('the code and editor entries carry no MapLibre either', () => {
