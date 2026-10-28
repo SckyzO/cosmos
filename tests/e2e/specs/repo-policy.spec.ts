@@ -271,7 +271,20 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists', 'Feedback', 'Overlays'];
+const RTL_GROUPS: string[] = [
+  'Atoms',
+  'Actions',
+  'Forms',
+  'Data',
+  'Lists',
+  'Feedback',
+  'Overlays',
+  'Monitoring',
+  'Media',
+  'Status',
+  'Typography',
+  'Foundations',
+];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -290,6 +303,14 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/ui/Dialog.tsx', // the panel of Modal and ConfirmationModal
   'packages/react/src/ui/FloatingPanel.tsx', // the panel of every popover, menu and picker
   'packages/react/src/ui/intent.ts', // the edge colour AlertBanner draws on its start side
+  'packages/react/src/logs/JobLogToolbar.tsx', // the bar of JobLog
+  'packages/react/src/logs/job-log-styles.ts', // the colours and frames of JobLog
+  'packages/react/src/uptime/MarkStrip.tsx', // the strip HeartbeatBar and UptimeBars draw their marks in
+  'packages/react/src/uptime/styles.ts', // the fills and text colours of the uptime components
+  'packages/react/src/map/MapPin.tsx', // the pin and popup MapView draws
+  'packages/react/src/map/MapMarkerList.tsx', // the list beside MapView
+  'packages/react/src/editor/FormattingToolbar.tsx', // the toolbar and bubble of RichTextEditor
+  'packages/react/src/editor/LinkForm.tsx', // the link field of RichTextEditor
 ];
 
 /**
@@ -303,6 +324,12 @@ const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
     reason:
       'the arrow sits on the edge that faces the trigger, picked by the side the viewport left the box on (a screen side, flipped by room), and --anchor-shift is a distance to the right',
   })),
+  {
+    file: 'packages/react/src/ui/VideoEmbed.tsx',
+    token: 'ml-0.5',
+    reason:
+      'the play triangle points right in both directions, as the time of a video runs from the left, so its optical offset toward the point is a screen side',
+  },
 ];
 
 /**
@@ -310,12 +337,7 @@ const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
  * is changing them). They are left out of the check. An entry fails once its file is no longer
  * in a converted group or holds no physical utility any more: the list only shrinks.
  */
-const RTL_DEFERRED: { file: string; reason: string }[] = [
-  {
-    file: 'packages/react/src/editor/RichTextEditor.tsx',
-    reason: 'editor/ is converted after #486, which is changing FormattingToolbar and LinkForm',
-  },
-];
+const RTL_DEFERRED: { file: string; reason: string }[] = [];
 
 // A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
 // `[&>button:first-child]:`), or an inline-style key that does: `left: 0`, `marginRight`.
