@@ -877,3 +877,45 @@ export const FluidSpansTheWholeWindow: Story = {
     ).toBe(0);
   },
 };
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Where the page reads right to left the sidebar is on the right, with its edge on the left. The
+ * drawer of the phone layout opens from the right too (`MobileOpen`, in the direction pass).
+ */
+export const SidebarSitsAtTheStartEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { ...desktopViewport, direction: 'rtl' },
+  render: () => <BoxedShell container="fluid" />,
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    await expect(getComputedStyle(page).direction).toBe('rtl');
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(startOffset(nav, page)).toBe(0);
+    await expect(getComputedStyle(nav).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(nav).borderRightWidth).toBe('0px');
+    // The topbar's title starts at the start edge of the page column, beside the sidebar.
+    const bar = canvas.getByRole('banner');
+    const title = canvas.getByText('Analytics Dashboard');
+    await expect(startOffset(title, bar)).toBeLessThan(endOffset(title, bar));
+  },
+};
+
+/** The secondary panel is at the end of the line, with its edge on the side that faces the page. */
+export const SecondaryPanelSitsAtTheEndEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { ...desktopViewport, direction: 'rtl' },
+  render: () => (
+    <Shell secondary={<p className="p-4">Details</p>}>
+      <PageContent title="Dashboard" description="The page." />
+    </Shell>
+  ),
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    const secondary = canvas.getByText('Details').closest('aside') as HTMLElement;
+    await expect(endOffset(secondary, page)).toBe(0);
+    await expect(getComputedStyle(secondary).borderRightWidth).toBe('1px');
+    await expect(getComputedStyle(secondary).borderLeftWidth).toBe('0px');
+  },
+};

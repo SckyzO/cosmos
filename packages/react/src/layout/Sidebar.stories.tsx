@@ -106,9 +106,9 @@ const Footer = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => v
       className="rounded-md p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
     >
       {collapsed ? (
-        <PanelLeftOpen className="h-4 w-4" aria-hidden />
+        <PanelLeftOpen className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
       ) : (
-        <PanelLeftClose className="h-4 w-4" aria-hidden />
+        <PanelLeftClose className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
       )}
     </button>
   </div>
@@ -132,8 +132,9 @@ export const FullExample: Story = {
         </Sidebar>
         <main className="flex-1 p-6 text-[var(--color-text-secondary)]">
           <p>
-            Click the <PanelLeftClose className="inline h-3 w-3" /> button in the sidebar footer to
-            toggle collapsed mode. Children re-render automatically via React context.
+            Click the <PanelLeftClose className="inline h-3 w-3 rtl:-scale-x-100" /> button in the
+            sidebar footer to toggle collapsed mode. Children re-render automatically via React
+            context.
           </p>
         </main>
       </Wrap>
@@ -449,7 +450,7 @@ const ThreeLevelNav = ({ onPick }: { onPick?: (label: string) => void }) => (
 
 /**
  * Sub-menus nest, three levels reading best: nested rows show their label alone, smaller at each
- * level, with a guide line on their left.
+ * level, with a guide line on their start side.
  */
 export const ThreeLevelMenu: Story = {
   render: () => (
@@ -2372,5 +2373,53 @@ export const CompactIgnoresCollapseProps: Story = {
     await expect(nav.getBoundingClientRect().width).toBe(88);
     await expect(within(nav).getByText('Dashboard')).toBeVisible();
     await expect(canvas.queryByRole('button', { name: /collapse|expand/i })).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Where the page reads right to left the sidebar sits on the right, with its edge on the left, its
+ * nested rows indented from the right, and its chevrons and toggle turned around. One sidebar
+ * only: its landmark has a fixed name.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { direction: 'rtl' },
+  render: () => (
+    <Wrap>
+      <Sidebar onCollapsedChange={fn()}>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <ThreeLevelNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    await expect(getComputedStyle(page).direction).toBe('rtl');
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    // At the start of the line: flush with the right edge, its border on the left side.
+    await expect(startOffset(nav, page)).toBe(0);
+    await expect(getComputedStyle(nav).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(nav).borderRightWidth).toBe('0px');
+    // The brand and the rows start at the start edge; the nested rows are indented from it.
+    const brand = canvas.getByText('Cosmos');
+    await expect(startOffset(brand, nav)).toBeLessThan(endOffset(brand, nav));
+    const start = (name: string) => startOffset(canvas.getByText(name), nav);
+    await expect(start('Datacenters')).toBe(start('Infrastructure'));
+    await expect(start('Paris-1') - start('Datacenters')).toBe(16);
+    // The guide line of a nested list is on the start side too, left of the labels' start.
+    const guide = nav.querySelector<HTMLElement>('span.w-px')!;
+    await expect(startOffset(guide, nav)).toBeLessThan(start('Datacenters'));
+    // A closed sub-menu points to the end of the line, an open one down, in both directions.
+    const closed = canvas.getByRole('button', { name: 'Clusters' }).querySelector('svg')!;
+    const open = canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg')!;
+    await expect(getComputedStyle(closed).rotate).toBe('180deg');
+    await expect(getComputedStyle(open).rotate).toBe('90deg');
+    await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
+    await waitFor(() => expect(getComputedStyle(closed).rotate).toBe('90deg'));
+    // The footer's toggle icon points toward the start edge, where the sidebar collapses.
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' }).querySelector('svg')!;
+    await expect(getComputedStyle(toggle).scale).toBe('-1 1');
   },
 };

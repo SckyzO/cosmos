@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { ChatSources, type ChatSource } from './ChatSources';
 
@@ -186,5 +190,26 @@ export const ReadableInEveryTheme: Story = {
         expectTextContrast(number);
       }
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The chips run from the start edge, each with its number first and its domain last. */
+export const ChipsFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: [],
+  render: (args) => bothDirections(() => <ChatSources {...args} sources={SOURCES.slice(0, 2)} />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('ol li:first-child a'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const chip = directionBox(canvasElement, dir).querySelector('ol li a')!;
+      const [number, , domain] = [...chip.children];
+      expect(startOffset(number!, chip), `${dir}: number first`).toBeLessThan(
+        startOffset(domain!, chip)
+      );
+      // The title and the domain are islands: the page's direction does not reorder them.
+      expect(getComputedStyle(chip.querySelector('bdi')!).unicodeBidi).toBe('isolate');
+    }
   },
 };

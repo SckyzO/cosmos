@@ -3,7 +3,12 @@ import { Box, Cog, Mail, Rocket, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '../ui/Button';
-import { expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectTextContrast,
+} from '../storybook-helpers';
 import { Stepper, type StepperProps } from './Stepper';
 
 const meta = {
@@ -410,5 +415,64 @@ export const SmallVerticalConnectorOffset: Story = {
     const connector = canvasElement.querySelector('li > span[aria-hidden]') as HTMLElement;
     await expect(getComputedStyle(connector).top).toBe('28px');
     await expect(getComputedStyle(connector).insetInlineStart).toBe('13px');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The steps run from the start edge, the panels' chevrons point the other way, the connectors follow. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: () =>
+    bothDirections(() => (
+      <div className="mb-6 space-y-8">
+        <Stepper current={1} variant="panels">
+          <Stepper.Step>Details</Stepper.Step>
+          <Stepper.Step>Form</Stepper.Step>
+          <Stepper.Step>Preview</Stepper.Step>
+        </Stepper>
+        <Stepper current={1}>
+          <Stepper.Step>One</Stepper.Step>
+          <Stepper.Step>Two</Stepper.Step>
+          <Stepper.Step>Three</Stepper.Step>
+        </Stepper>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelectorAll('li')[0]);
+    // The connector of the first indicator step starts at its middle and runs toward the next step.
+    expectMirrored(canvasElement, (box) =>
+      box.querySelectorAll('ol')[1]!.querySelector('li > span[aria-hidden]')
+    );
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const chevron = box.querySelector('ol li > [aria-hidden="true"] svg')!;
+      expect(getComputedStyle(chevron).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
+    }
+  },
+};
+
+/** A vertical connector runs through the middle of the indicators, in both directions. */
+export const VerticalConnectorLinesUpInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Stepper current={1} orientation="vertical">
+        <Stepper.Step>Profile</Stepper.Step>
+        <Stepper.Step>Verify</Stepper.Step>
+      </Stepper>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const li = box.querySelector('li')!;
+      const connector = li
+        .querySelector<HTMLElement>(':scope > span[aria-hidden]')!
+        .getBoundingClientRect();
+      const indicator = li.querySelector<HTMLElement>('.rounded-full')!.getBoundingClientRect();
+      const middle = (r: DOMRect) => r.left + r.width / 2;
+      expect(Math.abs(middle(connector) - middle(indicator)), dir).toBeLessThanOrEqual(1);
+    }
   },
 };

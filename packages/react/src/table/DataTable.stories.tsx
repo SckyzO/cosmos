@@ -2185,3 +2185,55 @@ export const LoadingPlaceholderFollowsTheColumnAlign: Story = {
     expect(justify(0)).toBe('normal');
   },
 };
+
+/**
+ * The search icon is at the start of the field and its clear button at the end, what is typed in
+ * it reads in its own script, and the selection bar keeps its actions at the end.
+ */
+export const ToolbarFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4">
+          <DataTable
+            aria-label={`Alerts ${dir}`}
+            rows={rows.slice(0, 5)}
+            columns={columns}
+            rowKey={(r) => r.id}
+            defaultSearchValue="مرحبا"
+            selectable
+            defaultSelection={new Set([rows[0]!.id])}
+            bulkActions={() => <button type="button">Archive</button>}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const bar = within(box)
+        .getByText(/1 selected/)
+        .closest('div')!.parentElement!;
+      await expect(
+        endOffset(within(box).getByRole('button', { name: 'Archive' }), bar),
+        dir
+      ).toBeLessThan(startOffset(within(box).getByRole('button', { name: 'Archive' }), bar));
+      // Deselect to show the search field.
+      await userEvent.click(within(box).getByRole('button', { name: 'Clear' }));
+      const field = within(box).getByRole('searchbox', { name: 'Search rows' });
+      await expect(field).toHaveAttribute('dir', 'auto');
+      await expect(getComputedStyle(field).direction).toBe('rtl');
+      const holder = field.parentElement!;
+      const icon = holder.querySelector('svg')!;
+      const clear = within(holder).getByRole('button', { name: 'Clear search' });
+      await expect(startOffset(icon, holder), `${dir}: icon at the start`).toBeLessThan(
+        endOffset(icon, holder)
+      );
+      await expect(endOffset(clear, holder), `${dir}: clear at the end`).toBeLessThan(
+        startOffset(clear, holder)
+      );
+    }
+  },
+};

@@ -2,7 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Pagination } from './Pagination';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Pagination',
@@ -480,5 +487,50 @@ export const PageButtonsStaySquareInEachDensity: Story = {
     }
     // Six paginations, two sizes in three densities: the heights do move.
     await expect(heights.size).toBeGreaterThan(2);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** Previous sits at the start, its chevrons point the other way, and the counts read left to right. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { page: 2, totalPages: 9, showEdges: true, showInfo: true, pageSize: 10, total: 87 },
+  render: (args) => {
+    // Both copies are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => <Pagination {...args} aria-label={`Pagination ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    for (const name of ['First page', 'Previous page', 'Next page', 'Last page']) {
+      expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name }));
+    }
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const name of ['First page', 'Previous page', 'Next page', 'Last page']) {
+        const svg = within(box).getByRole('button', { name }).querySelector('svg')!;
+        expect(getComputedStyle(svg).scale, `${dir}: ${name}`).toBe(
+          dir === 'rtl' ? '-1 1' : 'none'
+        );
+      }
+      expectReadsLeftToRight(within(box).getByText(/^Showing/));
+    }
+  },
+};
+
+/** Below `sm` the "Page 2 / 9" label is a sentence of its own: it reads left to right. */
+export const PageLabelReadsLeftToRight: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  args: { page: 2, totalPages: 9 },
+  render: (args) => {
+    // Both copies are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => <Pagination {...args} aria-label={`Pagination ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      expectReadsLeftToRight(within(directionBox(canvasElement, dir)).getByText(/^Page/));
+    }
   },
 };

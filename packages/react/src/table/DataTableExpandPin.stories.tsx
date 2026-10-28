@@ -2,7 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MoreVertical } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { endEdge, scrollAlong, startEdge } from '../storybook-helpers';
+import {
+  directionBox,
+  endEdge,
+  endOffset,
+  scrollAlong,
+  startEdge,
+  startOffset,
+} from '../storybook-helpers';
 import { DataTable } from './DataTable';
 import { HOSTS, hostColumns, type Host } from './storybook-hosts';
 import type { ColumnDef } from './types';
@@ -423,6 +430,94 @@ export const PinnedOffsetsFollowTheTextSizeAndTheWidth: Story = {
     } finally {
       if (before === null) root.removeAttribute('data-text-size');
       else root.setAttribute('data-text-size', before);
+    }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The disclosure chevron points to the end of the line when closed, and the detail opens below. */
+export const ExpandChevronFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4">
+          <DataTable
+            aria-label={`Hosts ${dir}`}
+            rows={HOSTS.slice(0, 2)}
+            columns={summaryColumns}
+            rowKey={(r) => r.host}
+            renderExpandedRow={detail}
+            defaultExpandedRows={new Set(['node-a02'])}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const closed = within(box).getByRole('button', { name: /Show details for node-a01/ });
+      const open = within(box).getByRole('button', { name: /Hide details for node-a02/ });
+      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open`).toBe('none');
+      // The toggle column is the first: nearest the start edge.
+      const table = closed.closest('table')!;
+      expect(startOffset(closed, table), dir).toBeLessThan(endOffset(closed, table));
+    }
+  },
+};
+
+/**
+ * A start-pinned column sticks to the start edge and an end-pinned one to the end edge, in both
+ * directions, and the shadow of a pinned edge falls on the side the content scrolls under.
+ */
+export const PinnedColumnsStickToTheirEdgesInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4 max-w-3xl">
+          <DataTable
+            aria-label={`Hosts ${dir}`}
+            rows={HOSTS.slice(0, 3)}
+            columns={pinnedColumns}
+            rowKey={(r) => r.host}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const side = directionBox(canvasElement, dir);
+      const table = within(side).getByRole('table');
+      const scroller = scrollerOf(table);
+      const cells = within(within(table).getAllByRole('row')[1]!).getAllByRole('cell');
+      const host = cells[0]!;
+      const status = cells[cells.length - 1]!;
+      await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+      scrollAlong(scroller, 300);
+      const frame = scroller.getBoundingClientRect();
+      // Pinned: the host column at the start edge of the scroller, the status at its end edge.
+      await waitFor(() => expect(startEdge(box(host), side)).toBe(startEdge(frame, side)));
+      await expect(endEdge(box(status), side)).toBe(endEdge(frame, side));
+      // Content scrolls under both, so both cast their shadow: toward the content, which is to the
+      // right of the start column in left to right and to its left in right to left.
+      const shadow = (el: Element) => getComputedStyle(el).boxShadow;
+      await waitFor(() =>
+        expect(shadow(host), `${dir}: start shadow`).toContain(
+          dir === 'ltr' ? ' 8px 0px 8px -8px' : ' -8px 0px 8px -8px'
+        )
+      );
+      await waitFor(() =>
+        expect(shadow(status), `${dir}: end shadow`).toContain(
+          dir === 'ltr' ? ' -8px 0px 8px -8px' : ' 8px 0px 8px -8px'
+        )
+      );
     }
   },
 };

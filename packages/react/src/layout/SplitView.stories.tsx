@@ -478,3 +478,37 @@ export const CollapseBelow: Story = {
     await expect(canvas.queryByRole('region', { name: 'xl detail' })).toBeNull();
   },
 };
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The panes run from the start edge: the first on the right, with the divider after it. */
+export const PanesFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { ...laptop, direction: 'rtl' },
+  render: () => (
+    <Frame>
+      <SplitView>
+        <SplitView.Pane id="list" label="Messages" width="w-80">
+          <MailList selected="m1" onSelect={() => {}} />
+        </SplitView.Pane>
+        <SplitView.Pane id="detail" label="Message">
+          <Message mail={mails[0]!} />
+        </SplitView.Pane>
+      </SplitView>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const detail = pane(canvas, 'Message');
+    const view = list.parentElement!;
+    await expect(getComputedStyle(view).direction).toBe('rtl');
+    // The list is at the start: flush with the right edge of the view, the detail on its left.
+    await expect(startOffset(list, view)).toBeLessThanOrEqual(1);
+    await expect(list.getBoundingClientRect().left).toBeGreaterThan(
+      detail.getBoundingClientRect().left
+    );
+    // The divider is the list's border on its end side, the left.
+    await expect(getComputedStyle(list).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(list).borderRightWidth).toBe('0px');
+  },
+};

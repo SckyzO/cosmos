@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
@@ -189,5 +191,33 @@ export const ReadableInEveryTheme: Story = {
     inEachTheme(() => {
       for (const live of canvasElement.querySelectorAll('[aria-live]')) expectTextContrast(live);
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The chevron points to the end of the line when closed, down when open; the status is at the end. */
+export const FollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-2">
+        <ChatToolCall name="search_docs" status="done" duration="1.2s" />
+        <ChatToolCall name="read_file" status="running" defaultOpen />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelectorAll('button svg')[0]);
+    expectMirrored(canvasElement, (box) => box.querySelector('[aria-live]'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = canvasElement.querySelector<HTMLElement>(`[data-direction="${dir}"]`)!;
+      const [closed, open] = [...box.querySelectorAll('button')].map((b) =>
+        b.querySelector('svg')!
+      );
+      expect(getComputedStyle(closed!).rotate, `${dir}: closed`).toBe(
+        dir === 'rtl' ? '180deg' : 'none'
+      );
+      expect(getComputedStyle(open!).rotate, `${dir}: open`).toBe('90deg');
+    }
   },
 };

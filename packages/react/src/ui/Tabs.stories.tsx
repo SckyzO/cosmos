@@ -15,8 +15,11 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Tabs, type TabsProps } from './Tabs';
 import {
+  bothDirections,
+  directionBox,
   endOffset,
   expectFocusRing,
+  expectMirrored,
   expectNoHorizontalOverflow,
   keyToEnd,
   keyToStart,
@@ -1362,4 +1365,89 @@ export const MobileRaised: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="raised" />,
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+const Trio = ({ orientation, variant }: Pick<TabsProps, 'orientation' | 'variant'>) => (
+  <Tabs defaultValue="one" orientation={orientation} variant={variant}>
+    <Tabs.List>
+      <Tabs.Trigger value="one">One</Tabs.Trigger>
+      <Tabs.Trigger value="two">Two</Tabs.Trigger>
+      <Tabs.Trigger value="three">Three</Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Panel value="one">First</Tabs.Panel>
+    <Tabs.Panel value="two">Second</Tabs.Panel>
+    <Tabs.Panel value="three">Third</Tabs.Panel>
+  </Tabs>
+);
+
+/** ArrowRight goes toward the end of the line: the next tab in left to right, the previous in right to left. */
+export const ArrowKeysFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Trio />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const tabs = within(directionBox(canvasElement, dir)).getAllByRole('tab');
+      tabs[0]!.focus();
+      // Physical keys on purpose: they are what the user presses.
+      await userEvent.keyboard('{ArrowRight}');
+      await expect(tabs[dir === 'ltr' ? 1 : 2], `${dir}: ArrowRight`).toHaveFocus();
+      await expect(tabs[dir === 'ltr' ? 1 : 2]).toHaveAttribute('aria-selected', 'true');
+      await userEvent.keyboard('{ArrowLeft}');
+      await expect(tabs[0], `${dir}: ArrowLeft`).toHaveFocus();
+    }
+  },
+};
+
+/** The edge fade follows the scroll position: toward the end, a gradient that starts at the start edge. */
+export const ScrollFadeFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="w-64">
+        <Tabs defaultValue={SECTIONS[0]}>
+          <Tabs.List>
+            {SECTIONS.map((section) => (
+              <Tabs.Trigger key={section} value={section}>
+                {section}
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
+        </Tabs>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const strip = within(directionBox(canvasElement, dir)).getByRole('tablist').parentElement!;
+      await waitFor(() => expect(getComputedStyle(strip).maskImage).not.toBe('none'));
+      // At the start only the end fades; the gradient runs from the start edge.
+      await expect(getComputedStyle(strip).maskImage, dir).toMatch(
+        new RegExp(`^linear-gradient\\(to ${dir === 'rtl' ? 'left' : 'right'}, rgb\\(0, 0, 0\\)`)
+      );
+    }
+  },
+};
+
+/** A vertical list sits at the start of the line and draws its edge on the end side. */
+export const VerticalListSitsAtTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="w-[34rem]">
+        <Trio orientation="vertical" variant="folder" />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('tablist'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const list = within(directionBox(canvasElement, dir)).getByRole('tablist');
+      await expect(list).toHaveAttribute('aria-orientation', 'vertical');
+      const style = getComputedStyle(list);
+      await expect(style.borderInlineEndWidth, `${dir}: end edge`).toBe('1px');
+      await expect(style.borderInlineStartWidth, `${dir}: start edge`).toBe('0px');
+      // Physically: the right edge in left to right, the left one in right to left.
+      await expect(dir === 'ltr' ? style.borderRightWidth : style.borderLeftWidth).toBe('1px');
+    }
+  },
 };

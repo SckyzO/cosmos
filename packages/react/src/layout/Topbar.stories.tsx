@@ -4,7 +4,13 @@ import { Bell, Search, Settings, Sun, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from './Topbar';
 import { Menu } from '../ui/Menu';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Topbar',
@@ -325,5 +331,39 @@ export const MoreMenuIsMobileOnly: Story = {
     await expect(canvas.getByText('Analytics Dashboard')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'More actions' })).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The toggle and the title start at the start edge of the bar, the actions end at its end edge, and
+ * the title is an island. One bar only: a second `header` would be a duplicate banner.
+ */
+export const BarFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" data-direction="rtl">
+      <Topbar
+        pageTitle="Servers"
+        sidebarCollapsed={false}
+        onCollapsedChange={fn()}
+        endActions={<IconBtn icon={Bell} label="Notifications" />}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('banner');
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' });
+    const title = canvas.getByText('Servers');
+    const bell = canvas.getByRole('button', { name: 'Notifications' });
+    // Along the line the order is: toggle, title, then the actions at the end.
+    await expect(startOffset(toggle, bar)).toBeLessThan(startOffset(title, bar));
+    await expect(endOffset(bell, bar)).toBeLessThan(endOffset(title, bar));
+    // That is right to left on the screen: the toggle on the right, the bell on the left.
+    await expect(toggle.getBoundingClientRect().left).toBeGreaterThan(
+      bell.getBoundingClientRect().left
+    );
+    await expect(getComputedStyle(title.closest('p') as HTMLElement).direction).toBe('rtl');
   },
 };

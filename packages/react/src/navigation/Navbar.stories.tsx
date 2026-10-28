@@ -567,3 +567,47 @@ export const MenuAlignFollowsTheReadingDirection: Story = {
     }
   },
 };
+
+/** The brand sits at the start, the actions at the end, and the items follow the brand. */
+export const BrandItemsAndActionsFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mx-auto mb-4 w-[900px]">
+          <Navbar aria-label={`Main ${dir}`}>
+            <Navbar.Brand>
+              <span className="text-lg font-semibold">Acme</span>
+              <Navbar.Items>
+                <Navbar.Item href="#" active>
+                  Dashboard
+                </Navbar.Item>
+                <Navbar.Item href="#">Team</Navbar.Item>
+              </Navbar.Items>
+            </Navbar.Brand>
+            <Navbar.Actions>
+              <Button size="sm">Invite</Button>
+            </Navbar.Actions>
+          </Navbar>
+        </div>
+      ))}
+    </>
+  ),
+  play: ({ canvasElement }) => {
+    const [ltr, rtl] = (['ltr', 'rtl'] as const).map((dir) => directionBox(canvasElement, dir));
+    for (const find of [
+      (box: HTMLElement) => within(box).getByText('Acme'),
+      (box: HTMLElement) => within(box).getByRole('link', { name: 'Dashboard' }),
+      (box: HTMLElement) => within(box).getByRole('button', { name: 'Invite' }),
+    ]) {
+      // Each part is the same distance from the start edge of its bar.
+      expect(startOffset(find(rtl!), rtl!)).toBeCloseTo(startOffset(find(ltr!), ltr!), 0);
+    }
+    // The brand is nearer the start than the actions, in both directions.
+    for (const box of [ltr!, rtl!]) {
+      expect(startOffset(within(box).getByText('Acme'), box)).toBeLessThan(
+        startOffset(within(box).getByRole('button', { name: 'Invite' }), box)
+      );
+    }
+  },
+};

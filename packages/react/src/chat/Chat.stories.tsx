@@ -6,12 +6,18 @@ import { Button } from '../ui/Button';
 import { Select } from '../forms/Select';
 import { SplitView } from '../layout/SplitView';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectGraphicContrast,
+  expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
   inEachTheme,
   mirroredIcon,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
@@ -1259,5 +1265,127 @@ export const ToolsAndSourcesInEveryTheme: Story = {
         expectTextContrast(live);
       }
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * A person's own messages sit at the end of the line, the others' at the start, and each bubble
+ * keeps its pointed corner on the side of its sender.
+ */
+export const BubblesFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ChatThread>
+        <ChatMessage direction="incoming" sender="Ana Ruiz" time="09:12" text="Did it finish?" />
+        <ChatMessage direction="outgoing" sender="You" time="09:13" text="Yes, all green." />
+      </ChatThread>
+    )),
+  play: ({ canvasElement }) => {
+    const bubble = (text: string) => (box: HTMLElement) => within(box).getByText(text);
+    const { ltr, rtl } = expectMirrored(canvasElement, bubble('Did it finish?'));
+    expectMirrored(canvasElement, bubble('Yes, all green.'));
+    expect(getComputedStyle(ltr).borderEndStartRadius).toBe('6px');
+    expect(getComputedStyle(rtl).borderEndStartRadius).toBe('6px');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const mine = within(box).getByText('Yes, all green.');
+      const theirs = within(box).getByText('Did it finish?');
+      expect(getComputedStyle(mine).borderEndEndRadius, `${dir}: own tail`).toBe('6px');
+      // The own message hugs the end of the thread, the other the start.
+      expect(endOffset(mine, box)).toBeLessThan(startOffset(mine, box));
+      expect(startOffset(theirs, box)).toBeLessThan(endOffset(theirs, box));
+      // The time and the name are islands: they read left to right, whatever the line.
+      expectReadsLeftToRight(within(box).getAllByText('09:12')[0]!);
+    }
+  },
+};
+
+/** What a person typed reads in its own script, in either direction. */
+export const TypedTextTakesItsOwnDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ChatThread>
+        <ChatMessage direction="incoming" sender="Ana" text="Hello there" />
+        <ChatMessage direction="incoming" sender="Sara" text="مرحبا بالجميع" />
+        <ChatComposer onSend={() => {}} />
+      </ChatThread>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      expect(getComputedStyle(within(box).getByText('Hello there')).direction, dir).toBe('ltr');
+      expect(getComputedStyle(within(box).getByText('مرحبا بالجميع')).direction, dir).toBe('rtl');
+      expect(within(box).getByRole('textbox', { name: 'Message' })).toHaveAttribute('dir', 'auto');
+    }
+  },
+};
+
+/** The send arrow points toward the end of the line; the attachment slot is at the start. */
+export const ComposerFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ChatComposer
+        onSend={() => {}}
+        attachment={
+          <Button variant="ghost" shape="square" icon={Paperclip} aria-label="Attach a file" />
+        }
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Attach a file' })
+    );
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Send message' })
+    );
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const send = within(directionBox(canvasElement, dir)).getByRole('button', {
+        name: 'Send message',
+      });
+      expect(getComputedStyle(send.querySelector('svg')!).scale, dir).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+    }
+  },
+};
+
+/** A conversation row has its presence dot on the avatar's end corner and its time at the end. */
+export const ConversationListFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // Both lists are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => (
+      <ChatConversationList
+        label={`Conversations ${++count}`}
+        selectedId="a"
+        onSelect={() => {}}
+        conversations={[
+          {
+            id: 'a',
+            name: 'Ana Ruiz',
+            lastMessage: 'Did it finish?',
+            time: '09:12',
+            unread: 2,
+            presence: 'online',
+          },
+        ]}
+      />
+    ));
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      box.querySelector('[class*="rounded-full"][aria-hidden]')
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByText('09:12'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const row = within(directionBox(canvasElement, dir)).getByRole('button');
+      expect(getComputedStyle(row).textAlign, dir).toBe('start');
+    }
   },
 };

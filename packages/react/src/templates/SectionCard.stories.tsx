@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { KeyRound, Lock, Server, Trash2, User, Users, Zap } from 'lucide-react';
 import { SectionCard, type SectionCardIconTone } from './SectionCard';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Section Card',
@@ -112,5 +113,22 @@ export const TitleHeadingLevel: Story = {
     await expect(
       canvas.getByRole('heading', { level: 2, name: 'Under the page heading' })
     ).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The icon tile leads the title, at the start edge of the card, in both directions. */
+export const HeaderFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <SectionCard title="Servers" icon={Server} desc="Active fleet across 3 sites">
+        <p>Body</p>
+      </SectionCard>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg'));
+    expectMirrored(canvasElement, (box) => box.querySelector('h3'));
   },
 };
