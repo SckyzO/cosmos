@@ -302,10 +302,6 @@ const RTL_DEFERRED: { file: string; reason: string }[] = [
     file: 'packages/react/src/editor/RichTextEditor.tsx',
     reason: 'editor/ is converted after #486, which is changing FormattingToolbar and LinkForm',
   },
-  {
-    file: 'packages/react/src/data/AuditDiff.tsx',
-    reason: 'converted after #486, which is changing it',
-  },
 ];
 
 // A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
