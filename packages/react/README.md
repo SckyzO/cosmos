@@ -1377,10 +1377,17 @@ const Forward = ({ className, ...props }: LucideProps) => (
 </Button>;
 ```
 
+Two things stay as they are on purpose. A chevron that points down, or turns over when a
+panel opens (`Accordion`), and a trend arrow that points up or down, are not turned around.
+And the arrow keys that move a card across a `KanbanBoard` follow where the columns are, not
+the reading direction: with the first column on the right, ArrowLeft takes the card to the
+next one.
+
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions** and **Forms** (apart from the rich text editor, which follows). The
-others still lay out for left to right and are the next ones in line: Data and Lists,
-Feedback and Overlays, Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
+**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), and **Data**
+and **Lists** (apart from `AuditDiff`, which follows). The others still lay out for left to
+right and are the next ones in line: Feedback and Overlays, Navigation and Layout, Chat, Tables
+and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
 (`&globals=direction:rtl`) renders any story right to left.
 
 ## Themes and accents
