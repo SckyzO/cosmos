@@ -30,7 +30,7 @@ const Card = ({ children }: { children: React.ReactNode }) => (
 
 // ── Stories ──────────────────────────────────────────────────────────────────
 
-export const FlatTopRight: Story = {
+export const FlatTopEnd: Story = {
   render: () => (
     <Card>
       <Ribbon>NEW</Ribbon>
@@ -51,7 +51,7 @@ export const Angled: Story = {
 export const Positions: Story = {
   render: () => (
     <div className="grid grid-cols-2 gap-6">
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+      {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon position={pos} intent="brand">
             {pos}
@@ -77,7 +77,7 @@ export const Intents: Story = {
 export const AngledPositions: Story = {
   render: () => (
     <div className="grid grid-cols-2 gap-6">
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+      {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon shape="angled" position={pos} intent="success">
             {pos}
@@ -109,7 +109,7 @@ export const Pill: Story = {
 export const PillPositions: Story = {
   render: () => (
     <div className="grid grid-cols-2 gap-6">
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as RibbonPosition[]).map((pos) => (
+      {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon shape="pill" position={pos} intent="brand">
             {pos}
@@ -165,7 +165,7 @@ export const FlatVsAngled: Story = {
 export const DemoCorner: Story = {
   render: () => (
     <Card>
-      <Ribbon shape="angled" position="top-left" intent="warning">
+      <Ribbon shape="angled" position="top-start" intent="warning">
         DEMO
       </Ribbon>
     </Card>
@@ -177,25 +177,25 @@ export const FollowsCardRadius: Story = {
   tags: ['!dev'],
   render: () => (
     <CosmosCard padding="lg" className="relative h-44 w-64">
-      <Ribbon position="top-right">NEW</Ribbon>
+      <Ribbon position="top-end">NEW</Ribbon>
       <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
     </CosmosCard>
   ),
   play: async ({ canvas }) => {
     const ribbon = canvas.getByText('NEW');
     const card = ribbon.parentElement as HTMLElement;
-    // The ribbon's `right` is the end of the line: the top-left corner in right to left.
+    // The ribbon's `top-end` is the end of the line: the top-left corner in right to left.
     const corner =
       getComputedStyle(ribbon).direction === 'rtl' ? 'borderTopLeftRadius' : 'borderTopRightRadius';
     await expect(getComputedStyle(ribbon)[corner]).toBe(getComputedStyle(card)[corner]);
   },
 };
 
-const INSET: Record<RibbonPosition, [side: 'left' | 'right', edge: 'top' | 'bottom']> = {
-  'top-left': ['left', 'top'],
-  'top-right': ['right', 'top'],
-  'bottom-left': ['left', 'bottom'],
-  'bottom-right': ['right', 'bottom'],
+const INSET: Record<RibbonPosition, [side: 'start' | 'end', edge: 'top' | 'bottom']> = {
+  'top-start': ['start', 'top'],
+  'top-end': ['end', 'top'],
+  'bottom-start': ['start', 'bottom'],
+  'bottom-end': ['end', 'bottom'],
 };
 
 /** A `pill` ribbon sits 12px from the corner of its position, and is fully rounded. */
@@ -226,8 +226,8 @@ export const PillSitsInsideTheCorner: Story = {
       const style = getComputedStyle(card);
       // An absolute box is placed from the padding edge, inside the border.
       const [named, edge] = INSET[pos];
-      // `left` and `right` name the start and the end of the line.
-      const side = (named === 'left') !== (style.direction === 'rtl') ? 'left' : 'right';
+      // `start` and `end` name the sides of the line.
+      const side = (named === 'start') !== (style.direction === 'rtl') ? 'left' : 'right';
       const fromSide =
         side === 'left'
           ? box.left - (cardBox.left + parseFloat(style.borderLeftWidth))
@@ -260,7 +260,7 @@ export const PillKeepsTheIntentFill: Story = {
           <Ribbon shape="pill" intent={i}>
             {`${i} pill`}
           </Ribbon>
-          <Ribbon shape="flat" intent={i} position="bottom-left">
+          <Ribbon shape="flat" intent={i} position="bottom-start">
             {`${i} flat`}
           </Ribbon>
         </Card>
@@ -278,7 +278,7 @@ export const PillKeepsTheIntentFill: Story = {
 };
 
 /**
- * `right` is the end of the line: a top-right ribbon takes the top-left corner in right to left,
+ * `end` is the end of the line: a `top-end` ribbon takes the top-left corner in right to left,
  * with its corners, its lean and its letter spacing following.
  */
 export const MirrorsInRightToLeft: Story = {
@@ -295,7 +295,7 @@ export const MirrorsInRightToLeft: Story = {
           </Ribbon>
         </Card>
         <Card>
-          <Ribbon shape="pill" position="bottom-left">
+          <Ribbon shape="pill" position="bottom-start">
             PRO
           </Ribbon>
         </Card>

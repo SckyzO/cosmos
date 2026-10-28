@@ -123,7 +123,7 @@ export const WithIcons: Story = {
           <Button variant="secondary" icon={Download}>
             Download
           </Button>
-          <Button variant="ghost" icon={Forward} iconPosition="right">
+          <Button variant="ghost" icon={Forward} iconPosition="end">
             Continue
           </Button>
           <Button intent="danger" icon={Trash2}>
@@ -422,7 +422,7 @@ export const LinkVariant: Story = {
             <Button variant="link" icon={Back}>
               Undo
             </Button>
-            <Button variant="link" icon={Forward} iconPosition="right">
+            <Button variant="link" icon={Forward} iconPosition="end">
               Continue
             </Button>
           </div>
@@ -748,14 +748,14 @@ export const PrimarySuccessHasDarkTextOnGreen: Story = {
   },
 };
 
-/** `iconPosition` names the side in left to right: the icon leads the label, or follows it. */
+/** `iconPosition` `start` leads the label, `end` follows it: both mirror in right to left. */
 export const IconsMirrorInRightToLeft: Story = {
   tags: ['!dev', '!autodocs'],
   render: () =>
     bothDirections(() => (
       <div className="flex gap-3">
         <Button icon={Plus}>Add</Button>
-        <Button icon={ArrowRight} iconPosition="right">
+        <Button icon={ArrowRight} iconPosition="end">
           Next
         </Button>
       </div>

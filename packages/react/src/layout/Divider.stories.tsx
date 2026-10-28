@@ -78,7 +78,7 @@ export const WithTitleAndButton: Story = {
       <Divider.Row
         title="Recent activity"
         actions={
-          <Button size="sm" icon={ArrowRight} iconPosition="right">
+          <Button size="sm" icon={ArrowRight} iconPosition="end">
             View all
           </Button>
         }
