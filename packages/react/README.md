@@ -1021,7 +1021,88 @@ a word, not only a colour. Each level colour holds 4.5:1 on both tones in the fo
 - Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn.
 - The labels ("Jump to latest", "Filters"…) are English.
 - Not here: the log volume chart (stacked `BarChart` of `@sckyzo/cosmos-charts`, as the lines per
-  level over time), a structured logs table and `JobLog`, the output of a job.
+  level over time) and a structured logs table. The output of a job is `JobLog`, below.
+
+## Job logs
+
+`JobLog` is the output of a CI job or a build: collapsible steps, each with its status and
+duration, and the lines of each step numbered and coloured. It is read differently from a live
+tail, hence a component of its own; it shares the tones, the clock format and the windowing of
+`LogViewer`. The host owns the data and the clock: it passes the steps, their durations (`JobLog`
+runs no timer) and the new lines as they come.
+
+```tsx
+const steps: JobLogStep[] = [
+  { id: 'install', name: 'Install dependencies', status: 'passed', duration: 41_000, lines: [...] },
+  {
+    id: 'run-tests',
+    name: 'Run tests',
+    status: 'failed',
+    duration: 72_000,
+    startedAt: '2026-01-15T09:30:44Z',
+    // A string, or { text, timestamp } when the line has a time.
+    lines: ['$ pnpm test', '\x1b[31m✗ sortRows keeps empty values last\x1b[0m', ...],
+  },
+  { id: 'build', name: 'Build', status: 'skipped', lines: [] },
+];
+
+<JobLog title="Build #1287" meta="main · 4f2c1a9" status="failed" duration={123_000} steps={steps} />
+```
+
+- **Steps.** `status` is `queued`, `running`, `passed`, `failed` or `skipped`. `duration` is in
+  milliseconds; `startedAt` is the origin of the elapsed times (it defaults to the first
+  timestamp of the step). `id` is unique and stays the same from one render to the next. The
+  optional header (`title`, `status`, `meta`, `duration`) is drawn when any of them is given.
+- **Open steps.** The failed and the running steps start open, the others closed, and a step that
+  starts running later opens. `expandedSteps` / `defaultExpandedSteps` / `onExpandedStepsChange`
+  work as on other controls. The header of an open step sticks to the top of the log while its
+  lines scroll, and each step is windowed on its own, so a step of tens of thousands of lines
+  stays smooth.
+- **Line numbers.** They restart at 1 in each step and are links: `href="#<idPrefix><step id>-L<n>"`.
+  A click calls `onCurrentLineChange({ step, line })` and does not touch `location`; a click with a
+  modifier key is the browser's own, so "open in a new tab" works. `currentLine` /
+  `defaultCurrentLine` is the line in focus: when it changes its step opens, the line scrolls into
+  view and takes `aria-current="location"`. One line at a time. To make the links shareable, sync
+  it with the URL hash in the host: read `parseJobLogHash(location.hash, idPrefix)` into
+  `currentLine` on load and on `hashchange`, and write `jobLogLineHref(idPrefix, line)` back from
+  `onCurrentLineChange` (the `Monitoring/JobLog` "Synced with the URL hash" story does).
+- **Toolbar.** Search across all the steps (a match in a closed step opens it) with the count and
+  previous / next, a timestamps toggle, wrap, expand or collapse all, and download as plain text
+  (ANSI codes stripped, `fileName`). `controls` picks which are drawn (`['search']`; `[]` leaves
+  the toolbar out). Below `md` of the log's own width, as a container, the search stays and the
+  rest moves into a "More options" menu. `timestamps`, `wrap` and `search` each come with a
+  `default*` and an `on*Change`.
+- **Timestamps.** Off by default. `timestampFormat="clock"` (default) is the time of each line, as
+  `LogViewer` writes it (`locale`, `timeZone`); `"elapsed"` is the time since its step started,
+  `+0:04.2`.
+- **Following.** While a step runs the log stays at the end, pauses when the reader scrolls up,
+  and has a footer button: Pause, then "Jump to latest (12 new)". `follow` / `defaultFollow` /
+  `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too.
+- **Tone.** `terminal` (default) is a dark panel in every theme, `surface` follows the theme.
+
+**ANSI.** Colour codes are read into styled spans, never HTML. Kept: the 16 colours and their
+bright variants as a foreground and as a background, bold, dim, italic, underline and the resets.
+A 256-colour or truecolor code lands on the nearest of the 16. Every other escape sequence (cursor
+moves, window titles, links) and control character is dropped, and a carriage return keeps only the
+last segment of the line, so a progress bar reads as its last state. Black and white are mapped to
+what reads on the tone (a black text on the terminal panel is the muted gray). Each colour holds
+4.5:1 on both tones in the four themes. On a background colour, the text takes the colour that
+reads on that background and its own is dropped (`31;47` is dark text on a light fill), and dim
+mutes only the default text: a coloured text keeps its colour.
+
+**Accessibility.** The log is a named `region` with a tab stop. A step header is a button with
+`aria-expanded` and `aria-controls`, its status an image with a text name (never a colour alone),
+and the lines of an open step a named group. A line number is a link named "Line 6".
+
+**Limits.**
+
+- The windowing needs a row of a fixed height, so it is off with `wrap`: all the lines of an open
+  step are then drawn (the browser skips the ones out of view). Keep a step to a few thousand lines
+  with `wrap` on. A line link that scrolls out of the window loses the focus.
+- Without `wrap`, the lines of a step scroll sideways inside the step, under its header.
+- A search compiles the plain text of every line of every step: for logs of hundreds of thousands
+  of lines, filter on the host.
+- The labels ("Jump to latest", "More options"…) are English.
 
 ## Slider
 
