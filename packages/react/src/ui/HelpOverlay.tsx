@@ -115,9 +115,13 @@ const HelpOverlayRoot = ({
     >
       <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            <bdi>{title}</bdi>
+          </h2>
           {description && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <bdi>{description}</bdi>
+            </p>
           )}
         </div>
         <button
@@ -156,7 +160,7 @@ export type HelpOverlaySectionProps = {
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
     <h3 className="text-2xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-      {title}
+      <bdi>{title}</bdi>
     </h3>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
   </section>
@@ -181,8 +185,11 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
 
   return (
     <li className={clsx('py-row-6 flex items-center justify-between gap-3 text-sm', className)}>
-      <span className="text-gray-700 dark:text-gray-300">{description}</span>
-      <span className="flex shrink-0 items-center gap-1">
+      <span className="text-gray-700 dark:text-gray-300">
+        <bdi>{description}</bdi>
+      </span>
+      {/* Keys read in the order they are pressed, whatever the direction of the line. */}
+      <span dir="ltr" className="flex shrink-0 items-center gap-1">
         {sequence.map((combo, idx) => {
           const parts = combo.split('+');
           return (

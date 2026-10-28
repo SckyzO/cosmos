@@ -49,7 +49,7 @@ function UserMenuTrigger({
   return (
     <Menu.Trigger
       className={clsx(
-        'group py-row-6 flex items-center gap-2 rounded-lg border border-gray-200 pr-3 pl-2 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
+        'group py-row-6 flex items-center gap-2 rounded-lg border border-gray-200 ps-2 pe-3 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-white/5',
         className
       )}
       {...rest}
@@ -63,7 +63,7 @@ function UserMenuTrigger({
           hideName ? 'sr-only' : 'text-sm font-medium text-gray-700 dark:text-gray-200'
         )}
       >
-        {name}
+        <bdi>{name}</bdi>
       </span>
       <ChevronDown
         className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-aria-expanded:rotate-180"
@@ -104,8 +104,14 @@ const UserMenuHeader = ({ name, email, avatarSrc, className }: UserMenuHeaderPro
   >
     <DecorativeAvatar src={avatarSrc} name={name} size="md" />
     <div className="min-w-0 flex-1">
-      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
-      {email && <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>}
+      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+        <bdi>{name}</bdi>
+      </p>
+      {email && (
+        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+          <bdi>{email}</bdi>
+        </p>
+      )}
     </div>
   </div>
 );

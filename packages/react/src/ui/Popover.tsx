@@ -90,13 +90,14 @@ function PopoverTrigger({ onClick, className, children, ref, ...rest }: PopoverT
 // ── Content (portal) ─────────────────────────────────────────────────────────
 
 // `position` is the side the panel opened on as the screen sees it (it may have flipped), so the
-// arrow is placed with physical offsets: `left` / `right` below name that side, and the `left` of
-// a centered arrow is measured from the physical edge `--anchor-shift` moves the panel along.
+// arrow is placed on the physical edge that faces the trigger, written with the logical insets
+// for the direction it is laid out in.
 const arrowStyle = (
   position: AnchorSide,
   align: PopoverAlign,
   direction: Direction
 ): CSSProperties => {
+  const rtl = direction === 'rtl';
   // 8px square rotated 45° → diamond, clipped half by the content panel.
   const base: CSSProperties = {
     position: 'absolute',
@@ -104,27 +105,33 @@ const arrowStyle = (
     height: 8,
     transform: 'rotate(45deg)',
   };
-  // With `end`, keep pointing at the trigger's center, not the panel's: half the
-  // trigger's width (`--anchor-width`, set by the anchoring) from the end edge, and
-  // the inset is measured from the panel's padding box, 1px inside its border. A
-  // panel moved along the trigger to stay on screen sets `--anchor-shift`, by how
-  // much (to the right if positive): the arrow moves back by as much, which is away
-  // from the end edge in ltr and toward it in rtl.
+  // `--anchor-shift` is how far the panel moved to the right (to stay on screen) along the
+  // trigger: the arrow moves back by as much, which is toward the start edge in ltr and away
+  // from it in rtl.
+  // With `end`, keep pointing at the trigger's center, not the panel's: half the trigger's
+  // width (`--anchor-width`, set by the anchoring) from the end edge, and the inset is measured
+  // from the panel's padding box, 1px inside its border.
   const x: CSSProperties =
     align === 'end'
       ? {
-          insetInlineEnd: `calc(var(--anchor-width) / 2 - 1px ${direction === 'rtl' ? '-' : '+'} var(--anchor-shift, 0px))`,
+          insetInlineEnd: `calc(var(--anchor-width) / 2 - 1px ${rtl ? '-' : '+'} var(--anchor-shift, 0px))`,
           marginInlineEnd: -4,
         }
-      : { left: 'calc(50% - var(--anchor-shift, 0px))', marginLeft: -4 };
+      : {
+          insetInlineStart: `calc(50% ${rtl ? '+' : '-'} var(--anchor-shift, 0px))`,
+          marginInlineStart: -4,
+        };
   const y: CSSProperties = { top: 'calc(50% - var(--anchor-shift, 0px))', marginTop: -4 };
+  // The edge of a panel beside the trigger that faces it: its physical `edge`, in logical terms.
+  const facing = (edge: 'left' | 'right'): CSSProperties =>
+    (edge === 'left') === !rtl ? { insetInlineStart: -4 } : { insetInlineEnd: -4 };
   switch (position) {
     case 'top':
       return { ...base, bottom: -4, ...x };
     case 'right':
-      return { ...base, left: -4, ...y };
+      return { ...base, ...facing('left'), ...y };
     case 'left':
-      return { ...base, right: -4, ...y };
+      return { ...base, ...facing('right'), ...y };
     case 'bottom':
     default:
       return { ...base, top: -4, ...x };

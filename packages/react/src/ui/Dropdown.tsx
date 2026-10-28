@@ -111,7 +111,9 @@ export const Dropdown = ({
         )}
       >
         {TriggerIcon && <TriggerIcon className="h-4 w-4 shrink-0 text-gray-400" />}
-        <span className="truncate">{displayLabel}</span>
+        <span className="truncate">
+          <bdi>{displayLabel}</bdi>
+        </span>
         <ChevronDown
           className={clsx(
             'h-4 w-4 shrink-0 text-gray-400 transition-transform',
@@ -155,14 +157,16 @@ export const Dropdown = ({
                 closeAndRefocus();
               }}
               className={clsx(
-                'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
+                'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-start text-sm transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
                 isSelected
                   ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
                   : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
               )}
             >
               {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" />}
-              <span className="flex-1 truncate">{opt.label}</span>
+              <span className="flex-1 truncate">
+                <bdi>{opt.label}</bdi>
+              </span>
               {isSelected && <Check className="text-brand-500 h-3.5 w-3.5 shrink-0" />}
             </button>
           );

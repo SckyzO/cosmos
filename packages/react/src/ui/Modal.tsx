@@ -44,11 +44,13 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
       <div className="min-w-0 flex-1">
         {title && (
           <h2 id={titleId} className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {title}
+            <bdi>{title}</bdi>
           </h2>
         )}
         {description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <bdi>{description}</bdi>
+          </p>
         )}
         {children}
       </div>
@@ -128,8 +130,8 @@ export type ModalAlertProps = {
   /**
    * Visual layout. `centered` (default): icon + title + buttons stacked
    * vertically and centered (TUI "Centered with single action").
-   * `horizontal`: icon to the left of the title/message, with buttons in
-   * a separate gray footer right-aligned (TUI "Simple with gray footer").
+   * `horizontal`: icon before the title/message, with buttons in
+   * a separate gray footer aligned to the end (TUI "Simple with gray footer").
    */
   layout?: ModalAlertLayout;
   /**
@@ -171,8 +173,10 @@ const Alert = ({
           >
             <Icon className="size-6" aria-hidden />
           </div>
-          <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <div className="mt-3 text-center sm:ms-4 sm:mt-0 sm:text-start">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              <bdi>{title}</bdi>
+            </h2>
             {message && (
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">{message}</div>
             )}
@@ -208,7 +212,9 @@ const Alert = ({
         >
           <Icon className="size-6" aria-hidden />
         </div>
-        <h2 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">
+          <bdi>{title}</bdi>
+        </h2>
         {message && <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</div>}
         <div
           className={clsx(
