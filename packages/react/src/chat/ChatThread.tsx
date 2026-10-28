@@ -65,7 +65,9 @@ export type ChatDaySeparatorProps = {
 export const ChatDaySeparator = ({ children }: ChatDaySeparatorProps) => (
   <div className="text-2xs my-3 flex items-center gap-3 font-medium text-[var(--color-text-muted)]">
     <span aria-hidden className="h-px flex-1 bg-[var(--color-border)]" />
-    <span>{children}</span>
+    <span>
+      <bdi>{children}</bdi>
+    </span>
     <span aria-hidden className="h-px flex-1 bg-[var(--color-border)]" />
   </div>
 );
@@ -78,7 +80,7 @@ export type ChatTypingIndicatorProps = {
 /** Three animated dots in an incoming bubble: `name` is typing. */
 export const ChatTypingIndicator = ({ name }: ChatTypingIndicatorProps) => (
   <div className="mt-2 flex">
-    <span className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 dark:bg-gray-800">
+    <span className="flex items-center gap-1 rounded-2xl rounded-es-md bg-gray-100 px-4 py-3 dark:bg-gray-800">
       <span className="sr-only">{name} is typing</span>
       {[0, 150, 300].map((delay) => (
         <span

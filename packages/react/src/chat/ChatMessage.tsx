@@ -24,7 +24,7 @@ type ChatMessageContent =
     };
 
 type ChatMessageBaseProps = {
-  /** `outgoing` (right, accent) for the current user, `incoming` (left) otherwise. */
+  /** `outgoing` (at the end of the line, accent) for the current user, `incoming` (at the start) otherwise. */
   direction: ChatMessageDirection;
   /** Sender name: shown on the first message of a group, always read by screen readers. */
   sender: string;
@@ -73,8 +73,8 @@ const STATUS: Record<ChatMessageStatus, { icon: typeof Check; label: string }> =
 };
 
 /**
- * One chat bubble. Incoming bubbles sit on the left with the sender's avatar
- * on the first message of a group; outgoing ones sit on the right in the
+ * One chat bubble. Incoming bubbles sit at the start of the line with the sender's
+ * avatar on the first message of a group; outgoing ones sit at the end in the
  * accent color with their delivery state. Sender and time are read by screen
  * readers on every message, grouped or not.
  */
@@ -103,7 +103,7 @@ export const ChatMessage = ({
       {streaming && (
         <span
           aria-hidden
-          className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 bg-current motion-safe:animate-pulse"
+          className="ms-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 bg-current motion-safe:animate-pulse"
         />
       )}
     </>
@@ -119,7 +119,7 @@ export const ChatMessage = ({
     >
       {time && (
         <time aria-hidden dateTime={dateTime}>
-          {time}
+          <bdi>{time}</bdi>
         </time>
       )}
       {state && (
@@ -165,10 +165,12 @@ export const ChatMessage = ({
             aria-hidden
             className="text-2xs mb-0.5 px-1 font-medium text-[var(--color-text-muted)]"
           >
-            {sender}
+            <bdi>{sender}</bdi>
           </span>
         )}
         <Content
+          // What a person typed reads in its own direction, whatever the page's.
+          dir={text === undefined ? undefined : 'auto'}
           className={clsx(
             flat
               ? 'w-full min-w-0 px-1 py-0.5 text-sm break-words text-[var(--color-text-primary)]'
@@ -178,8 +180,8 @@ export const ChatMessage = ({
             text !== undefined && 'whitespace-pre-wrap',
             !flat &&
               (outgoing
-                ? 'bg-brand-500 rounded-br-md text-white'
-                : 'rounded-bl-md bg-gray-100 text-[var(--color-text-primary)] dark:bg-gray-800')
+                ? 'bg-brand-500 rounded-ee-md text-white'
+                : 'rounded-es-md bg-gray-100 text-[var(--color-text-primary)] dark:bg-gray-800')
           )}
         >
           {body}
