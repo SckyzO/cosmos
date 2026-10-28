@@ -146,7 +146,8 @@ export const Animated: Story = {
   },
 };
 
-// The visible label names the bar: `aria-labelledby` points at it.
+// The visible label names the bar: `aria-labelledby` points at it. The usage sits in a `<bdi>`,
+// as a host would put it: a right-to-left line reads `3.4 / 10 GB` as `GB 10 / 3.4` otherwise.
 const QuotaRow = ({
   label,
   usage,
@@ -165,7 +166,7 @@ const QuotaRow = ({
         <span id={labelId} className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {label}
         </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">{usage}</span>
+        <bdi className="text-xs text-gray-500 dark:text-gray-400">{usage}</bdi>
       </div>
       <ProgressBar value={value} intent={intent} aria-labelledby={labelId} />
     </div>
@@ -189,6 +190,7 @@ export const QuotaUsage: Story = {
       'aria-valuenow',
       '98'
     );
+    expectReadsLeftToRight(canvas.getByText('3.4 / 10 GB'));
   },
 };
 
