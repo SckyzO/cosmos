@@ -78,7 +78,7 @@ export type TableProps = ComponentProps<'table'> & {
 // is given a solid base so the cells that scroll under it do not show through; a header or
 // footer cell has its own.
 const STICKY_FIRST_COLUMN =
-  '[&_tr>:first-child]:sticky [&_tr>:first-child]:left-0 [&_tr>:first-child]:z-[1] [&_tr>:first-child]:[box-shadow:inset_-1px_0_0_var(--color-border)] [&_tbody_tr]:bg-[var(--color-bg-panel)] [&_tbody_tr>:first-child]:bg-inherit';
+  '[&_tr>:first-child]:sticky [&_tr>:first-child]:inset-s-0 [&_tr>:first-child]:z-[1] [&_tr>:first-child]:[box-shadow:inset_-1px_0_0_var(--color-border)] rtl:[&_tr>:first-child]:[box-shadow:inset_1px_0_0_var(--color-border)] [&_tbody_tr]:bg-[var(--color-bg-panel)] [&_tbody_tr>:first-child]:bg-inherit';
 
 // The id of the caption of the table inside `containerRef`, if it has one. A read of the DOM,
 // hence a store: the caption is a direct child of the table, which the host's children add and
@@ -171,7 +171,7 @@ export const TableCaption = ({ className, ...rest }: TableCaptionProps) => {
     <caption
       id={captionId}
       className={clsx(
-        'px-4 py-3 text-left text-sm font-semibold text-[var(--color-text-primary)]',
+        'px-4 py-3 text-start text-sm font-semibold text-[var(--color-text-primary)]',
         className
       )}
       {...rest}
@@ -309,7 +309,7 @@ export const TableSkeletonRows = ({
             <Sk
               h="h-3"
               w={SKELETON_WIDTHS[(row + col) % SKELETON_WIDTHS.length]}
-              className={numericColumns.includes(col) ? 'ml-auto' : undefined}
+              className={numericColumns.includes(col) ? 'ms-auto' : undefined}
             />
           </TableCell>
         ))}

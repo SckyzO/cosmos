@@ -3,29 +3,29 @@ import { pinEdges, pinOffsets, pinStyle } from './pinned';
 
 describe('pinOffsets', () => {
   it('adds up the pinned cells before a start-pinned one', () => {
-    const { left } = pinOffsets([44, 168, 100, 100], ['start', 'start', undefined, undefined]);
-    expect(left).toEqual([0, 44, undefined, undefined]);
+    const { start } = pinOffsets([44, 168, 100, 100], ['start', 'start', undefined, undefined]);
+    expect(start).toEqual([0, 44, undefined, undefined]);
   });
 
   it('adds up the pinned cells after an end-pinned one', () => {
-    const { right } = pinOffsets([100, 100, 136, 64], [undefined, undefined, 'end', 'end']);
-    expect(right).toEqual([undefined, undefined, 64, 0]);
+    const { end } = pinOffsets([100, 100, 136, 64], [undefined, undefined, 'end', 'end']);
+    expect(end).toEqual([undefined, undefined, 64, 0]);
   });
 
   it('skips the cells that scroll between two pinned ones', () => {
-    const { left } = pinOffsets([40, 90, 50], ['start', undefined, 'start']);
-    expect(left).toEqual([0, undefined, 40]);
+    const { start } = pinOffsets([40, 90, 50], ['start', undefined, 'start']);
+    expect(start).toEqual([0, undefined, 40]);
   });
 
   it('counts a width not measured yet as 0', () => {
-    const { left } = pinOffsets([], ['start', 'start']);
-    expect(left).toEqual([0, 0]);
+    const { start } = pinOffsets([], ['start', 'start']);
+    expect(start).toEqual([0, 0]);
   });
 
   it('keeps both sides apart', () => {
-    const { left, right } = pinOffsets([10, 20, 30], ['start', undefined, 'end']);
-    expect(left).toEqual([0, undefined, undefined]);
-    expect(right).toEqual([undefined, undefined, 0]);
+    const { start, end } = pinOffsets([10, 20, 30], ['start', undefined, 'end']);
+    expect(start).toEqual([0, undefined, undefined]);
+    expect(end).toEqual([undefined, undefined, 0]);
   });
 });
 
@@ -43,9 +43,9 @@ describe('pinEdges', () => {
 describe('pinStyle', () => {
   const offsets = pinOffsets([10, 20, 30], ['start', undefined, 'end']);
 
-  it('gives left to a start cell, right to an end cell, nothing to the others', () => {
-    expect(pinStyle(offsets, 0)).toEqual({ left: 0 });
+  it('gives the inline-start inset to a start cell, the inline-end one to an end cell, nothing to the others', () => {
+    expect(pinStyle(offsets, 0)).toEqual({ insetInlineStart: 0 });
     expect(pinStyle(offsets, 1)).toBeUndefined();
-    expect(pinStyle(offsets, 2)).toEqual({ right: 0 });
+    expect(pinStyle(offsets, 2)).toEqual({ insetInlineEnd: 0 });
   });
 });
