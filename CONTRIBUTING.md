@@ -271,9 +271,10 @@ The same prop means the same thing on every component.
   so: `iconPosition="start"`, `align="end"`, `position="top-end"`, `endSlot`, `startActions`. A
   default keeps its left-to-right meaning (`'left'` becomes `'start'`), so left to right renders
   as it always did. `top` and `bottom` stay physical, and so do the few names that really are a
-  screen edge (`AnchorSide`, `AnchorRect`). `repo-policy.spec.ts` refuses a `'left'` or `'right'`
-  literal in a type of `packages/react/src`; a type that must stay physical goes in its
-  `SIDE_ALLOWED` list, with the reason.
+  screen edge (`AnchorSide`, `AnchorRect`), and the charts' `legendPosition`: a chart keeps its
+  left-to-right axis under `dir="rtl"`, so its legend's `left` and `right` are the screen's.
+  `repo-policy.spec.ts` refuses a `'left'` or `'right'` literal in a type of `packages/react/src`;
+  a type that must stay physical goes in its `SIDE_ALLOWED` list, with the reason.
 - **Change callbacks follow the control.** A wrapper of a native field (Input, PasswordInput,
   Textarea, Select, Checkbox, Radio, TimePicker) passes the native event: `onChange(event)`, and
   `onChange(value, event)` for Checkbox, Radio and TimePicker. A custom widget passes the value:
