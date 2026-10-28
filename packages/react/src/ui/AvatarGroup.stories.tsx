@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
-import { bothDirections, expectMirrored, directionBox } from '../storybook-helpers';
+import {
+  bothDirections,
+  expectMirrored,
+  expectReadsLeftToRight,
+  directionBox,
+} from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import { Avatar } from './Avatar';
 import { AvatarGroup } from './AvatarGroup';
@@ -416,7 +421,11 @@ export const MirrorsInRightToLeft: Story = {
     for (const nth of [0, 1, 2]) {
       expectMirrored(canvasElement, (box) => within(box).getAllByRole('img')[nth]);
     }
-    const [first, second] = within(directionBox(canvasElement, 'rtl')).getAllByRole('img');
+    const [first, second, overflow] = within(directionBox(canvasElement, 'rtl')).getAllByRole(
+      'img'
+    );
+    // "+3", not "3+".
+    expectReadsLeftToRight(overflow!);
     // About a quarter of 48px, over the first avatar's left side.
     await expect(
       first!.getBoundingClientRect().left - second!.getBoundingClientRect().right

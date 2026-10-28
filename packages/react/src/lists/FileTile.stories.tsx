@@ -9,6 +9,7 @@ import {
   endOffset,
   expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   inEachTheme,
   mobileViewport,
   portalDocsParams,
@@ -493,11 +494,17 @@ export const TileAndRowMirrorInRightToLeft: Story = {
   render: () =>
     bothDirections(() => (
       <ul className="max-w-sm space-y-3">
-        <FileTile name="Q3 report.pdf" kind="pdf" meta="2.4 MB" shared defaultStarred />
         <FileTile
           name="Q3 report.pdf"
           kind="pdf"
-          meta="2.4 MB"
+          meta="2.4 MB · Edited yesterday"
+          shared
+          defaultStarred
+        />
+        <FileTile
+          name="Q3 report.pdf"
+          kind="pdf"
+          meta="2.4 MB · Edited yesterday"
           shared
           layout="row"
           defaultStarred
@@ -510,7 +517,12 @@ export const TileAndRowMirrorInRightToLeft: Story = {
       box.querySelector<HTMLElement>(`[data-layout="${layout}"]`)!;
     for (const layout of ['tile', 'row']) {
       expectMirrored(canvasElement, (box) => within(item(box, layout)).getByText('Q3 report.pdf'));
-      expectMirrored(canvasElement, (box) => within(item(box, layout)).getByText('2.4 MB'));
+      const meta = (box: HTMLElement) =>
+        within(item(box, layout)).getByText('2.4 MB · Edited yesterday');
+      expectMirrored(canvasElement, meta);
+      // The size leads the line in both directions.
+      for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
+        expectReadsLeftToRight(meta(box));
       const ltr = directionBox(canvasElement, 'ltr');
       const rtl = directionBox(canvasElement, 'rtl');
       const star = (box: HTMLElement) =>

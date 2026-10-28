@@ -149,12 +149,14 @@ export const ValueReadsLeftToRightInRightToLeft: Story = {
       <div className="space-y-2">
         <TrendDelta value={12.4} />
         <TrendDelta value={-3.1} label="vs last week" />
+        <TrendDelta value={0.4} label="30 days" />
       </div>
     )),
   play: ({ canvasElement }) => {
     for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
       expectReadsLeftToRight(within(box).getByText('+12.4%'));
       expectReadsLeftToRight(within(box).getByText('-3.1%'));
+      expectReadsLeftToRight(within(box).getByText('30 days'));
       // An arrow that points up or down is not turned around.
       for (const name of ['trending-up', 'trending-down'])
         expect(getComputedStyle(box.querySelector(`svg.lucide-${name}`)!).scale).toBe('none');

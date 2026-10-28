@@ -9,6 +9,7 @@ import {
   expectFocusRing,
   expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectRefFocuses,
   inEachTheme,
   expectTextContrast,
@@ -456,5 +457,18 @@ export const LabelAndIconMirrorInRightToLeft: Story = {
     const arrow = (box: HTMLElement) => box.querySelector('svg.lucide-trending-up')!;
     expect(getComputedStyle(arrow(rtl)).scale).toBe('none');
     expect(getComputedStyle(arrow(ltr)).scale).toBe('none');
+  },
+};
+
+/** A `sub` that starts with a number keeps its order in a right-to-left card. */
+export const SubReadsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <KpiCard label="Crit alerts" value="3" sub="2 escalated" icon={ShieldAlert} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
+      expectReadsLeftToRight(within(box).getByText('2 escalated'));
   },
 };
