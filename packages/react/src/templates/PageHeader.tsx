@@ -28,7 +28,7 @@ export type PageHeaderProps = {
   icon?: ElementType;
   /** Color of the icon tile, from `INTENT_STYLE`. Default `brand`. Needs `icon`. */
   iconIntent?: Intent;
-  /** Right-aligned actions (buttons, icon buttons, etc.) */
+  /** Actions at the end of the line (buttons, icon buttons, etc.) */
   actions?: ReactNode;
   className?: string;
 };
@@ -53,7 +53,9 @@ const Root = ({
 }: PageHeaderProps) => {
   const text = (
     <>
-      <Heading className="text-xl font-bold text-[var(--color-text-primary)]">{title}</Heading>
+      <Heading className="text-xl font-bold text-[var(--color-text-primary)]">
+        <bdi>{title}</bdi>
+      </Heading>
       {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
       {!breadcrumb && description && (
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>

@@ -81,7 +81,7 @@ export const ProfileHeader = ({
     ) : (
       <div
         aria-hidden="true"
-        className="from-brand-500/20 via-brand-500/5 to-brand-500/15 h-24 bg-gradient-to-br sm:h-36"
+        className="from-brand-500/20 via-brand-500/5 to-brand-500/15 h-24 bg-gradient-to-br sm:h-36 rtl:bg-gradient-to-bl"
       />
     )}
     <div className="flex flex-col gap-x-5 gap-y-3 px-4 sm:flex-row sm:flex-wrap sm:items-start sm:px-6">
@@ -97,12 +97,14 @@ export const ProfileHeader = ({
       <div className="min-w-0 flex-1 basis-60 sm:pt-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <Heading className="text-xl font-bold break-words text-[var(--color-text-primary)]">
-            {name}
+            <bdi>{name}</bdi>
           </Heading>
           {badges}
         </div>
         {headline && (
-          <p className="mt-1 text-sm break-words text-[var(--color-text-secondary)]">{headline}</p>
+          <p className="mt-1 text-sm break-words text-[var(--color-text-secondary)]">
+            <bdi>{headline}</bdi>
+          </p>
         )}
         {meta && (
           <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-[var(--color-text-muted)]">

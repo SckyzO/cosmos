@@ -98,7 +98,8 @@ export const ChatMessage = ({
   const state = status && STATUS[status];
   const body = (
     <>
-      <span className="sr-only">{`${sender}${time ? `, ${time}` : ''}: `}</span>
+      {/* A bdi: the sender's name must not decide the direction of the text next to it (`dir="auto"`). */}
+      <bdi className="sr-only">{`${sender}${time ? `, ${time}` : ''}: `}</bdi>
       {text === undefined ? children : <MessageText text={text} />}
       {streaming && (
         <span
