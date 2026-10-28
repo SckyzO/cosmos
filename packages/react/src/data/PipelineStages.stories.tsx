@@ -2,13 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
   expectFocusRing,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   keyToEnd,
   keyToStart,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { PipelineStages, type PipelineStage } from './PipelineStages';
 
@@ -391,5 +395,35 @@ export const ContrastInEveryTheme: Story = {
       }
       expectTextContrast(canvas.getByText('54.8%'));
     });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The first stage is at the start, each arrow points at the next stage (turned around in right to
+ * left), and the arrow of the stacked layout, which points down, does not change.
+ */
+export const StagesAndArrowsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <PipelineStages stages={DEALS} />),
+  play: ({ canvasElement }) => {
+    const stage = (box: HTMLElement, index: number) => within(box).getAllByRole('listitem')[index];
+    expectMirrored(canvasElement, (box) => stage(box, 0));
+    expectMirrored(canvasElement, (box) => stage(box, 4));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Lead'));
+    for (const [dir, scale] of [
+      ['ltr', 'none'],
+      ['rtl', '-1 1'],
+    ] as const) {
+      const box = directionBox(canvasElement, dir);
+      const connector = within(box).getAllByRole('listitem')[1].firstElementChild!;
+      const arrow = connector.querySelector('.lucide-arrow-right')!;
+      expect(arrow).toBeVisible();
+      expect(getComputedStyle(arrow).scale).toBe(scale);
+      expect(getComputedStyle(connector.querySelector('.lucide-arrow-down')!).scale).toBe('none');
+      // The next stage is further along the line than the first.
+      expect(startOffset(stage(box, 1), box)).toBeGreaterThan(startOffset(stage(box, 0), box));
+    }
   },
 };

@@ -1,8 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Cpu, Database, HardDrive, Server } from 'lucide-react';
 import { createRef } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
-import { expectRefFocuses } from '../storybook-helpers';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectRefFocuses,
+} from '../storybook-helpers';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import { Row } from './Row';
@@ -155,5 +161,35 @@ export const ForwardsRef: Story = {
   play: async ({ canvas }) => {
     await expectRefFocuses(linkRef, canvas.getByRole('link', { name: /Linked/ }));
     await expectRefFocuses(buttonRef, canvas.getByRole('button', { name: /Pressed/ }));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The icon is at the start, the chevron or the status at the end, and the chevron points onward. */
+export const IconAndChevronMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="max-w-md space-y-1">
+        <Row
+          icon={Server}
+          title="Server alpha-01"
+          subtitle="Rack 01-A · Slot 5"
+          onClick={() => {}}
+        />
+        <Row icon={Server} title="server-prod-01" subtitle="DC Paris" status="OK" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg.lucide-server')!.parentElement);
+    expectMirrored(canvasElement, (box) => within(box).getByText('Server alpha-01'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Rack 01-A · Slot 5'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const chevron = (box: HTMLElement) => box.querySelector('svg.lucide-chevron-right')!;
+    expect(endOffset(chevron(rtl), rtl)).toBeCloseTo(endOffset(chevron(ltr), ltr), 0);
+    expect(getComputedStyle(chevron(ltr)).scale).toBe('none');
+    expect(getComputedStyle(chevron(rtl)).scale).toBe('-1 1');
   },
 };

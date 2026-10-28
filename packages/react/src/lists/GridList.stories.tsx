@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { Mail, Phone } from 'lucide-react';
 import { placeholderAvatar } from '../storybook-avatars';
+import { bothDirections, directionBox, expectMirrored, startOffset } from '../storybook-helpers';
 import { GridList } from './GridList';
 
 const meta = {
@@ -176,5 +177,48 @@ export const FooterActionAddsMsPxAfterFirst: Story = {
   play: async ({ canvasElement }) => {
     const wrap = canvasElement.querySelector('[data-testid="b"]')?.parentElement;
     await expect(wrap?.className ?? '').toMatch(/-ms-px/);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The cards fill the grid from the start, and a footer's first action is the one at the start. */
+export const CardsAndFooterMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <GridList cols={2}>
+        {['Aiden Park', 'Mei Tanaka'].map((name) => (
+          <GridList.Card key={name}>
+            <div className="p-6 text-sm font-medium text-gray-900 dark:text-white">{name}</div>
+            <GridList.Footer>
+              <GridList.FooterAction href="mailto:contact@example.com">
+                <Mail className="size-5" aria-hidden />
+                Email
+              </GridList.FooterAction>
+              <GridList.FooterAction index={1} href="tel:+33000000000">
+                <Phone className="size-5" aria-hidden />
+                Call
+              </GridList.FooterAction>
+            </GridList.Footer>
+          </GridList.Card>
+        ))}
+      </GridList>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByText('Aiden Park'));
+    expectMirrored(canvasElement, (box) => within(box).getAllByRole('link', { name: 'Email' })[0]);
+    expectMirrored(canvasElement, (box) => within(box).getAllByRole('link', { name: 'Call' })[1]);
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [first, second] = within(box).getAllByRole('listitem');
+      expect(startOffset(first, box)).toBeLessThan(startOffset(second, box));
+      const email = within(first).getByRole('link', { name: 'Email' });
+      const call = within(first).getByRole('link', { name: 'Call' });
+      expect(startOffset(email, box)).toBeLessThan(startOffset(call, box));
+      // The footer's outer corners are round: the bottom start one on the first action.
+      expect(getComputedStyle(email).borderEndStartRadius).not.toBe('0px');
+      expect(getComputedStyle(call).borderEndEndRadius).not.toBe('0px');
+    }
   },
 };

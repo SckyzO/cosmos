@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { EventCalendar, type CalendarEvent } from './EventCalendar';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 
 const TODAY = new Date(2026, 4, 7);
 
@@ -366,5 +373,48 @@ export const Mobile: Story = {
 
     await userEvent.click(canvas.getByRole('button', { name: 'Wednesday, May 13, 2026' }));
     await expect(canvas.getByText('No events')).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The previous month is at the start with a chevron that points to it, the week starts at the
+ * start edge, and a day cell keeps its divider on the side the next day is on.
+ */
+export const MonthNavigationAndWeekMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => bothDirections(() => <EventCalendar {...args} />),
+  play: async ({ canvasElement }) => {
+    const button = (box: HTMLElement, name: string) => within(box).getByRole('button', { name });
+    expectMirrored(canvasElement, (box) => button(box, 'Previous month'));
+    expectMirrored(canvasElement, (box) => button(box, 'Next month'));
+    // Monday, the first weekday, and the first cell of the grid, at the start.
+    expectMirrored(canvasElement, (box) => box.querySelector('[aria-hidden] > span'));
+    const monday = (box: HTMLElement) =>
+      within(box).getByRole('group', { name: 'Monday, April 27, 2026' });
+    expectMirrored(canvasElement, monday);
+    for (const [dir, scale] of [
+      ['ltr', 'none'],
+      ['rtl', '-1 1'],
+    ] as const) {
+      const box = directionBox(canvasElement, dir);
+      const previous = button(box, 'Previous month');
+      const next = button(box, 'Next month');
+      expect(startOffset(previous, box)).toBeLessThan(startOffset(next, box));
+      // Both chevrons are turned around in right to left, so each still points at its month.
+      expect(previous.querySelector('svg')).toHaveClass('lucide-chevron-left');
+      expect(next.querySelector('svg')).toHaveClass('lucide-chevron-right');
+      for (const control of [previous, next])
+        expect(getComputedStyle(control.querySelector('svg')!).scale).toBe(scale);
+      // The divider is on the end side of every day but the last of a week.
+      expect(getComputedStyle(monday(box)).borderInlineEndWidth).toBe('1px');
+      expect(
+        getComputedStyle(within(box).getByRole('group', { name: 'Sunday, May 3, 2026' }))
+          .borderInlineEndWidth
+      ).toBe('0px');
+      await userEvent.click(previous);
+      await expect(within(box).getByRole('heading', { name: 'April 2026' })).toBeVisible();
+    }
   },
 };

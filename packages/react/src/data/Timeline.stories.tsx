@@ -3,7 +3,11 @@ import { AlertTriangle, Bell, CheckCircle2, Database, Rocket, Server, Wrench } f
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectGraphicContrast,
+  expectMirrored,
   expectTextContrast,
   inEachTheme,
   startOffset,
@@ -93,7 +97,7 @@ const stepperItems: TimelineItem[] = [
 export const Stepper: Story = { args: { items: stepperItems, variant: 'stepper' } };
 
 // One event per state, the last one without `intent`. The `dot`, `avatar` and `card` variants
-// color their marker per item: the dot, a ring around the avatar, the left edge of the card.
+// color their marker per item: the dot, a ring around the avatar, the start edge of the card.
 type TitledItem = TimelineItem & { title: string };
 
 const intentItems: TitledItem[] = [
@@ -226,7 +230,7 @@ export const AvatarWithIntent: Story = {
 };
 
 /**
- * `intent` gives the card a 4px left edge in its color, the other three sides stay the 1px gray
+ * `intent` gives the card a 4px start edge in its color, the other three sides stay the 1px gray
  * frame. Without it the card is the plain frame.
  */
 export const CardWithIntent: Story = {
@@ -545,5 +549,64 @@ export const TimeStyle: Story = {
     await expect(style.fontFamily).not.toMatch(/mono/i);
     // text-2xs: 11px at the default text size.
     await expect(style.fontSize).toBe('11px');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The dots sit at the start with their rail and the time at the end of the title row. */
+export const RailAndTimeMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={items} variant="dot" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getAllByRole('listitem')[0].querySelector('span.rounded-full')
+    );
+    // The rail is the line under the dot, centred on it.
+    expectMirrored(
+      canvasElement,
+      (box) => within(box).getAllByRole('listitem')[0].querySelector('span.w-px'),
+      0
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByText('server-prod-01 marked CRIT'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    expect(endOffset(within(rtl).getByText('5m ago'), rtl)).toBeCloseTo(
+      endOffset(within(ltr).getByText('5m ago'), ltr),
+      0
+    );
+  },
+};
+
+/** The coloured edge of a card is on its start side, and the padding follows it. */
+export const CardEdgeIsOnTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={intentItems.slice(0, 2)} variant="card" />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const card = within(box).getAllByRole('listitem')[0];
+      const style = getComputedStyle(card);
+      expect(dir === 'rtl' ? style.borderRightWidth : style.borderLeftWidth).toBe('4px');
+      expect(dir === 'rtl' ? style.borderLeftWidth : style.borderRightWidth).toBe('1px');
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('server-prod-01 marked CRIT'));
+  },
+};
+
+/** The cards alternate from the start side, and swap sides with the direction. */
+export const AlternatingSwapsSidesInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={items} variant="alternating" />),
+  play: ({ canvasElement }) => {
+    const card = (box: HTMLElement, index: number) =>
+      within(box).getAllByRole('listitem')[index].querySelector('.rounded-xl')!;
+    expectMirrored(canvasElement, (box) => card(box, 0));
+    expectMirrored(canvasElement, (box) => card(box, 1));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      // The first card is on the start side of the line, the second on the other one.
+      expect(startOffset(card(box, 0), box)).toBeLessThan(startOffset(card(box, 1), box));
+    }
   },
 };

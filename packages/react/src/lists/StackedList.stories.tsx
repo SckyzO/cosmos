@@ -3,7 +3,13 @@ import { Activity, MessageCircle, MoreVertical } from 'lucide-react';
 import { Fragment } from 'react';
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
-import { startOffset } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  startOffset,
+} from '../storybook-helpers';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -851,7 +857,7 @@ export const DetailsStayOnOneLineWhenNarrow: Story = {
   },
 };
 
-/** `meta` stays the right-hand column; only `details` is the dotted line under the title. */
+/** `meta` stays the end column; only `details` is the dotted line under the title. */
 export const MetaAndDetailsAreDistinct: Story = {
   tags: ['!dev'],
   render: () => (
@@ -1067,5 +1073,56 @@ export const CardHeaderSlotsRender: Story = {
       startOffset(heading, list) + heading.getBoundingClientRect().width
     );
     await expect(within(canvas.getByTestId('without')).queryByRole('heading')).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The rank, the avatar and the text are at the start; the meta, the chevron and a card's action at the end. */
+export const RowsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <StackedList
+        card
+        title="Slowest endpoints"
+        description="p95 over the last hour"
+        action={<button type="button">View all</button>}
+      >
+        <StackedList.Item
+          rank={1}
+          avatar={
+            <img
+              alt=""
+              src={placeholderAvatar('Aiden Park', 96)}
+              className="size-10 flex-none rounded-full"
+            />
+          }
+          title="/api/v1/query_range"
+          subtitle="Aiden Park"
+          meta={<p className="text-xs">1.8 s</p>}
+          href="#row"
+          chevron
+        />
+      </StackedList>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByText('Slowest endpoints'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('1'));
+    expectMirrored(canvasElement, (box) => box.querySelector('img'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('/api/v1/query_range'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Aiden Park'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const end = (box: HTMLElement) => ({
+      action: endOffset(within(box).getByRole('button', { name: 'View all' }), box),
+      meta: endOffset(within(box).getByText('1.8 s'), box),
+      chevron: endOffset(box.querySelector('svg.lucide-chevron-right')!, box),
+    });
+    expect(end(rtl).action).toBeCloseTo(end(ltr).action, 0);
+    expect(end(rtl).meta).toBeCloseTo(end(ltr).meta, 0);
+    expect(end(rtl).chevron).toBeCloseTo(end(ltr).chevron, 0);
+    expect(getComputedStyle(ltr.querySelector('svg.lucide-chevron-right')!).scale).toBe('none');
+    expect(getComputedStyle(rtl.querySelector('svg.lucide-chevron-right')!).scale).toBe('-1 1');
   },
 };

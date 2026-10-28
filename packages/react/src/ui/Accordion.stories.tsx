@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Bug, CreditCard, Info, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
-import { inEachTheme } from '../storybook-helpers';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { bothDirections, expectMirrored, inEachTheme } from '../storybook-helpers';
 import { Accordion } from './Accordion';
 import { Button } from './Button';
 
@@ -594,5 +594,53 @@ export const ContentFollowsTheIcon: Story = {
     await expect(textStart(body)).toBeCloseTo(textStart(canvas.getByText('Row')), 0);
     await userEvent.click(canvas.getByRole('button', { name: 'Toggle icon' }));
     await waitFor(() => expect(paddingStart()).toBe(40));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The icon and the title are at the start, the chevron at the end. The chevron points down and
+ * turns over when open, in both directions: it is not turned around.
+ */
+export const ChevronStaysPutInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // The open row's content is a landmark named after its trigger: one name per box.
+    let count = 0;
+    return bothDirections(() => {
+      const n = ++count;
+      return (
+        <Accordion type="multiple" defaultValue={['open']}>
+          <Accordion.Item value="open">
+            <Accordion.Trigger icon={Bug}>{`Open row ${n}`}</Accordion.Trigger>
+            <Accordion.Content>Body of the open row</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="closed">
+            <Accordion.Trigger>{`Closed row ${n}`}</Accordion.Trigger>
+            <Accordion.Content>Body of the closed row</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      );
+    });
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg.lucide-bug'));
+    expectMirrored(canvasElement, (box) => within(box).getByText(/^Open row/));
+    expectMirrored(canvasElement, (box) => within(box).getByText(/^Closed row/));
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
+      const chevron = (name: RegExp) =>
+        within(box).getByRole('button', { name }).querySelector('svg.lucide-chevron-down')!;
+      expect(getComputedStyle(chevron(/^Open row/)).scale).toBe('none');
+      expect(getComputedStyle(chevron(/^Closed row/)).scale).toBe('none');
+      expect(getComputedStyle(chevron(/^Open row/)).rotate).toBe('180deg');
+      expect(getComputedStyle(chevron(/^Closed row/)).rotate).toBe('none');
+    }
+    // The chevron of a row is at the end of it, on the same side in both.
+    expectMirrored(canvasElement, (box) =>
+      within(box)
+        .getByRole('button', { name: /^Closed row/ })
+        .querySelector('svg')
+    );
   },
 };

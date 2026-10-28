@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
@@ -211,5 +213,26 @@ export const TicksEachSecond: Story = {
     await waitFor(() => expect(timer.textContent).not.toBe(first), { timeout: 2500 });
     const second = timer.textContent;
     await waitFor(() => expect(timer.textContent).not.toBe(second), { timeout: 2500 });
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** A clock reads the same in a right-to-left page: digits and AM/PM keep their order. */
+export const TimeReadsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div className="space-y-2">
+        <Clock {...args} showDate label="Tokyo" />
+        <Clock {...args} variant="card" hour12={false} />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
+      const twelve = within(box).getByText(/^02:05:09\sPM$/);
+      expectReadsLeftToRight(twelve);
+      expectReadsLeftToRight(within(box).getByText('14:05:09'));
+    }
   },
 };
