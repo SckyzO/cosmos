@@ -86,23 +86,23 @@ export const ChatToolCall = ({
         aria-expanded={open}
         aria-controls={open ? bodyId : undefined}
         onClick={() => setOpen(!open)}
-        className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-3 text-left hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5"
+        className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-3 text-start hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5"
       >
         <ChevronRight
           aria-hidden
           className={clsx(
             'h-4 w-4 shrink-0 text-[var(--color-text-muted)] motion-safe:transition-transform',
-            open && 'rotate-90'
+            open ? 'rotate-90' : 'rtl:rotate-180'
           )}
         />
         <Wrench aria-hidden className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
         <span className="min-w-0 truncate font-mono text-xs text-[var(--color-text-primary)]">
-          {name}
+          <bdi>{name}</bdi>
         </span>
         <span
           aria-live="polite"
           className={clsx(
-            'text-2xs ml-auto inline-flex shrink-0 items-center gap-1.5 font-medium',
+            'text-2xs ms-auto inline-flex shrink-0 items-center gap-1.5 font-medium',
             statusColor
           )}
         >
@@ -114,7 +114,9 @@ export const ChatToolCall = ({
           )}
           {status === 'done' && <Check aria-hidden className="h-3.5 w-3.5" />}
           {status === 'failed' && <AlertCircle aria-hidden className="h-3.5 w-3.5" />}
-          <span>{statusText}</span>
+          <span>
+            <bdi>{statusText}</bdi>
+          </span>
         </span>
       </button>
       {open && (

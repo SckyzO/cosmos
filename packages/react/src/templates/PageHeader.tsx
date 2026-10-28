@@ -22,13 +22,13 @@ export type PageHeaderProps = {
    */
   meta?: ReactNode;
   /**
-   * Icon in a rounded tile left of the title and description: 48px, 40px below `sm`. It is
+   * Icon in a rounded tile before the title and description: 48px, 40px below `sm`. It is
    * decorative (`aria-hidden`); the title says what the page is.
    */
   icon?: ElementType;
   /** Color of the icon tile, from `INTENT_STYLE`. Default `brand`. Needs `icon`. */
   iconIntent?: Intent;
-  /** Right-aligned actions (buttons, icon buttons, etc.) */
+  /** Actions at the end of the line (buttons, icon buttons, etc.) */
   actions?: ReactNode;
   className?: string;
 };
@@ -53,7 +53,9 @@ const Root = ({
 }: PageHeaderProps) => {
   const text = (
     <>
-      <Heading className="text-xl font-bold text-[var(--color-text-primary)]">{title}</Heading>
+      <Heading className="text-xl font-bold text-[var(--color-text-primary)]">
+        <bdi>{title}</bdi>
+      </Heading>
       {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
       {!breadcrumb && description && (
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>
@@ -104,7 +106,7 @@ export type PageHeaderMetaItemProps = {
  */
 const MetaItem = ({ icon: Icon, children }: PageHeaderMetaItemProps) => (
   <div className="flex items-center">
-    {Icon && <Icon className="mr-1.5 size-5 shrink-0 text-[var(--color-text-muted)]" aria-hidden />}
+    {Icon && <Icon className="me-1.5 size-5 shrink-0 text-[var(--color-text-muted)]" aria-hidden />}
     {children}
   </div>
 );

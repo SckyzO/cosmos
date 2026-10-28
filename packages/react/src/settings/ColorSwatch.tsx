@@ -51,7 +51,7 @@ export const ColorSwatch = ({
       className="flex h-8 w-full items-center justify-center rounded-lg"
       style={{ backgroundColor: hex }}
     />
-    {active && <SelectedMark className="absolute top-1 right-1" />}
+    {active && <SelectedMark className="inset-e-1 absolute top-1" />}
     <span
       className={clsx(
         'text-2xs leading-none font-medium',

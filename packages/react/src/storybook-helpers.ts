@@ -166,6 +166,38 @@ export const endOffset = (element: Element, box: Element) => {
 };
 
 /**
+ * The x of the start edge of `rect` along the line, rounded: its left edge in left to right, minus
+ * its right edge in right to left, so it grows toward the end of the line in both directions and
+ * one comparison holds in both. `endEdge` is the same for the end edge. `at` is where the
+ * direction is read, `<html>` by default.
+ */
+export const startEdge = (rect: DOMRect, at: Element = document.documentElement) =>
+  Math.round(getComputedStyle(at).direction === 'rtl' ? -rect.right : rect.left);
+
+export const endEdge = (rect: DOMRect, at: Element = document.documentElement) =>
+  Math.round(getComputedStyle(at).direction === 'rtl' ? -rect.left : rect.right);
+
+/**
+ * Scrolls `scroller` by `distance` px toward the end of the line: `scrollLeft` goes up in left to
+ * right and down (negative) in right to left. A distance past the end stops at the end.
+ */
+export const scrollAlong = (scroller: HTMLElement, distance: number) => {
+  scroller.scrollLeft = getComputedStyle(scroller).direction === 'rtl' ? -distance : distance;
+};
+
+/**
+ * Play-function assertion: `element` sits past the end edge of `anchor`, on the right of it where
+ * the page reads left to right and on the left of it where it reads right to left. For a tooltip
+ * or a flyout that opens toward the end of a sidebar, by `slack` px at most overlapping.
+ */
+export const expectBeyondEnd = (element: Element, anchor: Element, slack = 0) => {
+  const e = element.getBoundingClientRect();
+  const a = anchor.getBoundingClientRect();
+  const gap = getComputedStyle(anchor).direction === 'rtl' ? a.left - e.right : e.left - a.right;
+  expect(gap, 'distance past the end edge').toBeGreaterThanOrEqual(-slack);
+};
+
+/**
  * Play-function assertion for a story rendered with `bothDirections`: the element `find` picks
  * in each box sits at the same distance from the start edge (so it moved to the other side when
  * the direction flipped), by `precision` decimal places. Returns both elements, for the

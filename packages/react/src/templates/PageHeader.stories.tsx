@@ -1,7 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Clock, Cpu, MapPin, Plug, Plus, RefreshCw, Server, ShieldAlert } from 'lucide-react';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectBeyondEnd,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { PageHeader } from './PageHeader';
 import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
@@ -65,7 +74,7 @@ export const WithActions: Story = {
 };
 
 // TUI Plus pattern "With meta and actions" — title + meta row (icons + text)
-// + right-aligned actions.
+// + end-aligned actions.
 export const WithMetaAndActions: Story = {
   render: () => (
     <PageHeader
@@ -213,10 +222,8 @@ export const IconTileIsDecorativeAnd48px: Story = {
     await expect(tile.querySelector('svg')).not.toBeNull();
     const box = tile.getBoundingClientRect();
     await expect([box.width, box.height]).toEqual([48, 48]);
-    // To the left of the title, and the title is still the page's only name for itself.
-    await expect(box.right).toBeLessThanOrEqual(
-      canvas.getByRole('heading', { name: 'Integrations' }).getBoundingClientRect().left
-    );
+    // Before the title, and the title is still the page's only name for itself.
+    expectBeyondEnd(canvas.getByRole('heading', { name: 'Integrations' }), tile);
     await expect(canvas.getAllByRole('heading')).toHaveLength(1);
   },
 };
@@ -250,5 +257,38 @@ export const MobileWithIcon: Story = {
     const button = canvas.getByRole('button', { name: 'Add integration' }).getBoundingClientRect();
     // The actions wrap under the title column instead of squeezing it.
     await expect(button.top).toBeGreaterThanOrEqual(title.bottom);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The title starts at the start edge, the actions end at the end edge, the icon tile leads the title. */
+export const FollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'Integrations', description: 'Connect the tools.', icon: Plug },
+  render: (args) =>
+    bothDirections(() => (
+      <PageHeader
+        {...args}
+        meta={<PageHeader.MetaItem icon={MapPin}>Lisbon</PageHeader.MetaItem>}
+        actions={<PageActionButton icon={Plus}>New rule</PageActionButton>}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('[aria-hidden="true"]'));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('heading', { name: 'Integrations' })
+    );
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const action = within(box).getByRole('button', { name: 'New rule' });
+      // The actions end at the end edge of the header, the title is not under them.
+      expect(endOffset(action, box)).toBeLessThanOrEqual(1);
+      expectBeyondEnd(action, within(box).getByRole('heading', { name: 'Integrations' }));
+      // The meta icon leads its text: it is at the start of the item.
+      const meta = within(box).getByText('Lisbon');
+      const icon = meta.querySelector('svg')!;
+      expect(startOffset(icon, meta)).toBeLessThan(endOffset(icon, meta));
+    }
   },
 };

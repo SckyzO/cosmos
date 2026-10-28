@@ -42,17 +42,21 @@ export const ActiveFiltersBar = ({
           onRemove={() => onClearOne(f.key)}
           removeLabel={`Clear ${f.label} filter`}
         >
-          <span className="font-semibold capitalize">{f.label}</span>
+          <span className="font-semibold capitalize">
+            <bdi>{f.label}</bdi>
+          </span>
           <span aria-hidden className="opacity-60">
             {' · '}
           </span>
-          <span className="inline-block max-w-[180px] truncate align-bottom">{f.value}</span>
+          <span className="inline-block max-w-[180px] truncate align-bottom">
+            <bdi>{f.value}</bdi>
+          </span>
         </Tag>
       ))}
       <button
         type="button"
         onClick={onClearAll}
-        className="focus-visible:focus-indicator ml-1 rounded text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+        className="focus-visible:focus-indicator ms-1 rounded text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Clear all
       </button>

@@ -86,10 +86,10 @@ export const Solid: Story = {
   ),
 };
 
-export const WithIconLeft: Story = {
+export const WithIconStart: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="With left icon">
+      <SectionCard title="With start icon">
         <div className="flex flex-wrap items-center gap-2">
           <Badge intent="success" icon={Check}>
             Verified
@@ -112,10 +112,10 @@ export const WithIconLeft: Story = {
   ),
 };
 
-export const WithIconRight: Story = {
+export const WithIconEnd: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="With right icon">
+      <SectionCard title="With end icon">
         <div className="flex flex-wrap items-center gap-2">
           <Badge intent="brand" icon={Star} iconPosition="end">
             Featured

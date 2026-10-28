@@ -22,7 +22,7 @@ export type ChatSourcesProps = {
 };
 
 const CHIP =
-  'text-xs inline-flex max-w-[min(100%,16.25rem)] items-center gap-1.5 rounded-full border bg-[var(--color-bg-panel)] py-[3px] pr-2.5 pl-1 text-[var(--color-text-primary)]';
+  'text-xs inline-flex max-w-[min(100%,16.25rem)] items-center gap-1.5 rounded-full border bg-[var(--color-bg-panel)] py-[3px] pe-2.5 ps-1 text-[var(--color-text-primary)]';
 
 /**
  * Where an answer comes from: numbered chips under a "Sources" caption, wrapping onto several
@@ -56,10 +56,12 @@ export const ChatSources = ({ sources, label = 'Sources', className }: ChatSourc
                 {i + 1}
               </span>
               <span title={title} className="min-w-0 truncate font-medium">
-                {title}
+                <bdi>{title}</bdi>
               </span>
               {shown && (
-                <span className="text-2xs shrink-0 text-[var(--color-text-muted)]">{shown}</span>
+                <span className="text-2xs shrink-0 text-[var(--color-text-muted)]">
+                  <bdi>{shown}</bdi>
+                </span>
               )}
             </>
           );

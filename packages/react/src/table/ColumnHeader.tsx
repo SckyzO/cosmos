@@ -58,7 +58,7 @@ export const ColumnHeader = ({
   // The button shows how many values are checked; its name says so too, with the number as a
   // word of its own (WCAG 2.5.3). A comma, not parentheses: those do not count in a name.
   const filterName = typeof label === 'string' ? `Filter ${label}` : 'Filter column';
-  // The label and the filter button: the dropdown opens under them, left-aligned.
+  // The label and the filter button: the dropdown opens under them, aligned to their start.
   const anchorRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLButtonElement>(null);
 
@@ -76,7 +76,7 @@ export const ColumnHeader = ({
             onClick={onSortToggle}
             className="focus-visible:focus-indicator flex items-center gap-1 rounded uppercase transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
-            {label}
+            <bdi>{label}</bdi>
             {/* Always drawn, so a column that sorts is recognisable before any sort: muted until
                 it is the sorted one. */}
             {sortDir === 'asc' ? (
@@ -88,7 +88,9 @@ export const ColumnHeader = ({
             )}
           </button>
         ) : (
-          <span>{label}</span>
+          <span>
+            <bdi>{label}</bdi>
+          </span>
         )}
 
         {filterable && filterValues.length > 0 && (

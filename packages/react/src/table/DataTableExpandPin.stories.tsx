@@ -2,6 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MoreVertical } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import {
+  directionBox,
+  endEdge,
+  endOffset,
+  scrollAlong,
+  startEdge,
+  startOffset,
+} from '../storybook-helpers';
 import { DataTable } from './DataTable';
 import { HOSTS, hostColumns, type Host } from './storybook-hosts';
 import type { ColumnDef } from './types';
@@ -298,25 +306,25 @@ export const PinnedColumnsKeepTheirPlace: Story = {
     const action = cells[cells.length - 1];
     const heads = within(table).getAllByRole('columnheader');
     const frame = box(scroller);
-    const rackBefore = box(rack).left;
-    scroller.scrollLeft = 300;
-    await waitFor(() => expect(box(rack).left).toBeLessThan(rackBefore));
+    const rackBefore = startEdge(box(rack));
+    scrollAlong(scroller, 300);
+    await waitFor(() => expect(startEdge(box(rack))).toBeLessThan(rackBefore));
     // Start side: the selection column at the edge, the host right after it, header and body alike.
-    await expect(Math.round(box(select).left)).toBe(Math.round(frame.left));
-    await expect(Math.round(box(host).left)).toBe(Math.round(box(select).right));
-    await expect(Math.round(box(heads[1]).left)).toBe(Math.round(box(host).left));
+    await expect(startEdge(box(select))).toBe(startEdge(frame));
+    await expect(startEdge(box(host))).toBe(endEdge(box(select)));
+    await expect(startEdge(box(heads[1]))).toBe(startEdge(box(host)));
     // End side: the action column at the edge, the status right before it.
-    await expect(Math.round(box(action).right)).toBe(Math.round(frame.right));
-    await expect(Math.round(box(status).right)).toBe(Math.round(box(action).left));
-    await expect(Math.round(box(heads[heads.length - 2]).left)).toBe(Math.round(box(status).left));
+    await expect(endEdge(box(action))).toBe(endEdge(frame));
+    await expect(endEdge(box(status))).toBe(startEdge(box(action)));
+    await expect(startEdge(box(heads[heads.length - 2]))).toBe(startEdge(box(status)));
     // Pinned cells are opaque, or the ones under them would show through.
     for (const cell of [select, host, status, action]) {
       await expect(getComputedStyle(cell).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
     }
     // Scrolled all the way, the end side has nothing under it any more.
-    scroller.scrollLeft = scroller.scrollWidth;
+    scrollAlong(scroller, scroller.scrollWidth);
     await waitFor(() => expect(casts(status)).toBe(false));
-    await expect(Math.round(box(status).right)).toBe(Math.round(box(action).left));
+    await expect(endEdge(box(status))).toBe(startEdge(box(action)));
   },
 };
 
@@ -334,11 +342,11 @@ export const PinnedEdgeShadowsFollowTheScroll: Story = {
     await waitFor(() => expect(casts(status), 'check 1 status').toBe(true));
     await expect(casts(host), 'check 2 host').toBe(false);
     // In the middle both do.
-    scroller.scrollLeft = 200;
+    scrollAlong(scroller, 200);
     await waitFor(() => expect(casts(host), 'check 3 host').toBe(true));
     await expect(casts(status), 'check 4 status').toBe(true);
     // At the end only the start side does.
-    scroller.scrollLeft = scroller.scrollWidth;
+    scrollAlong(scroller, scroller.scrollWidth);
     await waitFor(() => expect(casts(status), 'check 5 status').toBe(false));
     await expect(casts(host), 'check 6 host').toBe(true);
     // The edge fades give way to the pinned columns: no mask at either end.
@@ -355,7 +363,7 @@ export const FirstColumnKeepsItsWidthInAWideTable: Story = {
     await expect(scrollerOf(table).scrollWidth).toBeGreaterThan(scrollerOf(table).clientWidth);
     const [, host, rack] = within(table).getAllByRole('columnheader');
     await expect(Math.round(box(host).width)).toBe(150);
-    await expect(Math.round(box(rack).left)).toBe(Math.round(box(host).right));
+    await expect(startEdge(box(rack))).toBe(endEdge(box(host)));
   },
 };
 
@@ -375,15 +383,13 @@ export const SeveralPinnedColumnsAddUp: Story = {
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Hosts' });
     const scroller = scrollerOf(table);
-    scroller.scrollLeft = 400;
+    scrollAlong(scroller, 400);
     const cells = within(within(table).getAllByRole('row')[1]).getAllByRole('cell');
     // select, host, rack, … , updated, status, action: each pinned cell follows the one before it.
-    await waitFor(() =>
-      expect(Math.round(box(cells[2]).left)).toBe(Math.round(box(cells[1]).right))
-    );
+    await waitFor(() => expect(startEdge(box(cells[2]))).toBe(endEdge(box(cells[1]))));
     const n = cells.length;
-    await expect(Math.round(box(cells[n - 3]).right)).toBe(Math.round(box(cells[n - 2]).left));
-    await expect(Math.round(box(cells[n - 2]).right)).toBe(Math.round(box(cells[n - 1]).left));
+    await expect(endEdge(box(cells[n - 3]))).toBe(startEdge(box(cells[n - 2])));
+    await expect(endEdge(box(cells[n - 2]))).toBe(startEdge(box(cells[n - 1])));
   },
 };
 
@@ -406,10 +412,10 @@ export const PinnedOffsetsFollowTheTextSizeAndTheWidth: Story = {
     const cells = () => within(within(table).getAllByRole('row')[1]).getAllByRole('cell');
     const aligned = () => {
       const [select, host, rack] = cells();
-      expect(Math.round(box(host).left)).toBe(Math.round(box(select).right));
-      expect(Math.round(box(rack).left)).toBe(Math.round(box(host).right));
+      expect(startEdge(box(host))).toBe(endEdge(box(select)));
+      expect(startEdge(box(rack))).toBe(endEdge(box(host)));
     };
-    scrollerOf(table).scrollLeft = 300;
+    scrollAlong(scrollerOf(table), 300);
     const root = document.documentElement;
     const before = root.getAttribute('data-text-size');
     try {
@@ -424,6 +430,94 @@ export const PinnedOffsetsFollowTheTextSizeAndTheWidth: Story = {
     } finally {
       if (before === null) root.removeAttribute('data-text-size');
       else root.setAttribute('data-text-size', before);
+    }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The disclosure chevron points to the end of the line when closed, and the detail opens below. */
+export const ExpandChevronFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4">
+          <DataTable
+            aria-label={`Hosts ${dir}`}
+            rows={HOSTS.slice(0, 2)}
+            columns={summaryColumns}
+            rowKey={(r) => r.host}
+            renderExpandedRow={detail}
+            defaultExpandedRows={new Set(['node-a02'])}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const closed = within(box).getByRole('button', { name: /Show details for node-a01/ });
+      const open = within(box).getByRole('button', { name: /Hide details for node-a02/ });
+      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open`).toBe('none');
+      // The toggle column is the first: nearest the start edge.
+      const table = closed.closest('table')!;
+      expect(startOffset(closed, table), dir).toBeLessThan(endOffset(closed, table));
+    }
+  },
+};
+
+/**
+ * A start-pinned column sticks to the start edge and an end-pinned one to the end edge, in both
+ * directions, and the shadow of a pinned edge falls on the side the content scrolls under.
+ */
+export const PinnedColumnsStickToTheirEdgesInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4 max-w-3xl">
+          <DataTable
+            aria-label={`Hosts ${dir}`}
+            rows={HOSTS.slice(0, 3)}
+            columns={pinnedColumns}
+            rowKey={(r) => r.host}
+          />
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const side = directionBox(canvasElement, dir);
+      const table = within(side).getByRole('table');
+      const scroller = scrollerOf(table);
+      const cells = within(within(table).getAllByRole('row')[1]!).getAllByRole('cell');
+      const host = cells[0]!;
+      const status = cells[cells.length - 1]!;
+      await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+      scrollAlong(scroller, 300);
+      const frame = scroller.getBoundingClientRect();
+      // Pinned: the host column at the start edge of the scroller, the status at its end edge.
+      await waitFor(() => expect(startEdge(box(host), side)).toBe(startEdge(frame, side)));
+      await expect(endEdge(box(status), side)).toBe(endEdge(frame, side));
+      // Content scrolls under both, so both cast their shadow: toward the content, which is to the
+      // right of the start column in left to right and to its left in right to left.
+      const shadow = (el: Element) => getComputedStyle(el).boxShadow;
+      await waitFor(() =>
+        expect(shadow(host), `${dir}: start shadow`).toContain(
+          dir === 'ltr' ? ' 8px 0px 8px -8px' : ' -8px 0px 8px -8px'
+        )
+      );
+      await waitFor(() =>
+        expect(shadow(status), `${dir}: end shadow`).toContain(
+          dir === 'ltr' ? ' -8px 0px 8px -8px' : ' 8px 0px 8px -8px'
+        )
+      );
     }
   },
 };

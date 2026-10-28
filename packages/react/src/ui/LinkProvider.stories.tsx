@@ -16,7 +16,7 @@ import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { Row } from '../lists/Row';
 import { Breadcrumb } from '../navigation/Breadcrumb';
-import { mobileViewport } from '../storybook-helpers';
+import { mobileViewport, startOffset } from '../storybook-helpers';
 import { Link } from './Link';
 import { LinkProvider, type LinkComponent, type LinkComponentProps } from './LinkProvider';
 import { Menu } from './Menu';
@@ -480,7 +480,7 @@ export const DrawerClosesOnAProvidedLink: Story = {
     const hamburger = body().getByRole('button', { name: 'Open navigation' });
     await userEvent.click(hamburger);
     const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
-    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
 
     const servers = within(dialog).getByRole('link', { name: 'Servers' });
     await expect(servers).toHaveAttribute('data-router-link', 'router');

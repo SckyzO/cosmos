@@ -2,7 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Building2, Cpu, Server } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Breadcrumb } from './Breadcrumb';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Breadcrumb',
@@ -63,7 +71,11 @@ export const SeparatorDot: Story = { args: { items: PATH, separator: 'dot' } };
 export const SeparatorCustom: Story = {
   args: {
     items: PATH,
-    separator: <span className="text-xs text-[var(--color-text-muted)]">→</span>,
+    separator: (
+      <span className="inline-block text-xs text-[var(--color-text-muted)] rtl:-scale-x-100">
+        →
+      </span>
+    ),
   },
 };
 
@@ -228,9 +240,7 @@ export const Mobile: Story = {
     const current = within(nav)
       .getByText(/server-alpha-01/)
       .closest('[aria-current]')!;
-    await expect(current.getBoundingClientRect().right).toBeLessThanOrEqual(
-      nav.getBoundingClientRect().right
-    );
+    await expect(endOffset(current, nav)).toBeGreaterThanOrEqual(0);
     // The label is cut with an ellipsis, not clipped mid-word.
     const label = current.querySelector('span')!;
     await expect(getComputedStyle(label).textOverflow).toBe('ellipsis');
@@ -285,5 +295,34 @@ export const HomeIconOnASingleCrumb: Story = {
   args: { items: [{ label: 'Overview' }], homeIcon: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('img', { name: 'Home' })).toBeInTheDocument();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The trail starts at the start edge, its separators point the other way, and a label is an island. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    items: [
+      { label: 'Home', href: '/' },
+      { label: 'Library', href: '/library' },
+      { label: 'Breadcrumb' },
+    ],
+  },
+  render: (args) => {
+    // Both copies are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => <Breadcrumb {...args} aria-label={`Trail ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('link', { name: 'Home' }));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const separator of box.querySelectorAll('nav > div > svg')) {
+        expect(getComputedStyle(separator).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      }
+      expect(getComputedStyle(within(box).getByText('Home')).unicodeBidi).toBe('isolate');
+    }
   },
 };

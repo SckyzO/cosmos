@@ -1,7 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectPickerSelected, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  startOffset,
+  expectPickerSelected,
+  expectRefFocuses,
+  expectTextContrast,
+  keyToEnd,
+  keyToStart,
+} from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 import { ColorSwatch } from './ColorSwatch';
 
@@ -122,14 +133,14 @@ export const ArrowKeysMoveTheSelection: Story = {
 
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Sky', checked: true })).toHaveFocus();
     await expect(args.onChange).toHaveBeenLastCalledWith('sky');
     // The tab stop follows the selection.
     await expect(canvas.getByRole('radio', { name: 'Sky' })).toHaveAttribute('tabindex', '0');
     await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveAttribute('tabindex', '-1');
 
-    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
     await expect(canvas.getByRole('radio', { name: 'Slate', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toHaveFocus();
@@ -290,5 +301,43 @@ export const SelectedSharesThePickerTreatment: Story = {
   ),
   play: async ({ canvas }) => {
     expectPickerSelected(canvas.getByRole('radiogroup', { name: 'Accent' }));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The swatches run from the start edge, the check badge is on the end corner of the picked one,
+ * and the arrow keys follow the line: ArrowRight picks the next swatch in left to right, the
+ * previous one in right to left.
+ */
+export const PickerFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <AccentPicker colors={ACCENTS.slice(0, 4)} defaultValue="sky" aria-label="Accent" />
+    )),
+  play: async ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('radio', { name: 'Brand' }));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('radio', { name: 'Amber' }));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('radio', { name: 'Sky' }).querySelector('.bg-brand-500')
+    );
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const sky = within(box).getByRole('radio', { name: 'Sky' });
+      const mark = sky.querySelector<HTMLElement>('.bg-brand-500')!;
+      await expect(endOffset(mark, sky), `${dir}: check on the end corner`).toBeLessThan(
+        startOffset(mark, sky)
+      );
+      sky.focus();
+      // Physical keys on purpose: they are what the user presses.
+      await userEvent.keyboard('{ArrowRight}');
+      await expect(
+        within(box).getByRole('radio', { name: dir === 'ltr' ? 'Emerald' : 'Brand' })
+      ).toHaveFocus();
+      await userEvent.keyboard('{ArrowLeft}');
+      await expect(sky).toHaveFocus();
+    }
   },
 };

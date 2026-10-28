@@ -3,7 +3,7 @@ import { Bell, User } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from '../layout/Topbar';
-import { portalDocsParams } from '../storybook-helpers';
+import { endOffset, portalDocsParams } from '../storybook-helpers';
 import { AppearanceMenu } from './AppearanceMenu';
 import {
   applyAppearance,
@@ -127,7 +127,8 @@ export const PanelIsFlushWithTrigger: Story = {
     await waitFor(() => expect(panel()).toBeVisible());
     const t = trigger.getBoundingClientRect();
     const p = panel().getBoundingClientRect();
-    await expect(p.right).toBeCloseTo(t.right, 2);
+    // The panel lines up with the trigger's end edge, on the right or on the left.
+    await expect(endOffset(panel(), trigger)).toBeCloseTo(0, 2);
     await expect(p.top).toBeCloseTo(t.bottom + 8, 2);
   },
 };

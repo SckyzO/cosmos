@@ -94,7 +94,7 @@ export const PaletteCard = ({
           borderTop: `1px solid ${meta.preview.border}`,
         }}
       >
-        <span className="text-left">
+        <span className="text-start">
           <span className="block text-xs font-semibold" style={{ color: labelColor }}>
             {meta.label}
           </span>

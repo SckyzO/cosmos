@@ -108,13 +108,13 @@ export const SidebarToggle = ({
     >
       {panel ? (
         <>
-          <Icon className="h-5 w-5 shrink-0" aria-hidden />
+          <Icon className="h-5 w-5 shrink-0 rtl:-scale-x-100" aria-hidden />
           {!collapsed && <span>{drawer ? 'Close' : 'Collapse'}</span>}
         </>
       ) : (
-        // TailAdmin asymmetric hamburger — distinctive 3-line glyph
+        // TailAdmin asymmetric hamburger — distinctive 3-line glyph, its short line at the start
         <svg
-          className="fill-current"
+          className="fill-current rtl:-scale-x-100"
           width="16"
           height="12"
           viewBox="0 0 16 12"

@@ -1496,6 +1496,17 @@ And the arrow keys that move a card across a `KanbanBoard` follow where the colu
 the reading direction: with the first column on the right, ArrowLeft takes the card to the
 next one.
 
+The page layout follows the line too. A `Shell` puts its `Sidebar` at the start (on the right
+under `dir="rtl"`, with its edge, its collapse toggle and the drawer of the phone layout on that
+side) and its `secondary` panel at the end; `SplitView` runs its panes from the start. `Tabs`
+and the settings pickers swap ArrowLeft and ArrowRight with the direction, and a scrolling strip
+fades the side with more to see. The pinned columns of `DataTable` (`pin: 'start'` | `'end'`) and `Table`'s
+`stickyFirstColumn` stick to the start or end edge, with their shadow on the right side. In a
+`Chat`, a person's own messages sit at the end of the line and the others' at the start, and
+what was typed in a message or the composer reads in its own script. The `hotkeys` of a
+`RecordPager` are literal keys and do not follow the direction: give Previous the arrow that
+points toward it where the page reads right to left.
+
 Output keeps its order. Code (`CodeBlock`), logs (`LogViewer`, `JobLog`, and the message, fields
 and stack of `LogEntryDetail`) and keyboard keys (`Kbd`) read left to right in any page: they are
 `dir="ltr"` islands, so a number gutter stays at the left of its lines and a log scrolls from the
@@ -1520,9 +1531,9 @@ right.
 
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
 **Atoms**, **Actions**, **Forms**, **Data**, **Lists**, **Feedback**, **Overlays**,
-**Monitoring**, **Media**, **Status**, **Typography** and **Foundations**. The others still lay out
-for left to right and are the next ones in line: Navigation and Layout, Chat, Tables and Settings,
-then Pages. In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`)
+**Navigation**, **Layout**, **Chat**, **Tables**, **Settings**, **Monitoring**, **Media**,
+**Status**, **Typography** and **Foundations**. Pages still lay out for left to right and are the
+last in line. In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`)
 renders any story right to left.
 
 ## Themes and accents

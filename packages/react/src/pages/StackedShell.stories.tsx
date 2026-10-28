@@ -50,7 +50,7 @@ export const WithLighterPageHeader: Story = {
         <Navbar theme="dark">
           <Navbar.Brand>
             <Navbar.MobileMenuButton theme="dark" />
-            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <span className="ms-2 text-lg font-semibold text-white">Acme</span>
             <Navbar.Items>
               <Navbar.Item theme="dark" active href="#">
                 Dashboard
@@ -99,7 +99,7 @@ export const WithPageHeaderActions: Story = {
         <Navbar theme="dark">
           <Navbar.Brand>
             <Navbar.MobileMenuButton theme="dark" />
-            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <span className="ms-2 text-lg font-semibold text-white">Acme</span>
             <Navbar.Items>
               <Navbar.Item theme="dark" active href="#">
                 Dashboard
@@ -146,7 +146,7 @@ export const WithMenus: Story = {
         <Navbar theme="dark">
           <Navbar.Brand>
             <Navbar.MobileMenuButton theme="dark" />
-            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <span className="ms-2 text-lg font-semibold text-white">Acme</span>
             <Navbar.Items>
               <Navbar.Item theme="dark" href="#">
                 Dashboard
@@ -203,7 +203,7 @@ export const MultiColumnWithSecondary: Story = {
       topbar={
         <Navbar theme="dark">
           <Navbar.Brand>
-            <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+            <span className="ms-2 text-lg font-semibold text-white">Acme</span>
             <Navbar.Items>
               <Navbar.Item theme="dark" active href="#">
                 Inbox

@@ -48,14 +48,14 @@ const BellIcon = ({ tone = 'dark' }: { tone?: 'dark' | 'light' }) => (
   </button>
 );
 
-// TUI Plus pattern "Simple dark with menu button on left" — dark bg, hamburger
+// TUI Plus pattern "Simple dark with menu button on left" (the start of the line) — dark bg, hamburger
 // on mobile, brand + items + actions (bell + avatar).
-export const SimpleDarkMenuLeft: Story = {
+export const SimpleDarkMenuAtStart: Story = {
   render: () => (
     <Navbar theme="dark">
       <Navbar.Brand>
         <Navbar.MobileMenuButton theme="dark" />
-        <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+        <span className="ms-2 text-lg font-semibold text-white">Acme</span>
         <Navbar.Items>
           <Navbar.Item theme="dark" active href="#">
             Dashboard
@@ -86,7 +86,7 @@ export const DarkWithQuickAction: Story = {
     <Navbar theme="dark">
       <Navbar.Brand>
         <Navbar.MobileMenuButton theme="dark" />
-        <span className="ml-2 text-lg font-semibold text-white">Acme</span>
+        <span className="ms-2 text-lg font-semibold text-white">Acme</span>
         <Navbar.Items>
           <Navbar.Item theme="dark" active href="#">
             Dashboard
@@ -119,7 +119,7 @@ export const Light: Story = {
     <Navbar theme="light">
       <Navbar.Brand>
         <Navbar.MobileMenuButton theme="light" />
-        <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
+        <span className="ms-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
         <Navbar.Items>
           <Navbar.Item theme="light" active href="#">
             Dashboard
@@ -149,7 +149,7 @@ export const WithMenus: Story = {
     <Navbar>
       <Navbar.Brand>
         <Navbar.MobileMenuButton />
-        <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
+        <span className="ms-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
         <Navbar.Items>
           <Navbar.Item active href="#">
             Dashboard
@@ -374,7 +374,7 @@ export const MenuOpensAndClosesByKeyboard: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar aria-label="Main">
-      <Navbar.Items className="md:ml-0 md:block">
+      <Navbar.Items className="md:ms-0 md:block">
         <Navbar.Menu label="Monitoring">
           <Menu.Item href="#hosts">Hosts</Menu.Item>
           <Menu.Item href="#alerts">Alerts</Menu.Item>
@@ -426,7 +426,7 @@ export const ActiveGroupShows: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Navbar aria-label="Main">
-      <Navbar.Items className="md:ml-0 md:block">
+      <Navbar.Items className="md:ms-0 md:block">
         <Navbar.Menu label="Monitoring" active>
           <Menu.Item href="#">Hosts</Menu.Item>
         </Navbar.Menu>
@@ -536,7 +536,7 @@ export const MenuAlignFollowsTheReadingDirection: Story = {
       {(['ltr', 'rtl'] as const).map((dir) => (
         <div key={dir} dir={dir} data-direction={dir} className="mx-auto mb-4 w-[600px]">
           <Navbar aria-label={`Main ${dir}`}>
-            <Navbar.Items className="md:ml-0 md:block">
+            <Navbar.Items className="md:ms-0 md:block">
               <Navbar.Menu label="Start menu" align="start">
                 <Menu.Item href="#">Hosts</Menu.Item>
               </Navbar.Menu>
@@ -564,6 +564,50 @@ export const MenuAlignFollowsTheReadingDirection: Story = {
         await userEvent.keyboard('{Escape}');
         await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
       }
+    }
+  },
+};
+
+/** The brand sits at the start, the actions at the end, and the items follow the brand. */
+export const BrandItemsAndActionsFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mx-auto mb-4 w-[900px]">
+          <Navbar aria-label={`Main ${dir}`}>
+            <Navbar.Brand>
+              <span className="text-lg font-semibold">Acme</span>
+              <Navbar.Items>
+                <Navbar.Item href="#" active>
+                  Dashboard
+                </Navbar.Item>
+                <Navbar.Item href="#">Team</Navbar.Item>
+              </Navbar.Items>
+            </Navbar.Brand>
+            <Navbar.Actions>
+              <Button size="sm">Invite</Button>
+            </Navbar.Actions>
+          </Navbar>
+        </div>
+      ))}
+    </>
+  ),
+  play: ({ canvasElement }) => {
+    const [ltr, rtl] = (['ltr', 'rtl'] as const).map((dir) => directionBox(canvasElement, dir));
+    for (const find of [
+      (box: HTMLElement) => within(box).getByText('Acme'),
+      (box: HTMLElement) => within(box).getByRole('link', { name: 'Dashboard' }),
+      (box: HTMLElement) => within(box).getByRole('button', { name: 'Invite' }),
+    ]) {
+      // Each part is the same distance from the start edge of its bar.
+      expect(startOffset(find(rtl!), rtl!)).toBeCloseTo(startOffset(find(ltr!), ltr!), 0);
+    }
+    // The brand is nearer the start than the actions, in both directions.
+    for (const box of [ltr!, rtl!]) {
+      expect(startOffset(within(box).getByText('Acme'), box)).toBeLessThan(
+        startOffset(within(box).getByRole('button', { name: 'Invite' }), box)
+      );
     }
   },
 };

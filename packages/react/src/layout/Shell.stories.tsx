@@ -16,9 +16,11 @@ import { Shell } from './Shell';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
 import {
+  endOffset,
   expectNoHorizontalOverflow,
   mobileViewport,
   portalDocsParams,
+  startOffset,
   transitionsEnd,
 } from '../storybook-helpers';
 
@@ -486,7 +488,7 @@ const body = () => within(document.body);
 const openDrawer = async () => {
   await userEvent.click(body().getByRole('button', { name: 'Open navigation' }));
   const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
-  await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+  await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
   return dialog;
 };
 const expectClosed = async (dialog: HTMLElement) => {
@@ -513,14 +515,14 @@ export const Mobile: Story = {
   },
 };
 
-/** The hamburger opens the sidebar as a panel from the left, over a scrim, with a close button. */
+/** The hamburger opens the sidebar as a panel from the start edge, over a scrim, with a close button. */
 export const MobileOpen: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <MobileShell defaultSidebarOpen />,
   play: async () => {
     const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
-    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
     expectNoHorizontalOverflow();
     await expect(dialog.getBoundingClientRect().width).toBe(288);
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
@@ -643,8 +645,8 @@ export const BodyScrollIsLockedWhileOpen: Story = {
   },
 };
 
-/** A swipe toward the left edge closes it; a short one springs back. */
-export const SwipeLeftClosesTheDrawer: Story = {
+/** A swipe toward the start edge closes it; a short one springs back. */
+export const SwipeTowardStartClosesTheDrawer: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
   render: () => <MobileShell />,
@@ -656,18 +658,20 @@ export const SwipeLeftClosesTheDrawer: Story = {
       clientX,
       clientY: 300,
     });
+    // The drawer sits at the start: the swipe goes to the left, or to the right in right to left.
+    const toStart = getComputedStyle(document.documentElement).direction === 'rtl' ? 1 : -1;
     const dialog = await openDrawer();
     await fireEvent.pointerDown(dialog, touch(200));
-    await fireEvent.pointerMove(dialog, touch(170));
+    await fireEvent.pointerMove(dialog, touch(200 + 30 * toStart));
     await new Promise((resolve) => setTimeout(resolve, 250));
-    await fireEvent.pointerUp(dialog, touch(170));
-    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    await fireEvent.pointerUp(dialog, touch(200 + 30 * toStart));
+    await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
     await expect(dialog).toBeVisible();
 
     await fireEvent.pointerDown(dialog, touch(200));
-    await fireEvent.pointerMove(dialog, touch(60));
+    await fireEvent.pointerMove(dialog, touch(200 + 140 * toStart));
     await new Promise((resolve) => setTimeout(resolve, 250));
-    await fireEvent.pointerUp(dialog, touch(60));
+    await fireEvent.pointerUp(dialog, touch(200 + 140 * toStart));
     await expectClosed(dialog);
     await expect(body().getByRole('button', { name: 'Open navigation' })).toHaveFocus();
   },
@@ -820,9 +824,10 @@ export const BoxedCentersTheColumn: Story = {
     const bar = canvas.getByRole('banner');
     const main = canvas.getByRole('main');
     // The sidebar starts at the column's edge (less its 1px hairline), the topbar ends at the other.
-    await expect(nav.getBoundingClientRect().left).toBeCloseTo(left + 1, 0);
-    await expect(bar.getBoundingClientRect().right).toBeCloseTo(width - left - 1, 0);
-    await expect(main.getBoundingClientRect().right).toBeCloseTo(width - left - 1, 0);
+    const page = document.documentElement;
+    await expect(startOffset(nav, page)).toBeCloseTo(left + 1, 0);
+    await expect(endOffset(bar, page)).toBeCloseTo(left + 1, 0);
+    await expect(endOffset(main, page)).toBeCloseTo(left + 1, 0);
     // The two sides are the page itself: its background, and nothing of the Shell's panels.
     const root = document.elementFromPoint(left / 2, 300) as HTMLElement;
     await expect(root.contains(nav)).toBe(true);
@@ -843,9 +848,12 @@ export const BoxedFillsTheWindowUnder1440: Story = {
     const width = document.documentElement.clientWidth;
     await expect(width).toBeLessThanOrEqual(1440);
     await expect(
-      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().left
+      startOffset(
+        canvas.getByRole('navigation', { name: 'Main navigation' }),
+        document.documentElement
+      )
     ).toBe(0);
-    await expect(canvas.getByRole('banner').getBoundingClientRect().right).toBe(width);
+    await expect(endOffset(canvas.getByRole('banner'), document.documentElement)).toBe(0);
     expectNoHorizontalOverflow();
     const column = canvas
       .getByRole('navigation', { name: 'Main navigation' })
@@ -860,10 +868,54 @@ export const FluidSpansTheWholeWindow: Story = {
   globals: desktopViewport,
   render: () => <BoxedShell container="fluid" />,
   play: async ({ canvas }) => {
-    const width = document.documentElement.clientWidth;
-    await expect(canvas.getByRole('banner').getBoundingClientRect().right).toBe(width);
+    await expect(endOffset(canvas.getByRole('banner'), document.documentElement)).toBe(0);
     await expect(
-      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().left
+      startOffset(
+        canvas.getByRole('navigation', { name: 'Main navigation' }),
+        document.documentElement
+      )
     ).toBe(0);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Where the page reads right to left the sidebar is on the right, with its edge on the left. The
+ * drawer of the phone layout opens from the right too (`MobileOpen`, in the direction pass).
+ */
+export const SidebarSitsAtTheStartEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { ...desktopViewport, direction: 'rtl' },
+  render: () => <BoxedShell container="fluid" />,
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    await expect(getComputedStyle(page).direction).toBe('rtl');
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(startOffset(nav, page)).toBe(0);
+    await expect(getComputedStyle(nav).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(nav).borderRightWidth).toBe('0px');
+    // The topbar's title starts at the start edge of the page column, beside the sidebar.
+    const bar = canvas.getByRole('banner');
+    const title = canvas.getByText('Analytics Dashboard');
+    await expect(startOffset(title, bar)).toBeLessThan(endOffset(title, bar));
+  },
+};
+
+/** The secondary panel is at the end of the line, with its edge on the side that faces the page. */
+export const SecondaryPanelSitsAtTheEndEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { ...desktopViewport, direction: 'rtl' },
+  render: () => (
+    <Shell secondary={<p className="p-4">Details</p>}>
+      <PageContent title="Dashboard" description="The page." />
+    </Shell>
+  ),
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    const secondary = canvas.getByText('Details').closest('aside') as HTMLElement;
+    await expect(endOffset(secondary, page)).toBe(0);
+    await expect(getComputedStyle(secondary).borderRightWidth).toBe('1px');
+    await expect(getComputedStyle(secondary).borderLeftWidth).toBe('0px');
   },
 };

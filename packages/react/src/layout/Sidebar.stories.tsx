@@ -18,10 +18,13 @@ import {
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  endOffset,
+  expectBeyondEnd,
   expectFocusRing,
   expectNoHorizontalOverflow,
   expectRefFocuses,
   mobileViewport,
+  startOffset,
   transitionsEnd,
 } from '../storybook-helpers';
 import { Popover } from '../ui/Popover';
@@ -103,9 +106,9 @@ const Footer = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => v
       className="rounded-md p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
     >
       {collapsed ? (
-        <PanelLeftOpen className="h-4 w-4" aria-hidden />
+        <PanelLeftOpen className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
       ) : (
-        <PanelLeftClose className="h-4 w-4" aria-hidden />
+        <PanelLeftClose className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
       )}
     </button>
   </div>
@@ -129,8 +132,9 @@ export const FullExample: Story = {
         </Sidebar>
         <main className="flex-1 p-6 text-[var(--color-text-secondary)]">
           <p>
-            Click the <PanelLeftClose className="inline h-3 w-3" /> button in the sidebar footer to
-            toggle collapsed mode. Children re-render automatically via React context.
+            Click the <PanelLeftClose className="inline h-3 w-3 rtl:-scale-x-100" /> button in the
+            sidebar footer to toggle collapsed mode. Children re-render automatically via React
+            context.
           </p>
         </main>
       </Wrap>
@@ -180,9 +184,9 @@ export const CollapsedFooterFits: Story = {
     await userEvent.click(canvas.getByRole('button', { name: /collapse|expand/i }));
     await transitionsEnd(nav);
     await expect(nav.getBoundingClientRect().width).toBe(72);
-    const toggle = canvas.getByRole('button', { name: /collapse|expand/i }).getBoundingClientRect();
-    // The nav's right edge is its 1px border.
-    await expect(toggle.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);
+    const toggle = canvas.getByRole('button', { name: /collapse|expand/i });
+    // The nav's end edge is its 1px border.
+    await expect(endOffset(toggle, nav)).toBeGreaterThanOrEqual(1);
   },
 };
 
@@ -235,9 +239,9 @@ export const Sections: Story = {
     const section = canvas.getByText('Monitoring').parentElement as HTMLElement;
     await expect(getComputedStyle(section).borderTopWidth).toBe('0px');
     await expect(getComputedStyle(section).marginTop).toBe('16px');
-    const row = canvas.getByRole('button', { name: 'World Map' }).getBoundingClientRect();
-    await expect(row.left - nav.getBoundingClientRect().left).toBe(20);
-    await expect(row.height).toBe(40);
+    const row = canvas.getByRole('button', { name: 'World Map' });
+    await expect(startOffset(row, nav)).toBe(20);
+    await expect(row.getBoundingClientRect().height).toBe(40);
     await expect(canvas.getByRole('button', { name: 'Notifications' })).toHaveClass(
       'bg-brand-500/10'
     );
@@ -258,8 +262,8 @@ export const SectionsCollapsed: Story = {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await expect(canvas.queryByText('Monitoring')).toBeNull();
     await expect(nav.querySelectorAll('div[aria-hidden="true"] > svg')).toHaveLength(3);
-    const row = canvas.getByRole('button', { name: 'World Map' }).getBoundingClientRect();
-    await expect(row.left - nav.getBoundingClientRect().left).toBe(8);
+    const row = canvas.getByRole('button', { name: 'World Map' });
+    await expect(startOffset(row, nav)).toBe(8);
   },
 };
 
@@ -361,7 +365,7 @@ export const FooterNavigation: Story = {
     await expect(line.left).toBe('20px');
     await expect(line.right).toBe('20px');
     // The footer's own padding and the row margin add up to the rows' 20 px.
-    await expect(profile.getBoundingClientRect().left - nav.getBoundingClientRect().left).toBe(20);
+    await expect(startOffset(profile, nav)).toBe(20);
   },
 };
 
@@ -397,8 +401,8 @@ export const FooterNavigationAndCollapse: Story = {
     await transitionsEnd(nav);
     await expect(nav.getBoundingClientRect().width).toBe(72);
     // Collapsed, the footer rows are icons named by their label.
-    const profile = canvas.getByRole('button', { name: 'Profile' }).getBoundingClientRect();
-    await expect(profile.right).toBeLessThanOrEqual(nav.getBoundingClientRect().right - 1);
+    const profile = canvas.getByRole('button', { name: 'Profile' });
+    await expect(endOffset(profile, nav)).toBeGreaterThanOrEqual(1);
   },
 };
 
@@ -446,7 +450,7 @@ const ThreeLevelNav = ({ onPick }: { onPick?: (label: string) => void }) => (
 
 /**
  * Sub-menus nest, three levels reading best: nested rows show their label alone, smaller at each
- * level, with a guide line on their left.
+ * level, with a guide line on their start side.
  */
 export const ThreeLevelMenu: Story = {
   render: () => (
@@ -458,10 +462,11 @@ export const ThreeLevelMenu: Story = {
     </Wrap>
   ),
   play: async ({ canvas }) => {
-    const left = (name: string) => canvas.getByText(name).getBoundingClientRect().left;
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const start = (name: string) => startOffset(canvas.getByText(name), nav);
     // The first nested level lines up under the top-level label, the next one 16 px further.
-    await expect(left('Datacenters')).toBe(left('Infrastructure'));
-    await expect(left('Paris-1') - left('Datacenters')).toBe(16);
+    await expect(start('Datacenters')).toBe(start('Infrastructure'));
+    await expect(start('Paris-1') - start('Datacenters')).toBe(16);
     // No icon below the top level, and smaller rows as they go down.
     await expect(
       canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg.h-5')
@@ -473,7 +478,7 @@ export const ThreeLevelMenu: Story = {
     await expect(height('Paris-1')).toBe(28);
     // A closed sub-menu opens on click, its items one level in.
     await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
-    await expect(left('prod-eu') - left('Clusters')).toBe(16);
+    await expect(start('prod-eu') - start('Clusters')).toBe(16);
   },
 };
 
@@ -534,8 +539,7 @@ export const TreeRowsSplitAndTrail: Story = {
   play: async ({ args, canvas }) => {
     const onNavigate = (args as unknown as { onNavigate: ReturnType<typeof fn> }).onNavigate;
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
-    const fromNav = (el: Element) =>
-      el.getBoundingClientRect().left - nav.getBoundingClientRect().left;
+    const fromNav = (el: Element) => startOffset(el, nav);
 
     // The trail: the site and the room hold the active rack and take the accent; the aisle too.
     await expect(
@@ -750,7 +754,7 @@ export const CutLabelShowsItsFullNameInATooltip: Story = {
     await expect(box(cut).left).toBe(box(whole).left);
     await expect(box(cut).right).toBe(box(whole).right);
     await expect(box(cut).height).toBe(box(whole).height);
-    await expect(nav.getBoundingClientRect().right - box(cut).right).toBe(21);
+    await expect(endOffset(cut, nav)).toBe(21);
     // Only the cut row has a tooltip.
     await expect(tip(ROOM_C)).not.toBeNull();
     await expect(tip(ROOM_A)).toBeNull();
@@ -761,9 +765,7 @@ export const CutLabelShowsItsFullNameInATooltip: Story = {
     await userEvent.hover(cut);
     await waitFor(() => expect(tip(ROOM_C)).toHaveClass('opacity-100'));
     await expect(cut).toHaveAttribute('aria-describedby', tip(ROOM_C)!.id);
-    await expect(tip(ROOM_C)!.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-      nav.getBoundingClientRect().right
-    );
+    expectBeyondEnd(tip(ROOM_C)!, nav);
     await userEvent.unhover(cut);
     await waitFor(() => expect(tip(ROOM_C)).toHaveClass('opacity-0'));
 
@@ -1130,9 +1132,7 @@ export const CollapsedItemShowsTooltip: Story = {
     await expect(link).toHaveFocus();
     await waitFor(() => expect(tip('Dashboard')).toHaveClass('opacity-100'));
     await expect(link).toHaveAttribute('aria-describedby', tip('Dashboard').id);
-    await expect(tip('Dashboard').getBoundingClientRect().left).toBeGreaterThanOrEqual(
-      canvas.getByRole('navigation', { name: 'Main navigation' }).getBoundingClientRect().right
-    );
+    expectBeyondEnd(tip('Dashboard'), canvas.getByRole('navigation', { name: 'Main navigation' }));
     await userEvent.tab();
     await expect(button).toHaveFocus();
     await waitFor(() => expect(tip('Tokens')).toHaveClass('opacity-100'));
@@ -1798,23 +1798,23 @@ export const HoverOverlaysThePage: Story = {
     const nav = mainNav(canvas);
     await settlePointer(nav);
     const main = canvas.getByRole('main');
-    const pageLeft = main.getBoundingClientRect().left;
+    const pageStart = startOffset(main, document.documentElement);
     await expect(navWidth(nav)).toBe(RAIL);
 
     await userEvent.hover(nav);
     await expectExpanded(nav);
     await transitionsEnd(nav);
     // The page stays where it was, under the sidebar, which is on top of it.
-    await expect(main.getBoundingClientRect().left).toBe(pageLeft);
+    await expect(startOffset(main, document.documentElement)).toBe(pageStart);
     const box = nav.getBoundingClientRect();
-    await expect(nav).toContainElement(
-      document.elementFromPoint(box.left + EXPANDED - 24, box.top + 300) as HTMLElement
-    );
+    // 24 px in from the end edge of the expanded sidebar.
+    const x = getComputedStyle(nav).direction === 'rtl' ? box.left + 24 : box.left + EXPANDED - 24;
+    await expect(nav).toContainElement(document.elementFromPoint(x, box.top + 300) as HTMLElement);
     await expect(getComputedStyle(nav).boxShadow).not.toBe('none');
 
     await userEvent.unhover(nav);
     await expectRail(nav);
-    await expect(main.getBoundingClientRect().left).toBe(pageLeft);
+    await expect(startOffset(main, document.documentElement)).toBe(pageStart);
   },
 };
 
@@ -1828,16 +1828,16 @@ export const HoverPushesThePage: Story = {
     const nav = mainNav(canvas);
     await settlePointer(nav);
     const main = canvas.getByRole('main');
-    await expect(main.getBoundingClientRect().left).toBe(RAIL);
+    await expect(startOffset(main, document.documentElement)).toBe(RAIL);
 
     await userEvent.hover(nav);
     await expectExpanded(nav);
-    await waitFor(() => expect(main.getBoundingClientRect().left).toBe(EXPANDED));
+    await waitFor(() => expect(startOffset(main, document.documentElement)).toBe(EXPANDED));
     await expect(getComputedStyle(nav).boxShadow).toBe('none');
 
     await userEvent.unhover(nav);
     await expectRail(nav);
-    await waitFor(() => expect(main.getBoundingClientRect().left).toBe(RAIL));
+    await waitFor(() => expect(startOffset(main, document.documentElement)).toBe(RAIL));
   },
 };
 
@@ -1871,7 +1871,7 @@ export const CrossingTheRailOpensNothing: Story = {
     await userEvent.unhover(nav);
     await pause(400);
     await expect(navWidth(nav)).toBe(RAIL);
-    await expect(main.getBoundingClientRect().left).toBe(RAIL);
+    await expect(startOffset(main, document.documentElement)).toBe(RAIL);
   },
 };
 
@@ -2156,7 +2156,7 @@ export const TouchScreenNothingExpands: Story = {
     await userEvent.tab();
     await pause(500);
     await expect(navWidth(nav)).toBe(RAIL);
-    await expect(canvas.getByRole('main').getBoundingClientRect().left).toBe(RAIL);
+    await expect(startOffset(canvas.getByRole('main'), document.documentElement)).toBe(RAIL);
   },
 };
 
@@ -2170,7 +2170,7 @@ export const DrawerIgnoresExpandOnHover: Story = {
   render: () => <HoverShell mode="overlay" defaultSidebarOpen />,
   play: async () => {
     const dialog = await within(document.body).findByRole('dialog', { name: 'Navigation menu' });
-    await waitFor(() => expect(dialog.getBoundingClientRect().left).toBe(0));
+    await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
     const nav = within(dialog).getByRole('navigation', { name: 'Main navigation' });
     const width = navWidth(nav);
     // The panel's width, less a pixel.
@@ -2342,9 +2342,7 @@ export const CompactSubMenuOpensInAFlyout: Story = {
     const flyout = await body.findByRole('dialog', { name: 'Library' });
     await expect(within(flyout).getByText('Components')).toBeVisible();
     // It opens beside the row, not over it, and the rail keeps its width.
-    await expect(flyout.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-      trigger.getBoundingClientRect().right
-    );
+    expectBeyondEnd(flyout, trigger);
     await expect(nav.getBoundingClientRect().width).toBe(88);
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(body.queryByRole('dialog', { name: 'Library' })).toBeNull());
@@ -2375,5 +2373,53 @@ export const CompactIgnoresCollapseProps: Story = {
     await expect(nav.getBoundingClientRect().width).toBe(88);
     await expect(within(nav).getByText('Dashboard')).toBeVisible();
     await expect(canvas.queryByRole('button', { name: /collapse|expand/i })).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * Where the page reads right to left the sidebar sits on the right, with its edge on the left, its
+ * nested rows indented from the right, and its chevrons and toggle turned around. One sidebar
+ * only: its landmark has a fixed name.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { direction: 'rtl' },
+  render: () => (
+    <Wrap>
+      <Sidebar onCollapsedChange={fn()}>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <ThreeLevelNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const page = document.documentElement;
+    await expect(getComputedStyle(page).direction).toBe('rtl');
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    // At the start of the line: flush with the right edge, its border on the left side.
+    await expect(startOffset(nav, page)).toBe(0);
+    await expect(getComputedStyle(nav).borderLeftWidth).toBe('1px');
+    await expect(getComputedStyle(nav).borderRightWidth).toBe('0px');
+    // The brand and the rows start at the start edge; the nested rows are indented from it.
+    const brand = canvas.getByText('Cosmos');
+    await expect(startOffset(brand, nav)).toBeLessThan(endOffset(brand, nav));
+    const start = (name: string) => startOffset(canvas.getByText(name), nav);
+    await expect(start('Datacenters')).toBe(start('Infrastructure'));
+    await expect(start('Paris-1') - start('Datacenters')).toBe(16);
+    // The guide line of a nested list is on the start side too, left of the labels' start.
+    const guide = nav.querySelector<HTMLElement>('span.w-px')!;
+    await expect(startOffset(guide, nav)).toBeLessThan(start('Datacenters'));
+    // A closed sub-menu points to the end of the line, an open one down, in both directions.
+    const closed = canvas.getByRole('button', { name: 'Clusters' }).querySelector('svg')!;
+    const open = canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg')!;
+    await expect(getComputedStyle(closed).rotate).toBe('180deg');
+    await expect(getComputedStyle(open).rotate).toBe('90deg');
+    await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
+    await waitFor(() => expect(getComputedStyle(closed).rotate).toBe('90deg'));
+    // The footer's toggle icon points toward the start edge, where the sidebar collapses.
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' }).querySelector('svg')!;
+    await expect(getComputedStyle(toggle).scale).toBe('-1 1');
   },
 };

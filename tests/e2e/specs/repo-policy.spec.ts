@@ -279,6 +279,11 @@ const RTL_GROUPS: string[] = [
   'Lists',
   'Feedback',
   'Overlays',
+  'Navigation',
+  'Layout',
+  'Chat',
+  'Tables',
+  'Settings',
   'Monitoring',
   'Media',
   'Status',
@@ -303,6 +308,30 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/ui/Dialog.tsx', // the panel of Modal and ConfirmationModal
   'packages/react/src/ui/FloatingPanel.tsx', // the panel of every popover, menu and picker
   'packages/react/src/ui/intent.ts', // the edge colour AlertBanner draws on its start side
+  'packages/react/src/layout/SidebarToggle.tsx', // the toggle of Shell, Topbar and Sidebar
+  'packages/react/src/chat/ChatComposer.tsx', // Chat.stories.tsx, the field and send button
+  'packages/react/src/chat/ChatConversationList.tsx', // the conversations of Chat.stories.tsx
+  'packages/react/src/chat/ChatMessage.tsx', // the bubble of Chat.stories.tsx
+  'packages/react/src/chat/ChatMessageActions.tsx', // the row under a reply
+  'packages/react/src/chat/ChatSuggestions.tsx', // the chips above the composer
+  'packages/react/src/chat/ChatThread.tsx', // the log, day separator and typing indicator
+  'packages/react/src/chat/MessageText.tsx', // the text of a message
+  'packages/react/src/table/ColumnHeader.tsx', // the header cell of DataTable
+  'packages/react/src/table/ColumnFilterDropdown.tsx', // the filter panel of a column
+  'packages/react/src/table/DataTableFilterTabs.tsx', // the tab strip above a DataTable
+  'packages/react/src/table/InlineEdit.tsx', // the editing cells and row actions
+  'packages/react/src/table/LoadingVeil.tsx', // the spinner over a loading DataTable
+  'packages/react/src/table/PageSizeSelect.tsx', // the page size field of the pager
+  'packages/react/src/table/RowActionsMenu.tsx', // the menu of a row's actions
+  'packages/react/src/table/RowChevron.tsx', // the disclosure chevron of a row
+  'packages/react/src/table/cells.tsx', // the built-in cell renderers
+  'packages/react/src/table/density.ts', // the padding and look of every cell
+  'packages/react/src/table/pinned.ts', // the offsets and edge shadows of pinned columns
+  'packages/react/src/table/toolbarButton.ts', // the look of the toolbar buttons
+  'packages/react/src/settings/ColorSwatch.tsx', // what AccentPicker draws
+  'packages/react/src/settings/OptionCard.tsx', // what OptionPicker draws
+  'packages/react/src/settings/PaletteCard.tsx', // what PalettePicker draws
+  'packages/react/src/settings/SelectedMark.tsx', // the check badge of the pickers
   'packages/react/src/logs/JobLogToolbar.tsx', // the bar of JobLog
   'packages/react/src/logs/job-log-styles.ts', // the colours and frames of JobLog
   'packages/react/src/uptime/MarkStrip.tsx', // the strip HeartbeatBar and UptimeBars draw their marks in

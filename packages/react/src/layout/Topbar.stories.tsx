@@ -4,7 +4,13 @@ import { Bell, Search, Settings, Sun, User } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Topbar } from './Topbar';
 import { Menu } from '../ui/Menu';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Layout/Topbar',
@@ -67,11 +73,11 @@ export const WithCenterSearch: Story = {
           center={
             <div className="mx-auto max-w-md">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                <Search className="inset-s-3 absolute top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
                 <input
                   type="text"
                   placeholder="Search servers..."
-                  className="focus:border-brand-500 h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-base)] pr-3 pl-9 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                  className="focus:border-brand-500 h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-base)] ps-9 pe-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                 />
               </div>
             </div>
@@ -251,7 +257,7 @@ export const PageTitleIsPlainTextByDefault: Story = {
   args: { pageTitle: 'Servers' },
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('heading')).toBeNull();
-    await expect(canvas.getByText('Servers').tagName).toBe('P');
+    await expect(canvas.getByText('Servers').parentElement?.tagName).toBe('P');
   },
 };
 
@@ -325,5 +331,39 @@ export const MoreMenuIsMobileOnly: Story = {
     await expect(canvas.getByText('Analytics Dashboard')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'More actions' })).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The toggle and the title start at the start edge of the bar, the actions end at its end edge, and
+ * the title is an island. One bar only: a second `header` would be a duplicate banner.
+ */
+export const BarFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" data-direction="rtl">
+      <Topbar
+        pageTitle="Servers"
+        sidebarCollapsed={false}
+        onCollapsedChange={fn()}
+        endActions={<IconBtn icon={Bell} label="Notifications" />}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('banner');
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' });
+    const title = canvas.getByText('Servers');
+    const bell = canvas.getByRole('button', { name: 'Notifications' });
+    // Along the line the order is: toggle, title, then the actions at the end.
+    await expect(startOffset(toggle, bar)).toBeLessThan(startOffset(title, bar));
+    await expect(endOffset(bell, bar)).toBeLessThan(endOffset(title, bar));
+    // That is right to left on the screen: the toggle on the right, the bell on the left.
+    await expect(toggle.getBoundingClientRect().left).toBeGreaterThan(
+      bell.getBoundingClientRect().left
+    );
+    await expect(getComputedStyle(title.closest('p') as HTMLElement).direction).toBe('rtl');
   },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { endOffset, portalDocsParams, startOffset } from '../storybook-helpers';
 import { Modal } from '../ui/Modal';
 import { Chatbot, type ChatbotMessage } from './Chatbot';
 
@@ -203,5 +203,31 @@ export const SuggestionSends: Story = {
     const body = within(canvasElement.ownerDocument.body);
     await userEvent.click(body.getByRole('button', { name: 'Show rack B4' }));
     await expect(args.onSend).toHaveBeenCalledWith('Show rack B4');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The launcher sits in the corner at the end of the line, with the panel above it, so on the left
+ * where the page reads right to left. The panel is portalled: the page's `dir` reaches it.
+ */
+export const LauncherAndPanelSitInTheEndCorner: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { direction: 'rtl', viewport: { value: 'desktop', isRotated: false } },
+  args: { messages: history, defaultOpen: true },
+  play: async ({ canvasElement }) => {
+    const page = canvasElement.ownerDocument.documentElement;
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(getComputedStyle(page).direction).toBe('rtl');
+    const launcher = body.getByRole('button', { name: 'Open chat' });
+    const panel = await body.findByRole('dialog');
+    await expect(endOffset(launcher, page)).toBe(24);
+    await expect(endOffset(panel, page)).toBe(24);
+    // The user's own message is at the end of the thread, on the left; the bot's at the start.
+    const mine = body.getByText('Which racks are over 80% power?');
+    const theirs = body.getByText('Two racks: B4 (86%) and C1 (82%).');
+    await expect(endOffset(mine, panel)).toBeLessThan(startOffset(mine, panel));
+    await expect(startOffset(theirs, panel)).toBeLessThan(endOffset(theirs, panel));
   },
 };

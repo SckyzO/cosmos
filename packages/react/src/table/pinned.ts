@@ -10,8 +10,8 @@ import type { ColumnPin } from './types';
 // scroll under it do not show through, and it takes the row's hover, selected and open colors
 // itself.
 
-/** The offset of each cell from its edge: `left` for a start-pinned cell, `right` for an end one. */
-export type PinOffsets = { left: (number | undefined)[]; right: (number | undefined)[] };
+/** The offset of each cell from its edge: `start` for a start-pinned cell, `end` for an end one. */
+export type PinOffsets = { start: (number | undefined)[]; end: (number | undefined)[] };
 
 /**
  * The offsets of the cells of a row, in order, from their measured `widths` and their `pins`
@@ -20,19 +20,19 @@ export type PinOffsets = { left: (number | undefined)[]; right: (number | undefi
  * counts as 0.
  */
 export const pinOffsets = (widths: number[], pins: (ColumnPin | undefined)[]): PinOffsets => {
-  const left: (number | undefined)[] = [];
-  const right: (number | undefined)[] = [];
+  const start: (number | undefined)[] = [];
+  const end: (number | undefined)[] = [];
   let before = 0;
   pins.forEach((pin, i) => {
-    left[i] = pin === 'start' ? before : undefined;
+    start[i] = pin === 'start' ? before : undefined;
     if (pin === 'start') before += widths[i] ?? 0;
   });
   let after = 0;
   for (let i = pins.length - 1; i >= 0; i--) {
-    right[i] = pins[i] === 'end' ? after : undefined;
+    end[i] = pins[i] === 'end' ? after : undefined;
     if (pins[i] === 'end') after += widths[i] ?? 0;
   }
-  return { left, right };
+  return { start, end };
 };
 
 /**
@@ -44,12 +44,15 @@ export const pinEdges = (pins: (ColumnPin | undefined)[]): { start: number; end:
   end: pins.indexOf('end'),
 });
 
-/** The `left` or `right` of a pinned cell, `undefined` for one that scrolls. */
+/**
+ * The inline-start or inline-end inset of a pinned cell, `undefined` for one that scrolls. Logical
+ * properties, so a start-pinned cell sticks to the right where the table reads right to left.
+ */
 export const pinStyle = (offsets: PinOffsets, index: number): CSSProperties | undefined => {
-  const left = offsets.left[index];
-  const right = offsets.right[index];
-  if (left !== undefined) return { left };
-  if (right !== undefined) return { right };
+  const start = offsets.start[index];
+  const end = offsets.end[index];
+  if (start !== undefined) return { insetInlineStart: start };
+  if (end !== undefined) return { insetInlineEnd: end };
   return undefined;
 };
 
@@ -63,18 +66,19 @@ const IDLE =
 
 // The line between a pinned column and the rest is a shadow in place of a border (a collapsed
 // border stays behind when the cell is pinned). While content scrolls under the edge it grows a
-// soft shadow on the side the content is on. Written out in full: Tailwind reads class names from
-// the source and cannot see one built from pieces.
+// soft shadow on the side the content is on. A shadow offset is physical, so each edge has its
+// right-to-left twin (`rtl:`) on the other side. Written out in full: Tailwind reads class names
+// from the source and cannot see one built from pieces.
 const EDGE = {
   start: {
-    rest: '[box-shadow:inset_-1px_0_0_var(--color-border)]',
+    rest: '[box-shadow:inset_-1px_0_0_var(--color-border)] rtl:[box-shadow:inset_1px_0_0_var(--color-border)]',
     scrolled:
-      '[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(0_0_0/0.6)]',
+      '[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(0_0_0/0.6)] rtl:[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:rtl:[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(0_0_0/0.6)]',
   },
   end: {
-    rest: '[box-shadow:inset_1px_0_0_var(--color-border)]',
+    rest: '[box-shadow:inset_1px_0_0_var(--color-border)] rtl:[box-shadow:inset_-1px_0_0_var(--color-border)]',
     scrolled:
-      '[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(0_0_0/0.6)]',
+      '[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:[box-shadow:inset_1px_0_0_var(--color-border),-8px_0_8px_-8px_rgb(0_0_0/0.6)] rtl:[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(16_24_40/0.25)] dark:rtl:[box-shadow:inset_-1px_0_0_var(--color-border),8px_0_8px_-8px_rgb(0_0_0/0.6)]',
   },
 } as const;
 const edge = (side: 'start' | 'end', scrolled: boolean) =>
