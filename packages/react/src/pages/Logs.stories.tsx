@@ -54,7 +54,7 @@ const LogsPage = () => (
   <Shell
     topbar={
       <Topbar
-        rightActions={
+        endActions={
           <button
             type="button"
             aria-label="Notifications"

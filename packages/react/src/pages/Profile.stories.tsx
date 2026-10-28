@@ -448,7 +448,7 @@ const ProfileShell = ({ children }: { children: ReactNode }) => {
       topbar={
         <Topbar
           pageTitle="Profile"
-          rightActions={
+          endActions={
             <>
               <ThemeToggle
                 isDark={isDark}

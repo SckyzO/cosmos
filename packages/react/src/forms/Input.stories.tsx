@@ -52,12 +52,12 @@ export const WithError: Story = {
   },
 };
 
-export const WithRightSlot: Story = {
+export const WithEndSlot: Story = {
   args: {
     label: 'Scrape interval',
     placeholder: '15',
     type: 'number',
-    rightSlot: 'seconds',
+    endSlot: 'seconds',
   },
 };
 
@@ -450,7 +450,7 @@ export const PrefixGroupSuccessFocusShowsAccentBorderInDark: Story = {
   },
 };
 
-export const SuccessIconIsDecorativeOnTheRightEdge: Story = {
+export const SuccessIconIsDecorativeOnTheEndEdge: Story = {
   ...WithSuccess,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
@@ -464,10 +464,10 @@ export const SuccessIconIsDecorativeOnTheRightEdge: Story = {
   },
 };
 
-/** The right slot owns the end edge: it replaces the check, the rest of the state stays. */
-export const SuccessIconYieldsToRightSlot: Story = {
+/** The end slot owns the end edge: it replaces the check, the rest of the state stays. */
+export const SuccessIconYieldsToEndSlot: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { label: 'Scrape interval', rightSlot: 'seconds', success: 'Target reachable.' },
+  args: { label: 'Scrape interval', endSlot: 'seconds', success: 'Target reachable.' },
   play: async ({ canvas, canvasElement }) => {
     const field = canvas.getByRole('textbox', { name: 'Scrape interval' });
     await expect(canvasElement.querySelector('svg')).toBeNull();
@@ -551,7 +551,7 @@ export const AdornmentsMirrorInRightToLeft: Story = {
       <div className="space-y-3">
         <Input label="Email" icon={Mail} defaultValue="user@example.com" />
         <Input label="Endpoint" prefix="https://" suffix=".com" defaultValue="example" />
-        <Input label="Interval" rightSlot="seconds" defaultValue="30" />
+        <Input label="Interval" endSlot="seconds" defaultValue="30" />
         <Input label="Username" defaultValue="sckyzo" success="Available." />
       </div>
     )),
