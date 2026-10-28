@@ -88,7 +88,7 @@ export const Rating = ({
       {filled(i) > 0 && (
         <span
           aria-hidden="true"
-          className="absolute inset-y-0 left-0 overflow-hidden"
+          className="inset-s-0 absolute inset-y-0 overflow-hidden"
           style={{ width: `${filled(i) * 100}%` }}
         >
           {/* warning-600 holds 3:1 on a light card or sand page, amber-400 on a dark one. */}
@@ -108,11 +108,13 @@ export const Rating = ({
     <>
       {showValue && (
         <span className={clsx('font-semibold text-[var(--color-text)]', TEXT_SIZE[size])}>
-          {value.toFixed(1)}
+          <bdi>{value.toFixed(1)}</bdi>
         </span>
       )}
       {count !== undefined && count !== null && (
-        <span className={clsx('text-[var(--color-text-muted)]', TEXT_SIZE[size])}>{count}</span>
+        <span className={clsx('text-[var(--color-text-muted)]', TEXT_SIZE[size])}>
+          <bdi>{count}</bdi>
+        </span>
       )}
     </>
   );
@@ -134,7 +136,7 @@ export const Rating = ({
     );
   }
 
-  // One radio per pickable value, in order: two per star with `allowHalf`, the left half first.
+  // One radio per pickable value, in order: two per star with `allowHalf`, the half at the start first.
   const radioValues = Array.from({ length: Math.round(max / step) }, (_, i) => (i + 1) * step);
   const anyChecked = radioValues.includes(value);
   return (
@@ -167,7 +169,7 @@ export const Rating = ({
                   onMouseEnter={() => setHover(v)}
                   className={clsx(
                     'focus-visible:focus-indicator absolute inset-y-0 cursor-pointer rounded-sm disabled:cursor-not-allowed',
-                    !allowHalf ? 'inset-x-0' : r % 2 === 0 ? 'left-0 w-1/2' : 'right-0 w-1/2'
+                    !allowHalf ? 'inset-x-0' : r % 2 === 0 ? 'inset-s-0 w-1/2' : 'inset-e-0 w-1/2'
                   )}
                 />
               );

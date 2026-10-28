@@ -165,14 +165,15 @@ const SingleProgressBar = ({
               className={clsx(
                 'flex h-full items-center justify-center rounded-full transition-[width] duration-300 ease-out',
                 INTENT_BG[intent],
-                striped && 'motion-safe:animate-[progressStripes_1s_linear_infinite]'
+                striped &&
+                  'motion-safe:animate-[progressStripes_1s_linear_infinite] motion-safe:rtl:animate-[progressStripesRtl_1s_linear_infinite]'
               )}
             >
               {showInsideLabel && (
                 <span
                   className={clsx('text-3xs px-2 leading-none font-bold', INTENT_LABEL[intent])}
                 >
-                  {labelText}
+                  <bdi>{labelText}</bdi>
                 </span>
               )}
             </div>
@@ -183,19 +184,24 @@ const SingleProgressBar = ({
             aria-live="polite"
             className="shrink-0 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-300"
           >
-            {labelText}
+            <bdi>{labelText}</bdi>
           </span>
         )}
       </div>
-      {/* Inline keyframes — local to ProgressBar so consumers don't need to register them globally. */}
+      {/* Inline keyframes — local to ProgressBar so consumers don't need to register them globally.
+          The bar and the stripes travel toward the end of the line, which `rtl:` turns around. */}
       <style>{`
         @keyframes progressIndeterminate {
-          0% { left: -33%; }
-          100% { left: 100%; }
+          0% { inset-inline-start: -33%; }
+          100% { inset-inline-start: 100%; }
         }
         @keyframes progressStripes {
           0% { background-position: 0 0; }
           100% { background-position: 1rem 0; }
+        }
+        @keyframes progressStripesRtl {
+          0% { background-position: 0 0; }
+          100% { background-position: -1rem 0; }
         }
       `}</style>
     </div>
@@ -276,9 +282,11 @@ const SegmentedProgressBar = ({
                 aria-hidden="true"
                 className={clsx('size-2.5 shrink-0 rounded-[3px]', INTENT_BG[s.intent ?? 'brand'])}
               />
-              <span className="text-[var(--color-text-muted)]">{s.label}</span>
+              <span className="text-[var(--color-text-muted)]">
+                <bdi>{s.label}</bdi>
+              </span>
               <span className="font-semibold text-[var(--color-text-primary)] tabular-nums">
-                {s.valueLabel ?? fit.segments[i].value}
+                <bdi>{s.valueLabel ?? fit.segments[i].value}</bdi>
               </span>
             </li>
           ))}
@@ -288,9 +296,11 @@ const SegmentedProgressBar = ({
                 aria-hidden="true"
                 className="size-2.5 shrink-0 rounded-[3px] bg-gray-100 ring-1 ring-[var(--color-border)] ring-inset dark:bg-gray-800"
               />
-              <span className="text-[var(--color-text-muted)]">{freeLabel}</span>
+              <span className="text-[var(--color-text-muted)]">
+                <bdi>{freeLabel}</bdi>
+              </span>
               <span className="font-semibold text-[var(--color-text-primary)] tabular-nums">
-                {freeText}
+                <bdi>{freeText}</bdi>
               </span>
             </li>
           )}

@@ -133,7 +133,11 @@ export const ProgressRing = ({
             centreText(px)
           )}
         >
-          {children}
+          {typeof children === 'string' || typeof children === 'number' ? (
+            <bdi>{children}</bdi>
+          ) : (
+            children
+          )}
         </span>
       )}
     </div>

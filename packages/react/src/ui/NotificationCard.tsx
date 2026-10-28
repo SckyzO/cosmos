@@ -72,14 +72,18 @@ const SimpleVariant = ({
               aria-hidden
             />
           </div>
-          <div className="ml-3 w-0 flex-1 pt-0.5">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
+          <div className="ms-3 w-0 flex-1 pt-0.5">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <bdi>{title}</bdi>
+            </p>
             {description && (
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <bdi>{description}</bdi>
+              </p>
             )}
           </div>
           {onDismiss && (
-            <div className="ml-4 flex shrink-0">
+            <div className="ms-4 flex shrink-0">
               <button
                 type="button"
                 onClick={onDismiss}
@@ -99,7 +103,7 @@ const SimpleVariant = ({
 // ── Condensed variant ────────────────────────────────────────────────────────
 
 export type NotificationCardCondensedProps = {
-  /** Primary text shown on the left. */
+  /** Primary text, at the start of the line. */
   title: ReactNode;
   /** Inline action label (e.g., "Undo") — rendered as a link-styled button. */
   actionLabel?: ReactNode;
@@ -125,7 +129,9 @@ const CondensedVariant = ({
       className
     )}
   >
-    <p className="flex-1 text-sm font-medium text-white">{title}</p>
+    <p className="flex-1 text-sm font-medium text-white">
+      <bdi>{title}</bdi>
+    </p>
     {actionLabel && (
       <button
         type="button"

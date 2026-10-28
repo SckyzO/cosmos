@@ -56,9 +56,13 @@ export const StateLayout = ({
         )}
       </div>
       <div>
-        <p className="text-sm font-medium text-[var(--color-text-secondary)]">{title}</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+          <bdi>{title}</bdi>
+        </p>
         {description && (
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">{description}</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            <bdi>{description}</bdi>
+          </p>
         )}
       </div>
       {action}

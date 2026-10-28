@@ -13,7 +13,7 @@ export type AnnouncementBarProps = {
   /** Override the default icon for the intent. Pass `null` to hide. */
   icon?: ElementType | null;
   message: ReactNode;
-  /** Right-side slot — a Link, Button, etc. */
+  /** Slot at the end of the line — a Link, Button, etc. */
   action?: ReactNode;
   /** Render a close button. */
   dismissible?: boolean;

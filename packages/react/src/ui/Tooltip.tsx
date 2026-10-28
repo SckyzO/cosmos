@@ -36,13 +36,20 @@ const UNPLACED: CSSProperties = { top: 0, insetInlineStart: 0 };
 // Centered on the box, minus `--anchor-shift`: how far the box moved along its trigger to
 // stay on screen, so the arrow keeps pointing at the trigger.
 //
-// Keyed by the side the box opened on as the screen sees it: the viewport flips it, and the
-// offsets that follow `--anchor-shift` are physical.
-const ARROW_POS: Record<AnchorSide, string> = {
-  top: 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
-  bottom: 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2',
-  left: 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
-  right: 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2',
+// Keyed by the side the box opened on as the screen sees it: the viewport flips it, the
+// `--anchor-shift` is a distance to the right, and the arrow sits on the physical edge that
+// faces the trigger. Those offsets stay physical (see `RTL_ALLOWED`), whatever the direction.
+const arrowPosition = (side: AnchorSide): string => {
+  switch (side) {
+    case 'top':
+      return 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2';
+    case 'bottom':
+      return 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2';
+    case 'left':
+      return 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2';
+    case 'right':
+      return 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2';
+  }
 };
 
 const VARIANT_BOX: Record<TooltipVariant, string> = {
@@ -220,7 +227,11 @@ export const Tooltip = ({
               intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
             )}
           >
-            {title && <span className="block font-semibold">{title}</span>}
+            {title && (
+              <span className="block font-semibold">
+                <bdi>{title}</bdi>
+              </span>
+            )}
             {title ? <span className="mt-0.5 block opacity-80">{content}</span> : content}
             {shortcut && (
               <span className="ms-2 inline-flex align-middle">
@@ -241,7 +252,7 @@ export const Tooltip = ({
                 aria-hidden
                 className={clsx(
                   'absolute h-2 w-2 rotate-45',
-                  ARROW_POS[side],
+                  arrowPosition(side),
                   intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
                 )}
               />

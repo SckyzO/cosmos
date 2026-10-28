@@ -1,4 +1,11 @@
-import { useCallback, useLayoutEffect, useRef, useState, type RefCallback } from 'react';
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefCallback,
+} from 'react';
 
 /** The reading direction of an element, from the native `dir` attribute of it or an ancestor. */
 export type Direction = 'ltr' | 'rtl';
@@ -41,3 +48,22 @@ export function useParentDirection<T extends Element>(): [Direction, RefCallback
   });
   return [direction, ref];
 }
+
+const subscribeToDocumentDirection = (onChange: () => void) => {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] });
+  return () => observer.disconnect();
+};
+
+const getDocumentDirection = (): Direction => directionOf(document.documentElement);
+const getServerDirection = (): Direction => 'ltr';
+
+/**
+ * The direction of the page, from the `dir` attribute of `<html>`, followed when it changes. For
+ * a component that is not inside the page's tree to read it from (a toast stack), or that has
+ * to pick a physical value (a corner of the screen) for it. `ltr` on the server.
+ *
+ * Internal to the package, not exported.
+ */
+export const useDocumentDirection = (): Direction =>
+  useSyncExternalStore(subscribeToDocumentDirection, getDocumentDirection, getServerDirection);
