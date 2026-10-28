@@ -265,12 +265,12 @@ test('the dev container cannot write the repo metadata', () => {
 
 // ── Right to left ───────────────────────────────────────────────────────────
 
-// A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `start-`,
+// A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `inset-s-`,
 // `text-start`, `border-s`, `rounded-s`…) and the `rtl:` variant. This refuses the physical
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -281,6 +281,9 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/forms/fieldRecipe.ts', // the padding and icon places of every field
   'packages/react/src/forms/RequiredMark.tsx', // the asterisk after a label
   'packages/react/src/forms/tagField.tsx', // the box and input of MultiSelect and TagInput
+  'packages/react/src/comments/Comment.tsx', // what CommentThread draws
+  'packages/react/src/comments/CommentComposer.tsx', // the reply and edit fields of a Comment
+  'packages/react/src/data/TimeLabel.tsx', // the `<time>` of DateTime and RelativeTime
 ];
 
 /**
@@ -387,7 +390,7 @@ test('the converted groups use logical utilities only', () => {
     RTL_ALLOWED.some(({ file, token }) => file === hit.file && token === hit.token);
   expect(
     found.filter((hit) => !allowed(hit)).map(({ file, token }) => `${file}: ${token}`),
-    'physical utilities: use the logical form (ms-, pe-, start-, text-start, border-s, rounded-s…), or the rtl: variant, or add an RTL_ALLOWED entry with the reason'
+    'physical utilities: use the logical form (ms-, pe-, inset-s-, text-start, border-s, rounded-s…), or the rtl: variant, or add an RTL_ALLOWED entry with the reason'
   ).toEqual([]);
 
   for (const { file, token, reason } of RTL_ALLOWED) {

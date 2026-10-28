@@ -3,12 +3,18 @@ import { CalendarDays, Flag } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectFocusRing,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  keyToEnd,
   mobileViewport,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Drawer } from '../ui/Drawer';
@@ -216,7 +222,9 @@ export const Controlled: Story = {
     const [value, setValue] = useState(sprint);
     const [last, setLast] = useState<KanbanMove>();
     return (
-      <div className="grid gap-4">
+      // One `minmax(0, 1fr)` column: an `auto` one grows to the whole board, which then
+      // overflows the page instead of scrolling inside its frame.
+      <div className="grid grid-cols-1 gap-4">
         <KanbanBoard {...args} value={value} onChange={setValue} onCardMove={setLast} />
         <p
           aria-live="polite"
@@ -317,8 +325,12 @@ export const OnNarrowScreen: Story = {
     // One column wide, at most 300px, with the next column peeking in.
     expect(todo.getBoundingClientRect().width).toBeLessThanOrEqual(300);
     expect(todo.getBoundingClientRect().width).toBeGreaterThan(window.innerWidth * 0.6);
-    expect(doing.getBoundingClientRect().left).toBeLessThan(window.innerWidth);
-    expect(doing.getBoundingClientRect().right).toBeGreaterThan(window.innerWidth);
+    // The next column peeks in: its near edge is on the screen, its far edge past the screen's
+    // end (the left one in right to left, where the board starts on the right).
+    const next = doing.getBoundingClientRect();
+    const rtl = getComputedStyle(scroller).direction === 'rtl';
+    expect(rtl ? window.innerWidth - next.right : next.left).toBeLessThan(window.innerWidth);
+    expect(rtl ? window.innerWidth - next.left : next.right).toBeGreaterThan(window.innerWidth);
     // The board scrolls, the page does not, and the snap is on.
     expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
     expect(getComputedStyle(scroller).overflowX).toBe('auto');
@@ -615,7 +627,7 @@ export const KeyboardPickUpMoveAndDrop: Story = {
     await waitFor(() =>
       expect(titlesIn(canvas, 'To do').slice(0, 2)).toEqual([TITLES.export, TITLES.billing])
     );
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     // Nothing is reported until the drop.
     expect(calls(args.onChange)).toHaveLength(0);
@@ -644,7 +656,7 @@ export const KeyboardEnterAndEmptyColumn: Story = {
   play: async ({ canvas, args }) => {
     gripOf(canvas, TITLES.sso).focus();
     await keys('{Enter}');
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'Review')).toEqual([TITLES.sso]));
     await keys('{Enter}');
     await waitFor(() =>
@@ -665,7 +677,7 @@ export const KeyboardCancel: Story = {
     await keys('{ArrowDown}');
     // Each move lands before the next key: the sensor measures the card again after it.
     await waitFor(() => expect(titlesIn(canvas, 'To do').indexOf(TITLES.billing)).toBe(1));
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('{Escape}');
     await waitFor(() => expect(board(canvas)).toEqual(SPRINT_ORDER));
@@ -699,7 +711,7 @@ export const KeyboardDropDoesNotWaitForTheRender: Story = {
   },
   play: async ({ canvas, args }) => {
     await pickUp(gripOf(canvas, TITLES.billing));
-    await keys('{ArrowRight}[Space]');
+    await keys(`{${keyToEnd()}}[Space]`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
     expect(calls(args.onCardMove)[0][0]).toMatchObject({
@@ -732,7 +744,7 @@ export const AnnouncesPickUpMoveDropAndCancel: Story = {
     );
     await keys('{ArrowDown}');
     await waitFor(() => expect(announcement(grip)).toBe('Column To do, position 3 of 4.'));
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() =>
       expect(announcement(grip)).toMatch(/^Column In progress, position \d of 4\.$/)
     );
@@ -748,7 +760,7 @@ export const AnnouncesPickUpMoveDropAndCancel: Story = {
     await waitFor(() => expect(moved).toHaveFocus());
     await waitFor(() => expect(document.querySelector('[data-dnd-overlay]')).toBeEmptyDOMElement());
     await pickUp(moved);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'Review')).toContain(TITLES.export));
     await keys('{Escape}');
     await waitFor(() =>
@@ -931,7 +943,7 @@ export const ControlledBoardWaitsForTheHost: Story = {
   play: async ({ canvas, args }) => {
     const grip = gripOf(canvas, TITLES.billing);
     await pickUp(grip);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('[Space]');
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
@@ -1039,7 +1051,7 @@ export const OnNarrowScreenMovesCards: Story = {
   play: async ({ canvas, args }) => {
     const grip = gripOf(canvas, TITLES.billing);
     await pickUp(grip);
-    await keys('{ArrowRight}');
+    await keys(`{${keyToEnd()}}`);
     await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
     await keys('[Space]');
     await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
@@ -1092,5 +1104,119 @@ export const FocusShowsOnEveryControl: Story = {
     const card = open.closest('li > div') as HTMLElement;
     const box = card.getBoundingClientRect();
     expect(box.width).toBeGreaterThan(open.getBoundingClientRect().width);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** Which physical edges of a scroller fade, read off the gradient of its mask. */
+const fadedSides = (scroller: HTMLElement) => {
+  const mask = getComputedStyle(scroller).maskImage;
+  const toward = /to (left|right)/.exec(mask)?.[1];
+  const stops = mask.match(/rgba?\([^)]*\)/g) ?? [];
+  if (!toward || stops.length === 0) return { left: false, right: false };
+  const clear = (color: string) => color === 'rgba(0, 0, 0, 0)';
+  const first = clear(stops[0]!);
+  const last = clear(stops[stops.length - 1]!);
+  return toward === 'right' ? { left: first, right: last } : { left: last, right: first };
+};
+
+/** The columns of `board`, each name suffixed, for two boards on one page (landmarks are unique). */
+const named = (board: KanbanColumn[], n: number) =>
+  board.map((column) => ({ ...column, title: `${column.title} (${n})` }));
+
+/**
+ * The columns start at the start edge, and the board fades the edge that has more to scroll to: the
+ * end one at first, the start one once scrolled to the end. In right to left that is the left edge
+ * at first and the right one at the end, and the browser counts `scrollLeft` down from 0.
+ */
+export const ScrollFadeFollowsTheStartEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => {
+    // The two boards are on the page together: each column needs a name of its own.
+    let count = 0;
+    return bothDirections(() => (
+      <div className="w-[600px]">
+        <KanbanBoard {...args} defaultValue={named(sprint(), ++count)} />
+      </div>
+    ));
+  },
+  play: async ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('region', { name: /^To do/ }));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const scroller = within(box).getByRole('region', { name: /^To do/ }).parentElement!;
+      const rtl = dir === 'rtl';
+      const max = scroller.scrollWidth - scroller.clientWidth;
+      expect(max).toBeGreaterThan(100);
+      // At the start: more to come at the end edge, which is the left one in right to left.
+      await waitFor(() => expect(fadedSides(scroller)).toEqual({ left: rtl, right: !rtl }));
+      // Somewhere in the middle: both edges.
+      scroller.scrollLeft = (rtl ? -1 : 1) * (max / 2);
+      await waitFor(() => expect(fadedSides(scroller)).toEqual({ left: true, right: true }));
+      // At the end: nothing more past the end edge, more back to the start.
+      scroller.scrollLeft = (rtl ? -1 : 1) * max;
+      await waitFor(() => expect(fadedSides(scroller)).toEqual({ left: !rtl, right: rtl }));
+      expect(rtl ? scroller.scrollLeft < 0 : scroller.scrollLeft > 0).toBe(true);
+    }
+  },
+};
+
+/**
+ * The first column is at the start, and the arrow keys move a picked-up card across the board by
+ * where the columns are: toward the left, the next column in right to left, and back.
+ */
+export const KeyboardMovesCardsAcrossAMirroredBoard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { defaultValue: sprint(), onCardMove: fn() },
+  render: (args) => (
+    <div dir="rtl" data-direction="rtl">
+      <KanbanBoard {...args} />
+    </div>
+  ),
+  play: async ({ canvas, canvasElement, args }) => {
+    const box = directionBox(canvasElement, 'rtl');
+    const lane = (name: string) => canvas.getByRole('region', { name });
+    expect(startOffset(lane('To do'), box)).toBeLessThan(startOffset(lane('In progress'), box));
+    await pickUp(gripOf(canvas, TITLES.billing));
+    await keys('{ArrowLeft}');
+    await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
+    await keys('{ArrowRight}');
+    await waitFor(() => expect(titlesIn(canvas, 'To do')).toContain(TITLES.billing));
+    await keys('{ArrowLeft}');
+    await waitFor(() => expect(titlesIn(canvas, 'In progress')).toContain(TITLES.billing));
+    await keys('[Space]');
+    await waitFor(() => expect(calls(args.onCardMove)).toHaveLength(1));
+    expect(calls(args.onCardMove)[0][0]).toMatchObject({
+      cardId: 'billing-emails',
+      fromColumnId: 'todo',
+      toColumnId: 'doing',
+    });
+  },
+};
+
+/** The grip sits at the start of a card and the actions menu at its end, the board over. */
+export const CardGripAndActionsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => {
+    let count = 0;
+    return bothDirections(() => (
+      <div className="w-[600px]">
+        <KanbanBoard {...args} defaultValue={named(sprint(), ++count)} onCardOpen={() => {}} />
+      </div>
+    ));
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getAllByLabelText(/^Move card: /)[0]);
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: TITLES.billing })
+    );
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const actions = (box: HTMLElement) =>
+      within(box).getByRole('button', { name: `Card actions: ${TITLES.billing}` });
+    const lane = (box: HTMLElement) => within(box).getByRole('region', { name: /^To do/ });
+    const gap = (box: HTMLElement) => endOffset(actions(box), lane(box));
+    expect(gap(rtl)).toBeCloseTo(gap(ltr), 0);
   },
 };

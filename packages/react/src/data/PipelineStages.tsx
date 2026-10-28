@@ -118,12 +118,12 @@ export const PipelineStages = ({
               checked ? 'text-brand-600 dark:text-brand-400' : 'text-[var(--color-text-secondary)]'
             )}
           >
-            {stage.label}
+            <bdi>{stage.label}</bdi>
           </span>
         </span>
         <span className="flex shrink-0 items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0">
           <span className="text-base font-semibold text-[var(--color-text-primary)] tabular-nums sm:text-2xl">
-            {formatCount(stage.count)}
+            <bdi>{formatCount(stage.count)}</bdi>
           </span>
           {stage.amount !== undefined && (
             <span
@@ -133,7 +133,7 @@ export const PipelineStages = ({
                 checked ? 'text-gray-700 dark:text-gray-300' : 'text-[var(--color-text-secondary)]'
               )}
             >
-              {stage.amount}
+              <bdi>{stage.amount}</bdi>
             </span>
           )}
         </span>
@@ -142,7 +142,7 @@ export const PipelineStages = ({
     );
 
     const cardClass = clsx(
-      'relative flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left sm:flex-1 sm:flex-col sm:items-stretch sm:justify-start sm:gap-1',
+      'relative flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-start sm:flex-1 sm:flex-col sm:items-stretch sm:justify-start sm:gap-1',
       selectable && 'transition-colors',
       selectable && checked
         ? clsx('border-brand-500 bg-brand-50 dark:bg-brand-500/10', SELECTED_EDGE)
@@ -157,10 +157,10 @@ export const PipelineStages = ({
     const connector = previous && (
       <div
         aria-hidden
-        className="flex items-center gap-2 py-1.5 pl-5 text-[var(--color-text-muted)] sm:w-16 sm:shrink-0 sm:flex-col sm:justify-center sm:gap-1 sm:py-0 sm:pl-0"
+        className="flex items-center gap-2 py-1.5 ps-5 text-[var(--color-text-muted)] sm:w-16 sm:shrink-0 sm:flex-col sm:justify-center sm:gap-1 sm:py-0 sm:ps-0"
       >
         <ArrowDown className="size-4 sm:hidden" />
-        <ArrowRight className="hidden size-[18px] sm:block" />
+        <ArrowRight className="hidden size-[18px] sm:block rtl:-scale-x-100" />
         {rateText && (
           <span className="text-2xs rounded-full bg-gray-100 px-1.5 font-semibold text-[var(--color-text-primary)] tabular-nums dark:bg-gray-800">
             {rateText}

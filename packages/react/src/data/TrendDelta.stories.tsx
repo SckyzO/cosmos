@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
+import { bothDirections, expectReadsLeftToRight } from '../storybook-helpers';
 import { TrendDelta } from './TrendDelta';
 
 const meta = {
@@ -135,5 +136,30 @@ export const AccessibleText: Story = {
     const hidden = canvas.getByTestId('up').querySelector('.sr-only') as HTMLElement;
     expect(getComputedStyle(hidden).position).toBe('absolute');
     expect(hidden.getBoundingClientRect().width).toBeLessThanOrEqual(1);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The value keeps its sign and its percent in a right-to-left page; the arrow still points up or down. */
+export const ValueReadsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-2">
+        <TrendDelta value={12.4} />
+        <TrendDelta value={-3.1} label="vs last week" />
+        <TrendDelta value={0.4} label="30 days" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
+      expectReadsLeftToRight(within(box).getByText('+12.4%'));
+      expectReadsLeftToRight(within(box).getByText('-3.1%'));
+      expectReadsLeftToRight(within(box).getByText('30 days'));
+      // An arrow that points up or down is not turned around.
+      for (const name of ['trending-up', 'trending-down'])
+        expect(getComputedStyle(box.querySelector(`svg.lucide-${name}`)!).scale).toBe('none');
+    }
   },
 };

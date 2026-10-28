@@ -12,7 +12,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { bothDirections, endOffset, expectMirrored, directionBox } from '../storybook-helpers';
 import { IntegrationCard } from './IntegrationCard';
 
 const meta = {
@@ -357,5 +358,36 @@ export const LoadingKeepsTheDescription: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Email marketing platform.')).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The logo is at the start, the status badge and the actions at the end. */
+export const LogoStatusAndActionsMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <IntegrationCard
+        logo={<ColoredIcon icon={Hash} color="text-violet-500" />}
+        name="Hash"
+        description="Send incident alerts to a channel and respond from chat."
+        status="connected"
+        category="Communication"
+        actionLabel="Disconnect"
+        secondaryLabel="Configure"
+      />
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg.lucide-hash')!.parentElement);
+    expectMirrored(canvasElement, (box) => within(box).getByText('Hash'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Communication'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    for (const name of ['Connected', 'Disconnect']) {
+      const find = (box: HTMLElement) =>
+        within(box).getByText(name, { exact: false }).closest('span, button')!;
+      expect(endOffset(find(rtl), rtl)).toBeCloseTo(endOffset(find(ltr), ltr), 0);
+    }
   },
 };

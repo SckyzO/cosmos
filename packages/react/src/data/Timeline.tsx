@@ -21,7 +21,7 @@ export type TimelineItem = {
   /**
    * The state of the event, as a color on its marker: the icon circle of
    * `stepper` and `alternating` (tinted), the dot of `dot`, a ring around the
-   * avatar of `avatar`, the left edge of the card of `card`. Defaults to
+   * avatar of `avatar`, the start edge of the card of `card`. Defaults to
    * `brand` in `dot`, `stepper` and `alternating`; `avatar` and `card` draw
    * nothing without it, so an item with no `intent` keeps its look there.
    */
@@ -54,9 +54,9 @@ export type TimelineVariant =
   /** Each entry rendered as a stand-alone card (no connector line). */
   | 'card'
   /**
-   * Cards alternating left and right of a centred line, with a `stepper`
+   * Cards alternating between the two sides of a centred line, with a `stepper`
    * icon circle on the line and the time on the other side. Below `md`, one
-   * column with the line on the left.
+   * column with the line at the start.
    */
   | 'alternating';
 
@@ -90,31 +90,31 @@ const INTENT_MARKER: Record<
     dot: 'bg-brand-500',
     dotIcon: 'text-white',
     ring: 'ring-brand-600 dark:ring-brand-500',
-    edge: 'border-l-brand-600 dark:border-l-brand-500',
+    edge: 'border-s-brand-600 dark:border-s-brand-500',
   },
   success: {
     dot: 'bg-green-600 dark:bg-green-500',
     dotIcon: 'text-white dark:text-gray-900',
     ring: 'ring-green-600 dark:ring-green-500',
-    edge: 'border-l-green-600 dark:border-l-green-500',
+    edge: 'border-s-green-600 dark:border-s-green-500',
   },
   warning: {
     dot: 'bg-amber-600 dark:bg-amber-500',
     dotIcon: 'text-white dark:text-gray-900',
     ring: 'ring-amber-600 dark:ring-amber-500',
-    edge: 'border-l-amber-600 dark:border-l-amber-500',
+    edge: 'border-s-amber-600 dark:border-s-amber-500',
   },
   danger: {
     dot: 'bg-red-600 dark:bg-red-500',
     dotIcon: 'text-white',
     ring: 'ring-red-600 dark:ring-red-500',
-    edge: 'border-l-red-600 dark:border-l-red-500',
+    edge: 'border-s-red-600 dark:border-s-red-500',
   },
   neutral: {
     dot: 'bg-gray-600 dark:bg-gray-500',
     dotIcon: 'text-white',
     ring: 'ring-gray-600 dark:ring-gray-500',
-    edge: 'border-l-gray-600 dark:border-l-gray-500',
+    edge: 'border-s-gray-600 dark:border-s-gray-500',
   },
 };
 
@@ -174,13 +174,13 @@ const StepperIndicator = ({
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 
-// The card is a 1px gray frame. With an `intent` its left edge is 4px and takes the colour; the three
-// other sides get their gray from classes of their own (not `border-gray-200` under a `border-l-*`),
+// The card is a 1px gray frame. With an `intent` its start edge is 4px and takes the colour; the three
+// other sides get their gray from classes of their own (not `border-gray-200` under a `border-s-*`),
 // so no side depends on which class the CSS lists last. The padding gives back the 3px the thicker
 // edge takes: the titles of cards with and without an `intent` start at the same place.
 const CARD_PLAIN = 'border border-gray-200 p-3 dark:border-gray-800';
 const CARD_EDGED =
-  'border-y border-r border-l-4 border-y-gray-200 border-r-gray-200 py-3 pr-3 pl-[calc(var(--spacing)*3-3px)] dark:border-y-gray-800 dark:border-r-gray-800';
+  'border-y border-e border-s-4 border-y-gray-200 border-e-gray-200 py-3 pe-3 ps-[calc(var(--spacing)*3-3px)] dark:border-y-gray-800 dark:border-e-gray-800';
 
 // ── Body (title + description + meta + time) — shared across line variants ───
 
@@ -205,7 +205,9 @@ const Body = ({
         variant === 'dot' ? 'min-h-6 items-center' : 'items-baseline'
       )}
     >
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <bdi>{item.title}</bdi>
+      </p>
       {item.time && <span className={clsx(TIMESTAMP_CLASS, 'shrink-0')}>{item.time}</span>}
     </div>
     {item.description && (
@@ -246,7 +248,9 @@ const TimelineList = ({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <bdi>{item.title}</bdi>
+                </p>
                 {item.description && (
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {item.description}
@@ -263,13 +267,13 @@ const TimelineList = ({
   }
 
   // One grid row per entry: indicator column, card, and (from `md`) the time
-  // on the other side of the line. Even positions put the card on the left.
+  // on the other side of the line. Even positions put the card on the start side.
   if (variant === 'alternating') {
     return (
       <ol aria-labelledby={labelledBy} className={clsx('flex flex-col', className)}>
         {items.map((item, i) => {
           const isLast = i === items.length - 1;
-          const left = (startIndex + i) % 2 === 0;
+          const atStart = (startIndex + i) % 2 === 0;
           return (
             <li
               key={item.id}
@@ -282,13 +286,13 @@ const TimelineList = ({
               <div
                 className={clsx(
                   'col-start-2 row-start-1',
-                  left ? 'md:col-start-1' : 'md:col-start-3',
+                  atStart ? 'md:col-start-1' : 'md:col-start-3',
                   !isLast && 'pb-6'
                 )}
               >
                 <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {item.title}
+                    <bdi>{item.title}</bdi>
                   </p>
                   {item.description && (
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -306,7 +310,7 @@ const TimelineList = ({
                   className={clsx(
                     TIMESTAMP_CLASS,
                     'row-start-1 hidden pt-3 md:block',
-                    left ? 'md:col-start-3' : 'md:col-start-1 md:text-right'
+                    atStart ? 'md:col-start-3' : 'md:col-start-1 md:text-end'
                   )}
                 >
                   {item.time}
@@ -369,7 +373,7 @@ const groupRuns = (items: TimelineItem[]) => {
 
 const GroupHeader = ({ id, label, centred }: { id: string; label: string; centred: boolean }) =>
   centred ? (
-    // A pill on the line; it moves to the left with the line below `md`.
+    // A pill on the line; it moves to the start with the line below `md`.
     <h3 id={id} className="mb-4 flex md:justify-center">
       <span className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
         {label}

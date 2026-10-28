@@ -121,7 +121,7 @@ function GridListFooter({ className, children, ref, ...rest }: GridListFooterPro
 // ── FooterAction (one cell of the split footer) ─────────────────────────────
 
 export type GridListFooterActionProps = ComponentPropsWithRef<'a'> & {
-  /** Index in the footer row — only used to apply `-ml-px` on cells after the first. */
+  /** Index in the footer row — only used to apply `-ms-px` on cells after the first. */
   index?: number;
 };
 
@@ -134,12 +134,12 @@ function GridListFooterAction({
   ...rest
 }: GridListFooterActionProps) {
   return (
-    // The cell's position picks the card corner it rounds: first bottom-left, last bottom-right.
-    <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ml-px')}>
+    // The cell's position picks the card corner it rounds: first rounds the bottom start corner, last the bottom end one.
+    <div className={clsx('group/action flex w-0 flex-1', index > 0 && '-ms-px')}>
       <AppLink
         ref={ref}
         className={clsx(
-          'focus-visible:focus-indicator py-row-16 relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent text-sm font-semibold text-gray-900 group-first/action:rounded-bl-lg group-last/action:rounded-br-lg hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
+          'focus-visible:focus-indicator py-row-16 relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 border border-transparent text-sm font-semibold text-gray-900 group-first/action:rounded-es-lg group-last/action:rounded-ee-lg hover:bg-gray-50 focus-visible:ring-inset dark:text-white dark:hover:bg-white/5',
           className
         )}
         {...rest}

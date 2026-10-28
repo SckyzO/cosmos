@@ -1436,7 +1436,9 @@ it swaps sides under `dir="rtl"`. Left to right renders as it always did.
 Text that comes from you and sits inside a label or a sentence (a name, a value, a key) is
 wrapped in `<bdi>`, so a Latin name in an Arabic page, or the reverse, keeps its own order
 and does not drag the punctuation around it. The package's own copy stays in English, as it
-is everywhere else.
+is everywhere else. A Latin text cut short by an ellipsis in a right-to-left page (a long file
+name in a narrow tile) shows its end rather than its beginning: the line ends on the left, where
+Latin text starts.
 
 A text field (`Input`, `SearchInput`, `Textarea`, the inputs of `Combobox`, `MultiSelect` and
 `TagInput`) follows the direction of what is typed in it: Arabic aligns and flows right to
@@ -1472,11 +1474,17 @@ const Forward = ({ className, ...props }: LucideProps) => (
 </Button>;
 ```
 
+Two things stay as they are on purpose. A chevron that points down, or turns over when a
+panel opens (`Accordion`), and a trend arrow that points up or down, are not turned around.
+And the arrow keys that move a card across a `KanbanBoard` follow where the columns are, not
+the reading direction: with the first column on the right, ArrowLeft takes the card to the
+next one.
+
 The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions** and **Forms** (apart from the rich text editor, which follows). The
-others still lay out for left to right and are the next ones in line: Data and Lists,
-Feedback and Overlays, Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the **Direction** menu of the toolbar
-(`&globals=direction:rtl`) renders any story right to left.
+**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), **Data** and
+**Lists**. The others still lay out for left to right and are the next ones in line: Feedback
+and Overlays, Navigation and Layout, Chat, Tables and Settings, then Pages. In Storybook, the
+**Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story right to left.
 
 ## Themes and accents
 

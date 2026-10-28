@@ -68,10 +68,12 @@ export const TrendDelta = ({
       >
         <Icon className={clsx('shrink-0', sizes.icon)} aria-hidden />
         <span className="sr-only">{direction} </span>
-        {format(value)}
+        <bdi>{format(value)}</bdi>
       </span>
       {label && (
-        <span className={clsx('text-gray-500 dark:text-gray-400', sizes.label)}>{label}</span>
+        <span className={clsx('text-gray-500 dark:text-gray-400', sizes.label)}>
+          <bdi>{label}</bdi>
+        </span>
       )}
     </span>
   );

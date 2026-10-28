@@ -4,7 +4,12 @@ import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Menu } from '../ui/Menu';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   inEachTheme,
   mobileViewport,
   portalDocsParams,
@@ -366,7 +371,10 @@ export const NameIsTextWithoutHandler: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button')).toBeNull();
     await expect(canvas.queryByRole('link')).toBeNull();
-    await expect(canvas.getByText('Q3 report.pdf')).toHaveAttribute('title', 'Q3 report.pdf');
+    await expect(canvas.getByText('Q3 report.pdf').closest('[title]')).toHaveAttribute(
+      'title',
+      'Q3 report.pdf'
+    );
   },
 };
 
@@ -474,6 +482,60 @@ export const ForwardsRef: Story = {
     await expect(tileRef.current?.tagName).toBe('LI');
     await expect(tileRef.current).toContainElement(
       canvas.getByRole('button', { name: 'Q3 report.pdf' })
+    );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The icon, the name and the Shared badge are at the start; the star and the actions at the end. */
+export const TileAndRowMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ul className="max-w-sm space-y-3">
+        <FileTile
+          name="Q3 report.pdf"
+          kind="pdf"
+          meta="2.4 MB · Edited yesterday"
+          shared
+          defaultStarred
+        />
+        <FileTile
+          name="Q3 report.pdf"
+          kind="pdf"
+          meta="2.4 MB · Edited yesterday"
+          shared
+          layout="row"
+          defaultStarred
+          actions={<ActionsMenu name="Q3 report.pdf" />}
+        />
+      </ul>
+    )),
+  play: ({ canvasElement }) => {
+    const item = (box: HTMLElement, layout: string) =>
+      box.querySelector<HTMLElement>(`[data-layout="${layout}"]`)!;
+    for (const layout of ['tile', 'row']) {
+      expectMirrored(canvasElement, (box) => within(item(box, layout)).getByText('Q3 report.pdf'));
+      const meta = (box: HTMLElement) =>
+        within(item(box, layout)).getByText('2.4 MB · Edited yesterday');
+      expectMirrored(canvasElement, meta);
+      // The size leads the line in both directions.
+      for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
+        expectReadsLeftToRight(meta(box));
+      const ltr = directionBox(canvasElement, 'ltr');
+      const rtl = directionBox(canvasElement, 'rtl');
+      const star = (box: HTMLElement) =>
+        within(item(box, layout)).getByRole('button', { name: 'Star Q3 report.pdf' });
+      expect(endOffset(star(rtl), item(rtl, layout))).toBeCloseTo(
+        endOffset(star(ltr), item(ltr, layout)),
+        0
+      );
+    }
+    // The badge over the preview of a tile is at the start corner.
+    expectMirrored(canvasElement, (box) => within(item(box, 'tile')).getByText('Shared'));
+    expectMirrored(canvasElement, (box) =>
+      item(box, 'row').querySelector('span.rounded-\\[10px\\]')
     );
   },
 };

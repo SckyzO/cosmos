@@ -49,7 +49,7 @@ const ICON_BUTTON =
   'focus-visible:focus-indicator flex shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10';
 
 const NAME_CLASS =
-  'focus-visible:focus-indicator block max-w-full truncate rounded text-left text-sm font-semibold text-[var(--color-text-primary)] hover:underline';
+  'focus-visible:focus-indicator block max-w-full truncate rounded text-start text-sm font-semibold text-[var(--color-text-primary)] hover:underline';
 
 /**
  * One file or folder, as a `<li>` for a `GridList`, a `StackedList` or any `<ul>`. `layout="tile"`
@@ -96,7 +96,7 @@ export const FileTile = ({
       aria-current={selected || undefined}
       className={clsx(NAME_CLASS, 'break-all')}
     >
-      {name}
+      <bdi>{name}</bdi>
     </AppLink>
   ) : onOpen ? (
     <button
@@ -106,20 +106,20 @@ export const FileTile = ({
       onClick={onOpen}
       className={NAME_CLASS}
     >
-      {name}
+      <bdi>{name}</bdi>
     </button>
   ) : (
     <span
       title={name}
       className="block max-w-full truncate text-sm font-semibold text-[var(--color-text-primary)]"
     >
-      {name}
+      <bdi>{name}</bdi>
     </span>
   );
 
   const metaNode = (meta !== undefined || (shared && !isTile)) && (
     <div className="text-2xs flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[var(--color-text-muted)]">
-      {meta}
+      {meta !== undefined && <bdi>{meta}</bdi>}
       {shared && !isTile && (
         <Badge size="sm" intent="neutral">
           Shared
@@ -137,7 +137,7 @@ export const FileTile = ({
       className={clsx(
         ICON_BUTTON,
         // Over the preview the star sits on a panel-coloured square, so it reads over a photo.
-        isTile ? 'absolute top-2 right-2 size-8 bg-[var(--color-bg-panel)]/85' : 'size-8'
+        isTile ? 'inset-e-2 absolute top-2 size-8 bg-[var(--color-bg-panel)]/85' : 'size-8'
       )}
     >
       {/* warning-600, as on `Rating`: it holds 3:1 on a sand page, where amber-600 does not. */}
@@ -157,7 +157,7 @@ export const FileTile = ({
         data-layout="row"
         data-selected={selected || undefined}
         className={clsx(
-          'py-row-10 flex items-center gap-3 pr-3 pl-4',
+          'py-row-10 flex items-center gap-3 ps-4 pe-3',
           selected &&
             'bg-brand-50/50 dark:bg-brand-500/10 shadow-[inset_0_0_0_2px_var(--color-brand-500)]',
           className
@@ -217,7 +217,7 @@ export const FileTile = ({
         )}
       </div>
       {shared && (
-        <span className="absolute top-2 left-2 rounded-full bg-[var(--color-bg-panel)]">
+        <span className="inset-s-2 absolute top-2 rounded-full bg-[var(--color-bg-panel)]">
           <Badge size="sm" intent="neutral">
             Shared
           </Badge>
@@ -225,7 +225,7 @@ export const FileTile = ({
       )}
       <div
         className={clsx(
-          'flex items-start gap-2 py-3 pr-3 pl-3.5',
+          'flex items-start gap-2 py-3 ps-3.5 pe-3',
           selected && 'bg-brand-50/50 dark:bg-brand-500/10'
         )}
       >

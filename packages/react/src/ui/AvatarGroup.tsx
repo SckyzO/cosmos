@@ -156,7 +156,7 @@ export const AvatarGroup = ({
             'focus-visible:focus-indicator cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'
           )}
         >
-          +{hidden}
+          <bdi>+{hidden}</bdi>
         </button>
       );
     } else {
@@ -170,7 +170,7 @@ export const AvatarGroup = ({
             AVATAR_SIZE_CLASS[size]
           )}
         >
-          +{hidden}
+          <bdi>+{hidden}</bdi>
         </span>
       );
     }

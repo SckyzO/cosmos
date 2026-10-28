@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Check, Send, ThumbsUp, User } from 'lucide-react';
+import { bothDirections, directionBox, endOffset, expectMirrored } from '../storybook-helpers';
 import { ActivityFeed } from './ActivityFeed';
 
 const meta = {
@@ -173,5 +174,37 @@ export const RingFollowsTheSurface: Story = {
     await expect(getComputedStyle(outer).boxShadow).toContain(panel);
     // The tint sits on an opaque base: nothing behind the disc (the connector) shows through.
     await expect(getComputedStyle(outer).backgroundColor).toBe(panel);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The disc and its connector are at the start, the text follows them and the time is at the end. */
+export const DiscsAndTimesMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ActivityFeed>
+        <ActivityFeed.Item icon={User} timestamp={<time dateTime="2026-09-20">Sep 20</time>}>
+          Applied to <span className="font-medium">Front End Developer</span>
+        </ActivityFeed.Item>
+        <ActivityFeed.Item
+          icon={Check}
+          intent="success"
+          timestamp={<time dateTime="2026-09-22">Sep 22</time>}
+        >
+          Completed phone screening
+        </ActivityFeed.Item>
+      </ActivityFeed>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('[data-slot="disc"]'));
+    // The connector runs down the middle of the disc, on the same side.
+    expectMirrored(canvasElement, (box) => box.querySelector('span.w-0\\.5'), 0);
+    expectMirrored(canvasElement, (box) => box.querySelector('p, div.text-sm'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const time = (box: HTMLElement) => box.querySelector('time')!;
+    expect(endOffset(time(rtl), rtl)).toBeCloseTo(endOffset(time(ltr), ltr), 0);
   },
 };

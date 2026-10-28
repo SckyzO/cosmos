@@ -3,8 +3,13 @@ import { createRef } from 'react';
 import { CreditCard, Server, ShieldAlert, Users } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectFocusRing,
+  expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectRefFocuses,
   inEachTheme,
   expectTextContrast,
@@ -57,7 +62,7 @@ export const Default: Story = {
 
 export const NoSub: Story = { args: { label: 'Health Score', value: '94%' } };
 
-/** The icon sits in a tinted chip on the right of the label, in the accent by default. */
+/** The icon sits in a tinted chip at the end of the label, in the accent by default. */
 export const WithIcon: Story = {
   args: { label: 'Active users', value: '12 480', icon: Users },
 };
@@ -422,5 +427,48 @@ export const LoadingButtonHoldsNoBlockElement: Story = {
     const button = canvas.getByRole('button', { name: /Sessions/ });
     expect(button.querySelectorAll('.animate-pulse')).toHaveLength(3);
     expect(button.querySelectorAll('div, p')).toHaveLength(0);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The label and the value start at the start edge, the icon chip sits at the end one. */
+export const LabelAndIconMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <KpiCard
+        label="Total Racks"
+        value="48"
+        sub="across 3 sites"
+        icon={Server}
+        delta={<TrendDelta value={12.4} size="sm" />}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    for (const text of ['Total Racks', '48', 'across 3 sites'])
+      expectMirrored(canvasElement, (box) => within(box).getByText(text));
+    expectMirrored(canvasElement, (box) => box.querySelector('svg.lucide-server')!.parentElement);
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const chip = (box: HTMLElement) => box.querySelector('svg.lucide-server')!.parentElement!;
+    expect(endOffset(chip(rtl), rtl)).toBeCloseTo(endOffset(chip(ltr), ltr), 0);
+    // The trend arrow points up or down, not along the line.
+    const arrow = (box: HTMLElement) => box.querySelector('svg.lucide-trending-up')!;
+    expect(getComputedStyle(arrow(rtl)).scale).toBe('none');
+    expect(getComputedStyle(arrow(ltr)).scale).toBe('none');
+  },
+};
+
+/** A `sub` that starts with a number keeps its order in a right-to-left card. */
+export const SubReadsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <KpiCard label="Crit alerts" value="3" sub="2 escalated" icon={ShieldAlert} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
+      expectReadsLeftToRight(within(box).getByText('2 escalated'));
   },
 };

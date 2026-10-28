@@ -96,9 +96,15 @@ export const Clock = ({
       : null;
   return (
     <div role="timer" className={clsx(ROOT[variant], className)}>
-      {label && <span className={LABEL[variant]}>{label}</span>}
-      <span className={clsx('tabular-nums', TIME[variant])}>{time}</span>
-      {showDate && <span className={DATE[variant]}>{date ?? ' '}</span>}
+      {label && (
+        <span className={LABEL[variant]}>
+          <bdi>{label}</bdi>
+        </span>
+      )}
+      <span className={clsx('tabular-nums', TIME[variant])}>
+        <bdi>{time}</bdi>
+      </span>
+      {showDate && <span className={DATE[variant]}>{date ? <bdi>{date}</bdi> : ' '}</span>}
     </div>
   );
 };

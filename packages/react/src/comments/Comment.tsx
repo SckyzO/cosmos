@@ -174,7 +174,7 @@ export function Comment({
               id={nameId}
               className="text-sm font-semibold break-words text-[var(--color-text-primary)]"
             >
-              {author}
+              <bdi>{author}</bdi>
             </span>
             {role && (
               <Badge size="sm" intent="neutral">
@@ -214,7 +214,7 @@ export function Comment({
             </div>
           )}
           {hasActions && !editing && (
-            <div className="mt-1.5 -ml-2 flex flex-wrap items-center gap-1">
+            <div className="-ms-2 mt-1.5 flex flex-wrap items-center gap-1">
               {canReply && (
                 <Button
                   ref={replyButton}
@@ -241,7 +241,7 @@ export function Comment({
         </div>
       </div>
       {(replyList.length > 0 || replying) && (
-        <div className="mt-3 ml-4 min-w-0 border-l-2 border-[var(--color-border)] pl-4 sm:ml-5">
+        <div className="ms-4 mt-3 min-w-0 border-s-2 border-[var(--color-border)] ps-4 sm:ms-5">
           {replyList.length > 0 && (
             <ReplyContext value>
               <ul role="list" aria-label={labels.replies(author)} className="space-y-4">

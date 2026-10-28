@@ -155,7 +155,7 @@ export const Countdown = ({
           className
         )}
       >
-        {blank ? '--:--:--' : formatCountdownCompact(parts, short.days)}
+        <bdi>{blank ? '--:--:--' : formatCountdownCompact(parts, short.days)}</bdi>
       </span>
     );
 
@@ -172,7 +172,7 @@ export const Countdown = ({
           {label}
           {label ? ' ' : null}
           <span className="font-medium text-gray-900 dark:text-white">
-            {blank ? '--' : formatCountdownInline(parts, short)}
+            <bdi>{blank ? '--' : formatCountdownInline(parts, short)}</bdi>
           </span>
         </>
       )}

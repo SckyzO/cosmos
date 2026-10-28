@@ -2,12 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FileText, Globe, Mail, Search, Users } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectFocusRing,
+  expectMirrored,
   expectGraphicContrast,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { BarList, type BarListItem } from './BarList';
 import { TrendDelta } from './TrendDelta';
@@ -241,7 +246,8 @@ export const Mobile: Story = {
     expectNoHorizontalOverflow();
     const rows = canvas.getAllByRole('listitem');
     const long = rows[0];
-    const label = within(long).getByText(/Getting started/);
+    // The truncating span wraps the label's `<bdi>`.
+    const label = within(long).getByText(/Getting started/).parentElement!;
     expect(label.scrollWidth).toBeGreaterThan(label.clientWidth);
     const value = within(long).getByText('128,430');
     expect(value).toBeVisible();
@@ -378,9 +384,9 @@ export const RankedListIsAnOl: Story = {
       expect.stringMatching(/^3Blog/),
     ]);
     // The bars of every row start at the same place, rank or not.
-    const lefts = rows.map((row) => trackOf(row).getBoundingClientRect().left);
-    expect(new Set(lefts).size).toBe(1);
-    expect(lefts[0]).toBeGreaterThan(ranked.getBoundingClientRect().left);
+    const offsets = rows.map((row) => startOffset(trackOf(row), ranked));
+    expect(new Set(offsets).size).toBe(1);
+    expect(offsets[0]).toBeGreaterThan(0);
   },
 };
 
@@ -392,7 +398,7 @@ export const BarIsThin: Story = {
     const row = canvas.getAllByRole('listitem')[0];
     expect(trackOf(row).getBoundingClientRect().height).toBe(6);
     expect(getComputedStyle(trackOf(row)).borderTopLeftRadius).not.toBe('0px');
-    expect(within(row).getByText('Home')).toHaveAttribute('title', 'Home');
+    expect(within(row).getByText('Home').closest('[title]')).toHaveAttribute('title', 'Home');
   },
 };
 
@@ -520,5 +526,44 @@ export const SortDescOrdersByValue: Story = {
     expect(within(rows[0]).getByText('Home')).toBeVisible();
     expect(widthOf(rows[0])).toBeCloseTo(1, 2);
     expect(within(rows[2]).getByText('Blog')).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The bar fills from the start edge, the value sits at the end one and a hint follows its label. */
+export const BarsFillFromTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <BarList aria-label="Top pages" showRank items={[{ ...PAGES[0], hint: '/home' }, PAGES[3]]} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const rows = within(box).getAllByRole('listitem');
+      for (const row of rows) {
+        // The fill starts where its track does.
+        expect(startOffset(fillOf(row), trackOf(row))).toBeCloseTo(0, 1);
+      }
+      // The value is the row's last part, at the end edge.
+      const value = within(rows[0]).getByText('12,480');
+      expect(endOffset(value, rows[0])).toBeLessThan(startOffset(value, rows[0]));
+      const label = within(rows[0]).getByText('Home');
+      expect(startOffset(within(rows[0]).getByText('/home'), box)).toBeGreaterThan(
+        startOffset(label, box) + label.getBoundingClientRect().width
+      );
+    }
+    for (const find of [
+      (box: HTMLElement) => within(box).getByText('12,480'),
+      (box: HTMLElement) => within(box).getByText('1'),
+      (box: HTMLElement) => within(box).getByText('Blog'),
+      (box: HTMLElement) => fillOf(within(box).getAllByRole('listitem')[1]),
+    ])
+      expectMirrored(canvasElement, find);
+    const [ltr, rtl] = (['ltr', 'rtl'] as const).map((dir) =>
+      widthOf(within(directionBox(canvasElement, dir)).getAllByRole('listitem')[1])
+    );
+    expect(rtl).toBeCloseTo(ltr, 3);
   },
 };

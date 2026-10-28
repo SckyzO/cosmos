@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Bug, CreditCard, Info, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
-import { inEachTheme } from '../storybook-helpers';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { bothDirections, expectMirrored, inEachTheme } from '../storybook-helpers';
 import { Accordion } from './Accordion';
 import { Button } from './Button';
 
@@ -520,11 +520,14 @@ export const AccentOpenIsOffByDefault: Story = {
   },
 };
 
-// Where the text of `el` starts, whatever its padding.
-const textLeft = (el: Element) => {
+// Where the text of `el` starts, whatever its padding: its left edge, or minus its right edge in
+// right to left, so two values compare the same way in both directions.
+const textStart = (el: Element) => {
   const range = document.createRange();
   range.selectNodeContents(el);
-  return range.getBoundingClientRect().left;
+  const box = range.getBoundingClientRect();
+  // From the parent: a title sits in a `<bdi>`, which can pick a direction of its own.
+  return getComputedStyle(el.parentElement!).direction === 'rtl' ? -box.right : box.left;
 };
 
 export const ContentAlignsUnderTheTitle: Story = {
@@ -553,11 +556,11 @@ export const ContentAlignsUnderTheTitle: Story = {
       const withoutBody = await canvas.findByText(`Body without icon ${size}`);
 
       // The text of the content starts where the title starts, icon or not.
-      await expect(textLeft(withBody)).toBeCloseTo(textLeft(withTitle), 0);
-      await expect(textLeft(withoutBody)).toBeCloseTo(textLeft(withoutTitle), 0);
+      await expect(textStart(withBody)).toBeCloseTo(textStart(withTitle), 0);
+      await expect(textStart(withoutBody)).toBeCloseTo(textStart(withoutTitle), 0);
 
       // The indent is the icon (16px) and its gap (8px), and only the item with an icon has it.
-      const paddingStart = (el: HTMLElement) => parseFloat(getComputedStyle(el).paddingLeft);
+      const paddingStart = (el: HTMLElement) => parseFloat(getComputedStyle(el).paddingInlineStart);
       await expect(paddingStart(withBody) - paddingStart(withoutBody)).toBe(24);
     }
   },
@@ -581,15 +584,63 @@ export const ContentFollowsTheIcon: Story = {
   },
   play: async ({ canvas }) => {
     const body = await canvas.findByText('Body');
-    const paddingStart = () => parseFloat(getComputedStyle(body).paddingLeft);
+    const paddingStart = () => parseFloat(getComputedStyle(body).paddingInlineStart);
     await expect(paddingStart()).toBe(40);
-    await expect(textLeft(body)).toBeCloseTo(textLeft(canvas.getByText('Row')), 0);
+    await expect(textStart(body)).toBeCloseTo(textStart(canvas.getByText('Row')), 0);
 
     // Taking the icon away takes the indent with it, and putting it back restores it.
     await userEvent.click(canvas.getByRole('button', { name: 'Toggle icon' }));
     await waitFor(() => expect(paddingStart()).toBe(16));
-    await expect(textLeft(body)).toBeCloseTo(textLeft(canvas.getByText('Row')), 0);
+    await expect(textStart(body)).toBeCloseTo(textStart(canvas.getByText('Row')), 0);
     await userEvent.click(canvas.getByRole('button', { name: 'Toggle icon' }));
     await waitFor(() => expect(paddingStart()).toBe(40));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The icon and the title are at the start, the chevron at the end. The chevron points down and
+ * turns over when open, in both directions: it is not turned around.
+ */
+export const ChevronStaysPutInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // The open row's content is a landmark named after its trigger: one name per box.
+    let count = 0;
+    return bothDirections(() => {
+      const n = ++count;
+      return (
+        <Accordion type="multiple" defaultValue={['open']}>
+          <Accordion.Item value="open">
+            <Accordion.Trigger icon={Bug}>{`Open row ${n}`}</Accordion.Trigger>
+            <Accordion.Content>Body of the open row</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="closed">
+            <Accordion.Trigger>{`Closed row ${n}`}</Accordion.Trigger>
+            <Accordion.Content>Body of the closed row</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      );
+    });
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('svg.lucide-bug'));
+    expectMirrored(canvasElement, (box) => within(box).getByText(/^Open row/));
+    expectMirrored(canvasElement, (box) => within(box).getByText(/^Closed row/));
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
+      const chevron = (name: RegExp) =>
+        within(box).getByRole('button', { name }).querySelector('svg.lucide-chevron-down')!;
+      expect(getComputedStyle(chevron(/^Open row/)).scale).toBe('none');
+      expect(getComputedStyle(chevron(/^Closed row/)).scale).toBe('none');
+      expect(getComputedStyle(chevron(/^Open row/)).rotate).toBe('180deg');
+      expect(getComputedStyle(chevron(/^Closed row/)).rotate).toBe('none');
+    }
+    // The chevron of a row is at the end of it, on the same side in both.
+    expectMirrored(canvasElement, (box) =>
+      within(box)
+        .getByRole('button', { name: /^Closed row/ })
+        .querySelector('svg')
+    );
   },
 };

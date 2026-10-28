@@ -189,13 +189,13 @@ const CardFrame = ({
       onClick={() => onOpen(card, columnId)}
       // The ::after stretches the button over the whole card, so a click anywhere on it opens the
       // card; the grip and the actions sit above it (`relative z-10`).
-      className="focus-visible:after:focus-indicator cursor-pointer text-left text-sm leading-5 font-semibold break-words text-[var(--color-text-primary)] outline-hidden after:absolute after:inset-0 after:rounded-xl"
+      className="focus-visible:after:focus-indicator cursor-pointer text-start text-sm leading-5 font-semibold break-words text-[var(--color-text-primary)] outline-hidden after:absolute after:inset-0 after:rounded-xl"
     >
-      {card.title}
+      <bdi>{card.title}</bdi>
     </button>
   ) : (
     <span className="text-sm leading-5 font-semibold break-words text-[var(--color-text-primary)]">
-      {card.title}
+      <bdi>{card.title}</bdi>
     </span>
   );
   return (
@@ -214,7 +214,7 @@ const CardFrame = ({
         // The brand line that says where the card will land: the hole is the drop place.
         <span
           aria-hidden
-          className="bg-brand-500 before:bg-brand-500 absolute inset-x-1 -top-[5px] h-0.5 rounded-full before:absolute before:-top-[3px] before:-left-1 before:size-2 before:rounded-full"
+          className="bg-brand-500 before:bg-brand-500 before:-inset-s-1 absolute inset-x-1 -top-[5px] h-0.5 rounded-full before:absolute before:-top-[3px] before:size-2 before:rounded-full"
         />
       )}
       <div className={clsx('flex flex-col gap-2', state === 'hole' && 'opacity-0')}>
@@ -288,7 +288,7 @@ const SortableCard = ({
             // touch scrolling: the rest of the card keeps scrolling the board.
             className={clsx(
               ICON_BUTTON,
-              '-mt-0.5 -ml-1.5 cursor-grab touch-none active:cursor-grabbing'
+              '-ms-1.5 -mt-0.5 cursor-grab touch-none active:cursor-grabbing'
             )}
           >
             {GRIP_ICON}
@@ -299,7 +299,7 @@ const SortableCard = ({
             <Menu.Trigger
               aria-label={`Card actions: ${card.title}`}
               data-kanban-actions={card.id}
-              className={clsx(ICON_BUTTON, '-mt-0.5 -mr-1.5')}
+              className={clsx(ICON_BUTTON, '-me-1.5 -mt-0.5')}
             >
               {ACTIONS_ICON}
             </Menu.Trigger>
@@ -378,7 +378,7 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
           id={headingId}
           className="m-0 min-w-0 truncate text-[13px] font-semibold text-[var(--color-text-primary)]"
         >
-          {column.title}
+          <bdi>{column.title}</bdi>
         </h3>
         <span className="text-2xs rounded-full bg-gray-200 px-1.5 py-px font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
           {column.cards.length}
@@ -409,11 +409,14 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
         <button
           type="button"
           onClick={() => onAddCard(column.id)}
-          className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-1.5 rounded-lg px-2.5 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
+          className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-1.5 rounded-lg px-2.5 text-start text-sm font-medium text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
         >
           <Plus className="size-3.5" aria-hidden />
           Add card
-          <span className="sr-only"> to {column.title}</span>
+          <span className="sr-only">
+            {' '}
+            to <bdi>{column.title}</bdi>
+          </span>
         </button>
       )}
     </section>
@@ -628,14 +631,14 @@ export const KanbanBoard = ({
                     aria-hidden
                     className={clsx(
                       ICON_BUTTON,
-                      'text-brand-600 dark:text-brand-400 -mt-0.5 -ml-1.5'
+                      'text-brand-600 dark:text-brand-400 -ms-1.5 -mt-0.5'
                     )}
                   >
                     {GRIP_ICON}
                   </span>
                 }
                 actions={
-                  <span aria-hidden className={clsx(ICON_BUTTON, '-mt-0.5 -mr-1.5')}>
+                  <span aria-hidden className={clsx(ICON_BUTTON, '-me-1.5 -mt-0.5')}>
                     {ACTIONS_ICON}
                   </span>
                 }

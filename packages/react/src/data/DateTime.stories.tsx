@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
@@ -133,7 +135,8 @@ export const TooltipOnFocus: Story = {
   tags: ['!dev', '!autodocs'],
   args: { tooltip: true, format: 'date' },
   play: async ({ canvas }) => {
-    const time = canvas.getByText('Jan 15, 2026');
+    // The text sits in a `<bdi>` inside the `<time>`.
+    const time = canvas.getByText('Jan 15, 2026').closest('time')!;
     expect(time.getAttribute('tabindex')).toBe('0');
     await userEvent.tab();
     expect(time).toHaveFocus();
@@ -153,5 +156,24 @@ export const InvalidValueHasNoTimeElement: Story = {
   play: async ({ canvas }) => {
     expect(canvas.getByText('—').tagName).toBe('SPAN');
     expect(canvas.queryByRole('tooltip')).toBeNull();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** A date and a time keep their order in a right-to-left page. */
+export const ValueReadsLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div className="space-y-2">
+        <DateTime {...args} />
+        <DateTime {...args} format="time" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    const times = canvasElement.querySelectorAll('time');
+    expect(times).toHaveLength(4);
+    for (const time of times) expectReadsLeftToRight(time);
   },
 };

@@ -93,7 +93,7 @@ export const KpiCard = ({
   const chip = INTENT_STYLE[chipIntent];
   const interactive = Boolean(href || onClick);
   const classes = clsx(
-    'flex flex-col rounded-2xl border bg-white p-5 text-left dark:bg-gray-900',
+    'flex flex-col rounded-2xl border bg-white p-5 text-start dark:bg-gray-900',
     INTENT_STYLE[intent].border,
     interactive &&
       'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator cursor-pointer transition-shadow hover:shadow-sm',
@@ -103,7 +103,7 @@ export const KpiCard = ({
     <>
       <span className="flex items-center justify-between gap-3">
         <span className="min-w-0 text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-          {label}
+          <bdi>{label}</bdi>
         </span>
         {Icon && (
           <span
@@ -128,7 +128,7 @@ export const KpiCard = ({
             intent === 'neutral' ? 'text-gray-900 dark:text-white' : INTENT_STYLE[intent].text
           )}
         >
-          {value}
+          <bdi>{value}</bdi>
         </span>
       </Slot>
       {delta && (
@@ -140,7 +140,11 @@ export const KpiCard = ({
           {delta}
         </Slot>
       )}
-      {sub && <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{sub}</span>}
+      {sub && (
+        <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+          <bdi>{sub}</bdi>
+        </span>
+      )}
       {chart && (
         <Slot
           loading={loading}

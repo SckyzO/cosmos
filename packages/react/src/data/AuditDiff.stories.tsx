@@ -1,11 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { ActivityFeed } from '../lists/ActivityFeed';
 import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { Pencil } from 'lucide-react';
 import { AuditDiff, type AuditChange } from './AuditDiff';
@@ -422,5 +427,51 @@ export const TableFollowsPageDensity: Story = {
   play: async ({ canvas }) => {
     await expectDensitySteps(canvas, (scope) => scope.getAllByRole('columnheader')[0]!);
     await expectDensitySteps(canvas, (scope) => scope.getAllByRole('row')[1]!);
+  },
+};
+
+/**
+ * In right to left the Field column is on the right, each line of `inline` runs from its old value
+ * on the right to its new one on the left with the arrow turned around, and a value made of
+ * numbers (a phone number) keeps its order.
+ */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-4">
+        <AuditDiff changes={userChanges} aria-label="Changes to Bob" />
+        <AuditDiff changes={userChanges} variant="inline" aria-label="Changes to Bob" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    const table = (box: HTMLElement) => within(box).getByRole('table');
+    const list = (box: HTMLElement) => within(box).getByRole('list');
+    expectMirrored(canvasElement, (box) =>
+      within(table(box)).getByRole('rowheader', { name: 'Role' })
+    );
+    expectMirrored(canvasElement, (box) => within(list(box)).getByText('Role'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [field, before, after] = within(table(box)).getAllByRole('columnheader');
+      expect(startOffset(field!, box)).toBeLessThan(startOffset(before!, box));
+      expect(startOffset(before!, box)).toBeLessThan(startOffset(after!, box));
+      // A header's text starts at its cell's start padding: a `th` centres it otherwise.
+      for (const cell of [field!, within(table(box)).getByRole('rowheader', { name: 'Role' })]) {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const edges = cell.getBoundingClientRect();
+        const fromStart = dir === 'rtl' ? edges.right - text.right : text.left - edges.left;
+        expect(fromStart).toBeCloseTo(parseFloat(getComputedStyle(cell).paddingInlineStart), 0);
+      }
+      const old = within(list(box)).getByText('Viewer');
+      const next = within(list(box)).getByText('Admin');
+      expect(startOffset(old, box)).toBeLessThan(startOffset(next, box));
+      const arrow = list(box).querySelector('[aria-hidden] > .inline-block')!;
+      expect(getComputedStyle(arrow).scale).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      for (const phone of within(box).getAllByText('+33 1 23 45 67 89'))
+        expectReadsLeftToRight(phone);
+    }
   },
 };

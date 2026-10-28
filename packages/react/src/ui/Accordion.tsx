@@ -134,7 +134,7 @@ function AccordionTrigger({
       <RadixAccordion.Trigger
         ref={ref}
         className={clsx(
-          'group focus-visible:focus-indicator flex w-full items-center justify-between gap-2 text-left font-medium transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
+          'group focus-visible:focus-indicator flex w-full items-center justify-between gap-2 text-start font-medium transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50',
           TITLE_COLOR[tone],
           size === 'md' ? 'py-row-16 px-5 text-base' : 'py-row-12 px-4 text-sm',
           // Hover only on a live trigger: a disabled one must not invite a click.
@@ -144,7 +144,9 @@ function AccordionTrigger({
         {...rest}
       >
         {Icon && <Icon className={clsx('h-4 w-4 shrink-0', ICON_COLOR[tone])} aria-hidden />}
-        <span className="flex-1">{children}</span>
+        <span className="flex-1">
+          <bdi>{children}</bdi>
+        </span>
         {!hideChevron && (
           <ChevronDown
             className={clsx(

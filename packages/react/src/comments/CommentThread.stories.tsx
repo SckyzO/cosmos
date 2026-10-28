@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type ReactNode } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
@@ -791,5 +793,40 @@ export const DiscussionRoundTrip: Story = {
       })
     );
     await waitFor(() => expect(canvas.queryByText('Closing this one.')).toBeNull());
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The avatar and the text are at the start, and the replies hang from a rule at the start too. */
+export const RepliesHangFromTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <CommentThread>
+        <Comment
+          author="Ana Costa"
+          text="Rebooted the node, it is back in service."
+          time={time('2026-10-26T11:00')}
+          onReply={() => {}}
+          onEdit={() => {}}
+          replies={<Comment author="Ben Ito" text="Thanks, confirmed on my side." />}
+        />
+      </CommentThread>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByText('Ana Costa'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('Ben Ito'));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByText('Rebooted the node, it is back in service.')
+    );
+    // The reply button sits under the text, nudged back to the start edge by its padding.
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Reply' }));
+    const rule = canvasElement.querySelector('[data-direction="rtl"] .border-s-2')!;
+    expect(getComputedStyle(rule).borderInlineStartWidth).toBe('2px');
+    expect(getComputedStyle(rule).borderRightWidth).toBe('2px');
+    expect(getComputedStyle(rule).borderLeftWidth).toBe('0px');
+    // The replies are indented from the start, the same distance in both directions.
+    expectMirrored(canvasElement, (box) => box.querySelector('.border-s-2'));
   },
 };

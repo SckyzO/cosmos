@@ -2,7 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertTriangle, Bell, CheckCircle2, Database, Rocket, Server, Wrench } from 'lucide-react';
 import { expect, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
-import { expectGraphicContrast, expectTextContrast, inEachTheme } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectGraphicContrast,
+  expectMirrored,
+  expectTextContrast,
+  inEachTheme,
+  startOffset,
+} from '../storybook-helpers';
 import { Timeline, type TimelineIntent, type TimelineItem } from './Timeline';
 
 const meta = {
@@ -88,7 +97,7 @@ const stepperItems: TimelineItem[] = [
 export const Stepper: Story = { args: { items: stepperItems, variant: 'stepper' } };
 
 // One event per state, the last one without `intent`. The `dot`, `avatar` and `card` variants
-// color their marker per item: the dot, a ring around the avatar, the left edge of the card.
+// color their marker per item: the dot, a ring around the avatar, the start edge of the card.
 type TitledItem = TimelineItem & { title: string };
 
 const intentItems: TitledItem[] = [
@@ -221,7 +230,7 @@ export const AvatarWithIntent: Story = {
 };
 
 /**
- * `intent` gives the card a 4px left edge in its color, the other three sides stay the 1px gray
+ * `intent` gives the card a 4px start edge in its color, the other three sides stay the 1px gray
  * frame. Without it the card is the plain frame.
  */
 export const CardWithIntent: Story = {
@@ -233,16 +242,16 @@ export const CardWithIntent: Story = {
       for (const item of intentItems) {
         const card = getComputedStyle(rowOf(canvas, item));
         if (item.intent) {
-          expect(card.borderLeftWidth).toBe('4px');
-          expect(card.borderLeftColor).toBe(markerColor(item.intent));
+          expect(card.borderInlineStartWidth).toBe('4px');
+          expect(card.borderInlineStartColor).toBe(markerColor(item.intent));
           // The other sides keep the 1px gray of a card with no intent.
-          for (const side of ['Top', 'Right', 'Bottom'] as const) {
+          for (const side of ['BlockStart', 'InlineEnd', 'BlockEnd'] as const) {
             expect(card[`border${side}Width`]).toBe('1px');
             expect(card[`border${side}Color`]).toBe(plain[`border${side}Color`]);
           }
         } else {
-          expect(card.borderLeftWidth).toBe('1px');
-          expect(card.borderLeftColor).toBe(card.borderTopColor);
+          expect(card.borderInlineStartWidth).toBe('1px');
+          expect(card.borderInlineStartColor).toBe(card.borderBlockStartColor);
         }
       }
     });
@@ -471,7 +480,7 @@ export const AvatarWithImageKeepsTheRing: Story = {
   },
 };
 
-/** The thicker edge of an `intent` card takes its padding from the left: titles start at the same place. */
+/** The thicker edge of an `intent` card takes its padding from the start: titles start at the same place. */
 export const CardTitlesAlign: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -483,8 +492,7 @@ export const CardTitlesAlign: Story = {
   },
   play: async ({ canvas }) => {
     const offset = (title: string) =>
-      canvas.getByText(title).getBoundingClientRect().left -
-      canvas.getByText(title).closest('li')!.getBoundingClientRect().left;
+      startOffset(canvas.getByText(title), canvas.getByText(title).closest('li')!);
     await expect(offset('Card with intent')).toBe(offset('Plain card'));
     // 1px border + 12px padding.
     await expect(offset('Plain card')).toBe(13);
@@ -521,7 +529,7 @@ export const DotLayout: Story = {
     await expect(indicator.height).toBe(24);
     // The time is a sibling of the title, not a line under the description.
     const time = canvas.getByText('5m ago');
-    const title = canvas.getByText('server-prod-01 marked CRIT');
+    const title = canvas.getByText('server-prod-01 marked CRIT').closest('p')!;
     await expect(time.parentElement).toBe(title.parentElement);
     // Entries are apart: the gap under an entry's last line, none under the last entry.
     const body = (row: HTMLElement) => row.lastElementChild as HTMLElement;
@@ -541,5 +549,64 @@ export const TimeStyle: Story = {
     await expect(style.fontFamily).not.toMatch(/mono/i);
     // text-2xs: 11px at the default text size.
     await expect(style.fontSize).toBe('11px');
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The dots sit at the start with their rail and the time at the end of the title row. */
+export const RailAndTimeMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={items} variant="dot" />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getAllByRole('listitem')[0].querySelector('span.rounded-full')
+    );
+    // The rail is the line under the dot, centred on it.
+    expectMirrored(
+      canvasElement,
+      (box) => within(box).getAllByRole('listitem')[0].querySelector('span.w-px'),
+      0
+    );
+    expectMirrored(canvasElement, (box) => within(box).getByText('server-prod-01 marked CRIT'));
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    expect(endOffset(within(rtl).getByText('5m ago'), rtl)).toBeCloseTo(
+      endOffset(within(ltr).getByText('5m ago'), ltr),
+      0
+    );
+  },
+};
+
+/** The coloured edge of a card is on its start side, and the padding follows it. */
+export const CardEdgeIsOnTheStartInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={intentItems.slice(0, 2)} variant="card" />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const card = within(box).getAllByRole('listitem')[0];
+      const style = getComputedStyle(card);
+      expect(dir === 'rtl' ? style.borderRightWidth : style.borderLeftWidth).toBe('4px');
+      expect(dir === 'rtl' ? style.borderLeftWidth : style.borderRightWidth).toBe('1px');
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('server-prod-01 marked CRIT'));
+  },
+};
+
+/** The cards alternate from the start side, and swap sides with the direction. */
+export const AlternatingSwapsSidesInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Timeline items={items} variant="alternating" />),
+  play: ({ canvasElement }) => {
+    const card = (box: HTMLElement, index: number) =>
+      within(box).getAllByRole('listitem')[index].querySelector('.rounded-xl')!;
+    expectMirrored(canvasElement, (box) => card(box, 0));
+    expectMirrored(canvasElement, (box) => card(box, 1));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      // The first card is on the start side of the line, the second on the other one.
+      expect(startOffset(card(box, 0), box)).toBeLessThan(startOffset(card(box, 1), box));
+    }
   },
 };

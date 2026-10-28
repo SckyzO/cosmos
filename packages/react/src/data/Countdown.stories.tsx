@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, waitFor } from 'storybook/test';
+import { expect, fn, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   expectTextContrast,
   inEachTheme,
   mobileViewport,
@@ -258,5 +260,25 @@ export const CompletesAtOnceWhenPast: Story = {
   play: async ({ canvas, args }) => {
     expect(canvas.getByRole('timer').textContent).toBe('Ended');
     await waitFor(() => expect(args.onComplete).toHaveBeenCalledTimes(1));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The compact and inline forms keep their order ("2d 04:15:30") in a right-to-left page. */
+export const PartsReadLeftToRightInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div className="space-y-2">
+        <Countdown {...args} variant="compact" />
+        <Countdown {...args} variant="inline" label="Ends in" />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]')) {
+      expectReadsLeftToRight(within(box).getByText('2d 04:15:30'));
+      expectReadsLeftToRight(within(box).getByText('2d 4h'));
+    }
   },
 };

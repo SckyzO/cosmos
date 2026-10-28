@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { bothDirections, directionBox, expectMirrored, startOffset } from '../storybook-helpers';
 import { MiniCalendar } from './MiniCalendar';
 
 const meta = {
@@ -326,8 +327,10 @@ export const WeekdayLabelsDoNotTouch: Story = {
       canvas.getByTitle(name)
     );
     for (let i = 1; i < labels.length; i++) {
-      const gap =
-        labels[i].getBoundingClientRect().left - labels[i - 1].getBoundingClientRect().right;
+      // The gap to the previous label, which is on the right of this one in right to left.
+      const a = labels[i - 1].getBoundingClientRect();
+      const b = labels[i].getBoundingClientRect();
+      const gap = Math.max(b.left - a.right, a.left - b.right);
       const textWidth = (el: HTMLElement) => {
         const range = document.createRange();
         range.selectNodeContents(el);
@@ -335,6 +338,37 @@ export const WeekdayLabelsDoNotTouch: Story = {
       };
       // The letters of two neighbours are further apart than a few pixels.
       await expect(gap + (labels[i].offsetWidth - textWidth(labels[i])) / 2).toBeGreaterThan(8);
+    }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The previous month is at the start with a chevron that points to it, and the week starts there too. */
+export const MonthNavigationAndWeekMirrorInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...FIXED_DAY, onSelect: fn() },
+  render: (args) => bothDirections(() => <MiniCalendar {...args} />),
+  play: async ({ canvasElement }) => {
+    const button = (box: HTMLElement, name: string) => within(box).getByRole('button', { name });
+    expectMirrored(canvasElement, (box) => button(box, 'Previous month'));
+    expectMirrored(canvasElement, (box) => button(box, 'Next month'));
+    expectMirrored(canvasElement, (box) => within(box).getByTitle('Mon'));
+    expectMirrored(canvasElement, (box) => button(box, 'Monday, May 4, 2026'));
+    for (const [dir, scale] of [
+      ['ltr', 'none'],
+      ['rtl', '-1 1'],
+    ] as const) {
+      const box = directionBox(canvasElement, dir);
+      const previous = button(box, 'Previous month');
+      const next = button(box, 'Next month');
+      expect(startOffset(previous, box)).toBeLessThan(startOffset(next, box));
+      expect(previous.querySelector('svg')).toHaveClass('lucide-chevron-left');
+      expect(next.querySelector('svg')).toHaveClass('lucide-chevron-right');
+      for (const control of [previous, next])
+        expect(getComputedStyle(control.querySelector('svg')!).scale).toBe(scale);
+      await userEvent.click(previous);
+      await expect(within(box).getByRole('button', { name: 'April 2026' })).toBeVisible();
     }
   },
 };
