@@ -63,6 +63,6 @@ export const OptionCard = ({
       </p>
       {desc && <p className="text-3xs text-gray-600 dark:text-gray-400">{desc}</p>}
     </div>
-    {active && <SelectedMark className="absolute top-1.5 right-1.5" />}
+    {active && <SelectedMark className="inset-e-1.5 absolute top-1.5" />}
   </button>
 );

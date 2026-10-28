@@ -9,7 +9,7 @@ import { Check } from 'lucide-react';
  */
 export const PICKER_SELECTED_BORDER = 'border-brand-500';
 
-/** The brand check badge. The card positions it (`absolute top-1.5 right-1.5`, or in a row). */
+/** The brand check badge. The card positions it (`absolute top-1.5 inset-e-1.5`, or in a row). */
 export const SelectedMark = ({ className }: { className?: string }) => (
   <span
     className={clsx(

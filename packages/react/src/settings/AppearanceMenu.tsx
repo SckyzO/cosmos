@@ -31,7 +31,7 @@ const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
 
 /**
  * AppearanceMenu — icon button for a top bar that opens `<AppearanceSettings>`
- * in a panel flush with its right edge. Controlled like AppearanceSettings:
+ * in a panel flush with its end edge. Controlled like AppearanceSettings:
  * apply the choice in the callbacks (for example with `applyAppearance`). The
  * panel stays open while the user tries combinations; Escape, a click
  * outside or the button close it.
