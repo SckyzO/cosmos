@@ -53,6 +53,8 @@ export const BUBBLE_ACTIONS: readonly RichTextAction[] = [
 
 export type ActionSpec = {
   icon: LucideIcon;
+  /** The icon points along the line (an indented list, undo): it turns around in right to left. */
+  mirror?: boolean;
   label: string;
   /** `Mod` is Cmd on macOS and Ctrl elsewhere. Matches the shortcut Tiptap binds. */
   shortcut: readonly string[];
@@ -97,6 +99,7 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   bulletList: {
     icon: List,
+    mirror: true,
     label: 'Bulleted list',
     shortcut: ['Mod', 'Shift', '8'],
     isActive: (editor) => editor.isActive('bulletList'),
@@ -104,6 +107,7 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   orderedList: {
     icon: ListOrdered,
+    mirror: true,
     label: 'Numbered list',
     shortcut: ['Mod', 'Shift', '7'],
     isActive: (editor) => editor.isActive('orderedList'),
@@ -111,6 +115,7 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   blockquote: {
     icon: Quote,
+    mirror: true,
     label: 'Quote',
     shortcut: ['Mod', 'Shift', 'B'],
     isActive: (editor) => editor.isActive('blockquote'),
@@ -131,6 +136,7 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   undo: {
     icon: Undo2,
+    mirror: true,
     label: 'Undo',
     shortcut: ['Mod', 'Z'],
     isActive: () => false,
@@ -139,6 +145,7 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   redo: {
     icon: Redo2,
+    mirror: true,
     label: 'Redo',
     shortcut: ['Mod', 'Shift', 'Z'],
     isActive: () => false,

@@ -9,6 +9,7 @@ import {
   type Ref,
 } from 'react';
 import { useEditorState, type Editor } from '@tiptap/react';
+import { directionOf } from '../hooks/direction';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
@@ -89,10 +90,12 @@ export function FormattingToolbar({
     if (!(event.target instanceof HTMLButtonElement)) return;
     const list = buttons();
     const at = list.indexOf(event.target);
+    // The buttons run along the line, so the arrows swap in right to left.
+    const toEnd = directionOf(root.current) === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
     const next =
-      event.key === 'ArrowRight'
+      event.key === toEnd
         ? (at + 1) % list.length
-        : event.key === 'ArrowLeft'
+        : event.key === (toEnd === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight')
           ? (at - 1 + list.length) % list.length
           : event.key === 'Home'
             ? 0
@@ -141,7 +144,9 @@ export function FormattingToolbar({
               onMouseDown: (e: MouseEvent) => e.preventDefault(),
               className: clsx(BUTTON, active ? PRESSED : IDLE),
             };
-            const icon = <Icon aria-hidden className="h-4 w-4" />;
+            const icon = (
+              <Icon aria-hidden className={clsx('h-4 w-4', spec.mirror && 'rtl:-scale-x-100')} />
+            );
 
             const tooltip = (child: ReactElement) => (
               <Tooltip
