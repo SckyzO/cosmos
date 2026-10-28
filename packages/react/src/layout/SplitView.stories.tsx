@@ -4,15 +4,21 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import {
+  expectBeyondEnd,
   expectBorderToken,
   expectNoHorizontalOverflow,
   inEachTheme,
+  mirroredIcon,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { Shell } from './Shell';
 import { Sidebar } from './Sidebar';
 import { SplitView, useSplitView } from './SplitView';
 import { Topbar } from './Topbar';
+
+// The back arrow points toward the start of the line, so it turns around in right to left.
+const BackIcon = mirroredIcon(ArrowLeft);
 
 const meta = {
   title: 'Layout/SplitView',
@@ -63,7 +69,7 @@ const MailList = ({
           type="button"
           aria-current={m.id === selected || undefined}
           onClick={() => onSelect(m.id)}
-          className="focus-visible:focus-indicator block w-full px-4 py-3 text-left hover:bg-gray-50 focus-visible:ring-inset aria-[current]:bg-gray-100 dark:hover:bg-gray-800 dark:aria-[current]:bg-gray-800"
+          className="focus-visible:focus-indicator block w-full px-4 py-3 text-start hover:bg-gray-50 focus-visible:ring-inset aria-[current]:bg-gray-100 dark:hover:bg-gray-800 dark:aria-[current]:bg-gray-800"
         >
           <span className="block truncate text-sm font-medium text-[var(--color-text-primary)]">
             {m.from}
@@ -85,7 +91,7 @@ const FolderList = () => (
           <button
             type="button"
             aria-current={i === 0 || undefined}
-            className="focus-visible:focus-indicator flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-gray-50 focus-visible:ring-inset aria-[current]:bg-gray-100 aria-[current]:font-medium aria-[current]:text-[var(--color-text-primary)] dark:hover:bg-gray-800 dark:aria-[current]:bg-gray-800"
+            className="focus-visible:focus-indicator flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-sm text-[var(--color-text-secondary)] hover:bg-gray-50 focus-visible:ring-inset aria-[current]:bg-gray-100 aria-[current]:font-medium aria-[current]:text-[var(--color-text-primary)] dark:hover:bg-gray-800 dark:aria-[current]:bg-gray-800"
           >
             <f.icon className="h-4 w-4" aria-hidden />
             <span className="flex-1">{f.label}</span>
@@ -100,13 +106,7 @@ const FolderList = () => (
 const Message = ({ mail, onBack }: { mail: Mail; onBack?: () => void }) => (
   <article className="p-6">
     {onBack && (
-      <Button
-        variant="ghost"
-        size="sm"
-        icon={ArrowLeft}
-        onClick={onBack}
-        className="mb-4 lg:hidden"
-      >
+      <Button variant="ghost" size="sm" icon={BackIcon} onClick={onBack} className="mb-4 lg:hidden">
         Back
       </Button>
     )}
@@ -157,9 +157,7 @@ export const TwoPanesPicksAMessage: Story = {
     // Side by side: same top, the list at its width, the detail on the rest.
     await expect(list.getBoundingClientRect().top).toBe(detail.getBoundingClientRect().top);
     await expect(list.getBoundingClientRect().width).toBe(320);
-    await expect(detail.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-      list.getBoundingClientRect().right
-    );
+    expectBeyondEnd(detail, list);
     await userEvent.click(canvas.getAllByRole('button', { name: /Disk alert/ })[0]!);
     await expect(
       canvas.getByRole('heading', { name: 'Disk alert cleared on rack B4' })
@@ -190,9 +188,11 @@ export const ThreePanes: Story = {
   },
   play: async ({ canvas }) => {
     const [folders, list, detail] = ['Folders', 'Messages', 'Message'].map((n) => pane(canvas, n));
-    const lefts = [folders, list, detail].map((p) => p!.getBoundingClientRect().left);
-    await expect(lefts[0]).toBeLessThan(lefts[1]!);
-    await expect(lefts[1]).toBeLessThan(lefts[2]!);
+    // The panes follow each other along the line: the first is nearest the start edge.
+    const view = folders!.parentElement!;
+    const starts = [folders, list, detail].map((p) => startOffset(p!, view));
+    await expect(starts[0]).toBeLessThan(starts[1]!);
+    await expect(starts[1]).toBeLessThan(starts[2]!);
   },
 };
 
@@ -254,7 +254,7 @@ export const BordersFollowTheTheme: Story = {
     const detail = pane(canvas, 'Message');
     inEachTheme(() => {
       expectBorderToken(frame, '--color-border');
-      // The list's right edge is the divider: the border of the pane itself.
+      // The list's end edge is the divider: the border of the pane itself.
       expectBorderToken(pane(canvas, 'Messages'), '--color-border');
       expect(getComputedStyle(detail).borderInlineEndWidth).toBe('0px');
     });
@@ -341,7 +341,7 @@ export const Narrow: Story = {
         <button
           type="button"
           onClick={() => setActivePane('detail')}
-          className="focus-visible:focus-indicator block w-full px-4 py-3 text-left hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-gray-800"
+          className="focus-visible:focus-indicator block w-full px-4 py-3 text-start hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-gray-800"
         >
           <span className="block truncate text-sm font-medium text-[var(--color-text-primary)]">
             {mail.from}

@@ -175,7 +175,9 @@ export const LongNameStaysInTheRow: Story = {
   globals: mobileViewport,
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
-    const name = within(canvasElement).getByText(/search_internal/);
+    const name = within(canvasElement)
+      .getByText(/search_internal/)
+      .closest('span')!;
     await expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
   },
 };

@@ -10,6 +10,7 @@ import {
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  mirroredIcon,
   mobileViewport,
 } from '../storybook-helpers';
 import { ChatComposer } from './ChatComposer';
@@ -22,6 +23,9 @@ import { ChatToolCall } from './ChatToolCall';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ImageGrid } from '../ui/ImageGrid';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
+
+// The back arrow points toward the start of the line, so it turns around in right to left.
+const BackIcon = mirroredIcon(ArrowLeft);
 
 const meta = {
   title: 'Chat/Chat',
@@ -342,7 +346,7 @@ export const TwoPane: Story = {
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={ArrowLeft}
+                  icon={BackIcon}
                   onClick={() => setPane('list')}
                   className="lg:hidden"
                 >
@@ -526,7 +530,7 @@ export const BubbleDefaultKeepsTheBubble: Story = {
         'text-sm',
         'break-words',
         'whitespace-pre-wrap',
-        'rounded-bl-md',
+        'rounded-es-md',
         'bg-gray-100',
         'text-[var(--color-text-primary)]',
         'dark:bg-gray-800',
@@ -853,7 +857,7 @@ const ComposerFooter = () => (
       ]}
       defaultValue="fast"
     />
-    <span className="text-2xs ml-auto text-[var(--color-text-muted)]">Enter to send</span>
+    <span className="text-2xs ms-auto text-[var(--color-text-muted)]">Enter to send</span>
   </>
 );
 

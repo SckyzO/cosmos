@@ -14,6 +14,7 @@ import {
   type CosmosTheme,
   type CosmosThemeChoice,
 } from './appearance';
+import { keyToEnd } from '../storybook-helpers';
 
 const meta = {
   title: 'Settings/Appearance Settings',
@@ -223,13 +224,13 @@ export const ArrowKeysRoveAndPick: Story = {
     await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveAttribute('tabindex', '-1');
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'Light', checked: true })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveFocus();
     await expect(args.onThemeChange).toHaveBeenCalledWith('sand');
 
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'Teal', checked: true })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Cyan' })).toHaveFocus();
     await expect(args.onAccentChange).toHaveBeenCalledWith('cyan');
 

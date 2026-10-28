@@ -29,6 +29,8 @@ import {
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  scrollAlong,
+  startEdge,
   startOffset,
 } from '../storybook-helpers';
 
@@ -693,14 +695,14 @@ export const MobileStickyFirstColumn: Story = {
     await waitFor(() => expect(scroller).toHaveAttribute('tabindex', '0'));
     // The end fades, the start does not: the first column is pinned there.
     await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
-    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const left = (el: Element) => startEdge(el.getBoundingClientRect());
     const head = canvas.getAllByRole('columnheader')[0];
     const cell = canvas.getAllByRole('row')[2].firstElementChild as HTMLElement;
     const second = canvas.getAllByRole('row')[2].children[1];
     // Pinned to the padding box of the wrapper, inside its 1px border.
     const start = left(scroller) + scroller.clientLeft;
     const before = left(second);
-    scroller.scrollLeft = 120;
+    scrollAlong(scroller, 120);
     await waitFor(() => expect(left(second)).toBeLessThan(before));
     await expect(left(head)).toBe(start);
     await expect(left(cell)).toBe(start);

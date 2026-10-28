@@ -67,11 +67,11 @@ export const WithCenterSearch: Story = {
           center={
             <div className="mx-auto max-w-md">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                <Search className="inset-s-3 absolute top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
                 <input
                   type="text"
                   placeholder="Search servers..."
-                  className="focus:border-brand-500 h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-base)] pr-3 pl-9 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                  className="focus:border-brand-500 h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-base)] ps-9 pe-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                 />
               </div>
             </div>
@@ -251,7 +251,7 @@ export const PageTitleIsPlainTextByDefault: Story = {
   args: { pageTitle: 'Servers' },
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('heading')).toBeNull();
-    await expect(canvas.getByText('Servers').tagName).toBe('P');
+    await expect(canvas.getByText('Servers').parentElement?.tagName).toBe('P');
   },
 };
 

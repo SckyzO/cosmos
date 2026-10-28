@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Building2, Cpu, Server } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Breadcrumb } from './Breadcrumb';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Breadcrumb',
@@ -228,9 +233,7 @@ export const Mobile: Story = {
     const current = within(nav)
       .getByText(/server-alpha-01/)
       .closest('[aria-current]')!;
-    await expect(current.getBoundingClientRect().right).toBeLessThanOrEqual(
-      nav.getBoundingClientRect().right
-    );
+    await expect(endOffset(current, nav)).toBeGreaterThanOrEqual(0);
     // The label is cut with an ellipsis, not clipped mid-word.
     const label = current.querySelector('span')!;
     await expect(getComputedStyle(label).textOverflow).toBe('ellipsis');

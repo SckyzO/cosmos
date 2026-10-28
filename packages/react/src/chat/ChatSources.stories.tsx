@@ -152,7 +152,7 @@ export const TitleIsTruncatedWithItsFullTextAsTooltip: Story = {
     ],
   },
   play: async ({ canvas }) => {
-    const title = canvas.getByText(/A page title long enough/);
+    const title = canvas.getByText(/A page title long enough/).closest('[title]') as HTMLElement;
     await expect(title).toHaveAttribute('title', title.textContent as string);
     await expect(title.scrollWidth).toBeGreaterThan(title.clientWidth);
     await expect(getComputedStyle(title).whiteSpace).toBe('nowrap');

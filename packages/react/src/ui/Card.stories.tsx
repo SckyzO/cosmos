@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, ArrowRight, Bell, Mail, MessageSquare, Server, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
-import { expectFocusRing } from '../storybook-helpers';
+import { expectBeyondEnd, expectFocusRing } from '../storybook-helpers';
 import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -141,11 +141,9 @@ export const HorizontalLayout: Story = {
     await expect(image).toBeVisible();
     await expect(heading).toBeVisible();
     if (window.matchMedia('(min-width: 640px)').matches) {
-      // Image column on the left, content on its right.
+      // Image column at the start, content after it.
       await expect(wrapper.getBoundingClientRect().width).toBe(160);
-      await expect(heading.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-        wrapper.getBoundingClientRect().right
-      );
+      expectBeyondEnd(heading, wrapper);
     } else {
       // Stacked: the content sits under the image.
       await expect(heading.getBoundingClientRect().top).toBeGreaterThanOrEqual(

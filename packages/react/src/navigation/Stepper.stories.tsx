@@ -409,6 +409,6 @@ export const SmallVerticalConnectorOffset: Story = {
   play: async ({ canvasElement }) => {
     const connector = canvasElement.querySelector('li > span[aria-hidden]') as HTMLElement;
     await expect(getComputedStyle(connector).top).toBe('28px');
-    await expect(getComputedStyle(connector).left).toBe('13px');
+    await expect(getComputedStyle(connector).insetInlineStart).toBe('13px');
   },
 };

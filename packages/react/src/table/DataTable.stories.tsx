@@ -9,8 +9,11 @@ import {
   expectFocusBorder,
   expectFocusRing,
   expectOutsideClip,
+  keyToEnd,
   portalDocsParams,
+  scrollAlong,
   scrollAnchor,
+  startEdge,
   startOffset,
 } from '../storybook-helpers';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
@@ -1352,22 +1355,26 @@ export const MobileScrollsWithAnEdgeFade: Story = {
     expectNoHorizontalOverflow();
     const scroller = scrollerOf(canvas.getByRole('table'));
     await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
-    // At the start, only the end fades: there is more to the right.
+    // At the start, only the end fades: there is more past the end. The gradient runs from the
+    // start edge, so it is `to right` in left to right and `to left` in right to left.
+    const toward = getComputedStyle(scroller).direction === 'rtl' ? 'left' : 'right';
     await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
     await expect(getComputedStyle(scroller).maskImage).toMatch(
-      /^linear-gradient\(to right, rgb\(0, 0, 0\), rgb\(0, 0, 0\) 24px/
+      new RegExp(`^linear-gradient\\(to ${toward}, rgb\\(0, 0, 0\\), rgb\\(0, 0, 0\\) 24px`)
     );
     // Scrolled into the middle, both do; at the end, only the start.
-    scroller.scrollLeft = 200;
+    scrollAlong(scroller, 200);
     await waitFor(() =>
       expect(getComputedStyle(scroller).maskImage).toMatch(
-        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgba\(0, 0, 0, 0\)\)$/
+        new RegExp(
+          `^linear-gradient\\(to ${toward}, rgba\\(0, 0, 0, 0\\).*rgba\\(0, 0, 0, 0\\)\\)$`
+        )
       )
     );
-    scroller.scrollLeft = scroller.scrollWidth;
+    scrollAlong(scroller, scroller.scrollWidth);
     await waitFor(() =>
       expect(getComputedStyle(scroller).maskImage).toMatch(
-        /^linear-gradient\(to right, rgba\(0, 0, 0, 0\).*rgb\(0, 0, 0\)\)$/
+        new RegExp(`^linear-gradient\\(to ${toward}, rgba\\(0, 0, 0, 0\\).*rgb\\(0, 0, 0\\)\\)$`)
       )
     );
   },
@@ -1404,13 +1411,13 @@ export const PinnedStartColumn: Story = {
     expectNoHorizontalOverflow();
     const table = canvas.getByRole('table');
     const scroller = scrollerOf(table);
-    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const left = (el: Element) => startEdge(el.getBoundingClientRect());
     const row = within(table).getAllByRole('row')[1];
     const [select, first, second] = within(row).getAllByRole('cell');
     const [selectHead, firstHead] = within(table).getAllByRole('columnheader');
     const start = left(scroller);
     const secondBefore = left(second);
-    scroller.scrollLeft = 150;
+    scrollAlong(scroller, 150);
     await waitFor(() => expect(left(second)).toBeLessThan(secondBefore));
     // The selection column and the first data column stay where they were, header and body
     // alike, with the second one scrolling under the pinned pair.
@@ -1420,7 +1427,9 @@ export const PinnedStartColumn: Story = {
     await expect(left(firstHead)).toBe(start + 44);
     // The start edge is the pinned column's: it does not fade.
     await expect(getComputedStyle(scroller).maskImage).not.toMatch(
-      /^linear-gradient\(to right, rgba/
+      new RegExp(
+        `^linear-gradient\\(to ${getComputedStyle(scroller).direction === 'rtl' ? 'left' : 'right'}, rgba`
+      )
     );
     // Pinned cells are opaque, or the ones under them would show through.
     await expect(getComputedStyle(first).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
@@ -1742,7 +1751,7 @@ export const StatusTabsKeyboard: Story = {
     const tabs = canvas.getAllByRole('tab');
     await expect(tabs.map((t) => t.tabIndex)).toEqual([0, -1, -1, -1]);
     tabs[0].focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('tab', { name: 'Active 7' })).toHaveFocus();
     await expect(canvas.getByRole('tab', { name: 'Active 7' })).toHaveAttribute(
       'aria-selected',
@@ -1752,7 +1761,7 @@ export const StatusTabsKeyboard: Story = {
     await userEvent.keyboard('{End}');
     await expect(canvas.getByRole('tab', { name: 'Invited 3' })).toHaveFocus();
     await expect(teammateNames(canvas)).toHaveLength(3);
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('tab', { name: 'All 12' })).toHaveFocus();
     await expect(teammateNames(canvas)).toHaveLength(12);
   },

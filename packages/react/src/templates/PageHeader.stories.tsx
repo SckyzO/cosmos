@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Clock, Cpu, MapPin, Plug, Plus, RefreshCw, Server, ShieldAlert } from 'lucide-react';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import { expectBeyondEnd, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { PageHeader } from './PageHeader';
 import { Breadcrumb } from '../navigation/Breadcrumb';
 import { PageActionButton } from '../ui/PageActionButton';
@@ -65,7 +65,7 @@ export const WithActions: Story = {
 };
 
 // TUI Plus pattern "With meta and actions" — title + meta row (icons + text)
-// + right-aligned actions.
+// + end-aligned actions.
 export const WithMetaAndActions: Story = {
   render: () => (
     <PageHeader
@@ -213,10 +213,8 @@ export const IconTileIsDecorativeAnd48px: Story = {
     await expect(tile.querySelector('svg')).not.toBeNull();
     const box = tile.getBoundingClientRect();
     await expect([box.width, box.height]).toEqual([48, 48]);
-    // To the left of the title, and the title is still the page's only name for itself.
-    await expect(box.right).toBeLessThanOrEqual(
-      canvas.getByRole('heading', { name: 'Integrations' }).getBoundingClientRect().left
-    );
+    // Before the title, and the title is still the page's only name for itself.
+    expectBeyondEnd(canvas.getByRole('heading', { name: 'Integrations' }), tile);
     await expect(canvas.getAllByRole('heading')).toHaveLength(1);
   },
 };

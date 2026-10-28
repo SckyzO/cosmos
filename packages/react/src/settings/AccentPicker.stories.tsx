@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectPickerSelected, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
+import {
+  expectPickerSelected,
+  expectRefFocuses,
+  expectTextContrast,
+  keyToEnd,
+  keyToStart,
+} from '../storybook-helpers';
 import { AccentPicker, type AccentColor } from './AccentPicker';
 import { ColorSwatch } from './ColorSwatch';
 
@@ -122,14 +128,14 @@ export const ArrowKeysMoveTheSelection: Story = {
 
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Sky', checked: true })).toHaveFocus();
     await expect(args.onChange).toHaveBeenLastCalledWith('sky');
     // The tab stop follows the selection.
     await expect(canvas.getByRole('radio', { name: 'Sky' })).toHaveAttribute('tabindex', '0');
     await expect(canvas.getByRole('radio', { name: 'Brand' })).toHaveAttribute('tabindex', '-1');
 
-    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
     await expect(canvas.getByRole('radio', { name: 'Slate', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(canvas.getByRole('radio', { name: 'Brand', checked: true })).toHaveFocus();

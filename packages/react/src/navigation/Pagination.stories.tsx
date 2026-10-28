@@ -317,8 +317,11 @@ const expectWordsAndChevrons = async (
   const prevIcon = prev.querySelector('svg')!.getBoundingClientRect();
   const nextIcon = next.querySelector('svg')!.getBoundingClientRect();
   // "‹ Previous" and "Next ›": the chevron is on the outer side of the word.
-  await expect(prevIcon.right).toBeLessThanOrEqual(wordRect(prev).left);
-  await expect(wordRect(next).right).toBeLessThanOrEqual(nextIcon.left);
+  // "Outer" and "before" follow the reading direction: right to left the order is mirrored.
+  const rtl = getComputedStyle(prev).direction === 'rtl';
+  const before = (a: DOMRect, b: DOMRect) => (rtl ? a.left >= b.right : a.right <= b.left);
+  await expect(before(prevIcon, wordRect(prev))).toBe(true);
+  await expect(before(wordRect(next), nextIcon)).toBe(true);
   // The accessible name is unchanged, and it contains the visible word.
   await expect(prev).toHaveAttribute('aria-label', 'Previous page');
   await expect(next).toHaveAttribute('aria-label', 'Next page');

@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { Box, LayoutGrid, List, Map, Server } from 'lucide-react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusRing, expectPickerSelected, expectRefFocuses } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectPickerSelected,
+  expectRefFocuses,
+  keyToEnd,
+  keyToStart,
+} from '../storybook-helpers';
 import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
@@ -186,14 +192,14 @@ export const ArrowKeysMoveTheSelection: Story = {
 
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
     await expect(args.onChange).toHaveBeenLastCalledWith('list');
     // The tab stop follows the selection.
     await expect(canvas.getByRole('radio', { name: 'List' })).toHaveAttribute('tabindex', '0');
     await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveAttribute('tabindex', '-1');
 
-    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
     await expect(canvas.getByRole('radio', { name: 'Box', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
