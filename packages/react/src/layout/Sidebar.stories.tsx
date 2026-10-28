@@ -1953,7 +1953,7 @@ const AccountMenu = () => (
     >
       <User className="h-4 w-4" />
     </Popover.Trigger>
-    <Popover.Content position="right" aria-label="Account menu">
+    <Popover.Content position="end" aria-label="Account menu">
       <button type="button" className="px-3 py-2 text-sm">
         Sign out
       </button>

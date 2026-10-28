@@ -168,7 +168,7 @@ export const HideNameOnTrigger: Story = {
 export const AlignLeft: Story = {
   render: () => (
     <InTopbar side="left">
-      <UserMenu defaultOpen align="left">
+      <UserMenu defaultOpen align="start">
         <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
         <UserMenu.Content>
           <UserMenu.Header name="John Doe" email="john@example.com" avatarSrc={SAMPLE_AVATAR} />

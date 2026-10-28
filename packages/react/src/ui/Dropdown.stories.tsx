@@ -371,7 +371,7 @@ export const MenuFollowsTriggerAndCloses: Story = {
   render: () => (
     <div data-testid="scroller" className="h-64 overflow-y-auto">
       <div className="flex flex-col items-end gap-4 p-6 pb-[600px]">
-        <Dropdown label="Actions" options={ACCOUNT} align="right" />
+        <Dropdown label="Actions" options={ACCOUNT} align="end" />
         <button type="button">Outside</button>
       </div>
     </div>

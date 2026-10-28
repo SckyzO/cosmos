@@ -9,6 +9,7 @@ import {
   inEachTheme,
   mobileViewport,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import type { DrawerProps } from './Drawer';
@@ -46,16 +47,16 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 export const Sides: Story = {
   render: () => {
-    const [side, setSide] = useState<'left' | 'right' | 'bottom' | null>(null);
+    const [side, setSide] = useState<'start' | 'end' | 'bottom' | null>(null);
     return (
       <Wrap>
         <SectionCard title="Drawer sides">
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setSide('left')}>
-              Open left
+            <Button variant="secondary" onClick={() => setSide('start')}>
+              Open at start
             </Button>
-            <Button variant="secondary" onClick={() => setSide('right')}>
-              Open right
+            <Button variant="secondary" onClick={() => setSide('end')}>
+              Open at end
             </Button>
             <Button variant="secondary" onClick={() => setSide('bottom')}>
               Open bottom
@@ -64,7 +65,7 @@ export const Sides: Story = {
         </SectionCard>
         {/* One drawer per side: a drawer's side is fixed, so switching it while
             the panel slides would send it in or out by the wrong edge. */}
-        {(['left', 'right', 'bottom'] as const).map((drawerSide) => (
+        {(['start', 'end', 'bottom'] as const).map((drawerSide) => (
           <Drawer
             key={drawerSide}
             open={side === drawerSide}
@@ -331,7 +332,7 @@ export const BottomSheetOnMobile: Story = {
 // At the `mobile` viewport a `md` (384px) or `lg` (448px) side drawer is wider than the screen as
 // asked: it stops short of the far edge, the page does not widen and the close-outside button
 // stays on screen.
-const fitsAPhone = (size: 'md' | 'lg', side: 'left' | 'right'): Story => ({
+const fitsAPhone = (size: 'md' | 'lg', side: 'start' | 'end'): Story => ({
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -353,34 +354,35 @@ const fitsAPhone = (size: 'md' | 'lg', side: 'left' | 'right'): Story => ({
   },
 });
 
-export const MediumDrawerFitsAPhone = fitsAPhone('md', 'right');
-export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'left');
+export const MediumDrawerFitsAPhone = fitsAPhone('md', 'end');
+export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'start');
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
-/** The left drawer enters and leaves by the left edge, never the right. */
-export const LeftDrawerStaysOnTheLeft: Story = {
+/** The start drawer enters and leaves by the edge the text starts at, never the other one. */
+export const StartDrawerStaysAtTheStart: Story = {
   tags: ['!dev', '!autodocs'],
   // The story watches the slide itself: keep it in the story tests.
   parameters: { settleMotion: false },
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
-    await userEvent.click(canvas.getByRole('button', { name: 'Open left' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Open at start' }));
     const panel = body
-      .getByText('This drawer slides in from the left.')
+      .getByText('This drawer slides in from the start.')
       .closest('[role="dialog"]')!;
-    const left = () => panel.getBoundingClientRect().left;
+    // How far the panel sits from the page's start edge: the left one in ltr, the right in rtl.
+    const start = () => startOffset(panel, document.documentElement);
 
-    // A frame into the slide, the panel is still coming in from off-screen left.
+    // A frame into the slide, the panel is still coming in from off-screen at the start.
     await nextFrame();
-    await expect(left()).toBeLessThan(0);
-    await waitFor(() => expect(left()).toBe(0));
+    await expect(start()).toBeLessThan(0);
+    await waitFor(() => expect(start()).toBe(0));
 
     await userEvent.click(within(panel as HTMLElement).getByRole('button', { name: 'Cancel' }));
     await nextFrame();
-    await expect(left()).toBeLessThanOrEqual(0);
-    await waitFor(() => expect(left()).toBe(-panel.getBoundingClientRect().width));
+    await expect(start()).toBeLessThanOrEqual(0);
+    await waitFor(() => expect(start()).toBe(-panel.getBoundingClientRect().width));
   },
 };
 
@@ -683,7 +685,7 @@ export const PanelsRenderInsideTheDrawer: Story = {
           </Tooltip>
           <Dropdown
             label="Sort"
-            align="right"
+            align="end"
             options={[
               { value: 'new', label: 'Newest' },
               { value: 'old', label: 'Oldest' },
@@ -774,7 +776,7 @@ export const DrawerIsANamedModalDialog: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <>
-      <Drawer open onClose={() => {}} side="left">
+      <Drawer open onClose={() => {}} side="start">
         <Drawer.Header title="Server details" />
       </Drawer>
       <Drawer open onClose={() => {}} ariaLabel="Filters" withBackdrop={false}>
@@ -822,7 +824,7 @@ export const SwipeToClose: Story = {
     return (
       <Wrap>
         <Button onClick={() => setOpen(true)}>Open drawer</Button>
-        <Drawer open={open} onClose={() => setOpen(false)} side="left" size="sm" swipeToClose>
+        <Drawer open={open} onClose={() => setOpen(false)} side="start" size="sm" swipeToClose>
           <Drawer.Header title="Swipe me" onClose={() => setOpen(false)} />
           <Drawer.Body>
             Swipe this panel to the left with a finger, or use the close button.
@@ -855,7 +857,7 @@ export const SwipePastAThirdCloses: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+    <Drawer {...args} side="start" size="sm" swipeToClose ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
@@ -915,7 +917,7 @@ export const MouseAndDefaultDrawerDoNotSwipe: Story = {
   args: { open: true, onClose: fn() },
   render: (args) => (
     <>
-      <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+      <Drawer {...args} side="start" size="sm" swipeToClose ariaLabel="Swipe">
         <Drawer.Body>Content</Drawer.Body>
       </Drawer>
     </>
@@ -935,7 +937,7 @@ export const DrawerWithoutSwipeToCloseIgnoresSwipes: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="left" size="sm" ariaLabel="Swipe">
+    <Drawer {...args} side="start" size="sm" ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
@@ -954,7 +956,7 @@ export const RightDrawerSwipesToTheRight: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="right" size="sm" swipeToClose ariaLabel="Swipe">
+    <Drawer {...args} side="end" size="sm" swipeToClose ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
@@ -1117,10 +1119,10 @@ export const SideDrawersAreUnchangedByTheBottomSheet: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <>
-      <Drawer open onClose={() => {}} side="left" ariaLabel="Left" withBackdrop={false}>
+      <Drawer open onClose={() => {}} side="start" ariaLabel="Left" withBackdrop={false}>
         <Drawer.Body>Left</Drawer.Body>
       </Drawer>
-      <Drawer open onClose={() => {}} side="right" size="sm" ariaLabel="Right" withBackdrop={false}>
+      <Drawer open onClose={() => {}} side="end" size="sm" ariaLabel="Right" withBackdrop={false}>
         <Drawer.Body>Right</Drawer.Body>
       </Drawer>
     </>

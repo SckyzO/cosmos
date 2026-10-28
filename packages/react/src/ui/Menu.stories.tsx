@@ -112,7 +112,7 @@ export const Groups: Story = {
 export const AlignRight: Story = {
   render: () => (
     <div className="flex h-80 items-start justify-end px-8 pt-8">
-      <Menu defaultOpen align="right">
+      <Menu defaultOpen align="end">
         <Menu.Trigger aria-label="More actions" className={TRIGGER_CLASS}>
           <MoreVertical className="h-4 w-4" aria-hidden />
         </Menu.Trigger>

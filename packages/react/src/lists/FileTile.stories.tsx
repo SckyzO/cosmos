@@ -53,7 +53,7 @@ const MORE_BUTTON =
   'flex size-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-black/5 dark:hover:bg-white/10';
 
 const ActionsMenu = ({ name, defaultOpen }: { name: string; defaultOpen?: boolean }) => (
-  <Menu align="right" defaultOpen={defaultOpen}>
+  <Menu align="end" defaultOpen={defaultOpen}>
     <Menu.Trigger aria-label={`More actions for ${name}`} className={MORE_BUTTON}>
       <MoreVertical className="size-4" aria-hidden />
     </Menu.Trigger>

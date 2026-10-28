@@ -205,7 +205,7 @@ export const HighCount: Story = {
 export const AlignLeft: Story = {
   render: () => (
     <div className="flex h-[420px] items-start justify-start">
-      <NotificationsPanel defaultOpen align="left">
+      <NotificationsPanel defaultOpen align="start">
         <NotificationsPanel.Trigger count={3} />
         <NotificationsPanel.Content>
           <NotificationsPanel.Header title="Active Alerts" />

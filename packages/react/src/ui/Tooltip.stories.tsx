@@ -31,7 +31,7 @@ export const Positions: Story = {
     <Wrap>
       <SectionCard title="Positions — hover the buttons">
         <div className="flex flex-wrap items-center gap-12">
-          {(['top', 'bottom', 'left', 'right'] as const).map((position) => (
+          {(['top', 'bottom', 'start', 'end'] as const).map((position) => (
             <Tooltip key={position} content={`Position: ${position}`} position={position}>
               <Button variant="secondary" size="sm">
                 {position}
@@ -108,7 +108,7 @@ export const Open: Story = {
   render: () => (
     <Wrap>
       <div className="grid grid-cols-2 gap-x-48 gap-y-32 pt-10 pb-10 md:grid-cols-4 md:gap-x-24">
-        {(['top', 'bottom', 'left', 'right'] as const).map((position) => (
+        {(['top', 'bottom', 'start', 'end'] as const).map((position) => (
           <div key={position} className="flex justify-center">
             <Tooltip content={`Position: ${position}`} position={position} open>
               <Button variant="secondary" size="sm">
@@ -353,7 +353,7 @@ export const WithTitle: Story = {
         <Tooltip
           title="Error budget"
           content="Share of failed requests allowed this month before on-call is paged."
-          position="right"
+          position="end"
         >
           <Button variant="ghost" size="xs">
             What is this?
