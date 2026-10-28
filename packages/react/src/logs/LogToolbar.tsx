@@ -105,7 +105,7 @@ const LEVEL_NAME = (level: LogLevelKey) =>
   LOG_LEVEL_LABEL[level].charAt(0) + LOG_LEVEL_LABEL[level].slice(1).toLowerCase();
 
 const CONTROL =
-  'focus-visible:focus-indicator inline-flex h-9 items-center justify-center gap-2 rounded-lg border text-sm font-medium whitespace-nowrap';
+  'focus-visible:focus-indicator inline-flex h-ctrl-36 items-center justify-center gap-2 rounded-lg border text-sm font-medium whitespace-nowrap';
 const CONTROL_IDLE =
   'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
 const CONTROL_ON =
@@ -270,7 +270,7 @@ export const LogToolbar = ({
     <div
       role="group"
       aria-label="Levels"
-      className="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
+      className="h-ctrl-36 inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
     >
       {levels.map((level) => {
         const pressed = activeLevels.includes(level);
@@ -282,7 +282,7 @@ export const LogToolbar = ({
             aria-pressed={pressed}
             onClick={() => toggleLevel(level)}
             className={clsx(
-              'focus-visible:focus-indicator inline-flex h-[34px] items-center gap-1.5 border-r border-gray-200 px-2.5 text-sm font-medium last:border-r-0 focus-visible:ring-inset dark:border-gray-700',
+              'focus-visible:focus-indicator inline-flex items-center gap-1.5 border-r border-gray-200 px-2.5 text-sm font-medium last:border-r-0 focus-visible:ring-inset dark:border-gray-700',
               pressed
                 ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'

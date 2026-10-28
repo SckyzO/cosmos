@@ -12,6 +12,7 @@ import {
   MANY_GROUPS,
 } from '../storybook-health';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthCheckList } from './HealthCheckList';
 import { StatusBadge } from './StatusBadge';
 
@@ -276,5 +277,21 @@ export const CollapsedGroupsControlled: Story = {
     );
     await userEvent.click(canvas.getByRole('button', { name: /^Queue/ }));
     await expect(canvas.getByTestId('collapsed')).toHaveTextContent('db,queue');
+  },
+};
+
+/** A check row and a group header follow the page's `data-density`; the header is a control. */
+export const RowsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <InEachDensity>
+      <HealthCheckList groups={HEALTH_GROUPS} now={HEALTH_NOW} />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getByText('Job queue').closest('li')!);
+    await expectDensitySteps(canvas, (scope) => scope.getByRole('button', { name: /Queue/ }), {
+      control: true,
+    });
   },
 };

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { LogToolbar } from './LogToolbar';
 import { LogConsole } from './storybook-logs';
 import type { LogLevelKey } from './types';
@@ -160,5 +161,35 @@ export const SearchWidthIgnoresMatchCounter: Story = {
     await userEvent.type(field, 'timeout');
     await expect(canvas.findByText('3 of 12')).resolves.toBeVisible();
     expect(field.getBoundingClientRect().width).toBeCloseTo(before, 0);
+  },
+};
+
+/** The Live button and the level group follow the page's `data-density`, and compact keeps 24px. */
+export const ControlsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <InEachDensity>
+      <LogToolbar
+        onLiveChange={() => {}}
+        levels={LEVELS}
+        onActiveLevelsChange={() => {}}
+        levelCounts={{ debug: 1204, info: 8412, warn: 214, error: 37 }}
+      />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getByRole('button', { name: /^Live/ }), {
+      control: true,
+    });
+    await expectDensitySteps(canvas, (scope) => scope.getByRole('group', { name: 'Levels' }), {
+      control: true,
+    });
+    await expectDensitySteps(
+      canvas,
+      (scope) => scope.getByRole('button', { name: 'Debug 1,204' }),
+      {
+        control: true,
+      }
+    );
   },
 };

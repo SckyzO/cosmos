@@ -242,7 +242,7 @@ export const AuditDiff = ({
                 key={index}
                 role="columnheader"
                 scope="col"
-                className="px-4 py-2.5 text-xs font-medium text-gray-500 sm:w-[30%] first:sm:w-[20%] dark:text-gray-400"
+                className="py-row-10 px-4 text-xs font-medium text-gray-500 sm:w-[30%] first:sm:w-[20%] dark:text-gray-400"
               >
                 {header}
               </th>
@@ -261,7 +261,7 @@ export const AuditDiff = ({
                 <th
                   role="rowheader"
                   scope="row"
-                  className="min-w-0 px-4 py-3 font-medium break-words text-gray-900 max-sm:block max-sm:pb-1 dark:text-white"
+                  className="py-row-12 max-sm:pb-row-4 min-w-0 px-4 font-medium break-words text-gray-900 max-sm:block dark:text-white"
                 >
                   {change.label ?? change.field}
                 </th>
@@ -273,7 +273,7 @@ export const AuditDiff = ({
                       key={side}
                       role="cell"
                       className={clsx(
-                        'min-w-0 px-4 py-3 break-words max-sm:block max-sm:py-1.5',
+                        'py-row-12 max-sm:py-row-6 min-w-0 px-4 break-words max-sm:block',
                         plain
                           ? 'text-[var(--color-text-secondary)]'
                           : side === 'before'

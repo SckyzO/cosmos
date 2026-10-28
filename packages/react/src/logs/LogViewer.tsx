@@ -343,7 +343,7 @@ const LogRow = ({
         'flex gap-x-2 px-3 font-mono text-xs leading-5',
         wrap ? 'w-full' : 'w-max min-w-full',
         wrap && !comfortable && '@max-md:flex-wrap',
-        comfortable ? 'items-start py-1.5' : wrap ? 'items-start' : 'items-center',
+        comfortable ? 'py-row-6 items-start' : wrap ? 'items-start' : 'items-center',
         comfortable && clsx('border-b', palette.divider),
         // A wrapped row is as tall as its text, so the browser may skip those out of view.
         wrap && '[contain-intrinsic-size:auto_1.25rem] [content-visibility:auto]',
@@ -406,7 +406,7 @@ const LogDetails = ({
         palette.expanded
       )}
     >
-      <div className="py-1 pr-3 pl-9">
+      <div className="py-row-4 pr-3 pl-9">
         {fields.length > 0 && (
           <dl className="grid grid-cols-[minmax(6rem,max-content)_minmax(0,1fr)] gap-x-4">
             {fields.map(([key, value]) => (

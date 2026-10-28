@@ -6,6 +6,7 @@ import { Badge, Card } from '../ui';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { MapMarkerList } from './MapMarkerList';
 import { MapView, type MapViewProps, type MapViewState } from './MapView';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { CITY_DARK, CITY_LIGHT, CITY_STORES } from './storybook-map';
 import type { MapMarker } from './types';
 
@@ -360,5 +361,29 @@ export const StyleFollowsTheTheme: Story = {
       setStyle.mockRestore();
       root.className = themeClasses;
     }
+  },
+};
+
+/** The zoom buttons and the rows of the marker list follow the page's `data-density`. */
+export const ControlsFollowPageDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <InEachDensity>
+      {(density) => (
+        <>
+          <MapMarkerList markers={args.markers} ariaLabel="Stores" />
+          <MapView {...args} ariaLabel={`Stores, ${density}`} cluster={false} height={200} />
+        </>
+      )}
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.getByRole('button', { name: 'Zoom in' }), {
+      control: true,
+    });
+    await expectDensitySteps(
+      canvas,
+      (scope) => within(scope.getByRole('list', { name: 'Stores' })).getAllByRole('button')[0]!
+    );
   },
 };

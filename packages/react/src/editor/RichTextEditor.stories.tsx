@@ -9,6 +9,7 @@ import {
   mobileViewport,
 } from '../storybook-helpers';
 import { RichTextEditor } from './RichTextEditor';
+import { InEachDensity, expectDensitySteps } from '../storybook-density';
 
 const meta = {
   title: 'Forms/Rich Text Editor',
@@ -746,5 +747,53 @@ export const PlaceholderShowsWhileEmpty: Story = {
     const empty = text.querySelector('p.is-editor-empty') as HTMLElement;
     await expect(empty).toHaveAttribute('data-placeholder', 'Write your message…');
     await expect(getComputedStyle(empty, '::before').content).toBe('"Write your message…"');
+  },
+};
+
+/** The toolbar buttons follow the page's `data-density`; compact keeps them at 24px. */
+export const ToolbarFollowsPageDensity: Story = {
+  ...test,
+  render: (args) => (
+    <InEachDensity>
+      <RichTextEditor {...args} />
+    </InEachDensity>
+  ),
+  play: async ({ canvas }) => {
+    await expectDensitySteps(canvas, (scope) => scope.findByRole('button', { name: 'Bold' }), {
+      control: true,
+    });
+  },
+};
+
+/** The link field follows `data-density`. The dialog opens in a portal, so the attribute goes on `<html>`. */
+export const LinkFieldFollowsPageDensity: Story = {
+  ...test,
+  args: { defaultValue: '<p>Read the changelog.</p>' },
+  play: async ({ canvas, canvasElement }) => {
+    const root = document.documentElement;
+    const before = root.getAttribute('data-density');
+    const heights: number[] = [];
+    try {
+      for (const density of ['compact', 'default', 'comfortable']) {
+        root.dataset.density = density;
+        const text = await textbox(canvasElement);
+        await userEvent.click(text);
+        await userEvent.keyboard('{Control>}a{/Control}');
+        await userEvent.click(canvas.getByRole('button', { name: 'Link' }));
+        const dialog = await within(document.body).findByRole('dialog', { name: 'Edit link' });
+        heights.push(
+          within(dialog).getByRole('textbox', { name: 'Link URL' }).getBoundingClientRect().height
+        );
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() => expect(within(document.body).queryByRole('dialog')).toBeNull());
+      }
+    } finally {
+      if (before === null) delete root.dataset.density;
+      else root.dataset.density = before;
+    }
+    const [compact, normal, comfortable] = heights as [number, number, number];
+    await expect(compact).toBeLessThan(normal);
+    await expect(comfortable).toBeGreaterThan(normal);
+    await expect(compact).toBeGreaterThanOrEqual(24);
   },
 };

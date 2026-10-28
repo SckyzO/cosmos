@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { useId, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Button } from '../ui/Button';
-import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass } from '../forms/fieldRecipe';
+import { FIELD_PAD_X, FIELD_PAD_Y, FIELD_PLACEHOLDER, fieldClass } from '../forms/fieldRecipe';
 import type { ResolvedLabels } from './labels';
 import { normalizeLinkUrl } from './linkUrl';
 
@@ -85,7 +85,7 @@ export function LinkForm({ editor, labels, onDone, className }: LinkFormProps) {
           'block w-full',
           fieldClass({ size: 'sm', invalid, fixedHeight: false }),
           FIELD_PAD_X.sm,
-          'py-1.5',
+          FIELD_PAD_Y.sm,
           FIELD_PLACEHOLDER
         )}
       />

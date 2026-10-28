@@ -159,7 +159,7 @@ export const DataTableMobileCards = <T,>({
                 : undefined
             }
             className={clsx(
-              'px-4 py-3',
+              'py-row-12 px-4',
               selected
                 ? 'bg-brand-50/40 dark:bg-brand-500/5'
                 : open && 'bg-gray-50 dark:bg-white/[0.03]',
@@ -216,7 +216,7 @@ export const DataTableMobileCards = <T,>({
                 {pairs.map((col) => (
                   <div
                     key={col.key}
-                    className="flex items-baseline justify-between gap-4 border-t border-gray-100 py-2 first:border-t-0 first:pt-0 last:pb-0 dark:border-gray-800/60"
+                    className="py-row-8 flex items-baseline justify-between gap-4 border-t border-gray-100 first:border-t-0 first:pt-0 last:pb-0 dark:border-gray-800/60"
                   >
                     <dt className="shrink-0 text-[var(--color-text-muted)]">
                       {mobileLabelOf(col)}
