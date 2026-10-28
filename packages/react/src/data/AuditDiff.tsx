@@ -234,22 +234,19 @@ export const AuditDiff = ({
       )}
       {...rest}
     >
-      <table
-        role="table"
-        className="w-full border-collapse text-start text-sm max-sm:block"
-        {...name}
-      >
+      <table role="table" className="w-full border-collapse text-sm max-sm:block" {...name}>
         <thead role="rowgroup" className="max-sm:sr-only">
           <tr
             role="row"
             className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-white/5"
           >
+            {/* `text-start` on each header: a `th` centres its text when it inherits `start`. */}
             {[labels.field, labels.before, labels.after].map((header, index) => (
               <th
                 key={index}
                 role="columnheader"
                 scope="col"
-                className="py-row-10 px-4 text-xs font-medium text-gray-500 sm:w-[30%] first:sm:w-[20%] dark:text-gray-400"
+                className="py-row-10 px-4 text-start text-xs font-medium text-gray-500 sm:w-[30%] first:sm:w-[20%] dark:text-gray-400"
               >
                 {header}
               </th>
@@ -268,7 +265,7 @@ export const AuditDiff = ({
                 <th
                   role="rowheader"
                   scope="row"
-                  className="py-row-12 max-sm:pb-row-4 min-w-0 px-4 font-medium break-words text-gray-900 max-sm:block dark:text-white"
+                  className="py-row-12 max-sm:pb-row-4 min-w-0 px-4 text-start font-medium break-words text-gray-900 max-sm:block dark:text-white"
                 >
                   <bdi>{change.label ?? change.field}</bdi>
                 </th>
