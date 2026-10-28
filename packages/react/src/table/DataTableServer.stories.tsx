@@ -77,7 +77,7 @@ const columns: ColumnDef<Order>[] = [
   {
     key: 'total',
     label: 'Total',
-    align: 'right',
+    align: 'end',
     sortable: true,
     sortValue: (o) => o.total,
     render: (o) => `$${o.total.toFixed(2)}`,

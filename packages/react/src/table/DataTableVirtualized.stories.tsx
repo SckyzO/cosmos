@@ -39,7 +39,7 @@ const columns: ColumnDef<Node>[] = [
     render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
   },
   { key: 'team', label: 'Team', render: (r) => r.team },
-  { key: 'cpu', label: 'CPU %', align: 'right', render: (r) => `${r.cpu}%` },
+  { key: 'cpu', label: 'CPU %', align: 'end', render: (r) => `${r.cpu}%` },
 ];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
@@ -504,5 +504,30 @@ export const RowsFollowTheTextSize: Story = {
     await waitFor(() => expect(canvas.getByText('node-10000')).toBeInTheDocument());
     noOverflow();
     await expect(canvas.getByText('node-10000')).toBeVisible();
+  },
+};
+
+/** The cells of a window follow their column's `end` alignment too, not only the table cells. */
+export const EndColumnIsJustifiedInTheWindow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        pageSize={COUNT}
+        virtualize
+        aria-label="Nodes"
+        className="max-h-96"
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Nodes' });
+    const cells = within(bodyRows(table)[0]).getAllByRole('cell');
+    const box = (cell: HTMLElement) => getComputedStyle(cell.firstElementChild!).justifyContent;
+    await expect(box(cells[2])).toBe('flex-end');
+    await expect(box(cells[1])).toBe('normal');
   },
 };
