@@ -190,6 +190,16 @@ const TOKEN =
 const HAS_CONTROL = /[\x00-\x08\x0b-\x1f\x7f\x9b]/;
 
 /**
+ * `input` without the `\r` and `\n` at its end. A loop, since `/[\r\n]+$/` is quadratic on a long
+ * run of them followed by text.
+ */
+const trimLineEnd = (input: string): string => {
+  let end = input.length;
+  while (end > 0 && (input[end - 1] === '\n' || input[end - 1] === '\r')) end--;
+  return input.slice(0, end);
+};
+
+/**
  * The text of a line of output as segments, each with its style. SGR sequences set the style
  * (the 16 colours and their bright variants, bold, dim, italic, underline, reset; a 256-colour
  * index or a truecolor triplet becomes the nearest of the 16). Every other escape sequence and
@@ -198,7 +208,7 @@ const HAS_CONTROL = /[\x00-\x08\x0b-\x1f\x7f\x9b]/;
  * its end). Adjacent runs of one style are one segment; an empty line has no segment.
  */
 export const parseAnsi = (input: string): AnsiSegment[] => {
-  const line = input.replace(/[\r\n]+$/, '');
+  const line = trimLineEnd(input);
   if (!HAS_CONTROL.test(line)) return line === '' ? [] : [{ text: line, style: PLAIN_STYLE }];
   let segments: AnsiSegment[] = [];
   let style = PLAIN_STYLE;

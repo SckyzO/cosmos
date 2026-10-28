@@ -218,6 +218,14 @@ describe('parseAnsi: carriage return', () => {
     expect(texts('built\r')).toEqual(['built']);
     expect(texts('built\r\n')).toEqual(['built']);
   });
+
+  it('reads a line with a long run of line ends inside it in linear time', () => {
+    // A trailing `/[\r\n]+$/` retries the whole run from each of its characters: 2 s here.
+    const line = `${'\n'.repeat(50_000)}x`;
+    const start = performance.now();
+    expect(parseAnsi(line)).toEqual([{ text: line, style: PLAIN_STYLE }]);
+    expect(performance.now() - start).toBeLessThan(500);
+  });
 });
 
 describe('stripAnsi', () => {
