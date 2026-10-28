@@ -265,7 +265,7 @@ test('the dev container cannot write the repo metadata', () => {
 
 // ── Right to left ───────────────────────────────────────────────────────────
 
-// A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `start-`,
+// A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `inset-s-`,
 // `text-start`, `border-s`, `rounded-s`…) and the `rtl:` variant. This refuses the physical
 // ones, group by group as each Storybook group is converted (#453).
 
@@ -394,7 +394,7 @@ test('the converted groups use logical utilities only', () => {
     RTL_ALLOWED.some(({ file, token }) => file === hit.file && token === hit.token);
   expect(
     found.filter((hit) => !allowed(hit)).map(({ file, token }) => `${file}: ${token}`),
-    'physical utilities: use the logical form (ms-, pe-, start-, text-start, border-s, rounded-s…), or the rtl: variant, or add an RTL_ALLOWED entry with the reason'
+    'physical utilities: use the logical form (ms-, pe-, inset-s-, text-start, border-s, rounded-s…), or the rtl: variant, or add an RTL_ALLOWED entry with the reason'
   ).toEqual([]);
 
   for (const { file, token, reason } of RTL_ALLOWED) {
