@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Button, type ButtonIntent, type ButtonVariant } from '../ui/Button';
 
-export type FormFooterAlign = 'right' | 'between';
+export type FormFooterAlign = 'end' | 'between';
 
 export type FormFooterProps = {
   /** Cancel button handler. Hidden when omitted. */
@@ -20,7 +20,7 @@ export type FormFooterProps = {
   submitIntent?: ButtonIntent;
   /** Form name attribute (used by submit when the button is outside the form). */
   formId?: string;
-  /** Where to render the buttons: `right` is the end edge (the left one in right to left). Default `right`. */
+  /** Where to render the buttons: `end` is the end edge (the left one in right to left). Default `end`. */
   align?: FormFooterAlign;
   /** Render a top border separator. Default `true`. */
   bordered?: boolean;
@@ -40,7 +40,7 @@ export const FormFooter = ({
   submitVariant = 'primary',
   submitIntent = 'brand',
   formId,
-  align = 'right',
+  align = 'end',
   bordered = true,
   extra,
   children,
@@ -76,9 +76,7 @@ export const FormFooter = ({
       )}
     >
       {extra && <div className="text-xs text-gray-500 dark:text-gray-400">{extra}</div>}
-      <div className={clsx('flex items-center gap-3', align === 'right' && 'ms-auto')}>
-        {buttons}
-      </div>
+      <div className={clsx('flex items-center gap-3', align === 'end' && 'ms-auto')}>{buttons}</div>
     </div>
   );
 };

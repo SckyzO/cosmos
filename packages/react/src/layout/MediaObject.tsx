@@ -21,7 +21,7 @@ import type { HTMLAttributes, ReactNode, ComponentPropsWithRef } from 'react';
 //                                margin to `ml-4`.
 
 export type MediaObjectAlign = 'start' | 'center' | 'bottom' | 'stretch';
-export type MediaObjectPosition = 'left' | 'right';
+export type MediaObjectPosition = 'start' | 'end';
 
 const ALIGN_CLASS: Record<MediaObjectAlign, string> = {
   start: 'items-start',
@@ -39,7 +39,7 @@ export type MediaObjectProps = ComponentPropsWithRef<'div'> & {
    * `h-full`). Default `start`.
    */
   align?: MediaObjectAlign;
-  /** Side of the body the media sits on. `right` reverses the row. Default `left`. */
+  /** Side of the body the media sits on. `end` reverses the row. Default `start`. */
   mediaPosition?: MediaObjectPosition;
   /** Gap between the media and the body. Default `gap-x-4` (16px). */
   gapClassName?: string;
@@ -53,7 +53,7 @@ export type MediaObjectProps = ComponentPropsWithRef<'div'> & {
  */
 function MediaObjectRoot({
   align = 'start',
-  mediaPosition = 'left',
+  mediaPosition = 'start',
   gapClassName = 'gap-x-4',
   className,
   children,
@@ -66,7 +66,7 @@ function MediaObjectRoot({
       data-media-position={mediaPosition}
       className={clsx(
         'flex',
-        mediaPosition === 'right' && 'flex-row-reverse',
+        mediaPosition === 'end' && 'flex-row-reverse',
         ALIGN_CLASS[align],
         gapClassName,
         className

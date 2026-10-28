@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export type BlockquoteVariant = 'plain' | 'solid' | 'icon' | 'testimonial';
 export type BlockquoteSize = 'sm' | 'md' | 'lg';
-export type BlockquoteAlign = 'left' | 'center' | 'right';
+export type BlockquoteAlign = 'start' | 'center' | 'end';
 
 export type BlockquoteProps = {
   children: ReactNode;
@@ -34,16 +34,16 @@ const SIZE: Record<BlockquoteSize, string> = {
 };
 
 const ALIGN: Record<BlockquoteAlign, string> = {
-  left: 'text-left',
+  start: 'text-start',
   center: 'text-center',
-  right: 'text-right',
+  end: 'text-end',
 };
 
 export const Blockquote = ({
   children,
   variant = 'plain',
   size = 'md',
-  align = 'left',
+  align = 'start',
   author,
   role,
   authorAvatar,
@@ -62,7 +62,7 @@ export const Blockquote = ({
           className={clsx(
             'text-gray-300 dark:text-gray-600',
             align === 'center' ? 'mx-auto mb-3' : 'mb-3',
-            align === 'right' ? 'ms-auto' : ''
+            align === 'end' ? 'ms-auto' : ''
           )}
           aria-hidden
           size={32}
@@ -87,7 +87,7 @@ export const Blockquote = ({
             className={clsx(
               'mt-5 flex items-center gap-3',
               align === 'center' && 'justify-center',
-              align === 'right' && 'justify-end'
+              align === 'end' && 'justify-end'
             )}
           >
             {authorAvatar && (
