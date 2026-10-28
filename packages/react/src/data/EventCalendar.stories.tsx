@@ -6,6 +6,7 @@ import {
   directionBox,
   expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
@@ -416,5 +417,16 @@ export const MonthNavigationAndWeekMirrorInRightToLeft: Story = {
       await userEvent.click(previous);
       await expect(within(box).getByRole('heading', { name: 'April 2026' })).toBeVisible();
     }
+  },
+};
+
+/** A weekday name the locale abbreviates with a dot (`lun.`) keeps the dot at its end. */
+export const WeekdayNamesKeepTheirOrderInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { locale: 'fr-FR' },
+  render: (args) => bothDirections(() => <EventCalendar {...args} />),
+  play: ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
+      expectReadsLeftToRight(within(box).getByText('lun.'));
   },
 };

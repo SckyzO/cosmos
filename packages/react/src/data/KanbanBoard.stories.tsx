@@ -222,7 +222,9 @@ export const Controlled: Story = {
     const [value, setValue] = useState(sprint);
     const [last, setLast] = useState<KanbanMove>();
     return (
-      <div className="grid gap-4">
+      // One `minmax(0, 1fr)` column: an `auto` one grows to the whole board, which then
+      // overflows the page instead of scrolling inside its frame.
+      <div className="grid grid-cols-1 gap-4">
         <KanbanBoard {...args} value={value} onChange={setValue} onCardMove={setLast} />
         <p
           aria-live="polite"

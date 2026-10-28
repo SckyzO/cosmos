@@ -635,7 +635,7 @@ export const TopNWidget: Story = {
             rank={i + 1}
             title={<span className="font-mono text-xs">{e.path}</span>}
             className="py-3"
-            trailing={<span className="text-sm/6 text-gray-900 dark:text-white">{e.p95}</span>}
+            trailing={<bdi className="text-sm/6 text-gray-900 dark:text-white">{e.p95}</bdi>}
           />
         ))}
       </StackedList>
