@@ -650,7 +650,11 @@ nothing in it is `UNKNOWN`.
   filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
   legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
   grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
-  vertically.
+  vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
+  `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a
+  warning or a critical cell, with its counts in words ("2 Critical, 1 Warning"), the worst rows
+  first. Picking a chip scrolls its row into view, in the grid's own box when `maxHeight` is set,
+  and moves the focus to its worst cell; on a phone the strip scrolls sideways.
 
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.

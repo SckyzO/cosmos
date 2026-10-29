@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
-import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { RelativeTime } from '../data/RelativeTime';
 import { directionOf } from '../hooks/direction';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { STATUS_NAME, formatLatency } from './health';
+import { rowsNeedingAttention } from './matrixAttention';
 import { StatusBadge } from './StatusBadge';
 import { STATUS_DOT, type HealthStatus } from './types';
 
@@ -46,6 +47,18 @@ export type HealthMatrixProps = {
   ariaLabel: string;
   /** A visible title, above the grid. */
   title?: ReactNode;
+  /**
+   * The text of the first header cell, above the row names. Default "Service"; a cluster says
+   * "Rack".
+   */
+  rowHeader?: ReactNode;
+  /**
+   * Lists the rows holding a warning or a critical cell in a "Needs attention" strip above the
+   * grid, worst first, each with its counts in words. Picking one scrolls its row into view (in
+   * the grid's own box when `maxHeight` is set) and moves the focus to its worst cell. The strip
+   * scrolls sideways on a phone. Default `false`; no strip when no row has a problem.
+   */
+  attentionStrip?: boolean;
   /** Shows the legend of the shapes. Default: with `dots`, not with `pills`. */
   legend?: boolean;
   /**
@@ -98,6 +111,8 @@ export const HealthMatrix = ({
   variant = 'dots',
   ariaLabel,
   title,
+  rowHeader = 'Service',
+  attentionStrip = false,
   legend,
   maxHeight,
   now,
@@ -108,6 +123,7 @@ export const HealthMatrix = ({
   const [active, setActive] = useState<Position>({ row: 0, col: 0 });
   const [open, setOpen] = useState<Position | null>(null);
   const showLegend = legend ?? variant === 'dots';
+  const attentionId = useId();
 
   const lastRow = rows.length - 1;
   const lastCol = columns.length - 1;
@@ -121,6 +137,20 @@ export const HealthMatrix = ({
     gridRef.current
       ?.querySelector<HTMLElement>(`button[data-row="${row}"][data-col="${col}"]`)
       ?.focus();
+  };
+
+  // The focus goes to the worst cell of the row: its first critical one, else its first warning.
+  const goToRow = (index: number) => {
+    const cells = rows[index]!.cells;
+    const firstWith = (status: HealthStatus) =>
+      columns.findIndex((column) => cells[column.id]?.status === status);
+    const crit = firstWith('CRIT');
+    const col = crit >= 0 ? crit : firstWith('WARN');
+    focusCell({ row: index, col });
+    // The focus scrolls too; this settles the row inside the box, under the sticky header.
+    gridRef.current
+      ?.querySelector<HTMLElement>(`button[data-row="${index}"][data-col="${col}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTableElement>) => {
@@ -148,6 +178,10 @@ export const HealthMatrix = ({
   const openRow = open ? rows[open.row] : undefined;
   const openCol = open ? columns[open.col] : undefined;
   const openCell = openRow && openCol ? openRow.cells[openCol.id] : undefined;
+
+  const attention = attentionStrip ? rowsNeedingAttention(rows) : [];
+  const attentionCrit = attention.reduce((sum, entry) => sum + entry.crit, 0);
+  const attentionWarn = attention.reduce((sum, entry) => sum + entry.warn, 0);
 
   const legendStatuses = LEGEND_ORDER.filter(
     (status) =>
@@ -187,7 +221,61 @@ export const HealthMatrix = ({
           )}
         </div>
       )}
-      <div className="overflow-auto" style={{ maxHeight }}>
+      {attention.length > 0 && (
+        <div className="border-b border-[var(--color-border)] px-4 py-3">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <p
+              id={attentionId}
+              className="m-0 text-sm font-semibold text-[var(--color-text-primary)]"
+            >
+              Needs attention
+            </p>
+            <span className="text-sm text-[var(--color-text-secondary)]">
+              {[
+                `${attention.length} of ${rows.length} ${rows.length === 1 ? 'row' : 'rows'}`,
+                attentionCrit > 0 && `${attentionCrit} ${STATUS_NAME.CRIT}`,
+                attentionWarn > 0 && `${attentionWarn} ${STATUS_NAME.WARN}`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          </div>
+          <ul
+            aria-labelledby={attentionId}
+            className="m-0 mt-2.5 flex list-none gap-2 overflow-x-auto p-0 sm:flex-wrap sm:overflow-visible"
+          >
+            {attention.map(({ row, index, crit, warn }) => (
+              <li key={row.id} className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => goToRow(index)}
+                  className="focus-visible:focus-indicator h-ctrl-40 inline-flex cursor-pointer items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-3 text-sm whitespace-nowrap text-[var(--color-text-primary)] hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-gray-800"
+                >
+                  <bdi className="font-mono font-semibold">{row.label}</bdi>
+                  <span className="sr-only">: </span>
+                  {crit > 0 && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+                      <Shape status="CRIT" />
+                      {crit} {STATUS_NAME.CRIT}
+                    </span>
+                  )}
+                  {crit > 0 && warn > 0 && <span className="sr-only">, </span>}
+                  {warn > 0 && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+                      <Shape status="WARN" />
+                      {warn} {STATUS_NAME.WARN}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div
+        className="scroll-ps-28 scroll-pt-12 overflow-auto sm:scroll-ps-40"
+        style={{ maxHeight }}
+      >
         <table
           ref={gridRef}
           role="grid"
@@ -201,7 +289,7 @@ export const HealthMatrix = ({
                 scope="col"
                 className="py-row-10 inset-s-0 sticky top-0 z-20 min-w-28 border-e border-b border-[var(--color-border)] bg-gray-50 px-4 text-start text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
               >
-                Service
+                <bdi>{rowHeader}</bdi>
               </th>
               {columns.map((column) => (
                 <th
