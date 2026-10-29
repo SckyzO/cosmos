@@ -1,11 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, ArrowRight, Bell, Mail, MessageSquare, Server, Zap } from 'lucide-react';
 import { expect } from 'storybook/test';
-import { expectFocusRing } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectBeyondEnd,
+  expectFocusRing,
+  expectMirrored,
+  mirroredIcon,
+} from '../storybook-helpers';
 import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { Button } from './Button';
 import { IconBox } from './IconBox';
+
+// The arrow points toward the end of the line, so it turns around in right to left.
+const ForwardIcon = mirroredIcon(ArrowRight);
 
 const meta = {
   title: 'Layout/Card',
@@ -121,7 +131,7 @@ export const Horizontal: Story = {
             Active monitoring on every node — scrape every 15 s.
           </p>
           <div className="mt-3 flex justify-end">
-            <Button variant="secondary" size="sm" icon={ArrowRight} iconPosition="end">
+            <Button variant="secondary" size="sm" icon={ForwardIcon} iconPosition="end">
               Open
             </Button>
           </div>
@@ -141,11 +151,9 @@ export const HorizontalLayout: Story = {
     await expect(image).toBeVisible();
     await expect(heading).toBeVisible();
     if (window.matchMedia('(min-width: 640px)').matches) {
-      // Image column on the left, content on its right.
+      // Image column at the start, content after it.
       await expect(wrapper.getBoundingClientRect().width).toBe(160);
-      await expect(heading.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-        wrapper.getBoundingClientRect().right
-      );
+      expectBeyondEnd(heading, wrapper);
     } else {
       // Stacked: the content sits under the image.
       await expect(heading.getBoundingClientRect().top).toBeGreaterThanOrEqual(
@@ -289,7 +297,7 @@ export const WithCTA: Story = {
           Cosmos ships a Prometheus-style exporter for every supported service. Pick one and
           we&apos;ll generate a kubectl manifest.
         </p>
-        <Button variant="primary" icon={ArrowRight} iconPosition="end">
+        <Button variant="primary" icon={ForwardIcon} iconPosition="end">
           Browse exporters
         </Button>
       </Card>
@@ -320,7 +328,7 @@ export const WithLink: Story = {
           href="#"
           className="text-brand-600 dark:text-brand-400 inline-flex items-center gap-1 text-sm font-medium hover:underline"
         >
-          Read changelog <ArrowRight className="h-4 w-4" />
+          Read changelog <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
         </a>
       </Card>
     </Wrap>
@@ -366,7 +374,7 @@ export const CenteredCTA: Story = {
         </p>
         <div className="flex justify-center gap-3">
           <Button variant="secondary">Preview manifest</Button>
-          <Button variant="primary" icon={ArrowRight} iconPosition="end">
+          <Button variant="primary" icon={ForwardIcon} iconPosition="end">
             Deploy now
           </Button>
         </div>
@@ -394,7 +402,7 @@ export const WithList: Story = {
               href="#"
               className="text-brand-600 dark:text-brand-400 inline-flex items-center gap-1 text-xs font-medium hover:underline"
             >
-              View all <ArrowRight className="h-3.5 w-3.5" />
+              View all <ArrowRight className="h-3.5 w-3.5 rtl:-scale-x-100" />
             </a>
           </Card.Header>
           <ul className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -533,5 +541,34 @@ export const BorderKeepsThemeColorInLight: Story = {
   play: async ({ canvas }) => {
     const card = canvas.getByText('Body').parentElement!;
     await expect(getComputedStyle(card).borderTopColor).toBe(cardBorder('--color-border'));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The image column of a horizontal card is at the start edge, the content after it. */
+export const HorizontalImageSitsAtTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: () =>
+    bothDirections(() => (
+      <Card padding="none" orientation="horizontal" className="max-w-2xl">
+        <Card.Image
+          src={gradientImage('#10b981', '#06b6d4', 'Server')}
+          alt="Server cover"
+          aspectRatio="aspect-square"
+        />
+        <div className="flex flex-1 flex-col p-4">
+          <h3 className="text-sm font-semibold">Production datacenter</h3>
+        </div>
+      </Card>
+    )),
+  play: ({ canvasElement }) => {
+    const { ltr, rtl } = expectMirrored(canvasElement, (box) => box.querySelector('img'));
+    expect(ltr.getBoundingClientRect().width).toBe(rtl.getBoundingClientRect().width);
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      expectBeyondEnd(box.querySelector('h3')!, box.querySelector('img')!.parentElement!);
+    }
   },
 };

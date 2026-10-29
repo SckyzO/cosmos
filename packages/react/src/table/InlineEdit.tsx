@@ -84,7 +84,7 @@ export const CellTrigger = <T,>({
         {content}
         <span className="sr-only">, edit {columnText(col)}</span>
         {saving && (
-          <span className="ml-2 inline-block align-middle">
+          <span className="ms-2 inline-block align-middle">
             <Spinner />
           </span>
         )}
@@ -211,7 +211,7 @@ export const CellEditorBox = <T,>({
               if (!e.currentTarget.contains(e.relatedTarget)) commit(false);
             }
       }
-      className="-my-1.5 text-left whitespace-normal"
+      className="-my-1.5 text-start whitespace-normal"
     >
       {mode === 'button' ? (
         <div className="flex items-center gap-1">

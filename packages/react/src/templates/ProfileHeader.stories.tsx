@@ -2,7 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Calendar, Mail, MapPin } from 'lucide-react';
 import { expect, waitFor, within } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectBeyondEnd,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+} from '../storybook-helpers';
 import { placeholderAvatar, placeholderCover } from '../storybook-avatars';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -157,5 +165,30 @@ export const AvatarFallsBackToInitials: Story = {
   play: async ({ canvasElement }) => {
     const avatar = within(canvasElement).getAllByRole('img', { name: 'Ana Ruiz' })[0]!;
     await waitFor(() => expect(avatar).toHaveTextContent('AR'));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The avatar leads at the start edge, the actions end at the end edge, and the name is an island. */
+export const FollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: (args) => bothDirections(() => <ProfileHeader {...args} />),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('[class*="ring-4"]'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const follow = within(box).getByRole('button', { name: 'Follow' });
+      expect(endOffset(follow, box), `${dir}: actions at the end`).toBeLessThanOrEqual(25);
+      expectBeyondEnd(follow, within(box).getByRole('heading', { name: 'Ana Ruiz' }));
+      const name = within(box).getByRole('heading', { name: 'Ana Ruiz' }).querySelector('bdi')!;
+      expect(getComputedStyle(name).unicodeBidi, `${dir}: name`).toBe('isolate');
+      // The cover gradient runs toward the end corner: bottom right, or bottom left.
+      const cover = box.querySelector('.bg-gradient-to-br')!;
+      expect(getComputedStyle(cover).backgroundImage, `${dir}: cover`).toContain(
+        dir === 'rtl' ? 'to left bottom' : 'to right bottom'
+      );
+    }
   },
 };

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, spyOn, userEvent, waitFor } from 'storybook/test';
 import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
 import { SectionCard } from '../templates/SectionCard';
+import { endOffset, startOffset } from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Sticky Scroll Nav',
@@ -142,5 +143,33 @@ export const OnNavigateReplacesTheScroll: Story = {
     } finally {
       scrollIntoView.mockRestore();
     }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The first section is at the start edge of the row: on the right where the page reads right to
+ * left. One row only: the nav has no name to tell two landmarks apart.
+ */
+export const SectionsRunFromTheStartEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" data-direction="rtl">
+      <StickyScrollNav
+        sections={[
+          { id: 'one', label: 'One' },
+          { id: 'two', label: 'Two' },
+        ]}
+      />
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const row = canvasElement.querySelector('nav')!;
+    const first = row.querySelector('button')!;
+    const last = row.querySelectorAll('button')[1]!;
+    expect(startOffset(first, row)).toBeLessThan(endOffset(first, row));
+    expect(startOffset(first, row)).toBeLessThan(startOffset(last, row));
+    expect(first.getBoundingClientRect().left).toBeGreaterThan(last.getBoundingClientRect().left);
   },
 };

@@ -121,7 +121,7 @@ export const Chatbot = ({
           tabIndex={-1}
           className={clsx(
             'fixed inset-0 z-50 flex flex-col overflow-hidden bg-[var(--color-bg-panel)] shadow-2xl focus:outline-none motion-safe:transition-all motion-safe:duration-150',
-            'min-[480px]:inset-auto min-[480px]:right-6 min-[480px]:bottom-24 min-[480px]:h-[min(600px,calc(100dvh-8rem))] min-[480px]:w-96 min-[480px]:rounded-2xl min-[480px]:border min-[480px]:border-[var(--color-border)]',
+            'min-[480px]:inset-e-6 min-[480px]:inset-auto min-[480px]:bottom-24 min-[480px]:h-[min(600px,calc(100dvh-8rem))] min-[480px]:w-96 min-[480px]:rounded-2xl min-[480px]:border min-[480px]:border-[var(--color-border)]',
             shown ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
           )}
         >
@@ -134,7 +134,7 @@ export const Chatbot = ({
                 id={titleId}
                 className="truncate text-sm font-semibold text-[var(--color-text-primary)]"
               >
-                {title}
+                <bdi>{title}</bdi>
               </h2>
               {subtitle && (
                 <p className="truncate text-xs text-[var(--color-text-muted)]">{subtitle}</p>
@@ -198,7 +198,7 @@ export const Chatbot = ({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={clsx(
-          'bg-brand-500 shadow-brand-500/25 hover:bg-brand-600 focus-visible:focus-indicator fixed right-6 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95',
+          'bg-brand-500 shadow-brand-500/25 hover:bg-brand-600 focus-visible:focus-indicator inset-e-6 fixed bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95',
           open && 'max-[479px]:hidden'
         )}
       >
@@ -210,7 +210,7 @@ export const Chatbot = ({
         {unread && (
           <span
             aria-hidden
-            className="text-2xs absolute -top-1 -right-1 min-w-5 rounded-full bg-red-600 px-1.5 text-center leading-5 font-semibold text-white ring-2 ring-[var(--color-bg-base)]"
+            className="text-2xs -inset-e-1 absolute -top-1 min-w-5 rounded-full bg-red-600 px-1.5 text-center leading-5 font-semibold text-white ring-2 ring-[var(--color-bg-base)]"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>

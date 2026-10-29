@@ -13,7 +13,7 @@ export type ChatComposerProps = {
   /** Accessible name of the send button. Default `Send message`. */
   sendLabel?: string;
   disabled?: boolean;
-  /** Slot left of the textarea, e.g. an attach-file button. */
+  /** Slot before the textarea, e.g. an attach-file button. */
   attachment?: ReactNode;
   /**
    * A line under the field and the send button, inside the same panel: an attach button, a model
@@ -90,6 +90,8 @@ export function ChatComposer({
         ref={mergeRefs(inner, ref)}
         rows={1}
         aria-label={label}
+        // What is typed reads in its own direction.
+        dir="auto"
         placeholder={placeholder}
         disabled={disabled}
         value={value}
@@ -121,7 +123,7 @@ export function ChatComposer({
         {generating ? (
           <Square className="h-3.5 w-3.5 fill-current" aria-hidden />
         ) : (
-          <SendHorizontal className="h-4 w-4" aria-hidden />
+          <SendHorizontal className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
         )}
       </button>
     </>

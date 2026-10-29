@@ -67,17 +67,19 @@ function Item({
             aria-hidden
           />
         )}
-        <span className="flex-1 truncate">{children}</span>
+        <span className="flex-1 truncate">
+          <bdi>{children}</bdi>
+        </span>
         {badge && (
           <span
             className={clsx(
-              'ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium ring-1 ring-inset',
+              'ms-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium ring-1 ring-inset',
               active
                 ? 'bg-white text-indigo-600 ring-indigo-600/20 dark:bg-gray-900 dark:text-indigo-400 dark:ring-indigo-400/30'
                 : 'bg-white text-gray-700 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-white/10'
             )}
           >
-            {badge}
+            <bdi>{badge}</bdi>
           </span>
         )}
       </AppLink>

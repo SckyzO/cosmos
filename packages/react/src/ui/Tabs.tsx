@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
+import { directionOf } from '../hooks/direction';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useScrollFade } from '../hooks/useScrollFade';
@@ -78,13 +79,13 @@ const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   underline: {
     horizontal:
       'flex w-max min-w-full items-center gap-1 border-b border-gray-200 dark:border-gray-800',
-    vertical: 'flex shrink-0 flex-col gap-1 border-r border-gray-200 dark:border-gray-800',
+    vertical: 'flex shrink-0 flex-col gap-1 border-e border-gray-200 dark:border-gray-800',
   },
   // The list's border is the panel's edge: it runs under the inactive tabs and
   // the active tab covers it.
   folder: {
     horizontal: 'flex w-max min-w-full items-end gap-1 border-b border-[var(--folder-border)]',
-    vertical: 'flex shrink-0 flex-col gap-1 border-r border-[var(--folder-border)]',
+    vertical: 'flex shrink-0 flex-col gap-1 border-e border-[var(--folder-border)]',
   },
   pills: TRACK_LIST,
   raised: TRACK_LIST,
@@ -145,7 +146,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       hover: IDLE_HOVER,
     },
     vertical: {
-      base: '-mr-px justify-start rounded-l-lg border-r-2 px-3 py-row-8 text-left whitespace-nowrap',
+      base: '-me-px justify-start rounded-s-lg border-e-2 px-3 py-row-8 text-start whitespace-nowrap',
       active:
         'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
       inactive: 'border-transparent',
@@ -166,10 +167,10 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       hover: IDLE_HOVER,
     },
     vertical: {
-      base: '-mr-px justify-start rounded-l-lg border border-[var(--folder-border)] py-row-8 pr-3 text-left whitespace-nowrap',
+      base: '-me-px justify-start rounded-s-lg border border-[var(--folder-border)] py-row-8 pe-3 text-start whitespace-nowrap',
       active:
-        'border-r-transparent bg-[var(--color-bg-panel)] pl-4 text-brand-600 dark:text-brand-400',
-      inactive: 'ml-1 bg-[var(--color-bg-base)] pl-3',
+        'border-e-transparent bg-[var(--color-bg-panel)] ps-4 text-brand-600 dark:text-brand-400',
+      inactive: 'ms-1 bg-[var(--color-bg-base)] ps-3',
       hover: IDLE_HOVER,
     },
   },
@@ -185,7 +186,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       activeFocus: 'focus-visible:focus-indicator-on-accent',
     },
     vertical: {
-      base: 'justify-start rounded-lg px-3 py-row-8 text-left whitespace-nowrap',
+      base: 'justify-start rounded-lg px-3 py-row-8 text-start whitespace-nowrap',
       active: 'bg-brand-500 text-white',
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
@@ -206,7 +207,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       idle: 'text-gray-600 dark:text-gray-400',
     },
     vertical: {
-      base: 'justify-start rounded-lg px-3 py-row-6 text-left whitespace-nowrap',
+      base: 'justify-start rounded-lg px-3 py-row-6 text-start whitespace-nowrap',
       active: RAISED_ACTIVE,
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
@@ -222,7 +223,7 @@ const PANEL_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
     horizontal:
       'rounded-b-xl border border-t-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
     vertical:
-      'flex-1 rounded-r-xl border border-l-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
+      'flex-1 rounded-e-xl border border-s-0 border-[var(--folder-border)] bg-[var(--color-bg-panel)] p-5',
   },
   pills: { horizontal: 'pt-5', vertical: 'flex-1' },
   raised: { horizontal: 'pt-5', vertical: 'flex-1' },
@@ -235,7 +236,7 @@ export type TabsProps = {
   defaultValue?: string;
   /** Called with the tab to activate. */
   onChange?: (value: string) => void;
-  /** Layout direction. `horizontal` (default) puts the tab list on top; `vertical` puts it on the left. */
+  /** Layout direction. `horizontal` (default) puts the tab list on top; `vertical` puts it at the start of the line. */
   orientation?: TabsOrientation;
   /**
    * Visual style. `underline` (default) marks the active tab with an accent
@@ -330,8 +331,14 @@ const List = ({ children, className }: { children: ReactNode; className?: string
   // orientation move focus to the previous/next enabled tab (wrapping), Home
   // and End to the first/last, and the focused tab is selected.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Along the line the arrows follow the reading direction: ArrowRight goes toward the end in
+    // left to right, ArrowLeft does in right to left.
     const [prev, next] =
-      orientation === 'vertical' ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
+      orientation === 'vertical'
+        ? ['ArrowUp', 'ArrowDown']
+        : directionOf(event.currentTarget) === 'rtl'
+          ? ['ArrowRight', 'ArrowLeft']
+          : ['ArrowLeft', 'ArrowRight'];
     if (![prev, next, 'Home', 'End'].includes(event.key)) return;
     const tabs = Array.from(
       event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)')
@@ -443,7 +450,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
             isActive ? BADGE_CLASSES[variant].active : BADGE_CLASSES[variant].inactive
           )}
         >
-          {badge}
+          <bdi>{badge}</bdi>
         </span>
       )}
     </button>

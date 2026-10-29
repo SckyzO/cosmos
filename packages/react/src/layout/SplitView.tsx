@@ -16,7 +16,7 @@ import { mergeRefs } from '../ui/mergeRefs';
 export type SplitViewBreakpoint = 'md' | 'lg' | 'xl';
 
 export type SplitViewProps = {
-  /** The panes: `SplitView.Pane`, in the order they sit from left to right. */
+  /** The panes: `SplitView.Pane`, in the order they sit along the line, the first at the start. */
   children: ReactNode;
   /**
    * Below this breakpoint the panes no longer sit side by side: only the active one shows, and

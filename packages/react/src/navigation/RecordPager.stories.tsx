@@ -5,7 +5,15 @@ import { PageHeader } from '../templates/PageHeader';
 import { Button } from '../ui/Button';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { LinkProvider, type LinkComponentProps } from '../ui/LinkProvider';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { Breadcrumb } from './Breadcrumb';
 import { RecordPager } from './RecordPager';
 
@@ -452,5 +460,32 @@ export const ShortcutsFollowTheRouter: Story = {
   play: async ({ canvas }) => {
     await userEvent.keyboard(']');
     await waitFor(() => expect(canvas.getByTestId('visited')).toHaveTextContent('#order-13'));
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** Back and Previous sit at the start, the arrows turn around, and the position reads left to right. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => {
+    // Both copies are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => <RecordPager {...args} aria-label={`Orders ${++count}`} />);
+  },
+  play: ({ canvasElement }) => {
+    for (const name of [/Back to list/, /Previous order/, /Next order/]) {
+      expectMirrored(canvasElement, (box) => within(box).getByRole('link', { name }));
+    }
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const name of [/Back to list/, /Previous order/, /Next order/]) {
+        const svg = within(box).getByRole('link', { name }).querySelector('svg')!;
+        expect(getComputedStyle(svg).scale, `${dir}: ${name}`).toBe(
+          dir === 'rtl' ? '-1 1' : 'none'
+        );
+      }
+      expectReadsLeftToRight(box.querySelector('bdi')!);
+    }
   },
 };

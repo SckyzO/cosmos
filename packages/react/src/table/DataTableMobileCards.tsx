@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
@@ -10,6 +10,7 @@ import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
 import { detailRowId } from './expandedRows';
 import { DIMMED, LoadingVeil } from './LoadingVeil';
+import { RowChevron } from './RowChevron';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
   mobileLabelOf,
@@ -176,12 +177,12 @@ export const DataTableMobileCards = <T,>({
                   variant="ghost"
                   size="lg"
                   shape="square"
-                  icon={open ? ChevronDown : ChevronRight}
+                  icon={open ? ChevronDown : RowChevron}
                   aria-expanded={open}
                   aria-controls={open ? detailId : undefined}
                   aria-label={`${open ? 'Hide' : 'Show'} details for ${key}`}
                   onClick={() => onToggleExpanded(key)}
-                  className={clsx('-my-2.5 -mr-2 -ml-3 shrink-0', href && 'relative z-[1]')}
+                  className={clsx('-my-2.5 -ms-3 -me-2 shrink-0', href && 'relative z-[1]')}
                 />
               )}
               {selectable && (
@@ -221,7 +222,7 @@ export const DataTableMobileCards = <T,>({
                     <dt className="shrink-0 text-[var(--color-text-muted)]">
                       {mobileLabelOf(col)}
                     </dt>
-                    <dd className={clsx('min-w-0 text-right', href && RAISE_CONTROLS)}>
+                    <dd className={clsx('min-w-0 text-end', href && RAISE_CONTROLS)}>
                       {col.render(row)}
                     </dd>
                   </div>

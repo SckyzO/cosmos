@@ -29,6 +29,8 @@ import {
   expectTextContrast,
   inEachTheme,
   mobileViewport,
+  scrollAlong,
+  startEdge,
   startOffset,
 } from '../storybook-helpers';
 
@@ -397,7 +399,7 @@ const ExpandableTable = ({ initiallyOpen = [] }: { initiallyOpen?: string[] }) =
                   >
                     <ChevronRight
                       aria-hidden
-                      className={`h-4 w-4 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                      className={`h-4 w-4 transition-transform ${expanded ? 'rotate-90' : 'rtl:-scale-x-100'}`}
                     />
                   </button>
                 </TableCell>
@@ -693,14 +695,14 @@ export const MobileStickyFirstColumn: Story = {
     await waitFor(() => expect(scroller).toHaveAttribute('tabindex', '0'));
     // The end fades, the start does not: the first column is pinned there.
     await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
-    const left = (el: Element) => Math.round(el.getBoundingClientRect().left);
+    const left = (el: Element) => startEdge(el.getBoundingClientRect());
     const head = canvas.getAllByRole('columnheader')[0];
     const cell = canvas.getAllByRole('row')[2].firstElementChild as HTMLElement;
     const second = canvas.getAllByRole('row')[2].children[1];
     // Pinned to the padding box of the wrapper, inside its 1px border.
     const start = left(scroller) + scroller.clientLeft;
     const before = left(second);
-    scroller.scrollLeft = 120;
+    scrollAlong(scroller, 120);
     await waitFor(() => expect(left(second)).toBeLessThan(before));
     await expect(left(head)).toBe(start);
     await expect(left(cell)).toBe(start);
@@ -757,6 +759,72 @@ export const AlignFollowsTheReadingDirection: Story = {
       expect(getComputedStyle(within(box).getByText('Start')).textAlign).toBe('start');
       expect(getComputedStyle(within(box).getByText('End')).textAlign).toBe('end');
       expect(getComputedStyle(within(box).getByText('Numeric')).textAlign).toBe('end');
+    }
+  },
+};
+
+/**
+ * The first column sticks to the start edge, with its hairline on the side the rest scrolls
+ * under, and the edge fade is on the end side only.
+ */
+export const StickyFirstColumnFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      {(['ltr', 'rtl'] as const).map((dir) => (
+        <div key={dir} dir={dir} data-direction={dir} className="mb-4 w-80">
+          <Table stickyFirstColumn aria-label={`Nodes ${dir}`}>
+            <TableCaption>Nodes {dir}</TableCaption>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell className="min-w-40">Room</TableHeaderCell>
+                <TableHeaderCell numeric className="min-w-32">
+                  CPU
+                </TableHeaderCell>
+                <TableHeaderCell numeric className="min-w-32">
+                  Memory
+                </TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell>node-101</TableCell>
+                <TableCell>Room A</TableCell>
+                <TableCell numeric>41%</TableCell>
+                <TableCell numeric>63%</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const table = within(box).getByRole('table');
+      const scroller = table.parentElement as HTMLElement;
+      const cell = within(box).getByText('node-101');
+      await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+      // At rest the first column is at the start edge of the scroller (inside its 1px border).
+      await expect(startOffset(cell, scroller) - scroller.clientLeft, dir).toBeLessThan(
+        endOffset(cell, scroller)
+      );
+      scrollAlong(scroller, 120);
+      // Scrolled, it stays on the same edge, and its hairline is on the side facing the rest.
+      await waitFor(() =>
+        expect(startEdge(cell.getBoundingClientRect(), box)).toBe(
+          startEdge(scroller.getBoundingClientRect(), box) + scroller.clientLeft
+        )
+      );
+      await expect(getComputedStyle(cell).boxShadow, dir).toContain(
+        dir === 'ltr' ? ' -1px 0px 0px 0px inset' : ' 1px 0px 0px 0px inset'
+      );
+      // The fade covers the end only: its gradient starts at the start edge and has no start fade.
+      await expect(getComputedStyle(scroller).maskImage, dir).toMatch(
+        new RegExp(`^linear-gradient\\(to ${dir === 'rtl' ? 'left' : 'right'}, rgb\\(0, 0, 0\\)`)
+      );
     }
   },
 };

@@ -14,7 +14,17 @@ import {
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Tabs, type TabsProps } from './Tabs';
-import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectFocusRing,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  keyToEnd,
+  keyToStart,
+  mobileViewport,
+} from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 
 const meta = {
@@ -368,7 +378,7 @@ export const FolderSwitchesPanel: Story = {
     await expect(images).toHaveAttribute('aria-selected', 'true');
     await expect(documents).toHaveAttribute('aria-selected', 'false');
     // Keyboard: the arrow key moves focus to the next tab and selects it
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(archives).toHaveFocus();
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('archives-panel-content');
     await expect(archives).toHaveAttribute('aria-selected', 'true');
@@ -444,19 +454,19 @@ export const ArrowKeysMoveSelection: Story = {
     await userEvent.tab();
     await expect(overview).toHaveFocus();
     // ArrowRight skips the disabled tab, focuses and selects the next one
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(metrics).toHaveFocus();
     await expect(metrics).toHaveAttribute('aria-selected', 'true');
     await expect(metrics).toHaveAttribute('tabindex', '0');
     await expect(overview).toHaveAttribute('tabindex', '-1');
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('metrics-panel-content');
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(logs).toHaveFocus();
     // Wraps from the last tab to the first, and back
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(overview).toHaveFocus();
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('overview-panel-content');
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(logs).toHaveFocus();
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('logs-panel-content');
     // Home and End jump to the first and last tabs
@@ -698,12 +708,9 @@ const expectStripScrollsToActiveTab = async (
   await expect(strip.scrollLeft).toBe(0);
   const last = canvas.getByRole('tab', { name: 'Billing' });
   await userEvent.click(last);
-  await waitFor(() => expect(strip.scrollLeft).toBeGreaterThan(0));
-  await waitFor(() =>
-    expect(last.getBoundingClientRect().right).toBeLessThanOrEqual(
-      strip.getBoundingClientRect().right + 1
-    )
-  );
+  // Right to left the strip begins on the right and scrolls to negative values.
+  await waitFor(() => expect(Math.abs(strip.scrollLeft)).toBeGreaterThan(0));
+  await waitFor(() => expect(endOffset(last, strip)).toBeGreaterThanOrEqual(-1));
   expectNoHorizontalOverflow();
 };
 
@@ -759,7 +766,7 @@ export const MobileVertical: Story = {
     );
     const account = canvas.getByRole('tab', { name: 'Account' });
     account.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('tab', { name: 'Security' })).toHaveAttribute(
       'aria-selected',
       'true'
@@ -935,14 +942,14 @@ export const PillsArrowKeysMoveSelection: Story = {
     const billing = canvas.getByRole('tab', { name: 'Billing' });
     await userEvent.tab();
     await expect(overview).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(alerts).toHaveFocus();
     await expect(alerts).toHaveAttribute('aria-selected', 'true');
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('alerts-panel-content');
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(billing).toHaveFocus();
     // The disabled tab is skipped: the next stop wraps to the first.
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(overview).toHaveFocus();
     await userEvent.keyboard('{End}');
     await expect(billing).toHaveFocus();
@@ -987,7 +994,7 @@ export const PillsFocusRing: Story = {
       halo: false,
     });
     // Arrow keys select on focus: the pill that takes the focus is the active one.
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expectFocusRing(canvas.getByRole('tab', { name: 'Alerts' }), {
       token: '--color-white',
       inset: true,
@@ -1156,8 +1163,9 @@ export const RaisedGeometry: Story = {
     );
     const tabs = canvas.getAllByRole('tab');
     const [first, last] = [tabs[0], tabs[tabs.length - 1]];
+    const [from, to] = [first, last].map((tab) => tab.getBoundingClientRect());
     await expect(tablist.getBoundingClientRect().width).toBeCloseTo(
-      last.getBoundingClientRect().right - first.getBoundingClientRect().left + 8,
+      Math.max(from.right, to.right) - Math.min(from.left, to.left) + 8,
       0
     );
   },
@@ -1264,17 +1272,17 @@ export const RaisedArrowKeysMoveSelection: Story = {
     await expect(canvas.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
     await userEvent.tab();
     await expect(overview).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(alerts).toHaveFocus();
     await expect(alerts).toHaveAttribute('aria-selected', 'true');
     await expect(overview).toHaveAttribute('aria-selected', 'false');
     await expect(canvas.getByRole('tabpanel')).toHaveTextContent('alerts-panel-content');
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(billing).toHaveFocus();
     // The disabled tab is skipped: the next stop wraps to the first.
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(overview).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(billing).toHaveFocus();
     await userEvent.keyboard('{Home}');
     await expect(overview).toHaveAttribute('aria-selected', 'true');
@@ -1342,7 +1350,7 @@ export const RaisedFocusRingInDark: Story = {
   play: async ({ canvas }) => {
     await expectFocusRing(canvas.getByRole('tab', { name: 'Overview' }), { inset: true });
     // Arrow keys select on focus: the tab that takes the focus is the raised one.
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expectFocusRing(canvas.getByRole('tab', { name: 'Alerts' }), { inset: true });
   },
 };
@@ -1357,4 +1365,89 @@ export const MobileRaised: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="raised" />,
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+const Trio = ({ orientation, variant }: Pick<TabsProps, 'orientation' | 'variant'>) => (
+  <Tabs defaultValue="one" orientation={orientation} variant={variant}>
+    <Tabs.List>
+      <Tabs.Trigger value="one">One</Tabs.Trigger>
+      <Tabs.Trigger value="two">Two</Tabs.Trigger>
+      <Tabs.Trigger value="three">Three</Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Panel value="one">First</Tabs.Panel>
+    <Tabs.Panel value="two">Second</Tabs.Panel>
+    <Tabs.Panel value="three">Third</Tabs.Panel>
+  </Tabs>
+);
+
+/** ArrowRight goes toward the end of the line: the next tab in left to right, the previous in right to left. */
+export const ArrowKeysFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Trio />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const tabs = within(directionBox(canvasElement, dir)).getAllByRole('tab');
+      tabs[0]!.focus();
+      // Physical keys on purpose: they are what the user presses.
+      await userEvent.keyboard('{ArrowRight}');
+      await expect(tabs[dir === 'ltr' ? 1 : 2], `${dir}: ArrowRight`).toHaveFocus();
+      await expect(tabs[dir === 'ltr' ? 1 : 2]).toHaveAttribute('aria-selected', 'true');
+      await userEvent.keyboard('{ArrowLeft}');
+      await expect(tabs[0], `${dir}: ArrowLeft`).toHaveFocus();
+    }
+  },
+};
+
+/** The edge fade follows the scroll position: toward the end, a gradient that starts at the start edge. */
+export const ScrollFadeFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="w-64">
+        <Tabs defaultValue={SECTIONS[0]}>
+          <Tabs.List>
+            {SECTIONS.map((section) => (
+              <Tabs.Trigger key={section} value={section}>
+                {section}
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
+        </Tabs>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const strip = within(directionBox(canvasElement, dir)).getByRole('tablist').parentElement!;
+      await waitFor(() => expect(getComputedStyle(strip).maskImage).not.toBe('none'));
+      // At the start only the end fades; the gradient runs from the start edge.
+      await expect(getComputedStyle(strip).maskImage, dir).toMatch(
+        new RegExp(`^linear-gradient\\(to ${dir === 'rtl' ? 'left' : 'right'}, rgb\\(0, 0, 0\\)`)
+      );
+    }
+  },
+};
+
+/** A vertical list sits at the start of the line and draws its edge on the end side. */
+export const VerticalListSitsAtTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="w-[34rem]">
+        <Trio orientation="vertical" variant="folder" />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => within(box).getByRole('tablist'));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const list = within(directionBox(canvasElement, dir)).getByRole('tablist');
+      await expect(list).toHaveAttribute('aria-orientation', 'vertical');
+      const style = getComputedStyle(list);
+      await expect(style.borderInlineEndWidth, `${dir}: end edge`).toBe('1px');
+      await expect(style.borderInlineStartWidth, `${dir}: start edge`).toBe('0px');
+      // Physically: the right edge in left to right, the left one in right to left.
+      await expect(dir === 'ltr' ? style.borderRightWidth : style.borderLeftWidth).toBe('1px');
+    }
+  },
 };

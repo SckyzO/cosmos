@@ -135,7 +135,11 @@ export const Pagination = ({
         className
       )}
     >
-      {infoNode && <span className="text-xs text-gray-500 dark:text-gray-400">{infoNode}</span>}
+      {infoNode && (
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          <bdi>{infoNode}</bdi>
+        </span>
+      )}
       <div
         className={clsx(
           'flex items-center gap-3',
@@ -162,7 +166,7 @@ export const Pagination = ({
                 onClick={() => goTo(1)}
                 className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
               >
-                <ChevronsLeft className="h-4 w-4" />
+                <ChevronsLeft className="h-4 w-4 rtl:-scale-x-100" />
               </button>
             )}
             <button
@@ -172,20 +176,24 @@ export const Pagination = ({
               onClick={() => goTo(safePage - 1)}
               className={stepClass}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
               {withText && 'Previous'}
             </button>
 
             {variant === 'compact' ? (
               <span className="px-3 text-xs text-gray-600 dark:text-gray-300">
-                Page <span className="font-medium">{safePage}</span> of{' '}
-                <span className="font-medium">{Math.max(1, totalPages)}</span>
+                <bdi>
+                  Page <span className="font-medium">{safePage}</span> of{' '}
+                  <span className="font-medium">{Math.max(1, totalPages)}</span>
+                </bdi>
               </span>
             ) : (
               <>
                 <span className="px-3 text-xs text-gray-600 sm:hidden dark:text-gray-300">
-                  Page <span className="font-medium">{safePage}</span> /{' '}
-                  <span className="font-medium">{Math.max(1, totalPages)}</span>
+                  <bdi>
+                    Page <span className="font-medium">{safePage}</span> /{' '}
+                    <span className="font-medium">{Math.max(1, totalPages)}</span>
+                  </bdi>
                 </span>
                 {buildRange(safePage, Math.max(1, totalPages)).map((p, i) =>
                   p === 0 ? (
@@ -228,7 +236,7 @@ export const Pagination = ({
               className={stepClass}
             >
               {withText && 'Next'}
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
             </button>
             {showEdges && (
               <button
@@ -238,7 +246,7 @@ export const Pagination = ({
                 onClick={() => goTo(Math.max(1, totalPages))}
                 className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
               >
-                <ChevronsRight className="h-4 w-4" />
+                <ChevronsRight className="h-4 w-4 rtl:-scale-x-100" />
               </button>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ChevronDown, ChevronRight, Download, Search, X } from 'lucide-react';
+import { ChevronDown, Download, Search, X } from 'lucide-react';
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
@@ -42,6 +42,7 @@ import { rowInitials, triggerId } from './editing';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
 import { usePinnedWidths } from './usePinnedWidths';
+import { RowChevron } from './RowChevron';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
   ColumnDef,
@@ -71,7 +72,7 @@ export type DataTableProps<T> = {
    * others' as many as you want: they stay clickable above the row.
    */
   rowHref?: (row: T) => string | undefined;
-  /** Optional right-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
+  /** Optional end-edge action column (typically a `RowActionButton` or a `RowActionsMenu`). */
   renderRowAction?: (row: T) => React.ReactNode;
   /**
    * Rows per page, when controlled. Without `pageSizeOptions` it is the fixed size. Default 25.
@@ -944,7 +945,7 @@ export const DataTable = <T,>({
                 variant="ghost"
                 size="sm"
                 shape="square"
-                icon={isOpen ? ChevronDown : ChevronRight}
+                icon={isOpen ? ChevronDown : RowChevron}
                 aria-expanded={isOpen}
                 // Only while the detail row exists: an id that is not there names nothing.
                 aria-controls={isOpen ? detailId : undefined}
@@ -1102,7 +1103,7 @@ export const DataTable = <T,>({
         )}
         {isOpen && renderExpandedRow && (
           <tr id={detailId} className="bg-gray-50 dark:bg-white/[0.03] print:break-inside-avoid">
-            <td colSpan={columnCount} className="pt-1 pr-4 pb-5 pl-15 text-sm">
+            <td colSpan={columnCount} className="ps-15 pe-4 pt-1 pb-5 text-sm">
               {renderExpandedRow(row)}
             </td>
           </tr>
@@ -1136,7 +1137,7 @@ export const DataTable = <T,>({
       {selectable && selection.size > 0 ? (
         <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden">
           <span className="text-brand-700 dark:text-brand-300 text-sm font-medium">
-            {selection.size} selected
+            <bdi>{selection.size} selected</bdi>
           </span>
           <button
             type="button"
@@ -1145,7 +1146,7 @@ export const DataTable = <T,>({
           >
             Clear
           </button>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ms-auto flex items-center gap-2">
             {bulkActions ? bulkActions(selectedRows) : null}
           </div>
         </div>
@@ -1159,22 +1160,24 @@ export const DataTable = <T,>({
           <div className={clsx('h-ctrl-36 relative', hasToolbarControls && 'min-w-0 flex-1')}>
             <Search
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+              className="inset-s-3 pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
             />
             <input
               type="search"
+              // What is typed reads in its own direction.
+              dir="auto"
               value={searchValue}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label="Search rows"
-              className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white pr-9 pl-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+              className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white ps-9 pe-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
             />
             {searchValue && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="focus-visible:focus-indicator absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
+                className="focus-visible:focus-indicator inset-e-2 absolute top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -1310,7 +1313,7 @@ export const DataTable = <T,>({
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING,
-                      'print:hidden',
+                      'text-start print:hidden',
                       pinOf(0).className
                     )}
                   >
@@ -1323,7 +1326,7 @@ export const DataTable = <T,>({
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING,
-                      'print:hidden',
+                      'text-start print:hidden',
                       pinOf(expandable ? 1 : 0).className
                     )}
                   >
@@ -1360,7 +1363,7 @@ export const DataTable = <T,>({
                     className={clsx(
                       HEADER_CELL,
                       HEADER_CELL_PADDING,
-                      'text-right print:hidden',
+                      'text-end print:hidden',
                       pinOf(leadCount + columns.length).className
                     )}
                   >

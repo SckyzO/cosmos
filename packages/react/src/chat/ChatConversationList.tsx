@@ -38,7 +38,7 @@ const PRESENCE_CLASS: Record<ChatPresence, string> = {
 const ON_SELECTED = 'text-gray-600 dark:text-gray-400';
 
 /**
- * Conversation picker for the left pane of a two-pane chat: name, last
+ * Conversation picker for the start pane of a two-pane chat: name, last
  * message, time, unread count and presence of each thread.
  */
 export const ChatConversationList = ({
@@ -60,7 +60,7 @@ export const ChatConversationList = ({
               aria-current={selected || undefined}
               onClick={() => onSelect(c.id)}
               className={clsx(
-                'focus-visible:focus-indicator py-row-12 flex w-full items-center gap-3 px-4 text-left transition-colors focus-visible:bg-gray-100 focus-visible:ring-inset dark:focus-visible:bg-gray-800',
+                'focus-visible:focus-indicator py-row-12 flex w-full items-center gap-3 px-4 text-start transition-colors focus-visible:bg-gray-100 focus-visible:ring-inset dark:focus-visible:bg-gray-800',
                 selected ? 'bg-brand-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
               )}
             >
@@ -70,7 +70,7 @@ export const ChatConversationList = ({
                   <span
                     aria-hidden
                     className={clsx(
-                      'absolute right-0 bottom-0 h-3 w-3 rounded-full ring-2 ring-[var(--color-bg-panel)]',
+                      'inset-e-0 absolute bottom-0 h-3 w-3 rounded-full ring-2 ring-[var(--color-bg-panel)]',
                       PRESENCE_CLASS[c.presence]
                     )}
                   />
@@ -84,7 +84,7 @@ export const ChatConversationList = ({
                       unread > 0 ? 'font-semibold' : 'font-medium'
                     )}
                   >
-                    {c.name}
+                    <bdi>{c.name}</bdi>
                     {c.presence && <span className="sr-only">, {c.presence}</span>}
                   </span>
                   {c.time && (
@@ -94,7 +94,7 @@ export const ChatConversationList = ({
                         selected ? ON_SELECTED : 'text-[var(--color-text-muted)]'
                       )}
                     >
-                      {c.time}
+                      <bdi>{c.time}</bdi>
                     </span>
                   )}
                 </span>
@@ -105,11 +105,11 @@ export const ChatConversationList = ({
                       selected ? ON_SELECTED : 'text-[var(--color-text-secondary)]'
                     )}
                   >
-                    {c.lastMessage}
+                    <bdi>{c.lastMessage}</bdi>
                   </span>
                   {unread > 0 && (
                     <span className="bg-brand-500 text-2xs min-w-5 shrink-0 rounded-full px-1.5 text-center leading-5 font-semibold text-white">
-                      {unread}
+                      <bdi>{unread}</bdi>
                       <span className="sr-only"> unread</span>
                     </span>
                   )}

@@ -21,7 +21,7 @@ export type CardProps = {
   edgeToEdgeMobile?: boolean;
   /**
    * `vertical` (default) stacks the parts. `horizontal` puts a `Card.Image` in a fixed-width
-   * column on the left and the rest on the right from the `sm` breakpoint, and stacks them
+   * column at the start and the rest after it from the `sm` breakpoint, and stacks them
    * below it.
    */
   orientation?: CardOrientation;

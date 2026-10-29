@@ -56,7 +56,9 @@ export type RecordPagerProps = {
   /**
    * Keyboard shortcuts, off unless given: a default key would be taken from apps that never asked
    * for one. They listen on the document and do nothing while a field is being typed in. List
-   * them for the user in a `HelpOverlay`; the pager doesn't register itself there.
+   * them for the user in a `HelpOverlay`; the pager doesn't register itself there. The keys are
+   * literal and do not follow the reading direction: where the page reads right to left, give
+   * Previous the arrow that points to the right if you want one.
    */
   hotkeys?: RecordPagerHotkeys;
   /** Names the landmark. Default `{Noun} navigation`; two pagers on one page need distinct names. */
@@ -135,7 +137,7 @@ export const RecordPager = ({
     ref: { current: HTMLElement | null }
   ) => {
     const Icon = direction === 'previous' ? ChevronLeft : ChevronRight;
-    const icon = <Icon aria-hidden className="size-4" />;
+    const icon = <Icon aria-hidden className="size-4 rtl:-scale-x-100" />;
     // Below `sm` the default variant shows only the icons too: a label such as "Previous purchase
     // order" would wrap inside the button. The text stays as the accessible name.
     const content = (
@@ -187,7 +189,7 @@ export const RecordPager = ({
           href={backHref}
           className="focus-visible:focus-indicator text-brand-600 dark:text-brand-400 inline-flex items-center gap-1.5 rounded text-sm font-medium hover:underline"
         >
-          <ArrowLeft aria-hidden className="size-4" />
+          <ArrowLeft aria-hidden className="size-4 rtl:-scale-x-100" />
           {backLabel}
         </AppLink>
       )}
@@ -199,13 +201,16 @@ export const RecordPager = ({
             compact ? 'text-xs' : 'text-sm'
           )}
         >
-          {labels?.count ? (
-            labels.count(position, total)
-          ) : (
-            <>
-              <span className={strong}>{position}</span> of <span className={strong}>{total}</span>
-            </>
-          )}
+          <bdi>
+            {labels?.count ? (
+              labels.count(position, total)
+            ) : (
+              <>
+                <span className={strong}>{position}</span> of{' '}
+                <span className={strong}>{total}</span>
+              </>
+            )}
+          </bdi>
         </span>
         {step('next', canNext, nextLabel, nextHref, onNext, nextRef)}
       </div>

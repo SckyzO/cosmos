@@ -309,7 +309,7 @@ const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItems
   return (
     <div
       ref={rootRef}
-      className={clsx('hidden md:ml-10 md:block', setHasItems && 'min-w-0 flex-1', className)}
+      className={clsx('hidden md:ms-10 md:block', setHasItems && 'min-w-0 flex-1', className)}
       {...rest}
     >
       <div className="relative flex items-baseline gap-x-4 whitespace-nowrap">
@@ -325,7 +325,7 @@ const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItems
               className={clsx(
                 // flex keeps the entry a block box, so its padding sizes the slot.
                 'flex shrink-0',
-                out && 'pointer-events-none invisible absolute top-0 left-0'
+                out && 'inset-s-0 pointer-events-none invisible absolute top-0'
               )}
             >
               {entry}
@@ -337,7 +337,7 @@ const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItems
             data-navbar-more=""
             className={clsx(
               'flex shrink-0',
-              hidden === 0 && 'pointer-events-none invisible absolute top-0 left-0'
+              hidden === 0 && 'inset-s-0 pointer-events-none invisible absolute top-0'
             )}
           >
             <Menu>
@@ -400,11 +400,11 @@ const Item = ({ active = false, theme, className, children, ...rest }: NavbarIte
   );
 };
 
-// ── Actions (right-aligned slot for notifications, avatar, quick action) ───
+// ── Actions (end-aligned slot for notifications, avatar, quick action) ───
 
 const Actions = ({ className, children, ...rest }: HTMLAttributes<HTMLDivElement>) => (
   <div className={clsx('hidden md:block', className)} {...rest}>
-    <div className="ml-4 flex items-center gap-3 md:ml-6">{children}</div>
+    <div className="ms-4 flex items-center gap-3 md:ms-6">{children}</div>
   </div>
 );
 

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { Calendar, FileText, Folder, Home, MessageSquare, Users } from 'lucide-react';
 import { VerticalNavigation } from './VerticalNavigation';
+import { bothDirections, expectMirrored } from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Vertical Navigation',
@@ -192,5 +193,41 @@ export const BadgeRendersWhenProvided: Story = {
   play: async ({ canvasElement }) => {
     const link = canvasElement.querySelector('[data-testid="i"]');
     await expect(link?.textContent).toMatch(/7/);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The badge sits at the end of the row, and an item's label is an island. */
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // Both copies are on the page: each landmark needs a name of its own.
+    let count = 0;
+    return bothDirections(() => (
+      <div className="max-w-xs">
+        <VerticalNavigation aria-label={`Sidebar ${++count}`}>
+          <VerticalNavigation.Item active href="#" icon={Home} badge={5}>
+            Dashboard
+          </VerticalNavigation.Item>
+          <VerticalNavigation.Item href="#" icon={Users}>
+            Team
+          </VerticalNavigation.Item>
+        </VerticalNavigation>
+      </div>
+    ));
+  },
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) => box.querySelector('a svg'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('5'));
+    // The label and the badge are islands: their own direction, whatever the row's.
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = canvasElement.querySelector<HTMLElement>(`[data-direction="${dir}"]`)!;
+      for (const text of ['Dashboard', '5']) {
+        const island = within(box).getByText(text);
+        expect(island.tagName, `${dir}: ${text}`).toBe('BDI');
+        expect(getComputedStyle(island).unicodeBidi, `${dir}: ${text}`).toBe('isolate');
+      }
+    }
   },
 };

@@ -119,11 +119,13 @@ const StepperStep = ({
         <div
           aria-current={__status === 'active' ? 'step' : undefined}
           className={clsx(
-            'group flex flex-col border-l-4 py-2 pl-4 md:border-t-4 md:border-l-0 md:pt-4 md:pb-0 md:pl-0',
+            'group flex flex-col border-s-4 py-2 ps-4 md:border-s-0 md:border-t-4 md:ps-0 md:pt-4 md:pb-0',
             barColor
           )}
         >
-          <span className={clsx('text-sm font-medium', stepLabel)}>Step {__index + 1}</span>
+          <span className={clsx('text-sm font-medium', stepLabel)}>
+            <bdi>Step {__index + 1}</bdi>
+          </span>
           <span className="text-sm font-medium text-gray-900 dark:text-white">{children}</span>
           {description && (
             <span className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</span>
@@ -171,13 +173,13 @@ const StepperStep = ({
                 <span>{String(__index + 1).padStart(2, '0')}</span>
               )}
             </span>
-            <span className={clsx('ml-4 text-sm font-medium', labelColor)}>{children}</span>
+            <span className={clsx('ms-4 text-sm font-medium', labelColor)}>{children}</span>
           </span>
         </div>
         {!__isLast && (
-          <div className="absolute top-0 right-0 hidden h-full w-5 md:block" aria-hidden>
+          <div className="inset-e-0 absolute top-0 hidden h-full w-5 md:block" aria-hidden>
             <svg
-              className="size-full text-gray-200 dark:text-white/10"
+              className="size-full text-gray-200 rtl:-scale-x-100 dark:text-white/10"
               viewBox="0 0 22 80"
               fill="none"
               preserveAspectRatio="none"
@@ -238,7 +240,7 @@ const StepperStep = ({
           <span
             aria-hidden
             className={clsx(
-              'absolute top-0 left-1/2 h-0.5 w-full',
+              'inset-s-1/2 absolute top-0 h-0.5 w-full',
               __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
               __size === 'sm' ? 'mt-[14px]' : 'mt-[18px]'
             )}
@@ -273,9 +275,9 @@ const StepperStep = ({
         <span
           aria-hidden
           className={clsx(
-            'absolute h-full w-0.5 -translate-x-1/2',
+            'absolute h-full w-0.5 -translate-x-1/2 rtl:translate-x-1/2',
             __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
-            __size === 'sm' ? 'top-7 left-[13px]' : 'top-9 left-[17px]'
+            __size === 'sm' ? 'inset-s-[13px] top-7' : 'inset-s-[17px] top-9'
           )}
         />
       )}
@@ -285,7 +287,7 @@ const StepperStep = ({
           onClick={handleClick}
           disabled={disabled}
           aria-current={__status === 'active' ? 'step' : undefined}
-          className="focus-visible:focus-indicator flex w-full items-start gap-3 text-left focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus-visible:focus-indicator flex w-full items-start gap-3 text-start focus-visible:rounded-md disabled:cursor-not-allowed disabled:opacity-50"
         >
           {content}
         </button>

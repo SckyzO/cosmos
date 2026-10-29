@@ -31,7 +31,7 @@ export type ShellProps = {
   /** Main content area. */
   children: ReactNode;
   /**
-   * Optional right-aligned secondary panel — mirrors the TUI Plus "Multi-
+   * Optional end-aligned secondary panel — mirrors the TUI Plus "Multi-
    * column" application shell pattern (sidebar + main + secondary). Renders
    * after `children` inside a flex row below the topbar; below `lg` it stacks under `children`.
    */
@@ -91,7 +91,7 @@ export type ShellProps = {
  *
  * The Shell owns two sidebar states: collapsed from `lg` up (the rail) and open below `lg`,
  * where the sidebar leaves the layout and the toggle opens it as a 288px drawer over a scrim
- * (`sidebarOpen`). It closes on the scrim, the close button, Escape, a swipe toward the left
+ * (`sidebarOpen`). It closes on the scrim, the close button, Escape, a swipe toward the start
  * edge, a click on a `Sidebar.Item` and when the viewport grows past `lg`.
  *
  * The Shell's state is the only one inside it: the Topbar's
@@ -173,7 +173,7 @@ export const Shell = ({
           {secondary && (
             <aside
               className={clsx(
-                'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-t-0 lg:border-l',
+                'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-s lg:border-t-0',
                 // `max-lg:` sorts after the plain width utility: full width while stacked.
                 secondaryWidthClassName,
                 'max-lg:w-full'
