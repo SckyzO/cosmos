@@ -471,7 +471,10 @@ export const Default: Story = {
             title="Story composed from Cosmos components — Shell, Topbar, Sidebar, PageHeader, KpiCard × 4, SectionCard, Timeline, DataTable, plus overlays/states showcase above."
             actions={
               <Button variant="ghost" size="sm">
-                View raw stories →
+                View raw stories{' '}
+                <span aria-hidden className="inline-block rtl:-scale-x-100">
+                  →
+                </span>
               </Button>
             }
           />

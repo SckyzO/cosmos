@@ -389,7 +389,15 @@ const ProfileContent = ({ withAuthBanner = false }: { withAuthBanner?: boolean }
             {withAuthBanner && (
               <AlertBanner intent="info">
                 Authentication is disabled — credential changes are saved but not enforced. Enable
-                auth in <strong>Settings → Security</strong> to protect the UI with a password.
+                auth in{' '}
+                <strong>
+                  Settings{' '}
+                  <span aria-hidden className="inline-block rtl:-scale-x-100">
+                    →
+                  </span>{' '}
+                  Security
+                </strong>{' '}
+                to protect the UI with a password.
               </AlertBanner>
             )}
           </div>
@@ -477,7 +485,12 @@ const ProfileShell = ({ children }: { children: ReactNode }) => {
                       />
                     ))}
                   </NotificationsPanel.List>
-                  <NotificationsPanel.Footer>View all alerts →</NotificationsPanel.Footer>
+                  <NotificationsPanel.Footer>
+                    View all alerts{' '}
+                    <span aria-hidden className="inline-block rtl:-scale-x-100">
+                      →
+                    </span>
+                  </NotificationsPanel.Footer>
                 </NotificationsPanel.Content>
               </NotificationsPanel>
               <UserMenu>

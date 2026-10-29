@@ -2,7 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectReadsLeftToRight,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
@@ -120,5 +125,22 @@ export const SentViewShowsEmail: Story = {
     await expect(canvas.getByRole('heading', { name: /check your inbox/i })).toBeInTheDocument();
     await userEvent.click(canvas.getByRole('button', { name: /resend/i }));
     await expect(args.onResend).toHaveBeenCalledTimes(1);
+  },
+};
+
+// The back arrow points along the line, so it turns around in right to left; the address is the
+// host's and keeps its own order inside the sentence.
+export const SentViewMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { onSubmit: fn(), sent: true, sentEmail: 'john@example.com', signInHref: '#' },
+  render: (args) => bothDirections(() => <ResetPasswordForm {...args} />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const arrow = box.querySelector('.lucide-arrow-left')!;
+      await expect(getComputedStyle(arrow).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      expectReadsLeftToRight(box.querySelector('bdi')!);
+    }
   },
 };

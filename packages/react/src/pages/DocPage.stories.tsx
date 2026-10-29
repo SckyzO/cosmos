@@ -29,12 +29,17 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CodeBlock } from '../ui/CodeBlock';
 import { IconBox } from '../ui/IconBox';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  expectNoHorizontalOverflow,
+  mirroredIcon,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { expect } from 'storybook/test';
 
 // Pages/DocPage — component documentation template (RTFM).
 // Style: Stripe Docs × Linear Docs × Tailwind Docs, dressed in Cosmos tokens.
-// 3-col layout: left sidebar nav (VerticalNavigation) + center body + right TOC.
+// 3-col layout: sidebar nav (VerticalNavigation) + center body + TOC.
 
 const meta = {
   title: 'Pages/Examples/Doc Page',
@@ -52,7 +57,7 @@ type DocSection = { id: string; label: string };
 const docNavbar = () => (
   <Navbar theme="light">
     <Navbar.Brand>
-      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
+      <span className="ms-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos</span>
       <Navbar.Items>
         <Navbar.Item theme="light" active href="#docs">
           Docs
@@ -72,7 +77,10 @@ const docNavbar = () => (
       >
         <Search className="size-4" aria-hidden />
         Search…
-        <kbd className="ml-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-1.5 py-0.5 font-mono text-xs">
+        <kbd
+          dir="ltr"
+          className="ms-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-1.5 py-0.5 font-mono text-xs"
+        >
           ⌘K
         </kbd>
       </button>
@@ -86,7 +94,10 @@ const Breadcrumbs = ({ items }: { items: string[] }) => (
       {items.map((item, i) => (
         <li key={item} className="flex items-center gap-x-1.5">
           {i > 0 && (
-            <ChevronRight className="size-3.5 text-[var(--color-text-muted)]" aria-hidden />
+            <ChevronRight
+              className="size-3.5 text-[var(--color-text-muted)] rtl:-scale-x-100"
+              aria-hidden
+            />
           )}
           <span
             className={
@@ -134,14 +145,14 @@ const SectionHeading = ({ id, children }: { id: string; children: React.ReactNod
     <a
       href={`#${id}`}
       aria-label={`Link to ${id}`}
-      className="anchor ml-2 text-[var(--color-text-muted)] transition-opacity"
+      className="anchor ms-2 text-[var(--color-text-muted)] transition-opacity"
     >
       #
     </a>
   </h2>
 );
 
-// ── Sidebar nav (left rail, built on VerticalNavigation) ────────────────────
+// ── Sidebar nav (start rail, built on VerticalNavigation) ────────────────────
 
 const DocSidebar = () => (
   <VerticalNavigation className="px-4 py-6" aria-label="Docs sidebar">
@@ -182,7 +193,7 @@ const DocSidebar = () => (
   </VerticalNavigation>
 );
 
-// ── TOC (right rail) ────────────────────────────────────────────────────────
+// ── TOC (end rail) ────────────────────────────────────────────────────────
 
 const TocRail = ({ sections, active }: { sections: DocSection[]; active: string }) => (
   <nav aria-label="On this page" className="px-4 py-6">
@@ -227,6 +238,9 @@ const AnatomyTitle = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-lg font-bold text-gray-900 dark:text-white">{children}</h3>
 );
 
+// The icon points along the line, so it turns around in right to left.
+const NextIcon = mirroredIcon(ChevronRight);
+
 const PreviewBox = ({ children }: { children: React.ReactNode }) => (
   <Card padding="lg" className="not-prose">
     <div className="flex flex-wrap items-center gap-3">{children}</div>
@@ -237,8 +251,8 @@ const ButtonDocBody = () => {
   const active = useActiveSection(BUTTON_SECTIONS.map((s) => s.id));
   return (
     <div className="grid min-h-screen grid-cols-1 bg-[var(--color-bg-base)] lg:grid-cols-[260px_1fr_240px]">
-      {/* Left sidebar */}
-      <aside className="hidden border-r border-[var(--color-border)] lg:block">
+      {/* Sidebar, at the start */}
+      <aside className="hidden border-e border-[var(--color-border)] lg:block">
         <div className="sticky top-0 max-h-screen overflow-y-auto">
           <DocSidebar />
         </div>
@@ -465,7 +479,7 @@ const ButtonDocBody = () => {
               <div className="mt-6">
                 <PreviewBox>
                   <Button icon={ThumbsUp}>Like</Button>
-                  <Button icon={ChevronRight} iconPosition="end">
+                  <Button icon={NextIcon} iconPosition="end">
                     Next
                   </Button>
                 </PreviewBox>
@@ -568,8 +582,8 @@ const ButtonDocBody = () => {
         </div>
       </article>
 
-      {/* Right TOC */}
-      <aside className="hidden border-l border-[var(--color-border)] xl:block">
+      {/* TOC, at the end */}
+      <aside className="hidden border-s border-[var(--color-border)] xl:block">
         <div className="sticky top-0 max-h-screen overflow-y-auto">
           <TocRail sections={BUTTON_SECTIONS} active={active} />
         </div>
@@ -614,8 +628,8 @@ export const WithoutSidebar: Story = {
               Button
             </h1>
             <p className="mt-3 text-lg text-[var(--color-text-secondary)]">
-              Standalone documentation page without left sidebar or TOC. Useful for mobile screens
-              or deep-dive articles.
+              Standalone documentation page without sidebar or TOC. Useful for mobile screens or
+              deep-dive articles.
             </p>
             <div className="mt-4 flex items-center gap-x-3 text-sm">
               <Badge intent="success">Stable</Badge>
@@ -697,7 +711,7 @@ export const Changelog: Story = {
 
           <div className="mt-12 space-y-12">
             {RELEASES.map((r) => (
-              <article key={r.version} className="border-l-2 border-[var(--color-border)] pl-6">
+              <article key={r.version} className="border-s-2 border-[var(--color-border)] ps-6">
                 <div className="flex items-baseline gap-x-3">
                   {/* A permalink per release: also the one control in this text-only page,
                       so the scrolling <main> of the shell can be reached from the keyboard. */}
@@ -724,7 +738,7 @@ export const Changelog: Story = {
                     <Badge intent="success" size="sm">
                       Added
                     </Badge>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
+                    <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-[var(--color-text-secondary)]">
                       {r.added.map((i) => (
                         <li key={i}>{i}</li>
                       ))}
@@ -736,7 +750,7 @@ export const Changelog: Story = {
                     <Badge intent="info" size="sm">
                       Changed
                     </Badge>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
+                    <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-[var(--color-text-secondary)]">
                       {r.changed.map((i) => (
                         <li key={i}>{i}</li>
                       ))}
@@ -748,7 +762,7 @@ export const Changelog: Story = {
                     <Badge intent="warning" size="sm">
                       Fixed
                     </Badge>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-secondary)]">
+                    <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-[var(--color-text-secondary)]">
                       {r.fixed.map((i) => (
                         <li key={i}>{i}</li>
                       ))}

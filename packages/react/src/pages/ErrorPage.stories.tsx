@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Home } from 'lucide-react';
 import { expect } from 'storybook/test';
-import { expectGraphicContrast, inEachTheme } from '../storybook-helpers';
+import { expectGraphicContrast, inEachTheme, mirroredIcon } from '../storybook-helpers';
 import { ErrorPage } from './ErrorPage';
 import { Button } from '../ui/Button';
+
+// The icon points along the line, so it turns around in right to left.
+const BackIcon = mirroredIcon(ArrowLeft);
 
 const meta = {
   title: 'Pages/Error Page',
@@ -24,7 +27,7 @@ export const NotFound: Story = {
     actions: (
       <>
         <Button icon={Home}>Go to dashboard</Button>
-        <Button variant="secondary" icon={ArrowLeft}>
+        <Button variant="secondary" icon={BackIcon}>
           Go back
         </Button>
       </>

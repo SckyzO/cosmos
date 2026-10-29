@@ -73,8 +73,7 @@ const BLOG_POST_CSS = `
 .cosmos-progress {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   height: 2px;
   background-color: var(--color-brand, rgb(99 102 241));
   transform-origin: left;
@@ -82,8 +81,9 @@ const BLOG_POST_CSS = `
   transition: transform 90ms linear;
   z-index: 60;
 }
+.cosmos-progress:dir(rtl) { transform-origin: right; }
 .cosmos-anchor {
-  margin-left: 0.4em;
+  margin-inline-start: 0.4em;
   color: var(--color-text-muted);
   opacity: 0;
   transition: opacity 150ms ease;
@@ -99,7 +99,7 @@ const blogNavbar = () => (
         href="#"
         className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
       >
-        <ArrowLeft className="size-4" aria-hidden /> Back to blog
+        <ArrowLeft className="size-4 rtl:-scale-x-100" aria-hidden /> Back to blog
       </a>
     </Navbar.Brand>
     <Navbar.Actions>
@@ -192,7 +192,7 @@ const AuthorCard = ({ author }: { author: Author }) => (
           className="text-brand-600 hover:text-brand-700 dark:text-brand-400 mt-3 inline-flex items-center gap-1 text-sm font-semibold"
         >
           Read more from {author.name.split(' ')[0]}
-          <ArrowRight className="size-3.5" aria-hidden />
+          <ArrowRight className="size-3.5 rtl:-scale-x-100" aria-hidden />
         </a>
       </div>
     </div>
@@ -374,7 +374,7 @@ const ProseBody = () => (
       <CodeBlock language="ts" code={CODE_SAMPLE} />
     </div>
 
-    <blockquote className="border-brand-500 border-l-2 pl-5 text-xl leading-relaxed text-[var(--color-text-primary)] italic">
+    <blockquote className="border-brand-500 border-s-2 ps-5 text-xl leading-relaxed text-[var(--color-text-primary)] italic">
       Pixels are noisy. Structure is not. The diff your team can trust is the one that looks at
       structure.
     </blockquote>
@@ -478,7 +478,10 @@ const DefaultStoryRender = () => {
         }
         action={
           <a href="#changelog" className="font-medium text-white underline underline-offset-2">
-            Read the changelog →
+            Read the changelog{' '}
+            <span aria-hidden className="inline-block rtl:-scale-x-100">
+              →
+            </span>
           </a>
         }
         dismissible
