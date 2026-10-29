@@ -398,6 +398,8 @@ export const FunnelChart = ({
     <div
       ref={frameRef}
       style={{
+        // The stages keep their order under `dir="rtl"`, as a chart's axis does.
+        direction: 'ltr',
         position: 'relative',
         width: width ?? '100%',
         height,

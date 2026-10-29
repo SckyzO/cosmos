@@ -139,6 +139,8 @@ export const CalendarChart = ({
     <div
       className={CALENDAR_DARK_CLASS}
       style={{
+        // Time keeps its order under `dir="rtl"`, as a chart's axis does.
+        direction: 'ltr',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem',
