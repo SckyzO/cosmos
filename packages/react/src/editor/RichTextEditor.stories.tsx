@@ -940,7 +940,10 @@ export const LinkFieldReadsLeftToRight: Story = {
   args: { autoFocus: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await textbox(canvasElement);
+    const text = await textbox(canvasElement);
+    // The editor takes its focus after it mounts: opened before, the field would lose it to the
+    // editor and close.
+    await waitFor(() => expect(text).toHaveFocus());
     await inDirection('rtl', async () => {
       await userEvent.click(canvas.getByRole('button', { name: 'Link' }));
       const dialog = await within(document.body).findByRole('dialog', { name: 'Edit link' });
