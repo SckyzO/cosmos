@@ -1,8 +1,16 @@
 import { clsx } from 'clsx';
-import type { ElementType, MouseEventHandler, ReactNode, Ref } from 'react';
+import {
+  useState,
+  type ElementType,
+  type FocusEvent,
+  type MouseEventHandler,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
+import { Tooltip } from '../ui/Tooltip';
 
 /** The meanings a card can carry: the plain one, or a metric that needs a look. */
 export type KpiCardIntent = Extract<Intent, 'neutral' | 'warning' | 'danger'>;
@@ -10,6 +18,13 @@ export type KpiCardIntent = Extract<Intent, 'neutral' | 'warning' | 'danger'>;
 export type KpiCardProps = {
   label: string;
   value: ReactNode;
+  /**
+   * The exact figure behind an abbreviated `value` (`€12,418,906.40` for `€12.4M`). A tooltip shows
+   * it on hover and focus, and it is part of the card's accessible name, which would otherwise
+   * read only "12.4M". On a plain card the value becomes a tab stop to reach the tooltip; a link or
+   * button card shows it when the card takes keyboard focus. Ignored while `loading`.
+   */
+  exactValue?: string;
   /** Smaller text under the value — e.g. "across 3 sites". */
   sub?: ReactNode;
   /** Lucide icon (or any component taking `className`), in a tinted chip next to the label. */
@@ -77,6 +92,7 @@ const Slot = ({
 export const KpiCard = ({
   label,
   value,
+  exactValue,
   sub,
   icon: Icon,
   iconIntent,
@@ -92,6 +108,20 @@ export const KpiCard = ({
   const chipIntent = iconIntent ?? (intent === 'neutral' ? 'brand' : intent);
   const chip = INTENT_STYLE[chipIntent];
   const interactive = Boolean(href || onClick);
+  const withExact = Boolean(exactValue) && !loading;
+  // The tooltip opens on the pointer or focus of the value (its own handlers), and on keyboard
+  // focus of an interactive card, whose value takes no focus of its own inside a link or button.
+  const [hovered, setHovered] = useState(false);
+  const [cardFocused, setCardFocused] = useState(false);
+  const focusProps =
+    withExact && interactive
+      ? {
+          onFocus: (e: FocusEvent<HTMLElement>) => {
+            if (e.currentTarget.matches(':focus-visible')) setCardFocused(true);
+          },
+          onBlur: () => setCardFocused(false),
+        }
+      : {};
   const classes = clsx(
     'flex flex-col rounded-2xl border bg-white p-5 text-start dark:bg-gray-900',
     INTENT_STYLE[intent].border,
@@ -128,7 +158,37 @@ export const KpiCard = ({
             intent === 'neutral' ? 'text-gray-900 dark:text-white' : INTENT_STYLE[intent].text
           )}
         >
-          <bdi>{value}</bdi>
+          {withExact ? (
+            <>
+              <Tooltip
+                // A block, so the value's line keeps the height it has without a tooltip.
+                block
+                open={hovered || cardFocused}
+                onOpenChange={(open) => {
+                  setHovered(open);
+                  if (!open) setCardFocused(false);
+                }}
+                content={
+                  <span>
+                    <span className="block tabular-nums">{exactValue}</span>
+                    <span className="text-2xs block opacity-70">Exact value</span>
+                  </span>
+                }
+              >
+                <span
+                  tabIndex={interactive ? undefined : 0}
+                  className="focus-visible:focus-indicator rounded-sm"
+                >
+                  <bdi>{value}</bdi>
+                </span>
+              </Tooltip>
+              <span className="sr-only">
+                , exact value <bdi>{exactValue}</bdi>
+              </span>
+            </>
+          ) : (
+            <bdi>{value}</bdi>
+          )}
         </span>
       </Slot>
       {delta && (
@@ -164,6 +224,7 @@ export const KpiCard = ({
         onClick={onClick}
         aria-busy={loading || undefined}
         className={classes}
+        {...focusProps}
       >
         {content}
       </AppLink>
@@ -176,6 +237,7 @@ export const KpiCard = ({
         onClick={onClick}
         aria-busy={loading || undefined}
         className={classes}
+        {...focusProps}
       >
         {content}
       </button>
