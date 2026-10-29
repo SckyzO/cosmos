@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
+import { bothDirections, directionBox, expectReadsLeftToRight } from '../storybook-helpers';
 import { Kbd } from './Kbd';
 
 const meta = {
@@ -20,7 +22,11 @@ export const SizeSm: Story = {
 
 export const Combo: Story = {
   render: () => (
-    <span className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
+    // A combination reads left to right in any page, as in `HelpOverlay` and `Tooltip`.
+    <span
+      dir="ltr"
+      className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200"
+    >
       <Kbd>⌘</Kbd>
       <span className="text-gray-400">+</span>
       <Kbd>K</Kbd>
@@ -30,7 +36,10 @@ export const Combo: Story = {
 
 export const ComboLong: Story = {
   render: () => (
-    <span className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
+    <span
+      dir="ltr"
+      className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200"
+    >
       <Kbd>Ctrl</Kbd>
       <span className="text-gray-400">+</span>
       <Kbd>Shift</Kbd>
@@ -69,7 +78,7 @@ export const ShortcutLegend: Story = {
             }
           >
             <span className="text-sm text-gray-700 dark:text-gray-200">{r.label}</span>
-            <span className="flex items-center gap-1">
+            <span dir="ltr" className="flex items-center gap-1">
               {r.combo.map((k, j) => (
                 <span key={k + j} className="inline-flex items-center gap-1">
                   <Kbd size="sm">{k}</Kbd>
@@ -81,5 +90,42 @@ export const ShortcutLegend: Story = {
         ))}
       </div>
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * A key keeps the order it is pressed in: an island that a right-to-left line does not reorder.
+ * A combination of keys, as the stories above write it, is one too: ⌘ before K.
+ */
+export const KeyKeepsItsOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <>
+        <p>
+          <Kbd>⌘D</Kbd> <Kbd>Ctrl+K</Kbd>
+        </p>
+        <span dir="ltr" className="inline-flex items-center gap-1">
+          <Kbd>⌘</Kbd>
+          <span>+</span>
+          <Kbd>K</Kbd>
+        </span>
+      </>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const text of ['⌘D', 'Ctrl+K']) {
+        const key = within(box).getByText(text);
+        expect(getComputedStyle(key).direction, `${dir}: ${text}`).toBe('ltr');
+        expectReadsLeftToRight(key);
+      }
+      expect(
+        within(box).getByText('⌘').getBoundingClientRect().left,
+        `${dir}: ⌘ before K`
+      ).toBeLessThan(within(box).getByText('K').getBoundingClientRect().left);
+    }
   },
 };

@@ -40,9 +40,14 @@ export const TwoStepVerificationForm = ({
 }: TwoStepVerificationFormProps) => {
   const [code, setCode] = useState('');
 
-  const description = sentTo
-    ? `Enter the ${length}-digit code we sent to ${sentTo}.`
-    : `Enter the ${length}-digit verification code from your authenticator app.`;
+  // The address or number is the host's: isolated, it keeps its order in a right-to-left page.
+  const description = sentTo ? (
+    <>
+      Enter the {length}-digit code we sent to <bdi>{sentTo}</bdi>.
+    </>
+  ) : (
+    `Enter the ${length}-digit verification code from your authenticator app.`
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -110,7 +115,7 @@ export const TwoStepVerificationForm = ({
         {cancelHref && (
           <div className="flex justify-center">
             <Link href={cancelHref} variant="subtle">
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
               {cancelLabel}
             </Link>
           </div>

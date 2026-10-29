@@ -1442,6 +1442,16 @@ is everywhere else. A Latin text cut short by an ellipsis in a right-to-left pag
 name in a narrow tile) shows its end rather than its beginning: the line ends on the left, where
 Latin text starts.
 
+What you put in a slot (a table cell, a card's title, a list item, a toast's message) is drawn
+as you pass it. A Latin value that starts with a number reorders in a right-to-left line, "248 W"
+showing as "W 248": wrap it in `<bdi>` yourself.
+
+```tsx
+<TableCell>
+  <bdi>248 W</bdi>
+</TableCell>
+```
+
 A text field (`Input`, `SearchInput`, `Textarea`, the inputs of `Combobox`, `MultiSelect` and
 `TagInput`) follows the direction of what is typed in it: Arabic aligns and flows right to
 left, a URL left to right, each paragraph of a `Textarea` on its own. It does that with
@@ -1507,12 +1517,39 @@ of the line and the others' at the start, and what was typed in a message or the
 `RecordPager` are literal keys and do not follow the direction: give Previous the arrow that
 points toward it where the page reads right to left.
 
-The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions**, **Forms** (apart from the rich text editor, which follows), **Data**,
-**Lists**, **Feedback**, **Overlays**, **Navigation**, **Layout**, **Chat**, **Tables** and
-**Settings**. The others still lay out for left to right and are the next ones in line, Pages
-last. In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any
-story right to left.
+Output keeps its order. Code (`CodeBlock`), logs (`LogViewer`, `JobLog`, and the message, fields
+and stack of `LogEntryDetail`) and keyboard keys (`Kbd`) read left to right in any page: they are
+`dir="ltr"` islands, so a number gutter stays at the left of its lines and a log scrolls from the
+left. What surrounds them follows the page: the title bar and copy button of a code block, the
+toolbar and the "Jump to latest" button of a log, the step headers of a `JobLog` (their chevron
+turns around). Time keeps its order too, as the axis of a chart does: `HeartbeatBar` and
+`UptimeBars` draw their oldest mark on the left and their newest on the right in both directions,
+with "N days ago" at the left and "Today" at the right, and ArrowLeft moves to the older mark. A
+percentage, a latency or a count the components write (`99.95%`, `182 ms`, `3 of 12`) is wrapped in
+`<bdi>`, so it reads in order inside an Arabic line.
+
+`Carousel` hands the direction to Embla, which lays the slides out from the end of the line: the
+first slide is at the start, the next one comes in from the end, a swipe follows, and the arrows
+and their chevrons sit on their sides. The play triangle of a `VideoEmbed` points right in both
+directions, as the time of a video runs from the left. `MapView` does not mirror the map; its zoom
+buttons and the popup of a pin follow the page. Arabic and Hebrew labels in the tiles of a map
+need MapLibre's RTL text plugin (`setRTLTextPlugin` in `maplibre-gl`), which a host sets once
+for the page: Cosmos adds no dependency for it. In `RichTextEditor`, each block follows what is
+typed in it (the same `unicode-bidi: plaintext` as a `Textarea`), lists are indented and quotes
+edged on the start side, the arrow keys along the toolbar swap, and the link field reads left to
+right.
+
+The pages follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
+turns around, the address or number a form says it sent the code to is wrapped in `<bdi>`, and
+`AuthLayout`'s `asidePosition` (`start` | `end`) puts the panel at the start or the end of the line.
+
+Every group of the Storybook sidebar is converted: **Atoms**, **Actions**, **Forms**, **Data**,
+**Lists**, **Feedback**, **Overlays**, **Navigation**, **Layout**, **Chat**, **Tables**,
+**Settings**, **Monitoring**, **Media**, **Status**, **Typography**, **Foundations** and
+**Pages**. A check in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`,
+`text-left`…) in any source file of the package, and every story is rendered right to left in CI.
+In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story
+right to left.
 
 ## Themes and accents
 

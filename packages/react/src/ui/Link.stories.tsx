@@ -126,7 +126,10 @@ export const AllVariants: Story = {
               {v}
             </span>
             <Link href="#" variant={v}>
-              Read the docs →
+              Read the docs{' '}
+              <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
+                →
+              </span>
             </Link>
           </div>
         )

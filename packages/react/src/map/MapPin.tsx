@@ -70,9 +70,11 @@ export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: Pin
         <div
           role="dialog"
           aria-label={label}
-          className="absolute bottom-full left-1/2 mb-3 w-max max-w-60 -translate-x-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-3 pr-9 text-left text-sm text-[var(--color-text-base)] shadow-lg"
+          className="inset-s-1/2 absolute bottom-full mb-3 w-max max-w-60 -translate-x-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-3 pe-9 text-start text-sm text-[var(--color-text-base)] shadow-lg rtl:translate-x-1/2"
         >
-          <p className="font-medium">{label}</p>
+          <p className="font-medium">
+            <bdi>{label}</bdi>
+          </p>
           {description != null && (
             <div className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{description}</div>
           )}
@@ -80,7 +82,7 @@ export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: Pin
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="focus-visible:focus-indicator absolute top-1.5 right-1.5 flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:bg-gray-100 dark:hover:bg-white/10"
+            className="focus-visible:focus-indicator inset-e-1.5 absolute top-1.5 flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:bg-gray-100 dark:hover:bg-white/10"
           >
             <X className="size-4" aria-hidden="true" />
           </button>

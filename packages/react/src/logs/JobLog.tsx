@@ -747,7 +747,7 @@ export const JobLog = ({
           <span className="min-w-0 flex-1 truncate [unicode-bidi:isolate]">{job.name}</span>
           {trailing !== '' && (
             <span className={clsx('shrink-0 font-mono text-xs font-normal', palette.muted)}>
-              {trailing}
+              <bdi>{trailing}</bdi>
             </span>
           )}
         </button>
@@ -766,6 +766,9 @@ export const JobLog = ({
               <div
                 data-lines={job.id}
                 data-count={count}
+                // The lines are output: they keep their order, and scroll from the left, whatever
+                // the page reads.
+                dir="ltr"
                 className={wrap ? undefined : 'overflow-x-auto'}
               >
                 {start > 0 && <div aria-hidden style={{ height: start * rowHeight }} />}
@@ -798,7 +801,7 @@ export const JobLog = ({
         >
           {title !== undefined && (
             <p id={titleId} className={clsx('m-0 text-sm font-semibold', look.title)}>
-              {title}
+              <bdi>{title}</bdi>
             </p>
           )}
           {meta !== undefined && (
@@ -830,7 +833,7 @@ export const JobLog = ({
           )}
           {duration !== undefined && (
             <span className={clsx('ms-auto font-mono text-xs', palette.muted)}>
-              {formatJobDuration(duration)}
+              <bdi>{formatJobDuration(duration)}</bdi>
             </span>
           )}
         </div>
@@ -870,7 +873,8 @@ export const JobLog = ({
         <div
           ref={probeRef}
           aria-hidden
-          className="pointer-events-none invisible absolute top-0 left-0"
+          dir="ltr"
+          className="inset-s-0 pointer-events-none invisible absolute top-0"
         >
           <JobLogRow {...probeProps} height={undefined} />
         </div>
@@ -908,9 +912,11 @@ export const JobLog = ({
             ) : (
               <>
                 <ArrowDown aria-hidden className="size-3.5" />
-                {waiting > 0
-                  ? `Jump to latest (${waiting.toLocaleString('en-US')} new)`
-                  : 'Jump to latest'}
+                <bdi>
+                  {waiting > 0
+                    ? `Jump to latest (${waiting.toLocaleString('en-US')} new)`
+                    : 'Jump to latest'}
+                </bdi>
               </>
             )}
           </button>

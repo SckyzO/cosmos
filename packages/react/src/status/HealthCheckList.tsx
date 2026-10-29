@@ -70,7 +70,7 @@ type CheckProps = {
 const CheckName = ({ check, open, onToggle, outputId }: Omit<CheckProps, 'now'>) =>
   check.output === undefined ? (
     <span className="min-w-0 font-medium break-words text-[var(--color-text-primary)]">
-      {check.name}
+      <bdi>{check.name}</bdi>
     </span>
   ) : (
     <button
@@ -78,14 +78,16 @@ const CheckName = ({ check, open, onToggle, outputId }: Omit<CheckProps, 'now'>)
       aria-expanded={open}
       aria-controls={outputId}
       onClick={onToggle}
-      className="focus-visible:focus-indicator -mx-1 flex min-w-0 items-center gap-1 rounded px-1 text-left font-medium text-[var(--color-text-primary)] focus-visible:ring-inset"
+      className="focus-visible:focus-indicator -mx-1 flex min-w-0 items-center gap-1 rounded px-1 text-start font-medium text-[var(--color-text-primary)] focus-visible:ring-inset"
     >
       {open ? (
         <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
       ) : (
-        <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
+        <ChevronRight aria-hidden="true" className="size-4 shrink-0 rtl:-scale-x-100" />
       )}
-      <span className="min-w-0 break-words">{check.name}</span>
+      <span className="min-w-0 break-words">
+        <bdi>{check.name}</bdi>
+      </span>
     </button>
   );
 
@@ -116,19 +118,27 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
       <CheckName check={check} open={open} onToggle={onToggle} outputId={outputId} />
       {check.target ? (
         <span className="font-mono text-xs break-all text-[var(--color-text-secondary)] sm:truncate">
-          {check.target}
+          <bdi>{check.target}</bdi>
         </span>
       ) : (
         <Dash />
       )}
-      {check.message ? <span className="min-w-0 break-words">{check.message}</span> : <Dash />}
+      {check.message ? (
+        <span className="min-w-0 break-words">
+          <bdi>{check.message}</bdi>
+        </span>
+      ) : (
+        <Dash />
+      )}
       {check.latency !== undefined ? (
-        <span className="tabular-nums sm:text-right">{formatLatency(check.latency)}</span>
+        <span className="tabular-nums sm:text-end">
+          <bdi>{formatLatency(check.latency)}</bdi>
+        </span>
       ) : (
         <Dash />
       )}
       {check.checkedAt !== undefined ? (
-        <span className="text-[var(--color-text-secondary)] tabular-nums sm:text-right">
+        <span className="text-[var(--color-text-secondary)] tabular-nums sm:text-end">
           <RelativeTime value={check.checkedAt} now={now} />
         </span>
       ) : (
@@ -136,7 +146,7 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
       )}
     </div>
     {check.output !== undefined && (
-      <div className={clsx(open && 'mt-3 sm:ml-[7.25rem]')}>
+      <div className={clsx(open && 'mt-3 sm:ms-[7.25rem]')}>
         <Output check={check} open={open} outputId={outputId} />
       </div>
     )}
@@ -158,17 +168,19 @@ const CheckCard = ({ check, open, onToggle, outputId, now }: CheckProps) => (
     </div>
     {check.target && (
       <span className="font-mono text-xs break-all text-[var(--color-text-secondary)]">
-        {check.target}
+        <bdi>{check.target}</bdi>
       </span>
     )}
     {check.message && (
-      <p className="m-0 break-words text-[var(--color-text-secondary)]">{check.message}</p>
+      <p className="m-0 break-words text-[var(--color-text-secondary)]">
+        <bdi>{check.message}</bdi>
+      </p>
     )}
     <Output check={check} open={open} outputId={outputId} />
     {(check.latency !== undefined || check.checkedAt !== undefined) && (
       <div className="mt-auto flex justify-between gap-2 pt-1 text-xs text-[var(--color-text-secondary)]">
         <span className="tabular-nums">
-          {check.latency !== undefined ? formatLatency(check.latency) : ''}
+          {check.latency !== undefined ? <bdi>{formatLatency(check.latency)}</bdi> : ''}
         </span>
         {check.checkedAt !== undefined && <RelativeTime value={check.checkedAt} now={now} />}
       </div>
@@ -267,17 +279,19 @@ export const HealthCheckList = ({
           aria-controls={panelId}
           onClick={() => toggleGroup(group.id)}
           style={{ paddingInlineStart: `${1 + depth * 1.25}rem` }}
-          className="focus-visible:focus-indicator min-h-ctrl-44 flex w-full flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[var(--color-border)] bg-gray-50 py-2 pe-4 text-left text-sm font-semibold text-[var(--color-text-primary)] focus-visible:ring-inset dark:bg-black/20"
+          className="focus-visible:focus-indicator min-h-ctrl-44 flex w-full flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[var(--color-border)] bg-gray-50 py-2 pe-4 text-start text-sm font-semibold text-[var(--color-text-primary)] focus-visible:ring-inset dark:bg-black/20"
         >
           {isCollapsed ? (
-            <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
+            <ChevronRight aria-hidden="true" className="size-4 shrink-0 rtl:-scale-x-100" />
           ) : (
             <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
           )}
-          <span className="min-w-0 break-words">{group.name}</span>
+          <span className="min-w-0 break-words">
+            <bdi>{group.name}</bdi>
+          </span>
           <StatusBadge status={groupWorst(group)} label={STATUS_NAME[groupWorst(group)]} />
           <span className="text-xs font-normal text-[var(--color-text-secondary)]">
-            {countsText(counts)}
+            <bdi>{countsText(counts)}</bdi>
           </span>
         </button>
         <div id={panelId} hidden={isCollapsed}>

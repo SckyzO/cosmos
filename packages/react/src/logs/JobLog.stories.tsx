@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+} from '../storybook-helpers';
 import { JobLog, type JobLogProps } from './JobLog';
 import { parseJobLogHash, type JobLogLineRef } from './job-log';
 import {
@@ -607,5 +613,50 @@ export const WrapKeepsLongLinesInView: Story = {
       'aria-pressed',
       'true'
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+// Two logs on one page need two names (axe: landmark-unique).
+const NamedBuildLog = () => {
+  const id = useId();
+  return (
+    <JobLog steps={BUILD_STEPS} {...BUILD_HEADER} aria-label={`Build log ${id}`} height={360} />
+  );
+};
+
+/**
+ * The header and the steps follow the page, so the chevron of a closed step turns around; the
+ * lines are output and stay as they are: numbered at the left, scrolling from the left.
+ */
+export const StepsFollowThePageAndLinesKeepTheirOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <NamedBuildLog />),
+  play: ({ canvasElement }) => {
+    const gutters: number[] = [];
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const closed = canvas.getByRole('button', { name: /Install dependencies/ });
+      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed chevron`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      const open = canvas.getByRole('button', { name: /Run tests/ });
+      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open chevron`).toBe(
+        'none'
+      );
+      const lines = box.querySelector<HTMLElement>('[data-lines]')!;
+      expect(getComputedStyle(lines).direction, `${dir}: the lines`).toBe('ltr');
+      const number = within(lines).getByRole('link', { name: 'Line 1' });
+      const text = number.nextElementSibling!;
+      expect(number.getBoundingClientRect().left, `${dir}: number before text`).toBeLessThan(
+        text.getBoundingClientRect().left
+      );
+      gutters.push(number.getBoundingClientRect().left - box.getBoundingClientRect().left);
+    }
+    // The gutter does not move between directions: the lines are not mirrored.
+    expect(gutters[1]).toBeCloseTo(gutters[0]!, 0);
+    expectMirrored(canvasElement, (box) => within(box).getByText('Build #1287'));
   },
 };

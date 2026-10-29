@@ -76,6 +76,9 @@ export const MarkStrip = ({ marks, ariaLabel, stripRef, className }: MarkStripPr
       ref={stripRef}
       role="group"
       aria-label={ariaLabel}
+      // Time runs from the left to the right, as the axis of a chart does: the strip, its keys
+      // (ArrowRight is the next mark) and its tooltip keep their order whatever the page reads.
+      dir="ltr"
       onKeyDown={onKeyDown}
       onMouseOver={(event) => {
         const mark = markOf(event.target);

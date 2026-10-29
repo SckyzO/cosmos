@@ -1,6 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Paperclip } from 'lucide-react';
+import { within } from 'storybook/test';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectReadsLeftToRight,
+  startOffset,
+} from '../storybook-helpers';
 import { StatusBadge } from '../status/StatusBadge';
 import { DescriptionList } from './DescriptionList';
 
@@ -57,8 +65,8 @@ const SHARED_ITEMS = (
 );
 
 // TUI Plus pattern "Left-aligned" — title + description + dl below, with
-// dividers between items.
-export const LeftAligned: Story = {
+// dividers between items; the term is at the start of the line.
+export const StartAligned: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <DescriptionList
@@ -73,7 +81,7 @@ export const LeftAligned: Story = {
 
 // TUI Plus pattern "Left-aligned in card" — wrapped in a card surface with
 // border + rounded + shadow.
-export const LeftAlignedInCard: Story = {
+export const StartAlignedInCard: Story = {
   render: () => (
     <div className="bg-gray-50 p-8 dark:bg-gray-950">
       <DescriptionList
@@ -194,7 +202,7 @@ export const StripedAddsAlternatingBg: Story = {
   },
 };
 
-/** A compact item puts the label and the value on one line, the value at the right edge. */
+/** A compact item puts the label and the value on one line, the value at the end edge. */
 export const CompactItemsAreOneLine: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -211,12 +219,8 @@ export const CompactItemsAreOneLine: Story = {
     await expect(
       Math.abs(label.getBoundingClientRect().top - value.getBoundingClientRect().top)
     ).toBeLessThan(8);
-    await expect(
-      row.getBoundingClientRect().right - value.getBoundingClientRect().right
-    ).toBeLessThan(2);
-    await expect(
-      label.getBoundingClientRect().left - row.getBoundingClientRect().left
-    ).toBeLessThan(2);
+    await expect(endOffset(value, row)).toBeLessThan(2);
+    await expect(startOffset(label, row)).toBeLessThan(2);
   },
 };
 
@@ -243,5 +247,46 @@ export const MonoSetsAMonospaceValue: Story = {
     await expect(family('rack-01-a')).toBe(family('9f2c1d'));
     await expect(family('rack-01-a')).not.toBe(family('rack one'));
     await expect(family('rack-01-a')).toMatch(/mono/i);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The term is at the start of its row, and a compact item puts its value at the end. A text value
+ * keeps its own order: "2 minutes ago", not "minutes ago 2".
+ */
+export const TermsStartTheRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="max-w-2xl space-y-6">
+        <DescriptionList>
+          <DescriptionList.Item label="Full name">Margot Foster</DescriptionList.Item>
+        </DescriptionList>
+        <DescriptionList compact>
+          <DescriptionList.Item label="Height">42U</DescriptionList.Item>
+          <DescriptionList.Item label="Last seen">2 minutes ago</DescriptionList.Item>
+        </DescriptionList>
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const term = canvas.getByText('Full name');
+      const value = canvas.getByText('Margot Foster');
+      expect(startOffset(term, box), `${dir}: term first`).toBeLessThan(startOffset(value, box));
+      const height = canvas.getByText('Height');
+      const compact = canvas.getByText('42U');
+      expect(startOffset(height, box), `${dir}: compact term`).toBeLessThan(
+        startOffset(compact, box)
+      );
+      expect(
+        endOffset(compact, height.parentElement!),
+        `${dir}: compact value at the end`
+      ).toBeLessThan(2);
+      expectReadsLeftToRight(canvas.getByText('2 minutes ago'));
+    }
   },
 };

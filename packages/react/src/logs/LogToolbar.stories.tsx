@@ -1,7 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { LogToolbar } from './LogToolbar';
 import { LogConsole } from './storybook-logs';
@@ -191,5 +201,39 @@ export const ControlsFollowPageDensity: Story = {
         control: true,
       }
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The bar follows the page: Live at the start, the view options at the end, the match count and
+ * its arrows at the end of the search field, and the count reads left to right.
+ */
+export const ControlsFollowTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <LogConsole count={120} height={160} search="timeout" />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const live = await canvas.findByRole('button', { name: /^(Live|Paused)/ });
+      const wrap = canvas.getByRole('button', { name: 'Wrap lines' });
+      expect(startOffset(live, box), `${dir}: Live at the start`).toBeLessThan(
+        startOffset(wrap, box)
+      );
+      expect(endOffset(wrap, box), `${dir}: options at the end`).toBeLessThan(
+        startOffset(wrap, box)
+      );
+      const input = canvas.getByRole('textbox', { name: 'Search logs' });
+      const previous = await canvas.findByRole('button', { name: 'Previous match' });
+      const middle = startOffset(input, box) + input.getBoundingClientRect().width / 2;
+      expect(startOffset(previous, box), `${dir}: the arrows end the field`).toBeGreaterThan(
+        middle
+      );
+      expectReadsLeftToRight(canvas.getByText(/^\d+ of \d+$/));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Wrap lines' }));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('group', { name: 'Levels' }), 0);
   },
 };

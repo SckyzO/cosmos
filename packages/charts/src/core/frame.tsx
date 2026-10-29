@@ -28,8 +28,10 @@ export const frameProps = ({
   accessibilityLayer: keyboard,
   ...(keyboard ? {} : { role: 'img' }),
   'aria-label': ariaLabel,
-  // `maxWidth`: a chart wider than its parent would widen the page.
-  style: { width, height, maxWidth: '100%' } satisfies CSSProperties,
+  // `maxWidth`: a chart wider than its parent would widen the page. `direction`: a chart keeps
+  // its left-to-right axes under `dir="rtl"`; left alone, the SVG's `text-anchor` would read
+  // `start` and `end` from the page and put the labels on the wrong side of their marks.
+  style: { width, height, maxWidth: '100%', direction: 'ltr' } satisfies CSSProperties,
 });
 
 /**

@@ -106,11 +106,17 @@ export const LogEntryDetail = ({
           ) : (
             <TimePlaceholder width="26ch" />
           )}
-          {line.source && <span className="break-all">{line.source}</span>}
+          {line.source && (
+            <span className="break-all">
+              <bdi>{line.source}</bdi>
+            </span>
+          )}
         </div>
         <p
+          // A message is output, as in the log it comes from: it reads left to right.
+          dir="ltr"
           className={clsx(
-            'm-0 mt-2 font-mono text-sm break-words whitespace-pre-wrap [unicode-bidi:isolate]',
+            'm-0 mt-2 font-mono text-sm break-words whitespace-pre-wrap',
             LOG_MESSAGE_CLASS.surface[level]
           )}
         >
@@ -125,9 +131,12 @@ export const LogEntryDetail = ({
             {fields.map(([key, value]) => {
               const text = formatLogField(value);
               return (
-                <DescriptionList.Item key={key} label={<span className="font-mono">{key}</span>}>
+                <DescriptionList.Item key={key} label={<bdi className="font-mono">{key}</bdi>}>
                   <span className="flex items-center justify-end gap-1">
-                    <span className="min-w-0 font-mono text-xs font-normal break-all whitespace-pre-wrap [unicode-bidi:isolate]">
+                    <span
+                      dir="ltr"
+                      className="min-w-0 font-mono text-xs font-normal break-all whitespace-pre-wrap"
+                    >
                       {text}
                     </span>
                     <Clipboard
@@ -169,7 +178,10 @@ export const LogEntryDetail = ({
       {line.stack && (
         <section>
           <Heading>Stack trace</Heading>
-          <pre className="m-0 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-red-700 dark:border-gray-800 dark:bg-gray-900 dark:text-red-300">
+          <pre
+            dir="ltr"
+            className="m-0 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-red-700 dark:border-gray-800 dark:bg-gray-900 dark:text-red-300"
+          >
             {line.stack}
           </pre>
         </section>

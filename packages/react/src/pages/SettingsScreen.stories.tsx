@@ -95,7 +95,7 @@ const SettingsForm = () => {
           <Accordion.Item value="reset">
             <Accordion.Trigger>How do I reset my profile to defaults?</Accordion.Trigger>
             <Accordion.Content>
-              Open the user menu in the top-right corner, then choose
+              Open the user menu in the topbar, then choose
               <em> Reset profile</em>. Your avatar and bio are cleared; account identifiers stay
               untouched.
             </Accordion.Content>
@@ -180,7 +180,7 @@ const BellBtn = () => (
   </button>
 );
 
-// TUI Plus "Sidebar" — full settings with a left sidebar + sub-tab nav + form.
+// TUI Plus "Sidebar" — full settings with a sidebar + sub-tab nav + form.
 export const Sidebar_: Story = {
   name: 'Sidebar',
   render: () => {
@@ -191,11 +191,11 @@ export const Sidebar_: Story = {
           <Topbar
             center={
               <div className="relative max-w-md">
-                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                <Search className="inset-s-3 absolute top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
                 <input
                   type="search"
                   placeholder="Search"
-                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
+                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 ps-9 pe-3 text-sm focus:ring-2 focus:outline-none"
                 />
               </div>
             }
@@ -228,7 +228,7 @@ export const Sidebar_: Story = {
   },
 };
 
-// TUI Plus "Stacked" — top navbar (no left sidebar) + sub-tab nav + form.
+// TUI Plus "Stacked" — top navbar (no sidebar) + sub-tab nav + form.
 export const Stacked: Story = {
   render: () => {
     const [tab, setTab] = useState('account');
@@ -239,7 +239,7 @@ export const Stacked: Story = {
             <Navbar theme="dark">
               <Navbar.Brand>
                 <Navbar.MobileMenuButton theme="dark" />
-                <span className="ml-2 text-lg font-semibold text-white">Cosmos</span>
+                <span className="ms-2 text-lg font-semibold text-white">Cosmos</span>
                 <Navbar.Items>
                   <Navbar.Item theme="dark" href="#">
                     Dashboard

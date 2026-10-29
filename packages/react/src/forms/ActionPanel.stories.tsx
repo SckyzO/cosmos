@@ -46,7 +46,7 @@ export const WithLink: Story = {
             className="text-brand-600 dark:text-brand-400 text-sm font-semibold hover:underline"
           >
             Change plan{' '}
-            <span aria-hidden className="inline-block rtl:-scale-x-100">
+            <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
               →
             </span>
           </a>

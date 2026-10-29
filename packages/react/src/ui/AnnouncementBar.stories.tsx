@@ -42,7 +42,7 @@ export const WithAction: Story = {
     action: (
       <Link href="#" variant="underline" className="text-current">
         Upgrade plan{' '}
-        <span aria-hidden className="inline-block rtl:-scale-x-100">
+        <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
           →
         </span>
       </Link>
@@ -67,7 +67,7 @@ export const Brand: Story = {
     action: (
       <Link href="#" variant="underline" className="text-white">
         Try it{' '}
-        <span aria-hidden className="inline-block rtl:-scale-x-100">
+        <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
           →
         </span>
       </Link>
@@ -164,7 +164,7 @@ export const ActionAndDismissSitAtTheEnd: Story = {
         action={
           <Link href="#" variant="underline" className="text-current">
             Upgrade plan{' '}
-            <span aria-hidden className="inline-block rtl:-scale-x-100">
+            <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
               →
             </span>
           </Link>
@@ -181,6 +181,12 @@ export const ActionAndDismissSitAtTheEnd: Story = {
       // The action comes before the dismiss button, toward the start.
       expect(startOffset(action, bar)).toBeLessThan(startOffset(dismiss, bar));
       expect(startOffset(bar.querySelector('svg')!, bar)).toBeLessThan(startOffset(action, bar));
+      // The arrow is a box of its own, so it can turn around: the link's underline has to be
+      // handed to it, it does not reach into a box.
+      expect(
+        getComputedStyle(action.querySelector('span')!).textDecorationLine,
+        `${dir}: arrow underline`
+      ).toBe('underline');
     }
     for (const find of [
       (box: HTMLElement) => within(box).getByRole('button', { name: 'Dismiss announcement' }),

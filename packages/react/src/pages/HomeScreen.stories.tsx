@@ -117,11 +117,11 @@ export const Sidebar_: Story = {
         <Topbar
           center={
             <div className="relative max-w-md">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              <Search className="inset-s-3 absolute top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
                 type="search"
                 placeholder="Search"
-                className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
+                className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 ps-9 pe-3 text-sm focus:ring-2 focus:outline-none"
               />
             </div>
           }

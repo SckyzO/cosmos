@@ -89,11 +89,11 @@ export const Sidebar_: Story = {
           <Topbar
             center={
               <div className="relative max-w-md">
-                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                <Search className="inset-s-3 absolute top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
                 <input
                   type="search"
                   placeholder="Search"
-                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
+                  className="focus:ring-brand-500/40 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-base)] py-1.5 ps-9 pe-3 text-sm focus:ring-2 focus:outline-none"
                 />
               </div>
             }
@@ -180,7 +180,7 @@ export const Sidebar_: Story = {
                         <th
                           key={h}
                           scope="col"
-                          className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase"
+                          className="px-4 py-3 text-start text-xs font-semibold tracking-wider text-[var(--color-text-secondary)] uppercase"
                         >
                           {h}
                         </th>
@@ -215,7 +215,7 @@ export const Sidebar_: Story = {
                         <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
                           {row.duration}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm text-[var(--color-text-secondary)]">
+                        <td className="px-4 py-3 text-end text-sm text-[var(--color-text-secondary)]">
                           {row.when}
                         </td>
                       </tr>

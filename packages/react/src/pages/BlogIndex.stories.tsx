@@ -88,7 +88,7 @@ const SectionHeader = () => (
 const blogNavbar = () => (
   <Navbar theme="light">
     <Navbar.Brand>
-      <span className="ml-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos blog</span>
+      <span className="ms-2 text-lg font-semibold text-gray-900 dark:text-white">Cosmos blog</span>
       <Navbar.Items>
         <Navbar.Item theme="light" active href="#">
           Articles
@@ -256,7 +256,7 @@ export const SingleColumn: Story = {
 
 // ── Variant 4: With featured post ───────────────────────────────────────────
 // Editorial magazine-style: large hero featured article (image + content) on
-// the left, compact "Latest" side list with thumbnails on the right.
+// the start, compact "Latest" side list with thumbnails at the end.
 
 export const WithFeaturedPost: Story = {
   render: () => {
@@ -280,7 +280,7 @@ export const WithFeaturedPost: Story = {
                 className="hidden text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] sm:inline-flex sm:items-center sm:gap-1"
               >
                 View all articles
-                <ArrowRight className="size-4" aria-hidden />
+                <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden />
               </a>
             </div>
 
@@ -332,7 +332,7 @@ export const WithFeaturedPost: Story = {
                     className="bg-brand-500 hover:bg-brand-600 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-white"
                   >
                     Continue reading
-                    <ArrowRight className="size-4" aria-hidden />
+                    <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden />
                   </a>
                 </div>
               </article>
@@ -377,7 +377,7 @@ export const WithFeaturedPost: Story = {
                   className="text-brand-600 hover:text-brand-700 dark:text-brand-400 mt-6 inline-flex items-center gap-1 text-sm font-semibold sm:hidden"
                 >
                   View all articles
-                  <ArrowRight className="size-4" aria-hidden />
+                  <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden />
                 </a>
               </aside>
             </div>
@@ -389,8 +389,8 @@ export const WithFeaturedPost: Story = {
 };
 
 // ── Variant 5: With photo and list ──────────────────────────────────────────
-// TUI "With photo and list" — wide photo of latest article on the left,
-// compact post list on the right.
+// TUI "With photo and list" — wide photo of latest article at the start,
+// compact post list at the end.
 
 export const WithPhotoAndList: Story = {
   render: () => {

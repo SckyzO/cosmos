@@ -2,7 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
 
@@ -75,7 +82,7 @@ export const Interactive: Story = {
           }}
         />
         {verified && (
-          <div className="fixed bottom-4 left-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
+          <div className="inset-s-4 fixed bottom-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
             Account verified!
           </div>
         )}
@@ -153,5 +160,21 @@ export const ResendIsA44pxButton: Story = {
     await expect(resend.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     await expect(resend).toBeEnabled();
     expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+// The back arrow points along the line, so it turns around in right to left; the number the code
+// went to is the host's and keeps its own order inside the sentence ("+33 6 12" would lose its plus).
+export const MirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSubmit: fn(), sentTo: '+33 6 12 34 56 78', cancelHref: '#' },
+  render: (args) => bothDirections(() => <TwoStepVerificationForm {...args} />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const arrow = box.querySelector('.lucide-arrow-left')!;
+      await expect(getComputedStyle(arrow).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
+      expectReadsLeftToRight(box.querySelector('bdi')!);
+    }
   },
 };

@@ -126,7 +126,7 @@ export const CustomFooter: Story = {
           Need more help?{' '}
           <a className="text-brand-600 dark:text-brand-400 hover:underline">
             Read the docs{' '}
-            <span aria-hidden className="inline-block rtl:-scale-x-100">
+            <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
               →
             </span>
           </a>

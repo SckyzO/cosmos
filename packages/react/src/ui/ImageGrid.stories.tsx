@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type ReactNode } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
-import { expectFocusRing, expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+  expectFocusRing,
+  expectNoHorizontalOverflow,
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { ImageGrid } from './ImageGrid';
 
 const meta = {
@@ -341,18 +349,19 @@ export const MasonryKeepsEachPicturesAspect: Story = {
 export const MasonryFlowsDownTheColumns: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <MasonryDemo />,
-  play: async ({ canvas }) => {
-    const lefts = canvas
+  play: async ({ canvas, canvasElement }) => {
+    // How far each picture sits from the start edge: the columns run from the start of the line.
+    const starts = canvas
       .getAllByRole('img')
-      .map((img) => Math.round(img.getBoundingClientRect().left));
-    // DOM order is reading order: the left edge never moves back, column after column.
-    for (let i = 1; i < lefts.length; i += 1)
-      await expect(lefts[i]).toBeGreaterThanOrEqual(lefts[i - 1]);
-    await expect(new Set(lefts).size).toBe(3);
+      .map((img) => Math.round(startOffset(img, canvasElement)));
+    // DOM order is reading order: the start edge never moves back, column after column.
+    for (let i = 1; i < starts.length; i += 1)
+      await expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1]);
+    await expect(new Set(starts).size).toBe(3);
     // Within a column, the next item is lower.
     const tops = canvas.getAllByRole('img').map((img) => img.getBoundingClientRect().top);
-    for (let i = 1; i < lefts.length; i += 1) {
-      if (lefts[i] === lefts[i - 1]) await expect(tops[i]).toBeGreaterThan(tops[i - 1]);
+    for (let i = 1; i < starts.length; i += 1) {
+      if (starts[i] === starts[i - 1]) await expect(tops[i]).toBeGreaterThan(tops[i - 1]);
     }
   },
 };
@@ -402,5 +411,37 @@ export const MasonryOnAPhone: Story = {
     for (const img of canvas.getAllByRole('img')) {
       await expect(img.getBoundingClientRect().width).toBeGreaterThan(width * 0.8);
     }
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/** The tiles fill the row from the start of the line, and a caption starts at the start of its tile. */
+export const TilesFillTheRowFromTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: null },
+  render: () =>
+    bothDirections(() => (
+      <ImageGrid columns={3}>
+        <ImageGrid.Item caption="First">
+          <img src={gradient(0)} alt="First tile" />
+        </ImageGrid.Item>
+        <ImageGrid.Item onClick={() => {}}>
+          <img src={gradient(1)} alt="Second tile" />
+        </ImageGrid.Item>
+        <ImageGrid.Item href="#there">
+          <img src={gradient(2)} alt="Third tile" />
+        </ImageGrid.Item>
+      </ImageGrid>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [first, second, third] = within(box).getAllByRole('img');
+      expect(startOffset(first!, box), `${dir}: first`).toBeLessThan(startOffset(second!, box));
+      expect(startOffset(second!, box), `${dir}: second`).toBeLessThan(startOffset(third!, box));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByAltText('First tile'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('First'));
   },
 };

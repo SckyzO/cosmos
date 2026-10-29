@@ -23,7 +23,7 @@ export type UptimeBarsProps = {
   period?: UptimeBarsPeriod;
   /** Overrides the limits that colour a day. Default: 99.9 % and up green, 99 % and up amber, below red. */
   thresholds?: Partial<UptimeThresholds>;
-  /** Shown on the left of the header, above the bars: the name of the service. */
+  /** Shown at the start of the header, above the bars: the name of the service. */
   title?: ReactNode;
   /**
    * The uptime written in the header, 0 to 1. Default: the mean of the days shown that have
@@ -90,11 +90,11 @@ export const UptimeBars = ({
         <div className="mb-2 flex items-baseline justify-between gap-3">
           {title && (
             <span className="min-w-0 text-sm font-semibold text-[var(--color-text-primary)]">
-              {title}
+              <bdi>{title}</bdi>
             </span>
           )}
-          <span className={clsx('ml-auto text-sm font-semibold', LEVEL_TEXT[overallLevel])}>
-            {overall === null ? 'No data' : `${formatUptime(overall)} uptime`}
+          <span className={clsx('ms-auto text-sm font-semibold', LEVEL_TEXT[overallLevel])}>
+            <bdi>{overall === null ? 'No data' : `${formatUptime(overall)} uptime`}</bdi>
           </span>
         </div>
       )}
@@ -113,7 +113,10 @@ export const UptimeBars = ({
         )}
       />
       {!compact && count > 1 && (
-        <div className="mt-1.5 flex justify-between text-xs text-[var(--color-text-secondary)]">
+        <div
+          dir="ltr"
+          className="mt-1.5 flex justify-between text-xs text-[var(--color-text-secondary)]"
+        >
           <span>{count} days ago</span>
           <span>Today</span>
         </div>
@@ -129,7 +132,7 @@ export const UptimeBars = ({
                 aria-hidden="true"
                 className={clsx('size-3 shrink-0 rounded-[2px]', LEVEL_FILL[level])}
               />
-              {label}
+              <bdi>{label}</bdi>
             </li>
           ))}
         </ul>

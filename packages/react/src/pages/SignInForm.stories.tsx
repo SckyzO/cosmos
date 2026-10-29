@@ -70,7 +70,7 @@ export const Interactive: Story = {
           }}
         />
         {signedIn && (
-          <div className="fixed bottom-4 left-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
+          <div className="inset-s-4 fixed bottom-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
             Signed in as {signedIn}
           </div>
         )}

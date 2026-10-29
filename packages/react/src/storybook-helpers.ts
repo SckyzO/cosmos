@@ -515,6 +515,14 @@ const over = (fg: number[], bg: number[]) =>
     : [0, 1, 2].map((i) => Math.round((fg[i] * fg[3] + bg[i] * (255 - fg[3])) / 255));
 
 /**
+ * Play-function assertion: `el` paints an opaque background of its own, so the text in it
+ * reads the same over anything drawn behind it (map tiles, an image).
+ */
+export const expectOpaqueBackground = (el: Element) => {
+  expect(toRgba(getComputedStyle(el).backgroundColor)[3]).toBe(255);
+};
+
+/**
  * Play-function assertion: the computed text colour of `el` against the closest
  * opaque background behind it reaches `min` (WCAG AA for normal text by default).
  */

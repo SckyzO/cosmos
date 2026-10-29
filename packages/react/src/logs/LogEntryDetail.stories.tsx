@@ -3,7 +3,13 @@ import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '../ui/Button';
 import { Drawer } from '../ui/Drawer';
-import { portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectReadsLeftToRight,
+  inDirection,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { LogEntryDetail } from './LogEntryDetail';
 import { fakeLine, fakeLines } from './storybook-logs';
 
@@ -95,5 +101,33 @@ export const FieldActionsCallBack: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Show context' }));
     expect(canvas.getByRole('button', { name: 'Hide context' })).toBeVisible();
     expect(within(document.body).queryByText('Raw record')).toBeVisible();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The panel follows the page (the field names start their rows), while the record itself is
+ * output: the message, the field values and the stack trace read left to right.
+ */
+export const RecordReadsLeftToRightInsideAPageThatDoesNot: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { line: WITH_STACK },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const message = canvas.getByText(WITH_STACK.message);
+        expect(getComputedStyle(message).direction, `${dir}: message`).toBe('ltr');
+        expectReadsLeftToRight(message);
+        const stack = canvas.getAllByText(/PromClient\.query/)[0]!;
+        expect(getComputedStyle(stack).direction, `${dir}: stack`).toBe('ltr');
+        const row = canvas.getByText('request_id').closest('div')!;
+        expect(getComputedStyle(row).direction, `${dir}: field row`).toBe(dir);
+        expect(startOffset(canvas.getByText('request_id'), row), `${dir}: name first`).toBeLessThan(
+          endOffset(canvas.getByText('request_id'), row)
+        );
+      });
+    }
   },
 };

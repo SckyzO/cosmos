@@ -1,7 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { API_DAYS, daysFrom, SHAKY_DAYS } from '../storybook-uptime';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  inDirection,
+  mobileViewport,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { UptimeBars } from './UptimeBars';
 import { dayName, fitCount, formatUptime, thresholdLegend } from './uptime';
 
@@ -268,5 +277,67 @@ export const LevelsReadWithoutColour: Story = {
     await expect(
       canvas.getByRole('img', { name: 'Dec 19, 2025: 97.2% uptime, 2 incidents' })
     ).toBeInTheDocument();
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The header follows the page (the title at the start, the uptime at the end, its figure in
+ * order), while the days keep their time order: the oldest at the left, "Today" at the right.
+ * A legend's thresholds keep their order too: "99.9% and up", not "and up 99.9%".
+ */
+export const DaysKeepTheirOrderAndHeaderFollowsThePage: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div style={{ width: 480 }}>
+        <UptimeBars {...args} legend />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      await waitFor(() => expect(canvas.getAllByRole('img').length).toBeGreaterThan(5));
+      const days = canvas.getAllByRole('img');
+      expect(days[0]!.getBoundingClientRect().left, `${dir}: oldest day`).toBeLessThan(
+        days.at(-1)!.getBoundingClientRect().left
+      );
+      const ago = canvas.getByText(/days ago$/);
+      const today = canvas.getByText('Today');
+      expect(ago.getBoundingClientRect().left, `${dir}: caption`).toBeLessThan(
+        today.getBoundingClientRect().left
+      );
+      expectReadsLeftToRight(canvas.getByText(/% uptime$/));
+      for (const item of within(canvas.getByRole('list', { name: 'Legend' })).getAllByRole(
+        'listitem'
+      ))
+        expectReadsLeftToRight(item);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('API'));
+  },
+};
+
+/** ArrowLeft goes to the previous day, the one on the left, whatever the direction of the page. */
+export const ArrowsFollowTheScreen: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div style={{ width: 480 }}>
+      <UptimeBars {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const days = () => within(canvasElement).getAllByRole('img');
+    await waitFor(() => expect(days().length).toBeGreaterThan(5));
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        days().at(-1)!.focus();
+        await userEvent.keyboard('{ArrowLeft}');
+        await expect(days().at(-2)).toHaveFocus();
+        await userEvent.keyboard('{ArrowRight}');
+        await expect(days().at(-1)).toHaveFocus();
+      });
+    }
   },
 };

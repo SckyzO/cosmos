@@ -32,9 +32,11 @@ make lint / lint-fix / format / format-check / typecheck
 `make ci` runs, bailing on first failure: `lint` → `format:check` → `typecheck` → `build` →
 `storybook:build` → `test` (with `CI=true`, so Playwright serves the static build like CI) →
 `a11y:contrast` (axe `color-contrast` on every story in light, sand and deep-blue, ~3 min; alone:
-`make test-contrast`, one theme with `A11Y_THEME=sand`). This mirrors `.github/workflows/ci.yml`,
-which runs the same steps as parallel jobs (`static`, `build-e2e`, `stories`, `contrast` once per
-theme) plus an aggregator job, `ci`, named "Lint + typecheck + test + build": that name is the
+`make test-contrast`, one theme with `A11Y_THEME=sand`) → `a11y:rtl` (every story again under
+`dir="rtl"` on `<html>`, with every axe rule, the play functions and a check that the page does not
+scroll sideways in right to left unless it does in left to right; alone: `make test-rtl`). This
+mirrors `.github/workflows/ci.yml`, which runs the same steps as parallel jobs (`static`,
+`build-e2e`, `stories`, `contrast` once per theme, `direction`) plus an aggregator job, `ci`, named "Lint + typecheck + test + build": that name is the
 required check, so keep it when touching the workflow. The jobs that open a browser run in
 Playwright's image, pinned by digest, at the version the dev image's `install-deps` uses: CI runs
 no apt. A Playwright bump moves the Dockerfile and the image together (`repo-policy.spec.ts`).
@@ -42,7 +44,7 @@ no apt. A Playwright bump moves the Dockerfile and the image together (`repo-pol
 `make check-changed` (`tests/e2e/checks/check-changed.sh`; `BASE`, default `origin/main`;
 uncommitted and untracked files count) runs the steps of `make ci` the changed files can break, on
 them: Prettier and ESLint on those files, the typecheck, the unit tests, and the story files that use
-what changed in the default pass and the three contrast passes. `select-stories.mjs` picks them: the
+what changed in the default pass, the three contrast passes and the direction pass. `select-stories.mjs` picks them: the
 names the changed files export, followed through every source file that names one, barrels
 skipped; a change to a widely used helper selects most of the suite. A change outside
 `packages/{react,charts}/src` that isn't Markdown runs the full `make ci` instead: what reaches a
@@ -142,8 +144,8 @@ charts ───────────── storybook      (charts imports ne
   stack are never duplicated; the source keeps relative imports, which means the names it imports
   must be exported by the root entry (`Popover`, `Tooltip`, `Button`). An internal helper the root
   does not export, and that shares no state with it, is listed in that entry's `bundle` option and
-  copied in by value (`/editor` takes `useControllableState`, `mergeRefs`, `fieldRecipe`,
-  `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
+  copied in by value (`/editor` takes `useControllableState`, `directionOf`, `mergeRefs`,
+  `fieldRecipe`, `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
   never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's

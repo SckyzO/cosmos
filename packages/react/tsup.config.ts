@@ -35,6 +35,7 @@ export default defineConfig({
     externalizeOutside('src/editor', '@sckyzo/cosmos-react', {
       bundle: [
         'hooks/useControllableState',
+        'hooks/direction',
         'ui/mergeRefs',
         'forms/fieldRecipe',
         'forms/RequiredMark',

@@ -3,10 +3,14 @@ import type { ReactNode } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { placeholderCover } from '../storybook-avatars';
 import {
+  bothDirections,
+  directionBox,
   expectFocusRing,
+  endOffset,
   expectNoHorizontalOverflow,
   mobileViewport,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { Carousel } from './Carousel';
 
@@ -469,13 +473,10 @@ export const ThumbnailsFollowTheCurrentSlide: Story = {
     for (let i = 2; i < thumbs.length; i += 1)
       await userEvent.click(canvas.getByRole('button', { name: /next slide/i }));
     await waitFor(() => expect(thumbs[7]).toHaveAttribute('aria-current', 'true'));
-    // The last thumbnail was off the right edge: the strip scrolled to bring it into view.
-    await waitFor(() => {
-      const strip_ = strip.getBoundingClientRect();
-      const last = thumbs[7]!.getBoundingClientRect();
-      expect(last.right).toBeLessThanOrEqual(strip_.right + 1);
-    });
-    await expect(strip.scrollLeft).toBeGreaterThan(0);
+    // The last thumbnail was off the end edge: the strip scrolled to bring it into view (toward
+    // the left in right to left, where `scrollLeft` counts down from 0).
+    await waitFor(() => expect(endOffset(thumbs[7]!, strip)).toBeGreaterThanOrEqual(-1));
+    await expect(Math.abs(strip.scrollLeft)).toBeGreaterThan(0);
   },
 };
 
@@ -485,5 +486,61 @@ export const ThumbnailFocusRing: Story = {
   play: async ({ canvas }) => {
     const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
     await expectFocusRing(within(strip).getAllByRole('button')[1]!);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The slides run from the start of the line: the first slide is at the start, the next one comes
+ * in from the end, the arrows are on their sides with their chevrons turned around, and the dots
+ * stay centred.
+ */
+export const SlidesRunFromTheStartOfTheLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Carousel>
+        <Carousel.Viewport>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Carousel.Slide key={i}>
+              <Slide index={i} />
+            </Carousel.Slide>
+          ))}
+        </Carousel.Viewport>
+        <Carousel.Controls />
+        <Carousel.Indicators position="inside" />
+      </Carousel>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const previous = await canvas.findByRole('button', { name: /previous slide/i });
+      const next = canvas.getByRole('button', { name: /next slide/i });
+      expect(startOffset(previous, box), `${dir}: previous at the start`).toBeLessThan(
+        startOffset(next, box)
+      );
+      expect(getComputedStyle(previous.querySelector('svg')!).scale, `${dir}: chevron`).toBe(
+        dir === 'rtl' ? '-1 1' : 'none'
+      );
+      const first = canvas.getByText('Slide 1');
+      const second = canvas.getByText('Slide 2');
+      expect(startOffset(first, box), `${dir}: first slide at the start`).toBeLessThan(
+        startOffset(second, box)
+      );
+      const dots = canvas.getAllByRole('button', { name: /go to slide/i });
+      const pill = dots[0]!.parentElement!.getBoundingClientRect();
+      const middle = box.getBoundingClientRect();
+      expect(pill.left + pill.width / 2, `${dir}: dots centred`).toBeCloseTo(
+        middle.left + middle.width / 2,
+        0
+      );
+      await userEvent.click(next);
+      await waitFor(() => expect(dots[1]).toHaveAttribute('aria-current', 'true'));
+      // The second slide has slid to the start, the first one off toward it.
+      await waitFor(() => expect(startOffset(second, box)).toBeLessThan(24));
+      expect(startOffset(first, box), `${dir}: first slide left toward the start`).toBeLessThan(0);
+    }
   },
 };

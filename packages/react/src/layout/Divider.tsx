@@ -86,7 +86,7 @@ const Root = ({
               : 'text-sm text-gray-500 dark:text-gray-400'
           )}
         >
-          {inset}
+          <bdi>{inset}</bdi>
         </span>
       </div>
     </div>
@@ -128,9 +128,9 @@ const Icon = ({
 // ── Row variant: title + actions row above a horizontal border ──────────────
 
 export type DividerRowProps = HTMLAttributes<HTMLDivElement> & {
-  /** Left-aligned title. Use `null` to render only actions. */
+  /** Title at the start of the line. Use `null` to render only actions. */
   title?: ReactNode;
-  /** Right-aligned trailing content — button, button group, toolbar, etc. */
+  /** Trailing content at the end of the line — button, button group, toolbar, etc. */
   actions?: ReactNode;
   /**
    * Use a larger font size for the title (TUI "With title and button").
@@ -156,11 +156,11 @@ const Row = ({ title, actions, emphasis = true, className, ...rest }: DividerRow
               : 'text-sm text-gray-500 dark:text-gray-400'
           )}
         >
-          {title}
+          <bdi>{title}</bdi>
         </h3>
       )}
     </div>
-    {actions && <div className="ml-3 flex shrink-0 items-center gap-x-2">{actions}</div>}
+    {actions && <div className="ms-3 flex shrink-0 items-center gap-x-2">{actions}</div>}
   </div>
 );
 

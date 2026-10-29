@@ -3,7 +3,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { Badge, Card } from '../ui';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  endOffset,
+  expectNoHorizontalOverflow,
+  expectOpaqueBackground,
+  expectTextContrast,
+  inDirection,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { MapMarkerList } from './MapMarkerList';
 import { MapView, type MapViewProps, type MapViewState } from './MapView';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
@@ -305,6 +313,20 @@ export const SelectionIsControlled: Story = {
   },
 };
 
+/**
+ * The attribution MapLibre writes over the map takes the theme's panel and text colours. Its own
+ * box was half-white and its text the page's: 2.9:1 over the dark tiles, which axe cannot read
+ * through the canvas.
+ */
+export const AttributionReadsInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const text = await canvas.findByText('Fictional map data');
+    expectOpaqueBackground(text.closest('.maplibregl-ctrl-attrib')!);
+    expectTextContrast(text);
+  },
+};
+
 export const PinsFollowTheAccent: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <Probe cluster={false} />,
@@ -385,5 +407,38 @@ export const ControlsFollowPageDensity: Story = {
       canvas,
       (scope) => within(scope.getByRole('list', { name: 'Stores' })).getAllByRole('button')[0]!
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The map itself does not mirror, but what Cosmos draws on it does: the zoom buttons sit at the
+ * end of the map, and the popup of a pin starts its text at the start with its close button at
+ * the end.
+ */
+export const ControlsAndPopupFollowThePage: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { defaultSelectedId: 'central', cluster: false },
+  play: async ({ canvas }) => {
+    const zoomIn = await canvas.findByRole('button', { name: 'Zoom in' });
+    const popup = await canvas.findByRole('dialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        const map = zoomIn.parentElement!.parentElement!;
+        expect(getComputedStyle(map).direction).toBe(dir);
+        expect(endOffset(zoomIn, map), `${dir}: zoom at the end`).toBeLessThan(
+          startOffset(zoomIn, map)
+        );
+        const close = within(popup).getByRole('button', { name: 'Close' });
+        expect(endOffset(close, popup), `${dir}: close at the end`).toBeLessThan(
+          startOffset(close, popup)
+        );
+        const label = popup.querySelector('p')!;
+        expect(startOffset(label, popup), `${dir}: text at the start`).toBeLessThan(
+          endOffset(label, popup)
+        );
+      });
+    }
   },
 };

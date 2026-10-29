@@ -156,7 +156,7 @@ function ImageGridItem({
     ? clsx(
         'group/item block w-full break-inside-avoid outline-hidden',
         MASONRY_ROW_GAP[gap],
-        interactive && 'cursor-pointer text-left',
+        interactive && 'cursor-pointer text-start',
         className
       )
     : clsx(
@@ -166,7 +166,7 @@ function ImageGridItem({
         rounded && 'rounded-xl',
         interactive &&
           // The picture eases in on hover and on keyboard focus alike.
-          'focus-visible:focus-indicator w-full cursor-pointer text-left focus-visible:ring-inset [&_img]:transition-transform [&_img]:duration-200 hover:[&_img]:scale-105 focus-visible:[&_img]:scale-105',
+          'focus-visible:focus-indicator w-full cursor-pointer text-start focus-visible:ring-inset [&_img]:transition-transform [&_img]:duration-200 hover:[&_img]:scale-105 focus-visible:[&_img]:scale-105',
         className
       );
   const overlayLayer = overlay && (

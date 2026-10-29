@@ -1,7 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { HEALTH_NOW, MATRIX_COLUMNS, MATRIX_ROWS } from '../storybook-health';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  inDirection,
+  keyToEnd,
+  keyToStart,
+  mobileViewport,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthMatrix } from './HealthMatrix';
 
@@ -127,7 +139,7 @@ export const LegendAndPillsConveyStatusAsText: Story = {
     }
     const grid = within(canvas.getByRole('grid'));
     for (const name of ['OK', 'Warning', 'Critical', 'Unknown', 'Info']) {
-      await expect(grid.getAllByText(name, { selector: 'span' }).length).toBeGreaterThan(0);
+      await expect(grid.getAllByText(name, { selector: 'span > bdi' }).length).toBeGreaterThan(0);
     }
   },
 };
@@ -157,17 +169,18 @@ export const KeyboardNavigation: Story = {
     await userEvent.tab();
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
-    await userEvent.keyboard('{ArrowRight}');
+    // The columns run along the line, so the arrows along them swap in right to left.
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(cell(canvas, 'API on par-1b: OK')).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(cell(canvas, 'Scheduler on par-1b: OK')).toHaveFocus();
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(cell(canvas, 'Scheduler on par-1a: OK')).toHaveFocus();
     await userEvent.keyboard('{ArrowUp}');
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     // The ends of the grid stop the arrows.
-    await userEvent.keyboard('{ArrowLeft}{ArrowUp}');
+    await userEvent.keyboard(`{${keyToStart()}}{ArrowUp}`);
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     await userEvent.keyboard('{End}');
@@ -176,7 +189,7 @@ export const KeyboardNavigation: Story = {
     await expect(cell(canvas, 'API on par-1a: OK')).toHaveFocus();
 
     // The tab stop moved with the focus: still one.
-    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}{${keyToEnd()}}`);
     await expect(stops()).toHaveLength(1);
     await expect(stops()[0]).toBe(cell(canvas, 'API on par-1c: OK'));
 
@@ -256,5 +269,66 @@ export const CellsFollowPageDensity: Story = {
         control: true,
       }
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The service column sits at the start and sticks there while the nodes scroll, the legend ends
+ * the header, and the nodes run from the start of the line.
+ */
+export const ServiceColumnSticksAtTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div className="max-w-xl">
+        <HealthMatrix {...args} />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      const first = canvas.getByRole('columnheader', { name: 'par-1a' });
+      const last = canvas.getByRole('columnheader', { name: MATRIX_COLUMNS.at(-1)!.label });
+      expect(startOffset(first, box), `${dir}: first node`).toBeLessThan(startOffset(last, box));
+      const service = canvas.getByRole('columnheader', { name: 'Service' });
+      const scroller = service.closest<HTMLElement>('.overflow-auto')!;
+      expect(scroller.scrollWidth, `${dir}: the grid scrolls`).toBeGreaterThan(
+        scroller.clientWidth
+      );
+      // Scrolled to the end (negative in right to left), the column is still at the start edge.
+      scroller.scrollLeft = dir === 'rtl' ? -scroller.scrollWidth : scroller.scrollWidth;
+      await waitFor(() => expect(Math.abs(scroller.scrollLeft)).toBeGreaterThan(0));
+      const row = canvas.getByRole('rowheader', { name: 'API' });
+      expect(startOffset(row, scroller), `${dir}: sticky column`).toBeCloseTo(0, 0);
+      expect(endOffset(row, scroller), `${dir}: sticky column`).toBeGreaterThan(0);
+      scroller.scrollLeft = 0;
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('Services by node'));
+    expectMirrored(canvasElement, (box) => within(box).getByRole('rowheader', { name: 'API' }));
+  },
+};
+
+/** The arrows along a row follow the direction of the page, however it was set. */
+export const ArrowsFollowTheDirectionOfThePage: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        cell(canvas, 'API on par-1a: OK').focus();
+        // ArrowRight is the next node in left to right, the previous one in right to left.
+        await userEvent.keyboard('{ArrowRight}');
+        await expect(
+          cell(canvas, dir === 'ltr' ? 'API on par-1b: OK' : 'API on par-1a: OK')
+        ).toHaveFocus();
+        await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+        await expect(
+          cell(canvas, dir === 'ltr' ? 'API on par-1a: OK' : 'API on par-1c: OK')
+        ).toHaveFocus();
+        cell(canvas, 'API on par-1a: OK').focus();
+      });
+    }
   },
 };

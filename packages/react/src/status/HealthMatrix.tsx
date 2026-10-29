@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { RelativeTime } from '../data/RelativeTime';
+import { directionOf } from '../hooks/direction';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { STATUS_NAME, formatLatency } from './health';
 import { StatusBadge } from './StatusBadge';
@@ -127,9 +128,12 @@ export const HealthMatrix = ({
     if (!cell || event.altKey || event.ctrlKey || event.metaKey) return;
     const row = Number(cell.dataset.row);
     const col = Number(cell.dataset.col);
+    // The columns follow the reading direction, so the arrows along them swap in right to left.
+    const toEnd = directionOf(gridRef.current) === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+    const toStart = toEnd === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight';
     const next: Record<string, Position> = {
-      ArrowRight: { row, col: Math.min(col + 1, lastCol) },
-      ArrowLeft: { row, col: Math.max(col - 1, 0) },
+      [toEnd]: { row, col: Math.min(col + 1, lastCol) },
+      [toStart]: { row, col: Math.max(col - 1, 0) },
       ArrowDown: { row: Math.min(row + 1, lastRow), col },
       ArrowUp: { row: Math.max(row - 1, 0), col },
       Home: { row, col: 0 },
@@ -162,13 +166,13 @@ export const HealthMatrix = ({
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-[var(--color-border)] px-4 py-3">
           {title && (
             <p className="m-0 text-[0.9375rem] font-semibold text-[var(--color-text-primary)]">
-              {title}
+              <bdi>{title}</bdi>
             </p>
           )}
           {showLegend && (
             <ul
               aria-label="Legend"
-              className="m-0 ml-auto flex list-none flex-wrap gap-x-4 gap-y-1 p-0"
+              className="m-0 ms-auto flex list-none flex-wrap gap-x-4 gap-y-1 p-0"
             >
               {legendStatuses.map((status) => (
                 <li
@@ -195,7 +199,7 @@ export const HealthMatrix = ({
             <tr>
               <th
                 scope="col"
-                className="py-row-10 sticky top-0 left-0 z-20 min-w-28 border-r border-b border-[var(--color-border)] bg-gray-50 px-4 text-left text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
+                className="py-row-10 inset-s-0 sticky top-0 z-20 min-w-28 border-e border-b border-[var(--color-border)] bg-gray-50 px-4 text-start text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
               >
                 Service
               </th>
@@ -205,7 +209,7 @@ export const HealthMatrix = ({
                   scope="col"
                   className="py-row-10 sticky top-0 z-10 border-b border-[var(--color-border)] bg-gray-50 px-2 font-mono text-xs font-medium whitespace-nowrap text-[var(--color-text-secondary)] dark:bg-gray-800"
                 >
-                  {column.label}
+                  <bdi>{column.label}</bdi>
                 </th>
               ))}
             </tr>
@@ -215,9 +219,9 @@ export const HealthMatrix = ({
               <tr key={row.id}>
                 <th
                   scope="row"
-                  className="sticky left-0 z-10 border-r border-b border-[var(--color-border)] bg-[var(--color-bg-panel)] px-4 text-left text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
+                  className="inset-s-0 sticky z-10 border-e border-b border-[var(--color-border)] bg-[var(--color-bg-panel)] px-4 text-start text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
                 >
-                  {row.label}
+                  <bdi>{row.label}</bdi>
                 </th>
                 {columns.map((column, c) => {
                   const cell = row.cells[column.id];
@@ -283,31 +287,35 @@ export const HealthMatrix = ({
         {openRow && openCol && openCell && (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              <b className="font-semibold text-[var(--color-text-primary)]">{openRow.label}</b>
+              <b className="font-semibold text-[var(--color-text-primary)]">
+                <bdi>{openRow.label}</bdi>
+              </b>
               <span className="font-mono text-xs text-[var(--color-text-secondary)]">
-                {openCol.label}
+                <bdi>{openCol.label}</bdi>
               </span>
               <StatusBadge
                 status={openCell.status}
                 size="sm"
                 label={STATUS_NAME[openCell.status]}
-                className="ml-auto"
+                className="ms-auto"
               />
             </div>
             {openCell.message && (
               <p className="m-0 mt-2 break-words text-[var(--color-text-primary)]">
-                {openCell.message}
+                <bdi>{openCell.message}</bdi>
               </p>
             )}
             {(openCell.checkedAt !== undefined || openCell.latency !== undefined) && (
               <p className="m-0 mt-1 text-xs text-[var(--color-text-secondary)]">
-                {openCell.checkedAt !== undefined && (
-                  <>
-                    Checked <RelativeTime value={openCell.checkedAt} now={now} />
-                  </>
-                )}
-                {openCell.checkedAt !== undefined && openCell.latency !== undefined && ' · '}
-                {openCell.latency !== undefined && formatLatency(openCell.latency)}
+                <bdi>
+                  {openCell.checkedAt !== undefined && (
+                    <>
+                      Checked <RelativeTime value={openCell.checkedAt} now={now} />
+                    </>
+                  )}
+                  {openCell.checkedAt !== undefined && openCell.latency !== undefined && ' · '}
+                  {openCell.latency !== undefined && formatLatency(openCell.latency)}
+                </bdi>
               </p>
             )}
             {openCell.detail && <div className="mt-2.5">{openCell.detail}</div>}

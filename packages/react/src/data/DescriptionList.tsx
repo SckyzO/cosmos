@@ -31,9 +31,16 @@ export type DescriptionListItemProps = ComponentPropsWithRef<'div'> & {
   label: ReactNode;
   /** Render the value in a monospace font (IDs, hashes, paths…). */
   mono?: boolean;
-  /** Value (`<dd>`). */
+  /**
+   * Value (`<dd>`). A text or a number sits in a `<bdi>`, so a value that starts with a number
+   * keeps its order in a right-to-left page ("2 minutes ago", not "minutes ago 2").
+   */
   children: ReactNode;
 };
+
+// A text value is an island of its own direction; a node is left as it is.
+const isolate = (value: ReactNode) =>
+  typeof value === 'string' || typeof value === 'number' ? <bdi>{value}</bdi> : value;
 
 function Item({
   label,
@@ -58,7 +65,7 @@ function Item({
             mono && 'font-mono text-xs'
           )}
         >
-          {children}
+          {isolate(children)}
         </dd>
       </div>
     );
@@ -76,7 +83,7 @@ function Item({
           mono && 'font-mono'
         )}
       >
-        {children}
+        {isolate(children)}
       </dd>
     </div>
   );
@@ -100,8 +107,8 @@ export type DescriptionListProps = ComponentPropsWithRef<'dl'> & {
    */
   striped?: boolean;
   /**
-   * When `true`, items are flat label/value rows, the label on the left and the value on the
-   * right, for the metadata of a card (ID, template, last seen…). The default items are
+   * When `true`, items are flat label/value rows, the label at the start and the value at the
+   * end, for the metadata of a card (ID, template, last seen…). The default items are
    * wide, with the label above the value on a phone.
    */
   compact?: boolean;

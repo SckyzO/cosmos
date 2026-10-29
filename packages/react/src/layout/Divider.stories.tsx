@@ -36,8 +36,8 @@ export const WithIcon: Story = {
   ),
 };
 
-// TUI Plus "With label on left" — line with a left-aligned text inset.
-export const WithLabelOnLeft: Story = {
+// TUI Plus "With label on left" — line with a text inset at the start of the line.
+export const WithLabelAtStart: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <Divider inset="Continue" align="start" />
@@ -54,8 +54,8 @@ export const WithTitle: Story = {
   ),
 };
 
-// TUI Plus "With title on left" — emphasized inset, left-aligned.
-export const WithTitleOnLeft: Story = {
+// TUI Plus "With title on left" — emphasized inset at the start of the line.
+export const WithTitleAtStart: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
       <Divider inset="Section title" emphasis align="start" />
@@ -88,7 +88,7 @@ export const WithTitleAndButton: Story = {
   ),
 };
 
-// TUI Plus "With toolbar" — bordered row with title + button group on the right.
+// TUI Plus "With toolbar" — bordered row with title + button group at the end.
 export const WithToolbar: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
@@ -218,6 +218,30 @@ export const AlignFollowsTheReadingDirection: Story = {
         endOffset(startIcon, box)
       );
       expect(endOffset(endIcon, box), `${dir}: end icon`).toBeLessThan(startOffset(endIcon, box));
+    }
+  },
+};
+
+/** A row puts its title at the start of the line and its actions at the end. */
+export const RowTitleStartsAndActionsEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Divider.Row title="Members" actions={<Button size="sm">Invite</Button>} />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const title = within(box).getByText('Members');
+      const action = within(box).getByRole('button', { name: 'Invite' });
+      expect(startOffset(title, box), `${dir}: title`).toBeLessThan(endOffset(title, box));
+      expect(endOffset(action, box), `${dir}: actions`).toBeLessThan(startOffset(action, box));
+      // The gap before the actions is on their start side.
+      expect(
+        parseFloat(
+          getComputedStyle(action.parentElement!)[dir === 'ltr' ? 'marginLeft' : 'marginRight']
+        )
+      ).toBeGreaterThan(0);
     }
   },
 };

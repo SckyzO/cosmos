@@ -60,6 +60,8 @@ export function LinkForm({ editor, labels, onDone, className }: LinkFormProps) {
         autoFocus
         autoComplete="off"
         spellCheck={false}
+        // An address reads left to right, whatever the page does.
+        dir="ltr"
         aria-label={labels.linkUrl}
         aria-invalid={invalid || undefined}
         aria-describedby={invalid ? errorId : undefined}

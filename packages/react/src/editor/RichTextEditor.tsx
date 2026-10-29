@@ -12,6 +12,7 @@ import { isSafeLinkUrl } from '../chat/httpUrl';
 import { fieldClass, type FieldSize } from '../forms/fieldRecipe';
 import { RequiredMark } from '../forms/RequiredMark';
 import { BUBBLE_ACTIONS, RICH_TEXT_ACTIONS, type RichTextAction } from './actions';
+import { BlockDirection } from './blockDirection';
 import { FormattingToolbar } from './FormattingToolbar';
 import { resolveLabels, type RichTextLabels } from './labels';
 
@@ -127,15 +128,18 @@ const LinkShortcut = Extension.create<{ open: () => boolean }>({
 const CONTENT_CLASS = [
   'min-w-0 outline-hidden break-words',
   '[&>*+*]:mt-2',
+  // Each block follows the direction of what is typed in it, as a Textarea's paragraphs do
+  // (`FIELD_PLAINTEXT`); lists and quotes take a `dir` from `BlockDirection`.
+  '[&_p]:[unicode-bidi:plaintext] [&_h2]:[unicode-bidi:plaintext] [&_h3]:[unicode-bidi:plaintext]',
   '[&_h2]:text-lg [&_h2]:leading-snug [&_h2]:font-semibold',
   '[&_h3]:text-base [&_h3]:leading-snug [&_h3]:font-semibold',
-  '[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li>p]:my-0',
-  '[&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:text-gray-600',
+  '[&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_li>p]:my-0',
+  '[&_blockquote]:border-s-4 [&_blockquote]:border-gray-300 [&_blockquote]:ps-3 [&_blockquote]:text-gray-600',
   'dark:[&_blockquote]:border-gray-600 dark:[&_blockquote]:text-gray-300',
   '[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.9em]',
   'dark:[&_code]:bg-gray-800',
   '[&_a]:text-brand-600 dark:[&_a]:text-brand-400 [&_a]:underline [&_a]:underline-offset-2',
-  '[&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-left [&_p.is-editor-empty:first-child]:before:h-0',
+  '[&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-start [&_p.is-editor-empty:first-child]:before:h-0',
   '[&_p.is-editor-empty:first-child]:before:text-gray-500 dark:[&_p.is-editor-empty:first-child]:before:text-gray-400',
   '[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
 ].join(' ');
@@ -238,6 +242,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
         Placeholder.configure({ placeholder: () => latest.get().placeholder ?? '' }),
         ...(maxLength !== undefined ? [CharacterCount.configure({ limit: maxLength })] : []),
         LinkShortcut.configure({ open: () => latest.get().openLink() }),
+        BlockDirection,
       ],
       onCreate: ({ editor: created }) => setCharacters(countCharacters(created)),
       onTransaction: ({ editor: changed }) => setCharacters(countCharacters(changed)),
@@ -417,7 +422,9 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
           {error ?? description ?? ''}
         </span>
         {counter && (
+          // A count is a code: "12 / 100" reads in this order whatever the page's direction.
           <span
+            dir="ltr"
             aria-live="polite"
             className={clsx(
               'shrink-0 font-mono text-xs tabular-nums',

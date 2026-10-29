@@ -159,10 +159,12 @@ export const HealthSummary = ({
           {headline}
         </b>
         <span className="text-[var(--color-text-secondary)]">
-          {countsText(counts)}
-          {lastCheck}
+          <bdi>
+            {countsText(counts)}
+            {lastCheck}
+          </bdi>
         </span>
-        {refresh && <RefreshButton {...refresh} className={clsx('ml-auto', refresh.className)} />}
+        {refresh && <RefreshButton {...refresh} className={clsx('ms-auto', refresh.className)} />}
       </div>
     );
   }
@@ -193,8 +195,10 @@ export const HealthSummary = ({
           {headline}
         </p>
         <p className={clsx('m-0 mt-0.5 text-sm', tone.text)}>
-          {detail}
-          {lastCheck}
+          <bdi>
+            {detail}
+            {lastCheck}
+          </bdi>
         </p>
       </div>
       <div className="flex flex-wrap gap-1.5">

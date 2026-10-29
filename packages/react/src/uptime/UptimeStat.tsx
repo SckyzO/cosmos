@@ -71,7 +71,7 @@ const Figure = ({
   className?: string;
 }) => (
   <span className={clsx('tabular-nums', LEVEL_TEXT[uptimeLevel(uptime, thresholds)], className)}>
-    {figure(uptime)}
+    <bdi>{figure(uptime)}</bdi>
     {uptime === null && <span className="sr-only">No data</span>}
   </span>
 );
@@ -106,7 +106,7 @@ export const UptimeStat = ({
     return (
       <div className={clsx(CARD, 'min-w-0 px-5 py-[18px]', className)}>
         <p className="m-0 text-xs text-[var(--color-text-secondary)]">
-          {label ?? `Uptime, ${period?.label ?? ''}`}
+          <bdi>{label ?? `Uptime, ${period?.label ?? ''}`}</bdi>
         </p>
         <p className="m-0 mt-1 flex flex-wrap items-baseline gap-x-2.5">
           <Figure
@@ -116,7 +116,7 @@ export const UptimeStat = ({
           />
           {down && (
             <span className="text-sm text-[var(--color-text-secondary)]">
-              {down === 'No downtime' ? down : `${down} down`}
+              <bdi>{down === 'No downtime' ? down : `${down} down`}</bdi>
             </span>
           )}
         </p>
@@ -137,13 +137,15 @@ export const UptimeStat = ({
   const expiring = certificate !== undefined && certificate.daysLeft < warnBelow;
   const expired = certificate !== undefined && certificate.daysLeft < 0;
   const item =
-    'flex min-w-0 flex-col gap-0.5 sm:border-r sm:border-[var(--color-border)] sm:px-5 sm:first:pl-0 sm:last:border-r-0';
+    'flex min-w-0 flex-col gap-0.5 sm:border-e sm:border-[var(--color-border)] sm:px-5 sm:first:ps-0 sm:last:border-e-0';
   return (
     <div role="group" aria-label={ariaLabel} className={clsx(CARD, 'px-5 py-4', className)}>
       <dl className="m-0 grid grid-cols-2 gap-y-4 sm:flex sm:flex-wrap">
         {periods.map((period) => (
           <div key={period.label} className={item}>
-            <dt className="text-xs text-[var(--color-text-secondary)]">{period.label}</dt>
+            <dt className="text-xs text-[var(--color-text-secondary)]">
+              <bdi>{period.label}</bdi>
+            </dt>
             <dd className="m-0 text-xl font-semibold">
               <Figure uptime={period.uptime} thresholds={thresholds} />
             </dd>
@@ -153,7 +155,7 @@ export const UptimeStat = ({
           <div className={item}>
             <dt className="text-xs text-[var(--color-text-secondary)]">Avg. response</dt>
             <dd className="m-0 text-xl font-semibold text-[var(--color-text-primary)] tabular-nums">
-              {formatLatency(responseTime)}
+              <bdi>{formatLatency(responseTime)}</bdi>
             </dd>
           </div>
         )}
@@ -173,7 +175,7 @@ export const UptimeStat = ({
               {expiring && (
                 <AlertTriangle role="img" aria-label="Warning" className="size-4 shrink-0" />
               )}
-              {daysLeftText(certificate.daysLeft)}
+              <bdi>{daysLeftText(certificate.daysLeft)}</bdi>
             </dd>
           </div>
         )}

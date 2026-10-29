@@ -283,10 +283,7 @@ const LogRow = ({
       {number !== null && (
         <span
           aria-hidden
-          className={clsx(
-            'min-w-[6ch] shrink-0 text-right tabular-nums select-none',
-            palette.muted
-          )}
+          className={clsx('min-w-[6ch] shrink-0 text-end tabular-nums select-none', palette.muted)}
         >
           {number}
         </span>
@@ -325,7 +322,7 @@ const LogRow = ({
         // Narrow and wrapped, a compact row breaks after the time and the level: the message takes
         // a line of its own, as wide as the row less the toggle.
         wrap ? 'flex-1 break-words whitespace-pre-wrap' : 'whitespace-pre',
-        wrap && !comfortable && '@max-md:ml-6 @max-md:basis-[calc(100%-1.5rem)]',
+        wrap && !comfortable && '@max-md:ms-6 @max-md:basis-[calc(100%-1.5rem)]',
         LOG_MESSAGE_CLASS[tone][level]
       )}
     >
@@ -406,7 +403,7 @@ const LogDetails = ({
         palette.expanded
       )}
     >
-      <div className="py-row-4 pr-3 pl-9">
+      <div className="py-row-4 ps-9 pe-3">
         {fields.length > 0 && (
           <dl className="grid grid-cols-[minmax(6rem,max-content)_minmax(0,1fr)] gap-x-4">
             {fields.map(([key, value]) => (
@@ -749,7 +746,11 @@ export const LogViewer = ({
         className="pointer-events-auto shadow-lg"
         onClick={() => setFollow(true)}
       >
-        {waiting > 0 ? `Jump to latest (${waiting.toLocaleString('en-US')} new)` : 'Jump to latest'}
+        <bdi>
+          {waiting > 0
+            ? `Jump to latest (${waiting.toLocaleString('en-US')} new)`
+            : 'Jump to latest'}
+        </bdi>
       </Button>
     </div>
   );
@@ -768,13 +769,17 @@ export const LogViewer = ({
         aria-labelledby={ariaLabelledBy}
         tabIndex={0}
         onScroll={onScroll}
+        // A log is output: its records keep their column order and scroll from the left,
+        // whatever the page reads. The toolbar and the jump button around it follow the page.
+        dir="ltr"
         className="focus-visible:focus-indicator relative h-full overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset"
       >
         {/* Measures a row, so the window knows how tall one is at this text size. */}
         <div
           ref={probeRef}
           aria-hidden
-          className="pointer-events-none invisible absolute top-0 left-0"
+          dir="ltr"
+          className="inset-s-0 pointer-events-none invisible absolute top-0"
         >
           <LogRow
             line={probeLine}
@@ -796,7 +801,9 @@ export const LogViewer = ({
         </div>
         <div ref={contentRef}>
           {count === 0 ? (
-            <p className={clsx('m-0 px-3 py-2 font-sans text-sm', palette.muted)}>{emptyMessage}</p>
+            <p dir="auto" className={clsx('m-0 px-3 py-2 font-sans text-sm', palette.muted)}>
+              {emptyMessage}
+            </p>
           ) : (
             <>
               {shown.before > 0 && <div aria-hidden style={{ height: shown.before * rowHeight }} />}

@@ -58,7 +58,7 @@ const HealthContent = () => {
           >
             Checks
           </h2>
-          <span className="ml-auto text-sm text-[var(--color-text-secondary)]">
+          <span className="ms-auto text-sm text-[var(--color-text-secondary)]">
             Sorted by severity
           </span>
         </div>

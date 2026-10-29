@@ -177,6 +177,8 @@ export const HeatmapChart = ({
   return (
     <div
       style={{
+        // The axes keep their order under `dir="rtl"`, and so do the legend's sides.
+        direction: 'ltr',
         display: 'flex',
         gap: '1rem',
         width: width ?? '100%',

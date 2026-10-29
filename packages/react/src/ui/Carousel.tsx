@@ -12,6 +12,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { useParentDirection } from '../hooks/direction';
 
 type EmblaApi = UseEmblaCarouselType[1];
 
@@ -66,7 +67,10 @@ export const CarouselRoot = ({
         }),
       ]
     : [];
-  const [emblaRef, api] = useEmblaCarousel(options, plugins);
+  // Embla lays the slides out from the end of the line in right to left, and drags and scrolls
+  // that way, only when it is told: it does not read `dir`. A `direction` in `options` wins.
+  const [direction, rootRef] = useParentDirection<HTMLDivElement>();
+  const [emblaRef, api] = useEmblaCarousel({ direction, ...options }, plugins);
   const subscribe = useCallback(
     (onChange: () => void) => {
       if (!api) return () => {};
@@ -111,7 +115,9 @@ export const CarouselRoot = ({
         canScrollNext,
       }}
     >
-      <div className={clsx('relative', className)}>{children}</div>
+      <div ref={rootRef} className={clsx('relative', className)}>
+        {children}
+      </div>
     </CarouselContext.Provider>
   );
 };
@@ -175,7 +181,7 @@ const CarouselControls = ({
           onClick={scrollPrev}
           className={baseBtn}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
         </button>
         <button
           type="button"
@@ -184,7 +190,7 @@ const CarouselControls = ({
           onClick={scrollNext}
           className={baseBtn}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
         </button>
       </div>
     );
@@ -196,18 +202,18 @@ const CarouselControls = ({
         aria-label={prevLabel}
         disabled={!canScrollPrev}
         onClick={scrollPrev}
-        className={clsx('absolute top-1/2 left-4 z-10 -translate-y-1/2', overlayBtn, className)}
+        className={clsx('inset-s-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
       </button>
       <button
         type="button"
         aria-label={nextLabel}
         disabled={!canScrollNext}
         onClick={scrollNext}
-        className={clsx('absolute top-1/2 right-4 z-10 -translate-y-1/2', overlayBtn, className)}
+        className={clsx('inset-e-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
       </button>
     </>
   );
@@ -232,7 +238,8 @@ export type CarouselIndicatorsProps = {
 // the wide active dot and `aria-current`. Tailwind scans for whole class names, so each is written out.
 const INDICATORS_CLASS = {
   outside: 'mt-3',
-  inside: 'absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-2',
+  inside:
+    'absolute inset-s-1/2 bottom-3 z-10 -translate-x-1/2 rounded-full bg-black/50 px-2 rtl:translate-x-1/2',
 } as const;
 
 const INDICATOR_FOCUS = {

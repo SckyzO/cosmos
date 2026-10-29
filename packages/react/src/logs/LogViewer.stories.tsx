@@ -1,9 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SplitView } from '../layout/SplitView';
 import { Card } from '../ui/Card';
-import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { LogViewer } from './LogViewer';
 import { LogConsole, SOURCES, fakeLine, fakeLines } from './storybook-logs';
@@ -594,5 +600,60 @@ export const RowsFollowPageDensity: Story = {
     await expectDensitySteps(canvas, (scope) =>
       scope.getByRole('group', { name: 'Details of line 8' })
     );
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+const PausedViewer = () => {
+  const [lines, setLines] = useState(() => fakeLines(60));
+  const [added, setAdded] = useState(false);
+  if (!added) {
+    setAdded(true);
+    queueMicrotask(() => setLines((previous) => [...previous, ...fakeLines(12, 61)]));
+  }
+  return (
+    <LogViewer
+      lines={lines}
+      aria-label="Backend logs"
+      lineNumbers
+      height={200}
+      follow={false}
+      onFollowChange={() => {}}
+    />
+  );
+};
+
+/**
+ * A log is output: its records keep their column order (number, time, level, source, message) and
+ * scroll from the left in both directions, while the jump button around it follows the page and
+ * its count reads left to right.
+ */
+export const RecordsKeepTheirOrderInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <PausedViewer />),
+  play: async ({ canvasElement }) => {
+    const numberStarts: number[] = [];
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const log = within(box).getByRole('log');
+      expect(getComputedStyle(log).direction, `${dir}: the log`).toBe('ltr');
+      // The first row in the page, not the hidden one that measures a row.
+      const row = [...log.querySelectorAll<HTMLElement>('[data-index="0"]')].find(
+        (candidate) => !candidate.closest('[aria-hidden]')
+      )!;
+      const number = row.querySelector('.contents')!.firstElementChild!;
+      expect(number.textContent, `${dir}: line number`).toBe('1');
+      const message = row.lastElementChild!;
+      expect(number.getBoundingClientRect().left, `${dir}: number before message`).toBeLessThan(
+        message.getBoundingClientRect().left
+      );
+      numberStarts.push(number.getBoundingClientRect().left - box.getBoundingClientRect().left);
+      const jump = await within(box).findByRole('button', { name: /Jump to latest/ });
+      await waitFor(() => expect(jump.textContent).toMatch(/\(12 new\)/));
+      expectReadsLeftToRight(jump);
+    }
+    // The gutter is at the same place in both: the log does not mirror.
+    expect(numberStarts[1]).toBeCloseTo(numberStarts[0]!, 0);
   },
 };

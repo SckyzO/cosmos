@@ -3,10 +3,14 @@ import type { ReactNode } from 'react';
 import { Activity, Sparkles } from 'lucide-react';
 import { expect, fn } from 'storybook/test';
 import {
+  endEdge,
   expectNoHorizontalOverflow,
+  inDirection,
   inEachTheme,
   mobileViewport,
   portalDocsParams,
+  startEdge,
+  startOffset,
 } from '../storybook-helpers';
 import { Button } from '../ui/Button';
 import { Input } from '../forms/Input';
@@ -257,9 +261,30 @@ export const SplitAsideAtStartIsFirst: Story = {
   play: async ({ canvasElement }) => {
     const aside = canvasElement.querySelector('aside') as HTMLElement;
     const form = canvasElement.querySelector('input') as HTMLElement;
-    await expect(aside.getBoundingClientRect().right).toBeLessThanOrEqual(
-      form.getBoundingClientRect().left
+    await expect(endEdge(aside.getBoundingClientRect())).toBeLessThanOrEqual(
+      startEdge(form.getBoundingClientRect())
     );
+  },
+};
+
+// The panel at the end of the line sits on the right in left to right and on the left in right to
+// left, the same distance from the start edge of the page. One layout, measured under each
+// direction: two on the page would repeat the `aside` landmark.
+export const SplitAsideMirrorsInRightToLeft: Story = {
+  ...Split,
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  play: async ({ canvasElement }) => {
+    const aside = canvasElement.querySelector('aside') as HTMLElement;
+    const page = aside.parentElement as HTMLElement;
+    const offsets: Record<string, number> = {};
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        offsets[dir] = Math.round(startOffset(aside, page));
+      });
+    }
+    await expect(offsets.ltr).toBeGreaterThan(0);
+    await expect(offsets.rtl).toBe(offsets.ltr);
   },
 };
 

@@ -1,7 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { beatsFrom, FLAPPING_BEATS, GAPPY_BEATS, MIXED_BEATS } from '../storybook-uptime';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
+  mobileViewport,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { MonitorRow, type MonitorRowProps } from './MonitorRow';
 
@@ -257,5 +266,40 @@ export const RowFollowsPageDensity: Story = {
   ),
   play: async ({ canvas }) => {
     await expectDensitySteps(canvas, (_scope, region) => region.firstElementChild!);
+  },
+};
+
+// ── Right to left ───────────────────────────────────────────────────────────
+
+/**
+ * The row follows the page: the state chip and the name at the start, the figures at the end,
+ * each one in its own order. The beats between them keep their time order.
+ */
+export const RowFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) =>
+    bothDirections(() => (
+      <div style={{ width: 720 }}>
+        <MonitorRow {...args} uptime={0.9995} beats={MIXED_BEATS} />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const canvas = within(box);
+      await waitFor(() => expect(canvas.getAllByRole('img').length).toBeGreaterThan(5));
+      const chip = canvas.getAllByRole('img')[0]!;
+      expect(startOffset(chip, box), `${dir}: chip first`).toBeLessThan(
+        startOffset(canvas.getByText('API'), box)
+      );
+      expectReadsLeftToRight(canvas.getByText('99.95%'));
+      const beats = canvas.getByRole('group');
+      const marks = within(beats).getAllByRole('img');
+      expect(marks[0]!.getBoundingClientRect().left, `${dir}: oldest beat`).toBeLessThan(
+        marks.at(-1)!.getBoundingClientRect().left
+      );
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByText('API'));
+    expectMirrored(canvasElement, (box) => within(box).getByText('99.95%'));
   },
 };
