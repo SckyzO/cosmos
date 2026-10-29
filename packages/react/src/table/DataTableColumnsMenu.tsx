@@ -22,8 +22,10 @@ export const DataTableColumnsMenu = <T,>({
   <Menu align="end">
     <Menu.Trigger aria-label="Columns" className={TOOLBAR_BUTTON}>
       <Columns3 aria-hidden className="h-4 w-4" />
-      <span className="max-sm:hidden">Columns</span>
-      <ChevronDown aria-hidden className="h-4 w-4 text-gray-400 max-sm:hidden" />
+      <span data-toolbar-label className="max-sm:hidden">
+        Columns
+      </span>
+      <ChevronDown aria-hidden data-toolbar-label className="h-4 w-4 text-gray-400 max-sm:hidden" />
     </Menu.Trigger>
     <Menu.Content aria-label="Columns" width="w-56">
       <Menu.Group label="Columns">
