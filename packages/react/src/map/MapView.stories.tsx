@@ -6,6 +6,8 @@ import { Badge, Card } from '../ui';
 import {
   endOffset,
   expectNoHorizontalOverflow,
+  expectOpaqueBackground,
+  expectTextContrast,
   inDirection,
   mobileViewport,
   startOffset,
@@ -308,6 +310,20 @@ export const SelectionIsControlled: Story = {
     // A controlled selection does not move until the host says so.
     await userEvent.click(within(popup).getByRole('button', { name: 'Close' }));
     expect(canvas.getByRole('dialog', { name: 'Harbour' })).toBeVisible();
+  },
+};
+
+/**
+ * The attribution MapLibre writes over the map takes the theme's panel and text colours. Its own
+ * box was half-white and its text the page's: 2.9:1 over the dark tiles, which axe cannot read
+ * through the canvas.
+ */
+export const AttributionReadsInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const text = await canvas.findByText('Fictional map data');
+    expectOpaqueBackground(text.closest('.maplibregl-ctrl-attrib')!);
+    expectTextContrast(text);
   },
 };
 
