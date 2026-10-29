@@ -11,6 +11,8 @@ export type StateLayoutProps = {
   media?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
+  /** Under the description, before the action. Start-aligned, up to 28rem wide. */
+  children?: ReactNode;
   action?: ReactNode;
   /** Tighter spacing and a smaller tile, for a card or a table body. */
   compact?: boolean;
@@ -28,6 +30,7 @@ export const StateLayout = ({
   media,
   title,
   description,
+  children,
   action,
   compact = false,
   role,
@@ -65,6 +68,7 @@ export const StateLayout = ({
           </p>
         )}
       </div>
+      {children && <div className="w-full max-w-md text-start">{children}</div>}
       {action}
     </div>
   );
