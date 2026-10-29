@@ -207,8 +207,28 @@ filters bar; the counts come from you, the table never computes them.
 instead of scrolling: the checkbox, the column marked `mobile: 'title'` and the
 row action on the first line, then a label/value pair per other column
 (`mobileLabel` renames a label, `mobile: 'hidden'` drops a column). The toolbar
-gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
-the table.
+gets a "Sort by" select for the sortable columns and, when a column is
+filterable, a "Filters" button with the number of values filtered: it opens a
+bottom sheet with the filter of each filterable column, "Clear all" and "Show n
+rows", and sets the same `filters` as the column headers, controlled or not. The
+default, `scroll`, keeps the table.
+
+With `selectable`, a selection puts a tinted bar on one row: the count, "Clear"
+and the bulk actions on the start side, the search and the toolbar on the end
+side. `bulkActionItems` takes the actions as data (`{ key, label, icon,
+intent, disabled, onClick(selectedRows) }`) so the bar can adapt: the first is a
+button and, under 1152px of bar, the others fold into an "Actions" menu; the
+toolbar buttons go icon-only and the search narrows under 1360px; under 640px
+the bar wraps to two lines; with `mobileLayout="cards"` on a phone each action is
+an icon button named by its `label`. `bulkActions(selectedRows)` still renders
+any node after them, as given at every width. While rows are selected the
+toolbar's Export follows them ("Export 3" downloads those rows, in the table's
+sort order, and `onExport` gets their keys as `selection`); with none selected it
+exports the filtered rows.
+
+`emptyAction` puts a call to action under the empty state ("Create the first
+order"). When a search or filters hide every row it gives way to a "Clear
+filters" button, which clears both.
 
 `DataTable` rows can expand: `renderExpandedRow(row)` adds a first column of
 chevron buttons (`aria-expanded`, `aria-controls` the detail row while it is
@@ -334,7 +354,8 @@ mark (U+FEFF), so that spreadsheets read accents. Fields follow RFC 4180
 header or string value that starts with `=`, `+`, `-`, `@`, a tab or a carriage
 return gets a `'` prefix so a spreadsheet never runs it as a formula; a
 `number` is left alone. To export on the server, `onExport(query)` receives `{ search, filters,
-sort, columns }` (the visible column keys, in order) and builds no file.
+sort, columns }` (the visible column keys, in order, plus `selection`, the
+selected keys, while rows are selected) and builds no file.
 `toCsv(rows, columns)` gives the same text, without the byte order mark, for an
 export outside a table (prepend U+FEFF for a file meant for spreadsheets).
 
@@ -656,7 +677,16 @@ nothing in it is `UNKNOWN`.
   filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
   legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
   grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
-  vertically.
+  vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
+  `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a
+  warning or a critical cell, with its counts in words ("2 Critical, 1 Warning"), the worst rows
+  first. Picking a chip scrolls its row into view, in the grid's own box when `maxHeight` is set,
+  and moves the focus to its worst cell; on a phone the strip scrolls sideways.
+
+`HealthSummary`, `HealthMatrix` and `MonitorRow` (see Uptime monitoring) take `stale`, the time of the
+last data, for a source that has stopped answering. The status colours turn grey, the component says
+"Stale · 4 minutes ago" and the stale state is in the accessible text (the headline, each matrix
+cell, the monitor's state chip). The statuses shown stay those of the last data.
 
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
@@ -720,7 +750,8 @@ theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaint
   pause it), the name (a link with `href`) and `type` (any string: `HTTP`, `TCP`, `DNS`, `ping`,
   `keyword`), a 24px `HeartbeatBar`, the uptime over 24 hours, and the current latency (default: the
   last beat's). `variant="row"` is a line of a list, which the host draws: it stacks on a narrow
-  screen. `variant="card"` is a tile for a grid.
+  screen. `variant="card"` is a tile for a grid. `stale` (with `now` to freeze its text) greys the
+  chip, the beats and the uptime and adds a "Stale · 4 minutes ago" tag under the name.
 
 The response time (a `LineAreaChart` from `@sckyzo/cosmos-charts`, its `referenceBands` shading the
 down periods; the stories draw a plain SVG, since this package has no chart dependency), the timeline
@@ -897,12 +928,22 @@ only http(s) URLs become links.
   Cancel and Escape return the focus to the button that opened it. Delete calls back at once:
   confirm in the host if needed.
 - Replies are one level, `Comment`s passed as `replies`, folded beyond `maxReplies` (default
-  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own.
+  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own. For a ticket, where
+  the latest exchanges matter, `keepReplies="last"` keeps the last `maxReplies` visible and folds
+  the older ones behind a button above them ("Show 3 earlier replies", `labels.showEarlierReplies`).
 - `variant="internal"` tints a note and labels it "Internal note" with a lock, so it reads as one
   without the color.
 - `CommentComposer` is a `Textarea` with `autoResize`: Enter adds a line, Ctrl or Cmd+Enter and the
   submit button send, Escape cancels when `onCancel` is given. Submit is disabled while the text
   is empty or `submitting`. `value` / `defaultValue` / `onChange` work as on other fields.
+- `modes` gives the composer a segmented control above the field, for what is being written
+  (`{ value: 'reply', label: 'Reply to customer' }`, `{ value: 'note', label: 'Internal note',
+internal: true }`). `onSubmit(text, mode)` receives the selected mode's `value`; without `modes`
+  it gets the text alone, as before. `mode` / `defaultMode` / `onModeChange` work as on other
+  fields, and a mode may carry its own `placeholder` and `submitLabel`. An `internal` mode tints
+  the field and the submit button like `variant="internal"` tints a comment, with a lock and the
+  line `internalNotice` ("Internal note: only your team sees this."), announced when the mode
+  changes. `modeLabel` names the control.
 - `time` is a node, as in `Timeline`: a `RelativeTime`, a `<time>` or your own text.
 - Every text can be translated: `labels` on `CommentThread` reaches all its comments (a
   comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
@@ -1205,6 +1246,32 @@ reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass i
 >
   {/* page */}
 </Shell>
+```
+
+### Search in the Topbar
+
+`CommandPaletteTrigger` is a button drawn like a search field (a magnifier, a placeholder and the
+hotkey as a key hint, `⌘K` on Apple platforms and `Ctrl K` elsewhere) that opens a
+`CommandPalette`. It is not an input: the palette holds the field, so a screen reader announces a
+button that opens a dialog. Put it in the Topbar's `center` slot. Below `sm` it is a square icon
+button, and the placeholder stays as its accessible name. `size` takes the form fields' `sm`, `md`
+and `lg`.
+
+The palette owns the hotkey (`hotkey`, `mod+k` by default) and the open state; the button
+registers no listener of its own. Open the palette from its `onClick`, and pass the same hotkey
+as `shortcut` so the hint is the right one (`shortcut={null}` for a palette without a hotkey).
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Topbar
+  pageTitle="Projects"
+  center={<CommandPaletteTrigger placeholder="Search projects" onClick={() => setOpen(true)} />}
+/>
+<CommandPalette open={open} onOpenChange={setOpen}>
+  <CommandPalette.Input placeholder="Search…" />
+  <CommandPalette.List>{/* items */}</CommandPalette.List>
+</CommandPalette>
 ```
 
 ### Layout modes

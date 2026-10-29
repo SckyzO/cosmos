@@ -49,8 +49,14 @@ export const DataTableViews = <T,>({
       <Menu align="end">
         <Menu.Trigger aria-label={label} className={TOOLBAR_BUTTON}>
           <Bookmark aria-hidden className="h-4 w-4" />
-          <span className="max-w-40 truncate max-sm:hidden">{label}</span>
-          <ChevronDown aria-hidden className="h-4 w-4 text-gray-400 max-sm:hidden" />
+          <span data-toolbar-label className="max-w-40 truncate max-sm:hidden">
+            {label}
+          </span>
+          <ChevronDown
+            aria-hidden
+            data-toolbar-label
+            className="h-4 w-4 text-gray-400 max-sm:hidden"
+          />
         </Menu.Trigger>
         <Menu.Content aria-label="Views" width="w-64">
           <Menu.Group label="Views">

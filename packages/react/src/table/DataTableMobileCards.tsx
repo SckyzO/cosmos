@@ -58,6 +58,7 @@ type DataTableMobileCardsProps<T> = {
   onRetry?: () => void;
   emptyTitle: string;
   emptyDescription?: string;
+  emptyAction?: ReactNode;
   'aria-label'?: string;
   'aria-labelledby'?: string;
 };
@@ -85,6 +86,7 @@ export const DataTableMobileCards = <T,>({
   onRetry,
   emptyTitle,
   emptyDescription,
+  emptyAction,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: DataTableMobileCardsProps<T>) => {
@@ -116,7 +118,7 @@ export const DataTableMobileCards = <T,>({
         {error ? (
           <ErrorState message={error} onRetry={onRetry} />
         ) : (
-          <EmptyState title={emptyTitle} description={emptyDescription} />
+          <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />
         )}
       </div>
     );

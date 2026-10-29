@@ -93,6 +93,16 @@ export const CompactWithRefresh: Story = {
   },
 };
 
+const STALE_SINCE = HEALTH_NOW - 4 * 60_000;
+
+/**
+ * `stale` is when the last data came in: the status colours go grey, a "Stale · 4 minutes ago" tag
+ * joins the banner and the headline is read as stale. The status stays the last known one.
+ */
+export const Stale: Story = { args: { stale: STALE_SINCE } };
+
+export const StaleCompact: Story = { args: { stale: STALE_SINCE, variant: 'compact' } };
+
 /** The banner and the compact line at 375px: the badges and the button wrap, nothing widens the page. */
 export const Mobile: Story = {
   globals: mobileViewport,
@@ -149,6 +159,47 @@ export const ConveysStatusAsText: Story = {
     await expect(canvas.getByText('2 Warning')).toBeVisible();
     await expect(canvas.getByText(/2 of 14 checks need attention/)).toBeVisible();
     await expect(canvas.getByRole('group')).toHaveTextContent(/last check 30 seconds ago/);
+  },
+};
+
+/** The tag says how old the data is, and the headline is read as stale. */
+export const StaleIsWrittenAndRead: Story = {
+  ...Stale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/^Stale/)).toHaveTextContent('Stale · 4 minutes ago');
+    await expect(canvas.getByRole('status')).toHaveTextContent('Degraded performance, stale data');
+    await expect(canvas.getByText('2 Warning')).toBeVisible();
+  },
+};
+
+export const FreshDataSaysNothingOfStaleness: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText(/^Stale/)).toBeNull();
+    await expect(canvas.getByRole('status')).toHaveTextContent(/^Degraded performance$/);
+  },
+};
+
+/** A stale banner takes the neutral surface and its badges go grey, whatever the last status was. */
+export const StaleMutesTheStatusColours: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex flex-col gap-3">
+      <HealthSummary checks={OUTAGE} now={HEALTH_NOW} stale={STALE_SINCE} ariaLabel="Stale" />
+      <HealthSummary checks={UNKNOWN} now={HEALTH_NOW} ariaLabel="Neutral" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const stale = canvas.getByRole('group', { name: 'Stale' });
+    const neutral = canvas.getByRole('group', { name: 'Neutral' });
+    const surface = (el: HTMLElement) => {
+      const { backgroundColor, borderColor } = getComputedStyle(el);
+      return { backgroundColor, borderColor };
+    };
+    await expect(surface(stale)).toEqual(surface(neutral));
+    const badge = within(stale).getByText('1 Critical').closest('span')!;
+    await expect(getComputedStyle(badge.parentElement!).filter).toContain('grayscale');
   },
 };
 
