@@ -39,6 +39,8 @@ Settings on the `<html>` element restyle every component:
   `xl`. It scales the text, not the spacing;
 - the **density**, a `data-density` attribute: none for the default, or `compact`,
   `comfortable`. It moves the height of controls and the padding of rows, not the gaps.
+- the **corner radius**, a `data-radius` attribute: none for the default, or `none`, `sm`, `lg`.
+  It rescales every `rounded-*` corner but `rounded-full`, which stays round.
 
 ```html
 <html class="sand" data-accent="teal" data-font="inter" data-text-size="lg"></html>
