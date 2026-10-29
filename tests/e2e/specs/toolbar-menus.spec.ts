@@ -34,6 +34,12 @@ const MENUS = [
     check: (html: Element) => html.getAttribute('data-density') === 'compact',
   },
   {
+    description: 'Corner radius',
+    label: 'Radius:',
+    pick: 'Radius: Large',
+    check: (html: Element) => html.getAttribute('data-radius') === 'lg',
+  },
+  {
     description: 'Text direction',
     label: 'Direction:',
     pick: 'Direction: Right to left',
