@@ -809,9 +809,9 @@ export const LinkFieldFollowsPageDensity: Story = {
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /**
- * The frame follows the page (the first button at the start, the character count at the end, the
- * icons that point along the line turned around) and so does the text it holds: lists are
- * indented and a quote is edged on the start side.
+ * The frame follows the page: the first button at the start, the character count at the end, the
+ * icons that point along the line turned around. The text it holds follows what is typed in it
+ * (`BlocksFollowWhatIsTypedInThem`, `ListsAndQuotesFollowWhatIsTypedInThem`).
  */
 export const ToolbarAndTextFollowTheReadingDirection: Story = {
   ...test,
@@ -821,7 +821,7 @@ export const ToolbarAndTextFollowTheReadingDirection: Story = {
     for (const dir of ['ltr', 'rtl'] as const) {
       const box = directionBox(canvasElement, dir);
       const canvas = within(box);
-      const text = await canvas.findByRole('textbox', { name: 'Message' });
+      await canvas.findByRole('textbox', { name: 'Message' });
       const bold = canvas.getByRole('button', { name: 'Bold' });
       const redo = canvas.getByRole('button', { name: 'Redo' });
       expect(startOffset(bold, box), `${dir}: first button at the start`).toBeLessThan(
@@ -832,20 +832,6 @@ export const ToolbarAndTextFollowTheReadingDirection: Story = {
       expect(scale('Undo'), `${dir}: undo`).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expect(scale('Bulleted list'), `${dir}: list`).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expect(scale('Bold'), `${dir}: bold`).toBe('none');
-
-      const [near, far] =
-        dir === 'ltr' ? (['Left', 'Right'] as const) : (['Right', 'Left'] as const);
-      const must = (selector: string) => {
-        const found = text.querySelector(selector);
-        if (!found) throw new Error(`${dir}: no ${selector} in ${text.innerHTML}`);
-        return found;
-      };
-      const list = getComputedStyle(must('ul'));
-      expect(parseFloat(list[`padding${near}`]), `${dir}: list indent`).toBe(20);
-      expect(parseFloat(list[`padding${far}`]), `${dir}: list far side`).toBe(0);
-      const quote = getComputedStyle(must('blockquote'));
-      expect(parseFloat(quote[`border${near}Width`]), `${dir}: quote edge`).toBe(4);
-      expect(parseFloat(quote[`border${far}Width`]), `${dir}: quote far side`).toBe(0);
 
       expectReadsLeftToRight(canvas.getByText(/^\d+ \/ 400$/));
     }
@@ -904,6 +890,46 @@ export const BlocksFollowWhatIsTypedInThem: Story = {
         `${dir}: Latin starts at the left`
       ).toBeLessThan(2);
       expect(field.width).toBeGreaterThan(textEdges(arabic).width);
+    }
+  },
+};
+
+/**
+ * A list and a quote follow what is typed in them too, so a bullet, a number and a quote's edge
+ * stay with their text: at the left of Latin, at the right of Arabic, in either page direction.
+ */
+export const ListsAndQuotesFollowWhatIsTypedInThem: Story = {
+  ...test,
+  args: {
+    defaultValue:
+      '<ul><li><p>Rolling restarts</p></li></ul><ol><li><p>إعادة التشغيل</p></li></ol>' +
+      '<blockquote><p>Nothing changes</p></blockquote><blockquote><p>لا شيء يتغير</p></blockquote>',
+  },
+  render: (args) => bothDirections(() => <RichTextEditor {...args} />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const text = await within(directionBox(canvasElement, dir)).findByRole('textbox', {
+        name: 'Message',
+      });
+      const [latinItem, arabicItem] = [...text.querySelectorAll('li')];
+      const [latinQuote, arabicQuote] = [...text.querySelectorAll('blockquote')];
+      if (!latinItem || !arabicItem || !latinQuote || !arabicQuote)
+        throw new Error('two lists and two quotes expected');
+      // A marker sits on the start side of its item, and a list's indent and a quote's edge on
+      // their start side: the side `direction` names, on the item, the list and the quote.
+      for (const [item, quote, side, near, far] of [
+        [latinItem, latinQuote, 'ltr', 'Left', 'Right'],
+        [arabicItem, arabicQuote, 'rtl', 'Right', 'Left'],
+      ] as const) {
+        const list = getComputedStyle(item.parentElement!);
+        expect(getComputedStyle(item).direction, `${dir}: ${side} item`).toBe(side);
+        expect(list.direction, `${dir}: ${side} list`).toBe(side);
+        expect(parseFloat(list[`padding${near}`]), `${dir}: ${side} list indent`).toBe(20);
+        expect(parseFloat(list[`padding${far}`]), `${dir}: ${side} list far side`).toBe(0);
+        const edge = getComputedStyle(quote);
+        expect(parseFloat(edge[`border${near}Width`]), `${dir}: ${side} quote edge`).toBe(4);
+        expect(parseFloat(edge[`border${far}Width`]), `${dir}: ${side} quote far side`).toBe(0);
+      }
     }
   },
 };

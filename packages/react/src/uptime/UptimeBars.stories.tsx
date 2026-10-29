@@ -285,13 +285,14 @@ export const LevelsReadWithoutColour: Story = {
 /**
  * The header follows the page (the title at the start, the uptime at the end, its figure in
  * order), while the days keep their time order: the oldest at the left, "Today" at the right.
+ * A legend's thresholds keep their order too: "99.9% and up", not "and up 99.9%".
  */
 export const DaysKeepTheirOrderAndHeaderFollowsThePage: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) =>
     bothDirections(() => (
       <div style={{ width: 480 }}>
-        <UptimeBars {...args} />
+        <UptimeBars {...args} legend />
       </div>
     )),
   play: async ({ canvasElement }) => {
@@ -309,6 +310,10 @@ export const DaysKeepTheirOrderAndHeaderFollowsThePage: Story = {
         today.getBoundingClientRect().left
       );
       expectReadsLeftToRight(canvas.getByText(/% uptime$/));
+      for (const item of within(canvas.getByRole('list', { name: 'Legend' })).getAllByRole(
+        'listitem'
+      ))
+        expectReadsLeftToRight(item);
     }
     expectMirrored(canvasElement, (box) => within(box).getByText('API'));
   },

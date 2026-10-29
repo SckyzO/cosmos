@@ -136,7 +136,7 @@ export const SingleCheckCard: Story = {
           <DescriptionList.Item label="Last result">p95 1.8 s, above 1 s</DescriptionList.Item>
           <DescriptionList.Item label="Latency">
             <span className="flex items-center gap-3">
-              1,820 ms
+              <bdi>1,820 ms</bdi>
               <LatencyTrend />
             </span>
           </DescriptionList.Item>
@@ -178,7 +178,7 @@ export const ConveysStatusAsText: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const name of ['OK', 'Info', 'Unknown', 'Critical', 'Warning']) {
-      await expect(canvas.getByText(name, { selector: 'span' })).toBeVisible();
+      await expect(canvas.getByText(name, { selector: 'span > bdi' })).toBeVisible();
     }
   },
 };

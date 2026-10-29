@@ -177,6 +177,12 @@ export const BannerAndCompactFollowTheReadingDirection: Story = {
         const summary = within(box).getByRole('group', { name });
         expectReadsLeftToRight(summary.querySelector('bdi')!);
       }
+      // The banner's badges, "12 OK" and not "OK 12".
+      const badges = within(within(box).getByRole('group', { name: 'Banner' })).getAllByText(
+        /^\d+ (OK|Warning|Critical|Unknown|Info)$/
+      );
+      expect(badges.length, `${dir}: badges`).toBeGreaterThan(1);
+      for (const badge of badges) expectReadsLeftToRight(badge);
     }
     expectMirrored(canvasElement, (box) =>
       within(within(box).getByRole('group', { name: 'Compact' })).getByRole('button', {

@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { Paperclip } from 'lucide-react';
 import { within } from 'storybook/test';
-import { bothDirections, directionBox, endOffset, startOffset } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectReadsLeftToRight,
+  startOffset,
+} from '../storybook-helpers';
 import { StatusBadge } from '../status/StatusBadge';
 import { DescriptionList } from './DescriptionList';
 
@@ -246,7 +252,10 @@ export const MonoSetsAMonospaceValue: Story = {
 
 // ── Right to left ───────────────────────────────────────────────────────────
 
-/** The term is at the start of its row, and a compact item puts its value at the end. */
+/**
+ * The term is at the start of its row, and a compact item puts its value at the end. A text value
+ * keeps its own order: "2 minutes ago", not "minutes ago 2".
+ */
 export const TermsStartTheRow: Story = {
   tags: ['!dev', '!autodocs'],
   render: () =>
@@ -257,6 +266,7 @@ export const TermsStartTheRow: Story = {
         </DescriptionList>
         <DescriptionList compact>
           <DescriptionList.Item label="Height">42U</DescriptionList.Item>
+          <DescriptionList.Item label="Last seen">2 minutes ago</DescriptionList.Item>
         </DescriptionList>
       </div>
     )),
@@ -276,6 +286,7 @@ export const TermsStartTheRow: Story = {
         endOffset(compact, height.parentElement!),
         `${dir}: compact value at the end`
       ).toBeLessThan(2);
+      expectReadsLeftToRight(canvas.getByText('2 minutes ago'));
     }
   },
 };
