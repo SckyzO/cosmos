@@ -530,7 +530,11 @@ export const PageLabelReadsLeftToRight: Story = {
   },
   play: ({ canvasElement }) => {
     for (const dir of ['ltr', 'rtl'] as const) {
-      expectReadsLeftToRight(within(directionBox(canvasElement, dir)).getByText(/^Page/));
+      const label = within(directionBox(canvasElement, dir)).getByText(/^Page/);
+      // An isolate of its own, so the page's direction cannot reorder it.
+      expect(label.tagName, dir).toBe('BDI');
+      expect(getComputedStyle(label).unicodeBidi, dir).toBe('isolate');
+      expectReadsLeftToRight(label);
     }
   },
 };

@@ -220,5 +220,14 @@ export const MirrorsInRightToLeft: Story = {
   play: ({ canvasElement }) => {
     expectMirrored(canvasElement, (box) => box.querySelector('a svg'));
     expectMirrored(canvasElement, (box) => within(box).getByText('5'));
+    // The label and the badge are islands: their own direction, whatever the row's.
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = canvasElement.querySelector<HTMLElement>(`[data-direction="${dir}"]`)!;
+      for (const text of ['Dashboard', '5']) {
+        const island = within(box).getByText(text);
+        expect(island.tagName, `${dir}: ${text}`).toBe('BDI');
+        expect(getComputedStyle(island).unicodeBidi, `${dir}: ${text}`).toBe('isolate');
+      }
+    }
   },
 };

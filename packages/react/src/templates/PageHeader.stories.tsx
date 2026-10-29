@@ -289,6 +289,13 @@ export const FollowsTheReadingDirection: Story = {
       const meta = within(box).getByText('Lisbon');
       const icon = meta.querySelector('svg')!;
       expect(startOffset(icon, meta)).toBeLessThan(endOffset(icon, meta));
+      // Its gap to the text is on the end side of the icon, in both directions.
+      expect(getComputedStyle(icon).marginInlineEnd, `${dir}: icon gap`).toBe('6px');
+      // The title is an island: its own direction, whatever the header's.
+      const title = within(box)
+        .getByRole('heading', { name: 'Integrations' })
+        .querySelector('bdi')!;
+      expect(getComputedStyle(title).unicodeBidi, `${dir}: title`).toBe('isolate');
     }
   },
 };

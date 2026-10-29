@@ -365,5 +365,8 @@ export const BarFollowsTheReadingDirection: Story = {
       bell.getBoundingClientRect().left
     );
     await expect(getComputedStyle(title.closest('p') as HTMLElement).direction).toBe('rtl');
+    // The title is an island: its own direction, whatever the bar's.
+    await expect(title.tagName).toBe('BDI');
+    await expect(getComputedStyle(title).unicodeBidi).toBe('isolate');
   },
 };
