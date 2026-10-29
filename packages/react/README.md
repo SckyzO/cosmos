@@ -650,7 +650,16 @@ nothing in it is `UNKNOWN`.
   filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
   legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
   grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
-  vertically.
+  vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
+  `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a
+  warning or a critical cell, with its counts in words ("2 Critical, 1 Warning"), the worst rows
+  first. Picking a chip scrolls its row into view, in the grid's own box when `maxHeight` is set,
+  and moves the focus to its worst cell; on a phone the strip scrolls sideways.
+
+`HealthSummary`, `HealthMatrix` and `MonitorRow` (see Uptime monitoring) take `stale`, the time of the
+last data, for a source that has stopped answering. The status colours turn grey, the component says
+"Stale · 4 minutes ago" and the stale state is in the accessible text (the headline, each matrix
+cell, the monitor's state chip). The statuses shown stay those of the last data.
 
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
@@ -714,7 +723,8 @@ theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaint
   pause it), the name (a link with `href`) and `type` (any string: `HTTP`, `TCP`, `DNS`, `ping`,
   `keyword`), a 24px `HeartbeatBar`, the uptime over 24 hours, and the current latency (default: the
   last beat's). `variant="row"` is a line of a list, which the host draws: it stacks on a narrow
-  screen. `variant="card"` is a tile for a grid.
+  screen. `variant="card"` is a tile for a grid. `stale` (with `now` to freeze its text) greys the
+  chip, the beats and the uptime and adds a "Stale · 4 minutes ago" tag under the name.
 
 The response time (a `LineAreaChart` from `@sckyzo/cosmos-charts`, its `referenceBands` shading the
 down periods; the stories draw a plain SVG, since this package has no chart dependency), the timeline

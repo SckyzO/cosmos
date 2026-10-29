@@ -15,7 +15,8 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
-import { HealthMatrix } from './HealthMatrix';
+import { HealthMatrix, type HealthMatrixRow } from './HealthMatrix';
+import type { HealthStatus } from './types';
 
 const meta = {
   title: 'Monitoring/Health Matrix',
@@ -99,6 +100,67 @@ export const WithDetail: Story = {
   },
 };
 
+/** `rowHeader` names the first header cell, "Service" by default: a cluster says "Rack". */
+export const RowHeader: Story = {
+  args: { rowHeader: 'Rack', title: 'Nodes by rack', ariaLabel: 'Nodes by rack' },
+};
+
+// Thirty-six racks on twelve nodes: every third rack holds a problem, a few hold several.
+const RACK_COLUMNS = Array.from({ length: 12 }, (_, c) => {
+  const id = `n${String(c + 1).padStart(2, '0')}`;
+  return { id, label: id };
+});
+const RACK_ROWS: HealthMatrixRow[] = Array.from({ length: 36 }, (_, r) => {
+  const label = `R${String(r + 1).padStart(2, '0')}`;
+  const bad = r % 3 === 1;
+  return {
+    id: label,
+    label,
+    cells: Object.fromEntries(
+      RACK_COLUMNS.map((column, c): [string, HealthMatrixRow['cells'][string]] => {
+        let status: HealthStatus = 'OK';
+        if (bad && c === r % 12) status = 'WARN';
+        if (bad && r % 2 === 0 && c === (r + 5) % 12) status = 'CRIT';
+        if (bad && r % 4 === 0 && c === (r + 7) % 12) status = 'WARN';
+        return [column.id, { status, checkedAt: HEALTH_NOW - 30_000 }];
+      })
+    ),
+  };
+});
+
+/**
+ * `attentionStrip` lists the rows that hold a warning or a critical cell above the grid, worst
+ * first. Picking a chip scrolls its row into view, inside the grid's own box here, and moves the
+ * focus to its first problem cell.
+ */
+export const AttentionStrip: Story = {
+  args: {
+    attentionStrip: true,
+    rowHeader: 'Rack',
+    columns: RACK_COLUMNS,
+    rows: RACK_ROWS,
+    title: 'Nodes by rack',
+    ariaLabel: 'Nodes by rack',
+    maxHeight: 320,
+  },
+};
+
+export const AttentionStripPills: Story = { args: { ...AttentionStrip.args, variant: 'pills' } };
+
+/** At 375px the strip scrolls sideways on its own, and the page does not. */
+export const AttentionStripMobile: Story = {
+  ...AttentionStrip,
+  globals: mobileViewport,
+  play: ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const strip = canvas.getByRole('list', { name: 'Needs attention' });
+    expect(strip.scrollWidth).toBeGreaterThan(strip.clientWidth);
+  },
+};
+
+/** The strip on the services matrix: three rows, the two with a critical cell first. */
+export const AttentionStripFewRows: Story = { args: { attentionStrip: true } };
+
 /** At 375px the grid scrolls in its own box: the page does not. */
 export const Mobile: Story = {
   globals: mobileViewport,
@@ -108,6 +170,16 @@ export const Mobile: Story = {
     expect(box.scrollWidth).toBeGreaterThan(box.clientWidth);
   },
 };
+
+/**
+ * `stale` is when the last data came in. The marks turn grey, the header says "Stale · 4 minutes
+ * ago" and every cell is named as stale, for the screen reader.
+ */
+export const Stale: Story = { args: { stale: HEALTH_NOW - 4 * 60_000 } };
+
+export const StalePills: Story = { args: { stale: HEALTH_NOW - 4 * 60_000, variant: 'pills' } };
+
+export const StaleMobile: Story = { ...Mobile, args: { stale: HEALTH_NOW - 4 * 60_000 } };
 
 export const MobilePills: Story = { ...Mobile, args: { variant: 'pills' } };
 
@@ -156,6 +228,141 @@ export const LegendFollowsTheStatusesInUse: Story = {
       'Critical',
       'Unknown',
     ]);
+  },
+};
+
+/** The first header cell reads `rowHeader`, and "Service" when there is none. */
+export const RowHeaderNamesTheFirstHeaderCell: Story = {
+  ...RowHeader,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('columnheader', { name: 'Rack' })).toBeVisible();
+    await expect(canvas.queryByRole('columnheader', { name: 'Service' })).toBeNull();
+  },
+};
+
+export const FirstHeaderCellIsServiceByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('columnheader', { name: 'Service' })).toBeVisible();
+  },
+};
+
+/** The strip names each row and counts its critical and warning cells in words, worst first. */
+export const AttentionStripCountsInWords: Story = {
+  ...AttentionStripFewRows,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const strip = canvas.getByRole('list', { name: 'Needs attention' });
+    const chips = within(strip).getAllByRole('button');
+    await expect(chips.map((chip) => chip.textContent)).toEqual([
+      'API: 1 Critical, 1 Warning',
+      'Collector: 1 Critical, 1 Warning',
+      'Cache: 1 Warning',
+    ]);
+    await expect(chips[0]).toHaveTextContent('1 Critical');
+    await expect(chips[0]).toHaveTextContent('1 Warning');
+    await expect(canvas.getByText('3 of 6 rows · 2 Critical · 3 Warning')).toBeVisible();
+  },
+};
+
+/** No strip unless asked for, and none when no row holds a problem. */
+export const NoStripWithoutTheOptionOrAProblem: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <>
+      <HealthMatrix {...args} />
+      <HealthMatrix
+        {...args}
+        attentionStrip
+        ariaLabel="All clear"
+        rows={[{ id: 'ok', label: 'API', cells: { 'par-1a': { status: 'OK' } } }]}
+      />
+    </>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText('Needs attention')).toBeNull();
+    await expect(canvas.queryByRole('list', { name: 'Needs attention' })).toBeNull();
+  },
+};
+
+/** A chip scrolls its row into the grid's own box, below the sticky header, and focuses it. */
+export const ChipScrollsItsRowIntoViewAndFocusesIt: Story = {
+  ...AttentionStrip,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    const scroller = canvasElement.querySelector<HTMLElement>('.overflow-auto')!;
+    await expect(scroller.scrollTop).toBe(0);
+    const pageScroll = window.scrollY;
+
+    const strip = within(canvas.getByRole('list', { name: 'Needs attention' }));
+    const chips = strip.getAllByRole('button');
+    const last = chips.at(-1)!;
+    const name = last.textContent!.split(':')[0]!;
+    await userEvent.click(last);
+
+    const row = canvas.getByRole('rowheader', { name }).closest('tr')!;
+    await waitFor(() => expect(scroller.scrollTop).toBeGreaterThan(0));
+    const box = scroller.getBoundingClientRect();
+    const header = scroller.querySelector('thead')!.getBoundingClientRect();
+    const rect = row.getBoundingClientRect();
+    await expect(rect.top).toBeGreaterThanOrEqual(header.bottom - 1);
+    await expect(rect.bottom).toBeLessThanOrEqual(box.bottom + 1);
+    await expect(window.scrollY).toBe(pageScroll);
+
+    // The focus lands on a problem cell of that row, and nothing opened.
+    const focused = document.activeElement as HTMLElement;
+    await expect(row.contains(focused)).toBe(true);
+    await expect(focused.getAttribute('aria-label')).toMatch(/: (Critical|Warning)$/);
+    await expect(within(canvasElement.ownerDocument.body).queryByRole('dialog')).toBeNull();
+  },
+};
+
+/** The focus goes to the worst cell of the row: its first critical cell before a warning. */
+export const ChipFocusesTheWorstCellOfItsRow: Story = {
+  ...AttentionStripFewRows,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await userEvent.click(
+      canvas.getByRole('button', { name: /^Collector\W+1 Critical\W+1 Warning$/ })
+    );
+    await expect(cell(canvas, 'Collector on fra-1a: Critical')).toHaveFocus();
+    await userEvent.click(canvas.getByRole('button', { name: /^Cache\W+1 Warning$/ }));
+    await expect(cell(canvas, 'Cache on lon-1a: Warning')).toHaveFocus();
+  },
+};
+
+/** The header says how old the data is, and each cell says it is stale. */
+export const StaleIsWrittenAndNamed: Story = {
+  ...Stale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/^Stale/)).toHaveTextContent('Stale · 4 minutes ago');
+    await expect(cell(canvas, 'API on par-1a: OK, stale')).toBeVisible();
+    await expect(cell(canvas, 'Collector on fra-1a: Critical, stale')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'API on par-1a: OK' })).toBeNull();
+  },
+};
+
+/** The marks are muted: the same shapes in grey, the text still readable. */
+export const StaleMutesTheMarks: Story = {
+  ...Stale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    const grid = canvasElement.querySelector<HTMLElement>('.overflow-auto')!;
+    await expect(getComputedStyle(grid).filter).toContain('grayscale');
+    await expect(getComputedStyle(canvas.getByText(/^Stale/)).filter).toBe('none');
+  },
+};
+
+export const FreshDataSaysNothingOfStaleness: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.queryByText(/^Stale/)).toBeNull();
+    await expect(cell(canvas, 'API on par-1a: OK')).toBeVisible();
+    await expect(getComputedStyle(canvasElement.querySelector('.overflow-auto')!).filter).toBe(
+      'none'
+    );
   },
 };
 
