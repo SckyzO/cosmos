@@ -891,12 +891,22 @@ only http(s) URLs become links.
   Cancel and Escape return the focus to the button that opened it. Delete calls back at once:
   confirm in the host if needed.
 - Replies are one level, `Comment`s passed as `replies`, folded beyond `maxReplies` (default
-  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own.
+  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own. For a ticket, where
+  the latest exchanges matter, `keepReplies="last"` keeps the last `maxReplies` visible and folds
+  the older ones behind a button above them ("Show 3 earlier replies", `labels.showEarlierReplies`).
 - `variant="internal"` tints a note and labels it "Internal note" with a lock, so it reads as one
   without the color.
 - `CommentComposer` is a `Textarea` with `autoResize`: Enter adds a line, Ctrl or Cmd+Enter and the
   submit button send, Escape cancels when `onCancel` is given. Submit is disabled while the text
   is empty or `submitting`. `value` / `defaultValue` / `onChange` work as on other fields.
+- `modes` gives the composer a segmented control above the field, for what is being written
+  (`{ value: 'reply', label: 'Reply to customer' }`, `{ value: 'note', label: 'Internal note',
+internal: true }`). `onSubmit(text, mode)` receives the selected mode's `value`; without `modes`
+  it gets the text alone, as before. `mode` / `defaultMode` / `onModeChange` work as on other
+  fields, and a mode may carry its own `placeholder` and `submitLabel`. An `internal` mode tints
+  the field and the submit button like `variant="internal"` tints a comment, with a lock and the
+  line `internalNotice` ("Internal note: only your team sees this."), announced when the mode
+  changes. `modeLabel` names the control.
 - `time` is a node, as in `Timeline`: a `RelativeTime`, a `<time>` or your own text.
 - Every text can be translated: `labels` on `CommentThread` reaches all its comments (a
   comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
