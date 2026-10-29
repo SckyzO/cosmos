@@ -7,3 +7,4 @@ export * from './OptionPicker';
 export * from './appearance';
 export * from './AppearanceSettings';
 export * from './AppearanceMenu';
+export * from './Customizer';

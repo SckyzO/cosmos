@@ -1614,8 +1614,62 @@ useEffect(() => {
 
 Saving the choice (local storage, user profile) is left to the app.
 
+`applyAppearance` also takes a `direction` (`'ltr'` or `'rtl'`): it sets `dir="rtl"` on
+`<html>`, and removes `dir` for `ltr`, like the other defaults.
+
 Charts live in a separate package, [`@sckyzo/cosmos-charts`](../charts), so apps
 that don't render charts don't ship a chart library.
+
+### Customizer
+
+`Customizer` is a panel on the end side (a `Drawer`) that puts the choices above in one place,
+plus the shell's layout, sidebar mode and container, with optional presets, a Reset and a
+"Copy config" that copies the value as JSON. It only **holds** the choice: it is controlled
+(`value`, `onChange`, with the whole new value on each click) and applies nothing itself. The
+host applies it on every change:
+
+```tsx
+const [value, setValue] = useState<CustomizerValue>(CUSTOMIZER_DEFAULT_VALUE);
+const [open, setOpen] = useState(false);
+useEffect(() => applyAppearance(value), [value]);
+const { layout, sidebar, container } = { ...CUSTOMIZER_DEFAULT_VALUE, ...value };
+
+<Shell
+  container={container}
+  sidebarCollapsed={sidebar === 'collapsed' || sidebar === 'hover'}
+  topbar={layout === 'horizontal' ? <Navbar>…</Navbar> : <Topbar />}
+  sidebar={
+    layout === 'horizontal' ? undefined : (
+      <Sidebar
+        variant={sidebar === 'compact' ? 'compact' : 'default'}
+        expandOnHover={sidebar === 'hover' ? 'overlay' : false}
+      >
+        …
+      </Sidebar>
+    )
+  }
+>
+  …
+</Shell>
+<Customizer open={open} onClose={() => setOpen(false)} value={value} onChange={setValue} />
+```
+
+| Value                                                         | What the host does                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `theme`, `accent`, `font`, `textSize`, `density`, `direction` | `applyAppearance(value)`                                                         |
+| `container`                                                   | `Shell`'s `container`                                                            |
+| `sidebar: 'collapsed'`                                        | `Shell`'s `sidebarCollapsed`                                                     |
+| `sidebar: 'hover'`                                            | collapsed, plus `Sidebar`'s `expandOnHover="overlay"`                            |
+| `sidebar: 'compact'`                                          | `Sidebar`'s `variant="compact"` (and `collapseControl="sidebar"` on the `Shell`) |
+| `layout: 'horizontal'`                                        | a `Navbar` in `Shell`'s `topbar` in place of the `Sidebar`                       |
+
+Keep the `Customizer` outside what `layout` swaps, so the panel keeps its focus as the shell
+re-renders. Cosmos ships no presets: pass `presets` (`{ id, label, value }`, the value being
+a part of the whole) to show the section. `sections` lists the sections to show (a host with a
+fixed layout leaves out `layout`, `sidebar` and `container`), `defaultValue` is what Reset
+restores, and `themes`, `accents`, `fonts`, `textSizes` and `densities` narrow the choices as
+they do on `AppearanceSettings`. The `Settings/Customizer` stories wire all of it, with local
+storage.
 
 ## License
 

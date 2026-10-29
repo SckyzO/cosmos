@@ -16,27 +16,42 @@ import {
 } from './appearance';
 
 // A stand-in for `<html>`: the node project has no DOM, and `applyAppearance`
-// only touches `classList` and `dataset`. The browser's own mapping of
+// only touches `classList`, `dataset` and the `dir` attribute. The browser's own mapping of
 // `dataset.textSize` to the `data-text-size` attribute is covered by the
 // Foundations/Appearance stories.
-const fakeRoot = (classes: string[] = [], dataset: Record<string, string> = {}) => {
+const fakeRoot = (
+  classes: string[] = [],
+  dataset: Record<string, string> = {},
+  attributes: Record<string, string> = {}
+) => {
   const classList = new Set(classes);
   const data = { ...dataset };
+  const attrs = { ...attributes };
   const root = {
+    setAttribute: (name: string, value: string) => {
+      attrs[name] = value;
+    },
+    removeAttribute: (name: string) => {
+      delete attrs[name];
+    },
     classList: {
       add: (...names: string[]) => names.forEach((n) => classList.add(n)),
       remove: (...names: string[]) => names.forEach((n) => classList.delete(n)),
     },
     dataset: data,
   } as unknown as HTMLElement;
-  return { root, classes: classList, data };
+  return { root, classes: classList, data, attributes: attrs };
 };
 
 const apply = (
   appearance: CosmosAppearance,
-  start: { classes?: string[]; dataset?: Record<string, string> } = {}
+  start: {
+    classes?: string[];
+    dataset?: Record<string, string>;
+    attributes?: Record<string, string>;
+  } = {}
 ) => {
-  const el = fakeRoot(start.classes, start.dataset);
+  const el = fakeRoot(start.classes, start.dataset, start.attributes);
   applyAppearance(appearance, el.root);
   return el;
 };
@@ -55,6 +70,30 @@ describe('isDarkTheme', () => {
 describe('applyAppearance', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  describe('direction', () => {
+    it('sets dir="rtl" for rtl', () => {
+      expect(apply({ theme: 'light', accent: 'blue', direction: 'rtl' }).attributes.dir).toBe(
+        'rtl'
+      );
+    });
+
+    it('removes dir for ltr, the default', () => {
+      const { attributes } = apply(
+        { theme: 'light', accent: 'blue', direction: 'ltr' },
+        { attributes: { dir: 'rtl' } }
+      );
+      expect(attributes).not.toHaveProperty('dir');
+    });
+
+    it('keeps dir as it is when direction is left out', () => {
+      const { attributes } = apply(
+        { theme: 'light', accent: 'blue' },
+        { attributes: { dir: 'rtl' } }
+      );
+      expect(attributes.dir).toBe('rtl');
+    });
   });
 
   describe('theme', () => {

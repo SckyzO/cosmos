@@ -1,3 +1,4 @@
+import type { Direction } from '../hooks/direction';
 import type { AccentColor } from './AccentPicker';
 import type { PaletteMeta } from './PaletteCard';
 
@@ -49,8 +50,8 @@ export type CosmosTextSizeMeta = { id: CosmosTextSize; label: string; scale: num
 export type CosmosDensityMeta = { id: CosmosDensity; label: string };
 
 /**
- * The page's appearance. `font`, `textSize` and `density` are optional: leave
- * them out and `applyAppearance` doesn't touch their attributes.
+ * The page's appearance. `font`, `textSize`, `density` and `direction` are
+ * optional: leave them out and `applyAppearance` doesn't touch their attributes.
  */
 export type CosmosAppearance = {
   /** `system` follows `prefers-color-scheme`: see `systemThemes`. */
@@ -61,6 +62,8 @@ export type CosmosAppearance = {
   font?: CosmosFont;
   textSize?: CosmosTextSize;
   density?: CosmosDensity;
+  /** The reading direction: the `dir` attribute on `<html>`, none for `ltr`. */
+  direction?: Direction;
 };
 
 /** The four themes shipped by `@sckyzo/cosmos-theme`, ready for `<PalettePicker>`. */
@@ -196,14 +199,15 @@ export const watchSystemTheme = (onChange: (prefersDark: boolean) => void): (() 
 
 /**
  * Apply an appearance to `root` (default `<html>`): swaps the theme class and
- * sets `data-accent`, `data-font`, `data-text-size` and `data-density`,
- * removing each one for its default (blue, Outfit, `md`, `default`). A `system`
+ * sets `data-accent`, `data-font`, `data-text-size` and `data-density`, and
+ * `dir="rtl"` for a `direction` of `rtl`, removing each one for its default
+ * (blue, Outfit, `md`, `default`, `ltr`). A `system`
  * theme is resolved with `prefers-color-scheme` when applied: call this again
- * on `watchSystemTheme`. A `font`, `textSize` or `density` left out keeps its
- * attribute as it is. No-op during SSR.
+ * on `watchSystemTheme`. A `font`, `textSize`, `density` or `direction` left out
+ * keeps its attribute as it is. No-op during SSR.
  */
 export const applyAppearance = (
-  { theme: choice, systemThemes, accent, font, textSize, density }: CosmosAppearance,
+  { theme: choice, systemThemes, accent, font, textSize, density, direction }: CosmosAppearance,
   root?: HTMLElement
 ) => {
   const el = root ?? (typeof document === 'undefined' ? undefined : document.documentElement);
@@ -219,4 +223,6 @@ export const applyAppearance = (
   else if (textSize) el.dataset.textSize = textSize;
   if (density === 'default') delete el.dataset.density;
   else if (density) el.dataset.density = density;
+  if (direction === 'ltr') el.removeAttribute('dir');
+  else if (direction) el.setAttribute('dir', direction);
 };
