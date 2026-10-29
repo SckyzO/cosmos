@@ -139,7 +139,7 @@ export const LegendAndPillsConveyStatusAsText: Story = {
     }
     const grid = within(canvas.getByRole('grid'));
     for (const name of ['OK', 'Warning', 'Critical', 'Unknown', 'Info']) {
-      await expect(grid.getAllByText(name, { selector: 'span' }).length).toBeGreaterThan(0);
+      await expect(grid.getAllByText(name, { selector: 'span > bdi' }).length).toBeGreaterThan(0);
     }
   },
 };
