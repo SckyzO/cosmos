@@ -1529,12 +1529,17 @@ typed in it (the same `unicode-bidi: plaintext` as a `Textarea`), lists are inde
 edged on the start side, the arrow keys along the toolbar swap, and the link field reads left to
 right.
 
-The conversion lands group by group, following the groups of the Storybook sidebar. Done:
-**Atoms**, **Actions**, **Forms**, **Data**, **Lists**, **Feedback**, **Overlays**,
-**Navigation**, **Layout**, **Chat**, **Tables**, **Settings**, **Monitoring**, **Media**,
-**Status**, **Typography** and **Foundations**. Pages still lay out for left to right and are the
-last in line. In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`)
-renders any story right to left.
+The pages follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
+turns around, the address or number a form says it sent the code to is wrapped in `<bdi>`, and
+`AuthLayout`'s `asidePosition` (`start` | `end`) puts the panel at the start or the end of the line.
+
+Every group of the Storybook sidebar is converted: **Atoms**, **Actions**, **Forms**, **Data**,
+**Lists**, **Feedback**, **Overlays**, **Navigation**, **Layout**, **Chat**, **Tables**,
+**Settings**, **Monitoring**, **Media**, **Status**, **Typography**, **Foundations** and
+**Pages**. A check in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`,
+`text-left`…) in any source file of the package, and every story is rendered right to left in CI.
+In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story
+right to left.
 
 ## Themes and accents
 
