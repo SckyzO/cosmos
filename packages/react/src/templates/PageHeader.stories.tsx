@@ -261,6 +261,94 @@ export const MobileWithIcon: Story = {
   },
 };
 
+// ── Breadcrumb above the title ───────────────────────────────────────────────
+
+const TRAIL = (
+  <Breadcrumb
+    homeIcon
+    items={[{ label: 'Support', href: '#' }, { label: 'Tickets', href: '#' }, { label: '#4821' }]}
+  />
+);
+
+/** The breadcrumb sits above the title, and the description stays under it. */
+export const WithBreadcrumbAndDescription: Story = {
+  args: {
+    title: 'Checkout fails with a 502 on the EU payment gateway',
+    as: 'h1',
+    description: 'Opened by Ana Costa, assigned to the payments team.',
+    breadcrumb: TRAIL,
+    actions: (
+      <PageActionButton icon={Plus} variant="primary">
+        Reply
+      </PageActionButton>
+    ),
+  },
+  play: async ({ canvas }) => {
+    const trail = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    const title = canvas.getByRole('heading', { name: /Checkout fails/ });
+    const description = canvas.getByText(/Opened by Ana Costa/);
+    await expect(trail.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      title.getBoundingClientRect().top
+    );
+    await expect(title.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      description.getBoundingClientRect().top
+    );
+  },
+};
+
+export const BreadcrumbComesBeforeTheTitleInTheDom: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'Order #20431', description: 'Placed on 3 March.', breadcrumb: TRAIL },
+  play: async ({ canvas }) => {
+    const trail = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    const title = canvas.getByRole('heading', { name: 'Order #20431' });
+    await expect(
+      trail.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    // The description is no longer an alternative to the breadcrumb.
+    await expect(canvas.getByText('Placed on 3 March.')).toBeInTheDocument();
+  },
+};
+
+/**
+ * Below `sm` the actions wrap under the meta items, at the start of the line, even when they would
+ * fit beside the title. The icon tile stays beside the text column, which holds the breadcrumb.
+ */
+export const MobileBreadcrumbMetaAndActions: Story = {
+  globals: mobileViewport,
+  args: {
+    title: 'Checkout fails with a 502',
+    as: 'h1',
+    description: 'Opened by Ana Costa.',
+    breadcrumb: TRAIL,
+    icon: Plug,
+    meta: (
+      <>
+        <PageHeader.MetaItem icon={Server}>payments-gw</PageHeader.MetaItem>
+        <PageHeader.MetaItem icon={Clock}>Open 3 days</PageHeader.MetaItem>
+      </>
+    ),
+    actions: <PageActionButton icon={RefreshCw} aria-label="Refresh" />,
+  },
+  play: async ({ canvasElement, canvas }) => {
+    expectNoHorizontalOverflow();
+    const tile = canvasElement.querySelector('[aria-hidden="true"]') as HTMLElement;
+    const trail = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    const lastMeta = canvas.getByText('Open 3 days').getBoundingClientRect();
+    const button = canvas.getByRole('button', { name: 'Refresh' });
+    // The tile is beside the text column: level with the breadcrumb, which leads it.
+    await expect(tile.getBoundingClientRect().top).toBeLessThanOrEqual(
+      trail.getBoundingClientRect().top + 1
+    );
+    expectBeyondEnd(trail, tile);
+    // The actions are under the meta, and start where the header starts.
+    await expect(button.getBoundingClientRect().top).toBeGreaterThanOrEqual(lastMeta.bottom);
+    await expect(
+      Math.abs(button.getBoundingClientRect().left - tile.getBoundingClientRect().left)
+    ).toBeLessThanOrEqual(1);
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The title starts at the start edge, the actions end at the end edge, the icon tile leads the title. */
