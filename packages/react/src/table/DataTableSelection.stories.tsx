@@ -233,10 +233,10 @@ export const FiltersOnAPhone: Story = {
   },
 };
 
-/** The sheet, opened: one group of checkboxes per filterable column. */
+/** The sheet, opened: one group of checkboxes per filterable column. Hidden: it opens by a click. */
 export const FiltersSheetOpen: Story = {
   globals: mobileViewport,
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <Orders
