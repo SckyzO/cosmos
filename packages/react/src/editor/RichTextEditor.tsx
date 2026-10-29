@@ -12,6 +12,7 @@ import { isSafeLinkUrl } from '../chat/httpUrl';
 import { fieldClass, type FieldSize } from '../forms/fieldRecipe';
 import { RequiredMark } from '../forms/RequiredMark';
 import { BUBBLE_ACTIONS, RICH_TEXT_ACTIONS, type RichTextAction } from './actions';
+import { BlockDirection } from './blockDirection';
 import { FormattingToolbar } from './FormattingToolbar';
 import { resolveLabels, type RichTextLabels } from './labels';
 
@@ -128,7 +129,7 @@ const CONTENT_CLASS = [
   'min-w-0 outline-hidden break-words',
   '[&>*+*]:mt-2',
   // Each block follows the direction of what is typed in it, as a Textarea's paragraphs do
-  // (`FIELD_PLAINTEXT`).
+  // (`FIELD_PLAINTEXT`); lists and quotes take a `dir` from `BlockDirection`.
   '[&_p]:[unicode-bidi:plaintext] [&_h2]:[unicode-bidi:plaintext] [&_h3]:[unicode-bidi:plaintext]',
   '[&_h2]:text-lg [&_h2]:leading-snug [&_h2]:font-semibold',
   '[&_h3]:text-base [&_h3]:leading-snug [&_h3]:font-semibold',
@@ -241,6 +242,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
         Placeholder.configure({ placeholder: () => latest.get().placeholder ?? '' }),
         ...(maxLength !== undefined ? [CharacterCount.configure({ limit: maxLength })] : []),
         LinkShortcut.configure({ open: () => latest.get().openLink() }),
+        BlockDirection,
       ],
       onCreate: ({ editor: created }) => setCharacters(countCharacters(created)),
       onTransaction: ({ editor: changed }) => setCharacters(countCharacters(changed)),
