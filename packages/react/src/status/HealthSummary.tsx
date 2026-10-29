@@ -20,6 +20,7 @@ import {
   worstStatus,
   type HealthCheck,
 } from './health';
+import { StaleBadge } from './StaleBadge';
 import { StatusBadge } from './StatusBadge';
 import { HealthDot } from './HealthDot';
 import type { HealthStatus } from './types';
@@ -45,6 +46,12 @@ export type HealthSummaryProps = {
   variant?: 'banner' | 'compact';
   /** When the checks last ran. Default: the most recent `checkedAt` among `checks`. */
   checkedAt?: DateTimeValue;
+  /**
+   * When the last data came in, for a source that has stopped answering. The banner takes the
+   * neutral surface, its badges turn grey, a "Stale · 4 minutes ago" tag joins it and the headline
+   * is read as stale. The status shown stays the last known one. Default: fresh.
+   */
+  stale?: DateTimeValue;
   /** Draws a `RefreshButton` with these props. Without it there is no refresh action. */
   refresh?: RefreshButtonProps;
   /**
@@ -117,6 +124,7 @@ export const HealthSummary = ({
   labels,
   variant = 'banner',
   checkedAt,
+  stale,
   refresh,
   ariaLabel = 'System health',
   now,
@@ -140,7 +148,11 @@ export const HealthSummary = ({
         <RelativeTime value={last} now={now} />
       </>
     ) : null;
-  const tone = TONE[shown];
+  const isStale = stale !== undefined;
+  // Stale data is not a status of its own: the surface goes neutral, the status stays.
+  const tone = TONE[isStale ? 'UNKNOWN' : shown];
+  const staleNote = isStale && <span className="sr-only">, stale data</span>;
+  const staleBadge = isStale && <StaleBadge since={stale} now={now} />;
 
   if (variant === 'compact') {
     return (
@@ -152,11 +164,12 @@ export const HealthSummary = ({
           className
         )}
       >
-        <span aria-hidden="true" className="flex">
+        <span aria-hidden="true" className={clsx('flex', isStale && 'grayscale')}>
           <HealthDot status={shown} />
         </span>
         <b role="status" className={clsx('font-semibold', tone.text)}>
           {headline}
+          {staleNote}
         </b>
         <span className="text-[var(--color-text-secondary)]">
           <bdi>
@@ -164,6 +177,7 @@ export const HealthSummary = ({
             {lastCheck}
           </bdi>
         </span>
+        {staleBadge}
         {refresh && <RefreshButton {...refresh} className={clsx('ms-auto', refresh.className)} />}
       </div>
     );
@@ -193,6 +207,7 @@ export const HealthSummary = ({
       <div className="min-w-0 flex-1 basis-48">
         <p role="status" className={clsx('m-0 text-xl font-semibold', tone.text)}>
           {headline}
+          {staleNote}
         </p>
         <p className={clsx('m-0 mt-0.5 text-sm', tone.text)}>
           <bdi>
@@ -201,7 +216,8 @@ export const HealthSummary = ({
           </bdi>
         </p>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      {staleBadge}
+      <div className={clsx('flex flex-wrap gap-1.5', isStale && 'grayscale')}>
         {SEVERITY_ORDER.filter((s) => counts[s] > 0).map((s) => (
           <StatusBadge key={s} status={s} label={`${counts[s]} ${STATUS_NAME[s]}`} />
         ))}

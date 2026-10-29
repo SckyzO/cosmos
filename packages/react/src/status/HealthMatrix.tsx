@@ -1,10 +1,12 @@
 import { clsx } from 'clsx';
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { RelativeTime } from '../data/RelativeTime';
+import type { DateTimeValue } from '../data/time';
 import { directionOf } from '../hooks/direction';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { STATUS_NAME, formatLatency } from './health';
 import { rowsNeedingAttention } from './matrixAttention';
+import { StaleBadge } from './StaleBadge';
 import { StatusBadge } from './StatusBadge';
 import { STATUS_DOT, type HealthStatus } from './types';
 
@@ -59,6 +61,12 @@ export type HealthMatrixProps = {
    * scrolls sideways on a phone. Default `false`; no strip when no row has a problem.
    */
   attentionStrip?: boolean;
+  /**
+   * When the last data came in, for a source that has stopped answering. The header says "Stale
+   * · 4 minutes ago", the marks turn grey and each cell is named as stale. The statuses stay
+   * those of the last data. Default: fresh.
+   */
+  stale?: DateTimeValue;
   /** Shows the legend of the shapes. Default: with `dots`, not with `pills`. */
   legend?: boolean;
   /**
@@ -113,6 +121,7 @@ export const HealthMatrix = ({
   title,
   rowHeader = 'Service',
   attentionStrip = false,
+  stale,
   legend,
   maxHeight,
   now,
@@ -123,6 +132,7 @@ export const HealthMatrix = ({
   const [active, setActive] = useState<Position>({ row: 0, col: 0 });
   const [open, setOpen] = useState<Position | null>(null);
   const showLegend = legend ?? variant === 'dots';
+  const isStale = stale !== undefined;
   const attentionId = useId();
 
   const lastRow = rows.length - 1;
@@ -196,17 +206,21 @@ export const HealthMatrix = ({
         className
       )}
     >
-      {(title || showLegend) && (
+      {(title || showLegend || isStale) && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-[var(--color-border)] px-4 py-3">
           {title && (
             <p className="m-0 text-[0.9375rem] font-semibold text-[var(--color-text-primary)]">
               <bdi>{title}</bdi>
             </p>
           )}
+          {isStale && <StaleBadge since={stale} now={now} />}
           {showLegend && (
             <ul
               aria-label="Legend"
-              className="m-0 ms-auto flex list-none flex-wrap gap-x-4 gap-y-1 p-0"
+              className={clsx(
+                'm-0 ms-auto flex list-none flex-wrap gap-x-4 gap-y-1 p-0',
+                isStale && 'grayscale'
+              )}
             >
               {legendStatuses.map((status) => (
                 <li
@@ -242,7 +256,10 @@ export const HealthMatrix = ({
           </div>
           <ul
             aria-labelledby={attentionId}
-            className="m-0 mt-2.5 flex list-none gap-2 overflow-x-auto p-0 sm:flex-wrap sm:overflow-visible"
+            className={clsx(
+              'm-0 mt-2.5 flex list-none gap-2 overflow-x-auto p-0 sm:flex-wrap sm:overflow-visible',
+              isStale && 'grayscale'
+            )}
           >
             {attention.map(({ row, index, crit, warn }) => (
               <li key={row.id} className="relative shrink-0">
@@ -273,7 +290,10 @@ export const HealthMatrix = ({
         </div>
       )}
       <div
-        className="scroll-ps-28 scroll-pt-12 overflow-auto sm:scroll-ps-40"
+        className={clsx(
+          'scroll-ps-28 scroll-pt-12 overflow-auto sm:scroll-ps-40',
+          isStale && 'grayscale'
+        )}
         style={{ maxHeight }}
       >
         <table
@@ -325,7 +345,7 @@ export const HealthMatrix = ({
                         data-row={r}
                         data-col={c}
                         tabIndex={tab.row === r && tab.col === c ? 0 : -1}
-                        aria-label={`${row.label} on ${column.label}: ${cell ? STATUS_NAME[cell.status] : 'no data'}`}
+                        aria-label={`${row.label} on ${column.label}: ${cell ? STATUS_NAME[cell.status] : 'no data'}${isStale ? ', stale' : ''}`}
                         aria-haspopup={cell ? 'dialog' : undefined}
                         aria-expanded={cell ? isOpen : undefined}
                         onFocus={() => setActive({ row: r, col: c })}
