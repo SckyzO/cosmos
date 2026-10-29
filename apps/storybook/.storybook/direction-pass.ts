@@ -54,6 +54,11 @@ const noRtlOverflow: AfterEach = async ({ id }) => {
   } finally {
     if (window.innerWidth !== innerWidth) {
       await page.viewport(innerWidth, innerHeight);
+      // axe runs after this hook: a component that measures itself (a ResizeObserver, then a
+      // React render) must be back at the story's width first, or a table that scrolls at that
+      // width is checked as the one that fit at 1280px, without its tab stop.
+      await nextFrame();
+      await nextFrame();
     }
   }
 };
