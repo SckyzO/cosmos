@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import ts from 'typescript';
 
@@ -268,79 +268,7 @@ test('the dev container cannot write the repo metadata', () => {
 
 // A component mirrors under `dir="rtl"` through logical utilities (`ms-`, `ps-`, `inset-s-`,
 // `text-start`, `border-s`, `rounded-s`…) and the `rtl:` variant. This refuses the physical
-// ones, group by group as each Storybook group is converted (#453).
-
-/** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = [
-  'Atoms',
-  'Actions',
-  'Forms',
-  'Data',
-  'Lists',
-  'Feedback',
-  'Overlays',
-  'Navigation',
-  'Layout',
-  'Chat',
-  'Tables',
-  'Settings',
-  'Monitoring',
-  'Media',
-  'Status',
-  'Typography',
-  'Foundations',
-];
-
-/**
- * Component sources the story-title rule cannot find: a stories file whose component has
- * another name, or a helper module the converted components share.
- */
-const RTL_EXTRA_FILES = [
-  'packages/react/src/ui/Button.tsx', // Buttons.stories.tsx
-  'packages/react/src/forms/fieldRecipe.ts', // the padding and icon places of every field
-  'packages/react/src/forms/RequiredMark.tsx', // the asterisk after a label
-  'packages/react/src/forms/tagField.tsx', // the box and input of MultiSelect and TagInput
-  'packages/react/src/comments/Comment.tsx', // what CommentThread draws
-  'packages/react/src/comments/CommentComposer.tsx', // the reply and edit fields of a Comment
-  'packages/react/src/data/TimeLabel.tsx', // the `<time>` of DateTime and RelativeTime
-  'packages/react/src/feedback/Skeleton.tsx', // Sk.stories.tsx, and the presets
-  'packages/react/src/feedback/StateLayout.tsx', // what EmptyState, ErrorState and LoadingState draw
-  'packages/react/src/ui/Dialog.tsx', // the panel of Modal and ConfirmationModal
-  'packages/react/src/ui/FloatingPanel.tsx', // the panel of every popover, menu and picker
-  'packages/react/src/ui/intent.ts', // the edge colour AlertBanner draws on its start side
-  'packages/react/src/layout/SidebarToggle.tsx', // the toggle of Shell, Topbar and Sidebar
-  'packages/react/src/chat/ChatComposer.tsx', // Chat.stories.tsx, the field and send button
-  'packages/react/src/chat/ChatConversationList.tsx', // the conversations of Chat.stories.tsx
-  'packages/react/src/chat/ChatMessage.tsx', // the bubble of Chat.stories.tsx
-  'packages/react/src/chat/ChatMessageActions.tsx', // the row under a reply
-  'packages/react/src/chat/ChatSuggestions.tsx', // the chips above the composer
-  'packages/react/src/chat/ChatThread.tsx', // the log, day separator and typing indicator
-  'packages/react/src/chat/MessageText.tsx', // the text of a message
-  'packages/react/src/table/ColumnHeader.tsx', // the header cell of DataTable
-  'packages/react/src/table/ColumnFilterDropdown.tsx', // the filter panel of a column
-  'packages/react/src/table/DataTableFilterTabs.tsx', // the tab strip above a DataTable
-  'packages/react/src/table/InlineEdit.tsx', // the editing cells and row actions
-  'packages/react/src/table/LoadingVeil.tsx', // the spinner over a loading DataTable
-  'packages/react/src/table/PageSizeSelect.tsx', // the page size field of the pager
-  'packages/react/src/table/RowActionsMenu.tsx', // the menu of a row's actions
-  'packages/react/src/table/RowChevron.tsx', // the disclosure chevron of a row
-  'packages/react/src/table/cells.tsx', // the built-in cell renderers
-  'packages/react/src/table/density.ts', // the padding and look of every cell
-  'packages/react/src/table/pinned.ts', // the offsets and edge shadows of pinned columns
-  'packages/react/src/table/toolbarButton.ts', // the look of the toolbar buttons
-  'packages/react/src/settings/ColorSwatch.tsx', // what AccentPicker draws
-  'packages/react/src/settings/OptionCard.tsx', // what OptionPicker draws
-  'packages/react/src/settings/PaletteCard.tsx', // what PalettePicker draws
-  'packages/react/src/settings/SelectedMark.tsx', // the check badge of the pickers
-  'packages/react/src/logs/JobLogToolbar.tsx', // the bar of JobLog
-  'packages/react/src/logs/job-log-styles.ts', // the colours and frames of JobLog
-  'packages/react/src/uptime/MarkStrip.tsx', // the strip HeartbeatBar and UptimeBars draw their marks in
-  'packages/react/src/uptime/styles.ts', // the fills and text colours of the uptime components
-  'packages/react/src/map/MapPin.tsx', // the pin and popup MapView draws
-  'packages/react/src/map/MapMarkerList.tsx', // the list beside MapView
-  'packages/react/src/editor/FormattingToolbar.tsx', // the toolbar and bubble of RichTextEditor
-  'packages/react/src/editor/LinkForm.tsx', // the link field of RichTextEditor
-];
+// ones in every source file of `packages/react/src` (#453).
 
 /**
  * The few physical utilities that must stay: `file`, the exact `token` and why, so each
@@ -353,6 +281,12 @@ const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
     reason:
       'the arrow sits on the edge that faces the trigger, picked by the side the viewport left the box on (a screen side, flipped by room), and --anchor-shift is a distance to the right',
   })),
+  ...['right:', 'left:', 'right :'].map((token) => ({
+    file: 'packages/react/src/hooks/useAnchorPosition.ts',
+    token,
+    reason:
+      'screen geometry: the opposite of a side the viewport cut the panel on, the keys of a DOMRect, and the `left` of the fixed style the panel is placed with, all measured from the left edge of the screen',
+  })),
   {
     file: 'packages/react/src/ui/VideoEmbed.tsx',
     token: 'ml-0.5',
@@ -360,13 +294,6 @@ const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
       'the play triangle points right in both directions, as the time of a video runs from the left, so its optical offset toward the point is a screen side',
   },
 ];
-
-/**
- * Component sources of a converted group that wait for later, with the reason (another branch
- * is changing them). They are left out of the check. An entry fails once its file is no longer
- * in a converted group or holds no physical utility any more: the list only shrinks.
- */
-const RTL_DEFERRED: { file: string; reason: string }[] = [];
 
 // A utility that names a side of the screen, with its variants in front (`sm:`, `dark:`,
 // `[&>button:first-child]:`), or an inline-style key that does: `left: 0`, `marginRight`.
@@ -380,27 +307,23 @@ const physicalUtilities = (source: string) => [
   ...new Set(withoutComments(source).match(PHYSICAL_UTILITY) ?? []),
 ];
 
-/** The component sources of `RTL_GROUPS`: their stories' components and `RTL_EXTRA_FILES`. */
-const groupFiles = () => {
-  const root = 'packages/react/src';
-  const files = new Set(RTL_GROUPS.length > 0 ? RTL_EXTRA_FILES : []);
-  const stories = readdirSync(new URL(`../../../${root}`, import.meta.url), {
+/**
+ * The sources the check reads: every module of the package but its stories, its tests and the
+ * helpers its stories share (`storybook-*`), which are not shipped.
+ */
+const packageSources = () =>
+  readdirSync(new URL('../../../packages/react/src', import.meta.url), {
     recursive: true,
     encoding: 'utf8',
-  }).filter((path) => path.endsWith('.stories.tsx'));
-  for (const story of stories) {
-    const group = /\btitle:\s*'([^/']+)\//.exec(read(`${root}/${story}`))?.[1];
-    if (!group || !RTL_GROUPS.includes(group)) continue;
-    const component = `${root}/${story.replace('.stories.tsx', '.tsx')}`;
-    // Not every stories file sits next to a component of its name: RTL_EXTRA_FILES has those.
-    if (existsSync(new URL(`../../../${component}`, import.meta.url))) files.add(component);
-  }
-  return [...files].sort();
-};
-
-/** The sources the check reads: those of the groups, less the deferred ones. */
-const convertedFiles = () =>
-  groupFiles().filter((file) => !RTL_DEFERRED.some((deferred) => deferred.file === file));
+  })
+    .filter(
+      (path) =>
+        /\.tsx?$/.test(path) &&
+        !/\.(?:stories\.tsx|test\.ts)$/.test(path) &&
+        !/(?:^|\/)storybook-[^/]*$/.test(path)
+    )
+    .map((path) => `packages/react/src/${path}`)
+    .sort();
 
 test('the physical-utility check sees what it must and lets the logical forms through', () => {
   const classes = (...names: string[]) => `className="${names.join(' ')}"`;
@@ -442,10 +365,9 @@ test('the physical-utility check sees what it must and lets the logical forms th
   expect(physicalUtilities('/* mr-2 and right: 0 */ const a = 1;')).toEqual([]);
 });
 
-test('the converted groups use logical utilities only', () => {
-  const files = convertedFiles();
-  // A group holds components, so an empty list means the story titles stopped matching.
-  expect(files.length > 0, 'converted component files').toBe(RTL_GROUPS.length > 0);
+test('the package uses logical utilities only', () => {
+  const files = packageSources();
+  expect(files.length, 'source files').toBeGreaterThan(100);
 
   const found = files.flatMap((file) =>
     physicalUtilities(read(file)).map((token) => ({ file, token }))
@@ -462,18 +384,6 @@ test('the converted groups use logical utilities only', () => {
     expect(
       found.some((hit) => hit.file === file && hit.token === token),
       `RTL_ALLOWED entry no longer needed: ${file}: ${token}`
-    ).toBe(true);
-  }
-});
-
-test('the deferred files are still in a converted group and still need converting', () => {
-  const inGroups = groupFiles();
-  for (const { file, reason } of RTL_DEFERRED) {
-    expect(reason, file).not.toBe('');
-    expect(inGroups, `RTL_DEFERRED entry not in a converted group: ${file}`).toContain(file);
-    expect(
-      physicalUtilities(read(file)).length > 0,
-      `RTL_DEFERRED entry no longer needed: ${file}`
     ).toBe(true);
   }
 });
