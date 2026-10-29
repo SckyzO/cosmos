@@ -29,7 +29,7 @@ export const Kbd = ({ children, size = 'md', className }: KbdProps) => (
     // A key keeps its glyphs in the order it is pressed in: an island, whatever the line reads.
     dir="ltr"
     className={clsx(
-      'inline-flex shrink-0 items-center justify-center rounded border border-gray-200 bg-gray-50 font-mono font-medium text-gray-700 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.04)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.04)]',
+      'inline-flex shrink-0 items-center justify-center rounded-sm border border-gray-200 bg-gray-50 font-mono font-medium text-gray-700 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.04)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.04)]',
       SIZE[size],
       className
     )}

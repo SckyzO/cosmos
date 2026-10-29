@@ -90,7 +90,7 @@ export const Breadcrumb = ({
   const hidden = items.slice(hiddenFrom, hiddenTo);
   const shown = collapsed ? [...items.slice(0, hiddenFrom), ...items.slice(hiddenTo)] : items;
   const linkClass =
-    'text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex max-w-32 items-center max-sm:min-w-0 gap-1.5 rounded px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:max-w-none';
+    'text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator flex max-w-32 items-center max-sm:min-w-0 gap-1.5 rounded-sm px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:max-w-none';
   return (
     <nav
       aria-label={ariaLabel}
@@ -113,7 +113,7 @@ export const Breadcrumb = ({
                 <Menu>
                   <Menu.Trigger
                     aria-label={`Show ${hidden.length} more pages`}
-                    className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded px-2 py-1 transition-colors"
+                    className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded-sm px-2 py-1 transition-colors"
                   >
                     <Ellipsis className="h-4 w-4" aria-hidden />
                   </Menu.Trigger>
@@ -136,7 +136,7 @@ export const Breadcrumb = ({
             {isLast ? (
               <span
                 aria-current="page"
-                className="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
+                className="flex items-center gap-1.5 rounded-sm px-2 py-1 text-sm font-semibold whitespace-nowrap text-[var(--color-text-primary)] max-sm:min-w-0"
               >
                 {renderIcon('text-brand-500 h-4 w-4 shrink-0')}
                 <span className="truncate">

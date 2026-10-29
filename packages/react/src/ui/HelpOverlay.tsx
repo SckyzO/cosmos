@@ -38,7 +38,7 @@ const formatKey = (raw: string, isMac: boolean): string => {
 const Kbd = ({ children, className }: { children: ReactNode; className?: string }) => (
   <kbd
     className={clsx(
-      'text-2xs inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 font-mono font-medium text-gray-700 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+      'text-2xs inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-sm border border-gray-200 bg-gray-50 px-1.5 font-mono font-medium text-gray-700 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
       className
     )}
   >

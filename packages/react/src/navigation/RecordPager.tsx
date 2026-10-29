@@ -187,7 +187,7 @@ export const RecordPager = ({
       {backHref !== undefined && (
         <AppLink
           href={backHref}
-          className="focus-visible:focus-indicator text-brand-600 dark:text-brand-400 inline-flex items-center gap-1.5 rounded text-sm font-medium hover:underline"
+          className="focus-visible:focus-indicator text-brand-600 dark:text-brand-400 inline-flex items-center gap-1.5 rounded-sm text-sm font-medium hover:underline"
         >
           <ArrowLeft aria-hidden className="size-4 rtl:-scale-x-100" />
           {backLabel}

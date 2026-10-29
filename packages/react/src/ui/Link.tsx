@@ -75,7 +75,7 @@ export function Link({
       target={finalTarget}
       rel={finalRel}
       className={clsx(
-        'focus-visible:focus-indicator inline-flex items-center gap-1 text-sm font-medium transition-colors focus-visible:rounded',
+        'focus-visible:focus-indicator inline-flex items-center gap-1 text-sm font-medium transition-colors focus-visible:rounded-sm',
         variant === 'colored' ? COLORED_CLASS[intent] : VARIANT_CLASS[variant],
         className
       )}

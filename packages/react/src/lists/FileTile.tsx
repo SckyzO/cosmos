@@ -49,7 +49,7 @@ const ICON_BUTTON =
   'focus-visible:focus-indicator flex shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10';
 
 const NAME_CLASS =
-  'focus-visible:focus-indicator block max-w-full truncate rounded text-start text-sm font-semibold text-[var(--color-text-primary)] hover:underline';
+  'focus-visible:focus-indicator block max-w-full truncate rounded-sm text-start text-sm font-semibold text-[var(--color-text-primary)] hover:underline';
 
 /**
  * One file or folder, as a `<li>` for a `GridList`, a `StackedList` or any `<ul>`. `layout="tile"`
@@ -165,7 +165,7 @@ export const FileTile = ({
       >
         <span
           className={clsx(
-            'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
+            'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-[calc(var(--radius-lg)*1.25)]',
             tint.tile
           )}
         >

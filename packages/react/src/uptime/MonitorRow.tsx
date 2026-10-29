@@ -101,7 +101,7 @@ export const MonitorRow = ({
       {href ? (
         <AppLink
           href={href}
-          className="focus-visible:focus-indicator min-w-0 truncate rounded font-medium text-[var(--color-text-primary)] hover:underline"
+          className="focus-visible:focus-indicator min-w-0 truncate rounded-sm font-medium text-[var(--color-text-primary)] hover:underline"
         >
           <bdi>{name}</bdi>
         </AppLink>
@@ -111,7 +111,7 @@ export const MonitorRow = ({
         </span>
       )}
       {type && (
-        <span className="text-2xs shrink-0 rounded bg-gray-100 px-1.5 font-mono leading-[18px] text-[var(--color-text-secondary)] dark:bg-gray-800">
+        <span className="text-2xs shrink-0 rounded-sm bg-gray-100 px-1.5 font-mono leading-[18px] text-[var(--color-text-secondary)] dark:bg-gray-800">
           <bdi>{type}</bdi>
         </span>
       )}
