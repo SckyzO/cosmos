@@ -415,7 +415,7 @@ export const ScrollingAreaFollowsItsContent: Story = {
     <Wrap>
       <DataTable
         aria-label="Searchable alerts"
-        className="h-72"
+        className="h-96"
         defaultSearchValue=""
         rows={rows.slice(0, 30)}
         columns={columns}
@@ -2187,8 +2187,9 @@ export const LoadingPlaceholderFollowsTheColumnAlign: Story = {
 };
 
 /**
- * The search icon is at the start of the field and its clear button at the end, what is typed in
- * it reads in its own script, and the selection bar keeps its actions at the end.
+ * The selection bar keeps its count and actions at the start and the search at the end, the search
+ * icon is at the start of the field and its clear button at the end, and what is typed in it reads
+ * in its own script.
  */
 export const ToolbarFollowsTheReadingDirection: Story = {
   tags: ['!dev', '!autodocs'],
@@ -2213,14 +2214,16 @@ export const ToolbarFollowsTheReadingDirection: Story = {
   play: async ({ canvasElement }) => {
     for (const dir of ['ltr', 'rtl'] as const) {
       const box = directionBox(canvasElement, dir);
-      const bar = within(box)
-        .getByText(/1 selected/)
-        .closest('div')!.parentElement!;
-      await expect(
-        endOffset(within(box).getByRole('button', { name: 'Archive' }), bar),
-        dir
-      ).toBeLessThan(startOffset(within(box).getByRole('button', { name: 'Archive' }), bar));
-      // Deselect to show the search field.
+      const archive = within(box).getByRole('button', { name: 'Archive' });
+      const selectionSearch = within(box).getByRole('searchbox', { name: 'Search rows' });
+      // The actions sit at the start of the line, the search at its end.
+      await expect(startOffset(archive, box), `${dir}: actions at the start`).toBeLessThan(
+        endOffset(archive, box)
+      );
+      await expect(endOffset(selectionSearch, box), `${dir}: search at the end`).toBeLessThan(
+        startOffset(selectionSearch, box)
+      );
+      // Deselect: the plain toolbar keeps the search.
       await userEvent.click(within(box).getByRole('button', { name: 'Clear' }));
       const field = within(box).getByRole('searchbox', { name: 'Search rows' });
       await expect(field).toHaveAttribute('dir', 'auto');
