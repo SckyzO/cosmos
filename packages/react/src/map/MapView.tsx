@@ -351,6 +351,10 @@ export const MapView = ({
       ref={ref}
       className={clsx(
         'relative isolate w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]',
+        // MapLibre's attribution is a half-white box under the page's text colour, unreadable
+        // over dark tiles: it takes the panel and the secondary text, and its links an underline
+        // rather than MapLibre's black. `!`: MapLibre's stylesheet is loaded outside the layers.
+        '[&_.maplibregl-ctrl-attrib]:bg-[var(--color-bg-panel)]! [&_.maplibregl-ctrl-attrib]:text-[var(--color-text-secondary)] [&_.maplibregl-ctrl-attrib_a]:text-inherit! [&_.maplibregl-ctrl-attrib_a]:underline!',
         className
       )}
       style={{ height }}
