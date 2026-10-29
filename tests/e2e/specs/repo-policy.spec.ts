@@ -519,3 +519,184 @@ test('no prop type names a physical side of the line', () => {
     ).toBe(true);
   }
 });
+
+// ── Corner radius ───────────────────────────────────────────────────────────
+
+// `data-radius` rescales Tailwind's `--radius-*` variables (`rounded-sm` … `rounded-4xl` read them),
+// so a corner follows the page's radius only if it goes through the scale. Three things escape it:
+// a utility that compiles to a literal (a bare `rounded`, `rounded-t`, `rounded-ss`… are a fixed
+// 0.25rem in Tailwind 4), an arbitrary `rounded-[…]`, and a radius written in a style (#455).
+// `rounded-none` and `rounded-full` are fine: the first is square, the second round at every step.
+
+/**
+ * The few radii that stay out of the scale: `file`, the exact `token` and why, so each exception
+ * is a decision and not a leftover. `in` narrows an entry to the lines that contain it, for a
+ * word that is not a class. An entry that no longer matches fails too.
+ */
+const RADIUS_ALLOWED: { file: string; token: string; in?: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/ui/ProgressBar.tsx',
+    token: 'rounded-[3px]',
+    reason:
+      'the 10px swatch of the legend: a 3px corner is a softened square, and a scale on it would move it by a pixel',
+  },
+  ...['rounded-[1px]', 'rounded-[2px]', 'rounded-[3px]'].map((token) => ({
+    file: 'packages/react/src/uptime/HeartbeatBar.tsx',
+    token,
+    reason:
+      'the bars, cells and crosses of a heartbeat strip are 5 to 12px wide: a 1 to 3px corner only softens them, and a large radius would turn the strip into dots',
+  })),
+  {
+    file: 'packages/react/src/uptime/UptimeBars.tsx',
+    token: 'rounded-[2px]',
+    reason: 'the thin bars and 12px legend cells of an uptime strip, as in HeartbeatBar',
+  },
+  {
+    file: 'packages/react/src/status/HealthMatrix.tsx',
+    token: 'rounded-[2px]',
+    reason: 'the 12px cell of the matrix: a 2px corner only softens it',
+  },
+  ...['packages/react/src/ui/Button.tsx', 'packages/react/src/logs/LogToolbar.tsx'].map((file) => ({
+    file,
+    token: 'rounded',
+    in: "'rounded'",
+    reason:
+      'the `rounded` value of the `shape` prop (the Button default), not a class: its class is `rounded-lg`',
+  })),
+];
+
+const BARE_RADIUS = /(?<![\w-])rounded(?:-(?:t|b|s|e|l|r|tl|tr|bl|br|ss|se|es|ee))?(?![\w[-])/g;
+const ARBITRARY_RADIUS =
+  /(?<![\w-])rounded(?:-(?:t|b|s|e|l|r|tl|tr|bl|br|ss|se|es|ee))?-(?:\[([^\]\s]*)\]|\(([^)\s]*)\))/g;
+const CSS_RADIUS = /\bborder(?:-(?:top|bottom|start|end)-(?:left|right|start|end))?-radius\b/g;
+const STYLE_RADIUS = /^border(?:(?:Top|Bottom|Start|End)(?:Left|Right|Start|End))?Radius$/;
+
+type RadiusHit = { file: string; token: string; line: string };
+
+/**
+ * What of `source` takes a corner out of the scale: a bare `rounded` utility or an arbitrary one
+ * that does not read `var(--radius-…)` in a string, a radius in CSS text, or a `borderRadius`
+ * key. Comments and types are not code that renders.
+ */
+const radiusEscapes = (file: string, source: string): RadiusHit[] => {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const lines = source.split('\n');
+  const hits: RadiusHit[] = [];
+  const add = (node: ts.Node, token: string) =>
+    hits.push({
+      file,
+      token,
+      line: lines[tree.getLineAndCharacterOfPosition(node.getStart(tree)).line] ?? '',
+    });
+  const scan = (node: ts.Node, text: string) => {
+    for (const [token] of text.matchAll(BARE_RADIUS)) add(node, token);
+    for (const [token, bracket, paren] of text.matchAll(ARBITRARY_RADIUS)) {
+      const value = bracket ?? paren ?? '';
+      if (value !== 'inherit' && !value.includes('var(--radius-')) add(node, token);
+    }
+    for (const [token] of text.matchAll(CSS_RADIUS)) add(node, token);
+  };
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isLiteralTypeNode(node) ||
+      ts.isImportDeclaration(node) ||
+      ts.isExportDeclaration(node)
+    ) {
+      return;
+    }
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    ) {
+      // A property name is a key, not a class: `rounded: 'rounded-lg'`.
+      if (!(ts.isPropertyAssignment(node.parent) && node.parent.name === node))
+        scan(node, node.text);
+    }
+    if (
+      (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) &&
+      (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
+      STYLE_RADIUS.test(node.name.text)
+    ) {
+      add(node, node.name.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return hits;
+};
+
+test('the radius check sees a corner that leaves the scale and lets the scale through', () => {
+  const found = (code: string) => radiusEscapes('x.tsx', code).map((hit) => hit.token);
+  for (const bare of [
+    'rounded',
+    'rounded-t',
+    'rounded-b',
+    'rounded-s',
+    'rounded-e',
+    'rounded-tl',
+  ]) {
+    expect(found(`<a className="flex ${bare} p-2" />`), bare).toEqual([bare]);
+    expect(found(`<a className="flex sm:${bare} p-2" />`), `sm:${bare}`).toEqual([bare]);
+    expect(found(`<a className="[&_code]:${bare}" />`), `[&_code]:${bare}`).toEqual([bare]);
+  }
+  expect(found('const a = clsx(x && "rounded", `rounded-ss ${y}`);')).toEqual([
+    'rounded',
+    'rounded-ss',
+  ]);
+  expect(found('<i className="size-3 rounded-[3px] before:rounded-[10px]" />')).toEqual([
+    'rounded-[3px]',
+    'rounded-[10px]',
+  ]);
+  expect(found('<i className="rounded-t-[4px] rounded-(--corner)" />')).toEqual([
+    'rounded-t-[4px]',
+    'rounded-(--corner)',
+  ]);
+  expect(found('<div style={{ borderRadius: 4, borderStartStartRadius: 2 }} />')).toEqual([
+    'borderRadius',
+    'borderStartStartRadius',
+  ]);
+  expect(found('const css = "border-radius: 4px";')).toEqual(['border-radius']);
+  const scale = [
+    'rounded-xs rounded-sm rounded-md rounded-lg rounded-xl rounded-2xl rounded-3xl rounded-4xl',
+    'rounded-t-lg rounded-s-md rounded-ee-xl rounded-tl-sm sm:rounded-lg dark:rounded-xl',
+    'rounded-none rounded-full rounded-t-none rounded-e-full rounded-[inherit] rounded-se-[inherit]',
+    'rounded-[calc(var(--radius-lg)*1.25)] before:rounded-[inherit]',
+  ].join(' ');
+  expect(found(`<a className="${scale}" />`)).toEqual([]);
+  // Prose, keys, types, imports and comments are not classes.
+  expect(found("type Shape = 'rounded' | 'pill'; const x = { rounded: 'rounded-lg' };")).toEqual(
+    []
+  );
+  expect(
+    found("const rounded = true; // rounded corners\n/* rounded */ f(rounded && 'rounded-xl');")
+  ).toEqual([]);
+  expect(found("import { rounded } from './rounded'; const t = 'unrounded roundedness';")).toEqual(
+    []
+  );
+});
+
+test('every corner of the package goes through the radius scale', () => {
+  const files = packageSources();
+  expect(files.length, 'source files').toBeGreaterThan(100);
+
+  const found = files.flatMap((file) => radiusEscapes(file, read(file)));
+  const matches = (entry: (typeof RADIUS_ALLOWED)[number]) => (hit: RadiusHit) =>
+    entry.file === hit.file && entry.token === hit.token && hit.line.includes(entry.in ?? '');
+  expect(
+    found
+      .filter((hit) => !RADIUS_ALLOWED.some((entry) => matches(entry)(hit)))
+      .map(({ file, token, line }) => `${file}: ${token}  (${line.trim().slice(0, 100)})`),
+    'a bare rounded (rounded, rounded-t…) is a fixed 0.25rem: write rounded-sm (rounded-t-sm…); an arbitrary rounded-[…] reads var(--radius-…) or goes in RADIUS_ALLOWED with the reason; a borderRadius is a class instead'
+  ).toEqual([]);
+
+  for (const entry of RADIUS_ALLOWED) {
+    expect(entry.reason, `${entry.file}: ${entry.token}`).not.toBe('');
+    expect(
+      found.some(matches(entry)),
+      `RADIUS_ALLOWED entry no longer needed: ${entry.file}: ${entry.token}`
+    ).toBe(true);
+  }
+});
