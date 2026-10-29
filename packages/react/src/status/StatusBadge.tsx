@@ -4,6 +4,10 @@ import { type HealthStatus, STATUS_PILL } from './types';
 export type StatusBadgeProps = {
   status: HealthStatus;
   size?: 'sm' | 'md' | 'lg';
+  /**
+   * Text of the pill, default `status`. It sits in a `<bdi>`: "12 OK" keeps its order in a
+   * right-to-left page.
+   */
   label?: string;
   className?: string;
 };
@@ -28,6 +32,6 @@ export const StatusBadge = ({ status, size = 'md', label, className }: StatusBad
       className
     )}
   >
-    {label ?? status}
+    <bdi>{label ?? status}</bdi>
   </span>
 );

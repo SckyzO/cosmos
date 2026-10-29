@@ -132,7 +132,7 @@ export const UptimeBars = ({
                 aria-hidden="true"
                 className={clsx('size-3 shrink-0 rounded-[2px]', LEVEL_FILL[level])}
               />
-              {label}
+              <bdi>{label}</bdi>
             </li>
           ))}
         </ul>
