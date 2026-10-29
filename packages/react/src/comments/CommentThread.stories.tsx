@@ -7,6 +7,7 @@ import {
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
+  keyToEnd,
   mobileViewport,
 } from '../storybook-helpers';
 import { RelativeTime } from '../data/RelativeTime';
@@ -302,6 +303,35 @@ export const FoldedReplies: Story = {
   ),
 };
 
+/**
+ * `keepReplies="last"` keeps the latest replies on screen and folds the older ones behind a button
+ * above them: a ticket, where the last exchanges matter.
+ */
+export const LatestRepliesKept: Story = {
+  render: () => (
+    <Frame>
+      <CommentThread>
+        <Comment
+          author="Marta Ilves"
+          role="Customer"
+          time={time('2026-10-26T09:12')}
+          text="Is anyone looking at this?"
+          maxReplies={2}
+          keepReplies="last"
+          replies={[1, 2, 3, 4, 5, 6].map((n) => (
+            <Comment
+              key={n}
+              author={n % 2 ? 'Ben Okafor' : 'Marta Ilves'}
+              time={time(`2026-10-26T09:${10 + n}`)}
+              text={`Reply number ${n}.`}
+            />
+          ))}
+        />
+      </CommentThread>
+    </Frame>
+  ),
+};
+
 /** Every text in another language: on the thread for all its comments, or on a single comment. */
 export const Translated: Story = {
   render: () => (
@@ -369,6 +399,38 @@ export const ComposerSubmitting: Story = {
       <CommentComposer
         defaultValue="Restarted the worker, please try again."
         submitting
+        onSubmit={fn()}
+      />
+    </Frame>
+  ),
+};
+
+const MODES = [
+  { value: 'reply', label: 'Reply to customer', submitLabel: 'Send reply' },
+  { value: 'note', label: 'Internal note', internal: true, submitLabel: 'Add note' },
+];
+
+/** Modes: a segmented control above the field picks what the text is. Reply is selected. */
+export const ComposerWithModes: Story = {
+  render: () => (
+    <Frame>
+      <CommentComposer modes={MODES} label="Reply to Marta Ilves" onSubmit={fn()} />
+    </Frame>
+  ),
+};
+
+/**
+ * An internal mode tints the field and the button, and a line with a lock says who sees the text,
+ * so a note is not sent to the customer by mistake.
+ */
+export const ComposerInternalNote: Story = {
+  render: () => (
+    <Frame>
+      <CommentComposer
+        modes={MODES}
+        defaultMode="note"
+        defaultValue="Worker 7 is stuck again, restarting it."
+        label="Reply to Marta Ilves"
         onSubmit={fn()}
       />
     </Frame>
@@ -445,6 +507,9 @@ export const EmptyThreadOnMobile: Story = atMobile(EmptyThread);
 export const LongTextOnMobile: Story = atMobile(LongText);
 export const HostileTextOnMobile: Story = atMobile(HostileText);
 export const FoldedRepliesOnMobile: Story = atMobile(FoldedReplies);
+export const LatestRepliesKeptOnMobile: Story = atMobile(LatestRepliesKept);
+export const ComposerWithModesOnMobile: Story = atMobile(ComposerWithModes);
+export const ComposerInternalNoteOnMobile: Story = atMobile(ComposerInternalNote);
 export const TicketDetailPageOnMobile: Story = atMobile(TicketDetailPage);
 
 // ── Tests ───────────────────────────────────────────────────────────────────
@@ -828,5 +893,193 @@ export const RepliesHangFromTheStartInRightToLeft: Story = {
     expect(getComputedStyle(rule).borderLeftWidth).toBe('0px');
     // The replies are indented from the start, the same distance in both directions.
     expectMirrored(canvasElement, (box) => box.querySelector('.border-s-2'));
+  },
+};
+
+export const LatestRepliesShowAndTheButtonUnfoldsTheOlderOnes: Story = {
+  ...LatestRepliesKept,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list', { name: 'Replies to Marta Ilves' });
+    const items = () => within(list).getAllByRole('listitem');
+    // The last two stay, the older four are folded.
+    await expect(items()).toHaveLength(2);
+    await expect(within(list).getByText('Reply number 5.')).toBeVisible();
+    await expect(within(list).getByText('Reply number 6.')).toBeVisible();
+    await expect(within(list).queryByText('Reply number 1.')).toBeNull();
+    const more = canvas.getByRole('button', { name: 'Show 4 earlier replies' });
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    // The button sits above the replies, where the folded ones come back.
+    await expect(
+      more.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    await userEvent.click(more);
+    await expect(items()).toHaveLength(6);
+    await expect(items()[0]).toHaveTextContent('Reply number 1.');
+    await expect(items()[5]).toHaveTextContent('Reply number 6.');
+    const fewer = canvas.getByRole('button', { name: 'Show fewer replies' });
+    await expect(fewer).toHaveAttribute('aria-expanded', 'true');
+    await expect(fewer).toHaveFocus();
+    await userEvent.click(fewer);
+    await expect(items()).toHaveLength(2);
+    await expect(items()[0]).toHaveTextContent('Reply number 5.');
+  },
+};
+
+export const TheDefaultStillFoldsTheTail: Story = {
+  ...FoldedReplies,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list', { name: 'Replies to Marta Ilves' });
+    await expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+    await expect(within(list).getByText('Reply number 1.')).toBeVisible();
+    await expect(within(list).getByText('Reply number 2.')).toBeVisible();
+    await expect(within(list).queryByText('Reply number 5.')).toBeNull();
+    // The button is under the replies.
+    const more = canvas.getByRole('button', { name: 'Show 3 more replies' });
+    await expect(
+      list.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  },
+};
+
+const modeCalls = fn();
+export const SwitchingModeChangesWhatOnSubmitReceives: Story = {
+  ...tagged,
+  render: () => (
+    <Frame>
+      <CommentComposer modes={MODES} onSubmit={modeCalls} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    modeCalls.mockClear();
+    const field = canvas.getByRole('textbox', { name: 'Comment' });
+    const reply = canvas.getByRole('radio', { name: 'Reply to customer' });
+    const note = canvas.getByRole('radio', { name: 'Internal note' });
+    await expect(reply).toBeChecked();
+    await userEvent.type(field, 'Restarted, please retry.');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send reply' }));
+    await expect(modeCalls).toHaveBeenLastCalledWith('Restarted, please retry.', 'reply');
+    // The text stays when the mode changes; the button follows the mode.
+    await userEvent.type(field, 'Do not tell the customer.');
+    await userEvent.click(note);
+    await expect(note).toBeChecked();
+    await expect(field).toHaveValue('Do not tell the customer.');
+    await userEvent.click(canvas.getByRole('button', { name: 'Add note' }));
+    await expect(modeCalls).toHaveBeenLastCalledWith('Do not tell the customer.', 'note');
+    await expect(modeCalls).toHaveBeenCalledTimes(2);
+  },
+};
+
+const plainCalls = fn();
+export const WithoutModesOnSubmitStillGetsTheTextAlone: Story = {
+  ...tagged,
+  render: () => (
+    <Frame>
+      <CommentComposer onSubmit={plainCalls} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    plainCalls.mockClear();
+    await expect(canvas.queryByRole('radiogroup')).toBeNull();
+    await expect(canvas.queryByRole('status')).toBeNull();
+    await userEvent.type(canvas.getByRole('textbox', { name: 'Comment' }), 'hello');
+    await userEvent.click(canvas.getByRole('button', { name: 'Comment' }));
+    await expect(plainCalls).toHaveBeenCalledTimes(1);
+    await expect(plainCalls.mock.calls[0]).toEqual(['hello']);
+  },
+};
+
+const readSurface = (el: Element) => {
+  const style = getComputedStyle(el);
+  return `${style.backgroundColor}|${style.borderTopColor}`;
+};
+
+export const AnInternalModeIsAnnouncedAndTinted: Story = {
+  ...tagged,
+  render: () => (
+    <Frame>
+      <CommentComposer modes={MODES} defaultValue="Check the logs." onSubmit={fn()} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const field = canvas.getByRole('textbox', { name: 'Comment' });
+    const status = canvas.getByRole('status');
+    const replySurface = readSurface(field);
+    await expect(status).toHaveTextContent('');
+    await userEvent.click(canvas.getByRole('radio', { name: 'Internal note' }));
+    // Announced in a live region that was already on the page, and shown with a lock.
+    await expect(status).toHaveTextContent('Internal note: only your team sees this.');
+    await expect(status).toBeVisible();
+    inEachTheme(() => {
+      expect(readSurface(field)).not.toBe(replySurface);
+      expectTextContrast(field);
+    });
+    // The submit button turns amber.
+    const submit = canvas.getByRole('button', { name: 'Add note' });
+    await expect(submit).toBeEnabled();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Reply to customer' }));
+    await expect(status).toHaveTextContent('');
+    await expect(readSurface(field)).toBe(replySurface);
+  },
+};
+
+export const InternalSubmitButtonIsTintedToo: Story = {
+  ...tagged,
+  render: () => (
+    <Frame>
+      <CommentComposer modes={MODES} defaultValue="Text" onSubmit={fn()} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const bg = () => getComputedStyle(canvas.getAllByRole('button')[0]!).backgroundColor;
+    const replyBg = bg();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Internal note' }));
+    await expect(bg()).not.toBe(replyBg);
+  },
+};
+
+const ControlledModes = ({ onSubmit }: { onSubmit: (text: string, mode?: string) => void }) => {
+  const [mode, setMode] = useState('reply');
+  return (
+    <Frame>
+      <CommentComposer
+        modes={MODES}
+        mode={mode}
+        onModeChange={setMode}
+        defaultValue="Text"
+        onSubmit={onSubmit}
+      />
+      <p data-testid="host-mode">{mode}</p>
+    </Frame>
+  );
+};
+
+const controlledCalls = fn();
+export const ModeCanBeControlled: Story = {
+  ...tagged,
+  render: () => <ControlledModes onSubmit={controlledCalls} />,
+  play: async ({ canvas }) => {
+    controlledCalls.mockClear();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Internal note' }));
+    await expect(canvas.getByTestId('host-mode')).toHaveTextContent('note');
+    await expect(canvas.getByRole('radio', { name: 'Internal note' })).toBeChecked();
+    await userEvent.click(canvas.getByRole('button', { name: 'Add note' }));
+    await expect(controlledCalls).toHaveBeenLastCalledWith('Text', 'note');
+  },
+};
+
+export const ModeKeyboardArrowsMoveTheSelection: Story = {
+  ...tagged,
+  render: () => (
+    <Frame>
+      <CommentComposer modes={MODES} onSubmit={fn()} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    canvas.getByRole('radio', { name: 'Reply to customer' }).focus();
+    await userEvent.keyboard(`{${keyToEnd()}}`);
+    await expect(canvas.getByRole('radio', { name: 'Internal note' })).toBeChecked();
+    await expect(canvas.getByRole('status')).toHaveTextContent('Internal note');
   },
 };
