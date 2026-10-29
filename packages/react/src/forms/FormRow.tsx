@@ -15,7 +15,8 @@ export type FormRowProps = {
 /**
  * FormRow — horizontal setting row : label (+ optional description and help)
  * at the start, control at the end. Below `sm` the label and its description stack
- * above the control, which takes the row's width. Pair multiple FormRows inside a
+ * above the control, which takes the row's width; a switch (`Toggle`) stays beside its
+ * label, as phones show a setting that turns on and off. Pair multiple FormRows inside a
  * `divide-y` container to build settings panels. The Cosmos controls inside
  * (Toggle, NumberInput, SearchInput, Select, SegmentedControl) take the
  * label as their name and the description as their description; any other
@@ -29,10 +30,11 @@ export const FormRow = ({ label, description, tooltip, children, className }: Fo
     <div
       className={clsx(
         'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4',
+        'has-[[role=switch]]:flex-row has-[[role=switch]]:items-center has-[[role=switch]]:justify-between has-[[role=switch]]:gap-4',
         className
       )}
     >
-      <div className="min-w-0 sm:flex-1">
+      <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
           <span id={labelId}>{label}</span>
           {tooltip && <TooltipHelp text={tooltip} />}
@@ -43,7 +45,7 @@ export const FormRow = ({ label, description, tooltip, children, className }: Fo
           </p>
         )}
       </div>
-      <div className="sm:shrink-0">
+      <div className="shrink-0">
         <FormRowContext.Provider value={{ labelId, descriptionId }}>
           {children}
         </FormRowContext.Provider>
