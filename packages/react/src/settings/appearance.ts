@@ -38,6 +38,12 @@ export type CosmosTextSize = 'sm' | 'md' | 'lg' | 'xl';
 /** A Cosmos density: the `data-density` attribute on `<html>`, none for `default`. */
 export type CosmosDensity = 'compact' | 'default' | 'comfortable';
 
+/**
+ * A Cosmos corner radius: the `data-radius` attribute on `<html>`, none for `default`.
+ * `none` squares every corner to 2px, `sm` halves them, `lg` takes them one and a half times.
+ */
+export type CosmosRadius = 'none' | 'sm' | 'default' | 'lg';
+
 /** The reading direction of the page. */
 export type CosmosDirection = 'ltr' | 'rtl';
 
@@ -50,10 +56,11 @@ export type CosmosFontMeta = { id: CosmosFont; label: string; family: string };
 /** `scale` is the factor the theme applies to every text size. */
 export type CosmosTextSizeMeta = { id: CosmosTextSize; label: string; scale: number };
 export type CosmosDensityMeta = { id: CosmosDensity; label: string };
+export type CosmosRadiusMeta = { id: CosmosRadius; label: string };
 
 /**
- * The page's appearance. `font`, `textSize`, `density` and `direction` are
- * optional: leave them out and `applyAppearance` doesn't touch their attributes.
+ * The page's appearance. `font`, `textSize`, `density`, `radius` and `direction`
+ * are optional: leave them out and `applyAppearance` doesn't touch their attributes.
  */
 export type CosmosAppearance = {
   /** `system` follows `prefers-color-scheme`: see `systemThemes`. */
@@ -64,6 +71,7 @@ export type CosmosAppearance = {
   font?: CosmosFont;
   textSize?: CosmosTextSize;
   density?: CosmosDensity;
+  radius?: CosmosRadius;
   /** The reading direction: the `dir` attribute on `<html>`, none for `ltr`. */
   direction?: CosmosDirection;
 };
@@ -163,6 +171,18 @@ export const COSMOS_DENSITIES: CosmosDensityMeta[] = [
   { id: 'comfortable', label: 'Comfortable' },
 ];
 
+/**
+ * The four corner radii of `@sckyzo/cosmos-theme`, sharpest first. They rescale
+ * Tailwind's `--radius-*` tokens (`rounded-sm` to `rounded-4xl`); `rounded-full`
+ * never moves.
+ */
+export const COSMOS_RADII: CosmosRadiusMeta[] = [
+  { id: 'none', label: 'None' },
+  { id: 'sm', label: 'Small' },
+  { id: 'default', label: 'Default' },
+  { id: 'lg', label: 'Large' },
+];
+
 const THEME_CLASSES = COSMOS_THEMES.map((t) => t.id).filter((id) => id !== 'light');
 
 /** `true` for the themes that enable Tailwind's `dark:` variant. */
@@ -201,15 +221,24 @@ export const watchSystemTheme = (onChange: (prefersDark: boolean) => void): (() 
 
 /**
  * Apply an appearance to `root` (default `<html>`): swaps the theme class and
- * sets `data-accent`, `data-font`, `data-text-size` and `data-density`, and
- * `dir="rtl"` for a `direction` of `rtl`, removing each one for its default
- * (blue, Outfit, `md`, `default`, `ltr`). A `system`
+ * sets `data-accent`, `data-font`, `data-text-size`, `data-density` and
+ * `data-radius`, and `dir="rtl"` for a `direction` of `rtl`, removing each one
+ * for its default (blue, Outfit, `md`, `default`, `default`, `ltr`). A `system`
  * theme is resolved with `prefers-color-scheme` when applied: call this again
- * on `watchSystemTheme`. A `font`, `textSize`, `density` or `direction` left out
- * keeps its attribute as it is. No-op during SSR.
+ * on `watchSystemTheme`. A `font`, `textSize`, `density`, `radius` or `direction`
+ * left out keeps its attribute as it is. No-op during SSR.
  */
 export const applyAppearance = (
-  { theme: choice, systemThemes, accent, font, textSize, density, direction }: CosmosAppearance,
+  {
+    theme: choice,
+    systemThemes,
+    accent,
+    font,
+    textSize,
+    density,
+    radius,
+    direction,
+  }: CosmosAppearance,
   root?: HTMLElement
 ) => {
   const el = root ?? (typeof document === 'undefined' ? undefined : document.documentElement);
@@ -225,6 +254,8 @@ export const applyAppearance = (
   else if (textSize) el.dataset.textSize = textSize;
   if (density === 'default') delete el.dataset.density;
   else if (density) el.dataset.density = density;
+  if (radius === 'default') delete el.dataset.radius;
+  else if (radius) el.dataset.radius = radius;
   if (direction === 'ltr') el.removeAttribute('dir');
   else if (direction) el.setAttribute('dir', direction);
 };

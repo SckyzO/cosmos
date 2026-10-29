@@ -136,7 +136,7 @@ const CONTENT_CLASS = [
   '[&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_li>p]:my-0',
   '[&_blockquote]:border-s-4 [&_blockquote]:border-gray-300 [&_blockquote]:ps-3 [&_blockquote]:text-gray-600',
   'dark:[&_blockquote]:border-gray-600 dark:[&_blockquote]:text-gray-300',
-  '[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.9em]',
+  '[&_code]:rounded-sm [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.9em]',
   'dark:[&_code]:bg-gray-800',
   '[&_a]:text-brand-600 dark:[&_a]:text-brand-400 [&_a]:underline [&_a]:underline-offset-2',
   '[&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-start [&_p.is-editor-empty:first-child]:before:h-0',

@@ -215,7 +215,7 @@ function CommandPaletteItem({
         // A shortcut reads in the order the keys are pressed, whatever the direction of the line.
         <kbd
           dir="ltr"
-          className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+          className="text-3xs shrink-0 rounded-sm border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
         >
           {shortcut}
         </kbd>

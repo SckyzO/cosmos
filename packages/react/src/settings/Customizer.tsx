@@ -13,6 +13,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
   type CosmosAccent,
@@ -22,6 +23,7 @@ import {
   type CosmosDirection,
   type CosmosFont,
   type CosmosFontMeta,
+  type CosmosRadiusMeta,
   type CosmosSystemThemeMeta,
   type CosmosTextSizeMeta,
   type CosmosThemeChoice,
@@ -56,6 +58,7 @@ export type CustomizerSection =
   | 'font'
   | 'textSize'
   | 'density'
+  | 'radius'
   | 'direction'
   | 'layout'
   | 'sidebar'
@@ -77,6 +80,7 @@ export const CUSTOMIZER_SECTIONS: CustomizerSection[] = [
   'font',
   'textSize',
   'density',
+  'radius',
   'direction',
   'layout',
   'sidebar',
@@ -90,6 +94,7 @@ export const CUSTOMIZER_DEFAULT_VALUE = {
   font: 'outfit',
   textSize: 'md',
   density: 'default',
+  radius: 'default',
   direction: 'ltr',
   layout: 'vertical',
   sidebar: 'expanded',
@@ -103,6 +108,7 @@ const DEFAULT_LABELS: Record<CustomizerSection, string> = {
   font: 'Font',
   textSize: 'Text size',
   density: 'Density',
+  radius: 'Corner radius',
   direction: 'Direction',
   layout: 'Layout',
   sidebar: 'Sidebar',
@@ -144,6 +150,8 @@ export type CustomizerProps = {
   textSizes?: CosmosTextSizeMeta[];
   /** Densities to offer. Default: all of `COSMOS_DENSITIES`. */
   densities?: CosmosDensityMeta[];
+  /** Corner radii to offer. Default: all of `COSMOS_RADII`. */
+  radii?: CosmosRadiusMeta[];
   /** Headings of the sections, by section. Default: English names ("Accent color", "Text size"…). */
   labels?: Partial<Record<CustomizerSection, string>>;
   /** Title of the panel. Default `'Customize'`. */
@@ -323,15 +331,15 @@ const ANNOUNCE_MS = 1500;
 
 /**
  * Customizer — a panel on the end side where a user shapes the app: theme, accent, font, text
- * size, density, direction, and the shell's layout, sidebar mode and container, with optional
+ * size, density, corner radius, direction, and the shell's layout, sidebar mode and container, with optional
  * presets, a Reset and a "Copy config" that puts the value on the clipboard as JSON. Built on
  * `Drawer`, `PalettePicker`, `AccentPicker` and `OptionPicker`.
  *
  * It only holds the choice, and applies nothing: it is controlled (`value`, `onChange`) and the
  * host does the rest, on every change:
  *
- * - `applyAppearance(value)` sets the theme, accent, font, text size, density and direction
- *   (`dir`) on `<html>`;
+ * - `applyAppearance(value)` sets the theme, accent, font, text size, density, radius
+ *   (`data-radius`) and direction (`dir`) on `<html>`;
  * - `value.container` is `Shell`'s `container`;
  * - `value.sidebar` drives `Shell` and `Sidebar`: `collapsed` is `Shell`'s `sidebarCollapsed`,
  *   `hover` is collapsed plus `expandOnHover="overlay"`, `compact` is `Sidebar`'s
@@ -354,6 +362,7 @@ export const Customizer = ({
   fonts = COSMOS_FONTS,
   textSizes = COSMOS_TEXT_SIZES,
   densities = COSMOS_DENSITIES,
+  radii = COSMOS_RADII,
   labels,
   title = 'Customize',
   subtitle = 'Changes apply at once.',
@@ -482,6 +491,19 @@ export const Customizer = ({
                 value={current.density}
                 onChange={(id) => set({ density: id })}
                 options={densities.map((d) => ({ value: d.id, label: d.label }))}
+              />
+            )}
+          </Group>
+        )}
+        {shown('radius') && (
+          <Group title={label('radius')}>
+            {(labelledBy) => (
+              <SegmentedControl
+                aria-labelledby={labelledBy}
+                size="sm"
+                value={current.radius}
+                onChange={(id) => set({ radius: id })}
+                options={radii.map((r) => ({ value: r.id, label: r.label }))}
               />
             )}
           </Group>

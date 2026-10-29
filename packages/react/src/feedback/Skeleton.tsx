@@ -5,7 +5,7 @@ export type SkProps = {
   h?: string;
   /** Tailwind width class — default `w-full`. */
   w?: string;
-  /** Tailwind border-radius class — default `rounded`. */
+  /** Tailwind border-radius class — default `rounded-sm`. */
   round?: string;
   /** Element to render — default `div`; `span` where only phrasing content is allowed (inside a button). */
   as?: 'div' | 'span';
@@ -25,7 +25,7 @@ export type SkProps = {
 export const Sk = ({
   h = 'h-4',
   w = 'w-full',
-  round = 'rounded',
+  round = 'rounded-sm',
   as: Tag = 'div',
   className,
 }: SkProps) => (

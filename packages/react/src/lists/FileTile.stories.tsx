@@ -535,7 +535,7 @@ export const TileAndRowMirrorInRightToLeft: Story = {
     // The badge over the preview of a tile is at the start corner.
     expectMirrored(canvasElement, (box) => within(item(box, 'tile')).getByText('Shared'));
     expectMirrored(canvasElement, (box) =>
-      item(box, 'row').querySelector('span.rounded-\\[10px\\]')
+      item(box, 'row').querySelector('span[class*="--radius-lg"]')
     );
   },
 };

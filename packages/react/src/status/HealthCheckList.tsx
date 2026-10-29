@@ -78,7 +78,7 @@ const CheckName = ({ check, open, onToggle, outputId }: Omit<CheckProps, 'now'>)
       aria-expanded={open}
       aria-controls={outputId}
       onClick={onToggle}
-      className="focus-visible:focus-indicator -mx-1 flex min-w-0 items-center gap-1 rounded px-1 text-start font-medium text-[var(--color-text-primary)] focus-visible:ring-inset"
+      className="focus-visible:focus-indicator -mx-1 flex min-w-0 items-center gap-1 rounded-sm px-1 text-start font-medium text-[var(--color-text-primary)] focus-visible:ring-inset"
     >
       {open ? (
         <ChevronDown aria-hidden="true" className="size-4 shrink-0" />

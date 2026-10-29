@@ -9,7 +9,8 @@
  * Before that, it checks that the themes and accents of the CSS are the ones
  * COSMOS_THEMES and COSMOS_ACCENTS list in react/src/settings/appearance.ts
  * (read as text), with the same `dark` flag and the same brand-500 as `hex`,
- * and that the [data-density] blocks are the COSMOS_DENSITIES.
+ * and that the [data-density] blocks are the COSMOS_DENSITIES and the [data-radius] blocks
+ * the COSMOS_RADII.
  *
  *   node scripts/check-contrast.mjs
  */
@@ -195,16 +196,61 @@ for (const name of rebuiltTokens.filter((n) => !densityTokens.includes(n))) {
   drift.push(`--${name} is rebuilt under [data-density] but has no default in @theme`);
 }
 
+// The radii: the same ids in the [data-radius='…'] blocks and in COSMOS_RADII, and every
+// radius token of Tailwind's theme is rebuilt under [data-radius], and under 'none' too.
+// These are Tailwind's default `--radius-*` (tailwindcss/theme.css), which the CSS of this
+// package does not declare: a step Tailwind adds is a corner the data-radius attribute misses.
+const TAILWIND_RADII = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl'].map(
+  (s) => `radius-${s}`
+);
+const metaRadii = metaEntries('COSMOS_RADII');
+const radii = [...vars.keys()]
+  .map((sel) => sel.match(/^\[data-radius='([\w-]+)'\]$/)?.[1])
+  .filter(Boolean);
+for (const id of radii) {
+  if (!metaRadii.has(id)) drift.push(`radius '${id}' is in the CSS but not in COSMOS_RADII`);
+}
+for (const id of metaRadii.keys()) {
+  if (!radii.includes(id)) {
+    drift.push(
+      `radius '${id}' is in COSMOS_RADII but has no [data-radius='${id}'] block in css-vars.css`
+    );
+  }
+}
+const radiusNames = (decls) =>
+  Object.keys(decls ?? {})
+    .filter((name) => name.startsWith('radius-'))
+    .sort();
+const rebuiltRadii = radiusNames(vars.get('[data-radius]'));
+for (const name of TAILWIND_RADII.filter((n) => !rebuiltRadii.includes(n))) {
+  drift.push(`--${name} is a Tailwind radius but [data-radius] does not rebuild it`);
+}
+for (const name of rebuiltRadii.filter((n) => !TAILWIND_RADII.includes(n))) {
+  drift.push(`--${name} is rebuilt under [data-radius] but is not in TAILWIND_RADII`);
+}
+const squared = vars.get(`[data-radius='none']`);
+for (const name of TAILWIND_RADII.filter((n) => squared?.[n] !== '2px')) {
+  drift.push(`--${name} is not 2px under [data-radius='none']`);
+}
+// The scale of each step sits in its own block; the default is 1, and the others are not.
+const radiusScale = (id) => Number(vars.get(`[data-radius='${id}']`)?.['cosmos-radius-scale']);
+if (radiusScale('default') !== 1) {
+  drift.push(`[data-radius='default'] must set --cosmos-radius-scale to 1`);
+}
+if (!(radiusScale('sm') < 1) || !(radiusScale('lg') > 1)) {
+  drift.push(`--cosmos-radius-scale must be under 1 for 'sm' and over 1 for 'lg'`);
+}
+
 if (drift.length) {
   console.error(
     `\nThe theme metadata and the CSS disagree (packages/react/src/settings/appearance.ts vs packages/theme/css):\n` +
       drift.map((d) => `  - ${d}`).join('\n') +
-      `\n\nUpdate appearance.ts or the CSS so that both list the same themes, accents and densities.`
+      `\n\nUpdate appearance.ts or the CSS so that both list the same themes, accents, densities and radii.`
   );
   process.exit(1);
 }
 console.log(
-  `ok   metadata   ${THEMES.length} themes, ${accents.length} accents and ${densities.length} densities match appearance.ts`
+  `ok   metadata   ${THEMES.length} themes, ${accents.length} accents and ${densities.length} densities and ${radii.length} radii match appearance.ts`
 );
 
 // ── Color math ────────────────────────────────────────────────────────────

@@ -363,7 +363,7 @@ export const EventCalendar = ({
                   <Popover.Trigger
                     aria-label={`+${hidden} more on ${label}`}
                     className={clsx(
-                      'mt-0.5 rounded px-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
+                      'mt-0.5 rounded-sm px-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
                       'focus-visible:focus-indicator'
                     )}
                   >

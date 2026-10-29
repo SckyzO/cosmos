@@ -151,7 +151,7 @@ export const Pagination = ({
           <button
             type="button"
             onClick={() => onShowAllChange(!showAll)}
-            className="focus-visible:focus-indicator rounded text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator rounded-sm text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             {showAll ? 'Show paginated' : 'Show all'}
           </button>

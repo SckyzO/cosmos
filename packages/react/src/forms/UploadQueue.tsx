@@ -155,7 +155,7 @@ const UploadRow = ({
     >
       <span
         className={clsx(
-          'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
+          'flex size-9 shrink-0 items-center justify-center rounded-[calc(var(--radius-lg)*1.25)]',
           tint.tile
         )}
       >

@@ -415,7 +415,7 @@ const Header = ({
             type="button"
             onClick={onClose}
             aria-label="Close drawer"
-            className="focus-visible:focus-indicator rounded text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            className="focus-visible:focus-indicator rounded-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             <X className="h-5 w-5" />
           </button>

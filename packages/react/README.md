@@ -1553,9 +1553,9 @@ right to left.
 
 ## Themes and accents
 
-The theme is a class on `<html>`; the accent, the font, the text size and the
-density are the `data-accent`, `data-font`, `data-text-size` and `data-density`
-attributes, see the
+The theme is a class on `<html>`; the accent, the font, the text size, the
+density and the corner radius are the `data-accent`, `data-font`,
+`data-text-size`, `data-density` and `data-radius` attributes, see the
 [theme README](../theme#themes--accents). `AppearanceSettings` renders a picker
 for each, and `applyAppearance` sets them on the document:
 
@@ -1654,20 +1654,20 @@ const { layout, sidebar, container } = { ...CUSTOMIZER_DEFAULT_VALUE, ...value }
 <Customizer open={open} onClose={() => setOpen(false)} value={value} onChange={setValue} />
 ```
 
-| Value                                                         | What the host does                                                               |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `theme`, `accent`, `font`, `textSize`, `density`, `direction` | `applyAppearance(value)`                                                         |
-| `container`                                                   | `Shell`'s `container`                                                            |
-| `sidebar: 'collapsed'`                                        | `Shell`'s `sidebarCollapsed`                                                     |
-| `sidebar: 'hover'`                                            | collapsed, plus `Sidebar`'s `expandOnHover="overlay"`                            |
-| `sidebar: 'compact'`                                          | `Sidebar`'s `variant="compact"` (and `collapseControl="sidebar"` on the `Shell`) |
-| `layout: 'horizontal'`                                        | a `Navbar` in `Shell`'s `topbar` in place of the `Sidebar`                       |
+| Value                                                                   | What the host does                                                               |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `theme`, `accent`, `font`, `textSize`, `density`, `radius`, `direction` | `applyAppearance(value)`                                                         |
+| `container`                                                             | `Shell`'s `container`                                                            |
+| `sidebar: 'collapsed'`                                                  | `Shell`'s `sidebarCollapsed`                                                     |
+| `sidebar: 'hover'`                                                      | collapsed, plus `Sidebar`'s `expandOnHover="overlay"`                            |
+| `sidebar: 'compact'`                                                    | `Sidebar`'s `variant="compact"` (and `collapseControl="sidebar"` on the `Shell`) |
+| `layout: 'horizontal'`                                                  | a `Navbar` in `Shell`'s `topbar` in place of the `Sidebar`                       |
 
 Keep the `Customizer` outside what `layout` swaps, so the panel keeps its focus as the shell
 re-renders. Cosmos ships no presets: pass `presets` (`{ id, label, value }`, the value being
 a part of the whole) to show the section. `sections` lists the sections to show (a host with a
 fixed layout leaves out `layout`, `sidebar` and `container`), `defaultValue` is what Reset
-restores, and `themes`, `accents`, `fonts`, `textSizes` and `densities` narrow the choices as
+restores, and `themes`, `accents`, `fonts`, `textSizes`, `densities` and `radii` narrow the choices as
 they do on `AppearanceSettings`. The `Settings/Customizer` stories wire all of it, with local
 storage.
 

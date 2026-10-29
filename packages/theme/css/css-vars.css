@@ -558,6 +558,53 @@
   --cosmos-density-virtual-cell: calc(60em / 14);
 }
 
+/* ── Radius ────────────────────────────────────────────────────────────────
+ * data-radius rescales Tailwind's own --radius-* tokens, the ones rounded-sm
+ * to rounded-4xl read, so every corner of a component follows. none squares
+ * them all to 2px (a scale cannot get there from 4px to 32px), sm halves
+ * them, lg takes them one and a half times. No attribute keeps today's
+ * values; 'default' is the same, spelled out so a part of the page can opt
+ * out of its parent's radius. rounded-full and rounded-none are literals and
+ * never move: avatars, dots, switches, badges and pill buttons stay round.
+ *
+ * Declared again here for the same reason as the text sizes and the density:
+ * a custom property resolves var() on the element that declares it, so the
+ * tokens are rebuilt on every element that carries the attribute. The values
+ * are Tailwind's (theme.css); check-contrast.mjs fails if one goes missing. */
+[data-radius] {
+  --radius-xs: calc(0.125rem * var(--cosmos-radius-scale, 1));
+  --radius-sm: calc(0.25rem * var(--cosmos-radius-scale, 1));
+  --radius-md: calc(0.375rem * var(--cosmos-radius-scale, 1));
+  --radius-lg: calc(0.5rem * var(--cosmos-radius-scale, 1));
+  --radius-xl: calc(0.75rem * var(--cosmos-radius-scale, 1));
+  --radius-2xl: calc(1rem * var(--cosmos-radius-scale, 1));
+  --radius-3xl: calc(1.5rem * var(--cosmos-radius-scale, 1));
+  --radius-4xl: calc(2rem * var(--cosmos-radius-scale, 1));
+}
+
+[data-radius='default'] {
+  --cosmos-radius-scale: 1;
+}
+
+[data-radius='sm'] {
+  --cosmos-radius-scale: 0.5;
+}
+
+[data-radius='lg'] {
+  --cosmos-radius-scale: 1.5;
+}
+
+[data-radius='none'] {
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+}
+
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class
    on the app shell (not body, to avoid transitioning every DOM element). */
 .cosmos-bg-transition {

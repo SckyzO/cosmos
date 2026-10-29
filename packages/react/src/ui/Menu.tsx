@@ -410,7 +410,7 @@ function MenuCheckboxItem({
       <span
         aria-hidden
         className={clsx(
-          'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors',
           checked
             ? 'bg-brand-500 border-brand-500 text-white'
             : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'

@@ -125,6 +125,12 @@ charts ───────────── storybook      (charts imports ne
   `--spacing-ctrl-*` (control heights), `--spacing-row-*` and `--spacing-cell-*` (row and cell
   padding) tokens, which components use as `h-ctrl-36` (= `h-9`) and `py-row-8` (= `py-2`); only
   the vertical rhythm moves, and compact stays at 24px or more. A new control or row takes them.
+  **Radius** is `data-radius` (`none`/`sm`/`lg`, none = default): it re-declares Tailwind's own
+  `--radius-*` (`rounded-sm` to `rounded-4xl` read them) as `calc(<value> * var(--cosmos-radius-scale))`,
+  `none` setting every one to 2px; `rounded-full` and `rounded-none` are literals and never move.
+  A corner must go through the scale: a bare `rounded` is a fixed 0.25rem in Tailwind 4, write
+  `rounded-sm`; `repo-policy.spec.ts` refuses it, an arbitrary `rounded-[…]` that doesn't read
+  `var(--radius-…)` and a `borderRadius` (kept ones go in `RADIUS_ALLOWED`, with the reason).
   **Themes** are one class on `<html>`: none (light), `.sand`, `.dark` (neutral black/gray),
   `.deep-blue` (the old navy dark); `.dark` and `.deep-blue` enable `dark:`. **Accents** are
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,
@@ -232,12 +238,12 @@ The toolbar has a **Theme** menu (a `theme` global put on `<html>` by the `withT
 before the story renders: light, sand, dark, deep-blue; default
 `dark` via `initialGlobals`). The manager and the docs pages follow it too: `manager.ts` re-themes
 the UI on SET_GLOBALS/GLOBALS_UPDATED, `CosmosDocsContainer.tsx` does the same for docs, both from
-the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font**, **Text size** and **Density** menus
-(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES`/`DENSITIES` in
+the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font**, **Text size**, **Density** and **Radius** menus
+(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES`/`DENSITIES`/`RADII` in
 `packages/react/src/settings/appearance.ts`; `check-contrast.mjs` fails if that file drifts from the
 theme CSS), applied by the `withAppearanceAttributes` decorator as `data-accent`,
-`data-font`, `data-text-size` and `data-density` before the story renders. In URLs:
-`&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact`. A story that needs the current values reads them from the render
+`data-font`, `data-text-size`, `data-density` and `data-radius` before the story renders. In URLs:
+`&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact;radius:lg`. A story that needs the current values reads them from the render
 context (`(_args, { globals }) => …`); `Foundations/Appearance` and the Welcome page apply a picked
 combination with `applyAppearance` and remount when the toolbar changes. The **Direction** menu
 (`direction` global, `ltr` | `rtl`, `&globals=direction:rtl`) is Storybook's own: the `withDirection`

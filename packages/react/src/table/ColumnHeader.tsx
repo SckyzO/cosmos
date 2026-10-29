@@ -74,7 +74,7 @@ export const ColumnHeader = ({
           <button
             type="button"
             onClick={onSortToggle}
-            className="focus-visible:focus-indicator flex items-center gap-1 rounded uppercase transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+            className="focus-visible:focus-indicator flex items-center gap-1 rounded-sm uppercase transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
             <bdi>{label}</bdi>
             {/* Always drawn, so a column that sorts is recognisable before any sort: muted until
@@ -102,7 +102,7 @@ export const ColumnHeader = ({
               onClick={() => setOpen((v) => !v)}
               aria-label={filterCount > 0 ? `${filterName}, ${filterCount} selected` : filterName}
               className={clsx(
-                'focus-visible:focus-indicator flex items-center gap-1 rounded p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
+                'focus-visible:focus-indicator flex items-center gap-1 rounded-sm p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
                 filterCount > 0 && 'text-brand-600 dark:text-brand-400'
               )}
             >

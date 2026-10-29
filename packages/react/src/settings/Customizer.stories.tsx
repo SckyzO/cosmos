@@ -15,7 +15,12 @@ import {
   type CustomizerProps,
   type CustomizerValue,
 } from './Customizer';
-import { applyAppearance, type CosmosAccent, type CosmosTextSize } from './appearance';
+import {
+  applyAppearance,
+  type CosmosAccent,
+  type CosmosRadius,
+  type CosmosTextSize,
+} from './appearance';
 
 const base: CustomizerValue = { ...CUSTOMIZER_DEFAULT_VALUE };
 
@@ -66,7 +71,7 @@ export const WithPresets: Story = { args: { presets: PRESETS } };
 
 /** A host with a fixed layout leaves the layout, sidebar and container sections out of `sections`. */
 export const WithSectionsHidden: Story = {
-  args: { sections: ['theme', 'accent', 'font', 'textSize', 'density', 'direction'] },
+  args: { sections: ['theme', 'accent', 'font', 'textSize', 'density', 'radius', 'direction'] },
 };
 
 /** On a phone the panel takes the whole width. */
@@ -88,6 +93,7 @@ const ROOT_ATTRIBUTES = [
   'data-font',
   'data-text-size',
   'data-density',
+  'data-radius',
   'dir',
 ];
 
@@ -100,6 +106,7 @@ const valueOfPage = (): CustomizerValue => {
       (['sand', 'dark', 'deep-blue'] as const).find((t) => root.classList.contains(t)) ?? 'light',
     accent: (root.dataset.accent as CosmosAccent | undefined) ?? 'blue',
     textSize: (root.dataset.textSize as CosmosTextSize | undefined) ?? 'md',
+    radius: (root.dataset.radius as CosmosRadius | undefined) ?? 'default',
     direction: root.dir === 'rtl' ? 'rtl' : 'ltr',
   };
 };
@@ -238,7 +245,7 @@ const App = () => {
 
 /**
  * The whole wiring. The value is kept in `localStorage` and applied on every change:
- * `applyAppearance` for the theme, accent, font, text size, density and direction; `container`,
+ * `applyAppearance` for the theme, accent, font, text size, density, radius and direction; `container`,
  * the sidebar mode (`sidebarCollapsed`, `expandOnHover`, `variant`) and the layout (a `Navbar` in
  * place of the `Sidebar`) as props of `Shell` and `Sidebar`.
  */
@@ -268,6 +275,7 @@ export const EachOptionCallsOnChange: Story = {
       ['Font', 'Inter', { font: 'inter' }],
       ['Text size', 'Large', { textSize: 'lg' }],
       ['Density', 'Compact', { density: 'compact' }],
+      ['Corner radius', 'Large', { radius: 'lg' }],
       ['Direction', 'Right to left', { direction: 'rtl' }],
       ['Layout', 'Horizontal', { layout: 'horizontal' }],
       ['Sidebar', 'Compact', { sidebar: 'compact' }],
@@ -299,6 +307,7 @@ export const SectionsAreInTheDocumentedOrder: Story = {
       'Font',
       'Text size',
       'Density',
+      'Corner radius',
       'Direction',
       'Layout',
       'Sidebar',
@@ -364,7 +373,7 @@ export const ResetRestoresTheDefaultValue: Story = {
 
 export const ResetFallsBackToTheCosmosDefaults: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { onChange: fn(), value: { ...base, theme: 'dark', direction: 'rtl' } },
+  args: { onChange: fn(), value: { ...base, theme: 'dark', direction: 'rtl', radius: 'none' } },
   play: async ({ args }) => {
     await userEvent.click(within(panel()).getByRole('button', { name: 'Reset' }));
     await expect(args.onChange).toHaveBeenLastCalledWith(CUSTOMIZER_DEFAULT_VALUE);
@@ -499,6 +508,8 @@ export const InAnAppAppliesTheChoice: Story = {
       await expect(document.documentElement).toHaveAttribute('data-accent', 'teal');
       await choose('Density', 'Compact');
       await expect(document.documentElement).toHaveAttribute('data-density', 'compact');
+      await choose('Corner radius', 'Large');
+      await expect(document.documentElement).toHaveAttribute('data-radius', 'lg');
 
       // Horizontal: a Navbar takes the place of the Sidebar.
       await choose('Layout', 'Horizontal');
@@ -515,6 +526,7 @@ export const InAnAppAppliesTheChoice: Story = {
         theme: 'sand',
         accent: 'teal',
         density: 'compact',
+        radius: 'lg',
         container: 'boxed',
       });
     } finally {

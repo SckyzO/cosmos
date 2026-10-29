@@ -60,7 +60,7 @@ export const ColumnFilterDropdown = ({
                 type="checkbox"
                 checked={selected.has(val)}
                 onChange={() => onToggle(val)}
-                className="accent-brand-500 focus-visible:focus-indicator h-3.5 w-3.5 cursor-pointer rounded"
+                className="accent-brand-500 focus-visible:focus-indicator h-3.5 w-3.5 cursor-pointer rounded-sm"
               />
               <span className="truncate text-gray-700 dark:text-gray-300">{val}</span>
             </label>

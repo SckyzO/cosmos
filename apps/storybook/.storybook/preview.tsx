@@ -4,6 +4,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
 } from '../../../packages/react/src';
@@ -85,7 +86,7 @@ const menuItems = (menu: string, items: { id: string; label: string }[]) =>
 
 /** Sets `data-<key>` on <html>, or removes it for the theme's default value. */
 const setRootData = (
-  key: 'accent' | 'font' | 'textSize' | 'density',
+  key: 'accent' | 'font' | 'textSize' | 'density' | 'radius',
   value: unknown,
   byDefault: string
 ) => {
@@ -95,9 +96,9 @@ const setRootData = (
 };
 
 /**
- * Apply the `accent`, `font`, `textSize` and `density` toolbar globals as
- * data-accent, data-font, data-text-size and data-density on <html>; each
- * default (blue, Outfit, md, default) removes its attribute. Set before the story renders so charts read the right
+ * Apply the `accent`, `font`, `textSize`, `density` and `radius` toolbar globals as
+ * data-accent, data-font, data-text-size, data-density and data-radius on <html>;
+ * each default (blue, Outfit, md, default, default) removes its attribute. Set before the story renders so charts read the right
  * --color-brand-500 on mount.
  */
 const withAppearanceAttributes: Decorator = (Story, ctx) => {
@@ -105,6 +106,7 @@ const withAppearanceAttributes: Decorator = (Story, ctx) => {
   setRootData('font', ctx.globals.font, 'outfit');
   setRootData('textSize', ctx.globals.textSize, 'md');
   setRootData('density', ctx.globals.density, 'default');
+  setRootData('radius', ctx.globals.radius, 'default');
   return <Story />;
 };
 
@@ -211,6 +213,15 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    radius: {
+      description: 'Corner radius',
+      toolbar: {
+        title: 'Radius',
+        icon: 'circlehollow',
+        items: menuItems('Radius', COSMOS_RADII),
+        dynamicTitle: true,
+      },
+    },
     direction: {
       description: 'Text direction',
       toolbar: {
@@ -228,6 +239,7 @@ const preview: Preview = {
     font: 'outfit',
     textSize: 'md',
     density: 'default',
+    radius: 'default',
     direction: 'ltr',
   },
   parameters: {

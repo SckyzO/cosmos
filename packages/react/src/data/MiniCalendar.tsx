@@ -88,7 +88,7 @@ export const MiniCalendar = ({
         <button
           type="button"
           onClick={goToday}
-          className="hover:text-brand-600 dark:hover:text-brand-400 focus-visible:focus-indicator rounded text-sm font-semibold text-gray-900 dark:text-gray-100"
+          className="hover:text-brand-600 dark:hover:text-brand-400 focus-visible:focus-indicator rounded-sm text-sm font-semibold text-gray-900 dark:text-gray-100"
         >
           {fmt.monthYear(view)}
         </button>
