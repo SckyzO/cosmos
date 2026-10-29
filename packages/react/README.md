@@ -1211,6 +1211,32 @@ reads the Shell's state, and every toggle stays in sync. Outside a Shell, pass i
 </Shell>
 ```
 
+### Search in the Topbar
+
+`CommandPaletteTrigger` is a button drawn like a search field (a magnifier, a placeholder and the
+hotkey as a key hint, `⌘K` on Apple platforms and `Ctrl K` elsewhere) that opens a
+`CommandPalette`. It is not an input: the palette holds the field, so a screen reader announces a
+button that opens a dialog. Put it in the Topbar's `center` slot. Below `sm` it is a square icon
+button, and the placeholder stays as its accessible name. `size` takes the form fields' `sm`, `md`
+and `lg`.
+
+The palette owns the hotkey (`hotkey`, `mod+k` by default) and the open state; the button
+registers no listener of its own. Open the palette from its `onClick`, and pass the same hotkey
+as `shortcut` so the hint is the right one (`shortcut={null}` for a palette without a hotkey).
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Topbar
+  pageTitle="Projects"
+  center={<CommandPaletteTrigger placeholder="Search projects" onClick={() => setOpen(true)} />}
+/>
+<CommandPalette open={open} onOpenChange={setOpen}>
+  <CommandPalette.Input placeholder="Search…" />
+  <CommandPalette.List>{/* items */}</CommandPalette.List>
+</CommandPalette>
+```
+
 ### Layout modes
 
 `Sidebar variant="compact"` is a fixed 88px rail with the label under each icon, on two lines

@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isTypingTarget, matchesHotkey } from './hotkey';
+import {
+  ariaKeyShortcuts,
+  hotkeyLabel,
+  isApplePlatform,
+  isTypingTarget,
+  matchesHotkey,
+} from './hotkey';
 
 type Mods = Partial<Pick<KeyboardEvent, 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>>;
 
@@ -244,5 +250,55 @@ describe('isTypingTarget', () => {
     vi.stubGlobal('HTMLElement', FakeHTMLElement);
     expect(isTypingTarget(null)).toBe(false);
     expect(isTypingTarget({ tagName: 'INPUT' } as unknown as EventTarget)).toBe(false);
+  });
+});
+
+describe('hotkeyLabel', () => {
+  it('writes the modifier as ⌘ on Apple platforms, run together with the key', () => {
+    expect(hotkeyLabel('mod+k', true)).toBe('⌘K');
+    expect(hotkeyLabel('mod+shift+p', true)).toBe('⌘⇧P');
+  });
+
+  it('writes Ctrl elsewhere, with a space between the names', () => {
+    expect(hotkeyLabel('mod+k', false)).toBe('Ctrl K');
+    expect(hotkeyLabel('mod+shift+p', false)).toBe('Ctrl Shift P');
+  });
+
+  it('keeps a bare key as an upper-case character', () => {
+    expect(hotkeyLabel('/', true)).toBe('/');
+    expect(hotkeyLabel('/', false)).toBe('/');
+  });
+});
+
+describe('ariaKeyShortcuts', () => {
+  it('names the modifier the platform presses for mod', () => {
+    expect(ariaKeyShortcuts('mod+k', true)).toBe('Meta+K');
+    expect(ariaKeyShortcuts('mod+k', false)).toBe('Control+K');
+  });
+
+  it('maps the other modifiers to the ARIA names', () => {
+    expect(ariaKeyShortcuts('ctrl+alt+shift+/', false)).toBe('Control+Alt+Shift+/');
+    expect(ariaKeyShortcuts('cmd+option+p', true)).toBe('Meta+Alt+P');
+  });
+});
+
+describe('isApplePlatform', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each(['MacIntel', 'iPhone', 'iPad'])('is true on %s', (platform) => {
+    onPlatform(platform);
+    expect(isApplePlatform()).toBe(true);
+  });
+
+  it.each(['Linux x86_64', 'Win32'])('is false on %s', (platform) => {
+    onPlatform(platform);
+    expect(isApplePlatform()).toBe(false);
+  });
+
+  it('is false with no navigator', () => {
+    vi.stubGlobal('navigator', undefined);
+    expect(isApplePlatform()).toBe(false);
   });
 });
