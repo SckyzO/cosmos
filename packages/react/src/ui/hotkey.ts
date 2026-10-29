@@ -1,3 +1,7 @@
+/** Whether the page runs on an Apple platform, where `mod` is Cmd and not Ctrl. */
+export const isApplePlatform = (): boolean =>
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
+
 /**
  * Whether `e` is the `hotkey` combination: names joined with `+`, the key
  * last (`mod+k`, `mod+shift+p`, `?`). `mod` is Cmd on macOS and Ctrl
@@ -18,7 +22,7 @@ export const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
   const expectAlt = parts.includes('alt') || parts.includes('option');
   const key = parts[parts.length - 1];
 
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
+  const isMac = isApplePlatform();
   const expectMeta = parts.includes('meta') || parts.includes('cmd') || (expectMod && isMac);
   const expectCtrl = parts.includes('ctrl') || (expectMod && !isMac);
 
@@ -32,3 +36,51 @@ export const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
 export const isTypingTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+
+const MOD_LABEL = {
+  apple: { mod: '⌘', cmd: '⌘', meta: '⌘', ctrl: 'Ctrl', shift: '⇧', alt: '⌥', option: '⌥' },
+  other: {
+    mod: 'Ctrl',
+    cmd: 'Meta',
+    meta: 'Meta',
+    ctrl: 'Ctrl',
+    shift: 'Shift',
+    alt: 'Alt',
+    option: 'Alt',
+  },
+} as const;
+
+/**
+ * The keys of `hotkey` as they are written on the platform: `mod+k` is `⌘K` on Apple
+ * platforms, run together, and `Ctrl K` elsewhere. For a hint next to the control the
+ * hotkey opens, not for matching (`matchesHotkey`).
+ */
+export const hotkeyLabel = (hotkey: string, isMac: boolean): string => {
+  const names = MOD_LABEL[isMac ? 'apple' : 'other'];
+  const parts = hotkey.split('+').map((part, i, all) => {
+    if (i === all.length - 1) return part.length === 1 ? part.toUpperCase() : part;
+    return names[part.toLowerCase() as keyof typeof names] ?? part;
+  });
+  return parts.join(isMac ? '' : ' ');
+};
+
+const ARIA_MOD = {
+  ctrl: 'Control',
+  meta: 'Meta',
+  cmd: 'Meta',
+  shift: 'Shift',
+  alt: 'Alt',
+  option: 'Alt',
+} as const;
+
+/** `hotkey` as the value of `aria-keyshortcuts`: `mod+k` is `Meta+K` on Apple platforms, `Control+K` elsewhere. */
+export const ariaKeyShortcuts = (hotkey: string, isMac: boolean): string =>
+  hotkey
+    .split('+')
+    .map((part, i, all) => {
+      if (i === all.length - 1) return part.length === 1 ? part.toUpperCase() : part;
+      const name = part.toLowerCase();
+      if (name === 'mod') return isMac ? 'Meta' : 'Control';
+      return ARIA_MOD[name as keyof typeof ARIA_MOD] ?? part;
+    })
+    .join('+');
