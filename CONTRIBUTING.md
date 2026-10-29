@@ -84,7 +84,8 @@ A11Y_THEME=sand make test-contrast    # one theme
 The direction pass renders every story again under `dir="rtl"` on `<html>` (the Direction menu of
 the toolbar, `&globals=direction:rtl`), with every axe rule and the play functions, and fails a
 story whose page scrolls sideways in right to left and not in left to right. A story that pins
-`globals.direction` keeps its own. It is not part of `make ci` yet:
+`globals.direction` keeps its own. CI runs it as its own job, "Story tests (right to left)", and
+`make ci` as its last step:
 
 ```bash
 make test-rtl                         # or: STORY_DIR=rtl, in the container, with the a11y:rtl script
@@ -275,6 +276,12 @@ The same prop means the same thing on every component.
   left-to-right axis under `dir="rtl"`, so its legend's `left` and `right` are the screen's.
   `repo-policy.spec.ts` refuses a `'left'` or `'right'` literal in a type of `packages/react/src`;
   a type that must stay physical goes in its `SIDE_ALLOWED` list, with the reason.
+- **Logical utilities only, in every source file of `packages/react/src`.** Spacing, positions,
+  borders, corners and text alignment name the start and the end of the line (`ms-`, `pe-`,
+  `inset-s-`, `border-s`, `rounded-e`, `text-start`), and what has no logical form takes the `rtl:`
+  variant (`rtl:-scale-x-100` on an icon that points along the line). A physical one (`ml-`, `left-`,
+  `text-left`…) that must stay, because it names a side of the screen, goes in `RTL_ALLOWED` in
+  `repo-policy.spec.ts` with the reason; the same spec fails on any other.
 - **Change callbacks follow the control.** A wrapper of a native field (Input, PasswordInput,
   Textarea, Select, Checkbox, Radio, TimePicker) passes the native event: `onChange(event)`, and
   `onChange(value, event)` for Checkbox, Radio and TimePicker. A custom widget passes the value:
