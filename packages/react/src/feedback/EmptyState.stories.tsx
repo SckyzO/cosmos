@@ -234,3 +234,42 @@ export const StaysStaticWhateverTheIntent: Story = {
     }
   },
 };
+
+/** `children` under the description: here, the steps to follow. */
+export const WithSteps: Story = {
+  args: {
+    intent: 'brand',
+    icon: Sparkles,
+    title: 'Add your first exporter',
+    description: 'Connect one exporter and your racks appear here within a minute.',
+    children: (
+      <ol className="list-decimal space-y-1 ps-5 text-start text-xs text-[var(--color-text-secondary)]">
+        <li>Install node_exporter on one compute node.</li>
+        <li>Add it to a Prometheus scrape job, then reload.</li>
+        <li>Paste the URL of your Prometheus server.</li>
+      </ol>
+    ),
+    action: (
+      <Button size="sm" icon={Plus}>
+        Add exporter
+      </Button>
+    ),
+  },
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list');
+    await expect(list.querySelectorAll('li')).toHaveLength(3);
+    // Between the description and the action.
+    const description = canvas.getByText(/appear here within a minute/).getBoundingClientRect();
+    const action = canvas.getByRole('button', { name: 'Add exporter' }).getBoundingClientRect();
+    await expect(list.getBoundingClientRect().top).toBeGreaterThanOrEqual(description.bottom);
+    await expect(list.getBoundingClientRect().bottom).toBeLessThanOrEqual(action.top);
+  },
+};
+
+export const ChildrenRender: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: 'No items yet', children: <p>Steps go here.</p> },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Steps go here.')).toBeInTheDocument();
+  },
+};
