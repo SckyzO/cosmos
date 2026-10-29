@@ -1667,7 +1667,7 @@ Keep the `Customizer` outside what `layout` swaps, so the panel keeps its focus 
 re-renders. Cosmos ships no presets: pass `presets` (`{ id, label, value }`, the value being
 a part of the whole) to show the section. `sections` lists the sections to show (a host with a
 fixed layout leaves out `layout`, `sidebar` and `container`), `defaultValue` is what Reset
-restores, and `themes`, `accents`, `fonts`, `textSizes`, `densities` and `radiuses` narrow the choices as
+restores, and `themes`, `accents`, `fonts`, `textSizes`, `densities` and `radii` narrow the choices as
 they do on `AppearanceSettings`. The `Settings/Customizer` stories wire all of it, with local
 storage.
 
