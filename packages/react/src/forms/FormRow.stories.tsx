@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, within } from 'storybook/test';
-import { bothDirections, expectMirrored } from '../storybook-helpers';
+import {
+  bothDirections,
+  expectMirrored,
+  expectBeyondEnd,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { Toggle } from './Toggle';
 import { Select } from './Select';
@@ -154,5 +161,80 @@ export const LabelAndControlSwapSides: Story = {
   play: ({ canvasElement }) => {
     expectMirrored(canvasElement, (box) => within(box).getByText('Notifications'));
     expectMirrored(canvasElement, (box) => within(box).getByRole('switch'));
+  },
+};
+
+const SettingsRows = () => (
+  <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 px-4 dark:divide-gray-800 dark:border-gray-800">
+    <div className="py-3">
+      <FormRow
+        label="Time zone"
+        description="Dates in reports and emails use it."
+        tooltip="Each member can still pick their own."
+      >
+        <Select
+          aria-label="Time zone"
+          options={[
+            { value: 'paris', label: 'Europe/Paris (UTC+02:00)' },
+            { value: 'lisbon', label: 'Europe/Lisbon (UTC+01:00)' },
+          ]}
+        />
+      </FormRow>
+    </div>
+    <div className="py-3">
+      <FormRow label="Weekly digest" description="An email every Monday morning.">
+        <Toggle aria-label="Weekly digest" defaultChecked />
+      </FormRow>
+    </div>
+  </div>
+);
+
+/** Below `sm` the label and its description stack above the field, which takes the row's width. */
+export const MobileStacksLabelAboveField: Story = {
+  globals: mobileViewport,
+  render: () => <SettingsRows />,
+  play: async ({ canvas, canvasElement }) => {
+    expectNoHorizontalOverflow();
+    const labelText = canvas.getByText('Time zone');
+    const description = canvas
+      .getByText('Dates in reports and emails use it.')
+      .getBoundingClientRect();
+    const selectField = canvas.getByRole('combobox');
+    const select = selectField.getBoundingClientRect();
+    await expect(select.top).toBeGreaterThanOrEqual(description.bottom);
+    // Same start edge as the label, and wide: not squeezed beside it.
+    await expect(
+      Math.abs(startOffset(selectField, canvasElement) - startOffset(labelText, canvasElement))
+    ).toBeLessThanOrEqual(1);
+    await expect(select.width).toBeGreaterThan(250);
+  },
+};
+
+/** A switch stays beside its label on a phone, at the end of the row. */
+export const MobileKeepsASwitchBesideItsLabel: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <SettingsRows />,
+  play: async ({ canvas }) => {
+    const label = canvas.getByText('Weekly digest');
+    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' });
+    await expect(toggle.getBoundingClientRect().top).toBeLessThan(
+      canvas.getByText('An email every Monday morning.').getBoundingClientRect().bottom
+    );
+    expectBeyondEnd(toggle, label);
+  },
+};
+
+/** From `sm` up the control stays beside its label, on the row's centre line. */
+export const DesktopKeepsTheControlBesideTheLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SettingsRows />,
+  play: async ({ canvas }) => {
+    const label = canvas.getByText('Weekly digest');
+    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' });
+    await expect(toggle.getBoundingClientRect().top).toBeLessThan(
+      label.getBoundingClientRect().bottom
+    );
+    expectBeyondEnd(toggle, label);
   },
 };

@@ -10,15 +10,14 @@ export type PageHeaderProps = {
    * (the default) passes `h1` so it keeps exactly one.
    */
   as?: 'h1' | 'h2';
-  /** Optional description shown below title (only when no breadcrumb) */
+  /** Optional description shown below the title, with or without a `breadcrumb`. */
   description?: string;
-  /** Breadcrumb shown below title (replaces description if provided) */
+  /** Breadcrumb shown above the title. */
   breadcrumb?: ReactNode;
   /**
    * Optional meta row shown below the title — typically a `flex gap-x-6` of
    * `<PageHeader.MetaItem icon=...>` children, mirroring the TUI "With meta
-   * and actions" pattern. Renders alongside (below) `breadcrumb` and
-   * `description`.
+   * and actions" pattern. Renders below the title and the `description`.
    */
   meta?: ReactNode;
   /**
@@ -28,17 +27,20 @@ export type PageHeaderProps = {
   icon?: ElementType;
   /** Color of the icon tile, from `INTENT_STYLE`. Default `brand`. Needs `icon`. */
   iconIntent?: Intent;
-  /** Actions at the end of the line (buttons, icon buttons, etc.) */
+  /**
+   * Actions at the end of the line (buttons, icon buttons, etc.). Below `sm` they wrap under the
+   * meta, at the start of the line.
+   */
   actions?: ReactNode;
   className?: string;
 };
 
 /**
- * PageHeader — standard page header with title, breadcrumb or description,
- * optional meta line, and actions.
+ * PageHeader — standard page header: an optional breadcrumb, the title, an optional description
+ * and meta line, and actions.
  *
- * Use at the top of every page. If both `breadcrumb` and `description` are passed,
- * the breadcrumb wins (description is hidden — they're alternatives).
+ * Use at the top of every page. The breadcrumb sits above the title and the description under
+ * it; they can be passed together.
  */
 const Root = ({
   title,
@@ -53,11 +55,11 @@ const Root = ({
 }: PageHeaderProps) => {
   const text = (
     <>
+      {breadcrumb && <div className="mb-1.5">{breadcrumb}</div>}
       <Heading className="text-xl font-bold text-[var(--color-text-primary)]">
         <bdi>{title}</bdi>
       </Heading>
-      {breadcrumb && <div className="mt-1.5">{breadcrumb}</div>}
-      {!breadcrumb && description && (
+      {description && (
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>
       )}
       {meta && (
@@ -70,8 +72,9 @@ const Root = ({
   const intent = INTENT_STYLE[iconIntent];
   return (
     // The title column asks for 16rem: when that and the actions don't both fit
-    // (a phone, a narrow pane), the actions wrap under the title instead of
-    // squeezing it until its words run under the buttons.
+    // (a narrow pane), the actions wrap under the title instead of squeezing it
+    // until its words run under the buttons. Below `sm` they always wrap, whatever
+    // their width, and start the line.
     <div className={`flex flex-wrap items-start justify-between gap-4 ${className ?? ''}`}>
       {Icon ? (
         <div className="flex min-w-0 grow basis-64 items-start gap-3.5">
@@ -89,7 +92,7 @@ const Root = ({
       ) : (
         <div className="min-w-0 grow basis-64">{text}</div>
       )}
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 items-center gap-2 max-sm:w-full">{actions}</div>}
     </div>
   );
 };

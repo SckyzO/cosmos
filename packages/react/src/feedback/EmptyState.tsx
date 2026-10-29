@@ -17,6 +17,11 @@ export type EmptyStateProps = {
   title?: string;
   /** Optional description below title */
   description?: string;
+  /**
+   * Under the description, before the `action`: a short list of steps, a hint. It is start-aligned
+   * and up to 28rem wide, whatever the centering of the rest.
+   */
+  children?: ReactNode;
   /** Optional call-to-action (button, link) */
   action?: ReactNode;
   /**
@@ -42,6 +47,7 @@ export type EmptyStateProps = {
 export const EmptyState = ({
   title = 'No data',
   description,
+  children,
   action,
   intent = 'neutral',
   icon = Inbox,
@@ -56,5 +62,7 @@ export const EmptyState = ({
     action={action}
     compact={compact}
     className={className}
-  />
+  >
+    {children}
+  </StateLayout>
 );

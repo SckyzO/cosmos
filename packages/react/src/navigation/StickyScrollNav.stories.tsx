@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, spyOn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
 import { SectionCard } from '../templates/SectionCard';
-import { endOffset, startOffset } from '../storybook-helpers';
+import {
+  endOffset,
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Navigation/Sticky Scroll Nav',
@@ -143,6 +148,75 @@ export const OnNavigateReplacesTheScroll: Story = {
     } finally {
       scrollIntoView.mockRestore();
     }
+  },
+};
+
+// ── Phones: the jump menu ───────────────────────────────────────────────────
+
+/** Below `sm` the row of buttons folds into a menu that names the current section. */
+export const MobileJumpMenu: Story = {
+  globals: mobileViewport,
+  render: () => <LongPage topOffset={0} />,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const menu = canvas.getByRole('combobox', { name: 'Jump to section' });
+    await expect(menu).toHaveValue('overview');
+    // The row of buttons is gone, not squeezed in.
+    await expect(canvas.queryByRole('button', { name: 'Metrics' })).toBeNull();
+    await expect(
+      within(menu)
+        .getAllByRole('option')
+        .map((o) => o.textContent)
+    ).toEqual(SECTIONS.map((section) => section.label));
+  },
+};
+
+/** Picking a section scrolls it below the nav, and the menu follows the scroll afterwards. */
+export const JumpMenuMovesToThePickedSection: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <LongPage topOffset={0} />,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const menu = canvas.getByRole('combobox', { name: 'Jump to section' });
+    const alerts = canvas.getByRole('region', { name: 'Alerts' });
+
+    await userEvent.selectOptions(menu, 'alerts');
+    await expectLandedBelow(nav, alerts, canvas.getByRole('heading', { name: 'Alerts' }));
+    await expect(menu).toHaveValue('alerts');
+
+    // Scrolled by hand back to another section: the menu shows where the reader is.
+    const metrics = canvas.getByRole('region', { name: 'Metrics' });
+    window.scrollBy({
+      top: topOf(metrics) - nav.getBoundingClientRect().bottom,
+      behavior: 'instant',
+    });
+    await waitFor(() => expect(menu).toHaveValue('metrics'), { timeout: 3000 });
+  },
+};
+
+/** With `onNavigate` the menu hands over the section id too. */
+export const JumpMenuCallsOnNavigate: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  args: { onNavigate: fn() },
+  render: (args) => <LongPage onNavigate={args.onNavigate} />,
+  play: async ({ args, canvas }) => {
+    await userEvent.selectOptions(
+      canvas.getByRole('combobox', { name: 'Jump to section' }),
+      'alerts'
+    );
+    await expect(args.onNavigate).toHaveBeenCalledWith('alerts');
+  },
+};
+
+/** From `sm` up there is no menu: the row of buttons is what the nav shows. */
+export const DesktopHasNoJumpMenu: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LongPage />,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('combobox')).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Metrics' })).toBeVisible();
   },
 };
 

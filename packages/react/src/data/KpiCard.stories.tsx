@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef } from 'react';
 import { CreditCard, Server, ShieldAlert, Users } from 'lucide-react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -281,6 +281,48 @@ export const Mobile: Story = {
   },
 };
 
+/** The exact value behind an abbreviated one: a tooltip on hover and focus, and in the card's name. */
+export const ExactValue: Story = {
+  args: {
+    label: 'Revenue',
+    value: '€12.4M',
+    exactValue: '€12,418,906.40',
+    icon: CreditCard,
+    delta: <TrendDelta value={8.1} label="vs prev. 90 days" />,
+  },
+  play: async ({ canvasElement }) => {
+    // The value is the one stop of a plain card; its exact figure is in its text.
+    await expect(canvasElement.querySelector('.sr-only')).toHaveTextContent(
+      'exact value €12,418,906.40'
+    );
+  },
+};
+
+export const ExactValueOnALinkCard: Story = {
+  args: { ...ExactValue.args, href: '#revenue' },
+};
+
+/** At phone width the card shows the short value; the exact one stays reachable. */
+export const MobileExactValue: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <div className="grid gap-4">
+      <KpiCard
+        label="Revenue"
+        value="€12.4M"
+        exactValue="€12,418,906.40"
+        icon={CreditCard}
+        delta={<TrendDelta value={8.1} label="vs prev. 90 days" />}
+      />
+      <KpiCard label="Open tickets" value="1.2k" exactValue="1,184" icon={Users} href="#tickets" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('link', { name: /1\.2k.*1,184/ })).toBeInTheDocument();
+  },
+};
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 /** The warning and danger look: border, value and chip change, the background does not. */
@@ -470,5 +512,78 @@ export const SubReadsLeftToRightInRightToLeft: Story = {
   play: ({ canvasElement }) => {
     for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-direction]'))
       expectReadsLeftToRight(within(box).getByText('2 escalated'));
+  },
+};
+
+const tooltipOpacity = () =>
+  Number(getComputedStyle(within(document.body).getByRole('tooltip')).opacity);
+
+/** On a plain card the value takes focus; the tooltip shows on focus and on hover, Escape hides it. */
+export const ExactValueShowsOnFocusAndHover: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ExactValue.args },
+  play: async ({ canvas }) => {
+    const tooltip = within(document.body).getByRole('tooltip');
+    await expect(tooltip).toHaveTextContent('€12,418,906.40');
+    await expect(tooltipOpacity()).toBe(0);
+
+    await userEvent.tab();
+    const value = canvas.getByText('€12.4M').closest('[tabindex]') as HTMLElement;
+    await expect(value).toHaveFocus();
+    await waitFor(() => expect(tooltipOpacity()).toBe(1));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tooltipOpacity()).toBe(0));
+
+    value.blur();
+    await userEvent.hover(canvas.getByText('€12.4M'));
+    await waitFor(() => expect(tooltipOpacity()).toBe(1));
+    await userEvent.unhover(canvas.getByText('€12.4M'));
+    await waitFor(() => expect(tooltipOpacity()).toBe(0));
+  },
+};
+
+/** A link card keeps its one tab stop; the tooltip shows when the card takes keyboard focus. */
+export const ExactValueShowsWhenTheCardIsFocused: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ExactValue.args, href: '#revenue' },
+  play: async ({ canvas, canvasElement }) => {
+    const link = canvas.getByRole('link', { name: /€12\.4M.*€12,418,906\.40/ });
+    await expect(canvasElement.querySelectorAll('a, button, [tabindex]')).toHaveLength(1);
+    await expect(tooltipOpacity()).toBe(0);
+    await userEvent.tab();
+    await expect(link).toHaveFocus();
+    await waitFor(() => expect(tooltipOpacity()).toBe(1));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(tooltipOpacity()).toBe(0));
+  },
+};
+
+/** The exact figure is in the name of a button card; the tooltip describes the value inside it, not the button. */
+export const ExactValueIsInTheAccessibleName: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...ExactValue.args, onClick: fn() },
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: /Revenue.*€12\.4M.*€12,418,906\.40/ });
+    await expect(button).toHaveAccessibleDescription('');
+  },
+};
+
+/** The tooltip's trigger does not change the card's size. */
+export const ExactValueKeepsTheCardHeight: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex items-start gap-4">
+      <div className="w-64" data-case="plain">
+        <KpiCard label="Revenue" value="€12.4M" />
+      </div>
+      <div className="w-64" data-case="exact">
+        <KpiCard label="Revenue" value="€12.4M" exactValue="€12,418,906.40" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const height = (name: string) =>
+      canvasElement.querySelector(`[data-case="${name}"] > div`)!.getBoundingClientRect().height;
+    await expect(height('exact')).toBe(height('plain'));
   },
 };
