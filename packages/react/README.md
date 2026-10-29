@@ -1442,6 +1442,16 @@ is everywhere else. A Latin text cut short by an ellipsis in a right-to-left pag
 name in a narrow tile) shows its end rather than its beginning: the line ends on the left, where
 Latin text starts.
 
+What you put in a slot (a table cell, a card's title, a list item, a toast's message) is drawn
+as you pass it. A Latin value that starts with a number reorders in a right-to-left line, "248 W"
+showing as "W 248": wrap it in `<bdi>` yourself.
+
+```tsx
+<TableCell>
+  <bdi>248 W</bdi>
+</TableCell>
+```
+
 A text field (`Input`, `SearchInput`, `Textarea`, the inputs of `Combobox`, `MultiSelect` and
 `TagInput`) follows the direction of what is typed in it: Arabic aligns and flows right to
 left, a URL left to right, each paragraph of a `Textarea` on its own. It does that with
