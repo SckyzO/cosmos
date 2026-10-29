@@ -112,7 +112,10 @@ export const AsLink: Story = {
         href="#"
         className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors hover:underline hover:underline-offset-4"
       >
-        Read the changelog →
+        Read the changelog{' '}
+        <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
+          →
+        </span>
       </a>
     </h2>
   ),
