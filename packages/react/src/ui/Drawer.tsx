@@ -395,12 +395,12 @@ const Header = ({
           </div>
         )}
         <div className="min-w-0">
-          <h3
+          <h2
             id={titleId}
             className="truncate text-base font-semibold text-gray-900 dark:text-white"
           >
             <bdi>{title}</bdi>
-          </h3>
+          </h2>
           {description && (
             <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
               <bdi>{description}</bdi>
