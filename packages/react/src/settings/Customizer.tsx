@@ -7,6 +7,7 @@ import type { ShellContainer } from '../layout/Shell';
 import { AccentPicker } from './AccentPicker';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 import { PalettePicker } from './PalettePicker';
+import { densityOptions, fontOptions, textSizeOptions } from './appearanceOptions';
 import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
@@ -324,13 +325,6 @@ const CONTAINER_OPTIONS = optionsOf<ShellContainer>(
   (id) => CONTAINER_PREVIEW[id]
 );
 
-/** The gap between the rows of a density's preview, in px (as in `AppearanceSettings`). */
-const DENSITY_PREVIEW_GAP: Record<CosmosDensity, string> = {
-  compact: 'gap-[2px]',
-  default: 'gap-[5px]',
-  comfortable: 'gap-[9px]',
-};
-
 const sameValue = (a: unknown, b: unknown) => a === b || JSON.stringify(a) === JSON.stringify(b);
 
 /** How long the "Copied" announcement stays, in ms. */
@@ -469,19 +463,7 @@ export const Customizer = ({
                 cols={3}
                 value={current.font}
                 onChange={(id) => set({ font: id as CosmosFont })}
-                options={fonts.map((f) => ({
-                  id: f.id,
-                  label: f.label,
-                  preview: (
-                    <span
-                      aria-hidden
-                      style={{ fontFamily: f.family }}
-                      className="text-xl text-gray-900 dark:text-gray-100"
-                    >
-                      Aa
-                    </span>
-                  ),
-                }))}
+                options={fontOptions(fonts)}
               />
             )}
           </Group>
@@ -494,20 +476,7 @@ export const Customizer = ({
                 cols={4}
                 value={current.textSize}
                 onChange={(id) => set({ textSize: id as CosmosTextSize })}
-                options={textSizes.map((t) => ({
-                  id: t.id,
-                  label: t.label,
-                  // Pixel sizes, so the previews don't scale with the setting.
-                  preview: (
-                    <span
-                      aria-hidden
-                      style={{ fontSize: `${16 * t.scale}px` }}
-                      className="text-gray-900 dark:text-gray-100"
-                    >
-                      Aa
-                    </span>
-                  ),
-                }))}
+                options={textSizeOptions(textSizes)}
               />
             )}
           </Group>
@@ -520,22 +489,7 @@ export const Customizer = ({
                 cols={3}
                 value={current.density}
                 onChange={(id) => set({ density: id as CosmosDensity })}
-                options={densities.map((d) => ({
-                  id: d.id,
-                  label: d.label,
-                  // Three rows, closer or further apart. Pixel gaps, so the preview doesn't
-                  // follow the density it shows.
-                  preview: (
-                    <span aria-hidden className={clsx('flex flex-col', DENSITY_PREVIEW_GAP[d.id])}>
-                      {[0, 1, 2].map((row) => (
-                        <span
-                          key={row}
-                          className="h-1 w-6 rounded-full bg-gray-300 dark:bg-gray-600"
-                        />
-                      ))}
-                    </span>
-                  ),
-                }))}
+                options={densityOptions(densities)}
               />
             )}
           </Group>
