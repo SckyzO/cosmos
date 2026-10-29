@@ -479,7 +479,7 @@ const DefaultStoryRender = () => {
         action={
           <a href="#changelog" className="font-medium text-white underline underline-offset-2">
             Read the changelog{' '}
-            <span aria-hidden className="inline-block rtl:-scale-x-100">
+            <span aria-hidden className="inline-block [text-decoration:inherit] rtl:-scale-x-100">
               →
             </span>
           </a>
