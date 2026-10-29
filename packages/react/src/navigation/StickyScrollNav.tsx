@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Select } from '../forms/Select';
 
 export type StickyScrollNavSection = {
   id: string;
@@ -18,6 +19,11 @@ export type StickyScrollNavProps = {
    * above. A jump lands the section below the nav, so below that header too.
    */
   topOffset?: number;
+  /**
+   * Name of the jump menu shown below `sm`, in place of the row of buttons. Default
+   * 'Jump to section'; a translated app passes its own wording.
+   */
+  jumpLabel?: string;
   className?: string;
 };
 
@@ -33,15 +39,48 @@ const scrollContainerOf = (el: HTMLElement): HTMLElement | null => {
 /**
  * StickyScrollNav — sticky horizontal nav row that scrolls to in-page
  * sections by id, each landing just below the nav. Useful for long template
- * gallery pages and docs.
+ * gallery pages, docs and settings pages. Below `sm` the row folds into a jump
+ * menu (a native select) that shows the section being read and moves to the
+ * one picked.
  */
 export const StickyScrollNav = ({
   sections,
   onNavigate,
   topOffset = 0,
+  jumpLabel = 'Jump to section',
   className,
 }: StickyScrollNavProps) => {
   const navRef = useRef<HTMLElement>(null);
+  const [current, setCurrent] = useState(sections[0]?.id ?? '');
+
+  // The jump menu names the section being read: the last one whose top has reached the bottom
+  // of the nav, or the last one at the end of the scroll, which may never reach it.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const container = scrollContainerOf(nav);
+    const scroller: HTMLElement | Window = container ?? window;
+    const update = () => {
+      const navBottom = nav.getBoundingClientRect().bottom;
+      const root = container ?? document.documentElement;
+      const atEnd =
+        root.scrollTop > 0 && root.scrollTop + root.clientHeight >= root.scrollHeight - 1;
+      let reading = sections[0]?.id ?? '';
+      for (const { id } of sections) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= navBottom + 4) reading = id;
+      }
+      if (atEnd && sections.length > 0) reading = sections[sections.length - 1]!.id;
+      setCurrent(reading);
+    };
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      scroller.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [sections]);
 
   const handleClick = (id: string) => {
     if (onNavigate) {
@@ -79,7 +118,7 @@ export const StickyScrollNav = ({
         className
       )}
     >
-      <div className="flex gap-1">
+      <div className="hidden gap-1 sm:flex">
         {sections.map(({ id, label }) => (
           <button
             type="button"
@@ -90,6 +129,17 @@ export const StickyScrollNav = ({
             {label}
           </button>
         ))}
+      </div>
+      <div className="sm:hidden">
+        <Select
+          aria-label={jumpLabel}
+          value={current}
+          onChange={(e) => {
+            setCurrent(e.target.value);
+            handleClick(e.target.value);
+          }}
+          options={sections.map(({ id, label }) => ({ value: id, label }))}
+        />
       </div>
     </nav>
   );
