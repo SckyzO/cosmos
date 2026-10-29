@@ -12,7 +12,7 @@ export type AlertBannerProps = {
   intent?: AlertBannerIntent;
   /**
    * Surface. `tinted` (default) = a full border and the tinted background. `accent` = the same
-   * background with a 4px edge on the left in the intent color and no other border.
+   * background with a 4px edge at the start of the line in the intent color and no other border.
    */
   appearance?: AlertBannerAppearance;
   /** Bold first line. The icon aligns with it instead of centering on the whole banner. */
@@ -24,7 +24,7 @@ export type AlertBannerProps = {
    */
   bodyTone?: AlertBannerBodyTone;
   children: ReactNode;
-  /** Right-side slot: a Link or a Button. */
+  /** Slot at the end of the line: a Link or a Button. */
   action?: ReactNode;
   /** Shows a close button that calls this. The host removes the banner. */
   onDismiss?: () => void;
@@ -51,7 +51,7 @@ export const AlertBanner = ({
       className={clsx(
         'flex gap-3 rounded-lg px-5 py-3.5',
         hasTitle ? 'items-start' : 'items-center',
-        appearance === 'accent' ? ['border-l-4', v.edge, v.fill] : ['border', v.surface],
+        appearance === 'accent' ? ['border-s-4', v.edge, v.fill] : ['border', v.surface],
         className
       )}
     >
@@ -59,7 +59,11 @@ export const AlertBanner = ({
         className={clsx(INTENT_ICON_SIZE.inline, 'shrink-0', hasTitle && 'mt-0.5', v.iconColor)}
       />
       <div className="min-w-0 flex-1">
-        {hasTitle && <p className={clsx('text-sm font-semibold', v.text)}>{title}</p>}
+        {hasTitle && (
+          <p className={clsx('text-sm font-semibold', v.text)}>
+            <bdi>{title}</bdi>
+          </p>
+        )}
         <p className={clsx('text-sm', hasTitle ? 'mt-0.5 font-normal' : 'font-medium', bodyText)}>
           {children}
         </p>
@@ -71,7 +75,7 @@ export const AlertBanner = ({
           aria-label="Dismiss alert"
           onClick={onDismiss}
           className={clsx(
-            'focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 -my-1 -mr-2 flex shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',
+            'focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 -my-1 -me-2 flex shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',
             v.text
           )}
         >

@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sparkles } from 'lucide-react';
-import { expect, fn, userEvent } from 'storybook/test';
-import { expectFocusRing } from '../storybook-helpers';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectFocusRing,
+  expectMirrored,
+  startOffset,
+} from '../storybook-helpers';
 import { AnnouncementBar, type AnnouncementBarIntent } from './AnnouncementBar';
 import { Link } from './Link';
 
@@ -34,7 +41,10 @@ export const WithAction: Story = {
     message: 'Your trial ends in 5 days.',
     action: (
       <Link href="#" variant="underline" className="text-current">
-        Upgrade plan →
+        Upgrade plan{' '}
+        <span aria-hidden className="inline-block rtl:-scale-x-100">
+          →
+        </span>
       </Link>
     ),
   },
@@ -56,7 +66,10 @@ export const Brand: Story = {
     message: 'New: AI-powered alerts now in beta.',
     action: (
       <Link href="#" variant="underline" className="text-white">
-        Try it →
+        Try it{' '}
+        <span aria-hidden className="inline-block rtl:-scale-x-100">
+          →
+        </span>
       </Link>
     ),
     dismissible: true,
@@ -139,4 +152,40 @@ export const BrandDismissFocusShowsWhiteRingInLight: Story = {
   tags: ['!dev'],
   ...BrandDismissFocusShowsWhiteRingInDark,
   globals: { theme: 'light' },
+};
+
+/** The icon starts the bar, the action and the dismiss button end it, in either direction. */
+export const ActionAndDismissSitAtTheEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <AnnouncementBar
+        message="Your trial ends in 5 days."
+        action={
+          <Link href="#" variant="underline" className="text-current">
+            Upgrade plan{' '}
+            <span aria-hidden className="inline-block rtl:-scale-x-100">
+              →
+            </span>
+          </Link>
+        }
+        dismissible
+      />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const bar = within(directionBox(canvasElement, dir)).getByRole('status');
+      const dismiss = within(bar).getByRole('button', { name: 'Dismiss announcement' });
+      const action = within(bar).getByRole('link');
+      expect(endOffset(dismiss, bar)).toBeLessThan(startOffset(dismiss, bar));
+      // The action comes before the dismiss button, toward the start.
+      expect(startOffset(action, bar)).toBeLessThan(startOffset(dismiss, bar));
+      expect(startOffset(bar.querySelector('svg')!, bar)).toBeLessThan(startOffset(action, bar));
+    }
+    for (const find of [
+      (box: HTMLElement) => within(box).getByRole('button', { name: 'Dismiss announcement' }),
+      (box: HTMLElement) => within(box).getByRole('link'),
+    ])
+      expectMirrored(canvasElement, find);
+  },
 };

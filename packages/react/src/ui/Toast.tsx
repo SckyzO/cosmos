@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
+import { useDocumentDirection } from '../hooks/direction';
 import { useCosmosTheme } from '../settings/useCosmosTheme';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
 
@@ -65,7 +66,7 @@ const CLASS_NAMES = {
   cancelButton:
     'focus-visible:focus-indicator flex shrink-0 cursor-pointer items-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200',
   closeButton:
-    'focus-visible:focus-indicator absolute start-0 top-0 z-1 flex size-5 -translate-y-[35%] items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 ltr:-translate-x-[35%] rtl:translate-x-[35%] dark:border-gray-700! dark:bg-gray-900! dark:text-gray-400! dark:hover:bg-gray-800! dark:hover:text-gray-200!',
+    'focus-visible:focus-indicator absolute inset-s-0 top-0 z-1 flex size-5 -translate-y-[35%] items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 ltr:-translate-x-[35%] rtl:translate-x-[35%] dark:border-gray-700! dark:bg-gray-900! dark:text-gray-400! dark:hover:bg-gray-800! dark:hover:text-gray-200!',
 };
 
 const ICONS = {
@@ -81,7 +82,8 @@ const ICONS = {
  * Mount the `<Toaster />` once at the app root. Trigger toasts from anywhere
  * with `toast(...)`, `toast.success(...)`, `toast.error(...)`, `toast.promise(...)`.
  *
- * Cosmos defaults: bottom-right, light or dark from the Cosmos theme class on
+ * Cosmos defaults: the bottom corner at the end of the line (bottom right, bottom left under
+ * `dir="rtl"` on `<html>`, or on the `dir` prop), light or dark from the Cosmos theme class on
  * `<html>` (not the OS setting), close button on. The toasts are drawn by Cosmos
  * classes (`toastOptions.unstyled`), not by sonner: `success`, `info`, `warning`
  * and `error` take the `INTENT_STYLE` palette of `AlertBanner` on an opaque
@@ -92,17 +94,24 @@ const ICONS = {
 
 export type CosmosToasterProps = ToasterProps;
 
-export const Toaster = (props: CosmosToasterProps) => (
-  <SonnerToaster
-    position="bottom-right"
-    theme={useCosmosTheme()}
-    closeButton
-    duration={4000}
-    icons={ICONS}
-    toastOptions={{ unstyled: true, classNames: CLASS_NAMES }}
-    {...props}
-  />
-);
+export const Toaster = (props: CosmosToasterProps) => {
+  const theme = useCosmosTheme();
+  const documentDirection = useDocumentDirection();
+  // Sonner's `position` names a corner of the screen, so the default has to be picked for the
+  // direction it will lay the stack out in: its `dir` prop, else the page's (which it reads too).
+  const direction = props.dir && props.dir !== 'auto' ? props.dir : documentDirection;
+  return (
+    <SonnerToaster
+      position={direction === 'rtl' ? 'bottom-left' : 'bottom-right'}
+      theme={theme}
+      closeButton
+      duration={4000}
+      icons={ICONS}
+      toastOptions={{ unstyled: true, classNames: CLASS_NAMES }}
+      {...props}
+    />
+  );
+};
 
 // Re-export the trigger function as `toast`. Includes `toast.success`,
 // `toast.error`, `toast.warning`, `toast.info`, `toast.loading`,

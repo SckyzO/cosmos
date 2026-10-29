@@ -29,7 +29,7 @@ type Ctx = {
   setOpen: (v: boolean) => void;
   triggerRef: RefObject<HTMLButtonElement | null>;
   triggerId: string;
-  align: 'left' | 'right';
+  align: 'start' | 'end';
   /** Item to focus when the menu opens: `last` after ArrowUp on the trigger. */
   initialItemRef: MutableRefObject<'first' | 'last'>;
 };
@@ -53,8 +53,8 @@ export type MenuProps = {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Edge of the trigger the menu lines up with. Default `left`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the menu lines up with: where the text starts or ends, so the right under `dir="rtl"` for `start`. Default `start`. */
+  align?: 'start' | 'end';
   children: ReactNode;
 };
 
@@ -62,7 +62,7 @@ const MenuRoot = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  align = 'left',
+  align = 'start',
   children,
 }: MenuProps) => {
   const [open, setOpen] = useControllableState({
@@ -143,7 +143,7 @@ const MenuContent = ({
       open={open}
       onClose={() => setOpen(false)}
       triggerRef={triggerRef}
-      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      placement={{ side: 'bottom', align, offset: 8 }}
       initialFocus={(menu) => {
         const items = menuItems(menu);
         return initialItemRef.current === 'last' ? items[items.length - 1] : items[0];
@@ -210,7 +210,7 @@ const MenuGroup = ({ label, className, children }: MenuGroupProps) => {
           role="presentation"
           className="text-2xs px-4 pt-2 pb-1 font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
         >
-          {label}
+          <bdi>{label}</bdi>
         </div>
       )}
       {children}
@@ -269,7 +269,7 @@ function MenuItem({
   const danger = intent === 'danger';
   const isLink = href !== undefined;
   const classes = clsx(
-    'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm transition-colors focus-visible:ring-inset',
+    'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-start text-sm transition-colors focus-visible:ring-inset',
     danger
       ? 'text-red-600 focus-visible:bg-red-50 dark:text-red-400 dark:focus-visible:bg-red-500/10'
       : 'text-gray-700 focus-visible:bg-gray-50 dark:text-gray-300 dark:focus-visible:bg-white/5',
@@ -291,10 +291,13 @@ function MenuItem({
           aria-hidden
         />
       )}
-      <span className="flex-1 truncate">{children}</span>
+      <span className="flex-1 truncate">
+        <bdi>{children}</bdi>
+      </span>
       {badge}
       {shortcut && (
-        <kbd className="text-2xs shrink-0 font-sans text-gray-500 dark:text-gray-400">
+        // A shortcut reads in the order the keys are pressed, whatever the direction of the line.
+        <kbd dir="ltr" className="text-2xs shrink-0 font-sans text-gray-500 dark:text-gray-400">
           {shortcut}
         </kbd>
       )}
@@ -399,7 +402,7 @@ function MenuCheckboxItem({
         if (closeOnSelect) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-start text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
         disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
         className
       )}
@@ -415,7 +418,9 @@ function MenuCheckboxItem({
       >
         {checked && <Check className="h-3 w-3" strokeWidth={3} />}
       </span>
-      <span className="flex-1 truncate">{children}</span>
+      <span className="flex-1 truncate">
+        <bdi>{children}</bdi>
+      </span>
     </button>
   );
 }
@@ -468,7 +473,7 @@ function MenuRadioItem({
         if (closeOnSelect) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-left text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
+        'focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-4 text-start text-sm text-gray-700 transition-colors focus-visible:bg-gray-50 focus-visible:ring-inset dark:text-gray-300 dark:focus-visible:bg-white/5',
         disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5',
         className
       )}
@@ -484,7 +489,9 @@ function MenuRadioItem({
       >
         {checked && <span className="bg-brand-500 h-2 w-2 rounded-full" />}
       </span>
-      <span className="flex-1 truncate">{children}</span>
+      <span className="flex-1 truncate">
+        <bdi>{children}</bdi>
+      </span>
     </button>
   );
 }

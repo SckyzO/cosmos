@@ -202,13 +202,7 @@ const NavbarMenu = ({
 }: NavbarMenuProps) => {
   const inherited = useContext(NavbarThemeContext);
   return (
-    <Menu
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      // Menu still names its edges `left` and `right`; both already follow the direction.
-      align={align === 'end' ? 'right' : 'left'}
-    >
+    <Menu open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} align={align}>
       <NavbarTrigger
         label={label}
         active={active}

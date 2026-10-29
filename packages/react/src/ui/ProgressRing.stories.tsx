@@ -1,9 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Check } from 'lucide-react';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { KpiCard } from '../data/KpiCard';
 import { COSMOS_ACCENTS } from '../settings/appearance';
 import {
+  bothDirections,
+  directionBox,
+  expectMirrored,
+  expectReadsLeftToRight,
   expectNoHorizontalOverflow,
   expectStrokeContrast,
   inEachTheme,
@@ -224,5 +228,23 @@ export const ContrastInEveryTheme: Story = {
       if (saved === null) root.removeAttribute('data-accent');
       else root.setAttribute('data-accent', saved);
     }
+  },
+};
+
+/** The words in the centre keep their order in right to left, and the ring stays where it is. */
+export const CentreTextKeepsItsOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <ProgressRing value={60} size="lg" aria-label="Course progress">
+        3 of 5
+      </ProgressRing>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const ring = within(directionBox(canvasElement, dir)).getByRole('progressbar');
+      expectReadsLeftToRight(within(ring).getByText('3 of 5').parentElement!);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByRole('progressbar'));
   },
 };

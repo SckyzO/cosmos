@@ -592,7 +592,7 @@ const DashboardOverlaysDemo = () => {
         </Modal.Footer>
       </Modal>
 
-      <Drawer open={openDrawer} onClose={() => setOpenDrawer(false)} side="right" size="md">
+      <Drawer open={openDrawer} onClose={() => setOpenDrawer(false)} side="end" size="md">
         <Drawer.Header
           title="Server inspector"
           description="rack-a01-srv03"

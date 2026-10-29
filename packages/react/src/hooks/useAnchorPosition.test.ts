@@ -55,6 +55,24 @@ describe('anchoredStyle', () => {
     );
   });
 
+  it('puts the `start` and `end` sides left and right in ltr, right and left in rtl', () => {
+    const rtl = (placement: Parameters<typeof anchoredStyle>[1]) =>
+      anchoredStyle(rect, placement, undefined, 'rtl');
+    expect(anchoredStyle(rect, { side: 'end', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'right', offset: 8 })
+    );
+    expect(anchoredStyle(rect, { side: 'start', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'left', offset: 8 })
+    );
+    expect(rtl({ side: 'end', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'left', offset: 8 })
+    );
+    expect(rtl({ side: 'start', offset: 8 })).toEqual(
+      anchoredStyle(rect, { side: 'right', offset: 8 })
+    );
+    expect(resolveSide(rect, { side: 'end' }, undefined, 'rtl')).toBe('left');
+  });
+
   it('lifts a `top` panel by its own height, whatever the alignment', () => {
     expect(anchoredStyle(rect, { side: 'top' }).transform).toBe('translate(-50%, -100%)');
     expect(anchoredStyle(rect, { side: 'top', align: 'start' }).transform).toBe(
@@ -131,6 +149,16 @@ describe('anchoredStyle collision handling', () => {
     expect(resolveSide(rect, { side: 'left', offset: 8 }, panel(250, 30))).toBe('right');
   });
 
+  it('flips a logical side the viewport cuts, as the physical side it stands for', () => {
+    const nearRight: AnchorRect = { ...rect, left: 850, right: 950 };
+    // `end` is the right of the anchor in ltr: cut there, it goes to the left.
+    expect(resolveSide(nearRight, { side: 'end', offset: 8 }, panel(120, 30))).toBe('left');
+    // In rtl `start` is the right of the anchor: the same flip, from the other word.
+    expect(resolveSide(nearRight, { side: 'start', offset: 8 }, panel(120, 30), 'rtl')).toBe(
+      'left'
+    );
+  });
+
   it('flips only to a side with more room, when the panel fits on neither', () => {
     // 60px below the anchor, 50px above it: the 200px panel fits on neither side.
     const bounds = { panel: { width: 100, height: 200 }, viewport: { width: 1000, height: 150 } };
@@ -178,11 +206,48 @@ describe('anchoredStyle collision handling', () => {
     });
   });
 
-  it('keeps the left edge in view when the panel is wider than the viewport', () => {
+  it('keeps the left edge in view and narrows a panel wider than the viewport', () => {
     expect(anchoredStyle(rect, { align: 'start' }, panel(1200, 50))).toMatchObject({
       left: 16,
       '--anchor-shift': '-184px',
+      maxWidth: 968,
     });
+    // Narrowed, it measures 968px on the next pass and keeps its maxWidth.
+    expect(anchoredStyle(rect, { align: 'start' }, panel(968, 50)).maxWidth).toBe(968);
+  });
+
+  it('leaves a panel that matches its anchor as wide as the anchor', () => {
+    // A field 12px from each edge of a 375px screen: its list stays 351px wide.
+    const field: AnchorRect = { ...rect, left: 12, right: 363, width: 351 };
+    const narrow = { panel: { width: 351, height: 200 }, viewport: { width: 375, height: 800 } };
+    const style = anchoredStyle(field, { align: 'start', matchWidth: true }, narrow);
+    expect(style).toMatchObject({ width: 351, left: 12 });
+    expect(style.maxWidth).toBeUndefined();
+  });
+
+  it('keeps an `end` panel on a narrow rtl screen, as an ltr one stays on it', () => {
+    // A bell at the start of a 375px line: the left of the screen in rtl, the right in ltr.
+    const narrow = { width: 375, height: 800 };
+    const bell = { top: 0, left: 0, right: 40, bottom: 40, width: 40, height: 40 };
+    const rtl = (width: number) =>
+      anchoredStyle(
+        bell,
+        { align: 'end' },
+        { panel: { width, height: 300 }, viewport: narrow },
+        'rtl'
+      );
+    // Measured at its 384px, it is cut: narrowed, and moved 16px in for this pass.
+    expect(rtl(384)).toMatchObject({ left: 16, maxWidth: 343 });
+    // Measured again at 343px, it is all in view, so it stays at the bell's edge, still narrowed.
+    expect(rtl(343)).toMatchObject({ left: 0, maxWidth: 343 });
+    expect(rtl(343)).not.toHaveProperty('--anchor-shift');
+    const ltrBell = { ...bell, left: 335, right: 375 };
+    const ltr = anchoredStyle(
+      ltrBell,
+      { align: 'end' },
+      { panel: { width: 359, height: 300 }, viewport: narrow }
+    );
+    expect(ltr).toMatchObject({ left: 375, transform: 'translateX(-100%)', maxWidth: 359 });
   });
 
   it('leaves a panel the viewport does not cut where it is, even close to the edge', () => {

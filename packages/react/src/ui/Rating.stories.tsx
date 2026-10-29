@@ -1,7 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { expectFocusRing, expectGraphicContrast, inEachTheme } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
+  expectFocusRing,
+  expectGraphicContrast,
+  inEachTheme,
+  keyToEnd,
+  keyToStart,
+  startOffset,
+} from '../storybook-helpers';
 import { Rating } from './Rating';
 import { SectionLabel } from './SectionLabel';
 
@@ -109,14 +121,14 @@ export const InteractiveKeyboard: Story = {
     // One tab stop: the first radio while nothing is picked.
     await userEvent.tab();
     await expect(canvas.getByRole('radio', { name: '1 star' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(2);
     await expect(canvas.getByRole('radio', { name: '2 stars' })).toHaveFocus();
     await userEvent.keyboard('{End}');
     await expect(args.onChange).toHaveBeenLastCalledWith(5);
     await userEvent.keyboard('{Home}');
     await expect(args.onChange).toHaveBeenLastCalledWith(1);
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(5);
     await expect(canvas.getByRole('radio', { name: '5 stars' })).toBeChecked();
     // The picked radio is the only tab stop.
@@ -145,7 +157,7 @@ export const InteractiveHalfStars: Story = {
     await expect(canvas.getByRole('radio', { name: '3.5 stars' })).toBeChecked();
     await userEvent.click(canvas.getByRole('radio', { name: '4 stars' }));
     await expect(args.onChange).toHaveBeenLastCalledWith(4);
-    await userEvent.keyboard('{ArrowLeft}');
+    await userEvent.keyboard(`{${keyToStart()}}`);
     await expect(args.onChange).toHaveBeenLastCalledWith(3.5);
   },
 };
@@ -208,5 +220,56 @@ export const StarsHoldContrastInEveryTheme: Story = {
       for (const empty of stars.querySelectorAll('svg:not(.fill-current)'))
         expectGraphicContrast(empty, 'color');
     });
+  },
+};
+
+/** The first star is at the start edge, a half star fills from the start, and the text after the stars keeps its order. */
+export const StarsFillFromTheStart: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <Rating readOnly allowHalf value={3.5} showValue count="(128 reviews)" label="Product" />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const stars = within(box).getByRole('img');
+      const [first, , , half] = [...stars.children];
+      expect(startOffset(first!, stars)).toBeCloseTo(0, 1);
+      // The half star's fill starts at the star's start edge and covers half of it.
+      const fill = half!.querySelector<HTMLElement>('span[aria-hidden]')!;
+      expect(startOffset(fill, half!)).toBeCloseTo(0, 1);
+      expect(fill.getBoundingClientRect().width).toBeCloseTo(
+        half!.getBoundingClientRect().width / 2,
+        0
+      );
+      // The value and the count come after the stars.
+      const value = within(box).getByText('3.5');
+      expect(startOffset(value, box)).toBeGreaterThan(
+        startOffset(stars, box) + stars.getBoundingClientRect().width - 1
+      );
+      expectReadsLeftToRight(within(box).getByText('(128 reviews)').parentElement!);
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByRole('img').children[0]);
+    expectMirrored(canvasElement, (box) => within(box).getByText('3.5'));
+  },
+};
+
+/** With half stars, the first half of a star is the one at the start edge, and picks the lower value. */
+export const HalfStarsPickFromTheStartHalf: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <Rating allowHalf defaultValue={0} label="Your rating" />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const group = within(directionBox(canvasElement, dir)).getByRole('radiogroup');
+      const lower = within(group).getByRole('radio', { name: '0.5 stars' });
+      const upper = within(group).getByRole('radio', { name: '1 star' });
+      const star = lower.parentElement!;
+      expect(startOffset(lower, star)).toBeCloseTo(0, 1);
+      expect(endOffset(upper, star)).toBeCloseTo(0, 1);
+      // The second star is after the first one, toward the end.
+      const next = within(group).getByRole('radio', { name: '1.5 stars' });
+      expect(startOffset(next, group)).toBeGreaterThan(startOffset(upper, group));
+    }
   },
 };

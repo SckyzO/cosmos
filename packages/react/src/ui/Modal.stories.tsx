@@ -2,10 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  endOffset,
   expectBelow,
   expectGraphicContrast,
+  expectReadsLeftToRight,
+  inDirection,
   inEachTheme,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { Modal } from './Modal';
 import { Button } from './Button';
@@ -838,5 +842,83 @@ export const AlertOtherIntentsConfirmWithTheAccent: Story = {
     const confirm = await within(document.body).findByRole('button', { name: 'Continue' });
     await expect(confirm).toHaveClass('bg-brand-500', 'text-white');
     await expect(confirm).not.toHaveClass('bg-red-600');
+  },
+};
+
+/** The title starts the header and its close button ends it; the footer buttons end the dialog. */
+export const HeaderAndFooterFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}} ariaLabel="Delete">
+      <Modal.Header
+        title="Delete (3 of 5)."
+        description="Cannot be undone (1-5)."
+        onClose={() => {}}
+      />
+      <Modal.Body>Body</Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" size="sm">
+          Cancel
+        </Button>
+        <Button intent="danger" size="sm">
+          Delete
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const close = within(dialog).getByRole('button', { name: 'Close modal' });
+        const title = within(dialog).getByText('Delete (3 of 5).').closest('h2')!;
+        expect(endOffset(close, dialog)).toBeLessThan(startOffset(close, dialog));
+        expect(startOffset(title, dialog)).toBeLessThan(startOffset(close, dialog));
+        expectReadsLeftToRight(title);
+        expectReadsLeftToRight(within(dialog).getByText('Cannot be undone (1-5).').closest('p')!);
+        // The footer pushes its buttons to the end of the line, the primary one last.
+        const cancel = within(dialog).getByRole('button', { name: 'Cancel' });
+        const confirm = within(dialog).getByRole('button', { name: 'Delete' });
+        expect(endOffset(confirm, dialog)).toBeLessThan(startOffset(confirm, dialog));
+        expect(startOffset(cancel, dialog)).toBeLessThan(startOffset(confirm, dialog));
+      });
+    }
+  },
+};
+
+/** The horizontal alert starts with its icon and text, left aligned to the start, and ends with its buttons. */
+export const HorizontalAlertFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal.Alert
+      open
+      onClose={() => {}}
+      layout="horizontal"
+      intent="danger"
+      title="Deactivate (3 of 5)."
+      message="Cannot be undone."
+      confirmLabel="Go"
+      cancelLabel="No"
+    />
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const title = within(dialog).getByText('Deactivate (3 of 5).').closest('h2')!;
+        const icon = dialog.querySelector('svg')!;
+        expect(startOffset(icon, dialog)).toBeLessThan(startOffset(title, dialog));
+        expect(getComputedStyle(title.parentElement!).textAlign).toBe('start');
+        // The gap between the icon chip and the text is on the chip's end side.
+        const chip = icon.parentElement!;
+        expect(
+          startOffset(title, dialog) -
+            (startOffset(chip, dialog) + chip.getBoundingClientRect().width)
+        ).toBeCloseTo(16, 0);
+        expectReadsLeftToRight(title);
+        const go = within(dialog).getByRole('button', { name: 'Go' });
+        expect(endOffset(go, dialog)).toBeLessThan(startOffset(go, dialog));
+      });
+    }
   },
 };

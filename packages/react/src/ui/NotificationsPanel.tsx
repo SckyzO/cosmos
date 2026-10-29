@@ -59,7 +59,7 @@ type Ctx = {
   open: boolean;
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  align: 'left' | 'right';
+  align: 'start' | 'end';
 };
 
 const NotificationsPanelContext = createContext<Ctx | null>(null);
@@ -77,8 +77,8 @@ export type NotificationsPanelProps = {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Which side of the trigger the panel anchors to. Default `right`. */
-  align?: 'left' | 'right';
+  /** Edge of the trigger the panel lines up with: where the text starts or ends. Default `end`. */
+  align?: 'start' | 'end';
   children: ReactNode;
 };
 
@@ -86,7 +86,7 @@ const NotificationsPanelRoot = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  align = 'right',
+  align = 'end',
   children,
 }: NotificationsPanelProps) => {
   const [open, setOpen] = useControllableState({
@@ -149,12 +149,12 @@ function NotificationsPanelTrigger({
     >
       <Icon className="h-5 w-5" />
       {count > 0 && (
-        <span className="absolute top-0.5 right-0.5 flex min-w-[16px] items-center justify-center">
+        <span className="inset-e-0.5 absolute top-0.5 flex min-w-[16px] items-center justify-center">
           {showPing && (
             <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25" />
           )}
           <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] leading-none font-bold text-white">
-            {display}
+            <bdi>{display}</bdi>
           </span>
         </span>
       )}
@@ -182,7 +182,7 @@ const NotificationsPanelContent = ({
       open={open}
       onClose={() => setOpen(false)}
       triggerRef={triggerRef}
-      placement={{ side: 'bottom', align: align === 'right' ? 'end' : 'start', offset: 8 }}
+      placement={{ side: 'bottom', align, offset: 8 }}
       role="dialog"
       tabIndex={-1}
       aria-label="Notifications"
@@ -206,7 +206,7 @@ export type NotificationsPanelHeaderProps = {
    * rendered without it, and the panel stays open: the host clears its `unread` items.
    */
   onMarkAllRead?: () => void;
-  /** Right-side slot — pills, action buttons, etc. */
+  /** Slot at the end of the line — pills, action buttons, etc. */
   children?: ReactNode;
   className?: string;
 };
@@ -223,7 +223,9 @@ const NotificationsPanelHeader = ({
       className
     )}
   >
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+      <bdi>{title}</bdi>
+    </h3>
     {(onMarkAllRead || children) && (
       <div className="flex items-center gap-2">
         {onMarkAllRead && (
@@ -339,7 +341,7 @@ export type NotificationsPanelItemProps = ComponentPropsWithRef<'button'> & {
   time?: ReactNode;
   /** Not read yet: a dot before the title and a tinted row. Default false. */
   unread?: boolean;
-  /** Right-side badge label. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
+  /** Badge label at the end of the item. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
   badgeLabel?: string;
   /** When true, the panel auto-closes after the item is clicked. Default true. */
   closeOnClick?: boolean;
@@ -371,7 +373,7 @@ function NotificationsPanelItem({
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
       className={clsx(
-        'focus-visible:focus-indicator py-row-12 flex w-full items-start gap-3 px-4 text-left transition-colors focus-visible:ring-inset',
+        'focus-visible:focus-indicator py-row-12 flex w-full items-start gap-3 px-4 text-start transition-colors focus-visible:ring-inset',
         unread
           ? 'bg-brand-50/60 hover:bg-brand-50 dark:bg-brand-500/10 dark:hover:bg-brand-500/15'
           : 'hover:bg-gray-50 dark:hover:bg-white/5',
@@ -395,17 +397,25 @@ function NotificationsPanelItem({
               <span className="sr-only">Unread: </span>
             </>
           )}
-          <span className="min-w-0 truncate">{title}</span>
+          <span className="min-w-0 truncate">
+            <bdi>{title}</bdi>
+          </span>
         </p>
         {subtitle && (
-          <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+            <bdi>{subtitle}</bdi>
+          </p>
         )}
         {caption && (
           <p className="text-3xs mt-0.5 truncate font-mono text-gray-500 dark:text-gray-400">
-            {caption}
+            <bdi>{caption}</bdi>
           </p>
         )}
-        {time && <p className="text-3xs mt-1 text-gray-500 dark:text-gray-400">{time}</p>}
+        {time && (
+          <p className="text-3xs mt-1 text-gray-500 dark:text-gray-400">
+            <bdi>{time}</bdi>
+          </p>
+        )}
       </div>
       <Badge appearance="solid" intent={intent} size="sm" className="mt-0.5 shrink-0">
         {badgeLabel ?? BADGE_LABEL[intent]}
@@ -429,8 +439,12 @@ const NotificationsPanelEmpty = ({
 }: NotificationsPanelEmptyProps) => (
   <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
     <Icon className="h-8 w-8 text-gray-300 dark:text-gray-700" />
-    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-    <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+      <bdi>{title}</bdi>
+    </p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">
+      <bdi>{subtitle}</bdi>
+    </p>
   </div>
 );
 

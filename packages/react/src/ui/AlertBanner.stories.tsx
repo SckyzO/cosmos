@@ -2,7 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { AlertBanner } from './AlertBanner';
 import { Button } from './Button';
-import { expectTextContrast, inEachTheme } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
+  expectTextContrast,
+  inEachTheme,
+  startOffset,
+} from '../storybook-helpers';
 
 const meta = {
   title: 'Feedback/Alert Banner',
@@ -262,7 +271,7 @@ export const DefaultLooksAsBefore: Story = {
         await expect(style[`border${side}Width`]).toBe('1px');
       }
       await expect(el).toHaveClass('border', 'border-red-200', 'bg-red-50');
-      await expect(el).not.toHaveClass('border-l-4');
+      await expect(el).not.toHaveClass('border-s-4');
     }
     // `tinted` and `intent` are the defaults: spelling them out changes nothing.
     await expect(plain.className).toBe(explicit.className);
@@ -272,8 +281,8 @@ export const DefaultLooksAsBefore: Story = {
   },
 };
 
-/** `accent` has a 4px edge on the left and no border elsewhere, on the same tinted background. */
-export const AccentDrawsLeftEdgeOnly: Story = {
+/** `accent` has a 4px edge at the start of the line and no border elsewhere, on the same tinted background. */
+export const AccentDrawsStartEdgeOnly: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="space-y-2">
@@ -299,15 +308,15 @@ export const AccentDrawsLeftEdgeOnly: Story = {
     for (const [intent, hue] of Object.entries(hues)) {
       const el = banner(`${intent} accent`);
       const style = getComputedStyle(el);
-      await expect(style.borderLeftWidth).toBe('4px');
-      for (const side of ['Top', 'Right', 'Bottom'] as const) {
+      await expect(style.borderInlineStartWidth).toBe('4px');
+      for (const side of ['Top', 'InlineEnd', 'Bottom'] as const) {
         await expect(style[`border${side}Width`]).toBe('0px');
       }
-      await expect(el).toHaveClass('border-l-4', `border-l-${hue}-600`, `bg-${hue}-50`);
+      await expect(el).toHaveClass('border-s-4', `border-s-${hue}-600`, `bg-${hue}-50`);
       await expect(el).not.toHaveClass('border');
       // The edge is -600 in the light themes and -500 in the dark ones; the surface stays tinted.
       inEachTheme(() => {
-        expect(getComputedStyle(el).borderLeftColor).toBe(
+        expect(getComputedStyle(el).borderInlineStartColor).toBe(
           tokenColor(`${hue}-${isDark() ? 500 : 600}`)
         );
       });
@@ -379,5 +388,48 @@ export const NeutralBodyKeepsTitleColor: Story = {
       expectTextContrast(canvas.getByText('Titled neutral'));
       expectTextContrast(canvas.getByText('Titled warning'));
     });
+  },
+};
+
+/**
+ * In right to left the accent edge is on the right, the icon starts the line and the dismiss
+ * button ends it, and a title with a number and punctuation keeps its order.
+ */
+export const AccentEdgeAndDismissFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <AlertBanner
+        intent="success"
+        appearance="accent"
+        title="Backup done (3 of 5)."
+        action={<a href="#undo">Undo</a>}
+        onDismiss={() => {}}
+        className="max-w-xl"
+      >
+        Everything was saved.
+      </AlertBanner>
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const banner = within(box).getByRole('alert');
+      const style = getComputedStyle(banner);
+      // The 4px edge is on the physical side the line starts at.
+      expect(style[dir === 'ltr' ? 'borderLeftWidth' : 'borderRightWidth']).toBe('4px');
+      expect(style[dir === 'ltr' ? 'borderRightWidth' : 'borderLeftWidth']).toBe('0px');
+      // The dismiss button is the last part of the line, and the icon the first.
+      const dismiss = within(banner).getByRole('button', { name: 'Dismiss alert' });
+      expect(endOffset(dismiss, banner)).toBeLessThan(startOffset(dismiss, banner));
+      const icon = banner.querySelector('svg')!;
+      expect(startOffset(icon, banner)).toBeLessThan(endOffset(icon, banner));
+      expectReadsLeftToRight(within(banner).getByText('Backup done (3 of 5).').closest('p')!);
+    }
+    for (const find of [
+      (box: HTMLElement) => within(box).getByRole('button', { name: 'Dismiss alert' }),
+      (box: HTMLElement) => within(box).getByRole('link', { name: 'Undo' }),
+      (box: HTMLElement) => within(box).getByRole('alert').querySelector('svg'),
+    ])
+      expectMirrored(canvasElement, find);
   },
 };

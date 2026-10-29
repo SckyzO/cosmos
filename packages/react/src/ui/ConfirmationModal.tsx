@@ -94,7 +94,7 @@ const ConfirmationContent = ({
         </div>
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="font-semibold text-gray-900 dark:text-white">
-            {title}
+            <bdi>{title}</bdi>
           </h3>
           <p id={messageId} className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {message}
@@ -127,7 +127,7 @@ const ConfirmationContent = ({
           icon={X}
           onClick={onClose}
           aria-label="Close"
-          className="-mt-1 -mr-2 shrink-0"
+          className="-me-2 -mt-1 shrink-0"
         />
       </div>
 

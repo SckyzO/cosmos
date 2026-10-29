@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectFocusRing, expectTextContrast, portalDocsParams } from '../storybook-helpers';
+import {
+  expectFocusRing,
+  expectTextContrast,
+  inDirection,
+  portalDocsParams,
+} from '../storybook-helpers';
 import { AlertBanner } from './AlertBanner';
 import { Button } from './Button';
 import { Toaster, toast } from './Toast';
@@ -671,5 +676,87 @@ export const ButtonsShowFocusRing: Story = {
     await expectFocusRing(toastPart(toastEl, 'button[data-action]'));
     await expectFocusRing(toastPart(toastEl, 'button[data-cancel]'));
     await expectFocusRing(toastPart(toastEl, 'button[data-close-button]'));
+  },
+};
+
+// The stack opens in the corner at the end of the line, unless the host says where.
+const toasterAt = (x: 'left' | 'right') => {
+  const toaster = document.querySelector<HTMLElement>('[data-sonner-toaster]')!;
+  expect(toaster).toHaveAttribute('data-x-position', x);
+  const rect = document.querySelector('[data-sonner-toast]')!.getBoundingClientRect();
+  // On the side of the screen it was asked on.
+  if (x === 'right') expect(rect.left).toBeGreaterThan(window.innerWidth / 2);
+  else expect(rect.right).toBeLessThan(window.innerWidth / 2);
+};
+
+export const StackOpensAtTheEndOfTheLine: Story = {
+  beforeEach: dismissLeftovers,
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: function Render() {
+    useEffect(() => keepOpen(() => [toast('Backup completed', { duration: Infinity })]), []);
+    return <Toaster />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    // Bottom right while the page reads left to right, bottom left once it reads right to left,
+    // and back: the page's `dir` is followed while the toast is on screen.
+    await inDirection('ltr', () => waitFor(() => toasterAt('right')));
+    await inDirection('rtl', () => waitFor(() => toasterAt('left')));
+    await inDirection('ltr', () => waitFor(() => toasterAt('right')));
+  },
+};
+
+export const StackKeepsThePositionTheHostGives: Story = {
+  beforeEach: dismissLeftovers,
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: function Render() {
+    useEffect(() => keepOpen(() => [toast('Backup completed', { duration: Infinity })]), []);
+    return <Toaster position="bottom-right" />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    await inDirection('rtl', () => waitFor(() => toasterAt('right')));
+  },
+};
+
+export const StackTakesTheDirectionOfTheToaster: Story = {
+  beforeEach: dismissLeftovers,
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: function Render() {
+    useEffect(() => keepOpen(() => [toast('Backup completed', { duration: Infinity })]), []);
+    return <Toaster dir="rtl" />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    await inDirection('ltr', () => waitFor(() => toasterAt('left')));
+  },
+};
+
+/** The close button sits on the corner at the start of the toast, the right one in right to left. */
+export const CloseButtonSitsOnTheStartCorner: Story = {
+  beforeEach: dismissLeftovers,
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: function Render() {
+    useEffect(() => keepOpen(() => [toast('Backup completed', { duration: Infinity })]), []);
+    return <Toaster />;
+  },
+  play: async () => {
+    await waitForToasts(1);
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () =>
+        waitFor(() => {
+          const toastEl = document.querySelector('[data-sonner-toast]')!.getBoundingClientRect();
+          const close = document.querySelector('[data-close-button]')!.getBoundingClientRect();
+          const center = close.left + close.width / 2;
+          // Centred on the corner, give or take the offset that pulls it out of the toast.
+          if (dir === 'ltr') expect(Math.abs(center - toastEl.left)).toBeLessThan(close.width);
+          else expect(Math.abs(center - toastEl.right)).toBeLessThan(close.width);
+        })
+      );
+    }
   },
 };

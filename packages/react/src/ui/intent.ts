@@ -34,7 +34,7 @@ export type IntentStyle = {
   /** The tinted background of `surface` alone, for a surface that draws its own border (`accent`). */
   fill: string;
   /**
-   * Color of a left edge drawn on `fill` (the width is the component's): `-600` in light, `-500` in
+   * Color of an edge at the start of the line drawn on `fill` (the width is the component's): `-600` in light, `-500` in
    * dark, 3:1 or more against the tint.
    */
   edge: string;
@@ -54,7 +54,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-gray-100 dark:bg-gray-800',
     border: 'border-gray-200 dark:border-gray-800',
     fill: 'bg-gray-50 dark:bg-white/5',
-    edge: 'border-l-gray-600 dark:border-l-gray-500',
+    edge: 'border-s-gray-600 dark:border-s-gray-500',
   },
   brand: {
     icon: Megaphone,
@@ -64,7 +64,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-brand-50 dark:bg-brand-500/10',
     border: 'border-brand-300 dark:border-brand-500/40',
     fill: 'bg-brand-50 dark:bg-brand-500/10',
-    edge: 'border-l-brand-600 dark:border-l-brand-500',
+    edge: 'border-s-brand-600 dark:border-s-brand-500',
   },
   info: {
     icon: Info,
@@ -74,7 +74,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-blue-50 dark:bg-blue-500/10',
     border: 'border-blue-300 dark:border-blue-500/40',
     fill: 'bg-blue-50 dark:bg-blue-500/10',
-    edge: 'border-l-blue-600 dark:border-l-blue-500',
+    edge: 'border-s-blue-600 dark:border-s-blue-500',
   },
   success: {
     icon: CheckCircle2,
@@ -84,7 +84,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-green-50 dark:bg-green-500/10',
     border: 'border-green-300 dark:border-green-500/40',
     fill: 'bg-green-50 dark:bg-green-500/10',
-    edge: 'border-l-green-600 dark:border-l-green-500',
+    edge: 'border-s-green-600 dark:border-s-green-500',
   },
   warning: {
     icon: AlertTriangle,
@@ -94,7 +94,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-amber-50 dark:bg-amber-500/10',
     border: 'border-amber-300 dark:border-amber-500/40',
     fill: 'bg-amber-50 dark:bg-amber-500/10',
-    edge: 'border-l-amber-600 dark:border-l-amber-500',
+    edge: 'border-s-amber-600 dark:border-s-amber-500',
   },
   danger: {
     icon: XCircle,
@@ -104,7 +104,7 @@ export const INTENT_STYLE: Record<Intent, IntentStyle> = {
     tile: 'bg-red-50 dark:bg-red-500/10',
     border: 'border-red-300 dark:border-red-500/40',
     fill: 'bg-red-50 dark:bg-red-500/10',
-    edge: 'border-l-red-600 dark:border-l-red-500',
+    edge: 'border-s-red-600 dark:border-s-red-500',
   },
 };
 

@@ -124,6 +124,23 @@ export const bothDirections = (content: () => ReactNode) =>
     )
   );
 
+/**
+ * `body` run with `dir` on `<html>`, put back as it was (also when `body` throws). For a story
+ * about what renders outside the canvas, in a portal at the end of `<body>` (Drawer, Modal,
+ * CommandPalette), where `bothDirections`' boxes do not reach.
+ */
+export const inDirection = async (dir: Direction, body: () => void | Promise<void>) => {
+  const html = document.documentElement;
+  const was = html.getAttribute('dir');
+  html.setAttribute('dir', dir);
+  try {
+    await body();
+  } finally {
+    if (was === null) html.removeAttribute('dir');
+    else html.setAttribute('dir', was);
+  }
+};
+
 /** The box of `bothDirections` for `dir`. */
 export const directionBox = (canvasElement: HTMLElement, dir: Direction) => {
   const box = canvasElement.querySelector<HTMLElement>(`[data-direction="${dir}"]`);

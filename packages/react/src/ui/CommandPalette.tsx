@@ -65,7 +65,7 @@ const CommandPaletteRoot = ({
         overlayClassName
       )}
       contentClassName={clsx(
-        'fixed top-[20%] left-1/2 z-[9999] w-[640px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900',
+        'inset-s-1/2 fixed top-[20%] z-[9999] w-[640px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl rtl:translate-x-1/2 dark:border-gray-700 dark:bg-gray-900',
         contentClassName
       )}
       className={className}
@@ -164,7 +164,7 @@ export type CommandPaletteItemProps = Omit<
   'children'
 > & {
   icon?: ElementType;
-  /** Right-aligned keyboard shortcut hint (e.g. "⌘D"). */
+  /** Keyboard shortcut hint at the end of the item (e.g. "⌘D"). */
   shortcut?: ReactNode;
   /** Second line under the label: what the command does. The item stays one line without it. */
   description?: ReactNode;
@@ -197,20 +197,26 @@ function CommandPaletteItem({
     >
       {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />}
       <span className="min-w-0 flex-1">
-        <span className="block truncate">{children}</span>
+        <span className="block truncate">
+          <bdi>{children}</bdi>
+        </span>
         {description && (
           <span className="text-2xs block truncate text-gray-600 dark:text-gray-400">
-            {description}
+            <bdi>{description}</bdi>
           </span>
         )}
       </span>
       {meta && (
         <span className="text-2xs max-w-[40%] shrink-0 truncate text-gray-600 dark:text-gray-400">
-          {meta}
+          <bdi>{meta}</bdi>
         </span>
       )}
       {shortcut && (
-        <kbd className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+        // A shortcut reads in the order the keys are pressed, whatever the direction of the line.
+        <kbd
+          dir="ltr"
+          className="text-3xs shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+        >
           {shortcut}
         </kbd>
       )}

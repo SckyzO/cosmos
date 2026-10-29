@@ -8,7 +8,11 @@ import {
   expectNoHorizontalOverflow,
   inEachTheme,
   mobileViewport,
+  endOffset,
+  expectReadsLeftToRight,
+  inDirection,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { Drawer } from './Drawer';
 import type { DrawerProps } from './Drawer';
@@ -46,16 +50,16 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 export const Sides: Story = {
   render: () => {
-    const [side, setSide] = useState<'left' | 'right' | 'bottom' | null>(null);
+    const [side, setSide] = useState<'start' | 'end' | 'bottom' | null>(null);
     return (
       <Wrap>
         <SectionCard title="Drawer sides">
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setSide('left')}>
-              Open left
+            <Button variant="secondary" onClick={() => setSide('start')}>
+              Open at start
             </Button>
-            <Button variant="secondary" onClick={() => setSide('right')}>
-              Open right
+            <Button variant="secondary" onClick={() => setSide('end')}>
+              Open at end
             </Button>
             <Button variant="secondary" onClick={() => setSide('bottom')}>
               Open bottom
@@ -64,7 +68,7 @@ export const Sides: Story = {
         </SectionCard>
         {/* One drawer per side: a drawer's side is fixed, so switching it while
             the panel slides would send it in or out by the wrong edge. */}
-        {(['left', 'right', 'bottom'] as const).map((drawerSide) => (
+        {(['start', 'end', 'bottom'] as const).map((drawerSide) => (
           <Drawer
             key={drawerSide}
             open={side === drawerSide}
@@ -331,7 +335,7 @@ export const BottomSheetOnMobile: Story = {
 // At the `mobile` viewport a `md` (384px) or `lg` (448px) side drawer is wider than the screen as
 // asked: it stops short of the far edge, the page does not widen and the close-outside button
 // stays on screen.
-const fitsAPhone = (size: 'md' | 'lg', side: 'left' | 'right'): Story => ({
+const fitsAPhone = (size: 'md' | 'lg', side: 'start' | 'end'): Story => ({
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -353,34 +357,35 @@ const fitsAPhone = (size: 'md' | 'lg', side: 'left' | 'right'): Story => ({
   },
 });
 
-export const MediumDrawerFitsAPhone = fitsAPhone('md', 'right');
-export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'left');
+export const MediumDrawerFitsAPhone = fitsAPhone('md', 'end');
+export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'start');
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
-/** The left drawer enters and leaves by the left edge, never the right. */
-export const LeftDrawerStaysOnTheLeft: Story = {
+/** The start drawer enters and leaves by the edge the text starts at, never the other one. */
+export const StartDrawerStaysAtTheStart: Story = {
   tags: ['!dev', '!autodocs'],
   // The story watches the slide itself: keep it in the story tests.
   parameters: { settleMotion: false },
   render: Sides.render,
   play: async ({ canvas, canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
-    await userEvent.click(canvas.getByRole('button', { name: 'Open left' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Open at start' }));
     const panel = body
-      .getByText('This drawer slides in from the left.')
+      .getByText('This drawer slides in from the start.')
       .closest('[role="dialog"]')!;
-    const left = () => panel.getBoundingClientRect().left;
+    // How far the panel sits from the page's start edge: the left one in ltr, the right in rtl.
+    const start = () => startOffset(panel, document.documentElement);
 
-    // A frame into the slide, the panel is still coming in from off-screen left.
+    // A frame into the slide, the panel is still coming in from off-screen at the start.
     await nextFrame();
-    await expect(left()).toBeLessThan(0);
-    await waitFor(() => expect(left()).toBe(0));
+    await expect(start()).toBeLessThan(0);
+    await waitFor(() => expect(start()).toBe(0));
 
     await userEvent.click(within(panel as HTMLElement).getByRole('button', { name: 'Cancel' }));
     await nextFrame();
-    await expect(left()).toBeLessThanOrEqual(0);
-    await waitFor(() => expect(left()).toBe(-panel.getBoundingClientRect().width));
+    await expect(start()).toBeLessThanOrEqual(0);
+    await waitFor(() => expect(start()).toBe(-panel.getBoundingClientRect().width));
   },
 };
 
@@ -683,7 +688,7 @@ export const PanelsRenderInsideTheDrawer: Story = {
           </Tooltip>
           <Dropdown
             label="Sort"
-            align="right"
+            align="end"
             options={[
               { value: 'new', label: 'Newest' },
               { value: 'old', label: 'Oldest' },
@@ -774,7 +779,7 @@ export const DrawerIsANamedModalDialog: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <>
-      <Drawer open onClose={() => {}} side="left">
+      <Drawer open onClose={() => {}} side="start">
         <Drawer.Header title="Server details" />
       </Drawer>
       <Drawer open onClose={() => {}} ariaLabel="Filters" withBackdrop={false}>
@@ -822,10 +827,10 @@ export const SwipeToClose: Story = {
     return (
       <Wrap>
         <Button onClick={() => setOpen(true)}>Open drawer</Button>
-        <Drawer open={open} onClose={() => setOpen(false)} side="left" size="sm" swipeToClose>
+        <Drawer open={open} onClose={() => setOpen(false)} side="start" size="sm" swipeToClose>
           <Drawer.Header title="Swipe me" onClose={() => setOpen(false)} />
           <Drawer.Body>
-            Swipe this panel to the left with a finger, or use the close button.
+            Swipe this panel toward its edge with a finger, or use the close button.
           </Drawer.Body>
         </Drawer>
       </Wrap>
@@ -844,9 +849,16 @@ const touch = (clientX: number, init: Touch = {}) => ({
 });
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// The panels are drawn at the edge of the page, whose direction is the one of `<html>`.
+const isRtl = () => getComputedStyle(document.documentElement).direction === 'rtl';
+/** How far the panel sits from the start edge of the page: the left in ltr, the right in rtl. */
+const startEdge = (panel: Element) => startOffset(panel, document.documentElement);
+/** The `clientX` of a finger that went `px` from x=250 toward the start edge (away, if negative). */
+const towardStart = (px: number) => 250 + px * (isRtl() ? 1 : -1);
+
 const swipePanel = async () => {
   const panel = await within(document.body).findByRole('dialog', { name: 'Swipe' });
-  await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
+  await waitFor(() => expect(startEdge(panel)).toBe(0));
   return panel;
 };
 
@@ -855,7 +867,7 @@ export const SwipePastAThirdCloses: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+    <Drawer {...args} side="start" size="sm" swipeToClose ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
@@ -863,16 +875,16 @@ export const SwipePastAThirdCloses: Story = {
     const panel = await swipePanel();
     const width = panel.getBoundingClientRect().width;
     await fireEvent.pointerDown(panel, touch(250));
-    await fireEvent.pointerMove(panel, touch(250 - 60));
+    await fireEvent.pointerMove(panel, touch(towardStart(60)));
     // The panel is where the finger took it, with no transition in the way.
-    await waitFor(() => expect(panel.getBoundingClientRect().left).toBeCloseTo(-60, 0));
+    await waitFor(() => expect(startEdge(panel)).toBeCloseTo(-60, 0));
     // Never past its open position: the other way does nothing.
-    await fireEvent.pointerMove(panel, touch(250 + 80));
-    await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
-    await fireEvent.pointerMove(panel, touch(250 - width / 3 - 20));
+    await fireEvent.pointerMove(panel, touch(towardStart(-80)));
+    await waitFor(() => expect(startEdge(panel)).toBe(0));
+    await fireEvent.pointerMove(panel, touch(towardStart(width / 3 + 20)));
     await sleep(150);
     await expect(args.onClose).not.toHaveBeenCalled();
-    await fireEvent.pointerUp(panel, touch(250 - width / 3 - 20));
+    await fireEvent.pointerUp(panel, touch(towardStart(width / 3 + 20)));
     await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
@@ -885,12 +897,12 @@ export const ShortSwipeSpringsBack: Story = {
   play: async ({ args }) => {
     const panel = await swipePanel();
     await fireEvent.pointerDown(panel, touch(250));
-    await fireEvent.pointerMove(panel, touch(250 - 50));
-    await waitFor(() => expect(panel.getBoundingClientRect().left).toBeCloseTo(-50, 0));
+    await fireEvent.pointerMove(panel, touch(towardStart(50)));
+    await waitFor(() => expect(startEdge(panel)).toBeCloseTo(-50, 0));
     await sleep(250);
-    await fireEvent.pointerUp(panel, touch(250 - 50));
+    await fireEvent.pointerUp(panel, touch(towardStart(50)));
     await expect(args.onClose).not.toHaveBeenCalled();
-    await waitFor(() => expect(panel.getBoundingClientRect().left).toBe(0));
+    await waitFor(() => expect(startEdge(panel)).toBe(0));
     await expect(panel.style.translate).toBe('');
   },
 };
@@ -903,8 +915,8 @@ export const FastFlickCloses: Story = {
   play: async ({ args }) => {
     const panel = await swipePanel();
     await fireEvent.pointerDown(panel, touch(250));
-    await fireEvent.pointerMove(panel, touch(250 - 40));
-    await fireEvent.pointerUp(panel, touch(250 - 40));
+    await fireEvent.pointerMove(panel, touch(towardStart(40)));
+    await fireEvent.pointerUp(panel, touch(towardStart(40)));
     await expect(args.onClose).toHaveBeenCalledTimes(1);
   },
 };
@@ -915,7 +927,7 @@ export const MouseAndDefaultDrawerDoNotSwipe: Story = {
   args: { open: true, onClose: fn() },
   render: (args) => (
     <>
-      <Drawer {...args} side="left" size="sm" swipeToClose ariaLabel="Swipe">
+      <Drawer {...args} side="start" size="sm" swipeToClose ariaLabel="Swipe">
         <Drawer.Body>Content</Drawer.Body>
       </Drawer>
     </>
@@ -927,7 +939,7 @@ export const MouseAndDefaultDrawerDoNotSwipe: Story = {
     await fireEvent.pointerMove(panel, touch(100, mouse));
     await fireEvent.pointerUp(panel, touch(100, mouse));
     await expect(args.onClose).not.toHaveBeenCalled();
-    await expect(panel.getBoundingClientRect().left).toBe(0);
+    await expect(startEdge(panel)).toBe(0);
   },
 };
 
@@ -935,7 +947,7 @@ export const DrawerWithoutSwipeToCloseIgnoresSwipes: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="left" size="sm" ariaLabel="Swipe">
+    <Drawer {...args} side="start" size="sm" ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
@@ -949,34 +961,68 @@ export const DrawerWithoutSwipeToCloseIgnoresSwipes: Story = {
   },
 };
 
-/** A right drawer closes on a swipe to the right, not to the left. */
-export const RightDrawerSwipesToTheRight: Story = {
+/** An end drawer closes on a swipe toward the end of the line, not toward its start. */
+export const EndDrawerSwipesTowardTheEnd: Story = {
   tags: ['!dev', '!autodocs'],
   args: { open: true, onClose: fn() },
   render: (args) => (
-    <Drawer {...args} side="right" size="sm" swipeToClose ariaLabel="Swipe">
+    <Drawer {...args} side="end" size="sm" swipeToClose ariaLabel="Swipe">
       <Drawer.Body>Content</Drawer.Body>
     </Drawer>
   ),
   play: async ({ args }) => {
     const panel = await within(document.body).findByRole('dialog', { name: 'Swipe' });
-    await waitFor(() => expect(panel.getBoundingClientRect().right).toBe(window.innerWidth));
-    const x = window.innerWidth - 100;
-    await fireEvent.pointerDown(panel, touch(x));
-    await fireEvent.pointerMove(panel, touch(x - 120));
+    const endEdge = () => endOffset(panel, document.documentElement);
+    await waitFor(() => expect(endEdge()).toBe(0));
+    // A finger that went `px` from x=250 toward the end edge.
+    const towardEnd = (px: number) => towardStart(-px);
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(towardEnd(-120)));
     await sleep(150);
-    await fireEvent.pointerUp(panel, touch(x - 120));
+    await fireEvent.pointerUp(panel, touch(towardEnd(-120)));
     await expect(args.onClose).not.toHaveBeenCalled();
 
-    await fireEvent.pointerDown(panel, touch(x));
-    await fireEvent.pointerMove(panel, touch(x + 60));
-    await waitFor(() =>
-      expect(panel.getBoundingClientRect().right).toBeCloseTo(window.innerWidth + 60, 0)
-    );
-    await fireEvent.pointerMove(panel, touch(x + 130));
+    await fireEvent.pointerDown(panel, touch(250));
+    await fireEvent.pointerMove(panel, touch(towardEnd(60)));
+    await waitFor(() => expect(endEdge()).toBeCloseTo(-60, 0));
+    await fireEvent.pointerMove(panel, touch(towardEnd(130)));
     await sleep(150);
-    await fireEvent.pointerUp(panel, touch(x + 130));
+    await fireEvent.pointerUp(panel, touch(towardEnd(130)));
     await expect(args.onClose).toHaveBeenCalledTimes(1);
+  },
+};
+
+/**
+ * The start drawer closes toward the edge it sits at: left to right it is a swipe to the left,
+ * right to left a swipe to the right, and the other way does nothing. Both are checked in turn,
+ * on a page whose `dir` this story changes (and restores).
+ */
+export const StartDrawerSwipesTowardTheStartInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn() },
+  render: SwipePastAThirdCloses.render,
+  play: async ({ args }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        (args.onClose as ReturnType<typeof fn>).mockClear();
+        const panel = await swipePanel();
+        // The physical way of the start edge: left in ltr, right in rtl.
+        const toTheStart = dir === 'ltr' ? -1 : 1;
+        await fireEvent.pointerDown(panel, touch(250));
+        await fireEvent.pointerMove(panel, touch(250 - toTheStart * 140));
+        await sleep(150);
+        await fireEvent.pointerUp(panel, touch(250 - toTheStart * 140));
+        await expect(args.onClose, `${dir}: away from the edge`).not.toHaveBeenCalled();
+        await waitFor(() => expect(startEdge(panel)).toBe(0));
+
+        await fireEvent.pointerDown(panel, touch(250));
+        await fireEvent.pointerMove(panel, touch(250 + toTheStart * 140));
+        await sleep(150);
+        await fireEvent.pointerUp(panel, touch(250 + toTheStart * 140));
+        await expect(args.onClose, `${dir}: toward the edge`).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(startEdge(panel)).toBe(0));
+      });
+    }
   },
 };
 
@@ -994,11 +1040,11 @@ export const ReducedMotionSkipsTheSpring: Story = {
     try {
       const panel = await swipePanel();
       await fireEvent.pointerDown(panel, touch(250));
-      await fireEvent.pointerMove(panel, touch(250 - 50));
+      await fireEvent.pointerMove(panel, touch(towardStart(50)));
       await sleep(250);
-      await fireEvent.pointerUp(panel, touch(250 - 50));
+      await fireEvent.pointerUp(panel, touch(towardStart(50)));
       await waitFor(() => expect(panel.style.transition).toBe('none'));
-      await expect(panel.getBoundingClientRect().left).toBe(0);
+      await expect(startEdge(panel)).toBe(0);
       // Not left on: the next slide animates again.
       await waitFor(() => expect(panel.style.transition).toBe(''));
     } finally {
@@ -1112,35 +1158,34 @@ export const BottomSheetStaysUnder85PercentOfTheViewport: Story = {
   },
 };
 
-/** The left and right drawers keep their size, their full height and their square corners, and have no handle. */
+/** The start and end drawers keep their size, their full height and their square corners, and have no handle. */
 export const SideDrawersAreUnchangedByTheBottomSheet: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <>
-      <Drawer open onClose={() => {}} side="left" ariaLabel="Left" withBackdrop={false}>
-        <Drawer.Body>Left</Drawer.Body>
+      <Drawer open onClose={() => {}} side="start" ariaLabel="Start" withBackdrop={false}>
+        <Drawer.Body>Start</Drawer.Body>
       </Drawer>
-      <Drawer open onClose={() => {}} side="right" size="sm" ariaLabel="Right" withBackdrop={false}>
-        <Drawer.Body>Right</Drawer.Body>
+      <Drawer open onClose={() => {}} side="end" size="sm" ariaLabel="End" withBackdrop={false}>
+        <Drawer.Body>End</Drawer.Body>
       </Drawer>
     </>
   ),
   play: async () => {
-    const left = await findSheet('Left');
-    const right = await findSheet('Right');
-    await waitFor(() => expect(left.getBoundingClientRect().left).toBe(0));
-    await waitFor(() =>
-      expect(right.getBoundingClientRect().right).toBe(document.documentElement.clientWidth)
-    );
-    for (const panel of [left, right]) {
+    const start = await findSheet('Start');
+    const end = await findSheet('End');
+    // Each against its own edge of the page, the left or the right depending on the direction.
+    await waitFor(() => expect(startEdge(start)).toBe(0));
+    await waitFor(() => expect(endOffset(end, document.documentElement)).toBe(0));
+    for (const panel of [start, end]) {
       const box = panel.getBoundingClientRect();
       await expect(box.top).toBe(0);
       await expect(box.bottom).toBe(viewportBottom());
       await expect(getComputedStyle(panel).borderTopLeftRadius).toBe('0px');
       await expect(panel.querySelector('[data-slot="handle"]')).toBeNull();
     }
-    await expect(left.getBoundingClientRect().width).toBe(384);
-    await expect(right.getBoundingClientRect().width).toBe(288);
+    await expect(start.getBoundingClientRect().width).toBe(384);
+    await expect(end.getBoundingClientRect().width).toBe(288);
   },
 };
 
@@ -1404,3 +1449,51 @@ export const BottomSheetBodyKeepsItsScrollOnTouch: Story = {
     await expect(getComputedStyle(panel).touchAction).toBe('none');
   },
 };
+
+// What a drawer of `side` looks like at the edge it opens on, in each direction. A drawer is
+// portaled to the end of `<body>`, so the page's direction is the one of `<html>`.
+const drawerMirrors = (side: 'start' | 'end'): Story => ({
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Drawer open onClose={() => {}} side={side} size="sm" closeOutside ariaLabel="Panel">
+      <Drawer.Header title="Server details (3 of 5)." onClose={() => {}} />
+      <Drawer.Body>Content</Drawer.Body>
+    </Drawer>
+  ),
+  play: async () => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        const panel = await within(document.body).findByRole('dialog', { name: 'Panel' });
+        // At its own edge of the page: the left one for a start drawer in ltr, and so on.
+        const atLeft = (side === 'start') === (dir === 'ltr');
+        const edge = () =>
+          side === 'start' ? startEdge(panel) : endOffset(panel, document.documentElement);
+        await waitFor(() => expect(edge()).toBe(0));
+        const box = panel.getBoundingClientRect();
+        if (atLeft) expect(box.left).toBe(0);
+        else expect(box.right).toBe(document.documentElement.clientWidth);
+        // The border is on the side that faces the page.
+        const style = getComputedStyle(panel);
+        expect(style[atLeft ? 'borderRightWidth' : 'borderLeftWidth']).toBe('1px');
+        expect(style[atLeft ? 'borderLeftWidth' : 'borderRightWidth']).toBe('0px');
+        // The close button outside the panel sits against the edge facing the page.
+        const outside = [...panel.querySelectorAll('button')].find((b) => b.matches('.absolute'))!;
+        const out = outside.getBoundingClientRect();
+        // Against the edge facing the page, inside the 1px border it is positioned from.
+        if (atLeft) expect(out.left).toBeGreaterThanOrEqual(box.right - 1.5);
+        else expect(out.right).toBeLessThanOrEqual(box.left + 1.5);
+        // The header's close button ends the header, the title starts it.
+        const header = within(panel).getByRole('heading').closest('[class*="justify-between"]')!;
+        const close = within(header as HTMLElement).getByRole('button', { name: 'Close drawer' });
+        expect(endOffset(close, header)).toBeLessThan(startOffset(close, header));
+        expectReadsLeftToRight(within(panel).getByText('Server details (3 of 5).').closest('h3')!);
+      });
+    }
+  },
+});
+
+/** A start drawer sits at the left edge, and at the right one in right to left. */
+export const StartDrawerMirrors: Story = drawerMirrors('start');
+
+/** An end drawer sits at the right edge, and at the left one in right to left. */
+export const EndDrawerMirrors: Story = drawerMirrors('end');

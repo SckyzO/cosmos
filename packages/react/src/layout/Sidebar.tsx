@@ -184,7 +184,7 @@ const LabelTip = ({
 }) => {
   const { truncated } = useContext(SidebarContext);
   return truncated?.has(id) ? (
-    <Tooltip content={label} position="right" block>
+    <Tooltip content={label} position="end" block>
       {children}
     </Tooltip>
   ) : (
@@ -220,7 +220,7 @@ const CompactLabel = ({
 // The full name of a compact row whose label the clamp cuts: the others show it whole, and a
 // tooltip repeating it would only be read twice.
 const CompactTip = ({ label, children }: { label: string; children: ReactElement }) => (
-  <Tooltip content={label} position="right" block>
+  <Tooltip content={label} position="end" block>
     {children}
   </Tooltip>
 );
@@ -767,7 +767,7 @@ const SidebarItem = ({
   );
   if (compact) return clamped ? <CompactTip label={label}>{row}</CompactTip> : row;
   return collapsed ? (
-    <Tooltip content={label} position="right" block>
+    <Tooltip content={label} position="end" block>
       {row}
     </Tooltip>
   ) : (
@@ -893,7 +893,7 @@ const SidebarSubMenu = ({
     return (
       <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
         {compact && clamped ? <CompactTip label={label}>{trigger}</CompactTip> : trigger}
-        <Popover.Content position="right" aria-label={label} width="w-64" padding="p-2">
+        <Popover.Content position="end" aria-label={label} width="w-64" padding="p-2">
           {/* The panel has no top-level row: its rows are the first nested level, from its edge. */}
           <SidebarContext.Provider
             value={{

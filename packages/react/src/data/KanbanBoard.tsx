@@ -295,7 +295,7 @@ const SortableCard = ({
           </button>
         }
         actions={
-          <Menu align="right">
+          <Menu align="end">
             <Menu.Trigger
               aria-label={`Card actions: ${card.title}`}
               data-kanban-actions={card.id}

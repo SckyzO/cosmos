@@ -92,7 +92,9 @@ export const CookieBanner = ({
           {showIcon && <Cookie className="text-brand-500 mt-0.5 h-5 w-5 shrink-0" aria-hidden />}
           <div className="min-w-0 flex-1">
             {title && (
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <bdi>{title}</bdi>
+              </p>
             )}
             <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">{message}</div>
           </div>

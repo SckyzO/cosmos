@@ -2,7 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Save, Search, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { expectOutsideClip, portalDocsParams, scrollAnchor } from '../storybook-helpers';
+import {
+  bothDirections,
+  directionBox,
+  expectOutsideClip,
+  expectReadsLeftToRight,
+  portalDocsParams,
+  scrollAnchor,
+  startOffset,
+} from '../storybook-helpers';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -31,7 +39,7 @@ export const Positions: Story = {
     <Wrap>
       <SectionCard title="Positions — hover the buttons">
         <div className="flex flex-wrap items-center gap-12">
-          {(['top', 'bottom', 'left', 'right'] as const).map((position) => (
+          {(['top', 'bottom', 'start', 'end'] as const).map((position) => (
             <Tooltip key={position} content={`Position: ${position}`} position={position}>
               <Button variant="secondary" size="sm">
                 {position}
@@ -108,7 +116,7 @@ export const Open: Story = {
   render: () => (
     <Wrap>
       <div className="grid grid-cols-2 gap-x-48 gap-y-32 pt-10 pb-10 md:grid-cols-4 md:gap-x-24">
-        {(['top', 'bottom', 'left', 'right'] as const).map((position) => (
+        {(['top', 'bottom', 'start', 'end'] as const).map((position) => (
           <div key={position} className="flex justify-center">
             <Tooltip content={`Position: ${position}`} position={position} open>
               <Button variant="secondary" size="sm">
@@ -353,7 +361,7 @@ export const WithTitle: Story = {
         <Tooltip
           title="Error budget"
           content="Share of failed requests allowed this month before on-call is paged."
-          position="right"
+          position="end"
         >
           <Button variant="ghost" size="xs">
             What is this?
@@ -366,7 +374,7 @@ export const WithTitle: Story = {
     await userEvent.tab();
     const tip = within(page.getByRole('tooltip'));
     await waitFor(() => expect(page.getByRole('tooltip')).toBeVisible());
-    await expect(tip.getByText('Error budget')).toHaveClass('font-semibold');
+    await expect(tip.getByText('Error budget').parentElement).toHaveClass('font-semibold');
   },
 };
 
@@ -505,7 +513,7 @@ export const TooltipEscapesOverflowHidden: Story = {
 
 /**
  * A `top` tooltip on a trigger at the top of the screen opens below it, arrow included; one
- * the left edge would cut moves right, and its arrow still points at the trigger.
+ * the screen edge would cut moves back inside, and its arrow still points at the trigger.
  */
 export const TooltipFlipsAndStaysOnScreen: Story = {
   tags: ['!dev', '!autodocs'],
@@ -529,7 +537,8 @@ export const TooltipFlipsAndStaysOnScreen: Story = {
       const a = anchor.getBoundingClientRect();
       const t = tip.getBoundingClientRect();
       expect(t.top).toBeCloseTo(a.bottom + 10, 0);
-      expect(t.left).toBeCloseTo(16, 0);
+      // Moved back inside, 16px from the edge the trigger is at (the left one, the right in rtl).
+      expect(startOffset(tip, document.documentElement)).toBeCloseTo(16, 0);
       // The arrow sits on the tooltip's top edge, under the trigger's center.
       const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
       expect(arrow.top + arrow.height / 2).toBeCloseTo(t.top, 0);
@@ -566,5 +575,144 @@ export const TooltipFollowsTriggerOnScroll: Story = {
       expect(t.top).toBeCloseTo(a.bottom + 10, 0);
       expect((t.left + t.right) / 2).toBeCloseTo((a.left + a.right) / 2, 0);
     });
+  },
+};
+
+// The tooltip of the trigger in `box`, found through the `aria-describedby` that links them.
+const tipOf = (box: HTMLElement) => {
+  const trigger = within(box).getByRole('button');
+  return {
+    trigger,
+    anchor: trigger.parentElement!,
+    tip: document.getElementById(trigger.getAttribute('aria-describedby')!)!,
+  };
+};
+
+/**
+ * `position="end"` puts the tooltip after the trigger: on its right, and on its left in right to
+ * left. The arrow sits on the edge that faces the trigger, level with its centre.
+ */
+export const EndSideFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () =>
+    bothDirections(() => (
+      <div className="px-48 py-8">
+        <Tooltip content="Opens the report" position="end" defaultOpen>
+          <Button variant="secondary" size="sm">
+            Report
+          </Button>
+        </Tooltip>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const { anchor, tip } = tipOf(directionBox(canvasElement, dir));
+      await waitFor(() => {
+        const a = anchor.getBoundingClientRect();
+        const t = tip.getBoundingClientRect();
+        // 10px of room for the arrow, on the right of the trigger or on its left.
+        expect(dir === 'ltr' ? t.left - a.right : a.left - t.right, `${dir}: gap`).toBeCloseTo(
+          10,
+          0
+        );
+        const arrow = tip.querySelector('[aria-hidden]')!.getBoundingClientRect();
+        expect(arrow.top + arrow.height / 2).toBeCloseTo(a.top + a.height / 2, 0);
+        // On the tooltip's edge that faces the trigger.
+        expect(arrow.left + arrow.width / 2).toBeCloseTo(dir === 'ltr' ? t.left : t.right, 0);
+      });
+    }
+  },
+};
+
+/** `start` is the opposite side, and the tooltip reads in the direction of its trigger. */
+export const StartSideFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () =>
+    bothDirections(() => (
+      <div className="px-48 py-8">
+        <Tooltip content="Opens the report" position="start" defaultOpen>
+          <Button variant="secondary" size="sm">
+            Report
+          </Button>
+        </Tooltip>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const { anchor, tip } = tipOf(directionBox(canvasElement, dir));
+      await waitFor(() => {
+        const a = anchor.getBoundingClientRect();
+        const t = tip.getBoundingClientRect();
+        expect(dir === 'ltr' ? a.left - t.right : t.left - a.right, `${dir}: gap`).toBeCloseTo(
+          10,
+          0
+        );
+      });
+      expect(tip.getAttribute('dir')).toBe(dir);
+    }
+  },
+};
+
+/** A trigger at the end of the line has no room for an `end` tooltip: it flips to the start side. */
+export const EndSideFlipsAtTheEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () =>
+    bothDirections(() => (
+      <div className="flex justify-end p-1">
+        <Tooltip
+          content="Deletes every selected row, then empties the trash"
+          position="end"
+          defaultOpen
+        >
+          <Button variant="secondary" size="sm">
+            Delete
+          </Button>
+        </Tooltip>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const { anchor, tip } = tipOf(directionBox(canvasElement, dir));
+      await waitFor(() => {
+        const a = anchor.getBoundingClientRect();
+        const t = tip.getBoundingClientRect();
+        // The trigger is at the physical right in ltr, so the tooltip went to its left; the
+        // mirror image in rtl. The tooltip stays on screen.
+        if (dir === 'ltr') expect(t.right).toBeLessThanOrEqual(a.left);
+        else expect(t.left).toBeGreaterThanOrEqual(a.right);
+        expect(t.left).toBeGreaterThanOrEqual(0);
+        expect(t.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      });
+    }
+  },
+};
+
+/** The keys of a shortcut keep the order they are pressed in, and the gap before them is on the content's end side. */
+export const ShortcutKeysKeepTheirOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () =>
+    bothDirections(() => (
+      <div className="px-48 py-12">
+        <Tooltip content="Save" shortcut={['Ctrl', 'S']} title="Draft" defaultOpen>
+          <Button variant="secondary" size="sm">
+            Save
+          </Button>
+        </Tooltip>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const { tip } = tipOf(directionBox(canvasElement, dir));
+      await waitFor(() => expect(tip).toBeVisible());
+      const keys = tip.querySelector<HTMLElement>('[dir="ltr"]')!;
+      expectReadsLeftToRight(keys);
+      const first = keys.firstElementChild!.getBoundingClientRect();
+      const last = keys.lastElementChild!.getBoundingClientRect();
+      expect(first.left).toBeLessThan(last.left);
+    }
   },
 };

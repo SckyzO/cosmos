@@ -13,11 +13,15 @@ import {
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  bothDirections,
+  directionBox,
+  endOffset,
   expectBelow,
   expectFocusRing,
   expectOutsideClip,
   portalDocsParams,
   scrollAnchor,
+  startOffset,
 } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
@@ -371,7 +375,7 @@ export const MenuFollowsTriggerAndCloses: Story = {
   render: () => (
     <div data-testid="scroller" className="h-64 overflow-y-auto">
       <div className="flex flex-col items-end gap-4 p-6 pb-[600px]">
-        <Dropdown label="Actions" options={ACCOUNT} align="right" />
+        <Dropdown label="Actions" options={ACCOUNT} align="end" />
         <button type="button">Outside</button>
       </div>
     </div>
@@ -418,11 +422,12 @@ export const OpensUpwardAtTheBottomEdge: Story = {
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Actions' });
     await userEvent.click(trigger);
-    const menu = (await page.findByRole('menu')).getBoundingClientRect();
+    const panel = await page.findByRole('menu');
+    const menu = panel.getBoundingClientRect();
     const anchor = trigger.getBoundingClientRect();
-    // 4px above the trigger, flush with its left edge.
+    // 4px above the trigger, flush with its start edge (the left one, the right in rtl).
     await expect(menu.bottom).toBeCloseTo(anchor.top - 4, 0);
-    await expect(menu.left).toBeCloseTo(anchor.left, 0);
+    await expect(startOffset(panel, trigger)).toBeCloseTo(0, 0);
   },
 };
 
@@ -448,5 +453,37 @@ export const TabLeavesTheMenu: Story = {
     await userEvent.tab();
     await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
     await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+  },
+};
+
+/** The menu lines up with the start or the end of its trigger, and the check of the picked option ends its row. */
+export const MenuFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.sm(),
+  render: () =>
+    bothDirections(() => (
+      <div className="flex h-64 items-start justify-center gap-96 pt-4">
+        <Dropdown label="Start" options={ACCOUNT} defaultOpen defaultValue="profile" />
+        <Dropdown label="End" options={ACCOUNT} defaultOpen defaultValue="profile" align="end" />
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const [startTrigger, endTrigger] = within(box).getAllByRole('button', { expanded: true });
+      await waitFor(() =>
+        expect(document.querySelectorAll(`[role="menu"][dir="${dir}"]`)).toHaveLength(2)
+      );
+      const [atStart, atEnd] = [
+        ...document.querySelectorAll<HTMLElement>(`[role="menu"][dir="${dir}"]`),
+      ];
+      expect(startOffset(atStart!, startTrigger!), `${dir}: align start`).toBeCloseTo(0, 0);
+      expect(endOffset(atEnd!, endTrigger!), `${dir}: align end`).toBeCloseTo(0, 0);
+      // The picked option: text first, check last.
+      const picked = within(atStart!).getByRole('menuitemradio', { checked: true });
+      const check = picked.querySelector('svg:last-child')!;
+      expect(endOffset(check, picked)).toBeLessThan(startOffset(check, picked));
+      expect(getComputedStyle(picked).textAlign).toBe('start');
+    }
   },
 };

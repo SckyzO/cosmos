@@ -15,11 +15,12 @@ import { Kbd } from '../typography/Kbd';
 import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
 import { useOverlayLayer, usePortalContainer } from './overlayA11y';
-import { useAnchorPosition } from '../hooks/useAnchorPosition';
+import { useAnchorPosition, type AnchorSide } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
 
-export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
+/** `start` and `end` are the sides of the line: `end` is the right of the trigger, its left under `dir="rtl"`. */
+export type TooltipPosition = 'top' | 'bottom' | 'start' | 'end';
 /** Surface of the tooltip. */
 export type TooltipVariant = 'dark' | 'white';
 /** Meaning of the tooltip: colors it over its surface. */
@@ -30,15 +31,25 @@ const OFFSET = 10;
 
 // Where a tooltip never shown yet waits, invisible: it has no position before
 // its trigger is first measured, and must exist for `aria-describedby`.
-const UNPLACED: CSSProperties = { top: 0, left: 0 };
+const UNPLACED: CSSProperties = { top: 0, insetInlineStart: 0 };
 
 // Centered on the box, minus `--anchor-shift`: how far the box moved along its trigger to
 // stay on screen, so the arrow keeps pointing at the trigger.
-const ARROW_POS: Record<TooltipPosition, string> = {
-  top: 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
-  bottom: 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2',
-  left: 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2',
-  right: 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2',
+//
+// Keyed by the side the box opened on as the screen sees it: the viewport flips it, the
+// `--anchor-shift` is a distance to the right, and the arrow sits on the physical edge that
+// faces the trigger. Those offsets stay physical (see `RTL_ALLOWED`), whatever the direction.
+const arrowPosition = (side: AnchorSide): string => {
+  switch (side) {
+    case 'top':
+      return 'top-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2';
+    case 'bottom':
+      return 'bottom-full left-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 translate-y-1/2';
+    case 'left':
+      return 'left-full top-[calc(50%_-_var(--anchor-shift,0px))] -translate-x-1/2 -translate-y-1/2';
+    case 'right':
+      return 'right-full top-[calc(50%_-_var(--anchor-shift,0px))] translate-x-1/2 -translate-y-1/2';
+  }
 };
 
 const VARIANT_BOX: Record<TooltipVariant, string> = {
@@ -169,6 +180,7 @@ export const Tooltip = ({
   const {
     style: anchored,
     side,
+    direction,
     panelRef,
   } = useAnchorPosition(
     anchorRef,
@@ -203,6 +215,8 @@ export const Tooltip = ({
           <span
             ref={panelRef}
             id={id}
+            // The portal takes the box out of the trigger's subtree, and its `dir` with it.
+            dir={direction}
             role="tooltip"
             style={anchored ?? UNPLACED}
             className={clsx(
@@ -213,16 +227,24 @@ export const Tooltip = ({
               intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
             )}
           >
-            {title && <span className="block font-semibold">{title}</span>}
+            {title && (
+              <span className="block font-semibold">
+                <bdi>{title}</bdi>
+              </span>
+            )}
             {title ? <span className="mt-0.5 block opacity-80">{content}</span> : content}
             {shortcut && (
-              <span className="ml-2 inline-flex gap-0.5 align-middle">
-                {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
-                {shortcut.map((key, i) => (
-                  <Kbd key={i} size="sm">
-                    {key}
-                  </Kbd>
-                ))}
+              <span className="ms-2 inline-flex align-middle">
+                {/* Keys read in the order they are pressed, whatever the line's direction. The
+                    gap is on the outer span: a margin follows the direction of its own element. */}
+                <span dir="ltr" className="flex gap-0.5">
+                  {/* Index keys: a shortcut can repeat a key, e.g. G G. */}
+                  {shortcut.map((key, i) => (
+                    <Kbd key={i} size="sm">
+                      {key}
+                    </Kbd>
+                  ))}
+                </span>
               </span>
             )}
             {arrow && (
@@ -230,7 +252,7 @@ export const Tooltip = ({
                 aria-hidden
                 className={clsx(
                   'absolute h-2 w-2 rotate-45',
-                  ARROW_POS[side],
+                  arrowPosition(side),
                   intent ? INTENT_ARROW[intent] : VARIANT_ARROW[variant]
                 )}
               />

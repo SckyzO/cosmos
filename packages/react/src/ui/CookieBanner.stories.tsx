@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import {
+  endOffset,
+  expectReadsLeftToRight,
+  inDirection,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { CookieBanner } from './CookieBanner';
 import { Link } from './Link';
@@ -203,6 +209,38 @@ export const FullChoicesOnMobile: Story = {
       const { left, right } = canvas.getByRole('button', { name }).getBoundingClientRect();
       await expect(left).toBeGreaterThanOrEqual(bounds.left);
       await expect(right).toBeLessThanOrEqual(bounds.right);
+    }
+  },
+};
+
+/** The icon and the text start the banner, the choices end it, and the title keeps its order. */
+export const LaysOutFromTheStartInBothDirections: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div className="relative h-72 bg-gray-100 dark:bg-gray-800">
+      <CookieBanner
+        title="We use cookies (3 of 5)."
+        message={sampleMessage}
+        onAccept={args.onAccept as () => void}
+        onDeny={() => {}}
+        onSettings={() => {}}
+      />
+    </div>
+  ),
+  args: { onAccept: fn() } as never,
+  play: async ({ canvasElement }) => {
+    const banner = within(canvasElement).getByRole('dialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const icon = banner.querySelector('svg')!;
+        const title = within(banner).getByText('We use cookies (3 of 5).').closest('p')!;
+        const accept = within(banner).getByRole('button', { name: 'Accept all' });
+        const settings = within(banner).getByRole('button', { name: 'Cookie settings' });
+        expect(startOffset(icon, banner)).toBeLessThan(startOffset(title, banner));
+        expect(endOffset(accept, banner)).toBeLessThan(startOffset(accept, banner));
+        expect(startOffset(settings, banner)).toBeLessThan(startOffset(accept, banner));
+        expectReadsLeftToRight(title);
+      });
     }
   },
 };

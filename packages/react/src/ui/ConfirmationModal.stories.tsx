@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectReadsLeftToRight,
+  inDirection,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
 
@@ -399,5 +405,34 @@ export const WarningIsTheDefault: Story = {
     const dialog = await within(document.body).findByRole('alertdialog');
     await expect(dialog.querySelector('svg.text-amber-500')).not.toBeNull();
     await expect(dialog.querySelector('svg.text-red-500')).toBeNull();
+  },
+};
+
+/** The icon and text start the dialog, the close button ends it, the choices end the footer. */
+export const LayoutFollowsTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    open: true,
+    title: 'Delete (3 of 5).',
+    onClose: () => {},
+    onDiscard: () => {},
+    onSave: () => {},
+  },
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const close = within(dialog).getByRole('button', { name: 'Close' });
+        const title = within(dialog).getByText('Delete (3 of 5).').closest('h3')!;
+        const icon = dialog.querySelector('svg')!;
+        expect(endOffset(close, dialog)).toBeLessThan(startOffset(close, dialog));
+        expect(startOffset(icon, dialog)).toBeLessThan(startOffset(title, dialog));
+        expectReadsLeftToRight(title);
+        const save = within(dialog).getByRole('button', { name: /Save/ });
+        const stay = within(dialog).getByRole('button', { name: 'Stay' });
+        expect(endOffset(save, dialog)).toBeLessThan(startOffset(save, dialog));
+        expect(startOffset(stay, dialog)).toBeLessThan(startOffset(save, dialog));
+      });
+    }
   },
 };

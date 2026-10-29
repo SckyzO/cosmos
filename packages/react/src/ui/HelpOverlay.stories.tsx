@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { portalDocsParams } from '../storybook-helpers';
+import {
+  endOffset,
+  expectReadsLeftToRight,
+  inDirection,
+  portalDocsParams,
+  startOffset,
+} from '../storybook-helpers';
 import { Button } from './Button';
 import { Drawer } from './Drawer';
 import { HelpOverlay } from './HelpOverlay';
@@ -118,7 +124,12 @@ export const CustomFooter: Story = {
       footer={
         <span className="flex items-center gap-2">
           Need more help?{' '}
-          <a className="text-brand-600 dark:text-brand-400 hover:underline">Read the docs →</a>
+          <a className="text-brand-600 dark:text-brand-400 hover:underline">
+            Read the docs{' '}
+            <span aria-hidden className="inline-block rtl:-scale-x-100">
+              →
+            </span>
+          </a>
         </span>
       }
     >
@@ -287,5 +298,41 @@ export const DefaultOpenClosesOnItsOwn: Story = {
       (args as unknown as { onOpenChange: ReturnType<typeof fn> }).onOpenChange
     ).toHaveBeenCalledWith(false);
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};
+
+/**
+ * A shortcut row has its description at the start and its keys at the end, and the keys keep
+ * the order they are pressed in, with the title and description in their own order.
+ */
+export const KeysKeepTheirOrderInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <HelpOverlay
+      open
+      onOpenChange={() => undefined}
+      title="Shortcuts (3 of 5)."
+      description="Press them (1-5)."
+    >
+      {SAMPLE_SHORTCUTS}
+    </HelpOverlay>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, () => {
+        const row = within(dialog).getByText('Redo').closest('li')!;
+        const keys = row.querySelector<HTMLElement>('[dir="ltr"]')!;
+        expect(endOffset(keys, row)).toBeLessThan(startOffset(keys, row));
+        expectReadsLeftToRight(keys);
+        const sequence = within(dialog)
+          .getByText('Go to home')
+          .closest('li')!
+          .querySelector<HTMLElement>('[dir="ltr"]')!;
+        expectReadsLeftToRight(sequence);
+        expectReadsLeftToRight(within(dialog).getByText('Shortcuts (3 of 5).').closest('h2')!);
+        expectReadsLeftToRight(within(dialog).getByText('Press them (1-5).').closest('p')!);
+      });
+    }
   },
 };

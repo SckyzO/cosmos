@@ -13,10 +13,14 @@ import {
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  endOffset,
   expectPlaceholderContrast,
+  expectReadsLeftToRight,
   expectTextContrast,
+  inDirection,
   inEachTheme,
   portalDocsParams,
+  startOffset,
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
@@ -603,5 +607,37 @@ export const NoResults: Story = {
     // Clearing the search brings the list back.
     await userEvent.clear(input);
     await waitFor(() => expect(page.getByRole('listbox')).toBeVisible());
+  },
+};
+
+/**
+ * The dialog stays centred in right to left, an item's icon and text start the row, and its
+ * shortcut ends it with the keys in the order they are pressed ("⌘," would read ",⌘").
+ */
+export const CentredAndShortcutsKeepTheirOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: Open.render,
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    for (const dir of ['ltr', 'rtl'] as const) {
+      await inDirection(dir, async () => {
+        await waitFor(() => {
+          const box = dialog.getBoundingClientRect();
+          const viewport = document.documentElement.clientWidth;
+          expect(
+            Math.abs((box.left + box.right) / 2 - viewport / 2),
+            `${dir}: centred`
+          ).toBeLessThan(1);
+        });
+        const item = within(dialog).getByText('Settings').closest<HTMLElement>('[cmdk-item]')!;
+        const label = within(item).getByText('Settings');
+        const shortcut = item.querySelector('kbd')!;
+        expect(startOffset(item.querySelector('svg')!, item)).toBeLessThan(
+          startOffset(label, item)
+        );
+        expect(endOffset(shortcut, item)).toBeLessThan(startOffset(shortcut, item));
+        expectReadsLeftToRight(shortcut);
+      });
+    }
   },
 };

@@ -1,5 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, within } from 'storybook/test';
+import {
+  bothDirections,
+  directionBox,
+  endOffset,
+  expectMirrored,
+  expectReadsLeftToRight,
+  startOffset,
+} from '../storybook-helpers';
 import { NotificationCard } from './NotificationCard';
 
 const meta = {
@@ -144,5 +152,61 @@ export const IntentColorsTheIcon: Story = {
       ['success', 'info', 'warning', 'danger'].map((i) => icon(`${i} card`).innerHTML)
     );
     await expect(glyphs.size).toBe(4);
+  },
+};
+
+/** The icon starts the card and the dismiss button ends it; the text between keeps its own order. */
+export const IconAndDismissFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <NotificationCard.Simple
+        title="Backup done (3 of 5)."
+        description="Everything was saved."
+        onDismiss={() => {}}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const card = within(directionBox(canvasElement, dir)).getByRole('status');
+      const dismiss = within(card).getByRole('button', { name: 'Dismiss notification' });
+      const icon = card.querySelector('svg')!;
+      expect(endOffset(dismiss, card)).toBeLessThan(startOffset(dismiss, card));
+      expect(startOffset(icon, card)).toBeLessThan(endOffset(icon, card));
+      // The gap between the icon and the text is on the icon's end side, whichever it is.
+      const title = within(card).getByText('Backup done (3 of 5).').closest('p')!;
+      expect(startOffset(title, card)).toBeGreaterThan(startOffset(icon, card) + 20);
+      expectReadsLeftToRight(title);
+    }
+    for (const find of [
+      (box: HTMLElement) => within(box).getByRole('button', { name: 'Dismiss notification' }),
+      (box: HTMLElement) => within(box).getByText('Everything was saved.'),
+    ])
+      expectMirrored(canvasElement, find);
+  },
+};
+
+/** The condensed card puts its action and dismiss button after the text, in either direction. */
+export const CondensedActionsFollowTheDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <NotificationCard.Condensed
+        title="Discussion archived"
+        actionLabel="Undo"
+        onAction={() => {}}
+        onDismiss={() => {}}
+      />
+    )),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const card = within(directionBox(canvasElement, dir)).getByRole('status');
+      const title = within(card).getByText('Discussion archived');
+      const undo = within(card).getByRole('button', { name: 'Undo' });
+      const dismiss = within(card).getByRole('button', { name: 'Dismiss notification' });
+      expect(startOffset(title, card)).toBeLessThan(startOffset(undo, card));
+      expect(startOffset(undo, card)).toBeLessThan(startOffset(dismiss, card));
+    }
+    expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Undo' }));
   },
 };

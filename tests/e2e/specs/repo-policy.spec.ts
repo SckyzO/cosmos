@@ -271,7 +271,7 @@ test('the dev container cannot write the repo metadata', () => {
 // ones, group by group as each Storybook group is converted (#453).
 
 /** The Storybook groups whose components are converted. A group is added when its PR lands. */
-const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists'];
+const RTL_GROUPS: string[] = ['Atoms', 'Actions', 'Forms', 'Data', 'Lists', 'Feedback', 'Overlays'];
 
 /**
  * Component sources the story-title rule cannot find: a stories file whose component has
@@ -285,13 +285,25 @@ const RTL_EXTRA_FILES = [
   'packages/react/src/comments/Comment.tsx', // what CommentThread draws
   'packages/react/src/comments/CommentComposer.tsx', // the reply and edit fields of a Comment
   'packages/react/src/data/TimeLabel.tsx', // the `<time>` of DateTime and RelativeTime
+  'packages/react/src/feedback/Skeleton.tsx', // Sk.stories.tsx, and the presets
+  'packages/react/src/feedback/StateLayout.tsx', // what EmptyState, ErrorState and LoadingState draw
+  'packages/react/src/ui/Dialog.tsx', // the panel of Modal and ConfirmationModal
+  'packages/react/src/ui/FloatingPanel.tsx', // the panel of every popover, menu and picker
+  'packages/react/src/ui/intent.ts', // the edge colour AlertBanner draws on its start side
 ];
 
 /**
  * The few physical utilities that must stay: `file`, the exact `token` and why, so each
  * exception is a decision and not a leftover. An entry that no longer matches fails too.
  */
-const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [];
+const RTL_ALLOWED: { file: string; token: string; reason: string }[] = [
+  ...['left-[calc(50%_-_var(--anchor-shift,0px))]', 'left-full', 'right-full'].map((token) => ({
+    file: 'packages/react/src/ui/Tooltip.tsx',
+    token,
+    reason:
+      'the arrow sits on the edge that faces the trigger, picked by the side the viewport left the box on (a screen side, flipped by room), and --anchor-shift is a distance to the right',
+  })),
+];
 
 /**
  * Component sources of a converted group that wait for later, with the reason (another branch
@@ -441,59 +453,6 @@ const SIDE_ALLOWED: { file: string; holder: string; reason: string }[] = [
   },
 ];
 
-/**
- * Types of the Feedback and Overlays groups, which keep their physical names until the branch
- * that renames them lands (#453). The list only shrinks: an entry fails once its type is
- * renamed, so the branch that renames it deletes its line.
- */
-const SIDE_DEFERRED: { file: string; holder: string; reason: string }[] = [
-  {
-    file: 'packages/react/src/ui/Drawer.tsx',
-    holder: 'DrawerSide',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/Dropdown.tsx',
-    holder: 'DropdownProps.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/Menu.tsx',
-    holder: 'Ctx.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/Menu.tsx',
-    holder: 'MenuProps.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/NotificationsPanel.tsx',
-    holder: 'Ctx.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/NotificationsPanel.tsx',
-    holder: 'NotificationsPanelProps.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/Popover.tsx',
-    holder: 'PopoverPosition',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/Tooltip.tsx',
-    holder: 'TooltipPosition',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-  {
-    file: 'packages/react/src/ui/UserMenu.tsx',
-    holder: 'UserMenuProps.align',
-    reason: 'renamed by the Feedback and Overlays branch',
-  },
-];
-
 const SIDE_LITERAL = /(?:^|-)(?:left|right)(?:-|$)/;
 
 /** The sources the check reads: every module of the package but its stories and tests. */
@@ -567,21 +526,16 @@ test('no prop type names a physical side of the line', () => {
       list.some(({ file, holder }) => file === hit.file && holder === hit.holder);
   expect(
     found
-      .filter((hit) => !matches(SIDE_ALLOWED)(hit) && !matches(SIDE_DEFERRED)(hit))
+      .filter((hit) => !matches(SIDE_ALLOWED)(hit))
       .map(({ file, holder }) => `${file}: ${holder}`),
     'name the side start or end, or add a SIDE_ALLOWED entry with the reason it must stay physical (`top` and `bottom` are fine)'
   ).toEqual([]);
 
-  for (const [list, name] of [
-    [SIDE_ALLOWED, 'SIDE_ALLOWED'],
-    [SIDE_DEFERRED, 'SIDE_DEFERRED'],
-  ] as const) {
-    for (const entry of list) {
-      expect(entry.reason, `${name}: ${entry.file}: ${entry.holder}`).not.toBe('');
-      expect(
-        found.some(matches([entry])),
-        `${name} entry no longer needed: ${entry.file}: ${entry.holder}`
-      ).toBe(true);
-    }
+  for (const entry of SIDE_ALLOWED) {
+    expect(entry.reason, `SIDE_ALLOWED: ${entry.file}: ${entry.holder}`).not.toBe('');
+    expect(
+      found.some(matches([entry])),
+      `SIDE_ALLOWED entry no longer needed: ${entry.file}: ${entry.holder}`
+    ).toBe(true);
   }
 });

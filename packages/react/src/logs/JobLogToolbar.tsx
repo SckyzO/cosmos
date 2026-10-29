@@ -209,7 +209,7 @@ export const JobLogToolbar = ({
             )}
           </div>
           <div className="ms-auto @md:hidden">
-            <Menu align="right">
+            <Menu align="end">
               <Menu.Trigger
                 aria-label="More options"
                 className={clsx(ICON_BUTTON, look.iconButton)}
