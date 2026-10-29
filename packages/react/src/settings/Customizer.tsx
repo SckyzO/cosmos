@@ -151,7 +151,7 @@ export type CustomizerProps = {
   /** Densities to offer. Default: all of `COSMOS_DENSITIES`. */
   densities?: CosmosDensityMeta[];
   /** Corner radii to offer. Default: all of `COSMOS_RADII`. */
-  radiuses?: CosmosRadiusMeta[];
+  radii?: CosmosRadiusMeta[];
   /** Headings of the sections, by section. Default: English names ("Accent color", "Text size"…). */
   labels?: Partial<Record<CustomizerSection, string>>;
   /** Title of the panel. Default `'Customize'`. */
@@ -362,7 +362,7 @@ export const Customizer = ({
   fonts = COSMOS_FONTS,
   textSizes = COSMOS_TEXT_SIZES,
   densities = COSMOS_DENSITIES,
-  radiuses = COSMOS_RADII,
+  radii = COSMOS_RADII,
   labels,
   title = 'Customize',
   subtitle = 'Changes apply at once.',
@@ -503,7 +503,7 @@ export const Customizer = ({
                 size="sm"
                 value={current.radius}
                 onChange={(id) => set({ radius: id })}
-                options={radiuses.map((r) => ({ value: r.id, label: r.label }))}
+                options={radii.map((r) => ({ value: r.id, label: r.label }))}
               />
             )}
           </Group>
