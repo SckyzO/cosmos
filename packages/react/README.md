@@ -201,8 +201,28 @@ filters bar; the counts come from you, the table never computes them.
 instead of scrolling: the checkbox, the column marked `mobile: 'title'` and the
 row action on the first line, then a label/value pair per other column
 (`mobileLabel` renames a label, `mobile: 'hidden'` drops a column). The toolbar
-gets a "Sort by" select for the sortable columns. The default, `scroll`, keeps
-the table.
+gets a "Sort by" select for the sortable columns and, when a column is
+filterable, a "Filters" button with the number of values filtered: it opens a
+bottom sheet with the filter of each filterable column, "Clear all" and "Show n
+rows", and sets the same `filters` as the column headers, controlled or not. The
+default, `scroll`, keeps the table.
+
+With `selectable`, a selection puts a tinted bar on one row: the count, "Clear"
+and the bulk actions on the start side, the search and the toolbar on the end
+side. `bulkActionItems` takes the actions as data (`{ key, label, icon,
+intent, disabled, onClick(selectedRows) }`) so the bar can adapt: the first is a
+button and, under 1152px of bar, the others fold into an "Actions" menu; the
+toolbar buttons go icon-only and the search narrows under 1360px; under 640px
+the bar wraps to two lines; with `mobileLayout="cards"` on a phone each action is
+an icon button named by its `label`. `bulkActions(selectedRows)` still renders
+any node after them, as given at every width. While rows are selected the
+toolbar's Export follows them ("Export 3" downloads those rows, in the table's
+sort order, and `onExport` gets their keys as `selection`); with none selected it
+exports the filtered rows.
+
+`emptyAction` puts a call to action under the empty state ("Create the first
+order"). When a search or filters hide every row it gives way to a "Clear
+filters" button, which clears both.
 
 `DataTable` rows can expand: `renderExpandedRow(row)` adds a first column of
 chevron buttons (`aria-expanded`, `aria-controls` the detail row while it is
@@ -328,7 +348,8 @@ mark (U+FEFF), so that spreadsheets read accents. Fields follow RFC 4180
 header or string value that starts with `=`, `+`, `-`, `@`, a tab or a carriage
 return gets a `'` prefix so a spreadsheet never runs it as a formula; a
 `number` is left alone. To export on the server, `onExport(query)` receives `{ search, filters,
-sort, columns }` (the visible column keys, in order) and builds no file.
+sort, columns }` (the visible column keys, in order, plus `selection`, the
+selected keys, while rows are selected) and builds no file.
 `toCsv(rows, columns)` gives the same text, without the byte order mark, for an
 export outside a table (prepend U+FEFF for a file meant for spreadsheets).
 

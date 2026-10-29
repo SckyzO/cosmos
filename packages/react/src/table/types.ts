@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
+import type { Intent } from '../ui/intent';
 import type { ColumnVisibility } from './columnVisibility';
 
 export type SortDirection = 'asc' | 'desc';
@@ -139,6 +140,30 @@ export type DataTableExportQuery = {
   sort: DataTableSort;
   /** The keys of the visible data columns, in the order they are drawn. */
   columns: string[];
+  /**
+   * The `rowKey`s of the selected rows, present only while rows are selected: the export is of
+   * those rows alone, whatever the search and the filters keep.
+   */
+  selection?: (string | number)[];
+};
+
+/**
+ * A bulk action of `DataTable`'s `bulkActionItems`, shown while rows are selected. The first is a
+ * button; when the bar runs out of room the others fold into an "Actions" menu, and on a phone
+ * (`mobileLayout="cards"`) each one is an icon button named by its `label`.
+ */
+export type DataTableBulkAction<T> = {
+  /** Identifies the action among the others. */
+  key: string;
+  /** The text of the button or menu item, and the name of its icon-only form. */
+  label: string;
+  /** Drawn before the label. An action with no icon is a text button on a phone too. */
+  icon?: ComponentType<{ className?: string }>;
+  /** `danger` colors a destructive action red. Default `neutral`. */
+  intent?: Extract<Intent, 'neutral' | 'danger'>;
+  disabled?: boolean;
+  /** Called with the selected rows. */
+  onClick: (selectedRows: T[]) => void;
 };
 
 /**

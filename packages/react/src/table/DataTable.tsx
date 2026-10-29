@@ -4,6 +4,8 @@ import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type React
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
+import { DataTableBulkActions } from './DataTableBulkActions';
+import { DataTableFiltersButton, DataTableFiltersSheet } from './DataTableMobileFilters';
 import { DataTableMobileCards, DataTableMobileSort } from './DataTableMobileCards';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { DataTableFilterTabsStrip, type DataTableFilterTabsConfig } from './DataTableFilterTabs';
@@ -32,6 +34,7 @@ import { useControllableState } from '../hooks/useControllableState';
 import { toCsv } from './csv';
 import { downloadCsv } from './download';
 import { TOOLBAR_BUTTON } from './toolbarButton';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useOverflows } from '../hooks/useOverflows';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { useVirtualWindow, windowParts } from '../hooks/useVirtualWindow';
@@ -47,6 +50,7 @@ import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
   ColumnDef,
   ColumnPin,
+  DataTableBulkAction,
   DataTableDensity,
   DataTableExportQuery,
   DataTableSort,
@@ -92,6 +96,14 @@ export type DataTableProps<T> = {
   onRetry?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  /**
+   * A call to action under the empty state ("Create the first order"). It shows when the table
+   * has no data to start with. When a search or filters hide every row it gives way to a
+   * "Clear filters" button that clears both, since a call to create would not answer an empty
+   * result. With `manual`, where the host holds the rows, an active search or filter counts as
+   * the cause.
+   */
+  emptyAction?: ReactNode;
   /**
    * Row height. Without it (and without `defaultDensity`) the table follows the page's
    * `data-density`. Set, it is a local override of the page: `default` keeps the standard rows,
@@ -167,8 +179,21 @@ export type DataTableProps<T> = {
   selection?: Set<string | number>;
   defaultSelection?: Set<string | number>;
   onSelectionChange?: (selection: Set<string | number>) => void;
-  /** Toolbar rendered above the table when `selection.size > 0`. Receives the selected rows. */
+  /**
+   * Nodes shown in the selection bar while rows are selected, after `bulkActionItems`. Receives
+   * the selected rows. They stay as given at every width: use `bulkActionItems` for actions that
+   * fold into a menu when the bar runs out of room.
+   */
   bulkActions?: (selectedRows: T[]) => ReactNode;
+  /**
+   * The bulk actions as data, for a bar that adapts: the first is a button and, when the bar is
+   * narrower than 1152px, the others fold into an "Actions" menu; with `mobileLayout="cards"` on a
+   * phone each is an icon button named by its `label`. While rows are selected the bar holds the
+   * count, "Clear" and these actions on the start side, and the search and the toolbar on the end
+   * side; the toolbar buttons go icon-only and the search narrows below 1360px, and under 640px the
+   * bar wraps to two lines. Shown before the nodes of `bulkActions`, which keeps working.
+   */
+  bulkActionItems?: DataTableBulkAction<T>[];
 
   // ── Global search ──────────────────────────────────────────────────────────
   /** Controlled search value. When provided, the search input is shown. */
@@ -295,7 +320,8 @@ export type DataTableProps<T> = {
    * Shows an "Export" button in the toolbar, before the "Columns" one; the toolbar then shows even
    * without a search field. It downloads a CSV of every page of the rows that the search, the
    * filters and the sort keep, in the visible columns and their order (the selection and action
-   * columns are not data). With `manual` it holds the loaded rows only, one page: pass `onExport`
+   * columns are not data). While rows are selected it follows the selection: the button says
+   * "Export 3" and downloads those rows alone, in the table's sort order. With `manual` it holds the loaded rows only, one page: pass `onExport`
    * to export on the server. A column's header is its `label` when that is a string or a number,
    * else its `mobileLabel` when that is a string, else its `key`; its cells come from `exportValue`
    * (see `ColumnDef`, and `toCsv` for the format). The file is UTF-8 with a byte order mark, so
@@ -306,7 +332,8 @@ export type DataTableProps<T> = {
   exportFileName?: string;
   /**
    * Makes the Export button call this with what the table shows (search, filters, sort, visible
-   * column keys) and build no file: for a host that exports on the server.
+   * column keys, and the selected keys while rows are selected) and build no file: for a host that
+   * exports on the server.
    */
   onExport?: (query: DataTableExportQuery) => void;
 
@@ -336,8 +363,11 @@ export type DataTableProps<T> = {
    * sideways. `cards` swaps it for a list of blocks: the selection checkbox, the `mobile: 'title'`
    * column and the row action on the first line, then one label/value pair per remaining column
    * (`mobileLabel`, else the column header; `mobile: 'hidden'` leaves a column out). The toolbar
-   * gets a second line with a "Sort by" select for the sortable columns and the columns button.
-   * From `sm` up the table is the same either way.
+   * gets a second line with a "Filters" button (when a column is filterable), a "Sort by" select
+   * for the sortable columns and the columns button. "Filters" shows how many values are filtered
+   * and opens a bottom sheet with each filterable column's filter, "Clear all" and "Show n rows";
+   * it sets the same `filters` as the column headers do, controlled or not. From `sm` up the table
+   * is the same either way.
    */
   mobileLayout?: 'scroll' | 'cards';
 };
@@ -348,6 +378,12 @@ const EXPAND_COLUMN_WIDTH = '44px';
 const ACTION_COLUMN_WIDTH = '96px';
 // Room for Cancel and Save, in a row being edited.
 const EDIT_ACTION_COLUMN_WIDTH = '176px';
+
+// In the bar of a selection the toolbar's buttons lose their text, and keep their names, below
+// this width of the bar (the search narrows at the same point). `data-toolbar-label` marks the
+// text and the chevrons; the padding is the square a button has on a phone.
+const COMPACT_TOOLBAR =
+  '@max-[1359px]:[&_[data-toolbar-label]]:hidden @max-[1359px]:[&_button]:px-2.5';
 
 const ALIGN_CELL = {
   start: 'text-start',
@@ -381,6 +417,7 @@ export const DataTable = <T,>({
   onRetry,
   emptyTitle = 'No results',
   emptyDescription,
+  emptyAction,
   density: densityProp,
   defaultDensity,
   onDensityChange,
@@ -396,6 +433,7 @@ export const DataTable = <T,>({
   defaultSelection,
   onSelectionChange,
   bulkActions,
+  bulkActionItems,
   searchValue: searchValueProp,
   defaultSearchValue,
   onSearchChange,
@@ -597,6 +635,11 @@ export const DataTable = <T,>({
     setFilters({});
     goToFirstPage();
   };
+  // What "Clear filters" in the empty state clears: the filters and the search together.
+  const clearNarrowing = () => {
+    if (searchEnabled) setSearchState('');
+    clearAllFilters();
+  };
 
   // Build filter values per column (unique values currently present)
   const filterValues = useMemo(() => columnFilterValues(rows, columns), [rows, columns]);
@@ -775,6 +818,24 @@ export const DataTable = <T,>({
     value: Array.from(vals).join(', '),
   }));
 
+  // The filters sheet of the cards: it closes by itself when the window grows to the table.
+  const activeFilterCount = Object.values(filters).reduce((n, values) => n + values.size, 0);
+  const filterableColumns = columns.filter((c) => c.filterable);
+  const showFilters = mobileCards && filterableColumns.length > 0;
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const tableShown = useMediaQuery(mobileCards ? '(min-width: 640px)' : null, false);
+  // Rows that exist, hidden by what the user typed or picked: the empty state offers to undo it.
+  // With `manual` the host holds the rows, so an active search or filter is taken as the cause.
+  const narrowed = activeFilterCount > 0 || (searchEnabled && searchValue.trim() !== '');
+  const emptyActionNode =
+    narrowed && (manual || rows.length > 0) ? (
+      <Button variant="secondary" size="sm" onClick={clearNarrowing}>
+        Clear filters
+      </Button>
+    ) : (
+      emptyAction
+    );
+
   const [savedViews, setSavedViews] = useControllableState<DataTableView[]>({
     value: viewsProp,
     defaultValue: () => defaultViews ?? [],
@@ -823,6 +884,10 @@ export const DataTable = <T,>({
     setActiveViewId(null);
   };
 
+  // The toolbar's Export follows the selection: the selected rows when there are any, else the
+  // filtered ones. A selected row the filters hide is still exported, in the table's sort order.
+  const exportCount = selectable ? selectedRows.length : 0;
+  const exportLabel = exportCount > 0 ? `Export ${exportCount}` : 'Export';
   const handleExport = () => {
     if (onExport) {
       onExport({
@@ -830,34 +895,81 @@ export const DataTable = <T,>({
         filters: filtersToRecord(filters),
         sort,
         columns: columns.map((c) => c.key),
+        ...(exportCount > 0 && { selection: selectedRows.map(rowKey) }),
       });
       return;
     }
-    downloadCsv(toCsv(sortedRows, columns), exportFileName);
+    const exported =
+      exportCount === 0
+        ? sortedRows
+        : manual
+          ? selectedRows
+          : sortRows(selectedRows, columns, sortKey, sortDir);
+    downloadCsv(toCsv(exported, columns), exportFileName);
   };
-  const toolbarControls = hasToolbarControls ? (
-    <div className="flex shrink-0 items-center gap-2">
-      {viewsEnabled && (
-        <DataTableViews
-          views={savedViews}
-          activeId={activeViewId}
-          current={currentState}
-          columns={allColumns}
-          onApply={applyView}
-          onSave={saveView}
-          onRename={renameActiveView}
-          onDelete={deleteActiveView}
-        />
-      )}
-      {exportable && (
-        <button type="button" aria-label="Export" onClick={handleExport} className={TOOLBAR_BUTTON}>
-          <Download aria-hidden className="h-4 w-4" />
-          <span className="max-sm:hidden">Export</span>
+  // `className` is for the bar of a selection, where the buttons lose their text before the row
+  // wraps (see `COMPACT_TOOLBAR`).
+  const toolbarControls = (className?: string) =>
+    hasToolbarControls ? (
+      <div className={clsx('flex shrink-0 items-center gap-2', className)}>
+        {viewsEnabled && (
+          <DataTableViews
+            views={savedViews}
+            activeId={activeViewId}
+            current={currentState}
+            columns={allColumns}
+            onApply={applyView}
+            onSave={saveView}
+            onRename={renameActiveView}
+            onDelete={deleteActiveView}
+          />
+        )}
+        {exportable && (
+          <button
+            type="button"
+            aria-label={exportLabel}
+            onClick={handleExport}
+            className={TOOLBAR_BUTTON}
+          >
+            <Download aria-hidden className="h-4 w-4" />
+            <span data-toolbar-label className="max-sm:hidden">
+              {exportLabel}
+            </span>
+          </button>
+        )}
+        {columnsMenuNode}
+      </div>
+    ) : null;
+
+  // The search field. `className` sets how it sits in its row.
+  const searchField = (className: string) => (
+    <div className={clsx('h-ctrl-36 relative', className)}>
+      <Search
+        aria-hidden
+        className="inset-s-3 pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+      />
+      <input
+        type="search"
+        // What is typed reads in its own direction.
+        dir="auto"
+        value={searchValue}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={searchPlaceholder}
+        aria-label="Search rows"
+        className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white ps-9 pe-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+      />
+      {searchValue && (
+        <button
+          type="button"
+          onClick={() => setSearch('')}
+          aria-label="Clear search"
+          className="focus-visible:focus-indicator inset-e-2 absolute top-1/2 -translate-y-1/2 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
+        >
+          <X className="h-3.5 w-3.5" />
         </button>
       )}
-      {columnsMenuNode}
     </div>
-  ) : null;
+  );
 
   const renderRow = (row: T, index: number) => {
     const key = rowKey(row);
@@ -1133,21 +1245,55 @@ export const DataTable = <T,>({
         </div>
       )}
 
-      {/* Top toolbar: bulk actions when any selected, otherwise search bar. */}
+      {/* Top toolbar: the search and the controls, on a tinted row with the selection's count and
+          actions on the start side while rows are selected. */}
       {selectable && selection.size > 0 ? (
-        <div className="bg-brand-50 dark:bg-brand-500/10 flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden">
-          <span className="text-brand-700 dark:text-brand-300 text-sm font-medium">
-            <bdi>{selection.size} selected</bdi>
-          </span>
-          <button
-            type="button"
-            onClick={clearSelection}
-            className="focus-visible:focus-indicator rounded-sm text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            Clear
-          </button>
-          <div className="ms-auto flex items-center gap-2">
-            {bulkActions ? bulkActions(selectedRows) : null}
+        <div className="bg-brand-50 dark:bg-brand-500/10 @container border-b border-gray-100 dark:border-gray-800 print:hidden">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
+            <div
+              className={clsx('flex min-w-0 items-center gap-3', mobileCards && 'max-sm:flex-1')}
+            >
+              <span className="text-brand-700 dark:text-brand-300 text-sm font-medium whitespace-nowrap">
+                <bdi>{selection.size} selected</bdi>
+              </span>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="focus-visible:focus-indicator rounded-sm text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Clear
+              </button>
+              {(bulkActionItems || bulkActions) && (
+                <div className="flex min-w-0 flex-1 items-center gap-2 ps-1">
+                  {bulkActionItems && (
+                    <DataTableBulkActions
+                      items={bulkActionItems}
+                      selectedRows={selectedRows}
+                      phoneIcons={mobileCards}
+                    />
+                  )}
+                  {bulkActions?.(selectedRows)}
+                </div>
+              )}
+            </div>
+            {(searchEnabled || hasToolbarControls) && (
+              <div
+                className={clsx(
+                  'ms-auto flex min-w-0 items-center gap-2 @max-[639px]:w-full',
+                  !searchEnabled && mobileCards && 'max-sm:hidden'
+                )}
+              >
+                {searchEnabled &&
+                  searchField(
+                    'min-w-0 flex-1 @min-[640px]:w-44 @min-[640px]:flex-none @min-[1360px]:w-70'
+                  )}
+                {mobileCards ? (
+                  <div className="max-sm:hidden">{toolbarControls(COMPACT_TOOLBAR)}</div>
+                ) : (
+                  toolbarControls(COMPACT_TOOLBAR)
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : searchEnabled ? (
@@ -1157,33 +1303,12 @@ export const DataTable = <T,>({
             hasToolbarControls && 'flex items-center gap-2'
           )}
         >
-          <div className={clsx('h-ctrl-36 relative', hasToolbarControls && 'min-w-0 flex-1')}>
-            <Search
-              aria-hidden
-              className="inset-s-3 pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="search"
-              // What is typed reads in its own direction.
-              dir="auto"
-              value={searchValue}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label="Search rows"
-              className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white ps-9 pe-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
-            />
-            {searchValue && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                aria-label="Clear search"
-                className="focus-visible:focus-indicator inset-e-2 absolute top-1/2 -translate-y-1/2 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          {mobileCards ? <div className="max-sm:hidden">{toolbarControls}</div> : toolbarControls}
+          {searchField(hasToolbarControls ? 'min-w-0 flex-1' : '')}
+          {mobileCards ? (
+            <div className="max-sm:hidden">{toolbarControls()}</div>
+          ) : (
+            toolbarControls()
+          )}
         </div>
       ) : hasToolbarControls ? (
         <div
@@ -1192,12 +1317,19 @@ export const DataTable = <T,>({
             mobileCards && 'max-sm:hidden'
           )}
         >
-          {toolbarControls}
+          {toolbarControls()}
         </div>
       ) : null}
 
-      {mobileCards && (mobileSortable || hasToolbarControls) && (
+      {mobileCards && (mobileSortable || hasToolbarControls || showFilters) && (
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800 print:hidden">
+          {showFilters && (
+            <DataTableFiltersButton
+              count={activeFilterCount}
+              open={filtersOpen && !tableShown}
+              onClick={() => setFiltersOpen(true)}
+            />
+          )}
           {mobileSortable && (
             <DataTableMobileSort
               columns={columns}
@@ -1206,7 +1338,7 @@ export const DataTable = <T,>({
               onSortChange={(key, direction) => setSort(key === null ? null : { key, direction })}
             />
           )}
-          {toolbarControls}
+          {toolbarControls()}
         </div>
       )}
 
@@ -1238,6 +1370,7 @@ export const DataTable = <T,>({
           onRetry={onRetry}
           emptyTitle={emptyTitle}
           emptyDescription={emptyDescription}
+          emptyAction={emptyActionNode}
           aria-label={ariaLabel}
           aria-labelledby={ariaLabelledBy}
         />
@@ -1418,7 +1551,11 @@ export const DataTable = <T,>({
                       {error ? (
                         <ErrorState message={error} onRetry={onRetry} />
                       ) : (
-                        <EmptyState title={emptyTitle} description={emptyDescription} />
+                        <EmptyState
+                          title={emptyTitle}
+                          description={emptyDescription}
+                          action={emptyActionNode}
+                        />
                       )}
                     </div>
                   </td>
@@ -1459,6 +1596,20 @@ export const DataTable = <T,>({
             ) : undefined
           }
           className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800 print:hidden"
+        />
+      )}
+
+      {showFilters && (
+        <DataTableFiltersSheet
+          open={filtersOpen && !tableShown}
+          onClose={() => setFiltersOpen(false)}
+          columns={filterableColumns}
+          values={filterValues}
+          filters={filters}
+          onToggle={handleFilterToggle}
+          onClearAll={clearAllFilters}
+          rowCount={totalRows}
+          count={activeFilterCount}
         />
       )}
     </div>
