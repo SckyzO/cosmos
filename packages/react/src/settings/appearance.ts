@@ -1,4 +1,3 @@
-import type { Direction } from '../hooks/direction';
 import type { AccentColor } from './AccentPicker';
 import type { PaletteMeta } from './PaletteCard';
 
@@ -39,6 +38,9 @@ export type CosmosTextSize = 'sm' | 'md' | 'lg' | 'xl';
 /** A Cosmos density: the `data-density` attribute on `<html>`, none for `default`. */
 export type CosmosDensity = 'compact' | 'default' | 'comfortable';
 
+/** The reading direction of the page. */
+export type CosmosDirection = 'ltr' | 'rtl';
+
 export type CosmosThemeMeta = PaletteMeta & { id: CosmosTheme; dark: boolean };
 /** The `system` entry for `<PalettePicker>`: see `COSMOS_SYSTEM_THEME`. */
 export type CosmosSystemThemeMeta = PaletteMeta & { id: 'system' };
@@ -63,7 +65,7 @@ export type CosmosAppearance = {
   textSize?: CosmosTextSize;
   density?: CosmosDensity;
   /** The reading direction: the `dir` attribute on `<html>`, none for `ltr`. */
-  direction?: Direction;
+  direction?: CosmosDirection;
 };
 
 /** The four themes shipped by `@sckyzo/cosmos-theme`, ready for `<PalettePicker>`. */

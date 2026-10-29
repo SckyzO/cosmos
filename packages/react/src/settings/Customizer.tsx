@@ -18,6 +18,7 @@ import {
   type CosmosAppearance,
   type CosmosDensity,
   type CosmosDensityMeta,
+  type CosmosDirection,
   type CosmosFont,
   type CosmosFontMeta,
   type CosmosSystemThemeMeta,
@@ -26,7 +27,6 @@ import {
   type CosmosThemeChoice,
   type CosmosThemeMeta,
 } from './appearance';
-import type { Direction } from '../hooks/direction';
 
 /** The shell's navigation: a sidebar down the side, or a navbar across the top. */
 export type CustomizerLayout = 'vertical' | 'horizontal';
@@ -244,7 +244,7 @@ const CONTAINER_PREVIEW: Record<ShellContainer, ReactNode> = {
 
 // A few lines laid against the start of the line, under the direction the option names: `dir` on
 // the preview itself, so each one keeps its own side whichever direction the page is in.
-const DirectionPreview = ({ dir }: { dir: Direction }) => (
+const DirectionPreview = ({ dir }: { dir: CosmosDirection }) => (
   <span aria-hidden dir={dir} className="flex w-8 flex-col items-start gap-1">
     <span className={clsx(LINE, 'h-1 w-full')} />
     <span className={clsx(LINE, 'h-1 w-2/3')} />
@@ -307,7 +307,7 @@ const optionsOf = <T extends string>(
 ): OptionItem[] =>
   (Object.keys(labels) as T[]).map((id) => ({ id, label: labels[id], preview: preview(id) }));
 
-const DIRECTION_OPTIONS = optionsOf<Direction>(
+const DIRECTION_OPTIONS = optionsOf<CosmosDirection>(
   { ltr: 'Left to right', rtl: 'Right to left' },
   (dir) => <DirectionPreview dir={dir} />
 );
@@ -547,7 +547,7 @@ export const Customizer = ({
                 aria-labelledby={labelledBy}
                 cols={2}
                 value={current.direction}
-                onChange={(id) => set({ direction: id as Direction })}
+                onChange={(id) => set({ direction: id as CosmosDirection })}
                 options={DIRECTION_OPTIONS}
               />
             )}
