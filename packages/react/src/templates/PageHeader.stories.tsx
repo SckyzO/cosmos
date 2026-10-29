@@ -344,7 +344,7 @@ export const MobileBreadcrumbMetaAndActions: Story = {
     // The actions are under the meta, and start where the header starts.
     await expect(button.getBoundingClientRect().top).toBeGreaterThanOrEqual(lastMeta.bottom);
     await expect(
-      Math.abs(button.getBoundingClientRect().left - tile.getBoundingClientRect().left)
+      Math.abs(startOffset(button, canvasElement) - startOffset(tile, canvasElement))
     ).toBeLessThanOrEqual(1);
   },
 };

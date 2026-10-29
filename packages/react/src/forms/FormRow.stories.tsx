@@ -4,8 +4,10 @@ import { expect, within } from 'storybook/test';
 import {
   bothDirections,
   expectMirrored,
+  expectBeyondEnd,
   expectNoHorizontalOverflow,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { FormRow } from './FormRow';
 import { Toggle } from './Toggle';
@@ -191,16 +193,19 @@ const SettingsRows = () => (
 export const MobileStacksLabelAboveField: Story = {
   globals: mobileViewport,
   render: () => <SettingsRows />,
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
-    const label = canvas.getByText('Time zone').getBoundingClientRect();
+    const labelText = canvas.getByText('Time zone');
     const description = canvas
       .getByText('Dates in reports and emails use it.')
       .getBoundingClientRect();
-    const select = canvas.getByRole('combobox').getBoundingClientRect();
+    const selectField = canvas.getByRole('combobox');
+    const select = selectField.getBoundingClientRect();
     await expect(select.top).toBeGreaterThanOrEqual(description.bottom);
     // Same start edge as the label, and wide: not squeezed beside it.
-    await expect(Math.abs(select.left - label.left)).toBeLessThanOrEqual(1);
+    await expect(
+      Math.abs(startOffset(selectField, canvasElement) - startOffset(labelText, canvasElement))
+    ).toBeLessThanOrEqual(1);
     await expect(select.width).toBeGreaterThan(250);
     // A toggle is not stretched: it sits under its label, at the start.
     const toggle = canvas.getByRole('switch', { name: 'Weekly digest' }).getBoundingClientRect();
@@ -214,9 +219,11 @@ export const DesktopKeepsTheControlBesideTheLabel: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <SettingsRows />,
   play: async ({ canvas }) => {
-    const label = canvas.getByText('Weekly digest').getBoundingClientRect();
-    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' }).getBoundingClientRect();
-    await expect(toggle.top).toBeLessThan(label.bottom);
-    await expect(toggle.left).toBeGreaterThan(label.right);
+    const label = canvas.getByText('Weekly digest');
+    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' });
+    await expect(toggle.getBoundingClientRect().top).toBeLessThan(
+      label.getBoundingClientRect().bottom
+    );
+    expectBeyondEnd(toggle, label);
   },
 };
