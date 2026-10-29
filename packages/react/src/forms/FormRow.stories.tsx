@@ -207,10 +207,21 @@ export const MobileStacksLabelAboveField: Story = {
       Math.abs(startOffset(selectField, canvasElement) - startOffset(labelText, canvasElement))
     ).toBeLessThanOrEqual(1);
     await expect(select.width).toBeGreaterThan(250);
-    // A toggle is not stretched: it sits under its label, at the start.
-    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' }).getBoundingClientRect();
-    const digest = canvas.getByText('An email every Monday morning.').getBoundingClientRect();
-    await expect(toggle.top).toBeGreaterThanOrEqual(digest.bottom);
+  },
+};
+
+/** A switch stays beside its label on a phone, at the end of the row. */
+export const MobileKeepsASwitchBesideItsLabel: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <SettingsRows />,
+  play: async ({ canvas }) => {
+    const label = canvas.getByText('Weekly digest');
+    const toggle = canvas.getByRole('switch', { name: 'Weekly digest' });
+    await expect(toggle.getBoundingClientRect().top).toBeLessThan(
+      canvas.getByText('An email every Monday morning.').getBoundingClientRect().bottom
+    );
+    expectBeyondEnd(toggle, label);
   },
 };
 
