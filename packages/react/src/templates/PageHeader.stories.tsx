@@ -8,6 +8,7 @@ import {
   expectBeyondEnd,
   expectMirrored,
   expectNoHorizontalOverflow,
+  expectReadsLeftToRight,
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
@@ -152,7 +153,7 @@ export const Narrow: Story = {
     }
     // Meta icons keep their 20px, also beside text that wraps.
     for (const label of ['128 nodes', /^Refreshed/]) {
-      const icon = canvas.getByText(label).querySelector('svg');
+      const icon = canvas.getByText(label).closest('div')!.querySelector('svg');
       await expect(icon?.getBoundingClientRect().width).toBe(20);
     }
   },
@@ -270,7 +271,12 @@ export const FollowsTheReadingDirection: Story = {
     bothDirections(() => (
       <PageHeader
         {...args}
-        meta={<PageHeader.MetaItem icon={MapPin}>Lisbon</PageHeader.MetaItem>}
+        meta={
+          <div className="flex gap-x-6">
+            <PageHeader.MetaItem icon={MapPin}>Lisbon</PageHeader.MetaItem>
+            <PageHeader.MetaItem icon={Cpu}>64 cores, 512 GB</PageHeader.MetaItem>
+          </div>
+        }
         actions={<PageActionButton icon={Plus}>New rule</PageActionButton>}
       />
     )),
@@ -286,11 +292,13 @@ export const FollowsTheReadingDirection: Story = {
       expect(endOffset(action, box)).toBeLessThanOrEqual(1);
       expectBeyondEnd(action, within(box).getByRole('heading', { name: 'Integrations' }));
       // The meta icon leads its text: it is at the start of the item.
-      const meta = within(box).getByText('Lisbon');
+      const meta = within(box).getByText('Lisbon').closest('div')!;
       const icon = meta.querySelector('svg')!;
       expect(startOffset(icon, meta)).toBeLessThan(endOffset(icon, meta));
       // Its gap to the text is on the end side of the icon, in both directions.
       expect(getComputedStyle(icon).marginInlineEnd, `${dir}: icon gap`).toBe('6px');
+      // A meta text that starts with a number keeps its order: "64 cores", not "cores 64".
+      expectReadsLeftToRight(within(box).getByText('64 cores, 512 GB'));
       // The title is an island: its own direction, whatever the header's.
       const title = within(box)
         .getByRole('heading', { name: 'Integrations' })
