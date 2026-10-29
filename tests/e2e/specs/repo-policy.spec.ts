@@ -246,6 +246,25 @@ test('the CI jobs that open a browser run in the Playwright image the dev image 
   }
 });
 
+test('the aggregator job waits for every other CI job', () => {
+  // The "Lint + typecheck + test + build" check is the one branch protection requires: a job it
+  // does not list could fail and the merge would go through.
+  const workflow = read('.github/workflows/ci.yml');
+  const jobs = workflow
+    .slice(workflow.indexOf('\njobs:\n'))
+    .split(/\n(?= {2}[\w-]+:\n)/)
+    .map((job) => job.match(/^ {2}([\w-]+):/)?.[1])
+    .filter((name): name is string => !!name && name !== 'ci');
+  const needs = workflow.match(/^ {4}needs: \[([^\]]*)\]$/m)?.[1];
+  expect(jobs.length, 'CI jobs').toBeGreaterThan(1);
+  expect(
+    needs
+      ?.split(',')
+      .map((name) => name.trim())
+      .sort()
+  ).toEqual([...jobs].sort());
+});
+
 test('the dev container cannot write the repo metadata', () => {
   // Code running in the container could otherwise plant a hook in .git that
   // git runs on the host.

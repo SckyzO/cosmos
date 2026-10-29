@@ -3,7 +3,8 @@
 #
 # Runs the steps of `make ci` that the changed files can break, on those files: Prettier and ESLint
 # on the changed files, the typecheck and the unit tests, and the story files that use what changed
-# (select-stories.mjs) in the default pass and in the contrast pass in light, sand and deep-blue.
+# (select-stories.mjs) in the default pass, in the contrast pass in light, sand and deep-blue and in
+# the direction pass (right to left).
 # The build, the Storybook build and the e2e specs are left out: what can break them is outside the
 # sources. A change outside the react and charts sources that isn't Markdown (theme CSS, Storybook
 # or Vitest config, dependencies, workflows, e2e specs, Docker) runs the full `make ci` instead.
@@ -66,6 +67,8 @@ if [[ ${#code[@]} -gt 0 ]]; then
       step "stories, contrast in $theme" env A11Y_THEME="$theme" \
         pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${stories[@]}"
     done
+    step "stories, right to left" env STORY_DIR=rtl \
+      pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${stories[@]}"
   fi
 fi
 echo "── check-changed passed in ${SECONDS}s ──"

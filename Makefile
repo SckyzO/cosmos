@@ -115,4 +115,5 @@ ci: ## Full CI pipeline — mirrors .github/workflows/ci.yml
 	  echo '── 5. storybook:build ──' && pnpm storybook:build && \
 	  echo '── 6. unit + e2e tests ──' && pnpm browsers:install && CI=true pnpm test && \
 	  echo '── 7. story contrast in light, sand, deep-blue ──' && CI=true pnpm --filter @cosmos/storybook a11y:contrast && \
+	  echo '── 8. story direction pass (right to left) ──' && CI=true pnpm --filter @cosmos/storybook a11y:rtl && \
 	  echo '── ALL GREEN ──'"

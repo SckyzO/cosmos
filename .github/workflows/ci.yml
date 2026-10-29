@@ -13,7 +13,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Four jobs run side by side (`contrast` once per theme), then `ci` checks they
+# Five jobs run side by side (`contrast` once per theme), then `ci` checks they
 # all passed. `make ci` runs the same commands one after the other in the dev
 # container. Each job builds what it tests: no artifact passes between jobs, so
 # none can be swapped.
@@ -185,10 +185,43 @@ jobs:
           A11Y_THEME: ${{ matrix.theme }}
         run: pnpm --filter @cosmos/storybook a11y:contrast
 
+  direction:
+    # `stories` renders every story left to right. This pass renders each one again
+    # under `dir="rtl"` on `<html>`, with every axe rule and the play functions, and
+    # fails a story that scrolls sideways in right to left and not in left to right.
+    name: Story tests (right to left)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @cosmos/storybook exec playwright install chromium
+
+      - name: Story direction pass
+        run: pnpm --filter @cosmos/storybook a11y:rtl
+
   ci:
     # Branch protection requires this check name: keep it.
     name: Lint + typecheck + test + build
-    needs: [static, build-e2e, stories, contrast]
+    needs: [static, build-e2e, stories, contrast, direction]
     # Runs when a job fails or is cancelled too, so the check never stays
     # pending, and fails then.
     if: always()
