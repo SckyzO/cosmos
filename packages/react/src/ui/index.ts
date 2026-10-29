@@ -45,6 +45,7 @@ export * from './Toast';
 export * from './AnnouncementBar';
 export * from './CookieBanner';
 export * from './CommandPalette';
+export * from './CommandPaletteTrigger';
 export * from './Clipboard';
 export * from './SecretValue';
 export * from './BackToTopFab';
