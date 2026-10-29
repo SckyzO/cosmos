@@ -5,6 +5,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
   isDarkTheme,
@@ -171,6 +172,33 @@ describe('applyAppearance', () => {
     });
   });
 
+  describe('radius', () => {
+    it('sets data-radius', () => {
+      const { data } = apply({ theme: 'light', accent: 'blue', radius: 'lg' });
+      expect(data).toEqual({ radius: 'lg' });
+    });
+
+    it('sets every step but the default', () => {
+      for (const { id } of COSMOS_RADII.filter((r) => r.id !== 'default')) {
+        const { data } = apply({ theme: 'light', accent: 'blue', radius: id });
+        expect(data, id).toEqual({ radius: id });
+      }
+    });
+
+    it('removes it for the default radius', () => {
+      const { data } = apply(
+        { theme: 'light', accent: 'blue', radius: 'default' },
+        { dataset: { radius: 'none' } }
+      );
+      expect(data).not.toHaveProperty('radius');
+    });
+
+    it('keeps it as it is when left out', () => {
+      const { data } = apply({ theme: 'light', accent: 'blue' }, { dataset: { radius: 'sm' } });
+      expect(data).toEqual({ radius: 'sm' });
+    });
+  });
+
   describe('font and text size', () => {
     it('sets data-font and data-text-size', () => {
       const { data } = apply({ theme: 'light', accent: 'blue', font: 'inter', textSize: 'xl' });
@@ -323,6 +351,17 @@ describe('system theme', () => {
   });
 });
 
+describe('COSMOS_RADII', () => {
+  it('lists the four steps, sharpest first, with the default in the middle', () => {
+    expect(COSMOS_RADII.map((r) => [r.id, r.label])).toEqual([
+      ['none', 'None'],
+      ['sm', 'Small'],
+      ['default', 'Default'],
+      ['lg', 'Large'],
+    ]);
+  });
+});
+
 describe('contract with @sckyzo/cosmos-theme', () => {
   const read = (file: string) =>
     readFileSync(new URL(`../../../theme/css/${file}`, import.meta.url), 'utf8');
@@ -360,6 +399,12 @@ describe('contract with @sckyzo/cosmos-theme', () => {
   it('has a data-density block for every density', () => {
     for (const { id } of COSMOS_DENSITIES) {
       expect(attributeValues('density'), id).toContain(id);
+    }
+  });
+
+  it('has a data-radius block for every radius', () => {
+    for (const { id } of COSMOS_RADII) {
+      expect(attributeValues('radius'), id).toContain(id);
     }
   });
 

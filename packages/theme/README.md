@@ -163,6 +163,34 @@ The attribute also works on an element below `<html>`; `data-density="default"`
 opts a part of a compact or comfortable page out (a `DataTable` with its own
 `density` does this).
 
+## Radius
+
+A `data-radius` attribute on `<html>` rescales every corner at once: `none`,
+`sm`, none for the default, or `lg`. It rebuilds Tailwind's own `--radius-*`
+variables, the ones `rounded-sm` to `rounded-4xl` read, so a component needs
+nothing more than those utilities.
+
+| Step      | `--radius-*`                    | `rounded-lg` (8px by default) |
+| --------- | ------------------------------- | ----------------------------- |
+| `none`    | 2px, every one                  | 2px                           |
+| `sm`      | half of Tailwind's              | 4px                           |
+| (default) | Tailwind's, nothing moves       | 8px                           |
+| `lg`      | one and a half times Tailwind's | 12px                          |
+
+`rounded-full` and `rounded-none` are literals and never change: avatars,
+status dots, switches, badges and pill buttons stay round at every step. A
+corner that must follow the page goes through the scale. A bare `rounded` is a
+fixed `0.25rem` in Tailwind 4, so write `rounded-sm` (the same value, through
+the variable); an arbitrary `rounded-[10px]` is fixed too, and
+`rounded-[calc(var(--radius-lg)*1.25)]` is not.
+
+```html
+<html class="sand" data-radius="lg"></html>
+```
+
+The attribute also works on an element below `<html>`; `data-radius="default"`
+opts a part of the page out of its parent's radius.
+
 ## Tokens
 
 See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.
