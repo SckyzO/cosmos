@@ -1500,10 +1500,10 @@ The page layout follows the line too. A `Shell` puts its `Sidebar` at the start 
 under `dir="rtl"`, with its edge, its collapse toggle and the drawer of the phone layout on that
 side) and its `secondary` panel at the end; `SplitView` runs its panes from the start. `Tabs`
 and the settings pickers swap ArrowLeft and ArrowRight with the direction, and a scrolling strip
-fades the side with more to see. The pinned columns of `DataTable` (`pin: 'start'` | `'end'`) and `Table`'s
-`stickyFirstColumn` stick to the start or end edge, with their shadow on the right side. In a
-`Chat`, a person's own messages sit at the end of the line and the others' at the start, and
-what was typed in a message or the composer reads in its own script. The `hotkeys` of a
+fades the side with more to see. The pinned columns of `DataTable` (`pin: 'start'` | `'end'`)
+and `Table`'s `stickyFirstColumn` stick to the start or end edge, with their shadow on the side
+that faces the columns scrolling under them. In a `Chat`, a person's own messages sit at the end
+of the line and the others' at the start, and what was typed in a message or the composer reads in its own script. The `hotkeys` of a
 `RecordPager` are literal keys and do not follow the direction: give Previous the arrow that
 points toward it where the page reads right to left.
 
