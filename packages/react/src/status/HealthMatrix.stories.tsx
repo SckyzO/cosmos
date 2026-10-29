@@ -171,6 +171,16 @@ export const Mobile: Story = {
   },
 };
 
+/**
+ * `stale` is when the last data came in. The marks turn grey, the header says "Stale · 4 minutes
+ * ago" and every cell is named as stale, for the screen reader.
+ */
+export const Stale: Story = { args: { stale: HEALTH_NOW - 4 * 60_000 } };
+
+export const StalePills: Story = { args: { stale: HEALTH_NOW - 4 * 60_000, variant: 'pills' } };
+
+export const StaleMobile: Story = { ...Mobile, args: { stale: HEALTH_NOW - 4 * 60_000 } };
+
 export const MobilePills: Story = { ...Mobile, args: { variant: 'pills' } };
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -319,6 +329,40 @@ export const ChipFocusesTheWorstCellOfItsRow: Story = {
     await expect(cell(canvas, 'Collector on fra-1a: Critical')).toHaveFocus();
     await userEvent.click(canvas.getByRole('button', { name: /^Cache\W+1 Warning$/ }));
     await expect(cell(canvas, 'Cache on lon-1a: Warning')).toHaveFocus();
+  },
+};
+
+/** The header says how old the data is, and each cell says it is stale. */
+export const StaleIsWrittenAndNamed: Story = {
+  ...Stale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/^Stale/)).toHaveTextContent('Stale · 4 minutes ago');
+    await expect(cell(canvas, 'API on par-1a: OK, stale')).toBeVisible();
+    await expect(cell(canvas, 'Collector on fra-1a: Critical, stale')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'API on par-1a: OK' })).toBeNull();
+  },
+};
+
+/** The marks are muted: the same shapes in grey, the text still readable. */
+export const StaleMutesTheMarks: Story = {
+  ...Stale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    const grid = canvasElement.querySelector<HTMLElement>('.overflow-auto')!;
+    await expect(getComputedStyle(grid).filter).toContain('grayscale');
+    await expect(getComputedStyle(canvas.getByText(/^Stale/)).filter).toBe('none');
+  },
+};
+
+export const FreshDataSaysNothingOfStaleness: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.queryByText(/^Stale/)).toBeNull();
+    await expect(cell(canvas, 'API on par-1a: OK')).toBeVisible();
+    await expect(getComputedStyle(canvasElement.querySelector('.overflow-auto')!).filter).toBe(
+      'none'
+    );
   },
 };
 
