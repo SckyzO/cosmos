@@ -251,8 +251,12 @@ export const InAnApp: Story = {
 
 const panel = () => within(document.body).getByRole('dialog', { name: 'Customize' });
 const group = (name: string) => within(panel()).getByRole('radiogroup', { name });
-const choose = async (groupName: string, option: string) =>
-  userEvent.click(within(group(groupName)).getByRole('radio', { name: option }));
+// The font is a select, the other sections are radio groups.
+const choose = async (groupName: string, option: string) => {
+  const select = within(panel()).queryByRole('combobox', { name: groupName });
+  if (select) return userEvent.selectOptions(select, option);
+  return userEvent.click(within(group(groupName)).getByRole('radio', { name: option }));
+};
 
 export const EachOptionCallsOnChange: Story = {
   tags: ['!dev', '!autodocs'],
@@ -285,8 +289,7 @@ export const SectionsAreInTheDocumentedOrder: Story = {
   tags: ['!dev', '!autodocs'],
   args: { presets: PRESETS },
   play: async () => {
-    const names = within(panel())
-      .getAllByRole('radiogroup')
+    const names = [...panel().querySelectorAll('[role="radiogroup"], select')]
       .map((el) => el.getAttribute('aria-labelledby'))
       .map((id) => document.getElementById(id ?? '')?.textContent);
     await expect(names).toEqual([
