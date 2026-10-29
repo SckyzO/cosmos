@@ -1,4 +1,6 @@
 import { clsx } from 'clsx';
+import type { DateTimeValue } from '../data/time';
+import { StaleBadge } from '../status/StaleBadge';
 import { formatLatency } from '../status/health';
 import { AppLink } from '../ui/AppLink';
 import { HeartbeatBar } from './HeartbeatBar';
@@ -32,6 +34,14 @@ export type MonitorRowProps = {
   latency?: number;
   /** Overrides the limits that colour the uptime. Default: 99.9 % and up green, 99 % and up amber, below red. */
   thresholds?: Partial<UptimeThresholds>;
+  /**
+   * When the last data came in, for a source that has stopped answering. The state chip, the
+   * beats and the uptime turn grey, a "Stale · 4 minutes ago" tag sits under the name and the
+   * state is read as stale. The state shown stays the last known one. Default: fresh.
+   */
+  stale?: DateTimeValue;
+  /** Freezes the "stale" tag at this moment. For stories and tests. */
+  now?: Date | number;
   /** Makes the name a link, to the monitor's page. */
   href?: string;
   /**
@@ -59,11 +69,15 @@ const DOT: Record<MonitorState, string> = {
   paused: 'bg-gray-400 dark:bg-gray-500',
 };
 
-const StateChip = ({ state }: { state: MonitorState }) => (
+const StateChip = ({ state, stale }: { state: MonitorState; stale: boolean }) => (
   <span
     role="img"
-    aria-label={STATE_NAME[state]}
-    className={clsx('flex size-7 shrink-0 items-center justify-center rounded-full', CHIP[state])}
+    aria-label={stale ? `${STATE_NAME[state]}, stale` : STATE_NAME[state]}
+    className={clsx(
+      'flex size-7 shrink-0 items-center justify-center rounded-full',
+      CHIP[state],
+      stale && 'grayscale'
+    )}
   >
     <span aria-hidden="true" className={clsx('size-2 rounded-full', DOT[state])} />
   </span>
@@ -86,6 +100,8 @@ export const MonitorRow = ({
   uptime,
   latency,
   thresholds,
+  stale,
+  now,
   href,
   variant = 'row',
   className,
@@ -95,8 +111,9 @@ export const MonitorRow = ({
   const currentLatency = latency ?? last?.latency;
   const level = uptimeLevel(uptime, thresholds);
   const card = variant === 'card';
+  const isStale = stale !== undefined;
 
-  const title = (
+  const nameLine = (
     <span className="flex min-w-0 items-center gap-2">
       {href ? (
         <AppLink
@@ -125,9 +142,19 @@ export const MonitorRow = ({
       —<span className="sr-only">No data</span>
     </span>
   ) : (
-    <span className={LEVEL_TEXT[level]}>
+    <span className={clsx(LEVEL_TEXT[level], isStale && 'grayscale')}>
       <bdi>{formatUptime(uptime)}</bdi>
     </span>
+  );
+
+  // The tag goes under the name: the name's column is too narrow to share its line.
+  const title = isStale ? (
+    <span className="flex min-w-0 flex-col items-start gap-1">
+      {nameLine}
+      <StaleBadge since={stale} now={now} />
+    </span>
+  ) : (
+    nameLine
   );
 
   const latencyText =
@@ -140,7 +167,8 @@ export const MonitorRow = ({
       <bdi>{formatLatency(currentLatency)}</bdi>
     );
 
-  const bar = <HeartbeatBar beats={beats} size="sm" ariaLabel={`${name}: recent checks`} />;
+  const beatBar = <HeartbeatBar beats={beats} size="sm" ariaLabel={`${name}: recent checks`} />;
+  const bar = isStale ? <div className="grayscale">{beatBar}</div> : beatBar;
 
   if (card) {
     return (
@@ -152,7 +180,7 @@ export const MonitorRow = ({
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <StateChip state={state} />
+          <StateChip state={state} stale={isStale} />
           {title}
         </div>
         {bar}
@@ -180,7 +208,7 @@ export const MonitorRow = ({
         className
       )}
     >
-      <StateChip state={state} />
+      <StateChip state={state} stale={isStale} />
       {title}
       <div className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:row-start-auto">{bar}</div>
       <div className="flex gap-3 sm:contents">

@@ -83,6 +83,12 @@ type CommentBaseProps = {
   replies?: ReactNode;
   /** Replies shown before the rest fold behind a "Show n more replies" button. Default `2`. */
   maxReplies?: number;
+  /**
+   * Which replies stay on screen when they fold: the `first` `maxReplies` (the rest fold below
+   * them, "Show n more replies"), or the `last` ones, for a ticket where the latest exchanges
+   * matter (the older ones fold above them, "Show n earlier replies"). Default `first`.
+   */
+  keepReplies?: 'first' | 'last';
   /** Texts for another language; a `CommentThread` can give them to all of its comments. */
   labels?: CommentLabels;
   className?: string;
@@ -101,7 +107,8 @@ const INTERNAL_BOX =
 /**
  * One comment on a record: avatar, author, role, time, body, and the actions the host allows.
  * Reply and Edit open a `CommentComposer` in place; the host receives the text and owns the data.
- * Replies are `Comment`s passed as `replies`, folded beyond `maxReplies`.
+ * Replies are `Comment`s passed as `replies`, folded beyond `maxReplies` (the first ones stay, or
+ * the last ones with `keepReplies="last"`).
  */
 export function Comment({
   author,
@@ -118,6 +125,7 @@ export function Comment({
   editText,
   replies,
   maxReplies = 2,
+  keepReplies = 'first',
   labels: ownLabels,
   className,
   ref,
@@ -144,9 +152,30 @@ export function Comment({
   const canReply = !isReply && onReply !== undefined;
   const replyList = isReply ? [] : Children.toArray(replies);
   const folded = replyList.length > maxReplies && !unfolded;
-  const shown = folded ? replyList.slice(0, maxReplies) : replyList;
+  const keepLast = keepReplies === 'last';
+  const shown = !folded
+    ? replyList
+    : keepLast
+      ? replyList.slice(replyList.length - maxReplies)
+      : replyList.slice(0, maxReplies);
   const hiddenCount = replyList.length - maxReplies;
   const hasActions = canReply || onEdit !== undefined || onDelete !== undefined;
+
+  const foldToggle = replyList.length > maxReplies && (
+    <Button
+      variant="link"
+      size="xs"
+      className={keepLast ? 'mb-3' : 'mt-3'}
+      aria-expanded={unfolded}
+      onClick={() => setUnfolded(!unfolded)}
+    >
+      {!folded
+        ? labels.hideReplies
+        : keepLast
+          ? labels.showEarlierReplies(hiddenCount)
+          : labels.showReplies(hiddenCount)}
+    </Button>
+  );
 
   const closeReply = () => {
     restoreFocus.current = replyButton;
@@ -242,6 +271,7 @@ export function Comment({
       </div>
       {(replyList.length > 0 || replying) && (
         <div className="ms-4 mt-3 min-w-0 border-s-2 border-[var(--color-border)] ps-4 sm:ms-5">
+          {keepLast && foldToggle}
           {replyList.length > 0 && (
             <ReplyContext value>
               <ul role="list" aria-label={labels.replies(author)} className="space-y-4">
@@ -253,17 +283,7 @@ export function Comment({
               </ul>
             </ReplyContext>
           )}
-          {replyList.length > maxReplies && (
-            <Button
-              variant="link"
-              size="xs"
-              className="mt-3"
-              aria-expanded={unfolded}
-              onClick={() => setUnfolded(!unfolded)}
-            >
-              {folded ? labels.showReplies(hiddenCount) : labels.hideReplies}
-            </Button>
-          )}
+          {!keepLast && foldToggle}
           {replying && (
             <CommentComposer
               className={replyList.length > 0 ? 'mt-3' : undefined}

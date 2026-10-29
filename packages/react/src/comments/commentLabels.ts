@@ -31,6 +31,11 @@ export type CommentLabels = {
   replies?: (author: string) => string;
   /** The button that unfolds the replies past `maxReplies`. Default `Show 3 more replies`. */
   showReplies?: (hidden: number) => string;
+  /**
+   * The same button with `keepReplies="last"`, where the folded replies are the older ones.
+   * Default `Show 3 earlier replies`.
+   */
+  showEarlierReplies?: (hidden: number) => string;
   /** The same button once they are unfolded. Default `Show fewer replies`. */
   hideReplies?: string;
 };
@@ -49,6 +54,7 @@ export const DEFAULT_LABELS: Required<CommentLabels> = {
   editField: 'Edit comment',
   replies: (author) => `Replies to ${author}`,
   showReplies: (hidden) => `Show ${hidden} more ${hidden === 1 ? 'reply' : 'replies'}`,
+  showEarlierReplies: (hidden) => `Show ${hidden} earlier ${hidden === 1 ? 'reply' : 'replies'}`,
   hideReplies: 'Show fewer replies',
 };
 

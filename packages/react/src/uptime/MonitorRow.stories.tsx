@@ -154,6 +154,37 @@ export const TypesAreFreeStrings: Story = {
   ),
 };
 
+const STALE_SINCE = Date.UTC(2026, 0, 15, 9, 56, 0);
+const NOW = Date.UTC(2026, 0, 15, 10, 0, 0);
+
+/**
+ * `stale` is when the last data came in: the status colours go grey, a "Stale · 4 minutes ago" tag
+ * sits under the name and the state is read as stale. The monitor keeps its last known state.
+ */
+export const Stale: Story = {
+  render: () => (
+    <Rows
+      list={MONITORS.slice(1, 3).map((monitor) => ({ ...monitor, stale: STALE_SINCE, now: NOW }))}
+    />
+  ),
+};
+
+export const StaleCards: Story = {
+  render: () => (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {MONITORS.slice(1, 3).map(({ id, ...monitor }) => (
+        <MonitorRow key={id} {...monitor} variant="card" stale={STALE_SINCE} now={NOW} />
+      ))}
+    </div>
+  ),
+};
+
+export const StaleMobile: Story = {
+  ...Stale,
+  globals: mobileViewport,
+  play: () => expectNoHorizontalOverflow(),
+};
+
 /** At 375px a row stacks: the status and name, then the beats, with the figures on the first line. */
 export const MobileRows: Story = {
   render: () => <Rows />,
@@ -203,6 +234,41 @@ export const StateIsNamedInWords: Story = {
     await expect(item('Paused one').getByRole('img', { name: 'Paused' })).toBeInTheDocument();
     await expect(item('Paused one').getByText('Paused', { selector: 'span' })).toBeVisible();
     await expect(item('Empty').getByRole('img', { name: 'Pending' })).toBeInTheDocument();
+  },
+};
+
+/** The tag says how old the data is, and the state is named as stale. */
+export const StaleIsWrittenAndNamed: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { stale: STALE_SINCE, now: NOW, beats: beatsFrom('uudd'), uptime: 0.97 },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/^Stale/)).toHaveTextContent('Stale · 4 minutes ago');
+    await expect(canvas.getByRole('img', { name: 'Down, stale' })).toBeInTheDocument();
+    await expect(canvas.queryByRole('img', { name: 'Down' })).toBeNull();
+  },
+};
+
+/** The state chip, the beats and the uptime turn grey; the tag does not. */
+export const StaleMutesTheStatusColours: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { stale: STALE_SINCE, now: NOW, beats: beatsFrom('uudd'), uptime: 0.97 },
+  play: async ({ canvas }) => {
+    // A mark is muted when it, or one of its ancestors, carries a grayscale filter.
+    const muted = (el: Element | null): boolean =>
+      el !== null && (getComputedStyle(el).filter.includes('grayscale') || muted(el.parentElement));
+    await expect(muted(canvas.getByRole('img', { name: 'Down, stale' }))).toBe(true);
+    await expect(muted(canvas.getByLabelText('API: recent checks'))).toBe(true);
+    await expect(muted(canvas.getByText('97%'))).toBe(true);
+    await expect(muted(canvas.getByText(/^Stale/))).toBe(false);
+  },
+};
+
+export const FreshDataSaysNothingOfStaleness: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { beats: beatsFrom('uudd'), uptime: 0.97 },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByText(/^Stale/)).toBeNull();
+    await expect(canvas.getByRole('img', { name: 'Down' })).toBeInTheDocument();
   },
 };
 
