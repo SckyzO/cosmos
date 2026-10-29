@@ -182,7 +182,13 @@ export const FollowsTheReadingDirection: Story = {
       const follow = within(box).getByRole('button', { name: 'Follow' });
       expect(endOffset(follow, box), `${dir}: actions at the end`).toBeLessThanOrEqual(25);
       expectBeyondEnd(follow, within(box).getByRole('heading', { name: 'Ana Ruiz' }));
-      expect(getComputedStyle(within(box).getByText('Ana Ruiz')).unicodeBidi).toBe('isolate');
+      const name = within(box).getByRole('heading', { name: 'Ana Ruiz' }).querySelector('bdi')!;
+      expect(getComputedStyle(name).unicodeBidi, `${dir}: name`).toBe('isolate');
+      // The cover gradient runs toward the end corner: bottom right, or bottom left.
+      const cover = box.querySelector('.bg-gradient-to-br')!;
+      expect(getComputedStyle(cover).backgroundImage, `${dir}: cover`).toContain(
+        dir === 'rtl' ? 'to left bottom' : 'to right bottom'
+      );
     }
   },
 };
