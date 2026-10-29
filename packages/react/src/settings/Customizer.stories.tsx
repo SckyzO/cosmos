@@ -200,8 +200,7 @@ const App = () => {
               <Navbar.Actions>{customize}</Navbar.Actions>
             </Navbar>
           ) : (
-            // A paragraph, not the h1: the panel's title is an h3, which needs an h2 before it.
-            <Topbar pageTitle="Dashboard" as="p" endActions={customize} />
+            <Topbar pageTitle="Dashboard" endActions={customize} />
           )
         }
         sidebar={

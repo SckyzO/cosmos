@@ -1486,7 +1486,7 @@ const drawerMirrors = (side: 'start' | 'end'): Story => ({
         const header = within(panel).getByRole('heading').closest('[class*="justify-between"]')!;
         const close = within(header as HTMLElement).getByRole('button', { name: 'Close drawer' });
         expect(endOffset(close, header)).toBeLessThan(startOffset(close, header));
-        expectReadsLeftToRight(within(panel).getByText('Server details (3 of 5).').closest('h3')!);
+        expectReadsLeftToRight(within(panel).getByText('Server details (3 of 5).').closest('h2')!);
       });
     }
   },
@@ -1497,3 +1497,26 @@ export const StartDrawerMirrors: Story = drawerMirrors('start');
 
 /** An end drawer sits at the right edge, and at the left one in right to left. */
 export const EndDrawerMirrors: Story = drawerMirrors('end');
+
+/**
+ * The title is an `h2`, as a `Modal`'s is: a drawer opens over a page whose title is the `h1`
+ * (a `Topbar`'s), and an `h3` there skips a level, which axe flags (`heading-order`).
+ */
+export const TitleFollowsThePageHeading: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <h1 className="text-xl font-semibold">Orders</h1>
+      <Drawer open onClose={() => {}}>
+        <Drawer.Header title="Filters" onClose={() => {}} />
+        <Drawer.Body>
+          <p>Status, date and customer.</p>
+        </Drawer.Body>
+      </Drawer>
+    </>
+  ),
+  play: async () => {
+    const panel = await within(document.body).findByRole('dialog', { name: 'Filters' });
+    await expect(within(panel).getByRole('heading', { level: 2, name: 'Filters' })).toBeVisible();
+  },
+};
