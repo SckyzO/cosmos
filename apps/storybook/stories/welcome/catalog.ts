@@ -37,21 +37,27 @@ const docsHref = (id: string) => `./?path=/docs/${id}`;
 // index.json lists the entries already in sidebar order (storySort), so the components and the
 // groups keep it.
 export const catalogComponents = (entries: IndexEntry[]): CatalogComponent[] => {
-  const byTitle = new Map<string, { docs?: string; first?: string; stories: CatalogStory[] }>();
+  const byTitle = new Map<
+    string,
+    { docs?: string; first?: string; inSidebar: boolean; stories: CatalogStory[] }
+  >();
   for (const e of entries) {
     if (e.title === 'Welcome') continue;
-    const item = byTitle.get(e.title) ?? { stories: [] };
+    const item = byTitle.get(e.title) ?? { inSidebar: false, stories: [] };
+    // A test-only entry is hidden from the sidebar: it isn't one of the component's stories, and a
+    // title made only of them isn't a component.
+    const inSidebar = !e.tags || e.tags.includes('dev');
+    item.inSidebar ||= inSidebar;
     if (e.type === 'docs') item.docs ??= e.id;
     else {
       item.first ??= e.id;
-      // A test-only story is hidden from the sidebar: it isn't one of the component's stories.
-      if (!e.tags || e.tags.includes('dev'))
-        item.stories.push({ name: e.name ?? e.id, href: storyHref(e.id) });
+      if (inSidebar) item.stories.push({ name: e.name ?? e.id, href: storyHref(e.id) });
     }
     byTitle.set(e.title, item);
   }
   const components: CatalogComponent[] = [];
   for (const [title, item] of byTitle) {
+    if (!item.inSidebar) continue;
     const [group = title, ...rest] = title.split('/');
     components.push({
       group,
@@ -80,8 +86,7 @@ export type Figures = { components: number; charts: number };
 /** What the hero counts: components and patterns (not the recipes), and the chart wrappers. */
 export const figuresOf = (components: CatalogComponent[]): Figures => ({
   components: components.filter((c) => c.group !== SCREENS_GROUP).length,
-  // "All charts" is the overview page of the group, not a wrapper.
-  charts: components.filter((c) => c.group === 'Charts' && !/^All /.test(c.name)).length,
+  charts: components.filter((c) => c.group === 'Charts').length,
 });
 
 // "Date Picker", "date-picker" and "datepicker" are one name.

@@ -122,6 +122,8 @@ const FIXTURE: IndexEntry[] = [
   { id: 'atoms-button--variants', title: 'Atoms/Button', type: 'story' },
   { id: 'atoms-button--states', title: 'Atoms/Button', type: 'story' },
   { id: 'atoms-badge--default', title: 'Atoms/Badge', type: 'story' },
+  // A title with only test-only stories is not in the sidebar, so not in the counts.
+  { id: 'atoms-use-hook--test', title: 'Atoms/useHook', type: 'story', tags: ['test'] },
 ];
 
 /** The catalog groups the index in sidebar order and links each group. Test only. */
