@@ -8,6 +8,8 @@ const config: StorybookConfig = {
   // the same compose network can reach the manager via http://storybook:6006.
   core: {
     allowedHosts: ['storybook', '127.0.0.1'],
+    // No anonymous usage data from CI runs or contributors' machines.
+    disableTelemetry: true,
   },
   // No onboarding guide: the sidebar checklist ("Get started", "Level up"…)
   // and its menu link are for people new to Storybook, not for this reference.
@@ -19,7 +21,6 @@ const config: StorybookConfig = {
     '../stories/**/*.mdx',
     '../stories/**/*.stories.@(js|jsx|ts|tsx)',
     '../../../packages/react/src/**/*.stories.@(js|jsx|ts|tsx)',
-    '../../../packages/react/src/**/*.mdx',
     '../../../packages/charts/src/**/*.stories.@(js|jsx|ts|tsx)',
   ],
   addons: [
@@ -67,6 +68,13 @@ const config: StorybookConfig = {
       // `STORYBOOK_BASE_PATH` is set by the GH Pages deploy workflow; local
       // dev (`pnpm dev`) leaves it unset so `base` defaults to `/`.
       base: process.env.STORYBOOK_BASE_PATH ?? '/',
+      build: {
+        // Above the largest chunks (the preview's entry, ~1.15 MB, and maplibre-gl, ~1 MB). The
+        // heavy ones (maplibre-gl, the Icons and RichTextEditor stories, axe) load only with the
+        // story that needs them, and this is a reference site, not an app shipped to visitors, so
+        // the 500 kB default only adds a warning to every build log.
+        chunkSizeWarningLimit: 1250,
+      },
       server: {
         host: '0.0.0.0',
         allowedHosts: ['storybook', 'localhost', '127.0.0.1'],
