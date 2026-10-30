@@ -15,6 +15,9 @@ pnpm add @sckyzo/cosmos-charts
 pnpm add react react-dom   # peers, react 19+
 ```
 
+From 0.4.0, the three Cosmos packages share one version number: install the same version of
+`@sckyzo/cosmos-charts` as of `@sckyzo/cosmos-react` and `@sckyzo/cosmos-theme`.
+
 ## How the charts are drawn
 
 Every chart is drawn with Recharts, except `HeatmapChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow), and `WorldMap`, an SVG of its own (Recharts has no map). The rules every chart follows:
