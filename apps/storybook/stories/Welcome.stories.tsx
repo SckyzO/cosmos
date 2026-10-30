@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { CosmosAppearance } from '../../../packages/react/src';
 import { catalogComponents, type IndexEntry, type StoryIndex } from './welcome/catalog';
 import { Appearance } from './welcome/WelcomeAppearance';
@@ -130,5 +130,110 @@ export const CatalogWithoutIndex: Story = {
   render: () => <ComponentsSection index="error" />,
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText(/couldn.t be loaded/)).toBeVisible();
+  },
+};
+
+// ── The component search ─────────────────────────────────────────────────────
+
+const story = (id: string, title: string, name: string): IndexEntry => ({
+  id,
+  title,
+  name,
+  type: 'story',
+  tags: ['dev'],
+});
+
+const SEARCH_FIXTURE: IndexEntry[] = [
+  story('forms-calendar--single', 'Forms/Calendar', 'Single Select'),
+  story('forms-calendar--range', 'Forms/Calendar', 'Range'),
+  story('forms-date-picker--default', 'Forms/Date Picker', 'Default'),
+  story('data-event-calendar--default', 'Data/Event Calendar', 'Default'),
+  story('data-event-calendar--empty', 'Data/Event Calendar', 'Empty'),
+  story('data-kpi-card--default', 'Data/Kpi Card', 'Default'),
+  // A test-only story is not one of the component's stories.
+  { ...story('data-event-calendar--hidden', 'Data/Event Calendar', 'Hidden'), tags: [] },
+];
+
+const search = (canvas: ReturnType<typeof within>) =>
+  canvas.getByRole('textbox', { name: 'Find a component' });
+
+/** A query lists the components whose name holds it, with their group and stories. Test only. */
+export const SearchFiltersByName: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ComponentsSection index={SEARCH_FIXTURE} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('link', { name: /^(Forms|Data)/ })).toHaveLength(2);
+    await userEvent.type(search(canvas), 'calendar');
+    // The ones that begin with it come first.
+    const results = canvas.getAllByRole('link', { name: /calendar/i });
+    await expect(results.map((a) => a.getAttribute('href'))).toEqual([
+      './?path=/story/forms-calendar--single',
+      './?path=/story/data-event-calendar--default',
+    ]);
+    await expect(canvas.getByRole('status')).toHaveTextContent('2 components match “calendar”');
+    await expect(results[1]).toHaveTextContent('Data');
+    await expect(results[1]).toHaveTextContent('2 stories · Default, Empty');
+    // Groups are gone while a query is typed.
+    await expect(canvas.queryByRole('link', { name: /^Forms\s*\d/ })).toBeNull();
+    // "date picker" is one name however it is spaced.
+    await userEvent.clear(search(canvas));
+    await userEvent.type(search(canvas), 'datepick');
+    await expect(canvas.getAllByRole('link', { name: /Date Picker/ })).toHaveLength(1);
+  },
+};
+
+/** The arrow keys move through the matches, Enter opens one. Test only. */
+export const SearchKeyboard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ComponentsSection index={SEARCH_FIXTURE} />,
+  play: async ({ canvas }) => {
+    const opened: string[] = [];
+    const record = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest('a');
+      if (!link) return;
+      e.preventDefault();
+      opened.push(link.getAttribute('href') ?? '');
+    };
+    document.addEventListener('click', record, true);
+    try {
+      await userEvent.type(search(canvas), 'calendar');
+      const [first, second] = canvas.getAllByRole('link', { name: /calendar/i });
+      await userEvent.keyboard('{ArrowDown}');
+      await expect(first).toHaveFocus();
+      await userEvent.keyboard('{ArrowDown}');
+      await expect(second).toHaveFocus();
+      await userEvent.keyboard('{ArrowUp}{ArrowUp}');
+      await expect(search(canvas)).toHaveFocus();
+      // Enter in the field opens the first match; on a match, that one.
+      await userEvent.keyboard('{Enter}');
+      await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+      await expect(opened).toEqual([
+        './?path=/story/forms-calendar--single',
+        './?path=/story/data-event-calendar--default',
+      ]);
+    } finally {
+      document.removeEventListener('click', record, true);
+    }
+  },
+};
+
+/** Nothing matches: an empty state offers to clear the search or ask for a component. Test only. */
+export const SearchWithoutMatch: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ComponentsSection index={SEARCH_FIXTURE} />,
+  play: async ({ canvas }) => {
+    await userEvent.type(search(canvas), 'kanbn');
+    await expect(canvas.getByText('No component named “kanbn”')).toBeVisible();
+    await expect(canvas.getByRole('link', { name: 'Ask for a component' })).toHaveAttribute(
+      'href',
+      'https://github.com/SckyzO/cosmos/issues'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear the search' }));
+    await expect(search(canvas)).toHaveValue('');
+    await expect(search(canvas)).toHaveFocus();
+    await waitFor(() =>
+      expect(canvas.getAllByRole('link', { name: /^(Forms|Data)/ })).toHaveLength(2)
+    );
+    await expect(canvas.queryByText(/No component named/)).toBeNull();
   },
 };
