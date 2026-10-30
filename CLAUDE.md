@@ -21,7 +21,7 @@ make help            # every target
 ```bash
 make storybook       # Storybook dev server on http://localhost:6006 (docker compose)
 make check-changed   # BEFORE EVERY PUSH: make ci cut down to what the branch changed
-make ci              # full local pipeline (check-changed runs it when it can't scope a change)
+make ci              # full local pipeline, sequential (check-changed runs its steps when it can't scope a change)
 make test            # pnpm -r test
 make test-e2e        # Playwright against the storybook compose service
 make build           # tsup dists for react + charts
@@ -43,12 +43,36 @@ no apt. A Playwright bump moves the Dockerfile and the image together (`repo-pol
 
 `make check-changed` (`tests/e2e/checks/check-changed.sh`; `BASE`, default `origin/main`;
 uncommitted and untracked files count) runs the steps of `make ci` the changed files can break, on
-them: Prettier and ESLint on those files, the typecheck, the unit tests, and the story files that use
-what changed in the default pass, the three contrast passes and the direction pass. `select-stories.mjs` picks them: the
-names the changed files export, followed through every source file that names one, barrels
-skipped; a change to a widely used helper selects most of the suite. A change outside
-`packages/{react,charts}/src` that isn't Markdown runs the full `make ci` instead: what reaches a
-story through CSS, config or a dependency isn't followed. GitHub's CI stays the merge gate.
+them:
+
+- **Documentation only** (`docs-only.sh`: Markdown, `docs/`, pictures outside `packages/`, `apps/`
+  and `tests/`): Prettier on those files, nothing else.
+- **Sources of `packages/{react,charts}/src` and the stories of `apps/storybook/stories`**
+  (`*.ts`, `*.tsx`): Prettier and ESLint on those files, the typecheck, the unit tests, and the
+  story files that use what changed in the default pass, the three contrast passes and the
+  direction pass. `select-stories.mjs` picks them: the names the changed files export, followed
+  through every source file that names one, barrels skipped; a change to a widely used helper
+  selects most of the suite. A changed package source also selects the stories of the Storybook
+  app that use it; a changed file of the app is followed inside the app only.
+- **Anything else** (theme CSS, `.storybook/`, the Vitest config, dependencies, workflows, e2e
+  specs, Docker, MDX): what reaches a story through CSS, config or a dependency isn't followed, so
+  every step runs. Lint, format, typecheck, the builds and `CI=true pnpm test` run one after the
+  other, as in `make ci`. Then, with at least 13 GB of `MemAvailable` in `/proc/meminfo`
+  (`CHECK_MIN_MEM_GB` changes the threshold), the three contrast passes and the direction pass run
+  side by side, one `cosmos-dev` container each (logs in `.cache/check-changed/`; a failure names
+  its pass and keeps the log). Below it they are skipped, the check says so and exits 0: push, and
+  the PR's CI runs them. Each pass gets its own Vite and Storybook caches through
+  `VITEST_CACHE_DIR` (`apps/storybook/vitest.config.ts`): two runs sharing a dependency cache
+  re-optimise it under each other ("optimized dependencies changed. reloading"). Keep any new
+  parallel run on its own folder.
+
+`make ci` stays the sequential, authoritative pipeline. GitHub's CI stays the merge gate: its
+first job, `changes`, lists the files of a pull request with `docs-only.sh` and skips `static`,
+`build-e2e`, `stories`, `contrast` and `direction` when only documentation changed (never by a
+`paths` filter on the workflow, which would leave the required check missing). The `ci` aggregator
+accepts `skipped` for those jobs only then, and fails on `changes` failing and on any other
+result; `repo-policy.spec.ts` runs its script against each case. A push to `main` always runs
+everything.
 
 Visual review is local and per component, validated by eye; nothing visual runs in CI.
 `make visual-diff STORIES=<id substrings> [THEMES=…] [BASE=main]` captures those stories at BASE (a
