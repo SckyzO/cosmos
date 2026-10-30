@@ -32,6 +32,22 @@ if (storyDir && storyDir !== 'rtl') {
 }
 
 /**
+ * `VITEST_CACHE_DIR=<absolute path>` moves everything a run writes next to the sources (Vite's
+ * dependency cache of Storybook's plugin, Vitest's results, failure screenshots and
+ * attachments) under that folder. Passes that run side by side (`make check-changed`) each get
+ * their own: two runs sharing one dependency cache re-optimise it under each other
+ * ("optimized dependencies changed. reloading"). Unset, nothing moves.
+ */
+const cacheRoot = process.env.VITEST_CACHE_DIR ?? '';
+if (cacheRoot && !path.isAbsolute(cacheRoot)) {
+  throw new Error(`VITEST_CACHE_DIR=${cacheRoot}: expected an absolute path.`);
+}
+const underCache = (name: string) => (cacheRoot ? path.join(cacheRoot, name) : undefined);
+// Storybook's Vitest plugin sets its own `cacheDir` (the dependency cache), which wins over a
+// project's: only the CACHE_DIR variable Storybook resolves its cache folder from moves it.
+if (cacheRoot) process.env.CACHE_DIR = cacheRoot;
+
+/**
  * Vitest config for the Storybook app, two projects:
  *
  * - `storybook`: browser mode via Playwright. Runs all `*.stories.tsx` as
@@ -49,7 +65,10 @@ if (storyDir && storyDir !== 'rtl') {
  *   pnpm --filter @cosmos/storybook test
  */
 export default defineConfig({
+  cacheDir: underCache('vite'),
   test: {
+    attachmentsDir: underCache('attachments'),
+    fsModuleCachePath: underCache('module-cache'),
     // The Vite HMR client tries to reach a dev server in browser mode and
     // fails with "WebSocket closed without opened" — those rejections are
     // harmless. Drop only that one: a blanket dangerouslyIgnoreUnhandledErrors
@@ -77,6 +96,7 @@ export default defineConfig({
             enabled: true,
             provider: playwright({}),
             headless: true,
+            screenshotDirectory: underCache('screenshots'),
             instances: [{ browser: 'chromium' }],
           },
           setupFiles: ['./.storybook/vitest.setup.ts'],
