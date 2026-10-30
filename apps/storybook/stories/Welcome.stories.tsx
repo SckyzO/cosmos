@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import type { CosmosAppearance } from '../../../packages/react/src';
 import { catalogComponents, type IndexEntry, type StoryIndex } from './welcome/catalog';
-import { Appearance } from './welcome/WelcomeAppearance';
+import { Appearance, type WelcomeAppearance } from './welcome/WelcomeAppearance';
 import { ComponentsSection } from './welcome/WelcomeCatalog';
 import { Hero } from './welcome/WelcomeHero';
 import { Examples, Footer, GetStarted, Quality, WhatsNew } from './welcome/WelcomeSections';
@@ -42,11 +41,17 @@ const useStoryIndex = (): StoryIndex => {
   return entries;
 };
 
-const WelcomePage = ({
-  appearance = { theme: 'dark', accent: 'blue' },
-}: {
-  appearance?: CosmosAppearance;
-}) => {
+const DEFAULT_APPEARANCE: WelcomeAppearance = {
+  theme: 'dark',
+  accent: 'blue',
+  font: 'outfit',
+  textSize: 'md',
+  density: 'default',
+  radius: 'default',
+  direction: 'ltr',
+};
+
+const WelcomePage = ({ appearance = DEFAULT_APPEARANCE }: { appearance?: WelcomeAppearance }) => {
   const index = useStoryIndex();
   const components = Array.isArray(index) ? catalogComponents(index) : null;
   return (
@@ -89,6 +94,8 @@ export const Default: Story = {
         font: globals.font || 'outfit',
         textSize: globals.textSize || 'md',
         density: globals.density || 'default',
+        radius: globals.radius || 'default',
+        direction: globals.direction === 'rtl' ? 'rtl' : 'ltr',
       }}
     />
   ),
@@ -235,5 +242,96 @@ export const SearchWithoutMatch: Story = {
       expect(canvas.getAllByRole('link', { name: /^(Forms|Data)/ })).toHaveLength(2)
     );
     await expect(canvas.queryByText(/No component named/)).toBeNull();
+  },
+};
+
+// ── The appearance section ───────────────────────────────────────────────────
+
+/** A choice is applied to the page: it reaches <html>, and the snippet shows it. Test only. */
+export const AppearanceReachesHtml: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage />,
+  play: async ({ canvas }) => {
+    const html = document.documentElement;
+    const before = {
+      className: html.className,
+      dir: html.getAttribute('dir'),
+      data: { ...html.dataset },
+    };
+    const group = (name: string) => within(canvas.getByRole('radiogroup', { name }));
+    try {
+      await userEvent.click(group('Theme').getByRole('radio', { name: /Sand/ }));
+      await expect(html).toHaveClass('sand');
+      await userEvent.click(group('Accent').getByRole('radio', { name: 'Teal' }));
+      await expect(html.dataset.accent).toBe('teal');
+      await userEvent.click(group('Density').getByRole('radio', { name: 'Compact' }));
+      await expect(html.dataset.density).toBe('compact');
+      await userEvent.click(group('Corners').getByRole('radio', { name: 'Large' }));
+      await expect(html.dataset.radius).toBe('lg');
+      await userEvent.click(group('Text size').getByRole('radio', { name: 'Large' }));
+      await expect(html.dataset.textSize).toBe('lg');
+      await userEvent.click(
+        group('Reading direction').getByRole('radio', { name: 'Right to left' })
+      );
+      await expect(html).toHaveAttribute('dir', 'rtl');
+      // The snippet is what an app sets for the same choices.
+      const snippet = canvas.getByText(/^<html /);
+      for (const part of [
+        'class="sand"',
+        'data-accent="teal"',
+        'data-density="compact"',
+        'data-radius="lg"',
+        'data-text-size="lg"',
+        'dir="rtl"',
+      ])
+        await expect(snippet).toHaveTextContent(part);
+      await userEvent.click(
+        group('Reading direction').getByRole('radio', { name: 'Left to right' })
+      );
+      await expect(html).not.toHaveAttribute('dir');
+    } finally {
+      html.className = before.className;
+      if (before.dir === null) html.removeAttribute('dir');
+      else html.setAttribute('dir', before.dir);
+      for (const key of Object.keys(html.dataset)) delete html.dataset[key];
+      Object.assign(html.dataset, before.data);
+    }
+  },
+};
+
+/** The right-to-left option shows its effect in Arabic, marked as such. Test only. */
+export const DirectionPreviewIsArabic: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage />,
+  play: async ({ canvas }) => {
+    const rtl = within(canvas.getByRole('radiogroup', { name: 'Reading direction' })).getByRole(
+      'radio',
+      { name: 'Right to left' }
+    );
+    const sample = rtl.querySelector('[dir="rtl"][lang="ar"]');
+    await expect(sample).not.toBeNull();
+    await expect(sample).toHaveTextContent(/[؀-ۿ]/);
+  },
+};
+
+/** The button opens the real Customizer, and a choice made there reaches the page. Test only. */
+export const CustomizerOpens: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage />,
+  play: async ({ canvas }) => {
+    const html = document.documentElement;
+    const density = html.dataset.density;
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Open the Customizer' }));
+      const panel = within(await within(document.body).findByRole('dialog'));
+      await expect(panel.getByText('Customize')).toBeVisible();
+      await userEvent.click(panel.getByRole('radio', { name: 'Comfortable' }));
+      await expect(html.dataset.density).toBe('comfortable');
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() => expect(within(document.body).queryByRole('dialog')).toBeNull());
+    } finally {
+      if (density === undefined) delete html.dataset.density;
+      else html.dataset.density = density;
+    }
   },
 };
