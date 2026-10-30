@@ -1619,7 +1619,7 @@ turns around, the address or number a form says it sent the code to is wrapped i
 Every group of the Storybook sidebar is converted: **Atoms**, **Actions**, **Forms**, **Data**,
 **Lists**, **Feedback**, **Overlays**, **Navigation**, **Layout**, **Chat**, **Tables**,
 **Settings**, **Monitoring**, **Media**, **Status**, **Typography**, **Foundations** and
-**Pages**. A check in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`,
+**Examples**. A check in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`,
 `text-left`…) in any source file of the package, and every story is rendered right to left in CI.
 In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story
 right to left.
