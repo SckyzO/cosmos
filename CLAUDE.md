@@ -309,6 +309,9 @@ Several settings look removable but are not. They carry explanatory comments; re
   0 s transition never fires `transitionend` nor shows in `getAnimations()`, so a story about the
   Drawer's slide or a sidebar width transition opts out. Never give a story a `timeout` of its own
   for a slow machine.
+  It also wraps Storybook's `eventWrapper` so a dispatch that arrives inside another one (user-event's
+  `change` on the `blur` of a focused, edited input removed by a commit) runs without a nested
+  `act()`: drop it and every such story logs "not wrapped in act(...)" again.
   `./devctl run pnpm --filter '@cosmos/storybook' a11y:todo` rewrites it from a full run (a filtered
   run writes nothing); its diff must only remove lines. `vitest.config.ts` pre-bundles
   `@storybook/addon-a11y/preview` (`optimizeDeps`), or Vite reloads mid-run.

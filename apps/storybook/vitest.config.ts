@@ -4,7 +4,7 @@ import { playwright } from '@vitest/browser-playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { COSMOS_THEMES } from '../../packages/react/src/settings/appearance';
+import { COSMOS_THEMES } from '../../packages/react/src/settings/appearance.ts';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 

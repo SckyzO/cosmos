@@ -94,8 +94,10 @@ export const Clock = ({
     showDate && isClient
       ? formatClockDate(tick, variant === 'inline' ? 'medium' : 'full', locale, timeZone)
       : null;
+  // A span in a line: the inline clock sits in a paragraph, where a div is invalid.
+  const Root = variant === 'inline' ? 'span' : 'div';
   return (
-    <div role="timer" className={clsx(ROOT[variant], className)}>
+    <Root role="timer" className={clsx(ROOT[variant], className)}>
       {label && (
         <span className={LABEL[variant]}>
           <bdi>{label}</bdi>
@@ -105,6 +107,6 @@ export const Clock = ({
         <bdi>{time}</bdi>
       </span>
       {showDate && <span className={DATE[variant]}>{date ? <bdi>{date}</bdi> : ' '}</span>}
-    </div>
+    </Root>
   );
 };

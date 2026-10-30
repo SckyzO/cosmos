@@ -141,6 +141,20 @@ export const Mobile: Story = {
   },
 };
 
+/** In a line the clock is phrasing content: a `<div>` is invalid inside the paragraph. */
+export const InlineSitsInAParagraph: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'inline', label: 'UTC', showDate: true },
+  render: Inline.render,
+  play: async ({ canvas }) => {
+    const timer = canvas.getByRole('timer');
+    const paragraph = timer.closest('p');
+    expect(paragraph).not.toBeNull();
+    expect(timer.tagName).toBe('SPAN');
+    expect(paragraph?.querySelector('div')).toBeNull();
+  },
+};
+
 /** A `timer`, not a live region: a screen reader does not read the seconds. */
 export const IsATimerNotALiveRegion: Story = {
   tags: ['!dev', '!autodocs'],
