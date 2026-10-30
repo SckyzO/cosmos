@@ -15,9 +15,9 @@ concurrency:
 
 # `changes` lists what the change touches. When it is documentation only, the five
 # jobs after it are skipped; otherwise they run side by side (`contrast` once per
-# theme). Then `ci` checks they all passed (or were skipped for a docs-only change). `make ci` runs the same commands one after the other in the dev
-# container. Each job builds what it tests: no artifact passes between jobs, so
-# none can be swapped.
+# theme). Then `ci` checks they all passed, or were skipped for a docs-only change.
+# `make ci` runs the same commands one after the other in the dev container. Each
+# job builds what it tests: no artifact passes between jobs, so none can be swapped.
 #
 # The jobs that open a browser run in Playwright's image, pinned by digest like
 # the actions. It holds Chromium's system libraries, the ones the dev image gets
