@@ -695,8 +695,8 @@ export const Default: Story = {
 // A fixed index, so the test doesn't depend on the stories that exist.
 const FIXTURE: IndexEntry[] = [
   { id: 'welcome--default', title: 'Welcome', type: 'story' },
-  { id: 'pages-dashboard--docs', title: 'Pages/Dashboard', type: 'docs' },
-  { id: 'pages-dashboard--default', title: 'Pages/Dashboard', type: 'story' },
+  { id: 'examples-dashboard--docs', title: 'Examples/Dashboard', type: 'docs' },
+  { id: 'examples-dashboard--content', title: 'Examples/Dashboard', type: 'story' },
   { id: 'atoms-button--docs', title: 'Atoms/Button', type: 'docs' },
   { id: 'atoms-button--variants', title: 'Atoms/Button', type: 'story' },
   { id: 'atoms-button--states', title: 'Atoms/Button', type: 'story' },
@@ -712,8 +712,8 @@ export const CatalogFromIndex: Story = {
     await expect(canvasElement.querySelector('p')).toHaveTextContent(
       '3 entries and 4 stories across 2 groups'
     );
-    const groups = canvas.getAllByRole('link', { name: /^(Pages|Atoms|Welcome)$/ });
-    await expect(groups.map((a) => a.textContent)).toEqual(['Pages', 'Atoms']);
+    const groups = canvas.getAllByRole('link', { name: /^(Examples|Atoms|Welcome)$/ });
+    await expect(groups.map((a) => a.textContent)).toEqual(['Examples', 'Atoms']);
     // An entry links its docs page, or its first story when it has none.
     await expect(canvas.getByRole('link', { name: 'Button' })).toHaveAttribute(
       'href',

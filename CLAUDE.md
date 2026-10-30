@@ -254,7 +254,7 @@ titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group tha
 `parameters.options.storySort.order` in `apps/storybook/.storybook/preview.tsx`:
 
 ```text
-Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
+Welcome → Examples → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
 → Monitoring → Feedback → Overlays → Navigation → Layout → Lists → Chat → Tables → Settings
 → Charts
 ```
