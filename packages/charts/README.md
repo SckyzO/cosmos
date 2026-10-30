@@ -15,6 +15,14 @@ pnpm add @sckyzo/cosmos-charts
 pnpm add react react-dom   # peers, react 19+
 ```
 
+A few charts carry Tailwind 4 classes: the legend's focus ring, the calendar's shades in a dark
+theme. Point Tailwind at this package too, in the CSS file that imports it, next to the `@source`
+line for `@sckyzo/cosmos-react`. Without it, those classes are not generated.
+
+```css
+@source '../node_modules/@sckyzo/cosmos-charts/dist/**/*.{js,cjs}';
+```
+
 From 0.4.0, the three Cosmos packages share one version number: install the same version of
 `@sckyzo/cosmos-charts` as of `@sckyzo/cosmos-react` and `@sckyzo/cosmos-theme`.
 
