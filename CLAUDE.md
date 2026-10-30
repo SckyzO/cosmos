@@ -259,8 +259,8 @@ Welcome → Examples → Foundations → Typography → Atoms → Actions → Fo
 → Charts
 ```
 
-Adding a top-level group means updating `storySort`; the Welcome page builds its group table from
-`index.json`, which follows it.
+Adding a top-level group means updating `storySort`; the Welcome page builds its counts, its group
+cards and its component search from `index.json` (`stories/welcome/catalog.ts`), which follows it.
 
 Every named export of a `*.stories.tsx` is a story: keep helpers unexported. Test-only stories take
 `tags: ['!dev']` (hidden from the sidebar, still run by vitest); interaction tests that take focus
