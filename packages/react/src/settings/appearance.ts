@@ -1,5 +1,5 @@
-import type { AccentColor } from './AccentPicker';
-import type { PaletteMeta } from './PaletteCard';
+import type { AccentColor } from './AccentPicker.tsx';
+import type { PaletteMeta } from './PaletteCard.tsx';
 
 /** A Cosmos theme: one class on `<html>`, none for `light`. */
 export type CosmosTheme = 'light' | 'sand' | 'dark' | 'deep-blue';
