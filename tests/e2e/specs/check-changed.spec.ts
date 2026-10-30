@@ -61,6 +61,7 @@ test('only Markdown, docs/ and pictures outside the code count as documentation'
   ).toBe(true);
   expect(docsOnly('packages/react/README.md', 'logo.png')).toBe(true);
   expect(docsOnly('README.md', 'packages/react/src/ui/Spinner.tsx')).toBe(false);
+  expect(docsOnly('SECURITY.md'), 'repo-policy.spec.ts reads it').toBe(false);
   expect(docsOnly('README.md', '.github/workflows/ci.yml')).toBe(false);
   expect(docsOnly('apps/storybook/public/avatar.png'), 'a picture a story may render').toBe(false);
   expect(docsOnly('tests/e2e/fixtures/a.png')).toBe(false);

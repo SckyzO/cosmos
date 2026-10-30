@@ -15,6 +15,8 @@ while IFS= read -r file || [[ -n $file ]]; do
   [[ -n $file ]] || continue
   seen=1
   case $file in
+    # A spec reads it (repo-policy.spec.ts): a change to it runs the checks.
+    SECURITY.md) exit 1 ;;
     *.md | docs/*) ;;
     packages/* | apps/* | tests/*) exit 1 ;;
     *.png | *.jpg | *.jpeg | *.gif | *.webp) ;;
