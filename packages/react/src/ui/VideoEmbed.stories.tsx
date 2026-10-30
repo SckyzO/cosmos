@@ -26,6 +26,10 @@ export const Default: Story = {
   args: { src: SAMPLE_SRC, title: 'Sample video' },
 };
 
+// A native video with no media and no request: a data URL stays off the network, and unlike an
+// empty `src` React has nothing to warn about.
+const NATIVE_SRC = 'data:video/mp4;base64,';
+
 const POSTER =
   'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22640%22%20height%3D%22360%22%3E%3Crect%20width%3D%22640%22%20height%3D%22360%22%20fill%3D%22%231f2937%22%2F%3E%3C%2Fsvg%3E';
 
@@ -88,7 +92,7 @@ export const NativeVideo: Story = {
         Native HTML5 video element with controls — useful for self-hosted MP4s.
       </p>
       <VideoEmbed
-        src=""
+        src={NATIVE_SRC}
         title="Native sample"
         type="video"
         controls
@@ -124,7 +128,7 @@ export const RendersIframeByDefault: Story = {
 
 export const NativeRendersVideo: Story = {
   tags: ['!dev'],
-  args: { src: '', title: 'Video sample', type: 'video' },
+  args: { src: NATIVE_SRC, title: 'Video sample', type: 'video' },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('video')).not.toBeNull();
     await expect(canvasElement.querySelector('iframe')).toBeNull();
