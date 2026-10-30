@@ -439,7 +439,9 @@ and Docker updates, and any update where the package changed maintainers wait fo
 
 [release-please](https://github.com/googleapis/release-please) keeps a release PR open on
 `main` from the Conventional Commits. While the packages are below 1.0, a breaking change
-bumps the minor version (`bump-minor-pre-major`).
+bumps the minor version (`bump-minor-pre-major`). The three packages share one version number
+(the `linked-versions` plugin): a release of any of them gives the three the same version, so
+`@sckyzo/cosmos-charts` 0.5.0 goes with `@sckyzo/cosmos-react` 0.5.0.
 
 1. The GitHub Actions token opens the release PR, so no CI runs on it. Close and reopen it,
    or push a commit to it, to get the required checks.

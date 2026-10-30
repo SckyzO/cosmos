@@ -335,7 +335,8 @@ unpacks the tarball and publishes the directory. Constraints that are easy to br
 - npm can't read pnpm's `workspace:*`, so react's theme dep is rewritten to a real range at publish.
 
 Version bumps go through release-please (`release.yml`, `release-please-config.json`,
-`.release-please-manifest.json`): it maintains a release PR on every push to `main`.
+`.release-please-manifest.json`): it maintains a release PR on every push to `main`. The three
+packages share one version number (`linked-versions` plugin): a release of one releases the three.
 `bump-minor-pre-major` keeps breaking changes on minor bumps while the packages are below 1.0;
 going 1.0 is a deliberate decision. The release PR is opened with `GITHUB_TOKEN`, so no workflow
 runs on it and the required checks never appear: close and reopen it to trigger CI. Tags pushed by

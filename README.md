@@ -26,6 +26,8 @@ portals, and rackscope itself eventually).
 | [`@sckyzo/cosmos-react`](packages/react)   | React 19 component library — ESM + CJS + DTS                                     | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-react)](https://www.npmjs.com/package/@sckyzo/cosmos-react)   |
 | [`@sckyzo/cosmos-charts`](packages/charts) | Chart wrappers (Recharts) that follow the theme and accent, published separately | [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-charts)](https://www.npmjs.com/package/@sckyzo/cosmos-charts) |
 
+The three packages share one version number: install the same version of each.
+
 ## Themes and accents
 
 Settings on the `<html>` element restyle every component:
