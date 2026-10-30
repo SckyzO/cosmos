@@ -8,6 +8,6 @@
   "packages": {
     "packages/theme": { "component": "@sckyzo/cosmos-theme" },
     "packages/react": { "component": "@sckyzo/cosmos-react" },
-    "packages/charts": { "component": "@sckyzo/cosmos-charts" }
+    "packages/charts": { "component": "@sckyzo/cosmos-charts", "release-as": "0.4.0" }
   }
 }
