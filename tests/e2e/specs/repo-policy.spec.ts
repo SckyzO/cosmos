@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import ts from 'typescript';
@@ -263,6 +264,53 @@ test('the aggregator job waits for every other CI job', () => {
       .map((name) => name.trim())
       .sort()
   ).toEqual([...jobs].sort());
+});
+
+test('a documentation-only change skips the heavy CI jobs, and nothing else does', () => {
+  // The heavy jobs wait for `changes` and run only when it found more than documentation. A
+  // workflow-level path filter would leave the required check missing, so none is allowed.
+  const workflow = read('.github/workflows/ci.yml');
+  const triggers = workflow.slice(workflow.indexOf('\non:'), workflow.indexOf('\npermissions:'));
+  expect(triggers, 'workflow path filter').not.toMatch(/\bpaths(-ignore)?:/);
+  const jobs = workflow
+    .slice(workflow.indexOf('\njobs:\n'))
+    .split(/\n(?= {2}[\w-]+:\n)/)
+    .filter((job) => /^ {2}[\w-]+:/.test(job));
+  const name = (job: string) => job.match(/^ {2}([\w-]+):/)?.[1];
+  const heavy = jobs.filter((job) => !['changes', 'ci'].includes(name(job) ?? ''));
+  expect(heavy.length, 'heavy jobs').toBeGreaterThan(1);
+  for (const job of heavy) {
+    expect(job, `${name(job)}: needs`).toMatch(/^ {4}needs: changes$/m);
+    expect(job, `${name(job)}: if`).toMatch(/^ {4}if: needs\.changes\.outputs\.code == 'true'$/m);
+  }
+  expect(workflow, 'aggregator runs when a job fails').toMatch(
+    /\n {2}ci:\n(?:(?! {2}\w).*\n)*? {4}if: always\(\)\n/
+  );
+});
+
+test('the aggregator accepts a skipped job only after a documentation-only change', () => {
+  const workflow = read('.github/workflows/ci.yml');
+  const step = workflow.slice(workflow.indexOf('      - name: Require every job to pass'));
+  const script = step
+    .slice(step.indexOf('        run: |\n') + '        run: |\n'.length)
+    .split('\n')
+    .map((line) => line.replace(/^ {10}/, ''))
+    .join('\n');
+  const passes = (changes: string, code: string, ...results: string[]) =>
+    spawnSync('bash', ['-c', script], {
+      env: { PATH: process.env.PATH, CHANGES: changes, CODE: code, RESULTS: results.join(' ') },
+    }).status === 0;
+  const skipped = ['skipped', 'skipped', 'skipped', 'skipped', 'skipped'];
+  const green = ['success', 'success', 'success', 'success', 'success'];
+  expect(passes('success', 'false', 'success', ...skipped), 'docs only, jobs skipped').toBe(true);
+  expect(passes('success', 'true', 'success', ...green), 'code, jobs passed').toBe(true);
+  expect(passes('success', 'true', 'success', ...skipped), 'code, jobs skipped').toBe(false);
+  expect(passes('success', '', 'success', ...skipped), 'no verdict, jobs skipped').toBe(false);
+  expect(passes('success', 'false', 'success', 'failure', ...skipped.slice(1))).toBe(false);
+  expect(passes('success', 'false', 'success', 'cancelled', ...skipped.slice(1))).toBe(false);
+  expect(passes('success', 'true', 'success', 'failure', ...green.slice(1))).toBe(false);
+  expect(passes('failure', '', 'failure', ...skipped), 'changes failed').toBe(false);
+  expect(passes('cancelled', 'false', 'cancelled', ...skipped), 'changes cancelled').toBe(false);
 });
 
 test('the dev container cannot write the repo metadata', () => {
