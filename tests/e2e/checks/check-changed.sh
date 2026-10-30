@@ -81,14 +81,18 @@ parallel_passes() {
   fi
 
   local logs=.cache/check-changed passes=(contrast-light contrast-sand contrast-deep-blue direction)
-  local pass status seconds failed=0
+  local pass status seconds failed=0 workers
+  # A Vitest run opens one browser page per core by default: four of them on the cores of one
+  # machine starve each other and the stories time out (15 s) or hang. Share the cores.
+  workers=$(($(nproc) / ${#passes[@]}))
+  [[ $workers -ge 1 ]] || workers=1
   rm -rf "$logs"
   mkdir -p "$logs"
-  echo "── ${#passes[@]} story passes side by side (${available_gb} GB available), logs in $logs ──"
+  echo "── ${#passes[@]} story passes side by side (${available_gb} GB available, $workers workers each), logs in $logs ──"
   for pass in "${passes[@]}"; do
     (
       # devctl forwards no environment: `env` sets the variables inside the container.
-      args=(env CI=true "VITEST_CACHE_DIR=/workspace/.cache/vitest/$pass")
+      args=(env CI=true "VITEST_CACHE_DIR=/workspace/.cache/vitest/$pass" "VITEST_MAX_WORKERS=$workers")
       case $pass in
         contrast-*) args+=("A11Y_THEME=${pass#contrast-}" pnpm --filter @cosmos/storybook a11y:contrast) ;;
         direction) args+=(pnpm --filter @cosmos/storybook a11y:rtl) ;;
@@ -137,14 +141,16 @@ if [[ ${#code[@]} -gt 0 ]]; then
     echo "No story file uses what changed."
   else
     echo "Story files: ${stories[*]}"
+    # Vitest filters match the path relative to apps/storybook, where it runs.
+    filters=("${stories[@]#apps/storybook/}")
     step browsers pnpm browsers:install
-    step "stories, default pass" pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${stories[@]}"
+    step "stories, default pass" pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
     for theme in light sand deep-blue; do
       step "stories, contrast in $theme" env A11Y_THEME="$theme" \
-        pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${stories[@]}"
+        pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
     done
     step "stories, right to left" env STORY_DIR=rtl \
-      pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${stories[@]}"
+      pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
   fi
 fi
 echo "── check-changed passed in ${SECONDS}s ──"
