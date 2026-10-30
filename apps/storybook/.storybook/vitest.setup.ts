@@ -1,6 +1,6 @@
 import { setProjectAnnotations } from '@storybook/react-vite';
 import type { ProjectAnnotations, Renderer } from 'storybook/internal/types';
-import { configure } from 'storybook/test';
+import { configure, getConfig } from 'storybook/test';
 import { afterEach, beforeAll } from 'vitest';
 
 import { a11yGateAnnotations, contrastPassAnnotations, recordA11yViolations } from './a11y-gate';
@@ -66,6 +66,34 @@ const settleMotionAnnotations: ProjectAnnotations<Renderer> = {
   },
 };
 
+// Storybook's `eventWrapper` runs every dispatch of a story's user-event in `act()`, and React
+// flushes the render when that `act` exits. Committing the removal of a focused input (a dialog or
+// popover closing on Enter) makes Chrome fire `blur`; user-event answers an edited input's blur
+// with a `change`, which comes back through `eventWrapper` and opens a nested `act()` while React
+// is still flushing. React then leaves its queue unflushed ("suspended inside an `act` scope") and
+// renders the rest outside any act. A dispatch that arrives while a wrapped one is running joins
+// it instead. Storybook installs its wrapper again for each story, hence a `beforeEach` that wraps
+// whichever one is current, once.
+const guardedWrapper = Symbol('guardedEventWrapper');
+const nestedEventAnnotations: ProjectAnnotations<Renderer> = {
+  beforeEach: () => {
+    const storybookWrapper = getConfig().eventWrapper;
+    if (Reflect.get(storybookWrapper, guardedWrapper)) return;
+    let running = false;
+    const guarded: typeof storybookWrapper = (cb) => {
+      if (running) return cb();
+      running = true;
+      try {
+        return storybookWrapper(cb);
+      } finally {
+        running = false;
+      }
+    };
+    Reflect.set(guarded, guardedWrapper, true);
+    configure({ eventWrapper: guarded });
+  },
+};
+
 // Wire the framework's preview annotations into the Vitest test runner so
 // `context.renderToCanvas` is available when stories mount in browser mode.
 //
@@ -87,6 +115,7 @@ const project = setProjectAnnotations([
   a11yGateAnnotations,
   projectAnnotations.default,
   settleMotionAnnotations,
+  nestedEventAnnotations,
   contrastPassAnnotations,
   directionPassAnnotations,
 ]);
