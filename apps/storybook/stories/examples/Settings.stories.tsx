@@ -445,7 +445,7 @@ const SettingsScreen = ({
                     placeholder="Add an email, then Enter"
                     value={values.invites}
                     onChange={(list) => edit('invites', list)}
-                    validate={(text) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)}
+                    validate={(text) => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(text)}
                     invalidMessage="That is not an email address."
                     error={errors.invites}
                   />
