@@ -3,18 +3,16 @@ import {
   Activity as ActivityIcon,
   AppWindow,
   ArrowRight,
-  BookMarked,
   BookOpen,
-  CalendarDays,
   CircleDot,
   ExternalLink,
   FileText,
   FolderGit2,
   LayoutDashboard,
+  Rows3,
   Mail,
   Settings,
   Tag,
-  UserRound,
 } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { expect, within } from 'storybook/test';
@@ -289,7 +287,7 @@ const TemplateCard = ({
     <span className="text-base font-semibold">{title}</span>
     <span className="flex-1 text-sm leading-snug text-gray-500 dark:text-gray-400">{desc}</span>
     <span className="text-brand-600 dark:text-brand-400 font-mono text-[0.7rem] tracking-wide uppercase">
-      Open template →
+      Open the example →
     </span>
   </a>
 );
@@ -511,59 +509,51 @@ const WelcomePage = ({
       </div>
     </section>
 
-    {/* Page templates */}
+    {/* Examples */}
     <section className="mt-12">
       <h2 className="mb-4 border-b border-gray-200 pb-2 text-sm font-semibold tracking-widest text-gray-500 uppercase dark:border-gray-800 dark:text-gray-400">
-        Page templates
+        Examples
       </h2>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Six screens built only from Cosmos components, each in its states: content, empty, loading,
+        error, extreme content and phone.
+      </p>
       <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-3.5">
         <TemplateCard
-          href="./?path=/docs/pages-examples-dashboard--docs"
-          icon={LayoutDashboard}
-          title="Dashboard"
-          desc="KPI cards, charts and status rows: the landing page of a monitoring app."
+          href="./?path=/docs/examples-app-shell--docs"
+          icon={AppWindow}
+          title="App shell"
+          desc="Sidebar, top bar with search and notifications, and the page header every screen sits in."
         />
         <TemplateCard
-          href="./?path=/docs/pages-examples-calendar--docs"
-          icon={CalendarDays}
-          title="Calendar"
-          desc="Month view with colored events, a mini calendar and the next events."
+          href="./?path=/docs/examples-list--docs"
+          icon={Rows3}
+          title="List"
+          desc="Orders on a DataTable: tabs, saved views, filters, bulk actions, export, cards on a phone."
         />
         <TemplateCard
-          href="./?path=/docs/pages-examples-activity--docs"
-          icon={ActivityIcon}
-          title="Activity"
-          desc="Deploys, incidents and changes on an alternating timeline, grouped by day."
+          href="./?path=/docs/examples-detail--docs"
+          icon={FileText}
+          title="Detail"
+          desc="A support ticket: header with a record pager, the conversation, details and history."
         />
         <TemplateCard
-          href="./?path=/docs/pages-examples-settings-screen--docs"
+          href="./?path=/docs/examples-settings--docs"
           icon={Settings}
           title="Settings"
-          desc="Sections in tabs, each with its labels on the left and the form on the right."
+          desc="One long settings page with a section nav, form rows, a save footer and a danger zone."
         />
         <TemplateCard
-          href="./?path=/docs/pages-examples-profile--docs"
-          icon={UserRound}
-          title="Profile"
-          desc="Account details, username and password, appearance and local storage."
+          href="./?path=/docs/examples-dashboard--docs"
+          icon={LayoutDashboard}
+          title="Dashboard"
+          desc="KPI cards, revenue and plan charts, top regions and recent cancellations."
         />
         <TemplateCard
-          href="./?path=/docs/pages-examples-doc-page--docs"
-          icon={BookMarked}
-          title="Doc page"
-          desc="Documentation with a sidebar nav, the article and a table of contents."
-        />
-        <TemplateCard
-          href="./?path=/docs/pages-examples-blog-index--docs"
-          icon={FileText}
-          title="Blog"
-          desc="Five blog section layouts for a landing page, with a matching post page."
-        />
-        <TemplateCard
-          href="./?path=/docs/layout-stacked-shell--docs"
-          icon={AppWindow}
-          title="Stacked shell"
-          desc="Top navbar, no sidebar, full-width content under a page header."
+          href="./?path=/docs/examples-monitoring--docs"
+          icon={ActivityIcon}
+          title="Monitoring"
+          desc="A cluster's health: incident banner, summary, node matrix, services, power and logs."
         />
       </div>
     </section>

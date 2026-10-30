@@ -34,8 +34,6 @@ const STORIES = [
   { id: 'overlays-drawer', name: 'docs-drawer' },
   { id: 'overlays-confirmation-modal', name: 'docs-confirm' },
   { id: 'overlays-notifications-panel', name: 'docs-notifications' },
-  // Pages/Examples/Form Elements rendering — to see them in real form context
-  { id: 'pages-examples-form-elements--default', name: 'pages-formelements' },
 ];
 
 const STORYBOOK_URL = process.env.STORYBOOK_URL ?? 'http://storybook:6006';

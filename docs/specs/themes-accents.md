@@ -305,7 +305,7 @@ In `packages/react/src` (stories excluded), **text** in `text-brand-500` (links,
 2. `pnpm --filter @sckyzo/cosmos-theme test` (the § 1.6 contrast script): must pass.
 3. `pnpm test` (stories + `play` tests + a11y in `error` mode).
 4. `pnpm build`.
-5. Visual check in Storybook: the 4 themes with at least `blue`, `teal` and `red`, on `Pages/Dashboard`, a form (focus ring) and a chart (color follows the accent, dark chart on `deep-blue`).
+5. Visual check in Storybook: the 4 themes with at least `blue`, `teal` and `red`, on `Examples/Dashboard`, a form (focus ring) and a chart (color follows the accent, dark chart on `deep-blue`).
 
 ## Out of scope (separate PRs)
 
