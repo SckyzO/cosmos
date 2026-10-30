@@ -8,6 +8,11 @@
 // few files too many. What reaches a story some other way than a name (a CSS variable, a theme
 // token) is not followed, which is why check-changed runs the full `make ci` for those files.
 //
+// The Storybook app's own stories (apps/storybook/stories) are searched too: they import the
+// packages by relative path and use their components, so a change under packages/*/src can reach
+// them. A change inside that folder (a story, or a helper or data file it imports) is followed
+// within the folder only: nothing in a package imports from it.
+//
 // Barrels (index.ts) are skipped: each one names every file of its folder, so following them would
 // spread a change to the names they re-export from unrelated files. Only the packages of the
 // changed files are searched: charts imports neither react nor theme. Paths are relative to the
@@ -40,11 +45,15 @@ const exportsOf = (text) => {
 // Exported names are identifiers, so they need no escaping.
 const usesAny = (names) => new RegExp(`\\b(?:${[...names].join('|')})\\b`);
 
+const STORIES_DIR = 'apps/storybook/stories';
 const packages = new Set(
   changed.filter((f) => f.startsWith('packages/')).map((f) => f.split('/').slice(0, 2).join('/'))
 );
-const files = [...packages]
-  .map((pkg) => join(pkg, 'src'))
+const dirs = [...packages].map((pkg) => join(pkg, 'src'));
+if (packages.size > 0 || changed.some((f) => f.startsWith(`${STORIES_DIR}/`))) {
+  dirs.push(STORIES_DIR);
+}
+const files = dirs
   .filter((dir) => existsSync(dir))
   .flatMap((dir) =>
     readdirSync(dir, { recursive: true })

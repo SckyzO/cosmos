@@ -33,7 +33,7 @@ fi
 code=()
 unscoped=()
 for f in "${changed[@]}"; do
-  if [[ $f =~ ^packages/(react|charts)/src/.*\.tsx?$ ]]; then
+  if [[ $f =~ ^(packages/(react|charts)/src|apps/storybook/stories)/.*\.tsx?$ ]]; then
     code+=("$f")
   elif [[ $f != *.md ]]; then
     unscoped+=("$f")
