@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+  expectNoHorizontalOverflow,
+  mobileViewport,
+} from '../../../packages/react/src/storybook-helpers';
 import { catalogComponents, type IndexEntry, type StoryIndex } from './welcome/catalog';
 import { Appearance, type WelcomeAppearance } from './welcome/WelcomeAppearance';
 import { ComponentsSection } from './welcome/WelcomeCatalog';
@@ -51,8 +55,16 @@ const DEFAULT_APPEARANCE: WelcomeAppearance = {
   direction: 'ltr',
 };
 
-const WelcomePage = ({ appearance = DEFAULT_APPEARANCE }: { appearance?: WelcomeAppearance }) => {
-  const index = useStoryIndex();
+// `entries` stands in for the fetched index, for the tests.
+const WelcomePage = ({
+  appearance = DEFAULT_APPEARANCE,
+  entries,
+}: {
+  appearance?: WelcomeAppearance;
+  entries?: StoryIndex;
+}) => {
+  const fetched = useStoryIndex();
+  const index = entries ?? fetched;
   const components = Array.isArray(index) ? catalogComponents(index) : null;
   return (
     <div className="min-w-0">
@@ -333,5 +345,95 @@ export const CustomizerOpens: Story = {
       if (density === undefined) delete html.dataset.density;
       else html.dataset.density = density;
     }
+  },
+};
+
+// ── Structure and phone ──────────────────────────────────────────────────────
+
+// Ten groups, so a phone has some to hide.
+const MANY_GROUPS: IndexEntry[] = [
+  'Foundations',
+  'Typography',
+  'Atoms',
+  'Actions',
+  'Forms',
+  'Data',
+  'Media',
+  'Status',
+  'Monitoring',
+  'Charts',
+].flatMap((group) =>
+  ['One', 'Two', 'Three'].map((name) =>
+    story(`${group.toLowerCase()}-${name.toLowerCase()}--default`, `${group}/${name}`, 'Default')
+  )
+);
+
+/** The page on a phone: the sections stack, nothing scrolls sideways. */
+export const Phone: Story = {
+  globals: mobileViewport,
+  render: () => <WelcomePage />,
+  play: async () => {
+    expectNoHorizontalOverflow();
+  },
+};
+
+/** The page has one h1, whatever the index holds. Test only. */
+export const OneHeading: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage entries={MANY_GROUPS} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    await expect(canvas.getByRole('heading', { level: 2, name: /^30 components/ })).toBeVisible();
+  },
+};
+
+/** On a phone the catalog and the news show a few cards behind buttons that say so. Test only. */
+export const PhoneDisclosures: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage entries={MANY_GROUPS} />,
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const groups = () =>
+      within(canvas.getByRole('region', { name: /^30 components/ }))
+        .getAllByRole('listitem')
+        .filter((li) => li.offsetParent);
+    await expect(groups()).toHaveLength(6);
+    const more = canvas.getByRole('button', { name: 'Show the 4 other groups' });
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(more);
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    await expect(groups()).toHaveLength(10);
+    expectNoHorizontalOverflow();
+
+    const news = () =>
+      within(canvas.getByRole('region', { name: /Density, both/ }))
+        .getAllByRole('heading', { level: 3 })
+        .filter((h) => h.offsetParent);
+    await expect(news()).toHaveLength(4);
+    await userEvent.click(canvas.getByRole('button', { name: 'Show the 4 others' }));
+    await expect(news()).toHaveLength(8);
+    expectNoHorizontalOverflow();
+  },
+};
+
+/** Below sm the section links are one menu. Test only. */
+export const PhoneSectionMenu: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <WelcomePage entries={MANY_GROUPS} />,
+  play: async ({ canvas }) => {
+    // Hidden, so out of the accessibility tree.
+    await expect(canvas.queryByRole('navigation', { name: 'Welcome sections' })).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Sections' }));
+    const menu = within(await within(document.body).findByRole('menu'));
+    await expect(menu.getAllByRole('menuitem').map((i) => i.getAttribute('href'))).toEqual([
+      '#appearance',
+      '#examples',
+      '#components',
+      '#get-started',
+      '#new',
+    ]);
+    await userEvent.keyboard('{Escape}');
   },
 };
