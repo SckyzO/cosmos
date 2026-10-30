@@ -1,6 +1,8 @@
 import type { StorybookConfig } from '@storybook/react-vite';
-import { mergeConfig } from 'vite';
+import { mergeConfig, type UserConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
+
+type OnLog = NonNullable<NonNullable<NonNullable<UserConfig['build']>['rolldownOptions']>['onLog']>;
 
 const config: StorybookConfig = {
   // Allowlist for Origin/Host header validation (Storybook 10+ default = []).
@@ -54,6 +56,7 @@ const config: StorybookConfig = {
   //  - hmr.host: forces the browser-side HMR client to talk to localhost instead of the
   //    container hostname, so the WebSocket connects when the page is loaded via localhost:6006.
   async viteFinal(config) {
+    const previousOnLog = config.build?.rolldownOptions?.onLog;
     return mergeConfig(config, {
       plugins: [tailwindcss()],
       // Vite only discovers a dependency when a story first imports it, then
@@ -69,6 +72,19 @@ const config: StorybookConfig = {
       // dev (`pnpm dev`) leaves it unset so `base` defaults to `/`.
       base: process.env.STORYBOOK_BASE_PATH ?? '/',
       build: {
+        rolldownOptions: {
+          // Dependencies (Radix, Tiptap, lucide-react, cmdk, sonner) start their files with
+          // "use client", a directive for React Server Components bundlers. The preview runs
+          // entirely in the browser, so it means nothing in this bundle and Rolldown's note that it
+          // may not be preserved is noise. Only that directive is dropped: every other log goes on
+          // to the handler Storybook or Vite set, or to the default one.
+          onLog: ((level, log, defaultHandler) => {
+            if (log.code === 'MODULE_LEVEL_DIRECTIVE' && log.message.includes('"use client"'))
+              return;
+            if (previousOnLog) previousOnLog(level, log, defaultHandler);
+            else defaultHandler(level, log);
+          }) satisfies OnLog,
+        },
         // Above the largest chunks (the preview's entry, ~1.15 MB, and maplibre-gl, ~1 MB). The
         // heavy ones (maplibre-gl, the Icons and RichTextEditor stories, axe) load only with the
         // story that needs them, and this is a reference site, not an app shipped to visitors, so
