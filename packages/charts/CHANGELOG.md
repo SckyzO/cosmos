@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-* **charts:** add the [@source](https://github.com/source) line to the install steps ([80f1687](https://github.com/SckyzO/cosmos/commit/80f16872bb9e68ad13924034a15eb6d2a123695b))
+* **charts:** add the `@source` line to the install steps ([80f1687](https://github.com/SckyzO/cosmos/commit/80f16872bb9e68ad13924034a15eb6d2a123695b))
 
 ## [0.3.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.3.0...@sckyzo/cosmos-charts@0.3.1) (2026-10-30)
 
