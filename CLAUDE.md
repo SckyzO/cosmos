@@ -59,8 +59,9 @@ them:
   every step runs. Lint, format, typecheck, the builds and `CI=true pnpm test` run one after the
   other, as in `make ci`. Then, with at least 13 GB of `MemAvailable` in `/proc/meminfo`
   (`CHECK_MIN_MEM_GB` changes the threshold), the three contrast passes and the direction pass run
-  side by side, one `cosmos-dev` container each (logs in `.cache/check-changed/`; a failure names
-  its pass and keeps the log). Below it they are skipped, the check says so and exits 0: push, and
+  side by side, one `cosmos-dev` container each with a quarter of the cores
+  (`VITEST_MAX_WORKERS`: one Vitest run per core on four runs starves them, and stories time out;
+  logs in `.cache/check-changed/`; a failure names its pass and keeps the log). Below it they are skipped, the check says so and exits 0: push, and
   the PR's CI runs them. Each pass gets its own Vite and Storybook caches through
   `VITEST_CACHE_DIR` (`apps/storybook/vitest.config.ts`): two runs sharing a dependency cache
   re-optimise it under each other ("optimized dependencies changed. reloading"). Keep any new
