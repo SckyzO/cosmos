@@ -5,6 +5,13 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.3.0...@sckyzo/cosmos-charts@0.3.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **charts:** keep the charts left to right under dir=rtl ([d9c5d80](https://github.com/SckyzO/cosmos/commit/d9c5d806a6f3718b369719ed8198681ea4116c35))
+
 ## [0.3.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.2.0...@sckyzo/cosmos-charts@0.3.0) (2026-10-27)
 
 

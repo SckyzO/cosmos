@@ -5,6 +5,19 @@ All notable changes to `@sckyzo/cosmos-theme` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.3.0...@sckyzo/cosmos-theme@0.4.0) (2026-10-30)
+
+
+### Features
+
+* **react:** add density to appearance settings and a compact DataTable ([000d1c2](https://github.com/SckyzO/cosmos/commit/000d1c211c4a4bfffd22e1b119558d0e0cb57235))
+* **theme:** add 20px and 24px row padding tokens ([e4acd79](https://github.com/SckyzO/cosmos/commit/e4acd79ac1cc8e47551e1b2d82efe032c7ed95fa))
+* **theme:** add a 4px row padding token ([4886cf3](https://github.com/SckyzO/cosmos/commit/4886cf3c65edbdef99ee88a4f9dc822ae8ea3000))
+* **theme:** add a 5px row token that stops at 4px ([842804d](https://github.com/SckyzO/cosmos/commit/842804d10ab958a7c3f083ebd842597ffb16bd78))
+* **theme:** add data-density and its spacing tokens ([070f74a](https://github.com/SckyzO/cosmos/commit/070f74a8135fe3564b4609a8a53755fc9e12d002))
+* **theme:** follow the nearest dir attribute in the rtl variant ([6e25a80](https://github.com/SckyzO/cosmos/commit/6e25a800d64c3c3208c1d0eea940fe60980842d3))
+* **theme:** rescale every corner with data-radius ([2bdea86](https://github.com/SckyzO/cosmos/commit/2bdea865a341d3052e9a1fe10a1c7875f6793f9f))
+
 ## [0.3.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.2.0...@sckyzo/cosmos-theme@0.3.0) (2026-10-27)
 
 
