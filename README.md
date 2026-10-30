@@ -70,14 +70,14 @@ Stories are organised by **responsibility**, not file location (Storybook
 [story-hierarchy convention](https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy)):
 
 ```text
-Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data
+Welcome → Examples → Foundations → Typography → Atoms → Actions → Forms → Data
        → Media → Status → Monitoring → Feedback → Overlays → Navigation
        → Layout → Lists → Chat → Tables → Settings → Charts
 ```
 
 Notable groups:
 
-- **Pages** — full-page templates (Dashboard, Calendar, Activity, Settings, Profile, sign-in forms, Blog, Doc Page, …)
+- **Examples** — six screen recipes, each in its states (content, empty, loading, error, extreme content, phone): App Shell, List, Detail, Settings, Dashboard and Monitoring; then the auth forms and the error page
 - **Typography** — Headings, Paragraphs, Text utilities, Blockquote, Kbd, Figure, Link, List, Description List, Divider
 - **Forms** — 26 controls (Input, Select, Combobox, MultiSelect, TagInput, DatePicker single + range, …)
 - **Media** — Carousel, Image Grid, Video Embed, CodeBlock

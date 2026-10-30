@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { SignUpForm } from './SignUpForm';
 
 const meta = {
-  title: 'Pages/Auth/Sign Up Form',
+  title: 'Examples/Auth/Sign Up Form',
   component: SignUpForm,
   parameters: portalDocsParams(720),
   tags: ['autodocs'],

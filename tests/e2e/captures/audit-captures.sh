@@ -12,7 +12,7 @@
 #   THEMES          themes of the 1280px pass, comma-separated (default: light,dark)
 #   STORIES         story id substrings of the 1280px pass (default: every story)
 #   MOBILE_STORIES  story id substrings of the 375px pass, in light
-#                   (default: layout-,navigation-,pages-,templates-)
+#                   (default: layout-,navigation-,examples-,templates-)
 #
 # The host needs docker, git and bash. Node, pnpm and Chromium run in cosmos-dev.
 set -euo pipefail
@@ -24,7 +24,7 @@ work=/workspace/.cache/audit
 references=${REFERENCES:-../cosmos-references}
 themes=${THEMES:-light,dark}
 stories=${STORIES:-}
-mobile_stories=${MOBILE_STORIES:-layout-,navigation-,pages-,templates-}
+mobile_stories=${MOBILE_STORIES:-layout-,navigation-,examples-,templates-}
 
 # The captures replace a whole folder: make sure it is the right checkout.
 [[ -d "$references/references" && -d "$references/.git" ]] || {

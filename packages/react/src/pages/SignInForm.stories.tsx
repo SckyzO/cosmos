@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './SignInForm';
 
 const meta = {
-  title: 'Pages/Auth/Sign In Form',
+  title: 'Examples/Auth/Sign In Form',
   component: SignInForm,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],

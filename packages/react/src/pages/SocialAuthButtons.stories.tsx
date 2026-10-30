@@ -8,7 +8,7 @@ import { SignInForm } from './SignInForm';
 import { SocialAuthButtons, type SocialProvider } from './SocialAuthButtons';
 
 const meta = {
-  title: 'Pages/Auth/Social Auth Buttons',
+  title: 'Examples/Auth/Social Auth Buttons',
   component: SocialAuthButtons,
   parameters: { layout: 'padded' },
   tags: ['autodocs'],

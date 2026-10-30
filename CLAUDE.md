@@ -60,7 +60,7 @@ build-image` after a Dockerfile change). `make screenshots` writes raw captures 
 cut every request to another origin than Storybook's (images in stories: `storybook-avatars.ts`);
 a story whose picture depends on elapsed time takes the `no-capture` tag. `make audit-captures`
 builds the working tree's Storybook, captures every story at 1280px (light, dark) and the
-`layout-`/`navigation-`/`pages-`/`templates-` stories at 375px (light), and replaces the `cosmos/`
+`layout-`/`navigation-`/`examples-`/`templates-` stories at 375px (light), and replaces the `cosmos/`
 folder of `../cosmos-references` (override with `REFERENCES=`) with them plus a `meta.json` naming
 the commit: the input of the visual audit. `CAPTURE_VIEWPORT=<w>x<h>` changes any capture's size.
 
@@ -254,7 +254,7 @@ titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group tha
 `parameters.options.storySort.order` in `apps/storybook/.storybook/preview.tsx`:
 
 ```text
-Welcome → Pages → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
+Welcome → Examples → Foundations → Typography → Atoms → Actions → Forms → Data → Media → Status
 → Monitoring → Feedback → Overlays → Navigation → Layout → Lists → Chat → Tables → Settings
 → Charts
 ```

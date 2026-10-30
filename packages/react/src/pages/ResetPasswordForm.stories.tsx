@@ -12,7 +12,7 @@ import { AuthLayout } from './AuthLayout';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
 const meta = {
-  title: 'Pages/Auth/Reset Password Form',
+  title: 'Examples/Auth/Reset Password Form',
   component: ResetPasswordForm,
   parameters: portalDocsParams(500),
   tags: ['autodocs'],
