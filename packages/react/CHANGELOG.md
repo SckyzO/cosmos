@@ -5,6 +5,134 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.3.0...@sckyzo/cosmos-react@0.4.0) (2026-10-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** rename the values you pass. TableHeaderCell and TableCell align, ColumnDef align and ColumnHeader align: 'left' -> 'start', 'right' -> 'end'. RowActionsMenu align: 'left' -> 'start', 'right' -> 'end' (default now 'end').
+* **react:** rename the values you pass. FormFooter align: 'right' -> 'end' (default now 'end'). Divider and Divider.Icon align: 'left' -> 'start', 'right' -> 'end'. Blockquote align and Figure align: 'left' -> 'start', 'right' -> 'end' (default now 'start'). MediaObject mediaPosition: 'left' -> 'start', 'right' -> 'end', and the data-media-position attribute follows. Navbar.Menu align: 'left' -> 'start', 'right' -> 'end' (default now 'start').
+* **react:** Drawer side="left" is now side="start" and side="right" is side="end". Dropdown, UserMenu, NotificationsPanel and Menu align="left" is now align="start" and align="right" is align="end". Tooltip and Popover.Content position="left" is now position="start" and position="right" is position="end".
+* **react:** rename the props. Input rightSlot -> endSlot. Topbar leftActions -> startActions, rightActions -> endActions.
+* **react:** rename the values you pass. Button and Badge iconPosition: 'left' -> 'start', 'right' -> 'end'. Ribbon position: 'top-left' -> 'top-start', 'top-right' -> 'top-end', 'bottom-left' -> 'bottom-start', 'bottom-right' -> 'bottom-end'. BackToTopFab position: 'bottom-left' -> 'bottom-start', 'bottom-right' -> 'bottom-end'.
+
+### Features
+
+* **react:** add a corner radius section to the Customizer ([b228b2c](https://github.com/SckyzO/cosmos/commit/b228b2cb681bf29cbda9ebe1bd7b3474ddd11e4a))
+* **react:** add an internal direction helper ([90877c0](https://github.com/SckyzO/cosmos/commit/90877c034acf508f4d7aaf7fe76af4396c1d4fd2))
+* **react:** add CommandPaletteTrigger for the command palette ([c074041](https://github.com/SckyzO/cosmos/commit/c07404184451a17347953b366686658aa9b8e340))
+* **react:** add Customizer panel and direction to applyAppearance ([bb28a36](https://github.com/SckyzO/cosmos/commit/bb28a36d7570d33fef20d1dd1b46b09ffd930b35))
+* **react:** add density to appearance settings and a compact DataTable ([000d1c2](https://github.com/SckyzO/cosmos/commit/000d1c211c4a4bfffd22e1b119558d0e0cb57235))
+* **react:** add ErrorState's action slot and retryLabel ([dae3d7a](https://github.com/SckyzO/cosmos/commit/dae3d7ab9dd593f95c7ba2b48a4f1771c236e17e))
+* **react:** add HeartbeatBar ([f9c5cec](https://github.com/SckyzO/cosmos/commit/f9c5cecf673e694d9d300d2b663bec669ae6d4fe)), closes [#462](https://github.com/SckyzO/cosmos/issues/462)
+* **react:** add isSafeLinkUrl for links a user writes ([aec23db](https://github.com/SckyzO/cosmos/commit/aec23db7f5c3cba0cf927e6161e3103b0a67bdb5))
+* **react:** add JobLog for the output of a CI job ([236bd8d](https://github.com/SckyzO/cosmos/commit/236bd8da5a95aa52d2605e3c6e1f353e9f54703d)), closes [#477](https://github.com/SckyzO/cosmos/issues/477)
+* **react:** add KpiCard's exactValue with a tooltip ([265ce53](https://github.com/SckyzO/cosmos/commit/265ce53a800e852b2c3d6f417c9101d002444b70))
+* **react:** add modes to CommentComposer ([99cecb8](https://github.com/SckyzO/cosmos/commit/99cecb8451e1e62b4322676a624633251f24a8c8))
+* **react:** add MonitorRow ([b5c5c66](https://github.com/SckyzO/cosmos/commit/b5c5c6666ceafd9776395588ad81ef00f0914f86)), closes [#462](https://github.com/SckyzO/cosmos/issues/462)
+* **react:** add Navbar.Menu and a More menu for items that overflow ([b3c8f78](https://github.com/SckyzO/cosmos/commit/b3c8f784566732966d17f100ec5f76cf9fc8037d))
+* **react:** add rowHeader and attentionStrip to HealthMatrix ([dfa04da](https://github.com/SckyzO/cosmos/commit/dfa04da24098ad4eb6d16f9d425e178b8596a74a))
+* **react:** add Shell container boxed, a centred 1440px column ([cdf3ed1](https://github.com/SckyzO/cosmos/commit/cdf3ed18defa056cde33f7de5795b252ba94af29))
+* **react:** add Sidebar variant compact, an 88px rail with labels ([5129bc8](https://github.com/SckyzO/cosmos/commit/5129bc83a178b7163faf18a7dfad175c3ad33d85))
+* **react:** add stale to HealthSummary, HealthMatrix and MonitorRow ([bf9536b](https://github.com/SckyzO/cosmos/commit/bf9536b7d25a07972245f2c7e5980a147a09f09e))
+* **react:** add the editor entry with RichTextEditor ([cdc6464](https://github.com/SckyzO/cosmos/commit/cdc646471d3174f1cdeb532336f984f164b9bb42))
+* **react:** add the map entry with MapView on MapLibre ([7b250e0](https://github.com/SckyzO/cosmos/commit/7b250e065518471158c1f561049c5812f97a3167))
+* **react:** add UptimeBars ([20bd233](https://github.com/SckyzO/cosmos/commit/20bd233c21236b780be8edec74df12a3e8fd2806)), closes [#462](https://github.com/SckyzO/cosmos/issues/462)
+* **react:** add UptimeStat ([085dc18](https://github.com/SckyzO/cosmos/commit/085dc1815158e70e5a430f6cc9c0437911d38abb)), closes [#462](https://github.com/SckyzO/cosmos/issues/462)
+* **react:** align floating panels to the reading direction ([d5d4e8c](https://github.com/SckyzO/cosmos/commit/d5d4e8c6ffec73c65269cb7298505cbc941d72c8))
+* **react:** DataTable selection toolbar, phone filters, empty action ([b01b38a](https://github.com/SckyzO/cosmos/commit/b01b38abef8b5bf3a9a14c33aebb2dcefc8b2e6e))
+* **react:** fold StickyScrollNav into a jump menu below sm ([95857a3](https://github.com/SckyzO/cosmos/commit/95857a349464b4b509117933b67894ecdf1e9fb9))
+* **react:** follow page density in cards and audit diff rows ([b6128f8](https://github.com/SckyzO/cosmos/commit/b6128f88e3dbc66692923fa0697bbc23a9d2f3eb)), closes [#486](https://github.com/SckyzO/cosmos/issues/486)
+* **react:** follow page density in health and uptime rows ([60084f4](https://github.com/SckyzO/cosmos/commit/60084f450aa429a93d803709cc8e98b2391e195f)), closes [#486](https://github.com/SckyzO/cosmos/issues/486)
+* **react:** follow page density in the editor toolbar and link field ([c527889](https://github.com/SckyzO/cosmos/commit/c527889f07fafd6609db8d0f15d31ab75537a525)), closes [#486](https://github.com/SckyzO/cosmos/issues/486)
+* **react:** follow page density in the log toolbar and viewer ([876b5d3](https://github.com/SckyzO/cosmos/commit/876b5d3e5629f39d2b05115a642b9109ef3bcbd1)), closes [#486](https://github.com/SckyzO/cosmos/issues/486)
+* **react:** follow page density in the map zoom and marker list ([3e04438](https://github.com/SckyzO/cosmos/commit/3e044380aa291504f5721b5a16807d9ce18e4078)), closes [#486](https://github.com/SckyzO/cosmos/issues/486)
+* **react:** follow the page density in auth buttons ([da86950](https://github.com/SckyzO/cosmos/commit/da86950007e0ab00debe1b6b15af991c6e5c8a20))
+* **react:** follow the page density in buttons and their kin ([5261b0c](https://github.com/SckyzO/cosmos/commit/5261b0cccefe0c0a9af50fe71b6ec615d3e914d8))
+* **react:** follow the page density in chat ([6e90831](https://github.com/SckyzO/cosmos/commit/6e908311878d10f992fe616819b8644bbacd8dc8))
+* **react:** follow the page density in data components ([b2096b9](https://github.com/SckyzO/cosmos/commit/b2096b920fc161490b8f8c0cea0e97940d20b89b))
+* **react:** follow the page density in feedback and media controls ([fe3e94c](https://github.com/SckyzO/cosmos/commit/fe3e94c735321312d860f65368bc5fe9faf4b496))
+* **react:** follow the page density in lists ([46c93c6](https://github.com/SckyzO/cosmos/commit/46c93c63afe130437803a6bddb7fda1ef8703c5a))
+* **react:** follow the page density in navigation ([0c55dff](https://github.com/SckyzO/cosmos/commit/0c55dff6bedf034c9416b02a54c4ebb726485aa0))
+* **react:** follow the page density in overlays ([f2333c9](https://github.com/SckyzO/cosmos/commit/f2333c9d93b091e62a7126376b43c05d3b5ba64c))
+* **react:** follow the page density in settings and theme toggles ([4595c2c](https://github.com/SckyzO/cosmos/commit/4595c2c1bccf482b16a658787f1415c9a88238fc))
+* **react:** follow the page density in table controls ([3987996](https://github.com/SckyzO/cosmos/commit/3987996d1f36c87dc33d832fb566320715d58ae0))
+* **react:** follow the page density in the form controls ([6b621a0](https://github.com/SckyzO/cosmos/commit/6b621a0713f7e85fc3a19bac178ef0894f9a3285))
+* **react:** follow the page density in the layout ([41078f8](https://github.com/SckyzO/cosmos/commit/41078f86ec23d4a2f22f9536d10db86bf8c01a03))
+* **react:** follow the reading direction in radio-group arrow keys ([55bca05](https://github.com/SckyzO/cosmos/commit/55bca05fbc04d97d010ec21c342ab987121842b6))
+* **react:** give the editor's lists and quotes their text's direction ([48145e3](https://github.com/SckyzO/cosmos/commit/48145e34d024ea1d0ef30448b9e6ddd83a92f9e6))
+* **react:** isolate status badges, uptime legends and list values ([1b9d299](https://github.com/SckyzO/cosmos/commit/1b9d299ee7cecc856c80e8e9de2db6d1e2344441))
+* **react:** isolate the EventCalendar weekday names ([f510eea](https://github.com/SckyzO/cosmos/commit/f510eeacb2efb98fb192f5688953bdf8db26d35a))
+* **react:** isolate the KpiCard, TrendDelta and FileTile captions ([e6a44fb](https://github.com/SckyzO/cosmos/commit/e6a44fb70ffe683ac2151e55f66d7b8f79bc9194))
+* **react:** isolate the meta items of PageHeader in right to left ([95a38ca](https://github.com/SckyzO/cosmos/commit/95a38ca3059344b7dcf44ecb0e55eddb909d637d))
+* **react:** isolate the titles and sender names in right to left ([2a1bb30](https://github.com/SckyzO/cosmos/commit/2a1bb307462365b4aa0f4b4ad86b6a27f387a346))
+* **react:** keep a FormRow's switch beside its label on phones ([b188258](https://github.com/SckyzO/cosmos/commit/b18825813e100e913cd165b05904bb0ea61736f5))
+* **react:** keep the last replies of a Comment visible ([4a3dff6](https://github.com/SckyzO/cosmos/commit/4a3dff6ce228787c0cab0f87c71969bd6d3705fd))
+* **react:** lay the Customizer out as its mockup does ([e6b86ff](https://github.com/SckyzO/cosmos/commit/e6b86ff214dfe86694d382e82c5f3110e49cc918))
+* **react:** let MultiSelect keep its label for assistive technology ([f1871f3](https://github.com/SckyzO/cosmos/commit/f1871f3222b46bb12af8569cba05d6a754c932f0)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** mirror AuditDiff in right to left ([14e819e](https://github.com/SckyzO/cosmos/commit/14e819e374e56a8ff26592fa76fea221a451c6f2))
+* **react:** mirror DataTable and Table in right to left ([7c1f8c8](https://github.com/SckyzO/cosmos/commit/7c1f8c894ccd3485b75802431fab0137cf4dae6f))
+* **react:** mirror Shell, Sidebar and Topbar in right to left ([c729a4a](https://github.com/SckyzO/cosmos/commit/c729a4a8e016b483150461cf47d336f34b3871db))
+* **react:** mirror the Actions components in right to left ([d968d9f](https://github.com/SckyzO/cosmos/commit/d968d9f3781be06c79514114b81ff787aca5b72f))
+* **react:** mirror the Atoms components in right to left ([53259cf](https://github.com/SckyzO/cosmos/commit/53259cff07f307584cb7cf9e75f80ba808e46548))
+* **react:** mirror the Calendar and DatePicker in right to left ([60134c2](https://github.com/SckyzO/cosmos/commit/60134c23495aaa5e26848e8167b6582bc1938439))
+* **react:** mirror the Chat components in right to left ([c0d4310](https://github.com/SckyzO/cosmos/commit/c0d43103e4318c48a139df334f04b1b26fae832b))
+* **react:** mirror the CommentThread replies in right to left ([19b6288](https://github.com/SckyzO/cosmos/commit/19b628813bc8493d75d789030ddb338620d3a0a2))
+* **react:** mirror the Data components in right to left ([45f281f](https://github.com/SckyzO/cosmos/commit/45f281fd0385f3d5b0bc7656e6d6887a9b2704e4))
+* **react:** mirror the Feedback components in right to left ([dd89694](https://github.com/SckyzO/cosmos/commit/dd89694d43874b4e86f95f89fcf18e767b9e946d))
+* **react:** mirror the Forms components in right to left ([85e7f22](https://github.com/SckyzO/cosmos/commit/85e7f222821844718290a46778d6532fa54f7d97))
+* **react:** mirror the Layout components in right to left ([af523ea](https://github.com/SckyzO/cosmos/commit/af523eadf89c34ead170334800b63c02155230e9))
+* **react:** mirror the Lists components in right to left ([3770150](https://github.com/SckyzO/cosmos/commit/37701503a296e2da22dcf58f4a5afe90eb36e62c))
+* **react:** mirror the Media components in right to left ([7ec29c0](https://github.com/SckyzO/cosmos/commit/7ec29c0c09314c9045782a373b7400d4d45cb7b5))
+* **react:** mirror the Monitoring components in right to left ([b61bc23](https://github.com/SckyzO/cosmos/commit/b61bc23c565276b22c2587867e2b1ea6e1e0ddf8))
+* **react:** mirror the Navigation components in right to left ([be3dafb](https://github.com/SckyzO/cosmos/commit/be3dafb1dc9ecbf977f75b93d24adb6e6b337a20))
+* **react:** mirror the Overlays components in right to left ([7dec0a9](https://github.com/SckyzO/cosmos/commit/7dec0a91643ef7e92fef07d89b84b44eebd2c678))
+* **react:** mirror the Pages components in right to left ([b4a5185](https://github.com/SckyzO/cosmos/commit/b4a51858bb23694cc4b88a57d2f61df403192780))
+* **react:** mirror the rich text editor in right to left ([c75e905](https://github.com/SckyzO/cosmos/commit/c75e905eadc75a2fe3cdf38b473fb79ca36a7bef))
+* **react:** mirror the Settings components in right to left ([ae1914d](https://github.com/SckyzO/cosmos/commit/ae1914d5a60084819e2fb19e4fc886f4f6ac007f))
+* **react:** mirror the Slider in right to left ([d0048df](https://github.com/SckyzO/cosmos/commit/d0048df03a0ac15b99236514d5c5d1503d7278ce))
+* **react:** mirror the Typography components in right to left ([2db5779](https://github.com/SckyzO/cosmos/commit/2db5779d63100e95ba5c2b2a4f677ba1d4bcc9ca))
+* **react:** name the Customizer's radius list radii ([daa036a](https://github.com/SckyzO/cosmos/commit/daa036a4097ba87f3019a6b26d4e5496e101491e))
+* **react:** name the reading direction CosmosDirection ([6ee5553](https://github.com/SckyzO/cosmos/commit/6ee555375af04997d941d006d2d03b48ff76d0b8))
+* **react:** point the Calendar month chevrons at their month in rtl ([259f547](https://github.com/SckyzO/cosmos/commit/259f547887277f78d9f6d5586f699e70d312cbba))
+* **react:** put PageHeader's breadcrumb above the title ([730cf5b](https://github.com/SckyzO/cosmos/commit/730cf5b7cb0c5bf7aa4981b3ec64773d1d826c47))
+* **react:** render EmptyState children under the description ([327134f](https://github.com/SckyzO/cosmos/commit/327134f2b99f722bcf5f274bb45612a6f5d7af2a))
+* **react:** stack FormRow's label above the control below sm ([e4b03c0](https://github.com/SckyzO/cosmos/commit/e4b03c03ced09a0fd8f1cc588374283a2212cdf8))
+* **theme:** rescale every corner with data-radius ([2bdea86](https://github.com/SckyzO/cosmos/commit/2bdea865a341d3052e9a1fe10a1c7875f6793f9f))
+
+
+### Bug Fixes
+
+* **react:** adapt the LogViewer row to the width of the viewer ([5f5d59c](https://github.com/SckyzO/cosmos/commit/5f5d59c3ecee9cd0f94aebf462163bff8855afdd)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** align LogToolbar's source filter with the other controls ([7dc23f8](https://github.com/SckyzO/cosmos/commit/7dc23f86e3bc1d888b9041d6b6181ce93c6065b2)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** align the AuditDiff headers to the start ([4d046e1](https://github.com/SckyzO/cosmos/commit/4d046e1c9046319939ad629eb0d7423ddeb379e9))
+* **react:** give LogViewer's id props a plain type for the docs table ([ec6c1c2](https://github.com/SckyzO/cosmos/commit/ec6c1c20290f3f98bcf3f20dd960c013275e2cfd)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** give the DataTable edit helpers a file name of their own ([8e0b283](https://github.com/SckyzO/cosmos/commit/8e0b28349e1c50001b09cdaaf3781933f407f4ef)), closes [#457](https://github.com/SckyzO/cosmos/issues/457)
+* **react:** give the map attribution the panel's colours ([04ab484](https://github.com/SckyzO/cosmos/commit/04ab48438bb859ec5b74a4666acbc7c43a23043e))
+* **react:** keep a paused LogViewer paused when a filter changes ([d06c2f6](https://github.com/SckyzO/cosmos/commit/d06c2f64b83ebd6196d615d3f177ecf44d336707)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** keep a side Drawer inside a narrow screen ([6ac420b](https://github.com/SckyzO/cosmos/commit/6ac420b17b392f8691df0b9bab2384ace6abceb9))
+* **react:** keep a tab's label and count in separate flex items ([e9e9529](https://github.com/SckyzO/cosmos/commit/e9e9529cabbcecf92f81b3be96fe6ebfec4d3ad2))
+* **react:** keep a wide floating panel inside a narrow screen ([d5a617d](https://github.com/SckyzO/cosmos/commit/d5a617d3eff4a4c6ceb02ead340259ce7420bb0e))
+* **react:** keep JobLog's ANSI text readable on a colour ([b1122fd](https://github.com/SckyzO/cosmos/commit/b1122fd10892f28a69a4282e61a6eebbd70186be))
+* **react:** keep LogToolbar's search field the same width with a count ([32139da](https://github.com/SckyzO/cosmos/commit/32139daa2eb7a36cc8ffab753eccff19a25f685b)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** keep the AvatarGroup overflow count in order in rtl ([021850f](https://github.com/SckyzO/cosmos/commit/021850fc821d00485b8722c37dd60657a5196aae))
+* **react:** keep the first DataTable column wide in a wide table ([bcd711c](https://github.com/SckyzO/cosmos/commit/bcd711c4015952599da9974f391e7dad4873fc93)), closes [#457](https://github.com/SckyzO/cosmos/issues/457)
+* **react:** keep the icon of LogToolbar's icon-only toggles at full size ([05a9d22](https://github.com/SckyzO/cosmos/commit/05a9d228cd13e882626459d0d9084243b917be24)), closes [#460](https://github.com/SckyzO/cosmos/issues/460)
+* **react:** measure scroll edges in right to left ([5a356d2](https://github.com/SckyzO/cosmos/commit/5a356d2374ebb8e14010c9fed2d27fee60ca5025))
+* **react:** parse highlightLines ranges in linear time ([d007671](https://github.com/SckyzO/cosmos/commit/d007671a9d8aedcba98b585b0119d5747ea149b8))
+* **react:** render the inline Clock as a span ([643e307](https://github.com/SckyzO/cosmos/commit/643e307e44284236f109817a5262ff638715b149))
+* **react:** title a drawer with an h2, as a modal is ([90f6311](https://github.com/SckyzO/cosmos/commit/90f63111fbd16ee589a10c92ecd51ed638cea8d6))
+* **react:** trim a log line's end in linear time ([7f3df32](https://github.com/SckyzO/cosmos/commit/7f3df321912880bcb5b3e5a9019f1ada8e0f0f30))
+
+
+### Code Refactoring
+
+* **react:** align table cells to start and end ([1bd32cf](https://github.com/SckyzO/cosmos/commit/1bd32cf7b2ddd3b3dac6ad168fd1b9ce7016c5e3))
+* **react:** align to start and end ([17f0dcb](https://github.com/SckyzO/cosmos/commit/17f0dcb72df27ac2c8e1fa1e7209365bd09aea24))
+* **react:** name the icon and corner sides start and end ([d75552e](https://github.com/SckyzO/cosmos/commit/d75552e39b938ecf0ddf47cc6b5599b3b129b710))
+* **react:** name the overlay sides start and end ([6c3c103](https://github.com/SckyzO/cosmos/commit/6c3c103162609f05b4ede86759082e599fbbbb20))
+* **react:** name the slot and action sides start and end ([93d9a1d](https://github.com/SckyzO/cosmos/commit/93d9a1d6a40e39b1bdd6a05313ab61d797d38938))
+
 ## [0.3.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.2.0...@sckyzo/cosmos-react@0.3.0) (2026-10-27)
 
 
