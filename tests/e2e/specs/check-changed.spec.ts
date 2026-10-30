@@ -52,3 +52,18 @@ test('a changed component selects the Storybook app stories that render it', () 
   expect(picked).toContain('packages/react/src/ui/Spinner.stories.tsx');
   expect(picked.some((f) => f.startsWith('apps/storybook/stories/'))).toBe(true);
 });
+
+test('only Markdown, docs/ and pictures outside the code count as documentation', () => {
+  const docsOnly = (...files: string[]) =>
+    spawnSync('tests/e2e/checks/docs-only.sh', { cwd: root, input: files.join('\n') }).status === 0;
+  expect(
+    docsOnly('README.md', 'docs/specs/themes-accents.md', 'docs/images/welcome-dark.png')
+  ).toBe(true);
+  expect(docsOnly('packages/react/README.md', 'logo.png')).toBe(true);
+  expect(docsOnly('README.md', 'packages/react/src/ui/Spinner.tsx')).toBe(false);
+  expect(docsOnly('README.md', '.github/workflows/ci.yml')).toBe(false);
+  expect(docsOnly('apps/storybook/public/avatar.png'), 'a picture a story may render').toBe(false);
+  expect(docsOnly('tests/e2e/fixtures/a.png')).toBe(false);
+  expect(docsOnly('docs/diagram.svg', 'package.json')).toBe(false);
+  expect(docsOnly(), 'no file at all').toBe(false);
+});

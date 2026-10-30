@@ -30,12 +30,25 @@ if [[ ${#changed[@]} -eq 0 ]]; then
   exit 0
 fi
 
+step() {
+  echo "── $1 ──"
+  shift
+  ./devctl run "$@"
+}
+
+if printf '%s\n' "${changed[@]}" | tests/e2e/checks/docs-only.sh; then
+  echo "Documentation only: ${changed[*]}"
+  step "prettier: ${#changed[@]} files" pnpm exec prettier --check --ignore-unknown "${changed[@]}"
+  echo "── check-changed passed in ${SECONDS}s ──"
+  exit 0
+fi
+
 code=()
 unscoped=()
 for f in "${changed[@]}"; do
   if [[ $f =~ ^(packages/(react|charts)/src|apps/storybook/stories)/.*\.tsx?$ ]]; then
     code+=("$f")
-  elif [[ $f != *.md ]]; then
+  elif ! echo "$f" | tests/e2e/checks/docs-only.sh; then
     unscoped+=("$f")
   fi
 done
@@ -44,12 +57,6 @@ if [[ ${#unscoped[@]} -gt 0 ]]; then
   echo "Running the full make ci."
   exec make ci
 fi
-
-step() {
-  echo "── $1 ──"
-  shift
-  ./devctl run "$@"
-}
 
 step "prettier: ${#changed[@]} files" pnpm exec prettier --check --ignore-unknown "${changed[@]}"
 if [[ ${#code[@]} -gt 0 ]]; then
