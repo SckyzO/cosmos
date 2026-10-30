@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 const BackIcon = mirroredIcon(ArrowLeft);
 
 const meta = {
-  title: 'Pages/Error Page',
+  title: 'Examples/Error Page',
   component: ErrorPage,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],

@@ -14,7 +14,7 @@ import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
 
 const meta = {
-  title: 'Pages/Auth/Two Step Verification Form',
+  title: 'Examples/Auth/Two Step Verification Form',
   component: TwoStepVerificationForm,
   parameters: portalDocsParams(560),
   tags: ['autodocs'],

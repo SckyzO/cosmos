@@ -19,7 +19,7 @@ import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './SignInForm';
 
 const meta = {
-  title: 'Pages/Auth/Auth Layout',
+  title: 'Examples/Auth/Auth Layout',
   component: AuthLayout,
   parameters: portalDocsParams(600),
   tags: ['autodocs'],
