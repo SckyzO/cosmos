@@ -4,12 +4,13 @@ Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 
 Recharts-based chart wrappers, documented in Storybook 10.
 
 **Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/): every component with its docs and
-stories (more than 1,000), in four themes and twelve accent colors.
+stories (more than 1,800), in four themes, twelve accent colors, three densities, four corner radii
+and both reading directions.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/images/welcome-light.png">
-  <img alt="Cosmos welcome page: theme and accent picker, live component preview, page templates, setup snippets and the catalog of sidebar groups" src="docs/images/welcome-dark.png">
+  <img alt="Cosmos welcome page: a workspace overview built from Cosmos components, the appearance choices, the six screen recipes, the component catalog with its search, the setup steps and what is new" src="docs/images/welcome-dark.png">
 </picture>
 
 Cosmos provides a shared CSS theme and a library of React components extracted
@@ -38,21 +39,31 @@ Settings on the `<html>` element restyle every component:
 - the **text size**, a `data-text-size` attribute: none for the default, or `sm`, `lg`,
   `xl`. It scales the text, not the spacing;
 - the **density**, a `data-density` attribute: none for the default, or `compact`,
-  `comfortable`. It moves the height of controls and the padding of rows, not the gaps.
+  `comfortable`. It moves the height of controls and the padding of rows, not the gaps;
 - the **corner radius**, a `data-radius` attribute: none for the default, or `none`, `sm`, `lg`.
-  It rescales every `rounded-*` corner but `rounded-full`, which stays round.
+  It rescales every `rounded-*` corner but `rounded-full`, which stays round;
+- the **reading direction**, the native `dir` attribute: none for left to right, or `rtl`. Every
+  component mirrors.
 
 ```html
-<html class="sand" data-accent="teal" data-font="inter" data-text-size="lg"></html>
+<html
+  class="sand"
+  data-accent="teal"
+  data-font="inter"
+  data-text-size="lg"
+  data-density="compact"
+  data-radius="lg"
+  dir="rtl"
+></html>
 ```
 
 The theme tokens that `scripts/check-contrast.mjs` in the theme package checks on every CI run
 (body, muted and accent text, white text on the accent) meet WCAG AA in every theme and accent
-pair. That guarantee covers those tokens, not every component. Some still fall short of AA,
-tracked in #265.
-`@sckyzo/cosmos-react` ships the pickers
-(`AppearanceSettings`, and `AppearanceMenu` for a top bar) and `applyAppearance` to set
-them. Details in the [theme README](packages/theme#themes--accents).
+pair. Every story passes axe on every CI run too, its color contrast in light, sand and deep blue,
+and passes again under `dir="rtl"`.
+`@sckyzo/cosmos-react` ships the pickers (`Customizer`, a side panel with every setting;
+`AppearanceSettings` for a settings page; `AppearanceMenu` for a top bar) and `applyAppearance`
+to set them. Details in the [theme README](packages/theme#themes--accents).
 
 ## Apps
 
@@ -61,7 +72,7 @@ them. Details in the [theme README](packages/theme#themes--accents).
 | [`apps/storybook`](apps/storybook) | Component showcase + visual testing + a11y + MCP | <https://sckyzo.github.io/cosmos/> |
 
 The Storybook is the canonical reference — every component has at least one
-story, autodocs is enabled, and the **Welcome** page lists every group and entry,
+story, autodocs is enabled, and the **Welcome** page counts, groups and searches every component,
 read from Storybook's story index so it stays in sync.
 
 ## Sidebar groups
