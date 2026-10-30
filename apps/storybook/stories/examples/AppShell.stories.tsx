@@ -92,10 +92,7 @@ const DOT: Record<ProjectColor, string> = {
 };
 
 const ProjectDot = ({ color, className }: { color: ProjectColor; className?: string }) => (
-  <span
-    aria-hidden
-    className={`size-2.5 shrink-0 rounded-sm ${DOT[color]} ${className ?? ''}`}
-  />
+  <span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${DOT[color]} ${className ?? ''}`} />
 );
 
 // `Sidebar.Item` takes an icon component: one per colour, drawn in the icon's 20px box.
