@@ -41,6 +41,8 @@ export const Circular: Story = {
   args: {
     size: 'xs',
     radius: 'full',
+    // A square crop: `radius="full"` alone rounds a landscape picture into an oval.
+    className: 'aspect-square object-cover',
     caption: 'Circular crop for avatars and logos.',
   },
 };

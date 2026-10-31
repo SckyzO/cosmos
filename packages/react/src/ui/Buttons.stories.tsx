@@ -87,28 +87,31 @@ export const Intents: Story = {
   render: () => (
     <Wrap>
       <SectionCard title="Variants × intents">
-        <div className="grid grid-cols-[repeat(5,max-content)] items-center gap-x-6 gap-y-3">
-          <span />
-          {EMPHASES.map((variant) => (
-            <span
-              key={variant}
-              className="text-2xs font-mono text-[var(--color-text-muted)] uppercase"
-            >
-              {variant}
-            </span>
-          ))}
-          {INTENTS.map((intent) => (
-            <Fragment key={intent}>
-              <span className="text-2xs font-mono text-[var(--color-text-muted)] uppercase">
-                {intent}
+        {/* A matrix keeps its columns: on a phone it scrolls in its card. */}
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-[repeat(5,max-content)] items-center gap-x-6 gap-y-3">
+            <span />
+            {EMPHASES.map((variant) => (
+              <span
+                key={variant}
+                className="text-2xs font-mono text-[var(--color-text-muted)] uppercase"
+              >
+                {variant}
               </span>
-              {EMPHASES.map((variant) => (
-                <Button key={variant} variant={variant} intent={intent}>
-                  {INTENT_LABEL[intent]}
-                </Button>
-              ))}
-            </Fragment>
-          ))}
+            ))}
+            {INTENTS.map((intent) => (
+              <Fragment key={intent}>
+                <span className="text-2xs font-mono text-[var(--color-text-muted)] uppercase">
+                  {intent}
+                </span>
+                {EMPHASES.map((variant) => (
+                  <Button key={variant} variant={variant} intent={intent}>
+                    {INTENT_LABEL[intent]}
+                  </Button>
+                ))}
+              </Fragment>
+            ))}
+          </div>
         </div>
       </SectionCard>
     </Wrap>

@@ -138,7 +138,7 @@ export const LabelsWithoutTextReadOnTheirSurface: Story = {
 export const UnevenLabelsFillCards: Story = {
   render: () => (
     <Wrap>
-      <div className="w-80">
+      <div className="w-80 max-w-full">
         <PalettePicker
           palettes={[
             ...LIGHT_THEMES.slice(0, 3),

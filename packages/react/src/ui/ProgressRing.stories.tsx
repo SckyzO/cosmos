@@ -34,7 +34,7 @@ export const Default: Story = {};
 
 export const Sizes: Story = {
   render: () => (
-    <div className="flex items-end gap-8">
+    <div className="flex flex-wrap items-end gap-8">
       {(['sm', 'md', 'lg'] as ProgressRingSize[]).map((s) => (
         <div key={s} className="flex flex-col items-center gap-2">
           <ProgressRing size={s} value={64} aria-label={`Size ${s}`}>
@@ -49,7 +49,7 @@ export const Sizes: Story = {
 
 export const Intents: Story = {
   render: () => (
-    <div className="flex items-center gap-8">
+    <div className="flex flex-wrap items-center gap-8">
       {INTENTS.map((i) => (
         <div key={i} className="flex flex-col items-center gap-2">
           <ProgressRing intent={i} value={72} aria-label={`${i} progress`}>
@@ -64,7 +64,7 @@ export const Intents: Story = {
 
 export const CentreContent: Story = {
   render: () => (
-    <div className="flex items-center gap-8">
+    <div className="flex flex-wrap items-center gap-8">
       <ProgressRing size="lg" value={64} aria-label="Goal" intent="brand">
         64%
       </ProgressRing>

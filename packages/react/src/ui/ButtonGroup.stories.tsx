@@ -80,23 +80,26 @@ export const IconOnly: Story = {
 
 export const Toolbar: Story = {
   render: () => (
-    <ButtonGroup>
-      <Button variant="secondary" icon={Save}>
-        Save
-      </Button>
-      <Button variant="secondary" icon={Share2}>
-        Share
-      </Button>
-      <Button variant="secondary" icon={Download}>
-        Export
-      </Button>
-      <Button variant="secondary" icon={Filter}>
-        Filter
-      </Button>
-      <Button variant="secondary" icon={Plus}>
-        Add
-      </Button>
-    </ButtonGroup>
+    // A group of attached buttons doesn't wrap: on a phone it scrolls in its own strip.
+    <div className="max-w-full overflow-x-auto p-1">
+      <ButtonGroup>
+        <Button variant="secondary" icon={Save}>
+          Save
+        </Button>
+        <Button variant="secondary" icon={Share2}>
+          Share
+        </Button>
+        <Button variant="secondary" icon={Download}>
+          Export
+        </Button>
+        <Button variant="secondary" icon={Filter}>
+          Filter
+        </Button>
+        <Button variant="secondary" icon={Plus}>
+          Add
+        </Button>
+      </ButtonGroup>
+    </div>
   ),
 };
 

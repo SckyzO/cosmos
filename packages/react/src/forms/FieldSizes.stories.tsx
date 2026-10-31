@@ -31,7 +31,7 @@ const OPTIONS = [
 ];
 
 const FieldsRow = ({ size, required }: { size: FieldSize; required?: boolean }) => (
-  <div data-size={size} className="grid grid-cols-4 items-start gap-4">
+  <div data-size={size} className="grid grid-cols-2 items-start gap-4 sm:grid-cols-4">
     <Input label="Name" placeholder="Type here…" size={size} required={required} />
     <Select label="Region" options={OPTIONS} size={size} required={required} />
     <TimePicker label="Time" size={size} required={required} fullWidth />

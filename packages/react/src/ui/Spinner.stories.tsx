@@ -43,7 +43,7 @@ const INTENTS = [
 
 export const Intents: Story = {
   render: () => (
-    <div className="flex items-start gap-8">
+    <div className="flex flex-wrap items-start gap-8">
       {INTENTS.map((intent) => (
         <div key={intent} className="flex flex-col items-center gap-2">
           <Spinner intent={intent} size="lg" />
@@ -62,7 +62,7 @@ export const IntentsInLight: Story = {
 
 export const OnDark: Story = {
   render: () => (
-    <div className="flex items-center gap-6 rounded-lg bg-black/70 p-6">
+    <div className="flex flex-wrap items-center gap-6 rounded-lg bg-black/70 p-6">
       <Spinner size="sm" onDark />
       <Spinner size="md" onDark />
       <Spinner size="lg" onDark />
@@ -152,7 +152,7 @@ export const EachIntentSetsItsArc: Story = {
 export const OnDarkIsWhiteInEveryTheme: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <div className="flex items-center gap-6 rounded-lg bg-black/70 p-6">
+    <div className="flex flex-wrap items-center gap-6 rounded-lg bg-black/70 p-6">
       <Spinner onDark />
       {/* `onDark` takes the place of `intent`. */}
       <Spinner onDark intent="danger" />

@@ -372,3 +372,20 @@ export const MonthNavigationAndWeekMirrorInRightToLeft: Story = {
     }
   },
 };
+
+// On its own, as wide as its content, the calendar still gives each day a target a finger can
+// hit: 28px, where the columns used to be as narrow as the numbers.
+export const DaysAreWideEnoughToTap: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div className="inline-block">
+      <MiniCalendar {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const days = canvas.getAllByRole('button', { pressed: false });
+    await expect(days.length).toBeGreaterThan(27);
+    for (const day of days)
+      await expect(day.getBoundingClientRect().width).toBeGreaterThanOrEqual(28);
+  },
+};
