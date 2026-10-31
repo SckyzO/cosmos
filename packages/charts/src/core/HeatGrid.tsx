@@ -10,6 +10,7 @@ import { TEXT_SIZE } from './axes';
 import { TooltipCard } from './ChartTooltip';
 import { MUTED, PANEL, TEXT } from './colors';
 import { textOn } from './readable';
+import { useEndFade } from './useEndFade';
 
 /** One cell of a `HeatGrid`. A slot with no cell stays empty. */
 export type HeatCell = {
@@ -71,6 +72,8 @@ const GAP = 3;
 const RADIUS = 5;
 // Clear space kept between two column labels.
 const LABEL_GAP = 6;
+// Clear space a value keeps inside its cell, both sides together.
+const VALUE_PADDING = 4;
 // Room the tooltip card leaves the pointer or the cell.
 const TIP_GAP = 6;
 
@@ -78,26 +81,33 @@ const key = (row: number, column: number) => `${row}:${column}`;
 
 /**
  * How many columns apart the labels are drawn so that none touches the next:
- * 1 when they all fit. Measured on the page, since the text size, the font and
- * the width all change it.
+ * 1 when they all fit; and whether the longest value fits a cell, or the values
+ * are left out rather than drawn cut. Measured on the page, since the text size,
+ * the font and the width all change both.
  */
-const useLabelStride = (probe: string, gap: number) => {
+const useLabelStride = (probe: string, valueProbe: string, gap: number) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLSpanElement>(null);
+  const valueProbeRef = useRef<HTMLSpanElement>(null);
   const columnRef = useRef<HTMLDivElement>(null);
   const [stride, setStride] = useState(1);
+  const [valuesFit, setValuesFit] = useState(true);
   useLayoutEffect(() => {
     const read = () => {
       const label = probeRef.current?.offsetWidth ?? 0;
+      const value = valueProbeRef.current?.offsetWidth ?? 0;
       const column = columnRef.current?.offsetWidth ?? 0;
       setStride(column > 0 ? Math.max(1, Math.ceil((label + LABEL_GAP) / (column + gap))) : 1);
+      setValuesFit(column === 0 || value === 0 || value + VALUE_PADDING <= column);
     };
     read();
     const observer = new ResizeObserver(read);
-    for (const el of [gridRef.current, probeRef.current]) if (el) observer.observe(el);
+    for (const el of [gridRef.current, probeRef.current, valueProbeRef.current]) {
+      if (el) observer.observe(el);
+    }
     return () => observer.disconnect();
-  }, [probe, gap]);
-  return { gridRef, probeRef, columnRef, stride };
+  }, [probe, valueProbe, gap]);
+  return { gridRef, probeRef, valueProbeRef, columnRef, stride, valuesFit };
 };
 
 type Tip = {
@@ -138,7 +148,16 @@ export const HeatGrid = ({
 }: HeatGridProps) => {
   const frame = useRef<HTMLDivElement>(null);
   const longest = columns.reduce((a, b) => (b.length > a.length ? b : a), '');
-  const { gridRef, probeRef, columnRef, stride: measured } = useLabelStride(longest, gap);
+  const longestValue = cells.reduce((a, c) => ((c.text ?? '').length > a.length ? c.text! : a), '');
+  const {
+    gridRef,
+    probeRef,
+    valueProbeRef,
+    columnRef,
+    stride: measured,
+    valuesFit,
+  } = useLabelStride(longest, longestValue, gap);
+  const fade = useEndFade();
   const stride = thinLabels ? measured : 1;
   const byPosition = new Map(cells.map((cell) => [key(cell.row, cell.column), cell]));
   const cellsByRow = new Map<number, HeatCell[]>();
@@ -322,7 +341,7 @@ export const HeatGrid = ({
                   zIndex: active ? 1 : undefined,
                 }}
               >
-                {cell.text}
+                {valuesFit && cell.text}
               </div>
             );
           })}
@@ -365,6 +384,20 @@ export const HeatGrid = ({
       >
         {longest}
       </span>
+      {/* In the font of a cell's value. */}
+      <span
+        ref={valueProbeRef}
+        aria-hidden
+        style={{
+          position: 'absolute',
+          visibility: 'hidden',
+          whiteSpace: 'nowrap',
+          fontSize: 'var(--text-2xs, 0.6875rem)',
+          fontWeight: 500,
+        }}
+      >
+        {longestValue}
+      </span>
     </div>
   );
 
@@ -373,7 +406,11 @@ export const HeatGrid = ({
       {columnWidth ? (
         // The padding leaves room for the focus outline of the cells at the edges,
         // which the scrolling box would cut.
-        <div data-heat-scroll="" style={{ overflowX: 'auto', padding: 3 }}>
+        <div
+          ref={fade.ref}
+          data-heat-scroll=""
+          style={{ overflowX: 'auto', padding: 3, ...fade.style }}
+        >
           {grid}
         </div>
       ) : (
