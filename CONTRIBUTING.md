@@ -192,7 +192,7 @@ checkout (`../cosmos-references` by default), `STORIES` narrows the run to the s
 contains one of its comma-separated parts, `THEMES` the themes put side by side (every theme by
 default), `MOBILE_STORIES` (`examples-,layout-,navigation-,tables-,monitoring-`) and
 `DESKTOP_STORIES` (`examples-,layout-`) the groups captured at the other widths, and `SKIP_BUILD=1`
-reuses the Storybook build of the last run. Plan for one to two hours over every story (about 2 to 4 seconds each), and a few GB
+reuses the Storybook build of the last run. Plan for one to three hours over every story (3 to 5 seconds each), and a few hundred MB
 of captures.
 
 Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`,
