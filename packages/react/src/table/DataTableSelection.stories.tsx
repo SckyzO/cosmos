@@ -188,6 +188,31 @@ export const BulkActionsOnAPhone: Story = {
   },
 };
 
+// Without cards a phone keeps the labelled actions: they go to the line under the count, each on
+// one line of text, instead of being squeezed beside it and cut by the edge of the card.
+export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <Orders defaultSelection={selected} />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const ship = canvas.getByRole('button', { name: 'Mark as shipped' });
+    // The selection bar, as wide as the card that clips it.
+    const card = ship.closest('.\\@container')!.getBoundingClientRect();
+    const more = canvas.getByRole('button', { name: 'Actions' });
+    await expect(ship.getBoundingClientRect().top).toBeGreaterThan(
+      canvas.getByText('3 selected').getBoundingClientRect().bottom
+    );
+    await expect(ship.scrollHeight).toBeLessThanOrEqual(ship.clientHeight);
+    for (const button of [ship, more]) {
+      await expect(button.getBoundingClientRect().right).toBeLessThanOrEqual(card.right);
+    }
+  },
+};
+
 /** The existing `bulkActions` render function still works, next to the search and the toolbar. */
 export const BulkActionsAsNodes: Story = {
   globals: laptop,
