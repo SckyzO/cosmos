@@ -170,14 +170,30 @@ two variables:
 STORIES=overlays-,forms-select THEMES=dark make screenshots
 ```
 
-`make audit-captures` feeds the maintainer's visual audit, which compares the components with
-reference admin templates kept in the private `cosmos-references` repository. It builds the working
-tree's Storybook, captures every story at 1280px in `light` and `dark` and the shell-level stories
-(`layout-`, `navigation-`, `examples-`, `templates-`) at 375px in `light`, then replaces the `cosmos/`
-folder of the `cosmos-references` checkout with them, plus a `meta.json` naming the commit captured.
-`REFERENCES` points at the checkout (`../cosmos-references` by default), `THEMES` and `STORIES`
-narrow the 1280px pass and `MOBILE_STORIES` the 375px one. `CAPTURE_VIEWPORT=<width>x<height>`
-gives any capture another size than 1280x720.
+`make audit-captures` feeds the maintainer's visual audit (#494) and the comparison with the reference
+admin templates kept in the private `cosmos-references` repository. It builds the working tree's
+Storybook and, for every visible story, left to right only:
+
+- runs page checks at 375, 768, 1280 and 1440px in `light`, written to `checks.json` and
+  `checks.md` by Storybook group: the page scrolling sideways, text cut off or running out of its
+  box, text over other text, an icon or a column squeezed by its row, touch targets under 24px
+  (WCAG 2.5.8) and console errors or warnings. The rules are in `captures/audit-checks.ts`, each
+  written to stay quiet on a layout that is meant (an ellipsis, a scroller, a dialog over the page);
+- captures every story at 1280px in `light`, the stories of `MOBILE_STORIES` at 375 and 768px, those
+  of `DESKTOP_STORIES` at 1440px, each story the checks flagged at the width it was flagged
+  (console messages aside), and the first story of each component in every theme at 1280px, into
+  `<width>/<theme>/<story-id>.png`;
+- builds contact sheets of them with ImageMagick, per group and width, and per group for the themes
+  side by side (`sheets/`, with an `index.md` listing the stories on each).
+
+It then replaces the `cosmos/` folder of the `cosmos-references` checkout with the result, plus a
+`meta.json` naming the commit captured and counting what was found. `REFERENCES` points at the
+checkout (`../cosmos-references` by default), `STORIES` narrows the run to the stories whose id
+contains one of its comma-separated parts, `THEMES` the themes put side by side (every theme by
+default), `MOBILE_STORIES` (`examples-,layout-,navigation-,tables-,monitoring-`) and
+`DESKTOP_STORIES` (`examples-,layout-`) the groups captured at the other widths, and `SKIP_BUILD=1`
+reuses the Storybook build of the last run. Plan for about an hour over every story, and a few GB
+of captures.
 
 Every capture runs on the same day (15 January 2026, then time flows) with a seeded `Math.random`,
 so two runs of an unchanged story give the same image. A capture waits

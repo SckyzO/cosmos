@@ -84,10 +84,16 @@ build-image` after a Dockerfile change). `make screenshots` writes raw captures 
 `screenshots/<theme>/`. Captures use a fixed clock, a seeded `Math.random`, a stable-frame check, and
 cut every request to another origin than Storybook's (images in stories: `storybook-avatars.ts`);
 a story whose picture depends on elapsed time takes the `no-capture` tag. `make audit-captures`
-builds the working tree's Storybook, captures every story at 1280px (light, dark) and the
-`layout-`/`navigation-`/`examples-`/`templates-` stories at 375px (light), and replaces the `cosmos/`
-folder of `../cosmos-references` (override with `REFERENCES=`) with them plus a `meta.json` naming
-the commit: the input of the visual audit. `CAPTURE_VIEWPORT=<w>x<h>` changes any capture's size.
+(#494) builds the working tree's Storybook and, for every visible story, left to right only: runs the
+page checks at 375, 768, 1280 and 1440px in light (`captures/audit-checks.ts`: sideways scroll, text
+cut off or overlapping, squeezed icons and columns, touch targets under 24px, console errors;
+`checks.json`, `checks.md`); captures every story at 1280px in light, `MOBILE_STORIES` at 375 and
+768px, `DESKTOP_STORIES` at 1440px, each flagged story at its flagged width, and one story per
+component in the four themes; builds ImageMagick contact sheets per group (`captures/audit-sheets.mjs`,
+`sheets/index.md`); and replaces the `cosmos/` folder of `../cosmos-references` (override with
+`REFERENCES=`) with it all plus a `meta.json` naming the commit. `STORIES=<id substrings>` runs a
+subset, `SKIP_BUILD=1` reuses the last build. The spec (`audit.spec.ts`) has its own config, `audit:stories`.
+`CAPTURE_VIEWPORT=<w>x<h>` changes any capture's size.
 
 Playwright browsers are **not** in the image: `PLAYWRIGHT_BROWSERS_PATH` points at the gitignored
 `.cache/ms-playwright`, filled by `pnpm browsers:install` (run by `make install` and the test
