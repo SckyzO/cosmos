@@ -181,7 +181,7 @@ const inspect = (): Finding[] => {
 
   const layerOf = (el: Element): Element | null => {
     for (let a: Element | null = el; a && a !== document.body; a = a.parentElement) {
-      const position = css(a).position;
+      const position: string = css(a).position;
       let popover = false;
       try {
         popover = a.matches('dialog[open], [popover]:popover-open');
@@ -192,6 +192,9 @@ const inspect = (): Finding[] => {
         position === 'fixed' ||
         position === 'sticky' ||
         popover ||
+        // A chart's tooltip, and a button laid over the content (a log's "Jump to latest").
+        a.classList.contains('recharts-tooltip-wrapper') ||
+        (position === 'absolute' && a.matches('button, [role="button"]')) ||
         /^(dialog|alertdialog|menu|listbox|tooltip)$/.test(a.getAttribute('role') ?? '')
       ) {
         return a;
@@ -312,11 +315,21 @@ const inspect = (): Finding[] => {
         let holder: Element | null = el;
         while (holder && ['inline', 'contents'].includes(css(holder).display))
           holder = holder.parentElement;
+        // A text painted with its background (`bg-clip-text`) measures past its box by the
+        // overhang of its glyphs; a label placed on its own (a chart's month above a
+        // column) is drawn over its neighbours on purpose.
+        const painted = (() => {
+          for (let a: Element | null = el; a && a !== holder?.parentElement; a = a.parentElement)
+            if (css(a).backgroundClip === 'text') return true;
+          return false;
+        })();
         if (
           holder &&
           holder !== document.body &&
           holder !== doc &&
-          css(holder).overflowX === 'visible'
+          css(holder).overflowX === 'visible' &&
+          css(holder).position !== 'absolute' &&
+          !painted
         ) {
           const hb = box(holder.getBoundingClientRect());
           const out2 = here.some(
@@ -409,8 +422,14 @@ const inspect = (): Finding[] => {
   media.forEach((el, i) => {
     const was = before[i];
     const free = after[i];
+    // An eighth of the room is a glyph that is not square in a square box (28x32), not a squeeze.
+    const lost = Math.max(
+      (free.width - was.width) / free.width,
+      (free.height - was.height) / free.height
+    );
     if (
       (free.width > was.width + 0.75 || free.height > was.height + 0.75) &&
+      lost > 0.125 &&
       free.width <= 64 &&
       free.height <= 64
     ) {
@@ -451,10 +470,13 @@ const inspect = (): Finding[] => {
   const targets: Target[] = [];
   for (const el of elements) {
     if (!el.matches(TARGET) || !seen(el)) continue;
-    if (el.closest('[aria-hidden="true"], [inert]')) continue;
+    // Inside a log, the lines are text to read: a link in one is part of it, as in a sentence.
+    if (el.closest('[aria-hidden="true"], [inert], [role="log"]')) continue;
     if ((el as HTMLButtonElement).disabled || el.getAttribute('aria-disabled') === 'true') continue;
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
+    // A visually hidden field (a file input under its drop zone) is pressed through its label.
+    if (r.width <= 2 && r.height <= 2 && css(el).overflow !== 'visible') continue;
     targets.push({ el, r: box(r), w: r.width, h: r.height, size: 24 });
   }
   const small = targets.filter((t) => {
@@ -511,6 +533,17 @@ export const auditPage = (page: Page): Promise<Finding[]> => page.evaluate(inspe
 type Message = { type: string; text: string; url: string };
 
 /**
+ * Messages that are not the story's: Storybook's warning when a play reads the
+ * story store, the YouTube frame the captures cut (it posts to an origin that
+ * is not there), and WebGL's notes on a headless GPU.
+ */
+const NOISE = [
+  /Accessing the Story Store is deprecated/,
+  /Failed to execute 'postMessage' on 'DOMWindow'.*youtube/i,
+  /GPU stall due to ReadPixels/,
+];
+
+/**
  * Collects what the page prints as an error or a warning, and what it throws.
  * Attach it before the page loads. A failed request to another origin than the
  * page's is not reported: the captures cut every third party on purpose.
@@ -523,7 +556,8 @@ export const watchConsole = (page: Page) => {
     const cut =
       /^Failed to load resource/.test(m.text()) &&
       (!url || new URL(url, 'http://x').origin !== safeOrigin(page));
-    if (!cut) messages.push({ type: m.type(), text: m.text(), url });
+    if (!cut && !NOISE.some((pattern) => pattern.test(m.text())))
+      messages.push({ type: m.type(), text: m.text(), url });
   });
   page.on('pageerror', (e) => messages.push({ type: 'error', text: e.message, url: '' }));
   return {

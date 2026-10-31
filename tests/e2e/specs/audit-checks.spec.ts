@@ -189,3 +189,83 @@ test('accepts text reached by scrolling, and a caption hidden with clip', async 
   );
   expect(rules).toEqual([]);
 });
+
+// What the review of the first full run (#494) found to be false alarms. Each
+// keeps a real defect of the same kind reported next to it.
+test.describe('false alarms of the first run', () => {
+  test('accepts a visually hidden file input and the links of a log', async ({ page }) => {
+    const rules = await rulesOf(
+      page,
+      `<div><input type="file" aria-label="File" style="position:absolute;width:1px;height:1px;
+         overflow:hidden;clip:rect(0,0,0,0);margin:0;padding:0;border:0"><button
+         style="width:80px;height:32px">Upload</button></div>
+       <div role="log" style="font:12px/16px monospace">
+         <div><a href="#l1" style="display:inline-block;width:20px">1</a><span>step started</span></div>
+         <div><a href="#l2" style="display:inline-block;width:20px">2</a><span>step done</span></div></div>`
+    );
+    expect(rules).toEqual([]);
+  });
+
+  test('accepts a gradient heading and a label placed over its neighbours', async ({ page }) => {
+    const rules = await rulesOf(
+      page,
+      `<h1 style="margin:0;font:italic 32px/32px serif;background:linear-gradient(90deg,#00f,#f0f);
+         -webkit-background-clip:text;background-clip:text;color:transparent;width:max-content">Welcome f</h1>
+       <div style="position:relative;height:40px;width:200px">
+         <span style="position:absolute;left:0;width:12px;white-space:nowrap">January</span></div>`
+    );
+    expect(rules).toEqual([]);
+  });
+
+  test('still reports a nowrap label running out of a box in the flow', async ({ page }) => {
+    const rules = await rulesOf(
+      page,
+      `<div style="width:60px;white-space:nowrap">A label running out</div>`
+    );
+    expect(rules).toContain('text-cut-off');
+  });
+
+  test('accepts a chart tooltip and a button laid over the text', async ({ page }) => {
+    const rules = await rulesOf(
+      page,
+      `<div style="position:relative;width:300px">
+         <p style="margin:0">Line one of the log, long enough to sit under the button</p>
+         <button style="position:absolute;top:0;left:20px;height:24px">Jump to latest</button>
+         <div class="recharts-tooltip-wrapper" style="position:absolute;top:0;left:120px">
+           <span>Tooltip text</span></div></div>`
+    );
+    expect(rules).toEqual([]);
+  });
+
+  test('accepts a glyph that is not square in a square box, reports a real squeeze', async ({
+    page,
+  }) => {
+    const glyph = await rulesOf(
+      page,
+      `<div style="display:flex;width:60px;gap:0"><svg width="32" height="32"></svg>
+         <span style="flex:none;width:32px"></span></div>`
+    );
+    expect(glyph).toEqual([]);
+    const squeezed = await rulesOf(
+      page,
+      `<div style="display:flex;width:40px;gap:0"><svg width="32" height="32"></svg>
+         <span style="flex:none;width:28px"></span></div>`
+    );
+    expect(squeezed).toContain('squeezed');
+  });
+
+  test("ignores Storybook's store warning, the cut YouTube frame and WebGL notes", async ({
+    page,
+  }) => {
+    const rules = await rulesOf(
+      page,
+      `<script>
+         console.warn('Accessing the Story Store is deprecated and will be removed in 9.0');
+         console.warn("Failed to execute 'postMessage' on 'DOMWindow': The target origin provided " +
+           "('http://127.0.0.1:1') does not match the recipient window's origin ('https://www.youtube-nocookie.com').");
+         console.warn('[.WebGL-0x1]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels');
+       </script>`
+    );
+    expect(rules).toEqual([]);
+  });
+});
