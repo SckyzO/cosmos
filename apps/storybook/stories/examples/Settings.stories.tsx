@@ -816,7 +816,7 @@ export const ErrorLinksFocusTheirField: Story = {
   play: async ({ canvas }) => {
     const banner = canvas.getByRole('alert');
     await expect(within(banner).getByText('We couldn’t save your changes')).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Error' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Try again' })).toBeVisible();
     await expect(canvas.getByText('Nothing was saved.')).toBeVisible();
     await expect(
       canvas.getByText('That address is taken. Try alpine-rock-collective.')

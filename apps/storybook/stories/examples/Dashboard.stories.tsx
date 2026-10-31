@@ -596,7 +596,7 @@ const DashboardPage = ({ state: initial }: { state: ScreenState }) => {
           </p>
         )}
         <KpiGrid view={view} state={state} />
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
           <RevenueCard
             view={view}
             state={state}
@@ -605,7 +605,7 @@ const DashboardPage = ({ state: initial }: { state: ScreenState }) => {
           />
           <PlansCard view={view} state={state} />
         </div>
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
           <RegionsCard view={view} state={state} />
           <CancellationsCard view={view} state={state} />
         </div>
@@ -877,5 +877,19 @@ export const PhoneCancellationsAreAList: Story = {
     const first = kpiCard(canvas, '€412.9k');
     const second = kpiCard(canvas, '38.2k');
     await expect(first.getBoundingClientRect().top).toBe(second.getBoundingClientRect().top);
+  },
+};
+
+/**
+ * Extreme content on a phone: the full figures, the long region names and the long names stay
+ * inside the screen. The KPI figures wrap in their card; the region names truncate in a column
+ * that no longer grows to their width.
+ */
+export const PhoneExtremeContentFits: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => <DashboardScreen state="extreme" />,
+  play: async () => {
+    expectNoHorizontalOverflow();
   },
 };

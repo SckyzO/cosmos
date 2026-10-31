@@ -12,7 +12,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { Fragment, useSyncExternalStore, type ReactNode } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   Avatar,
@@ -354,6 +354,15 @@ const HistoryTab = ({ ticket }: { ticket: Ticket }) => {
 
 // ── Aside ────────────────────────────────────────────────────────────────────
 
+// An address may break after its "@" and its dots, not in the middle of a word.
+const breakable = (email: string) =>
+  email.split(/(?<=[@.])/).map((part, i) => (
+    <Fragment key={i}>
+      {i > 0 && <wbr />}
+      {part}
+    </Fragment>
+  ));
+
 const Person = ({ name, email }: { name: string; email?: string }) => (
   <span className="flex min-w-0 items-center justify-end gap-2 text-end">
     <Avatar name={name} size="xs" />
@@ -362,8 +371,8 @@ const Person = ({ name, email }: { name: string; email?: string }) => (
         <bdi>{name}</bdi>
       </span>
       {email && (
-        <span className="block text-xs font-normal break-all text-[var(--color-text-secondary)]">
-          <bdi>{email}</bdi>
+        <span className="block text-xs font-normal break-words text-[var(--color-text-secondary)]">
+          <bdi>{breakable(email)}</bdi>
         </span>
       )}
     </span>
@@ -477,7 +486,7 @@ const Record = ({
   tab: TicketTab;
   onSubmit: (text: string, mode?: string) => void;
 }) => (
-  <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <Tabs defaultValue={tab} className="min-w-0">
       <Tabs.List>
         <Tabs.Trigger value="conversation" badge={messageCount(ticket)}>
@@ -502,7 +511,10 @@ const Record = ({
 
 // Skeletons where the data goes. The header keeps the id the route already knows.
 const LoadingBody = ({ id }: { id: string }) => (
-  <div aria-busy="true" className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div
+    aria-busy="true"
+    className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+  >
     <p role="status" className="sr-only">
       Loading ticket #{id}…
     </p>
