@@ -99,7 +99,7 @@ const Output = ({ check, open, outputId }: Pick<CheckProps, 'check' | 'open' | '
   );
 
 const Dash = () => (
-  <span aria-hidden="true" className="text-[var(--color-text-muted)] max-sm:hidden">
+  <span aria-hidden="true" className="text-[var(--color-text-muted)] @max-[48rem]:hidden">
     —
   </span>
 );
@@ -111,13 +111,16 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
       (check.status === 'WARN' || check.status === 'CRIT') && 'bg-gray-50/60 dark:bg-white/[0.02]'
     )}
   >
-    <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[6.5rem_minmax(0,10rem)_minmax(0,12rem)_minmax(0,1fr)_5rem_6rem] sm:items-center sm:gap-3">
+    {/* Stacked in a narrow list, one row of columns from 48rem. The name and the message keep at
+        least 6rem and 12rem; the name and the target then grow to their widths and the message
+        takes the rest, so in a tight row the target gives way first. */}
+    <div className="flex flex-col gap-1.5 @min-[48rem]:grid @min-[48rem]:grid-cols-[6.5rem_minmax(6rem,10rem)_minmax(0,12rem)_minmax(12rem,1fr)_5rem_7rem] @min-[48rem]:items-center @min-[48rem]:gap-3">
       <span>
         <StatusBadge status={check.status} label={STATUS_NAME[check.status]} />
       </span>
       <CheckName check={check} open={open} onToggle={onToggle} outputId={outputId} />
       {check.target ? (
-        <span className="font-mono text-xs break-all text-[var(--color-text-secondary)] sm:truncate">
+        <span className="font-mono text-xs break-all text-[var(--color-text-secondary)] @min-[48rem]:truncate">
           <bdi>{check.target}</bdi>
         </span>
       ) : (
@@ -131,14 +134,14 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
         <Dash />
       )}
       {check.latency !== undefined ? (
-        <span className="tabular-nums sm:text-end">
+        <span className="tabular-nums @min-[48rem]:text-end">
           <bdi>{formatLatency(check.latency)}</bdi>
         </span>
       ) : (
         <Dash />
       )}
       {check.checkedAt !== undefined ? (
-        <span className="text-[var(--color-text-secondary)] tabular-nums sm:text-end">
+        <span className="text-[var(--color-text-secondary)] tabular-nums @min-[48rem]:text-end">
           <RelativeTime value={check.checkedAt} now={now} />
         </span>
       ) : (
@@ -146,7 +149,7 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
       )}
     </div>
     {check.output !== undefined && (
-      <div className={clsx(open && 'mt-3 sm:ms-[7.25rem]')}>
+      <div className={clsx(open && 'mt-3 @min-[48rem]:ms-[7.25rem]')}>
         <Output check={check} open={open} outputId={outputId} />
       </div>
     )}
@@ -307,8 +310,10 @@ export const HealthCheckList = ({
       role={ariaLabel ? 'group' : undefined}
       aria-label={ariaLabel}
       className={clsx(
+        // The rows lay their columns out from the list's own width, not the screen's: in a card the
+        // list is narrower than the screen, and a grid of fixed columns left the message nothing.
         variant === 'list' &&
-          'overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)]',
+          '@container overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)]',
         variant === 'grid' && 'flex flex-col gap-4',
         className
       )}
