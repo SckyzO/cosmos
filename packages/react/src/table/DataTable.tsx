@@ -1268,7 +1268,7 @@ export const DataTable = <T,>({
                 Clear
               </button>
               {(bulkActionItems || bulkActions) && (
-                <div className="flex min-w-0 flex-auto items-center gap-2 ps-1">
+                <div className="flex min-w-0 flex-auto flex-wrap items-center gap-2 ps-1">
                   {bulkActionItems && (
                     <DataTableBulkActions
                       items={bulkActionItems}

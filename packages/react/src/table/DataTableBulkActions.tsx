@@ -38,13 +38,15 @@ export const DataTableBulkActions = <T,>({
       icon={item.icon}
       disabled={item.disabled}
       onClick={() => item.onClick(selectedRows)}
+      // A label on one line: a narrow bar sends the next action to the line below instead.
+      className="shrink-0"
     >
       {item.label}
     </Button>
   );
   return (
     <>
-      <div className={clsx('flex items-center gap-2', phoneIcons && 'max-sm:hidden')}>
+      <div className={clsx('flex flex-wrap items-center gap-2', phoneIcons && 'max-sm:hidden')}>
         {button(first!, true)}
         {rest.length > 0 && (
           <>
