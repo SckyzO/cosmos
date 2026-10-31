@@ -2,23 +2,30 @@
 
 [![npm](https://img.shields.io/npm/v/@sckyzo/cosmos-theme)](https://www.npmjs.com/package/@sckyzo/cosmos-theme)
 
-Cosmos design tokens — CSS only.
+Cosmos design tokens, CSS only: a Tailwind 4 `@theme` block, four themes, twelve accents, six
+fonts, and text size, density and corner radius settings. It is what `@sckyzo/cosmos-react` and
+`@sckyzo/cosmos-charts` are styled with, and it works on its own in any framework.
 
-Provides CSS files consumable by any framework:
+| Import                              | Purpose                                                                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `@sckyzo/cosmos-theme/tailwind`     | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors), the `dark:` and `rtl:` variants, the focus utilities |
+| `@sckyzo/cosmos-theme/vars`         | Universal CSS custom properties (bg, text, border, accent), themes and accents                                          |
+| `@sckyzo/cosmos-theme/fonts`        | `@fontsource` font imports (Outfit + JetBrains Mono)                                                                    |
+| `@sckyzo/cosmos-theme/fonts/<name>` | One variable font for `data-font`: `inter`, `plex`, `montserrat`, `open-sans`                                           |
 
-| Import                              | Purpose                                                                        |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| `@sckyzo/cosmos-theme/tailwind`     | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors)              |
-| `@sckyzo/cosmos-theme/vars`         | Universal CSS custom properties (bg, text, border, accent), themes and accents |
-| `@sckyzo/cosmos-theme/fonts`        | `@fontsource` font imports (Outfit + JetBrains Mono)                           |
-| `@sckyzo/cosmos-theme/fonts/<name>` | One variable font for `data-font`: `inter`, `plex`, `montserrat`, `open-sans`  |
+## Install
+
+```bash
+npm install @sckyzo/cosmos-theme
+```
+
+The three Cosmos packages share one version number: install the same version of each.
 
 ## Usage
 
 ### With Tailwind 4 (recommended for React apps)
 
-Import order matters: `tailwindcss` comes first, then the Cosmos tokens, then
-the vars.
+Import order matters: `tailwindcss` comes first, then the Cosmos tokens, then the vars.
 
 ```css
 /* src/index.css */
@@ -28,9 +35,8 @@ the vars.
 @import '@sckyzo/cosmos-theme/fonts';
 ```
 
-Pairing this with `@sckyzo/cosmos-react`? You also need an `@source` line so
-Tailwind scans the components — see the
-[cosmos-react README](../react#set-up-the-styles).
+Pairing this with `@sckyzo/cosmos-react`? You also need an `@source` line so Tailwind scans the
+components: see [Getting started](https://github.com/SckyzO/cosmos/blob/main/docs/getting-started.md#set-up-the-styles).
 
 ### Without Tailwind (e.g. Docusaurus)
 
@@ -40,175 +46,22 @@ Tailwind scans the components — see the
 /* Then reference vars: var(--color-brand-500), var(--color-bg-base), etc. */
 ```
 
-## Themes & accents
+### Set the appearance
 
-Two independent settings, both on the `<html>` element:
-
-- **Theme**: one class, and only one at a time.
-
-  | Theme       | Class        | Look                                         |
-  | ----------- | ------------ | -------------------------------------------- |
-  | `light`     | _(none)_     | Cool gray, the default                       |
-  | `sand`      | `.sand`      | Warm beige light theme                       |
-  | `dark`      | `.dark`      | Neutral black/gray, softened (no pure black) |
-  | `deep-blue` | `.deep-blue` | Navy dark theme                              |
-
-  `.dark` and `.deep-blue` both enable Tailwind's `dark:` variant.
-
-- **Direction**: the native `dir` attribute, on `<html>` or any ancestor. Tailwind's `rtl:` variant is
-  redefined to follow the nearest `dir` attribute, so a `dir="ltr"` island inside a right-to-left
-  page is not flipped. It does not follow `dir="auto"`, nor a `dir="rtl"` nested inside such an
-  island.
-
-- **Accent**: a `data-accent` attribute that swaps the whole `--color-brand-*`
-  scale (and with it `--color-accent` and the focus ring). Leave it off for
-  `blue`. The others are `indigo`, `violet`, `purple`, `rose`, `teal`, `cyan`,
-  `graphite`, `red`, `orange`, `amber`, `green`.
+The theme is one class on `<html>`; the accent, the font, the text size, the density and the corner
+radius are `data-accent`, `data-font`, `data-text-size`, `data-density` and `data-radius` attributes,
+and the reading direction is the native `dir`.
 
 ```html
 <html class="sand" data-accent="teal"></html>
 ```
 
-`red`, `orange`, `amber` and `green` look like the status colors (error,
-warning, success): a red primary button reads as a destructive action. Offer
-them last in any picker, after the others.
+## Documentation
 
-Every theme × accent pair meets WCAG AA for body text, links and white text on
-the accent. `pnpm --filter @sckyzo/cosmos-theme test` runs the contrast check
-(`scripts/check-contrast.mjs`) against the CSS files.
-
-## Focus indicator
-
-Four Tailwind utilities, shipped with `@sckyzo/cosmos-theme/tailwind`, give
-every control the same keyboard focus look: a **solid accent indicator** plus
-the `--shadow-focus-ring` halo (12% of the accent). The halo alone is too faint
-to count: the solid part is what reaches 3:1 against the surface (WCAG 1.4.11;
-`brand-500` is checked on every theme × accent pair by `pnpm test`).
-
-| Utility                     | Paints                      | For                                                                   |
-| --------------------------- | --------------------------- | --------------------------------------------------------------------- |
-| `focus-indicator`           | 2px `brand-500` ring + halo | buttons, links, toggles, tabs, menu items, cards…                     |
-| `field-focus`               | `brand-500` border + halo   | text inputs, textarea, select and their wrappers                      |
-| `field-focus-error`         | `red-500` border + red halo | the same fields in error (`--shadow-focus-ring-error`)                |
-| `focus-indicator-on-accent` | 2px white ring, no halo     | a control filled with `brand-500`, where the accent ring would vanish |
-
-They hold no state: put the variant that fits in front of them.
-
-```html
-<button class="focus-visible:focus-indicator">Save</button>
-<input class="focus:field-focus border border-gray-200" />
-<div class="focus-within:field-focus border border-gray-200"><input /></div>
-<!-- a control drawn by a sibling of a visually hidden input -->
-<input type="checkbox" class="peer sr-only" />
-<span class="peer-focus-visible:focus-indicator"></span>
-```
-
-There is no ring offset. Add `ring-inset` where an ancestor clips with
-`overflow-hidden`, or a neighbour covers the outer ring. The utilities use
-`outline-hidden`, so the indicator survives forced-colors mode, where box
-shadows are not painted.
-
-## Fonts & text size
-
-Two more settings on `<html>`, both optional:
-
-- **Font**: a `data-font` attribute that swaps `--font-sans`. Leave it off for
-  Outfit. The others are `inter`, `plex` (IBM Plex Sans), `montserrat`,
-  `open-sans`, and `system`, the platform's UI font. Each one loads from its own
-  subpath, so import only the fonts you offer; `system` loads nothing. The mono
-  font stays JetBrains Mono.
-
-  ```css
-  @import '@sckyzo/cosmos-theme/fonts'; /* Outfit + JetBrains Mono */
-  @import '@sckyzo/cosmos-theme/fonts/inter';
-  ```
-
-- **Text size**: a `data-text-size` attribute, `sm`, `lg` or `xl`, that scales
-  every `text-*` size to 93.75%, 112.5% or 125%. Leave it off for 100%. Only the
-  text grows: spacing keeps its `rem` values, so layouts keep their density.
-  Sizes written in pixels, such as `text-[13px]`, don't scale; the `text-*`
-  scale includes `text-2xs` (11px) and `text-3xs` (10px) for small labels.
-
-```html
-<html class="sand" data-accent="teal" data-font="inter" data-text-size="lg"></html>
-```
-
-Both attributes also work on an element below `<html>`, for one part of a page.
-
-## Density
-
-A `data-density` attribute on `<html>` tightens or loosens the vertical rhythm of
-every control and row at once: `compact`, none for the default, or `comfortable`.
-Only the heights and the vertical padding of rows move; panel padding, gaps and
-horizontal padding stay. It applies on touch screens too: the user's choice wins.
-
-| Token                          | Default    | `compact` | `comfortable` | Used by                     |
-| ------------------------------ | ---------- | --------- | ------------- | --------------------------- |
-| `h-ctrl-28` … `h-ctrl-48`      | 28–48px    | 4px less  | 4px more      | buttons, fields, segments   |
-| `py-row-4` … `py-row-24`       | 4–24px     | 2px less  | 2px more      | list rows, menu items, tabs |
-| `py-cell-head`, `py-cell-body` | 12px, 14px | 8px, 10px | 16px, 20px    | table cells                 |
-
-The token is named by its default size: `h-ctrl-36` is today's `h-9`. The smallest
-control, 28px, stays at 24px in `compact`, the WCAG 2.5.8 floor, and `py-row-5`
-stops at 4px for the same reason. They are `--spacing-ctrl-*`, `--spacing-row-*` and
-`--spacing-cell-*` theme variables, so any utility of the spacing scale takes
-them (`h-ctrl-36`, `min-h-ctrl-36`, `size-ctrl-32`, `py-row-8`). Use them for a
-control or a row of your own and it follows the page.
-
-```html
-<html class="sand" data-density="compact"></html>
-```
-
-The attribute also works on an element below `<html>`; `data-density="default"`
-opts a part of a compact or comfortable page out (a `DataTable` with its own
-`density` does this).
-
-## Radius
-
-A `data-radius` attribute on `<html>` rescales every corner at once: `none`,
-`sm`, none for the default, or `lg`. It rebuilds Tailwind's own `--radius-*`
-variables, the ones `rounded-sm` to `rounded-4xl` read, so a component needs
-nothing more than those utilities.
-
-| Step      | `--radius-*`                    | `rounded-lg` (8px by default) |
-| --------- | ------------------------------- | ----------------------------- |
-| `none`    | 2px, every one                  | 2px                           |
-| `sm`      | half of Tailwind's              | 4px                           |
-| (default) | Tailwind's, nothing moves       | 8px                           |
-| `lg`      | one and a half times Tailwind's | 12px                          |
-
-`rounded-full` and `rounded-none` are literals and never change: avatars,
-status dots, switches, badges and pill buttons stay round at every step. A
-corner that must follow the page goes through the scale. A bare `rounded` is a
-fixed `0.25rem` in Tailwind 4, so write `rounded-sm` (the same value, through
-the variable); an arbitrary `rounded-[10px]` is fixed too, and
-`rounded-[calc(var(--radius-lg)*1.25)]` is not.
-
-```html
-<html class="sand" data-radius="lg"></html>
-```
-
-The attribute also works on an element below `<html>`; `data-radius="default"`
-opts a part of the page out of its parent's radius.
-
-## Tokens
-
-See [`css/tailwind-tokens.css`](css/tailwind-tokens.css) for the full source.
-
-The brand palette, the status colors and the semantic colors are always in the CSS (`@theme static`): Tailwind
-only emits a theme variable that a utility uses, and the charts read these as plain `var(--color-…)`.
-
-Categories:
-
-- **Brand palette** : `--color-brand-25` to `--color-brand-950`
-- **Chart series** : `--color-chart-2` to `--color-chart-8`, the series colors after the accent (the first series is `--color-brand-500`). Each accent lists its own seven, skipping the hues that look like it
-- **Semantic colors** : `--color-success-*`, `--color-error-*`, `--color-warning-*`
-- **Status** : `--color-status-{ok,warn,crit,unknown}`
-- **Typography** : `--font-sans` (Outfit), `--font-mono` (JetBrains Mono), `--text-2xs` (11px), `--text-3xs` (10px)
-- **Shadows** : `--shadow-card`, `--shadow-card-hover`, `--shadow-focus-ring` and `--shadow-focus-ring-error` (the focus halos)
-- **Layout vars** (theme-aware): `--color-bg-{base,panel,elevated}`, `--color-text-{base,primary,secondary,muted}`, `--color-border`, `--color-accent`
-- **Code highlighting** (theme-aware): `--color-code-foreground` and `--color-code-token-*` (keyword, string, comment, constant, function, parameter, string-expression, punctuation, link, inserted, deleted, changed). The names match Shiki's CSS variables theme with `variablePrefix: '--color-code-'`. Each one keeps 4.5:1 on CodeBlock's background in all four themes (checked by `pnpm test`).
+- [Appearance](https://github.com/SckyzO/cosmos/blob/main/docs/guides/appearance.md): every theme, accent, font, text size, density and radius.
+- [Tokens and focus](https://github.com/SckyzO/cosmos/blob/main/docs/guides/tokens.md): the design tokens and the focus utilities.
+- [Getting started](https://github.com/SckyzO/cosmos/blob/main/docs/getting-started.md).
 
 ## License
 
-MIT — see [LICENSE](../../LICENSE).
+MIT, see [LICENSE](https://github.com/SckyzO/cosmos/blob/main/LICENSE).
