@@ -133,7 +133,7 @@ export const SocialAuthButtons = ({
             onClick={() => onProviderClick(provider)}
             disabled={isDisabled}
             aria-label={label}
-            className="focus-visible:focus-indicator h-ctrl-40 flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="focus-visible:focus-indicator h-ctrl-40 flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 [&>svg]:shrink-0"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon />}
             <span className="truncate">{label}</span>
