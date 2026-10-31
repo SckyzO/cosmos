@@ -56,7 +56,7 @@ nothing in it is `UNKNOWN`.
   Home and End go to the ends of the row. A cell opens its detail in a popover (`message`, `latency`,
   `checkedAt`, and a `detail` node of your own) with Enter, Space or a click; Escape closes it and the
   focus returns to the cell. Each cell is named like "API on par-2b: Warning", and a column with no
-  entry is an empty cell. `variant="dots"` is dense, and every dot has a shape as well as a colour: OK a
+  entry is an empty cell. `variant="dots"` is dense, and every dot has a shape as well as a color: OK a
   filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
   legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
   grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
@@ -67,7 +67,7 @@ nothing in it is `UNKNOWN`.
   and moves the focus to its worst cell; on a phone the strip scrolls sideways.
 
 `HealthSummary`, `HealthMatrix` and `MonitorRow` (see [Uptime monitoring](#uptime-monitoring)) take `stale`, the time of the
-last data, for a source that has stopped answering. The status colours turn grey, the component says
+last data, for a source that has stopped answering. The status colors turn gray, the component says
 "Stale · 4 minutes ago" and the stale state is in the accessible text (the headline, each matrix
 cell, the monitor's state chip). The statuses shown stay those of the last data.
 
@@ -102,23 +102,23 @@ const days: UptimeDay[] = [
 <MonitorRow name="API" type="HTTP" beats={beats} uptime={0.9992} />
 ```
 
-**Thresholds.** An uptime is coloured by one shared rule: 99.9 % and up is green, 99 % up to 99.9 %
-is amber, below 99 % is red, and `null` is grey ("No data"). Every component that colours by uptime
+**Thresholds.** An uptime is colored by one shared rule: 99.9 % and up is green, 99 % up to 99.9 %
+is amber, below 99 % is red, and `null` is gray ("No data"). Every component that colors by uptime
 (`UptimeBars`, `UptimeStat`, `MonitorRow`) takes `thresholds`, a partial `{ good, warning }` in shares
 from 0 to 1 (`{ good: 0.9999, warning: 0.999 }`), and the legend of `UptimeBars` follows it. A
 `warning` limit above `good` is lowered to it. `DEFAULT_THRESHOLDS`, `resolveThresholds` and
-`uptimeLevel` are exported, to colour your own figures the same way. The status colours are the
+`uptimeLevel` are exported, to color your own figures the same way. The status colors are the
 theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaints them.
 
 - `HeartbeatBar` draws one mark per beat, the newest at the end. `variant` is `bars` (default),
   `blocks` or `dots`; `size` is `md` (32px, default) or `sm` (24px, the height inside a `MonitorRow`).
   It holds as many beats as its width allows and drops the oldest, so a 375px screen still shows the
   latest history: give it the width of its container. A `down` beat differs by shape as well as
-  colour (a taller bar, a block crossed by a diagonal, a square dot) and every beat is named in words
+  color (a taller bar, a block crossed by a diagonal, a square dot) and every beat is named in words
   (status, time, latency, message). The bar is one tab stop on the newest beat; the arrow keys, Home
   and End move between beats, and hovering or focusing one shows its tooltip (Escape hides it).
   `legend` writes the key of the statuses under the bar.
-- `UptimeBars` draws one bar per day over `period` 30, 60 or 90 days (default 90), coloured by the
+- `UptimeBars` draws one bar per day over `period` 30, 60 or 90 days (default 90), colored by the
   thresholds. The header gives `title` and the uptime of the period (the mean of the days with data,
   or `uptime` when you have the exact figure), the captions read "90 days ago" and "Today". When the
   width cannot hold every day, the oldest are dropped and the caption and the figure describe what is
@@ -127,7 +127,7 @@ theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaint
   bars, no header, captions or legend.
 - `UptimeStat` has two variants. `row` (default) puts the uptime of each of your `periods` side by
   side (`{ label: '24 hours', uptime }`: you name the periods), then `responseTime` and the
-  `certificate`: days left, a warning (an icon, and the amber colour) under `warnBelow` days, 14 by
+  `certificate`: days left, a warning (an icon, and the amber color) under `warnBelow` days, 14 by
   default. `card` is one figure for a dashboard tile: the first period, and the downtime it stands for
   ("39 min down") when the period has a `duration` in milliseconds, with `days` drawn as compact bars.
   It is a variant of its own, not a `KpiCard` preset.
@@ -135,7 +135,7 @@ theme's (`--color-status-ok`, `-warn`, `-crit`), so a theme or an accent repaint
   pause it), the name (a link with `href`) and `type` (any string: `HTTP`, `TCP`, `DNS`, `ping`,
   `keyword`), a 24px `HeartbeatBar`, the uptime over 24 hours, and the current latency (default: the
   last beat's). `variant="row"` is a line of a list, which the host draws: it stacks on a narrow
-  screen. `variant="card"` is a tile for a grid. `stale` (with `now` to freeze its text) greys the
+  screen. `variant="card"` is a tile for a grid. `stale` (with `now` to freeze its text) grays the
   chip, the beats and the uptime and adds a "Stale · 4 minutes ago" tag under the name.
 
 The response time (a `LineAreaChart` from `@sckyzo/cosmos-charts`, its `referenceBands` shading the
@@ -235,7 +235,7 @@ filters are active (levels narrowed, sources chosen). The state pairs (`live`, `
 `search`, `searchRegex`, `activeSources`, `wrap`, `order`) work controlled or not, as on other
 fields. It holds none of the log: pass the same filters to the viewer.
 
-**`LogLevelBadge`** is the level as a word in its colour (`ERROR`, `WARN`), on the `surface` tone
+**`LogLevelBadge`** is the level as a word in its color (`ERROR`, `WARN`), on the `surface` tone
 by default or the `terminal` one. Use it in a table cell, a card or a detail.
 
 **`LogEntryDetail`** shows one record in full for a drawer or a side panel: level, time, source
@@ -249,7 +249,7 @@ column and, once rows can expand, a `LogEntryDetail` in them.
 line by line cannot be followed, so new lines are not announced. `announceErrors` reads the
 error and fatal lines that arrive (three at most, then the count of the rest) in a polite live
 region of its own. The scroller takes a tab stop, so the arrow keys scroll it, and every level is
-a word, not only a colour. Each level colour holds 4.5:1 on both tones in the four themes.
+a word, not only a color. Each level color holds 4.5:1 on both tones in the four themes.
 
 **Limits.**
 
@@ -272,7 +272,7 @@ a word, not only a colour. Each level colour holds 4.5:1 on both tones in the fo
 Storybook: [JobLog](https://sckyzo.github.io/cosmos/?path=/docs/monitoring-joblog--docs).
 
 `JobLog` is the output of a CI job or a build: collapsible steps, each with its status and
-duration, and the lines of each step numbered and coloured. It is read differently from a live
+duration, and the lines of each step numbered and colored. It is read differently from a live
 tail, hence a component of its own; it shares the tones, the clock format and the windowing of
 `LogViewer`. The host owns the data and the clock: it passes the steps, their durations (`JobLog`
 runs no timer) and the new lines as they come.
@@ -326,18 +326,18 @@ const steps: JobLogStep[] = [
   `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too.
 - **Tone.** `terminal` (default) is a dark panel in every theme, `surface` follows the theme.
 
-**ANSI.** Colour codes are read into styled spans, never HTML. Kept: the 16 colours and their
+**ANSI.** Color codes are read into styled spans, never HTML. Kept: the 16 colors and their
 bright variants as a foreground and as a background, bold, dim, italic, underline and the resets.
-A 256-colour or truecolor code lands on the nearest of the 16. Every other escape sequence (cursor
+A 256-color or truecolor code lands on the nearest of the 16. Every other escape sequence (cursor
 moves, window titles, links) and control character is dropped, and a carriage return keeps only the
 last segment of the line, so a progress bar reads as its last state. Black and white are mapped to
-what reads on the tone (a black text on the terminal panel is the muted gray). Each colour holds
-4.5:1 on both tones in the four themes. On a background colour, the text takes the colour that
+what reads on the tone (a black text on the terminal panel is the muted gray). Each color holds
+4.5:1 on both tones in the four themes. On a background color, the text takes the color that
 reads on that background and its own is dropped (`31;47` is dark text on a light fill), and dim
-mutes only the default text: a coloured text keeps its colour.
+mutes only the default text: a colored text keeps its color.
 
 **Accessibility.** The log is a named `region` with a tab stop. A step header is a button with
-`aria-expanded` and `aria-controls`, its status an image with a text name (never a colour alone),
+`aria-expanded` and `aria-controls`, its status an image with a text name (never a color alone),
 and the lines of an open step a named group. A line number is a link named "Line 6".
 
 **Limits.**

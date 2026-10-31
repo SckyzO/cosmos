@@ -60,7 +60,7 @@ They hold no state: put the variant that fits in front of them.
 ```
 
 There is no ring offset. Add `ring-inset` where an ancestor clips with `overflow-hidden`, or a
-neighbour covers the outer ring. The utilities use `outline-hidden`, so the indicator survives
+neighbor covers the outer ring. The utilities use `outline-hidden`, so the indicator survives
 forced-colors mode, where box shadows are not painted.
 
 ## Variants

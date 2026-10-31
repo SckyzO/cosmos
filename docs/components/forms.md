@@ -25,11 +25,11 @@ every `step`, `intent` colors the fill (`brand`, `success`, `warning` or `danger
 />
 ```
 
-## Colour and phone fields
+## Color and phone fields
 
 Storybook: [Color Input](https://sckyzo.github.io/cosmos/?path=/docs/forms-color-input--docs), [Phone Input](https://sckyzo.github.io/cosmos/?path=/docs/forms-phone-input--docs).
 
-`ColorInput` picks a colour from named swatches (a radio group, arrows move between them) or a hex
+`ColorInput` picks a color from named swatches (a radio group, arrows move between them) or a hex
 field with a preview square. The value is the lowercase `#rrggbb`: the field accepts `#abc`, `abc`
 and `#aabbcc`, and only a valid hex reaches `onChange(hex)`. Leaving the field with an invalid draft
 shows an error and keeps the value. `presets` replaces the eight default swatches (`[]` for the hex

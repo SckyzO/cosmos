@@ -46,7 +46,7 @@ and both reading directions.
         <picture>
           <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-settings-dark.webp">
           <source media="(prefers-color-scheme: light)" srcset="docs/images/example-settings-light.webp">
-          <img alt="An organisation settings page: section tabs, form rows and a save bar" src="docs/images/example-settings-light.webp" width="100%">
+          <img alt="An organization settings page: section tabs, form rows and a save bar" src="docs/images/example-settings-light.webp" width="100%">
         </picture>
         <br>Settings
       </a>

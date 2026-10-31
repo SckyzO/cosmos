@@ -24,7 +24,7 @@ files, which sit in the same `dist` folder.
 Storybook: [CodeBlock](https://sckyzo.github.io/cosmos/?path=/docs/media-codeblock--docs), [Code highlighting](https://sckyzo.github.io/cosmos/?path=/docs/media-code-highlighting--docs).
 
 `CodeBlock` itself, in the main entry, needs no highlighter: its variants are in
-[Media](../components/media.md#codeblock). To colour it, use the `/code` entry. It needs
+[Media](../components/media.md#codeblock). To color it, use the `/code` entry. It needs
 [Shiki](https://shiki.style), an optional peer dependency that only the apps using this entry
 install:
 
@@ -38,7 +38,7 @@ import { CodeBlock } from '@sckyzo/cosmos-react/code';
 <CodeBlock language="yaml" filename="deployment.yaml" code={manifest} lineNumbers />;
 ```
 
-The colours are the `--color-code-*` tokens of the theme, so they follow the theme, accent and text
+The colors are the `--color-code-*` tokens of the theme, so they follow the theme, accent and text
 size. The JavaScript regex engine is used (no WebAssembly), and each language is its own chunk,
 loaded when a block shows it: until then, and for a language Cosmos has no grammar for, the block
 shows plain text. The languages are shell (`bash`, `sh`, `zsh`), `shellsession`, `yaml`, `json`,
@@ -95,7 +95,7 @@ The main entry never imports Tiptap: an app that does not use `/editor` ships no
 
 Storybook: [Map View](https://sckyzo.github.io/cosmos/?path=/docs/media-map-view--docs).
 
-`MapView` draws places on a map: pins in the theme's colours with an icon or a number, a popup per
+`MapView` draws places on a map: pins in the theme's colors with an icon or a number, a popup per
 pin, groups of close pins as a counted circle, zoom buttons and a fit to the markers. It lives in
 the `/map` entry and needs [MapLibre GL JS](https://maplibre.org) (BSD-3), an optional peer
 dependency that only the apps using this entry install:
@@ -153,7 +153,7 @@ export const Stores = () => {
   `darkStyle` is optional: under the dark themes (`.dark`, `.deep-blue`) the map switches to it,
   and without it keeps `style`. Pass constants, not a new object on each render. A markers array
   is the same: define it once, or the pins are redrawn each time.
-- **Pins, popups and buttons are React and HTML**, coloured by `intent` with the theme's classes,
+- **Pins, popups and buttons are React and HTML**, colored by `intent` with the theme's classes,
   so a theme, accent or text size switch repaints them with no code. A title or description with
   markup shows as text.
 - **`variant="static"`** is a fixed view for a card or a detail page: no gesture, no zoom buttons,

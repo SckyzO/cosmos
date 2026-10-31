@@ -149,7 +149,7 @@ place.
 Storybook: [Auth Layout](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-auth-layout--docs).
 
 `AuthLayout` wraps the sign-in, sign-up, reset and two-step forms. `variant` picks the page:
-`card` (default) is a centred card; `split` puts the form beside a brand panel; `cover`
+`card` (default) is a centered card; `split` puts the form beside a brand panel; `cover`
 centres the card over a full-bleed image.
 
 ```tsx

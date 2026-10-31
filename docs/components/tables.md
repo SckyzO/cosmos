@@ -242,7 +242,7 @@ On paper a `DataTable` drops its toolbar, bulk-action bar, filter tabs, pager
 and the selection and action columns, prints every row of the page instead of
 scrolling, repeats the header on each page and keeps a row on one page. There is
 no Print button: use the browser's. The theme is not switched, so a dark theme
-prints its own colours: pick a light one for print (or `@media print` in your CSS).
+prints its own colors: pick a light one for print (or `@media print` in your CSS).
 
 Saved views: `views` (or `defaultViews`) shows a Views button in the toolbar.
 A view is plain JSON, `{ id, name, search, filters, sort, columnVisibility,
@@ -294,7 +294,7 @@ it back, and a change that resets the page calls `onPageChange(1)` (not when it
 is on page 1 already).
 
 `loading` with rows on screen keeps them, dimmed and inert (nothing in them can
-be clicked meanwhile), under a centred spinner, with the pager still there and
+be clicked meanwhile), under a centered spinner, with the pager still there and
 `aria-busy` on the table; with no rows yet it draws the `loadingRows`
 placeholders as before. Use it for every request, the first or the next page.
 
