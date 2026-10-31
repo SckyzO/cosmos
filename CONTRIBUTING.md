@@ -17,8 +17,23 @@ make install              # pnpm install + Playwright browsers, inside the conta
 make storybook            # http://localhost:6006 — component playground
 make test                 # Unit tests (Vitest, Node), story tests (Vitest browser mode), e2e and the theme contrast check
 make check-changed        # Before pushing: the CI cut down to what you changed
-make ci                   # Full CI (check-changed runs it when a change needs it)
+make ci                   # Full CI, one step after the other (check-changed runs its steps when a change needs them)
 ```
+
+`make check-changed` runs only what your change can break:
+
+- **Documentation only** (Markdown, `docs/`, pictures): Prettier on those files.
+- **Component sources and the stories of `apps/storybook/stories`**: Prettier, ESLint, the
+  typecheck, the unit tests and the story files that use what you changed, in the default,
+  contrast and right-to-left passes.
+- **Anything else** (theme CSS, Storybook or Vitest config, dependencies, workflows, e2e specs,
+  Docker, MDX): lint, format, typecheck, the builds and the tests, then the three contrast passes
+  and the right-to-left pass side by side, one container each. They need 13 GB of available
+  memory; below that the check skips them, says so, and passes: push, and the PR's CI runs
+  them. `make ci` runs them one after the other.
+
+On GitHub, a pull request that changes only documentation runs none of the heavy jobs; the
+required "Lint + typecheck + test + build" check still reports, and passes.
 
 ## Tests
 
@@ -408,7 +423,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 
 ## PR checklist
 
-- [ ] `make check-changed` passes locally (it runs the full `make ci` when the change needs it)
+- [ ] `make check-changed` passes locally (it runs every step of `make ci` when the change needs it; with less than 13 GB of memory it skips the parallel story passes and the PR's CI runs them)
 - [ ] New components have a Storybook story
 - [ ] New or changed props follow the [Component API](#component-api) rules
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
