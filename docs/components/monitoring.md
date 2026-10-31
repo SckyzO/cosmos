@@ -50,7 +50,8 @@ nothing in it is `UNKNOWN`.
   header shows the worst status and the counts under it and collapses
   (`collapsedGroups` / `defaultCollapsedGroups` / `onCollapsedGroupsChange`, by group id).
   `sort="severity"` puts the failing checks, and the groups holding them, first. `variant="list"` is
-  rows, `variant="grid"` one small card per check, for a wall screen.
+  rows, `variant="grid"` one small card per check, for a wall screen. A list narrower than 48rem, on
+  a phone or in a card, stacks each check's fields instead of laying them out in columns.
 - `HealthMatrix` is one cell per service (`rows`) and per environment, node or region (`columns`),
   with sticky headers, in a `role="grid"` that takes one tab stop: arrow keys move between cells,
   Home and End go to the ends of the row. A cell opens its detail in a popover (`message`, `latency`,
