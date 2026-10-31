@@ -28,6 +28,13 @@ label that needs more ends in an ellipsis and its row shows the full label in a 
 `maxWidth` to the same value as `width` for a fixed width. The collapsed rail (`collapsedWidth`)
 and the drawer keep their own widths.
 
+Rows are 32px tall and 4px apart, with 16px icons; the `data-density` setting moves their height.
+A `Sidebar.Section` or `Sidebar.Group` sets its block apart with 22px above its title, which is
+written as given (not upper-cased) and starts on the column of the row icons, as the logo of
+`Sidebar.Brand` is centred on it. The rows stand 20px from the sidebar's edges; `gutter="tight"`
+brings them to 10px, the logo, the titles and the footer following. Both go through
+`--cosmos-sidebar-gutter`, which an app can set for another distance.
+
 A collapsed `Sidebar` can open while the pointer rests on it, with `expandOnHover`:
 `"overlay"` opens it above the page after 150 ms, with a shadow, and the page does not move;
 `"push"` widens it and the page makes room. Keyboard focus entering the sidebar does the same,
