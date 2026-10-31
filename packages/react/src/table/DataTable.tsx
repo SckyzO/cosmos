@@ -28,6 +28,7 @@ import {
   VIRTUAL_ROW_HEIGHT,
 } from './density';
 import { resolveColumnVisibility, type ColumnVisibility } from './columnVisibility';
+import { tableMinWidth } from './columnWidths';
 import { columnFilterValues, filterRows, filtersToRecord, searchRows, sortRows } from './pipeline';
 import { newViewId, recordToFilters, type ViewState } from './savedViews';
 import { useControllableState } from '../hooks/useControllableState';
@@ -666,19 +667,18 @@ export const DataTable = <T,>({
   // takes what is left, so those two stay as wide as asked.
   const firstColumnTakesTheRest =
     (selectable || actionColumn) && columns.length > 0 && columns.every((c) => c.width);
-  // What is left is nothing once the stated widths add up to more than the box, as in a table that
-  // scrolls under pinned columns: the table is then at least as wide as all of them, so the first
-  // column keeps its own width.
-  const statedMinWidth = firstColumnTakesTheRest
-    ? `calc(${[
-        expandable && EXPAND_COLUMN_WIDTH,
-        selectable && SELECT_COLUMN_WIDTH,
-        ...columns.map((c) => c.width),
-        actionColumn && (rowEditing ? EDIT_ACTION_COLUMN_WIDTH : ACTION_COLUMN_WIDTH),
-      ]
-        .filter(Boolean)
-        .join(' + ')})`
-    : undefined;
+  // The table is never narrower than its columns need, so a narrow box scrolls it instead of
+  // squeezing them: each column keeps its minimum, and the first one, when it takes the rest, keeps
+  // its own width (what is left is nothing once the stated widths add up to more than the box).
+  const tableMinimum = tableMinWidth(
+    columns,
+    [
+      expandable && EXPAND_COLUMN_WIDTH,
+      selectable && SELECT_COLUMN_WIDTH,
+      actionColumn && (rowEditing ? EDIT_ACTION_COLUMN_WIDTH : ACTION_COLUMN_WIDTH),
+    ].filter((w): w is string => Boolean(w)),
+    firstColumnTakesTheRest ? 0 : undefined
+  );
 
   const mobileSortable = columns.some((c) => c.sortable);
 
@@ -1407,7 +1407,7 @@ export const DataTable = <T,>({
             aria-labelledby={ariaLabelledBy}
             aria-busy={loading || undefined}
             aria-rowcount={windowed ? pageRows.length + 1 : undefined}
-            style={statedMinWidth ? { minWidth: statedMinWidth } : undefined}
+            style={tableMinimum ? { minWidth: tableMinimum } : undefined}
             className="w-full table-fixed"
           >
             <colgroup>

@@ -70,6 +70,13 @@ export type ColumnDef<T> = {
   label: ReactNode;
   /** Optional fixed width (CSS value, e.g. `'20%'` or `'180px'`). */
   width?: string;
+  /**
+   * The narrowest the column is drawn when `width` is a percentage or unset (a length, `'180px'`,
+   * is kept as it is). Default `'8rem'`. The table is never narrower than what its columns need,
+   * so on a narrow screen it scrolls sideways instead of squeezing them. Columns without a width
+   * split what the others leave in equal parts: each gets at least the largest `minWidth` of them.
+   */
+  minWidth?: string;
   /** Text alignment override: `start` (the default), `end` or `center`. `end` is for numbers. */
   align?: 'start' | 'end' | 'center';
   /** Renders the cell for a row. */
