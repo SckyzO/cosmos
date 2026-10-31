@@ -180,7 +180,7 @@ Replace the hardcoded blue:
 --shadow-focus-ring: 0px 0px 0px 4px color-mix(in srgb, var(--color-brand-500) 12%, transparent);
 ```
 
-Since #151 the halo is drawn together with a solid indicator through the `focus-indicator`, `field-focus`, `field-focus-error` and `focus-indicator-on-accent` utilities of `tailwind-tokens.css` (documented in `packages/theme/README.md`); no component uses `--shadow-focus-ring` alone.
+Since #151 the halo is drawn together with a solid indicator through the `focus-indicator`, `field-focus`, `field-focus-error` and `focus-indicator-on-accent` utilities of `tailwind-tokens.css` (documented in `docs/guides/tokens.md`); no component uses `--shadow-focus-ring` alone.
 
 ### 1.6 Contrast guard — `packages/theme/scripts/check-contrast.mjs`
 
