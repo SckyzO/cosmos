@@ -179,7 +179,7 @@ export const WithMenus: Story = {
 const OVERFLOW_ITEMS = ['Dashboard', 'Hosts', 'Alerts', 'Logs', 'Reports', 'Billing', 'Team'];
 
 const OverflowBar = ({ width }: { width?: number | string }) => (
-  <div style={{ width }} data-testid="frame">
+  <div style={{ width, maxWidth: '100%' }} data-testid="frame">
     <Navbar theme="dark" aria-label="Main">
       <Navbar.Brand>
         <span className="text-lg font-semibold text-white">Acme</span>

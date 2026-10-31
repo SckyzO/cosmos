@@ -105,7 +105,7 @@ export const Shapes: Story = {
         <div className="flex flex-wrap items-end gap-10">
           {SHAPES.map((shape) => (
             <div key={shape} className="flex flex-col items-center gap-2">
-              <div className="flex items-end gap-3">
+              <div className="flex flex-wrap items-end gap-3">
                 <Avatar shape={shape} size="sm" name="Ana Costa" />
                 <Avatar shape={shape} size="lg" name="Ana Costa" />
                 <Avatar shape={shape} size="lg" name="Ana Costa" src={PHOTO} />

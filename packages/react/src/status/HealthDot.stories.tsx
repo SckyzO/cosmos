@@ -59,7 +59,7 @@ export const MatchesThemePalette: Story = {
 export const StaticVsPulse: Story = {
   render: () => (
     <div className="space-y-4">
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-6">
         {STATUSES.map((s) => (
           <div key={s} className="flex items-center gap-2">
             <HealthDot status={s} />
@@ -67,7 +67,7 @@ export const StaticVsPulse: Story = {
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-6">
         {STATUSES.map((s) => (
           <div key={s} className="flex items-center gap-2">
             <HealthDot status={s} pulse />

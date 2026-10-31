@@ -246,7 +246,7 @@ export const LargeBuffer: Story = {
  */
 export const NarrowViewer: Story = {
   render: () => (
-    <div style={{ width: 375 }}>
+    <div style={{ width: 375, maxWidth: '100%' }}>
       <Card padding="none" className="overflow-hidden">
         <LogViewer lines={fakeLines(60)} aria-label="Backend logs" height={300} />
       </Card>
@@ -257,7 +257,7 @@ export const NarrowViewer: Story = {
 /** The same narrow viewer with `wrap`: the message goes on its own line, under the time and the level. */
 export const NarrowWrapped: Story = {
   render: () => (
-    <div style={{ width: 375 }}>
+    <div style={{ width: 375, maxWidth: '100%' }}>
       <Card padding="none" className="overflow-hidden">
         <LogViewer lines={longLines()} aria-label="Backend logs" wrap height={360} />
       </Card>

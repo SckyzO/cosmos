@@ -1335,7 +1335,7 @@ export const Variants: Story = {
   render: () => {
     const [collapsed, setCollapsed] = useState(false);
     return (
-      <div className="flex min-h-screen items-start gap-10 bg-[var(--color-bg-base)] p-6 text-sm text-[var(--color-text-secondary)]">
+      <div className="flex min-h-screen flex-wrap items-start gap-10 bg-[var(--color-bg-base)] p-6 text-sm text-[var(--color-text-secondary)]">
         <div className="space-y-2">
           <p>hamburger</p>
           <SidebarToggle collapsed={collapsed} onCollapsedChange={setCollapsed} />
@@ -1421,7 +1421,7 @@ export const ControlledOutsideShell: Story = {
               <ToggleNav />
             </Sidebar>
           </div>
-          <main className="flex-1">
+          <main className="min-w-0 flex-1">
             <Page>The host keeps the state: collapsed = {String(collapsed)}.</Page>
           </main>
         </div>

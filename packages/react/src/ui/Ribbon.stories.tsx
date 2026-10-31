@@ -18,7 +18,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative h-44 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  // Up to 16rem, narrower in a narrow column; the content starts under the corner ribbons.
+  <div className="relative h-44 w-full max-w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 pt-12 shadow-sm dark:border-gray-700 dark:bg-gray-800">
     {children}
     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">29 € / month</p>
@@ -50,7 +51,7 @@ export const Angled: Story = {
 
 export const Positions: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon position={pos} intent="brand">
@@ -64,7 +65,7 @@ export const Positions: Story = {
 
 export const Intents: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {(['brand', 'success', 'warning', 'danger', 'neutral'] as RibbonIntent[]).map((i) => (
         <Card key={i}>
           <Ribbon intent={i}>{i}</Ribbon>
@@ -76,7 +77,7 @@ export const Intents: Story = {
 
 export const AngledPositions: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon shape="angled" position={pos} intent="success">
@@ -108,7 +109,7 @@ export const Pill: Story = {
 
 export const PillPositions: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon shape="pill" position={pos} intent="brand">
@@ -122,7 +123,7 @@ export const PillPositions: Story = {
 
 export const PillIntents: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {(['brand', 'success', 'warning', 'danger', 'neutral'] as RibbonIntent[]).map((i) => (
         <Card key={i}>
           <Ribbon shape="pill" intent={i}>
@@ -136,7 +137,7 @@ export const PillIntents: Story = {
 
 export const OnImage: Story = {
   render: () => (
-    <div className="relative h-44 w-64 overflow-hidden rounded-xl shadow-sm">
+    <div className="relative h-44 w-full max-w-64 overflow-hidden rounded-xl shadow-sm">
       <div className="h-full w-full bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500" />
       <Ribbon shape="angled" intent="danger">
         −30%
@@ -147,7 +148,7 @@ export const OnImage: Story = {
 
 export const FlatVsAngled: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <Card>
         <Ribbon shape="flat" intent="brand">
           NEW
@@ -176,7 +177,7 @@ export const DemoCorner: Story = {
 export const FollowsCardRadius: Story = {
   tags: ['!dev'],
   render: () => (
-    <CosmosCard padding="lg" className="relative h-44 w-64">
+    <CosmosCard padding="lg" className="relative h-44 w-full max-w-64">
       <Ribbon position="top-end">NEW</Ribbon>
       <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
     </CosmosCard>
@@ -202,7 +203,7 @@ const INSET: Record<RibbonPosition, [side: 'start' | 'end', edge: 'top' | 'botto
 export const PillSitsInsideTheCorner: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(Object.keys(INSET) as RibbonPosition[]).map((pos) => (
         <Card key={pos}>
           <Ribbon shape="pill" position={pos} intent="danger">
@@ -254,7 +255,7 @@ export const PillSitsInsideTheCorner: Story = {
 export const PillKeepsTheIntentFill: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(['brand', 'success', 'warning', 'danger', 'neutral'] as RibbonIntent[]).map((i) => (
         <Card key={i}>
           <Ribbon shape="pill" intent={i}>
