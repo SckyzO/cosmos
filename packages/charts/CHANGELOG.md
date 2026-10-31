@@ -5,6 +5,15 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.4.0...@sckyzo/cosmos-charts@0.4.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **charts:** fade a scrolling heat grid and drop values that don't fit ([e8ff4ab](https://github.com/SckyzO/cosmos/commit/e8ff4ab015777ac6e2d6ef015d324e412370f00a))
+* **charts:** keep room for the lowest label of a RealtimeChart ([5dac109](https://github.com/SckyzO/cosmos/commit/5dac10929560e8034543c80a78c965285ee53336))
+* **charts:** put a reference band's label at the bottom of the band ([13ee80b](https://github.com/SckyzO/cosmos/commit/13ee80b338034903b0f940abfbfb5acbfb641f1c))
+
 ## [0.4.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.3.1...@sckyzo/cosmos-charts@0.4.0) (2026-10-30)
 
 

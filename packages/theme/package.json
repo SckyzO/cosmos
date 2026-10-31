@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-theme",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Tailwind 4 theme and design tokens for the Cosmos design system — palette, typography, radii and CSS variables for its light, sand, dark and deep-blue themes.",
   "license": "MIT",
   "author": "SckyzO",

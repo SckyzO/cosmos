@@ -5,6 +5,29 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.4.0...@sckyzo/cosmos-react@0.4.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **react:** back each avatar of a group with the surface ([648179b](https://github.com/SckyzO/cosmos/commit/648179b0793542ccb75312f5c5d52251f0a36d7f))
+* **react:** break a KPI figure and label inside a narrow card ([7c4c5b2](https://github.com/SckyzO/cosmos/commit/7c4c5b2326d9daac7fae81774534c2eb53587616))
+* **react:** break a long DescriptionList value inside its row ([d42e97a](https://github.com/SckyzO/cosmos/commit/d42e97a62367efb5e9e89e860b43267578d6622d))
+* **react:** keep a button's label on one line and its icon whole ([c1b1f04](https://github.com/SckyzO/cosmos/commit/c1b1f0446e32f3d283ba69d0c37931a219864c33))
+* **react:** keep DataTable columns at a minimum width ([1a7875d](https://github.com/SckyzO/cosmos/commit/1a7875d28b5156a51c995b5871053a4cb6cc76b1))
+* **react:** keep each bulk action label on one line ([ef5c63a](https://github.com/SckyzO/cosmos/commit/ef5c63a79a30053e826d1965e0dcb1161349548b))
+* **react:** keep MiniCalendar days wide enough to tap ([1a2f78a](https://github.com/SckyzO/cosmos/commit/1a2f78a943839b30199d2194328c8af05ec439c6))
+* **react:** keep the notification ping inside the bell ([8470c6f](https://github.com/SckyzO/cosmos/commit/8470c6f666bb92ab6a819da29885b3a73bf81d7d))
+* **react:** keep the social sign-in icons whole in a grid ([71493ed](https://github.com/SckyzO/cosmos/commit/71493edef7408f3d402b254135b376073e33d4c5))
+* **react:** lay HealthCheckList rows out from the list's own width ([8cbb142](https://github.com/SckyzO/cosmos/commit/8cbb142f11a372250f478b94ce32825a34d0e01d))
+* **react:** let a date range wrap in a narrow box ([bb50e01](https://github.com/SckyzO/cosmos/commit/bb50e017eb4d4f0a8149201f3c5c51152011b50c))
+* **react:** let a long ProfileHeader name break in a narrow card ([81a49ec](https://github.com/SckyzO/cosmos/commit/81a49ec412e57897c39ce81e74300320952279c4))
+* **react:** match column widths in linear time ([e6b9f26](https://github.com/SckyzO/cosmos/commit/e6b9f26625eaaff6867a59a4f175630aa6b0ce22))
+* **react:** narrow the cells of a long code to fit a phone ([0fdb122](https://github.com/SckyzO/cosmos/commit/0fdb12200c3e1853ecbdfc8669da7185e0239a83))
+* **react:** offer "Try again" on a save button whose save failed ([eb2bcfb](https://github.com/SckyzO/cosmos/commit/eb2bcfb771adf42371def2c4d1277ae2bf6ceac1))
+* **react:** put a StackedList badge under the title in a narrow row ([68fa710](https://github.com/SckyzO/cosmos/commit/68fa7104121c196571f7c0892bca83e2bc981fe9))
+* **react:** put the bulk actions under the count when they don't fit ([538b641](https://github.com/SckyzO/cosmos/commit/538b64178f83135354f484cf5457aa1b20368184))
+
 ## [0.4.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.3.0...@sckyzo/cosmos-react@0.4.0) (2026-10-30)
 
 
