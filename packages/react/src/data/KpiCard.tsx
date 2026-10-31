@@ -132,7 +132,9 @@ export const KpiCard = ({
   const content = (
     <>
       <span className="flex items-center justify-between gap-3">
-        <span className="min-w-0 text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+        {/* A one-word label longer than its room breaks, with a hyphen where the language allows,
+            rather than running under the icon. */}
+        <span className="min-w-0 text-xs font-medium tracking-wider break-words hyphens-auto text-gray-500 uppercase dark:text-gray-400">
           <bdi>{label}</bdi>
         </span>
         {Icon && (
@@ -154,7 +156,9 @@ export const KpiCard = ({
       >
         <span
           className={clsx(
-            'block text-3xl font-bold tracking-tight tabular-nums',
+            // A figure with no break in it (`€12,418,906.40`) wraps in a narrow card instead of
+            // running out of it: cut, it would read as another number.
+            'block text-3xl font-bold tracking-tight break-words tabular-nums',
             intent === 'neutral' ? 'text-gray-900 dark:text-white' : INTENT_STYLE[intent].text
           )}
         >
