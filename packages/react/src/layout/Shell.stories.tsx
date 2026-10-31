@@ -148,6 +148,88 @@ export const Default: Story = {
 // a button under the sidebar's content.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// The floating variant: the sidebar and the page are two cards, 10px from the window and from
+// each other, the sidebar with the tight gutter and the edge toggle.
+const FloatingShell = (props: Partial<React.ComponentProps<typeof Shell>>) => (
+  <Shell
+    variant="floating"
+    topbar={<Topbar pageTitle="Analytics Dashboard" endActions={<ThemeToggle />} />}
+    sidebar={
+      <Sidebar>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <NavItems />
+      </Sidebar>
+    }
+    {...props}
+  >
+    <PageContent
+      title="Dashboard"
+      description="The sidebar and the page float as two cards. Click the sidebar's edge to collapse it."
+    />
+  </Shell>
+);
+
+/**
+ * `variant="floating"`: the sidebar is a card 10px from the window, and the topbar and the page
+ * share a second card beside it. The sidebar's rows come 10px from its edges, and a strip along
+ * its edge collapses it on click.
+ */
+export const Floating: Story = { render: () => <FloatingShell /> };
+
+export const FloatingChecks: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <FloatingShell />,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const panel = nav.ownerDocument.querySelector('[data-shell-panel]') as HTMLElement;
+    const card = nav.getBoundingClientRect();
+    const page = panel.getBoundingClientRect();
+    // Two cards, 10px from the window's edges and from each other.
+    await expect(startOffset(nav, document.documentElement)).toBe(10);
+    await expect(card.top).toBe(10);
+    await expect(window.innerHeight - card.bottom).toBe(10);
+    const rtl = getComputedStyle(nav).direction === 'rtl';
+    await expect(Math.round(rtl ? card.left - page.right : page.left - card.right)).toBe(10);
+    for (const el of [nav, panel]) {
+      await expect(getComputedStyle(el).borderTopWidth).toBe('1px');
+      await expect(getComputedStyle(el).borderTopLeftRadius).not.toBe('0px');
+    }
+    // The tight gutter, from the Shell: 10px inside the card's 1px border.
+    await expect(startOffset(canvas.getByRole('button', { name: 'Dashboard' }), nav)).toBe(11);
+    // The edge toggle: out of the tab order, collapses on click, expands on the next.
+    const edge = nav.querySelector('[data-sidebar-edge]') as HTMLElement;
+    await expect(edge.tabIndex).toBe(-1);
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' });
+    await userEvent.click(edge);
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(edge);
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBeGreaterThan(72));
+  },
+};
+
+/** Below `lg` the sidebar is a drawer and the page fills the window, as in `attached`. */
+export const FloatingOnAPhoneFillsTheWindow: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => <FloatingShell />,
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.ownerDocument.querySelector('[data-shell-panel]')).toBeNull();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** An attached Shell keeps its sidebar's edge a plain line: no edge toggle unless it asks. */
+export const AttachedHasNoEdgeToggle: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <FloatingShell variant="attached" />,
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.querySelector('[data-sidebar-edge]')).toBeNull();
+    await expect(startOffset(canvas.getByRole('button', { name: 'Dashboard' }), nav)).toBe(20);
+  },
+};
+
 export const CollapseButtonInSidebar: Story = {
   render: () => (
     <Shell
