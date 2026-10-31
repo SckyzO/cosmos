@@ -47,6 +47,9 @@ export type Finding = {
  *      the block that holds it (a `nowrap` label in a fixed width, a long word),
  *      starting inside it.
  *
+ * Text turned by a rotation (a chart's axis title, slanted tick labels) is left
+ * out of both: its bounding box is not where its glyphs are.
+ *
  * text-overlap
  *   Two lines from different text nodes whose visible parts (clipped by their
  *   scrollers) overlap by more than half of the shorter one's height and 30% of
@@ -65,7 +68,7 @@ export type Finding = {
  * small-target
  *   A link, button, field or ARIA control under 24x24 CSS px (WCAG 2.5.8), not
  *   disabled. The criterion's exceptions that can be measured: a link inside
- *   a sentence; a native control left to the browser (`appearance: auto`); a
+ *   a sentence (inline, inline-block or inline-flex); a native control left to the browser (`appearance: auto`); a
  *   field whose label is 24x24 or more; spacing, when a 24px circle on the
  *   target meets no other target (its box, or the circle of another small one).
  *   Not seen: a hit area widened by a pseudo-element, or another target that
@@ -208,11 +211,31 @@ const inspect = (): Finding[] => {
     return false;
   };
 
+  // The box of a turned text is not where its glyphs are: a rotated axis title or
+  // tick label is left out of both text rules.
+  const turned = (el: Element) => {
+    if (el instanceof SVGGraphicsElement) {
+      const m = el.getScreenCTM();
+      if (m && (Math.abs(m.b) > 0.01 || Math.abs(m.c) > 0.01)) return true;
+    }
+    for (let a: Element | null = el; a; a = a.parentElement) {
+      const t = css(a).transform;
+      const values = t
+        .match(/matrix(3d)?\(([^)]+)\)/)?.[2]
+        .split(',')
+        .map(Number);
+      if (!values) continue;
+      const [b, c] = values.length === 16 ? [values[1], values[4]] : [values[1], values[2]];
+      if (Math.abs(b) > 0.01 || Math.abs(c) > 0.01) return true;
+    }
+    return false;
+  };
+
   for (const root of roots) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode() as Text | null; n; n = walker.nextNode() as Text | null) {
       const el = n.parentElement;
-      if (!el || !n.data.trim() || !seen(el)) continue;
+      if (!el || !n.data.trim() || !seen(el) || turned(el)) continue;
       const range = document.createRange();
       range.selectNodeContents(n);
       const rects = Array.from(range.getClientRects()).filter(
@@ -222,6 +245,14 @@ const inspect = (): Finding[] => {
       const own = clippers(el, true);
       // A box a pixel or two wide that clips is how a visually hidden label is made.
       if (own.some((c) => c.hard && clientBox(c.el).r - clientBox(c.el).l <= 2)) continue;
+      // ...or with `clip: rect(0, 0, 0, 0)` or `clip-path: inset(50%)`, which a table caption keeps its width under.
+      if (
+        own.some(
+          (c) =>
+            css(c.el).clip === 'rect(0px, 0px, 0px, 0px)' || css(c.el).clipPath === 'inset(50%)'
+        )
+      )
+        continue;
       const fontSize = parseFloat(css(el).fontSize);
       const tolY = 0.3 * fontSize;
       const here = rects.map(box);
@@ -229,16 +260,32 @@ const inspect = (): Finding[] => {
 
       // a. cut by a clipping ancestor
       let flagged = false;
+      // The lines still to judge: what a scroller between the text and a clipping
+      // box keeps out of view is reached by scrolling, not cut.
+      let cur = here;
       for (const c of own) {
-        if (!c.hard || intended(el, c.el)) continue;
-        const cr = clientBox(c.el);
         const s = css(c.el);
+        const cr = clientBox(c.el);
+        const soft = (v: string) => v === 'auto' || v === 'scroll';
+        const xsoft = soft(s.overflowX);
+        const ysoft = soft(s.overflowY);
+        if (xsoft || ysoft) {
+          cur = cur
+            .map((l) => ({
+              l: xsoft ? Math.max(l.l, cr.l) : l.l,
+              r: xsoft ? Math.min(l.r, cr.r) : l.r,
+              t: ysoft ? Math.max(l.t, cr.t) : l.t,
+              b: ysoft ? Math.min(l.b, cr.b) : l.b,
+            }))
+            .filter((l) => l.r > l.l && l.b > l.t);
+        }
+        if (!c.hard || intended(el, c.el)) continue;
         const xs = s.overflowX === 'hidden' || s.overflowX === 'clip';
         const ys = s.overflowY === 'hidden' || s.overflowY === 'clip';
         let inside = 0;
         let cut = 0;
         let outside = 0;
-        for (const l of here) {
+        for (const l of cur) {
           const meetsX = !xs || (l.r > cr.l + 0.5 && l.l < cr.r - 0.5);
           const meetsY = !ys || (l.b > cr.t + 0.5 && l.t < cr.b - 0.5);
           if (!meetsX || !meetsY) outside++;
@@ -414,7 +461,7 @@ const inspect = (): Finding[] => {
     if (t.w >= 23.5 && t.h >= 23.5) return false;
     const el = t.el;
     // A link inside a sentence.
-    if (el.matches('a') && css(el).display === 'inline') {
+    if (el.matches('a') && /^inline/.test(css(el).display)) {
       const parent = el.parentElement;
       const around = Array.from(parent?.childNodes ?? []).some(
         (c) => c !== el && c.nodeType === Node.TEXT_NODE && (c.textContent ?? '').trim() !== ''

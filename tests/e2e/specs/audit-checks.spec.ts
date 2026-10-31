@@ -167,3 +167,25 @@ test('reports console errors and warnings, not logs', async ({ page }) => {
   expect(await rulesOf(page, `<script>console.error('boom')</script>`)).toEqual(['console']);
   expect(await rulesOf(page, `<script>console.warn('careful')</script>`)).toEqual(['console']);
 });
+
+test('accepts rotated text: its box is not where its glyphs are', async ({ page }) => {
+  const rules = await rulesOf(
+    page,
+    `<div style="position:relative;height:120px;width:200px;overflow:hidden">
+       <span style="position:absolute;top:40px;left:0;transform:rotate(-90deg);white-space:nowrap">Axis title text</span>
+       <span style="position:absolute;top:40px;left:20px;transform:rotate(-45deg);white-space:nowrap">Slanted label</span>
+     </div>`
+  );
+  expect(rules).toEqual([]);
+});
+
+test('accepts text reached by scrolling, and a caption hidden with clip', async ({ page }) => {
+  const rules = await rulesOf(
+    page,
+    `<div style="width:100px;overflow:hidden">
+       <div style="width:60px;overflow-x:auto;white-space:nowrap">A tab list wider than its scroller</div></div>
+     <table><caption style="clip:rect(0,0,0,0);position:absolute;overflow:hidden;width:1px;height:1px;
+       padding:0 16px">Members</caption><tr><td>Cell</td></tr></table>`
+  );
+  expect(rules).toEqual([]);
+});
