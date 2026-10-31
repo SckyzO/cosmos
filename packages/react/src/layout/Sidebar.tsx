@@ -334,9 +334,18 @@ export type SidebarProps = {
    * How far the rows sit from the sidebar's edges, with the logo, the section titles and the
    * footer following them: `default` (20 px) or `tight` (10 px). It sets
    * `--cosmos-sidebar-gutter` on the sidebar; an app can set that variable itself for another
-   * distance. The collapsed rail and the compact one keep their own.
+   * distance. The collapsed rail and the compact one keep their own. Inside a Shell, the Shell's
+   * `sidebarGutter` is the default (`tight` in a floating Shell).
    */
   gutter?: SidebarGutter;
+  /**
+   * A strip along the sidebar's end edge that collapses or expands it on click, and shows a line
+   * under the pointer: a large target next to the toggles, for the mouse (the keyboard has the
+   * toggles). Default `false`, `true` in a floating Shell. Not on the compact rail nor in the
+   * Shell's drawer. Outside a Shell it moves the sidebar's own state and calls
+   * `onCollapsedChange`.
+   */
+  edgeToggle?: boolean;
   /**
    * Renders a collapse button (a `SidebarToggle`, `panel` variant) at the very
    * bottom, under `footer`, and fires with the next state when it is clicked;
@@ -382,7 +391,8 @@ const SidebarRoot = ({
   footer,
   footerDivider = 'full',
   activeStyle = 'tint',
-  gutter = 'default',
+  gutter: gutterProp,
+  edgeToggle: edgeToggleProp,
   onCollapsedChange,
   className,
 }: SidebarProps) => {
@@ -400,6 +410,11 @@ const SidebarRoot = ({
   // The compact rail has one width: no collapsed state, no hover expansion, no toggle.
   const compact = variant === 'compact' && !inDrawer;
   const collapsed = inDrawer || compact ? false : shell ? shell.collapsed : ownCollapsed;
+  const floating = shell?.variant === 'floating' && !inDrawer;
+  const gutter = gutterProp ?? shell?.sidebarGutter ?? 'default';
+  const edgeToggle = (edgeToggleProp ?? floating) && !inDrawer && !compact;
+  const toggleCollapsed = () =>
+    shell ? shell.setCollapsed(!shell.collapsed) : setOwnCollapsed(!ownCollapsed);
   const ownNavId = useId();
   const navId = shell ? shell.navId : ownNavId;
   // The drawer has no bottom toggle: the Topbar hamburger and the close button do the job.
@@ -443,9 +458,14 @@ const SidebarRoot = ({
           : {}),
       }}
       className={clsx(
-        'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
-        // The drawer panel draws the edge and the shadow, and sets the width.
-        inDrawer ? 'w-full' : 'border-e border-[var(--color-border)]',
+        'relative flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
+        // The drawer panel draws the edge and the shadow, and sets the width. Floating, the
+        // sidebar is a card of its own.
+        inDrawer
+          ? 'w-full'
+          : floating
+            ? 'rounded-xl border border-[var(--color-border)] shadow-sm'
+            : 'border-e border-[var(--color-border)]',
         // Not before the first frames: the width measured at mount shows at once.
         fit.animated &&
           clsx(
@@ -460,6 +480,26 @@ const SidebarRoot = ({
       {...hover.props}
     >
       <div className="flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+      {edgeToggle && (
+        // Mouse only: hidden from assistive technology and out of the tab order, since the
+        // toggles already do the job by keyboard. The line shows under the pointer.
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden
+          data-sidebar-edge=""
+          onClick={toggleCollapsed}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={clsx(
+            'group/edge absolute inset-y-0 end-0 z-10 w-2',
+            collapsed
+              ? 'cursor-e-resize rtl:cursor-w-resize'
+              : 'cursor-w-resize rtl:cursor-e-resize'
+          )}
+        >
+          <span className="group-hover/edge:bg-brand-500 absolute inset-y-3 end-0 w-0.5 rounded-full bg-transparent transition-colors" />
+        </button>
+      )}
       {footer && (
         <div
           className={clsx(

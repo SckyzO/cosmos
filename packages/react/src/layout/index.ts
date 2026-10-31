@@ -21,7 +21,7 @@ export {
   type SplitViewPaneProps,
   type SplitViewBreakpoint,
 } from './SplitView';
-export { Shell, type ShellProps, type ShellContainer } from './Shell';
+export { Shell, type ShellProps, type ShellContainer, type ShellVariant } from './Shell';
 export { Topbar, type TopbarProps } from './Topbar';
 export {
   Sidebar,

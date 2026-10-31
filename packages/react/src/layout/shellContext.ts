@@ -19,6 +19,13 @@ export type ShellContextValue = {
   navId: string;
   /** Where the Shell puts its built-in toggle: in the Topbar or at the bottom of the Sidebar. */
   collapseControl: 'topbar' | 'sidebar';
+  /**
+   * The Shell's `variant`. `floating`: the Sidebar draws itself as a card (border all round,
+   * rounded corners, a light shadow) and takes the tight gutter and the edge toggle by default.
+   */
+  variant: 'attached' | 'floating';
+  /** The gutter the Shell gives its Sidebar when the Sidebar sets none. */
+  sidebarGutter: 'default' | 'tight';
 };
 
 /** Set by a Shell that has a sidebar; `null` anywhere else. Internal to the package. */
