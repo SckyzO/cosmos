@@ -188,6 +188,19 @@ export const BulkActionsOnAPhone: Story = {
   },
 };
 
+// The lines of text a control's label takes: a text node gives one rectangle per line.
+const textLines = (element: HTMLElement) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let lines = 0;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    lines += range.getClientRects().length;
+  }
+  return lines;
+};
+
 // Without cards a phone keeps the labelled actions: they go to the line under the count, each on
 // one line of text, instead of being squeezed beside it and cut by the edge of the card.
 export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
@@ -195,7 +208,10 @@ export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
   globals: mobileViewport,
   render: () => (
     <Wrap>
-      <Orders defaultSelection={selected} />
+      {/* The card of a 375px phone, a little narrower than the viewport's own. */}
+      <div style={{ maxWidth: 296 }}>
+        <Orders defaultSelection={selected} />
+      </div>
     </Wrap>
   ),
   play: async ({ canvas }) => {
@@ -206,8 +222,8 @@ export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
     await expect(ship.getBoundingClientRect().top).toBeGreaterThan(
       canvas.getByText('3 selected').getBoundingClientRect().bottom
     );
-    await expect(ship.scrollHeight).toBeLessThanOrEqual(ship.clientHeight);
     for (const button of [ship, more]) {
+      await expect(textLines(button)).toBe(1);
       await expect(button.getBoundingClientRect().right).toBeLessThanOrEqual(card.right);
     }
   },
