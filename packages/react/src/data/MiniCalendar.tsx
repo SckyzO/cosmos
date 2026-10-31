@@ -128,7 +128,8 @@ export const MiniCalendar = ({
               aria-current={isToday ? 'date' : undefined}
               className={clsx(
                 // The number sits above the middle of the cell (`pb-1.5`) to leave room for the event dot under it.
-                'h-ctrl-36 relative flex items-center justify-center rounded-md border pb-1.5 text-xs font-medium transition-colors focus-visible:ring-inset',
+                // At least 28px wide: a calendar as wide as its content had columns as narrow as the numbers.
+                'h-ctrl-36 min-w-ctrl-28 relative flex items-center justify-center rounded-md border pb-1.5 text-xs font-medium transition-colors focus-visible:ring-inset',
                 isSelected
                   ? 'bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator-on-accent border-transparent text-white'
                   : isToday
