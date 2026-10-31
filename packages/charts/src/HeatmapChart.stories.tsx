@@ -504,7 +504,7 @@ export const ColumnLabelsDoNotOverlap: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...RackTemperature.args },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <HeatmapChart {...args} />
     </div>
   ),
@@ -538,7 +538,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...RackTemperature.args, width: 900 },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <HeatmapChart {...args} />
     </div>
   ),
@@ -631,5 +631,34 @@ export const KeyboardSkipsMissingCells: Story = {
     await userEvent.keyboard('{ArrowLeft}');
     await expect(cellAt(canvasElement, 1, 0)).toHaveFocus();
     await userEvent.tab();
+  },
+};
+
+// Values that don't fit their cells are not drawn cut: the cells keep their colour, and the value
+// stays in the tooltip and in the cell's name. With room, they show.
+export const ValuesShowOnlyWhenTheyFit: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: Thresholds.args,
+  render: (args) => (
+    <div className="flex flex-col gap-6">
+      <div data-testid="narrow" style={{ width: 300 }}>
+        <HeatmapChart {...args} />
+      </div>
+      <div data-testid="wide" style={{ width: 1000 }}>
+        <HeatmapChart {...args} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const cells = (id: string) => [
+      ...canvas.getByTestId(id).querySelectorAll<HTMLElement>('[data-heat-cell]'),
+    ];
+    await waitFor(() => {
+      for (const cell of cells('narrow'))
+        expect(cell.scrollWidth).toBeLessThanOrEqual(cell.clientWidth);
+    });
+    await expect(cells('wide').some((cell) => cell.textContent?.includes('°C'))).toBe(true);
+    for (const cell of cells('wide'))
+      await expect(cell.scrollWidth).toBeLessThanOrEqual(cell.clientWidth);
   },
 };

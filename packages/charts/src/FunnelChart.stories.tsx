@@ -146,7 +146,7 @@ export const HtmlInLabelsRendersAsText: Story = {
 /** In a box of 375px, each stage's name and value sit on one line above its bar, and the bars take the full width. */
 export const Narrow375: Story = {
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <FunnelChart {...args} />
     </div>
   ),
@@ -433,7 +433,7 @@ export const TextIsReadableInEveryTheme: Story = {
       <div data-testid="wide" style={{ width: 800 }}>
         <FunnelChart {...args} />
       </div>
-      <div data-testid="narrow" style={{ width: 375 }}>
+      <div data-testid="narrow" style={{ width: 375, maxWidth: '100%' }}>
         <FunnelChart {...args} />
       </div>
     </>
@@ -585,7 +585,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { width: 900, formatValue: money },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <FunnelChart {...args} />
     </div>
   ),

@@ -433,7 +433,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { width: 900 },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <Replay {...args} trace={CPU} />
     </div>
   ),
@@ -455,4 +455,28 @@ export const NamedAndKeyboardReachable: Story = {
   args: { ariaLabel: 'Live CPU usage' },
   render: (args) => <Replay {...args} trace={CPU} />,
   play: expectAccessibleChart({ keyboard: true }),
+};
+
+// The lowest value of the y axis is drawn on the bottom edge of the plot: with no time axis under
+// it, the chart keeps room for its label, which is not cut by the edge of the chart.
+export const LowestLabelStaysInTheChart: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { min: 20, max: 120, formatValue: (v) => `${v} °C` },
+  render: (args) => <Replay {...args} trace={DISK} />,
+  play: async ({ canvasElement }) => {
+    const svg = canvasElement.querySelector('svg.recharts-surface')!.getBoundingClientRect();
+    const labels = await waitFor(() => {
+      const found = [
+        ...canvasElement.querySelectorAll(
+          '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value'
+        ),
+      ];
+      expect(found.length).toBeGreaterThan(1);
+      return found;
+    });
+    for (const label of labels) {
+      const box = label.getBoundingClientRect();
+      await expect(box.bottom, label.textContent ?? '').toBeLessThanOrEqual(svg.bottom);
+    }
+  },
 };

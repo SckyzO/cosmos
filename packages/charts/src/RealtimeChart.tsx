@@ -165,7 +165,9 @@ export const RealtimeChart = ({
         ariaLabel: ariaLabel ?? 'Live values, newest on the right',
       })}
       data={samples}
-      margin={{ top: 4, right: 12, bottom: 0, left: 0 }}
+      // The label of the lowest value is centred on the bottom edge of the plot: without the time
+      // axis under it, the chart keeps room for its lower half, which was cut.
+      margin={{ top: 4, right: 12, bottom: showTimeAxis ? 0 : 10, left: 0 }}
     >
       <CartesianGrid {...GRID_PROPS} />
       {/* The samples are not on a scale of their own unless the axis is the clock. */}
