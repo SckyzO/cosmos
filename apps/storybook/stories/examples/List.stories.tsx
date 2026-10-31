@@ -83,10 +83,13 @@ const day = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'U
 const count = new Intl.NumberFormat('en-US');
 
 // A business status is a `Badge`; `StatusBadge` is for the health of a system.
+// The short columns have a width and the customer takes what they leave, so the names keep the
+// room; narrower than what the columns need, the table scrolls.
 const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'order',
     label: 'Order',
+    width: '96px',
     sortable: true,
     sortValue: (o) => o.id,
     searchValue: (o) => o.id,
@@ -107,6 +110,7 @@ const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'items',
     label: 'Items',
+    width: '88px',
     align: 'end',
     mobile: 'hidden',
     sortable: true,
@@ -116,6 +120,7 @@ const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'total',
     label: 'Total',
+    width: '96px',
     align: 'end',
     sortable: true,
     sortValue: (o) => o.total,
@@ -124,6 +129,7 @@ const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'payment',
     label: 'Payment',
+    width: '116px',
     filterable: true,
     // The values a filter offers: the same whatever the rows on screen hold.
     filterOptions: [...PAYMENTS],
@@ -133,6 +139,7 @@ const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'fulfilment',
     label: 'Fulfilment',
+    width: '136px',
     filterable: true,
     filterOptions: [...FULFILMENTS],
     filterValue: (o) => o.fulfilment,
@@ -176,6 +183,7 @@ const baseColumns: ColumnDef<Order>[] = [
   {
     key: 'date',
     label: 'Date',
+    width: '120px',
     sortable: true,
     sortValue: (o) => o.date,
     render: (o) => <span className="whitespace-nowrap">{day.format(new Date(o.date))}</span>,
