@@ -45,8 +45,9 @@ shows plain text. The languages are shell (`bash`, `sh`, `zsh`), `shellsession`,
 `toml`, `ini`, `dockerfile`, `sql`, `typescript`, `javascript`, `tsx`, `jsx`, `python`, `go`, `html`,
 `xml`, `css`, `diff`, `nginx`, `hcl`, `terraform`, `rust`, `java`, `php`, `markdown` and `promql`.
 A `highlight` prop still replaces the built-in highlighter. The main entry never imports Shiki:
-an app that does not use `/code` ships none of it. Imported without `shiki` installed, a block
-throws an error that names the package.
+an app that does not use `/code` ships none of it. Without `shiki` installed, Next.js stops the
+build on the missing module; Vite builds the app, and a block throws an error that names the
+package.
 
 ## Editor
 
@@ -165,5 +166,6 @@ export const Stores = () => {
   the markers on the first draw and when the set of markers changes; otherwise `initialCenter` and
   `initialZoom` give the view. `onViewChange` reports each pan or zoom.
 - A browser without WebGL shows `unavailableMessage` in place of the map. The main entry never
-  imports MapLibre: an app that does not use `/map` ships none of it. Imported without
-  `maplibre-gl` installed, a map throws an error that names the package.
+  imports MapLibre: an app that does not use `/map` ships none of it. Without `maplibre-gl`
+  installed, Next.js stops the build on the missing module; Vite builds the app, and a map throws
+  an error that names the package.

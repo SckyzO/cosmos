@@ -50,7 +50,7 @@ import { ReferenceLine } from 'recharts';
 </LineAreaChart>;
 ```
 
-`children` reads the chart's data and axes, so a `y` is in the units of the series. Add `recharts` to your app at the version this package depends on (`3.10.1`): two copies of Recharts do not share a chart's context, and the elements would not find it. Pass CSS variables for colors (`var(--color-status-warn)`) and they follow the theme.
+`children` reads the chart's data and axes, so a `y` is in the units of the series. Add `recharts` to your app at the version this package depends on (its `package.json`; `3.10.1` in 0.4.0): two copies of Recharts do not share a chart's context, and the elements would not find it. Pass CSS variables for colors (`var(--color-status-warn)`) and they follow the theme.
 
 Animation is short (500 ms) and off under `prefers-reduced-motion`. A chart fills the width it is given and never widens its parent (`width` caps it).
 
