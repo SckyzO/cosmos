@@ -179,7 +179,9 @@ export const Button = ({
     type={type}
     disabled={disabled || loading}
     className={clsx(
-      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium transition-colors',
+      // A label on one line in a button of fixed height: a row too narrow for it wraps or
+      // scrolls the buttons, not the text.
+      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors',
       VARIANT_CLASS[variant][intent],
       TEXT_CLASS[size],
       variant === 'link'
@@ -193,17 +195,21 @@ export const Button = ({
     )}
     {...rest}
   >
-    {Icon && iconPosition === 'start' && !loading && <Icon className={ICON_SIZE[size]} />}
+    {Icon && iconPosition === 'start' && !loading && (
+      <Icon className={clsx('shrink-0', ICON_SIZE[size])} />
+    )}
     {loading && (
       <span
         aria-hidden
         className={clsx(
-          'animate-spin rounded-full border-2 border-current border-t-transparent',
+          'shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent',
           ICON_SIZE[size]
         )}
       />
     )}
     {children}
-    {Icon && iconPosition === 'end' && !loading && <Icon className={ICON_SIZE[size]} />}
+    {Icon && iconPosition === 'end' && !loading && (
+      <Icon className={clsx('shrink-0', ICON_SIZE[size])} />
+    )}
   </button>
 );
