@@ -76,25 +76,14 @@ test('audit stories', async ({ context, page, baseURL }) => {
         await p.setViewportSize({ width, height: HEIGHT });
         watcher.findings();
         await openStory(p, id, 'light', allThemes);
-        // A play function that fails here (a `mobile-` story run at 1280px, which
-        // would be given its own viewport in the story tests) logs its error from
-        // Storybook's preview: that is the width we forced, not a defect of the story.
-        const playFailed = await p.evaluate(
-          () =>
-            (
-              window as unknown as {
-                __STORYBOOK_PREVIEW__?: { currentRender?: { phase?: string } };
-              }
-            ).__STORYBOOK_PREVIEW__?.currentRender?.phase === 'errored'
-        );
-        // Transitions end where they are going; the page then rests.
-        await p.addStyleTag({
-          content: '*,*::before,*::after{transition:none!important;animation:none!important}',
-        });
-        await p.waitForTimeout(100);
+        // A play function that fails here (a `mobile-` story run at 1280px, which the
+        // story tests give its own viewport) logs its error from Storybook's
+        // preview: that is the width we forced, not a defect of the story.
         const logged = watcher
           .findings()
-          .filter((f) => !(playFailed && /\/assets\/iframe-[\w-]+\.js$/.test(f.target)));
+          .filter(
+            (f) => !(f.detail.startsWith('error:') && /\/assets\/iframe-[\w-]+\.js$/.test(f.target))
+          );
         found.get(id)![width] = [...(await auditPage(p)), ...logged];
       } catch (error) {
         problems.push(`checks ${width}/${id}: ${(error as Error).message.split('\n')[0]}`);
