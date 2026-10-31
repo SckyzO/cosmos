@@ -334,3 +334,45 @@ export const RowsAndGroupsFollowTheReadingDirection: Story = {
     expectMirrored(canvasElement, (box) => within(box).getByText('Queue'));
   },
 };
+
+// The width each message of EVERY_STATUS is drawn at.
+const messageWidths = (canvasElement: HTMLElement) =>
+  EVERY_STATUS.filter((check) => check.message).map(
+    (check) =>
+      within(canvasElement).getByText(check.message!).parentElement!.getBoundingClientRect().width
+  );
+
+/**
+ * In a card about as wide as a tablet, the columns follow the list's own width, not the screen's:
+ * the message keeps room to be read instead of one character per line.
+ */
+export const MessageKeepsRoomInACard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { groups: undefined, checks: EVERY_STATUS },
+  render: (args) => (
+    <div style={{ width: 700 }}>
+      <HealthCheckList {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const width of messageWidths(canvasElement)) {
+      await expect(width).toBeGreaterThanOrEqual(192);
+    }
+  },
+};
+
+/** With room, a row stays one line of columns: the message beside the name. */
+export const WideListKeepsItsColumns: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { groups: undefined, checks: EVERY_STATUS },
+  render: (args) => (
+    <div style={{ width: 1100 }}>
+      <HealthCheckList {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const name = canvas.getByText('Job queue').getBoundingClientRect();
+    const message = canvas.getByText('312 jobs waiting (limit 200)').getBoundingClientRect();
+    await expect(Math.abs(message.top - name.top)).toBeLessThan(4);
+  },
+};
