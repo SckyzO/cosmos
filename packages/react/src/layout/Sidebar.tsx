@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type ComponentType,
+  type CSSProperties,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -52,12 +53,25 @@ export type SidebarExpandOnHover = false | 'overlay' | 'push';
  */
 export type SidebarVariant = 'default' | 'compact';
 
+/**
+ * How far the rows sit from the sidebar's edges: `default` (20 px) or `tight` (10 px, the floating
+ * Shell's).
+ */
+export type SidebarGutter = 'default' | 'tight';
+
+// The distance of the expanded rows from the edges. A CSS variable, so an app can set its own
+// (`--cosmos-sidebar-gutter: 12px`); `gutter="tight"` sets it on the sidebar. Every position in
+// the sidebar that follows the rows is computed from it.
+const GUTTER = 'var(--cosmos-sidebar-gutter,20px)';
+const TIGHT_GUTTER = '10px';
+
 // The compact rail's width (px).
 const COMPACT_WIDTH = 88;
 
-// How far rows sit from the edge of their container: 20 px (`wide`), or less where 20 doesn't fit
-// or is already given. `tight` (8 px): the collapsed rail, the collapsed sub-menu's panel, and the
-// footer, whose own 12 px padding brings its rows to 20 px. `none`: the collapsed footer, whose
+// How far rows sit from the edge of their container: the gutter (`wide`, 20 px by default), or less
+// where it doesn't fit or is already given. `tight` (8 px): the collapsed rail, the collapsed
+// sub-menu's panel, and the footer, whose own padding brings its rows to the gutter. `none`: the
+// collapsed footer, whose
 // padding alone fills the 72 px rail.
 type RowInset = 'wide' | 'tight' | 'none';
 
@@ -98,28 +112,38 @@ const useSidebarCollapsed = (override?: boolean): boolean => {
 const SidebarDepthContext = createContext(0);
 
 // Margin of a row, the width a `<button>` row needs to keep it (an `<a>` row is a block and fills
-// the rest by itself), and the margin in px.
-const ROW_INSET: Record<RowInset, { margin: string; width: string; px: number }> = {
-  wide: { margin: 'mx-5', width: 'w-[calc(100%-2.5rem)]', px: 20 },
-  tight: { margin: 'mx-2', width: 'w-[calc(100%-1rem)]', px: 8 },
-  none: { margin: 'mx-0', width: 'w-full', px: 0 },
+// the rest by itself), and the margin as a CSS length. Rows stand 4 px apart (`mb-1`: one margin,
+// so nothing collapses it, and blocks put their space in padding for the same reason).
+const ROW_INSET: Record<RowInset, { margin: string; width: string; px: string }> = {
+  wide: {
+    margin: 'mx-[var(--cosmos-sidebar-gutter,20px)]',
+    width: 'w-[calc(100%-2*var(--cosmos-sidebar-gutter,20px))]',
+    px: GUTTER,
+  },
+  tight: { margin: 'mx-2', width: 'w-[calc(100%-1rem)]', px: '8px' },
+  none: { margin: 'mx-0', width: 'w-full', px: '0px' },
 };
+
+// Inside a top-level row: 12 px of padding, the 16 px icon, a 12 px gap, then the label.
+const ROW_PADDING = 12;
+const ICON = 16;
+const TOP_LABEL = ROW_PADDING + ICON + 12;
 
 // ─── Tree levels ──────────────────────────────────────────────────────────────
 // The top level shows an icon. Nested levels show the label alone, smaller and shorter as they go
-// down, so the depth reads at a glance: 40, 32, 28 then 26 px rows at the default density. Three levels read best; a
-// fourth takes the third's text.
+// down, so the depth reads at a glance: 32, 28, 26 then 24 px rows at the default density, which
+// moves them all. Three levels read best; a fourth takes the third's text.
 
 const LEVEL = [
-  { text: 'text-sm', py: 'py-row-10' },
   { text: 'text-sm', py: 'py-row-6' },
-  { text: 'text-xs', py: 'py-row-6' },
+  { text: 'text-sm', py: 'py-row-4' },
   { text: 'text-xs', py: 'py-row-5' },
+  { text: 'text-xs', py: 'py-row-4' },
 ] as const;
 const level = (depth: number) => LEVEL[Math.min(depth, LEVEL.length - 1)];
 
 // Where a nested row's label starts, from the edge of the rows' container. The first nested level
-// lines up under the top-level label (12 px padding, 20 px icon and 12 px gap past the row margin),
+// lines up under the top-level label (`TOP_LABEL` past the row margin),
 // or, in the collapsed sub-menu's panel, which has no top-level row, at the panel's edge; each
 // level after it is 16 px further. A nested row's pill starts 10 px before its label, so the guide
 // lines on its start side stay visible.
@@ -127,18 +151,22 @@ const NESTED_PADDING = 10;
 
 const useNestedGeometry = (inset: RowInset) => {
   const { labelOrigin } = useContext(SidebarContext);
-  const origin = labelOrigin ?? ROW_INSET[inset].px + 44;
-  const labelX = (depth: number) => origin + 16 * (depth - 1);
+  const margin = ROW_INSET[inset].px;
+  // A length past the row margin, or past the panel's edge when the panel sets the origin.
+  const at = (px: number) =>
+    labelOrigin === undefined ? `calc(${margin} + ${px}px)` : `${labelOrigin + px - TOP_LABEL}px`;
+  const labelX = (depth: number) => TOP_LABEL + 16 * (depth - 1);
   return {
     /** Margin (and, for a `<button>`, width) that puts a nested row's pill at its own indent. */
     rowStyle: (depth: number, button: boolean) => {
-      const left = labelX(depth) - NESTED_PADDING;
+      const left = at(labelX(depth) - NESTED_PADDING);
       return button
-        ? { marginInlineStart: left, width: `calc(100% - ${left + ROW_INSET[inset].px}px)` }
+        ? { marginInlineStart: left, width: `calc(100% - ${left} - ${margin})` }
         : { marginInlineStart: left };
     },
     /** The guide line under a row's children: under a top-level icon, or 4 px before the label. */
-    guideStart: (depth: number) => (depth === 0 ? ROW_INSET[inset].px + 22 : labelX(depth) - 4),
+    guideStart: (depth: number) =>
+      depth === 0 ? at(ROW_PADDING + ICON / 2) : at(labelX(depth) - 4),
   };
 };
 
@@ -231,7 +259,7 @@ export type SidebarFooterDivider = 'full' | 'inset' | 'none';
 const FOOTER_DIVIDER: Record<SidebarFooterDivider, string> = {
   full: 'border-t border-[var(--color-border)]',
   inset:
-    'relative before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-[var(--color-border)]',
+    'relative before:absolute before:inset-x-[var(--cosmos-sidebar-gutter,20px)] before:top-0 before:h-px before:bg-[var(--color-border)]',
   none: '',
 };
 
@@ -303,6 +331,13 @@ export type SidebarProps = {
   /** How the active row is drawn: `tint` (default) or `solid` (filled with the accent). */
   activeStyle?: SidebarActiveStyle;
   /**
+   * How far the rows sit from the sidebar's edges, with the logo, the section titles and the
+   * footer following them: `default` (20 px) or `tight` (10 px). It sets
+   * `--cosmos-sidebar-gutter` on the sidebar; an app can set that variable itself for another
+   * distance. The collapsed rail and the compact one keep their own.
+   */
+  gutter?: SidebarGutter;
+  /**
    * Renders a collapse button (a `SidebarToggle`, `panel` variant) at the very
    * bottom, under `footer`, and fires with the next state when it is clicked;
    * an uncontrolled sidebar also moves to it. Leave it out when the control
@@ -347,6 +382,7 @@ const SidebarRoot = ({
   footer,
   footerDivider = 'full',
   activeStyle = 'tint',
+  gutter = 'default',
   onCollapsedChange,
   className,
 }: SidebarProps) => {
@@ -400,11 +436,12 @@ const SidebarRoot = ({
       ref={navRef}
       id={navId}
       aria-label="Main navigation"
-      style={
-        inDrawer
-          ? undefined
-          : { width: compact ? COMPACT_WIDTH : rail ? collapsedWidth : fit.width }
-      }
+      style={{
+        ...(inDrawer ? {} : { width: compact ? COMPACT_WIDTH : rail ? collapsedWidth : fit.width }),
+        ...(gutter === 'tight'
+          ? ({ '--cosmos-sidebar-gutter': TIGHT_GUTTER } as CSSProperties)
+          : {}),
+      }}
       className={clsx(
         'flex h-full flex-col overflow-hidden bg-[var(--color-bg-panel)]',
         // The drawer panel draws the edge and the shadow, and sets the width.
@@ -427,9 +464,11 @@ const SidebarRoot = ({
         <div
           className={clsx(
             'shrink-0 overflow-hidden',
-            compact ? 'p-2' : 'p-3',
+            compact ? 'p-2' : rail ? 'p-3' : 'py-3',
             FOOTER_DIVIDER[footerDivider]
           )}
+          // Expanded, the footer's rows (8 px in) line up with the others, at the gutter.
+          style={compact || rail ? undefined : { paddingInline: `max(0px, calc(${GUTTER} - 8px))` }}
         >
           <SidebarContext.Provider
             value={{ ...context, inset: rail || compact ? 'none' : 'tight' }}
@@ -570,11 +609,14 @@ const SidebarBrand = ({
   const baseClass = clsx(
     'focus-visible:focus-indicator flex h-[72px] items-center focus-visible:ring-inset',
     // The logo alone has the row to itself: centred, with no gap for the hidden title.
-    compact ? 'justify-center' : 'gap-3 px-5',
+    compact ? 'justify-center' : collapsed ? 'gap-3 px-5' : 'gap-3',
     inDrawer
       ? 'min-w-0 flex-1'
       : clsx('shrink-0', divider && 'border-b border-[var(--color-border)]')
   );
+  // Expanded, the logo is centred on the column of the row icons, wherever the gutter puts it.
+  const brandStyle =
+    compact || collapsed ? undefined : { paddingInline: `calc(${GUTTER} + 2px) ${GUTTER}` };
   // The marker sits on the outermost element of the row, and only under a line: a
   // `Sidebar.Section` with its own line right below then leaves it out.
   const marker = inDrawer || !divider ? undefined : '';
@@ -586,7 +628,9 @@ const SidebarBrand = ({
         ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         className={baseClass}
+        style={brandStyle}
         data-sidebar-brand={marker}
+        data-sidebar-head=""
       >
         {inner}
       </AppLink>
@@ -598,14 +642,22 @@ const SidebarBrand = ({
         type="button"
         onClick={onClick}
         className={clsx(baseClass, 'w-full text-start')}
+        style={brandStyle}
         data-sidebar-brand={marker}
+        data-sidebar-head=""
       >
         {inner}
       </button>
     );
   } else {
     brand = (
-      <div ref={ref as Ref<HTMLDivElement>} className={baseClass} data-sidebar-brand={marker}>
+      <div
+        ref={ref as Ref<HTMLDivElement>}
+        className={baseClass}
+        style={brandStyle}
+        data-sidebar-brand={marker}
+        data-sidebar-head=""
+      >
         {inner}
       </div>
     );
@@ -619,6 +671,7 @@ const SidebarBrand = ({
         divider && 'border-b border-[var(--color-border)]'
       )}
       data-sidebar-brand={divider ? '' : undefined}
+      data-sidebar-head=""
     >
       {brand}
       <button
@@ -702,7 +755,7 @@ const SidebarItem = ({
     compact
       ? 'text-2xs relative flex-col gap-1 py-2 text-center'
       : clsx(
-          'gap-3',
+          'mb-1 gap-3',
           nested ? 'px-2.5' : collapsed ? 'justify-center px-2' : 'px-3',
           level(nested ? depth : 0).py,
           level(nested ? depth : 0).text
@@ -714,13 +767,13 @@ const SidebarItem = ({
 
   const content = compact ? (
     <>
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className="size-5 shrink-0" />
       <CompactLabel label={label} labelRef={setCompactLabel} />
       {badge && <span className="inset-e-1 absolute top-1">{badge}</span>}
     </>
   ) : (
     <>
-      {!nested && <Icon className="h-5 w-5 shrink-0" />}
+      {!nested && <Icon className="size-4 shrink-0" />}
       {!collapsed && (
         <>
           <span className="flex-1 truncate" {...fitLabel(labelId)}>
@@ -880,13 +933,13 @@ const SidebarSubMenu = ({
           'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
           compact
             ? 'text-2xs py-row-8 flex-col gap-1 text-center'
-            : 'py-row-10 justify-center px-2 text-sm',
+            : 'py-row-6 mb-1 justify-center px-2 text-sm',
           ROW_INSET[inset].margin,
           ROW_INSET[inset].width,
           active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
         )}
       >
-        <Icon className="h-5 w-5 shrink-0" />
+        <Icon className={clsx('shrink-0', compact ? 'size-5' : 'size-4')} />
         {compact && <CompactLabel label={label} labelRef={setCompactLabel} />}
       </Popover.Trigger>
     );
@@ -902,11 +955,11 @@ const SidebarSubMenu = ({
               inDrawer: false,
               inset: 'tight',
               activeStyle: ctx.activeStyle,
-              labelOrigin: ROW_INSET.tight.px + NESTED_PADDING,
+              labelOrigin: 8 + NESTED_PADDING,
             }}
           >
             <SidebarDepthContext.Provider value={1}>
-              <p className="px-3 pt-1 pb-2 text-xs font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
+              <p className="px-3 pt-1 pb-1.5 text-xs font-medium text-[var(--color-text-muted)]">
                 {label}
               </p>
               <div
@@ -937,7 +990,7 @@ const SidebarSubMenu = ({
         ? GROUPING_ROW
         : IDLE_ROW;
   const row = clsx(
-    'group flex items-center rounded-lg font-medium transition-colors',
+    'group mb-1 flex items-center rounded-lg font-medium transition-colors',
     text,
     ROW_INSET[inset].margin,
     tone
@@ -945,7 +998,7 @@ const SidebarSubMenu = ({
   const toggle = () => setOpen((v) => !v);
   const content = (
     <>
-      {!nested && <Icon className="h-5 w-5 shrink-0" />}
+      {!nested && <Icon className="size-4 shrink-0" />}
       <span className="flex-1 truncate" {...fitLabel(labelId)}>
         {label}
       </span>
@@ -1095,13 +1148,18 @@ const SidebarGroup = ({
     return <div className="my-1">{children}</div>;
   }
 
+  // The header reads like a section title, its chevron on the column of the row icons.
   return (
-    <div className="my-1">
+    <div className="pt-[18px] [[data-sidebar-head]+&]:pt-1">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-2xs focus-visible:focus-indicator py-row-6 mx-2 flex w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-3 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase hover:text-[var(--color-text-secondary)]"
+        className={clsx(
+          'focus-visible:focus-indicator py-row-4 flex items-center gap-2 rounded-lg px-3 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
+          ROW_INSET.wide.margin,
+          ROW_INSET.wide.width
+        )}
       >
         {open ? (
           <ChevronDown className="h-3 w-3" />
@@ -1132,12 +1190,12 @@ export type SidebarSectionProps = {
   children: ReactNode;
 };
 
+// The title of a block: quiet, as the label the reader finds the block by, and on the column of the
+// row icons.
 const SectionTitle = ({ label, className }: { label: string; className: string }) => (
   <p
-    className={clsx(
-      'text-2xs px-5 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase',
-      className
-    )}
+    className={clsx('text-xs font-medium text-[var(--color-text-muted)]', className)}
+    style={{ paddingInline: `calc(${GUTTER} + ${ROW_PADDING}px) ${GUTTER}` }}
   >
     {label}
   </p>
@@ -1160,10 +1218,16 @@ const SidebarSection = ({
       </div>
     );
   }
-  // The "···" mark (40 px) takes the place of the title and the space above it (38 px), so rows
-  // barely move when the sidebar collapses.
+  // Rows sit close inside a block and blocks stand apart: 22 px above a title (18 px and the 4 px
+  // under the row above), 6 px under it. The "···" mark (40 px) takes the place of the title and
+  // the space above it (40 px), so rows don't move when the sidebar collapses. Right under the
+  // brand, whose own height is the space, both lose 14 px.
   return (
-    <div className={collapsed ? undefined : 'mt-4'}>
+    <div
+      className={
+        collapsed ? '[[data-sidebar-head]+&]:-mt-3.5' : 'pt-[18px] [[data-sidebar-head]+&]:pt-1'
+      }
+    >
       {collapsed ? (
         <div className="flex justify-center py-2 text-[var(--color-text-muted)]" aria-hidden>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
