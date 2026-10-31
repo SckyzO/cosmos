@@ -61,7 +61,8 @@ function Item({
         <dt className="text-sm text-[var(--color-text-secondary)]">{label}</dt>
         <dd
           className={clsx(
-            'text-sm font-medium text-[var(--color-text-primary)]',
+            // A value with no space in it (an e-mail) breaks inside the row.
+            'min-w-0 text-sm font-medium break-words text-[var(--color-text-primary)]',
             mono && 'font-mono text-xs'
           )}
         >
@@ -79,7 +80,7 @@ function Item({
       <dt className="text-sm/6 font-medium text-gray-900 dark:text-white">{label}</dt>
       <dd
         className={clsx(
-          'mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0 dark:text-gray-300',
+          'mt-1 min-w-0 text-sm/6 break-words text-gray-700 sm:col-span-2 sm:mt-0 dark:text-gray-300',
           mono && 'font-mono'
         )}
       >

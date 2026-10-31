@@ -107,3 +107,12 @@ export const SavedIsAriaDisabledAndIgnoresClicks: Story = {
     await expect(args.onClick).not.toHaveBeenCalled();
   },
 };
+
+// After a failed save the button says what to do next, not the name of the state.
+export const ErrorOffersToTryAgain: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { state: 'error', onClick: () => {} },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Try again' })).toBeVisible();
+  },
+};

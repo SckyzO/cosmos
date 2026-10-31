@@ -114,6 +114,22 @@ export const LongName: Story = {
   },
 };
 
+// On a phone a name with a word longer than the card breaks inside the card.
+export const LongNameBreaksInANarrowCard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: LongName.args,
+  render: (args) => (
+    <div data-testid="box" style={{ width: 296 }}>
+      <ProfileHeader {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('box').getBoundingClientRect();
+    const name = canvas.getByRole('heading', { name: /Maximiliano/ }).getBoundingClientRect();
+    await expect(name.right).toBeLessThanOrEqual(box.right);
+  },
+};
+
 export const WithoutOptionalParts: Story = {
   args: {
     headline: undefined,

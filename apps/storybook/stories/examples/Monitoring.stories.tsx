@@ -444,13 +444,13 @@ const Overview = ({ state, onRetry }: { state: State; onRetry?: () => void }) =>
       />
 
       {stale ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Services services={STALE_SERVICES} stale />
           <Events lines={[]} failed onRetry={onRetry} />
         </div>
       ) : (
         <>
-          <div className="grid items-start gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
             <div className="flex min-w-0 flex-col gap-6">
               <Scheduler />
               <Power />

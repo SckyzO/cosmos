@@ -67,6 +67,28 @@ export const WithIcon: Story = {
   args: { label: 'Active users', value: '12 480', icon: Users },
 };
 
+// In a card as narrow as half a phone, a figure with no break in it and a one-word label longer
+// than its room stay inside the card: the figure wraps, the label breaks.
+export const LongValueAndLabelStayInANarrowCard: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Subscribers', value: '€12,418,906.40', icon: Users },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 150 }}>
+      <KpiCard {...args} />
+    </div>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const box = canvas.getByTestId('box').getBoundingClientRect();
+    const figure = canvas.getByText('€12,418,906.40').getBoundingClientRect();
+    await expect(figure.left).toBeGreaterThanOrEqual(box.left);
+    await expect(figure.right).toBeLessThanOrEqual(box.right);
+    // Beside the icon, on whichever side the reading direction puts it, never under it.
+    const icon = canvasElement.querySelector('svg')!.getBoundingClientRect();
+    const label = canvas.getByText('Subscribers').getBoundingClientRect();
+    await expect(label.right <= icon.left || label.left >= icon.right).toBe(true);
+  },
+};
+
 /** `iconIntent` colors the chip on its own. */
 export const IconIntent: Story = {
   args: { label: 'Revenue', value: '$48 920', icon: CreditCard, iconIntent: 'success' },
