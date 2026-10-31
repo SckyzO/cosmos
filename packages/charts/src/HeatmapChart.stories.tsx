@@ -131,12 +131,22 @@ export const CustomColors: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
 /** `xTitle` and `yTitle` name the columns and the rows. */
 export const AxisTitles: Story = {
   args: { ...RackTemperature.args, xTitle: 'Hour of day', yTitle: 'Rack' },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('[role="grid"]')).not.toBeNull();
     await expect(canvasElement).toHaveTextContent('Hour of day');
@@ -171,7 +181,7 @@ const px = (el: Element | null) => parseFloat(el ? getComputedStyle(el).fontSize
  * are React text: row names, categories and range names show as written.
  */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     xTitle: HOSTILE,
     yTitle: HOSTILE,

@@ -156,6 +156,11 @@ const fontSizes = (root: HTMLElement) => [
  */
 export const Default: Story = {
   args: { data: PROFIT_WALK, formatValue: k, yTitle: 'USD', ariaLabel: 'Profit walk, Q3' },
+};
+
+export const DefaultChecks: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await expectBarsAtTheirSpans(canvasElement, PROFIT_SPANS);
     await expectConnectorsJoinTheBars(canvasElement, PROFIT_RUNNING);
@@ -188,6 +193,11 @@ export const OnlySteps: Story = {
     formatValue: k,
     ariaLabel: 'Net new accounts',
   },
+};
+
+export const OnlyStepsChecks: Story = {
+  ...OnlySteps,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await expectBarsAtTheirSpans(canvasElement, [
       [0, 120],
@@ -215,6 +225,11 @@ export const NegativeTotal: Story = {
     formatValue: k,
     ariaLabel: 'Cash position',
   },
+};
+
+export const NegativeTotalChecks: Story = {
+  ...NegativeTotal,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await expectBarsAtTheirSpans(canvasElement, [
       [0, 150],
@@ -246,6 +261,11 @@ export const ManyBars: Story = {
     ],
     ariaLabel: 'Weekly stock walk',
   },
+};
+
+export const ManyBarsChecks: Story = {
+  ...ManyBars,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(bars(canvasElement)).toHaveLength(26));
     await expect(valueLabels(canvasElement)).toEqual([]);
@@ -261,6 +281,11 @@ export const ManyBars: Story = {
 /** `showConnectors={false}` leaves the bars alone. */
 export const WithoutConnectors: Story = {
   args: { data: PROFIT_WALK, formatValue: k, showConnectors: false },
+};
+
+export const WithoutConnectorsChecks: Story = {
+  ...WithoutConnectors,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await expectBarsAtTheirSpans(canvasElement, PROFIT_SPANS);
     await expect(connectors(canvasElement)).toHaveLength(0);
@@ -275,6 +300,11 @@ export const CustomColors: Story = {
     formatValue: k,
     colors: { positive: '#0ea5e9', negative: '#a855f7', total: '#334155' },
   },
+};
+
+export const CustomColorsChecks: Story = {
+  ...CustomColors,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const [positive, negative, total] = ['#0ea5e9', '#a855f7', '#334155'].map(resolveColor);
     await waitFor(() =>
@@ -297,12 +327,22 @@ export const CustomColors: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { data: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
 /** `emptyMessage` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
   args: { data: [], emptyMessage: 'No movements this quarter' },
+};
+
+export const EmptyWithMessageChecks: Story = {
+  ...EmptyWithMessage,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No movements this quarter'),
 };
 
@@ -314,6 +354,11 @@ export const OnNarrowScreen: Story = {
       <WaterfallChart {...args} />
     </NarrowBox>
   ),
+};
+
+export const OnNarrowScreenChecks: Story = {
+  ...OnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectFitsNarrowBox(context);
     const { canvasElement } = context;
@@ -352,6 +397,11 @@ export const TargetLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const TargetLineInChildrenChecks: Story = {
+  ...TargetLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const line = canvasElement.querySelector('.recharts-reference-line-line');

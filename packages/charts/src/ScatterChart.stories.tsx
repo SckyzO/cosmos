@@ -101,6 +101,11 @@ export const LatencyVsLoad: Story = {
 /** The axis titles sit under and beside the plot, inside the drawing, with no space left under it. */
 export const AxisTitles: Story = {
   args: { ...LatencyVsLoad.args },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: ['CPU load'], y: ['p95 latency'] })
@@ -163,6 +168,11 @@ export const Bubble: BubbleStory = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -185,6 +195,11 @@ export const ReferenceAreaInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceAreaInChildrenChecks: Story = {
+  ...ReferenceAreaInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelector('.recharts-reference-area')).not.toBeNull()
@@ -209,6 +224,11 @@ export const ReferenceLines: Story = {
     referenceBands: [{ from: 20, to: 60, label: 'Healthy', intent: 'success' }],
     referenceLines: [{ value: 90, label: 'SLO 90 ms', intent: 'danger', dashed: true }],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectMarksAtTheirValues('yAxis', { lines: [90], bands: [[20, 60]] })(context);
     await waitFor(() =>
@@ -362,7 +382,7 @@ export const FormatsFormatTheTicks: Story = {
 
 /** A click on a legend entry hides its points and shows them again. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: MultiSeries.args,
   play: async ({ canvasElement }) => {
     const drawn = () => scatterSymbols(canvasElement).flat().length;

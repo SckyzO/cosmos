@@ -159,6 +159,11 @@ export const AxisTitles: Story = {
     yTitle: 'Requests (req/s)',
     yRightTitle: 'p95 latency (ms)',
   },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({
@@ -183,6 +188,11 @@ export const RightAxisOnly: Story = {
       },
     ],
   },
+};
+
+export const RightAxisOnlyChecks: Story = {
+  ...RightAxisOnly,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(axisTitles(canvasElement)).toEqual({ x: [], y: ['Energy (MWh)'] });
@@ -204,6 +214,11 @@ export const AreaSeries: Story = {
       { name: '4-week mean', type: 'line', data: ROLLING_4W },
     ],
   },
+};
+
+export const AreaSeriesChecks: Story = {
+  ...AreaSeries,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelectorAll('.recharts-area-curve')).toHaveLength(1);
@@ -258,6 +273,11 @@ export const StackedColumns: Story = {
     stackedColumns: true,
     series: [...STACKED_COLUMNS, { name: 'Target', type: 'line', data: [45, 36, 52, 41] }],
   },
+};
+
+export const StackedColumnsChecks: Story = {
+  ...StackedColumns,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const [reads, writes] = barShapes(canvasElement).map((shapes) =>
@@ -330,6 +350,11 @@ export const ReferenceLines: Story = {
     referenceBands: [{ from: 8, to: 14, label: 'Expected', intent: 'success' }],
     referenceLines: [{ value: 20, label: 'Budget 20', intent: 'danger', dashed: true }],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectMarksAtTheirValues('yAxis', { lines: [20], bands: [[8, 14]] })(context);
     await waitFor(() =>
@@ -393,6 +418,11 @@ export const ReferenceLabelsFitNarrowBox: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -413,6 +443,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
@@ -489,7 +524,7 @@ export const AxesFormatTheirOwnLabels: Story = {
 
 /** A click on a legend entry hides its series, column or line, and shows it again. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: RequestsAndLatency.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

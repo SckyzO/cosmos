@@ -159,6 +159,11 @@ export const French: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the grid. */
 export const Empty: Story = {
   args: { data: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -210,7 +215,7 @@ const ACCENT_IDS = [
 
 /** The tooltip and the names of the days are text: markup in a formatted value shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     data: [{ day: '2026-03-02', value: 3 }],
     from: '2026-03-01',

@@ -108,6 +108,11 @@ export const UpdatingSeries: Story = {
 /** `variant="pie"` fills the disc: no hole, no center text. */
 export const Pie: Story = {
   args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, variant: 'pie' },
+};
+
+export const PieChecks: Story = {
+  ...Pie,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(5));
     await waitFor(() => {
@@ -171,6 +176,11 @@ export const CenterText: Story = {
     centerValue: '1 TB',
     centerLabel: 'Capacity',
   },
+};
+
+export const CenterTextChecks: Story = {
+  ...CenterText,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(centerText(canvasElement)).toEqual({ value: '1 TB', label: 'Capacity' })
@@ -225,6 +235,11 @@ export const LegendValues: Story = {
     legendValues: true,
     formatValue: (v) => `${v} alerts`,
   },
+};
+
+export const LegendValuesChecks: Story = {
+  ...LegendValues,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(legendFigures(canvasElement)).toEqual([
@@ -353,6 +368,11 @@ export const LegendValuesFitNarrowBox: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], labels: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -485,7 +505,7 @@ export const PaletteFromTheme: Story = {
 
 /** A click on a legend entry hides its slice and the total follows; another click brings it back. */
 export const LegendTogglesSlices: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { series: [30, 20, 50], labels: ['a', 'b', 'c'] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

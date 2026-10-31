@@ -86,6 +86,11 @@ export const Empty: Story = {
       <RadialBarChart {...args} />
     </Card>
   ),
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -125,7 +130,7 @@ export const RingsClampButShowTheValue: Story = {
 
 /** The rings are React text in the tooltip: a label with markup shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { series: [60, 40], labels: [HOSTILE, 'Normal'] },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(rings(canvasElement)).toHaveLength(2));

@@ -106,6 +106,11 @@ export const Empty: Story = {
       <Sparkline {...args} />
     </Card>
   ),
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -268,6 +273,11 @@ export const ReferenceLineInChildren: Story = {
       </Sparkline>
     </Card>
   ),
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelector('.recharts-reference-line')).not.toBeNull()

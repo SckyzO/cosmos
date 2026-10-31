@@ -108,12 +108,17 @@ export const CustomColors: Story = {
 /** With no stage, or only stages at 0, the chart draws `emptyMessage` (default "No data"). */
 export const Empty: Story = {
   args: { stages: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
 /** The labels are React text: markup in a stage name or a formatted value shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     stages: [
       { label: HOSTILE, value: 40 },
@@ -150,6 +155,11 @@ export const Narrow375: Story = {
       <FunnelChart {...args} />
     </div>
   ),
+};
+
+export const Narrow375Checks: Story = {
+  ...Narrow375,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
     await waitFor(() => expect(narrowLayout(canvasElement)).toBe(true));

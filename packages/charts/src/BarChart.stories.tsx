@@ -175,6 +175,11 @@ export const HorizontalNegativeStacked: Story = {
       { name: 'Inbound', data: [42, 35, 28, 16] },
     ],
   },
+};
+
+export const HorizontalNegativeStackedChecks: Story = {
+  ...HorizontalNegativeStacked,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     // The negative series stacks left of zero and the positive one right of it: they never overlap.
     await waitFor(() => {
@@ -243,6 +248,11 @@ export const AxisTitles: Story = {
       </div>
     </div>
   ),
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const chart = (id: string) =>
       canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
@@ -273,12 +283,22 @@ export const BorderRadius: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
 /** `emptyMessage` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
   args: { series: [{ name: 'Incidents', data: [] }], categories: [], emptyMessage: 'No incidents' },
+};
+
+export const EmptyWithMessageChecks: Story = {
+  ...EmptyWithMessage,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No incidents'),
 };
 
@@ -298,6 +318,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
@@ -323,6 +348,11 @@ export const ColorByValue: Story = {
     series: [{ name: 'Incidents', data: INCIDENTS }],
     colorByValue: (value) => (value > 25 ? 'var(--color-status-crit)' : undefined),
   },
+};
+
+export const ColorByValueChecks: Story = {
+  ...ColorByValue,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const crit = themeColor('--color-status-crit');
     const brand = themeColor('--color-brand-500');
@@ -344,6 +374,11 @@ export const Distributed: Story = {
     series: [{ name: 'Active racks', data: [42, 38, 26, 19] }],
     distributed: true,
   },
+};
+
+export const DistributedChecks: Story = {
+  ...Distributed,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(fills(canvasElement)).toEqual(
@@ -380,6 +415,11 @@ export const NegativeColor: Story = {
     series: [{ name: 'Net rack change', data: [6, 4, -3, 8, -5, 2, -7, 5, 3] }],
     negativeColor: 'var(--color-status-crit)',
   },
+};
+
+export const NegativeColorChecks: Story = {
+  ...NegativeColor,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const crit = themeColor('--color-status-crit');
     const brand = themeColor('--color-brand-500');
@@ -440,6 +480,11 @@ export const ReferenceLines: Story = {
       { value: 35, label: 'Breach', intent: 'danger' },
     ],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectMarksAtTheirValues('yAxis', { lines: [25, 35], bands: [[0, 15]] })(context);
     await waitFor(() =>
@@ -463,6 +508,11 @@ export const HorizontalReferenceLines: Story = {
     referenceBands: [{ from: 30, to: 50, label: 'Target', intent: 'success' }],
     referenceLines: [{ value: 40, label: 'Capacity 40', intent: 'danger', dashed: true }],
   },
+};
+
+export const HorizontalReferenceLinesChecks: Story = {
+  ...HorizontalReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectMarksAtTheirValues('xAxis', { lines: [40], bands: [[30, 50]] })(context);
     await waitFor(() =>
@@ -516,7 +566,7 @@ export const ReferenceLabelsFitNarrowBox: Story = {
 
 /** One legend entry per series, in order. */
 export const LegendListsEverySeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: MultiSeries.args,
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toEqual(['CRIT', 'WARN']));
@@ -525,7 +575,7 @@ export const LegendListsEverySeries: Story = {
 
 /** A click on a legend entry hides its series and shows it again; the stack closes up. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: Stacked.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -674,6 +724,11 @@ export const EightSeriesPalette: Story = {
       (name, index) => ({ name, data: [4, 6, 5, 7, 3].map((v) => v + index) })
     ),
   },
+};
+
+export const EightSeriesPaletteChecks: Story = {
+  ...EightSeriesPalette,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const fills = barFills(canvasElement).map(resolveColor);
@@ -687,6 +742,12 @@ export const EightSeriesPalette: Story = {
 export const EightSeriesPaletteCyanAccent: Story = {
   ...EightSeriesPalette,
   globals: { accent: 'cyan' },
+  play: undefined,
+};
+
+export const EightSeriesPaletteCyanAccentChecks: Story = {
+  ...EightSeriesPaletteCyanAccent,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const fills = barFills(canvasElement).map(resolveColor);
