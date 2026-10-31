@@ -16,7 +16,7 @@ const BAND_LAYER = 50;
 
 // Plain SVG text in the muted color: an amber or red label would not read on
 // the card in every theme, so the line and the band carry the intent.
-const labelOf = (value: string, position: 'insideTopRight' | 'insideTopLeft') => ({
+const labelOf = (value: string, position: 'insideTopRight' | 'insideBottomLeft') => ({
   value,
   position,
   className: 'recharts-reference-label',
@@ -50,7 +50,9 @@ export const referenceMarks = ({
           fillOpacity={0.14}
           ifOverflow="extendDomain"
           zIndex={BAND_LAYER}
-          label={band.label ? labelOf(band.label, 'insideTopLeft') : undefined}
+          // At the bottom of the band, and a line's label at the top: a line in or by a band
+          // never prints its label over the band's.
+          label={band.label ? labelOf(band.label, 'insideBottomLeft') : undefined}
         />
       );
     }),
