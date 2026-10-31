@@ -294,8 +294,11 @@ Adding a top-level group means updating `storySort`; the Welcome page builds its
 cards and its component search from `index.json` (`stories/welcome/catalog.ts`), which follows it.
 
 Every named export of a `*.stories.tsx` is a story: keep helpers unexported. Test-only stories take
-`tags: ['!dev']` (hidden from the sidebar, still run by vitest); interaction tests that take focus
-take `!autodocs`.
+`tags: ['!dev', '!autodocs']` (hidden from the sidebar and the docs page, still run by vitest). A
+visible story makes no assertion: its play only sets the state it shows, and its checks go to a
+hidden twin `{ ...Demo, tags: ['!dev', '!autodocs'], play }`. `visibleStoriesDontAssert` in
+`.storybook/vitest.setup.ts` fails a visible story whose play asserts (it counts `expect` calls,
+so helpers count too).
 
 Docs pages without stories (`apps/storybook/stories/*.mdx`, e.g. `Foundations/Fonts`) run no
 decorators: `<html>` gets no theme class nor `data-*`, so the Cosmos vars stay on light under a
