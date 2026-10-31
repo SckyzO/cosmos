@@ -44,7 +44,8 @@ const SHARED_ITEMS = (
           <li key={f.name} className="flex items-center justify-between py-4 pr-5 pl-4 text-sm/6">
             <div className="flex w-0 flex-1 items-center">
               <Paperclip className="size-5 shrink-0 text-gray-400" aria-hidden />
-              <div className="ml-4 flex min-w-0 flex-1 gap-2">
+              {/* The size goes under the name when the row is too narrow for both. */}
+              <div className="ml-4 flex min-w-0 flex-1 flex-wrap gap-x-2">
                 <span className="truncate font-medium">{f.name}</span>
                 <span className="shrink-0 text-gray-500 dark:text-gray-400">{f.size}</span>
               </div>
@@ -287,6 +288,29 @@ export const TermsStartTheRow: Story = {
         `${dir}: compact value at the end`
       ).toBeLessThan(2);
       expectReadsLeftToRight(canvas.getByText('2 minutes ago'));
+    }
+  },
+};
+
+// A value with no space in it, an e-mail address, breaks inside a narrow list instead of running
+// out of it, in both layouts.
+export const LongValueStaysInANarrowList: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" className="flex flex-col gap-6" style={{ width: 240 }}>
+      {[false, true].map((compact) => (
+        <DescriptionList key={String(compact)} compact={compact}>
+          <DescriptionList.Item label="Email">
+            margot.foster@applicants.example.com
+          </DescriptionList.Item>
+        </DescriptionList>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('box').getBoundingClientRect();
+    for (const value of canvas.getAllByText('margot.foster@applicants.example.com')) {
+      await expect(value.getBoundingClientRect().right).toBeLessThanOrEqual(box.right);
     }
   },
 };
