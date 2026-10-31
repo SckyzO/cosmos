@@ -1251,7 +1251,11 @@ export const DataTable = <T,>({
         <div className="bg-brand-50 dark:bg-brand-500/10 @container border-b border-gray-100 dark:border-gray-800 print:hidden">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
             <div
-              className={clsx('flex min-w-0 items-center gap-3', mobileCards && 'max-sm:flex-1')}
+              className={clsx(
+                // The actions go to the next line when the count leaves them too little room.
+                'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2',
+                mobileCards && 'max-sm:flex-1'
+              )}
             >
               <span className="text-brand-700 dark:text-brand-300 text-sm font-medium whitespace-nowrap">
                 <bdi>{selection.size} selected</bdi>
@@ -1264,7 +1268,7 @@ export const DataTable = <T,>({
                 Clear
               </button>
               {(bulkActionItems || bulkActions) && (
-                <div className="flex min-w-0 flex-1 items-center gap-2 ps-1">
+                <div className="flex min-w-0 flex-auto items-center gap-2 ps-1">
                   {bulkActionItems && (
                     <DataTableBulkActions
                       items={bulkActionItems}
