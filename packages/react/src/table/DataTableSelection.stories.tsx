@@ -188,6 +188,47 @@ export const BulkActionsOnAPhone: Story = {
   },
 };
 
+// The lines of text a control's label takes: a text node gives one rectangle per line.
+const textLines = (element: HTMLElement) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let lines = 0;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    lines += range.getClientRects().length;
+  }
+  return lines;
+};
+
+// Without cards a phone keeps the labelled actions: they go to the line under the count, each on
+// one line of text, instead of being squeezed beside it and cut by the edge of the card.
+export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      {/* The card of a 375px phone, a little narrower than the viewport's own. */}
+      <div style={{ maxWidth: 296 }}>
+        <Orders defaultSelection={selected} />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const ship = canvas.getByRole('button', { name: 'Mark as shipped' });
+    // The selection bar, as wide as the card that clips it.
+    const card = ship.closest('.\\@container')!.getBoundingClientRect();
+    const more = canvas.getByRole('button', { name: 'Actions' });
+    await expect(ship.getBoundingClientRect().top).toBeGreaterThan(
+      canvas.getByText('3 selected').getBoundingClientRect().bottom
+    );
+    for (const button of [ship, more]) {
+      await expect(textLines(button)).toBe(1);
+      await expect(button.getBoundingClientRect().right).toBeLessThanOrEqual(card.right);
+    }
+  },
+};
+
 /** The existing `bulkActions` render function still works, next to the search and the toolbar. */
 export const BulkActionsAsNodes: Story = {
   globals: laptop,

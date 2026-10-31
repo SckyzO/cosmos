@@ -69,6 +69,9 @@ const columns: ColumnDef<LogLine>[] = [
   {
     key: 'message',
     label: 'Message',
+    // Takes what the other columns leave, and never less than a readable line: on a phone the
+    // table scrolls to it.
+    minWidth: '20rem',
     searchValue: (line) => line.message,
     render: (line) => <span className="font-mono text-xs break-words">{line.message}</span>,
   },

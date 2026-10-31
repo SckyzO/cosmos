@@ -1394,6 +1394,64 @@ export const TableThatFitsHasNoFade: Story = {
   },
 };
 
+// The width each data column is drawn at, read from its header.
+const headerWidths = (canvasElement: HTMLElement, labels: string[]) =>
+  [...canvasElement.querySelectorAll('thead th')]
+    .filter((th) => labels.includes(th.textContent?.trim() ?? ''))
+    .map((th) => th.getBoundingClientRect().width);
+
+// On a phone, percentages are a share of the screen and columns without a width split what is
+// left: each column keeps its minimum instead (8rem by default), and the table scrolls.
+export const PercentColumnsScrollOnAPhone: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={5} />
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    expectNoHorizontalOverflow();
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    const widths = headerWidths(
+      canvasElement,
+      columns.map((c) => c.label as string)
+    );
+    await expect(widths).toHaveLength(columns.length);
+    for (const width of widths) await expect(width).toBeGreaterThanOrEqual(128);
+  },
+};
+
+export const ColumnsWithoutWidthScrollOnAPhone: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <Wrap>
+      <DataTable
+        rows={rows}
+        columns={columns.map(({ width: _width, ...c }, i) =>
+          i === 1 ? { ...c, minWidth: '12rem' } : c
+        )}
+        rowKey={(r) => r.id}
+        pageSize={5}
+        selectable
+      />
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    const widths = headerWidths(
+      canvasElement,
+      columns.map((c) => c.label as string)
+    );
+    await expect(widths).toHaveLength(columns.length);
+    // They share what is left equally: each gets the widest minimum, the Name column's 12rem.
+    for (const width of widths) await expect(width).toBeGreaterThanOrEqual(192);
+  },
+};
+
 export const PinnedStartColumn: Story = {
   globals: mobileViewport,
   render: () => (
