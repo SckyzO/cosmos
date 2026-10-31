@@ -43,4 +43,16 @@ describe('tableMinWidth', () => {
   it('has nothing to say without columns', () => {
     expect(tableMinWidth([], ['44px'])).toBeUndefined();
   });
+
+  it('reads decimal widths', () => {
+    expect(tableMinWidth([{ width: '.5rem' }, { width: '12.5%' }], [])).toBe(
+      `max(calc(${min} / 0.125), calc((.5rem) / 0.875))`
+    );
+  });
+
+  it('reads a long width that is no length in linear time', () => {
+    const start = performance.now();
+    tableMinWidth([{ width: `${'9'.repeat(30_000)}x` }], []);
+    expect(performance.now() - start).toBeLessThan(100);
+  });
 });

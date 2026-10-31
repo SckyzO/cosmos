@@ -4,8 +4,11 @@
  */
 export const DEFAULT_COLUMN_MIN_WIDTH = '8rem';
 
-const LENGTH = /^\d*\.?\d+(px|rem|em|ch)$/;
-const PERCENT = /^(\d*\.?\d+)%$/;
+// A number has one way to match ("12", "12.5", ".5"), so a long run of digits that ends in
+// something else fails in linear time: `\d*\.?\d+` tried every split of the run.
+const NUMBER = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`;
+const LENGTH = new RegExp(`^${NUMBER}(?:px|rem|em|ch)$`);
+const PERCENT = new RegExp(`^(${NUMBER})%$`);
 
 type Sized = { width?: string; minWidth?: string };
 
