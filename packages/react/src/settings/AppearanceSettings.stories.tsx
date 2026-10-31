@@ -119,6 +119,11 @@ export const WithSystemTheme: Story = {
       />
     );
   },
+};
+
+export const WithSystemThemeChecks: Story = {
+  ...WithSystemTheme,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('radio', { name: 'System' })).toBeChecked();
     await userEvent.click(canvas.getByRole('radio', { name: 'Deep Blue' }));

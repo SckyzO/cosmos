@@ -105,6 +105,11 @@ export const Translated: Story = {
 export const Mobile: Story = {
   args: { changes: userChanges.concat(LongText.args!.changes!.slice(0, 1)) },
   globals: mobileViewport,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
     const table = canvasElement.querySelector('table') as HTMLElement;
@@ -137,6 +142,7 @@ export const InlineMobile: Story = {
 
 /** Markup in a value or a label is text, never HTML. */
 export const HostileValues: Story = {
+  tags: ['!dev', '!autodocs'],
   args: {
     changes: [
       {
@@ -201,6 +207,11 @@ export const HistoryOfARecord: Story = {
     </div>
   ),
   globals: mobileViewport,
+};
+
+export const HistoryOfARecordChecks: Story = {
+  ...HistoryOfARecord,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => expectNoHorizontalOverflow(canvasElement),
 };
 

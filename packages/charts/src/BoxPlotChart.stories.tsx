@@ -159,6 +159,11 @@ export const AxisTitles: Story = {
     </div>
   ),
   args: { ...ResponseTimes.args, formatValue: undefined },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const chart = (id: string) =>
       canvasElement.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
@@ -178,6 +183,11 @@ export const AxisTitles: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -201,6 +211,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
@@ -228,6 +243,11 @@ export const ReferenceLines: Story = {
     referenceBands: [{ from: 0, to: 60, label: 'Fast', intent: 'success' }],
     referenceLines: [{ value: 200, label: 'Budget 200 ms', intent: 'danger', dashed: true }],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async (context) => {
     await expectMarksAtTheirValues('yAxis', { lines: [200], bands: [[0, 60]] })(context);
     await waitFor(() =>
@@ -242,6 +262,11 @@ export const HorizontalReferenceLines: Story = {
     ...ReferenceLines.args,
     orientation: 'horizontal',
   },
+};
+
+export const HorizontalReferenceLinesChecks: Story = {
+  ...HorizontalReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: expectMarksAtTheirValues('xAxis', { lines: [200], bands: [[0, 60]] }),
 };
 
@@ -406,7 +431,7 @@ export const TooltipHeadsEachSeries: Story = {
 
 /** A click on a legend entry hides its boxes and shows them again. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: BeforeAfterDeploy.args,
   play: async ({ canvasElement }) => {
     const boxes = () => canvasElement.querySelectorAll('.recharts-bar-rectangle rect').length;

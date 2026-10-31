@@ -69,6 +69,11 @@ export const ContactCardsWithSmallPortraits: Story = {
       ))}
     </GridList>
   ),
+};
+
+export const ContactCardsWithSmallPortraitsChecks: Story = {
+  ...ContactCardsWithSmallPortraits,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // Each Email / Call link names its person for screen readers.
     for (const p of PEOPLE) {

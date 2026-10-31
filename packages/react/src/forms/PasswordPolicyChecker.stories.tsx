@@ -69,6 +69,7 @@ export const LiveCheck: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const LiveCheckUpdatesOnTyping: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [pwd, setPwd] = useState('');
     const rules = useMemo(() => defaultPasswordRules(pwd), [pwd]);

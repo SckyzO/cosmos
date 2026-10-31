@@ -318,6 +318,11 @@ export const CircularIconOnly: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+export const CircularIconOnlyChecks: Story = {
+  ...CircularIconOnly,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const button of canvas.getAllByRole('button', { name: 'Add' })) {
       const box = button.getBoundingClientRect();
@@ -373,6 +378,11 @@ export const SquareIconOnly: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+export const SquareIconOnlyChecks: Story = {
+  ...SquareIconOnly,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const shape of ['square', 'circle'] as const) {
       for (const size of SIZES) {
@@ -445,6 +455,11 @@ export const LinkVariant: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+export const LinkVariantChecks: Story = {
+  ...LinkVariant,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const link = (intent: string, size: string) =>
       canvas.getByRole('button', { name: `${intent} ${size}` });
@@ -715,8 +730,8 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsRingInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 

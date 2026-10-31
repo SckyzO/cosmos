@@ -158,6 +158,11 @@ export const Loading: Story = {
       <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading loadingRows={4} />
     </Wrap>
   ),
+};
+
+export const LoadingChecks: Story = {
+  ...Loading,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The header stays, so the columns do not jump: its cells, then one row per placeholder.
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
@@ -205,6 +210,11 @@ export const ErrorWithRetry: Story = {
       />
     </Wrap>
   ),
+};
+
+export const ErrorWithRetryChecks: Story = {
+  ...ErrorWithRetry,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The header stays above the error, so the page has the same shape as with rows.
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
@@ -226,6 +236,11 @@ export const Empty: Story = {
       />
     </Wrap>
   ),
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(columns.length);
     await expect(canvas.getByRole('table').querySelector('thead')).not.toBeNull();
@@ -237,6 +252,11 @@ export const Empty: Story = {
 
 export const NextPageButton: Story = {
   render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+};
+
+export const NextPageButtonChecks: Story = {
+  ...NextPageButton,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // 60 rows / 10 = 6 pages. The range is split over several nodes: match
     // the info line by its normalized text.
@@ -274,6 +294,11 @@ export const Mobile: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />
     </Wrap>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByRole('navigation', { name: 'Pagination' })).toBeVisible();
@@ -282,6 +307,7 @@ export const Mobile: Story = {
 };
 
 export const SortByName: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
   play: async ({ canvas }) => {
     // Default order: node-100, node-101, …
@@ -477,6 +503,11 @@ export const WithSelection: Story = {
       />
     </Wrap>
   ),
+};
+
+export const WithSelectionChecks: Story = {
+  ...WithSelection,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The story's column widths add up to 80%: the rest goes to a data column, not to the
     // selection and action columns, which keep their fixed width.
@@ -1112,6 +1143,11 @@ export const ClickableRows: Story = {
       />
     </Wrap>
   ),
+};
+
+export const ClickableRowsChecks: Story = {
+  ...ClickableRows,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const onRowClick = args.onRowClick as ReturnType<typeof fn>;
     const row = canvas.getByRole('row', { name: /node-100/ });
@@ -1182,6 +1218,11 @@ export const LinkRows: Story = {
       />
     </Wrap>
   ),
+};
+
+export const LinkRowsChecks: Story = {
+  ...LinkRows,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const row = canvas.getByRole('row', { name: /node-100/ });
     const link = within(row).getByRole('link', { name: /node-100/ });
@@ -1264,6 +1305,11 @@ export const RowMenu: Story = {
       />
     </Wrap>
   ),
+};
+
+export const RowMenuChecks: Story = {
+  ...RowMenu,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const onRowClick = args.onRowClick as ReturnType<typeof fn>;
     const page = within(document.body);
@@ -1351,6 +1397,11 @@ export const MobileScrollsWithAnEdgeFade: Story = {
       <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.id} pageSize={5} />
     </Wrap>
   ),
+};
+
+export const MobileScrollsWithAnEdgeFadeChecks: Story = {
+  ...MobileScrollsWithAnEdgeFade,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const scroller = scrollerOf(canvas.getByRole('table'));
@@ -1465,6 +1516,11 @@ export const PinnedStartColumn: Story = {
       />
     </Wrap>
   ),
+};
+
+export const PinnedStartColumnChecks: Story = {
+  ...PinnedStartColumn,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const table = canvas.getByRole('table');
@@ -1597,6 +1653,11 @@ export const CellHelpers: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const CellHelpersChecks: Story = {
+  ...CellHelpers,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // In the fixed layout of a DataTable the cells truncate to their column, whatever they hold.
     const email = canvas.getByText('ada.lovelace@analytical-engine.example.org');
@@ -1689,6 +1750,11 @@ export const WithStatusTabs: Story = {
       />
     </Wrap>
   ),
+};
+
+export const WithStatusTabsChecks: Story = {
+  ...WithStatusTabs,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const all = canvas.getByRole('tab', { name: 'All 12' });
     await expect(all).toHaveAttribute('aria-selected', 'true');
@@ -1826,6 +1892,7 @@ export const StatusTabsKeyboard: Story = {
 };
 
 export const ControlledFilters: Story = {
+  tags: ['!dev', '!autodocs'],
   render: function Render() {
     const [filters, setFilters] = useState<Record<string, Set<string>>>({
       status: new Set(['Suspended']),
@@ -1952,6 +2019,11 @@ export const StatusTabsMobile: Story = {
       />
     </Wrap>
   ),
+};
+
+export const StatusTabsMobileChecks: Story = {
+  ...StatusTabsMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const list = canvas.getByRole('tablist');
@@ -2003,6 +2075,11 @@ export const WithPageSizeOptions: Story = {
       />
     </Wrap>
   ),
+};
+
+export const WithPageSizeOptionsChecks: Story = {
+  ...WithPageSizeOptions,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const select = canvas.getByRole('combobox', { name: 'Rows per page' });
     await expect(select).toHaveValue('10');
@@ -2055,6 +2132,11 @@ export const PageSizeControlled: Story = {
       </Wrap>
     );
   },
+};
+
+export const PageSizeControlledChecks: Story = {
+  ...PageSizeControlled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Rows per page' }), '50');
     await expect(canvas.getByTestId('host-size')).toHaveTextContent('50');
@@ -2125,6 +2207,11 @@ export const PageSizeOptionsMobile: Story = {
       />
     </Wrap>
   ),
+};
+
+export const PageSizeOptionsMobileChecks: Story = {
+  ...PageSizeOptionsMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const nav = canvas.getByRole('navigation', { name: 'Pagination' });

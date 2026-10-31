@@ -128,6 +128,11 @@ export const IntentSuccessColorsCircleGreen: Story = {
       </ActivityFeed.Item>
     </ActivityFeed>
   ),
+};
+
+export const IntentSuccessColorsCircleGreenChecks: Story = {
+  ...IntentSuccessColorsCircleGreen,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const circle = canvasElement.querySelector('[data-testid="i"] [data-slot="disc"]');
     await expect(circle).toHaveClass('bg-green-100', 'text-green-700');

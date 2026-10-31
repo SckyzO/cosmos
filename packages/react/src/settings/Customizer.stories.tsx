@@ -78,6 +78,11 @@ export const WithSectionsHidden: Story = {
 export const Mobile: Story = {
   args: { presets: PRESETS },
   globals: mobileViewport,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

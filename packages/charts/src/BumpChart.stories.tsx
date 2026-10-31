@@ -168,6 +168,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
@@ -190,6 +195,7 @@ export const Narrow: Story = {
  * for 24px discs. The names stay.
  */
 export const TooNarrowForDiscs: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { series: PRODUCTS },
   render: (args) => <Box {...args} width={260} />,
   play: async ({ canvasElement }) => {
@@ -203,12 +209,22 @@ export const TooNarrowForDiscs: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
 /** `emptyMessage` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
   args: { series: [{ name: 'Aurora', data: [] }], emptyMessage: 'No ranking this quarter' },
+};
+
+export const EmptyWithMessageChecks: Story = {
+  ...EmptyWithMessage,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No ranking this quarter'),
 };
 

@@ -125,6 +125,11 @@ export const Mobile: Story = {
     step: 100,
     formatValue: dollars,
   },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
     const [min, max] = canvas.getAllByRole('slider');

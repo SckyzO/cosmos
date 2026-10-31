@@ -1,6 +1,6 @@
 import { setProjectAnnotations } from '@storybook/react-vite';
 import type { ProjectAnnotations, Renderer } from 'storybook/internal/types';
-import { configure, getConfig } from 'storybook/test';
+import { configure, expect, getConfig } from 'storybook/test';
 import { afterEach, beforeAll } from 'vitest';
 
 import { a11yGateAnnotations, contrastPassAnnotations, recordA11yViolations } from './a11y-gate';
@@ -94,6 +94,28 @@ const nestedEventAnnotations: ProjectAnnotations<Renderer> = {
   },
 };
 
+// A story shown in the sidebar is a demo: its play may set the state it shows (open a menu, hover
+// a tooltip) but checks nothing, or its Interactions panel reads as a test report and its picture
+// as a test fixture. The checks go to a hidden twin, `{ ...Demo, tags: ['!dev', '!autodocs'],
+// play }`. Counting the assertions, not searching the source for `expect(`, also catches a helper
+// that asserts (`expectNoHorizontalOverflow`) and a story built by a function.
+let assertionsBefore = 0;
+const assertionCalls = () => expect.getState().assertionCalls;
+const visibleStoriesDontAssert: ProjectAnnotations<Renderer> = {
+  beforeEach: () => {
+    assertionsBefore = assertionCalls();
+  },
+  afterEach: ({ tags, title, name }) => {
+    if (!tags.includes('dev')) return;
+    const made = assertionCalls() - assertionsBefore;
+    if (made > 0)
+      throw new Error(
+        `${title} › ${name} is shown in the sidebar and its play makes ${made} assertion(s): ` +
+          "move them to a hidden twin, { ...Story, tags: ['!dev', '!autodocs'], play }."
+      );
+  },
+};
+
 // Wire the framework's preview annotations into the Vitest test runner so
 // `context.renderToCanvas` is available when stories mount in browser mode.
 //
@@ -116,6 +138,7 @@ const project = setProjectAnnotations([
   projectAnnotations.default,
   settleMotionAnnotations,
   nestedEventAnnotations,
+  visibleStoriesDontAssert,
   contrastPassAnnotations,
   directionPassAnnotations,
 ]);

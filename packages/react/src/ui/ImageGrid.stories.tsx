@@ -404,6 +404,11 @@ export const MasonryItemsAreButtonsAndLinks: Story = {
 export const MasonryOnAPhone: Story = {
   globals: mobileViewport,
   render: () => <MasonryDemo columns={{ sm: 2, lg: 3 }} />,
+};
+
+export const MasonryOnAPhoneChecks: Story = {
+  ...MasonryOnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();
     // One column below `sm`: every picture spans the container.

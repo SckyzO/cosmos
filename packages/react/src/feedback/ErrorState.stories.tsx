@@ -19,6 +19,11 @@ export const Default: Story = { args: { message: 'Failed to load data.' } };
 
 export const WithRetry: Story = {
   args: { message: 'Failed to load data.', onRetry: fn() },
+};
+
+export const WithRetryChecks: Story = {
+  ...WithRetry,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Try again/i }));
     await expect(args.onRetry).toHaveBeenCalled();
@@ -36,6 +41,11 @@ export const WithAction: Story = {
       </Button>
     ),
   },
+};
+
+export const WithActionChecks: Story = {
+  ...WithAction,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Back to tickets' })).toBeInTheDocument();
     // No `onRetry`: no retry button.

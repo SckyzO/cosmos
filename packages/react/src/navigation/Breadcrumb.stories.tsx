@@ -186,6 +186,11 @@ const DEEP_PATH = [
 export const CollapsedMiddle: Story = {
   parameters: portalDocsParams.lg(),
   args: { items: DEEP_PATH, maxItems: 3 },
+};
+
+export const CollapsedMiddleChecks: Story = {
+  ...CollapsedMiddle,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
     // First and last two crumbs stay; the middle three are in the menu.
@@ -234,6 +239,11 @@ export const ShortTrailIsNotCollapsed: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { items: DEEP_PATH, maxItems: 3 },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
     expectNoHorizontalOverflow(nav);
@@ -257,6 +267,11 @@ export const MobileWithIcons: Story = {
       { icon: Cpu, label: 'server-alpha-01' },
     ],
   },
+};
+
+export const MobileWithIconsChecks: Story = {
+  ...MobileWithIcons,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Breadcrumb' }));
   },

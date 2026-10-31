@@ -43,6 +43,13 @@ required "Lint + typecheck + test + build" check still reports, and passes.
 - **Component tests** — the stories, run by Vitest in a headless Chromium (the `storybook`
   project). They cover what needs a real DOM: rendering, focus, interaction, theming, and
   accessibility (see [Accessibility](#accessibility)).
+
+  A story shown in the sidebar is a demo, and its play function checks nothing: it may only set
+  the state the story shows, such as an open menu or a hovered tooltip. The checks go to a hidden
+  twin, `export const DemoChecks: Story = { ...Demo, tags: ['!dev', '!autodocs'], play }`, and a
+  story that exists only to test takes those tags itself. The story tests fail a visible story whose
+  play makes an assertion, including one made by a helper such as `expectNoHorizontalOverflow`.
+
 - **E2E** — Playwright against Storybook, in `tests/e2e`.
 
 `pnpm --filter '@cosmos/storybook' test` runs both Vitest projects, so `make test`, `make ci` and
@@ -412,8 +419,8 @@ by kind. None of them may widen the page.
 
 Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQuery` only when the
 markup itself changes. Every component with such a behavior has a story at the `mobile` viewport
-(`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor) whose play
-function calls `expectNoHorizontalOverflow`.
+(`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor), and a hidden
+twin of it whose play function calls `expectNoHorizontalOverflow`.
 
 ## Charts
 

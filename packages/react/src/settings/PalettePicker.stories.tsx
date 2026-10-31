@@ -150,6 +150,11 @@ export const UnevenLabelsFillCards: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const UnevenLabelsFillCardsChecks: Story = {
+  ...UnevenLabelsFillCards,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const cards = canvas.getAllByRole('radio');
     const heights = new Set(cards.map((c) => c.getBoundingClientRect().height));

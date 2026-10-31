@@ -83,6 +83,11 @@ export const CentreContent: Story = {
 
 export const Indeterminate: Story = {
   args: { indeterminate: true, children: null, 'aria-label': 'Loading' },
+};
+
+export const IndeterminateChecks: Story = {
+  ...Indeterminate,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const ring = canvas.getByRole('progressbar');
     await expect(ring).toHaveAttribute('aria-busy', 'true');
@@ -104,6 +109,11 @@ export const InKpiCard: Story = {
       />
     </div>
   ),
+};
+
+export const InKpiCardChecks: Story = {
+  ...InKpiCard,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('progressbar', { name: 'Course progress' })).toHaveAttribute(
       'aria-valuenow',
@@ -124,6 +134,11 @@ export const OnNarrowScreen: Story = {
       ))}
     </div>
   ),
+};
+
+export const OnNarrowScreenChecks: Story = {
+  ...OnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

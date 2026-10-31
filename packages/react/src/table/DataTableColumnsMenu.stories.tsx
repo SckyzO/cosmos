@@ -80,6 +80,11 @@ export const ColumnsMenu: Story = {
       />
     </Wrap>
   ),
+};
+
+export const ColumnsMenuChecks: Story = {
+  ...ColumnsMenu,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(headers(canvas)).toEqual(['Name', 'Email', 'Role', 'Team']);
     await expect(canvas.getByRole('button', { name: 'Columns' })).toHaveAttribute(
@@ -96,6 +101,11 @@ export const ColumnsMenuWithoutSearch: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
     </Wrap>
   ),
+};
+
+export const ColumnsMenuWithoutSearchChecks: Story = {
+  ...ColumnsMenuWithoutSearch,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Columns' })).toBeVisible();
     await expect(canvas.queryByRole('searchbox')).toBeNull();
@@ -125,6 +135,15 @@ export const MenuStates: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
     </Wrap>
   ),
+  // The menu open, to show its states.
+  play: async ({ canvas }) => {
+    await openMenu(canvas);
+  },
+};
+
+export const MenuStatesChecks: Story = {
+  ...MenuStates,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const panel = within(await openMenu(canvas));
     const items = panel.getAllByRole('menuitemcheckbox');
@@ -148,7 +167,7 @@ export const MenuStates: Story = {
 
 /** Unchecking an item hides the column and checking it brings it back; the menu stays open. */
 export const HidingAndShowingAColumn: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
@@ -173,7 +192,7 @@ export const HidingAndShowingAColumn: Story = {
 
 /** Space toggles an item from the keyboard, and the menu stays open. */
 export const ColumnsMenuKeyboard: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
@@ -210,7 +229,7 @@ const FewColumns = () => {
 
 /** The last shown column cannot be hidden: its item is disabled while it is the only one left. */
 export const LastColumnIsProtected: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <FewColumns />,
   play: async ({ canvas }) => {
     const panel = within(await openMenu(canvas));
@@ -237,6 +256,11 @@ export const NonHideableColumn: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
     </Wrap>
   ),
+};
+
+export const NonHideableColumnChecks: Story = {
+  ...NonHideableColumn,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const panel = within(await openMenu(canvas));
     const name = panel.getByRole('menuitemcheckbox', { name: 'Name' });
@@ -262,6 +286,11 @@ export const Uncontrolled: Story = {
       />
     </Wrap>
   ),
+};
+
+export const UncontrolledChecks: Story = {
+  ...Uncontrolled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     await expect(headers(canvas)).toEqual(['Name', 'Email', 'Team', 'City']);
     const panel = within(await openMenu(canvas));
@@ -306,6 +335,11 @@ const ControlledTable = ({ locked }: { locked?: boolean }) => {
 /** The host owns the visibility: the table shows what it passes back. */
 export const ControlledVisibility: Story = {
   render: () => <ControlledTable />,
+};
+
+export const ControlledVisibilityChecks: Story = {
+  ...ControlledVisibility,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(headers(canvas)).toEqual(['Name', 'Role', 'Team']);
     const panel = within(await openMenu(canvas));
@@ -377,6 +411,11 @@ export const Mobile: Story = {
       />
     </Wrap>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const button = canvas.getByRole('button', { name: 'Columns' });

@@ -28,7 +28,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ReadOnly: Story = {
+export const ReadOnly: Story = {};
+
+export const ReadOnlyChecks: Story = {
+  ...ReadOnly,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const stars = canvas.getByRole('img', { name: 'Rated 4.5 out of 5' });
     await expect(stars).toBeVisible();
@@ -47,6 +51,11 @@ export const HalfStars: Story = {
       ))}
     </div>
   ),
+};
+
+export const HalfStarsChecks: Story = {
+  ...HalfStars,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // A half star clips the filled glyph at 50%, over the empty outline: no second icon.
     const half = canvas.getByRole('img', { name: 'Rated 3.5 out of 5' });
@@ -72,6 +81,11 @@ export const Sizes: Story = {
 
 export const WithLabel: Story = {
   args: { label: 'Walnut desk lamp', count: undefined },
+};
+
+export const WithLabelChecks: Story = {
+  ...WithLabel,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('img', { name: 'Walnut desk lamp: 4.5 out of 5' })).toBeVisible();
   },
@@ -193,6 +207,11 @@ export const Controlled: Story = {
 
 export const Disabled: Story = {
   args: { readOnly: false, disabled: true, value: 3, allowHalf: false, count: undefined },
+};
+
+export const DisabledChecks: Story = {
+  ...Disabled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const radio of canvas.getAllByRole('radio')) await expect(radio).toBeDisabled();
     await expect(canvas.getByRole('radiogroup')).toHaveAttribute('aria-disabled', 'true');

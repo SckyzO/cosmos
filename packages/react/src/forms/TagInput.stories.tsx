@@ -77,6 +77,7 @@ export const WithValidation: Story = {
 
 /** A pasted list adds each of its items. */
 export const PasteAList: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="max-w-md bg-white p-8 dark:bg-gray-900">
       <TagInput label="Tags" placeholder="Paste a list" />
@@ -142,6 +143,11 @@ export const Controlled: Story = {
       </div>
     );
   },
+};
+
+export const ControlledChecks: Story = {
+  ...Controlled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await userEvent.type(canvas.getByRole('textbox', { name: 'Tags' }), 'docs{Enter}');
     await expect(canvas.getByTestId('value')).toHaveTextContent('design, docs');

@@ -104,6 +104,7 @@ export const ClickPageFiresChange: Story = {
 };
 
 export const PrevDisabledOnFirstPage: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { page: 1, totalPages: 10, onPageChange: fn() },
   play: async ({ args, canvas }) => {
     const prev = canvas.getByRole('button', { name: /previous/i });
@@ -114,6 +115,7 @@ export const PrevDisabledOnFirstPage: Story = {
 };
 
 export const NextDisabledOnLastPage: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { page: 10, totalPages: 10, onPageChange: fn() },
   play: async ({ args, canvas }) => {
     const next = canvas.getByRole('button', { name: /next/i });
@@ -207,6 +209,11 @@ export const ActivePageDiffersFromInactive: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { page: 2, totalPages: 9, showInfo: true, pageSize: 10, total: 87 },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Pagination' });
     expectNoHorizontalOverflow(nav);
@@ -238,6 +245,11 @@ export const ShowAll: Story = {
     );
   },
   args: { page: 2, totalPages: 9 },
+};
+
+export const ShowAllChecks: Story = {
+  ...ShowAll,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Show all' }));
     await expect(canvas.getByText(/^Showing all/)).toHaveTextContent('Showing all 87 results');
@@ -291,6 +303,11 @@ export const MobileWithEdges: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { page: 2, totalPages: 9, showEdges: true, showInfo: true, pageSize: 10, total: 87 },
+};
+
+export const MobileWithEdgesChecks: Story = {
+  ...MobileWithEdges,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
     await expect(canvas.getByRole('button', { name: 'First page' })).toBeVisible();
@@ -338,6 +355,11 @@ const expectWordsAndChevrons = async (
 
 export const TextLabels: Story = {
   args: { page: 5, totalPages: 10, prevNextLabel: 'text' },
+};
+
+export const TextLabelsChecks: Story = {
+  ...TextLabels,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expectWordsAndChevrons(canvas);
   },
@@ -345,6 +367,11 @@ export const TextLabels: Story = {
 
 export const TextLabelsSizeMd: Story = {
   args: { page: 5, totalPages: 10, prevNextLabel: 'text', size: 'md' },
+};
+
+export const TextLabelsSizeMdChecks: Story = {
+  ...TextLabelsSizeMd,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expectWordsAndChevrons(canvas);
     // Same height as the page buttons, whatever the size: the word does not grow the button.
@@ -380,6 +407,11 @@ export const MobileTextLabels: Story = {
     total: 100,
     prevNextLabel: 'text',
   },
+};
+
+export const MobileTextLabelsChecks: Story = {
+  ...MobileTextLabels,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
     await expectWordsAndChevrons(canvas);

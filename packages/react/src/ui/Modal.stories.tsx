@@ -131,6 +131,11 @@ export const Open: Story = {
       </Wrap>
     );
   },
+};
+
+export const OpenChecks: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await within(document.body).findByRole('dialog', {
       name: 'Rotate the API key?',
@@ -213,6 +218,11 @@ export const FormInModal: Story = {
       </Wrap>
     );
   },
+};
+
+export const FormInModalChecks: Story = {
+  ...FormInModal,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = within(
       await within(document.body).findByRole('dialog', { name: 'Edit server' })

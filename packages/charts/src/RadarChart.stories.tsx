@@ -276,7 +276,7 @@ export const ColorsOverridePalette: Story = {
 
 /** A click on a legend entry hides its polygon; another brings it back. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: CompareDatacenters.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

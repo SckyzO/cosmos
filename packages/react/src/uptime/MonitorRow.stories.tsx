@@ -182,6 +182,11 @@ export const StaleCards: Story = {
 export const StaleMobile: Story = {
   ...Stale,
   globals: mobileViewport,
+};
+
+export const StaleMobileChecks: Story = {
+  ...StaleMobile,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
@@ -189,6 +194,11 @@ export const StaleMobile: Story = {
 export const MobileRows: Story = {
   render: () => <Rows />,
   globals: mobileViewport,
+};
+
+export const MobileRowsChecks: Story = {
+  ...MobileRows,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
     const rows = canvasElement.querySelectorAll('li > div');
@@ -199,6 +209,11 @@ export const MobileRows: Story = {
 export const MobileCards: Story = {
   render: Cards.render,
   globals: mobileViewport,
+};
+
+export const MobileCardsChecks: Story = {
+  ...MobileCards,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 

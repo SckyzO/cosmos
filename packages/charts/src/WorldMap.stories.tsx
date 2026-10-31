@@ -107,7 +107,11 @@ type Story = StoryObj<typeof meta>;
  * gives the lower bound of each step; a country with no value is gray. Hover,
  * or Tab and the arrow keys, for a country's value.
  */
-export const Default: Story = {
+export const Default: Story = {};
+
+export const DefaultChecks: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(valued(canvasElement)).toHaveLength(Object.keys(VISITS).length));
     await expect(legendTexts(canvasElement)).toEqual([
@@ -124,6 +128,11 @@ export const Default: Story = {
 /** `showLegend={false}` leaves the map alone. */
 export const WithoutLegend: Story = {
   args: { showLegend: false },
+};
+
+export const WithoutLegendChecks: Story = {
+  ...WithoutLegend,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(valued(canvasElement).length).toBeGreaterThan(0));
     await expect(canvasElement.querySelector('[data-world-legend]')).toBeNull();
@@ -137,6 +146,11 @@ export const WithoutLegend: Story = {
  */
 export const PinnedScale: Story = {
   args: { min: 0, max: 5000 },
+};
+
+export const PinnedScaleChecks: Story = {
+  ...PinnedScale,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(valued(canvasElement).length).toBeGreaterThan(0));
     await expect(legendTexts(canvasElement)).toEqual([
@@ -176,6 +190,11 @@ export const Selectable: Story = {
       </>
     );
   },
+};
+
+export const SelectableChecks: Story = {
+  ...Selectable,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, args }) => {
     const selected = () => canvasElement.querySelector('[data-testid="selected"]')?.textContent;
     await waitFor(() => expect(countryOf(canvasElement, 'FR')).not.toBeNull());
@@ -201,6 +220,11 @@ export const Selectable: Story = {
 /** With no value, the bare map is drawn in the gray of a country without data: no legend, nothing to walk, no table. */
 export const Empty: Story = {
   args: { data: {} },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelectorAll('svg path').length).toBeGreaterThan(100)
@@ -224,6 +248,11 @@ export const OnNarrowScreen: Story = {
       <WorldMap {...args} />
     </div>
   ),
+};
+
+export const OnNarrowScreenChecks: Story = {
+  ...OnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
     await waitFor(() => expect(valued(canvasElement).length).toBeGreaterThan(0));
@@ -491,7 +520,7 @@ export const FixedHeight: Story = {
 
 /** The country names, the label and the values are React text: markup in them shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     geography: {
       ...geography,

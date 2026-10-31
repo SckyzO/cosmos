@@ -139,6 +139,11 @@ export const Mobile: Story = {
       <RecordPager {...args} />
     </div>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));
     for (const name of ['Previous purchase order', 'Next purchase order']) {
@@ -159,6 +164,11 @@ export const MobileCompact: Story = {
       <PageHeader title="Order #20431" actions={<RecordPager {...args} />} />
     </div>
   ),
+};
+
+export const MobileCompactChecks: Story = {
+  ...MobileCompact,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));
     await expect(canvas.getByRole('link', { name: 'Next order' })).toBeVisible();
@@ -172,6 +182,7 @@ const Hidden: Pick<Story, 'tags'> = { tags: ['!dev', '!autodocs'] };
 /** At the first record Previous is a disabled button, not a link; Next stays a link. */
 export const DisabledAtStartInLinkMode: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { position: 1, previousHref: '#order-0' },
   play: async ({ canvas }) => {
     const previous = canvas.getByRole('button', { name: 'Previous order' });
@@ -186,6 +197,7 @@ export const DisabledAtStartInLinkMode: Story = {
 
 export const DisabledAtEndInLinkMode: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { position: 340, nextHref: '#order-341' },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Next order' })).toBeDisabled();
@@ -200,6 +212,7 @@ export const DisabledAtEndInLinkMode: Story = {
 /** In callback mode both ends are disabled, and a click on a disabled button calls nothing. */
 export const DisabledAtEndsInCallbackMode: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: {
     previousHref: undefined,
     nextHref: undefined,
@@ -237,6 +250,7 @@ export const DisabledAtEndsInCallbackMode: Story = {
 /** A side without a destination or a callback is disabled too, whatever the position. */
 export const DisabledWithoutDestination: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { previousHref: undefined, nextHref: undefined },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Previous order' })).toBeDisabled();
@@ -247,6 +261,7 @@ export const DisabledWithoutDestination: Story = {
 /** The shortcuts move through the pager's own controls: callbacks here, links below. */
 export const ShortcutsCallBack: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: {
     previousHref: undefined,
     nextHref: undefined,
@@ -268,6 +283,7 @@ export const ShortcutsCallBack: Story = {
 /** Without `hotkeys` no key is taken. */
 export const NoShortcutsByDefault: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { previousHref: undefined, nextHref: undefined, onPrevious: fn(), onNext: fn() },
   play: async ({ args }) => {
     await userEvent.keyboard('[[]');
@@ -279,6 +295,7 @@ export const NoShortcutsByDefault: Story = {
 /** A key typed in a field is text: the pager does nothing. */
 export const ShortcutsIgnoredInField: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: {
     previousHref: undefined,
     nextHref: undefined,
@@ -309,6 +326,7 @@ export const ShortcutsIgnoredInField: Story = {
 /** At the ends the shortcut for the missing side does nothing, and the key stays free. */
 export const ShortcutsStopAtTheEnds: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: {
     position: 1,
     previousHref: undefined,
@@ -328,6 +346,7 @@ export const ShortcutsStopAtTheEnds: Story = {
 /** Once the pager is gone its listener is too. */
 export const ShortcutsAreRemovedOnUnmount: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: {
     previousHref: undefined,
     nextHref: undefined,
@@ -354,6 +373,7 @@ export const ShortcutsAreRemovedOnUnmount: Story = {
 /** `noun` builds the labels, `labels` replaces any of them, and the compact buttons keep the name. */
 export const LabelsCanBeOverridden: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="flex flex-col gap-4">
       <div data-testid="noun">
@@ -404,6 +424,7 @@ const RouterLink = ({ href, ...props }: LinkComponentProps) => (
 /** Every link of the pager goes through the app's router: Previous, Next and Back to list. */
 export const LinksUseTheLinkProvider: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   decorators: [
     (Story) => (
       <LinkProvider component={RouterLink}>
@@ -424,6 +445,7 @@ export const LinksUseTheLinkProvider: Story = {
 /** Without a provider they are plain links. */
 export const LinksArePlainWithoutProvider: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const name of ['Previous order', 'Next order', 'Back to list']) {
       await expect(canvas.getByRole('link', { name })).not.toHaveAttribute('data-router-link');
@@ -434,6 +456,7 @@ export const LinksArePlainWithoutProvider: Story = {
 /** A shortcut on a link clicks it, so the router gets it, and nothing else navigates. */
 export const ShortcutsFollowTheRouter: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { hotkeys: { previous: '[', next: ']' } },
   decorators: [
     (Story) => {

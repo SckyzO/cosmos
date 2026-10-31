@@ -657,6 +657,11 @@ export const ExtremeContent: Story = {
 export const Phone: Story = {
   globals: mobileViewport,
   render: () => <DashboardScreen state="content" />,
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

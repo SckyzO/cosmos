@@ -256,6 +256,11 @@ export const Open: Story = {
     );
     return <Toaster expand visibleToasts={7} />;
   },
+};
+
+export const OpenChecks: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     await waitFor(() => expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(7));
     // Each toast fades in once mounted.

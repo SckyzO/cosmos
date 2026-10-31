@@ -242,6 +242,11 @@ export const Mobile: Story = {
       </div>
     ),
   ],
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
     const rows = canvas.getAllByRole('listitem');

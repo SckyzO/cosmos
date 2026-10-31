@@ -187,6 +187,11 @@ export const WithBrand: Story = {
       />
     </Wrap>
   ),
+};
+
+export const WithBrandChecks: Story = {
+  ...WithBrand,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const brand = canvas.getByText('Cosmos');
     await expect(brand).toBeVisible();
@@ -308,6 +313,11 @@ export const Mobile: Story = {
   globals: mobileViewport,
   parameters: { ...portalDocsParams.lg(), layout: 'fullscreen' },
   render: () => <MobileTopbar onSelect={fn()} />,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('banner'));
     await expect(canvas.getByText('Analytics Dashboard')).not.toBeVisible();

@@ -282,6 +282,11 @@ export const GroupHeaderFollowsTheme: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -397,7 +402,7 @@ export const TextFollowsTheTextSize: Story = {
 
 /** Markup in a name, a group or a value shows as text: in the label, the tooltip and the names. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     showValues: true,
     series: [

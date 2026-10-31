@@ -175,6 +175,11 @@ export const LongNameStaysInTheRow: Story = {
     output: <CodeBlock code="[]" />,
   },
   globals: mobileViewport,
+};
+
+export const LongNameStaysInTheRowChecks: Story = {
+  ...LongNameStaysInTheRow,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
     const name = within(canvasElement)

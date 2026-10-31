@@ -210,6 +210,11 @@ export const AutoHideMasksTheValueAgain: Story = {
 export const MobileButtonsWrapUnderTheValue: Story = {
   globals: mobileViewport,
   args: { value: WEBHOOK.repeat(2), label: 'Webhook secret', defaultRevealed: true },
+};
+
+export const MobileButtonsWrapUnderTheValueChecks: Story = {
+  ...MobileButtonsWrapUnderTheValue,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const value = canvas

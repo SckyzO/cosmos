@@ -268,6 +268,11 @@ export const Mobile: Story = {
       </ul>
     </div>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));
   },
@@ -281,6 +286,7 @@ const HiddenTile: Pick<Story, 'tags' | 'decorators'> = { ...Hidden, decorators: 
 /** The star toggles, reports the state it moves to, and keeps its name ("Star {name}"). */
 export const StarToggles: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   args: { defaultStarred: false, onStarredChange: fn() },
   play: async ({ canvas, args }) => {
     const star = canvas.getByRole('button', { name: 'Star Q3 report.pdf' });
@@ -297,6 +303,7 @@ export const StarToggles: Story = {
 /** A controlled star shows what the host passes back, not what was clicked. */
 export const ControlledStarFollowsTheHost: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => {
     const [starred, setStarred] = useState(false);
     return (
@@ -324,6 +331,7 @@ export const ControlledStarFollowsTheHost: Story = {
 /** Without any starred prop there is no star button. */
 export const NoStarByDefault: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /^Star / })).toBeNull();
   },
@@ -332,6 +340,7 @@ export const NoStarByDefault: Story = {
 /** The name is the single button; the star and the actions are its siblings, not inside it. */
 export const NameIsTheOnlyButton: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   parameters: portalDocsParams.md(),
   args: {
     onOpen: fn(),
@@ -354,6 +363,7 @@ export const NameIsTheOnlyButton: Story = {
 /** With an `href` the name is the only link, and the star is not inside it. */
 export const NameIsTheOnlyLink: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   args: { href: '#q3-report', defaultStarred: false },
   play: async ({ canvas }) => {
     const links = canvas.getAllByRole('link');
@@ -368,6 +378,7 @@ export const NameIsTheOnlyLink: Story = {
 /** Without `onOpen` or `href` the name is plain text, not a control. */
 export const NameIsTextWithoutHandler: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button')).toBeNull();
     await expect(canvas.queryByRole('link')).toBeNull();
@@ -391,6 +402,11 @@ export const LongNameTruncates: Story = {
       </ul>
     </div>
   ),
+};
+
+export const LongNameTruncatesChecks: Story = {
+  ...LongNameTruncates,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const name of canvas.getAllByRole('button', { name: LONG })) {
       const style = getComputedStyle(name);
@@ -406,6 +422,7 @@ export const LongNameTruncates: Story = {
 /** A thumbnail that fails to load falls back to the kind icon. */
 export const BrokenThumbnailFallsBackToTheIcon: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   args: { thumbnail: 'data:image/png;base64,broken', kind: 'image', name: 'broken.png' },
   play: async ({ canvasElement }) => {
     const li = canvasElement.querySelector('li') as HTMLElement;
@@ -417,6 +434,7 @@ export const BrokenThumbnailFallsBackToTheIcon: Story = {
 /** A thumbnail that loads replaces the icon, with an empty `alt` (the name is already there). */
 export const ThumbnailHasEmptyAlt: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   args: { thumbnail: PHOTO, kind: 'image', name: 'mountain-night.jpg' },
   play: async ({ canvasElement }) => {
     const img = canvasElement.querySelector('li img') as HTMLImageElement;
@@ -429,6 +447,11 @@ export const ThumbnailHasEmptyAlt: Story = {
 export const SelectedMarksTheName: Story = {
   ...HiddenTile,
   args: { selected: true, onOpen: fn() },
+};
+
+export const SelectedMarksTheNameChecks: Story = {
+  ...SelectedMarksTheName,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     await expect(canvas.getByRole('button', { name: 'Q3 report.pdf' })).toHaveAttribute(
       'aria-current',
@@ -456,6 +479,11 @@ export const KindsAreTintedApart: Story = {
       ))}
     </GridList>
   ),
+};
+
+export const KindsAreTintedApartChecks: Story = {
+  ...KindsAreTintedApart,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const tintOf = (name: string): string => {
       const li = within(canvasElement).getByText(name).closest('li') as HTMLElement;
@@ -473,6 +501,7 @@ const tileRef = createRef<HTMLLIElement>();
 /** The ref gets the `<li>`. */
 export const ForwardsRef: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <ul>
       <FileTile ref={tileRef} name="Q3 report.pdf" kind="pdf" onOpen={fn()} />

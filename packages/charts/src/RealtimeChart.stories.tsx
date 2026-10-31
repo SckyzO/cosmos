@@ -139,6 +139,11 @@ const withoutThresholds = ({ x, y }: { x: (string | null)[]; y: (string | null)[
 export const AxisTitles: Story = {
   args: { showTimeAxis: true, xTitle: 'Time', yTitle: 'CPU usage (%)' },
   render: (args) => <Replay {...args} trace={CPU} />,
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(withoutThresholds(axisTitles(canvasElement))).toEqual({
@@ -166,6 +171,11 @@ export const ReferenceAreaInChildren: Story = {
     ),
   },
   render: (args) => <Replay {...args} trace={CPU} />,
+};
+
+export const ReferenceAreaInChildrenChecks: Story = {
+  ...ReferenceAreaInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelector('.recharts-reference-area')).not.toBeNull()
@@ -408,7 +418,7 @@ export const RepaintsWithTheme: Story = {
 
 /** The labels and the axis titles are SVG text: markup in them shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: {
     showTimeAxis: true,
     xTitle: HOSTILE,

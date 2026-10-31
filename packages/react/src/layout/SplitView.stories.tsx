@@ -186,6 +186,11 @@ export const ThreePanes: Story = {
       </Frame>
     );
   },
+};
+
+export const ThreePanesChecks: Story = {
+  ...ThreePanes,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const [folders, list, detail] = ['Folders', 'Messages', 'Message'].map((n) => pane(canvas, n));
     // The panes follow each other along the line: the first is nearest the start edge.
@@ -299,6 +304,11 @@ export const InAShell: Story = {
       </ShellFrame>
     );
   },
+};
+
+export const InAShellChecks: Story = {
+  ...InAShell,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     const main = canvasElement.querySelector('main')!;
     const list = pane(canvas, 'Messages');

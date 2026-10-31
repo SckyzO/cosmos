@@ -170,6 +170,11 @@ export const WithProgress: Story = {
       </div>
     </div>
   ),
+};
+
+export const WithProgressChecks: Story = {
+  ...WithProgress,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const [testId, name, now] of [
       ['goal', 'Monthly goal', '77'],
@@ -295,6 +300,11 @@ export const Mobile: Story = {
       />
     </div>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
     for (const card of canvasElement.querySelectorAll<HTMLElement>('div > div, div > a')) {
@@ -305,6 +315,7 @@ export const Mobile: Story = {
 
 /** The exact value behind an abbreviated one: a tooltip on hover and focus, and in the card's name. */
 export const ExactValue: Story = {
+  tags: ['!dev', '!autodocs'],
   args: {
     label: 'Revenue',
     value: '€12.4M',
@@ -326,6 +337,7 @@ export const ExactValueOnALinkCard: Story = {
 
 /** At phone width the card shows the short value; the exact one stays reachable. */
 export const MobileExactValue: Story = {
+  tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
     <div className="grid gap-4">

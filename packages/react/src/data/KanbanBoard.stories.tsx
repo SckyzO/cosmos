@@ -317,6 +317,11 @@ export const OnNarrowScreen: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { defaultValue: sprint() },
+};
+
+export const OnNarrowScreenChecks: Story = {
+  ...OnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const todo = canvas.getByRole('region', { name: 'To do' });

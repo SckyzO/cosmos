@@ -133,6 +133,11 @@ export const Open: Story = {
       </Wrap>
     );
   },
+};
+
+export const OpenChecks: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const menu = await page.findByRole('menu');
     await expect(menu).toBeVisible();
@@ -344,8 +349,8 @@ export const MenuItemFocusShowsRingInDark: Story = {
 };
 
 export const MenuItemFocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...MenuItemFocusShowsRingInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 

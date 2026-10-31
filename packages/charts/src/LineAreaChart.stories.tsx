@@ -152,6 +152,11 @@ export const FormattedValues: Story = {
 /** `xTitle` and `yTitle` name the axes, so the tick labels need no unit. */
 export const AxisTitles: Story = {
   args: { ...Basic.args, xTitle: 'Hour of day', yTitle: 'CPU usage (%)' },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: ['Hour of day'], y: ['CPU usage (%)'] })
@@ -180,6 +185,11 @@ export const TextFollowsTheTextSize: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -200,6 +210,11 @@ export const EmptyWithMessage: Story = {
     categories: [],
     emptyMessage: 'No samples in the last hour',
   },
+};
+
+export const EmptyWithMessageChecks: Story = {
+  ...EmptyWithMessage,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No samples in the last hour'),
 };
 
@@ -222,6 +237,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const line = canvasElement.querySelector('.recharts-reference-line line');
@@ -252,6 +272,11 @@ const curves = (root: HTMLElement) => [
 /** `variant="line"` draws the lines alone, with no fill under them. */
 export const LineVariant: Story = {
   args: { ...MultiSeries.args, variant: 'line' },
+};
+
+export const LineVariantChecks: Story = {
+  ...LineVariant,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(curves(canvasElement)).toHaveLength(SERIES_COUNT));
     // No gradient, and the area under each line has no fill.
@@ -290,6 +315,11 @@ export const Stacked: Story = {
       { name: 'Other', data: [20, 25, 15, 30, 35, 25, 40, 30, 20] },
     ],
   },
+};
+
+export const StackedChecks: Story = {
+  ...Stacked,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
     // The last point of the top line sits at the sum 130 + 50 + 20 = 200.
@@ -316,6 +346,11 @@ export const NotStackedByDefault: Story = {
 /** `markers` draws a dot on every point. */
 export const Markers: Story = {
   args: { ...MultiSeries.args, variant: 'line', markers: true },
+};
+
+export const MarkersChecks: Story = {
+  ...Markers,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelectorAll('.recharts-area-dot')).toHaveLength(
@@ -350,6 +385,11 @@ export const SeriesStyles: Story = {
       { name: 'Quota', style: 'step', data: [20, 20, 25, 25, 30, 30, 35, 35, 40] },
     ],
   },
+};
+
+export const SeriesStylesChecks: Story = {
+  ...SeriesStyles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(curves(canvasElement)).toHaveLength(3));
     const [solid, dashed, step] = curves(canvasElement);
@@ -379,6 +419,11 @@ export const ReferenceLines: Story = {
       { value: 8, label: 'Floor', intent: 'success' },
     ],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(referenceLineEls(canvasElement)).toHaveLength(4));
     await waitFor(() =>
@@ -476,6 +521,11 @@ export const ReferenceBands: Story = {
     ],
     referenceLines: [{ value: 40, label: 'Alert at 40%', intent: 'warning', dashed: true }],
   },
+};
+
+export const ReferenceBandsChecks: Story = {
+  ...ReferenceBands,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(referenceBandEls(canvasElement)).toHaveLength(3));
     await waitFor(() =>
@@ -522,7 +572,7 @@ export const ReferenceLabelsFitNarrowBox: Story = {
 
 /** A multi-series chart shows one legend entry per series, in order. */
 export const LegendListsEverySeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: MultiSeries.args,
   play: async ({ canvasElement }) => {
     await waitFor(() =>
@@ -547,7 +597,7 @@ export const SingleSeriesHasNoLegend: Story = {
 
 /** A click on a legend entry hides its series and shows it again; the keyboard does the same. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: MultiSeries.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

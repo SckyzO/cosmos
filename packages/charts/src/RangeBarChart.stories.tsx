@@ -158,6 +158,11 @@ export const SeverityColors: Story = {
 /** `xTitle` and `yTitle` name the time axis and the rows. */
 export const AxisTitles: Story = {
   args: { ...MaintenanceWindows.args, xTitle: 'Time (UTC)', yTitle: 'Rack' },
+};
+
+export const AxisTitlesChecks: Story = {
+  ...AxisTitles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(axisTitles(canvasElement)).toEqual({ x: ['Time (UTC)'], y: ['Rack'] })
@@ -168,6 +173,11 @@ export const AxisTitles: Story = {
 /** The time axis has round UTC ticks: the day at midnight, the time of day between. */
 export const TimeAxisTicks: Story = {
   args: { ...MaintenanceWindows.args },
+};
+
+export const TimeAxisTicksChecks: Story = {
+  ...TimeAxisTicks,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const ticks = tickTexts(canvasElement, 'xAxis');
@@ -181,6 +191,11 @@ export const TimeAxisTicks: Story = {
 /** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No data'),
 };
 
@@ -200,6 +215,11 @@ export const ReferenceLineInChildren: Story = {
       />
     ),
   },
+};
+
+export const ReferenceLineInChildrenChecks: Story = {
+  ...ReferenceLineInChildren,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(canvasElement.querySelector('.recharts-reference-line line')).not.toBeNull();
@@ -233,6 +253,11 @@ export const ReferenceLines: Story = {
     ],
     referenceLines: [{ value: at(14, 12), label: 'Now', intent: 'danger', dashed: true }],
   },
+};
+
+export const ReferenceLinesChecks: Story = {
+  ...ReferenceLines,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       expect(referenceLineEls(canvasElement)).toHaveLength(1);
@@ -405,7 +430,7 @@ export const TooltipListsTheRangesOfARow: Story = {
 
 /** A click on a legend entry hides its ranges and shows them again. */
 export const LegendTogglesSeries: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { series: CHANGES },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

@@ -158,6 +158,11 @@ export const Mobile: Story = {
     target: NOW + 123 * DAY + 4 * HOUR,
     labels: { days: 'Jours', hours: 'Heures', minutes: 'Minutes', seconds: 'Secondes' },
   },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

@@ -744,6 +744,11 @@ export const ExtremeContent: Story = {
 export const Phone: Story = {
   ...Content,
   globals: mobileViewport,
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     // The sections fold into a jump menu, and nothing makes the page scroll sideways.
     await expect(canvas.getByRole('combobox', { name: 'Jump to section' })).toBeVisible();
@@ -755,6 +760,11 @@ export const Phone: Story = {
 export const PhoneDeleteConfirm: Story = {
   render: () => <SettingsScreen state="content" defaultDeleteOpen />,
   globals: mobileViewport,
+};
+
+export const PhoneDeleteConfirmChecks: Story = {
+  ...PhoneDeleteConfirm,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await within(document.body).findByRole('alertdialog');
     await expect(
@@ -772,6 +782,7 @@ const hidden = { tags: ['!dev', '!autodocs'] };
 export const ContentCountsEdits: Story = {
   ...Content,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Unsaved changes · 3 fields edited')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Save Changes' })).toBeEnabled();
@@ -785,6 +796,7 @@ export const ContentCountsEdits: Story = {
 export const EmptyCountsRequiredFields: Story = {
   ...Empty,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByText('3 required fields left')).toBeVisible();
     await expect(canvas.getByRole('textbox', { name: 'Organisation name' })).toHaveAttribute(
@@ -800,6 +812,7 @@ export const EmptyCountsRequiredFields: Story = {
 export const LoadingShowsSkeletons: Story = {
   ...Loading,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     await expect(canvasElement.querySelector('form[aria-busy="true"]')).not.toBeNull();
     await expect(canvasElement.querySelectorAll('.animate-pulse').length).toBeGreaterThan(8);
@@ -813,6 +826,7 @@ export const LoadingShowsSkeletons: Story = {
 export const ErrorLinksFocusTheirField: Story = {
   ...LoadError,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const banner = canvas.getByRole('alert');
     await expect(within(banner).getByText('We couldn’t save your changes')).toBeVisible();
@@ -838,6 +852,11 @@ export const ErrorLinksFocusTheirField: Story = {
 export const ExtremeContentTruncates: Story = {
   ...ExtremeContent,
   ...hidden,
+};
+
+export const ExtremeContentTruncatesChecks: Story = {
+  ...ExtremeContentTruncates,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     await expect(canvas.getByText(/^60 staff across 4 gyms/)).toBeVisible();
     // 60 members and the header row.
@@ -859,6 +878,7 @@ export const ExtremeContentTruncates: Story = {
 export const DeleteConfirmNeedsTheName: Story = {
   ...Content,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Delete organisation' }));
     const dialog = await within(document.body).findByRole('alertdialog');

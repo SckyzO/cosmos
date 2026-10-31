@@ -136,6 +136,11 @@ export const Open: Story = {
       </Wrap>
     );
   },
+};
+
+export const OpenChecks: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await within(document.body).findByRole('dialog', { name: 'Server details' });
     await expect(dialog).toBeVisible();
@@ -217,6 +222,11 @@ export const FormInDrawer: Story = {
       </Wrap>
     );
   },
+};
+
+export const FormInDrawerChecks: Story = {
+  ...FormInDrawer,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = within(
       await within(document.body).findByRole('dialog', { name: 'Edit server' })
@@ -284,6 +294,11 @@ const SheetDemo = ({ rows = 3, ...props }: SheetDemoProps) => {
  */
 export const BottomSheet: Story = {
   render: () => <SheetDemo />,
+};
+
+export const BottomSheetChecks: Story = {
+  ...BottomSheet,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
     await expect(sheet).toBeVisible();
@@ -299,6 +314,11 @@ export const BottomSheet: Story = {
 export const BottomSheetScrolls: Story = {
   tags: ['!autodocs'],
   render: () => <SheetDemo rows={40} />,
+};
+
+export const BottomSheetScrollsChecks: Story = {
+  ...BottomSheetScrolls,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
     await expect(sheet).toBeVisible();
@@ -309,6 +329,11 @@ export const BottomSheetScrolls: Story = {
 export const BottomSheetWithoutHandle: Story = {
   tags: ['!autodocs'],
   render: () => <SheetDemo handle={false} />,
+};
+
+export const BottomSheetWithoutHandleChecks: Story = {
+  ...BottomSheetWithoutHandle,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
     await expect(sheet.querySelector('[data-slot="handle"]')).toBeNull();
@@ -320,6 +345,11 @@ export const BottomSheetOnMobile: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => <SheetDemo rows={40} swipeToClose />,
+};
+
+export const BottomSheetOnMobileChecks: Story = {
+  ...BottomSheetOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });
     await waitFor(() => expect(window.innerWidth).toBeLessThanOrEqual(400));

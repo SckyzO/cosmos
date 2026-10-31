@@ -179,6 +179,11 @@ export const Empty: Story = {
       <FullPanel alerts={[]} />
     </div>
   ),
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Notifications' });
     await expect(trigger.textContent).toBe('');
@@ -191,6 +196,11 @@ export const Muted: Story = {
       <FullPanel muted />
     </div>
   ),
+};
+
+export const MutedChecks: Story = {
+  ...Muted,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(
       canvas.getByRole('button', { name: 'Notifications (muted), 5' })
@@ -206,6 +216,11 @@ export const HighCount: Story = {
       </NotificationsPanel>
     </div>
   ),
+};
+
+export const HighCountChecks: Story = {
+  ...HighCount,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Notifications, 9999+' })).toHaveTextContent(
       '9999+'

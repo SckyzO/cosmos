@@ -162,6 +162,11 @@ export const WithCollapseButton: Story = {
       </Wrap>
     );
   },
+};
+
+export const WithCollapseButtonChecks: Story = {
+  ...WithCollapseButton,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
@@ -232,6 +237,11 @@ export const Sections: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+export const SectionsChecks: Story = {
+  ...Sections,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     const brand = canvas.getByText('Cosmos').closest('.h-\\[72px\\]') as HTMLElement;
@@ -258,6 +268,11 @@ export const SectionsCollapsed: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+export const SectionsCollapsedChecks: Story = {
+  ...SectionsCollapsed,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await expect(canvas.queryByText('Monitoring')).toBeNull();
@@ -300,6 +315,11 @@ export const ActiveSolid: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+export const ActiveSolidChecks: Story = {
+  ...ActiveSolid,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Notifications' })).toHaveClass(
       'bg-brand-500',
@@ -327,6 +347,11 @@ export const LogoStyles: Story = {
       />
     </div>
   ),
+};
+
+export const LogoStylesChecks: Story = {
+  ...LogoStyles,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const square = (title: string) =>
       canvas.getByText(title).closest('.h-\\[72px\\]')!.firstElementChild as HTMLElement;
@@ -356,6 +381,11 @@ export const FooterNavigation: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+export const FooterNavigationChecks: Story = {
+  ...FooterNavigation,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     const profile = canvas.getByRole('button', { name: 'Profile' });
@@ -372,6 +402,11 @@ export const FooterNavigation: Story = {
 /** The user's profile and the collapse button, under a full-width line. */
 export const FooterProfile: Story = {
   render: FullExample.render,
+};
+
+export const FooterProfileChecks: Story = {
+  ...FooterProfile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const footer = canvas.getByText('sckyzo').closest('.shrink-0') as HTMLElement;
     await expect(getComputedStyle(footer).borderTopWidth).toBe('1px');
@@ -395,6 +430,11 @@ export const FooterNavigationAndCollapse: Story = {
       </Wrap>
     );
   },
+};
+
+export const FooterNavigationAndCollapseChecks: Story = {
+  ...FooterNavigationAndCollapse,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
@@ -461,6 +501,11 @@ export const ThreeLevelMenu: Story = {
       </Sidebar>
     </Wrap>
   ),
+};
+
+export const ThreeLevelMenuChecks: Story = {
+  ...ThreeLevelMenu,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     const start = (name: string) => startOffset(canvas.getByText(name), nav);
@@ -1794,6 +1839,11 @@ const expectExpanded = (nav: HTMLElement) =>
  */
 export const HoverOverlaysThePage: Story = {
   render: () => <HoverShell mode="overlay" />,
+};
+
+export const HoverOverlaysThePageChecks: Story = {
+  ...HoverOverlaysThePage,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = mainNav(canvas);
     await settlePointer(nav);
@@ -1824,6 +1874,11 @@ export const HoverOverlaysThePage: Story = {
  */
 export const HoverPushesThePage: Story = {
   render: () => <HoverShell mode="push" />,
+};
+
+export const HoverPushesThePageChecks: Story = {
+  ...HoverPushesThePage,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = mainNav(canvas);
     await settlePointer(nav);
@@ -2249,6 +2304,11 @@ export const CompactInShell: Story = {
 export const CompactMobile: Story = {
   ...CompactInShell,
   globals: mobileViewport,
+};
+
+export const CompactMobileChecks: Story = {
+  ...CompactMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByRole('button', { name: 'Open navigation' })).toBeVisible();

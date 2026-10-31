@@ -88,6 +88,11 @@ export const Default: Story = {};
 
 export const Empty: Story = {
   args: { events: [] },
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('status')).toHaveTextContent('No events this month');
   },
@@ -142,6 +147,11 @@ export const French: Story = {
 /** Without `onEventClick` and `onDayClick`, chips and day numbers are plain text. */
 export const ReadOnly: Story = {
   args: { onEventClick: undefined, onDayClick: undefined },
+};
+
+export const ReadOnlyChecks: Story = {
+  ...ReadOnly,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getAllByText('Grafana upgrade')[0].closest('button')).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Thursday, May 14, 2026' })).toBeNull();
@@ -149,6 +159,7 @@ export const ReadOnly: Story = {
 };
 
 export const WeeksStartOnMonday: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const days = canvas.getAllByRole('group');
     // May 2026 starts on a Friday and ends on a Sunday: five full ISO weeks.
@@ -217,7 +228,11 @@ export const ClicksFireCallbacks: Story = {
   },
 };
 
-export const MonthNavigation: Story = {
+export const MonthNavigation: Story = {};
+
+export const MonthNavigationChecks: Story = {
+  ...MonthNavigation,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const todayButton = canvas.getByRole('button', { name: 'Today' });
     await expect(canvas.getByRole('heading', { name: 'May 2026' })).toBeVisible();
@@ -352,6 +367,11 @@ export const IntentColorsTheEvent: Story = {
  */
 export const Mobile: Story = {
   globals: mobileViewport,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.queryByText('Mon')).not.toBeVisible();

@@ -48,6 +48,11 @@ const items: TimelineItem[] = [
 
 export const Dot: Story = {
   args: { items, variant: 'dot' },
+};
+
+export const DotChecks: Story = {
+  ...Dot,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // No `group` on the items: one list, no headers.
     await expect(canvas.getAllByRole('list')).toHaveLength(1);
@@ -198,6 +203,11 @@ const RING_2PX = '0px 0px 0px 2px';
  */
 export const DotWithIntent: Story = {
   args: { items: intentItems, variant: 'dot' },
+};
+
+export const DotWithIntentChecks: Story = {
+  ...DotWithIntent,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     inEachTheme(() => {
       for (const item of intentItems) {
@@ -214,6 +224,11 @@ export const DotWithIntent: Story = {
  */
 export const AvatarWithIntent: Story = {
   args: { items: intentItems, variant: 'avatar' },
+};
+
+export const AvatarWithIntentChecks: Story = {
+  ...AvatarWithIntent,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     inEachTheme(() => {
       for (const item of intentItems) {
@@ -235,6 +250,11 @@ export const AvatarWithIntent: Story = {
  */
 export const CardWithIntent: Story = {
   args: { items: intentItems, variant: 'card' },
+};
+
+export const CardWithIntentChecks: Story = {
+  ...CardWithIntent,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // A live style object: it reads the theme `inEachTheme` has switched to.
     const plain = getComputedStyle(rowOf(canvas, intentItems[5]));
@@ -317,6 +337,11 @@ const activity: TimelineItem[] = [
  */
 export const Alternating: Story = {
   args: { items: activity, variant: 'alternating' },
+};
+
+export const AlternatingChecks: Story = {
+  ...Alternating,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('list', { name: 'Yesterday' })).toBeVisible();
     // The time is rendered on both sides of the line; one copy shows at a time.
@@ -331,6 +356,11 @@ export const Alternating: Story = {
  */
 export const GroupedWithMeta: Story = {
   args: { items: activity, variant: 'dot' },
+};
+
+export const GroupedWithMetaChecks: Story = {
+  ...GroupedWithMeta,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const headings = canvas.getAllByRole('heading').map((h) => h.textContent);
     await expect(headings).toEqual(['Today', 'Yesterday', 'Earlier this month']);

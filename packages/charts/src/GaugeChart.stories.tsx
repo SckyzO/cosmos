@@ -208,6 +208,11 @@ export const SemiCircleTarget: Story = {
       </Card>
     </div>
   ),
+};
+
+export const SemiCircleTargetChecks: Story = {
+  ...SemiCircleTarget,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(3)
