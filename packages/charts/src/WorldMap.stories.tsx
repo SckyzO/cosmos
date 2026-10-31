@@ -220,7 +220,7 @@ export const Empty: Story = {
 export const OnNarrowScreen: Story = {
   tags: ['!autodocs'],
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <WorldMap {...args} />
     </div>
   ),

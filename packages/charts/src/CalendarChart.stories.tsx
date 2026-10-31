@@ -530,7 +530,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { data: YEAR, width: 900 },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <CalendarChart {...args} />
     </div>
   ),
@@ -563,7 +563,7 @@ export const SeveralYearsDoNotWidenThePage: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...SeveralYears.args },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <CalendarChart {...args} />
     </div>
   ),
@@ -669,7 +669,7 @@ export const ScaleStaysInViewWhenTheGridScrolls: Story = {
   tags: ['!dev', '!autodocs'],
   args: { data: YEAR },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <CalendarChart {...args} />
     </div>
   ),
@@ -717,5 +717,25 @@ export const TopStepIsLighterInDark: Story = {
         restore();
       }
     }
+  },
+};
+
+// In a box narrower than the year the grid scrolls sideways, and its end fades while there are
+// weeks past it: the half week at the edge reads as more to come, not as a cut grid.
+export const NarrowBoxFadesTheEnd: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: DeploysPerDay.args,
+  render: (args) => (
+    <div style={{ width: 300 }}>
+      <CalendarChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const scroller = canvasElement.querySelector<HTMLElement>('[data-heat-scroll]')!;
+    await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).not.toBe('none'));
+    scroller.scrollLeft = scroller.scrollWidth;
+    scroller.dispatchEvent(new Event('scroll'));
+    await waitFor(() => expect(getComputedStyle(scroller).maskImage).toBe('none'));
   },
 };

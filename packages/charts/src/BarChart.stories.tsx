@@ -834,7 +834,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...MultiSeries.args, width: 900 },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <BarChart {...args} />
     </div>
   ),
@@ -944,5 +944,27 @@ export const AxisWidthFollowsALateFont: Story = {
     } finally {
       unload();
     }
+  },
+};
+
+// A line inside a band: the band's label sits at its bottom and the line's at the top, so the two
+// never print over each other.
+export const BandAndLineLabelsDontOverlap: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: HorizontalReferenceLines.args,
+  render: (args) => (
+    <div style={{ width: 360 }}>
+      <BarChart {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const labels = await waitFor(() => {
+      const found = [...canvasElement.querySelectorAll('.recharts-reference-label')];
+      expect(found).toHaveLength(2);
+      return found.map((label) => label.getBoundingClientRect());
+    });
+    const [a, b] = labels;
+    const apart = a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+    await expect(apart).toBe(true);
   },
 };

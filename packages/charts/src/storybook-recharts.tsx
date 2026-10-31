@@ -494,9 +494,12 @@ export const expectLineIntentColor = (root: HTMLElement, index: number, token: s
     { '': token, sand: token, dark: token, 'deep-blue': token }
   );
 
-/** A box 375px wide, the width of a phone: what the "narrow" stories render a chart in. */
+/**
+ * A box 375px wide, the width of a phone: what the "narrow" stories render a chart in. On a phone
+ * it is as wide as the page leaves it, so the demo stays inside the screen.
+ */
 export const NarrowBox = ({ children }: { children: ReactNode }) => (
-  <div data-testid="box" style={{ width: 375 }}>
+  <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
     {children}
   </div>
 );

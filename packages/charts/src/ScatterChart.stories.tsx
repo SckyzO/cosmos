@@ -545,7 +545,7 @@ export const NoHorizontalOverflow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...MultiSeries.args, width: 900 },
   render: (args) => (
-    <div data-testid="box" style={{ width: 375 }}>
+    <div data-testid="box" style={{ width: 375, maxWidth: '100%' }}>
       <ScatterChart {...args} />
     </div>
   ),
