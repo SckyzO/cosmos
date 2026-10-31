@@ -10,6 +10,7 @@ import {
   expectTextContrast,
   inEachTheme,
   mirroredIcon,
+  textLines,
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { SectionCard } from '../templates/SectionCard';
@@ -763,6 +764,29 @@ export const IconsMirrorInRightToLeft: Story = {
   play: ({ canvasElement }) => {
     for (const nth of [0, 1]) {
       expectMirrored(canvasElement, (box) => box.querySelectorAll('svg')[nth]);
+    }
+  },
+};
+
+// A label stays on one line and its icon keeps its size, even in a row too narrow for the
+// buttons: the row is what wraps or scrolls, not the text inside a button of fixed height.
+export const LabelKeepsOneLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex gap-2" style={{ width: 180 }}>
+      <Button variant="primary" icon={Download} size="sm">
+        Download report
+      </Button>
+      <Button variant="secondary" icon={ArrowRight} iconPosition="end" size="sm">
+        Next step
+      </Button>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const button of canvas.getAllByRole('button')) {
+      await expect(textLines(button)).toBe(1);
+      const icon = button.querySelector('svg')!.getBoundingClientRect();
+      await expect(Math.round(icon.width)).toBe(Math.round(icon.height));
     }
   },
 };

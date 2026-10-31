@@ -127,7 +127,9 @@ export const AvatarGroup = ({
     <span
       key={key}
       className={clsx(
-        'relative inline-flex shrink-0 ring-2 ring-[var(--color-bg-panel)] has-focus-visible:z-10',
+        // The surface behind each avatar: a tinted fill lets the one before it, and its ring, show
+        // through otherwise.
+        'relative inline-flex shrink-0 bg-[var(--color-bg-panel)] ring-2 ring-[var(--color-bg-panel)] has-focus-visible:z-10',
         AVATAR_SHAPE_CLASS[shape],
         index > 0 && OVERLAP_CLASS[spacing][size],
         index < last && INITIALS_SHIFT_CLASS[spacing][size]

@@ -313,7 +313,10 @@ export const DatePicker = (props: DatePickerProps) => {
       )}
 
       {isRange ? (
-        <div className={clsx('flex items-center gap-2', !fullWidth && 'w-fit')}>
+        // Two dates side by side don't fit a phone: the end date goes under the start date.
+        <div
+          className={clsx('flex flex-wrap items-center gap-2', !fullWidth && 'w-fit max-w-full')}
+        >
           {renderTrigger(
             fieldId,
             'from',

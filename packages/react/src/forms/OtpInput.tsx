@@ -158,7 +158,7 @@ export const OtpInput = ({
       {/* A code reads left to right in any page: the cells are an island, so the first digit is on
           the left, ArrowRight and the auto-advance go right, and the row still sits at the start
           of the group (a `className` that centers or fills the group works as before). */}
-      <div dir="ltr" className="flex items-center gap-2">
+      <div dir="ltr" className="flex min-w-0 items-center gap-2">
         {Array.from({ length }).map((_, i) => {
           const cellChar = value[i] ?? '';
           const display = mask && cellChar ? '•' : cellChar;
@@ -183,7 +183,8 @@ export const OtpInput = ({
               onPaste={handlePaste(i)}
               onFocus={(e) => e.target.select()}
               className={clsx(
-                'h-ctrl-48 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
+                // 2.5rem wide, narrower when the row doesn't fit (eight cells on a phone).
+                'h-ctrl-48 w-10 min-w-0 rounded-lg border bg-white text-center text-lg font-semibold text-gray-900 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white',
                 fieldStateClass({ invalid: error, success })
               )}
             />

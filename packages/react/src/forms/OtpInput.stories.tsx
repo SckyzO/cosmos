@@ -337,3 +337,22 @@ export const CellsStayLeftToRightInRightToLeft: Story = {
     await expect(cell(2)).toHaveFocus();
   },
 };
+
+// Eight cells of 40px and their gaps are wider than a phone's card: the cells narrow to fit it,
+// and stay large enough to tap.
+export const EightDigitsFitANarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { length: 8, value: '1234' },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 296 }}>
+      <OtpInput {...args} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('box');
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+    for (const cell of canvas.getAllByRole('textbox')) {
+      await expect(cell.getBoundingClientRect().width).toBeGreaterThanOrEqual(24);
+    }
+  },
+};

@@ -85,6 +85,22 @@ export const expectNoHorizontalOverflow = (box?: HTMLElement) => {
   if (box) expect(box.scrollWidth, 'the box scrolls sideways').toBeLessThanOrEqual(box.clientWidth);
 };
 
+/**
+ * The lines of text an element holds: a text node gives one rectangle per line it spans. A label
+ * meant to stay on one line, in a box too narrow for it, counts more than one.
+ */
+export const textLines = (element: Element) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let lines = 0;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    lines += range.getClientRects().length;
+  }
+  return lines;
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /**
