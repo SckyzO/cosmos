@@ -72,7 +72,12 @@ gets a "Sort by" select for the sortable columns and, when a column is
 filterable, a "Filters" button with the number of values filtered: it opens a
 bottom sheet with the filter of each filterable column, "Clear all" and "Show n
 rows", and sets the same `filters` as the column headers, controlled or not. The
-default, `scroll`, keeps the table.
+default, `scroll`, keeps the table and scrolls it sideways when the box is
+narrower than its columns need. A column with a length for `width` (`'120px'`)
+keeps it; one with a percentage or no width is never drawn narrower than its
+`minWidth`, `8rem` unless set. Columns without a width split what the others
+leave in equal parts, so each gets at least the largest `minWidth` among them:
+give the short columns a width and the one that needs room takes the rest.
 
 With `selectable`, a selection puts a tinted bar on one row: the count, "Clear"
 and the bulk actions on the start side, the search and the toolbar on the end
@@ -80,7 +85,8 @@ side. `bulkActionItems` takes the actions as data (`{ key, label, icon,
 intent, disabled, onClick(selectedRows) }`) so the bar can adapt: the first is a
 button and, under 1152px of bar, the others fold into an "Actions" menu; the
 toolbar buttons go icon-only and the search narrows under 1360px; under 640px
-the bar wraps to two lines; with `mobileLayout="cards"` on a phone each action is
+the bar wraps to two lines, and the actions go under the count when they don't
+fit beside it; with `mobileLayout="cards"` on a phone each action is
 an icon button named by its `label`. `bulkActions(selectedRows)` still renders
 any node after them, as given at every width. While rows are selected the
 toolbar's Export follows them ("Export 3" downloads those rows, in the table's
