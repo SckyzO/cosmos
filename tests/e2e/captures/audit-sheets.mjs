@@ -7,8 +7,9 @@
 //   <dir>/checks.md            the findings of the page checks, by Storybook group
 //   <dir>/sheets/<set>/<group>-<n>.jpg   contact sheets, built with ImageMagick
 //   <dir>/sheets/index.md      every sheet and the stories on it
-// A sheet is a grid of tiles, one per capture, labelled with the story id; a
-// capture taller than the tile is cut from the top, and says so in its label.
+// A sheet is a grid of tiles, one per capture, labelled with the story id. A tile
+// is the capture cropped to its content, never enlarged; one taller than the tile
+// is cut from the top, and says so in its label.
 // Sheets are about 2000px wide, so one image can be read without zooming:
 //   <width>/        the stories at that width, in light, one set of sheets per group
 //   themes/         one story per component in each theme, one row per component
@@ -207,26 +208,64 @@ const pool = async (items, size, job) => {
   );
 };
 
-/** One tile: the top of the capture, scaled to the tile's width. */
+/**
+ * The part of a capture a tile shows, from ImageMagick's trim box (`%@`, what differs from
+ * the page's background): the content with a margin, so a button or a badge fills its tile
+ * instead of sitting in a corner of an empty 1280px page. A blank capture keeps its size.
+ */
+export const tileBox = (trim, width, height, margin = 24) => {
+  const m = /^(\d+)x(\d+)\+(\d+)\+(\d+)$/.exec(trim.trim());
+  const [w, h, x, y] = m ? m.slice(1).map(Number) : [0, 0, 0, 0];
+  if (w <= 1 || h <= 1) return { x: 0, y: 0, w: width, h: height };
+  const left = Math.max(0, x - margin);
+  const top = Math.max(0, y - margin);
+  return {
+    x: left,
+    y: top,
+    w: Math.min(width, x + w + margin) - left,
+    h: Math.min(height, y + h + margin) - top,
+  };
+};
+
+/** One tile: the content of the capture, cut from the top, scaled down to the tile's width. */
 const makeTile = async (dir, tmp, tile, layout, n) => {
   const source = path.join(dir, tile.file);
-  const { stdout } = await run('identify', ['-format', '%h', `${source}[0]`]);
-  const height = Number(stdout);
+  const { stdout } = await run('convert', [
+    `${source}[0]`,
+    '-format',
+    '%w %h %@',
+    '-fuzz',
+    '2%',
+    'info:',
+  ]);
+  const [width, fullHeight, trim = ''] = stdout.trim().split(' ');
+  const content = tileBox(trim, Number(width), Number(fullHeight));
+  const height = content.h;
   const cut = height > layout.crop;
   const out = path.join(tmp, `${n}.png`);
   await run('convert', [
     source,
     '-crop',
+    `${content.w}x${content.h}+${content.x}+${content.y}`,
+    '+repage',
+    '-crop',
     `x${layout.crop}+0+0`,
     '+repage',
     '-resize',
-    `${layout.tile}x`,
+    `${layout.tile}x>`,
     out,
   ]);
   return {
     out,
     label: quote(cut ? `${tile.label} [top ${layout.crop} of ${height}px]` : tile.label),
+    height: Math.round(Math.min(height, layout.crop) * Math.min(1, layout.tile / content.w)),
   };
+};
+
+/** The height of a cell: the cut height of a capture, scaled as a full-width one is. */
+const cellHeight = (set) => {
+  const { tile, crop } = LAYOUT[set];
+  return Math.round((crop * tile) / (set === 'themes' ? 1280 : Number(set)));
 };
 
 const buildSheet = async (dir, sheet) => {
@@ -259,8 +298,11 @@ const buildSheet = async (dir, sheet) => {
       ...made.flatMap((m) => ['-label', m.label, m.out]),
       '-tile',
       `${layout.cols}x`,
+      // One cell size for the whole sheet, so the grid and its labels line up: a tile's
+      // width, and the height of the tallest tile up to a cut full-width capture. A smaller
+      // tile is not enlarged, a taller one is scaled to fit.
       '-geometry',
-      '+8+8',
+      `${layout.tile}x${Math.min(cellHeight(sheet.set), Math.max(...made.map((m) => m.height)))}>+8+8`,
       '-quality',
       '85',
       target,

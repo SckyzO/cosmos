@@ -76,6 +76,26 @@ test('the report counts a finding repeated at one width once per width', () => {
   );
 });
 
+// tileBox runs on the output of ImageMagick, so it is called through node here.
+const tileBox = (...args: unknown[]) =>
+  JSON.parse(
+    execFileSync('node', [
+      '--input-type=module',
+      '-e',
+      `import { tileBox } from '${script}'; console.log(JSON.stringify(tileBox(...${JSON.stringify(args)})))`,
+    ]).toString()
+  );
+
+test('a tile shows the content of a capture with a margin, not the empty page around it', () => {
+  // A 300x40 button at 20,30 on a 1280x720 page.
+  expect(tileBox('300x40+20+30', 1280, 720)).toEqual({ x: 0, y: 6, w: 344, h: 88 });
+  // A page filled to its edges keeps its size.
+  expect(tileBox('1280x720+0+0', 1280, 720)).toEqual({ x: 0, y: 0, w: 1280, h: 720 });
+  // A blank page (ImageMagick gives a 1x1 box) or no box at all keeps the whole capture.
+  expect(tileBox('1x1+0+0', 1280, 720)).toEqual({ x: 0, y: 0, w: 1280, h: 720 });
+  expect(tileBox('', 1280, 720)).toEqual({ x: 0, y: 0, w: 1280, h: 720 });
+});
+
 test('the sheets hold twelve 1280px tiles each, in story order', () => {
   const stories = Array.from({ length: 14 }, (_, i) => story(i));
   const { index } = build(
