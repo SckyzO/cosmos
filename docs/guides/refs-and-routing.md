@@ -2,9 +2,9 @@
 
 ## Refs
 
-`ref` is a regular prop (React 19), so no component needs `forwardRef`. Fields,
-buttons and custom controls point it at the element you would focus, for
-instance to put the focus on the first invalid field:
+`ref` is a regular prop (React 19). Fields, buttons and custom controls point it
+at the element you would focus, for instance to move the focus to the first
+invalid field:
 
 ```tsx
 import { useRef } from 'react';
@@ -29,7 +29,7 @@ A component with an `href` (`Sidebar.Item`, `Breadcrumb`, `Menu.Item`, `Link`, `
 `DataTable` row…) draws a plain `<a>`, so a click loads the page again. Mount `LinkProvider` once, at
 the root of the app, to send those links through your router instead: it renders the component you
 give in place of the `<a>`, so a click navigates in place, and middle-click and "Open in a new tab"
-keep working, the element still being a real link. `cosmos-react` imports no router; the adapter is
+keep working, since the element is still a link. `cosmos-react` imports no router; the adapter is
 yours.
 
 ```tsx
@@ -58,6 +58,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Without a provider
-nothing changes. A link with `target="_blank"`, a link with no `href` or a bare `#`, and the links in
-chat messages stay a plain `<a>`, and a provider inside another one replaces it for its subtree.
+Without a provider, every link is a plain `<a>`. Under one, a link with `target="_blank"`, a link
+with no `href` or a bare `#`, and the links in chat messages still are; a provider inside another
+one replaces it for its subtree.

@@ -3,7 +3,7 @@
 Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 components and
 Recharts-based chart wrappers, documented in Storybook 10.
 
-**Live demo:** [sckyzo.github.io/cosmos](https://sckyzo.github.io/cosmos/): every component with its docs and
+The [live Storybook](https://sckyzo.github.io/cosmos/) has every component with its docs and
 stories (more than 3,500), in four themes, twelve accent colors, three densities, four corner radii
 and both reading directions.
 
@@ -74,11 +74,11 @@ and both reading directions.
   </tr>
 </table>
 
-The six screens above are the Storybook's **Examples**, in light and dark: each one opens its story
-on the live Storybook.
+The six screens are the Storybook's Examples, shown light or dark to match your system. Each one
+opens its story.
 
-Cosmos is for React teams that build admin panels, dashboards, monitoring and status pages and
-want one themeable, accessible set of parts to do it with. It was extracted and refined from
+Cosmos is for React teams that build admin panels, dashboards, monitoring tools and status pages
+and want one themeable, accessible set of components for them. It was extracted from
 [rackscope](https://github.com/SckyzO/rackscope).
 
 ## Packages
@@ -156,12 +156,13 @@ direction are all a class or an attribute on `<html>`.
   [Media](docs/components/media.md) and [variants worth knowing](docs/components/variants.md).
 - [Themes and accents specification](docs/specs/themes-accents.md): how the themes and accents are built.
 - [Storybook](https://sckyzo.github.io/cosmos/): every component, with its props, stories and
-  accessibility checks. Its **Welcome** page counts, groups and searches every component, read from
-  Storybook's story index. [`docs/README.md`](docs/README.md) lists the same pages.
+  accessibility checks. Its Welcome page lists the components by group and has a search.
+
+The [documentation index](docs/README.md) lists the same pages.
 
 ### Storybook groups
 
-Stories are organised by **responsibility**, not file location (Storybook
+Stories are grouped by what a component does, not by where its file lives (Storybook's
 [story-hierarchy convention](https://storybook.js.org/docs/writing-stories/naming-components-and-hierarchy)):
 
 ```text
@@ -180,15 +181,15 @@ Notable groups:
 
 ## Development (everything in Docker)
 
-The host needs only `docker`, `git`, `gh`, `make`, `bash`. No Node, no pnpm,
-no Playwright on the host.
+The host needs only `docker`, `git`, `gh`, `make` and `bash`: Node, pnpm and Playwright run in
+the `cosmos-dev` image.
 
 ```bash
 make build-image    # Build cosmos-dev image (first time only)
 make install        # pnpm install + Playwright browsers, inside the container
 make storybook      # Start Storybook on http://localhost:6006
 make check-changed  # Before every push: the CI pipeline cut down to what you changed
-make ci             # Run the FULL CI pipeline locally
+make ci             # The full CI pipeline, one step after the other
 make test           # Unit + e2e tests only
 make build          # Build all package dists
 make help           # See every available target
@@ -226,9 +227,9 @@ Alternative wrapper (`./devctl`) for ad-hoc commands:
 | TypeScript   | 6                   |
 | Playwright   | 1.6x                |
 
-The packages are below 1.0: a breaking change bumps the minor version (0.4.0 to 0.5.0). The [release notes](https://github.com/SckyzO/cosmos/releases) and the `CHANGELOG.md` of
-each package list every breaking change under "BREAKING CHANGES", so read them before you bump.
-Going to 1.0 will be a deliberate decision.
+The packages are below 1.0, so a breaking change bumps the minor version (0.4.0 to 0.5.0). The
+[release notes](https://github.com/SckyzO/cosmos/releases) and the `CHANGELOG.md` of each package
+list breaking changes under "BREAKING CHANGES": read them before you bump.
 
 ## Contributing
 

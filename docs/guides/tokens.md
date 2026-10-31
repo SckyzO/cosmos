@@ -37,7 +37,7 @@ Accent-colored **text** (links, active labels) is `text-brand-600 dark:text-bran
 ## Focus indicator
 
 Four Tailwind utilities, shipped with `@sckyzo/cosmos-theme/tailwind`, give every control the same
-keyboard focus look: a **solid accent indicator** plus the `--shadow-focus-ring` halo (12% of the
+keyboard focus look: a solid accent indicator plus the `--shadow-focus-ring` halo (12% of the
 accent). The halo alone is too faint to count: the solid part is what reaches 3:1 against the
 surface (WCAG 1.4.11; `brand-500` is checked on every theme and accent pair by the theme package's contrast check).
 

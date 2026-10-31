@@ -1,7 +1,6 @@
 # Right to left
 
-Cosmos mirrors with the reading direction. This page is what to set, what mirrors, and the few
-things that stay as they are on purpose.
+Cosmos follows the reading direction: set it once, and the components mirror.
 
 Set the native `dir` attribute on `<html>`, or on any ancestor of the components, and
 they follow it. There is no prop and no `data-` attribute:
@@ -16,7 +15,6 @@ chevron that points forward, the `start` and `end` alignments of panels. A prop 
 a side of the line takes `start` or `end`, never `left` or `right` (`Ribbon`'s
 `position="top-end"`, `BackToTopFab`'s `position="bottom-end"`, `iconPosition="start"`,
 `align="end"`), so the side swaps under `dir="rtl"`. `top` and `bottom` stay as they are.
-Left to right renders as it always did.
 
 Text that comes from you and sits inside a label or a sentence (a name, a value, a key) is
 wrapped in `<bdi>`, so a Latin name in an Arabic page, or the reverse, keeps its own order
@@ -122,14 +120,14 @@ typed in it (the same `unicode-bidi: plaintext` as a `Textarea`), lists are inde
 edged on the start side, the arrow keys along the toolbar swap, and the link field reads left to
 right.
 
-The pages follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
+The auth forms follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
 turns around, the address or number a form says it sent the code to is wrapped in `<bdi>`, and
 `AuthLayout`'s `asidePosition` (`start` | `end`) puts the panel at the start or the end of the line.
 
-Every group of the Storybook sidebar is converted: **Atoms**, **Actions**, **Forms**, **Data**,
-**Lists**, **Feedback**, **Overlays**, **Navigation**, **Layout**, **Chat**, **Tables**,
-**Settings**, **Monitoring**, **Media**, **Status**, **Typography**, **Foundations** and
-**Examples**. A check in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`,
-`text-left`…) in any source file of the package, and every story is rendered right to left in CI.
+These Storybook groups follow the direction: Atoms, Actions, Forms, Data, Lists, Feedback,
+Overlays, Navigation, Layout, Chat, Tables, Settings, Monitoring, Media, Status, Typography,
+Foundations and Examples. The charts keep their left-to-right axes ([Charts](charts.md)). A check
+in the repository refuses a physical inline utility (`ml-`, `pr-`, `left-`, `text-left`…) in any
+source file of the package, and the CI renders every story right to left.
 In Storybook, the **Direction** menu of the toolbar (`&globals=direction:rtl`) renders any story
 right to left.

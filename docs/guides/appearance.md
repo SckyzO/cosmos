@@ -1,9 +1,10 @@
 # Appearance
 
 Seven settings restyle every component at once. Each one is a class or an attribute on the
-`<html>` element, so a component never carries a per-theme class. Storybook has a toolbar menu for each: try them on the
+`<html>` element, so a component never carries a per-theme class. Storybook has a toolbar menu for
+each; the
 [Foundations/Appearance](https://sckyzo.github.io/cosmos/?path=/docs/foundations-appearance--docs)
-page.
+page shows them side by side.
 
 | Setting           | On `<html>`      | Values                                                                                              | None means    |
 | ----------------- | ---------------- | --------------------------------------------------------------------------------------------------- | ------------- |
@@ -52,9 +53,11 @@ ring. Leave it off for `blue`. The others are `indigo`, `violet`, `purple`, `ros
 `red`, `orange`, `amber` and `green` look like the status colors (error, warning, success): a red
 primary button reads as a destructive action. Offer them last in any picker, after the others.
 
-Every theme and accent pair meets WCAG AA for body text, links and white text on the accent. In the repository, `pnpm --filter @sckyzo/cosmos-theme test` runs the contrast check
-(`scripts/check-contrast.mjs`) against the CSS files. Every story of the Storybook also passes axe on every CI run, its color contrast in
-light, sand and deep blue, and passes again under `dir="rtl"`.
+Every theme and accent pair meets WCAG AA for body text, accent-colored links and white text on
+the accent (4.5:1), and 3:1 for the focus ring. In the repository,
+`pnpm --filter @sckyzo/cosmos-theme test` checks those pairs in the CSS files
+(`scripts/check-contrast.mjs`), and the CI runs axe on every story, with its color contrast rule in
+light, sand and deep blue.
 
 ## Fonts
 
@@ -88,7 +91,7 @@ user's choice wins.
 | `py-row-4` … `py-row-24`       | 4–24px     | 2px less  | 2px more      | list rows, menu items, tabs |
 | `py-cell-head`, `py-cell-body` | 12px, 14px | 8px, 10px | 16px, 20px    | table cells                 |
 
-The token is named by its default size: `h-ctrl-36` is today's `h-9`. The smallest control, 28px,
+The token is named by its default size: `h-ctrl-36` is `h-9` at the default density. The smallest control, 28px,
 stays at 24px in `compact`, the WCAG 2.5.8 floor, and `py-row-5` stops at 4px for the same
 reason. They are `--spacing-ctrl-*`, `--spacing-row-*` and `--spacing-cell-*` theme variables, so
 any utility of the spacing scale takes them (`h-ctrl-36`, `min-h-ctrl-36`, `size-ctrl-32`,
@@ -119,10 +122,10 @@ of the page out of its parent's radius.
 
 ## Reading direction
 
-The native `dir` attribute, on `<html>` or any ancestor. Tailwind's `rtl:` variant is redefined to
+Set the native `dir` attribute on `<html>` or on any ancestor. Tailwind's `rtl:` variant is redefined to
 follow the nearest `dir` attribute, so a `dir="ltr"` island inside a right-to-left page is not
-flipped. It does not follow `dir="auto"`, nor a `dir="rtl"` nested inside such an island. What
-mirrors, and what does not: [Right to left](right-to-left.md).
+flipped. It does not follow `dir="auto"`, nor a `dir="rtl"` nested inside such an island.
+[Right to left](right-to-left.md) lists what mirrors and what does not.
 
 ## Setting them from your app
 
@@ -137,10 +140,10 @@ import { applyAppearance } from '@sckyzo/cosmos-react';
 applyAppearance({ theme: 'sand', accent: 'teal', density: 'compact', direction: 'rtl' });
 ```
 
-`applyAppearance` also takes a `direction` (`'ltr'` or `'rtl'`): it sets `dir="rtl"` on `<html>`,
-and removes `dir` for `ltr`, like the other defaults. Saving the choice (local storage, a user
-profile) is left to the app. For a server-rendered app, write the attributes in the root layout
-instead, as the [Next.js recipe](../getting-started.md#recipe-nextjs-app-router) does.
+For `direction`, `'rtl'` sets `dir="rtl"` and `'ltr'` removes `dir`, like the other defaults.
+Saving the choice (local storage, a user profile) is up to your app. A server-rendered app writes
+the attributes in its root layout instead, as the
+[Next.js recipe](../getting-started.md#recipe-nextjs-app-router) does.
 
 ### Pickers
 
@@ -149,8 +152,8 @@ instead, as the [Next.js recipe](../getting-started.md#recipe-nextjs-app-router)
   apply it. It has no radius or direction picker; `Customizer` has both.
 - **`AppearanceMenu`** takes the same props and puts the pickers in a panel behind an icon button,
   for example in `Topbar`'s `endActions`. Set `onReset` to add a Reset button under the groups.
-- **`Customizer`** is a panel on the end side (a `Drawer`) that holds every choice above, plus
-  the shell's layout, sidebar mode and container: [below](#customizer).
+- **`Customizer`** is a panel on the end side (a `Drawer`) with every choice above, plus the
+  shell's layout, sidebar mode and container ([below](#customizer)).
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -206,9 +209,9 @@ useEffect(() => {
 
 `Customizer` is a panel on the end side (a `Drawer`) that puts the choices above in one place,
 plus the shell's layout, sidebar mode and container, with optional presets, a Reset and a
-"Copy config" that copies the value as JSON. It only **holds** the choice: it is controlled
-(`value`, `onChange`, with the whole new value on each click) and applies nothing itself. The
-host applies it on every change:
+"Copy config" that copies the value as JSON. It is controlled (`value`, and `onChange` with the
+whole new value on each click) and applies nothing itself: the host applies the value on every
+change:
 
 ```tsx
 const [value, setValue] = useState<CustomizerValue>(CUSTOMIZER_DEFAULT_VALUE);

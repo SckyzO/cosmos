@@ -2,8 +2,8 @@
 
 The user documentation of `@sckyzo/cosmos-theme`, `@sckyzo/cosmos-react` and
 `@sckyzo/cosmos-charts`. The [Storybook](https://sckyzo.github.io/cosmos/) is the reference for
-every component and its props; these pages say how to set Cosmos up and how to use what a
-component's props do not explain.
+every component and its props; these pages cover the setup, and what the props alone do not
+explain.
 
 ## Start here
 
@@ -11,8 +11,6 @@ component's props do not explain.
   component, and recipes for Vite and Next.js (App Router).
 
 ## Guides
-
-One goal per page.
 
 - [Appearance](guides/appearance.md): the themes, accents, fonts, text size, density, corner radius
   and reading direction; `applyAppearance`, `AppearanceSettings`, `AppearanceMenu` and
@@ -29,8 +27,8 @@ One goal per page.
 
 ## Components
 
-Notes on the larger components, in files named after the Storybook group they belong to. Each
-section links to its Storybook page.
+Notes on the larger components, one page per Storybook group. Each section links to its
+Storybook page.
 
 | Page                                             | Holds                                                                                |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------ |

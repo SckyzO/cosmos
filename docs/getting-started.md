@@ -113,15 +113,16 @@ export default function App() {
 }
 ```
 
-Every component is a named export of `@sckyzo/cosmos-react`, with its types. The
+Every component outside the [optional entries](guides/optional-entries.md) is a named export of
+`@sckyzo/cosmos-react`, with its types. The
 [Storybook](https://sckyzo.github.io/cosmos/) documents each one, with its props and examples;
 [docs/components](README.md#components) adds notes on the larger ones.
 
 ## Set the appearance
 
 The theme, the accent, the font, the text size, the density, the corner radius and the reading
-direction are a class and attributes on `<html>`. None of them set means light, blue, Outfit, the
-default text size, density and radius, left to right.
+direction are a class and attributes on `<html>`. With none set, you get the light theme, the blue
+accent, Outfit, the default text size, density and radius, and left to right.
 
 ```html
 <html lang="en" class="dark" data-accent="teal"></html>
@@ -131,18 +132,16 @@ To change them while the app runs, call `applyAppearance` from `@sckyzo/cosmos-r
 and removes the class and the attributes for you:
 
 ```tsx
-import { useEffect } from 'react';
 import { applyAppearance } from '@sckyzo/cosmos-react';
 
-useEffect(() => {
-  applyAppearance({ theme: 'sand', accent: 'violet', font: 'inter', density: 'compact' });
-}, []);
+// In an event handler, or in an effect when the app starts.
+applyAppearance({ theme: 'sand', accent: 'violet', font: 'inter', density: 'compact' });
 ```
 
 A font other than Outfit needs its CSS import (`@import '@sckyzo/cosmos-theme/fonts/inter';`).
-Saving the user's choice is left to the app. Every value, the pickers (`AppearanceSettings`,
-`AppearanceMenu`, `Customizer`) and the system theme:
-[Appearance](guides/appearance.md).
+Saving the user's choice is up to your app. The [Appearance](guides/appearance.md) guide lists
+every value and covers the pickers (`AppearanceSettings`, `AppearanceMenu`, `Customizer`) and the
+system theme.
 
 ## Recipe: Vite and React
 

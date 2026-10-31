@@ -13,9 +13,8 @@ that most apps never use: syntax highlighting, a rich text editor and a map. The
 
 The ranges are the `peerDependencies` of the package. The main entry never imports any of these
 libraries: an app that does not use an entry ships none of its code. Where an entry uses a
-component or a context of the main entry, it imports it from `@sckyzo/cosmos-react` itself
-rather than carrying a copy, so the contexts and the overlay stack are never duplicated. They need
-nothing more in your CSS
+component or a context of the main entry, it imports it from `@sckyzo/cosmos-react`, so the app
+keeps one copy of each context and one overlay stack. The entries need nothing more in your CSS
 than [Getting started](../getting-started.md) sets up: the `@source` line covers their compiled
 files, which sit in the same `dist` folder.
 
@@ -87,8 +86,9 @@ shortcuts and Markdown-like input rules only: `##` and a space, `-` and a space,
 Links accept `http(s):`, `mailto:` and relative URLs only: a
 `javascript:` link is refused whether it is typed in the link field, typed as Markdown, pasted or
 passed in `value`. The schema holds paragraphs, headings 2 and 3, lists, quotes, hard breaks and the
-marks above; images, tables and anything else are dropped on paste. **That is the editor's
-guarantee, not yours: sanitise the stored HTML again on the server before you render it elsewhere.**
+marks above; images, tables and anything else are dropped on paste. **The editor only filters
+what goes through it: sanitize the stored HTML again on the server before you render it
+elsewhere.**
 The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
 
 ## Map

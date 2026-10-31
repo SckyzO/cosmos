@@ -136,13 +136,13 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `StrokedGauge`                 | Dashed-stroke radial                                          |
 | `DonutChart`                   | Donut, legend below by default                                |
 | `Sparkline`                    | Mini line, area or bar trend, no axes                         |
-| `TreemapChart`                 | Repartition treemap                                           |
+| `TreemapChart`                 | Part-to-whole treemap                                         |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges (HTML grid) |
 | `CalendarChart`                | Day-by-day heatmap over a year or any range (HTML grid)       |
 | `BumpChart`                    | Rankings over periods, names at both ends (Recharts)          |
 | `RadarChart`                   | One polygon per series over named axes                        |
 | `ScatterChart` / `BubbleChart` | Numeric x/y points; bubble size as a 3rd measure              |
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
-| `FunnelChart`                  | Centred bars joined by a flow, with the conversion per stage  |
+| `FunnelChart`                  | Centered bars joined by a flow, with the conversion per stage |
 | `WaterfallChart`               | Running total through gains, losses, subtotals and totals     |
 | `WorldMap`                     | Countries colored by value in five quantile steps (own SVG)   |

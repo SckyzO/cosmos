@@ -9,7 +9,7 @@ fonts, and text size, density and corner radius settings. It is what `@sckyzo/co
 | Import                              | Purpose                                                                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `@sckyzo/cosmos-theme/tailwind`     | Tailwind 4 `@theme` block (palette, fonts, shadows, brand colors), the `dark:` and `rtl:` variants, the focus utilities |
-| `@sckyzo/cosmos-theme/vars`         | Universal CSS custom properties (bg, text, border, accent), themes and accents                                          |
+| `@sckyzo/cosmos-theme/vars`         | The CSS custom properties (bg, text, border, accent), the themes and the accents                                        |
 | `@sckyzo/cosmos-theme/fonts`        | `@fontsource` font imports (Outfit + JetBrains Mono)                                                                    |
 | `@sckyzo/cosmos-theme/fonts/<name>` | One variable font for `data-font`: `inter`, `plex`, `montserrat`, `open-sans`                                           |
 
@@ -35,8 +35,7 @@ Import order matters: `tailwindcss` comes first, then the Cosmos tokens, then th
 @import '@sckyzo/cosmos-theme/fonts';
 ```
 
-Pairing this with `@sckyzo/cosmos-react`? You also need an `@source` line so Tailwind scans the
-components: see [Getting started](https://github.com/SckyzO/cosmos/blob/main/docs/getting-started.md#set-up-the-styles).
+With `@sckyzo/cosmos-react`, also add an `@source` line so Tailwind scans the components: see [Getting started](https://github.com/SckyzO/cosmos/blob/main/docs/getting-started.md#set-up-the-styles).
 
 ### Without Tailwind (e.g. Docusaurus)
 
