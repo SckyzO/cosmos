@@ -644,6 +644,11 @@ export const ExtremeContent: Story = {
 /** The History tab shown first (`tab="history"`), with its audit diffs. */
 export const History: Story = {
   args: { tab: 'history' },
+};
+
+export const HistoryChecks: Story = {
+  ...History,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('tab', { name: 'History' })).toHaveAttribute(
       'aria-selected',
@@ -660,6 +665,11 @@ export const History: Story = {
  */
 export const Phone: Story = {
   globals: mobileViewport,
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByRole('button', { name: 'More' })).toBeVisible();
@@ -671,6 +681,11 @@ export const Phone: Story = {
 export const PhoneHistory: Story = {
   globals: mobileViewport,
   args: { tab: 'history' },
+};
+
+export const PhoneHistoryChecks: Story = {
+  ...PhoneHistory,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

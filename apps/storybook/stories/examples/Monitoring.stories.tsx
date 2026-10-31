@@ -642,6 +642,11 @@ export const ExtremeContent: Story = {
 export const Phone: Story = {
   globals: mobileViewport,
   args: {},
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },
@@ -651,6 +656,11 @@ export const Phone: Story = {
 export const PhoneNode: Story = {
   globals: mobileViewport,
   args: { state: 'node' },
+};
+
+export const PhoneNodeChecks: Story = {
+  ...PhoneNode,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

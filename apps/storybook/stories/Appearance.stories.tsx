@@ -87,6 +87,11 @@ export const PickingAppliesToDocument: Story = {
   // A test: it rewrites the theme on <html>, so keep it out of the docs page.
   tags: ['!autodocs'],
   render: renderPlayground,
+};
+
+export const PickingAppliesToDocumentChecks: Story = {
+  ...PickingAppliesToDocument,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const root = document.documentElement;
     await userEvent.click(canvas.getByRole('radio', { name: 'Sand' }));
@@ -132,6 +137,11 @@ export const SmallTextTokens: Story = {
       </span>
     </p>
   ),
+};
+
+export const SmallTextTokensChecks: Story = {
+  ...SmallTextTokens,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const [id, size] of [
       ['text-2xs', '11px'],
@@ -155,7 +165,7 @@ const FONT_FAMILIES = [
 
 /** data-font swaps the sans-serif family below it; font-mono keeps JetBrains Mono. */
 export const FontAttributeSwitchesFamily: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="space-y-2">
       {FONT_FAMILIES.map(([id]) => (
@@ -181,7 +191,7 @@ export const FontAttributeSwitchesFamily: Story = {
 
 /** data-text-size scales the text-* sizes and plain text, not the spacing. */
 export const TextSizeAttributeScales: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="space-y-4">
       {(['sm', 'md', 'lg', 'xl'] as const).map((size) => (
@@ -214,7 +224,7 @@ export const TextSizeAttributeScales: Story = {
 
 /** applyAppearance sets and clears data-font and data-text-size, and leaves them when omitted. */
 export const ApplyAppearanceFontAndTextSize: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <p>applyAppearance on a detached element.</p>,
   play: async () => {
     const el = document.createElement('div');

@@ -374,6 +374,11 @@ const MANY_GROUPS: IndexEntry[] = [
 export const Phone: Story = {
   globals: mobileViewport,
   render: () => <WelcomePage />,
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

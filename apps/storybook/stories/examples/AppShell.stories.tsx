@@ -737,6 +737,11 @@ export const ExtremeContent: Story = {
 export const Phone: Story = {
   globals: mobileViewport,
   render: () => <AppShellScreen state="content" />,
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },
@@ -746,6 +751,11 @@ export const Phone: Story = {
 export const PhoneSidebarOpen: Story = {
   globals: mobileViewport,
   render: () => <AppShellScreen state="content" defaultSidebarOpen />,
+};
+
+export const PhoneSidebarOpenChecks: Story = {
+  ...PhoneSidebarOpen,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

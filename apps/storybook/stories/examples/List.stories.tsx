@@ -468,6 +468,11 @@ export const ExtremeContent: Story = {
 export const Phone: Story = {
   globals: mobileViewport,
   args: { filtered: true },
+};
+
+export const PhoneChecks: Story = {
+  ...Phone,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },
