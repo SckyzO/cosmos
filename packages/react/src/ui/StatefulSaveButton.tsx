@@ -19,7 +19,8 @@ const STATE_CONFIG: Record<SaveState, StateConfig> = {
   saving: { label: 'Saving…', loading: true },
   // The `success` intent carries the dark text on green (white on green-500 is about 2.3:1).
   saved: { label: 'Saved', icon: Check, intent: 'success' },
-  error: { label: 'Error', intent: 'danger' },
+  // What to do next, not the name of the state: the save failed, the click saves again.
+  error: { label: 'Try again', intent: 'danger' },
 };
 
 export type StatefulSaveButtonProps = {
