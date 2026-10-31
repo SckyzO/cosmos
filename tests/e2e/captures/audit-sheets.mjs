@@ -227,6 +227,31 @@ export const tileBox = (trim, width, height, margin = 24) => {
   };
 };
 
+/**
+ * A label broken into lines that fit a tile: montage draws a label on one line
+ * centred under its tile, so a long story id ran into its neighbours' labels.
+ * Breaks after `--` or `-` where it can, mid-word where it must. 15pt Liberation
+ * Sans averages under 8px a character on ids.
+ */
+export const wrapLabel = (label, tileWidth) => {
+  const max = Math.max(8, Math.floor(tileWidth / 8));
+  const lines = [];
+  let rest = label;
+  while (rest.length > max) {
+    const head = rest.slice(0, max + 1);
+    const at = Math.max(
+      head.lastIndexOf('--') + 2,
+      head.lastIndexOf('-') + 1,
+      head.lastIndexOf(' ') + 1
+    );
+    const cut = at > max / 2 ? at : max;
+    lines.push(rest.slice(0, cut).trimEnd());
+    rest = rest.slice(cut).trimStart();
+  }
+  lines.push(rest);
+  return lines.join('\n');
+};
+
 /** One tile: the content of the capture, cut from the top, scaled down to the tile's width. */
 const makeTile = async (dir, tmp, tile, layout, n) => {
   const source = path.join(dir, tile.file);
@@ -257,7 +282,9 @@ const makeTile = async (dir, tmp, tile, layout, n) => {
   ]);
   return {
     out,
-    label: quote(cut ? `${tile.label} [top ${layout.crop} of ${height}px]` : tile.label),
+    label: quote(
+      wrapLabel(cut ? `${tile.label} [top ${layout.crop} of ${height}px]` : tile.label, layout.tile)
+    ),
     height: Math.round(Math.min(height, layout.crop) * Math.min(1, layout.tile / content.w)),
   };
 };
