@@ -65,6 +65,17 @@ test('the report groups findings by story and joins the widths of one finding', 
   );
 });
 
+test('the report counts a finding repeated at one width once per width', () => {
+  const cut = finding('text-cut-off', '"Oct 29" runs out of td');
+  const { checks } = build(
+    [],
+    [story(1, { 375: [], 768: [cut, cut, cut], 1280: [cut], 1440: [] })]
+  );
+  expect(checks).toContain(
+    '- 768, 1280px, `text-cut-off`: "Oct 29" runs out of td (div.card), 4 times'
+  );
+});
+
 test('the sheets hold twelve 1280px tiles each, in story order', () => {
   const stories = Array.from({ length: 14 }, (_, i) => story(i));
   const { index } = build(

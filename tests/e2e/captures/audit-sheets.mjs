@@ -166,20 +166,25 @@ export const renderChecks = (checks, meta = {}) => {
     lines.push(`## ${group}: ${here.length} of ${total} stories`, '');
     for (const story of here) {
       lines.push(`### \`${story.id}\``, '');
-      // The same message at every width is one line.
+      // The same message at every width is one line, with how many times it showed
+      // when an element repeats (the same cell on every row).
       const rows = new Map();
       for (const w of widths) {
         for (const f of story.widths?.[w] ?? []) {
           const key = `${f.rule}|${f.detail}|${f.target}`;
-          const row = rows.get(key) ?? { f, widths: [] };
-          row.widths.push(w);
+          const row = rows.get(key) ?? { f, widths: [], times: 0 };
+          if (!row.widths.includes(w)) row.widths.push(w);
+          row.times += 1;
           rows.set(key, row);
         }
       }
       for (const rule of rules) {
         const list = [...rows.values()].filter((r) => r.f.rule === rule);
         for (const r of list.slice(0, SHOWN_PER_RULE)) {
-          lines.push(`- ${r.widths.join(', ')}px, \`${rule}\`: ${r.f.detail} (${r.f.target})`);
+          const times = r.times > r.widths.length ? `, ${r.times} times` : '';
+          lines.push(
+            `- ${r.widths.join(', ')}px, \`${rule}\`: ${r.f.detail} (${r.f.target})${times}`
+          );
         }
         if (list.length > SHOWN_PER_RULE) {
           lines.push(`- \`${rule}\`: and ${list.length - SHOWN_PER_RULE} more, in checks.json`);
