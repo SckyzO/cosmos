@@ -82,7 +82,7 @@ screenshots: ## Capture every story in each theme into screenshots/<theme>/ (not
 visual-diff: ## Visual diff of some stories, BASE (default main) vs the working tree: STORIES=<id substrings> [THEMES=<themes>] [BASE=<ref>]
 	@tests/e2e/captures/visual-review.sh
 
-audit-captures: ## Captures for the visual audit, into ../cosmos-references/cosmos: [REFERENCES=<path>] [THEMES=<themes>] [STORIES=…] [MOBILE_STORIES=…]
+audit-captures: ## Visual audit (#494): page checks at 4 widths, captures and contact sheets into ../cosmos-references/cosmos: [REFERENCES=<path>] [STORIES=<id substrings>] [THEMES=…] [MOBILE_STORIES=…] [DESKTOP_STORIES=…]
 	@tests/e2e/captures/audit-captures.sh
 
 build: ## Build all packages

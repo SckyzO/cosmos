@@ -12,6 +12,7 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "screenshots": "playwright test -c playwright.captures.config.ts",
+    "audit:stories": "playwright test -c playwright.audit.config.ts",
     "report": "playwright show-report ../../playwright-report"
   },
   "devDependencies": {
