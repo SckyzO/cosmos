@@ -217,10 +217,11 @@ function StackedListItem({
       <bdi>{title}</bdi>
     </p>
   );
+  // In a narrow row the badge goes under the title rather than wrapping inside itself.
   const titleRow = badge ? (
-    <div className="flex items-start gap-x-3">
+    <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
       {titleEl}
-      {badge}
+      <span className="flex-none">{badge}</span>
     </div>
   ) : (
     titleEl
