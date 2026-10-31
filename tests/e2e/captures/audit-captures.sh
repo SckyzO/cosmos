@@ -84,8 +84,10 @@ quiet() {
 mkdir -p screenshots/audit
 find screenshots/audit -mindepth 1 -delete
 
+reused=false
 if [[ -n ${SKIP_BUILD:-} && -f .cache/audit/static/index.html ]]; then
   step "Storybook build (reusing .cache/audit/static)"
+  reused=true
 else
   step "Storybook build"
   quiet dev sh -c "pnpm --filter @cosmos/storybook exec storybook build -o $work/static"
@@ -109,9 +111,10 @@ cat >screenshots/audit/meta.json <<JSON
 {
   "cosmosCommit": "$sha",
   "uncommittedChanges": $dirty,
+  "reusedBuild": $reused,
   "capturedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "checkWidths": [375, 768, 1280, 1440],
-  "stories": "${stories}",
+  "storyFilter": "${stories}",
   "themes": "${themes:-every theme}",
   "mobileStories": "${mobile_stories}",
   "desktopStories": "${desktop_stories}"
