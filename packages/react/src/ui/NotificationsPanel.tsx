@@ -139,7 +139,9 @@ function NotificationsPanelTrigger({
       aria-expanded={open}
       onClick={() => setOpen(!open)}
       className={clsx(
-        'focus-visible:focus-indicator h-ctrl-40 w-ctrl-40 relative flex items-center justify-center rounded-lg border transition-colors',
+        // The ping around the count grows to twice its size: clipped to the bell, it never widens
+        // the row that holds it. The focus ring is a shadow, outside the clip.
+        'focus-visible:focus-indicator h-ctrl-40 w-ctrl-40 relative flex items-center justify-center overflow-hidden rounded-lg border transition-colors',
         muted
           ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
           : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',

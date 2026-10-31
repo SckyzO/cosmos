@@ -504,3 +504,21 @@ export const TriggerAndItemsFollowTheDirection: Story = {
     );
   },
 };
+
+// The ping around the count grows to twice its size: at the end of a row (a topbar without
+// padding, a toolbar that scrolls) it must not widen what holds the bell. Frozen at its widest.
+export const PingStaysInsideTheBell: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" className="flex justify-end overflow-x-auto" style={{ width: 200 }}>
+      <FullPanel defaultOpen={false} />
+    </div>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const ping = canvasElement.querySelector<HTMLElement>('.animate-ping')!;
+    ping.style.animation = 'none';
+    ping.style.transform = 'scale(2)';
+    const box = canvas.getByTestId('box');
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+  },
+};

@@ -365,7 +365,7 @@ export const ProjectsWithBadgeAndActions: Story = {
           ]}
           trailing={
             <>
-              <Button variant="secondary" size="xs" className="hidden sm:inline-flex">
+              <Button variant="secondary" size="xs" className="max-sm:hidden">
                 View project<span className="sr-only">, {p.name}</span>
               </Button>
               <ActionsMenuButton name={p.name} />
@@ -377,10 +377,43 @@ export const ProjectsWithBadgeAndActions: Story = {
   ),
   play: async ({ canvas }) => {
     // Each repeated button names its project for screen readers. `hidden`: the
-    // button only shows from `sm` up, wider than the test viewport.
+    // button only shows from `sm` up, wider than the test viewport. A `max-sm:` variant hides it:
+    // a plain `hidden` loses to the `inline-flex` of Button's own classes.
     for (const p of PROJECTS) {
       const name = new RegExp(`^View project\\s*, ${p.name}$`);
       await expect(canvas.getByRole('button', { name, hidden: true })).toBeInTheDocument();
+    }
+  },
+};
+
+// In a narrow row the badge goes under the title instead of wrapping inside itself.
+export const BadgeKeepsOneLineInANarrowRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 296 }}>
+      <StackedList>
+        {PROJECTS.map((p) => (
+          <StackedList.Item
+            key={p.name}
+            title={p.name}
+            badge={<Badge intent={STATUS_INTENT[p.status]}>{p.status}</Badge>}
+            trailing={
+              <>
+                <Button variant="secondary" size="xs">
+                  View project
+                </Button>
+                <ActionsMenuButton name={p.name} />
+              </>
+            }
+          />
+        ))}
+      </StackedList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const p of PROJECTS) {
+      // One line of the badge's text is under 28px tall.
+      await expect(canvas.getByText(p.status).getBoundingClientRect().height).toBeLessThan(28);
     }
   },
 };
