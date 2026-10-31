@@ -292,7 +292,9 @@ export const WithFilename: Story = {
 export const Wrapped: Story = {
   render: () => (
     <Wrap>
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* `grid-cols-1`: a column of `minmax(0, 1fr)`, so the block that scrolls sideways can't
+          widen the page through it, as an implicit `auto` column did on a phone. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Labelled label="Default: scrolls sideways">
           <CodeBlock language="bash" code={SHELL} highlight={highlightWithShiki} />
         </Labelled>
