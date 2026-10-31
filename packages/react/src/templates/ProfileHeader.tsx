@@ -96,7 +96,8 @@ export const ProfileHeader = ({
       </span>
       <div className="min-w-0 flex-1 basis-60 sm:pt-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <Heading className="text-xl font-bold break-words text-[var(--color-text-primary)]">
+          {/* `min-w-0`: a flex item is as wide as its longest word otherwise, which never breaks. */}
+          <Heading className="min-w-0 text-xl font-bold break-words text-[var(--color-text-primary)]">
             <bdi>{name}</bdi>
           </Heading>
           {badges}
