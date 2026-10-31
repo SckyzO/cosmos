@@ -249,10 +249,10 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    viewport: {
-      viewports: { ...tailwindViewports, ...deviceViewports },
-      defaultViewport: 'reset',
-    },
+    // Storybook 10 reads the presets from `options`; under `viewports` (the Storybook 8 key) the
+    // toolbar does not list them and a story that picks one is shown in a 320x568 fallback.
+    // No viewport is the default: the story takes the width of the canvas.
+    viewport: { options: { ...tailwindViewports, ...deviceViewports } },
     a11y: { test: 'error' },
     // Docs pages (prose, prop tables, code blocks) follow the toolbar theme.
     docs: { container: CosmosDocsContainer },

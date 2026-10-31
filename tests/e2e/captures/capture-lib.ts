@@ -19,7 +19,7 @@ export type Preview = {
     story?: {
       storyGlobals?: { viewport?: { value?: string } };
       parameters?: {
-        viewport?: { viewports?: Record<string, { styles?: { width?: string } }> };
+        viewport?: { options?: Record<string, { styles?: { width?: string } }> };
       };
     };
   };
@@ -148,8 +148,6 @@ export const pinnedWidth = (page: Page) =>
     const story = (window as unknown as { __STORYBOOK_PREVIEW__?: Preview }).__STORYBOOK_PREVIEW__
       ?.currentRender?.story;
     const value = story?.storyGlobals?.viewport?.value;
-    const width = value
-      ? story?.parameters?.viewport?.viewports?.[value]?.styles?.width
-      : undefined;
+    const width = value ? story?.parameters?.viewport?.options?.[value]?.styles?.width : undefined;
     return width ? parseFloat(width) : undefined;
   });
