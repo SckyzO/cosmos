@@ -429,7 +429,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
 - [ ] `a11y-todo.json` only lost lines: no story or rule added (see [Accessibility](#accessibility))
 - [ ] Visual changes : `make visual-diff STORIES=<component>` run on what you touched, every change in the report is intended (see [Visual review](#visual-review)), screenshot in PR description
-- [ ] Public API changes : update package README
+- [ ] Public API changes : update the docs (`docs/`), and the package README if the install or the style setup changed
 - [ ] Breaking changes : add `BREAKING CHANGE:` footer to commit
 
 ## Dependencies
