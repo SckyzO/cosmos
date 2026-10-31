@@ -7,11 +7,72 @@ Recharts-based chart wrappers, documented in Storybook 10.
 stories (more than 1,800), in four themes, twelve accent colors, three densities, four corner radii
 and both reading directions.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/images/welcome-light.png">
-  <img alt="Cosmos welcome page: a workspace overview built from Cosmos components, the appearance choices, the six screen recipes, the component catalog with its search, the setup steps and what is new" src="docs/images/welcome-dark.png">
-</picture>
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-app-shell--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-app-shell-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-app-shell-light.webp">
+          <img alt="A workspace home: a sidebar, the tasks due this week, an activity feed and recent projects" src="docs/images/example-app-shell-light.webp" width="100%">
+        </picture>
+        <br>App Shell
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-list--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-list-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-list-light.webp">
+          <img alt="An orders list: status tabs, a search field, and a sortable, selectable table" src="docs/images/example-list-light.webp" width="100%">
+        </picture>
+        <br>List
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-detail--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-detail-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-detail-light.webp">
+          <img alt="A support ticket: the conversation with an internal note, a reply box and a details panel" src="docs/images/example-detail-light.webp" width="100%">
+        </picture>
+        <br>Detail
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-settings--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-settings-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-settings-light.webp">
+          <img alt="An organisation settings page: section tabs, form rows and a save bar" src="docs/images/example-settings-light.webp" width="100%">
+        </picture>
+        <br>Settings
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-dashboard--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-dashboard-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-dashboard-light.webp">
+          <img alt="A subscription dashboard: KPI cards with sparklines, a revenue chart and a donut" src="docs/images/example-dashboard-light.webp" width="100%">
+        </picture>
+        <br>Dashboard
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <a href="https://sckyzo.github.io/cosmos/?path=/story/examples-monitoring--content">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-monitoring-dark.webp">
+          <source media="(prefers-color-scheme: light)" srcset="docs/images/example-monitoring-light.webp">
+          <img alt="A cluster overview: an incident banner, a health summary and a rack by node status matrix" src="docs/images/example-monitoring-light.webp" width="100%">
+        </picture>
+        <br>Monitoring
+      </a>
+    </td>
+  </tr>
+</table>
 
 Cosmos provides a shared CSS theme and a library of React components extracted
 and refined from [rackscope](https://github.com/SckyzO/rackscope), reusable
