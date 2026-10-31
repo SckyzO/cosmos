@@ -463,3 +463,23 @@ export const OpensUnderTheTriggerInRightToLeft: Story = {
     }
   },
 };
+
+// On a phone the two dates of a range don't fit side by side: the end date goes under the start
+// date instead of pushing the page sideways.
+export const RangeWrapsInANarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { mode: 'range', label: 'Stay' },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 296 }}>
+      <DatePicker {...args} />
+    </div>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const box = canvas.getByTestId('box');
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+    const [from, to] = canvasElement.querySelectorAll('button[aria-haspopup="dialog"]');
+    await expect(to!.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      from!.getBoundingClientRect().bottom
+    );
+  },
+};
