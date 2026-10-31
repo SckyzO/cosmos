@@ -35,6 +35,15 @@ written as given (not upper-cased) and starts on the column of the row icons, as
 brings them to 10px, the logo, the titles and the footer following. Both go through
 `--cosmos-sidebar-gutter`, which an app can set for another distance.
 
+`<Shell variant="floating">` sets the sidebar and the page apart as two cards on the base
+background, 10px from the window and from each other: the sidebar with a border all round,
+rounded corners and a light shadow, the topbar, the page and `secondary` together in the second
+card. The sidebar takes the tight gutter (`sidebarGutter` on the Shell, or `gutter` on the
+Sidebar, override it) and an edge toggle: a strip along its end edge that collapses or expands it
+on click and shows a line under the pointer. The strip is for the mouse; it stays out of the tab
+order, since the toggles do the same by keyboard. `edgeToggle` turns it on in an attached Shell or
+outside one. Below `lg` the page fills the window as in the attached Shell.
+
 A collapsed `Sidebar` can open while the pointer rests on it, with `expandOnHover`:
 `"overlay"` opens it above the page after 150 ms, with a shadow, and the page does not move;
 `"push"` widens it and the page makes room. Keyboard focus entering the sidebar does the same,
