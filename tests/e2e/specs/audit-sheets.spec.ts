@@ -76,15 +76,18 @@ test('the report counts a finding repeated at one width once per width', () => {
   );
 });
 
-// tileBox runs on the output of ImageMagick, so it is called through node here.
-const tileBox = (...args: unknown[]) =>
+// The sheet helpers are plain ES modules that run next to ImageMagick, so they are called
+// through node here.
+const call = (name: string, ...args: unknown[]) =>
   JSON.parse(
     execFileSync('node', [
       '--input-type=module',
       '-e',
-      `import { tileBox } from '${script}'; console.log(JSON.stringify(tileBox(...${JSON.stringify(args)})))`,
+      `import { ${name} } from '${script}'; console.log(JSON.stringify(${name}(...${JSON.stringify(args)})))`,
     ]).toString()
   );
+const tileBox = (...args: unknown[]) => call('tileBox', ...args);
+const wrapLabel = (label: string, width: number): string => call('wrapLabel', label, width);
 
 test('a tile shows the content of a capture with a margin, not the empty page around it', () => {
   // A 300x40 button at 20,30 on a 1280x720 page.
@@ -115,4 +118,13 @@ test('the themes sheet needs a component captured in more than one theme', () =>
   );
   expect(index).toContain('## Themes side by side (1280px)');
   expect(index).toMatch(/themes\/forms-1\.jpg/);
+});
+
+test('a long label breaks into lines that fit its tile, after a dash when it can', () => {
+  const id = 'tables-datatable-selection-and-filters--bulk-actions-fold-into-a-menu';
+  const lines = wrapLabel(id, 375).split('\n');
+  expect(lines.every((line) => line.length <= Math.floor(375 / 8))).toBe(true);
+  expect(lines.join('')).toBe(id);
+  expect(lines[0]).toMatch(/-$/);
+  expect(wrapLabel('atoms-button--default', 375)).toBe('atoms-button--default');
 });

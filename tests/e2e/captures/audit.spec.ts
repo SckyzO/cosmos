@@ -2,11 +2,12 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from '@playwright/test';
 import { auditPage, watchConsole, type Finding } from './audit-checks';
-import { CHECK_WIDTHS, groupOf, planCaptures } from './audit-plan';
+import { CHECK_WIDTHS, groupOf, nearestCheckWidth, planCaptures } from './audit-plan';
 import {
   installCaptureEnvironment,
   matches,
   openStory,
+  pinnedWidth,
   readIndex,
   readThemes,
   settledScreenshot,
@@ -65,31 +66,50 @@ test('audit stories', async ({ context, page, baseURL }) => {
   // ── pass 1: the checks ────────────────────────────────────────────────────
   const found = new Map<string, Record<number, Finding[]>>();
   for (const story of stories) found.set(story.id, {});
+  // A story that pins a viewport is checked at the width nearest to it only.
+  const pinned = new Map<string, number>();
+  const queue = stories.flatMap((s) => CHECK_WIDTHS.map((width) => ({ id: s.id, width })));
+  let total = queue.length;
+  let started = Date.now();
+  let done = 0;
+  const progress = (pass: string) => {
+    done++;
+    if (done % 200 === 0 || done === total) {
+      const seconds = Math.round((Date.now() - started) / 1000);
+      console.log(`${pass}: ${done}/${total} in ${seconds}s`);
+    }
+  };
   const watchers = new Map(pages.map((p) => [p, watchConsole(p)]));
   // A chart that animates in measures differently from one at rest.
   await Promise.all(pages.map((p) => p.emulateMedia({ reducedMotion: 'reduce' })));
-  await work(
-    stories.flatMap((s) => CHECK_WIDTHS.map((width) => ({ id: s.id, width }))),
-    async (p, { id, width }) => {
-      const watcher = watchers.get(p)!;
-      try {
-        await p.setViewportSize({ width, height: HEIGHT });
+  await work(queue, async (p, { id, width }) => {
+    const watcher = watchers.get(p)!;
+    try {
+      await p.setViewportSize({ width, height: HEIGHT });
+      watcher.findings();
+      await openStory(p, id, 'light', allThemes);
+      const pin = await pinnedWidth(p);
+      if (pin !== undefined && nearestCheckWidth(pin) !== width) {
+        pinned.set(id, nearestCheckWidth(pin));
         watcher.findings();
-        await openStory(p, id, 'light', allThemes);
-        // A play function that fails here (a `mobile-` story run at 1280px, which the
-        // story tests give its own viewport) logs its error from Storybook's
-        // preview: that is the width we forced, not a defect of the story.
-        const logged = watcher
-          .findings()
-          .filter(
-            (f) => !(f.detail.startsWith('error:') && /\/assets\/iframe-[\w-]+\.js$/.test(f.target))
-          );
-        found.get(id)![width] = [...(await auditPage(p)), ...logged];
-      } catch (error) {
-        problems.push(`checks ${width}/${id}: ${(error as Error).message.split('\n')[0]}`);
+        return;
       }
+      if (pin !== undefined) pinned.set(id, width);
+      // A play function that fails here (a story run at a width it does not pin, which the
+      // story tests give its own viewport) logs its error from Storybook's
+      // preview: that is the width we forced, not a defect of the story.
+      const logged = watcher
+        .findings()
+        .filter(
+          (f) => !(f.detail.startsWith('error:') && /\/assets\/iframe-[\w-]+\.js$/.test(f.target))
+        );
+      found.get(id)![width] = [...(await auditPage(p)), ...logged];
+    } catch (error) {
+      problems.push(`checks ${width}/${id}: ${(error as Error).message.split('\n')[0]}`);
+    } finally {
+      progress('checks');
     }
-  );
+  });
   await Promise.all(pages.map((p) => p.emulateMedia({ reducedMotion: null })));
   mkdirSync(outDir, { recursive: true });
   writeFileSync(
@@ -122,10 +142,14 @@ test('audit stories', async ({ context, page, baseURL }) => {
     mobile: process.env.MOBILE_STORIES ?? '',
     desktop: process.env.DESKTOP_STORIES ?? '',
     themes,
+    pinned,
   });
   const titleOf = new Map(stories.map((s) => [s.id, s.title]));
   const captures: { id: string; title: string; width: number; theme: string; flagged: boolean }[] =
     [];
+  total = plan.length;
+  done = 0;
+  started = Date.now();
   await work([...plan], async (p, { id, width, theme }) => {
     const name = `${width}/${theme}/${id}`;
     try {
@@ -144,6 +168,8 @@ test('audit stories', async ({ context, page, baseURL }) => {
       });
     } catch (error) {
       problems.push(`${name}: ${(error as Error).message.split('\n')[0]}`);
+    } finally {
+      progress('captures');
     }
   });
   const order = new Map(stories.map((s, i) => [s.id, i]));

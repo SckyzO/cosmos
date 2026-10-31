@@ -14,7 +14,15 @@ export type IndexEntry = {
 // Storybook's preview object. Not a public API: the capture stops with a clear
 // error if it moves.
 export type Preview = {
-  currentRender?: { phase?: string };
+  currentRender?: {
+    phase?: string;
+    story?: {
+      storyGlobals?: { viewport?: { value?: string } };
+      parameters?: {
+        viewport?: { viewports?: Record<string, { styles?: { width?: string } }> };
+      };
+    };
+  };
   storyStoreValue?: {
     projectAnnotations?: {
       globalTypes?: { theme?: { toolbar?: { items?: { value: string }[] } } };
@@ -46,16 +54,17 @@ export const installCaptureEnvironment = async (context: BrowserContext, baseURL
       return (seed - 1) / 2147483646;
     };
   });
-  const storybook = new URL(baseURL).origin;
-  await context.route(
-    (url) => url.origin !== storybook,
-    (route) =>
-      route.request().resourceType() === 'document'
-        ? route.fulfill({
-            contentType: 'text/html',
-            body: '<body style="margin:0;background:#9ca3af"></body>',
-          })
-        : route.abort()
+  // A pattern, not a function: Playwright matches it without a round trip to
+  // the test process, and Storybook's own requests are never intercepted (a
+  // matcher function sees every request, which also turns off the cache).
+  const storybook = new URL(baseURL).origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await context.route(new RegExp(`^(?!${storybook}(/|$))`), (route) =>
+    route.request().resourceType() === 'document'
+      ? route.fulfill({
+          contentType: 'text/html',
+          body: '<body style="margin:0;background:#9ca3af"></body>',
+        })
+      : route.abort()
   );
 };
 
@@ -128,3 +137,19 @@ export const settledScreenshot = async (page: Page) => {
   }
   return { frame: await page.screenshot({ fullPage: true, animations: 'disabled' }), stable };
 };
+
+/**
+ * The width a story pins with its viewport global (`globals: mobileViewport`),
+ * in px, or undefined. Opened by URL the story gets the page's width, not that
+ * viewport: Storybook's viewport menu sizes the frame from the manager.
+ */
+export const pinnedWidth = (page: Page) =>
+  page.evaluate(() => {
+    const story = (window as unknown as { __STORYBOOK_PREVIEW__?: Preview }).__STORYBOOK_PREVIEW__
+      ?.currentRender?.story;
+    const value = story?.storyGlobals?.viewport?.value;
+    const width = value
+      ? story?.parameters?.viewport?.viewports?.[value]?.styles?.width
+      : undefined;
+    return width ? parseFloat(width) : undefined;
+  });

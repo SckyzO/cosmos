@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { planCaptures, groupOf } from '../captures/audit-plan';
+import { groupOf, nearestCheckWidth, planCaptures } from '../captures/audit-plan';
 
 // What `make audit-captures` captures, from a small story list.
 
@@ -59,4 +59,14 @@ test('an empty filter matches nothing, a title gives its group', () => {
   expect(plan.some((k) => k.startsWith('375/') || k.startsWith('1440/'))).toBe(false);
   expect(groupOf('Forms/Select')).toBe('Forms');
   expect(groupOf('Welcome')).toBe('Welcome');
+});
+
+test('a story that pins a viewport is captured at that width alone, in every theme', () => {
+  const pinned = new Map([['examples-dashboard--default', 375]]);
+  const plan = keys(planCaptures(stories, new Map(), { ...settings, pinned }));
+  const own = plan.filter((key) => key.endsWith('/examples-dashboard--default'));
+  expect(own).toEqual(settings.themes.map((theme) => `375/${theme}/examples-dashboard--default`));
+  // The phone viewport (393px) goes to the 375px checks.
+  expect(nearestCheckWidth(393)).toBe(375);
+  expect(nearestCheckWidth(1280)).toBe(1280);
 });

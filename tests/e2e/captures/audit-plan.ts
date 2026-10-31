@@ -12,7 +12,16 @@ export type AuditSettings = {
   desktop: string;
   /** The themes put side by side, in the order of their tiles. */
   themes: string[];
+  /**
+   * The check width of the stories that pin a viewport (a phone story): they
+   * are captured at that width alone, where the others go at 1280px.
+   */
+  pinned?: ReadonlyMap<string, number>;
 };
+
+/** The check width nearest to a pinned viewport's width (393px goes to 375). */
+export const nearestCheckWidth = (width: number) =>
+  CHECK_WIDTHS.reduce((best, w) => (Math.abs(w - width) < Math.abs(best - width) ? w : best));
 
 export const matchesAny = (id: string, filter: string) =>
   filter
@@ -24,7 +33,7 @@ export const matchesAny = (id: string, filter: string) =>
 export const groupOf = (title: string) => title.split('/')[0];
 
 /**
- * Every story at 1280px in light; the shell-level groups at 375 and 768px and
+ * Every story at 1280px in light, or at its width if it pins one; the shell-level groups at 375 and 768px and
  * the wide ones at 1440px; each story the checks flagged at the width it was
  * flagged; and the first story of each component in the other themes at 1280px.
  * In Storybook's order, one entry per (story, width, theme).
@@ -52,6 +61,12 @@ export const planCaptures = (
     }
   }
   for (const { id } of stories) {
+    const pinned = settings.pinned?.get(id);
+    if (pinned !== undefined) {
+      add(id, pinned, 'light');
+      if (firstOfComponent.has(id)) for (const theme of settings.themes) add(id, pinned, theme);
+      continue;
+    }
     add(id, 1280, 'light');
     if (matchesAny(id, settings.mobile)) {
       add(id, 375, 'light');

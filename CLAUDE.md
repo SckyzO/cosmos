@@ -89,7 +89,8 @@ page checks at 375, 768, 1280 and 1440px in light (`captures/audit-checks.ts`: s
 cut off or overlapping, squeezed icons and columns, touch targets under 24px, console errors;
 `checks.json`, `checks.md`); captures every story at 1280px in light, `MOBILE_STORIES` at 375 and
 768px, `DESKTOP_STORIES` at 1440px, each flagged story at its flagged width, and one story per
-component in the four themes; builds ImageMagick contact sheets per group (`captures/audit-sheets.mjs`,
+component in the four themes (a story that pins a viewport, such as `globals: mobileViewport`, is
+checked and captured at the check width nearest to it only); builds ImageMagick contact sheets per group (`captures/audit-sheets.mjs`,
 `sheets/index.md`); and replaces the `cosmos/` folder of `../cosmos-references` (override with
 `REFERENCES=`) with it all plus a `meta.json` naming the commit. `STORIES=<id substrings>` runs a
 subset, `SKIP_BUILD=1` reuses the last build. The spec (`audit.spec.ts`) has its own config, `audit:stories`.
