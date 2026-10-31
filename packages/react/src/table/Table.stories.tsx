@@ -135,6 +135,11 @@ export const Basic: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const BasicChecks: Story = {
+  ...Basic,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The caption names the table, and every header cell carries its scope.
     const table = canvas.getByRole('table', { name: 'Compute nodes' });
@@ -148,6 +153,11 @@ export const Basic: Story = {
 export const Striped: Story = {
   args: { striped: true },
   render: Basic.render,
+};
+
+export const StripedChecks: Story = {
+  ...Striped,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The shaded rows must stand out from the panel in every theme, dark ones included: a
     // stripe under about 5% white is invisible on a dark panel.
@@ -199,6 +209,11 @@ export const StickyHeader: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const StickyHeaderChecks: Story = {
+  ...StickyHeader,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The rows overflow the container: it is a focusable region, named by the caption.
     const region = await canvas.findByRole('region', { name: 'All compute nodes' });
@@ -309,6 +324,11 @@ export const FooterTotals: Story = {
       </Wrap>
     );
   },
+};
+
+export const FooterTotalsChecks: Story = {
+  ...FooterTotals,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('rowheader', { name: 'Total' })).toHaveAttribute('scope', 'row');
   },
@@ -350,6 +370,11 @@ export const GroupedRows: Story = {
       </Wrap>
     );
   },
+};
+
+export const GroupedRowsChecks: Story = {
+  ...GroupedRows,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // Each group header spans its own <tbody> with scope="rowgroup", and carries a count.
     const groupHeader = canvas.getAllByText(/^Room A/)[0]?.closest('th');
@@ -428,6 +453,11 @@ export const ExpandableRows: Story = {
       <ExpandableTable />
     </Wrap>
   ),
+};
+
+export const ExpandableRowsChecks: Story = {
+  ...ExpandableRows,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const toggle = canvas.getByRole('button', { name: 'Details for node-101' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -447,6 +477,11 @@ export const ExpandableRowsOpenByDefault: Story = {
       <ExpandableTable initiallyOpen={['node-101']} />
     </Wrap>
   ),
+};
+
+export const ExpandableRowsOpenByDefaultChecks: Story = {
+  ...ExpandableRowsOpenByDefault,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const toggle = canvas.getByRole('button', { name: 'Details for node-101' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -475,6 +510,11 @@ export const Empty: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const EmptyChecks: Story = {
+  ...Empty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
     await expect(canvas.getByText('No nodes')).toBeInTheDocument();
@@ -493,6 +533,11 @@ export const Loading: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const LoadingChecks: Story = {
+  ...Loading,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The header stays, with the rows in its place.
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
@@ -634,6 +679,11 @@ export const DashboardCells: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const DashboardCellsChecks: Story = {
+  ...DashboardCells,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const row = canvas.getByRole('row', { name: /node-104/ });
     // The identity cell: the name, then its detail line, under an icon that says nothing more.
@@ -686,6 +736,11 @@ export const MobileStickyFirstColumn: Story = {
       </Table>
     </Wrap>
   ),
+};
+
+export const MobileStickyFirstColumnChecks: Story = {
+  ...MobileStickyFirstColumn,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const table = canvas.getByRole('table', { name: 'Compute nodes' });

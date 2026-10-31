@@ -154,6 +154,11 @@ export const OutOfTheBox: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const OutOfTheBoxChecks: Story = {
+  ...OutOfTheBox,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const blocks = [...canvasElement.querySelectorAll('pre')];
     await waitFor(() => {
@@ -184,6 +189,11 @@ export const Languages: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const LanguagesChecks: Story = {
+  ...Languages,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const blocks = [...canvasElement.querySelectorAll('pre')];
     await expect(blocks).toHaveLength(SNIPPETS.length);
@@ -223,6 +233,11 @@ export const Variants: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const VariantsChecks: Story = {
+  ...Variants,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const blocks = [...canvasElement.querySelectorAll('pre')];
     await waitFor(() => {
@@ -235,6 +250,7 @@ export const Variants: Story = {
 };
 
 export const HostileSnippet: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <div className="space-y-4">
@@ -272,6 +288,11 @@ export const Mobile: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(tokens(canvasElement.querySelector('pre')!).length).toBeGreaterThan(0)

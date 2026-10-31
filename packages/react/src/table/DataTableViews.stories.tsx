@@ -152,6 +152,11 @@ export const SavedViews: Story = {
     };
     return <Host />;
   },
+};
+
+export const SavedViewsChecks: Story = {
+  ...SavedViews,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Views' })).toHaveAttribute(
       'aria-haspopup',
@@ -168,6 +173,11 @@ export const ViewsWithoutSearch: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultViews={VIEWS} />
     </Wrap>
   ),
+};
+
+export const ViewsWithoutSearchChecks: Story = {
+  ...ViewsWithoutSearch,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Views' })).toBeVisible();
     await expect(canvas.queryByRole('searchbox')).toBeNull();
@@ -562,6 +572,11 @@ export const Mobile: Story = {
       />
     </Wrap>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const views = canvas.getByRole('button', { name: 'Core engineers (modified)' });

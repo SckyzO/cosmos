@@ -58,6 +58,11 @@ export const Controlled: Story = {
 
 export const ToggleVisibility: Story = {
   args: { label: 'Password', defaultValue: 'p4ssw0rd!' },
+};
+
+export const ToggleVisibilityChecks: Story = {
+  ...ToggleVisibility,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Password') as HTMLInputElement;
     await expect(input).toHaveAttribute('type', 'password');

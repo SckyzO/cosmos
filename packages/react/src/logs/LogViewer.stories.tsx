@@ -269,6 +269,11 @@ export const NarrowWrapped: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   render: () => <LogConsole count={200} height={380} />,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 

@@ -113,6 +113,11 @@ export const Cards: Story = {
       />
     </Wrap>
   ),
+};
+
+export const CardsChecks: Story = {
+  ...Cards,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const list = canvas.getByRole('list', { name: 'Users' });
@@ -143,6 +148,11 @@ export const CardsWithoutPairs: Story = {
       />
     </Wrap>
   ),
+};
+
+export const CardsWithoutPairsChecks: Story = {
+  ...CardsWithoutPairs,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(cards(canvas)).toHaveLength(rows.length);
@@ -249,6 +259,11 @@ export const CardsSelection: Story = {
       />
     </Wrap>
   ),
+};
+
+export const CardsSelectionChecks: Story = {
+  ...CardsSelection,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, args }) => {
     const first = canvas.getByRole('checkbox', { name: 'Select row user-1' });
     await userEvent.click(first);
@@ -285,6 +300,11 @@ export const CardsRowAction: Story = {
       </Wrap>
     );
   },
+};
+
+export const CardsRowActionChecks: Story = {
+  ...CardsRowAction,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Actions for Grace Hopper' }));
     await userEvent.click(await within(document.body).findByRole('menuitem', { name: 'Edit' }));
@@ -312,6 +332,11 @@ export const CardsSort: Story = {
       />
     </Wrap>
   ),
+};
+
+export const CardsSortChecks: Story = {
+  ...CardsSort,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const sort = canvas.getByRole('combobox', { name: 'Sort by' });
     const options = within(sort)
@@ -372,6 +397,11 @@ export const CardsLoadingAndEmpty: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const CardsLoadingAndEmptyChecks: Story = {
+  ...CardsLoadingAndEmpty,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(

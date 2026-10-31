@@ -133,6 +133,11 @@ export const Export: Story = {
       />
     </Wrap>
   ),
+};
+
+export const ExportChecks: Story = {
+  ...Export,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const buttons = canvas.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
     await expect(buttons.indexOf('Export')).toBeGreaterThan(-1);
@@ -148,6 +153,11 @@ export const ExportWithoutSearch: Story = {
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} exportable />
     </Wrap>
   ),
+};
+
+export const ExportWithoutSearchChecks: Story = {
+  ...ExportWithoutSearch,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Export' })).toBeVisible();
     await expect(canvas.queryByRole('searchbox')).toBeNull();
@@ -292,6 +302,11 @@ export const Mobile: Story = {
       />
     </Wrap>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const button = canvas.getByRole('button', { name: 'Export' });

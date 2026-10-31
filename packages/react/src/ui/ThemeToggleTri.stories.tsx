@@ -153,7 +153,7 @@ const SystemToggle = () => {
 
 /** Cycles through all four choices; `system` resolves to the OS preference. */
 export const CyclesThroughSystem: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <SystemToggle />,
   play: async ({ canvas }) => {
     const root = document.documentElement;

@@ -170,6 +170,11 @@ export const CollapseButtonInSidebar: Story = {
       />
     </Shell>
   ),
+};
+
+export const CollapseButtonInSidebarChecks: Story = {
+  ...CollapseButtonInSidebar,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     // One control only, in the sidebar.
@@ -503,6 +508,11 @@ export const Mobile: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <MobileShell />,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(body().queryByRole('navigation', { name: 'Main navigation' })).toBeNull();
@@ -520,6 +530,11 @@ export const MobileOpen: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <MobileShell defaultSidebarOpen />,
+};
+
+export const MobileOpenChecks: Story = {
+  ...MobileOpen,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
     await waitFor(() => expect(startOffset(dialog, document.documentElement)).toBe(0));
@@ -550,6 +565,11 @@ export const MobileControlled: Story = {
       />
     );
   },
+};
+
+export const MobileControlledChecks: Story = {
+  ...MobileControlled,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     await openDrawer();
     await expect(body().getByText('open = true')).toBeVisible();
@@ -806,6 +826,11 @@ export const BoxedMobile: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <BoxedShell />,
+};
+
+export const BoxedMobileChecks: Story = {
+  ...BoxedMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByRole('button', { name: 'Open navigation' })).toBeVisible();

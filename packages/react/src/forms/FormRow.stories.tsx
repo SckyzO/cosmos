@@ -193,6 +193,11 @@ const SettingsRows = () => (
 export const MobileStacksLabelAboveField: Story = {
   globals: mobileViewport,
   render: () => <SettingsRows />,
+};
+
+export const MobileStacksLabelAboveFieldChecks: Story = {
+  ...MobileStacksLabelAboveField,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
     const labelText = canvas.getByText('Time zone');

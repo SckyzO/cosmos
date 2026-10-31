@@ -216,6 +216,11 @@ export const ThroughTheRouter: Story = {
       </LinkProvider>
     </FakeRouter>
   ),
+};
+
+export const ThroughTheRouterChecks: Story = {
+  ...ThroughTheRouter,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, step }) => {
     const sidebar = canvas.getByRole('navigation', { name: 'Main navigation' });
     const crumbs = canvas.getByRole('navigation', { name: 'Breadcrumb' });
@@ -293,6 +298,7 @@ export const ThroughTheRouter: Story = {
  * a breadcrumb gives a crumb that has none. The last link is routed, to tell them apart.
  */
 export const ExternalLinksStayPlain: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <FakeRouter>
       <LinkProvider component={RouterLink}>
@@ -380,6 +386,11 @@ export const NestedProvider: Story = {
       </LinkProvider>
     </FakeRouter>
   ),
+};
+
+export const NestedProviderChecks: Story = {
+  ...NestedProvider,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const via = (name: string) =>
       canvas.getByRole('link', { name }).getAttribute('data-router-link');
@@ -408,6 +419,7 @@ export const NestedProvider: Story = {
  * navigates the page, so the app that wants its router mounts the provider.
  */
 export const WithoutAProvider: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <FakeRouter>
       <Page />

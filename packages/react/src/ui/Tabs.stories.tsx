@@ -610,8 +610,8 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsRingInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 
@@ -663,8 +663,8 @@ export const FolderOutlineIsStrongerInDark: Story = {
 
 /** In light, the folder keeps the theme's own border. */
 export const FolderOutlineKeepsBorderInLight: Story = {
-  tags: ['!dev'],
   ...FolderOutlineIsStrongerInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     const plain = colorOf('var(--color-border)');
@@ -717,12 +717,22 @@ const expectStripScrollsToActiveTab = async (
 export const MobileScrollingTabs: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="underline" />,
+};
+
+export const MobileScrollingTabsChecks: Story = {
+  ...MobileScrollingTabs,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 
 export const MobileFolder: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="folder" />,
+};
+
+export const MobileFolderChecks: Story = {
+  ...MobileFolder,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 
@@ -756,6 +766,11 @@ export const MobileVertical: Story = {
       </Wrap>
     );
   },
+};
+
+export const MobileVerticalChecks: Story = {
+  ...MobileVertical,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     // Below `sm` a vertical list is a strip above the panel, and works as one.
@@ -853,6 +868,11 @@ export const PillsWithBadge: Story = {
       <PillsDemo badge defaultTab="alerts" />
     </Wrap>
   ),
+};
+
+export const PillsWithBadgeChecks: Story = {
+  ...PillsWithBadge,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // The count is read with the tab's name.
     await expect(canvas.getByRole('tab', { name: 'Alerts 12' })).toHaveAttribute(
@@ -899,6 +919,11 @@ export const PillsDisabled: Story = {
       <PillsDemo />
     </Wrap>
   ),
+};
+
+export const PillsDisabledChecks: Story = {
+  ...PillsDisabled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const disabled = canvas.getByRole('tab', { name: 'Audit' });
     await expect(disabled).toBeDisabled();
@@ -1006,6 +1031,11 @@ export const PillsFocusRing: Story = {
 export const MobilePills: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="pills" />,
+};
+
+export const MobilePillsChecks: Story = {
+  ...MobilePills,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 
@@ -1088,6 +1118,11 @@ export const RaisedWithBadge: Story = {
       <RaisedDemo badge defaultTab="alerts" />
     </Wrap>
   ),
+};
+
+export const RaisedWithBadgeChecks: Story = {
+  ...RaisedWithBadge,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const active = canvas.getByRole('tab', { name: 'Alerts 12' });
     const idle = canvas.getByRole('tab', { name: 'Billing 3' });
@@ -1122,6 +1157,11 @@ export const RaisedDisabled: Story = {
       <RaisedDemo />
     </Wrap>
   ),
+};
+
+export const RaisedDisabledChecks: Story = {
+  ...RaisedDisabled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const disabled = canvas.getByRole('tab', { name: 'Audit' });
     await expect(disabled).toBeDisabled();
@@ -1245,8 +1285,8 @@ export const RaisedActiveIsRaisedInDark: Story = {
 
 /** In light, the active tab is white on the gray-100 track, with gray-900 text. */
 export const RaisedActiveIsRaisedInLight: Story = {
-  tags: ['!dev'],
   ...RaisedActiveIsRaisedInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
   play: async ({ canvas }) =>
     expectRaisedColors(canvas, {
@@ -1356,14 +1396,19 @@ export const RaisedFocusRingInDark: Story = {
 };
 
 export const RaisedFocusRingInLight: Story = {
-  tags: ['!dev'],
   ...RaisedFocusRingInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 
 export const MobileRaised: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="raised" />,
+};
+
+export const MobileRaisedChecks: Story = {
+  ...MobileRaised,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 

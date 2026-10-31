@@ -94,6 +94,11 @@ export const NarrowContainer: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { legend: true },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
     const strip = canvasElement.querySelector<HTMLElement>('[role="group"]')!;

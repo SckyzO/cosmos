@@ -161,6 +161,7 @@ export const ExternalIconRenders: Story = {
 };
 
 export const ExternalIconHidden: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { external: true, hideExternalIcon: true, href: '#', children: 'Plain' },
   play: async ({ canvas }) => {
     const link = canvas.getByRole('link', { name: /plain/i });
@@ -196,8 +197,8 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsRingInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 

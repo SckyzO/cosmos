@@ -172,14 +172,14 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
 };
 
 export const FocusShowsAccentBorderInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsAccentBorderInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 
 export const ErrorFocusShowsRedBorderInLight: Story = {
-  tags: ['!dev'],
   ...ErrorFocusShowsRedBorderInDark,
+  tags: ['!dev'],
   globals: { theme: 'light' },
 };
 
@@ -310,8 +310,8 @@ export const ErrorIconShowsOnlyOnError: Story = {
 };
 
 export const ErrorIconIsDecorative: Story = {
-  tags: ['!dev', '!autodocs'],
   ...WithErrorIcon,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const icon = canvasElement.querySelector('svg')!;
     await expect(icon).toHaveAttribute('aria-hidden', 'true');
@@ -364,6 +364,11 @@ export const ValidatedAsYouType: Story = {
       </div>
     );
   },
+};
+
+export const ValidatedAsYouTypeChecks: Story = {
+  ...ValidatedAsYouType,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const field = canvas.getByRole('textbox', { name: 'Username' });
     await userEvent.type(field, 'sc');

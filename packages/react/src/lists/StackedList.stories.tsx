@@ -375,6 +375,11 @@ export const ProjectsWithBadgeAndActions: Story = {
       ))}
     </StackedList>
   ),
+};
+
+export const ProjectsWithBadgeAndActionsChecks: Story = {
+  ...ProjectsWithBadgeAndActions,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // Each repeated button names its project for screen readers. `hidden`: the
     // button only shows from `sm` up, wider than the test viewport. A `max-sm:` variant hides it:
@@ -519,6 +524,11 @@ export const StickyHeadings: Story = {
       </StackedList>
     </div>
   ),
+};
+
+export const StickyHeadingsChecks: Story = {
+  ...StickyHeadings,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // One list whose children are all list items, headers included.
     const items = Array.from(canvas.getByRole('list').children);
@@ -549,6 +559,11 @@ export const NarrowWithActions: Story = {
       </StackedList>
     </div>
   ),
+};
+
+export const NarrowWithActionsChecks: Story = {
+  ...NarrowWithActions,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     // Each View button names its person for screen readers.
     for (const p of PEOPLE) {

@@ -3,7 +3,12 @@ import { Archive, Printer, Trash2, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
-import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import {
+  expectNoHorizontalOverflow,
+  mobileViewport,
+  portalDocsParams,
+  textLines,
+} from '../storybook-helpers';
 import { DataTable } from './DataTable';
 import type { ColumnDef, DataTableBulkAction } from './types';
 
@@ -113,6 +118,7 @@ const Orders = (props: OrdersProps) => (
  * the end side, all on one row. The toolbar's Export says what it exports: "Export 3".
  */
 export const SelectionKeepsTheToolbar: Story = {
+  tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
     <Wrap>
@@ -141,6 +147,7 @@ export const SelectionKeepsTheToolbar: Story = {
  * search narrows and the toolbar buttons keep their icon only.
  */
 export const BulkActionsFoldIntoAMenu: Story = {
+  tags: ['!dev', '!autodocs'],
   globals: tablet,
   render: () => (
     <Wrap>
@@ -170,6 +177,11 @@ export const BulkActionsOnAPhone: Story = {
       <Orders mobileLayout="cards" defaultSelection={selected} />
     </Wrap>
   ),
+};
+
+export const BulkActionsOnAPhoneChecks: Story = {
+  ...BulkActionsOnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByText('3 selected')).toBeVisible();
@@ -189,18 +201,6 @@ export const BulkActionsOnAPhone: Story = {
 };
 
 // The lines of text a control's label takes: a text node gives one rectangle per line.
-const textLines = (element: HTMLElement) => {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-  let lines = 0;
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (!node.textContent?.trim()) continue;
-    const range = document.createRange();
-    range.selectNodeContents(node);
-    lines += range.getClientRects().length;
-  }
-  return lines;
-};
-
 // Without cards a phone keeps the labelled actions: they go to the line under the count, each on
 // one line of text, instead of being squeezed beside it and cut by the edge of the card.
 export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
@@ -246,6 +246,11 @@ export const BulkActionsAsNodes: Story = {
       />
     </Wrap>
   ),
+};
+
+export const BulkActionsAsNodesChecks: Story = {
+  ...BulkActionsAsNodes,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Archive 3' })).toBeVisible();
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toBeVisible();
@@ -266,6 +271,11 @@ export const FiltersOnAPhone: Story = {
       />
     </Wrap>
   ),
+};
+
+export const FiltersOnAPhoneChecks: Story = {
+  ...FiltersOnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const button = canvas.getByRole('button', { name: /^Filters/ });
@@ -314,6 +324,11 @@ export const EmptyWithAnAction: Story = {
       />
     </Wrap>
   ),
+};
+
+export const EmptyWithAnActionChecks: Story = {
+  ...EmptyWithAnAction,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Create the first order' })).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'Clear filters' })).toBeNull();
@@ -322,6 +337,7 @@ export const EmptyWithAnAction: Story = {
 
 /** A search and filters hide every row: the table offers to clear them. */
 export const FiltersHideEveryRow: Story = {
+  tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
     <Wrap>

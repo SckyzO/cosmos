@@ -135,6 +135,11 @@ export const Narrow: Story = {
       />
     </div>
   ),
+};
+
+export const NarrowChecks: Story = {
+  ...Narrow,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // Measure the title's text, not the h2 box: a squeezed h2 lets its words
@@ -250,6 +255,11 @@ export const MobileWithIcon: Story = {
       </PageActionButton>
     ),
   },
+};
+
+export const MobileWithIconChecks: Story = {
+  ...MobileWithIcon,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();
     const tile = canvasElement.querySelector('[aria-hidden="true"]') as HTMLElement;
@@ -283,6 +293,11 @@ export const WithBreadcrumbAndDescription: Story = {
       </PageActionButton>
     ),
   },
+};
+
+export const WithBreadcrumbAndDescriptionChecks: Story = {
+  ...WithBreadcrumbAndDescription,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const trail = canvas.getByRole('navigation', { name: 'Breadcrumb' });
     const title = canvas.getByRole('heading', { name: /Checkout fails/ });
@@ -330,6 +345,11 @@ export const MobileBreadcrumbMetaAndActions: Story = {
     ),
     actions: <PageActionButton icon={RefreshCw} aria-label="Refresh" />,
   },
+};
+
+export const MobileBreadcrumbMetaAndActionsChecks: Story = {
+  ...MobileBreadcrumbMetaAndActions,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();
     const tile = canvasElement.querySelector('[aria-hidden="true"]') as HTMLElement;

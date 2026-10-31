@@ -78,6 +78,11 @@ export const InAFormRow: Story = {
       </FormRow>
     </div>
   ),
+};
+
+export const InAFormRowChecks: Story = {
+  ...InAFormRow,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const field = canvas.getByRole('textbox', { name: 'Mobile phone' });
     await expect(field).toHaveAccessibleDescription('Used for two-factor codes');
@@ -112,6 +117,11 @@ export const MobileFillsTheScreen: Story = {
       />
     </div>
   ),
+};
+
+export const MobileFillsTheScreenChecks: Story = {
+  ...MobileFillsTheScreen,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },

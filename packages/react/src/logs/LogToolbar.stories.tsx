@@ -64,6 +64,11 @@ export const InvalidPattern: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   render: () => <LogConsole count={200} height={380} search="timeout" />,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 

@@ -113,6 +113,11 @@ export const Mobile: Story = {
       <HealthSummary {...args} variant="compact" />
     </div>
   ),
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 

@@ -106,6 +106,11 @@ export const Mobile: Story = {
       },
     ],
   },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('region', { name: 'Uploads' }));
     // The size wraps under a long name instead of squeezing it to a few letters.
@@ -230,6 +235,7 @@ const Hidden: Pick<Story, 'tags'> = { tags: ['!dev', '!autodocs'] };
 /** The queue, the dropzone and a fake uploader end to end: queued, uploading, failed, retried, done, dismissed. */
 export const FakeUploaderEndToEnd: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => <FakeUploads auto={false} />,
   play: async ({ canvas }) => {
     const input = canvas.getByLabelText('Attachments', { selector: 'input' }) as HTMLInputElement;
@@ -282,6 +288,7 @@ export const FakeUploaderEndToEnd: Story = {
 /** Each status reads as text first: Waiting, a percentage with the sizes, the error, Done. */
 export const StatusIsText: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { items: ITEMS },
   play: async ({ canvas }) => {
     const row = (name: string) => canvas.getByText(name).closest('li') as HTMLElement;
@@ -301,6 +308,7 @@ export const StatusIsText: Story = {
 /** Retry and the row buttons hand the item's id back; the button is named for what it does to that status. */
 export const RetryAndRemoveFireWithTheId: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { items: ITEMS, onRetry: fn(), onRemove: fn() },
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Retry site-photo-04.jpg' }));
@@ -324,6 +332,7 @@ export const RetryAndRemoveFireWithTheId: Story = {
 /** Without the callbacks there is neither Retry nor a row button. */
 export const NoButtonsWithoutCallbacks: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { items: ITEMS, onRetry: undefined, onRemove: undefined },
   play: async ({ canvas }) => {
     await expect(canvas.queryAllByRole('button')).toHaveLength(0);
@@ -358,6 +367,7 @@ const Announcing = () => {
 /** A row that fails or finishes is announced by name in a polite live region; a row that starts so is not. */
 export const AnnouncesFailureAndCompletion: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => <Announcing />,
   play: async ({ canvas }) => {
     const live = canvas.getByRole('status');
@@ -373,6 +383,7 @@ export const AnnouncesFailureAndCompletion: Story = {
 /** An empty queue draws nothing. */
 export const EmptyDrawsNothing: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   args: { items: [] },
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('region')).toBeNull();
@@ -384,6 +395,7 @@ const queueRef = createRef<HTMLElement>();
 /** The ref gets the card, a `<section>` named by its title. */
 export const ForwardsRef: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => <UploadQueue ref={queueRef} items={ITEMS} label="Transfers" />,
   play: async ({ canvas }) => {
     await expect(queueRef.current).toBe(canvas.getByRole('region', { name: 'Transfers' }));

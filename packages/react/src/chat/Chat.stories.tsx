@@ -141,6 +141,11 @@ export const LongConversation: Story = {
       </ChatThread>
     </Frame>
   ),
+};
+
+export const LongConversationChecks: Story = {
+  ...LongConversation,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const log = canvas.getByRole('log');
     await expect(log.scrollTop + log.clientHeight).toBeGreaterThanOrEqual(log.scrollHeight - 1);
@@ -481,6 +486,11 @@ export const FlatReply: Story = {
 export const FlatReplyOnMobile: Story = {
   ...FlatReply,
   globals: mobileViewport,
+};
+
+export const FlatReplyOnMobileChecks: Story = {
+  ...FlatReplyOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -892,6 +902,11 @@ export const ComposerGenerating: Story = {
 export const ComposerFooterAtMobile: Story = {
   ...ComposerGenerating,
   globals: mobileViewport,
+};
+
+export const ComposerFooterAtMobileChecks: Story = {
+  ...ComposerFooterAtMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -1091,6 +1106,11 @@ export const AiAssistant: Story = {
 export const AiAssistantOnMobile: Story = {
   ...AiAssistant,
   globals: mobileViewport,
+};
+
+export const AiAssistantOnMobileChecks: Story = {
+  ...AiAssistantOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -1142,6 +1162,11 @@ export const ImageGenerator: Story = {
 export const ImageGeneratorOnMobile: Story = {
   ...ImageGenerator,
   globals: mobileViewport,
+};
+
+export const ImageGeneratorOnMobileChecks: Story = {
+  ...ImageGeneratorOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -1251,6 +1276,11 @@ export const AiAssistantWithToolsAndSources: Story = {
 export const AiAssistantWithToolsOnMobile: Story = {
   ...AiAssistantWithToolsAndSources,
   globals: mobileViewport,
+};
+
+export const AiAssistantWithToolsOnMobileChecks: Story = {
+  ...AiAssistantWithToolsOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },

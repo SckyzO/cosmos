@@ -237,6 +237,11 @@ export const WithThumbnails: Story = { render: () => <Gallery count={5} /> };
 export const ThumbnailsOverflowing: Story = {
   globals: mobileViewport,
   render: () => <Gallery />,
+};
+
+export const ThumbnailsOverflowingChecks: Story = {
+  ...ThumbnailsOverflowing,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });
     await expect(strip.scrollWidth).toBeGreaterThan(strip.clientWidth);
@@ -374,6 +379,7 @@ const insideStory = (): Story => ({
 /** Inside, the dots sit on a dark pill at the bottom center of the slide and still jump to a slide. */
 export const InsideIndicatorsKeepTheirBehaviour: Story = {
   ...insideStory(),
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const dots = await canvas.findAllByRole('button', { name: /go to slide/i });
     await expect(dots).toHaveLength(4);
@@ -401,6 +407,11 @@ export const InsideIndicatorsKeepTheirBehaviour: Story = {
 /** The pill is 50% black and the dots white: the active one solid, the others at 60%. */
 export const InsideIndicatorsReadOnAPill: Story = {
   ...insideStory(),
+};
+
+export const InsideIndicatorsReadOnAPillChecks: Story = {
+  ...InsideIndicatorsReadOnAPill,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const dots = await canvas.findAllByRole('button', { name: /go to slide/i });
     const color = (el: Element) => getComputedStyle(el).backgroundColor;

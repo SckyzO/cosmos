@@ -84,6 +84,11 @@ export const WithoutShortcut: Story = {
       </div>
     );
   },
+};
+
+export const WithoutShortcutChecks: Story = {
+  ...WithoutShortcut,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole('button', { name: 'Search…' });
     await expect(button.querySelector('kbd')).toBeNull();
@@ -103,6 +108,11 @@ export const Sizes: Story = {
       ))}
     </div>
   ),
+};
+
+export const SizesChecks: Story = {
+  ...Sizes,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     // Same height as the field of its size, so the two line up in a form or a bar.
     const canvas = within(canvasElement);
@@ -127,6 +137,11 @@ export const Sizes: Story = {
 export const IconButtonOnAPhone: Story = {
   globals: mobileViewport,
   render: () => <InTopbar />,
+};
+
+export const IconButtonOnAPhoneChecks: Story = {
+  ...IconButtonOnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole('button', { name: /Search projects/ });
     await expect(button).toHaveAccessibleName(/Search projects, tasks, docs/);

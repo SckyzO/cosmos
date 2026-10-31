@@ -95,6 +95,11 @@ export const Controlled: Story = {
       </div>
     );
   },
+};
+
+export const ControlledChecks: Story = {
+  ...Controlled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const select = canvas.getByRole('combobox', { name: 'Interval' });
     await userEvent.selectOptions(select, '60');

@@ -95,6 +95,11 @@ export const Mobile: Story = {
   globals: mobileViewport,
   parameters: { layout: 'fullscreen' },
   render: (args) => <Locator {...args} />,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },

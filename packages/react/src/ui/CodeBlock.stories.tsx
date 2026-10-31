@@ -182,6 +182,11 @@ export const HighlightedWithShiki: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const HighlightedWithShikiChecks: Story = {
+  ...HighlightedWithShiki,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const blocks = [...canvasElement.querySelectorAll('pre code')];
     await expect(blocks).toHaveLength(3);

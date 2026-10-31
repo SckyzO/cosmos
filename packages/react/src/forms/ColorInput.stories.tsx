@@ -80,6 +80,11 @@ export const InAFormRow: Story = {
       </FormRow>
     </div>
   ),
+};
+
+export const InAFormRowChecks: Story = {
+  ...InAFormRow,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const field = canvas.getByRole('textbox', { name: 'Event colour' });
     await expect(field).toHaveAccessibleDescription('Shown on the calendar');
@@ -94,6 +99,11 @@ export const MobileWrapsTheSwatches: Story = {
       <ColorInput label="Event colour" defaultValue="#14b8a6" description="Shown on the calendar" />
     </div>
   ),
+};
+
+export const MobileWrapsTheSwatchesChecks: Story = {
+  ...MobileWrapsTheSwatches,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },

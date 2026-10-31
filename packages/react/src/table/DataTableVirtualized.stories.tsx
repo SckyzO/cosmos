@@ -406,6 +406,11 @@ export const OnAPhone: Story = {
       />
     </Wrap>
   ),
+};
+
+export const OnAPhoneChecks: Story = {
+  ...OnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(bodyRows(canvas.getByRole('table', { name: 'Nodes' })).length).toBeLessThan(40);
     expectNoHorizontalOverflow();

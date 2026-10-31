@@ -189,6 +189,11 @@ export const WithMenus: Story = {
 export const WithMenusMobile: Story = {
   ...WithMenus,
   globals: mobileViewport,
+};
+
+export const WithMenusMobileChecks: Story = {
+  ...WithMenusMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     await expect(canvas.getByRole('button', { name: 'Toggle menu' })).toBeVisible();
@@ -247,6 +252,11 @@ export const MultiColumnWithSecondary: Story = {
 export const MultiColumnMobile: Story = {
   ...MultiColumnWithSecondary,
   globals: mobileViewport,
+};
+
+export const MultiColumnMobileChecks: Story = {
+  ...MultiColumnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const main = canvas.getByRole('main');

@@ -103,6 +103,11 @@ export const AutoSubmitOnComplete: Story = {
   tags: ['!autodocs'],
   decorators: standaloneDecorator,
   args: { onSubmit: fn(), sentTo: 'john@example.com', length: 4 },
+};
+
+export const AutoSubmitOnCompleteChecks: Story = {
+  ...AutoSubmitOnComplete,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const cells = canvas.getAllByRole('textbox');
     cells[0].focus();

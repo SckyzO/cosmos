@@ -240,6 +240,11 @@ export const SyncedWithTheUrlHash: Story = {
 export const FailedBuildMobile: Story = {
   ...FailedBuild,
   globals: mobileViewport,
+};
+
+export const FailedBuildMobileChecks: Story = {
+  ...FailedBuildMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -248,6 +253,11 @@ export const FailedBuildMobile: Story = {
 export const RunningStepMobile: Story = {
   ...RunningStep,
   globals: mobileViewport,
+};
+
+export const RunningStepMobileChecks: Story = {
+  ...RunningStepMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
@@ -256,6 +266,11 @@ export const RunningStepMobile: Story = {
 export const LongLogMobile: Story = {
   ...LongLog,
   globals: mobileViewport,
+};
+
+export const LongLogMobileChecks: Story = {
+  ...LongLogMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },

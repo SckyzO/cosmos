@@ -206,6 +206,7 @@ export const ClickScrollsToTop: Story = {
 };
 
 export const OnActivateOverride: Story = {
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <div className="h-32 p-6">
       <BackToTopFab threshold={0} onActivate={args.onActivate as () => void} />
@@ -248,6 +249,13 @@ export const ScrolledPastThreshold: Story = {
     </TallContent>
   ),
   beforeEach: () => () => window.scrollTo({ top: 0, behavior: 'instant' }),
+  // Past the 400px threshold, so the button shows.
+  play: () => window.scrollTo({ top: 600, behavior: 'instant' }),
+};
+
+export const ScrolledPastThresholdChecks: Story = {
+  ...ScrolledPastThreshold,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     window.scrollTo({ top: 600, behavior: 'instant' });
     await waitFor(() => {

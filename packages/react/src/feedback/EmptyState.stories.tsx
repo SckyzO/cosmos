@@ -255,6 +255,11 @@ export const WithSteps: Story = {
       </Button>
     ),
   },
+};
+
+export const WithStepsChecks: Story = {
+  ...WithSteps,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const list = canvas.getByRole('list');
     await expect(list.querySelectorAll('li')).toHaveLength(3);

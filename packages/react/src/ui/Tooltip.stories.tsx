@@ -155,6 +155,11 @@ export const Open: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const OpenChecks: Story = {
+  ...Open,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     await waitFor(() => expect(page.getAllByRole('tooltip')).toHaveLength(7));
     for (const tip of page.getAllByRole('tooltip')) await expect(tip).toBeVisible();
@@ -342,6 +347,13 @@ export const WithShortcut: Story = {
       </div>
     </Wrap>
   ),
+  // The first tooltip open, to show its shortcut.
+  play: ({ canvas }) => userEvent.hover(canvas.getByRole('button', { name: 'Save' })),
+};
+
+export const WithShortcutChecks: Story = {
+  ...WithShortcut,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const save = canvas.getByRole('button', { name: 'Save' });
     await userEvent.hover(save);
@@ -370,6 +382,13 @@ export const WithTitle: Story = {
       </div>
     </Wrap>
   ),
+  // The tooltip open, to show its title.
+  play: () => userEvent.tab(),
+};
+
+export const WithTitleChecks: Story = {
+  ...WithTitle,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     await userEvent.tab();
     const tip = within(page.getByRole('tooltip'));
@@ -387,6 +406,7 @@ const DELAY = 300;
  * tooltip; leaving or Escape cancels it. `arrow={false}` drops the pointer.
  */
 export const DelayedWithoutArrow: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <div className="flex gap-3">

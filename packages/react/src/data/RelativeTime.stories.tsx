@@ -135,6 +135,11 @@ export const Live: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { tooltip: true, locale: 'fr-FR', value: NOW - 400 * DAY },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

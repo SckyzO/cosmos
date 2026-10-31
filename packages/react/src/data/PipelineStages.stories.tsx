@@ -89,6 +89,11 @@ export const OnNarrowScreen: Story = {
   globals: mobileViewport,
   tags: ['!autodocs'],
   args: { stages: DEALS, defaultSelectedId: 'qualified', 'aria-label': 'Deal pipeline' },
+};
+
+export const OnNarrowScreenChecks: Story = {
+  ...OnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const boxes = canvas.getAllByRole('radio').map((radio) => radio.getBoundingClientRect());

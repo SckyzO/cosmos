@@ -156,6 +156,11 @@ export const Controlled: Story = {
       </div>
     );
   },
+};
+
+export const ControlledChecks: Story = {
+  ...Controlled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('combobox', { name: 'Roles' }));
     await userEvent.click(await page.findByRole('option', { name: 'Billing' }));

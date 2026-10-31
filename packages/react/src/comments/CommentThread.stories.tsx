@@ -491,14 +491,15 @@ export const TicketDetailPage: Story = {
 
 // ── Narrow screens ──────────────────────────────────────────────────────────
 
-const atMobile = (story: Story): Story => ({
-  ...story,
-  globals: mobileViewport,
-  play: async (context) => {
+const atMobile = (story: Story): Story => ({ ...story, globals: mobileViewport });
+
+// The play of a phone story's hidden twin: the story's own, then no sideways scroll.
+const fitsThePhone =
+  (story: Story): Story['play'] =>
+  async (context) => {
     await story.play?.(context);
     expectNoHorizontalOverflow(context.canvasElement);
-  },
-});
+  };
 
 export const ThreadWithRepliesOnMobile: Story = atMobile(ThreadWithReplies);
 export const InternalNotesOnMobile: Story = atMobile(InternalNotes);
@@ -512,6 +513,72 @@ export const ComposerWithModesOnMobile: Story = atMobile(ComposerWithModes);
 export const ComposerInternalNoteOnMobile: Story = atMobile(ComposerInternalNote);
 export const TicketDetailPageOnMobile: Story = atMobile(TicketDetailPage);
 
+export const ThreadWithRepliesOnMobileChecks: Story = {
+  ...ThreadWithRepliesOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(ThreadWithReplies),
+};
+
+export const InternalNotesOnMobileChecks: Story = {
+  ...InternalNotesOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(InternalNotes),
+};
+
+export const EditingOnMobileChecks: Story = {
+  ...EditingOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(Editing),
+};
+
+export const EmptyThreadOnMobileChecks: Story = {
+  ...EmptyThreadOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(EmptyThread),
+};
+
+export const LongTextOnMobileChecks: Story = {
+  ...LongTextOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(LongText),
+};
+
+export const HostileTextOnMobileChecks: Story = {
+  ...HostileTextOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(HostileText),
+};
+
+export const FoldedRepliesOnMobileChecks: Story = {
+  ...FoldedRepliesOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(FoldedReplies),
+};
+
+export const LatestRepliesKeptOnMobileChecks: Story = {
+  ...LatestRepliesKeptOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(LatestRepliesKept),
+};
+
+export const ComposerWithModesOnMobileChecks: Story = {
+  ...ComposerWithModesOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(ComposerWithModes),
+};
+
+export const ComposerInternalNoteOnMobileChecks: Story = {
+  ...ComposerInternalNoteOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(ComposerInternalNote),
+};
+
+export const TicketDetailPageOnMobileChecks: Story = {
+  ...TicketDetailPageOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: fitsThePhone(TicketDetailPage),
+};
+
 // ── Tests ───────────────────────────────────────────────────────────────────
 
 const tagged: { tags: string[] } = { tags: ['!dev', '!autodocs'] };
@@ -519,6 +586,7 @@ const tagged: { tags: string[] } = { tags: ['!dev', '!autodocs'] };
 const replyCalls = fn();
 export const ReplyOpensAComposerAndSubmits: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment
@@ -554,6 +622,7 @@ export const ReplyOpensAComposerAndSubmits: Story = {
 const editCalls = fn();
 export const EditThenCancelRestoresTheCommentAndFocus: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment
@@ -615,6 +684,7 @@ export const FoldedRepliesUnfold: Story = {
 
 export const FewRepliesAreNotFolded: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment
@@ -644,6 +714,7 @@ export const FewRepliesAreNotFolded: Story = {
 const submitCalls = fn();
 export const CtrlOrCmdEnterSubmitsEnterAddsALine: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer onSubmit={submitCalls} />
@@ -674,6 +745,7 @@ export const CtrlOrCmdEnterSubmitsEnterAddsALine: Story = {
 
 export const SubmitIsDisabledWhileEmptyOrSubmitting: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer onSubmit={() => {}} />
@@ -709,6 +781,7 @@ export const HostileBodyRendersAsText: Story = {
 
 export const LinksInABodyAreHttpOnly: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment author="Ana" text="See https://example.com/a. Not javascript:alert(1)." />
@@ -724,6 +797,7 @@ export const LinksInABodyAreHttpOnly: Story = {
 
 export const AnActionWithoutItsCallbackIsAbsent: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment author="Ana" text="No actions at all." />
@@ -754,6 +828,7 @@ export const AnActionWithoutItsCallbackIsAbsent: Story = {
 
 export const EditedMarkAndRoleAreShown: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment author="Ana" role="Support" edited time="2m ago" text="Fixed." />
@@ -768,6 +843,7 @@ export const EditedMarkAndRoleAreShown: Story = {
 
 export const ChildrenRenderInPlaceOfText: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <Comment author="Ana" editText="**raw** source" onEdit={() => {}}>
@@ -946,6 +1022,7 @@ export const TheDefaultStillFoldsTheTail: Story = {
 const modeCalls = fn();
 export const SwitchingModeChangesWhatOnSubmitReceives: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer modes={MODES} onSubmit={modeCalls} />
@@ -974,6 +1051,7 @@ export const SwitchingModeChangesWhatOnSubmitReceives: Story = {
 const plainCalls = fn();
 export const WithoutModesOnSubmitStillGetsTheTextAlone: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer onSubmit={plainCalls} />
@@ -997,6 +1075,7 @@ const readSurface = (el: Element) => {
 
 export const AnInternalModeIsAnnouncedAndTinted: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer modes={MODES} defaultValue="Check the logs." onSubmit={fn()} />
@@ -1026,6 +1105,7 @@ export const AnInternalModeIsAnnouncedAndTinted: Story = {
 
 export const InternalSubmitButtonIsTintedToo: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer modes={MODES} defaultValue="Text" onSubmit={fn()} />
@@ -1058,6 +1138,7 @@ const ControlledModes = ({ onSubmit }: { onSubmit: (text: string, mode?: string)
 const controlledCalls = fn();
 export const ModeCanBeControlled: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => <ControlledModes onSubmit={controlledCalls} />,
   play: async ({ canvas }) => {
     controlledCalls.mockClear();
@@ -1071,6 +1152,7 @@ export const ModeCanBeControlled: Story = {
 
 export const ModeKeyboardArrowsMoveTheSelection: Story = {
   ...tagged,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
       <CommentComposer modes={MODES} onSubmit={fn()} />

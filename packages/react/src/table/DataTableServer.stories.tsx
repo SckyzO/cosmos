@@ -177,6 +177,11 @@ export const OnAPhone: Story = {
       <ServerTable latency={0} />
     </Wrap>
   ),
+};
+
+export const OnAPhoneChecks: Story = {
+  ...OnAPhone,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Orders' })).toBeInTheDocument();
     expectNoHorizontalOverflow();

@@ -150,18 +150,33 @@ export const SingleCheckCard: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { groups: HEALTH_GROUPS.slice(0, 2), sort: 'severity' },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
 export const MobileGrid: Story = {
   globals: mobileViewport,
   args: { variant: 'grid', groups: HEALTH_GROUPS.slice(0, 2), sort: 'severity' },
+};
+
+export const MobileGridChecks: Story = {
+  ...MobileGrid,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
 export const MobileLongMessage: Story = {
   ...LongMessage,
   globals: mobileViewport,
+};
+
+export const MobileLongMessageChecks: Story = {
+  ...MobileLongMessage,
+  tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 

@@ -109,6 +109,11 @@ export const NoIconNoTitle: Story = {
     </div>
   ),
   args: { onAccept: fn() } as never,
+};
+
+export const NoIconNoTitleChecks: Story = {
+  ...NoIconNoTitle,
+  tags: ['!dev', '!autodocs'],
   // With no title to name it, the dialog takes `ariaLabel`.
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('dialog', { name: 'Cookie notice' })).toBeInTheDocument();
@@ -198,6 +203,11 @@ export const SettingsDoesNotAutoClose: Story = {
 export const FullChoicesOnMobile: Story = {
   ...FullChoices,
   globals: { viewport: { value: 'mobile', isRotated: false } },
+};
+
+export const FullChoicesOnMobileChecks: Story = {
+  ...FullChoicesOnMobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(window.innerWidth).toBeLessThan(768);
     const dialog = canvas.getByRole('dialog');

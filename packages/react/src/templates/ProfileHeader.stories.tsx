@@ -81,6 +81,11 @@ export const WithCoverImage: Story = {
     cover: placeholderCover('Ana Ruiz cover', 1600, 400),
     avatar: { name: 'Ana Ruiz', src: placeholderAvatar('Ana Ruiz', 192) },
   },
+};
+
+export const WithCoverImageChecks: Story = {
+  ...WithCoverImage,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     // Only the avatar overlaps the cover: the name sits on the panel, where its contrast holds.
     const cover = canvasElement.querySelector('img[aria-hidden="true"]')!;
@@ -93,6 +98,11 @@ export const WithCoverImage: Story = {
 
 export const WithStatsAndTabs: Story = {
   args: { stats: STATS, tabs: <ProfileTabs /> },
+};
+
+export const WithStatsAndTabsChecks: Story = {
+  ...WithStatsAndTabs,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // The counters are terms and values, read as pairs.
@@ -143,6 +153,11 @@ export const Mobile: Story = {
   args: { stats: STATS, tabs: <ProfileTabs /> },
   parameters: { layout: 'fullscreen' },
   globals: mobileViewport,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
     const canvas = within(canvasElement);

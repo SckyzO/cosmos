@@ -112,6 +112,11 @@ export const NarrowContainer: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { legend: true },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
     const strip = canvasElement.querySelector<HTMLElement>('[role="group"]')!;
@@ -124,6 +129,12 @@ export const Mobile: Story = {
 export const MobileDots: Story = {
   ...Mobile,
   args: { variant: 'dots', legend: true },
+  play: undefined,
+};
+
+export const MobileDotsChecks: Story = {
+  ...MobileDots,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
     const strip = canvasElement.querySelector<HTMLElement>('[role="group"]')!;

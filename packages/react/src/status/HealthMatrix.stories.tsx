@@ -151,6 +151,11 @@ export const AttentionStripPills: Story = { args: { ...AttentionStrip.args, vari
 export const AttentionStripMobile: Story = {
   ...AttentionStrip,
   globals: mobileViewport,
+};
+
+export const AttentionStripMobileChecks: Story = {
+  ...AttentionStripMobile,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvas }) => {
     expectNoHorizontalOverflow();
     const strip = canvas.getByRole('list', { name: 'Needs attention' });
@@ -164,6 +169,11 @@ export const AttentionStripFewRows: Story = { args: { attentionStrip: true } };
 /** At 375px the grid scrolls in its own box: the page does not. */
 export const Mobile: Story = {
   globals: mobileViewport,
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
     const box = canvasElement.querySelector('table')!.parentElement!;
@@ -181,7 +191,19 @@ export const StalePills: Story = { args: { stale: HEALTH_NOW - 4 * 60_000, varia
 
 export const StaleMobile: Story = { ...Mobile, args: { stale: HEALTH_NOW - 4 * 60_000 } };
 
+export const StaleMobileChecks: Story = {
+  ...StaleMobile,
+  tags: ['!dev', '!autodocs'],
+  play: MobileChecks.play,
+};
+
 export const MobilePills: Story = { ...Mobile, args: { variant: 'pills' } };
+
+export const MobilePillsChecks: Story = {
+  ...MobilePills,
+  tags: ['!dev', '!autodocs'],
+  play: MobileChecks.play,
+};
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

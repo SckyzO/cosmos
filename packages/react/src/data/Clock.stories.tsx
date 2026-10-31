@@ -136,6 +136,11 @@ export const Mobile: Story = {
     hour12: true,
     showDate: true,
   },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

@@ -315,7 +315,7 @@ export const DisabledItemIsNotSelectable: Story = {
 
 /** `closeOnSelect={false}` keeps the menu open after the item runs. */
 export const CloseOnSelectOff: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Spot>
       <Menu defaultOpen>
@@ -529,7 +529,7 @@ export const CheckboxItems: Story = {
 
 /** The role, the state and the disabled state are exposed to assistive technology. */
 export const CheckboxItemRolesAndAttributes: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <CheckboxMenu />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'View' }));
@@ -550,7 +550,7 @@ export const CheckboxItemRolesAndAttributes: Story = {
 
 /** A click toggles the item, calls `onCheckedChange` with the new state, and keeps the menu open. */
 export const CheckboxItemTogglesAndStaysOpen: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   args: { onPick: fn() } as never,
   render: (args) => (
     <CheckboxMenu
@@ -579,7 +579,7 @@ export const CheckboxItemTogglesAndStaysOpen: Story = {
 
 /** Arrows, Home, End and the typeahead move over the checkbox items; Space and Enter toggle them. */
 export const CheckboxItemKeyboard: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <CheckboxMenu />,
   play: async ({ canvas }) => {
     canvas.getByRole('button', { name: 'View' }).focus();
@@ -611,7 +611,7 @@ export const CheckboxItemKeyboard: Story = {
 
 /** `closeOnSelect` closes the menu after the toggle, as an action item does. */
 export const CheckboxItemCloseOnSelect: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <CheckboxMenu closeOnSelect />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'View' }));
@@ -642,6 +642,11 @@ const ControlledCheckbox = () => {
 export const CheckboxItemControlled: Story = {
   tags: ['!autodocs'],
   render: () => <ControlledCheckbox />,
+};
+
+export const CheckboxItemControlledChecks: Story = {
+  ...CheckboxItemControlled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const item = await within(await waitFor(() => menu()!)).findByRole('menuitemcheckbox');
     await expect(item).toHaveAttribute('aria-checked', 'false');
@@ -687,7 +692,7 @@ export const RadioItems: Story = {
 
 /** The role and the state are exposed; a pick moves the check, closes the menu and takes the focus back. */
 export const RadioItemPicksOneAndCloses: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <RadioMenu />,
   play: async ({ canvas }) => {
     const trigger = canvas.getByRole('button', { name: 'Density' });
@@ -714,7 +719,7 @@ export const RadioItemPicksOneAndCloses: Story = {
 
 /** The arrows reach the radio items and skip the disabled one. */
 export const RadioItemsTakeTheArrowKeys: Story = {
-  tags: ['!autodocs'],
+  tags: ['!dev', '!autodocs'],
   render: () => <RadioMenu />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Density' }));

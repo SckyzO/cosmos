@@ -34,6 +34,11 @@ const Demo = () => {
 /** Each filter is a removable brand Tag, named "Clear {label} filter". */
 export const Default: Story = {
   render: () => <Demo />,
+};
+
+export const DefaultChecks: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Clear severity filter' }));

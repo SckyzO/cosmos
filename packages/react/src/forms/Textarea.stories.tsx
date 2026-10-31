@@ -102,6 +102,7 @@ export const TypingFiresOnChange: Story = {
 };
 
 export const CounterUpdatesAsYouType: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { label: 'Note', maxLength: 50 },
   play: async ({ canvas }) => {
     const ta = canvas.getByLabelText('Note');

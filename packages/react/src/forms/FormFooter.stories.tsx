@@ -118,6 +118,7 @@ export const ClickCancelFiresHandler: Story = {
 };
 
 export const SubmittingDisablesButtons: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { onCancel: fn(), submitting: true },
   play: async ({ args, canvas }) => {
     const cancel = canvas.getByRole('button', { name: /cancel/i });

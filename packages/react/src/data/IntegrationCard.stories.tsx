@@ -110,6 +110,11 @@ export const WithMeta: Story = {
     actionIntent: 'danger',
     onAction: fn(),
   },
+};
+
+export const WithMetaChecks: Story = {
+  ...WithMeta,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Last synced 2 min ago · 14 channels')).toBeInTheDocument();
   },

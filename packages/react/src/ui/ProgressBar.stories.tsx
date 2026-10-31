@@ -181,6 +181,11 @@ export const QuotaUsage: Story = {
       <QuotaRow label="Bandwidth" usage="490 / 500 MB" value={98} intent="danger" />
     </div>
   ),
+};
+
+export const QuotaUsageChecks: Story = {
+  ...QuotaUsage,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('progressbar', { name: 'Storage' })).toHaveAttribute(
       'aria-valuenow',
@@ -197,6 +202,7 @@ export const QuotaUsage: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const RoleProgressbar: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { value: 50 },
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar');
@@ -208,6 +214,7 @@ export const RoleProgressbar: Story = {
 };
 
 export const IndeterminateAriaBusy: Story = {
+  tags: ['!dev', '!autodocs'],
   args: { indeterminate: true },
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar');
@@ -291,6 +298,11 @@ export const Segments: Story = {
       <ProgressBar segments={STORAGE} aria-label="Storage by type" />
     </div>
   ),
+};
+
+export const SegmentsChecks: Story = {
+  ...Segments,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const bar = canvas.getByRole('progressbar', { name: 'Storage by type' });
     await expect(bar).toHaveAttribute('aria-valuenow', '80');
@@ -319,6 +331,11 @@ export const SegmentsWithLegend: Story = {
       />
     </div>
   ),
+};
+
+export const SegmentsWithLegendChecks: Story = {
+  ...SegmentsWithLegend,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const items = canvas.getAllByRole('listitem').map((li) => li.textContent);
     await expect(items).toEqual(['Documents40 GB', 'Images25 GB', 'Backups15 GB', 'Free20 GB']);
@@ -427,6 +444,11 @@ export const SegmentsOnNarrowScreen: Story = {
       aria-label="Storage by type"
     />
   ),
+};
+
+export const SegmentsOnNarrowScreenChecks: Story = {
+  ...SegmentsOnNarrowScreen,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

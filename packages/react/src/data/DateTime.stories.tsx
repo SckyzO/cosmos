@@ -89,6 +89,11 @@ export const InvalidValue: Story = { args: { value: 'soon' } };
 export const Mobile: Story = {
   globals: mobileViewport,
   args: { format: 'full', locale: 'fr-FR', timeZone: 'Asia/Tokyo' },
+};
+
+export const MobileChecks: Story = {
+  ...Mobile,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },

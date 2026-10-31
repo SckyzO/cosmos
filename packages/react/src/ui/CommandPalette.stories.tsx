@@ -534,6 +534,11 @@ export const RichItems: Story = {
       </div>
     );
   },
+};
+
+export const RichItemsChecks: Story = {
+  ...RichItems,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await within(document.body).findByRole('dialog');
     const inside = within(dialog);
@@ -594,6 +599,21 @@ export const NoResults: Story = {
       </div>
     );
   },
+  // A search that matches nothing, to show the empty state.
+  play: async () => {
+    const input = await waitFor(() => {
+      const found = document.querySelector<HTMLInputElement>('[cmdk-input]');
+      if (!found) throw new Error('The palette is not open yet.');
+      return found;
+    });
+    input.focus();
+    await userEvent.type(input, 'zzzz');
+  },
+};
+
+export const NoResultsChecks: Story = {
+  ...NoResults,
+  tags: ['!dev', '!autodocs'],
   play: async () => {
     await waitFor(() => expect(document.querySelector('[cmdk-input]')).not.toBeNull());
     const input = document.querySelector('[cmdk-input]') as HTMLInputElement;

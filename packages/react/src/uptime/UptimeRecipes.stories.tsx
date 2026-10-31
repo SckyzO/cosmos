@@ -83,6 +83,11 @@ export const Incident: Story = {
       <Timeline items={INCIDENT} variant="stepper" />
     </div>
   ),
+};
+
+export const IncidentChecks: Story = {
+  ...Incident,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     for (const step of ['Investigating', 'Identified', 'Monitoring', 'Resolved']) {
       await expect(canvas.getByText(step)).toBeVisible();

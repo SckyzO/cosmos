@@ -170,6 +170,11 @@ export const Controlled: Story = {
 export const Narrow: Story = {
   globals: mobileViewport,
   args: { defaultValue: SAMPLE },
+};
+
+export const NarrowChecks: Story = {
+  ...Narrow,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await textbox(canvasElement);
     expectNoHorizontalOverflow(canvasElement);
@@ -193,6 +198,7 @@ const MARKS: ReadonlyArray<[name: string, tag: string]> = [
 
 export const ButtonsApplyAndShowTheirState: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -228,6 +234,7 @@ const SHORTCUTS: ReadonlyArray<[name: string, keys: string, tag: string]> = [
 
 export const ShortcutsApplyAndShowTheirState: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -248,6 +255,7 @@ export const ShortcutsApplyAndShowTheirState: Story = {
 
 export const ButtonsAnnounceTheirShortcut: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await textbox(canvasElement);
@@ -269,6 +277,7 @@ export const ButtonsAnnounceTheirShortcut: Story = {
 
 export const ToolbarIsOneTabStopWithArrowKeys: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -303,6 +312,7 @@ export const ToolbarIsOneTabStopWithArrowKeys: Story = {
 
 export const LinkFieldRefusesScripts: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -342,6 +352,7 @@ export const LinkFieldRefusesScripts: Story = {
 
 export const LinkFieldEditsAndRemovesALink: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     autoFocus: true,
     defaultValue: '<p><a href="https://example.com/a">Docs</a> and more</p>',
@@ -371,6 +382,7 @@ export const LinkFieldEditsAndRemovesALink: Story = {
 
 export const PastedAndTypedScriptsBecomeNoLink: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const text = await textbox(canvasElement);
@@ -402,6 +414,7 @@ export const PastedAndTypedScriptsBecomeNoLink: Story = {
 
 export const SchemaKeepsToItsNodes: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const text = await textbox(canvasElement);
@@ -423,6 +436,7 @@ export const SchemaKeepsToItsNodes: Story = {
 
 export const OnChangeGivesTheHtml: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const text = await textbox(canvasElement);
@@ -437,6 +451,7 @@ export const OnChangeGivesTheHtml: Story = {
 
 export const OnChangeGivesTheJson: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true, format: 'json', onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const text = await textbox(canvasElement);
@@ -453,6 +468,7 @@ export const OnChangeGivesTheJson: Story = {
 
 export const ControlledValueFollowsTheHost: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   render: function Render(args) {
     const [html, setHtml] = useState('<p>Start</p>');
     return (
@@ -483,6 +499,7 @@ export const ControlledValueFollowsTheHost: Story = {
 
 export const LabelAndErrorAreLinkedToTheField: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     label: 'Reply',
     required: true,
@@ -505,6 +522,7 @@ export const LabelAndErrorAreLinkedToTheField: Story = {
 
 export const DescriptionIsLinkedWithoutAnError: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { description: 'Markdown shortcuts work.' },
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement);
@@ -515,6 +533,7 @@ export const DescriptionIsLinkedWithoutAnError: Story = {
 
 export const AriaLabelNamesAFieldWithoutALabel: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { label: undefined, 'aria-label': 'Internal note' },
   play: async ({ canvasElement }) => {
     await expect(await textbox(canvasElement, 'Internal note')).toBeVisible();
@@ -523,6 +542,7 @@ export const AriaLabelNamesAFieldWithoutALabel: Story = {
 
 export const MaxLengthStopsTypingAndFlagsOverflow: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     autoFocus: true,
     maxLength: 5,
@@ -552,6 +572,7 @@ export const MaxLengthStopsTypingAndFlagsOverflow: Story = {
 
 export const MaxLengthFlagsContentThatArrivedOver: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { ...OverTheLimit.args, onChange: fn() },
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement, 'Product summary');
@@ -564,6 +585,7 @@ export const MaxLengthFlagsContentThatArrivedOver: Story = {
 
 export const ReadOnlyRefusesEdits: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { readOnly: true, defaultValue: '<p>Fixed text</p>', onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -582,6 +604,7 @@ export const ReadOnlyRefusesEdits: Story = {
 
 export const ReadOnlyLinksAreFollowable: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { readOnly: true, defaultValue: '<p><a href="https://example.com/a">Docs</a></p>' },
   play: async ({ canvasElement }) => {
     const link = await within(canvasElement).findByRole('link', { name: 'Docs' });
@@ -592,6 +615,7 @@ export const ReadOnlyLinksAreFollowable: Story = {
 
 export const DisabledDoesNothing: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { disabled: true, defaultValue: '<p>Locked</p>', onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -609,6 +633,7 @@ export const DisabledDoesNothing: Story = {
 
 export const BubbleOpensOverTheSelection: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     variant: 'bubble',
     autoFocus: true,
@@ -646,6 +671,7 @@ export const BubbleOpensOverTheSelection: Story = {
 
 export const BubbleLinkFieldIsInlineAndRefusesScripts: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     variant: 'bubble',
     autoFocus: true,
@@ -670,6 +696,7 @@ export const BubbleLinkFieldIsInlineAndRefusesScripts: Story = {
 
 export const MinimalHasShortcutsAndInputRules: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { variant: 'minimal', autoFocus: true, onChange: fn() },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -703,6 +730,7 @@ export const MinimalHasShortcutsAndInputRules: Story = {
 // older one over what was typed since.
 export const FastTypingKeepsEveryCharacter: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   render: function Render() {
     const [html, setHtml] = useState('');
     return <RichTextEditor label="Message" autoFocus value={html} onChange={setHtml} />;
@@ -721,6 +749,7 @@ export const FastTypingKeepsEveryCharacter: Story = {
 
 export const FocusShowsTheFieldBorder: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true },
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement);
@@ -734,6 +763,7 @@ export const FocusShowsTheFieldBorder: Story = {
 
 export const ContentIsReadableInEveryTheme: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { defaultValue: SAMPLE, description: 'A hint.' },
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement);
@@ -750,6 +780,7 @@ export const ContentIsReadableInEveryTheme: Story = {
 
 export const PlaceholderShowsWhileEmpty: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement);
     const empty = text.querySelector('p.is-editor-empty') as HTMLElement;
@@ -761,6 +792,7 @@ export const PlaceholderShowsWhileEmpty: Story = {
 /** The toolbar buttons follow the page's `data-density`; compact keeps them at 24px. */
 export const ToolbarFollowsPageDensity: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   render: (args) => (
     <InEachDensity>
       <RichTextEditor {...args} />
@@ -776,6 +808,7 @@ export const ToolbarFollowsPageDensity: Story = {
 /** The link field follows `data-density`. The dialog opens in a portal, so the attribute goes on `<html>`. */
 export const LinkFieldFollowsPageDensity: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { defaultValue: '<p>Read the changelog.</p>' },
   play: async ({ canvas, canvasElement }) => {
     const root = document.documentElement;
@@ -815,6 +848,7 @@ export const LinkFieldFollowsPageDensity: Story = {
  */
 export const ToolbarAndTextFollowTheReadingDirection: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { maxLength: 400, defaultValue: SAMPLE },
   render: (args) => bothDirections(() => <RichTextEditor {...args} />),
   play: async ({ canvasElement }) => {
@@ -844,6 +878,7 @@ export const ToolbarAndTextFollowTheReadingDirection: Story = {
 /** The arrows along the toolbar swap in right to left, however the direction was set. */
 export const ToolbarArrowsFollowTheDirectionOfThePage: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -866,6 +901,7 @@ export const ToolbarArrowsFollowTheDirectionOfThePage: Story = {
 /** Each block follows what is typed in it: Arabic starts at the right and Latin at the left, in either page direction. */
 export const BlocksFollowWhatIsTypedInThem: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { defaultValue: '<p>مرحبا بالعالم</p><p>Hello world</p>' },
   render: (args) => bothDirections(() => <RichTextEditor {...args} />),
   play: async ({ canvasElement }) => {
@@ -900,6 +936,7 @@ export const BlocksFollowWhatIsTypedInThem: Story = {
  */
 export const ListsAndQuotesFollowWhatIsTypedInThem: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: {
     defaultValue:
       '<ul><li><p>Rolling restarts</p></li></ul><ol><li><p>إعادة التشغيل</p></li></ol>' +
@@ -937,6 +974,7 @@ export const ListsAndQuotesFollowWhatIsTypedInThem: Story = {
 /** An address reads left to right: the link field keeps that direction in a right-to-left page. */
 export const LinkFieldReadsLeftToRight: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   args: { autoFocus: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

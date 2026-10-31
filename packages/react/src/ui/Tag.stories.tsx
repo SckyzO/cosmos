@@ -96,6 +96,11 @@ const RemovableDemo = ({ onRemove }: { onRemove?: (name: string) => void }) => {
 export const Removable: Story = {
   tags: ['!autodocs'],
   render: () => <RemovableDemo />,
+};
+
+export const RemovableChecks: Story = {
+  ...Removable,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Remove Billing' }));
@@ -184,6 +189,11 @@ export const Link: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const LinkChecks: Story = {
+  ...Link,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const link = canvas.getByRole('link', { name: 'Documentation' });
@@ -196,6 +206,11 @@ export const Link: Story = {
 export const Clickable: Story = {
   args: { children: 'Filter', intent: 'brand', onClick: fn() },
   tags: ['!autodocs'],
+};
+
+export const ClickableChecks: Story = {
+  ...Clickable,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Filter' }));
@@ -221,6 +236,11 @@ export const Disabled: Story = {
       </div>
     </Wrap>
   ),
+};
+
+export const DisabledChecks: Story = {
+  ...Disabled,
+  tags: ['!dev', '!autodocs'],
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
     const remove = canvas.getByRole('button', { name: 'Remove Locked' });

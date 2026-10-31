@@ -157,6 +157,11 @@ export const OnNavigateReplacesTheScroll: Story = {
 export const MobileJumpMenu: Story = {
   globals: mobileViewport,
   render: () => <LongPage topOffset={0} />,
+};
+
+export const MobileJumpMenuChecks: Story = {
+  ...MobileJumpMenu,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const menu = canvas.getByRole('combobox', { name: 'Jump to section' });
