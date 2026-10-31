@@ -79,13 +79,13 @@ export const LongValueAndLabelStayInANarrowCard: Story = {
   ),
   play: async ({ canvas, canvasElement }) => {
     const box = canvas.getByTestId('box').getBoundingClientRect();
-    await expect(
-      canvas.getByText('€12,418,906.40').getBoundingClientRect().right
-    ).toBeLessThanOrEqual(box.right);
+    const figure = canvas.getByText('€12,418,906.40').getBoundingClientRect();
+    await expect(figure.left).toBeGreaterThanOrEqual(box.left);
+    await expect(figure.right).toBeLessThanOrEqual(box.right);
+    // Beside the icon, on whichever side the reading direction puts it, never under it.
     const icon = canvasElement.querySelector('svg')!.getBoundingClientRect();
-    await expect(canvas.getByText('Subscribers').getBoundingClientRect().right).toBeLessThanOrEqual(
-      icon.left
-    );
+    const label = canvas.getByText('Subscribers').getBoundingClientRect();
+    await expect(label.right <= icon.left || label.left >= icon.right).toBe(true);
   },
 };
 
