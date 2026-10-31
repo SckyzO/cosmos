@@ -105,7 +105,10 @@ parallel_passes() {
   done
   wait
   for pass in "${passes[@]}"; do
-    read -r status seconds <"$logs/$pass.status" || { status=1; seconds=0; }
+    read -r status seconds <"$logs/$pass.status" || {
+      status=1
+      seconds=0
+    }
     if [[ $status -eq 0 ]]; then
       echo "passed  $pass (${seconds}s)"
     else
