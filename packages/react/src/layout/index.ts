@@ -27,6 +27,7 @@ export {
   Sidebar,
   type SidebarProps,
   type SidebarVariant,
+  type SidebarGutter,
   type SidebarItemProps,
   type SidebarGroupProps,
   type SidebarSectionProps,
