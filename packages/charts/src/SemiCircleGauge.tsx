@@ -1,8 +1,23 @@
-import { PolarAngleAxis, RadialBar, RadialBarChart, usePlotArea } from 'recharts';
+import { useId } from 'react';
+import { PolarAngleAxis, RadialBar, RadialBarChart, Sector, usePlotArea } from 'recharts';
 import { ANIMATION } from './core/animation';
 import { MUTED, PANEL, SERIES, TEXT, TRACK } from './core/colors';
+import { safeId } from './core/data';
 import { frameProps } from './core/frame';
-import { arcMark, clampTo, gaugeName, percent, rangeShare, statusColor } from './core/gauge';
+import {
+  arcAngle,
+  arcMark,
+  clampTo,
+  gaugeName,
+  needleOf,
+  percent,
+  rangeShare,
+  statusColor,
+  STATUS_COLORS,
+  trackRing,
+  zoneSpans,
+  type ZoneSpan,
+} from './core/gauge';
 import { useElementWidth } from './core/useElementWidth';
 import type { ChartProps } from './types';
 
@@ -41,6 +56,19 @@ export type SemiCircleGaugeProps = Omit<ChartProps, 'height'> & {
    * after the value in the name of the gauge.
    */
   target?: number;
+  /**
+   * Draw the zones `warnAt` and `critAt` cut on the track, under the arc: the theme's success
+   * color up to `warnAt`, its warning color up to `critAt`, its critical color after it, as
+   * tints the arc stands out from. With one threshold the track has the two zones it cuts,
+   * with none no zone. The thresholds join the name of the gauge, after the target. Default off.
+   */
+  showZones?: boolean;
+  /**
+   * Draw a needle inside the arc, pointing at the value on the scale of `min`–`max` (out of
+   * range, it stops at an end). It is short and stops just short of the arc, so it stays out
+   * of the value and its label in the hollow. Default off.
+   */
+  showNeedle?: boolean;
   /**
    * The most the gauge takes, in pixels (default 120). The arc is as wide as the box allows, up
    * to this height: in a narrower box the gauge is shorter, never taller.
@@ -131,6 +159,74 @@ const Target = ({ radius, thickness, share }: TargetProps) => {
   );
 };
 
+type ZonesProps = { radius: number; thickness: number; spans: ZoneSpan[] };
+
+// A tint of a status color: the track shows through, and the arc, in the solid color, stands out.
+const ZONE_SHARE = 40;
+
+// The zones the thresholds cut on the track, over it and under the arc (the default layer sits
+// between the track's and the arc's). Each is a plain sector, all cut to the track's own
+// rounded shape so the ends of the track keep their caps.
+const Zones = ({ radius, thickness, spans }: ZonesProps) => {
+  const area = usePlotArea();
+  const clip = safeId(useId());
+  if (!area || spans.length === 0) return null;
+  const ring = { cx: area.x + area.width / 2, cy: radius, ...trackRing(radius, thickness) };
+  return (
+    <g data-chart-zones="" pointerEvents="none">
+      <clipPath id={clip}>
+        <Sector {...ring} startAngle={180} endAngle={0} cornerRadius={thickness / 2} />
+      </clipPath>
+      <g clipPath={`url(#${clip})`}>
+        {spans.map(({ status, from, to }) => (
+          <g key={status} data-zone={status}>
+            <Sector
+              {...ring}
+              startAngle={arcAngle(from)}
+              endAngle={arcAngle(to)}
+              fill={`color-mix(in srgb, ${STATUS_COLORS[status]} ${ZONE_SHARE}%, transparent)`}
+              stroke="none"
+            />
+          </g>
+        ))}
+      </g>
+    </g>
+  );
+};
+
+type NeedleProps = { radius: number; thickness: number; share: number };
+
+// How far the needle's tip stops from the arc, and its width at the base.
+const NEEDLE_GAP = 2;
+const NEEDLE_WIDTH = 6;
+
+// A needle across the hollow, just inside the arc: a wedge from a base a quarter of the radius
+// below its tip, so it stays out of the value in the middle. In the text color over a halo in
+// the card's color, like the target mark.
+const Needle = ({ radius, thickness, share }: NeedleProps) => {
+  const area = usePlotArea();
+  if (!area) return null;
+  const tip = trackRing(radius, thickness).innerRadius - NEEDLE_GAP;
+  const length = Math.min(30, Math.max(12, Math.round(radius / 4)));
+  const corners = needleOf(
+    { cx: area.x + area.width / 2, cy: radius },
+    { from: tip - length, to: tip, halfWidth: NEEDLE_WIDTH / 2 },
+    share
+  );
+  return (
+    <polygon
+      data-chart-needle=""
+      points={[corners.tip, corners.left, corners.right].map(({ x, y }) => `${x},${y}`).join(' ')}
+      pointerEvents="none"
+      fill={TEXT}
+      stroke={PANEL}
+      strokeWidth={2}
+      strokeLinejoin="round"
+      paintOrder="stroke"
+    />
+  );
+};
+
 export const SemiCircleGauge = ({
   value,
   label = '',
@@ -142,6 +238,8 @@ export const SemiCircleGauge = ({
   formatValue = percent,
   showRange = false,
   target,
+  showZones = false,
+  showNeedle = false,
   ariaLabel,
   children,
   height = 120,
@@ -155,6 +253,17 @@ export const SemiCircleGauge = ({
   const thickness = Math.min(24, Math.max(8, Math.round(radius * 0.2)));
   const byStatus = warnAt !== undefined || critAt !== undefined;
   const arc = color ?? (byStatus ? statusColor(value, warnAt, critAt) : SERIES[0]);
+  const spans = showZones ? zoneSpans(min, max, warnAt, critAt) : [];
+  // What the name adds after the value: the target, and the thresholds of the zones drawn.
+  const notes = [
+    ...(target === undefined ? [] : [`target ${formatValue(target)}`]),
+    ...(warnAt !== undefined && spans.some((span) => span.status === 'warn')
+      ? [`warning from ${formatValue(warnAt)}`]
+      : []),
+    ...(critAt !== undefined && spans.some((span) => span.status === 'crit')
+      ? [`critical from ${formatValue(critAt)}`]
+      : []),
+  ];
   return (
     <div
       ref={box}
@@ -167,7 +276,7 @@ export const SemiCircleGauge = ({
             width: '100%',
             ariaLabel:
               gaugeName(ariaLabel ?? (label || 'Gauge'), text) +
-              (target === undefined ? '' : `, target ${formatValue(target)}`),
+              notes.map((note) => `, ${note}`).join(''),
             keyboard: false,
           })}
           data={[{ name: label || 'value', value: clampTo(value, min, max) }]}
@@ -188,6 +297,10 @@ export const SemiCircleGauge = ({
             background={{ fill: TRACK, cornerRadius: thickness / 2 }}
             {...ANIMATION}
           />
+          <Zones radius={radius} thickness={thickness} spans={spans} />
+          {showNeedle && (
+            <Needle radius={radius} thickness={thickness} share={rangeShare(value, min, max)} />
+          )}
           <Face
             radius={radius}
             value={text}

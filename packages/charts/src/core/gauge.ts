@@ -44,3 +44,82 @@ export const arcMark = (
     y2: cy - outer * sin,
   };
 };
+
+/** What a stretch of the track says: fine, a warning, critical. */
+export type GaugeStatus = 'ok' | 'warn' | 'crit';
+
+/** A stretch of the track in one status, from `from` to `to`, as shares of the range (0 the start, 1 the end). */
+export type ZoneSpan = { status: GaugeStatus; from: number; to: number };
+
+/** The color of each status: the one `statusColor` gives the arc. */
+export const STATUS_COLORS: Record<GaugeStatus, string> = {
+  ok: SUCCESS,
+  warn: STATUS_WARN,
+  crit: STATUS_CRIT,
+};
+
+/**
+ * The zones of a gauge's track, in order from the start: success up to `warnAt`,
+ * warning up to `critAt`, critical after it, which is where `statusColor` turns
+ * the arc. A threshold left out is never reached, so it has no zone, and none
+ * set leaves no zone at all. A threshold outside `min`–`max` stops at an end, and
+ * a zone that is left with no length is dropped.
+ */
+export const zoneSpans = (
+  min: number,
+  max: number,
+  warnAt?: number,
+  critAt?: number
+): ZoneSpan[] => {
+  if (warnAt === undefined && critAt === undefined) return [];
+  const warn = warnAt === undefined ? 1 : rangeShare(warnAt, min, max);
+  const crit = critAt === undefined ? 1 : rangeShare(critAt, min, max);
+  const spans: ZoneSpan[] = [
+    { status: 'ok', from: 0, to: Math.min(warn, crit) },
+    // A warning threshold above the critical one is never reached: critical comes first.
+    { status: 'warn', from: warn, to: crit },
+    { status: 'crit', from: crit, to: 1 },
+  ];
+  return spans.filter((span) => span.to > span.from);
+};
+
+/**
+ * The angle of a share of a half-circle arc that opens upward, in the degrees
+ * Recharts reads (counterclockwise from the right): 180 on the left end of the
+ * arc, 90 at the top, 0 on the right end.
+ */
+export const arcAngle = (share: number) => 180 - 180 * share;
+
+type Point = { x: number; y: number };
+
+/**
+ * The three corners of a needle on the radius of a half-circle arc that opens
+ * upward, at `share` of the arc, around (`cx`, `cy`): the `tip` at radius `to`,
+ * and the two ends of its base at radius `from`, `halfWidth` either side of the
+ * radius.
+ */
+export const needleOf = (
+  { cx, cy }: { cx: number; cy: number },
+  { from, to, halfWidth }: { from: number; to: number; halfWidth: number },
+  share: number
+): { tip: Point; left: Point; right: Point } => {
+  const angle = Math.PI * (1 - share);
+  const [cos, sin] = [Math.cos(angle), Math.sin(angle)];
+  return {
+    tip: { x: cx + to * cos, y: cy - to * sin },
+    left: { x: cx + from * cos + halfWidth * sin, y: cy - from * sin + halfWidth * cos },
+    right: { x: cx + from * cos - halfWidth * sin, y: cy - from * sin - halfWidth * cos },
+  };
+};
+
+/**
+ * The ring Recharts fills with a bar `thickness` thick, drawn in a band of the same
+ * thickness (a `barSize` that fills its band): 90% of the band, centered, the offset
+ * rounded to a pixel. What the zones and the needle of a half-circle gauge measure
+ * against, so they sit on the track as it is drawn.
+ */
+export const trackRing = (radius: number, thickness: number) => {
+  const size = thickness * 0.9;
+  const innerRadius = radius - thickness + Math.round((thickness - size) / 2);
+  return { innerRadius, outerRadius: innerRadius + size };
+};
