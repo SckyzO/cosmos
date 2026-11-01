@@ -4,6 +4,7 @@ import { Input } from '../forms/Input';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
+import { ResendButton, resendLabels, type ResendLabels } from './ResendButton';
 
 export type ResetPasswordFormProps = {
   onSubmit: (email: string) => void | Promise<void>;
@@ -21,6 +22,16 @@ export type ResetPasswordFormProps = {
   /** Resend handler in the `sent` view. Hidden if not provided. */
   onResend?: () => void;
   resendLabel?: string;
+  /**
+   * Seconds the resend button waits before it can be pressed again, from the moment the `sent`
+   * view shows (the e-mail was just sent) and from each press. Default `0`: no wait. While it
+   * waits the button is `aria-disabled` and keeps focus, the countdown is its description, and a
+   * polite status says when a new link went out and when the wait is over. The server stays the
+   * authority: show its refusal (a 429) through `error`.
+   */
+  resendCooldown?: number;
+  /** The words of the resend wait, to translate with the rest of the page. */
+  resendLabels?: ResendLabels;
   className?: string;
 };
 
@@ -37,6 +48,8 @@ export const ResetPasswordForm = ({
   submitLabel = 'Send reset link',
   onResend,
   resendLabel = 'Resend',
+  resendCooldown = 0,
+  resendLabels: resendWords,
   className,
 }: ResetPasswordFormProps) => {
   const [email, setEmail] = useState('');
@@ -63,9 +76,16 @@ export const ResetPasswordForm = ({
         </p>
         <div className="mt-6 flex flex-col items-stretch gap-2">
           {onResend && (
-            <Button variant="secondary" loading={loading} disabled={loading} onClick={onResend}>
-              {resendLabel}
-            </Button>
+            <ResendButton
+              label={resendLabel}
+              onResend={onResend}
+              cooldown={resendCooldown}
+              labels={resendLabels('link', resendWords)}
+              disabled={loading}
+              loading={loading}
+              variant="secondary"
+              rowClassName="flex flex-col items-stretch gap-1 text-xs text-[var(--color-text-muted)]"
+            />
           )}
           {signInHref && (
             <Link href={signInHref} variant="subtle" className="justify-center">
