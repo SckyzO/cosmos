@@ -42,6 +42,7 @@ Storybook page.
 | [Forms](components/forms.md)                     | The slider, the color and phone fields                                               |
 | [Layout](components/layout.md)                   | The application shell, search in the topbar, layout modes, split panes, auth layouts |
 | [Media](components/media.md)                     | `CodeBlock`                                                                          |
+| [Typography](components/typography.md)           | `Highlight`                                                                          |
 | [Variants worth knowing](components/variants.md) | Props that are easy to miss                                                          |
 
 ## Specifications
