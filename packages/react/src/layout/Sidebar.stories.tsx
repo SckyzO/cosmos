@@ -328,6 +328,37 @@ export const GutterFromTheCssVariable: Story = {
   },
 };
 
+/** `edgeToggle` outside a Shell: the strip moves the sidebar's own state and reports it. */
+export const EdgeToggleOutsideAShell: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onCollapsedChange: fn() } as never,
+  render: (args) => (
+    <Wrap>
+      <Sidebar
+        edgeToggle
+        onCollapsedChange={(args as unknown as { onCollapsedChange: () => void }).onCollapsedChange}
+      >
+        <Sidebar.Brand title="Cosmos" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ args, canvas }) => {
+    const onChange = (args as unknown as { onCollapsedChange: ReturnType<typeof fn> })
+      .onCollapsedChange;
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const edge = nav.querySelector('[data-sidebar-edge]') as HTMLElement;
+    // Against the end edge (inside its 1px line), the full height.
+    await expect(endOffset(edge, nav)).toBe(1);
+    await expect(edge.getBoundingClientRect().height).toBe(nav.getBoundingClientRect().height);
+    await userEvent.click(edge);
+    await expect(onChange).toHaveBeenLastCalledWith(true);
+    await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
+    await userEvent.click(edge);
+    await expect(onChange).toHaveBeenLastCalledWith(false);
+  },
+};
+
 /** Collapsed, a "···" mark takes each section title's place. */
 export const SectionsCollapsed: Story = {
   render: () => (

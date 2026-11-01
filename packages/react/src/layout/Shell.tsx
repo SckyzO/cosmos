@@ -12,6 +12,12 @@ import { ShellContext } from './shellContext';
  */
 export type ShellContainer = 'fluid' | 'boxed';
 
+/**
+ * How the sidebar and the page meet: `attached` (the sidebar against the window's edge, the page
+ * beside it) or `floating` (both are cards, 10px from the window and from each other).
+ */
+export type ShellVariant = 'attached' | 'floating';
+
 export type ShellProps = {
   /**
    * `fluid` (default): the topbar, the sidebar and the content take the whole window.
@@ -20,6 +26,21 @@ export type ShellProps = {
    * the two are the same. The sidebar's drawer, below `lg`, is not part of the column.
    */
   container?: ShellContainer;
+  /**
+   * `attached` (default): the sidebar against the window's edge, its end edge a line, the
+   * topbar and the page beside it on the base background.
+   * `floating`: the sidebar is a card 10px from the window's edges (border all round, rounded
+   * corners, a light shadow), and the topbar, the page and `secondary` sit together in a second
+   * card beside it, 10px away. The sidebar takes the tight gutter and the edge toggle (a strip
+   * along its edge that collapses it on click) unless it sets them. Below `lg`, where the sidebar
+   * is a drawer, the page fills the window as in `attached`.
+   */
+  variant?: ShellVariant;
+  /**
+   * The gutter of the Sidebar, when it sets none: `default` (20px) or `tight` (10px). Default
+   * `tight` in a floating Shell, `default` otherwise.
+   */
+  sidebarGutter?: 'default' | 'tight';
   /**
    * Top header bar: typically `<Topbar />`, or any header (a `<Navbar>`). Shell
    * passes it no props: a Topbar or a `SidebarToggle` reads the sidebar state
@@ -110,6 +131,8 @@ export const Shell = ({
   onCollapsedChange,
   collapseControl = 'topbar',
   container = 'fluid',
+  variant = 'attached',
+  sidebarGutter,
   defaultSidebarOpen = false,
   sidebarOpen: controlledOpen,
   onSidebarOpenChange,
@@ -141,10 +164,23 @@ export const Shell = ({
   const navId = useId();
   // Read by the Topbar, the Sidebar and every SidebarToggle in the Shell. Without a
   // sidebar there is nothing to collapse: no context, so a toggle without props shows nothing.
+  const gutter = sidebarGutter ?? (variant === 'floating' ? 'tight' : 'default');
   const shell = useMemo(
-    () => ({ collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl }),
-    [collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl]
+    () => ({
+      collapsed,
+      setCollapsed,
+      isMobile,
+      open,
+      setOpen,
+      navId,
+      collapseControl,
+      variant,
+      sidebarGutter: gutter,
+    }),
+    [collapsed, setCollapsed, isMobile, open, setOpen, navId, collapseControl, variant, gutter]
   );
+  // The drawer below `lg` has no room for margins: the page fills the window there.
+  const floating = variant === 'floating' && !isMobile;
 
   const layout = (
     <>
@@ -165,7 +201,14 @@ export const Shell = ({
         ) : (
           <aside className="shrink-0">{sidebar}</aside>
         ))}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div
+        className={clsx(
+          'flex min-w-0 flex-1 flex-col',
+          floating &&
+            'overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] shadow-sm'
+        )}
+        data-shell-panel={floating ? '' : undefined}
+      >
         {topbar && <div className="shrink-0">{topbar}</div>}
         {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}
         <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
@@ -193,13 +236,20 @@ export const Shell = ({
         className={clsx(
           'flex h-screen w-screen overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-base)]',
           container === 'boxed' && 'justify-center',
+          // Floating: 10px around and between the two cards.
+          floating && container === 'fluid' && 'gap-2.5 p-2.5',
           className
         )}
       >
         {container === 'boxed' ? (
           // The column's hairlines only show where the page background does: the window is
           // wider than the column.
-          <div className="flex h-full w-full max-w-[1440px] min-w-0 border-[var(--color-border)] min-[1441px]:border-x">
+          <div
+            className={clsx(
+              'flex h-full w-full max-w-[1440px] min-w-0 border-[var(--color-border)] min-[1441px]:border-x',
+              floating && 'gap-2.5 p-2.5'
+            )}
+          >
             {layout}
           </div>
         ) : (

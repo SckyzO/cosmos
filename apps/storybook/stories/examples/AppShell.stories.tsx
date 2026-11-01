@@ -629,9 +629,11 @@ const ReviewPage = () => (
 const AppShellScreen = ({
   state: initial,
   defaultSidebarOpen,
+  variant,
 }: {
   state: ScreenState;
   defaultSidebarOpen?: boolean;
+  variant?: 'attached' | 'floating';
 }) => {
   const [state, setState] = useState(initial);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -653,6 +655,7 @@ const AppShellScreen = ({
   return (
     <>
       <Shell
+        variant={variant}
         sidebarCollapsed={collapsed}
         onCollapsedChange={setCollapsed}
         defaultSidebarOpen={defaultSidebarOpen}
@@ -707,6 +710,14 @@ const AppShellScreen = ({
 /** The home of a workspace in use, with the sidebar, the Topbar and the page header around it. */
 export const Content: Story = {
   render: () => <AppShellScreen state="content" />,
+};
+
+/**
+ * The same home with `variant="floating"`: the sidebar and the page are two cards on the base
+ * background. The sidebar's edge collapses it on click.
+ */
+export const Floating: Story = {
+  render: () => <AppShellScreen state="content" variant="floating" />,
 };
 
 /** A new workspace: the nav and the Topbar are unchanged, the page invites to create a project. */
