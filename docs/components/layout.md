@@ -183,3 +183,14 @@ panel shows from `lg` up; below, the brand block sits above the form. In `cover`
 drawn under a dark scrim (`cover.alt` is empty unless set), and without it the card sits on a
 gradient of the accent. In every variant the built-in title is a paragraph: the forms carry the
 page's `h1`.
+
+`size` is the width of the card (of the form column in `split`): `md` (448px, the default), `lg`
+(512px) or `xl` (672px), the widths of `Modal`'s sizes. It suits a step of an onboarding wizard
+that needs more room than a sign-in form. `md` pads the card by 32px; `lg` and `xl` pad it by 24px
+below `sm` and 32px from there, so a phone keeps room for the form.
+
+```tsx
+<AuthLayout size="xl" logo={Activity} title="Cosmos">
+  <PlanStep />
+</AuthLayout>
+```

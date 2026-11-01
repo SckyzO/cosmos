@@ -3,6 +3,16 @@ import type { ComponentType, ReactNode } from 'react';
 
 export type AuthLayoutVariant = 'card' | 'split' | 'cover';
 
+/** The width of the card (or of the form column in `split`): the `Modal` widths. */
+export type AuthLayoutSize = 'md' | 'lg' | 'xl';
+
+// 448, 512 and 672px, the widths of `Modal`'s `md`, `lg` and `xl`.
+const SIZE_CLASS: Record<AuthLayoutSize, string> = {
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-2xl',
+};
+
 export type AuthLayoutProps = {
   /** Brand icon component (lucide). Renders inside a brand-colored square above the title. */
   logo?: ComponentType<{ className?: string }>;
@@ -22,6 +32,12 @@ export type AuthLayoutProps = {
    * `h1`. A `brand` node of your own is rendered as written.
    */
   variant?: AuthLayoutVariant;
+  /**
+   * Width of the card, or of the form column in `split`: `md` (448px, default), `lg` (512px) or
+   * `xl` (672px), the widths of `Modal`'s sizes. `lg` and `xl` pad the card by 24px below `sm`
+   * and 32px from there, `md` keeps its 32px. A wide card suits a step of an onboarding wizard.
+   */
+  size?: AuthLayoutSize;
   /**
    * `split` only: the panel beside the form, from `lg` up (hidden below, where the brand block
    * shows above the form instead). Without it, a panel on the brand accent with the `logo`,
@@ -60,6 +76,7 @@ export const AuthLayout = ({
   subtitle,
   brand,
   variant = 'card',
+  size = 'md',
   aside,
   asidePosition = 'end',
   cover,
@@ -83,7 +100,12 @@ export const AuthLayout = ({
     ) : null;
 
   const cardBox = (
-    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div
+      className={clsx(
+        'rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900',
+        size === 'md' ? 'p-8' : 'p-6 sm:p-8'
+      )}
+    >
       {renderBrand}
       {children}
     </div>
@@ -114,7 +136,7 @@ export const AuthLayout = ({
         )}
       >
         <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
-          <div className="w-full max-w-md">
+          <div className={clsx('w-full', SIZE_CLASS[size])}>
             <div className={clsx(hasAside && 'lg:hidden')}>{renderBrand}</div>
             {children}
           </div>
@@ -156,7 +178,7 @@ export const AuthLayout = ({
             aria-hidden
           />
         )}
-        <div className="relative w-full max-w-md">{cardBox}</div>
+        <div className={clsx('relative w-full', SIZE_CLASS[size])}>{cardBox}</div>
       </div>
     );
   }
@@ -168,7 +190,7 @@ export const AuthLayout = ({
         className
       )}
     >
-      <div className="w-full max-w-md">{cardBox}</div>
+      <div className={clsx('w-full', SIZE_CLASS[size])}>{cardBox}</div>
     </div>
   );
 };
