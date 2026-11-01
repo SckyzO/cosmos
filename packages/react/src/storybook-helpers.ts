@@ -549,6 +549,28 @@ export const expectTextContrast = (el: Element, min = 4.5) => {
 };
 
 /**
+ * Same for text on a translucent tint (a highlighted word, a selected row): each translucent
+ * background from `el` up to the closest opaque one is laid over the one behind it, then the
+ * text colour over the result.
+ */
+export const expectTextContrastOnTint = (el: Element, min = 4.5) => {
+  const tints: number[][] = [];
+  let surface: number[] = [255, 255, 255, 255];
+  for (let node: Element | null = el; node; node = node.parentElement) {
+    const bg = toRgba(getComputedStyle(node).backgroundColor);
+    if (bg[3] === 0) continue;
+    if (bg[3] === 255) {
+      surface = bg;
+      break;
+    }
+    tints.push(bg);
+  }
+  surface = tints.reduceRight((under, tint) => over(tint, under), surface);
+  const text = over(toRgba(getComputedStyle(el).color), surface);
+  expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(min);
+};
+
+/**
  * Same for the native placeholder of an input or textarea, read from its
  * `::placeholder` pseudo-element (translucent colours are laid over the field).
  */
