@@ -5,6 +5,21 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.4.1...@sckyzo/cosmos-react@0.5.0) (2026-11-01)
+
+
+### Features
+
+* **react:** add a floating Shell and a Sidebar edge toggle ([4e5c334](https://github.com/SckyzO/cosmos/commit/4e5c33446ecce015d03e972fcafe20b33a95c278))
+* **react:** export the SidebarGutter type ([6144bca](https://github.com/SckyzO/cosmos/commit/6144bca63b97dc75bba0888ea4f693fd1b919a19))
+* **react:** group Sidebar rows and add a tight gutter ([96c686c](https://github.com/SckyzO/cosmos/commit/96c686c8a9ea459db3657a2fd8d63f46bc6e68b4))
+
+
+### Bug Fixes
+
+* **react:** make the collapsed Sidebar's rows square ([08c1392](https://github.com/SckyzO/cosmos/commit/08c139273b48cbfc6e6d3a92c35bfdf1b1065bdf))
+* **react:** mark only titled blocks after another in the rail ([f1d4e44](https://github.com/SckyzO/cosmos/commit/f1d4e44cdccdd4e10945db72844798af4561b768))
+
 ## [0.4.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.4.0...@sckyzo/cosmos-react@0.4.1) (2026-10-31)
 
 
