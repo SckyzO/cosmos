@@ -13,9 +13,13 @@ import {
   expectRefFocuses,
   inEachTheme,
   expectTextContrast,
+  expectTextContrastOnTint,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
+import { COSMOS_ACCENTS } from '../settings/appearance';
 import { ProgressBar } from '../ui/ProgressBar';
+import { ProgressRing } from '../ui/ProgressRing';
 import { KpiCard } from './KpiCard';
 import { TrendDelta } from './TrendDelta';
 
@@ -619,5 +623,275 @@ export const ExactValueKeepsTheCardHeight: Story = {
     const height = (name: string) =>
       canvasElement.querySelector(`[data-case="${name}"] > div`)!.getBoundingClientRect().height;
     await expect(height('exact')).toBe(height('plain'));
+  },
+};
+
+// ── Chart beside the value, featured card ────────────────────────────────────
+
+const GoalRing = () => <ProgressRing aria-label="Monthly goal reached" value={77} size="lg" />;
+
+const goalCard = (props: Partial<React.ComponentProps<typeof KpiCard>> = {}) => (
+  <KpiCard
+    label="Monthly goal"
+    value="77%"
+    sub="of $50 000"
+    icon={CreditCard}
+    delta={<TrendDelta value={9.6} label="vs last month" />}
+    chart={<GoalRing />}
+    chartPosition="end"
+    {...props}
+  />
+);
+
+/** `chartPosition="end"`: the ring sits beside the value, delta and sub line, centered on them. */
+export const ChartBesideTheValue: Story = {
+  globals: { viewport: { value: 'laptop', isRotated: false } },
+  render: () => <div className="max-w-sm">{goalCard()}</div>,
+};
+
+/** On a phone the card takes the width of the screen: the ring stays beside the figure. */
+export const ChartBesideTheValueOnMobile: Story = {
+  globals: mobileViewport,
+  render: () => (
+    <div className="grid gap-4">
+      {goalCard()}
+      {goalCard({ label: 'Uptime', value: '99.98%', icon: Server })}
+    </div>
+  ),
+};
+
+export const ChartBesideTheValueOnMobileChecks: Story = {
+  ...ChartBesideTheValueOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow();
+    for (const ring of within(canvasElement).getAllByRole('progressbar')) {
+      const card = ring.closest('div[aria-busy], div.rounded-2xl') as HTMLElement;
+      const value = within(card).getByText(/^\d+(\.\d+)?%$/);
+      // Beside the value, not under it: on its row, and after it along the line.
+      await expect(ring.getBoundingClientRect().top).toBeLessThan(
+        value.getBoundingClientRect().bottom
+      );
+      await expect(startOffset(ring, card)).toBeGreaterThanOrEqual(
+        startOffset(value, card) + value.getBoundingClientRect().width
+      );
+    }
+  },
+};
+
+// The card's value, its delta and the ring, by the part of the card they belong to.
+const placed = (card: HTMLElement) => ({
+  value: within(card).getByText('77%').getBoundingClientRect(),
+  delta: within(card).getByText('vs last month').getBoundingClientRect(),
+  ring: within(card).getByRole('progressbar').getBoundingClientRect(),
+  box: card.getBoundingClientRect(),
+});
+
+export const ChartPositionEndSitsBesideTheValue: Story = {
+  ...ChartBesideTheValue,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const card = canvas.getByText('Monthly goal').closest('div.rounded-2xl') as HTMLElement;
+    const { value, ring } = placed(card);
+    const valueEl = within(card).getByText('77%');
+    const ringEl = within(card).getByRole('progressbar');
+    await expect(startOffset(ringEl, card)).toBeGreaterThanOrEqual(
+      startOffset(valueEl, card) + value.width
+    );
+    // At the end of the line, inside the card's border and padding (1px and 20px).
+    await expect(endOffset(ringEl, card)).toBeCloseTo(21, 0);
+    // Centered on the figure: value, delta and sub line.
+    const figure = within(card).getByText('of $50 000').getBoundingClientRect();
+    const middle = (value.top + figure.bottom) / 2;
+    await expect(Math.abs(ring.top + ring.height / 2 - middle)).toBeLessThan(8);
+  },
+};
+
+/** The default stays what it was: the chart under the delta, the full width of the card. */
+export const ChartPositionBottomIsTheDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <div className="max-w-sm">{goalCard({ chartPosition: undefined })}</div>,
+  play: async ({ canvas }) => {
+    const card = canvas.getByText('Monthly goal').closest('div.rounded-2xl') as HTMLElement;
+    const { delta, ring } = placed(card);
+    await expect(ring.top).toBeGreaterThanOrEqual(delta.bottom);
+  },
+};
+
+/** Too narrow for both, the ring drops under the figure, at the start of the line. */
+export const ChartPositionEndDropsUnderInANarrowCard: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <div style={{ width: 220 }}>{goalCard()}</div>,
+  play: async ({ canvas }) => {
+    const card = canvas.getByText('Monthly goal').closest('div.rounded-2xl') as HTMLElement;
+    const { value, ring } = placed(card);
+    const ringEl = within(card).getByRole('progressbar');
+    await expect(ring.top).toBeGreaterThanOrEqual(value.bottom);
+    await expect(startOffset(ringEl, card)).toBeCloseTo(
+      startOffset(within(card).getByText('77%'), card),
+      0
+    );
+    await expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
+    await expect(endOffset(ringEl, card)).toBeGreaterThanOrEqual(0);
+  },
+};
+
+/** While loading, the ring's place and the card's height are kept. */
+export const ChartPositionEndKeepsItsLayoutWhileLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid max-w-3xl grid-cols-2 gap-4">
+      <div data-testid="loaded">{goalCard()}</div>
+      <div data-testid="loading">{goalCard({ loading: true })}</div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const loaded = canvas.getByTestId('loaded').firstElementChild as HTMLElement;
+    const loading = canvas.getByTestId('loading').firstElementChild as HTMLElement;
+    await expect(loading).toHaveAttribute('aria-busy', 'true');
+    await expect(loading.getBoundingClientRect().height).toBeCloseTo(
+      loaded.getBoundingClientRect().height,
+      0
+    );
+  },
+};
+
+/** `featured`: the tinted surface of the card's meaning, for the one figure a dashboard leads with. */
+export const Featured: Story = {
+  args: {
+    label: 'Monthly recurring revenue',
+    value: '$128 490',
+    sub: 'of $150 000 planned',
+    icon: CreditCard,
+    featured: true,
+    delta: <TrendDelta value={12.4} label="vs last month" />,
+  },
+};
+
+export const FeaturedWithRing: Story = {
+  render: () => <div className="max-w-sm">{goalCard({ featured: true })}</div>,
+};
+
+/** One featured card leading a row of plain ones. */
+export const FeaturedLeadsTheGrid: Story = {
+  render: () => (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <KpiCard
+        featured
+        className="lg:col-span-2"
+        label="Monthly recurring revenue"
+        value="$128 490"
+        sub="of $150 000 planned"
+        icon={CreditCard}
+        delta={<TrendDelta value={12.4} label="vs last month" />}
+      />
+      <KpiCard label="Active users" value="12 480" icon={Users} />
+      <KpiCard label="Open tickets" value="128" sub="across 3 queues" />
+    </div>
+  ),
+};
+
+/** A featured card takes the tint of its intent. */
+export const FeaturedIntents: Story = {
+  render: () => (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <KpiCard
+        featured
+        label="Revenue"
+        value="$48 920"
+        sub="this month"
+        icon={CreditCard}
+        delta={<TrendDelta value={12.4} label="vs last month" />}
+      />
+      <KpiCard
+        featured
+        intent="warning"
+        label="Disk usage"
+        value="82%"
+        sub="of 4 TB"
+        icon={Server}
+        delta={<TrendDelta value={5.1} goodDirection="down" label="vs last week" />}
+      />
+      <KpiCard
+        featured
+        intent="danger"
+        label="CRIT alerts"
+        value="3"
+        sub="2 escalated"
+        icon={ShieldAlert}
+        delta={<TrendDelta value={50} goodDirection="down" label="vs last week" />}
+      />
+    </div>
+  ),
+};
+
+export const FeaturedOnMobile: Story = {
+  ...FeaturedIntents,
+  globals: mobileViewport,
+};
+
+export const FeaturedOnMobileChecks: Story = {
+  ...FeaturedOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    expectNoHorizontalOverflow();
+  },
+};
+
+export const FeaturedTintsTheSurface: Story = {
+  ...FeaturedIntents,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 sm:grid-cols-4">
+      <KpiCard label="Plain" value="1" />
+      <KpiCard featured label="Featured" value="2" />
+      <KpiCard featured intent="warning" label="Warning" value="3" />
+      <KpiCard featured intent="danger" label="Danger" value="4" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const card = (label: string) =>
+      canvas.getByText(label).closest('div.rounded-2xl') as HTMLElement;
+    const surface = (label: string) => {
+      const style = getComputedStyle(card(label));
+      return [style.backgroundColor, style.borderTopColor].join(' ');
+    };
+    const [plain, featured, warning, danger] = ['Plain', 'Featured', 'Warning', 'Danger'].map(
+      surface
+    );
+    await expect(new Set([plain, featured, warning, danger]).size).toBe(4);
+  },
+};
+
+/** The label, value and sub line of a featured card keep 4.5:1 on its tint, in every theme and accent (the chip's icon is decorative). */
+export const FeaturedStaysReadableInEveryThemeAndAccent: Story = {
+  ...FeaturedIntents,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const root = document.documentElement;
+    const saved = root.getAttribute('data-accent');
+    try {
+      for (const { id } of COSMOS_ACCENTS) {
+        root.setAttribute('data-accent', id);
+        inEachTheme(() => {
+          try {
+            for (const card of canvasElement.querySelectorAll<HTMLElement>('div.rounded-2xl')) {
+              const spans = [
+                ...card.querySelectorAll<HTMLElement>(
+                  'span.uppercase, span.text-3xl, span.text-xs, span.text-gray-500'
+                ),
+              ];
+              expect(spans.length).toBeGreaterThanOrEqual(3);
+              for (const text of spans) expectTextContrastOnTint(text);
+            }
+          } catch (error) {
+            throw new Error(`[${id}] ${(error as Error).message}`, { cause: error });
+          }
+        });
+      }
+    } finally {
+      if (saved === null) root.removeAttribute('data-accent');
+      else root.setAttribute('data-accent', saved);
+    }
   },
 };
