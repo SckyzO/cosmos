@@ -12,6 +12,30 @@ region that stays scrolled to the newest message), `ChatMessage`,
 Shift+Enter adds a line) and `ChatConversationList` for a two-pane layout.
 Message text is always rendered as text, never HTML; http(s) URLs become links.
 
+`ChatConversationList` draws an `Avatar` from each conversation's `name` and `avatarSrc`. A
+conversation that needs another picture, a stack of members or an icon for a channel, passes it as
+`avatar`, which replaces the `Avatar`:
+
+```tsx
+const conversations = [
+  {
+    id: 'design',
+    name: 'Design team',
+    avatar: (
+      <AvatarGroup size="xs" max={3}>
+        <Avatar name="Ana Ruiz" />
+        <Avatar name="Li Wei" />
+      </AvatarGroup>
+    ),
+  },
+  { id: 'oncall', name: 'Ops on-call', avatar: <IconBox icon={Siren} size="lg" /> },
+];
+```
+
+The node sits in a 40px-high slot and is hidden from assistive technology, since the row is named
+by `name`. A node wider than 40px pushes the text along; `presence` still puts its dot on the node's
+end corner.
+
 `Chatbot` is a floating widget built on them: a launcher at the bottom right
 opens a panel (full-screen under 480px). It has no network code, the app owns
 the messages and answers `onSend`:
