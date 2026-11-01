@@ -1,6 +1,6 @@
 # Data
 
-Storybook group: Data. Audit entries, kanban boards, dates and clocks.
+Storybook group: Data. Audit entries, kanban boards, KPI cards, dates and clocks.
 
 ## Audit diff
 
@@ -101,3 +101,37 @@ the locale nor the zone, and keep the room of their text until then.
 `Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for
 stories, screenshots and tests.
+
+## KPI cards
+
+Storybook: [Kpi Card](https://sckyzo.github.io/cosmos/?path=/docs/data-kpi-card--docs).
+
+`KpiCard` is one key figure: a `label`, a `value`, and optionally an `icon`, a `delta`, a `sub` line
+and a `chart`. Two options change how the card is drawn, and both are off by default, so a card
+that sets neither looks as it always did.
+
+`chartPosition="end"` sets the `chart` beside the figure (the value, the delta and the sub line)
+instead of under the delta. The chart keeps its own size and is centered on the figure, at the end of
+the line: a `ProgressRing` next to a percentage. The figure keeps at least 9rem, so in a card too
+narrow for both the chart drops under it, at the start of the line, and nothing widens the page. The
+default, `chartPosition="bottom"`, is the chart under the delta at the full width of the card, for a
+sparkline.
+
+`featured` is for the one figure a dashboard leads with. The card takes the tinted surface of its
+meaning, the accent for a neutral card and the intent's color for `warning` and `danger`, and its
+label, value and sub line stay readable on it in the four themes and on every accent, and the muted
+gray text inside it (a `TrendDelta`'s comparison) takes a darker shade in the light themes. Give the
+card a wider column with `className` (`lg:col-span-2`) when it leads a grid:
+
+```tsx
+<KpiCard
+  featured
+  label="Monthly goal"
+  value="77%"
+  sub="of $50 000"
+  icon={CreditCard}
+  delta={<TrendDelta value={9.6} label="vs last month" />}
+  chart={<ProgressRing aria-label="Monthly goal reached" value={77} size="lg" />}
+  chartPosition="end"
+/>
+```

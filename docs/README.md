@@ -33,7 +33,7 @@ Storybook page.
 | Page                                             | Holds                                                                                |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | [Tables](components/tables.md)                   | `DataTable` and the table primitives                                                 |
-| [Data](components/data.md)                       | Audit diff, kanban board, dates, clocks and countdowns                               |
+| [Data](components/data.md)                       | Audit diff, kanban board, KPI cards, dates, clocks and countdowns                    |
 | [Feedback](components/feedback.md)               | Progress bars and rings                                                              |
 | [Monitoring](components/monitoring.md)           | Health checks, uptime monitoring, log views and job logs                             |
 | [Navigation](components/navigation.md)           | The record pager                                                                     |
