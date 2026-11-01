@@ -19,8 +19,8 @@ explain.
   controls.
 - [Charts](guides/charts.md): install `@sckyzo/cosmos-charts`, how the colors follow the theme,
   and the charts it ships.
-- [Optional entries](guides/optional-entries.md): `@sckyzo/cosmos-react/code`, `/editor` and
-  `/map`, with their optional peer dependencies.
+- [Optional entries](guides/optional-entries.md): `@sckyzo/cosmos-react/code`, `/editor`, `/map`
+  and `/qr`, with their optional peer dependencies.
 - [Right to left](guides/right-to-left.md): what to set, what mirrors, and what stays as it is.
 - [Refs and routing](guides/refs-and-routing.md): `ref` as a prop, and sending the links of the
   components through your router.

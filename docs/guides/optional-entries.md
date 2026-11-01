@@ -1,8 +1,8 @@
 # Optional entries
 
-Three parts of `@sckyzo/cosmos-react` live in entries of their own, because each needs a library
-that most apps never use: syntax highlighting, a rich text editor and a map. The library is an
-**optional peer dependency**: install it only in the apps that import the entry.
+Four parts of `@sckyzo/cosmos-react` live in entries of their own, because each needs a library
+that most apps never use: syntax highlighting, a rich text editor, a map and QR codes. The library
+is an **optional peer dependency**: install it only in the apps that import the entry.
 
 | Entry                         | Holds                                | You install                                                                                                   |
 | ----------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
@@ -10,6 +10,7 @@ that most apps never use: syntax highlighting, a rich text editor and a map. The
 | `@sckyzo/cosmos-react/code`   | `CodeBlock` with syntax highlighting | `shiki` `^4.5.0`                                                                                              |
 | `@sckyzo/cosmos-react/editor` | `RichTextEditor`                     | `@tiptap/react`, `@tiptap/core`, `@tiptap/pm`, `@tiptap/starter-kit` and `@tiptap/extensions`, each `^3.32.0` |
 | `@sckyzo/cosmos-react/map`    | `MapView`, `MapMarkerList`           | `maplibre-gl` `^5.24.0 \|\| ^6.4.1`                                                                           |
+| `@sckyzo/cosmos-react/qr`     | `QrCode`                             | `qr` `~0.7.2`                                                                                                 |
 
 The ranges are the `peerDependencies` of the package. The main entry never imports any of these
 libraries: an app that does not use an entry ships none of its code. Where an entry uses a
@@ -169,3 +170,50 @@ export const Stores = () => {
   imports MapLibre: an app that does not use `/map` ships none of it. Without `maplibre-gl`
   installed, Next.js stops the build on the missing module; Vite builds the app, and a map throws
   an error that names the package.
+
+## QR code
+
+Storybook: [QR Code](https://sckyzo.github.io/cosmos/?path=/docs/media-qr-code--docs),
+[the authenticator setup](https://sckyzo.github.io/cosmos/?path=/story/examples-auth-two-step-verification-form--authenticator-setup).
+
+`QrCode` draws a QR code from a text: a link to share, a code to pair a phone, the `otpauth://` URI
+an authenticator app is enrolled with. It lives in the `/qr` entry and needs
+[`qr`](https://github.com/paulmillr/qr) (MIT or Apache-2.0, no dependencies), an optional peer
+dependency that only the apps using this entry install:
+
+```bash
+pnpm add qr
+```
+
+```tsx
+import { QrCode } from '@sckyzo/cosmos-react/qr';
+
+<QrCode value={otpauthUri} label="Authenticator setup code" size={192} />;
+```
+
+- **`value` and `label`.** `value` is the text, as UTF-8. `label` is required: the code is a
+  picture (`role="img"`), so it is named by what it is for, and a screen reader cannot read it.
+  Show the same data as text next to it.
+- **`size`** is the side of the tile in pixels, quiet zone included (default `192`). The tile
+  shrinks, square, in a parent narrower than that.
+- **`ecc`** is the error correction level: `low` (7% of the code can be lost and it still scans),
+  `medium` (15%, default), `quartile` (25%) and `high` (30%). A higher level draws more modules for
+  the same text, so each is smaller at a given `size`. A text that does not fit throws an error
+  that names the level: a code holds up to 2953 bytes at `low`, 2331 at `medium`, 1663 at `quartile`
+  and 1273 at `high`.
+- **Dark on light in every theme.** The code is a white tile with black modules and the four-module
+  quiet zone the standard asks for, in light, sand, dark and deep blue alike. Readers handle an
+  inverted code unevenly, so a dark theme keeps the light tile rather than flipping the colors.
+  The accent does not touch it, and right to left does not mirror it.
+- **One `<svg>` with one `<path>`** for the dark modules, with crisp edges. It renders on the
+  server too: no effect, no measuring.
+- **For people who can't scan**, show the key as text in a `SecretValue` next to the code, as the
+  authenticator setup story does.
+
+`qr` is below 1.0, so Cosmos asks for `~0.7.2`: a new minor of `qr` is a deliberate bump of the
+peer range, not something your install picks up. The main entry never imports `qr`: an app that does
+not use `/qr` ships none of it. Without `qr` installed, the build stops on the missing module.
+
+`qr` ships ES modules only, and the CommonJS build of `/qr` requires it. Node loads an ES module
+from `require` from 20.19 and 22.12 on, the versions `qr` itself asks for. A test runner that cannot
+do that needs `qr` transformed, or the entry mocked.
