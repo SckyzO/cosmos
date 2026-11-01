@@ -74,31 +74,74 @@ is pre-1.0. It is a regular dependency of the package, not a peer.
 
 Storybook: [Event Calendar](https://sckyzo.github.io/cosmos/?path=/docs/data-event-calendar--docs).
 
-`EventCalendar` shows events in a month grid, Monday first. An event is `{ id, title, start, end?,
-allDay?, intent? }`: `start` and `end` are `Date`s, and `intent` colours the chip (`brand` by
-default, `violet` as a category colour that carries no meaning).
+`EventCalendar` shows events in a month grid, or in a week or a day of hours, Monday first. An event
+is `{ id, title, start, end?, allDay?, intent? }`: `start` and `end` are `Date`s, and `intent`
+colours it (`brand` by default, `violet` as a category colour that carries no meaning).
 
 ```tsx
 <EventCalendar
   events={events}
+  defaultView="week"
+  className="h-[640px]"
   onEventClick={(event) => open(event)}
-  onDayClick={(date) => create(date)}
+  onSlotClick={(start, { allDay }) => create(start, allDay)}
 />
 ```
 
-- **Time.** An event with a time writes its start before its title on the chip ("9:30 AM Release 2.4",
-  in the `locale`). An all-day event writes none.
+- **Views.** `view` (`month`, `week` or `day`; `month` by default), `defaultView` and `onViewChange`
+  follow the usual controlled/uncontrolled pair, and a segmented control in the toolbar picks one.
+  Previous and Next move by a month, a week or a day, and Today goes to the period that holds
+  `today`. Switching view from the period that holds today lands on today's period in the new view;
+  from any other, on the period that starts with the one shown (a week gives its Thursday's month).
+- **The period.** `date` (any day of the period shown), `defaultDate` and `onDateChange` are the
+  same kind of pair. `onDateChange` carries the first day of the period reached (the 1st of a month,
+  the Monday of a week, the day itself), by Previous, Next, Today and a change of view that lands on
+  another period, so a host that loads events per period knows what to fetch. `today` is the
+  current moment: its day is highlighted, Today goes to it, and the line of the hour grid sits at
+  its time. Leave it unset in an app, where it is now and the line moves every minute; set it to
+  freeze the calendar in a story or a test.
+- **Time.** An event with a time writes its start before its title on a month chip ("9:30 AM
+  Release 2.4", in the `locale`). An all-day event writes none.
 - **All-day.** `allDay` is inferred: an event is all-day when `start` is at 00:00 and `end` is
   missing or at 00:00, so an event made of dates alone (`new Date(2026, 4, 7)`) stays all-day. For
   an all-day event `end` is the last day, included. Set `allDay` to force the answer either way: a
   meeting that really starts at midnight is `allDay: false`, and then `end` is the moment it ends.
-- **The period.** `date` (any day of the period shown), `defaultDate` and `onDateChange` follow the
-  usual controlled/uncontrolled pair. `onDateChange` carries the first day of the period reached by
-  Previous, Next and Today, so a host that loads events per period knows what to fetch. `today`
-  says which day is highlighted, and where Today goes.
 - **Dates are local.** A `Date` is read in the browser's time zone, by its day and its clock time
-  there, as everywhere in the calendar: build one with `new Date(2026, 4, 7, 9, 30)`. A host that
-  keeps ISO strings in UTC converts them to local `Date`s before it passes them.
+  there: build one with `new Date(2026, 4, 7, 9, 30)`. A host that keeps ISO strings in UTC converts
+  them to local `Date`s before it passes them. A day on which the clocks change is still one day,
+  and the grid counts its hours on the wall clock.
+
+### Week and day
+
+The week and the day draw a grid of 24 hours, 48px each, in a scrolling area. It opens at 7 AM, or
+an hour before the first event of the period when that starts earlier. The area is as tall as the
+card: give the card a height with `className` (`h-[640px]`) and the grid scrolls inside it, or leave
+it and the grid is 36rem tall. The day names stay in view at the top, with the all-day events
+under them as bars over the days they cover.
+
+- **Overlaps.** Events that overlap sit side by side and share the width, as many columns as fit:
+  72px each, and two at least. A group with more has the rest behind a "+N" button at its first
+  hidden event, which opens the list of the whole day, the same one the month's "+N more" opens.
+- **Short and long events.** An event shorter than 20px (about 25 minutes) is drawn at 20px, on one
+  line with its start time. One that runs past midnight is cut at 24:00, square where it is cut, and
+  carries on at 00:00 the next day; a screen reader hears that it continues.
+- **The current time.** A line in the accent colour (red means danger in Cosmos), with a dot at its
+  start and the time in the gutter, on today's column. It is not read out.
+- **`onSlotClick(start, { allDay })`.** A click on an empty part of a day column gives the start of
+  the 30-minute slot under it, and a click on an empty part of the all-day row gives the day at
+  00:00 with `allDay: true`. Setting it also gives the grid one tab stop for a cursor on the slots:
+  the arrow keys move it a day or 30 minutes (the arrows toward the start and the end of the line
+  swap in right to left), Page Up and Page Down a week (a day, in the day view), Home and End to
+  the first and the last slot of the day, Enter or Space calls `onSlotClick`. A move past the
+  period shown goes to the next or the previous one. A status line under the grid says where the
+  cursor is. Without `onSlotClick` the grid is an area you can scroll, and nothing more.
+- **Keyboard and screen readers.** The hour grid is not an ARIA `grid`: events that overlap and run
+  over several rows are not cells. Each day is a group named by its date and holds a list of its
+  timed events in time order, each a button when `onEventClick` is set; the all-day events are one
+  group before them. The month keeps its own model, one tab stop per day number and chip.
+- **Dates and times** come from `Intl` in the `locale`: the title of a week is `May 4 – 10, 2026`
+  and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
+  the locale; the toolbar's labels stay in English.
 
 ## Dates, clocks and countdowns
 

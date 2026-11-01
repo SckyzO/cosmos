@@ -7,6 +7,8 @@ import {
   sameDay,
   startOfDay,
   startOfMonth,
+  weekDays,
+  weekStart,
 } from './calendar-dates';
 
 // Every date here is built from local components, like the helpers read them,
@@ -84,6 +86,45 @@ describe('startOfDay and startOfMonth', () => {
   it('cut a date back to its midnight and to the 1st', () => {
     expect(startOfDay(new Date(2026, 4, 7, 23, 59, 59, 999))).toEqual(new Date(2026, 4, 7));
     expect(startOfMonth(new Date(2026, 4, 31, 12))).toEqual(new Date(2026, 4, 1));
+  });
+});
+
+describe('weekStart and weekDays', () => {
+  it('start the week on the Monday on or before the date, at midnight', () => {
+    expect(weekStart(new Date(2026, 4, 7, 15, 30))).toEqual(new Date(2026, 4, 4));
+    expect(weekStart(new Date(2026, 4, 4))).toEqual(new Date(2026, 4, 4));
+  });
+
+  it('put a Sunday at the end of its week, not at the start of the next', () => {
+    expect(weekStart(new Date(2026, 4, 10))).toEqual(new Date(2026, 4, 4));
+    expect(weekStart(new Date(2026, 4, 11))).toEqual(new Date(2026, 4, 11));
+  });
+
+  it('cross a month and a year end', () => {
+    expect(weekStart(new Date(2026, 0, 1))).toEqual(new Date(2025, 11, 29));
+    expect(weekStart(new Date(2026, 4, 1))).toEqual(new Date(2026, 3, 27));
+  });
+
+  it('list seven consecutive days, Monday first', () => {
+    const days = weekDays(new Date(2025, 11, 31, 9));
+    expect(days).toHaveLength(7);
+    expect(days.map((d) => d.getDay())).toEqual([1, 2, 3, 4, 5, 6, 0]);
+    expect(days[0]).toEqual(new Date(2025, 11, 29));
+    expect(days[6]).toEqual(new Date(2026, 0, 4));
+    expect(days.every((d) => d.getHours() === 0 && d.getMinutes() === 0)).toBe(true);
+  });
+
+  it('stay a week of seven dates when the clocks change in it', () => {
+    // 8 March 2026 (New York), 29 March (Paris), 5 April (Auckland), 25 October (Paris).
+    for (const sunday of [new Date(2026, 2, 8), new Date(2026, 2, 29), new Date(2026, 3, 5)]) {
+      const days = weekDays(sunday);
+      expect(days[6]).toEqual(sunday);
+      expect(days.map((d) => d.getDate())).toEqual(
+        Array.from({ length: 7 }, (_, i) =>
+          new Date(2026, sunday.getMonth(), sunday.getDate() - 6 + i).getDate()
+        )
+      );
+    }
   });
 });
 
@@ -173,6 +214,61 @@ describe('createCalendarFormats', () => {
       expect(plain(createCalendarFormats('en-US').time(new Date(2026, 4, 7, 23, 59, 59)))).toBe(
         '11:59 PM'
       );
+    });
+  });
+
+  describe('timeRange, hour and dateRange', () => {
+    // ICU writes thin and narrow no-break spaces around the dash and before AM and PM.
+    const plain = (text: string) => text.replace(/[\u202f\u2009\u00a0]/g, ' ');
+    const at = (h: number, m = 0, d = 7) => new Date(2026, 4, d, h, m);
+
+    it('writes the time of an event from its start to its end', () => {
+      const en = createCalendarFormats('en-US');
+      expect(plain(en.timeRange(at(9, 30), at(11)))).toBe('9:30 – 11:00 AM');
+      expect(plain(en.timeRange(at(11), at(14, 30)))).toBe('11:00 AM – 2:30 PM');
+      expect(createCalendarFormats('fr-FR').timeRange(at(9, 30), at(11))).toMatch(
+        /^09:30\s*[–-]\s*11:00$/
+      );
+    });
+
+    it('writes the time of an event over midnight, hours only', () => {
+      const en = createCalendarFormats('en-US');
+      expect(plain(en.timeRange(at(22), at(1, 30, 8)))).toBe('10:00 PM – 1:30 AM');
+    });
+
+    it('names an hour for the side of the grid', () => {
+      const en = createCalendarFormats('en-US');
+      expect(plain(en.hour(9))).toBe('9 AM');
+      expect(plain(en.hour(12))).toBe('12 PM');
+      expect(plain(en.hour(15))).toBe('3 PM');
+      expect(createCalendarFormats('fr-FR').hour(15)).toMatch(/^15/);
+    });
+
+    it('folds the repeated parts of a range of dates', () => {
+      const en = createCalendarFormats('en-US');
+      expect(plain(en.dateRange(new Date(2026, 4, 4), new Date(2026, 4, 10)))).toBe(
+        'May 4 – 10, 2026'
+      );
+      expect(plain(en.dateRange(new Date(2026, 3, 27), new Date(2026, 4, 3)))).toBe(
+        'Apr 27 – May 3, 2026'
+      );
+      expect(plain(en.dateRange(new Date(2025, 11, 29), new Date(2026, 0, 4)))).toBe(
+        'Dec 29, 2025 – Jan 4, 2026'
+      );
+    });
+
+    it('is one date when the two are the same day, and keeps the Gregorian calendar', () => {
+      const en = createCalendarFormats('en-US');
+      expect(en.dateRange(new Date(2026, 4, 4), new Date(2026, 4, 4))).toBe('May 4, 2026');
+      expect(
+        createCalendarFormats('th-TH').dateRange(new Date(2026, 4, 4), new Date(2026, 4, 10))
+      ).not.toContain('2569');
+    });
+
+    it('names the dates in the locale', () => {
+      expect(
+        createCalendarFormats('fr-FR').dateRange(new Date(2026, 4, 4), new Date(2026, 4, 10))
+      ).toMatch(/4.*10 mai 2026/);
     });
   });
 
