@@ -183,3 +183,82 @@ comes before it: a currency sign, a protocol.
   it (a `FormRow` does the same with its description).
 - `controls="none"` draws the field alone, start-aligned like the stacked layout, for a price or an
   amount where a step of one means nothing. The arrow keys of the field still step by `step`.
+
+## Line items editor
+
+Storybook: [Line Items Editor](https://sckyzo.github.io/cosmos/?path=/docs/forms-line-items-editor--docs).
+
+`LineItemsEditor` is the list of lines of a new invoice or order: an item, a quantity, a rate and the
+amount worked out from them, with lines added and removed and the subtotal under them. It adds up
+what the user types and nothing else: tax, discounts and shipping are the page's.
+
+```tsx
+const [lines, setLines] = useState<LineItem[]>([]);
+
+<LineItemsEditor
+  aria-label="Invoice items"
+  currency="USD"
+  locale="en-US"
+  value={lines}
+  onChange={setLines}
+  catalogue={[
+    { label: 'Landing page design', rate: 950 },
+    { label: 'Copy editing (per page)', rate: 45 },
+  ]}
+  error={submitted && lines.length === 0 ? 'Add at least one line.' : undefined}
+  footer={({ subtotal }) => (
+    <>
+      <Totals.Row label="Tax (20%)" value={subtotal * 0.2} />
+      <Totals.Total label="Total due" value={subtotal * 1.2} />
+    </>
+  )}
+/>;
+```
+
+- **Value.** A line is `{ id, item, quantity, rate }`, the rate in units of the currency (`24.5`, not
+  2450 cents). `value`, `defaultValue` and `onChange(lines, { subtotal })` follow the usual
+  controlled and uncontrolled pair; only `undefined` means uncontrolled. The editor starts with no
+  line (`defaultValue` to change that) and gives an `id` to every line it adds: use it as the key of
+  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed.
+- **Layout.** From 42rem of its own width (a container query, so a card beside a summary switches on
+  its own width, not the window's) the lines are a grid with the amounts aligned in a column, and
+  the titles are drawn once above it. Narrower, each line is a card with the titles of its fields in
+  view, the item on the full width, the quantity and the rate side by side, and "Add line" as wide
+  as the editor. Every field has a name of its own, "Quantity, line 2".
+- **Item.** A plain text field, or, with a `catalogue` of `{ label, rate }`, a `Combobox` that also
+  takes what the user types (`allowCustomValue`). Picking an entry copies its rate to the line;
+  typing, even the whole label of an entry, never does. The list shows each rate written for the
+  currency. With a catalogue, the combobox toggle is one more Tab stop per line.
+- **Quantity and rate.** The quantity is a `NumberInput` with its arrows, at least 1 and in steps of
+  1; `quantity={{ min: 0.5, step: 0.5 }}` for hours. The rate is a `NumberInput` with no buttons and
+  the sign of the currency in front, from 0 and in steps of the smallest unit of the currency (a
+  browser checking the form around it refuses a rate with more decimals than the currency has).
+- **Amounts and rounding.** Each line is quantity times rate, rounded to the smallest unit of the
+  currency as `Intl.NumberFormat` knows it (2 decimals for USD, none for JPY, a half rounds up as it
+  reads in decimal), then the amounts shown are added: the subtotal is always the sum of the rows.
+  Without a `currency` the figures are plain numbers, up to three decimals.
+  `summarizeLineItems(lines, { currency, locale })` gives the same `{ subtotal }` for lines you hold
+  from elsewhere, such as a draft loaded from a server.
+- **Totals.** Under the lines the editor draws a `Totals` block with the subtotal, hidden while there
+  are no lines. `footer` receives `{ subtotal }` and returns the rows that follow it (`Totals.Row`,
+  `Totals.Total`, `Totals.Note`), written with the editor's currency and locale. `footer={false}`
+  draws no block, for a page that shows the summary in a card of its own and reads the subtotal from
+  `onChange`.
+- **Errors.** `errors` is keyed by line `id`, each with an `item`, `quantity` or `rate` message under
+  its cell; the cell is marked `aria-invalid` and described by it. `error` is a message for the
+  editor as a whole ("Add at least one line."), described by the editor and by "Add line", the one
+  button that can fix it. With no line, an empty state offers that button.
+- **Keyboard.** Tab goes through the item, the quantity, the rate and the remove button of each
+  line, then "Add line". Enter in a field does what it does without the editor: it submits the form
+  around it, or picks the option of the list; it never adds a line. A removed line hands the focus
+  to the item field of the line that took its place, the one before it when the last line is
+  removed, or "Add line" when none is left. A new line takes the focus in its item field.
+- **Announcements.** A polite status says "Line 3 added. 3 lines." and "Line 2 removed. 2 lines
+  left. Subtotal $1,900.00." and, when a cell is committed (focus leaves it, or Enter) and the
+  subtotal changed, "Subtotal $1,900.00". Nothing is said on a keystroke.
+- **Read only.** `readOnly` shows the lines as text, with no field, no "Add line" and no remove
+  button, in the same grid and cards, for a sent invoice.
+- **Words.** `labels` replaces every text, including the functions that write the names of the fields
+  and the announcements, for another language.
+
+There is no reordering of lines and no limit on their number.
