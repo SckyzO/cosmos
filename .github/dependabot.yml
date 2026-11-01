@@ -78,6 +78,16 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      # The Tiptap packages share one version: bumped one at a time, two copies
+      # of @tiptap/core end up in the lockfile and the editor's commands
+      # (toggleBold, setLink…) vanish from its types. #570 and #572 merged alone
+      # and left #571, #573 and #574 failing the typecheck.
+      tiptap:
+        patterns:
+          - '@tiptap/*'
+        update-types:
+          - 'minor'
+          - 'patch'
       # `playwright` (Vitest's browser provider, apps/storybook) and
       # `@playwright/test` (tests/e2e) must resolve the same version: CI installs
       # one browser revision for both, and a patch bump can change it.
