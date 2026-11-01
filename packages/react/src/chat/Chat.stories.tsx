@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowLeft, Paperclip } from 'lucide-react';
+import { ArrowLeft, Paperclip, Siren } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { Avatar } from '../ui/Avatar';
+import { AvatarGroup } from '../ui/AvatarGroup';
 import { Button } from '../ui/Button';
+import { IconBox } from '../ui/IconBox';
 import { Select } from '../forms/Select';
 import { SplitView } from '../layout/SplitView';
 import {
@@ -391,6 +394,106 @@ export const TwoPanePicksAConversation: Story = {
     await expect(canvas.getByRole('log', { name: 'Conversation with Ops on-call' })).toBeVisible();
     // Side by side at this width: the list stays on screen.
     await expect(canvas.getByRole('navigation', { name: 'Conversations' })).toBeVisible();
+  },
+};
+
+// Group conversations bring their own avatar: a stack of the members, an icon for a channel.
+const groupConversations: ChatConversation[] = [
+  {
+    id: 'design',
+    name: 'Design team',
+    lastMessage: 'Ana: the new icons are in the library',
+    time: '10:02',
+    unread: 3,
+    avatar: (
+      <AvatarGroup size="xs" max={3}>
+        <Avatar name="Ana Ruiz" />
+        <Avatar name="Li Wei" />
+        <Avatar name="Sam Patel" />
+        <Avatar name="Mia Chen" />
+      </AvatarGroup>
+    ),
+  },
+  {
+    id: 'oncall',
+    name: 'Ops on-call',
+    lastMessage: 'Disk alert cleared on rack B4',
+    time: '08:47',
+    presence: 'away',
+    avatar: <IconBox icon={Siren} size="lg" />,
+  },
+  {
+    id: 'ana',
+    name: 'Ana Ruiz',
+    lastMessage: 'Perfect, thanks',
+    time: 'Fri',
+    presence: 'online',
+  },
+];
+
+/**
+ * A conversation can carry its own `avatar`: an `AvatarGroup` for a group, an `IconBox` for a
+ * channel. The others keep the avatar made from their name.
+ */
+export const GroupAvatars: Story = {
+  render: () => (
+    <div className="max-w-sm overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)]">
+      <ChatConversationList
+        conversations={groupConversations}
+        selectedId="design"
+        onSelect={fn()}
+      />
+    </div>
+  ),
+};
+
+export const GroupAvatarsChecks: Story = {
+  ...GroupAvatars,
+  tags: ['!dev', '!autodocs'],
+  // The node replaces the avatar made from the name, and the other rows keep theirs.
+  play: async ({ canvas }) => {
+    const design = canvas.getByRole('button', { name: /Design team/ });
+    await expect(within(design).queryByRole('img', { name: 'Design team' })).toBeNull();
+    // The picture of the conversation is not read: its members are not part of the row's name.
+    await expect(within(design).queryByRole('img')).toBeNull();
+    await expect(design.firstElementChild!.firstElementChild).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
+    await expect(design).toHaveAccessibleName(/^Design team/);
+    const oncall = canvas.getByRole('button', { name: /Ops on-call/ });
+    await expect(within(oncall).queryByRole('img', { name: 'Ops on-call' })).toBeNull();
+    await expect(oncall.querySelector('svg')).not.toBeNull();
+    // The presence dot still marks the end corner of the node, whatever it is.
+    const dot = oncall.querySelector<HTMLElement>('[aria-hidden][class*="rounded-full"]')!;
+    await expect(dot).not.toBeNull();
+    await expect(
+      Math.abs(endOffset(dot, oncall.querySelector('svg')!.parentElement!))
+    ).toBeLessThan(4);
+    const ana = canvas.getByRole('button', { name: /^Ana Ruiz/ });
+    await expect(within(ana).getByRole('img', { name: /Ana Ruiz/ })).toBeVisible();
+    // Every avatar slot is 40px high, so the rows line up.
+    for (const row of [design, oncall, ana]) {
+      const slot = row.firstElementChild as HTMLElement;
+      await expect(slot.getBoundingClientRect().height).toBeCloseTo(40, 0);
+    }
+  },
+};
+
+/** The same list on a 375px screen: the previews give way, the page does not scroll sideways. */
+export const GroupAvatarsOnMobile: Story = {
+  ...GroupAvatars,
+  globals: mobileViewport,
+  render: () => (
+    <ChatConversationList conversations={groupConversations} selectedId="design" onSelect={fn()} />
+  ),
+};
+
+export const GroupAvatarsOnMobileChecks: Story = {
+  ...GroupAvatarsOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
