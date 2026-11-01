@@ -111,15 +111,21 @@ inline marks and the link by default, underline included.
   block moves it. With an image selected (an arrow key from its side, or a click), the button is
   pressed and opens the same fields on it. The button waits in a code block. The editor does not
   upload anything: host the picture, and give its URL.
+- **An image never comes in by paste or drop.** HTML copied from a web page, from a mail or from
+  the editor itself loses its pictures and keeps the text around them, so a picture from another
+  page is not even requested (no tracking pixel); a picture file pasted or dropped does nothing.
+  Images come in through the button, and through the document the host hands over as `value` or
+  `defaultValue`, in HTML or in JSON: that content is the host's, as it is for every other node,
+  and its images render.
 
 Links accept `http(s):`, `mailto:` and relative URLs only: a `javascript:` link is refused whether
 it is typed in the link field, typed as Markdown, pasted or passed in `value`. An image's source
-takes `http(s)` only, wherever it comes from: a pasted `<img>` with another source is dropped, and
-one in a JSON document is drawn without a source. The schema holds paragraphs, headings 1 to 3,
-lists, quotes, code blocks, hard breaks, images (`src` and `alt` only) and the marks above; tables,
-rules, other styles and anything else are dropped on paste. A pasted web page that holds images
-with `http(s)` sources now keeps them, and the browser loads them. **The editor only filters what
-goes through it: sanitize the stored HTML again on the server before you render it elsewhere.**
+takes `http(s)` only, wherever it comes from: an `<img>` with another source in an HTML `value` is
+dropped, and one in a JSON document is drawn without a source. The schema holds paragraphs,
+headings 1 to 3, lists, quotes, code blocks, hard breaks, images (`src` and `alt` only) and the
+marks above; tables, rules, other styles and anything else are dropped on paste. **The editor only
+filters what goes through it: sanitize the stored HTML again on the server before you render it
+elsewhere.**
 The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
 
 ## Map

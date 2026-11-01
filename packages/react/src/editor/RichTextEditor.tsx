@@ -177,7 +177,8 @@ const CONTENT_CLASS = [
  * `@tiptap/core`, `@tiptap/pm`).
  *
  * The schema holds paragraphs, headings (1 to 3), bullet and numbered lists, quotes, code blocks,
- * hard breaks, images and the marks above: nothing else survives a paste or `value`. Links go
+ * hard breaks, images and the marks above: nothing else survives a paste or `value`, and no image
+ * comes in by paste or drop (the toolbar's field and the host's `value` are its ways in). Links go
  * through `isSafeLinkUrl` (http(s), mailto, relative) and an image's source through `isHttpUrl`
  * (http(s) only); alignment is `center` or `end`, written as `style="text-align: …"`. That is the
  * editor's guarantee, not the server's: the HTML a host stores has to be sanitised again where it

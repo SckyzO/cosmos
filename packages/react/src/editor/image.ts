@@ -1,5 +1,6 @@
 import { Image } from '@tiptap/extension-image';
-import { NodeSelection, Selection } from '@tiptap/pm/state';
+import { DOMParser } from '@tiptap/pm/model';
+import { NodeSelection, Plugin, Selection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
 import { isHttpUrl } from '../chat/httpUrl';
 
@@ -8,10 +9,13 @@ const isSafeSource = (src: unknown): src is string => typeof src === 'string' &&
 /**
  * Tiptap's image, held to what the editor guarantees for a link. It lives in the line, so the
  * block's alignment moves it with the text. Only `src` and `alt` are in the schema, and a `src`
- * that is not an http(s) URL (`javascript:`, `data:`, a relative path) is out of it: a pasted
- * `<img>` with one is dropped, and one in a JSON document is drawn without a source. The Markdown
- * input rule is off: an image comes in through the field of the toolbar, which checks the address
- * and asks for a description.
+ * that is not an http(s) URL (`javascript:`, `data:`, a relative path) is out of it: an `<img>`
+ * with one in an HTML string is dropped, and one in a JSON document is drawn without a source.
+ *
+ * An image comes in through the field of the toolbar, which checks the address and asks for a
+ * description, or in the document the host hands over (HTML or JSON). Never by paste or drop: the
+ * parser of the clipboard has no rule for it, so a picture from another page is dropped before it
+ * is a node, and never requested. The Markdown input rule is off for the same reason.
  */
 export const RichTextImage = Image.extend({
   // Written out in full: `extend` calls `addOptions` again, and a `configure` before it is lost.
@@ -42,6 +46,16 @@ export const RichTextImage = Image.extend({
 
   addInputRules() {
     return [];
+  },
+
+  addProseMirrorPlugins() {
+    const { schema } = this.editor;
+    const rules = DOMParser.fromSchema(schema).rules.filter(
+      (rule) => !('node' in rule && rule.node === this.name)
+    );
+    // The same rules as everywhere else, less the image's: pasted or dropped content goes through
+    // this parser, and `setContent` and `content` through the schema's.
+    return [new Plugin({ props: { clipboardParser: new DOMParser(schema, rules) } })];
   },
 });
 
