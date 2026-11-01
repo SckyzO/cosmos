@@ -21,6 +21,7 @@ import { BubbleChart, ScatterChart } from './ScatterChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { Sparkline } from './Sparkline';
 import { StrokedGauge } from './StrokedGauge';
+import { SunburstChart } from './SunburstChart';
 import { TreemapChart } from './TreemapChart';
 import { WaterfallChart } from './WaterfallChart';
 import { WorldMap } from './WorldMap';
@@ -99,6 +100,24 @@ const CHARTS: Record<string, Chart> = {
       />
     ),
     empty: (props) => <TreemapChart series={[]} {...props} />,
+  },
+  SunburstChart: {
+    plot: '[data-sunburst] svg',
+    filled: () => (
+      <SunburstChart
+        data={[
+          {
+            name: 'a',
+            children: [
+              { name: 'a1', value: 3 },
+              { name: 'a2', value: 2 },
+            ],
+          },
+          { name: 'b', value: 4 },
+        ]}
+      />
+    ),
+    empty: (props) => <SunburstChart data={[]} {...props} />,
   },
   HeatmapChart: {
     plot: '[role="grid"]',
