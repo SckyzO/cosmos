@@ -11,9 +11,18 @@ import {
 import { useEditorState, type Editor } from '@tiptap/react';
 import { directionOf } from '../hooks/direction';
 import { mergeRefs } from '../ui/mergeRefs';
+import { Menu } from '../ui/Menu';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
-import { ACTION_SPECS, ariaShortcut, shortcutKeys, type RichTextAction } from './actions';
+import {
+  ACTION_SPECS,
+  ariaShortcut,
+  shortcutKeys,
+  type RichTextAction,
+  type RichTextChoice,
+  type RichTextForm,
+} from './actions';
+import { ImageForm } from './ImageForm';
 import { LinkForm } from './LinkForm';
 import type { ResolvedLabels } from './labels';
 
@@ -30,12 +39,12 @@ type FormattingToolbarProps = {
   /** Buttons stay, but do nothing. */
   disabled: boolean;
   /**
-   * Whether the link field is open. In a popover under the button (`toolbar`), or in place of
-   * the buttons (`bubble`).
+   * The field that is open, if any (the link's, the image's). In a popover under its button
+   * (`toolbar`), or in place of the buttons (`bubble`).
    */
-  linkOpen: boolean;
-  onLinkOpenChange: (open: boolean) => void;
-  linkMode: 'popover' | 'inline';
+  form: RichTextForm | null;
+  onFormChange: (form: RichTextForm | null) => void;
+  formMode: 'popover' | 'inline';
   /** Escape in the toolbar: the focus goes back to the text. */
   onEscape?: () => void;
   className?: string;
@@ -46,15 +55,16 @@ type FormattingToolbarProps = {
  * The buttons of `RichTextEditor` as one `role="toolbar"` and one Tab stop: the arrow keys, Home
  * and End move between them (roving tabindex). A button reports its state with `aria-pressed`, a
  * button with nothing to do (undo with no history) with `aria-disabled`, so it stays reachable.
+ * A button opens a menu (the heading, the alignment) or a field (the link, the image).
  */
 export function FormattingToolbar({
   editor,
   actions,
   labels,
   disabled,
-  linkOpen,
-  onLinkOpenChange,
-  linkMode,
+  form,
+  onFormChange,
+  formMode,
   onEscape,
   className,
   ref,
@@ -70,9 +80,13 @@ export function FormattingToolbar({
           {
             active: ACTION_SPECS[action].isActive(current),
             idle: ACTION_SPECS[action].isIdle?.(current) ?? false,
+            choice: ACTION_SPECS[action].menu?.current(current),
           },
         ])
-      ) as Record<RichTextAction, { active: boolean; idle: boolean }>,
+      ) as Record<
+        RichTextAction,
+        { active: boolean; idle: boolean; choice: RichTextChoice | undefined }
+      >,
   });
   const rootRef = useMemo(() => mergeRefs(root, ref), [ref]);
   const tabStop = Math.min(stop, actions.length - 1);
@@ -81,12 +95,15 @@ export function FormattingToolbar({
     Array.from(root.current?.querySelectorAll<HTMLButtonElement>('button[data-rt-action]') ?? []);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // A menu or a popover is portaled out of the toolbar, but its events still bubble through it:
+    // a key pressed there is that panel's own (Home and End move inside a menu).
+    if (!(event.target instanceof Node) || !root.current?.contains(event.target)) return;
     if (event.key === 'Escape' && onEscape) {
       event.preventDefault();
       onEscape();
       return;
     }
-    // A key typed in the link field is that field's own.
+    // A key typed in a field is that field's own.
     if (!(event.target instanceof HTMLButtonElement)) return;
     const list = buttons();
     const at = list.indexOf(event.target);
@@ -107,14 +124,15 @@ export function FormattingToolbar({
     list[next]?.focus();
   };
 
-  const linkField = (
-    <LinkForm
-      editor={editor}
-      labels={labels}
-      onDone={() => onLinkOpenChange(false)}
-      className={linkMode === 'inline' ? 'w-64 p-2' : undefined}
-    />
-  );
+  const field = (which: RichTextForm) => {
+    const props = {
+      editor,
+      labels,
+      onDone: () => onFormChange(null),
+      className: formMode === 'inline' ? 'w-64 p-2' : undefined,
+    };
+    return which === 'link' ? <LinkForm {...props} /> : <ImageForm {...props} />;
+  };
 
   return (
     <div
@@ -125,17 +143,20 @@ export function FormattingToolbar({
       onKeyDown={onKeyDown}
       className={clsx('flex flex-wrap items-center gap-0.5', className)}
     >
-      {linkMode === 'inline' && linkOpen
-        ? linkField
+      {formMode === 'inline' && form
+        ? field(form)
         : actions.map((action, index) => {
             const spec = ACTION_SPECS[action];
-            const { active, idle } = state[action];
-            const Icon = spec.icon;
+            const { active, idle, choice } = state[action];
             const inert = disabled || idle;
+            // A menu's button shows the item that is checked, when it is not the one at rest.
+            const shown =
+              active && spec.menu ? spec.menu.choices.find(({ id }) => id === choice) : undefined;
+            const Icon = shown?.icon ?? spec.icon;
             const common = {
               'data-rt-action': action,
               'aria-label': labels[action],
-              'aria-keyshortcuts': ariaShortcut(spec.shortcut),
+              'aria-keyshortcuts': spec.shortcut && ariaShortcut(spec.shortcut),
               'aria-pressed': active,
               'aria-disabled': inert || undefined,
               tabIndex: index === tabStop ? 0 : -1,
@@ -145,42 +166,81 @@ export function FormattingToolbar({
               className: clsx(BUTTON, active ? PRESSED : IDLE),
             };
             const icon = (
-              <Icon aria-hidden className={clsx('h-4 w-4', spec.mirror && 'rtl:-scale-x-100')} />
+              <Icon
+                aria-hidden
+                className={clsx(
+                  'h-4 w-4',
+                  (shown ? shown.mirror : spec.mirror) && 'rtl:-scale-x-100'
+                )}
+              />
             );
 
             const tooltip = (child: ReactElement) => (
               <Tooltip
                 key={action}
                 content={labels[action]}
-                shortcut={shortcutKeys(spec.shortcut)}
+                shortcut={spec.shortcut && shortcutKeys(spec.shortcut)}
                 position="top"
               >
                 {child}
               </Tooltip>
             );
 
-            if (action === 'link' && linkMode === 'popover') {
+            if (spec.menu) {
               return (
-                <Popover key={action} open={linkOpen && !disabled} onOpenChange={onLinkOpenChange}>
+                <Menu key={action}>
+                  {tooltip(
+                    <Menu.Trigger
+                      {...common}
+                      // A button with nothing to do stays reachable and opens nothing.
+                      onClick={(e) => inert && e.preventDefault()}
+                      onKeyDown={(e) => {
+                        if (inert && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {icon}
+                    </Menu.Trigger>
+                  )}
+                  <Menu.Content width="w-44">
+                    {spec.menu.choices.map((item) => (
+                      <Menu.RadioItem
+                        key={item.id}
+                        checked={item.id === choice}
+                        aria-keyshortcuts={item.shortcut && ariaShortcut(item.shortcut)}
+                        onSelect={() => item.run(editor)}
+                      >
+                        {labels[item.id]}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.Content>
+                </Menu>
+              );
+            }
+            if (spec.form && formMode === 'popover') {
+              return (
+                <Popover
+                  key={action}
+                  open={form === spec.form && !inert}
+                  onOpenChange={(open) => onFormChange(open ? (spec.form ?? null) : null)}
+                >
                   {tooltip(<Popover.Trigger {...common}>{icon}</Popover.Trigger>)}
                   <Popover.Content
-                    aria-label={labels.linkDialog}
+                    aria-label={spec.form === 'image' ? labels.imageDialog : labels.linkDialog}
                     position="bottom"
-                    width="w-72"
+                    width={spec.form === 'image' ? 'w-80' : 'w-72'}
                     padding="p-3"
                   >
-                    {linkField}
+                    {field(spec.form)}
                   </Popover.Content>
                 </Popover>
               );
             }
-            if (action === 'link') {
+            if (spec.form) {
+              const opens = spec.form;
               return tooltip(
-                <button
-                  type="button"
-                  {...common}
-                  onClick={() => !disabled && onLinkOpenChange(true)}
-                >
+                <button type="button" {...common} onClick={() => !inert && onFormChange(opens)}>
                   {icon}
                 </button>
               );

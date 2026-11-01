@@ -7,13 +7,21 @@ import type { Editor } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import { CharacterCount, Placeholder } from '@tiptap/extensions';
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
 import { useControllableState } from '../hooks/useControllableState';
 import { isSafeLinkUrl } from '../chat/httpUrl';
 import { fieldClass, type FieldSize } from '../forms/fieldRecipe';
 import { RequiredMark } from '../forms/RequiredMark';
-import { BUBBLE_ACTIONS, RICH_TEXT_ACTIONS, type RichTextAction } from './actions';
+import {
+  BUBBLE_ACTIONS,
+  RICH_TEXT_ACTIONS,
+  type RichTextAction,
+  type RichTextForm,
+} from './actions';
 import { BlockDirection } from './blockDirection';
+import { withoutDefaultAlignment } from './documentJson';
 import { FormattingToolbar } from './FormattingToolbar';
+import { RichTextImage } from './image';
 import { resolveLabels, type RichTextLabels } from './labels';
 
 /** What `value` and `onChange` carry: the HTML string, or the ProseMirror JSON document. */
@@ -42,7 +50,7 @@ export type RichTextEditorProps<F extends RichTextFormat = 'html'> = {
    * the link for `bubble`. Ignored by `minimal`.
    */
   toolbar?: readonly RichTextAction[];
-  /** Replaces any text the editor draws itself: the buttons, their tooltips, the link field. */
+  /** Replaces any text the editor draws itself: the buttons, their tooltips and menus, the link and image fields. */
   labels?: RichTextLabels;
   label?: string;
   description?: string;
@@ -103,7 +111,11 @@ const EMPTY_DOC: JSONContent = { type: 'doc', content: [{ type: 'paragraph' }] }
 type Content = string | JSONContent;
 
 const readContent = (editor: Editor, format: RichTextFormat): Content =>
-  format === 'json' ? editor.getJSON() : editor.isEmpty ? '' : editor.getHTML();
+  format === 'json'
+    ? withoutDefaultAlignment(editor.getJSON())
+    : editor.isEmpty
+      ? ''
+      : editor.getHTML();
 
 const countCharacters = (editor: Editor) =>
   (editor.storage.characterCount?.characters() as number | undefined) ?? 0;
@@ -122,6 +134,10 @@ const LinkShortcut = Extension.create<{ open: () => boolean }>({
   },
 });
 
+// Alignment from the menu only. The shortcuts Tiptap binds are for `left`, `right` and `justify`,
+// which the schema refuses, and Ctrl+Shift+E for `center`, which no button announces.
+const BlockAlign = TextAlign.extend({ addKeyboardShortcuts: () => ({}) });
+
 // The look of the text and of what the schema can hold. The classes sit on the editable element,
 // so a descendant variant reaches the nodes ProseMirror renders there.
 // Written out in full: Tailwind finds a class by reading the source, not by running it.
@@ -130,7 +146,8 @@ const CONTENT_CLASS = [
   '[&>*+*]:mt-2',
   // Each block follows the direction of what is typed in it, as a Textarea's paragraphs do
   // (`FIELD_PLAINTEXT`); lists and quotes take a `dir` from `BlockDirection`.
-  '[&_p]:[unicode-bidi:plaintext] [&_h2]:[unicode-bidi:plaintext] [&_h3]:[unicode-bidi:plaintext]',
+  '[&_p]:[unicode-bidi:plaintext] [&_h1]:[unicode-bidi:plaintext] [&_h2]:[unicode-bidi:plaintext] [&_h3]:[unicode-bidi:plaintext]',
+  '[&_h1]:text-xl [&_h1]:leading-tight [&_h1]:font-semibold',
   '[&_h2]:text-lg [&_h2]:leading-snug [&_h2]:font-semibold',
   '[&_h3]:text-base [&_h3]:leading-snug [&_h3]:font-semibold',
   '[&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_li>p]:my-0',
@@ -138,6 +155,13 @@ const CONTENT_CLASS = [
   'dark:[&_blockquote]:border-gray-600 dark:[&_blockquote]:text-gray-300',
   '[&_code]:rounded-sm [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.9em]',
   'dark:[&_code]:bg-gray-800',
+  // A code block reads left to right in any page, as `CodeBlock` does; its `code` drops the pill.
+  '[&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-gray-100 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-[0.9em] [&_pre]:leading-snug',
+  'dark:[&_pre]:bg-gray-800 [&_pre]:[direction:ltr] [&_pre]:text-start',
+  '[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-[1em]',
+  // An image is in the line: it never grows past it, and a selected one shows it.
+  '[&_img[src]]:inline-block [&_img[src]]:h-auto [&_img[src]]:max-w-full [&_img[src]]:align-middle',
+  '[&_img.ProseMirror-selectednode]:outline-brand-500 [&_img.ProseMirror-selectednode]:outline-2',
   '[&_a]:text-brand-600 dark:[&_a]:text-brand-400 [&_a]:underline [&_a]:underline-offset-2',
   '[&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-start [&_p.is-editor-empty:first-child]:before:h-0',
   '[&_p.is-editor-empty:first-child]:before:text-gray-500 dark:[&_p.is-editor-empty:first-child]:before:text-gray-400',
@@ -145,15 +169,19 @@ const CONTENT_CLASS = [
 ].join(' ');
 
 /**
- * A formatted text field, built on Tiptap: bold, italic, strike, headings, lists, quote, code,
- * links, undo and redo, behind a toolbar, a bubble over the selection, or only keyboard shortcuts.
- * Part of the `@sckyzo/cosmos-react/editor` entry, which needs the optional peer dependencies
- * (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extensions`, `@tiptap/core`, `@tiptap/pm`).
+ * A formatted text field, built on Tiptap: bold, italic, underline, strike, headings, lists,
+ * quote, code and code blocks, alignment, links, images, undo and redo, behind a toolbar, a bubble
+ * over the selection, or only keyboard shortcuts. Part of the `@sckyzo/cosmos-react/editor` entry,
+ * which needs the optional peer dependencies (`@tiptap/react`, `@tiptap/starter-kit`,
+ * `@tiptap/extensions`, `@tiptap/extension-text-align`, `@tiptap/extension-image`,
+ * `@tiptap/core`, `@tiptap/pm`).
  *
- * The schema holds paragraphs, headings (2 and 3), bullet and numbered lists, quotes, hard
- * breaks and the marks above: nothing else survives a paste or `value`. Links go through
- * `isSafeLinkUrl` (http(s), mailto, relative). That is the editor's guarantee, not the server's:
- * the HTML a host stores has to be sanitised again where it is read back.
+ * The schema holds paragraphs, headings (1 to 3), bullet and numbered lists, quotes, code blocks,
+ * hard breaks, images and the marks above: nothing else survives a paste or `value`. Links go
+ * through `isSafeLinkUrl` (http(s), mailto, relative) and an image's source through `isHttpUrl`
+ * (http(s) only); alignment is `center` or `end`, written as `style="text-align: …"`. That is the
+ * editor's guarantee, not the server's: the HTML a host stores has to be sanitised again where it
+ * is read back.
  */
 export function RichTextEditor<F extends RichTextFormat = 'html'>({
   format = 'html' as F,
@@ -195,7 +223,8 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
     onChange: (next) => onChange?.(next as RichTextValue<F>),
     name: 'RichTextEditor.value',
   });
-  const [linkOpen, setLinkOpen] = useState(false);
+  // The field open under the link or the image button, if any.
+  const [form, setForm] = useState<RichTextForm | null>(null);
   // Read from the editor on creation and on every transaction, which the host's `value` shows too.
   const [characters, setCharacters] = useState(0);
 
@@ -210,7 +239,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
       setCurrent,
       openLink: () => {
         if (!hasLinkField || !editable) return false;
-        setLinkOpen(true);
+        setForm('link');
         return true;
       },
     });
@@ -226,11 +255,9 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
       content: current,
       extensions: [
         StarterKit.configure({
-          heading: { levels: [2, 3] },
+          heading: { levels: [1, 2, 3] },
           // What the editor doesn't offer is out of the schema, so no paste or value brings it in.
-          codeBlock: false,
           horizontalRule: false,
-          underline: false,
           trailingNode: false,
           link: {
             openOnClick: false,
@@ -239,6 +266,10 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
             isAllowedUri: (url) => isSafeLinkUrl(url),
           },
         }),
+        // Center and end only, as the sides of the line: a pasted `left`, `right` or `justify` is
+        // dropped, and the start is a block with nothing set.
+        BlockAlign.configure({ types: ['paragraph', 'heading'], alignments: ['center', 'end'] }),
+        RichTextImage,
         Placeholder.configure({ placeholder: () => latest.get().placeholder ?? '' }),
         ...(maxLength !== undefined ? [CharacterCount.configure({ limit: maxLength })] : []),
         LinkShortcut.configure({ open: () => latest.get().openLink() }),
@@ -373,9 +404,9 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
             actions={actions}
             labels={labels}
             disabled={disabled}
-            linkOpen={linkOpen}
-            onLinkOpenChange={setLinkOpen}
-            linkMode="popover"
+            form={form}
+            onFormChange={setForm}
+            formMode="popover"
             className="border-b border-gray-200 p-1 dark:border-gray-700"
           />
         )}
@@ -388,7 +419,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
               strategy: 'fixed',
               placement: 'top',
               offset: 8,
-              onHide: () => setLinkOpen(false),
+              onHide: () => setForm(null),
             }}
             // The z-index scale of floating panels (`FLOATING_PANEL_Z`).
             className="z-[9999]"
@@ -399,11 +430,11 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
               actions={actions}
               labels={labels}
               disabled={disabled}
-              linkOpen={linkOpen}
-              onLinkOpenChange={setLinkOpen}
-              linkMode="inline"
+              form={form}
+              onFormChange={setForm}
+              formMode="inline"
               onEscape={() => {
-                setLinkOpen(false);
+                setForm(null);
                 editor.commands.focus();
               }}
               className="rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"

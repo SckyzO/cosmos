@@ -4,13 +4,13 @@ Four parts of `@sckyzo/cosmos-react` live in entries of their own, because each 
 that most apps never use: syntax highlighting, a rich text editor, a map and QR codes. The library
 is an **optional peer dependency**: install it only in the apps that import the entry.
 
-| Entry                         | Holds                                | You install                                                                                                   |
-| ----------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `@sckyzo/cosmos-react`        | Every other component                | `react` and `react-dom` `^19.0.0`                                                                             |
-| `@sckyzo/cosmos-react/code`   | `CodeBlock` with syntax highlighting | `shiki` `^4.5.0`                                                                                              |
-| `@sckyzo/cosmos-react/editor` | `RichTextEditor`                     | `@tiptap/react`, `@tiptap/core`, `@tiptap/pm`, `@tiptap/starter-kit` and `@tiptap/extensions`, each `^3.32.0` |
-| `@sckyzo/cosmos-react/map`    | `MapView`, `MapMarkerList`           | `maplibre-gl` `^5.24.0 \|\| ^6.4.1`                                                                           |
-| `@sckyzo/cosmos-react/qr`     | `QrCode`                             | `qr` `~0.7.2`                                                                                                 |
+| Entry                         | Holds                                | You install                                                                                                                                                              |
+| ----------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@sckyzo/cosmos-react`        | Every other component                | `react` and `react-dom` `^19.0.0`                                                                                                                                        |
+| `@sckyzo/cosmos-react/code`   | `CodeBlock` with syntax highlighting | `shiki` `^4.5.0`                                                                                                                                                         |
+| `@sckyzo/cosmos-react/editor` | `RichTextEditor`                     | `@tiptap/react`, `@tiptap/core`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extensions`, `@tiptap/extension-text-align` and `@tiptap/extension-image`, each `^3.32.0` |
+| `@sckyzo/cosmos-react/map`    | `MapView`, `MapMarkerList`           | `maplibre-gl` `^5.24.0 \|\| ^6.4.1`                                                                                                                                      |
+| `@sckyzo/cosmos-react/qr`     | `QrCode`                             | `qr` `~0.7.2`                                                                                                                                                            |
 
 The ranges are the `peerDependencies` of the package. The main entry never imports any of these
 libraries: an app that does not use an entry ships none of its code. Where an entry uses a
@@ -53,13 +53,14 @@ package.
 
 Storybook: [Rich Text Editor](https://sckyzo.github.io/cosmos/?path=/docs/forms-rich-text-editor--docs).
 
-`RichTextEditor` is a formatted text field: bold, italic, strike, headings, bulleted and numbered
-lists, quotes, code, links, undo and redo. It lives in the `/editor` entry and is built on
-[Tiptap](https://tiptap.dev) (MIT), whose packages are optional peer dependencies that only the apps
-using this entry install:
+`RichTextEditor` is a formatted text field: bold, italic, underline, strike, headings 1 to 3,
+bulleted and numbered lists, quotes, inline code, code blocks, alignment, links, images, undo and
+redo. It lives in the `/editor` entry and is built on [Tiptap](https://tiptap.dev) (MIT), whose
+packages are optional peer dependencies that only the apps using this entry install:
 
 ```bash
-pnpm add @tiptap/react @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extensions
+pnpm add @tiptap/react @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extensions \
+  @tiptap/extension-text-align @tiptap/extension-image
 ```
 
 ```tsx
@@ -84,12 +85,41 @@ shortcuts and Markdown-like input rules only: `##` and a space, `-` and a space,
 `description`, `error` and `required`: the label and the error are linked to the editable text.
 `maxLength` counts the text characters and stops typing and pasting at the limit.
 
-Links accept `http(s):`, `mailto:` and relative URLs only: a
-`javascript:` link is refused whether it is typed in the link field, typed as Markdown, pasted or
-passed in `value`. The schema holds paragraphs, headings 2 and 3, lists, quotes, hard breaks and the
-marks above; images, tables and anything else are dropped on paste. **The editor only filters
-what goes through it: sanitize the stored HTML again on the server before you render it
-elsewhere.**
+The toolbar's buttons are `bold`, `italic`, `underline`, `strike`, `heading`, `bulletList`,
+`orderedList`, `blockquote`, `code`, `codeBlock`, `align`, `link`, `image`, `undo` and `redo`
+(`RICH_TEXT_ACTIONS`, in that order). A toolbar written with `toolbar` keeps the buttons it lists:
+add the new ones to it, or leave `toolbar` out for all of them. The `bubble` variant shows the
+inline marks and the link by default, underline included.
+
+- **Heading** and **align** open a menu, and show the item that is checked: Paragraph and
+  Heading 1 to 3 (Ctrl+Alt+0 to 3 are their shortcuts), Align start, center and end. The `heading`
+  button used to toggle a level 2 heading; it opens the menu now. A button is pressed while a
+  heading or a centered or end-aligned block is under the caret.
+- **Alignment** is `start` (nothing is set), `center` or `end`: the sides of the line, so the
+  buttons and the stored text mean the same in right to left. A block's line follows what is typed
+  in it, as everywhere in the editor: the end of Latin text is its right, the end of Arabic its
+  left. The editor stores it as `style="text-align: center;"` on the paragraph or heading, so the
+  sanitizer that reads the HTML back has to let `text-align` through. A pasted `left`, `right` or
+  `justify` is dropped. In JSON, the block has `attrs: { textAlign: 'center' }`; with no alignment
+  it carries no `textAlign`, as before.
+- **Code block** is Ctrl+Alt+C, or three backticks and Enter in any variant. It holds plain text
+  (no marks) and reads left to right in any page; a pasted `language-…` class is kept.
+- **Image** opens a field for the address and the description. The address must be an `http(s)`
+  URL: a relative path, a bare host, `data:` and `blob:` are refused. The description (the image's
+  `alt`) is required, or the image is marked decorative, which writes `alt=""`; an image never goes
+  in with neither. The image is inserted after the selection, in the line, so the alignment of the
+  block moves it. With an image selected (an arrow key from its side, or a click), the button is
+  pressed and opens the same fields on it. The button waits in a code block. The editor does not
+  upload anything: host the picture, and give its URL.
+
+Links accept `http(s):`, `mailto:` and relative URLs only: a `javascript:` link is refused whether
+it is typed in the link field, typed as Markdown, pasted or passed in `value`. An image's source
+takes `http(s)` only, wherever it comes from: a pasted `<img>` with another source is dropped, and
+one in a JSON document is drawn without a source. The schema holds paragraphs, headings 1 to 3,
+lists, quotes, code blocks, hard breaks, images (`src` and `alt` only) and the marks above; tables,
+rules, other styles and anything else are dropped on paste. A pasted web page that holds images
+with `http(s)` sources now keeps them, and the browser loads them. **The editor only filters what
+goes through it: sanitize the stored HTML again on the server before you render it elsewhere.**
 The main entry never imports Tiptap: an app that does not use `/editor` ships none of it.
 
 ## Map

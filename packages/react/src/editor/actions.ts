@@ -2,42 +2,60 @@ import type { Editor } from '@tiptap/react';
 import {
   Bold,
   Code,
+  Heading1,
   Heading2,
+  Heading3,
+  Image as ImageIcon,
   Italic,
   Link,
   List,
   ListOrdered,
+  Pilcrow,
   Quote,
   Redo2,
+  SquareCode,
   Strikethrough,
+  TextAlignCenter,
+  TextAlignEnd,
+  TextAlignStart,
+  Underline,
   Undo2,
   type LucideIcon,
 } from 'lucide-react';
+import { imagePosition, selectedImage } from './image';
 
 /** The buttons a toolbar can hold, in the order `RICH_TEXT_ACTIONS` lists them. */
 export type RichTextAction =
   | 'bold'
   | 'italic'
+  | 'underline'
   | 'strike'
   | 'heading'
   | 'bulletList'
   | 'orderedList'
   | 'blockquote'
   | 'code'
+  | 'codeBlock'
+  | 'align'
   | 'link'
+  | 'image'
   | 'undo'
   | 'redo';
 
 export const RICH_TEXT_ACTIONS: readonly RichTextAction[] = [
   'bold',
   'italic',
+  'underline',
   'strike',
   'heading',
   'bulletList',
   'orderedList',
   'blockquote',
   'code',
+  'codeBlock',
+  'align',
   'link',
+  'image',
   'undo',
   'redo',
 ];
@@ -46,10 +64,37 @@ export const RICH_TEXT_ACTIONS: readonly RichTextAction[] = [
 export const BUBBLE_ACTIONS: readonly RichTextAction[] = [
   'bold',
   'italic',
+  'underline',
   'strike',
   'code',
   'link',
 ];
+
+/** The items of the menus a button opens: one of them is checked. */
+export type RichTextChoice =
+  'paragraph' | 'heading1' | 'heading2' | 'heading3' | 'alignStart' | 'alignCenter' | 'alignEnd';
+
+/** The fields a button opens, beside the buttons that run on their own. */
+export type RichTextForm = 'link' | 'image';
+
+export type ChoiceSpec = {
+  id: RichTextChoice;
+  label: string;
+  /** Shown on the button while this is the checked item. */
+  icon: LucideIcon;
+  mirror?: boolean;
+  /** Matches the shortcut Tiptap binds, announced on the item. */
+  shortcut?: readonly string[];
+  run: (editor: Editor) => void;
+};
+
+export type MenuSpec = {
+  choices: readonly ChoiceSpec[];
+  /** The item checked when nothing is set: the button is not pressed then. */
+  rest: RichTextChoice;
+  /** The item that holds at the caret, or `rest`. */
+  current: (editor: Editor) => RichTextChoice;
+};
 
 export type ActionSpec = {
   icon: LucideIcon;
@@ -57,17 +102,29 @@ export type ActionSpec = {
   mirror?: boolean;
   label: string;
   /** `Mod` is Cmd on macOS and Ctrl elsewhere. Matches the shortcut Tiptap binds. */
-  shortcut: readonly string[];
+  shortcut?: readonly string[];
   isActive: (editor: Editor) => boolean;
   /** Whether the action does nothing right now (nothing to undo). */
   isIdle?: (editor: Editor) => boolean;
-  /** Not for `link`, which opens its own field. */
+  /** Only for a button that runs on its own. */
   run?: (editor: Editor) => void;
+  /** The button opens a menu of choices instead. */
+  menu?: MenuSpec;
+  /** The button opens this field (a popover, or in place of the buttons in a bubble) instead. */
+  form?: RichTextForm;
 };
+
+// The levels of the heading menu, after the paragraph it starts with.
+const HEADINGS = [
+  { id: 'heading1', level: 1, icon: Heading1 },
+  { id: 'heading2', level: 2, icon: Heading2 },
+  { id: 'heading3', level: 3, icon: Heading3 },
+] as const;
 
 // Commands run without `.focus()`: a mouse press on a button is kept off the editor's focus
 // (`onMouseDown` prevents it), so the text stays focused, and a keyboard press leaves the focus on
-// the button, as a toolbar does.
+// the button, as a toolbar does. The choice of a menu is the exception: the menu took the focus, so
+// its command gives it back to the text.
 export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   bold: {
     icon: Bold,
@@ -83,6 +140,13 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
     isActive: (editor) => editor.isActive('italic'),
     run: (editor) => editor.chain().toggleItalic().run(),
   },
+  underline: {
+    icon: Underline,
+    label: 'Underline',
+    shortcut: ['Mod', 'U'],
+    isActive: (editor) => editor.isActive('underline'),
+    run: (editor) => editor.chain().toggleUnderline().run(),
+  },
   strike: {
     icon: Strikethrough,
     label: 'Strikethrough',
@@ -93,9 +157,28 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   heading: {
     icon: Heading2,
     label: 'Heading',
-    shortcut: ['Mod', 'Alt', '2'],
-    isActive: (editor) => editor.isActive('heading', { level: 2 }),
-    run: (editor) => editor.chain().toggleHeading({ level: 2 }).run(),
+    isActive: (editor) => editor.isActive('heading'),
+    menu: {
+      rest: 'paragraph',
+      current: (editor) =>
+        HEADINGS.find(({ level }) => editor.isActive('heading', { level }))?.id ?? 'paragraph',
+      choices: [
+        {
+          id: 'paragraph',
+          label: 'Paragraph',
+          icon: Pilcrow,
+          shortcut: ['Mod', 'Alt', '0'],
+          run: (editor) => editor.chain().focus().setParagraph().run(),
+        },
+        ...HEADINGS.map(({ id, level, icon }) => ({
+          id,
+          label: `Heading ${level}`,
+          icon,
+          shortcut: ['Mod', 'Alt', String(level)],
+          run: (editor: Editor) => editor.chain().focus().setHeading({ level }).run(),
+        })),
+      ],
+    },
   },
   bulletList: {
     icon: List,
@@ -128,11 +211,66 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
     isActive: (editor) => editor.isActive('code'),
     run: (editor) => editor.chain().toggleCode().run(),
   },
+  codeBlock: {
+    icon: SquareCode,
+    label: 'Code block',
+    shortcut: ['Mod', 'Alt', 'C'],
+    isActive: (editor) => editor.isActive('codeBlock'),
+    run: (editor) => editor.chain().toggleCodeBlock().run(),
+  },
+  align: {
+    icon: TextAlignStart,
+    mirror: true,
+    label: 'Text alignment',
+    isActive: (editor) =>
+      editor.isActive({ textAlign: 'center' }) || editor.isActive({ textAlign: 'end' }),
+    menu: {
+      rest: 'alignStart',
+      current: (editor) =>
+        editor.isActive({ textAlign: 'center' })
+          ? 'alignCenter'
+          : editor.isActive({ textAlign: 'end' })
+            ? 'alignEnd'
+            : 'alignStart',
+      choices: [
+        {
+          id: 'alignStart',
+          label: 'Align start',
+          icon: TextAlignStart,
+          mirror: true,
+          // The start is what a block has when nothing is set.
+          run: (editor) => editor.chain().focus().unsetTextAlign().run(),
+        },
+        {
+          id: 'alignCenter',
+          label: 'Align center',
+          icon: TextAlignCenter,
+          run: (editor) => editor.chain().focus().setTextAlign('center').run(),
+        },
+        {
+          id: 'alignEnd',
+          label: 'Align end',
+          icon: TextAlignEnd,
+          mirror: true,
+          run: (editor) => editor.chain().focus().setTextAlign('end').run(),
+        },
+      ],
+    },
+  },
   link: {
     icon: Link,
     label: 'Link',
     shortcut: ['Mod', 'K'],
     isActive: (editor) => editor.isActive('link'),
+    form: 'link',
+  },
+  image: {
+    icon: ImageIcon,
+    label: 'Image',
+    isActive: (editor) => selectedImage(editor) !== undefined,
+    // An image lives in a line of text, and a code block has none.
+    isIdle: (editor) => selectedImage(editor) === undefined && imagePosition(editor) === undefined,
+    form: 'image',
   },
   undo: {
     icon: Undo2,

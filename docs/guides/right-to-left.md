@@ -117,8 +117,9 @@ buttons and the popup of a pin follow the page. Arabic and Hebrew labels in the 
 need MapLibre's RTL text plugin (`setRTLTextPlugin` in `maplibre-gl`), which a host sets once
 for the page: Cosmos adds no dependency for it. In `RichTextEditor`, each block follows what is
 typed in it (the same `unicode-bidi: plaintext` as a `Textarea`), lists are indented and quotes
-edged on the start side, the arrow keys along the toolbar swap, and the link field reads left to
-right.
+edged on the start side, alignment is `start`, `center` or `end` (the icon of start and end turns
+around, and the end of Arabic text is its left), a code block reads left to right, the arrow keys
+along the toolbar swap, and the link and image fields read left to right.
 
 The auth forms follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
 turns around, the address or number a form says it sent the code to is wrapped in `<bdi>`, and
