@@ -422,6 +422,87 @@ export const PrefixSitsOnTheStartEdgeInRightToLeft: Story = {
   },
 };
 
+// ── Error ────────────────────────────────────────────────────────────────────
+
+/**
+ * `error` marks the field invalid: a red border and `aria-invalid`. It carries no message: the
+ * host writes it under the field and points `aria-describedby` at it.
+ */
+export const WithError: Story = {
+  render: () => (
+    <div>
+      <NumberInput
+        aria-label="Quantity"
+        aria-describedby="quantity-error"
+        controls="stacked"
+        value={0}
+        onChange={() => {}}
+        min={1}
+        error
+        className="w-28"
+      />
+      <p id="quantity-error" className="mt-1 text-xs text-red-700 dark:text-red-400">
+        Must be at least 1
+      </p>
+    </div>
+  ),
+};
+
+const idleBorder = (control: HTMLElement) => getComputedStyle(control).borderTopColor;
+
+/** Both layouts: `aria-invalid`, the message as the description, and a border that is not the neutral one. */
+export const ErrorMarksTheFieldInvalid: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <NumberInput
+        aria-label="Sides"
+        aria-describedby="sides-error"
+        value={0}
+        onChange={() => {}}
+        error
+      />
+      <p id="sides-error">Must be at least 1</p>
+      <NumberInput
+        aria-label="Stacked"
+        aria-describedby="sides-error"
+        controls="stacked"
+        value={0}
+        onChange={() => {}}
+        error
+      />
+      <NumberInput aria-label="Fine" value={1} onChange={() => {}} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const fine = canvas.getByRole('spinbutton', { name: 'Fine' });
+    await expect(fine).not.toHaveAttribute('aria-invalid');
+    const neutral = idleBorder(fine.closest<HTMLElement>('[class*="rounded-lg"]')!);
+    for (const name of ['Sides', 'Stacked']) {
+      const input = canvas.getByRole('spinbutton', { name });
+      await expect(input).toHaveAttribute('aria-invalid', 'true');
+      await expect(input).toHaveAccessibleDescription('Must be at least 1');
+      await expect(idleBorder(input.closest<HTMLElement>('[class*="rounded-lg"]')!)).not.toBe(
+        neutral
+      );
+    }
+  },
+};
+
+/** The focus border of an invalid field is red too, in the dark themes where `dark:` once won. */
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { value: 0, error: true },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await expectFocusBorder(input, {
+      border: input.closest('.rounded-lg') as HTMLElement,
+      token: '--color-red-500',
+    });
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports
