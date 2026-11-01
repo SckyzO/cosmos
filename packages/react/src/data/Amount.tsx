@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import type { ComponentPropsWithRef } from 'react';
-import { formatMoney, type MoneySignDisplay } from './money';
+import { formatMoney, type MoneySignDisplay, type MoneyTrailingZeroDisplay } from './money';
 
 export type AmountProps = Omit<ComponentPropsWithRef<'bdi'>, 'children'> & {
   /** The amount, in units (`24.5`, not 2450 cents). */
@@ -14,7 +14,12 @@ export type AmountProps = Omit<ComponentPropsWithRef<'bdi'>, 'children'> & {
    * a gain or of zero (no `-$0.00`). See `formatMoney`.
    */
   signDisplay?: MoneySignDisplay;
-  /** Writes the value yourself, in place of `currency`, `locale` and `signDisplay`. */
+  /**
+   * `stripIfInteger` writes a whole amount with no decimals (`$24`) and keeps them on the others
+   * (`$24.50`). Default `auto`: every decimal of the currency. See `formatMoney`.
+   */
+  trailingZeroDisplay?: MoneyTrailingZeroDisplay;
+  /** Writes the value yourself, in place of `currency`, `locale`, `signDisplay` and the rest. */
   format?: (value: number) => string;
 };
 
@@ -30,11 +35,14 @@ export const Amount = ({
   currency,
   locale,
   signDisplay,
+  trailingZeroDisplay,
   format,
   className,
   ...rest
 }: AmountProps) => (
   <bdi className={clsx('whitespace-nowrap tabular-nums', className)} {...rest}>
-    {format ? format(value) : formatMoney(value, { currency, locale, signDisplay })}
+    {format
+      ? format(value)
+      : formatMoney(value, { currency, locale, signDisplay, trailingZeroDisplay })}
   </bdi>
 );
