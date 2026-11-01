@@ -413,14 +413,16 @@ its `GITHUB_TOKEN` don't re-trigger `publish.yml` either, so after merging the r
 
 Checked out next to this one, in `../`:
 
-- **`SckyzO/cosmos-adminpanel`** (private until published): a generic admin panel built only from
-  Cosmos components, consuming `@sckyzo/cosmos-*` **from npm** exactly as the package READMEs
-  document, so it doubles as a consumer test. Roadmap, page inventory and gap list: #206. A
-  component it needs and Cosmos lacks is built here first, released, then picked up there by a
-  version bump; never copied into it. A breaking change here is fixed there at that bump.
+- **`SckyzO/cosmos-demo`** (public): a demo app built only from Cosmos components (Vite, React
+  Router), consuming `@sckyzo/cosmos-*` **from npm** exactly as `docs/getting-started.md`
+  documents, so it doubles as a consumer test. Plan and milestones: its own issues, starting with
+  SckyzO/cosmos-demo#1 (the shell and a complete admin, after the three references). A component
+  it needs and Cosmos lacks is built here first, released, then picked up there by a version bump;
+  never copied into it. A breaking change here is fixed there at that bump. It replaces
+  `cosmos-adminpanel` (deleted from GitHub; #206, closed, is its old plan).
 - **`SckyzO/cosmos-references`** (private, never public): captures of three commercial admin
-  templates (the references of #206), the Cosmos captures written by `make audit-captures`, and the
-  visual audit brief and reports. Nothing from its `references/` folder (third-party screenshots,
+  templates (the references of #206 and cosmos-demo#1), the Cosmos captures written by
+  `make audit-captures`, and the visual audit brief and reports. Nothing from its `references/` folder (third-party screenshots,
   texts, assets) is ever copied into this repository, an issue or a PR: describe the pattern in
   words, in Cosmos's own terms.
 

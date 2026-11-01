@@ -157,6 +157,9 @@ direction are all a class or an attribute on `<html>`.
 - [Themes and accents specification](docs/specs/themes-accents.md): how the themes and accents are built.
 - [Storybook](https://sckyzo.github.io/cosmos/): every component, with its props, stories and
   accessibility checks. Its Welcome page lists the components by group and has a search.
+- [cosmos-demo](https://github.com/SckyzO/cosmos-demo): a demo app built only from Cosmos and
+  installed from npm, with routes, shared state and the appearance settings on every page. In
+  progress; its plan is [cosmos-demo#1](https://github.com/SckyzO/cosmos-demo/issues/1).
 
 The [documentation index](docs/README.md) lists the same pages.
 
