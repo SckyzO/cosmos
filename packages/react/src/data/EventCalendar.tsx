@@ -5,7 +5,16 @@ import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
-import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import {
+  addDays,
+  createCalendarFormats,
+  isoDate,
+  isoWeekday,
+  sameDay,
+  startOfDay,
+  startOfMonth,
+} from './calendar-dates';
+import { compareEvents, isAllDay, lastDay } from './calendar-grid';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
@@ -19,10 +28,23 @@ export type EventCalendarIntent =
 export type CalendarEvent = {
   id: string;
   title: string;
-  /** First day of the event. Only the date is used, not the time. */
+  /**
+   * When the event starts. The month view uses its date and shows its time on the chip, unless
+   * the event is all-day.
+   */
   start: Date;
-  /** Last day, inclusive. Omit for a one-day event. */
+  /**
+   * An all-day event: the last day, inclusive. A timed one: the moment it ends. Omit for an event
+   * that lasts no longer than its day.
+   */
   end?: Date;
+  /**
+   * An all-day event has a date and no time: it shows no time. Left unset, it is true when `start`
+   * is at 00:00 and `end` is missing or at 00:00, so an event made of dates alone stays all-day.
+   * Set it to force the answer either way (a timed event that starts at midnight is
+   * `allDay: false`).
+   */
+  allDay?: boolean;
   /** Dot and chip colour. Defaults to `brand`. */
   intent?: EventCalendarIntent;
 };
@@ -84,10 +106,6 @@ const INTENT_CHIP_HOVER: Record<EventCalendarIntent, string> = {
   violet: 'hover:bg-violet-100 dark:hover:bg-violet-500/25',
 };
 
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-
 /** Monday on or before the 1st through the Sunday on or after the last day. */
 const monthGrid = (month: Date) => {
   const first = startOfMonth(month);
@@ -98,13 +116,13 @@ const monthGrid = (month: Date) => {
   return days;
 };
 
-/** Day key → events covering that day, for the shown days only, in start order. */
+/** Day key → events covering that day, for the shown days only: all-day first, then by start. */
 const indexByDay = (events: CalendarEvent[], first: Date, last: Date) => {
   const byDay = new Map<string, CalendarEvent[]>();
-  const sorted = [...events].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const sorted = [...events].sort(compareEvents);
   for (const event of sorted) {
     const start = startOfDay(event.start);
-    const end = event.end && event.end > event.start ? startOfDay(event.end) : start;
+    const end = lastDay(event);
     const to = end < last ? end : last;
     for (let d = start < first ? first : start; d <= to; d = addDays(d, 1)) {
       const key = isoDate(d);
@@ -118,11 +136,14 @@ const indexByDay = (events: CalendarEvent[], first: Date, last: Date) => {
 
 const EventChip = ({
   event,
+  time,
   onClick,
   compact = false,
   continuation = false,
 }: {
   event: CalendarEvent;
+  /** The start time to write before the title: none for an all-day event. */
+  time?: string;
   onClick?: (event: CalendarEvent) => void;
   /** In a day cell: below `sm` only the dot shows, the title stays for screen readers. */
   compact?: boolean;
@@ -133,6 +154,16 @@ const EventChip = ({
   const content = (
     <>
       <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', INTENT_DOT[intent])} />
+      {time && !continuation && (
+        <span
+          className={clsx(
+            'shrink-0 text-gray-600 tabular-nums dark:text-gray-300',
+            compact && 'max-sm:sr-only'
+          )}
+        >
+          <bdi>{time}</bdi>
+        </span>
+      )}
       <span className={clsx('truncate', continuation ? 'sr-only' : compact && 'max-sm:sr-only')}>
         <bdi>{event.title}</bdi>
       </span>
@@ -167,8 +198,9 @@ const EventChip = ({
 /**
  * EventCalendar — month view of events, with ISO weeks (Monday first).
  *
- * Each day shows up to three event chips (a color dot and the title) and a
- * "+N more" button that lists the whole day. An event with an `end` shows its title on
+ * Each day shows up to three event chips (a color dot, the time and the title) and a
+ * "+N more" button that lists the whole day. An all-day event has no time; a timed one
+ * writes its start time before the title. An event with an `end` shows its title on
  * its first day and a bare chip on each following day. Below `sm` the weekday names shrink
  * to a letter, the chips to their dots, and picking a day lists its events under the grid.
  *
@@ -214,6 +246,10 @@ export const EventCalendar = ({
     days.find((d) => isoDate(d) === pickedKey && d.getMonth() === shown.getMonth()) ??
     (isTodayMonth ? today : shown);
   const pickedEvents = byDay.get(isoDate(pickedDay)) ?? [];
+  // The start time of a timed event, on the day it starts; no time on an all-day event, nor on the
+  // days it goes on.
+  const timeOn = (event: CalendarEvent, day: Date) =>
+    !isAllDay(event) && sameDay(event.start, day) ? fmt.time(event.start) : undefined;
 
   return (
     <div
@@ -345,6 +381,7 @@ export const EventCalendar = ({
                     <li key={event.id} className="min-w-0">
                       <EventChip
                         event={event}
+                        time={timeOn(event, day)}
                         onClick={onEventClick}
                         compact
                         // The first shown day also carries it, for an event that began before the grid.
@@ -381,6 +418,7 @@ export const EventCalendar = ({
                         <li key={event.id}>
                           <EventChip
                             event={event}
+                            time={timeOn(event, day)}
                             onClick={
                               onEventClick &&
                               ((e) => {
@@ -417,7 +455,7 @@ export const EventCalendar = ({
             <ul className="space-y-1">
               {pickedEvents.map((event) => (
                 <li key={event.id}>
-                  <EventChip event={event} onClick={onEventClick} />
+                  <EventChip event={event} time={timeOn(event, pickedDay)} onClick={onEventClick} />
                 </li>
               ))}
             </ul>

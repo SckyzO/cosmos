@@ -70,6 +70,36 @@ column, `renderCard` replaces what is inside a card (the grip and the actions me
 Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
 is pre-1.0. It is a regular dependency of the package, not a peer.
 
+## Event calendar
+
+Storybook: [Event Calendar](https://sckyzo.github.io/cosmos/?path=/docs/data-event-calendar--docs).
+
+`EventCalendar` shows events in a month grid, Monday first. An event is `{ id, title, start, end?,
+allDay?, intent? }`: `start` and `end` are `Date`s, and `intent` colours the chip (`brand` by
+default, `violet` as a category colour that carries no meaning).
+
+```tsx
+<EventCalendar
+  events={events}
+  onEventClick={(event) => open(event)}
+  onDayClick={(date) => create(date)}
+/>
+```
+
+- **Time.** An event with a time writes its start before its title on the chip ("9:30 AM Release 2.4",
+  in the `locale`). An all-day event writes none.
+- **All-day.** `allDay` is inferred: an event is all-day when `start` is at 00:00 and `end` is
+  missing or at 00:00, so an event made of dates alone (`new Date(2026, 4, 7)`) stays all-day. For
+  an all-day event `end` is the last day, included. Set `allDay` to force the answer either way: a
+  meeting that really starts at midnight is `allDay: false`, and then `end` is the moment it ends.
+- **The period.** `date` (any day of the period shown), `defaultDate` and `onDateChange` follow the
+  usual controlled/uncontrolled pair. `onDateChange` carries the first day of the period reached by
+  Previous, Next and Today, so a host that loads events per period knows what to fetch. `today`
+  says which day is highlighted, and where Today goes.
+- **Dates are local.** A `Date` is read in the browser's time zone, by its day and its clock time
+  there, as everywhere in the calendar: build one with `new Date(2026, 4, 7, 9, 30)`. A host that
+  keeps ISO strings in UTC converts them to local `Date`s before it passes them.
+
 ## Dates, clocks and countdowns
 
 Storybook: [Date Time](https://sckyzo.github.io/cosmos/?path=/docs/data-date-time--docs), [Relative Time](https://sckyzo.github.io/cosmos/?path=/docs/data-relative-time--docs), [Clock](https://sckyzo.github.io/cosmos/?path=/docs/data-clock--docs), [Countdown](https://sckyzo.github.io/cosmos/?path=/docs/data-countdown--docs).

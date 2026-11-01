@@ -14,6 +14,16 @@ export const sameDay = (a: Date, b: Date) =>
 /** Days since the Monday of `d`'s week: JS 0=Sun..6=Sat → ISO 0=Mon..6=Sun. */
 export const isoWeekday = (d: Date) => (d.getDay() + 6) % 7;
 
+/** `d` moved by `n` days (negative goes back), at 00:00. A day count, not 24 hours a day. */
+export const addDays = (d: Date, n: number) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+/** 00:00 of `d`'s day. */
+export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/** The 1st of `d`'s month, at 00:00. */
+export const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+
 export type CalendarFormats = {
   /** Short weekday names, Monday first: `Mon`..`Sun` in en-US. */
   weekdays: string[];
@@ -28,6 +38,8 @@ export type CalendarFormats = {
   fullDate: (d: Date) => string;
   /** The day of the month alone, in the locale's digits: `7`, never `7日`. */
   dayNumber: (d: Date) => string;
+  /** The time of day, hours and minutes: `9:30 AM` in en-US, `09:30` in fr-FR. */
+  time: (d: Date) => string;
 };
 
 /**
@@ -47,6 +59,7 @@ export const createCalendarFormats = (locale?: string): CalendarFormats => {
   const monthYear = formatter({ month: 'long', year: 'numeric' });
   const fullDate = formatter({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const dayNumber = formatter({ day: 'numeric' });
+  const time = formatter({ hour: 'numeric', minute: '2-digit' });
   return {
     // 2024-01-01 is a Monday.
     weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(new Date(2024, 0, 1 + i))),
@@ -62,5 +75,6 @@ export const createCalendarFormats = (locale?: string): CalendarFormats => {
         .filter((part) => part.type === 'day')
         .map((part) => part.value)
         .join(''),
+    time: time.format,
   };
 };

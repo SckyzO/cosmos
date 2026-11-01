@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import {
+  addDays,
+  createCalendarFormats,
+  isoDate,
+  isoWeekday,
+  sameDay,
+  startOfDay,
+  startOfMonth,
+} from './calendar-dates';
 
 // Every date here is built from local components, like the helpers read them,
 // so the tests do not depend on the machine's time zone.
@@ -39,6 +47,43 @@ describe('isoWeekday', () => {
   it('puts Sunday last, not first', () => {
     expect(new Date(2024, 0, 7).getDay()).toBe(0);
     expect(isoWeekday(new Date(2024, 0, 7))).toBe(6);
+  });
+});
+
+describe('addDays', () => {
+  it('moves by whole days, across a month and a year end', () => {
+    expect(addDays(new Date(2026, 4, 7), 3)).toEqual(new Date(2026, 4, 10));
+    expect(addDays(new Date(2026, 4, 30), 3)).toEqual(new Date(2026, 5, 2));
+    expect(addDays(new Date(2025, 11, 30), 3)).toEqual(new Date(2026, 0, 2));
+    expect(addDays(new Date(2026, 0, 2), -3)).toEqual(new Date(2025, 11, 30));
+  });
+
+  it('returns midnight, whatever the time it was given', () => {
+    expect(addDays(new Date(2026, 4, 7, 15, 40), 1)).toEqual(new Date(2026, 4, 8));
+    expect(addDays(new Date(2026, 4, 7, 15, 40), 0)).toEqual(new Date(2026, 4, 7));
+  });
+
+  it('counts days, not 24 hours, on a day the clocks change', () => {
+    // 8 March 2026 has 23 hours in New York, 29 March 2026 in Paris, 5 April 2026 in Auckland:
+    // in whichever zone this runs, a day later is the next date at 00:00, never 23:00 or 01:00.
+    for (const [month, date] of [
+      [2, 7],
+      [2, 28],
+      [3, 4],
+      [9, 24],
+      [9, 31],
+    ]) {
+      const next = addDays(new Date(2026, month, date), 1);
+      expect([next.getHours(), next.getMinutes()]).toEqual([0, 0]);
+      expect(next.getDate()).toBe(new Date(2026, month, date + 1).getDate());
+    }
+  });
+});
+
+describe('startOfDay and startOfMonth', () => {
+  it('cut a date back to its midnight and to the 1st', () => {
+    expect(startOfDay(new Date(2026, 4, 7, 23, 59, 59, 999))).toEqual(new Date(2026, 4, 7));
+    expect(startOfMonth(new Date(2026, 4, 31, 12))).toEqual(new Date(2026, 4, 1));
   });
 });
 
@@ -109,6 +154,26 @@ describe('createCalendarFormats', () => {
     expect(createCalendarFormats('en-u-ca-persian').fullDate(thursday)).toBe(
       'Thursday, May 7, 2026'
     );
+  });
+
+  describe('time', () => {
+    // Newer ICU writes a narrow no-break space before AM and PM.
+    const plain = (text: string) => text.replace(/\u202f/g, ' ');
+
+    it('is the hour and the minutes in the locale', () => {
+      const en = createCalendarFormats('en-US');
+      expect(plain(en.time(new Date(2026, 4, 7, 9, 30)))).toBe('9:30 AM');
+      expect(plain(en.time(new Date(2026, 4, 7, 14, 5)))).toBe('2:05 PM');
+      expect(plain(en.time(new Date(2026, 4, 7, 0, 0)))).toBe('12:00 AM');
+      expect(createCalendarFormats('fr-FR').time(new Date(2026, 4, 7, 14, 5))).toBe('14:05');
+      expect(createCalendarFormats('de-DE').time(new Date(2026, 4, 7, 9, 30))).toBe('9:30');
+    });
+
+    it('is local time', () => {
+      expect(plain(createCalendarFormats('en-US').time(new Date(2026, 4, 7, 23, 59, 59)))).toBe(
+        '11:59 PM'
+      );
+    });
   });
 
   describe('dayNumber', () => {
