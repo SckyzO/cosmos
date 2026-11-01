@@ -707,6 +707,64 @@ export const DashboardCellsChecks: Story = {
   },
 };
 
+// What `TableAmountCell` wrote before it shared its formatter with `Amount`: the same text, the
+// same tint by sign, one element with no child. `format` still replaces the formatter.
+const AMOUNT_CELLS = [
+  { id: 'gain', cell: <TableAmountCell value={1240.5} currency="USD" locale="en-US" /> },
+  { id: 'loss', cell: <TableAmountCell value={-89} currency="USD" locale="en-US" /> },
+  { id: 'zero', cell: <TableAmountCell value={0} currency="USD" locale="en-US" /> },
+  { id: 'euro', cell: <TableAmountCell value={148.9} currency="EUR" locale="en-GB" /> },
+  { id: 'cents', cell: <TableAmountCell value={-0.001} currency="USD" locale="en-US" /> },
+  { id: 'plain', cell: <TableAmountCell value={1234.5} locale="en-US" /> },
+  { id: 'custom', cell: <TableAmountCell value={5} format={(v) => `${v} pts`} /> },
+];
+
+export const AmountCellKeepsItsOutput: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      {AMOUNT_CELLS.map(({ id, cell }) => (
+        <div key={id} data-testid={id}>
+          {cell}
+        </div>
+      ))}
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const cell = (id: string) => canvas.getByTestId(id).firstElementChild as HTMLElement;
+    const text: Record<string, string> = {
+      gain: '+$1,240.50',
+      loss: '-$89.00',
+      zero: '$0.00',
+      euro: '+€148.90',
+      // Rounded to zero, so no sign: `exceptZero` does not write one in front of a nothing.
+      cents: '$0.00',
+      plain: '+1,234.5',
+      custom: '5 pts',
+    };
+    for (const [id, expected] of Object.entries(text)) {
+      await expect(cell(id).textContent, id).toBe(expected);
+      // One element that holds the text and nothing else.
+      await expect(cell(id).childElementCount, id).toBe(0);
+      const style = getComputedStyle(cell(id));
+      await expect(style.display, id).toBe('inline');
+      await expect(style.whiteSpace, id).toBe('nowrap');
+      await expect(style.fontWeight, id).toBe('500');
+      await expect(style.fontVariantNumeric, id).toContain('tabular-nums');
+    }
+    // Green for a gain, red for a loss, the surrounding text colour for zero.
+    const color = (id: string) => getComputedStyle(cell(id)).color;
+    const around = getComputedStyle(canvas.getByTestId('zero')).color;
+    await expect(color('gain')).not.toBe(around);
+    await expect(color('loss')).not.toBe(around);
+    await expect(color('gain')).not.toBe(color('loss'));
+    await expect(color('gain')).toBe(color('euro'));
+    await expect(color('zero')).toBe(around);
+    // A cell that shows "$0.00" is still tinted by the sign of its value, as it always was.
+    await expect(color('cents')).toBe(color('loss'));
+  },
+};
+
 export const MobileStickyFirstColumn: Story = {
   globals: mobileViewport,
   render: () => (
