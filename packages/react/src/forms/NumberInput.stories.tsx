@@ -7,6 +7,8 @@ import {
   expectFocusBorder,
   expectMirrored,
   expectRefFocuses,
+  startEdge,
+  startOffset,
 } from '../storybook-helpers';
 import { NumberInput, type NumberInputProps } from './NumberInput';
 
@@ -338,6 +340,85 @@ export const StackedForwardsRef: Story = {
   ),
   play: async ({ canvas }) => {
     await expectRefFocuses(stackedRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
+  },
+};
+
+// ── Prefix ───────────────────────────────────────────────────────────────────
+
+/** `prefix` sits before the value as `unit` sits after it: a currency sign, a protocol. */
+export const WithPrefix: Story = {
+  args: { value: 1800, min: 0, step: 50, prefix: '$', controls: 'stacked', className: 'w-40' },
+};
+
+/** Before the value, inside the border, in both layouts and next to a `unit`. */
+export const PrefixSitsBeforeTheValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <NumberInput aria-label="Sides" value={8} onChange={() => {}} prefix="$" unit="/h" />
+      <NumberInput
+        aria-label="Stacked"
+        controls="stacked"
+        value={8}
+        onChange={() => {}}
+        prefix="$"
+        unit="/h"
+        className="w-36"
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // The − button of the sides layout comes first: the prefix follows it, then the value.
+    for (const [name, room] of [
+      ['Sides', 48],
+      ['Stacked', 24],
+    ] as const) {
+      const input = canvas.getByRole('spinbutton', { name });
+      const control = input.closest<HTMLElement>('[class*="rounded-lg"]')!;
+      const prefix = within(control).getByText('$');
+      // Ahead of the value, close to the start edge, and the control clips none of it.
+      await expect(startEdge(prefix.getBoundingClientRect())).toBeLessThan(
+        startEdge(input.getBoundingClientRect())
+      );
+      await expect(startOffset(prefix, control)).toBeLessThan(room);
+      await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+      // The unit stays after the value.
+      await expect(
+        startEdge(within(control).getByText('/h').getBoundingClientRect())
+      ).toBeGreaterThan(startEdge(input.getBoundingClientRect()));
+      // It is no part of the value.
+      await expect(input).toHaveValue(8);
+    }
+  },
+};
+
+/** The prefix sits on the start edge, which is the right one in right to left. */
+export const PrefixSitsOnTheStartEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <NumberInput aria-label="Sides" value={8} onChange={() => {}} prefix="$" />
+        <NumberInput
+          aria-label="Stacked"
+          controls="stacked"
+          value={8}
+          onChange={() => {}}
+          prefix="$"
+          className="w-28"
+        />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const name of ['Sides', 'Stacked']) {
+      expectMirrored(canvasElement, (box) =>
+        within(
+          within(box)
+            .getByRole('spinbutton', { name })
+            .closest<HTMLElement>('[class*="rounded-lg"]')!
+        ).getByText('$')
+      );
+    }
   },
 };
 
