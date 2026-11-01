@@ -1,7 +1,7 @@
 import { ReferenceArea, ReferenceLine } from 'recharts';
 import type { ChartReferenceProps } from '../types';
 import { TEXT_SIZE } from './axes';
-import { INTENT_COLORS, MUTED } from './colors';
+import { BORDER, INTENT_COLORS, MUTED } from './colors';
 
 type ReferenceOptions = ChartReferenceProps & {
   /** The axis the values are read on: `y` (default), or `x` on a chart of horizontal bars. */
@@ -70,3 +70,12 @@ export const referenceMarks = ({
     )),
   ];
 };
+
+/**
+ * The line the two sides of a mirrored chart share: zero on `axis` (`x`, or `y`
+ * on a chart of columns), in the border color, drawn over the bars so it
+ * shows where they meet.
+ */
+export const centralAxis = (axis: 'x' | 'y') => (
+  <ReferenceLine key="central-axis" {...{ [axis]: 0 }} stroke={BORDER} strokeWidth={1} />
+);
