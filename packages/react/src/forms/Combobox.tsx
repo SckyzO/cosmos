@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { useId, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
 import {
@@ -39,15 +39,39 @@ export type ComboboxOption = {
 
 export type ComboboxProps = {
   label?: ReactNode;
-  /** Selected option value, when controlled. */
+  /**
+   * Selected option value, when controlled. With `allowCustomValue` it is also any text the
+   * host holds as the value.
+   */
   value?: string;
   /** Initial option value, when uncontrolled. None selected when omitted. */
   defaultValue?: string;
-  /** Called when the user picks an option. */
+  /**
+   * Called when the user picks an option, with its `value`. With `allowCustomValue` it is also
+   * called on every keystroke, with the text typed.
+   */
   onChange?: (value: string) => void;
+  /**
+   * Called with the option the user picks (a click, or Enter on the active option). Typed text
+   * never fires it, which is how `allowCustomValue` tells a pick from typing.
+   */
+  onSelect?: (option: ComboboxOption) => void;
+  /**
+   * Accepts the text typed as the value, when no option is picked: a field that suggests a
+   * catalogue and lets the user write their own entry. The text is the value (`onChange` fires on
+   * every keystroke) and stays in the field when focus leaves. Nothing is active until an arrow
+   * key moves there, so Enter keeps the text and lets an enclosing form submit; the list closes
+   * when no option matches, unless `emptyMessage` is set. Keep the `value` of the options out of
+   * what people type: a text equal to one names that option. Default `false`: the typed text is
+   * only a filter, and the field goes back to the selected option when focus leaves.
+   */
+  allowCustomValue?: boolean;
   options: ComboboxOption[];
   placeholder?: string;
-  /** Show this when no option matches the typed query. */
+  /**
+   * Show this when no option matches the typed query. Default "No matches found."; none with
+   * `allowCustomValue`, where the text is accepted and the empty list stays closed.
+   */
   emptyMessage?: string;
   /** Disable the input + dropdown. */
   disabled?: boolean;
@@ -75,9 +99,11 @@ export const Combobox = ({
   value: valueProp,
   defaultValue,
   onChange,
+  onSelect,
+  allowCustomValue = false,
   options,
   placeholder,
-  emptyMessage = 'No matches found.',
+  emptyMessage,
   disabled = false,
   helperText,
   error,
@@ -100,7 +126,10 @@ export const Combobox = ({
     name: 'Combobox.value',
   });
   const selected = options.find((o) => o.value === value);
-  const [query, setQuery] = useState(selected?.label ?? '');
+  // What the field shows once the list is closed: the label of the selected option, or the
+  // value itself when the typed text is the value.
+  const shownText = selected?.label ?? (allowCustomValue ? (value ?? '') : '');
+  const [query, setQuery] = useState(shownText);
   const [open, setOpenState] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -119,7 +148,7 @@ export const Combobox = ({
   // Keep input mirror of external selection.
   // Adjusted during render rather than in an effect: it only re-syncs while the
   // list is closed, when the selected label or the open state changes.
-  const mirrorKey = open ? null : (selected?.label ?? '');
+  const mirrorKey = open ? null : shownText;
   const [lastMirrorKey, setLastMirrorKey] = useState(mirrorKey);
   if (mirrorKey !== lastMirrorKey) {
     setLastMirrorKey(mirrorKey);
@@ -127,20 +156,39 @@ export const Combobox = ({
   }
 
   const filtered = useFilteredOptions(options, query);
+  // With typed text accepted, a list with nothing to suggest is no error: it opens only for a
+  // message the host asked for.
+  const emptyText = emptyMessage ?? (allowCustomValue ? undefined : 'No matches found.');
+  const listOpen = open && (filtered.length > 0 || emptyText !== undefined);
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
     setValue(opt.value);
+    onSelect?.(opt);
     setQuery(opt.label);
     setOpen(false);
   };
 
-  const { activeIndex, setActiveIndex, onKeyDown } = useListboxNavigation({
+  // Typed text that is the value must not give way to the first match on Enter: nothing is
+  // active until an arrow key (or the pointer) says so.
+  const noneActive = allowCustomValue ? -1 : 0;
+  const {
+    activeIndex,
+    setActiveIndex,
+    onKeyDown: navigate,
+  } = useListboxNavigation({
     items: filtered,
     open,
     setOpen,
     onPick: pick,
+    initialIndex: noneActive,
   });
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    navigate(e);
+    // Enter with no option active accepts the text: the list closes, and the Enter goes on to
+    // submit the form around the field.
+    if (allowCustomValue && e.key === 'Enter' && !filtered[activeIndex]) setOpen(false);
+  };
 
   return (
     <div
@@ -161,14 +209,14 @@ export const Combobox = ({
           ref={ref}
           id={id}
           role="combobox"
-          aria-expanded={open}
+          aria-expanded={listOpen}
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-describedby={hasDesc ? descId : undefined}
           aria-invalid={error ? true : undefined}
           aria-required={required || undefined}
           aria-activedescendant={
-            open && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined
+            listOpen && filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined
           }
           disabled={disabled}
           value={query}
@@ -176,7 +224,8 @@ export const Combobox = ({
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
-            setActiveIndex(0);
+            setActiveIndex(noneActive);
+            if (allowCustomValue) setValue(e.target.value);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
@@ -203,7 +252,7 @@ export const Combobox = ({
           around it stays open. A mousedown anywhere in the field, its label or
           its help text is not outside. */}
       <FloatingPanel
-        open={open}
+        open={listOpen}
         onClose={() => setOpen(false)}
         triggerRef={wrapperRef}
         anchorRef={fieldRef}
@@ -216,9 +265,7 @@ export const Combobox = ({
           className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
         >
           {filtered.length === 0 ? (
-            <li className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400">
-              {emptyMessage}
-            </li>
+            <li className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400">{emptyText}</li>
           ) : (
             filtered.map((opt, i) => {
               const isActive = i === activeIndex;

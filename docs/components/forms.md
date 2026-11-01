@@ -121,3 +121,34 @@ tinted, so reopening the calendar shows which one is on. A preset that falls out
 now. Pass a fixed date in a test, so the days a preset makes do not depend on the day it runs. The
 presets are a column at the end of the calendar from `sm` up, and wrap under it below `sm`; they come
 after the calendar in the tab order at both widths.
+
+## Combobox with typed text
+
+Storybook: [Combobox](https://sckyzo.github.io/cosmos/?path=/docs/forms-combobox--docs).
+
+`Combobox` picks one of its `options`: the text typed only filters the list, and when focus leaves
+the field goes back to the option selected. `allowCustomValue` makes the text the value instead, for
+a field that suggests (a catalogue, a list of tags) and lets the user write their own entry.
+
+```tsx
+<Combobox
+  label="Item"
+  allowCustomValue
+  value={item}
+  onChange={setItem}
+  onSelect={(option) => setRate(RATES[option.value])}
+  options={catalogue}
+  placeholder="Select or type an item"
+/>
+```
+
+- `value` is an option's `value` or the text itself, and `onChange(value)` fires on every keystroke,
+  as an `Input`'s does. A text equal to the `value` of an option names that option: keep the values
+  of the options (SKUs, ids) out of what people type, or use the labels as values.
+- `onSelect(option)` fires when the user picks an option (a click, or Enter on the active one) and
+  never for typed text. It is how a host fills what depends on the pick, such as a price.
+- Nothing is active until an arrow key moves there, so Enter keeps the text instead of taking the
+  first match. With no option active, Enter closes the list and goes on to submit the form around
+  the field; with one active, it picks it and the form stays put.
+- When no option matches, the list stays closed: the text is accepted. `emptyMessage` opens it with
+  that message ("Press Enter to use this text").
