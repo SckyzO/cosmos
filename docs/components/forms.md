@@ -181,3 +181,5 @@ comes before it: a currency sign, a protocol.
 - `error` marks the field invalid: a red border and `aria-invalid`. It carries no message, a
   `NumberInput` having no text of its own: write it under the field and point `aria-describedby` at
   it (a `FormRow` does the same with its description).
+- `controls="none"` draws the field alone, start-aligned like the stacked layout, for a price or an
+  amount where a step of one means nothing. The arrow keys of the field still step by `step`.

@@ -4,7 +4,13 @@ import type { ReactNode, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 import { useControllableState } from '../hooks/useControllableState';
-import { FIELD_PAD_START, FIELD_TEXT, fieldClass, type FieldSize } from './fieldRecipe';
+import {
+  FIELD_PAD_END,
+  FIELD_PAD_START,
+  FIELD_TEXT,
+  fieldClass,
+  type FieldSize,
+} from './fieldRecipe';
 
 export type NumberInputProps = FieldA11yProps & {
   name?: string;
@@ -35,9 +41,11 @@ export type NumberInputProps = FieldA11yProps & {
   /**
    * Where the step buttons sit. `sides` (default): `−` / `+` on the outer edges,
    * centered text. `stacked`: ↑ / ↓ arrows stacked in a column inside the end
-   * edge, start-aligned text: the compact form for settings panels.
+   * edge, start-aligned text: the compact form for settings panels. `none`: no
+   * button, start-aligned text, for a price or an amount where a step of one means
+   * nothing; the arrow keys of the field still step.
    */
-  controls?: 'sides' | 'stacked';
+  controls?: 'sides' | 'stacked' | 'none';
   /** Tailwind width class for the inner input — default `w-20`. */
   width?: string;
   /**
@@ -97,7 +105,10 @@ export const NumberInput = ({
     name: 'NumberInput.value',
   });
   const draft = useNumberDraft({ value, onChange: setValue, min, max });
-  const stacked = controls === 'stacked';
+  // `stacked` and `none` lay the value out the same way, start-aligned; only `stacked` has arrows.
+  const startAligned = controls !== 'sides';
+  // The arrows close the field; without them the end of the value takes the field's padding.
+  const endPad = controls === 'stacked' || unit ? 'pe-1' : FIELD_PAD_END[size];
 
   return (
     <div
@@ -114,7 +125,7 @@ export const NumberInput = ({
         className
       )}
     >
-      {stacked ? (
+      {startAligned ? (
         <>
           {prefix !== undefined && (
             <span
@@ -140,41 +151,49 @@ export const NumberInput = ({
             step={step}
             className={clsx(
               // min-w-0: in a narrower container the input gives way, not the arrows.
-              'h-full min-w-0 [appearance:textfield] bg-transparent pe-1 font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+              'h-full min-w-0 [appearance:textfield] bg-transparent font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
               FIELD_TEXT[size],
               // The prefix carries the start padding, and the value sits close to it.
               prefix !== undefined ? 'ps-1' : FIELD_PAD_START[size],
+              endPad,
               fullWidth ? 'flex-1' : width
             )}
           />
           {unit && (
-            <span className="flex shrink-0 items-center pe-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
+            <span
+              className={clsx(
+                'flex shrink-0 items-center text-xs text-gray-500 select-none dark:text-gray-400',
+                controls === 'stacked' ? 'pe-1.5' : FIELD_PAD_END[size]
+              )}
+            >
               {unit}
             </span>
           )}
           {/* Fixed width keeps the chevrons clear of the rounded corner. */}
-          <div className="flex w-7 shrink-0 flex-col border-s border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => setValue(clamp(value + step))}
-              disabled={disabled || value >= max}
-              tabIndex={-1}
-              aria-label="Increase"
-              className={stackedButton}
-            >
-              <ChevronUp className="h-3 w-3" strokeWidth={2.25} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue(clamp(value - step))}
-              disabled={disabled || value <= min}
-              tabIndex={-1}
-              aria-label="Decrease"
-              className={clsx('border-t border-gray-200 dark:border-gray-700', stackedButton)}
-            >
-              <ChevronDown className="h-3 w-3" strokeWidth={2.25} aria-hidden />
-            </button>
-          </div>
+          {controls === 'stacked' && (
+            <div className="flex w-7 shrink-0 flex-col border-s border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setValue(clamp(value + step))}
+                disabled={disabled || value >= max}
+                tabIndex={-1}
+                aria-label="Increase"
+                className={stackedButton}
+              >
+                <ChevronUp className="h-3 w-3" strokeWidth={2.25} aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue(clamp(value - step))}
+                disabled={disabled || value <= min}
+                tabIndex={-1}
+                aria-label="Decrease"
+                className={clsx('border-t border-gray-200 dark:border-gray-700', stackedButton)}
+              >
+                <ChevronDown className="h-3 w-3" strokeWidth={2.25} aria-hidden />
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <>
