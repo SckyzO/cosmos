@@ -21,8 +21,8 @@ npm install @sckyzo/cosmos-charts
 The charts also need the styles of the other packages: follow
 [Getting started](../getting-started.md) first. Then point Tailwind at this package too, in the
 CSS file that imports it, next to the `@source` line for `@sckyzo/cosmos-react`. A few charts
-carry Tailwind 4 classes (the legend's focus ring, the calendar's shades in a dark theme), and
-without this line they are not generated.
+carry Tailwind 4 classes (the legend's focus ring, the calendar's shades in a dark theme, the pulse of
+a loading skeleton), and without this line they are not generated.
 
 ```css
 @source '../node_modules/@sckyzo/cosmos-charts/dist/**/*.{js,cjs}';
@@ -116,6 +116,8 @@ The scale has five steps of the accent, cut by quantiles of the values so that e
 The charts that draw a legend take `legendPosition` (`top`, `right`, `bottom` or `left`): the legend sits above the plot by default, below the donut on `DonutChart`. `left` and `right` are the sides of the screen, not of the line: a chart keeps its left-to-right axis in a right-to-left page, and its legend stays where you put it.
 
 A chart with no series, or only empty ones, draws `emptyMessage` (default `No data`, an empty string for nothing) in place of the plot. The gauges, which always have a value, and `RealtimeChart`, which fills its own window, have no such prop.
+
+The same charts take `loading`, for the time the data is on its way: a skeleton of the chart's size (`height` and `width`) in the track gray of the theme replaces the chart, and wins over `emptyMessage` and over any data given, so the page no longer swaps in a skeleton of its own. It is a busy group (`aria-busy`) named by the chart's `ariaLabel` and the word "loading" (`CPU usage per hour, loading`), and it pulses where motion is welcome and holds still under `prefers-reduced-motion`. `FunnelChart` and `CalendarChart` size themselves from their content, so their skeleton is as high as their empty state: `height` on `FunnelChart` (160px by default), 120px on `CalendarChart`, which has no `height`.
 
 For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart`, `FunnelChart` and `WorldMap` takes `children` (see above).
 

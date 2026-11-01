@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { MUTED } from './colors';
+import { MUTED, TRACK } from './colors';
 import type { ChartSize } from '../types';
 
 type FrameOptions = ChartSize & {
@@ -90,4 +90,33 @@ export const ChartEmpty = ({ message, ariaLabel, height, width = '100%' }: Empty
   >
     {message}
   </div>
+);
+
+type SkeletonProps = ChartSize & {
+  /** The chart's name: the skeleton is named by it and the word "loading". */
+  ariaLabel: string;
+};
+
+/**
+ * What a chart draws in place of its plot while `loading`: a block of the chart's
+ * size in the theme's track gray. A busy group named by the chart, so a screen
+ * reader says what is on its way; it pulses where motion is welcome
+ * (`motion-safe`, a Tailwind class like the legend's focus ring, which the
+ * consumer's `@source` generates) and holds still under `prefers-reduced-motion`.
+ */
+export const ChartSkeleton = ({ ariaLabel, height, width = '100%' }: SkeletonProps) => (
+  <div
+    role="group"
+    aria-label={`${ariaLabel}, loading`}
+    aria-busy="true"
+    data-chart-loading=""
+    className="motion-safe:animate-pulse"
+    style={{
+      width,
+      height,
+      maxWidth: '100%',
+      background: TRACK,
+      borderRadius: 'var(--radius-xl, 0.75rem)',
+    }}
+  />
 );

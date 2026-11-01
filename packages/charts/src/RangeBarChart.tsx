@@ -18,12 +18,13 @@ import { TooltipCard } from './core/ChartTooltip';
 import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
   ChartReferenceProps,
 } from './types';
@@ -37,6 +38,7 @@ export type RangeBarPoint = {
 
 export type RangeBarChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
   ChartReferenceProps & {
@@ -152,6 +154,7 @@ export const RangeBarChart = ({
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -162,6 +165,7 @@ export const RangeBarChart = ({
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys('vertical');
   const name = ariaLabel ?? `Range chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

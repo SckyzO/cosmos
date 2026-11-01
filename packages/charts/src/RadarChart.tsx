@@ -13,13 +13,14 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { ChartTooltip } from './core/ChartTooltip';
 import { BORDER, GRID, MUTED, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { radarSize } from './radarSize';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type RadarChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps & {
     /** One polygon per series; one value per category, in the same order. */
     series: { name: string; data: number[] }[];
@@ -50,6 +51,7 @@ export const RadarChart = ({
   max,
   showScale = false,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 340,
@@ -58,6 +60,7 @@ export const RadarChart = ({
   const hidden = useHiddenSeries();
   const { ref: box, width: boxWidth } = useElementWidth();
   const name = ariaLabel ?? `Radar chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

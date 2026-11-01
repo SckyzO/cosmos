@@ -5,15 +5,16 @@ import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { ChartTooltip } from './core/ChartTooltip';
 import { PANEL, seriesColor } from './core/colors';
 import { seriesKey } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { CenterText } from './core/radial';
 import { shares } from './core/shares';
-import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type DonutChartVariant = 'donut' | 'pie';
 
 export type DonutChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps & {
     series: number[];
     labels: string[];
@@ -55,6 +56,7 @@ export const DonutChart = ({
   legendValues = false,
   legendPosition = 'bottom',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 280,
@@ -65,6 +67,7 @@ export const DonutChart = ({
   const [active, setActive] = useState<number>();
   const pie = variant === 'pie';
   const name = ariaLabel ?? `${pie ? 'Pie' : 'Donut'} chart: ${labels.join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (series.length === 0) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

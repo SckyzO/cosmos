@@ -17,16 +17,17 @@ import { categoryAxis } from './core/categoryAxis';
 import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, MUTED, PANEL, TEXT, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type { BumpPoint, BumpSeries } from './core/bump';
 
 export type BumpChartPoints = 'rank' | 'dot';
 
 export type BumpChartProps = ChartProps &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     /**
      * One entry per ranked item. `data` lists the rank (1 is the top) of the
      * item in each period. The periods are every `x` once, in the order they
@@ -122,6 +123,7 @@ export const BumpChart = ({
   formatValue = defaultFormat,
   points = 'rank',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -141,6 +143,7 @@ export const BumpChart = ({
       })),
     [periods, plotted]
   );
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series) || periods.length === 0) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

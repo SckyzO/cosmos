@@ -6,12 +6,13 @@ import { ChartTooltip } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, PANEL, seriesColor } from './core/colors';
 import { hasNoData, safeId, seriesKey, toRows } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
   ChartReferenceProps,
 } from './types';
@@ -26,6 +27,7 @@ const DASH = '6 4';
 
 export type LineAreaChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
   ChartReferenceProps & {
@@ -60,6 +62,7 @@ export const LineAreaChart = ({
   referenceLines,
   referenceBands,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 280,
@@ -74,6 +77,7 @@ export const LineAreaChart = ({
   const hidden = useHiddenSeries();
   const axis = useAxis();
   const name = ariaLabel ?? `Area chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

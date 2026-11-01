@@ -17,6 +17,17 @@ export type ChartEmptyProps = {
   emptyMessage?: string;
 };
 
+/** Props of the charts that wait for their data. */
+export type ChartLoadingProps = {
+  /**
+   * Draws a skeleton of the chart's height in place of the chart, while the data
+   * is on its way: a busy group named by `ariaLabel` and the word "loading",
+   * still under `prefers-reduced-motion`. It wins over `emptyMessage` and over any
+   * data given. Default off.
+   */
+  loading?: boolean;
+};
+
 /** Props of the charts with a horizontal and a vertical axis. */
 export type ChartAxisTitleProps = {
   /** Title under the horizontal axis, such as "Time (UTC)". Drawn as plain text. */

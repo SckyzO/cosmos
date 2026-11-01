@@ -15,13 +15,14 @@ import { ChartTooltip } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
   ChartReferenceProps,
 } from './types';
@@ -30,6 +31,7 @@ export type BarChartOrientation = 'vertical' | 'horizontal';
 
 export type BarChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
   ChartReferenceProps & {
@@ -77,6 +79,7 @@ export const BarChart = ({
   distributed = false,
   negativeColor,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -87,6 +90,7 @@ export const BarChart = ({
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys(orientation === 'horizontal' ? 'vertical' : 'horizontal');
   const name = ariaLabel ?? `Bar chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

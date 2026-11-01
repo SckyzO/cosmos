@@ -18,13 +18,14 @@ import { TooltipCard } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, MUTED, PANEL, seriesColor } from './core/colors';
 import { hasNoData, safeId, seriesKey, toRows } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
   ChartReferenceProps,
 } from './types';
@@ -42,6 +43,7 @@ export type MixedChartSeries = {
 
 export type MixedChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
   ChartReferenceProps & {
@@ -98,6 +100,7 @@ export const MixedChart = ({
   legendPosition = 'top',
   stackedColumns = false,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -107,6 +110,7 @@ export const MixedChart = ({
   const hidden = useHiddenSeries();
   const axis = useAxis();
   const name = ariaLabel ?? `Mixed chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

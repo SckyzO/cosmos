@@ -2,13 +2,14 @@ import type { CSSProperties } from 'react';
 import { TEXT_SIZE } from './core/axes';
 import { MUTED, SEQUENTIAL, seriesColor } from './core/colors';
 import { hasNoData } from './core/data';
-import { ChartEmpty } from './core/frame';
+import { ChartEmpty, ChartSkeleton } from './core/frame';
 import { HeatGrid, type HeatCell } from './core/HeatGrid';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendPosition,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
 } from './types';
 
@@ -24,6 +25,7 @@ export type HeatmapColorRange = {
 
 export type HeatmapChartProps = Omit<ChartProps, 'children'> &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps & {
     /** One row per series, drawn top to bottom; one value per category. */
@@ -121,11 +123,13 @@ export const HeatmapChart = ({
   showLegend = true,
   legendPosition = 'top',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   height = 320,
   width,
 }: HeatmapChartProps) => {
   const name = ariaLabel ?? `Heatmap: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

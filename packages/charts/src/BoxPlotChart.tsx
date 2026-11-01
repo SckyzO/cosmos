@@ -17,12 +17,13 @@ import { TooltipCard, type TooltipRow } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
   ChartEmptyProps,
   ChartLegendProps,
+  ChartLoadingProps,
   ChartProps,
   ChartReferenceProps,
 } from './types';
@@ -34,6 +35,7 @@ export type BoxPlotSummary = [min: number, q1: number, median: number, q3: numbe
 
 export type BoxPlotChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
   ChartReferenceProps & {
@@ -130,6 +132,7 @@ export const BoxPlotChart = ({
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -140,6 +143,7 @@ export const BoxPlotChart = ({
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys(orientation === 'horizontal' ? 'vertical' : 'horizontal');
   const name = ariaLabel ?? `Box plot: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

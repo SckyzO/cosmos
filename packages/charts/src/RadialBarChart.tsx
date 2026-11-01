@@ -10,13 +10,14 @@ import type { TooltipContentProps } from 'recharts';
 import { ANIMATION } from './core/animation';
 import { TooltipCard } from './core/ChartTooltip';
 import { TRACK, seriesColor } from './core/colors';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { percent } from './core/gauge';
 import { CenterText } from './core/radial';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type RadialBarChartProps = ChartProps &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     series: number[];
     labels: string[];
     /** Override the default Cosmos palette. */
@@ -46,6 +47,7 @@ export const RadialBarChart = ({
   colors,
   formatValue = percent,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -54,6 +56,7 @@ export const RadialBarChart = ({
   // The ring the pointer is on, shown in the center in place of the average.
   const [active, setActive] = useState<number>();
   const name = ariaLabel ?? `Radial bar chart: ${labels.join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (series.length === 0) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

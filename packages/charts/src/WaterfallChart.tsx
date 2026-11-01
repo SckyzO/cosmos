@@ -16,9 +16,9 @@ import { AXIS, GRID_PROPS, TEXT_SIZE, useAxis, xAxisTitle, yAxisTitle } from './
 import { trimLabel } from './core/categoryAxis';
 import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, ERROR, MUTED, SERIES, SUCCESS, TEXT } from './core/colors';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartProps } from './types';
+import type { ChartAxisTitleProps, ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 import {
   barText,
   KIND_WORDS,
@@ -32,6 +32,7 @@ export type { WaterfallDatum } from './waterfall';
 
 export type WaterfallChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartAxisTitleProps & {
     /**
      * The bars, left to right. A step (default) carries a signed `value`. A
@@ -166,6 +167,7 @@ export const WaterfallChart = ({
   xTitle,
   yTitle,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -179,6 +181,7 @@ export const WaterfallChart = ({
     [bars]
   );
   const name = ariaLabel ?? `Waterfall chart: ${data.map((d) => d.label).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (data.length === 0) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }
