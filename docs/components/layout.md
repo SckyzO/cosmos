@@ -197,7 +197,7 @@ below `sm` and 32px from there, so a phone keeps room for the form.
 
 ## Auth forms
 
-Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs).
+Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs), [Sign Up Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-sign-up-form--docs).
 
 Reset a password in two routes, each with its own form. `ResetPasswordForm` takes the e-mail
 address on the first one and shows its `sent` view. `NewPasswordForm` is the page the e-mail link
@@ -228,7 +228,8 @@ The password policy is `rules`, a function of the password that returns the rule
 shows none and asks only for a non-empty password. `strength` takes a function that scores the
 password from 0 to 4 and shows a `PasswordStrengthMeter` under the field once something is typed;
 without it nothing is drawn, and Cosmos bundles no estimator (see
-[Password strength](forms.md#password-strength)).
+[Password strength](forms.md#password-strength)). `SignUpForm` takes the same two props, so one
+policy and one meter can serve both pages:
 
 ```tsx
 const policy = (password: string) => [
@@ -237,4 +238,5 @@ const policy = (password: string) => [
 ];
 
 <NewPasswordForm rules={policy} strength={estimate} onSubmit={…} />
+<SignUpForm rules={policy} strength={estimate} onSubmit={…} />
 ```

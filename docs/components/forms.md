@@ -96,7 +96,7 @@ const meterId = useId();
 ```
 
 Cosmos bundles no estimator, so it adds no weight to a page that does not need one.
-`NewPasswordForm` takes one as `strength` (see [Auth forms](layout.md#auth-forms)).
+`NewPasswordForm` and `SignUpForm` take one as `strength` (see [Auth forms](layout.md#auth-forms)).
 This one has no dependency and suits a page that wants a first version: it counts at most two characters for each
 distinct one, steps up at 8, 12, 16 and 20 of them, and moves one step for the kinds of character
 used.
