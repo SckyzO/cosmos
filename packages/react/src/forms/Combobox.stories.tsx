@@ -12,7 +12,7 @@ import {
   inEachTheme,
   scrollAnchor,
 } from '../storybook-helpers';
-import { Combobox } from './Combobox';
+import { Combobox, type ComboboxOption } from './Combobox';
 
 const meta = {
   title: 'Forms/Combobox',
@@ -294,6 +294,250 @@ export const DefaultValueOrControlled: Story = {
     await expect(args.onChange).toHaveBeenLastCalledWith('dries');
     // Closed again, the field mirrors the value it is given.
     await expect(held).toHaveValue('Tom Cook');
+  },
+};
+
+// ── Typed text as the value ──────────────────────────────────────────────────
+// `allowCustomValue`: a field that suggests (a catalogue, a list of tags) and accepts what the
+// user types. The value is an option's `value` or the text itself.
+
+const SERVICES = [
+  { value: 'design', label: 'Landing page design', secondary: '$950.00' },
+  { value: 'copy', label: 'Landing page copy', secondary: '$60.00' },
+  { value: 'audit', label: 'Landing page audit', secondary: '$320.00' },
+  { value: 'workshop', label: 'Brand identity workshop', secondary: '$1,800.00' },
+];
+
+/**
+ * `allowCustomValue`: picking an option sets its value, and any other text typed is the value as
+ * it is. `onChange` fires on every keystroke, and `onSelect` says which option was picked.
+ */
+export const AllowCustomValue: Story = {
+  render: () => {
+    const [v, setV] = useState('');
+    return (
+      <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+        <Combobox
+          label="Item"
+          allowCustomValue
+          value={v}
+          onChange={setV}
+          options={SERVICES}
+          placeholder="Select or type an item"
+          helperText="Pick from the catalogue, or type your own."
+        />
+        <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+          Value: <code>{v}</code>
+        </p>
+      </div>
+    );
+  },
+};
+
+const TextAndNeighbour = ({ onSelect }: { onSelect?: (option: ComboboxOption) => void }) => {
+  const [v, setV] = useState('');
+  return (
+    <div>
+      <Combobox
+        label="Item"
+        allowCustomValue
+        value={v}
+        onChange={setV}
+        onSelect={onSelect}
+        options={SERVICES}
+      />
+      <button type="button">After</button>
+      <p data-testid="value">{v}</p>
+    </div>
+  );
+};
+
+/** The text typed stays the value, when the list closes and when focus moves on. */
+export const AllowCustomValueKeepsTheTypedText: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <TextAndNeighbour />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Item' });
+    await userEvent.click(input);
+    await userEvent.type(input, 'Bespoke work');
+    await expect(canvas.getByTestId('value')).toHaveTextContent('Bespoke work');
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+    await expect(input).toHaveValue('Bespoke work');
+    await expect(canvas.getByTestId('value')).toHaveTextContent('Bespoke work');
+    // An empty field is an empty value, not the last option picked.
+    await userEvent.clear(input);
+    await expect(canvas.getByTestId('value')).toHaveTextContent(/^$/);
+  },
+};
+
+/** Without the prop, text that is no option is dropped when focus leaves, as it always was. */
+export const WithoutAllowCustomValueTheTypedTextIsDropped: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <div>
+      <Combobox label="Item" options={SERVICES} onChange={args.onChange} />
+      <button type="button">After</button>
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Item' });
+    await userEvent.type(input, 'Bespoke work');
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect(input).toHaveValue('');
+    await expect(args.onChange).not.toHaveBeenCalled();
+  },
+};
+
+const ItemInAForm = ({ onSelect }: { onSelect?: (option: ComboboxOption) => void }) => {
+  const [v, setV] = useState('');
+  const [submits, setSubmits] = useState(0);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setSubmits((n) => n + 1);
+      }}
+    >
+      <Combobox
+        label="Item"
+        allowCustomValue
+        value={v}
+        onChange={setV}
+        onSelect={onSelect}
+        options={SERVICES}
+      />
+      <p data-testid="value">{v}</p>
+      <p data-testid="submits">{submits}</p>
+    </form>
+  );
+};
+
+/**
+ * Enter keeps the text: with no option active it closes the list and submits the form around the
+ * field; it picks an option only after an arrow key, or a click, chose one.
+ */
+export const AllowCustomValueEnterKeepsTheText: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  render: (args) => <ItemInAForm onSelect={args.onSelect} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Item' });
+    const submits = canvas.getByTestId('submits');
+    await userEvent.type(input, 'Land');
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+    await expect(await page.findAllByRole('option')).toHaveLength(3);
+    // Nothing is active until an arrow key moves there: the first match is a suggestion only.
+    await expect(input).not.toHaveAttribute('aria-activedescendant');
+    await userEvent.keyboard('{Enter}');
+    await expect(submits).toHaveTextContent('1');
+    await expect(args.onSelect).not.toHaveBeenCalled();
+    await expect(input).toHaveValue('Land');
+    await expect(canvas.getByTestId('value')).toHaveTextContent('Land');
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+
+    // An arrow key chooses an option, and Enter picks it without submitting.
+    await userEvent.type(input, 'ing page c');
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(input).toHaveAttribute('aria-activedescendant');
+    await userEvent.keyboard('{Enter}');
+    await expect(submits).toHaveTextContent('1');
+    await expect(args.onSelect).toHaveBeenCalledTimes(1);
+    await expect(args.onSelect).toHaveBeenCalledWith(SERVICES[1]);
+    await expect(input).toHaveValue('Landing page copy');
+    await expect(canvas.getByTestId('value')).toHaveTextContent('copy');
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+/** A click on an option fires `onSelect` too, and the typed text that follows is no pick. */
+export const AllowCustomValueOnSelectTellsAPickFromTyping: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  render: (args) => <TextAndNeighbour onSelect={args.onSelect} />,
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Item' });
+    await userEvent.type(input, 'Land');
+    await expect(args.onSelect).not.toHaveBeenCalled();
+    await userEvent.click(await page.findByRole('option', { name: /Landing page audit/ }));
+    await expect(args.onSelect).toHaveBeenCalledWith(SERVICES[2]);
+    await expect(canvas.getByTestId('value')).toHaveTextContent('audit');
+    await expect(input).toHaveValue('Landing page audit');
+    await userEvent.type(input, ' extended');
+    await expect(args.onSelect).toHaveBeenCalledTimes(1);
+    await expect(canvas.getByTestId('value')).toHaveTextContent('Landing page audit extended');
+  },
+};
+
+/**
+ * With nothing to suggest, no panel opens (the text is accepted anyway), unless the host gave an
+ * `emptyMessage`. Without the prop, the panel says "No matches found." as before.
+ */
+export const AllowCustomValueOpensNoEmptyPanel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <Combobox label="Typed" allowCustomValue options={SERVICES} />
+      <Combobox
+        label="Message"
+        allowCustomValue
+        options={SERVICES}
+        emptyMessage="Press Enter to use this text."
+      />
+      <Combobox label="Strict" options={SERVICES} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const typed = canvas.getByRole('combobox', { name: 'Typed' });
+    await userEvent.type(typed, 'zzz');
+    await expect(typed).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.queryByRole('listbox')).toBeNull();
+    await userEvent.type(typed, '{Backspace>3/}');
+    await expect(typed).toHaveAttribute('aria-expanded', 'true');
+    await expect(await page.findAllByRole('option')).toHaveLength(SERVICES.length);
+
+    const message = canvas.getByRole('combobox', { name: 'Message' });
+    await userEvent.type(message, 'zzz');
+    await expect(message).toHaveAttribute('aria-expanded', 'true');
+    await expect(await page.findByText('Press Enter to use this text.')).toBeVisible();
+
+    const strict = canvas.getByRole('combobox', { name: 'Strict' });
+    await userEvent.type(strict, 'zzz');
+    await expect(strict).toHaveAttribute('aria-expanded', 'true');
+    await expect(await page.findByText('No matches found.')).toBeVisible();
+    // The empty message is a bare `li` in the listbox, which axe flags: close it before it runs.
+    await userEvent.keyboard('{Escape}');
+    await expect(page.queryByRole('listbox')).toBeNull();
+  },
+};
+
+/** The field shows the value it is given: the text itself, or the label of the option it names. */
+export const AllowCustomValueShowsTheValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <Combobox label="Held text" allowCustomValue options={SERVICES} value="Bespoke work" />
+      <Combobox
+        label="Default text"
+        allowCustomValue
+        options={SERVICES}
+        defaultValue="Bespoke work"
+      />
+      <Combobox label="Option" allowCustomValue options={SERVICES} value="copy" />
+      <Combobox label="Not an option" options={SERVICES} value="Bespoke work" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('combobox', { name: 'Held text' })).toHaveValue('Bespoke work');
+    await expect(canvas.getByRole('combobox', { name: 'Default text' })).toHaveValue(
+      'Bespoke work'
+    );
+    await expect(canvas.getByRole('combobox', { name: 'Option' })).toHaveValue('Landing page copy');
+    // Without the prop a value that names no option shows nothing, as before.
+    await expect(canvas.getByRole('combobox', { name: 'Not an option' })).toHaveValue('');
   },
 };
 
