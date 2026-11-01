@@ -891,10 +891,9 @@ export const SchemaKeepsToItsNodes: Story = {
     const html = lastValue(args.onChange) as string;
     // Level 1 is a heading now; level 4 is not.
     await expect(html).toContain('<h1>Title</h1>');
-    // Of six pasted images, the one with an http(s) source stays, with a source and a description.
-    await expect(html.match(/<img/g)).toHaveLength(1);
-    await expect(html).toContain('<img src="https://ok.example/a.png" alt="ok">');
+    // A pasted image is never kept, whatever its source (`PastedImagesAreDropped`).
     for (const forbidden of [
+      '<img',
       '<h4',
       '<hr',
       '<script',
@@ -904,12 +903,131 @@ export const SchemaKeepsToItsNodes: Story = {
       'javascript',
       'data:',
       'relative.png',
-      'src="x"',
+      'ok.example',
+      'src=',
       'width=',
       'title=',
     ]) {
       await expect(html).not.toContain(forbidden);
     }
+  },
+};
+
+// The first and last blocks of a paste join the paragraph around the caret, so the pictures sit
+// between two plain paragraphs and in the middle of a line.
+const PASTED_IMAGES =
+  '<p>first</p>' +
+  '<p>look <img src="https://tracker.example/pixel.png" alt="Pixel"> here</p>' +
+  '<p><img src="https://example.com/a.png" alt="Chart"></p>' +
+  '<p>last</p>';
+
+// An image that arrives by paste or drop is dropped, so a picture from another page is never
+// loaded (a tracking pixel): the text around it is kept.
+const expectNoImage = async (text: HTMLElement, onChange: unknown) => {
+  await expect(text.querySelectorAll(IMAGES)).toHaveLength(0);
+  await expect(lastValue(onChange) as string).not.toContain('<img');
+};
+
+export const PastedImagesAreDropped: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const data = new DataTransfer();
+    data.setData('text/html', PASTED_IMAGES);
+    data.setData('text/plain', 'first look here last');
+    await userEvent.paste(data);
+    await waitFor(() => expect(text).toHaveTextContent('look here'));
+    await expectNoImage(text, args.onChange);
+  },
+};
+
+export const DroppedImagesAreDropped: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { defaultValue: '<p>Drop here</p>', onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    const data = new DataTransfer();
+    data.setData('text/html', PASTED_IMAGES);
+    data.setData('text/plain', 'first look here last');
+    const box = text.getBoundingClientRect();
+    text.dispatchEvent(
+      new DragEvent('drop', {
+        dataTransfer: data,
+        clientX: box.left + 8,
+        clientY: box.top + 8,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    await waitFor(() => expect(text).toHaveTextContent('look here'));
+    await expectNoImage(text, args.onChange);
+  },
+};
+
+// No handler turns a file into an image: a picture file pasted or dropped does nothing.
+export const PastedAndDroppedImageFilesAreIgnored: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, defaultValue: '<p>Text</p>', onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const data = new DataTransfer();
+    data.items.add(new File(['x'], 'photo.png', { type: 'image/png' }));
+    await userEvent.paste(data);
+    const box = text.getBoundingClientRect();
+    text.dispatchEvent(
+      new DragEvent('drop', {
+        dataTransfer: data,
+        clientX: box.left + 8,
+        clientY: box.top + 8,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await expect(text.querySelectorAll(IMAGES)).toHaveLength(0);
+    await expect(args.onChange).not.toHaveBeenCalled();
+    await expect(text).toHaveTextContent('Text');
+  },
+};
+
+// A document the host hands over is not a paste: HTML is trusted like JSON, apart from the source
+// of an image, which has to be http(s) wherever it comes from.
+export const HtmlContentKeepsItsImages: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [html, setHtml] = useState(
+      '<p>Look <img src="javascript:alert(1)" alt="Unsafe"><img src="https://example.com/a.png" alt="Chart"> here</p>'
+    );
+    return (
+      <div>
+        <RichTextEditor label="Message" value={html} onChange={setHtml} />
+        <button
+          type="button"
+          onClick={() => setHtml('<p><img src="https://example.com/b.png" alt="Second"></p>')}
+        >
+          Swap
+        </button>
+      </div>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await expect(await within(text).findByRole('img', { name: 'Chart' })).toHaveAttribute(
+      'src',
+      'https://example.com/a.png'
+    );
+    await expect(text.querySelectorAll(IMAGES)).toHaveLength(1);
+    await userEvent.click(canvas.getByRole('button', { name: 'Swap' }));
+    await expect(await within(text).findByRole('img', { name: 'Second' })).toBeVisible();
+    await expect(within(text).queryByRole('img', { name: 'Chart' })).toBeNull();
   },
 };
 
