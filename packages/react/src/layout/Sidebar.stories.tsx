@@ -359,6 +359,40 @@ export const EdgeToggleOutsideAShell: Story = {
   },
 };
 
+/**
+ * Collapsed, a section without a title shows no mark: there is no title for it to stand for. Its
+ * rows keep their place, expanded or collapsed.
+ */
+export const UntitledSectionHasNoMark: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [collapsed, setCollapsed] = useState(true);
+    return (
+      <Wrap>
+        <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed}>
+          <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+          <Sidebar.Section>
+            <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
+          </Sidebar.Section>
+          <Sidebar.Section>
+            <Sidebar.Item icon={Globe} label="World Map" />
+          </Sidebar.Section>
+        </Sidebar>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.querySelector('[data-sidebar-mark]')).toBeNull();
+    const top = () => canvas.getByRole('button', { name: 'World Map' }).getBoundingClientRect().top;
+    const railTop = top();
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await waitFor(() => expect(canvas.getByText('Cosmos')).toBeVisible());
+    // The 36px rail square against the 32px row: the second row moves by those 4px only.
+    await expect(Math.abs(top() - railTop)).toBeLessThanOrEqual(4);
+  },
+};
+
 /** Collapsed, a "···" mark takes each section title's place. */
 export const SectionsCollapsed: Story = {
   render: () => (
@@ -377,7 +411,11 @@ export const SectionsCollapsedChecks: Story = {
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await expect(canvas.queryByText('Monitoring')).toBeNull();
-    await expect(nav.querySelectorAll('div[aria-hidden="true"] > svg')).toHaveLength(3);
+    // A mark between two titled blocks, none above the first one: nothing there to set apart.
+    const marks = [...nav.querySelectorAll('[data-sidebar-mark]')];
+    await expect(marks.filter((m) => m.checkVisibility({ visibilityProperty: true }))).toHaveLength(
+      2
+    );
     // Each row is a 36px square, centred in the rail: the active pill is not a wide band.
     for (const name of ['World Map', 'Notifications']) {
       const row = canvas.getByRole('button', { name }).getBoundingClientRect();

@@ -1263,26 +1263,35 @@ const SidebarSection = ({
     );
   }
   // Rows sit close inside a block and blocks stand apart: 22 px above a title (18 px and the 4 px
-  // under the row above), 6 px under it. The "···" mark (40 px) takes the place of the title and
-  // the space above it (40 px), so rows don't move when the sidebar collapses. Right under the
-  // brand, whose own height is the space, both lose 14 px.
+  // under the row above), 6 px under it. Collapsed, a "···" mark (40 px) takes the place of the
+  // title and the space above it (40 px), so rows don't move. The mark stands for a title between
+  // two blocks: a section without a title shows none (its 18 px of space stay), and the first
+  // section under the brand keeps its place empty, with nothing above it to set apart. Right under
+  // the brand, whose own height is the space, the title and the mark both lose 14 px.
+  const titled = Boolean(label);
   return (
     <div
       className={
-        collapsed ? '[[data-sidebar-head]+&]:-mt-3.5' : 'pt-[18px] [[data-sidebar-head]+&]:pt-1'
+        collapsed && titled
+          ? '[[data-sidebar-head]+&]:-mt-3.5'
+          : 'pt-[18px] [[data-sidebar-head]+&]:pt-1'
       }
     >
-      {collapsed ? (
-        <div className="flex justify-center py-2 text-[var(--color-text-muted)]" aria-hidden>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="6" cy="12" r="1.75" />
-            <circle cx="12" cy="12" r="1.75" />
-            <circle cx="18" cy="12" r="1.75" />
-          </svg>
-        </div>
-      ) : (
-        label && <SectionTitle label={label} className="mb-1.5" />
-      )}
+      {collapsed
+        ? titled && (
+            <div
+              data-sidebar-mark=""
+              className="flex justify-center py-2 text-[var(--color-text-muted)] [[data-sidebar-head]+div>&]:invisible"
+              aria-hidden
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="12" r="1.75" />
+                <circle cx="12" cy="12" r="1.75" />
+                <circle cx="18" cy="12" r="1.75" />
+              </svg>
+            </div>
+          )
+        : label && <SectionTitle label={label} className="mb-1.5" />}
       <div>{children}</div>
     </div>
   );
