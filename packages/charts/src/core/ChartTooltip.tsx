@@ -25,44 +25,47 @@ export type TooltipRow = { name: string; value: ReactNode; color: string };
 export const TooltipCard = ({ title, rows }: { title?: ReactNode; rows: TooltipRow[] }) => (
   <div role="status" aria-live="polite" style={card}>
     {title !== undefined && title !== '' && (
-      <p style={{ margin: '0 0 0.375rem', fontWeight: 600 }}>{title}</p>
+      // A card with a title and no row (a marker with no value) has nothing under it to make room for.
+      <p style={{ margin: rows.length > 0 ? '0 0 0.375rem' : 0, fontWeight: 600 }}>{title}</p>
     )}
-    <ul
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.25rem',
-        margin: 0,
-        padding: 0,
-        listStyle: 'none',
-      }}
-    >
-      {rows.map((row, i) => (
-        <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span
-            aria-hidden
-            style={{
-              flexShrink: 0,
-              width: '0.625rem',
-              height: '0.625rem',
-              borderRadius: '50%',
-              background: row.color,
-            }}
-          />
-          <span style={{ color: MUTED }}>{row.name}</span>
-          <span
-            style={{
-              marginLeft: 'auto',
-              paddingLeft: '1rem',
-              fontWeight: 600,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {row.value}
-          </span>
-        </li>
-      ))}
-    </ul>
+    {rows.length > 0 && (
+      <ul
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.25rem',
+          margin: 0,
+          padding: 0,
+          listStyle: 'none',
+        }}
+      >
+        {rows.map((row, i) => (
+          <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span
+              aria-hidden
+              style={{
+                flexShrink: 0,
+                width: '0.625rem',
+                height: '0.625rem',
+                borderRadius: '50%',
+                background: row.color,
+              }}
+            />
+            <span style={{ color: MUTED }}>{row.name}</span>
+            <span
+              style={{
+                marginLeft: 'auto',
+                paddingLeft: '1rem',
+                fontWeight: 600,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {row.value}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
   </div>
 );
 

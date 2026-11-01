@@ -111,7 +111,31 @@ import world from 'world-atlas/countries-110m.json';
 />;
 ```
 
-The scale has five steps of the accent, cut by quantiles of the values so that each holds about as many countries (a linear scale lets one large country wash the others out); a country without a value is gray. `min` and `max` clamp every value before the steps are cut, so a value over `max` counts as `max`: they pin the ends of the scale, and the legend starts at `min`. The legend gives the lower bound of each step (`2.7k+`, through `formatValue`) and a "No data" swatch; `showLegend={false}` hides it. It is its own SVG, so it takes no `children`, and a map with no value (an empty `data`, or no code the map holds) draws the bare map, with no legend and no `emptyMessage`. The map scales with the width it is given and keeps its proportions (about 2:1) unless `height` is set. It is one tab stop: the arrow keys walk the countries that have a value, largest first (Home and End go to the largest and the smallest), the one in focus is outlined and shows its card, and `onSelect(code)` is called by a click, or by Enter or Space on the country in focus. For screen readers the map is an image named by `ariaLabel`, and a visually hidden table (country, value, largest first) lists the data. `geography` needs `@types/topojson-specification` for its type, installed with the package.
+The scale has five steps of the accent, cut by quantiles of the values so that each holds about as many countries (a linear scale lets one large country wash the others out); a country without a value is gray. `min` and `max` clamp every value before the steps are cut, so a value over `max` counts as `max`: they pin the ends of the scale, and the legend starts at `min`. The legend gives the lower bound of each step (`2.7k+`, through `formatValue`) and a "No data" swatch; `showLegend={false}` hides it. It is its own SVG, so it takes no `children`, and a map with no value to draw (an empty `data`, or no code the map holds) and no marker draws the bare map, with no legend and no `emptyMessage`. The map scales with the width it is given and keeps its proportions (about 2:1) unless `height` is set. It is one tab stop: the arrow keys walk the countries that have a value, largest first (Home and End go to the largest and the smallest), the one in focus is outlined and shows its card, and `onSelect(code)` is called by a click, or by Enter or Space on the country in focus. For screen readers the map is an image named by `ariaLabel`, and a visually hidden table (country, value, largest first) lists the data. `geography` needs `@types/topojson-specification` for its type, installed with the package.
+
+`markers` puts points on the map and `routes` joins them. A marker is `{ id, coordinates: [longitude, latitude], label, value?, intent? }`: a bubble drawn above the countries whose area follows `value` (a marker with no value is a dot of the smallest size), and whose `label` titles its card and names it for a screen reader. Bubbles and lines are in the second series color unless a marker has an `intent` (`success`, `warning`, `danger` or `neutral`), which takes the status colors of the theme: every accent skips the hues that look like it, so the color is never one of the five steps of the countries, and an edge in the color of the card keeps each bubble and line apart from the country under it. Sizes are in screen pixels, not in units of the drawing: the largest bubble is a sixtieth of the width of the map, from 6px to 16px, so a map in a narrow box keeps bubbles you can see, and the smallest is 3px. Each marker has a touch target of 24px at least. Markers are not clustered: where two overlap, the smaller is drawn on top. `onMarkerSelect(marker)` is called by a click, or by Enter or Space on the marker in focus, and it is the only click a marker or a route has.
+
+```tsx
+<WorldMap
+  data={{ NL: 6200, CN: 9800, US: 11800 }}
+  geography={world as unknown as Topology}
+  label="shipments"
+  markers={[
+    { id: 'rtm', label: 'Rotterdam', coordinates: [4.48, 51.92], value: 6240 },
+    { id: 'sha', label: 'Shanghai', coordinates: [121.47, 31.23], value: 5600 },
+    { id: 'lax', label: 'Los Angeles', coordinates: [-118.24, 34.05], value: 3300 },
+  ]}
+  routes={[
+    { from: 'sha', to: 'rtm', value: 1240 },
+    { from: 'sha', to: 'lax', value: 860 },
+  ]}
+  onMarkerSelect={(marker) => openPort(marker.id)}
+/>
+```
+
+A route is `{ from, to, value?, label? }`, where `from` and `to` are a marker `id` or a `[longitude, latitude]` position, so coordinates are not written twice. It is drawn as the great circle between its ends, the shortest way on the globe, which the projection draws as a curve and cuts at the antimeridian: Shanghai to Los Angeles leaves by the right edge of the map and comes in by the left one, where a line straight across the map would run over the whole of Eurasia. Its width follows `value`, from 1.2px to 3.6px, and a route with no value is the thinnest. It is drawn under the markers, has no arrow (a route has no direction), and cannot be clicked: the pointer or the keyboard on a route shows its card, with its `label` or `Rotterdam → New York` from the markers at its ends (the coordinates, for an end that is a position), and fades the other routes. A marker with a position off the globe, a route that names a marker `markers` does not hold, has an end off the globe or starts where it ends, is not drawn; of two markers with the same `id` the first is kept.
+
+Markers and routes read the countries' `formatValue` and `label`, so one map shows one measure. The legend keeps the steps of the countries and adds the sizes of the bubbles (the largest value, and the quarter and sixteenth of it that the radius can tell apart) and the widths of the lines (the smallest and the largest value of the routes); `showLegend={false}` hides all of it. `data` may be empty: the countries are then gray, and the markers and routes carry the data. The map is still one tab stop, and the arrow keys now walk one list: the countries that have a value, then the markers, then the routes, each largest first (a marker with no value comes last in its group). Home and End go to the ends of the whole list, Page Up and Page Down to the first stop of the previous and the next group. Enter and Space call `onMarkerSelect` on a marker and `onSelect` on a country. The visually hidden tables gain `Markers` and `Routes`, after the one of the countries. Without `markers` and `routes` the map is what it was.
 
 `RadarChart` draws its polygons as large as its box allows and leaves the scale (0, 20 … 100) off them unless given `showScale`. `DonutChart` writes the total in the middle, and the value and name of the slice under the pointer in its place (`centerValue` and `centerLabel` replace the sum and "Total"; `variant="pie"` fills the disc and writes nothing in it; `legendValues` adds each slice's value and its share, in whole percents that add up to 100, to the legend, in columns when the legend is on a side); `RadialBarChart` does the same with the average and the ring.
 
@@ -149,4 +173,4 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `BoxPlotChart`                 | Min/quartiles/max boxes, vertical or horizontal               |
 | `FunnelChart`                  | Centered bars joined by a flow, with the conversion per stage |
 | `WaterfallChart`               | Running total through gains, losses, subtotals and totals     |
-| `WorldMap`                     | Countries colored by value in five quantile steps (own SVG)   |
+| `WorldMap`                     | Countries by value in five quantile steps, markers, routes    |
