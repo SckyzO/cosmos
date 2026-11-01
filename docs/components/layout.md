@@ -263,3 +263,34 @@ through `error`. `resendLabels` takes the words to translate: `resent`, `ready` 
   onSubmit={sendLink}
 />
 ```
+
+### Two-step verification
+
+`TwoStepVerificationForm` takes the six-digit code. Two opt-in props add to it, and a page that sets
+neither renders as before.
+
+`backupCode` offers a link to a backup-code entry in the same card: a text field with no length or
+format check, no automatic submit, and a link back to the code. `method` (`'code'` | `'backup'`),
+with `defaultMethod` and `onMethodChange(method)`, says which one shows; set `method` to own it.
+`onSubmit(code, method)` gets the method the code was typed for, and the backup code trimmed. Each
+entry starts empty when the other is picked, and focus moves to the new field. On the backup entry
+`error` shows under the field and does not say whether the code was already used; on the code it is
+the banner above the cells.
+
+`resendCooldown` makes the "Resend code" button wait as described in [Waiting between two
+resends](#waiting-between-two-resends), from the moment the form shows (a code was just sent). It is
+hidden on the backup entry, which has nothing to resend.
+
+```tsx
+<TwoStepVerificationForm
+  backupCode
+  sentTo="ada@example.com"
+  onSubmit={(code, method) => (method === 'backup' ? useBackupCode(code) : verify(code))}
+  onResend={resend}
+  resendCooldown={30}
+/>
+```
+
+`labels` takes the words to translate: the title, description and field of the backup entry
+(`backupTitle`, `backupDescription`, `backupField`), the two links (`useBackupCode`,
+`useVerificationCode`) and the three words of the wait (`resent`, `ready`, `availableIn`).
