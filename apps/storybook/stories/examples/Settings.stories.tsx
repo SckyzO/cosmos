@@ -15,7 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
   AlertBanner,
@@ -24,10 +24,10 @@ import {
   Badge,
   Button,
   ConfirmationModal,
+  ErrorSummary,
   FormFooter,
   FormRow,
   Input,
-  Link,
   NumberInput,
   PageContainer,
   PageHeader,
@@ -103,15 +103,6 @@ type Story = StoryObj<typeof meta>;
 
 // A field in a FormRow is as wide as the row's end column from `sm` up, the whole row below.
 const FIELD_WIDTH = 'w-full sm:w-80';
-
-// Where the error links of the summary land: the first control inside the field's box.
-const focusField = (key: string) => {
-  const box = document.getElementById(`field-${key}`);
-  const target = box?.querySelector<HTMLElement>('input:not([type=file]), select, button');
-  if (!target) return;
-  target.focus({ preventScroll: true });
-  target.scrollIntoView({ block: 'center' });
-};
 
 // A section is a SectionCard whose rows are FormRows separated by a hairline. The wrapper
 // carries the id the StickyScrollNav scrolls to.
@@ -305,27 +296,10 @@ const SettingsScreen = ({
               Start with the basics. You can change all of this later in Settings.
             </AlertBanner>
           )}
-          {summary.length > 0 && (
-            <AlertBanner intent="danger" title="We couldn’t save your changes">
-              Fix {summary.length} {summary.length === 1 ? 'field' : 'fields'} and try again:{' '}
-              {summary.map((entry, i) => (
-                <Fragment key={entry.key}>
-                  {i > 0 && (i === summary.length - 1 ? ' and ' : ', ')}
-                  <Link
-                    variant="underline"
-                    href={`#field-${entry.key}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      focusField(entry.key);
-                    }}
-                  >
-                    {entry.label}
-                  </Link>
-                </Fragment>
-              ))}{' '}
-              {summary.length === 1 ? 'needs' : 'need'} attention.
-            </AlertBanner>
-          )}
+          <ErrorSummary
+            title="We couldn’t save your changes"
+            errors={summary.map(({ key, label }) => ({ field: `field-${key}`, label }))}
+          />
 
           <StickyScrollNav sections={SECTIONS} />
 
