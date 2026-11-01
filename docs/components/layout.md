@@ -197,7 +197,7 @@ below `sm` and 32px from there, so a phone keeps room for the form.
 
 ## Auth forms
 
-Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs), [Sign Up Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-sign-up-form--docs).
+Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs), [Two Step Verification Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-two-step-verification-form--docs), [Sign Up Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-sign-up-form--docs).
 
 Reset a password in two routes, each with its own form. `ResetPasswordForm` takes the e-mail
 address on the first one and shows its `sent` view. `NewPasswordForm` is the page the e-mail link
@@ -239,4 +239,27 @@ const policy = (password: string) => [
 
 <NewPasswordForm rules={policy} strength={estimate} onSubmit={…} />
 <SignUpForm rules={policy} strength={estimate} onSubmit={…} />
+```
+
+### Waiting between two resends
+
+`ResetPasswordForm` takes `resendCooldown` for its `sent` view: the seconds the "Resend" button waits
+before it can be pressed again. It counts from the moment the view shows, since the e-mail was just
+sent, and restarts on each press. While it waits, the button is `aria-disabled`, not `disabled`: it
+stays in the tab order and keeps the focus a keyboard user gave it, a press does nothing, and a
+screen reader reads the countdown ("available in 0:30") as its description. The countdown changes
+every second and is not a live region. One polite status says when a new link went out and when the
+button works again, and nothing else. `loading` still disables the button for real, and without
+`resendCooldown` the button is as it was. The server stays the authority: show a refusal (a 429)
+through `error`. `resendLabels` takes the words to translate: `resent`, `ready` and
+`availableIn(seconds)`.
+
+```tsx
+<ResetPasswordForm
+  sent
+  sentEmail={email}
+  onResend={resend}
+  resendCooldown={30}
+  onSubmit={sendLink}
+/>
 ```
