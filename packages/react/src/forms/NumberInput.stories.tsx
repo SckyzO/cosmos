@@ -503,6 +503,52 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
   },
 };
 
+// ── No step buttons ──────────────────────────────────────────────────────────
+
+/**
+ * `controls="none"`: the field alone, for a price or an amount where stepping by one means
+ * nothing. The arrow keys of the field still step.
+ */
+export const NoControls: Story = {
+  args: { controls: 'none', value: 950, min: 0, prefix: '$', className: 'w-36' },
+};
+
+/** No step button, in front of a prefix or after a unit; typing and the range work as before. */
+export const NoControlsDrawsOnlyTheField: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 10, min: 0, max: 100, onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <Stateful {...args} controls="none" aria-label="Plain" className="w-36" />
+      <Stateful
+        {...args}
+        controls="none"
+        aria-label="Priced"
+        prefix="$"
+        unit="/h"
+        className="w-36"
+      />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    await expect(canvas.queryByRole('button')).toBeNull();
+    const priced = canvas.getByRole('spinbutton', { name: 'Priced' });
+    const control = priced.closest<HTMLElement>('[class*="rounded-lg"]')!;
+    await expect(within(control).getByText('$')).toBeInTheDocument();
+    await expect(within(control).getByText('/h')).toBeInTheDocument();
+    // The value starts the field, as in the stacked layout, and the control clips nothing.
+    await expect(getComputedStyle(priced).textAlign).toBe('start');
+    await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+    await userEvent.clear(priced);
+    await userEvent.type(priced, '12.5');
+    await expect(args.onChange).toHaveBeenLastCalledWith(12.5);
+    await userEvent.clear(priced);
+    await userEvent.type(priced, '500');
+    await userEvent.tab();
+    await expect(priced).toHaveValue(100);
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports
