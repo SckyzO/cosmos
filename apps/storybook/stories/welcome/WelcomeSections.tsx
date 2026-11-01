@@ -222,6 +222,11 @@ const entriesOf = (charts: number | null): Entry[] => [
     install: peer('maplibre-gl'),
   },
   {
+    name: '@sckyzo/cosmos-react/qr',
+    holds: 'QrCode',
+    install: peer('qr'),
+  },
+  {
     name: '@sckyzo/cosmos-charts',
     holds: `${charts === null ? 'The' : charts} chart wrappers drawn with Recharts`,
     install: 'nothing more: Recharts comes with it',
