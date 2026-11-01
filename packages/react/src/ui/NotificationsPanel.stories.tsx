@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
-import { Settings, Volume2, VolumeX } from 'lucide-react';
+import { Check, MessageSquare, Receipt, Settings, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
@@ -12,6 +12,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { Button } from './Button';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
 const meta = {
@@ -535,5 +536,169 @@ export const PingStaysInsideTheBell: Story = {
     ping.style.transform = 'scale(2)';
     const box = canvas.getByTestId('box');
     await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+  },
+};
+
+// ── Icon and actions ─────────────────────────────────────────────────────────
+
+// Every row of a list takes the same actions, so the badges line up.
+const rowActions = (title: string, onMarkAsRead?: () => void, onDelete?: () => void) => (
+  <>
+    <Button
+      variant="ghost"
+      shape="square"
+      size="sm"
+      icon={Check}
+      aria-label={`Mark as read: ${title}`}
+      onClick={onMarkAsRead}
+    />
+    <Button
+      variant="ghost"
+      shape="square"
+      size="sm"
+      icon={Trash2}
+      aria-label={`Delete: ${title}`}
+      onClick={onDelete}
+    />
+  </>
+);
+
+/**
+ * `icon` replaces the icon `intent` picks, and the chip and badge keep the color of the intent.
+ * `actions` sit beside the item's button, not inside it, and a click on one does not close the
+ * panel.
+ */
+export const IconsAndActions: Story = {
+  render: (args) => {
+    const extra = args as unknown as {
+      onItemClick?: () => void;
+      onMarkAsRead?: () => void;
+      onDelete?: () => void;
+    };
+    return (
+      <div className="flex h-[420px] items-start justify-end">
+        <NotificationsPanel defaultOpen>
+          <NotificationsPanel.Trigger count={2} />
+          <NotificationsPanel.Content>
+            <NotificationsPanel.Header title="Notifications" />
+            <NotificationsPanel.List>
+              <NotificationsPanel.Item
+                intent="info"
+                icon={MessageSquare}
+                title="Ana Costa commented"
+                subtitle="Q3 rollout plan"
+                time="5 min ago"
+                unread
+                onClick={extra.onItemClick}
+                actions={rowActions('Ana Costa commented', extra.onMarkAsRead, extra.onDelete)}
+              />
+              <NotificationsPanel.Item
+                intent="success"
+                icon={Receipt}
+                title="Invoice 2041 paid"
+                subtitle="Northwind Traders"
+                time="1 h ago"
+                actions={rowActions('Invoice 2041 paid')}
+              />
+            </NotificationsPanel.List>
+          </NotificationsPanel.Content>
+        </NotificationsPanel>
+      </div>
+    );
+  },
+};
+
+export const IconsAndActionsChecks: Story = {
+  ...IconsAndActions,
+  tags: ['!dev', '!autodocs'],
+  args: { onItemClick: fn(), onMarkAsRead: fn(), onDelete: fn() } as never,
+  play: async ({ args }) => {
+    const spies = args as unknown as {
+      onItemClick: ReturnType<typeof fn>;
+      onMarkAsRead: ReturnType<typeof fn>;
+      onDelete: ReturnType<typeof fn>;
+    };
+    const dialog = await within(document.body).findByRole('dialog');
+    // The actions are named after their row, so a row's own name starts with its title.
+    const item = (title: string) =>
+      within(dialog).getByRole('button', { name: new RegExp(`^(Unread: )?${title}`) });
+    const row = item('Ana Costa commented');
+    const plain = item('Invoice 2041 paid');
+    // `icon` replaces the one `intent` picks; the chip keeps the intent's color.
+    await expect(row.querySelector('svg')).toHaveClass('lucide-message-square', 'text-blue-500');
+    await expect(row.querySelector('div.rounded-full')).toHaveClass('bg-blue-500/15');
+    await expect(plain.querySelector('svg')).toHaveClass('lucide-receipt', 'text-green-600');
+    // The actions sit beside the row's button: nothing interactive inside it.
+    const mark = within(dialog).getByRole('button', { name: 'Mark as read: Ana Costa commented' });
+    const remove = within(dialog).getByRole('button', { name: 'Delete: Ana Costa commented' });
+    await expect(row.querySelector('button, a[href], [role="button"]')).toBeNull();
+    await expect(row.contains(mark)).toBe(false);
+    await expect(row.nextElementSibling!.contains(mark)).toBe(true);
+    await expect(row.nextElementSibling!.contains(remove)).toBe(true);
+    // Keyboard: the row, then each action in turn, and Enter and Space work them.
+    row.focus();
+    await userEvent.tab();
+    await expect(mark).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(spies.onMarkAsRead).toHaveBeenCalledTimes(1);
+    await userEvent.tab();
+    await expect(remove).toHaveFocus();
+    await userEvent.keyboard(' ');
+    await expect(spies.onDelete).toHaveBeenCalledTimes(1);
+    // An action is not a click on the row, and does not close the panel.
+    await expect(spies.onItemClick).not.toHaveBeenCalled();
+    await expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    // The row's own button still closes it.
+    await userEvent.click(row);
+    await expect(spies.onItemClick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+  },
+};
+
+/** An item with no `actions` is still the button itself, the child of the list. */
+export const ItemWithoutActionsIsTheButton: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-[420px] items-start justify-end">
+      <NotificationsPanel defaultOpen>
+        <NotificationsPanel.Trigger />
+        <NotificationsPanel.Content>
+          <NotificationsPanel.List>
+            <NotificationsPanel.Item intent="warning" title="plain item" />
+          </NotificationsPanel.List>
+        </NotificationsPanel.Content>
+      </NotificationsPanel>
+    </div>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    const row = within(dialog).getByRole('button', { name: /plain item/ });
+    await expect(row.parentElement).toHaveClass('divide-y');
+    await expect(row.nextElementSibling).toBeNull();
+  },
+};
+
+/** `closeOnClick` closes the panel after a click on the item by default, and not when it is false. */
+export const CloseOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex h-[420px] items-start justify-end">
+      <NotificationsPanel defaultOpen>
+        <NotificationsPanel.Trigger />
+        <NotificationsPanel.Content>
+          <NotificationsPanel.List>
+            <NotificationsPanel.Item intent="info" title="stays open" closeOnClick={false} />
+            <NotificationsPanel.Item intent="info" title="closes" />
+          </NotificationsPanel.List>
+        </NotificationsPanel.Content>
+      </NotificationsPanel>
+    </div>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: /stays open/ }));
+    await expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    await userEvent.click(within(dialog).getByRole('button', { name: /closes/ }));
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
   },
 };
