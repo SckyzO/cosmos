@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { AlertTriangle, Bell, BellOff, CheckCircle2, Info, XCircle } from 'lucide-react';
+import { AlertTriangle, Bell, BellOff, Info, XCircle } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -11,47 +11,17 @@ import {
 } from 'react';
 import { Badge } from './Badge';
 import { FloatingPanel } from './FloatingPanel';
-import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
+import {
+  NotificationRow,
+  type NotificationRowIntent,
+  type NotificationRowProps,
+} from './NotificationRow';
 import { useControllableState } from '../hooks/useControllableState';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type NotificationsPanelIntent = Extract<Intent, 'danger' | 'warning' | 'info' | 'success'>;
-
-const INTENT_META: Record<
-  NotificationsPanelIntent,
-  { icon: ComponentType<{ className?: string }>; color: string; chipBg: string }
-> = {
-  danger: {
-    icon: XCircle,
-    color: 'text-red-500 dark:text-red-400',
-    chipBg: 'bg-red-500/15 dark:bg-red-500/20',
-  },
-  warning: {
-    icon: AlertTriangle,
-    color: 'text-amber-500 dark:text-amber-400',
-    chipBg: 'bg-amber-500/15 dark:bg-amber-500/20',
-  },
-  info: {
-    icon: Info,
-    color: 'text-blue-500 dark:text-blue-400',
-    chipBg: 'bg-blue-500/15 dark:bg-blue-500/20',
-  },
-  success: {
-    icon: CheckCircle2,
-    color: 'text-green-600 dark:text-green-400',
-    chipBg: 'bg-green-500/15 dark:bg-green-500/20',
-  },
-};
-
-// Monitoring vocabulary on the badge: the label is data-facing, the prop is not.
-const BADGE_LABEL: Record<NotificationsPanelIntent, string> = {
-  danger: 'CRIT',
-  warning: 'WARN',
-  info: 'INFO',
-  success: 'OK',
-};
+export type NotificationsPanelIntent = NotificationRowIntent;
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -332,97 +302,29 @@ const NotificationsPanelList = ({
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
-export type NotificationsPanelItemProps = ComponentPropsWithRef<'button'> & {
-  /** Color and icon of the item. */
-  intent: NotificationsPanelIntent;
-  title: string;
-  subtitle?: string;
-  /** Small mono caption shown below the subtitle (e.g. check id, error code). */
-  caption?: string;
-  /** When the notification happened, as a line under the text (e.g. "2 min ago"). */
-  time?: ReactNode;
-  /** Not read yet: a dot before the title and a tinted row. Default false. */
-  unread?: boolean;
-  /** Badge label at the end of the item. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
-  badgeLabel?: string;
+export type NotificationsPanelItemProps = NotificationRowProps & {
   /** When true, the panel auto-closes after the item is clicked. Default true. */
   closeOnClick?: boolean;
 };
 
+/**
+ * A `NotificationRow` in the panel: it closes the panel when its button is clicked (`closeOnClick`),
+ * and nothing else. Its `actions` do not close it.
+ */
 function NotificationsPanelItem({
-  intent,
-  title,
-  subtitle,
-  caption,
-  time,
-  unread = false,
-  badgeLabel,
   closeOnClick = true,
   onClick,
-  className,
-  ref,
   ...rest
 }: NotificationsPanelItemProps) {
   const { setOpen } = useCtx();
-  const meta = INTENT_META[intent];
-  const Icon = meta.icon;
   return (
-    <button
-      ref={ref}
-      type="button"
+    <NotificationRow
+      {...rest}
       onClick={(e) => {
         onClick?.(e);
         if (closeOnClick && !e.defaultPrevented) setOpen(false);
       }}
-      className={clsx(
-        'focus-visible:focus-indicator py-row-12 flex w-full items-start gap-3 px-4 text-start transition-colors focus-visible:ring-inset',
-        unread
-          ? 'bg-brand-50/60 hover:bg-brand-50 dark:bg-brand-500/10 dark:hover:bg-brand-500/15'
-          : 'hover:bg-gray-50 dark:hover:bg-white/5',
-        className
-      )}
-      {...rest}
-    >
-      <div
-        className={clsx(
-          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-          meta.chipBg
-        )}
-      >
-        <Icon className={clsx('h-4 w-4', meta.color)} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
-          {unread && (
-            <>
-              <span aria-hidden className="bg-brand-500 h-2 w-2 shrink-0 rounded-full" />
-              <span className="sr-only">Unread: </span>
-            </>
-          )}
-          <span className="min-w-0 truncate">
-            <bdi>{title}</bdi>
-          </span>
-        </p>
-        {subtitle && (
-          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-            <bdi>{subtitle}</bdi>
-          </p>
-        )}
-        {caption && (
-          <p className="text-3xs mt-0.5 truncate font-mono text-gray-500 dark:text-gray-400">
-            <bdi>{caption}</bdi>
-          </p>
-        )}
-        {time && (
-          <p className="text-3xs mt-1 text-gray-500 dark:text-gray-400">
-            <bdi>{time}</bdi>
-          </p>
-        )}
-      </div>
-      <Badge appearance="solid" intent={intent} size="sm" className="mt-0.5 shrink-0">
-        {badgeLabel ?? BADGE_LABEL[intent]}
-      </Badge>
-    </button>
+    />
   );
 }
 

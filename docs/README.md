@@ -37,7 +37,7 @@ Storybook page.
 | [Feedback](components/feedback.md)               | Progress bars and rings                                                              |
 | [Monitoring](components/monitoring.md)           | Health checks, uptime monitoring, log views and job logs                             |
 | [Navigation](components/navigation.md)           | The record pager                                                                     |
-| [Lists](components/lists.md)                     | Files and uploads, comments                                                          |
+| [Lists](components/lists.md)                     | Files and uploads, comments, notification rows and a notifications page              |
 | [Chat](components/chat.md)                       | Chat building blocks, the chatbot, rich replies                                      |
 | [Forms](components/forms.md)                     | The slider, the color and phone fields                                               |
 | [Layout](components/layout.md)                   | The application shell, search in the topbar, layout modes, split panes, auth layouts |

@@ -23,6 +23,7 @@ export * from './StatefulSaveButton';
 export * from './UnsavedIndicator';
 export * from './ConfirmationModal';
 export * from './NotificationsPanel';
+export * from './NotificationRow';
 export * from './NotificationCard';
 export * from './Menu';
 export * from './UserMenu';
