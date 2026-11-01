@@ -7,8 +7,11 @@ import { RadialBarChart } from './RadialBarChart';
 import { SemiCircleGauge } from './SemiCircleGauge';
 import { StrokedGauge } from './StrokedGauge';
 import {
+  alphaOf,
   centerText,
   expectColorInThemes,
+  NarrowBox,
+  opaqueColor,
   resolveColor,
   surface,
   switchTheme,
@@ -329,6 +332,507 @@ export const SemiCircleTargetFollowsTheTheme: Story = {
       dark: '--color-text-primary',
       'deep-blue': '--color-text-primary',
     });
+  },
+};
+
+/**
+ * `showNeedle` draws a needle inside the arc, pointing at the value on the scale of `min`–`max`.
+ * It is short and stops just short of the arc, so it stays out of the value in the hollow.
+ */
+export const SemiCircleNeedle: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="Load">
+        <SemiCircleGauge value={34} label="Load" showNeedle />
+      </Card>
+      <Card title="Power draw">
+        <SemiCircleGauge
+          value={1450}
+          max={2000}
+          label="PDU 3"
+          formatValue={watts}
+          showNeedle
+          showRange
+        />
+      </Card>
+      <Card title="Inlet temperature">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          showNeedle
+          target={22}
+        />
+      </Card>
+    </div>
+  ),
+};
+
+// The centre of the arc of the gauge in `root`: halfway across its track, on its base.
+const arcCenter = (root: Element) => {
+  const { x, y, width, height } = (trackOf(root) as SVGGraphicsElement).getBBox();
+  return { cx: x + width / 2, cy: y + height };
+};
+
+// The angle a needle points at, in degrees counted from the right end of the arc (0 on the
+// right, 90 straight up, 180 on the left), read from its tip: the corner farthest from the
+// center of the arc.
+const readNeedle = (root: Element) => {
+  const { cx, cy } = arcCenter(root);
+  const corners = (root.querySelector('[data-chart-needle]')?.getAttribute('points') ?? '')
+    .split(' ')
+    .map((point) => point.split(',').map(Number));
+  const [x, y] = corners.reduce((far, point) =>
+    Math.hypot(point[0] - cx, point[1] - cy) > Math.hypot(far[0] - cx, far[1] - cy) ? point : far
+  );
+  return {
+    // The arc opens upward: an angle below zero is the sign of a tip exactly on the base line.
+    angle: Math.abs((Math.atan2(cy - y, x - cx) * 180) / Math.PI),
+    center: { cx, cy },
+    corners,
+    length: Math.hypot(x - cx, y - cy),
+    tip: { x, y },
+  };
+};
+
+// Asserts the needle's tip is in the hollow, short of the track, which a few pixels further
+// along the needle is.
+const expectNeedleShortOfTheTrack = (root: Element) => {
+  const { tip, center, length } = readNeedle(root);
+  const track = trackOf(root) as SVGGeometryElement;
+  const ahead = (distance: number) =>
+    new DOMPoint(
+      tip.x + ((tip.x - center.cx) / length) * distance,
+      tip.y + ((tip.y - center.cy) / length) * distance
+    );
+  expect(track.isPointInFill(ahead(0)), 'the tip is on the track').toBe(false);
+  expect(track.isPointInFill(ahead(6)), 'the track is not far ahead').toBe(true);
+};
+
+export const SemiCircleNeedleChecks: Story = {
+  ...SemiCircleNeedle,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-needle]')).toHaveLength(3)
+    );
+    // 34% of the arc, 72.5% of 0-2000, 17 of 35 on 10-45.
+    const angles = [118.8, 49.5, 92.57];
+    const gauges = [...canvasElement.querySelectorAll('svg.recharts-surface')];
+    for (const [i, expected] of angles.entries()) {
+      await waitFor(() => expect(readNeedle(gauges[i]).angle).toBeCloseTo(expected, 0));
+    }
+  },
+};
+
+/** The needle points where the arc ends: at its start for a value below `min`, at its end past `max`. */
+export const SemiCircleNeedleStopsAtTheEnds: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="above" data-angle="0">
+        <SemiCircleGauge value={2600} max={2000} formatValue={watts} showNeedle />
+      </div>
+      <div data-case="below" data-angle="180">
+        <SemiCircleGauge value={120} min={500} max={2000} formatValue={watts} showNeedle />
+      </div>
+      <div data-case="middle" data-angle="90">
+        <SemiCircleGauge value={30} min={10} max={50} formatValue={celsius} showNeedle />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-needle]')).toHaveLength(3)
+    );
+    for (const gauge of canvasElement.querySelectorAll<HTMLElement>('[data-angle]')) {
+      await waitFor(() =>
+        expect(readNeedle(gauge).angle, gauge.dataset.case).toBeCloseTo(
+          Number(gauge.dataset.angle),
+          0
+        )
+      );
+    }
+  },
+};
+
+/**
+ * The needle is across the hollow and stops a few pixels short of the arc, so it never covers
+ * the arc; and it keeps out of the value and its label, whatever the value it points at.
+ */
+export const SemiCircleNeedleStaysInTheHollow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      {[5, 25, 50, 75, 95].map((value) => (
+        <div className="w-80" key={value} data-testid="gauge">
+          <SemiCircleGauge value={value} label="Load" showNeedle />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const gauges = [...canvasElement.querySelectorAll<HTMLElement>('[data-testid="gauge"]')];
+    await waitFor(() =>
+      expect(gauges.filter((root) => root.querySelector('[data-chart-needle]'))).toHaveLength(5)
+    );
+    for (const root of gauges) {
+      await waitFor(() => expectNeedleShortOfTheTrack(root));
+      const needle = (root.querySelector('[data-chart-needle]') as Element).getBoundingClientRect();
+      for (const text of root.querySelectorAll('[data-chart-center] tspan')) {
+        const box = text.getBoundingClientRect();
+        const apart =
+          needle.right <= box.left ||
+          box.right <= needle.left ||
+          needle.bottom <= box.top ||
+          box.bottom <= needle.top;
+        await expect(apart, `${text.textContent} is under the needle`).toBe(true);
+      }
+    }
+  },
+};
+
+/** The needle is in the text color of the theme, over a halo in the card's color, in each of the four themes. */
+export const SemiCircleNeedleFollowsTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SemiCircleGauge value={67} label="Load" showNeedle />,
+  play: async ({ canvasElement }) => {
+    const needle = () => canvasElement.querySelector('[data-chart-needle]') as SVGElement | null;
+    await waitFor(() => expect(needle()).not.toBeNull());
+    const themes = ['', 'sand', 'dark', 'deep-blue'];
+    const tokens = (token: string) => Object.fromEntries(themes.map((theme) => [theme, token]));
+    await expectColorInThemes(
+      () => needle() && getComputedStyle(needle() as Element).fill,
+      tokens('--color-text-primary')
+    );
+    await expectColorInThemes(
+      () => needle() && getComputedStyle(needle() as Element).stroke,
+      tokens('--color-bg-panel')
+    );
+  },
+};
+
+/**
+ * `showZones` draws the zones `warnAt` and `critAt` cut on the track, under the arc: the theme's
+ * success color up to `warnAt`, the warning color to `critAt`, the critical color after it, in
+ * lighter tints so the arc still reads. With one threshold it draws the zones on its two sides.
+ */
+export const SemiCircleZones: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="web-01">
+        <SemiCircleGauge value={42} label="CPU" warnAt={70} critAt={90} showZones />
+      </Card>
+      <Card title="web-02">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} showZones />
+      </Card>
+      <Card title="db-01">
+        <SemiCircleGauge value={94} label="CPU" warnAt={70} critAt={90} showZones />
+      </Card>
+    </div>
+  ),
+};
+
+/** The zones and the needle together, with the scale, in the units of the value. */
+export const SemiCircleZonesAndNeedle: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card title="Inlet temperature">
+        <SemiCircleGauge
+          value={27}
+          min={10}
+          max={45}
+          label="Rack A12"
+          formatValue={celsius}
+          warnAt={30}
+          critAt={38}
+          showZones
+          showNeedle
+          showRange
+        />
+      </Card>
+      <Card title="Power draw">
+        <SemiCircleGauge
+          value={1450}
+          max={2000}
+          label="PDU 3"
+          formatValue={watts}
+          warnAt={1500}
+          critAt={1800}
+          target={1200}
+          showZones
+          showNeedle
+          showRange
+        />
+      </Card>
+      <Card title="Disk">
+        <SemiCircleGauge value={91} label="Disk" critAt={85} showZones showNeedle />
+      </Card>
+    </div>
+  ),
+};
+
+/** The same gauge in a box 375px wide, the width of a phone. */
+export const SemiCircleZonesAndNeedleNarrow: Story = {
+  render: () => (
+    <NarrowBox>
+      <SemiCircleGauge
+        value={1450}
+        max={2000}
+        label="PDU 3"
+        formatValue={watts}
+        warnAt={1500}
+        critAt={1800}
+        showZones
+        showNeedle
+        showRange
+      />
+    </NarrowBox>
+  ),
+};
+
+const zonesOf = (root: Element) =>
+  [...root.querySelectorAll('[data-chart-zones] [data-zone]')].map((el) =>
+    el.getAttribute('data-zone')
+  );
+
+// The zone the point at `share` of the track, in the middle of its thickness, falls in.
+const zoneAt = (gauge: Element, share: number) => {
+  const { x, y, width, height } = (trackOf(gauge) as SVGGraphicsElement).getBBox();
+  const radius = width / 2;
+  const angle = Math.PI * (1 - share);
+  // 3 px inside the outer edge: inside the track at any size (it is 8 px thick or more).
+  const point = new DOMPoint(
+    x + radius + (radius - 3) * Math.cos(angle),
+    y + height - (radius - 3) * Math.sin(angle)
+  );
+  const zone = [...gauge.querySelectorAll<SVGPathElement>('[data-zone] path')].find((path) =>
+    path.isPointInFill(point)
+  );
+  return zone?.parentElement?.getAttribute('data-zone');
+};
+
+export const SemiCircleZonesChecks: Story = {
+  ...SemiCircleZones,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-zones]')).toHaveLength(3)
+    );
+    for (const gauge of canvasElement.querySelectorAll('svg.recharts-surface')) {
+      await expect(zonesOf(gauge)).toEqual(['ok', 'warn', 'crit']);
+      // Success to 70% of the arc, warning to 90%, critical after it.
+      await waitFor(() => {
+        const at = (share: number) => zoneAt(gauge, share);
+        expect([0.05, 0.69, 0.71, 0.89, 0.91, 0.95].map(at)).toEqual([
+          'ok',
+          'ok',
+          'warn',
+          'warn',
+          'crit',
+          'crit',
+        ]);
+      });
+    }
+  },
+};
+
+/** The zones sit on the track, under the arc, and are cut to the track's rounded ends. */
+export const SemiCircleZonesSitOnTheTrack: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="w-80" data-testid="gauge">
+      <SemiCircleGauge value={50} label="CPU" warnAt={70} critAt={90} showZones />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const root = canvasElement.querySelector('[data-testid="gauge"]') as HTMLElement;
+    await waitFor(() => {
+      expect(root.querySelector('[data-chart-zones]')).not.toBeNull();
+      expect(arcOf(root)).not.toBeNull();
+    });
+    const track = trackOf(root) as SVGGraphicsElement;
+    const zones = root.querySelector('[data-chart-zones]') as Element;
+    const arc = arcOf(root) as Element;
+    // Over the track, under the arc.
+    await expect(
+      track.compareDocumentPosition(zones) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    await expect(
+      zones.compareDocumentPosition(arc) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    // The clip is the track's own shape: the zones end in the same rounded caps.
+    const clipped = zones.querySelector('[clip-path]') as Element;
+    const id = /url\(["']?#(.+?)["']?\)/.exec(clipped.getAttribute('clip-path') ?? '')?.[1];
+    const clip = root.querySelector(`[id="${id}"] path`) as SVGGraphicsElement;
+    const [a, b] = [track.getBBox(), clip.getBBox()];
+    for (const edge of ['x', 'y', 'width', 'height'] as const) {
+      await expect(b[edge], edge).toBeCloseTo(a[edge], 0);
+    }
+    // The zones themselves reach past both ends of the track, which the clip cuts to its caps.
+    const covered = [...zones.querySelectorAll('[data-zone] path')].map((path) =>
+      (path as SVGGraphicsElement).getBBox()
+    );
+    await expect(Math.min(...covered.map((box) => box.x))).toBeLessThanOrEqual(a.x);
+    await expect(Math.max(...covered.map((box) => box.x + box.width))).toBeGreaterThanOrEqual(
+      a.x + a.width
+    );
+  },
+};
+
+/** One threshold gives two zones; without any, `showZones` draws none. */
+export const SemiCircleZonesFollowTheThresholds: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="crit">
+        <SemiCircleGauge value={50} critAt={90} showZones />
+      </div>
+      <div data-case="warn">
+        <SemiCircleGauge value={50} warnAt={60} showZones />
+      </div>
+      <div data-case="none">
+        <SemiCircleGauge value={50} showZones />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const gauge = (name: string) => canvasElement.querySelector(`[data-case="${name}"]`) as Element;
+    await waitFor(() => expect(trackOf(gauge('none'))).not.toBeNull());
+    await expect(zonesOf(gauge('crit'))).toEqual(['ok', 'crit']);
+    await expect(zonesOf(gauge('warn'))).toEqual(['ok', 'warn']);
+    await expect(zonesOf(gauge('none'))).toEqual([]);
+    await expect(gauge('none').querySelector('[data-chart-zones]')).toBeNull();
+  },
+};
+
+/** The zones are tints of the theme's status colors, translucent so the track shows through, in each theme. */
+export const SemiCircleZonesFollowTheTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  render: () => <SemiCircleGauge value={50} label="CPU" warnAt={70} critAt={90} showZones />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(zonesOf(canvasElement)).toEqual(['ok', 'warn', 'crit']));
+    const fills = () =>
+      [...canvasElement.querySelectorAll('[data-zone] path')].map(
+        (path) => getComputedStyle(path).fill
+      );
+    for (const theme of ['dark', '', 'sand', 'deep-blue']) {
+      const restore = switchTheme(theme);
+      try {
+        await expect(fills().map(opaqueColor), theme || 'light').toEqual(
+          ['--color-success-500', '--color-status-warn', '--color-status-crit'].map(themeColor)
+        );
+        for (const fill of fills()) {
+          await expect(alphaOf(fill), theme || 'light').toBeGreaterThan(0);
+          await expect(alphaOf(fill), theme || 'light').toBeLessThan(0.6);
+        }
+      } finally {
+        restore();
+      }
+    }
+  },
+};
+
+/**
+ * The zones are in the name of the gauge, after the value and the target, so they are not
+ * known by color alone; `ariaLabel` still replaces the label.
+ */
+export const SemiCircleZonesJoinTheName: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="both">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} target={80} showZones />
+      </div>
+      <div data-case="crit">
+        <SemiCircleGauge value={78} ariaLabel="Cluster load" critAt={90} showZones />
+      </div>
+      <div data-case="plain">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const name = (id: string) =>
+      surface(canvasElement.querySelector(`[data-case="${id}"]`) as HTMLElement);
+    await waitFor(() =>
+      expect(name('both')).toHaveAttribute(
+        'aria-label',
+        'CPU: 78%, target 80%, warning from 70%, critical from 90%'
+      )
+    );
+    await expect(name('crit')).toHaveAttribute(
+      'aria-label',
+      'Cluster load: 78%, critical from 90%'
+    );
+    // Without `showZones` the name is what it was.
+    await expect(name('plain')).toHaveAttribute('aria-label', 'CPU: 78%');
+  },
+};
+
+/** A gauge draws no needle and no zones unless asked: its thresholds still color the arc. */
+export const SemiCircleNeedleAndZonesAreOptIn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <SemiCircleGauge value={67} label="Load" />
+      <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} />
+      <SemiCircleGauge value={67} label="Load" target={80} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('.recharts-radial-bar-sector')).toHaveLength(3)
+    );
+    await expect(canvasElement.querySelector('[data-chart-needle]')).toBeNull();
+    await expect(canvasElement.querySelector('[data-chart-zones]')).toBeNull();
+    // The value keeps the bare look.
+    for (const text of canvasElement.querySelectorAll('[data-chart-center] tspan')) {
+      await expect(getComputedStyle(text).stroke).toBe('none');
+    }
+  },
+};
+
+/** In a narrow box the needle, the zones and the range labels stay inside it, and the needle in the hollow. */
+export const SemiCircleNeedleAndZonesFitANarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="w-40" data-testid="box">
+      <SemiCircleGauge
+        value={1450}
+        max={2000}
+        label="PDU 3"
+        formatValue={watts}
+        warnAt={1500}
+        critAt={1800}
+        showZones
+        showNeedle
+        showRange
+      />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => {
+      expect(box.querySelector('[data-chart-needle]')).not.toBeNull();
+      expect(box.querySelector('[data-chart-zones]')).not.toBeNull();
+    });
+    const limit = box.getBoundingClientRect();
+    for (const part of box.querySelectorAll(
+      '[data-chart-needle], [data-chart-zones], [data-chart-range]'
+    )) {
+      const rect = part.getBoundingClientRect();
+      await expect(rect.left, part.getAttribute('data-chart-range') ?? '').toBeGreaterThanOrEqual(
+        limit.left - 1
+      );
+      await expect(rect.right).toBeLessThanOrEqual(limit.right + 1);
+    }
+    // A box of 160 px makes a gauge of 80 px of radius: the needle still stops short of the track.
+    await waitFor(() => expectNeedleShortOfTheTrack(box));
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
   },
 };
 

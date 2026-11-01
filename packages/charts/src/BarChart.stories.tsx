@@ -193,6 +193,248 @@ export const HorizontalNegativeStackedChecks: Story = {
   },
 };
 
+// A population pyramid: the oldest group on top, each series a side of the central axis.
+const AGES = ['75+', '60 to 74', '45 to 59', '30 to 44', '15 to 29', 'Under 15'];
+const MEN = [4, 9, 14, 17, 15, 11];
+const WOMEN = [6, 11, 15, 17, 14, 10];
+const PYRAMID = {
+  orientation: 'horizontal',
+  mirrored: true,
+  categories: AGES,
+  formatValue: (v: number) => `${v} k`,
+  series: [
+    { name: 'Men', data: MEN },
+    { name: 'Women', data: WOMEN },
+  ],
+} as const satisfies Partial<React.ComponentProps<typeof BarChart>>;
+
+/**
+ * `mirrored` draws two series either side of a central axis, a population
+ * pyramid with `orientation="horizontal"`. The values are magnitudes, the first
+ * series goes to the negative side, and the labels and the tooltip show them
+ * without a sign.
+ */
+export const Mirrored: Story = {
+  args: { ...PYRAMID, series: [...PYRAMID.series], categories: [...PYRAMID.categories] },
+};
+
+// Asserts no tick label of the chart in `root` is cut by its edge: the axis made room for them.
+const expectLabelsInsideTheChart = (root: HTMLElement) => {
+  const chart = (surface(root) as Element).getBoundingClientRect();
+  const labels = root.querySelectorAll('.recharts-cartesian-axis-tick-value');
+  expect(labels.length).toBeGreaterThan(0);
+  for (const label of labels) {
+    const box = label.getBoundingClientRect();
+    expect(box.left, label.textContent ?? '').toBeGreaterThanOrEqual(chart.left - 0.5);
+    expect(box.right, label.textContent ?? '').toBeLessThanOrEqual(chart.right + 0.5);
+  }
+};
+
+const axisX = (root: HTMLElement) => referenceLineEls(root)[0]?.getBoundingClientRect().left ?? NaN;
+
+// The boxes of the bars of each series, left of the central axis for the first and right of it
+// for the second, each starting on it. Waits for the bars to be drawn.
+const expectSidesOfTheAxis = (root: HTMLElement, count: number) =>
+  waitFor(() => {
+    const [men, women] = barShapes(root).map((shapes) =>
+      shapes.map((shape) => shape.getBoundingClientRect())
+    );
+    expect(men).toHaveLength(count);
+    expect(women).toHaveLength(count);
+    expect(referenceLineEls(root)).toHaveLength(1);
+    const line = axisX(root);
+    for (const bar of men) expect(Math.abs(bar.right - line)).toBeLessThanOrEqual(1);
+    for (const bar of women) expect(Math.abs(bar.left - line)).toBeLessThanOrEqual(1);
+  });
+
+export const MirroredChecks: Story = {
+  ...Mirrored,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    // The ticks read the same on both sides of zero, with no minus sign.
+    await waitFor(() => {
+      const ticks = tickTexts(canvasElement, 'xAxis');
+      expect(ticks.length).toBeGreaterThan(2);
+      for (const tick of ticks) expect(tick).toMatch(/^\d+ k$/);
+      expect(ticks).toEqual([...ticks].reverse());
+      expectLabelsInsideTheChart(canvasElement);
+    });
+    // The first series is left of the central axis, the second right of it, both starting on it.
+    await expectSidesOfTheAxis(canvasElement, AGES.length);
+    await waitFor(() => {
+      const [men, women] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      // A bar is as long as its value: the bigger of two is the longer.
+      expect(men[3].width).toBeGreaterThan(men[0].width);
+      expect(women[3].width / women[0].width).toBeCloseTo(WOMEN[3] / WOMEN[0], 1);
+    });
+    // The central axis sits at the zero tick, the middle of the plot.
+    await waitFor(() => {
+      const zero = [
+        ...canvasElement.querySelectorAll(
+          '.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value'
+        ),
+      ].find((tick) => tick.textContent === '0 k');
+      expect(zero).toBeDefined();
+      expect(
+        Math.abs(
+          (zero as Element).getBoundingClientRect().left +
+            (zero as Element).getBoundingClientRect().width / 2 -
+            axisX(canvasElement)
+        )
+      ).toBeLessThanOrEqual(1.5);
+    });
+    // The tooltip gives the two magnitudes of the row under the pointer, with no sign.
+    await openTooltip(canvasElement, 0.5);
+    const card = tooltipCard(canvasElement) as HTMLElement;
+    const row = AGES.indexOf(card.querySelector('p')?.textContent ?? '');
+    await expect(row).toBeGreaterThanOrEqual(0);
+    await expect(card).toHaveTextContent(`${MEN[row]} k`);
+    await expect(card).toHaveTextContent(`${WOMEN[row]} k`);
+    await expect(card.textContent).not.toMatch(/[-\u2212]/);
+    await closeTooltip(canvasElement);
+  },
+};
+
+/** The bars round the end away from the axis, on each side. */
+export const MirroredBarsRoundTheirOuterEnd: Story = {
+  ...Mirrored,
+  tags: ['!dev', '!autodocs'],
+  args: { ...Mirrored.args, borderRadius: 6 },
+  play: async ({ canvasElement }) => {
+    await expectSidesOfTheAxis(canvasElement, AGES.length);
+    for (const shape of barShapes(canvasElement).flat()) expect(roundedCorners(shape)).toBe(2);
+  },
+};
+
+/** Hiding a series from the legend leaves the central axis in the middle. */
+export const MirroredKeepsTheAxisCentred: Story = {
+  ...Mirrored,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const symmetric = () => {
+      const ticks = tickTexts(canvasElement, 'xAxis');
+      expect(ticks.length).toBeGreaterThan(2);
+      expect(ticks).toEqual([...ticks].reverse());
+    };
+    await waitFor(symmetric);
+    const drawn = () => barShapes(canvasElement).filter((shapes) => shapes.length > 0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Women' }));
+    await waitFor(() => {
+      expect(drawn().map((shapes) => shapes.length)).toEqual([AGES.length]);
+      symmetric();
+    });
+    await userEvent.click(canvas.getByRole('button', { name: 'Women' }));
+    await waitFor(() => expect(drawn()).toHaveLength(2));
+  },
+};
+
+/**
+ * The rules that read a value read its magnitude: `colorByValue` gets 12, not
+ * -12, and `negativeColor` has nothing to color, since no value is below zero.
+ */
+export const MirroredColorRules: Story = {
+  ...Mirrored,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    ...Mirrored.args,
+    negativeColor: 'var(--color-status-warn)',
+    colorByValue: (value) => (value >= 15 ? 'var(--color-status-crit)' : undefined),
+  },
+  play: async ({ canvasElement }) => {
+    const crit = themeColor('--color-status-crit');
+    await expectSidesOfTheAxis(canvasElement, AGES.length);
+    await waitFor(() => {
+      const [men, women] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => resolveColor(getComputedStyle(shape).fill))
+      );
+      expect(men).toEqual(MEN.map((v) => (v >= 15 ? crit : themeColor('--color-brand-500'))));
+      expect(women).toEqual(WOMEN.map((v) => (v >= 15 ? crit : themeColor('--color-chart-2'))));
+    });
+  },
+};
+
+/** The same rule with the categories along the horizontal axis: the first series hangs below it. */
+export const MirroredColumns: Story = {
+  args: {
+    mirrored: true,
+    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+    formatValue: (v) => `${v} M€`,
+    series: [
+      { name: 'Imports', data: [18, 22, 19, 26] },
+      { name: 'Exports', data: [24, 21, 27, 30] },
+    ],
+  },
+};
+
+export const MirroredColumnsChecks: Story = {
+  ...MirroredColumns,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const ticks = tickTexts(canvasElement, 'yAxis');
+      expect(ticks.length).toBeGreaterThan(2);
+      for (const tick of ticks) expect(tick).toMatch(/^\d+ M€$/);
+      expect(ticks).toEqual([...ticks].reverse());
+      expectLabelsInsideTheChart(canvasElement);
+    });
+    await waitFor(() => {
+      const [imports, exports] = barShapes(canvasElement).map((shapes) =>
+        shapes.map((shape) => shape.getBoundingClientRect())
+      );
+      const line = (referenceLineEls(canvasElement)[0] as Element).getBoundingClientRect().top;
+      expect(imports).toHaveLength(4);
+      expect(exports).toHaveLength(4);
+      for (const bar of imports) expect(Math.abs(bar.top - line)).toBeLessThanOrEqual(1);
+      for (const bar of exports) expect(Math.abs(bar.bottom - line)).toBeLessThanOrEqual(1);
+    });
+  },
+};
+
+/** On a phone the pyramid keeps its two sides and its labels inside the box. */
+export const MirroredNarrow: Story = {
+  args: Mirrored.args,
+  render: (args) => (
+    <NarrowBox>
+      <BarChart {...args} />
+    </NarrowBox>
+  ),
+};
+
+export const MirroredFitsNarrowBox: Story = {
+  ...MirroredNarrow,
+  tags: ['!dev', '!autodocs'],
+  args: { ...Mirrored.args, width: 900 },
+  play: async (context) => {
+    await expectFitsNarrowBox(context);
+    await expectSidesOfTheAxis(context.canvasElement, AGES.length);
+  },
+};
+
+/**
+ * `mirrored` is opt-in: without it, a series below zero is what it always was,
+ * and the labels keep their sign.
+ */
+export const NotMirroredByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    orientation: 'horizontal',
+    stacked: true,
+    categories: DCS,
+    series: [
+      { name: 'Outbound', data: [-31, -27, -19, -12] },
+      { name: 'Inbound', data: [42, 35, 28, 16] },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(tickTexts(canvasElement, 'xAxis').some((tick) => tick?.includes('-'))).toBe(true);
+    });
+  },
+};
+
 export const FormattedValues: Story = {
   args: {
     categories: MONTHS,
@@ -300,6 +542,56 @@ export const EmptyWithMessageChecks: Story = {
   ...EmptyWithMessage,
   tags: ['!dev', '!autodocs'],
   play: expectEmptyMessage('No incidents'),
+};
+
+/**
+ * `loading` draws a skeleton of the chart's height in place of the plot, until the data is there.
+ * It is a busy group named by `ariaLabel` and the word "loading", and it holds still under
+ * `prefers-reduced-motion`.
+ */
+export const Loading: Story = {
+  args: { ...SingleSeries.args, loading: true, height: 240, ariaLabel: 'Incidents per month' },
+};
+
+export const LoadingChecks: Story = {
+  ...Loading,
+  tags: ['!dev', '!autodocs'],
+  args: { ...Loading.args, width: 300 },
+  play: async ({ canvasElement }) => {
+    const block = await waitFor(() => {
+      const found = canvasElement.querySelector<HTMLElement>('[data-chart-loading]');
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    await expect(block).toHaveAttribute('aria-busy', 'true');
+    await expect(block).toHaveAccessibleName('Incidents per month, loading');
+    // The size the chart would have: `height` and `width`.
+    const { width, height } = block.getBoundingClientRect();
+    await expect([width, height]).toEqual([300, 240]);
+    await expect(canvasElement.querySelector('svg')).toBeNull();
+    await expect(canvasElement.querySelector('[data-chart-empty]')).toBeNull();
+  },
+};
+
+/** The skeleton is cut to its box, like the chart it stands for: a narrow screen never scrolls sideways. */
+export const LoadingFitsNarrowBox: Story = {
+  ...Loading,
+  tags: ['!dev', '!autodocs'],
+  args: { ...Loading.args, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <BarChart {...args} />
+    </NarrowBox>
+  ),
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(canvasElement.querySelector('[data-chart-loading]')).not.toBeNull());
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+    const block = canvasElement.querySelector('[data-chart-loading]') as Element;
+    await expect(block.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+  },
 };
 
 /**

@@ -65,14 +65,78 @@ export const resolveColor = (color: string) => {
   return colorContext.fillStyle;
 };
 
+/**
+ * A CSS color that holds `var()` or `color-mix()` (`TRACK`), as the browser
+ * computes it for an element: the form `getComputedStyle` gives a color that
+ * was resolved the same way. A probe element, so call it outside a `waitFor`
+ * callback, which reruns on every DOM mutation.
+ */
+export const computedColor = (css: string) => {
+  const probe = document.createElement('span');
+  probe.style.color = css;
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+/**
+ * The `@media` conditions around each CSS rule that animates `el`, from the
+ * outermost: one list per rule, empty when the rule applies in any case. Tells
+ * whether an animation is kept from a reader who asked for reduced motion,
+ * which a story cannot ask for itself.
+ */
+export const animationConditions = (el: Element) => {
+  const found: string[][] = [];
+  const animates = (style: CSSStyleDeclaration) =>
+    ['animation', 'animation-name'].some((property) => {
+      const value = style.getPropertyValue(property);
+      return value !== '' && value !== 'none';
+    });
+  const visit = (rules: CSSRuleList, around: string[]) => {
+    for (const rule of rules) {
+      if (rule instanceof CSSStyleRule && el.matches(rule.selectorText) && animates(rule.style)) {
+        found.push(around);
+      }
+      // Rules nested in a `@media`, a `@layer` or a style rule.
+      if ('cssRules' in rule) {
+        visit(
+          rule.cssRules as CSSRuleList,
+          rule instanceof CSSMediaRule ? [...around, rule.conditionText] : around
+        );
+      }
+    }
+  };
+  for (const sheet of document.styleSheets) visit(sheet.cssRules, []);
+  return found;
+};
+
 /** A theme custom property on `<html>` (`--color-success-500`), as a resolved color. */
 export const themeColor = (token: string) =>
   resolveColor(getComputedStyle(document.documentElement).getPropertyValue(token).trim());
 
+// A computed `color-mix()` reads back as `color(srgb 0.07 0.72 0.42 / 0.4)`, which the canvas
+// keeps as written: its channels, from 0 to 1, and its alpha.
+const SRGB = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/;
+const RGBA = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/;
+
 /** `color` resolved, without its alpha (`rgba(…, 0.85)` becomes `rgb(…)`). */
 export const opaqueColor = (color: string) => {
-  const rgba = /^rgba\((\d+), (\d+), (\d+), [\d.]+\)$/.exec(resolveColor(color));
-  return rgba ? resolveColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`) : resolveColor(color);
+  const resolved = resolveColor(color);
+  const rgba = RGBA.exec(resolved);
+  if (rgba) return resolveColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`);
+  const srgb = SRGB.exec(resolved);
+  if (srgb) {
+    const [r, g, b] = srgb.slice(1, 4).map((channel) => Math.round(Number(channel) * 255));
+    return resolveColor(`rgb(${r}, ${g}, ${b})`);
+  }
+  return resolved;
+};
+
+/** The alpha of a resolved color: 1 for an opaque one. */
+export const alphaOf = (color: string) => {
+  const resolved = resolveColor(color);
+  return Number((RGBA.exec(resolved) ?? SRGB.exec(resolved))?.[4] ?? 1);
 };
 
 const luminanceOf = (color: string) => {

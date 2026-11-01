@@ -24,7 +24,10 @@ import { StrokedGauge } from './StrokedGauge';
 import { TreemapChart } from './TreemapChart';
 import { WaterfallChart } from './WaterfallChart';
 import { WorldMap } from './WorldMap';
+import { TRACK } from './core/colors';
 import {
+  animationConditions,
+  computedColor,
   expectNoInjectedImage,
   HOSTILE,
   resolveColor,
@@ -32,7 +35,7 @@ import {
   themeColor,
   tickTexts,
 } from './storybook-recharts';
-import type { ChartEmptyProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper
 // that forgets to pass a prop on to the frame drops it without a type error.
@@ -52,34 +55,37 @@ const BOX = [
 ] as [number, number, number, number, number][];
 const RANGE = [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }];
 
+// What a wrapper that can have no data, or still be waiting for it, takes besides its data.
+type StateProps = ChartEmptyProps & ChartLoadingProps & { ariaLabel?: string };
+
 type Chart = {
   /** What marks its plot in the DOM, when it is not a Recharts SVG. */
   plot?: string;
-  /** Drawn with data. */
-  filled: () => ReactNode;
+  /** Drawn with data; the wrappers that can be loading take `loading`. */
+  filled: (props?: StateProps) => ReactNode;
   /** Drawn with no data, for the wrappers that can have none. */
-  empty?: (props: ChartEmptyProps) => ReactNode;
+  empty?: (props: StateProps) => ReactNode;
 };
 
 const CHARTS: Record<string, Chart> = {
   LineAreaChart: {
-    filled: () => <LineAreaChart series={TWO_SERIES} categories={CATEGORIES} />,
+    filled: (props) => <LineAreaChart series={TWO_SERIES} categories={CATEGORIES} {...props} />,
     empty: (props) => <LineAreaChart series={[]} categories={[]} {...props} />,
   },
   BarChart: {
-    filled: () => <BarChart series={TWO_SERIES} categories={CATEGORIES} />,
+    filled: (props) => <BarChart series={TWO_SERIES} categories={CATEGORIES} {...props} />,
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
-    filled: () => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} />,
+    filled: (props) => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} {...props} />,
     empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
   },
   RadialBarChart: {
-    filled: () => <RadialBarChart series={[60, 40]} labels={['a', 'b']} />,
+    filled: (props) => <RadialBarChart series={[60, 40]} labels={['a', 'b']} {...props} />,
     empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
   },
   TreemapChart: {
-    filled: () => (
+    filled: (props) => (
       <TreemapChart
         series={[
           {
@@ -89,62 +95,66 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <TreemapChart series={[]} {...props} />,
   },
   HeatmapChart: {
     plot: '[role="grid"]',
-    filled: () => <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} />,
+    filled: (props) => <HeatmapChart series={TWO_SERIES} categories={CATEGORIES} {...props} />,
     empty: (props) => <HeatmapChart series={[]} categories={[]} {...props} />,
   },
   CalendarChart: {
     plot: '[role="grid"]',
-    filled: () => (
+    filled: (props) => (
       <CalendarChart
         layout="range"
         data={[
           { day: '2026-03-02', value: 3 },
           { day: '2026-03-09', value: 5 },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <CalendarChart data={[]} {...props} />,
   },
   BumpChart: {
-    filled: () => <BumpChart series={RANKS} />,
+    filled: (props) => <BumpChart series={RANKS} {...props} />,
     empty: (props) => <BumpChart series={[]} {...props} />,
   },
   FunnelChart: {
     plot: '[role="list"]',
-    filled: () => (
+    filled: (props) => (
       <FunnelChart
         stages={[
           { label: 'a', value: 5 },
           { label: 'b', value: 3 },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <FunnelChart stages={[]} {...props} />,
   },
   WaterfallChart: {
-    filled: () => (
+    filled: (props) => (
       <WaterfallChart
         data={[
           { label: 'Opening', value: 10, kind: 'total' },
           { label: 'a', value: 5 },
           { label: 'Closing', kind: 'total' },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <WaterfallChart data={[]} {...props} />,
   },
   RadarChart: {
-    filled: () => <RadarChart series={TWO_SERIES} categories={CATEGORIES} />,
+    filled: (props) => <RadarChart series={TWO_SERIES} categories={CATEGORIES} {...props} />,
     empty: (props) => <RadarChart series={[]} categories={[]} {...props} />,
   },
   ScatterChart: {
-    filled: () => (
+    filled: (props) => (
       <ScatterChart
         series={[
           {
@@ -155,12 +165,13 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <ScatterChart series={[]} {...props} />,
   },
   BubbleChart: {
-    filled: () => (
+    filled: (props) => (
       <BubbleChart
         series={[
           {
@@ -171,32 +182,36 @@ const CHARTS: Record<string, Chart> = {
             ],
           },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <BubbleChart series={[]} {...props} />,
   },
   BoxPlotChart: {
-    filled: () => <BoxPlotChart series={[{ name: 'a', data: BOX }]} categories={['A', 'B']} />,
+    filled: (props) => (
+      <BoxPlotChart series={[{ name: 'a', data: BOX }]} categories={['A', 'B']} {...props} />
+    ),
     empty: (props) => <BoxPlotChart series={[]} categories={[]} {...props} />,
   },
   RangeBarChart: {
-    filled: () => <RangeBarChart series={[{ name: 'a', data: RANGE }]} />,
+    filled: (props) => <RangeBarChart series={[{ name: 'a', data: RANGE }]} {...props} />,
     empty: (props) => <RangeBarChart series={[]} {...props} />,
   },
   MixedChart: {
-    filled: () => (
+    filled: (props) => (
       <MixedChart
         series={[
           { name: 'a', type: 'column', data: [3, 5, 4] },
           { name: 'b', type: 'line', data: [4, 2, 5] },
         ]}
         categories={CATEGORIES}
+        {...props}
       />
     ),
     empty: (props) => <MixedChart series={[]} categories={[]} {...props} />,
   },
   Sparkline: {
-    filled: () => <Sparkline data={[1, 3, 2, 4]} />,
+    filled: (props) => <Sparkline data={[1, 3, 2, 4]} {...props} />,
     empty: (props) => <Sparkline data={[]} {...props} />,
   },
   // Always have data: no empty state.
@@ -366,6 +381,166 @@ export const ChartsGoFromDataToMessageAndBack: Story = {
         expect(chart).not.toBeNull();
         expect(tickTexts(chart as HTMLElement, 'yAxis')).not.toEqual([]);
       });
+    }
+  },
+};
+
+// ── Loading ───────────────────────────────────────────────────────────────────
+
+// The wrappers that can have no data are the ones that can still be waiting for it.
+const LOADING_NAMES = EMPTY_NAMES;
+
+const skeleton = (root: HTMLElement, name: string) =>
+  root.querySelector<HTMLElement>(`[data-chart="${name}"] [data-chart-loading]`);
+
+const loadingCharts = (props: StateProps = {}) => (
+  <Grid names={LOADING_NAMES}>{(name) => CHARTS[name].filled({ loading: true, ...props })}</Grid>
+);
+
+/**
+ * While `loading`, every chart draws a skeleton in place of its plot: a busy
+ * group named by the chart's `ariaLabel` and the word "loading", and nothing
+ * of the chart itself.
+ */
+export const LoadingChartsDrawASkeleton: Story = {
+  render: () => loadingCharts({ ariaLabel: 'Probe' }),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(LOADING_NAMES.filter((name) => skeleton(canvasElement, name))).toEqual(LOADING_NAMES)
+    );
+    for (const name of LOADING_NAMES) {
+      const block = skeleton(canvasElement, name) as HTMLElement;
+      await expect(block, name).toHaveAttribute('aria-busy', 'true');
+      await expect(block, name).toHaveAttribute('role', 'group');
+      await expect(block, name).toHaveAccessibleName('Probe, loading');
+      const { width, height } = block.getBoundingClientRect();
+      await expect(width, name).toBeGreaterThan(100);
+      await expect(height, name).toBeGreaterThan(40);
+      // Nothing of the chart: no plot, no axis or legend (SVG or HTML), no message.
+      const chart = canvasElement.querySelector(`[data-chart="${name}"]`) as HTMLElement;
+      await expect(chart.querySelector(plot(name)), name).toBeNull();
+      await expect(chart.querySelector('svg'), name).toBeNull();
+      await expect(chart.querySelector('[data-chart-empty]'), name).toBeNull();
+      await expect(chart.querySelectorAll('[aria-busy]'), name).toHaveLength(1);
+    }
+  },
+};
+
+/** A chart that is loading has no data yet: the skeleton wins over the empty message. */
+export const LoadingWinsOverNoData: Story = {
+  render: () => (
+    <Grid names={LOADING_NAMES}>
+      {(name) => CHARTS[name].empty?.({ loading: true, emptyMessage: 'Nothing to show' })}
+    </Grid>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(LOADING_NAMES.filter((name) => skeleton(canvasElement, name))).toEqual(LOADING_NAMES)
+    );
+    for (const name of LOADING_NAMES) await expect(noData(canvasElement, name), name).toBeNull();
+  },
+};
+
+/** Not loading, no chart draws a skeleton: `loading` is off by default and `false` is off. */
+export const NoSkeletonUnlessLoading: Story = {
+  render: () => (
+    <Grid names={LOADING_NAMES}>{(name) => CHARTS[name].filled({ loading: false })}</Grid>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(
+        LOADING_NAMES.filter((name) =>
+          canvasElement.querySelector(`[data-chart="${name}"] ${plot(name)}`)
+        )
+      ).toEqual(LOADING_NAMES)
+    );
+    await expect(canvasElement.querySelector('[data-chart-loading]')).toBeNull();
+    await expect(canvasElement.querySelector('[aria-busy="true"]')).toBeNull();
+  },
+};
+
+/** A chart that goes from loading to its data and back as `loading` flips: its hooks run the same either way. */
+const LoadingToggle = ({ name }: { name: string }) => {
+  const [loading, setLoading] = useState(true);
+  return (
+    <div data-chart={name}>
+      <button type="button" onClick={() => setLoading((value) => !value)}>
+        {name}
+      </button>
+      {CHARTS[name].filled({ loading })}
+    </div>
+  );
+};
+
+export const ChartsGoFromLoadingToDataAndBack: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      {LOADING_NAMES.map((name) => (
+        <LoadingToggle key={name} name={name} />
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const loading = (name: string) => skeleton(canvasElement, name) !== null;
+    const drawn = (name: string) =>
+      canvasElement.querySelector(`[data-chart="${name}"] ${plot(name)}`) !== null;
+    await waitFor(() => expect(LOADING_NAMES.filter(loading)).toEqual(LOADING_NAMES));
+    for (const name of LOADING_NAMES) await userEvent.click(canvas.getByRole('button', { name }));
+    await waitFor(() => expect(LOADING_NAMES.filter(drawn)).toEqual(LOADING_NAMES));
+    expect(LOADING_NAMES.filter(loading)).toEqual([]);
+    await expect(canvasElement.querySelector('[aria-busy="true"]')).toBeNull();
+    for (const name of LOADING_NAMES) await userEvent.click(canvas.getByRole('button', { name }));
+    await waitFor(() => expect(LOADING_NAMES.filter(loading)).toEqual(LOADING_NAMES));
+    await waitFor(() => expect(LOADING_NAMES.filter(drawn)).toEqual([]));
+  },
+};
+
+/** The skeleton is the theme's track gray, and follows theme changes. */
+export const LoadingSkeletonFollowsTheTheme: Story = {
+  globals: { theme: 'dark' },
+  render: () => loadingCharts(),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(LOADING_NAMES.filter((name) => skeleton(canvasElement, name))).toEqual(LOADING_NAMES)
+    );
+    for (const theme of ['dark', '', 'sand', 'deep-blue']) {
+      const restore = switchTheme(theme);
+      try {
+        const expected = computedColor(TRACK);
+        const colors = LOADING_NAMES.map(
+          (name) => getComputedStyle(skeleton(canvasElement, name) as Element).backgroundColor
+        );
+        await expect(colors, theme || 'light').toEqual(LOADING_NAMES.map(() => expected));
+      } finally {
+        restore();
+      }
+    }
+  },
+};
+
+/**
+ * The skeleton pulses, and only where motion is welcome: the rule that animates
+ * it sits under `prefers-reduced-motion: no-preference`, so a reader who asked
+ * for less motion gets a still block.
+ */
+export const LoadingPulsesOnlyWhereMotionIsAllowed: Story = {
+  // Keeps the animation: the story tests would otherwise set its duration to 0.
+  parameters: { settleMotion: false },
+  render: () => loadingCharts(),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(LOADING_NAMES.filter((name) => skeleton(canvasElement, name))).toEqual(LOADING_NAMES)
+    );
+    for (const name of LOADING_NAMES) {
+      const block = skeleton(canvasElement, name) as HTMLElement;
+      const conditions = animationConditions(block);
+      await expect(conditions.length, `${name}: a rule animates it`).toBeGreaterThan(0);
+      for (const around of conditions) {
+        await expect(around.join(' and '), name).toContain('prefers-reduced-motion: no-preference');
+      }
+      // With no preference set, it does run.
+      await expect(block.getAnimations(), name).toHaveLength(1);
     }
   },
 };
