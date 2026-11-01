@@ -29,6 +29,12 @@ updates:
       - dependency-name: 'typescript'
         update-types:
           - 'version-update:semver-major'
+      # `qr` is below 1.0, where a minor can break, and the optional peer dependency of
+      # cosmos-react stays inside 0.7. Without this, Dependabot merges 0.8 as a dev dependency on
+      # its own and leaves the peer range behind: a new minor is a deliberate bump of both.
+      - dependency-name: 'qr'
+        update-types:
+          - 'version-update:semver-minor'
     groups:
       react:
         patterns:
