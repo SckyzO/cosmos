@@ -378,8 +378,13 @@ export const SectionsCollapsedChecks: Story = {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     await expect(canvas.queryByText('Monitoring')).toBeNull();
     await expect(nav.querySelectorAll('div[aria-hidden="true"] > svg')).toHaveLength(3);
+    // Each row is a 36px square, centred in the rail: the active pill is not a wide band.
+    for (const name of ['World Map', 'Notifications']) {
+      const row = canvas.getByRole('button', { name }).getBoundingClientRect();
+      await expect([row.width, row.height]).toEqual([36, 36]);
+    }
     const row = canvas.getByRole('button', { name: 'World Map' });
-    await expect(startOffset(row, nav)).toBe(8);
+    await expect(startOffset(row, nav)).toBe((nav.clientWidth - 36) / 2);
   },
 };
 
