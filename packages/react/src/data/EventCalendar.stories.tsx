@@ -990,3 +990,96 @@ export const WeekMirrorsInRightToLeft: Story = {
     }
   },
 };
+
+// ── The week and the day on a phone ─────────────────────────────────────────
+
+/**
+ * Below `sm` a week is a strip of its seven days, a dot for each event, and the grid of the picked
+ * day under it; Previous and Next move by a week. The view keeps its name: this is how the week fits.
+ */
+export const WeekMobile: Story = {
+  args: { ...gridArgs, defaultView: 'week', onSlotClick: fn() },
+  globals: mobileViewport,
+};
+
+/** The day is the same grid, one column wide already. */
+export const DayMobile: Story = {
+  args: { ...gridArgs, defaultView: 'day' },
+  globals: mobileViewport,
+};
+
+export const WeekMobileChecks: Story = {
+  ...WeekMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ args, canvas }) => {
+    expectNoHorizontalOverflow();
+    // The view picker sits under the title and spans the card.
+    const heading = canvas.getByRole('heading', { name: /^May 4\s*–\s*10, 2026$/ });
+    const picker = canvas.getByRole('radiogroup', { name: 'Calendar view' });
+    await expect(picker.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      heading.getBoundingClientRect().bottom
+    );
+    await expect(picker.getBoundingClientRect().width).toBeGreaterThan(
+      heading.parentElement!.getBoundingClientRect().width - 40
+    );
+
+    // The week is the strip, today picked, and one column of hours under it.
+    const strip = within(canvas.getByRole('group', { name: 'Days of the week' }));
+    await expect(strip.getAllByRole('button')).toHaveLength(7);
+    const thursday = strip.getByRole('button', { name: 'Thursday, May 7, 2026' });
+    await expect(thursday).toHaveAttribute('aria-pressed', 'true');
+    await expect(thursday).toHaveAttribute('aria-current', 'date');
+    await expect(canvas.getAllByRole('group', { name: /^\w+, May \d+, 2026$/ })).toHaveLength(1);
+    await expect(canvas.getByRole('group', { name: 'Thursday, May 7, 2026' })).toBeVisible();
+    // Only the offsite runs through Thursday: the row lists the picked day's all-day events.
+    await expect(
+      within(canvas.getByRole('group', { name: 'All-day events' })).getAllByRole('listitem')
+    ).toHaveLength(1);
+
+    // Picking a day swaps the grid, and tells the host.
+    await userEvent.click(strip.getByRole('button', { name: 'Friday, May 8, 2026' }));
+    await expect(args.onDayClick).toHaveBeenCalledWith(at(8, 0));
+    await expect(strip.getByRole('button', { name: 'Friday, May 8, 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await expect(thursday).toHaveAttribute('aria-pressed', 'false');
+    const friday = within(canvas.getByRole('group', { name: 'Friday, May 8, 2026' }));
+    await expect(friday.getByRole('button', { name: /^Demo day/ })).toBeVisible();
+    await expect(canvas.queryByRole('group', { name: 'Thursday, May 7, 2026' })).toBeNull();
+    await expect(
+      within(canvas.getByRole('group', { name: 'All-day events' })).getAllByRole('listitem')
+    ).toHaveLength(2);
+
+    // The arrows go a week; the picked day falls back to the first day of the new one.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next week' }));
+    await expect(canvas.getByRole('heading', { name: /^May 11\s*–\s*17, 2026$/ })).toBeVisible();
+    await expect(
+      within(canvas.getByRole('group', { name: 'Days of the week' })).getByRole('button', {
+        name: 'Monday, May 11, 2026',
+      })
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(args.onDateChange).toHaveBeenLastCalledWith(at(11, 0));
+  },
+};
+
+export const DayMobileChecks: Story = {
+  ...DayMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    // No strip in the day: its grid is already one column.
+    await expect(canvas.queryByRole('group', { name: 'Days of the week' })).toBeNull();
+    const group = canvas.getByRole('group', { name: 'Thursday, May 7, 2026' });
+    await expect(group).toBeVisible();
+    // The five events of the afternoon: the column is as wide as the phone, so 72px a column
+    // fits as many as the width gives, and the rest are behind a "+N".
+    const items = within(group).getAllByRole('listitem');
+    const more = within(group).queryByRole('button', { name: /more on/ });
+    await expect(items.length + (more ? Number(more.textContent!.replace('+', '')) : 0)).toBe(9);
+    for (const item of items) {
+      const box = item.getBoundingClientRect();
+      await expect(box.right).toBeLessThanOrEqual(group.getBoundingClientRect().right + 1);
+    }
+  },
+};
