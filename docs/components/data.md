@@ -139,6 +139,12 @@ under them as bars over the days they cover.
   over several rows are not cells. Each day is a group named by its date and holds a list of its
   timed events in time order, each a button when `onEventClick` is set; the all-day events are one
   group before them. The month keeps its own model, one tab stop per day number and chip.
+- **On a phone.** Below `sm` the view picker goes under the title and spans the card, and a week
+  is a strip of its seven days (one-letter weekday, number, a dot for each event) with the grid of
+  the picked day under it, since seven columns would be 48px wide. Tapping a day of the strip picks
+  it and calls `onDayClick`; Previous and Next still move by a week. The `view` stays `week`: this is
+  how the week fits, as the dots of the month do. The day is one column already and does not
+  change.
 - **Dates and times** come from `Intl` in the `locale`: the title of a week is `May 4 – 10, 2026`
   and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
   the locale; the toolbar's labels stay in English.

@@ -414,8 +414,9 @@ by kind. None of them may widen the page.
 - **Collapse** what has a primary part and a long tail: `Breadcrumb` (`maxItems` folds the middle
   into a menu, the current crumb stays), `Topbar` (the title goes, `moreActions` becomes a "More"
   menu), `Pagination` (the info on its own row, "Page 2 / 9" in place of the numbers),
-  `EventCalendar` (one-letter weekdays, the picked day listed under the grid). A layout with a side
-  column stacks it under the main one (`Shell`'s `secondary`, vertical `Tabs`).
+  `EventCalendar` (one-letter weekdays, the picked day listed under the grid; a week becomes a
+  strip of its seven days over the grid of the picked day). A layout with a side column stacks it
+  under the main one (`Shell`'s `secondary`, vertical `Tabs`).
 
 Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQuery` only when the
 markup itself changes. Every component with such a behavior has a story at the `mobile` viewport

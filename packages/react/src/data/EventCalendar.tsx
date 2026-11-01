@@ -28,6 +28,7 @@ import {
   type CalendarView,
 } from './calendar-grid';
 import { DayEventsPopover, EventChip } from './EventCalendarChip';
+import { EventCalendarStrip } from './EventCalendarStrip';
 import { EventCalendarTimeGrid } from './EventCalendarTimeGrid';
 import { clockTick, nextClockDelay } from './time';
 
@@ -191,7 +192,8 @@ const NAV_BUTTON = clsx(
  * The week and day views draw a scrolling grid of 24 hours, 48px each, opened at 7 AM (or an hour
  * before the first event). All-day events sit in a row above it; timed ones are placed at their
  * time, side by side when they overlap, as many as the width allows (72px each, two at least),
- * the rest behind a "+N" button. A line marks the current time.
+ * the rest behind a "+N" button. A line marks the current time. Below `sm` a week is a strip of
+ * its seven days and the grid of the picked day.
  *
  * Uncontrolled by default; pass `date` with `onDateChange`, and `view` with `onViewChange`, to
  * drive it from outside (a side MiniCalendar, or loading events per period).
@@ -247,9 +249,16 @@ export const EventCalendar = ({
   const isCurrentPeriod = periodStart(now, view).getTime() === shownTime;
   // The picked day if it is in the period shown, else today, else the first day.
   const pickedDay =
-    days.find((d) => isoDate(d) === pickedKey && d.getMonth() === shown.getMonth()) ??
-    (isCurrentPeriod ? now : shown);
+    days.find(
+      (d) => isoDate(d) === pickedKey && (view !== 'month' || d.getMonth() === shown.getMonth())
+    ) ?? (isCurrentPeriod ? now : shown);
   const pickedEvents = byDay.get(isoDate(pickedDay)) ?? [];
+  // The one column of hours the phone draws under the strip: the picked day of the week.
+  const pickedIndex = Math.max(
+    0,
+    days.findIndex((d) => sameDay(d, pickedDay))
+  );
+  const pickedColumn = useMemo(() => [days[pickedIndex]], [days, pickedIndex]);
   // The start time of a timed event, on the day it starts; no time on an all-day event, nor on the
   // days it goes on.
   const timeOn = (event: CalendarEvent, day: Date) =>
@@ -282,7 +291,12 @@ export const EventCalendar = ({
   const showDay = (target: Date) => {
     if (view === 'day') goTo(startOfDay(target));
     else if (weekStart(target).getTime() !== shownTime) goTo(weekStart(target));
+    setPickedKey(isoDate(target));
   };
+
+  // Below `sm` a week is a strip of its seven days and the grid of the picked one: seven columns
+  // of hours would be 48px wide. The day is one column already.
+  const stripped = view === 'week' && narrow;
 
   return (
     <div
@@ -461,13 +475,27 @@ export const EventCalendar = ({
         </>
       ) : (
         <>
+          {stripped && (
+            <EventCalendarStrip
+              days={days}
+              picked={pickedDay}
+              now={now}
+              byDay={byDay}
+              fmt={fmt}
+              onPick={(day) => {
+                setPickedKey(isoDate(day));
+                onDayClick?.(day);
+              }}
+            />
+          )}
           <EventCalendarTimeGrid
-            days={days}
+            days={stripped ? pickedColumn : days}
             events={events}
             now={now}
             fmt={fmt}
             label={`Schedule for ${title}`}
             periodDays={view === 'week' ? 7 : 1}
+            header={!stripped}
             onEventClick={onEventClick}
             onDayClick={onDayClick}
             onSlotClick={onSlotClick}

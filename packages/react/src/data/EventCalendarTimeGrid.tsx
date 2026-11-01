@@ -154,6 +154,8 @@ export type EventCalendarTimeGridProps = {
   label: string;
   /** Days that PageUp and PageDown move the keyboard cursor by. */
   periodDays: number;
+  /** Draws the weekday and date above each column. The phone's strip of days does it there. */
+  header?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
   onDayClick?: (date: Date) => void;
   onSlotClick?: (start: Date, info: { allDay: boolean }) => void;
@@ -168,6 +170,7 @@ export const EventCalendarTimeGrid = ({
   fmt,
   label,
   periodDays,
+  header = true,
   onEventClick,
   onDayClick,
   onSlotClick,
@@ -284,52 +287,54 @@ export const EventCalendarTimeGrid = ({
         className="focus-visible:focus-indicator min-h-0 shrink grow basis-[36rem] overflow-auto border-t border-gray-200 focus-visible:ring-inset dark:border-gray-800"
       >
         <div ref={top} className="sticky top-0 z-30 bg-white dark:bg-gray-900">
-          <div className={clsx('grid', COLUMNS[count])}>
-            <div />
-            {days.map((day) => {
-              const isToday = sameDay(day, now);
-              const dayLabel = fmt.fullDate(day);
-              const numberClass = clsx(
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-sm font-medium',
-                isToday ? 'bg-brand-500 text-white' : 'text-gray-700 dark:text-gray-200'
-              );
-              return (
-                <div
-                  key={isoDate(day)}
-                  aria-hidden={onDayClick ? undefined : true}
-                  className="flex flex-col items-center gap-0.5 border-s border-gray-200 pt-2 pb-1.5 dark:border-gray-800"
-                >
-                  <span
-                    className={clsx(
-                      'text-2xs font-semibold tracking-wider uppercase',
-                      isToday
-                        ? 'text-brand-600 dark:text-brand-400'
-                        : 'text-gray-500 dark:text-gray-400'
-                    )}
+          {header && (
+            <div className={clsx('grid', COLUMNS[count])}>
+              <div />
+              {days.map((day) => {
+                const isToday = sameDay(day, now);
+                const dayLabel = fmt.fullDate(day);
+                const numberClass = clsx(
+                  'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-sm font-medium',
+                  isToday ? 'bg-brand-500 text-white' : 'text-gray-700 dark:text-gray-200'
+                );
+                return (
+                  <div
+                    key={isoDate(day)}
+                    aria-hidden={onDayClick ? undefined : true}
+                    className="flex flex-col items-center gap-0.5 border-s border-gray-200 pt-2 pb-1.5 dark:border-gray-800"
                   >
-                    <bdi>{fmt.weekdays[isoWeekday(day)]}</bdi>
-                  </span>
-                  {onDayClick ? (
-                    <button
-                      type="button"
-                      aria-label={dayLabel}
-                      aria-current={isToday ? 'date' : undefined}
-                      onClick={() => onDayClick(day)}
+                    <span
                       className={clsx(
-                        numberClass,
-                        !isToday && 'hover:bg-gray-100 dark:hover:bg-white/5',
-                        'focus-visible:focus-indicator'
+                        'text-2xs font-semibold tracking-wider uppercase',
+                        isToday
+                          ? 'text-brand-600 dark:text-brand-400'
+                          : 'text-gray-500 dark:text-gray-400'
                       )}
                     >
-                      {fmt.dayNumber(day)}
-                    </button>
-                  ) : (
-                    <span className={numberClass}>{fmt.dayNumber(day)}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                      <bdi>{fmt.weekdays[isoWeekday(day)]}</bdi>
+                    </span>
+                    {onDayClick ? (
+                      <button
+                        type="button"
+                        aria-label={dayLabel}
+                        aria-current={isToday ? 'date' : undefined}
+                        onClick={() => onDayClick(day)}
+                        className={clsx(
+                          numberClass,
+                          !isToday && 'hover:bg-gray-100 dark:hover:bg-white/5',
+                          'focus-visible:focus-indicator'
+                        )}
+                      >
+                        {fmt.dayNumber(day)}
+                      </button>
+                    ) : (
+                      <span className={numberClass}>{fmt.dayNumber(day)}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {(bars.length > 0 || interactive) && (
             <div
