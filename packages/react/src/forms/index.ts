@@ -6,6 +6,7 @@ export * from './SegmentedControl';
 export * from './NumberInput';
 export * from './ZoomBar';
 export * from './FormRow';
+export * from './ErrorSummary';
 export * from './AvatarUploader';
 export * from './PasswordInput';
 export * from './PasswordPolicyChecker';

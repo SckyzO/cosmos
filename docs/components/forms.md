@@ -57,3 +57,33 @@ message for a number it rejects, so a host can plug `libphonenumber-js` in.
   validate={(v) => (isValidPhoneNumber(v) ? undefined : 'Enter a valid phone number.')}
 />
 ```
+
+## Error summary
+
+Storybook: [Error Summary](https://sckyzo.github.io/cosmos/?path=/docs/forms-error-summary--docs). The whole screen is in [Examples/Settings](https://sckyzo.github.io/cosmos/?path=/story/examples-settings--load-error).
+
+`ErrorSummary` is the banner a form shows above its fields when it could not be submitted: how many
+fields need attention, and a link to each. Each link moves the focus to its field and brings it
+to the middle of the view, so a keyboard or screen reader user lands on the field to fix without
+scrolling for it. Draw each field's own message under the field (`error` on `Input`, `Select`…):
+the summary names the fields, it does not repeat the messages.
+
+`errors` is one `{ field, label }` per field in error, in the order of the page. `field` is the
+`id` of the field or of any box around it: the link focuses the field if that is the `id` of the
+input, else the first enabled input, select, textarea or button inside the box. A `field` that is
+not on the page leaves the link to the browser, which follows `#field`. An empty list draws
+nothing, so the summary can stay in the markup. `title` defaults to "There is a problem". It is an
+`AlertBanner` in `danger`, so it is announced as it appears. The sentence around the links ("Fix 3
+fields and try again: … need attention.") is English.
+
+```tsx
+<ErrorSummary
+  title="We couldn’t save your changes"
+  errors={[
+    { field: 'name', label: 'Organisation name' },
+    { field: 'booking-url', label: 'Booking URL' },
+  ]}
+/>
+<Input id="name" label="Organisation name" error="Enter a name." />
+<Input id="booking-url" label="Booking URL" error="That address is taken." />
+```
