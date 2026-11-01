@@ -65,8 +65,9 @@ Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs
 `PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
 reader also hears "met" or "not met" after each label (`labels` translates both words).
 `PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
-rules. `score` is 0 to 4 (zxcvbn's scale): that many of its four segments light up, and the level
-reads below them ("Password strength: Fair"). `labels` takes the words to translate:
+rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four segments of a `ProgressBar` light
+up, and the level reads above them ("Password strength: Fair"). `labels` takes the words to
+translate:
 
 ```tsx
 <PasswordStrengthMeter

@@ -1,5 +1,5 @@
-import { clsx } from 'clsx';
 import { useEffect, useId, useRef, useState } from 'react';
+import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 
 /** The five levels a score of 0 to 4 stands for, from the weakest. */
 export type PasswordStrengthLevels = readonly [string, string, string, string, string];
@@ -36,14 +36,14 @@ const DEFAULT_NAME = 'Password strength';
 const DEFAULT_LEVELS: PasswordStrengthLevels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
 // The colour of the lit segments for each score. A score of 0 lights none.
-const LIT: readonly string[] = ['', 'bg-red-500', 'bg-amber-500', 'bg-green-500', 'bg-green-500'];
+const INTENT: readonly ProgressBarIntent[] = ['neutral', 'danger', 'warning', 'success', 'success'];
 
 const toLevel = (score: number) =>
   Number.isFinite(score) ? Math.max(0, Math.min(SEGMENTS, Math.round(score))) : 0;
 
 /**
- * A strength gauge for a password field: four segments, as many lit as the score, and the level in
- * words below them. It draws what the page works out and bundles no estimator.
+ * A strength gauge for a password field: the level in words, and a bar of four segments with as
+ * many lit as the score (the segments of `ProgressBar`). It draws what the page works out and bundles no estimator.
  *
  * The bar is decoration (`aria-hidden`); the text says the level. A polite status announces a new
  * level once the score has held for 800 ms, so a screen reader is not read to on every key, and
@@ -80,22 +80,21 @@ export const PasswordStrengthMeter = ({
 
   return (
     <div className={className}>
-      <div aria-hidden className="flex gap-1">
-        {Array.from({ length: SEGMENTS }, (_, i) => (
-          <span
-            key={i}
-            data-segment=""
-            data-lit={i < level ? '' : undefined}
-            className={clsx(
-              'h-1.5 flex-1 rounded-full transition-colors duration-300',
-              i < level ? LIT[level] : 'bg-gray-100 dark:bg-gray-800'
-            )}
-          />
-        ))}
-      </div>
-      <p id={id ?? generatedId} className="mt-1.5 text-xs text-[var(--color-text-muted)]">
+      <p id={id ?? generatedId} className="mb-2 text-xs text-[var(--color-text-muted)]">
         {name}: <span className="font-medium text-[var(--color-text-primary)]">{levelName}</span>
       </p>
+      {/* The bar repeats the text: a screen reader skips it. */}
+      <div aria-hidden>
+        <ProgressBar
+          size="sm"
+          max={SEGMENTS}
+          segments={Array.from({ length: level }, () => ({
+            value: 1,
+            intent: INTENT[level],
+            label: levelName,
+          }))}
+        />
+      </div>
       <span role="status" className="sr-only">
         {announcement}
       </span>
