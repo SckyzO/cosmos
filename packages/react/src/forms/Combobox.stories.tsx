@@ -297,6 +297,23 @@ export const DefaultValueOrControlled: Story = {
   },
 };
 
+/** Without a visible `label`, `aria-label` names the input: the name a field in a table row has. */
+export const AriaLabelNamesTheInput: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <Combobox aria-label="Assignee, row 2" options={PEOPLE} />
+      <Combobox label="Owner" aria-label="Ignored" options={PEOPLE} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('combobox', { name: 'Assignee, row 2' })).toBeInTheDocument();
+    // A visible label wins: the name a screen reader reads is the one on screen.
+    await expect(canvas.getByRole('combobox', { name: 'Owner' })).toBeInTheDocument();
+    await expect(canvas.queryByRole('combobox', { name: 'Ignored' })).toBeNull();
+  },
+};
+
 // ── Typed text as the value ──────────────────────────────────────────────────
 // `allowCustomValue`: a field that suggests (a catalogue, a list of tags) and accepts what the
 // user types. The value is an option's `value` or the text itself.
