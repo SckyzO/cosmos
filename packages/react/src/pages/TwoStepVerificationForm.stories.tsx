@@ -58,7 +58,42 @@ export const FourDigits: Story = {
   args: { length: 4, sentTo: 'john@example.com', cancelHref: '#' },
 };
 
+export const WithBackupCode: Story = {
+  args: { sentTo: 'john@example.com', cancelHref: '#', onResend: fn(), backupCode: true },
+};
+
+export const BackupCodeEntry: Story = {
+  args: { defaultMethod: 'backup', backupCode: true, cancelHref: '#' },
+};
+
+export const BackupCodeRefused: Story = {
+  args: {
+    defaultMethod: 'backup',
+    backupCode: true,
+    error: 'That backup code isn’t valid. Check it and try again.',
+    cancelHref: '#',
+  },
+};
+
+// The countdown depends on how long the story has been open: no capture.
+export const WithResendCooldown: Story = {
+  tags: ['no-capture'],
+  args: {
+    sentTo: 'john@example.com',
+    cancelHref: '#',
+    onResend: fn(),
+    backupCode: true,
+    resendCooldown: 30,
+  },
+};
+
+export const BackupCodeOnPhone: Story = {
+  globals: mobileViewport,
+  args: { defaultMethod: 'backup', backupCode: true, cancelHref: '#' },
+};
+
 export const Interactive: Story = {
+  tags: ['no-capture'],
   render: () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | undefined>();
@@ -70,14 +105,24 @@ export const Interactive: Story = {
           error={error}
           sentTo="john@example.com"
           cancelHref="#"
-          onResend={() => setError('We resent a fresh code.')}
-          onSubmit={(code) => {
+          backupCode
+          resendCooldown={15}
+          onResend={() => setError(undefined)}
+          onMethodChange={() => setError(undefined)}
+          onSubmit={(code, method) => {
             setError(undefined);
             setSubmitting(true);
             window.setTimeout(() => {
               setSubmitting(false);
-              if (code === '123456') setVerified(true);
-              else setError('Invalid code — try `123456`.');
+              if (code === '123456' || (method === 'backup' && code === '4f7a-91bc')) {
+                setVerified(true);
+              } else {
+                setError(
+                  method === 'backup'
+                    ? 'That backup code isn’t valid. Try `4f7a-91bc`.'
+                    : 'Invalid code — try `123456`.'
+                );
+              }
             }, 1200);
           }}
         />
@@ -115,7 +160,7 @@ export const AutoSubmitOnCompleteChecks: Story = {
     // now. A single '1234' call kept typing into the first cell under the
     // Storybook UI's simulated events, though the input moves focus forward.
     for (const digit of '1234') await userEvent.keyboard(digit);
-    await waitFor(() => expect(args.onSubmit).toHaveBeenCalledWith('1234'));
+    await waitFor(() => expect(args.onSubmit).toHaveBeenCalledWith('1234', 'code'));
   },
 };
 
@@ -139,7 +184,7 @@ export const ManualSubmitDisabledUntilFilled: Story = {
     await userEvent.keyboard('4');
     await waitFor(() => expect(submit).not.toBeDisabled());
     await userEvent.click(submit);
-    await expect(args.onSubmit).toHaveBeenCalledWith('1234');
+    await expect(args.onSubmit).toHaveBeenCalledWith('1234', 'code');
   },
 };
 
@@ -181,5 +226,238 @@ export const MirrorsInRightToLeft: Story = {
       await expect(getComputedStyle(arrow).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expectReadsLeftToRight(box.querySelector('bdi')!);
     }
+  },
+};
+
+// ── Backup code ──────────────────────────────────────────────────────────────
+
+const backupLink = 'Use a backup code';
+const codeLink = 'Use a verification code instead';
+
+export const NoBackupLinkByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { sentTo: 'john@example.com', onResend: fn() },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: backupLink })).toBeNull();
+  },
+};
+
+/** The link swaps the entry in place and moves focus to the new field, then back. */
+export const SwitchesToTheBackupEntryAndBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { sentTo: 'john@example.com', onResend: fn(), backupCode: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Two-step verification'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: backupLink }));
+    await expect(canvas.getByRole('heading', { level: 1 })).toHaveTextContent('Use a backup code');
+    const field = canvas.getByLabelText(/^Backup code/);
+    await expect(field).toHaveFocus();
+    // The cells and the resend row belong to the code.
+    await expect(canvas.queryAllByRole('textbox')).toHaveLength(1);
+    await expect(canvas.queryByRole('button', { name: 'Resend code' })).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: codeLink }));
+    await expect(canvas.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Two-step verification'
+    );
+    await expect(canvas.getAllByRole('textbox')[0]).toHaveFocus();
+    await expect(canvas.getByRole('button', { name: 'Resend code' })).toBeInTheDocument();
+  },
+};
+
+export const DefaultMethodStartsOnTheBackupEntry: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { defaultMethod: 'backup', backupCode: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByLabelText(/^Backup code/)).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: codeLink })).toBeInTheDocument();
+  },
+};
+
+/** The host owns `method`: the link asks, the host answers. */
+export const MethodFollowsTheHostWhenControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { method: 'backup', backupCode: true, onMethodChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: codeLink }));
+    await expect(args.onMethodChange).toHaveBeenCalledWith('code');
+    await expect(canvas.getByLabelText(/^Backup code/)).toBeInTheDocument();
+  },
+};
+
+/** No length or format is checked: the host's server says if the code is good. */
+export const BackupSubmitTakesAnyNonEmptyText: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { defaultMethod: 'backup', backupCode: true, onSubmit: fn() },
+  play: async ({ args, canvas }) => {
+    const submit = canvas.getByRole('button', { name: /verify my account/i });
+    const field = canvas.getByLabelText(/^Backup code/);
+    await expect(submit).toBeDisabled();
+    await userEvent.type(field, '   ');
+    await expect(submit).toBeDisabled();
+    await userEvent.type(field, 'x');
+    await expect(submit).not.toBeDisabled();
+    // Typing more than a code's length never sends it by itself.
+    await userEvent.type(field, 'yzzy-1234-abcd');
+    await expect(args.onSubmit).not.toHaveBeenCalled();
+    await userEvent.click(submit);
+    await expect(args.onSubmit).toHaveBeenCalledWith('xyzzy-1234-abcd', 'backup');
+  },
+};
+
+export const CodeSubmitPassesItsMethod: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { length: 4, onSubmit: fn() },
+  play: async ({ args, canvas }) => {
+    canvas.getAllByRole('textbox')[0].focus();
+    for (const digit of '1234') await userEvent.keyboard(digit);
+    await waitFor(() => expect(args.onSubmit).toHaveBeenCalledWith('1234', 'code'));
+  },
+};
+
+/** On the backup entry the error sits under the field, and the field is invalid. */
+export const BackupErrorShowsUnderTheField: Story = {
+  ...BackupCodeRefused,
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  play: async ({ canvas }) => {
+    const field = canvas.getByLabelText(/^Backup code/);
+    await expect(field).toBeInvalid();
+    await expect(field).toHaveAccessibleDescription(
+      'That backup code isn’t valid. Check it and try again.'
+    );
+    await expect(canvas.queryByRole('alert')).toBeNull();
+  },
+};
+
+export const BackupLoadingDisablesTheEntry: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { defaultMethod: 'backup', backupCode: true, loading: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByLabelText(/^Backup code/)).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: codeLink })).toBeDisabled();
+  },
+};
+
+export const BackupEntryFitsOnAPhone: Story = {
+  ...BackupCodeOnPhone,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.type(canvas.getByLabelText(/^Backup code/), '4f7a-91bc-4f7a-91bc-4f7a-91bc');
+    const link = canvas.getByRole('button', { name: codeLink });
+    await expect(link.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+// ── Resend cooldown ──────────────────────────────────────────────────────────
+
+// The cooldown counts real seconds, so these tests run in real time with 2 s cooldowns and wait on
+// what they check; the margins are the wait's, never a sleep.
+const countdown = (canvas: { getByRole: (role: string, o: object) => HTMLElement }) =>
+  canvas.getByRole('button', { name: 'Resend code' });
+
+export const CooldownStartsOnMountAndEnds: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { sentTo: 'john@example.com', onResend: fn(), resendCooldown: 2 },
+  play: async ({ canvas }) => {
+    const resend = countdown(canvas);
+    const status = canvas.getByRole('status');
+    // A code was just sent: counting from the first render, the button dimmed but still focusable.
+    await expect(resend).toHaveAttribute('aria-disabled', 'true');
+    await expect(resend).not.toBeDisabled();
+    await expect(resend).toHaveAccessibleDescription(/available in 0:0[12]/);
+    await expect(status).toBeEmptyDOMElement();
+    resend.focus();
+    await waitFor(() => expect(resend).toHaveAccessibleDescription('available in 0:01'), {
+      timeout: 2500,
+    });
+    // At zero: active again, the countdown gone, said once, and focus where it was.
+    await waitFor(() => expect(resend).not.toHaveAttribute('aria-disabled'), { timeout: 2500 });
+    await expect(resend).not.toHaveAccessibleDescription();
+    await expect(status).toHaveTextContent('You can request a new code.');
+    await expect(resend).toHaveFocus();
+  },
+};
+
+export const PressingWhileCountingDoesNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { onResend: fn(), resendCooldown: 2 },
+  play: async ({ args, canvas }) => {
+    const resend = countdown(canvas);
+    resend.focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.keyboard(' ');
+    await expect(args.onResend).not.toHaveBeenCalled();
+    await expect(resend).toHaveFocus();
+  },
+};
+
+export const PressingRestartsTheCountdownAndSaysSo: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { onResend: fn(), resendCooldown: 2 },
+  play: async ({ args, canvas }) => {
+    const resend = countdown(canvas);
+    const status = canvas.getByRole('status');
+    await waitFor(() => expect(resend).not.toHaveAttribute('aria-disabled'), { timeout: 3500 });
+    resend.focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onResend).toHaveBeenCalledTimes(1);
+    await expect(resend).toHaveAttribute('aria-disabled', 'true');
+    await expect(resend).toHaveAccessibleDescription(/available in 0:0[12]/);
+    await expect(status).toHaveTextContent('We sent you a new code.');
+    await expect(status).toBeVisible();
+    // Focus stays on the button through it all.
+    await expect(resend).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onResend).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Without `resendCooldown` the button is as it was: no wait, no message. */
+export const NoCooldownLeavesResendAsItWas: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { onResend: fn() },
+  play: async ({ args, canvas }) => {
+    const resend = countdown(canvas);
+    await expect(resend).not.toHaveAttribute('aria-disabled');
+    await userEvent.click(resend);
+    await userEvent.click(resend);
+    await expect(args.onResend).toHaveBeenCalledTimes(2);
+    await expect(canvas.queryByRole('status')).toBeNull();
+    await expect(resend).not.toHaveAccessibleDescription();
+  },
+};
+
+/** `loading` disables the button as before, with the real attribute. */
+export const LoadingDisablesResendWhateverTheCooldown: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { onResend: fn(), loading: true },
+  play: async ({ canvas }) => {
+    await expect(countdown(canvas)).toBeDisabled();
+  },
+};
+
+export const CooldownFitsOnAPhone: Story = {
+  ...WithResendCooldown,
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  play: async ({ canvas, canvasElement }) => {
+    await expect(countdown(canvas)).toHaveAttribute('aria-disabled', 'true');
+    await expect(countdown(canvas).getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
