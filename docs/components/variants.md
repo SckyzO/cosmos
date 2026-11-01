@@ -26,3 +26,4 @@ Props that are easy to miss, one line each. The Storybook page of each component
 - `Badge size="lg"` and `shape="rounded"`: a larger badge, and `rounded-md` corners in place of the pill.
 - `Carousel.Indicators position="inside"`: the dots at the bottom center of the slide, 12px from the edge, on a dark pill. Keep the default when `Carousel.Controls` is `outside` too: its row sits under the slide.
 - `Ribbon shape="pill"`: a fully rounded label set inside the card, 12px from the corner of its `position`.
+- `UserMenu.Header badge={<Badge intent="brand" size="sm">Admin</Badge>}`: a node after the name, on the same line: the user's role or plan. The name truncates to make room, the badge never shrinks; the e-mail stays under both.

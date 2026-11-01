@@ -92,10 +92,15 @@ export type UserMenuHeaderProps = {
   name: string;
   email?: string;
   avatarSrc?: string;
+  /**
+   * Shown after the name on the same line, for what the user is here: a `Badge` with their role
+   * or plan. The name gives way to it (it truncates), the badge never shrinks.
+   */
+  badge?: ReactNode;
   className?: string;
 };
 
-const UserMenuHeader = ({ name, email, avatarSrc, className }: UserMenuHeaderProps) => (
+const UserMenuHeader = ({ name, email, avatarSrc, badge, className }: UserMenuHeaderProps) => (
   <div
     className={clsx(
       'flex items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800',
@@ -104,9 +109,12 @@ const UserMenuHeader = ({ name, email, avatarSrc, className }: UserMenuHeaderPro
   >
     <DecorativeAvatar src={avatarSrc} name={name} size="md" />
     <div className="min-w-0 flex-1">
-      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-        <bdi>{name}</bdi>
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-white">
+          <bdi>{name}</bdi>
+        </p>
+        {badge && <span className="flex shrink-0">{badge}</span>}
+      </div>
       {email && (
         <p className="truncate text-xs text-gray-500 dark:text-gray-400">
           <bdi>{email}</bdi>
