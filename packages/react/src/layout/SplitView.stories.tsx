@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Inbox, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { StackedList } from '../lists/StackedList';
 import { Button } from '../ui/Button';
 import {
   expectBeyondEnd,
@@ -62,25 +63,19 @@ const MailList = ({
   selected?: string;
   onSelect: (id: string) => void;
 }) => (
-  <ul className="divide-y divide-[var(--color-border)]">
+  <StackedList>
     {mails.map((m) => (
-      <li key={m.id}>
-        <button
-          type="button"
-          aria-current={m.id === selected || undefined}
-          onClick={() => onSelect(m.id)}
-          className="focus-visible:focus-indicator block w-full px-4 py-3 text-start hover:bg-gray-50 focus-visible:ring-inset aria-[current]:bg-gray-100 dark:hover:bg-gray-800 dark:aria-[current]:bg-gray-800"
-        >
-          <span className="block truncate text-sm font-medium text-[var(--color-text-primary)]">
-            {m.from}
-          </span>
-          <span className="block truncate text-xs text-[var(--color-text-secondary)]">
-            {m.subject}
-          </span>
-        </button>
-      </li>
+      <StackedList.Item
+        key={m.id}
+        // A bare list takes its rows' inset from its container, here the pane.
+        className="px-4"
+        title={m.from}
+        subtitle={m.subject}
+        selected={m.id === selected}
+        onClick={() => onSelect(m.id)}
+      />
     ))}
-  </ul>
+  </StackedList>
 );
 
 const FolderList = () => (
@@ -158,7 +153,7 @@ export const TwoPanesPicksAMessage: Story = {
     await expect(list.getBoundingClientRect().top).toBe(detail.getBoundingClientRect().top);
     await expect(list.getBoundingClientRect().width).toBe(320);
     expectBeyondEnd(detail, list);
-    await userEvent.click(canvas.getAllByRole('button', { name: /Disk alert/ })[0]!);
+    await userEvent.click(canvas.getAllByRole('button', { name: /Ops on-call/ })[0]!);
     await expect(
       canvas.getByRole('heading', { name: 'Disk alert cleared on rack B4' })
     ).toBeVisible();
@@ -348,18 +343,12 @@ export const Narrow: Story = {
     const Row = ({ mail }: { mail: Mail }) => {
       const { setActivePane } = useSplitView();
       return (
-        <button
-          type="button"
+        <StackedList.Item
+          className="px-4"
+          title={mail.from}
+          subtitle={mail.subject}
           onClick={() => setActivePane('detail')}
-          className="focus-visible:focus-indicator block w-full px-4 py-3 text-start hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-gray-800"
-        >
-          <span className="block truncate text-sm font-medium text-[var(--color-text-primary)]">
-            {mail.from}
-          </span>
-          <span className="block truncate text-xs text-[var(--color-text-secondary)]">
-            {mail.subject}
-          </span>
-        </button>
+        />
       );
     };
     const Detail = () => {
@@ -370,13 +359,11 @@ export const Narrow: Story = {
       <Frame height={480}>
         <SplitView defaultActivePane="list">
           <SplitView.Pane id="list" label="Messages" width="w-80">
-            <ul className="divide-y divide-[var(--color-border)]">
+            <StackedList>
               {mails.map((m) => (
-                <li key={m.id}>
-                  <Row mail={m} />
-                </li>
+                <Row key={m.id} mail={m} />
               ))}
-            </ul>
+            </StackedList>
           </SplitView.Pane>
           <SplitView.Pane id="detail" label="Message">
             <Detail />

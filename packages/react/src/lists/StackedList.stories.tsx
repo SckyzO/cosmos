@@ -1,13 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Activity, MessageCircle, MoreVertical } from 'lucide-react';
-import { Fragment } from 'react';
-import { expect, within } from 'storybook/test';
+import { Activity, Archive, MessageCircle, MoreVertical, Trash2 } from 'lucide-react';
+import { Fragment, useState } from 'react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import {
   bothDirections,
   directionBox,
   endOffset,
+  expectFocusRing,
   expectMirrored,
+  expectNoHorizontalOverflow,
+  mobileViewport,
   startOffset,
 } from '../storybook-helpers';
 import { AvatarGroup } from '../ui/AvatarGroup';
@@ -1121,6 +1124,786 @@ export const CardHeaderSlotsRender: Story = {
       startOffset(heading, list) + heading.getBoundingClientRect().width
     );
     await expect(within(canvas.getByTestId('without')).queryByRole('heading')).toBeNull();
+  },
+};
+
+// ── Rows that can be picked, starred or marked unread: a mail list ──────────
+
+type Mail = {
+  id: string;
+  from: string;
+  text: string;
+  time: string;
+  unread: boolean;
+  starred: boolean;
+};
+
+const MAILS: Mail[] = [
+  {
+    id: 'm1',
+    from: 'Ana Ruiz',
+    time: '10:42',
+    unread: true,
+    starred: true,
+    text: 'Review request for the cooling PR. Could you look at the fan curve change before Friday? I added the benchmark.',
+  },
+  {
+    id: 'm2',
+    from: 'Ops on-call',
+    time: '09:15',
+    unread: true,
+    starred: false,
+    text: 'Disk alert cleared on rack B4. Usage on b4-node-12 is back under 80% after the log rotation, no action needed.',
+  },
+  {
+    id: 'm3',
+    from: 'Li Wei',
+    time: 'Yesterday',
+    unread: false,
+    starred: false,
+    text: 'Maintenance window on Friday. The window opens at 22:00 UTC and covers racks A1 to A6, the B racks stay up.',
+  },
+  {
+    id: 'm4',
+    from: 'Sam Patel',
+    time: 'Yesterday',
+    unread: false,
+    starred: false,
+    text: 'Nightly backup finished. 312 GB written at 04:20. The retention settings still need a look before the window.',
+  },
+  {
+    id: 'm5',
+    from: 'Mei Tanaka',
+    time: 'Mon',
+    unread: false,
+    starred: true,
+    text: 'Capacity review notes. The forecast for Q1 holds if the new racks land before the end of January.',
+  },
+];
+
+const MailAvatar = ({ name }: { name: string }) => (
+  <img
+    src={placeholderAvatar(name, 64)}
+    alt=""
+    className="size-8 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
+  />
+);
+
+// The host keeps every piece of state: which rows are picked, starred, unread, and which is open.
+const InboxDemo = () => {
+  const [mails, setMails] = useState(MAILS);
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+  const [open, setOpen] = useState<string>();
+  const change = (id: string, patch: Partial<Mail>) =>
+    setMails((all) => all.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const drop = (ids: Iterable<string>) => {
+    const gone = new Set(ids);
+    setMails((all) => all.filter((m) => !gone.has(m.id)));
+    setPicked((p) => new Set([...p].filter((id) => !gone.has(id))));
+  };
+  const pick = (id: string, on: boolean) =>
+    setPicked((p) => {
+      const next = new Set(p);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const all = mails.length > 0 && picked.size === mails.length;
+
+  return (
+    <div className="max-w-3xl">
+      <StackedList card>
+        <StackedList.Header
+          checked={all}
+          indeterminate={picked.size > 0 && !all}
+          onCheckedChange={(on) => setPicked(on ? new Set(mails.map((m) => m.id)) : new Set())}
+          actions={
+            picked.size > 0 && (
+              <>
+                <Button variant="secondary" size="xs" icon={Archive} onClick={() => drop(picked)}>
+                  <span className="max-sm:sr-only">Archive</span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  intent="danger"
+                  size="xs"
+                  icon={Trash2}
+                  onClick={() => drop(picked)}
+                >
+                  <span className="max-sm:sr-only">Delete</span>
+                </Button>
+              </>
+            )
+          }
+        >
+          {picked.size > 0 ? `${picked.size} selected` : 'Inbox'}
+        </StackedList.Header>
+        {mails.map((m) => (
+          <StackedList.Item
+            key={m.id}
+            avatar={<MailAvatar name={m.from} />}
+            title={m.from}
+            timestamp={m.time}
+            description={m.text}
+            unread={m.unread}
+            selected={open === m.id}
+            onClick={() => {
+              setOpen(m.id);
+              change(m.id, { unread: false });
+            }}
+            checked={picked.has(m.id)}
+            onCheckedChange={(on) => pick(m.id, on)}
+            starred={m.starred}
+            onStarredChange={(starred) => change(m.id, { starred })}
+            actions={[
+              { label: 'Archive', icon: Archive, onSelect: () => drop([m.id]) },
+              { label: 'Delete', icon: Trash2, intent: 'danger', onSelect: () => drop([m.id]) },
+            ]}
+          />
+        ))}
+      </StackedList>
+    </div>
+  );
+};
+
+const laptop = { viewport: { value: 'laptop', isRotated: false } } as const;
+
+/**
+ * A mail list: a bar with select-all and the count, then rows with a checkbox, an unread dot, a
+ * star, and actions that show on hover or focus. The open row has a tint and a bar at its start.
+ */
+export const Inbox: Story = {
+  globals: laptop,
+  render: () => <InboxDemo />,
+};
+
+/** At phone width the row actions fold into one "More actions" menu and the star stays shown. */
+export const InboxNarrow: Story = {
+  ...Inbox,
+  globals: mobileViewport,
+};
+
+/** `unread` has three states: `true` is bold with a dot, `false` the read look, left out as before. */
+export const UnreadStates: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <StackedList card>
+        <StackedList.Item
+          title="Unread"
+          description="Bold title, a dot in the start gutter and a stronger description."
+          unread
+        />
+        <StackedList.Item
+          title="Read"
+          description="A lighter title and the usual description."
+          unread={false}
+        />
+        <StackedList.Item
+          title="Not tracked"
+          description="Without unread, a row keeps the look it always had."
+        />
+      </StackedList>
+    </div>
+  ),
+};
+
+// ── Interaction tests: selection, read state, star and actions ───────────────
+
+// What takes the focus or a click. A row must hold none of these inside another.
+const CONTROLS =
+  'a[href], button, input, select, textarea, [role="menuitem"], [tabindex]:not([tabindex="-1"])';
+
+const expectNoNestedControls = (root: Element) => {
+  for (const el of root.querySelectorAll(CONTROLS)) {
+    const outer = el.parentElement?.closest(CONTROLS);
+    expect(outer, `${el.tagName} ${el.textContent ?? ''} sits inside another control`).toBeNull();
+  }
+};
+
+// The rows of the inbox, without its header bar.
+const mailRows = (canvas: { getAllByRole: (role: string) => HTMLElement[] }) =>
+  canvas.getAllByRole('listitem').slice(1);
+
+const hitAt = (el: Element) => {
+  const { left, top, width, height } = el.getBoundingClientRect();
+  return el.ownerDocument.elementFromPoint(left + width / 2, top + height / 2);
+};
+
+/** Checkbox, title, star and actions are siblings: no row holds a control inside another. */
+export const InboxHasNoNestedControls: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list');
+    // The bar's checkbox, then per row: checkbox, title, star and two actions.
+    await expect(list.querySelectorAll(CONTROLS)).toHaveLength(1 + MAILS.length * 5);
+    expectNoNestedControls(list);
+  },
+};
+
+/** One tab stop per control, in the order they sit on the line: checkbox, title, actions, star. */
+export const InboxTabOrder: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const row = within(mailRows(canvas)[0]!);
+    const order = [
+      row.getByRole('checkbox', { name: 'Select Ana Ruiz' }),
+      row.getByRole('button', { name: 'Unread: Ana Ruiz' }),
+      row.getByRole('button', { name: 'Archive Ana Ruiz' }),
+      row.getByRole('button', { name: 'Delete Ana Ruiz' }),
+      row.getByRole('button', { name: 'Star Ana Ruiz' }),
+      within(mailRows(canvas)[1]!).getByRole('checkbox', { name: 'Select Ops on-call' }),
+    ];
+    canvas.getByRole('checkbox', { name: 'Select all' }).focus();
+    for (const control of order) {
+      await userEvent.tab();
+      await expect(control).toHaveFocus();
+    }
+  },
+};
+
+/** The bar's checkbox is checked, unchecked or mixed from the rows the host picked. */
+export const InboxSelectAllIsTriState: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const all = canvas.getByRole('checkbox', { name: 'Select all' });
+    const rows = () => canvas.getAllByRole('checkbox', { name: /^Select (?!all)/ });
+    await expect(all).not.toBeChecked();
+    await expect(all).not.toBePartiallyChecked();
+    await expect(canvas.getByText('Inbox')).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select Ana Ruiz' }));
+    await expect(all).toBePartiallyChecked();
+    await expect(canvas.getByText('1 selected')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Archive' })).toBeVisible();
+
+    await userEvent.click(all);
+    await expect(all).toBeChecked();
+    await expect(all).not.toBePartiallyChecked();
+    await expect(rows()).toHaveLength(MAILS.length);
+    for (const box of rows()) await expect(box).toBeChecked();
+    await expect(canvas.getByText(`${MAILS.length} selected`)).toBeVisible();
+
+    await userEvent.click(all);
+    await expect(all).not.toBeChecked();
+    for (const box of rows()) await expect(box).not.toBeChecked();
+    await expect(canvas.queryByRole('button', { name: 'Archive' })).toBeNull();
+  },
+};
+
+/** A picked row takes a light accent tint; the bulk bar acts on the picked rows. */
+export const InboxPickedRowsAreTintedAndActedOn: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const rows = mailRows(canvas);
+    const idle = getComputedStyle(rows[3]!).backgroundColor;
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select Sam Patel' }));
+    await waitFor(() => expect(getComputedStyle(rows[3]!).backgroundColor).not.toBe(idle));
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select Li Wei' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Archive' }));
+    await waitFor(() => expect(mailRows(canvas)).toHaveLength(MAILS.length - 2));
+    await expect(canvas.queryByText('Li Wei')).toBeNull();
+    await expect(canvas.queryByText('Sam Patel')).toBeNull();
+    await expect(canvas.getByRole('checkbox', { name: 'Select all' })).not.toBeChecked();
+  },
+};
+
+/** The star is a toggle with `aria-pressed`; a starred one stays shown, an empty one shows on hover. */
+export const InboxStarToggles: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const starred = canvas.getByRole('button', { name: 'Star Ana Ruiz' });
+    const empty = canvas.getByRole('button', { name: 'Star Ops on-call' });
+    await expect(starred).toHaveAttribute('aria-pressed', 'true');
+    await expect(empty).toHaveAttribute('aria-pressed', 'false');
+    // At rest: the state shows without a hover, the empty star waits for one.
+    await expect(getComputedStyle(starred).opacity).toBe('1');
+    await expect(getComputedStyle(empty).opacity).toBe('0');
+    // A filled star and an outlined one differ by more than their color.
+    await expect(getComputedStyle(starred.querySelector('svg')!).fill).not.toBe('none');
+    await expect(getComputedStyle(empty.querySelector('svg')!).fill).toBe('none');
+
+    await userEvent.click(empty);
+    await expect(empty).toHaveAttribute('aria-pressed', 'true');
+    await expect(getComputedStyle(empty.querySelector('svg')!).fill).not.toBe('none');
+    await userEvent.click(empty);
+    await expect(empty).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(starred);
+    await expect(starred).toHaveAttribute('aria-pressed', 'false');
+  },
+};
+
+/** Hidden by opacity, never by `display` or `visibility`: a keyboard reaches them and they show. */
+export const InboxActionsAreReachableWhileHidden: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const row = mailRows(canvas)[1]!;
+    const archive = within(row).getByRole('button', { name: 'Archive Ops on-call' });
+    const strip = archive.parentElement!;
+    await expect(getComputedStyle(strip).opacity).toBe('0');
+    await expect(getComputedStyle(archive).display).not.toBe('none');
+    await expect(getComputedStyle(archive).visibility).toBe('visible');
+
+    // Tab from the row's checkbox: the title, then the first action, which brings them in.
+    within(row).getByRole('checkbox', { name: 'Select Ops on-call' }).focus();
+    for (let i = 0; i < 2; i += 1) await userEvent.tab();
+    await expect(archive).toHaveFocus();
+    await waitFor(() => expect(getComputedStyle(strip).opacity).toBe('1'));
+    // The next row's own actions stay out.
+    const next = within(mailRows(canvas)[2]!).getByRole('button', { name: 'Archive Li Wei' });
+    await expect(getComputedStyle(next.parentElement!).opacity).toBe('0');
+
+    // Back out through the title and the checkbox to the previous row: they hide again.
+    for (let i = 0; i < 3; i += 1) await userEvent.tab({ shift: true });
+    await expect(
+      within(mailRows(canvas)[0]!).getByRole('button', { name: 'Star Ana Ruiz' })
+    ).toHaveFocus();
+    await waitFor(() => expect(getComputedStyle(strip).opacity).toBe('0'));
+  },
+};
+
+/** The open row has `aria-current` on its title, a tint and a 3px bar at its start edge. */
+export const InboxOpenRowIsMarked: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list');
+    const rows = mailRows(canvas);
+    await expect(list.querySelectorAll('[aria-current]')).toHaveLength(0);
+    await expect(list.querySelectorAll('[data-row-bar]')).toHaveLength(0);
+    const idle = getComputedStyle(rows[2]!).backgroundColor;
+
+    await userEvent.click(within(rows[2]!).getByRole('button', { name: 'Li Wei' }));
+    const title = within(rows[2]!).getByRole('button', { name: 'Li Wei' });
+    await expect(title).toHaveAttribute('aria-current', 'true');
+    await expect(list.querySelectorAll('[aria-current]')).toHaveLength(1);
+    await expect(getComputedStyle(rows[2]!).backgroundColor).not.toBe(idle);
+    const bar = rows[2]!.querySelector<HTMLElement>('[data-row-bar]')!;
+    await expect(bar).toBeInTheDocument();
+    await expect(bar).toHaveAttribute('aria-hidden', 'true');
+    await expect(bar.getBoundingClientRect().width).toBe(3);
+    await expect(startOffset(bar, rows[2]!)).toBe(0);
+    // The whole padding box: the row's own height less the divider above it.
+    await expect(bar.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+      rows[2]!.getBoundingClientRect().height - 1
+    );
+
+    // Opening another row moves the mark.
+    await userEvent.click(within(rows[4]!).getByRole('button', { name: 'Mei Tanaka' }));
+    await expect(list.querySelectorAll('[aria-current]')).toHaveLength(1);
+    await expect(rows[2]!.querySelector('[data-row-bar]')).toBeNull();
+    await expect(rows[4]!.querySelector('[data-row-bar]')).not.toBeNull();
+  },
+};
+
+/** Unread is bold with a dot and "Unread" for a screen reader; titles stay aligned, read or not. */
+export const InboxUnreadLooks: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list');
+    const rows = mailRows(canvas);
+    const unread = within(rows[0]!).getByRole('button', { name: 'Unread: Ana Ruiz' });
+    const read = within(rows[2]!).getByRole('button', { name: 'Li Wei' });
+    await expect(getComputedStyle(unread).fontWeight).toBe('700');
+    await expect(getComputedStyle(read).fontWeight).toBe('500');
+
+    const dot = rows[0]!.querySelector<HTMLElement>('[data-row-dot]')!;
+    await expect(dot).toBeVisible();
+    await expect(dot).toHaveAttribute('aria-hidden', 'true');
+    await expect(rows[2]!.querySelector('[data-row-dot]')).toBeNull();
+    // The dot sits in the start gutter, ahead of the checkbox: nothing moves for it.
+    const box = within(rows[0]!).getByRole('checkbox').closest('label')!;
+    await expect(startOffset(dot, list)).toBeLessThan(startOffset(box, list));
+    await expect(startOffset(unread, list)).toBe(startOffset(read, list));
+
+    // Opening an unread row marks it read: the dot goes, the weight drops.
+    await userEvent.click(unread);
+    await waitFor(() => expect(rows[0]!.querySelector('[data-row-dot]')).toBeNull());
+    await expect(within(rows[0]!).getByRole('button', { name: 'Ana Ruiz' })).toHaveStyle({
+      fontWeight: '500',
+    });
+  },
+};
+
+/** Without `unread` a row looks as it did: semi-bold title, no dot, nothing said to a screen reader. */
+export const UnreadOmittedKeepsTheCurrentLook: Story = {
+  ...UnreadStates,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const rows = canvas.getAllByRole('listitem');
+    await expect(getComputedStyle(canvas.getByText('Unread')).fontWeight).toBe('700');
+    await expect(getComputedStyle(canvas.getByText('Read')).fontWeight).toBe('500');
+    const plain = canvas.getByText('Not tracked');
+    await expect(getComputedStyle(plain).fontWeight).toBe('600');
+    await expect(rows[0]!.querySelector('[data-row-dot]')).not.toBeNull();
+    await expect(rows[1]!.querySelector('[data-row-dot]')).toBeNull();
+    await expect(rows[2]!.querySelector('[data-row-dot]')).toBeNull();
+    await expect(rows[2]!.querySelector('.sr-only')).toBeNull();
+    await expect(rows[0]!.querySelector('.sr-only')).toHaveTextContent('Unread');
+    // Read or unread, the three titles start at the same place.
+    const list = canvas.getByRole('list');
+    await expect(startOffset(canvas.getByText('Unread'), list)).toBe(
+      startOffset(canvas.getByText('Not tracked'), list)
+    );
+  },
+};
+
+/** The title's hit area covers the row; the checkbox, star and actions stay above it. */
+export const InboxHitAreas: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const row = within(mailRows(canvas)[0]!);
+    const title = row.getByRole('button', { name: 'Unread: Ana Ruiz' });
+    // The description and the avatar are under the overlay: a click on them goes to the title.
+    await expect(title.contains(hitAt(row.getByText(/Could you look/)))).toBe(true);
+    await expect(title.contains(hitAt(mailRows(canvas)[0]!.querySelector('img')!))).toBe(true);
+    const box = row.getByRole('checkbox', { name: 'Select Ana Ruiz' }).closest('label')!;
+    await expect(box.contains(hitAt(box))).toBe(true);
+    for (const name of ['Star Ana Ruiz', 'Archive Ana Ruiz', 'Delete Ana Ruiz']) {
+      const control = row.getByRole('button', { name });
+      await expect(control.contains(hitAt(control)), name).toBe(true);
+    }
+  },
+};
+
+/** Bringing in the bulk buttons or a row's actions moves and resizes nothing; the controls line up. */
+export const InboxDoesNotShiftOnState: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const header = canvas.getAllByRole('listitem')[0]!;
+    const rows = mailRows(canvas);
+    const heights = () => [header, ...rows].map((el) => el.getBoundingClientRect().height);
+    const mid = (el: Element) => {
+      const { top, height } = el.getBoundingClientRect();
+      return top + height / 2;
+    };
+    const rest = heights();
+
+    // The bulk buttons come in with the first picked row.
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select Sam Patel' }));
+    await expect(canvas.getByRole('button', { name: 'Archive' })).toBeVisible();
+    await expect(heights()).toEqual(rest);
+
+    // A row's actions come in with focus, in the place of the time.
+    const row = within(rows[1]!);
+    const archive = row.getByRole('button', { name: 'Archive Ops on-call' });
+    archive.focus();
+    await waitFor(() => expect(getComputedStyle(archive.parentElement!).opacity).toBe('1'));
+    await expect(heights()).toEqual(rest);
+
+    // On the title's line, level with its text; the checkbox box is level with it too.
+    const title = row.getByRole('button', { name: 'Unread: Ops on-call' });
+    await expect(Math.abs(mid(archive) - mid(title))).toBeLessThanOrEqual(3);
+    await expect(Math.abs(mid(row.getByText('09:15')) - mid(title))).toBeLessThanOrEqual(3);
+    const box = row.getByRole('checkbox').closest('label')!;
+    await expect(Math.abs(mid(box) - mid(title))).toBeLessThanOrEqual(3);
+    // The star sits on the row's own middle.
+    const star = row.getByRole('button', { name: 'Star Ops on-call' });
+    await expect(Math.abs(mid(star) - mid(rows[1]!))).toBeLessThanOrEqual(2);
+  },
+};
+
+/** Only the title shows the row ring on focus: a focused checkbox, star or action has its own. */
+export const InboxFocusRingIsOnTheTitle: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const li = mailRows(canvas)[2]!;
+    const row = within(li);
+    await expectFocusRing(row.getByRole('button', { name: 'Li Wei' }), { ring: li, inset: true });
+    await userEvent.tab();
+    await expect(row.getByRole('button', { name: 'Archive Li Wei' })).toHaveFocus();
+    await expect(getComputedStyle(li).boxShadow).toBe('none');
+  },
+};
+
+/** At phone width the actions are one menu, the star stays shown and every target is 24px. */
+export const InboxNarrowFoldsTheActions: Story = {
+  ...InboxNarrow,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const rows = mailRows(canvas);
+    await expect(canvas.queryByRole('button', { name: /^Archive/ })).toBeNull();
+    await expect(canvas.getAllByRole('button', { name: /^More actions / })).toHaveLength(
+      MAILS.length
+    );
+    // No hover on a phone: an empty star is shown too.
+    const star = within(rows[2]!).getByRole('button', { name: 'Star Li Wei' });
+    await expect(getComputedStyle(star).opacity).toBe('1');
+    const more = within(rows[2]!).getByRole('button', { name: 'More actions Li Wei' });
+    for (const control of [star, more, within(rows[2]!).getByRole('checkbox').closest('label')!]) {
+      const { width, height } = control.getBoundingClientRect();
+      await expect(Math.min(width, height)).toBeGreaterThanOrEqual(24);
+    }
+    // The bar's buttons go icon-only, so selecting rows does not widen the page.
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select Li Wei' }));
+    await expect(canvas.getByRole('button', { name: 'Archive' })).toBeVisible();
+    expectNoHorizontalOverflow();
+
+    await userEvent.click(more);
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    const menu = await within(document.body).findByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+    await expect(items.map((item) => item.textContent)).toEqual(['Archive', 'Delete']);
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Archive' }));
+    await waitFor(() =>
+      expect(canvas.queryByRole('checkbox', { name: 'Select Li Wei' })).toBeNull()
+    );
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    expectNoHorizontalOverflow();
+  },
+};
+
+/** The menu opens from the keyboard and Escape returns the focus to its button. */
+export const InboxNarrowMenuIsKeyboardReachable: Story = {
+  ...InboxNarrow,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const row = within(mailRows(canvas)[1]!);
+    row.getByRole('button', { name: 'Star Ops on-call' }).focus();
+    await userEvent.tab();
+    const more = row.getByRole('button', { name: 'More actions Ops on-call' });
+    await expect(more).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    const menu = await within(document.body).findByRole('menu');
+    await expect(within(menu).getByRole('menuitem', { name: 'Archive' })).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(more).toHaveFocus();
+  },
+};
+
+// A line of what the host was told, to check the callbacks of the rows.
+const Log = ({ entries }: { entries: string[] }) => <output>{entries.join(', ')}</output>;
+
+const ClickDemo = () => {
+  const [clicks, setClicks] = useState<string[]>([]);
+  return (
+    <>
+      <StackedList>
+        <StackedList.Item
+          title="Disk alert"
+          subtitle="rack B4"
+          onClick={() => setClicks((c) => [...c, 'title'])}
+          data-testid="li"
+        />
+      </StackedList>
+      <Log entries={clicks} />
+    </>
+  );
+};
+
+/** `onClick` makes the title a button; the row itself no longer carries the handler. */
+export const OnClickMakesTheTitleAButton: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ClickDemo />,
+  play: async ({ canvas }) => {
+    const title = canvas.getByRole('button', { name: 'Disk alert' });
+    await expect(title.closest('li')).toBe(canvas.getByTestId('li'));
+    await userEvent.click(title);
+    await expect(canvas.getByRole('status')).toHaveTextContent(/^title$/);
+    // The rest of the row is not the button: its own click does not reach the handler.
+    await userEvent.click(canvas.getByText('rack B4'));
+    await userEvent.click(canvas.getByTestId('li'));
+    await expect(canvas.getByRole('status')).toHaveTextContent(/^title$/);
+    // From the keyboard, like any button.
+    title.focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.keyboard(' ');
+    await expect(canvas.getByRole('status')).toHaveTextContent('title, title, title');
+    await expect(canvas.getAllByRole('button')).toHaveLength(1);
+  },
+};
+
+const LinkClickDemo = () => {
+  const [clicks, setClicks] = useState<string[]>([]);
+  return (
+    <>
+      <StackedList>
+        <StackedList.Item
+          title="Disk alert"
+          href="#alert"
+          onClick={(event) => {
+            event.preventDefault();
+            setClicks((c) => [...c, event.currentTarget.tagName]);
+          }}
+        />
+      </StackedList>
+      <Log entries={clicks} />
+    </>
+  );
+};
+
+/** With `href` the title stays a link, and `onClick` runs on it, so a router can take the click. */
+export const OnClickRunsOnTheLink: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LinkClickDemo />,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button')).toBeNull();
+    await userEvent.click(canvas.getByRole('link', { name: 'Disk alert' }));
+    // The handler is on the link itself, not on the row the click bubbles to.
+    await expect(canvas.getByRole('status')).toHaveTextContent(/^A$/);
+  },
+};
+
+const ControlledDemo = () => {
+  const [told, setTold] = useState<string[]>([]);
+  const tell = (entry: string) => setTold((t) => [...t, entry]);
+  return (
+    <>
+      <StackedList>
+        <StackedList.Item
+          title="Controlled"
+          checked={false}
+          onCheckedChange={(on) => tell(`Controlled checked ${on}`)}
+          starred={false}
+          onStarredChange={(on) => tell(`Controlled starred ${on}`)}
+        />
+        <StackedList.Item
+          title="Uncontrolled"
+          defaultChecked
+          onCheckedChange={(on) => tell(`Uncontrolled checked ${on}`)}
+          defaultStarred
+          onStarredChange={(on) => tell(`Uncontrolled starred ${on}`)}
+        />
+        <StackedList.Item title="Neither" />
+      </StackedList>
+      <Log entries={told} />
+    </>
+  );
+};
+
+/** `checked` and `starred` follow the controlled pattern: only `undefined` leaves them to the row. */
+export const CheckedAndStarredCanBeControlled: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledDemo />,
+  play: async ({ canvas }) => {
+    // A row with neither has no checkbox and no star.
+    await expect(canvas.getAllByRole('checkbox')).toHaveLength(2);
+    await expect(canvas.getAllByRole('button', { name: /^Star / })).toHaveLength(2);
+
+    const controlled = canvas.getByRole('checkbox', { name: 'Select Controlled' });
+    await userEvent.click(controlled);
+    // The host did not pass the new value back: the row keeps showing the old one.
+    await expect(controlled).not.toBeChecked();
+    const star = canvas.getByRole('button', { name: 'Star Controlled' });
+    await userEvent.click(star);
+    await expect(star).toHaveAttribute('aria-pressed', 'false');
+
+    const own = canvas.getByRole('checkbox', { name: 'Select Uncontrolled' });
+    await expect(own).toBeChecked();
+    await userEvent.click(own);
+    await expect(own).not.toBeChecked();
+    const ownStar = canvas.getByRole('button', { name: 'Star Uncontrolled' });
+    await expect(ownStar).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(ownStar);
+    await expect(ownStar).toHaveAttribute('aria-pressed', 'false');
+
+    // Both told the host the state they moved to, as the controlled pattern says.
+    await expect(canvas.getByRole('status')).toHaveTextContent(
+      'Controlled checked true, Controlled starred true, Uncontrolled checked false, Uncontrolled starred false'
+    );
+  },
+};
+
+const ActionsDemo = () => {
+  const [done, setDone] = useState<string[]>([]);
+  return (
+    <>
+      <StackedList>
+        <StackedList.Item
+          title="Disk alert"
+          actions={[
+            { label: 'Archive', icon: Archive, onSelect: () => setDone((d) => [...d, 'archive']) },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              intent: 'danger',
+              disabled: true,
+              onSelect: () => setDone((d) => [...d, 'delete']),
+            },
+          ]}
+        />
+      </StackedList>
+      <Log entries={done} />
+    </>
+  );
+};
+
+/** Each action is data: its label names the button, its `onSelect` runs on a click. */
+export const ActionsRunTheirCallback: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ActionsDemo />,
+  play: async ({ canvas }) => {
+    const archive = canvas.getByRole('button', { name: 'Archive Disk alert' });
+    const remove = canvas.getByRole('button', { name: 'Delete Disk alert' });
+    await expect(archive.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    await expect(remove).toBeDisabled();
+    await userEvent.click(archive);
+    await userEvent.click(archive);
+    await expect(canvas.getByRole('status')).toHaveTextContent('archive, archive');
+  },
+};
+
+/** The header bar and the rows lay out from the start edge: the checkbox, the dot, the open bar. */
+export const InboxMirrorsInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <StackedList card>
+        <StackedList.Header
+          checked={false}
+          onCheckedChange={() => {}}
+          actions={<button type="button">Archive</button>}
+        >
+          Inbox
+        </StackedList.Header>
+        <StackedList.Item
+          title="Ana Ruiz"
+          timestamp="10:42"
+          description="Review request for the cooling PR."
+          unread
+          selected
+          onClick={() => {}}
+          checked={false}
+          onCheckedChange={() => {}}
+          starred
+          onStarredChange={() => {}}
+          actions={[{ label: 'Archive', icon: Archive, onSelect: () => {} }]}
+        />
+      </StackedList>
+    )),
+  play: ({ canvasElement }) => {
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('checkbox', { name: 'Select all' }).closest('label')
+    );
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('checkbox', { name: 'Select Ana Ruiz' }).closest('label')
+    );
+    expectMirrored(canvasElement, (box) => box.querySelector('[data-row-dot]'));
+    expectMirrored(canvasElement, (box) => box.querySelector('[data-row-bar]'));
+    expectMirrored(canvasElement, (box) =>
+      within(box).getByRole('button', { name: 'Unread: Ana Ruiz' })
+    );
+    const ltr = directionBox(canvasElement, 'ltr');
+    const rtl = directionBox(canvasElement, 'rtl');
+    const end = (box: HTMLElement) => ({
+      star: endOffset(within(box).getByRole('button', { name: 'Star Ana Ruiz' }), box),
+      time: endOffset(within(box).getByText('10:42'), box),
+      bulk: endOffset(within(box).getByRole('button', { name: 'Archive' }), box),
+    });
+    expect(end(rtl).star).toBeCloseTo(end(ltr).star, 0);
+    expect(end(rtl).time).toBeCloseTo(end(ltr).time, 0);
+    expect(end(rtl).bulk).toBeCloseTo(end(ltr).bulk, 0);
   },
 };
 
