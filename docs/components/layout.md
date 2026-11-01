@@ -137,6 +137,59 @@ against. Below `md` the items leave the bar and `Navbar.MobileMenuButton` opens 
 </Shell>
 ```
 
+## Section cards
+
+Storybook: [Section Card](https://sckyzo.github.io/cosmos/?path=/docs/layout-section-card--docs).
+
+`SectionCard` is the card of a page: a title with an optional icon and description, then a body.
+Its root is a `<section>` named by the title, so a screen reader lists the cards of a page as
+regions. Give each card of a page its own title: two regions with one name fail axe's
+`landmark-unique`, and so does a table whose caption repeats the title of its card. `as` picks the
+heading (`h3` by default, `h2` under a page whose `PageHeader` is the `h1`). `className` goes on
+the root, for a grid span (`lg:col-span-2`) or a margin.
+
+`action` puts a button, a menu or a link at the end of the header. Below `sm` it goes under the
+title, in every card, so the cards of a grid stay aligned.
+
+A card can load, come back empty or fail on its own: `loading`, `empty` and `error` replace the
+body, and the header, action included, stays, so the reader knows which card it is and the rest of
+the page is untouched. When several are set, `loading` wins over `error`, which wins over `empty`:
+"Try again" sets `loading` while `error` is still true, and the skeleton comes back in front of the
+error.
+
+```tsx
+<SectionCard
+  title="Revenue over time"
+  desc="Weekly, last 30 days"
+  action={<RangeMenu />}
+  loading={query.isPending}
+  error={query.isError}
+  errorMessage="Couldn't load revenue"
+  onRetry={() => query.refetch()}
+  empty={query.data?.length === 0}
+  emptyMessage="No revenue yet"
+  emptyAction={<Button size="sm">Connect your store</Button>}
+>
+  <LineAreaChart ... />
+</SectionCard>
+```
+
+- `loading` draws a skeleton, sets `aria-busy` on the card and adds a status line for screen
+  readers ("Loading Revenue over time…").
+- `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
+  `errorMessage` defaults to "Something went wrong."
+- `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
+  under it. For a richer one (an icon, a description), leave `empty` off and pass your own
+  `EmptyState` as `children`.
+- The action stays visible in every state. A "View all" link that means nothing on an empty card
+  is yours to remove: `action={empty ? undefined : <ViewAll />}`.
+- The body takes the height the row of a grid gives the card, and the state is centred in it.
+  `minBodyHeight` (a Tailwind class, `min-h-72`) is for a card alone in its row, or whose chart
+  has a fixed height: the body keeps that height in every state, so the card does not jump when
+  the data arrives.
+
+The title is 16px (it was 14px up to 0.5.0).
+
 ## Split panes
 
 Storybook: [SplitView](https://sckyzo.github.io/cosmos/?path=/docs/layout-splitview--docs).
