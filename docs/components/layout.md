@@ -194,3 +194,47 @@ below `sm` and 32px from there, so a phone keeps room for the form.
   <PlanStep />
 </AuthLayout>
 ```
+
+## Auth forms
+
+Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs).
+
+Reset a password in two routes, each with its own form. `ResetPasswordForm` takes the e-mail
+address on the first one and shows its `sent` view. `NewPasswordForm` is the page the e-mail link
+opens: a new password and its confirmation, with `view` choosing the screen.
+
+```tsx
+// /forgot-password
+<ResetPasswordForm onSubmit={sendLink} sent={sent} sentEmail={email} signInHref="/sign-in" />
+
+// /reset-password?token=…
+<NewPasswordForm
+  view={view} // 'form' (default) | 'expired' | 'done'
+  onSubmit={(password) => updatePassword(token, password)}
+  requestHref="/forgot-password"
+  signInHref="/sign-in"
+/>
+```
+
+On `form` the submit button stays disabled until the password follows every rule and the
+confirmation matches. The mismatch shows when the confirmation field is left, not on every key,
+and a match is confirmed in words. `expired` is the link that no longer works: it offers
+`requestHref` to ask for another and `signInHref` to go back. `done` thanks the person and links to
+`signInHref`. Each view has one `h1`; `loading` and `error` follow the request, as on the other
+auth forms.
+
+The password policy is `rules`, a function of the password that returns the rules to list (the
+`PasswordRule`s of `PasswordPolicyChecker`). It defaults to `defaultPasswordRules`; an empty list
+shows none and asks only for a non-empty password. `strength` takes a function that scores the
+password from 0 to 4 and shows a `PasswordStrengthMeter` under the field once something is typed;
+without it nothing is drawn, and Cosmos bundles no estimator (see
+[Password strength](forms.md#password-strength)).
+
+```tsx
+const policy = (password: string) => [
+  { label: 'At least 14 characters', ok: password.length >= 14 },
+  { label: 'One number', ok: /\d/.test(password) },
+];
+
+<NewPasswordForm rules={policy} strength={estimate} onSubmit={…} />
+```
