@@ -10,6 +10,7 @@ export * from './ErrorSummary';
 export * from './AvatarUploader';
 export * from './PasswordInput';
 export * from './PasswordPolicyChecker';
+export * from './PasswordStrengthMeter';
 export * from './PermissionGrid';
 export * from './Textarea';
 export * from './Checkbox';
