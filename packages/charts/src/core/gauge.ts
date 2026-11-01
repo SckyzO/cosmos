@@ -123,3 +123,39 @@ export const trackRing = (radius: number, thickness: number) => {
   const innerRadius = radius - thickness + Math.round((thickness - size) / 2);
   return { innerRadius, outerRadius: innerRadius + size };
 };
+
+/** The radius of the hub a dial's needle pivots on, in px. */
+export const DIAL_HUB = 6;
+
+/**
+ * The most a dial takes by default, in px: the room under the pivot for the
+ * value over its label, and an arc as large as the one of a plain gauge.
+ */
+export const DIAL_HEIGHT = 180;
+
+/**
+ * Where the needle of a dial stops: halfway across the track, so it is on the
+ * zones and not in the hollow.
+ */
+export const dialTip = (radius: number, thickness: number) => {
+  const { innerRadius, outerRadius } = trackRing(radius, thickness);
+  return (innerRadius + outerRadius) / 2;
+};
+
+// The gap under the hub, the row the range labels take when they are shown, and the room the
+// value and the label take under it (at the largest text size), in px.
+const FACE_GAP = 8;
+const FACE_RANGE_BAND = 18;
+const FACE_VALUE = 36;
+const FACE_LABEL = 20;
+const FACE_MARGIN = 4;
+
+/**
+ * What a dial puts under its pivot, in px: where the value starts below it (under the hub, and
+ * under the range labels when they are shown), and the whole row the gauge adds to the radius,
+ * with room for the label when there is one.
+ */
+export const dialFace = ({ hasLabel, showRange }: { hasLabel: boolean; showRange: boolean }) => {
+  const top = DIAL_HUB + FACE_GAP + (showRange ? FACE_RANGE_BAND : 0);
+  return { top, row: top + FACE_VALUE + (hasLabel ? FACE_LABEL : 0) + FACE_MARGIN };
+};

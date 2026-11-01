@@ -4,6 +4,10 @@ import {
   arcAngle,
   arcMark,
   clampTo,
+  DIAL_HEIGHT,
+  DIAL_HUB,
+  dialFace,
+  dialTip,
   gaugeName,
   needleOf,
   percent,
@@ -202,5 +206,42 @@ describe('trackRing', () => {
     const { innerRadius, outerRadius } = trackRing(60, 8);
     expect(innerRadius).toBe(52);
     expect(outerRadius).toBeCloseTo(59.2);
+  });
+});
+
+describe('dialTip', () => {
+  it('is halfway across the track, where the needle meets it', () => {
+    const { innerRadius, outerRadius } = trackRing(116, 23);
+    expect(dialTip(116, 23)).toBeCloseTo((innerRadius + outerRadius) / 2);
+    expect(dialTip(116, 23)).toBeGreaterThan(innerRadius);
+    expect(dialTip(116, 23)).toBeLessThan(outerRadius);
+  });
+});
+
+describe('dialFace', () => {
+  it('starts under the hub, and has room for the value over its label under it', () => {
+    const { top, row } = dialFace({ hasLabel: true, showRange: false });
+    expect(top).toBeGreaterThan(DIAL_HUB);
+    expect(row).toBeGreaterThan(top + 30);
+  });
+
+  it('keeps room for a label only when there is one', () => {
+    const withLabel = dialFace({ hasLabel: true, showRange: false });
+    const without = dialFace({ hasLabel: false, showRange: false });
+    expect(withLabel.top).toBe(without.top);
+    expect(withLabel.row).toBeGreaterThan(without.row);
+  });
+
+  it('goes under the row of the range labels when they are shown', () => {
+    const plain = dialFace({ hasLabel: true, showRange: false });
+    const ranged = dialFace({ hasLabel: true, showRange: true });
+    expect(ranged.top).toBeGreaterThan(plain.top);
+    expect(ranged.row - ranged.top).toBe(plain.row - plain.top);
+  });
+
+  it('fits the dial in the height it is given by default, with an arc as large as the plain gauge', () => {
+    const { row } = dialFace({ hasLabel: true, showRange: false });
+    // The arc of a plain gauge is 116 px of radius in 120 px of height.
+    expect(DIAL_HEIGHT - row).toBeGreaterThanOrEqual(100);
   });
 });
