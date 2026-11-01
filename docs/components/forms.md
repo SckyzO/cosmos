@@ -178,3 +178,6 @@ comes before it: a currency sign, a protocol.
 - `prefix` takes text or a node. It sits on the start edge of the value (the right one in right to
   left, in a `<bdi>` of its own), small and dimmed like `unit`. It is part of neither the value nor
   the accessible name: name the field with `aria-label` or a `FormRow`.
+- `error` marks the field invalid: a red border and `aria-invalid`. It carries no message, a
+  `NumberInput` having no text of its own: write it under the field and point `aria-describedby` at
+  it (a `FormRow` does the same with its description).

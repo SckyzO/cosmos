@@ -28,6 +28,11 @@ export type NumberInputProps = FieldA11yProps & {
   /** Sets `aria-required` on the input. It has no label of its own to carry an asterisk. */
   required?: boolean;
   /**
+   * Marks the field invalid: a red border and `aria-invalid`. It carries no message: write it
+   * under the field and point `aria-describedby` at it.
+   */
+  error?: boolean;
+  /**
    * Where the step buttons sit. `sides` (default): `−` / `+` on the outer edges,
    * centered text. `stacked`: ↑ / ↓ arrows stacked in a column inside the end
    * edge, start-aligned text: the compact form for settings panels.
@@ -73,6 +78,7 @@ export const NumberInput = ({
   prefix,
   size = 'md',
   required,
+  error = false,
   controls = 'sides',
   width = 'w-20',
   fullWidth = false,
@@ -103,7 +109,7 @@ export const NumberInput = ({
         // `flex w-full` via `fullWidth` for form grids that need the column.
         fullWidth ? 'flex w-full' : 'inline-flex',
         'overflow-hidden',
-        fieldClass({ size, within: true }),
+        fieldClass({ size, within: true, invalid: error }),
         disabled && 'opacity-50',
         className
       )}
@@ -127,6 +133,7 @@ export const NumberInput = ({
             {...fieldA11y}
             {...draft}
             aria-required={required || undefined}
+            aria-invalid={error || undefined}
             disabled={disabled}
             min={min}
             max={max}
@@ -196,6 +203,7 @@ export const NumberInput = ({
               {...fieldA11y}
               {...draft}
               aria-required={required || undefined}
+              aria-invalid={error || undefined}
               disabled={disabled}
               min={min}
               max={max}
