@@ -170,6 +170,10 @@ const useNestedGeometry = (inset: RowInset) => {
   };
 };
 
+// A row of the collapsed rail: a square the size of the logo's, centred in the rail, so the pill
+// of the active row is not a band twice as wide as it is tall. `ctrl-36` follows the density.
+const RAIL_ROW = 'mx-auto mb-1 size-ctrl-36 justify-center text-sm';
+
 const ACTIVE_ROW: Record<SidebarActiveStyle, string> = {
   tint: 'bg-brand-500/10 text-brand-600 dark:text-brand-400',
   solid: 'bg-brand-500 text-white',
@@ -793,14 +797,16 @@ const SidebarItem = ({
   const baseClass = clsx(
     'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
     compact
-      ? 'text-2xs relative flex-col gap-1 py-2 text-center'
-      : clsx(
-          'mb-1 gap-3',
-          nested ? 'px-2.5' : collapsed ? 'justify-center px-2' : 'px-3',
-          level(nested ? depth : 0).py,
-          level(nested ? depth : 0).text
-        ),
-    ROW_INSET[inset].margin,
+      ? clsx('text-2xs relative flex-col gap-1 py-2 text-center', ROW_INSET[inset].margin)
+      : collapsed
+        ? RAIL_ROW
+        : clsx(
+            'mb-1 gap-3',
+            nested ? 'px-2.5' : 'px-3',
+            level(nested ? depth : 0).py,
+            level(nested ? depth : 0).text,
+            ROW_INSET[inset].margin
+          ),
     active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
   );
   const style = nested ? geometry.rowStyle(depth, !href) : undefined;
@@ -850,7 +856,7 @@ const SidebarItem = ({
         closeDrawer?.();
       }}
       aria-label={name}
-      className={clsx(baseClass, ROW_INSET[inset].width, !compact && 'text-start')}
+      className={clsx(baseClass, !collapsed && ROW_INSET[inset].width, !compact && 'text-start')}
       style={style}
       aria-current={active ? 'page' : undefined}
       data-sidebar-item=""
@@ -971,11 +977,9 @@ const SidebarSubMenu = ({
         aria-label={compact ? undefined : label}
         className={clsx(
           'group focus-visible:focus-indicator flex items-center rounded-lg font-medium transition-colors',
-          compact
-            ? 'text-2xs py-row-8 flex-col gap-1 text-center'
-            : 'py-row-6 mb-1 justify-center px-2 text-sm',
-          ROW_INSET[inset].margin,
-          ROW_INSET[inset].width,
+          compact ? 'text-2xs py-row-8 flex-col gap-1 text-center' : RAIL_ROW,
+          compact && ROW_INSET[inset].margin,
+          compact && ROW_INSET[inset].width,
           active ? ACTIVE_ROW[ctx.activeStyle] : IDLE_ROW
         )}
       >
