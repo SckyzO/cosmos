@@ -103,8 +103,8 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(playwright@1.64.1)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0))(vitest@5.0.5)
       maplibre-gl:
-        specifier: 6.4.1
-        version: 6.4.1
+        specifier: 6.16.0
+        version: 6.16.0
       playwright:
         specifier: ^1.64.1
         version: 1.64.1
@@ -246,8 +246,8 @@ importers:
         specifier: 2.3.6
         version: 2.3.6
       maplibre-gl:
-        specifier: 6.4.1
-        version: 6.4.1
+        specifier: 6.16.0
+        version: 6.16.0
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -738,8 +738,8 @@ packages:
   '@maplibre/geojson-vt@6.3.0':
     resolution: {integrity: sha512-3Zw2jsU9pIJG3G2CQFbLjWj2MlAHodhD7cSY+15iywUuLmmkgzcKRnueVRZ4AcC/5wOtfhidcJAAzBpoBNs3Xg==}
 
-  '@maplibre/maplibre-gl-style-spec@26.4.4':
-    resolution: {integrity: sha512-hG4RZR4PBd/+6A3ODdZ3AnQRF106ZQk1y3bhwDg8bH/A4Oz2tnRUJVVWs9BZa6gXZ1d3UKe89C+Mm+olGBELvA==}
+  '@maplibre/maplibre-gl-style-spec@26.5.0':
+    resolution: {integrity: sha512-Tli0Mi9rF3117uVFkqsysXu9TPLx3AODPmWklUjbDhR4jJ849vGT5/EqWM3dBjIQgU6xxj5SZQ9ONjibqjEP+Q==}
     hasBin: true
 
   '@maplibre/mlt@1.3.0':
@@ -2226,6 +2226,9 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
+  bidi-js@1.1.0:
+    resolution: {integrity: sha512-fX1Onk0tdVPC7obPWB5EbJ1z7NVhLq4m2xZLq2YXBkxzMXIGRpNMU88n0EPgWseKl12J7zXs7qrDxPK4sRs2fg==}
+
   brace-expansion@5.0.12:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
     engines: {node: 20 || >=22}
@@ -2988,8 +2991,8 @@ packages:
   magic-string@1.4.5:
     resolution: {integrity: sha512-oLLC2+YvQUfAa+vxoufE/yc1icb87M9iXIRqAoR/2EhE/8cb3SF/+Gi0c2By1B+5Vz2e2vQtUvHiu1+63Znh+w==}
 
-  maplibre-gl@6.4.1:
-    resolution: {integrity: sha512-KzxQKtfBu/pSz1C+yW1hNS9eyj2h2lC7ufdAi6/SEt177n3oAfDfmUmslRfJdXY7ReAFBcnvwsqmiyoDhtA9GQ==}
+  maplibre-gl@6.16.0:
+    resolution: {integrity: sha512-gApO66EMtoDZuio680RUBvskR7ahFd/NNhLN4tBAs+Y7FeT4gQV8zVFgYVMRmFxQznOEzecW19w6xOd9XjZjiA==}
     engines: {node: '>=16.14.0', npm: '>=8.1.0'}
 
   mdast-util-from-markdown@2.1.0:
@@ -3480,6 +3483,10 @@ packages:
 
   regex@6.1.0:
     resolution: {integrity: sha512-6VwtthbV4o/7+OaAF9I5L5V3llLEsoPyq9P1JVXkedTP33c7MfCG0/5NOPcSJn0TzXcG9YUrR0gQSWioew3LDg==}
+
+  require-from-string@2.0.2:
+    resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
+    engines: {node: '>=0.10.0'}
 
   reselect@5.2.0:
     resolution: {integrity: sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==}
@@ -4367,7 +4374,7 @@ snapshots:
     dependencies:
       kdbush: 4.1.0
 
-  '@maplibre/maplibre-gl-style-spec@26.4.4':
+  '@maplibre/maplibre-gl-style-spec@26.5.0':
     dependencies:
       '@mapbox/jsonlint-lines-primitives': 2.0.3
       '@mapbox/unitbezier': 1.0.0
@@ -5690,6 +5697,10 @@ snapshots:
 
   baseline-browser-mapping@2.11.32: {}
 
+  bidi-js@1.1.0:
+    dependencies:
+      require-from-string: 2.0.2
+
   brace-expansion@5.0.12:
     dependencies:
       balanced-match: 4.0.4
@@ -6371,17 +6382,18 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  maplibre-gl@6.4.1:
+  maplibre-gl@6.16.0:
     dependencies:
       '@mapbox/point-geometry': 1.1.0
       '@mapbox/tiny-sdf': 2.3.0
       '@mapbox/unitbezier': 1.0.0
       '@mapbox/vector-tile': 3.0.0
       '@maplibre/geojson-vt': 6.3.0
-      '@maplibre/maplibre-gl-style-spec': 26.4.4
+      '@maplibre/maplibre-gl-style-spec': 26.5.0
       '@maplibre/mlt': 1.3.0
       '@maplibre/vt-pbf': 4.3.3
       '@types/geojson': 7946.0.16
+      bidi-js: 1.1.0
       earcut: 3.2.4
       gl-matrix: 3.4.4
       kdbush: 4.1.0
@@ -7027,6 +7039,8 @@ snapshots:
   regex@6.1.0:
     dependencies:
       regex-utilities: 2.3.0
+
+  require-from-string@2.0.2: {}
 
   reselect@5.2.0: {}
 
