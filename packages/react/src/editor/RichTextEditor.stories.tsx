@@ -17,6 +17,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { RichTextEditor } from './RichTextEditor';
+import { RICH_TEXT_ACTIONS } from './actions';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 
 const meta = {
@@ -39,6 +40,40 @@ const SAMPLE = [
   '<blockquote><p>Nothing here changes a default.</p></blockquote>',
 ].join('');
 
+// A picture the story's own server holds: an editor image is an http(s) URL, and a story shows no
+// other origin. Read when the story renders, so the page's base URL is the one in use.
+const sampleImage = () => new URL('favicon.svg', document.baseURI).href;
+
+const formatsSample = () =>
+  [
+    '<h1>Release notes</h1>',
+    '<p>Mark what matters: <u>underlined</u>, <strong>bold</strong> or <code>inline code</code>.</p>',
+    '<p style="text-align: center">A line in the middle.</p>',
+    '<p style="text-align: end">A line at the end.</p>',
+    '<h2>Deploy</h2>',
+    '<pre><code>make build\nmake deploy ENV=staging</code></pre>',
+    `<p>The logo <img src="${sampleImage()}" alt="Storybook logo"> sits in the line.</p>`,
+  ].join('');
+
+// ProseMirror adds its own `img.ProseMirror-separator` after an image that ends a line.
+const IMAGES = 'img:not(.ProseMirror-separator)';
+
+// The arrow key that goes toward the start of the line, as a browser sends it. ProseMirror reads
+// `keyCode`, which `userEvent.keyboard` leaves at 0, so its own arrow handling (a caret after an
+// image selects the image) needs this event. Left to right that is ArrowLeft, right to left
+// ArrowRight.
+const arrowToStart = (text: HTMLElement) => {
+  const left = getComputedStyle(text).direction !== 'rtl';
+  text.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: left ? 'ArrowLeft' : 'ArrowRight',
+      keyCode: left ? 37 : 39,
+      bubbles: true,
+      cancelable: true,
+    })
+  );
+};
+
 // The editor is created after the first render, so every test waits for its text.
 const textbox = (canvasElement: HTMLElement, name = 'Message') =>
   within(canvasElement).findByRole('textbox', { name });
@@ -47,12 +82,40 @@ const textbox = (canvasElement: HTMLElement, name = 'Message') =>
 const lastValue = (onChange: unknown) =>
   (onChange as ReturnType<typeof fn>).mock.lastCall?.[0] as unknown;
 
+// Every text the new controls draw, for the story that translates them.
+const FRENCH_FORMATS = {
+  underline: 'Souligne',
+  heading: 'Titre',
+  paragraph: 'Paragraphe',
+  heading1: 'Titre 1',
+  heading2: 'Titre 2',
+  heading3: 'Titre 3',
+  codeBlock: 'Bloc de code',
+  align: 'Alignement',
+  alignStart: 'Aligner au debut',
+  alignCenter: 'Centrer',
+  alignEnd: 'Aligner a la fin',
+  image: 'Image',
+  imageDialog: 'Details de image',
+  imageUrl: 'Adresse de image',
+  imageAlt: 'Description',
+  imageDecorative: 'Image decorative',
+  imageApply: 'Inserer',
+  imageInvalid: 'Adresse http(s) attendue.',
+  imageAltRequired: 'Decrivez image ou cochez decorative.',
+};
+
 // ── Visible stories: no interaction ──────────────────────────────────────────
 
 export const Empty: Story = {};
 
 export const WithContent: Story = {
   args: { defaultValue: SAMPLE, description: 'Headings, lists, quotes, code and links.' },
+};
+
+export const Formats: Story = {
+  args: { description: 'Underline, three heading levels, code block, alignment and an image.' },
+  render: (args) => <RichTextEditor {...args} defaultValue={formatsSample()} />,
 };
 
 export const ReadOnly: Story = {
@@ -122,6 +185,10 @@ export const TranslatedLabels: Story = {
   },
 };
 
+export const TranslatedFormats: Story = {
+  args: { label: 'Message', labels: FRENCH_FORMATS },
+};
+
 export const JsonFormat: Story = {
   render: function Render(args) {
     const [json, setJson] = useState<unknown>();
@@ -181,6 +248,25 @@ export const NarrowChecks: Story = {
   },
 };
 
+export const NarrowFormats: Story = {
+  ...Formats,
+  globals: mobileViewport,
+};
+
+export const NarrowFormatsChecks: Story = {
+  ...NarrowFormats,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const text = await textbox(canvasElement);
+    // The wide toolbar wraps onto more lines, and neither it nor a code line widens the page.
+    expectNoHorizontalOverflow(canvasElement);
+    await expect(text.querySelector('pre')).not.toBeNull();
+    await expect(
+      text.querySelector(IMAGES)?.getBoundingClientRect().width ?? 0
+    ).toBeLessThanOrEqual(text.getBoundingClientRect().width);
+  },
+};
+
 // ── Tests: hidden from the sidebar and the docs ─────────────────────────────
 
 const test = { tags: ['!dev', '!autodocs'] };
@@ -188,12 +274,13 @@ const test = { tags: ['!dev', '!autodocs'] };
 const MARKS: ReadonlyArray<[name: string, tag: string]> = [
   ['Bold', '<strong>'],
   ['Italic', '<em>'],
+  ['Underline', '<u>'],
   ['Strikethrough', '<s>'],
-  ['Heading', '<h2>'],
   ['Bulleted list', '<ul>'],
   ['Numbered list', '<ol>'],
   ['Quote', '<blockquote>'],
   ['Code', '<code>'],
+  ['Code block', '<pre>'],
 ];
 
 export const ButtonsApplyAndShowTheirState: Story = {
@@ -224,12 +311,14 @@ export const ButtonsApplyAndShowTheirState: Story = {
 const SHORTCUTS: ReadonlyArray<[name: string, keys: string, tag: string]> = [
   ['Bold', '{Control>}b{/Control}', '<strong>'],
   ['Italic', '{Control>}i{/Control}', '<em>'],
+  ['Underline', '{Control>}u{/Control}', '<u>'],
   ['Strikethrough', '{Control>}{Shift>}s{/Shift}{/Control}', '<s>'],
   ['Heading', '{Control>}{Alt>}2{/Alt}{/Control}', '<h2>'],
   ['Bulleted list', '{Control>}{Shift>}8{/Shift}{/Control}', '<ul>'],
   ['Numbered list', '{Control>}{Shift>}7{/Shift}{/Control}', '<ol>'],
   ['Quote', '{Control>}{Shift>}b{/Shift}{/Control}', '<blockquote>'],
   ['Code', '{Control>}e{/Control}', '<code>'],
+  ['Code block', '{Control>}{Alt>}c{/Alt}{/Control}', '<pre>'],
 ];
 
 export const ShortcutsApplyAndShowTheirState: Story = {
@@ -267,11 +356,334 @@ export const ButtonsAnnounceTheirShortcut: Story = {
       'aria-keyshortcuts',
       'Control+Shift+Z Meta+Shift+Z'
     );
+    await expect(canvas.getByRole('button', { name: 'Underline' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Control+U Meta+U'
+    );
+    await expect(canvas.getByRole('button', { name: 'Code block' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Control+Alt+C Meta+Alt+C'
+    );
     // Nothing to undo yet: the button stays reachable and says it does nothing.
     await expect(canvas.getByRole('button', { name: 'Undo' })).toHaveAttribute(
       'aria-disabled',
       'true'
     );
+  },
+};
+
+export const EveryButtonHasANameAndAPressedState: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await textbox(canvasElement);
+    const buttons = within(canvas.getByRole('toolbar', { name: 'Text formatting' })).getAllByRole(
+      'button'
+    );
+    await expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual([
+      'Bold',
+      'Italic',
+      'Underline',
+      'Strikethrough',
+      'Heading',
+      'Bulleted list',
+      'Numbered list',
+      'Quote',
+      'Code',
+      'Code block',
+      'Text alignment',
+      'Link',
+      'Image',
+      'Undo',
+      'Redo',
+    ]);
+    await expect(buttons).toHaveLength(RICH_TEXT_ACTIONS.length);
+    for (const button of buttons) {
+      await expect(button).toHaveAccessibleName();
+      await expect(button, button.getAttribute('aria-label') ?? '').toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+    }
+    // The ones that open something say so.
+    for (const name of ['Heading', 'Text alignment']) {
+      await expect(canvas.getByRole('button', { name })).toHaveAttribute('aria-haspopup', 'menu');
+    }
+    for (const name of ['Link', 'Image']) {
+      await expect(canvas.getByRole('button', { name })).toHaveAttribute('aria-haspopup', 'dialog');
+    }
+  },
+};
+
+// A menu of a toolbar button: it opens from the button, the arrows, Home and End move inside it
+// (the toolbar's own Home and End must not steal them), and a choice brings the focus back to the
+// text.
+const openMenu = async (canvas: ReturnType<typeof within>, name: string) => {
+  await userEvent.click(canvas.getByRole('button', { name }));
+  return within(document.body).findByRole('menu', { name });
+};
+
+export const HeadingMenuSetsTheLevel: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('Title');
+    const trigger = canvas.getByRole('button', { name: 'Heading' });
+    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+
+    const menu = await openMenu(canvas, 'Heading');
+    const items = within(menu).getAllByRole('menuitemradio');
+    await expect(items.map((item) => item.textContent)).toEqual([
+      'Paragraph',
+      'Heading 1',
+      'Heading 2',
+      'Heading 3',
+    ]);
+    await expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+    ]);
+    // The shortcuts the editor binds are announced on their items.
+    await expect(items[2]).toHaveAttribute('aria-keyshortcuts', 'Control+Alt+2 Meta+Alt+2');
+    await userEvent.keyboard('{End}');
+    await expect(items[3]).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    await expect(items[0]).toHaveFocus();
+
+    await userEvent.click(items[1]!);
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h1>Title</h1>'));
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(text).toHaveFocus();
+    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
+
+    // The checked item follows the caret; choosing the checked one keeps it.
+    const again = within(await openMenu(canvas, 'Heading')).getAllByRole('menuitemradio');
+    await expect(again[1]).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(again[1]!);
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(args.onChange).toHaveBeenLastCalledWith('<h1>Title</h1>');
+
+    const third = within(await openMenu(canvas, 'Heading')).getAllByRole('menuitemradio');
+    await userEvent.click(third[3]!);
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h3>Title</h3>'));
+    const last = within(await openMenu(canvas, 'Heading')).getAllByRole('menuitemradio');
+    await userEvent.click(last[0]!);
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<p>Title</p>'));
+    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+  },
+};
+
+export const HeadingMenuOpensFromTheKeyboard: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, defaultValue: '<p>Title</p>', onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const trigger = canvas.getByRole('button', { name: 'Heading' });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    const menu = await within(document.body).findByRole('menu', { name: 'Heading' });
+    const items = within(menu).getAllByRole('menuitemradio');
+    await expect(items[0]).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h2>Title</h2>'));
+    // Escape closes a menu, and the focus goes back to its button.
+    await userEvent.click(trigger);
+    await within(document.body).findByRole('menu', { name: 'Heading' });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveFocus();
+  },
+};
+
+export const AlignMenuAlignsTheBlock: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('Line');
+    const trigger = canvas.getByRole('button', { name: 'Text alignment' });
+    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+
+    const items = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
+    await expect(items.map((item) => item.textContent)).toEqual([
+      'Align start',
+      'Align center',
+      'Align end',
+    ]);
+    await expect(items[0]).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(items[1]!);
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith('<p style="text-align: center;">Line</p>')
+    );
+    await expect(text.querySelector('p')).toHaveStyle({ textAlign: 'center' });
+    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
+    await expect(text).toHaveFocus();
+
+    const second = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
+    await expect(second[1]).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(second[2]!);
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith('<p style="text-align: end;">Line</p>')
+    );
+
+    // Start is the default: the style goes away instead of being written out.
+    const third = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
+    await userEvent.click(third[0]!);
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<p>Line</p>'));
+    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+  },
+};
+
+export const AlignmentHasNoKeyThatTheMenuDoesNotAnnounce: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('Line');
+    // Tiptap's own Ctrl+Shift+E centers a block; here nothing binds it.
+    await userEvent.keyboard('{Control>}{Shift>}e{/Shift}{/Control}');
+    await expect(args.onChange).toHaveBeenLastCalledWith('<p>Line</p>');
+    await expect(text.querySelector('p')).not.toHaveAttribute('style');
+  },
+};
+
+export const AlignmentAppliesToHeadingsAndEveryBlockSelected: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    autoFocus: true,
+    defaultValue: '<h2>Title</h2><p>One</p><p>Two</p>',
+    onChange: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('{Control>}a{/Control}');
+    const items = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
+    await userEvent.click(items[1]!);
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith(
+        '<h2 style="text-align: center;">Title</h2><p style="text-align: center;">One</p><p style="text-align: center;">Two</p>'
+      )
+    );
+  },
+};
+
+/**
+ * Start and end are the sides of the line, and a block's line follows what is typed in it: the end
+ * of Latin text is its right, the end of Arabic its left, in either page direction. Center is
+ * center.
+ */
+export const AlignmentFollowsTheDirectionOfTheText: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    defaultValue:
+      '<p style="text-align: end">Ends here</p><p style="text-align: end">ينتهي هنا</p>' +
+      '<p style="text-align: center">Middle</p>',
+  },
+  render: (args) => bothDirections(() => <RichTextEditor {...args} />),
+  play: async ({ canvasElement }) => {
+    const edges = (block: Element) => {
+      const range = document.createRange();
+      range.selectNodeContents(block);
+      return range.getBoundingClientRect();
+    };
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const text = await within(directionBox(canvasElement, dir)).findByRole('textbox', {
+        name: 'Message',
+      });
+      const [latin, arabic, middle] = [...text.querySelectorAll('p')];
+      if (!latin || !arabic || !middle) throw new Error('three paragraphs expected');
+      const box = (block: Element) => block.getBoundingClientRect();
+      expect(
+        Math.abs(edges(latin).right - box(latin).right),
+        `${dir}: Latin ends at the right`
+      ).toBeLessThan(2);
+      expect(
+        Math.abs(edges(arabic).left - box(arabic).left),
+        `${dir}: Arabic ends at the left`
+      ).toBeLessThan(2);
+      expect(
+        Math.abs(edges(middle).left - box(middle).left - (box(middle).right - edges(middle).right)),
+        `${dir}: centered`
+      ).toBeLessThan(2);
+    }
+  },
+};
+
+export const CodeBlockKeepsItsLines: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.click(canvas.getByRole('button', { name: 'Code block' }));
+    await userEvent.keyboard('make build{Enter}make deploy');
+    const html = '<pre><code>make build\nmake deploy</code></pre>';
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith(html));
+    // A code block holds no marks, so a mark shortcut does nothing there.
+    await userEvent.keyboard('{Control>}a{/Control}{Control>}b{/Control}');
+    await expect(args.onChange).toHaveBeenLastCalledWith(html);
+  },
+};
+
+export const MinimalOpensACodeBlockFromTheFence: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { variant: 'minimal', autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('```{Enter}ls -l');
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith('<pre><code>ls -l</code></pre>')
+    );
+    await userEvent.keyboard('{Control>}a{/Control}{Control>}u{/Control}');
+    // No marks inside a code block: the underline shortcut does nothing there.
+    await expect(args.onChange).toHaveBeenLastCalledWith('<pre><code>ls -l</code></pre>');
+  },
+};
+
+/** Code reads left to right in any page, as `CodeBlock` does: the block keeps its direction and starts at the left. */
+export const CodeBlockReadsLeftToRight: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { defaultValue: '<pre><code>make ci</code></pre>' },
+  render: (args) => bothDirections(() => <RichTextEditor {...args} />),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const text = await within(directionBox(canvasElement, dir)).findByRole('textbox', {
+        name: 'Message',
+      });
+      const pre = text.querySelector('pre') as HTMLElement;
+      const range = document.createRange();
+      range.selectNodeContents(pre.querySelector('code') as HTMLElement);
+      const padding = parseFloat(getComputedStyle(pre).paddingLeft);
+      expect(getComputedStyle(pre).direction, `${dir}: direction`).toBe('ltr');
+      expect(
+        Math.abs(range.getBoundingClientRect().left - pre.getBoundingClientRect().left - padding),
+        `${dir}: the code starts at the left`
+      ).toBeLessThan(2);
+    }
   },
 };
 
@@ -307,6 +719,51 @@ export const ToolbarIsOneTabStopWithArrowKeys: Story = {
     await expect(text).toHaveFocus();
     await userEvent.tab({ shift: true });
     await expect(buttons[2]).toHaveFocus();
+  },
+};
+
+export const NewControlsTakeTheirTextFromLabels: Story = {
+  ...TranslatedFormats,
+  tags: ['!dev', '!autodocs'],
+  args: { ...TranslatedFormats.args, autoFocus: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    for (const name of ['Souligne', 'Bloc de code', 'Titre', 'Alignement', 'Image']) {
+      await expect(canvas.getByRole('button', { name })).toBeVisible();
+    }
+    const heading = within(await openMenu(canvas, 'Titre')).getAllByRole('menuitemradio');
+    await expect(heading.map((item) => item.textContent)).toEqual([
+      'Paragraphe',
+      'Titre 1',
+      'Titre 2',
+      'Titre 3',
+    ]);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    const align = within(await openMenu(canvas, 'Alignement')).getAllByRole('menuitemradio');
+    await expect(align.map((item) => item.textContent)).toEqual([
+      'Aligner au debut',
+      'Centrer',
+      'Aligner a la fin',
+    ]);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Image' }));
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Details de image' });
+    const url = within(dialog).getByRole('textbox', { name: 'Adresse de image' });
+    await expect(within(dialog).getByRole('textbox', { name: 'Description' })).toBeVisible();
+    await expect(within(dialog).getByRole('checkbox', { name: 'Image decorative' })).toBeVisible();
+    await userEvent.type(url, 'nope{Enter}');
+    await expect(url).toHaveAccessibleDescription('Adresse http(s) attendue.');
+    await userEvent.clear(url);
+    await userEvent.type(url, 'https://example.com/a.png');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Inserer' }));
+    await expect(
+      within(dialog).getByRole('textbox', { name: 'Description' })
+    ).toHaveAccessibleDescription('Decrivez image ou cochez decorative.');
   },
 };
 
@@ -422,15 +879,355 @@ export const SchemaKeepsToItsNodes: Story = {
     const data = new DataTransfer();
     data.setData(
       'text/html',
-      '<h1>Title</h1><p onclick="x()">kept <img src="x" onerror="y()"><script>z()</script></p><table><tr><td>cell</td></tr></table>'
+      '<h1>Title</h1><h4>Small</h4><hr>' +
+        '<p onclick="x()">kept <img src="x" onerror="y()"><img src="javascript:alert(1)">' +
+        '<img src="data:image/png;base64,AAAA"><img src="/relative.png">' +
+        '<img src="https://ok.example/a.png" alt="ok" title="t" width="9999" onerror="z()">' +
+        '<script>z()</script></p><table><tr><td>cell</td></tr></table>'
     );
-    data.setData('text/plain', 'Title kept cell');
+    data.setData('text/plain', 'Title Small kept cell');
     await userEvent.paste(data);
     await waitFor(() => expect(text).toHaveTextContent('kept'));
     const html = lastValue(args.onChange) as string;
-    for (const forbidden of ['<img', '<script', '<table', 'onclick', 'onerror', '<h1']) {
+    // Level 1 is a heading now; level 4 is not.
+    await expect(html).toContain('<h1>Title</h1>');
+    // Of six pasted images, the one with an http(s) source stays, with a source and a description.
+    await expect(html.match(/<img/g)).toHaveLength(1);
+    await expect(html).toContain('<img src="https://ok.example/a.png" alt="ok">');
+    for (const forbidden of [
+      '<h4',
+      '<hr',
+      '<script',
+      '<table',
+      'onclick',
+      'onerror',
+      'javascript',
+      'data:',
+      'relative.png',
+      'src="x"',
+      'width=',
+      'title=',
+    ]) {
       await expect(html).not.toContain(forbidden);
     }
+  },
+};
+
+export const PastedFormatsKeepOnlyWhatTheEditorHolds: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const data = new DataTransfer();
+    data.setData(
+      'text/html',
+      // The first and last blocks of a paste join the paragraph around the caret, and keep none of
+      // their own attributes: the ones under test sit between two plain paragraphs.
+      '<p>first</p><p style="text-align: center; color: red"><u>under</u></p>' +
+        '<pre><code class="language-ts">let a = 1;</code></pre>' +
+        '<p style="text-align: left">l</p><p style="text-align: justify">j</p>' +
+        '<p style="text-align: right">r</p><p style="text-align: end">e</p><p>last</p>'
+    );
+    data.setData('text/plain', 'first under let a = 1; l j r e last');
+    await userEvent.paste(data);
+    await waitFor(() => expect(text).toHaveTextContent('under'));
+    const html = lastValue(args.onChange) as string;
+    await expect(html).toContain('<p style="text-align: center;"><u>under</u></p>');
+    await expect(html).toContain('<pre><code class="language-ts">let a = 1;</code></pre>');
+    await expect(html).toContain('<p style="text-align: end;">e</p>');
+    // The editor writes center and end only: the physical sides and justify are dropped, and no
+    // other style survives.
+    for (const dropped of ['left', 'right', 'justify', 'color']) {
+      await expect(html).not.toContain(dropped);
+    }
+  },
+};
+
+// ── Images ──────────────────────────────────────────────────────────────────
+
+const openImageForm = async (canvas: ReturnType<typeof within>) => {
+  await userEvent.click(canvas.getByRole('button', { name: 'Image' }));
+  const dialog = await within(document.body).findByRole('dialog', { name: 'Image details' });
+  const field = (name: string) => within(dialog).getByRole('textbox', { name });
+  return {
+    dialog,
+    url: field('Image URL'),
+    alt: field('Description (alt text)'),
+    decorative: within(dialog).getByRole('checkbox', { name: 'Decorative image, no description' }),
+    apply: within(dialog).getByRole('button', { name: 'Apply' }),
+  };
+};
+
+export const ImageFormInsertsAnImageWithItsDescription: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, defaultValue: '<p>Before</p>', onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const { url, alt, apply } = await openImageForm(canvas);
+    await waitFor(() => expect(url).toHaveFocus());
+    await userEvent.type(url, 'https://example.com/diagram.png');
+
+    // A description is required: say so, name the field, and put the focus there.
+    await userEvent.click(apply);
+    await expect(alt).toHaveAttribute('aria-invalid', 'true');
+    await expect(alt).toHaveAccessibleDescription('Describe the image, or mark it decorative.');
+    await waitFor(() => expect(alt).toHaveFocus());
+    await expect(text.querySelector(IMAGES)).toBeNull();
+
+    await userEvent.type(alt, 'Network diagram{Enter}');
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith(
+        '<p>Before<img src="https://example.com/diagram.png" alt="Network diagram"></p>'
+      )
+    );
+    await expect(await within(text).findByRole('img', { name: 'Network diagram' })).toBeVisible();
+    await waitFor(() => expect(within(document.body).queryByRole('dialog')).toBeNull());
+    await expect(text).toHaveFocus();
+  },
+};
+
+export const ImageFormTakesADecorativeImageWithAnEmptyDescription: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const { url, alt, decorative, apply } = await openImageForm(canvas);
+    await userEvent.type(url, 'https://example.com/rule.png');
+    await userEvent.type(alt, 'Dropped when the image is marked decorative');
+    await userEvent.click(decorative);
+    await expect(alt).toBeDisabled();
+    await userEvent.click(apply);
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith(
+        '<p><img src="https://example.com/rule.png" alt=""></p>'
+      )
+    );
+    // `alt=""` is kept: it says "decorative", where no `alt` says nothing.
+    await expect(text.querySelector(IMAGES)).toHaveAttribute('alt', '');
+  },
+};
+
+export const ImageFormRefusesAddressesThatAreNotHttp: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const { url, alt } = await openImageForm(canvas);
+    await userEvent.type(alt, 'Anything');
+    for (const refused of [
+      'javascript:alert(1)',
+      'data:image/png;base64,AAAA',
+      '/uploads/a.png',
+      'example.com/a.png',
+      'ftp://example.com/a.png',
+    ]) {
+      await userEvent.clear(url);
+      await userEvent.type(url, `${refused}{Enter}`);
+      await expect(url).toHaveAttribute('aria-invalid', 'true');
+      await expect(url).toHaveAccessibleDescription('Enter an http(s) image address.');
+      await waitFor(() => expect(url).toHaveFocus());
+      await expect(text.querySelector(IMAGES)).toBeNull();
+    }
+    await expect(args.onChange).not.toHaveBeenCalled();
+    // The error goes as soon as the address is edited.
+    await userEvent.type(url, 'x');
+    await expect(url).not.toHaveAttribute('aria-invalid');
+  },
+};
+
+export const ImageFormEditsTheSelectedImage: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    autoFocus: true,
+    defaultValue: '<p>Look: <img src="https://example.com/a.png" alt="Old"></p>',
+    onChange: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const button = canvas.getByRole('button', { name: 'Image' });
+    await expect(button).toHaveAttribute('aria-pressed', 'false');
+    // The caret is after the image, at the end: an arrow key toward the start selects it.
+    arrowToStart(text);
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+
+    // The field opens on the image that is selected, and changing it keeps it one image.
+    const { url, alt } = await openImageForm(canvas);
+    await expect(url).toHaveValue('https://example.com/a.png');
+    await expect(alt).toHaveValue('Old');
+    await userEvent.clear(alt);
+    await userEvent.type(alt, 'New{Enter}');
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith(
+        '<p>Look: <img src="https://example.com/a.png" alt="New"></p>'
+      )
+    );
+    await expect(text.querySelectorAll(IMAGES)).toHaveLength(1);
+  },
+};
+
+export const ImageFormShowsADecorativeImageAsSuch: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    autoFocus: true,
+    defaultValue: '<p><img src="https://example.com/rule.png" alt=""></p>',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    arrowToStart(text);
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: 'Image' })).toHaveAttribute('aria-pressed', 'true')
+    );
+    const { decorative, alt } = await openImageForm(canvas);
+    await expect(decorative).toBeChecked();
+    await expect(alt).toBeDisabled();
+  },
+};
+
+export const ImageButtonWaitsOutsideACodeBlock: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, defaultValue: '<pre><code>make ci</code></pre>' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    const button = canvas.getByRole('button', { name: 'Image' });
+    await expect(button).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(button);
+    await expect(within(document.body).queryByRole('dialog')).toBeNull();
+  },
+};
+
+export const BubbleHeadingMenuKeepsTheBubbleAndGivesBackItsButton: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    variant: 'bubble',
+    toolbar: ['bold', 'heading'],
+    autoFocus: true,
+    defaultValue: '<p>Pick</p>',
+    onChange: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('{Control>}a{/Control}');
+    const toolbar = await within(canvasElement).findByRole('toolbar', { name: 'Text formatting' });
+    const trigger = within(toolbar).getByRole('button', { name: 'Heading' });
+
+    // The menu is portaled out of the bubble, which stays where it is. Escape closes the menu
+    // alone, and the focus goes back to its button: the toolbar leaves a key of the menu alone.
+    await userEvent.click(trigger);
+    await within(document.body).findByRole('menu', { name: 'Heading' });
+    await expect(toolbar).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
+    await expect(trigger).toHaveFocus();
+    await expect(toolbar).toBeVisible();
+
+    const items = within(await openMenu(within(toolbar), 'Heading')).getAllByRole('menuitemradio');
+    await userEvent.click(items[2]!);
+    await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h2>Pick</h2>'));
+    await expect(text).toHaveFocus();
+  },
+};
+
+export const BubbleImageFieldIsInline: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: {
+    variant: 'bubble',
+    toolbar: ['bold', 'image'],
+    autoFocus: true,
+    defaultValue: '<p>Pick</p>',
+    onChange: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    await userEvent.keyboard('{Control>}a{/Control}');
+    const toolbar = await within(canvasElement).findByRole('toolbar', { name: 'Text formatting' });
+    await userEvent.click(within(toolbar).getByRole('button', { name: 'Image' }));
+    // In place of the buttons, as the link field is.
+    const url = await within(canvasElement).findByRole('textbox', { name: 'Image URL' });
+    await waitFor(() => expect(url).toHaveFocus());
+    await expect(within(toolbar).queryByRole('button', { name: 'Bold' })).toBeNull();
+    await userEvent.type(url, 'https://example.com/a.png');
+    await userEvent.type(
+      within(canvasElement).getByRole('textbox', { name: 'Description (alt text)' }),
+      'Chart{Enter}'
+    );
+    // The selected words stay: the image goes after them.
+    await waitFor(() =>
+      expect(args.onChange).toHaveBeenLastCalledWith(
+        '<p>Pick<img src="https://example.com/a.png" alt="Chart"></p>'
+      )
+    );
+  },
+};
+
+export const TypedMarkdownImageIsNotInserted: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  args: { autoFocus: true, onChange: fn() },
+  play: async ({ canvasElement }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text).toHaveFocus());
+    // Images come in through the field, which checks the address and asks for a description.
+    await userEvent.keyboard('![[x](javascript:alert(1)) ![[y](https://example.com/a.png) ');
+    await expect(text).toHaveTextContent(
+      '![x](javascript:alert(1)) ![y](https://example.com/a.png)'
+    );
+    await expect(text.querySelector(IMAGES)).toBeNull();
+  },
+};
+
+// A document handed over as JSON skips the HTML parser, so the source is checked where the image is
+// drawn too.
+export const ImageWithAnUnsafeSourceInJsonHasNoSource: Story = {
+  ...test,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <RichTextEditor
+      label="Message"
+      format="json"
+      defaultValue={{
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'image', attrs: { src: 'javascript:alert(1)', alt: 'Unsafe' } },
+              { type: 'image', attrs: { src: 'https://example.com/a.png', alt: 'Safe' } },
+            ],
+          },
+        ],
+      }}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const text = await textbox(canvasElement);
+    await waitFor(() => expect(text.querySelectorAll(IMAGES)).toHaveLength(2));
+    const [unsafe, safe] = [...text.querySelectorAll(IMAGES)];
+    await expect(unsafe).not.toHaveAttribute('src');
+    await expect(safe).toHaveAttribute('src', 'https://example.com/a.png');
   },
 };
 
@@ -627,6 +1424,16 @@ export const DisabledDoesNothing: Story = {
       'aria-pressed',
       'false'
     );
+    // The buttons that open a menu or a field do not open it.
+    for (const name of ['Heading', 'Text alignment']) {
+      await userEvent.click(canvas.getByRole('button', { name }));
+      await expect(within(document.body).queryByRole('menu')).toBeNull();
+    }
+    canvas.getByRole('button', { name: 'Text alignment' }).focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(within(document.body).queryByRole('menu')).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Image' }));
+    await expect(within(document.body).queryByRole('dialog')).toBeNull();
     await expect(args.onChange).not.toHaveBeenCalled();
   },
 };
@@ -778,6 +1585,20 @@ export const ContentIsReadableInEveryTheme: Story = {
   },
 };
 
+export const FormatsAreReadableInEveryTheme: Story = {
+  ...Formats,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const text = await textbox(canvasElement);
+    const shown = ['h1', 'h2', 'u', 'pre code', 'p[style]'].map(
+      (selector) => text.querySelector(selector) as HTMLElement
+    );
+    inEachTheme(() => {
+      for (const el of shown) expectTextContrast(el);
+    });
+  },
+};
+
 export const PlaceholderShowsWhileEmpty: Story = {
   ...test,
   tags: ['!dev', '!autodocs'],
@@ -866,6 +1687,8 @@ export const ToolbarAndTextFollowTheReadingDirection: Story = {
       expect(scale('Undo'), `${dir}: undo`).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expect(scale('Bulleted list'), `${dir}: list`).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expect(scale('Bold'), `${dir}: bold`).toBe('none');
+      // Align start points along the line, so it turns around too.
+      expect(scale('Text alignment'), `${dir}: alignment`).toBe(dir === 'rtl' ? '-1 1' : 'none');
 
       expectReadsLeftToRight(canvas.getByText(/^\d+ \/ 400$/));
     }
