@@ -121,9 +121,10 @@ edged on the start side, alignment is `start`, `center` or `end` (the icon of st
 around, and the end of Arabic text is its left), a code block reads left to right, the arrow keys
 along the toolbar swap, and the link and image fields read left to right.
 
-The auth forms follow the same rules. The back arrow of `ResetPasswordForm` and `TwoStepVerificationForm`
-turns around, the address or number a form says it sent the code to is wrapped in `<bdi>`, and
-`AuthLayout`'s `asidePosition` (`start` | `end`) puts the panel at the start or the end of the line.
+The auth forms follow the same rules. The back arrow of `ResetPasswordForm`, `NewPasswordForm` and
+`TwoStepVerificationForm` turns around, the strength meter fills from the start of the line, the
+address or number a form says it sent the code to is wrapped in `<bdi>`, and `AuthLayout`'s
+`asidePosition` (`start` | `end`) puts the panel at the start or the end of the line.
 
 These Storybook groups follow the direction: Atoms, Actions, Forms, Data, Lists, Feedback,
 Overlays, Navigation, Layout, Chat, Tables, Settings, Monitoring, Media, Status, Typography,
