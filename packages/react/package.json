@@ -143,7 +143,7 @@
   "devDependencies": {
     "@storybook/react-vite": "^10.6.5",
     "@tiptap/core": "3.32.0",
-    "@tiptap/extensions": "3.32.0",
+    "@tiptap/extensions": "3.32.1",
     "@tiptap/pm": "3.32.0",
     "@tiptap/react": "3.32.1",
     "@tiptap/starter-kit": "3.32.0",
