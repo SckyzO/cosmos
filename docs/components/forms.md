@@ -154,3 +154,27 @@ a field that suggests (a catalogue, a list of tags) and lets the user write thei
   that message ("Press Enter to use this text").
 - Without a visible `label`, `aria-label` names the input, as for a field in a row of lines. A
   `label` wins: the name is the one on screen.
+
+## Number input
+
+Storybook: [Number Input](https://sckyzo.github.io/cosmos/?path=/docs/forms-number-input--docs).
+
+`NumberInput` writes a number between `min` and `max` with step buttons, `−` / `+` on the edges or
+stacked arrows (`controls="stacked"`). `unit` follows the value, inside the border, and `prefix`
+comes before it: a currency sign, a protocol.
+
+```tsx
+<NumberInput
+  aria-label="Rate"
+  controls="stacked"
+  prefix="$"
+  unit="/h"
+  value={rate}
+  onChange={setRate}
+  min={0}
+/>
+```
+
+- `prefix` takes text or a node. It sits on the start edge of the value (the right one in right to
+  left, in a `<bdi>` of its own), small and dimmed like `unit`. It is part of neither the value nor
+  the accessible name: name the field with `aria-label` or a `FormRow`.

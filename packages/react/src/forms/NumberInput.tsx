@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useNumberDraft } from './numberDraft';
 import { useControllableState } from '../hooks/useControllableState';
@@ -16,7 +16,13 @@ export type NumberInputProps = FieldA11yProps & {
   min?: number;
   max?: number;
   step?: number;
+  /** Text after the value, inside the border: `s`, `ms`, `kg`. */
   unit?: string;
+  /**
+   * Text before the value, inside the border, as `unit` follows it: a currency sign (`$`, `€`),
+   * a protocol. It sits on the start edge, so it moves to the right in right to left.
+   */
+  prefix?: ReactNode;
   /** Height and text size, aligned on Button's. Default `md`. */
   size?: FieldSize;
   /** Sets `aria-required` on the input. It has no label of its own to carry an asterisk. */
@@ -64,6 +70,7 @@ export const NumberInput = ({
   max = Infinity,
   step = 1,
   unit,
+  prefix,
   size = 'md',
   required,
   controls = 'sides',
@@ -103,6 +110,16 @@ export const NumberInput = ({
     >
       {stacked ? (
         <>
+          {prefix !== undefined && (
+            <span
+              className={clsx(
+                'flex shrink-0 items-center text-xs text-gray-500 select-none dark:text-gray-400',
+                FIELD_PAD_START[size]
+              )}
+            >
+              <bdi>{prefix}</bdi>
+            </span>
+          )}
           <input
             ref={ref}
             type="number"
@@ -118,7 +135,8 @@ export const NumberInput = ({
               // min-w-0: in a narrower container the input gives way, not the arrows.
               'h-full min-w-0 [appearance:textfield] bg-transparent pe-1 font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
               FIELD_TEXT[size],
-              FIELD_PAD_START[size],
+              // The prefix carries the start padding, and the value sits close to it.
+              prefix !== undefined ? 'ps-1' : FIELD_PAD_START[size],
               fullWidth ? 'flex-1' : width
             )}
           />
@@ -166,6 +184,11 @@ export const NumberInput = ({
             </span>
           </button>
           <div className="flex items-center">
+            {prefix !== undefined && (
+              <span className="ps-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
+                <bdi>{prefix}</bdi>
+              </span>
+            )}
             <input
               ref={ref}
               type="number"
