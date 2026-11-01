@@ -74,7 +74,8 @@ export const LiveCheck: Story = {
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
-const lit = (root: HTMLElement) => root.querySelectorAll('[data-segment][data-lit]').length;
+// `ProgressBar` draws the lit segments only: the unlit ones are the track.
+const lit = (root: HTMLElement) => root.querySelectorAll('[data-segment]').length;
 
 export const BarIsDecorationAndTextSaysTheLevel: Story = {
   tags: ['!dev', '!autodocs'],
@@ -91,13 +92,9 @@ export const BarIsDecorationAndTextSaysTheLevel: Story = {
     const levels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
     levels.forEach((level, score) => {
       const box = canvas.getByTestId(`score-${score}`);
-      // Four segments, `score` of them lit, in an aria-hidden bar: the text says the rest.
-      expect(box.querySelectorAll('[data-segment]')).toHaveLength(4);
+      // `score` of the four segments lit, in an aria-hidden bar: the text says the rest.
       expect(lit(box)).toBe(score);
-      expect(box.querySelector('[data-segment]')!.parentElement).toHaveAttribute(
-        'aria-hidden',
-        'true'
-      );
+      expect(box.querySelector('[role=progressbar]')!.closest('[aria-hidden=true]')).not.toBeNull();
       expect(box.querySelector('p')).toHaveTextContent(`Password strength: ${level}`);
       expect(box.querySelector('p')).toBeVisible();
     });
