@@ -22,6 +22,7 @@ import {
   TRACK,
 } from './core/colors';
 import { useElementSize } from './core/useElementSize';
+import { VISUALLY_HIDDEN } from './core/visuallyHidden';
 import { NUMERIC_TO_ALPHA2 } from './world-map-codes';
 import {
   byValue,
@@ -194,19 +195,6 @@ type Tip = Stop & {
   bottom: number;
   align: 'start' | 'center' | 'end';
   below: boolean;
-};
-
-// Visually hidden, still read by screen readers.
-const HIDDEN: CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  margin: -1,
-  padding: 0,
-  overflow: 'hidden',
-  clipPath: 'inset(50%)',
-  whiteSpace: 'nowrap',
-  border: 0,
 };
 
 /**
@@ -666,13 +654,13 @@ export const WorldMap = ({
           </div>
         )}
         {interactive && (
-          <span data-world-status="" role="status" aria-live="polite" style={HIDDEN}>
+          <span data-world-status="" role="status" aria-live="polite" style={VISUALLY_HIDDEN}>
             {focus ? (describe(focus)?.announced ?? '') : ''}
           </span>
         )}
       </div>
       {interactive && (
-        <div style={HIDDEN}>
+        <div style={VISUALLY_HIDDEN}>
           {order.length > 0 && (
             <table data-world-table="">
               <caption>{name}</caption>

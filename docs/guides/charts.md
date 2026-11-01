@@ -34,7 +34,7 @@ for React 19 as a peer dependency.
 
 ## How the charts are drawn
 
-Every chart is drawn with Recharts, except `HeatmapChart`, `CalendarChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow), and `WorldMap`, an SVG of its own (Recharts has no map). The rules every chart follows:
+Every chart is drawn with Recharts, except `HeatmapChart`, `CalendarChart` and `FunnelChart`, drawn in HTML and SVG (Recharts has no heatmap, and its bars cannot be joined by a flow), `WorldMap`, an SVG of its own (Recharts has no map), and `SunburstChart`, an SVG of its own too (the Recharts sunburst has no way to focus a sector or to fit a name to its arc). The rules every chart follows:
 
 - **Colors are CSS variables** handed straight to the SVG, with a hex fallback: a theme, accent or text size switch on `<html>` repaints the chart with no observer and no redraw. `@sckyzo/cosmos-theme` always emits what the charts read (`--color-brand-500`, the status and semantic colors, `--color-chart-2` to `--color-chart-8`).
 - **The default palette** is the accent, then seven hues. Each accent lists its own seven in the theme CSS, skipping the hues that look like it (the teal accent has no teal series), and none of the first four reads as a status. `colors` overrides it.
@@ -95,6 +95,44 @@ The charts with a horizontal and a vertical axis (`LineAreaChart`, `BarChart`, `
 
 `WaterfallChart` walks a running total through gains and losses: `data` is `{ label, value?, kind? }[]`. A step (the default `kind`) carries a signed `value` and floats between the total before and after it; a `subtotal` is drawn from 0 to the running total at that point (never the sum since the last cut); a `total` is drawn the same way, and a `value` on it sets the running total to it, which is how an opening balance, or a known balance mid-walk, is written. A step without a `value` counts as 0. Increases take the theme's success color, decreases its error color and totals the accent (subtotals the same, lighter); `colors: { positive, negative, total }` overrides them. The color is never alone: the value above a bar and the tooltip carry the sign (`+310k`, `−265k`, with a real minus; `formatValue` gets the magnitude) and the kind in words (Increase, Decrease, Subtotal, Total), and the tooltip of a step adds the running total after it. `showLabels` forces the values above the bars on or off (by default they show with 12 bars or fewer in a chart at least 480px wide), `showConnectors` (default on) draws the dashed line from the top of a bar to the next one. Below 480px the category names tilt. It takes `xTitle`, `yTitle` and `children`.
 
+`SunburstChart` draws a hierarchy as nested rings: `data` is `{ name, value?, children? }[]`. The first ring shares the whole circle among its nodes by their values, and each node shares its arc among its `children`, ring after ring outward. There is no single root: the sum of the first ring is the total. A node with children takes the sum of theirs, and a `value` set on it is ignored; a value that is not a positive finite number counts as none, and a node with none, or whose children have none, has no arc. Four levels read well, and deeper ones are drawn, thinner. Each node of the first ring has one color (`colors`, cycling, as on `DonutChart`; the palette by default) and the rings after it are lighter mixes of it with the card, so the last ring stays 1.5:1 or more from the card in the four themes. A name is written along its arc only when the whole of it fits (there is no `showLabels`); the others read from the card, the focus and the legend.
+
+```tsx
+import { SunburstChart } from '@sckyzo/cosmos-charts';
+
+<SunburstChart
+  data={[
+    {
+      name: 'Engineering',
+      children: [
+        {
+          name: 'Platform',
+          children: [
+            { name: 'Infra', value: 18 },
+            { name: 'Data', value: 14 },
+          ],
+        },
+        { name: 'Product', value: 26 },
+      ],
+    },
+    {
+      name: 'Sales',
+      children: [
+        { name: 'EMEA', value: 31 },
+        { name: 'Americas', value: 27 },
+      ],
+    },
+  ]}
+  centerLabel="People"
+  legendValues
+  onSelect={(path) => filterTable(path)}
+/>;
+```
+
+The center is the total (`centerValue` and `centerLabel` replace it and "Total"), then the value, name and share of the sector under the pointer or the keyboard. Hover and focus fade the sectors that are not on the line from the first ring to that sector (its parents and its children stay), and the card gives its value and its share of the total, with its parents for the title. The legend lists the first ring, and `legendValues` and `legendPosition` work as on `DonutChart`: a click on a branch hides it and gives its share of the circle to the others, which keep their colors and their figures. It is on the right by default, and goes under the circle when the box is too narrow for both. The circle is as wide as its box, up to 380px, and as large as the box allows when `height` is set; it keeps its left-to-right layout in a right-to-left page.
+
+`onSelect(path)` makes the sectors selectable: a click, or Enter or Space on the sector in focus, selects it and calls `onSelect` with the names from the first ring (`['Engineering', 'Platform']`); picking it again, or Escape, calls it with `[]`. The selected sector keeps its color with its parents and children, and the rest fades. `selected` controls the selection (`[]` for none) and `defaultSelected` starts it; without `onSelect` the chart only shows, and a `selected` path is shown with no way to change it. A path is names, so keep them unique among siblings: of two the first is taken. The chart is one tab stop: Left and Right go to the previous and the next sibling, clockwise, Down to the first child (outward), Up to the parent (inward), Home and End to the first and the last sector of the ring. Each sector is an image (a button with `onSelect`) named by its path, its value and its share of its parent (`Engineering, Platform, Infra: 18, 44% of Platform`), and a visually hidden nested list gives the whole hierarchy. Like `WorldMap` it is an SVG of its own, so it takes no `children`: the Recharts sunburst has no way to focus a sector or to fit a name to its arc. With nothing to draw it shows `emptyMessage`.
+
 `WorldMap` colors the countries of a world map by value: `data` is `{ FR: 16400, US: 48200 }`, keyed by ISO 3166-1 alpha-2 code in upper case, and `geography` is a TopoJSON `Topology` with a `countries` object. The package ships no map data: you pass `world-atlas` (ISC), and the `110m` file is enough for a dashboard card (105 kB, 39 kB gzipped; `countries-50m.json` draws the small countries too). Antarctica is left out, and a code the map does not hold is not drawn.
 
 ```tsx
@@ -145,7 +183,7 @@ A chart with no series, or only empty ones, draws `emptyMessage` (default `No da
 
 The same charts take `loading`, for the time the data is on its way: a skeleton of the chart's size (`height` and `width`) in the track gray of the theme replaces the chart, and wins over `emptyMessage` and over any data given, so the page no longer swaps in a skeleton of its own. It is a busy group (`aria-busy`) named by the chart's `ariaLabel` and the word "loading" (`CPU usage per hour, loading`), and it pulses where motion is welcome and holds still under `prefers-reduced-motion`. `FunnelChart` and `CalendarChart` size themselves from their content, so their skeleton is as high as their empty state: `height` on `FunnelChart` (160px by default), 120px on `CalendarChart`, which has no `height`.
 
-For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart`, `FunnelChart` and `WorldMap` takes `children` (see above).
+For what a chart has no prop for, every chart but `HeatmapChart`, `CalendarChart`, `FunnelChart`, `SunburstChart` and `WorldMap` takes `children` (see above).
 
 Every chart takes an `ariaLabel`, the name screen readers read for it. Without one, the chart is named from its type and its series. Tab reaches a chart, and the arrow keys move from point to point and announce each one: ArrowRight goes to the next point, ArrowLeft to the previous one, and on a chart with its categories on the vertical axis (a horizontal `BarChart` or `BoxPlotChart`, `RangeBarChart`) ArrowDown and ArrowRight go to the next category and ArrowUp and ArrowLeft to the previous one. The gauges and `Sparkline` show a single value or a trend: they are named images, out of the tab order.
 
@@ -165,6 +203,7 @@ Every chart takes an `ariaLabel`, the name screen readers read for it. Without o
 | `DonutChart`                   | Donut, legend below by default                                |
 | `Sparkline`                    | Mini line, area or bar trend, no axes                         |
 | `TreemapChart`                 | Part-to-whole treemap                                         |
+| `SunburstChart`                | Hierarchy in nested rings, selectable (own SVG)               |
 | `HeatmapChart`                 | Rows × columns colored by value buckets or ranges (HTML grid) |
 | `CalendarChart`                | Day-by-day heatmap over a year or any range (HTML grid)       |
 | `BumpChart`                    | Rankings over periods, names at both ends (Recharts)          |

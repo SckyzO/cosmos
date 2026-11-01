@@ -82,8 +82,8 @@ export type ChartLegendPosition = 'top' | 'right' | 'bottom' | 'left';
 export type ChartLegendProps = {
   /**
    * The side of the plot the legend sits on. Default `top` (`bottom` on
-   * `DonutChart`). The legend is a row on `top` and `bottom` and a column on
-   * `left` and `right`, and takes its room from the plot.
+   * `DonutChart`, `right` on `SunburstChart`). The legend is a row on `top` and
+   * `bottom` and a column on `left` and `right`, and takes its room from the plot.
    */
   legendPosition?: ChartLegendPosition;
 };
