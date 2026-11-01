@@ -15,6 +15,7 @@ import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
 import { RequiredMark } from './RequiredMark';
+import { outsideBounds, resolvePreset, sameRange } from './rangePresets';
 
 export type DateRange = {
   from: Date | undefined;
@@ -22,6 +23,17 @@ export type DateRange = {
 };
 
 export type DatePickerMode = 'single' | 'range';
+
+/** A button of the range picker that sets the range in one click. */
+export type DateRangePreset = {
+  /** The text of the button: "Last 7 days". */
+  label: string;
+  /**
+   * The range it sets: fixed, or a function of today (see `today`) for one that moves with the
+   * date: `(today) => ({ from: subDays(today, 6), to: today })`.
+   */
+  range: DateRange | ((today: Date) => DateRange);
+};
 
 // Discriminated union — the `mode` prop changes the shape of `value`,
 // `defaultValue`, and `onChange`. Without a union TypeScript would force
@@ -44,6 +56,19 @@ type RangeProps = {
   fromPlaceholder?: string;
   /** Placeholder for the TO trigger. */
   toPlaceholder?: string;
+  /**
+   * Buttons beside the calendar that set the range in one click ("Last 7 days", "This month").
+   * Picking one sets the range, as picking its two days would, and closes the calendar. The one
+   * whose days are the current range is marked `aria-current`, and one that falls outside `fromDate` or
+   * `toDate` is disabled. Below `sm` they sit under the calendar and wrap; from `sm` up they
+   * are a column at its end, after it in the tab order at every width.
+   */
+  presets?: DateRangePreset[];
+  /**
+   * The date `presets` count from, and the one the calendar marks as today. Default now. Pass a
+   * fixed date to test the dates a preset makes.
+   */
+  today?: Date;
 };
 
 type CommonProps = {
@@ -171,7 +196,7 @@ export const DatePicker = (props: DatePickerProps) => {
   const startMonth = fromDate ?? new Date(fromYear ?? currentYear - 10, 0, 1);
   const endMonth = toDate ?? new Date(toYear ?? currentYear + 10, 11, 31);
   const initialMonth = isRange
-    ? (selectedRange.from ?? selectedRange.to ?? new Date())
+    ? (selectedRange.from ?? selectedRange.to ?? range?.today ?? new Date())
     : (selectedSingle ?? new Date());
   const [month, setMonth] = useState<Date>(initialMonth);
 
@@ -217,6 +242,24 @@ export const DatePicker = (props: DatePickerProps) => {
     if (next.from && next.to) setOpen(false);
   };
 
+  // ── Presets (range mode) ────────────────────────────────────────────────────
+  // Each preset with the range it makes today, whether that is the current range, and whether
+  // the bounds rule it out.
+  const presetToday = range?.today ?? new Date();
+  const presets = (range?.presets ?? []).map((preset) => {
+    const made = resolvePreset(preset.range, presetToday);
+    return {
+      label: preset.label,
+      made,
+      current: sameRange(selectedRange, made),
+      unavailable: outsideBounds(made, fromDate, toDate),
+    };
+  });
+  const pickPreset = (made: DateRange) => {
+    if (made.from) setMonth(made.from);
+    commitRange(made);
+  };
+
   // ── Footer (single mode) ────────────────────────────────────────────────────
   const handleToday = () => {
     const today = new Date();
@@ -255,6 +298,26 @@ export const DatePicker = (props: DatePickerProps) => {
         Done
       </button>
     </div>
+  );
+
+  const rangeCalendar = (
+    <Calendar
+      mode="range"
+      selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
+      onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
+      month={month}
+      onMonthChange={setMonth}
+      today={range?.today}
+      captionLayout={captionLayout}
+      startMonth={startMonth}
+      endMonth={endMonth}
+      disabled={
+        fromDate || toDate
+          ? [...(fromDate ? [{ before: fromDate }] : []), ...(toDate ? [{ after: toDate }] : [])]
+          : undefined
+      }
+      footer={rangeFooter}
+    />
   );
 
   // ── Trigger rendering ───────────────────────────────────────────────────────
@@ -365,25 +428,36 @@ export const DatePicker = (props: DatePickerProps) => {
         className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900"
       >
         {isRange ? (
-          <Calendar
-            mode="range"
-            selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
-            onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
-            month={month}
-            onMonthChange={setMonth}
-            captionLayout={captionLayout}
-            startMonth={startMonth}
-            endMonth={endMonth}
-            disabled={
-              fromDate || toDate
-                ? [
-                    ...(fromDate ? [{ before: fromDate }] : []),
-                    ...(toDate ? [{ after: toDate }] : []),
-                  ]
-                : undefined
-            }
-            footer={rangeFooter}
-          />
+          presets.length > 0 ? (
+            <div className="flex flex-col sm:flex-row">
+              {rangeCalendar}
+              <div
+                role="group"
+                aria-label="Date range presets"
+                className="flex flex-wrap gap-1 border-t border-gray-200 p-3 sm:w-44 sm:flex-col sm:flex-nowrap sm:border-s sm:border-t-0 dark:border-gray-700"
+              >
+                {presets.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    disabled={preset.unavailable}
+                    aria-current={preset.current || undefined}
+                    onClick={() => pickPreset(preset.made)}
+                    className={clsx(
+                      'focus-visible:focus-indicator h-ctrl-32 inline-flex items-center rounded-md px-3 text-start text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-40',
+                      preset.current
+                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5'
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            rangeCalendar
+          )
         ) : (
           <Calendar
             mode="single"
