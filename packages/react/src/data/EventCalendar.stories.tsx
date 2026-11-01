@@ -210,7 +210,7 @@ export const BusyDayOpensMore: Story = {
     const dialog = within(body.getByRole('dialog', { name: 'Events on Thursday, May 7, 2026' }));
     await expect(dialog.getAllByRole('listitem')).toHaveLength(5);
 
-    await userEvent.click(dialog.getByRole('button', { name: 'Backup audit' }));
+    await userEvent.click(dialog.getByRole('button', { name: /Backup audit/ }));
     await expect(args.onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'backup' }));
     await expect(body.queryByRole('dialog')).toBeNull();
   },
@@ -276,7 +276,7 @@ export const LocaleNamesTheDatesInFrench: Story = {
     const body = within(canvasElement.ownerDocument.body);
     const dialog = within(body.getByRole('dialog', { name: 'Events on jeudi 7 mai 2026' }));
     await expect(dialog.getByText('jeudi 7 mai 2026')).toBeVisible();
-    await userEvent.click(dialog.getByRole('button', { name: 'Backup audit' }));
+    await userEvent.click(dialog.getByRole('button', { name: /Backup audit/ }));
     await expect(args.onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'backup' }));
 
     await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
@@ -356,6 +356,42 @@ export const IntentColorsTheEvent: Story = {
     await expect(chip('default event').querySelector('span[aria-hidden]')).toHaveClass(
       'bg-brand-500'
     );
+  },
+};
+
+/**
+ * A timed event writes its start time before its title; an all-day one, a date with no time,
+ * writes none. `allDay` forces the answer: a meeting at midnight is `allDay: false`.
+ */
+export const TimeShownOnTimedEventsOnly: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    events: [
+      { id: 'timed', title: 'Release 2.4', start: new Date(2026, 4, 7, 9, 30) },
+      { id: 'date', title: 'Grafana upgrade', start: new Date(2026, 4, 7) },
+      { id: 'forced', title: 'Offsite', start: new Date(2026, 4, 8, 14), allDay: true },
+      { id: 'midnight', title: 'Batch window', start: new Date(2026, 4, 9), allDay: false },
+      {
+        id: 'run',
+        title: 'KubeCon trip',
+        start: new Date(2026, 4, 11, 8),
+        end: new Date(2026, 4, 13, 18),
+      },
+    ],
+  },
+  play: async ({ canvas }) => {
+    const chip = (title: string, day: string) =>
+      within(canvas.getByRole('group', { name: day })).getByTitle(title);
+    // Newer ICU writes a narrow no-break space before AM and PM.
+    const text = (el: HTMLElement) => el.textContent!.replace(/\u202f/g, ' ');
+    await expect(text(chip('Release 2.4', 'Thursday, May 7, 2026'))).toBe('9:30 AMRelease 2.4');
+    await expect(text(chip('Grafana upgrade', 'Thursday, May 7, 2026'))).toBe('Grafana upgrade');
+    await expect(text(chip('Offsite', 'Friday, May 8, 2026'))).toBe('Offsite');
+    await expect(text(chip('Batch window', 'Saturday, May 9, 2026'))).toBe('12:00 AMBatch window');
+    // A timed event over several days has its time on its first day only.
+    await expect(text(chip('KubeCon trip', 'Monday, May 11, 2026'))).toBe('8:00 AMKubeCon trip');
+    await expect(text(chip('KubeCon trip', 'Tuesday, May 12, 2026'))).toBe('KubeCon trip');
+    await expect(text(chip('KubeCon trip', 'Wednesday, May 13, 2026'))).toBe('KubeCon trip');
   },
 };
 
