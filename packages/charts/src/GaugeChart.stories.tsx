@@ -336,8 +336,10 @@ export const SemiCircleTargetFollowsTheTheme: Story = {
 };
 
 /**
- * `showNeedle` draws a needle inside the arc, pointing at the value on the scale of `min`–`max`.
- * It is short and stops just short of the arc, so it stays out of the value in the hollow.
+ * `showNeedle` makes the gauge a dial: no arc for the value, a needle on a hub at the center of
+ * the half circle pointing at it on the scale of `min`–`max`, and the value and its label under
+ * the hub, where the needle never crosses them. The track is the plain one, or the zones with
+ * `showZones`.
  */
 export const SemiCircleNeedle: Story = {
   render: () => (
@@ -370,18 +372,14 @@ export const SemiCircleNeedle: Story = {
   ),
 };
 
-// The centre of the arc of the gauge in `root`: halfway across its track, on its base.
-const arcCenter = (root: Element) => {
-  const { x, y, width, height } = (trackOf(root) as SVGGraphicsElement).getBBox();
-  return { cx: x + width / 2, cy: y + height };
-};
-
-// The angle a needle points at, in degrees counted from the right end of the arc (0 on the
-// right, 90 straight up, 180 on the left), read from its tip: the corner farthest from the
-// center of the arc.
+// The needle of the gauge in `root`: where it points, in degrees counted from the right end of
+// the arc (0 on the right, 90 straight up, 180 on the left), read from its tip, the corner
+// farthest from the hub; and the hub it pivots on.
 const readNeedle = (root: Element) => {
-  const { cx, cy } = arcCenter(root);
-  const corners = (root.querySelector('[data-chart-needle]')?.getAttribute('points') ?? '')
+  const needle = root.querySelector('[data-chart-needle]') as Element;
+  const hub = needle.querySelector('circle') as SVGCircleElement;
+  const [cx, cy, r] = ['cx', 'cy', 'r'].map((name) => Number(hub.getAttribute(name)));
+  const corners = (needle.querySelector('polygon')?.getAttribute('points') ?? '')
     .split(' ')
     .map((point) => point.split(',').map(Number));
   const [x, y] = corners.reduce((far, point) =>
@@ -390,25 +388,49 @@ const readNeedle = (root: Element) => {
   return {
     // The arc opens upward: an angle below zero is the sign of a tip exactly on the base line.
     angle: Math.abs((Math.atan2(cy - y, x - cx) * 180) / Math.PI),
-    center: { cx, cy },
-    corners,
-    length: Math.hypot(x - cx, y - cy),
+    hub: { cx, cy, r },
     tip: { x, y },
   };
 };
 
-// Asserts the needle's tip is in the hollow, short of the track, which a few pixels further
-// along the needle is.
-const expectNeedleShortOfTheTrack = (root: Element) => {
-  const { tip, center, length } = readNeedle(root);
+// Asserts the dial of the gauge in `root` is built right: its hub is the center of the track,
+// the needle's tip is on the track, and the value and its label are under the hub, clear of the
+// needle and of the box's edges.
+const expectDialClearOfTheText = (root: Element) => {
+  const { hub, tip } = readNeedle(root);
   const track = trackOf(root) as SVGGeometryElement;
-  const ahead = (distance: number) =>
-    new DOMPoint(
-      tip.x + ((tip.x - center.cx) / length) * distance,
-      tip.y + ((tip.y - center.cy) / length) * distance
+  const { x, y, width, height } = track.getBBox();
+  expect(hub.cx, 'the hub is halfway across the track').toBeCloseTo(x + width / 2, 0);
+  expect(hub.cy, 'the hub is on the base of the track').toBeCloseTo(y + height, 0);
+  // A pixel up: a needle at an end of the arc points along the base line, the edge of the track.
+  expect(track.isPointInFill(new DOMPoint(tip.x, tip.y - 1)), 'the tip is on the track').toBe(true);
+  const needle = (root.querySelector('[data-chart-needle]') as Element).getBoundingClientRect();
+  const svg = (surface(root as HTMLElement) as Element).getBoundingClientRect();
+  const hubBox = (
+    root.querySelector('[data-chart-needle] circle') as Element
+  ).getBoundingClientRect();
+  const texts = [...root.querySelectorAll('[data-chart-center] tspan')];
+  expect(texts.length).toBeGreaterThan(0);
+  for (const text of texts) {
+    const box = text.getBoundingClientRect();
+    const name = text.textContent ?? '';
+    const apart =
+      needle.right <= box.left ||
+      box.right <= needle.left ||
+      needle.bottom <= box.top ||
+      box.bottom <= needle.top;
+    expect(apart, `${name} is under the needle`).toBe(true);
+    expect(box.top, `${name} is under the hub`).toBeGreaterThanOrEqual(hubBox.bottom);
+    expect(box.bottom, `${name} is cut by the bottom of the gauge`).toBeLessThanOrEqual(
+      svg.bottom + 1
     );
-  expect(track.isPointInFill(ahead(0)), 'the tip is on the track').toBe(false);
-  expect(track.isPointInFill(ahead(6)), 'the track is not far ahead').toBe(true);
+    expect(box.left, `${name} is cut by the left of the gauge`).toBeGreaterThanOrEqual(
+      svg.left - 1
+    );
+    expect(box.right, `${name} is cut by the right of the gauge`).toBeLessThanOrEqual(
+      svg.right + 1
+    );
+  }
 };
 
 export const SemiCircleNeedleChecks: Story = {
@@ -458,17 +480,32 @@ export const SemiCircleNeedleStopsAtTheEnds: Story = {
   },
 };
 
+const NEEDLE_VALUES = [0, 5, 25, 50, 75, 95, 100];
+
 /**
- * The needle is across the hollow and stops a few pixels short of the arc, so it never covers
- * the arc; and it keeps out of the value and its label, whatever the value it points at.
+ * The needle pivots on a hub at the center of the arc and reaches the track, and the value and
+ * its label sit under the hub: whatever the value it points at, from one end of the arc to the
+ * other, and whatever the width of the box, down to 160px with a long value and the range.
  */
-export const SemiCircleNeedleStaysInTheHollow: Story = {
+export const SemiCircleNeedleIsClearOfTheText: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <div className="grid gap-4 md:grid-cols-3">
-      {[5, 25, 50, 75, 95].map((value) => (
-        <div className="w-80" key={value} data-testid="gauge">
+    <div className="grid gap-4 md:grid-cols-4">
+      {NEEDLE_VALUES.map((value) => (
+        <div className="w-80" key={`wide-${value}`} data-testid="gauge">
           <SemiCircleGauge value={value} label="Load" showNeedle />
+        </div>
+      ))}
+      {NEEDLE_VALUES.map((value) => (
+        <div className="w-40" key={`narrow-${value}`} data-testid="gauge">
+          <SemiCircleGauge
+            value={value * 20}
+            max={2000}
+            label="PDU 3"
+            formatValue={watts}
+            showNeedle
+            showRange
+          />
         </div>
       ))}
     </div>
@@ -476,41 +513,121 @@ export const SemiCircleNeedleStaysInTheHollow: Story = {
   play: async ({ canvasElement }) => {
     const gauges = [...canvasElement.querySelectorAll<HTMLElement>('[data-testid="gauge"]')];
     await waitFor(() =>
-      expect(gauges.filter((root) => root.querySelector('[data-chart-needle]'))).toHaveLength(5)
+      expect(gauges.filter((root) => root.querySelector('[data-chart-needle]'))).toHaveLength(
+        gauges.length
+      )
     );
-    for (const root of gauges) {
-      await waitFor(() => expectNeedleShortOfTheTrack(root));
-      const needle = (root.querySelector('[data-chart-needle]') as Element).getBoundingClientRect();
-      for (const text of root.querySelectorAll('[data-chart-center] tspan')) {
-        const box = text.getBoundingClientRect();
-        const apart =
-          needle.right <= box.left ||
-          box.right <= needle.left ||
-          needle.bottom <= box.top ||
-          box.bottom <= needle.top;
-        await expect(apart, `${text.textContent} is under the needle`).toBe(true);
-      }
-    }
+    for (const root of gauges) await waitFor(() => expectDialClearOfTheText(root));
   },
 };
 
-/** The needle is in the text color of the theme, over a halo in the card's color, in each of the four themes. */
+/** A dial has no arc for the value, only its track, and the same name as the gauge without the needle. */
+export const SemiCircleNeedleDrawsNoArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div data-case="plain">
+        <SemiCircleGauge value={67} label="Load" showNeedle />
+      </div>
+      <div data-case="zones">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} showZones showNeedle />
+      </div>
+      <div data-case="dial">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} target={80} showNeedle />
+      </div>
+      <div data-case="plain-name">
+        <SemiCircleGauge value={67} label="Load" />
+      </div>
+      <div data-case="zones-name">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} showZones />
+      </div>
+      <div data-case="dial-name">
+        <SemiCircleGauge value={78} label="CPU" warnAt={70} critAt={90} target={80} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const gauge = (name: string) => canvasElement.querySelector(`[data-case="${name}"]`) as Element;
+    // The gauges without the needle have drawn their arcs, so the absence below means something.
+    await waitFor(() => {
+      for (const name of ['plain-name', 'zones-name', 'dial-name']) {
+        expect(arcOf(gauge(name)), name).not.toBeNull();
+      }
+    });
+    for (const name of ['plain', 'zones', 'dial']) {
+      await waitFor(() => expect(gauge(name).querySelector('[data-chart-needle]')).not.toBeNull());
+      await expect(arcOf(gauge(name)), `${name} has no arc`).toBeNull();
+      await expect(trackOf(gauge(name)), `${name} has its track`).not.toBeNull();
+      // The name is what it is without the needle.
+      await expect(surface(gauge(name) as HTMLElement)?.getAttribute('aria-label')).toBe(
+        surface(gauge(`${name}-name`) as HTMLElement)?.getAttribute('aria-label')
+      );
+    }
+    // Zones with `showZones`, the plain track without it, whatever the thresholds.
+    await expect(zonesOf(gauge('zones'))).toEqual(['ok', 'warn', 'crit']);
+    await expect(zonesOf(gauge('dial'))).toEqual([]);
+    // The target is drawn as it is without the needle.
+    await expect(gauge('dial').querySelectorAll('[data-chart-target]')).toHaveLength(1);
+  },
+};
+
+/**
+ * A dial takes the height it is given: by default 180px, which makes room under the arc for the
+ * value; `height` is still the most it takes, and the arc as wide as the box allows within it.
+ */
+export const SemiCircleNeedleFitsItsHeight: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex items-start gap-4">
+      <div className="w-80" data-testid="default">
+        <SemiCircleGauge value={67} label="Load" showNeedle />
+      </div>
+      <div className="w-80" data-testid="short">
+        <SemiCircleGauge value={67} label="Load" showNeedle height={120} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const size = (id: string) => {
+      const root = canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+      return {
+        height: (surface(root) as Element).getBoundingClientRect().height,
+        arc: (trackOf(root) as SVGGraphicsElement).getBBox().width,
+      };
+    };
+    await waitFor(() => {
+      expect(size('default').height).toBeLessThanOrEqual(180);
+      expect(size('default').height).toBeGreaterThan(150);
+      expect(size('short').height).toBeLessThanOrEqual(120);
+      // The arc is as wide as the height allows: the default one is wider than the short one.
+      expect(size('default').arc).toBeGreaterThan(size('short').arc);
+      expect(size('default').arc).toBeGreaterThan(180);
+    });
+  },
+};
+
+/** The needle and its hub are in the text color of the theme, over a halo in the card's color, in each of the four themes. */
 export const SemiCircleNeedleFollowsTheTheme: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <SemiCircleGauge value={67} label="Load" showNeedle />,
   play: async ({ canvasElement }) => {
-    const needle = () => canvasElement.querySelector('[data-chart-needle]') as SVGElement | null;
-    await waitFor(() => expect(needle()).not.toBeNull());
+    const part = (layer: 'shape' | 'halo', selector: string) =>
+      canvasElement.querySelector(
+        `[data-chart-needle] [data-${layer}] ${selector}`
+      ) as SVGElement | null;
+    await waitFor(() => expect(part('shape', 'polygon') && part('shape', 'circle')).not.toBeNull());
     const themes = ['', 'sand', 'dark', 'deep-blue'];
     const tokens = (token: string) => Object.fromEntries(themes.map((theme) => [theme, token]));
-    await expectColorInThemes(
-      () => needle() && getComputedStyle(needle() as Element).fill,
-      tokens('--color-text-primary')
-    );
-    await expectColorInThemes(
-      () => needle() && getComputedStyle(needle() as Element).stroke,
-      tokens('--color-bg-panel')
-    );
+    for (const selector of ['polygon', 'circle']) {
+      await expectColorInThemes(
+        () => getComputedStyle(part('shape', selector) as Element).fill,
+        tokens('--color-text-primary')
+      );
+      await expectColorInThemes(
+        () => getComputedStyle(part('halo', selector) as Element).stroke,
+        tokens('--color-bg-panel')
+      );
+    }
   },
 };
 
@@ -796,7 +913,7 @@ export const SemiCircleNeedleAndZonesAreOptIn: Story = {
   },
 };
 
-/** In a narrow box the needle, the zones and the range labels stay inside it, and the needle in the hollow. */
+/** In a narrow box the dial, the zones and the range labels stay inside it, and the needle is clear of the text. */
 export const SemiCircleNeedleAndZonesFitANarrowBox: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -830,8 +947,20 @@ export const SemiCircleNeedleAndZonesFitANarrowBox: Story = {
       );
       await expect(rect.right).toBeLessThanOrEqual(limit.right + 1);
     }
-    // A box of 160 px makes a gauge of 80 px of radius: the needle still stops short of the track.
-    await waitFor(() => expectNeedleShortOfTheTrack(box));
+    // A box of 160 px makes a gauge of 80 px of radius: the value, long as it is, is still
+    // under the hub and clear of the needle and of the range labels.
+    await waitFor(() => expectDialClearOfTheText(box));
+    const ends = [...box.querySelectorAll('[data-chart-range]')].map((el) =>
+      el.getBoundingClientRect()
+    );
+    const value = (
+      box.querySelector('[data-chart-center] tspan') as Element
+    ).getBoundingClientRect();
+    for (const end of ends) {
+      await expect(
+        end.bottom <= value.top || end.right <= value.left || value.right <= end.left
+      ).toBe(true);
+    }
     await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
   },
 };
