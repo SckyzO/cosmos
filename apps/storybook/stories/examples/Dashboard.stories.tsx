@@ -9,20 +9,18 @@ import {
   UserMinus,
   Users,
 } from 'lucide-react';
-import { useId, useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
-  Card,
   EmptyState,
-  ErrorState,
   KpiCard,
   PageActionButton,
   PageContainer,
   PageHeader,
   SegmentedControl,
+  SectionCard,
   Shell,
   Sidebar,
-  Sk,
   SkeletonTable,
   Table,
   TableBody,
@@ -72,9 +70,10 @@ import {
 
 // Dashboard: an analytics screen. A `PageHeader` (the page's one `h1`) carries the date range and
 // the export; the cards below are four `KpiCard`s with a `Sparkline`, a revenue chart, a donut, a
-// `BarList` and a table. Each widget is its own `<section>` with its own states, so one that fails
-// or has nothing to show does not take the others with it. The five states below only change what
-// the widgets show: the frame, the header and the grid are the same in each.
+// `BarList` and a table. Each widget is a `SectionCard`: its own `<section>`, with `loading`,
+// `empty` and `error` of its own, so one that fails or has nothing to show does not take the
+// others with it. The five states below only change what the widgets show: the frame, the header
+// and the grid are the same in each.
 
 const meta = {
   title: 'Examples/Dashboard',
@@ -100,8 +99,17 @@ type View = {
     series: { name: string; data: number[]; style?: 'dashed' }[];
     stacked: boolean;
     height: number;
+    // The `min-h-*` class of that height, written out for Tailwind to find: the card keeps it
+    // while it loads, so the page does not jump when the chart arrives.
+    minHeight: string;
   };
-  plans: { labels: string[]; values: number[]; centerValue?: string; height: number };
+  plans: {
+    labels: string[];
+    values: number[];
+    centerValue?: string;
+    height: number;
+    minHeight: string;
+  };
   regions: Region[];
   cancellations: Cancellation[];
   cancellationsSummary: string;
@@ -137,12 +145,14 @@ const viewFor = (state: ScreenState, range: RangeId): View => {
         series: topSeriesWithOther(EXTREME_VARIANT_REVENUE, 8),
         stacked: true,
         height: 360,
+        minHeight: 'min-h-90',
       },
       plans: {
         labels: plans.map((plan) => plan.name),
         values: plans.map((plan) => plan.value),
         centerValue: abbreviate(plans.reduce((sum, plan) => sum + plan.value, 0)),
         height: 620,
+        minHeight: 'min-h-155',
       },
       regions: EXTREME_REGIONS,
       cancellations: EXTREME_CANCELLATIONS,
@@ -165,11 +175,13 @@ const viewFor = (state: ScreenState, range: RangeId): View => {
       ],
       stacked: false,
       height: 288,
+      minHeight: 'min-h-72',
     },
     plans: {
       labels: PLANS.map((plan) => plan.name),
       values: PLANS.map((plan) => plan.subscribers),
       height: 300,
+      minHeight: 'min-h-75',
     },
     regions: REGIONS,
     cancellations: CANCELLATIONS,
@@ -237,41 +249,8 @@ const DashboardTopbar = () => (
 
 // ── Widgets ──────────────────────────────────────────────────────────────────
 
-// A section named by its title, so a screen reader lists the widgets as regions and a test finds
-// one by name. The `action` sits beside the title (a link, a menu).
-const Widget = ({
-  title,
-  subtitle,
-  action,
-  className,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  action?: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) => {
-  const titleId = useId();
-  return (
-    <section aria-labelledby={titleId} className={className}>
-      <Card padding="lg" className="h-full">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 id={titleId} className="text-base font-semibold text-[var(--color-text-primary)]">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">{subtitle}</p>
-            )}
-          </div>
-          {action}
-        </div>
-        {children}
-      </Card>
-    </section>
-  );
-};
+// Every widget is a `SectionCard`: a section named by its title, so a screen reader lists the
+// widgets as regions and a test finds one by name. Its `action` sits at the end of the header.
 
 const ViewAll = ({ label }: { label: string }) => (
   <a
@@ -353,39 +332,35 @@ const RevenueCard = ({
 }) => {
   const { revenue } = view;
   const empty = state === 'empty';
+  const loading = state === 'loading';
   return (
-    <Widget
+    <SectionCard
+      as="h2"
       title="Revenue over time"
-      subtitle={empty ? 'Daily revenue' : `${revenue.grain}, ${view.period}`}
-      action={!empty && !failed && state !== 'loading' && <ViewAll label="View report" />}
+      desc={empty ? 'Daily revenue' : `${revenue.grain}, ${view.period}`}
+      // The action stays in every state: a link that means nothing on a card with no chart goes.
+      action={!empty && !failed && !loading && <ViewAll label="View report" />}
+      loading={loading}
+      // Only this card failed: the others keep their data, and the way out is in the card.
+      error={failed}
+      errorMessage="Couldn't load revenue"
+      onRetry={onRetry}
+      empty={empty}
+      emptyMessage="No revenue yet"
+      minBodyHeight={revenue.minHeight}
       className="lg:col-span-2"
     >
-      {state === 'loading' ? (
-        <div className="space-y-3" style={{ height: revenue.height }}>
-          <Sk h="h-full" round="rounded-lg" />
-        </div>
-      ) : failed ? (
-        // Only this card failed: the others keep their data, and the way out is in the card.
-        <ErrorState
-          title="Couldn't load revenue"
-          description="The request timed out. Your other widgets are up to date."
-          onRetry={onRetry}
-          className="min-h-72"
-        />
-      ) : (
-        <LineAreaChart
-          series={empty ? [] : revenue.series}
-          categories={empty ? [] : revenue.categories}
-          stacked={revenue.stacked}
-          colors={revenue.stacked ? WITH_OTHER : undefined}
-          formatValue={euroShort}
-          legendPosition={revenue.stacked ? 'bottom' : 'top'}
-          height={revenue.height}
-          emptyMessage="No revenue yet"
-          ariaLabel={revenue.stacked ? 'Weekly revenue by plan variant' : 'Revenue over time'}
-        />
-      )}
-    </Widget>
+      <LineAreaChart
+        series={revenue.series}
+        categories={revenue.categories}
+        stacked={revenue.stacked}
+        colors={revenue.stacked ? WITH_OTHER : undefined}
+        formatValue={euroShort}
+        legendPosition={revenue.stacked ? 'bottom' : 'top'}
+        height={revenue.height}
+        ariaLabel={revenue.stacked ? 'Weekly revenue by plan variant' : 'Revenue over time'}
+      />
+    </SectionCard>
   );
 };
 
@@ -395,26 +370,27 @@ const PlansCard = ({ view, state }: { view: View; state: ScreenState }) => {
   const { plans } = view;
   const empty = state === 'empty';
   return (
-    <Widget title="Subscribers by plan" subtitle={empty ? 'Active today' : 'Active on 29 Oct'}>
-      {state === 'loading' ? (
-        <div className="flex items-center justify-center" style={{ height: plans.height }}>
-          <Sk h="h-48" w="w-48" round="rounded-full" />
-        </div>
-      ) : (
-        <DonutChart
-          series={empty ? [] : plans.values}
-          labels={empty ? [] : plans.labels}
-          colors={WITH_OTHER}
-          centerLabel="Subscribers"
-          centerValue={plans.centerValue}
-          formatValue={abbreviateOrGroup}
-          legendValues
-          height={plans.height}
-          emptyMessage="No subscribers yet"
-          ariaLabel="Subscribers by plan"
-        />
-      )}
-    </Widget>
+    <SectionCard
+      as="h2"
+      title="Subscribers by plan"
+      desc={empty ? 'Active today' : 'Active on 29 Oct'}
+      loading={state === 'loading'}
+      empty={empty}
+      emptyMessage="No subscribers yet"
+      minBodyHeight={plans.minHeight}
+    >
+      <DonutChart
+        series={plans.values}
+        labels={plans.labels}
+        colors={WITH_OTHER}
+        centerLabel="Subscribers"
+        centerValue={plans.centerValue}
+        formatValue={abbreviateOrGroup}
+        legendValues
+        height={plans.height}
+        ariaLabel="Subscribers by plan"
+      />
+    </SectionCard>
   );
 };
 
@@ -425,9 +401,10 @@ const abbreviateOrGroup = (value: number) =>
 const RegionsCard = ({ view, state }: { view: View; state: ScreenState }) => {
   const items = state === 'empty' ? [] : view.regions;
   return (
-    <Widget
+    <SectionCard
+      as="h2"
       title="Top regions"
-      subtitle={state === 'empty' ? 'Deliveries' : 'Deliveries, last 30 days'}
+      desc={state === 'empty' ? 'Deliveries' : 'Deliveries, last 30 days'}
       className="lg:col-span-2"
     >
       <BarList
@@ -443,7 +420,7 @@ const RegionsCard = ({ view, state }: { view: View; state: ScreenState }) => {
           delta: <TrendDelta size="sm" value={region.delta} />,
         }))}
       />
-    </Widget>
+    </SectionCard>
   );
 };
 
@@ -515,9 +492,10 @@ const CancellationsList = ({ rows }: { rows: Cancellation[] }) => (
 );
 
 const CancellationsCard = ({ view, state }: { view: View; state: ScreenState }) => (
-  <Widget
+  <SectionCard
+    as="h2"
     title="Recent cancellations"
-    subtitle={state === 'empty' ? 'Last 7 days' : view.cancellationsSummary}
+    desc={state === 'empty' ? 'Last 7 days' : view.cancellationsSummary}
     action={
       state === 'content' || state === 'error' || state === 'extreme' ? (
         <ViewAll label="View all" />
@@ -540,7 +518,7 @@ const CancellationsCard = ({ view, state }: { view: View; state: ScreenState }) 
         <CancellationsList rows={view.cancellations} />
       </>
     )}
-  </Widget>
+  </SectionCard>
 );
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -788,6 +766,9 @@ export const LoadingIsBusy: Story = {
     const busy = document.querySelector<HTMLElement>('main [aria-busy="true"], [aria-busy="true"]');
     await expect(busy).not.toBeNull();
     await expect(busy!.querySelectorAll('.animate-pulse').length).toBeGreaterThan(12);
+    // The two widgets that SectionCard loads are busy themselves, not only the page region.
+    await expect(widget(canvas, 'Revenue over time')).toHaveAttribute('aria-busy', 'true');
+    await expect(widget(canvas, 'Subscribers by plan')).toHaveAttribute('aria-busy', 'true');
     // The header is already there.
     await expect(
       canvas.getByRole('heading', { level: 1, name: 'Subscription analytics' })
