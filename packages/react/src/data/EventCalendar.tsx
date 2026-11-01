@@ -29,12 +29,12 @@ export type CalendarEvent = {
 
 export type EventCalendarProps = {
   events: CalendarEvent[];
-  /** Month to show (any day in it). Set it with `onMonthChange` to control the calendar. */
-  month?: Date;
-  /** First month shown when `month` is not set. Defaults to the month of `today`. */
-  defaultMonth?: Date;
-  /** Fires with the first day of the month reached by previous / next / Today. */
-  onMonthChange?: (month: Date) => void;
+  /** Day that sets the period shown (any day in it). Set it with `onDateChange` to control the calendar. */
+  date?: Date;
+  /** Day that sets the first period shown when `date` is not set. Defaults to `today`. */
+  defaultDate?: Date;
+  /** Fires with the first day of the period reached by previous / next / Today. */
+  onDateChange?: (date: Date) => void;
   /** Day highlighted as today, and where the Today button goes. Defaults to now. */
   today?: Date;
   /** Makes each event chip a button. */
@@ -172,14 +172,14 @@ const EventChip = ({
  * its first day and a bare chip on each following day. Below `sm` the weekday names shrink
  * to a letter, the chips to their dots, and picking a day lists its events under the grid.
  *
- * Uncontrolled by default; pass `month` with `onMonthChange` to drive it from
+ * Uncontrolled by default; pass `date` with `onDateChange` to drive it from
  * outside (a side MiniCalendar, or loading events per month).
  */
 export const EventCalendar = ({
   events,
-  month,
-  defaultMonth,
-  onMonthChange,
+  date,
+  defaultDate,
+  onDateChange,
   today = new Date(),
   onEventClick,
   onDayClick,
@@ -188,10 +188,10 @@ export const EventCalendar = ({
   className,
 }: EventCalendarProps) => {
   const [current, goTo] = useControllableState({
-    value: month,
-    defaultValue: () => startOfMonth(defaultMonth ?? today),
-    onChange: onMonthChange,
-    name: 'EventCalendar.month',
+    value: date,
+    defaultValue: () => startOfMonth(defaultDate ?? today),
+    onChange: onDateChange,
+    name: 'EventCalendar.date',
   });
   const [openDay, setOpenDay] = useState<string | null>(null);
   // Below `sm` a cell has room for a dot only: the picked day's events are listed under the grid.

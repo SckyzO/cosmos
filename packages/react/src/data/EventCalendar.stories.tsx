@@ -66,8 +66,8 @@ const meta = {
   // Dates don't survive the JSON controls: keep them out of the panel.
   argTypes: {
     events: { control: false },
-    month: { control: false },
-    defaultMonth: { control: false },
+    date: { control: false },
+    defaultDate: { control: false },
     today: { control: false },
   },
   args: {
@@ -75,7 +75,7 @@ const meta = {
     today: TODAY,
     onEventClick: fn(),
     onDayClick: fn(),
-    onMonthChange: fn(),
+    onDateChange: fn(),
     // The stories read English names: pin the locale rather than follow the browser's.
     locale: 'en-US',
   },
@@ -240,13 +240,13 @@ export const MonthNavigationChecks: Story = {
 
     await userEvent.click(canvas.getByRole('button', { name: 'Next month' }));
     await expect(canvas.getByRole('heading', { name: 'June 2026' })).toBeVisible();
-    await expect(args.onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 5, 1));
+    await expect(args.onDateChange).toHaveBeenLastCalledWith(new Date(2026, 5, 1));
     // June 2026 starts on a Monday: no greyed days before the 1st.
     await expect(canvas.getAllByRole('group')[0]).toHaveAccessibleName('Monday, June 1, 2026');
 
     await userEvent.click(todayButton);
     await expect(canvas.getByRole('heading', { name: 'May 2026' })).toBeVisible();
-    await expect(args.onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 4, 1));
+    await expect(args.onDateChange).toHaveBeenLastCalledWith(new Date(2026, 4, 1));
   },
 };
 
