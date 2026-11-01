@@ -239,6 +239,17 @@ export const Sections: Story = {
   ),
 };
 
+// Where the text of `element` starts, from the start edge of `box` (its padding left out).
+const textStart = (element: Element, box: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  const text = range.getBoundingClientRect();
+  const edge = box.getBoundingClientRect();
+  return Math.round(
+    getComputedStyle(box).direction === 'rtl' ? edge.right - text.right : text.left - edge.left
+  );
+};
+
 export const SectionsChecks: Story = {
   ...Sections,
   tags: ['!dev', '!autodocs'],
@@ -246,15 +257,74 @@ export const SectionsChecks: Story = {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
     const brand = canvas.getByText('Cosmos').closest('.h-\\[72px\\]') as HTMLElement;
     await expect(getComputedStyle(brand).borderBottomWidth).toBe('0px');
-    const section = canvas.getByText('Monitoring').parentElement as HTMLElement;
+    const title = canvas.getByText('Monitoring');
+    const section = title.parentElement as HTMLElement;
     await expect(getComputedStyle(section).borderTopWidth).toBe('0px');
-    await expect(getComputedStyle(section).marginTop).toBe('16px');
+    // A block stands apart, its rows sit close: 18 px above a title (22 with the row above),
+    // rows 32 px tall and 4 px apart.
+    await expect(getComputedStyle(section).paddingTop).toBe('18px');
     const row = canvas.getByRole('button', { name: 'World Map' });
+    const next = canvas.getByRole('button', { name: 'Notifications' });
     await expect(startOffset(row, nav)).toBe(20);
-    await expect(row.getBoundingClientRect().height).toBe(40);
-    await expect(canvas.getByRole('button', { name: 'Notifications' })).toHaveClass(
-      'bg-brand-500/10'
-    );
+    await expect(row.getBoundingClientRect().height).toBe(32);
+    await expect(next.getBoundingClientRect().top - row.getBoundingClientRect().bottom).toBe(4);
+    // The title is written as given, on the column of the row icons.
+    await expect(getComputedStyle(title).textTransform).toBe('none');
+    await expect(textStart(title, nav)).toBe(startOffset(row.querySelector('svg')!, nav));
+    await expect(next).toHaveClass('bg-brand-500/10');
+  },
+};
+
+/**
+ * `gutter="tight"`: the rows 10 px from the edges instead of 20, with the logo and the section
+ * titles following them. The floating Shell uses it.
+ */
+export const TightGutter: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar gutter="tight">
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <SectionedNav />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+export const TightGutterChecks: Story = {
+  ...TightGutter,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const row = canvas.getByRole('button', { name: 'World Map' });
+    const icon = row.querySelector('svg')!;
+    await expect(startOffset(row, nav)).toBe(10);
+    // 10 px, and the sidebar's 1 px edge.
+    await expect(endOffset(row, nav)).toBe(11);
+    // The titles and the logo stay on the column of the icons.
+    await expect(textStart(canvas.getByText('Monitoring'), nav)).toBe(startOffset(icon, nav));
+    const logo = canvas.getByText('Cosmos').closest('[data-sidebar-head]')!.querySelector('div')!;
+    const centre = (el: Element) => startOffset(el, nav) + el.getBoundingClientRect().width / 2;
+    await expect(centre(logo)).toBe(centre(icon));
+  },
+};
+
+/** An app sets its own distance with the variable the gutter goes through. */
+export const GutterFromTheCssVariable: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex h-full [--cosmos-sidebar-gutter:14px]">
+        <Sidebar>
+          <Sidebar.Brand title="Cosmos" />
+          <SectionedNav />
+        </Sidebar>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(startOffset(canvas.getByRole('button', { name: 'World Map' }), nav)).toBe(14);
+    await expect(textStart(canvas.getByText('Monitoring'), nav)).toBe(26);
   },
 };
 
@@ -514,13 +584,13 @@ export const ThreeLevelMenuChecks: Story = {
     await expect(start('Paris-1') - start('Datacenters')).toBe(16);
     // No icon below the top level, and smaller rows as they go down.
     await expect(
-      canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg.h-5')
+      canvas.getByRole('button', { name: 'Datacenters' }).querySelector('svg.size-4')
     ).toBeNull();
     const height = (name: string) =>
       canvas.getByRole('button', { name }).getBoundingClientRect().height;
-    await expect(height('Infrastructure')).toBe(40);
-    await expect(height('Datacenters')).toBe(32);
-    await expect(height('Paris-1')).toBe(28);
+    await expect(height('Infrastructure')).toBe(32);
+    await expect(height('Datacenters')).toBe(28);
+    await expect(height('Paris-1')).toBe(26);
     // A closed sub-menu opens on click, its items one level in.
     await userEvent.click(canvas.getByRole('button', { name: 'Clusters' }));
     await expect(start('prod-eu') - start('Clusters')).toBe(16);
@@ -600,9 +670,9 @@ export const TreeRowsSplitAndTrail: Story = {
 
     // The active pill starts at its own indent: 16 px per level past the first nested label.
     const rack = canvas.getByRole('button', { name: 'Compute Rack C01' });
-    await expect(fromNav(rack)).toBe(86);
-    await expect(fromNav(canvas.getByText('Compute Rack C01'))).toBe(96);
-    await expect(rack.getBoundingClientRect().height).toBe(26);
+    await expect(fromNav(rack)).toBe(82);
+    await expect(fromNav(canvas.getByText('Compute Rack C01'))).toBe(92);
+    await expect(rack.getBoundingClientRect().height).toBe(24);
 
     // The chevron only toggles, without opening the page.
     const chevron = canvas.getByRole('button', { name: 'Room B, services sub-menu' });
