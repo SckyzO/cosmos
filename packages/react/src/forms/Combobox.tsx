@@ -40,6 +40,11 @@ export type ComboboxOption = {
 export type ComboboxProps = {
   label?: ReactNode;
   /**
+   * Names the input when there is no visible `label`, as for a field in a table row or a grid
+   * of lines. A `label` wins: the name is the one on screen.
+   */
+  'aria-label'?: string;
+  /**
    * Selected option value, when controlled. With `allowCustomValue` it is also any text the
    * host holds as the value.
    */
@@ -96,6 +101,7 @@ export type ComboboxProps = {
 
 export const Combobox = ({
   label,
+  'aria-label': ariaLabel,
   value: valueProp,
   defaultValue,
   onChange,
@@ -209,6 +215,7 @@ export const Combobox = ({
           ref={ref}
           id={id}
           role="combobox"
+          aria-label={label ? undefined : ariaLabel}
           aria-expanded={listOpen}
           aria-controls={listboxId}
           aria-autocomplete="list"
