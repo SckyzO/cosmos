@@ -89,6 +89,41 @@ export const CustomBrand: Story = {
   ),
 };
 
+// A short onboarding step: the wide card gives the plan cards room to sit side by side.
+const OnboardingStep = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Pick a plan</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400">You can change it later.</p>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-2">
+      {['Team', 'Business'].map((plan) => (
+        <div key={plan} className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <p className="font-medium text-gray-900 dark:text-white">{plan}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Up to 50 racks.</p>
+        </div>
+      ))}
+    </div>
+    <Button className="w-full">Continue</Button>
+  </div>
+);
+
+export const LargeCard: Story = {
+  render: () => (
+    <AuthLayout size="lg" logo={Activity} title="Cosmos" subtitle="Create your workspace">
+      <FormPlaceholder />
+    </AuthLayout>
+  ),
+};
+
+export const ExtraLargeCard: Story = {
+  render: () => (
+    <AuthLayout size="xl" logo={Activity} title="Cosmos" subtitle="Step 2 of 3">
+      <OnboardingStep />
+    </AuthLayout>
+  ),
+};
+
 // ── Variants ─────────────────────────────────────────────────────────────────
 
 export const Split: Story = {
@@ -349,6 +384,126 @@ export const CoverOnPhone: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   play: async () => {
+    expectNoHorizontalOverflow();
+  },
+};
+
+// ── Size ─────────────────────────────────────────────────────────────────────
+
+// The widths are the Dialog's: 448, 512 and 672px. Each layout holds a `content` block that is the
+// card's only child, so its parent is the card (or the column, in `split`).
+const Content = () => <div data-testid="content" />;
+const widthOf = (canvas: { getByTestId: (id: string) => HTMLElement }, id: string) =>
+  Math.round(
+    canvas
+      .getByTestId(id)
+      .querySelector('[data-testid=content]')!
+      .parentElement!.getBoundingClientRect().width
+  );
+
+export const SizeSetsTheCardWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: () => (
+    <>
+      <div data-testid="default">
+        <AuthLayout>
+          <Content />
+        </AuthLayout>
+      </div>
+      <div data-testid="md">
+        <AuthLayout size="md">
+          <Content />
+        </AuthLayout>
+      </div>
+      <div data-testid="lg">
+        <AuthLayout size="lg">
+          <Content />
+        </AuthLayout>
+      </div>
+      <div data-testid="xl">
+        <AuthLayout size="xl">
+          <Content />
+        </AuthLayout>
+      </div>
+    </>
+  ),
+  play: async ({ canvas }) => {
+    await expect(widthOf(canvas, 'default')).toBe(448);
+    await expect(widthOf(canvas, 'md')).toBe(448);
+    await expect(widthOf(canvas, 'lg')).toBe(512);
+    await expect(widthOf(canvas, 'xl')).toBe(672);
+  },
+};
+
+export const SizeSetsTheSplitColumn: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: () => (
+    <>
+      {(['md', 'lg', 'xl'] as const).map((size) => (
+        <div key={size} data-testid={size}>
+          <AuthLayout variant="split" aside={null} size={size}>
+            <Content />
+          </AuthLayout>
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvas }) => {
+    await expect(widthOf(canvas, 'md')).toBe(448);
+    await expect(widthOf(canvas, 'lg')).toBe(512);
+    await expect(widthOf(canvas, 'xl')).toBe(672);
+  },
+};
+
+export const SizeSetsTheCoverCard: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: () => (
+    <>
+      {(['md', 'lg', 'xl'] as const).map((size) => (
+        <div key={size} data-testid={size}>
+          <AuthLayout variant="cover" size={size}>
+            <Content />
+          </AuthLayout>
+        </div>
+      ))}
+    </>
+  ),
+  play: async ({ canvas }) => {
+    await expect(widthOf(canvas, 'md')).toBe(448);
+    await expect(widthOf(canvas, 'lg')).toBe(512);
+    await expect(widthOf(canvas, 'xl')).toBe(672);
+  },
+};
+
+// `md` keeps its `p-8`; the wider cards start at `p-6` so a 375px screen keeps room for the form.
+export const SizeSetsTheCardPadding: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  render: SizeSetsTheCardWidth.render,
+  play: async ({ canvas }) => {
+    const padding = (id: string) =>
+      getComputedStyle(
+        canvas.getByTestId(id).querySelector('[data-testid=content]')!.parentElement!
+      ).paddingInlineStart;
+    for (const id of ['default', 'md', 'lg', 'xl']) await expect(padding(id)).toBe('32px');
+  },
+};
+
+export const SizeOnPhone: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: SizeSetsTheCardWidth.render,
+  play: async ({ canvas }) => {
+    const padding = (id: string) =>
+      getComputedStyle(
+        canvas.getByTestId(id).querySelector('[data-testid=content]')!.parentElement!
+      ).paddingInlineStart;
+    await expect(padding('md')).toBe('32px');
+    await expect(padding('lg')).toBe('24px');
+    await expect(padding('xl')).toBe('24px');
     expectNoHorizontalOverflow();
   },
 };
