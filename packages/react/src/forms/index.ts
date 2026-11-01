@@ -9,6 +9,7 @@ export * from './FormRow';
 export * from './AvatarUploader';
 export * from './PasswordInput';
 export * from './PasswordPolicyChecker';
+export * from './PermissionGrid';
 export * from './Textarea';
 export * from './Checkbox';
 export * from './Radio';
