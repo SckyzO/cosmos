@@ -319,38 +319,43 @@ export const GetStarted = ({ components }: { components: CatalogComponent[] | nu
 
 const NEWS = [
   {
-    title: 'Density',
+    title: 'Commerce',
     text: (
       <>
-        Compact, default and comfortable rows and controls, from <Code>data-density</Code>.
+        Totals and amounts with <Code>formatMoney</Code>, plan cards, a line items editor and card
+        fields.
       </>
     ),
   },
   {
-    title: 'Right to left',
+    title: 'Sign-in flows',
+    text: 'A new password step, a strength meter, backup codes and a wait before resending.',
+  },
+  {
+    title: 'Permission grid',
+    text: 'Roles against permissions, in groups, with select-all boxes per row, column and group.',
+  },
+  {
+    title: 'Calendar',
+    text: 'EventCalendar adds week and day views, timed events on an hour grid.',
+  },
+  {
+    title: 'Charts',
+    text: 'Loading skeletons, a gauge dial, mirrored bars, SunburstChart, and markers and routes on WorldMap.',
+  },
+  {
+    title: 'Media and editor',
     text: (
       <>
-        Every component mirrors under <Code>dir=&quot;rtl&quot;</Code>, and every story is tested
-        both ways.
+        Lightbox, QrCode in a <Code>/qr</Code> entry, and alignment and images in RichTextEditor.
       </>
     ),
   },
   {
-    title: 'Corner radius',
-    text: (
-      <>
-        From square to round with <Code>data-radius</Code>, every corner on one scale.
-      </>
-    ),
+    title: 'Lists and cards',
+    text: 'StackedList rows that select, star and show unread, NotificationRow, SectionCard states.',
   },
-  { title: 'Customizer', text: 'A side panel with every appearance setting, ready for your app.' },
-  { title: 'Shell layouts', text: 'A boxed 1440px column and a compact 88px sidebar rail.' },
-  {
-    title: 'Monitoring',
-    text: 'JobLog, MonitorRow, uptime bars and stats, a heartbeat bar, and a stale state.',
-  },
-  { title: 'Editor and maps', text: 'RichTextEditor and MapView, each in an entry of its own.' },
-  { title: 'Examples', text: 'Six screen recipes replace the old example pages.' },
+  { title: 'Public pages', text: 'SiteFooter, with columns, a compact line or a banner.' },
 ];
 
 // Cards shown at first on a phone; the others wait behind a button.
@@ -363,8 +368,8 @@ export const WhatsNew = () => {
   return (
     <Section
       id="new"
-      eyebrow="What's new in 0.4.0"
-      title="Density, both reading directions, corners and a Customizer"
+      eyebrow="What's new in 0.6.0"
+      title="Commerce, sign-in flows, a week view and new charts"
       action={
         <a href={`${REPO}/releases`} target="_blank" rel="noreferrer" className={TEXT_LINK}>
           Full release notes <ArrowRight aria-hidden className="inline size-4 rtl:rotate-180" />
@@ -394,10 +399,10 @@ export const WhatsNew = () => {
       >
         {all ? 'Show fewer' : `Show the ${others} others`}
       </Button>
-      <AlertBanner intent="info" title="Coming from 0.3?" className="mt-6">
-        Props and values that named a side now say start and end: <Code>side=&quot;left&quot;</Code>{' '}
-        becomes <Code>side=&quot;start&quot;</Code>, <Code>rightSlot</Code> becomes{' '}
-        <Code>endSlot</Code>. The release notes list each one.
+      <AlertBanner intent="info" title="Coming from 0.5?" className="mt-6">
+        <Code>onClick</Code> on a <Code>StackedList.Item</Code> now belongs to its title, and{' '}
+        <Code>EventCalendar</Code> takes <Code>date</Code>, <Code>defaultDate</Code> and{' '}
+        <Code>onDateChange</Code> instead of the month props. The release notes list each change.
       </AlertBanner>
     </Section>
   );
@@ -460,7 +465,7 @@ const PACKAGES = [
   {
     name: '@sckyzo/cosmos-react',
     version: reactPkg.version,
-    what: 'React 19 components. ESM, CJS and types, with optional code, editor and map entries.',
+    what: 'React 19 components. ESM, CJS and types, with optional code, editor, map and QR entries.',
   },
   {
     name: '@sckyzo/cosmos-charts',

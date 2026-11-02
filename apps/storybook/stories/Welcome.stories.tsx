@@ -414,7 +414,7 @@ export const PhoneDisclosures: Story = {
     expectNoHorizontalOverflow();
 
     const news = () =>
-      within(canvas.getByRole('region', { name: /Density, both/ }))
+      within(canvas.getByRole('region', { name: /Commerce, sign-in flows/ }))
         .getAllByRole('heading', { level: 3 })
         .filter((h) => h.offsetParent);
     await expect(news()).toHaveLength(4);
