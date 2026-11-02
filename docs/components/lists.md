@@ -3,6 +3,77 @@
 Storybook group: Lists, with the upload components of Forms that go with the file tiles and the
 notifications panel of Overlays that goes with the notification row.
 
+## Stacked list rows
+
+Storybook: [Stacked List](https://sckyzo.github.io/cosmos/?path=/docs/lists-stacked-list--docs).
+
+`StackedList.Item` is a row with an avatar, a title and a subtitle. For a triage list (a mail inbox,
+a notifications page) it also takes the state of the row, and the host keeps all of it: the list
+holds no selection, no read flags and no open row of its own.
+
+```tsx
+<StackedList card>
+  <StackedList.Header
+    checked={picked.size === mails.length}
+    indeterminate={picked.size > 0 && picked.size < mails.length}
+    onCheckedChange={(on) => setPicked(on ? new Set(ids) : new Set())}
+    actions={picked.size > 0 && <BulkButtons />}
+  >
+    {picked.size > 0 ? `${picked.size} selected` : 'Inbox'}
+  </StackedList.Header>
+  {mails.map((m) => (
+    <StackedList.Item
+      key={m.id}
+      title={m.from}
+      timestamp={m.time}
+      description={m.text}
+      unread={m.unread}
+      selected={m.id === openId}
+      onClick={() => open(m.id)}
+      checked={picked.has(m.id)}
+      onCheckedChange={(on) => pick(m.id, on)}
+      starred={m.starred}
+      onStarredChange={(starred) => star(m.id, starred)}
+      actions={[
+        { label: 'Archive', icon: Archive, onSelect: () => archive(m.id) },
+        { label: 'Delete', icon: Trash2, intent: 'danger', onSelect: () => remove(m.id) },
+      ]}
+    />
+  ))}
+</StackedList>
+```
+
+- `unread` has three values. `true` is a bold title, a dot in the start gutter and "Unread" for a
+  screen reader; `false` is a lighter title; left out, the row looks as it always did. Set it on every
+  row of an inbox so the titles stay aligned. There is no background tint: the open and the picked
+  rows already use one.
+- `selected` is the row open in a master-detail layout, not a picked row. The title takes
+  `aria-current`, and the row a tint and a 3px bar at its start edge.
+- `checked` / `defaultChecked` / `onCheckedChange` add a checkbox at the start of the row, named
+  "Select" followed by the title. A picked row takes a light accent tint. `starred` /
+  `defaultStarred` / `onStarredChange` add a star toggle (`aria-pressed`, named "Star" and the title);
+  a set star always shows, an empty one shows when the row is hovered or has focus. All three follow
+  the controlled and uncontrolled pattern of the other components.
+- `actions` is data: `label`, `icon`, `onSelect`, and `intent="danger"` or `disabled` when needed.
+  On a wide screen they are icon buttons in place of the `timestamp`, transparent until the row is
+  hovered or has focus. They stay in the tab order and the accessibility tree the whole time, so a
+  keyboard reaches them. Below `sm`, and on a screen with no hover, they fold into one "More
+  actions" menu next to the star. `trailing` stays for anything else.
+- `StackedList.Header` becomes a selection bar when it gets `checked` or `onCheckedChange`: a
+  select-all checkbox (mixed with `indeterminate`), the count as its children, and `actions` at the
+  end for the bulk buttons. It does not wrap, so make those icon-only on a phone.
+- Nothing is nested. The title is the row's one link (`href`) or button (`onClick`), stretched over
+  the row; the checkbox, the star and the actions are its siblings, above it. Each control is one tab
+  stop, in the order they sit on the line: checkbox, title, actions, star. Every control is named
+  after the row, so a list of them reads "Archive Ana Ruiz", "Star Ana Ruiz".
+- A bare list gets no inset from its container: give its rows and its header a `className` such as
+  `px-4`, as in a `SplitView` pane. A `card` list insets them itself.
+
+**`onClick` moved.** On a `StackedList.Item` it used to land on the `<li>`, with no keyboard access.
+It is now the handler of the title, which becomes a button (and with `href`, the link's handler).
+A click on a control, or on text in the row that is not the title, no longer reaches it. Move
+row-level handlers to the title's `onClick`, to `trailing`, or to your own wrapper.
+
 ## Files and uploads
 
 Storybook: [File Tile](https://sckyzo.github.io/cosmos/?path=/docs/lists-file-tile--docs), [Grid List](https://sckyzo.github.io/cosmos/?path=/docs/lists-grid-list--docs), [Upload Queue](https://sckyzo.github.io/cosmos/?path=/docs/forms-upload-queue--docs), [Dropzone](https://sckyzo.github.io/cosmos/?path=/docs/forms-dropzone--docs).

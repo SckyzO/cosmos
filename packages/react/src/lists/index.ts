@@ -3,6 +3,7 @@ export {
   type StackedListProps,
   type StackedListItemProps,
   type StackedListHeaderProps,
+  type StackedListAction,
 } from './StackedList';
 export { Row, type RowProps } from './Row';
 export {
