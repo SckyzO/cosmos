@@ -430,6 +430,8 @@ export const WorldMap = ({
   };
 
   const keyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Alt+ArrowLeft is the browser's Back, Ctrl+Home the page's: not the map's keys.
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const current = focus ? stopId(focus) : lastKey;
     const targets: Record<string, () => Stop | undefined> = {
       ArrowRight: () => walk(stops, current, 1),

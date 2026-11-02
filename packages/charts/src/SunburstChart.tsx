@@ -211,6 +211,8 @@ export const SunburstChart = ({
   const pick = (arc: Arc) => setPath(selectedArc?.id === arc.id ? [] : arc.path);
 
   const keyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Alt+ArrowLeft is the browser's Back, Ctrl+Home the page's: not the chart's keys.
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const from = (event.target as Element).closest<SVGElement>('[data-arc]')?.dataset.arc;
     if (from === undefined) return;
     const direction = KEYS[event.key];
