@@ -701,3 +701,53 @@ export const RangeWithoutPresetsHasNoPresetColumn: Story = {
     await expect(dialog.getByRole('button', { name: 'Done' })).toBeVisible();
   },
 };
+
+const startOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+/**
+ * With no `today`, a preset counts from the start of the day: a range that ended at the minute
+ * the page was drawn would leave out the rest of the day to a host that filters on `<= to`.
+ */
+export const RangePresetsCountFromTheStartOfTheDay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { mode: 'range', label: 'Report period', presets: PRESETS, onChange: fn() },
+  play: async ({ args, canvas }) => {
+    const today = startOfToday();
+    for (const [name, from] of [
+      ['Today', today],
+      ['Last 7 days', daysBefore(today, 6)],
+    ] as const) {
+      await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+      const dialog = await dialogWithPresets();
+      await userEvent.click(dialog.getByRole('button', { name }));
+      await waitFor(() => expect(calendarDialog()).toBeNull());
+      await expect(args.onChange, name).toHaveBeenLastCalledWith({ from, to: today });
+    }
+  },
+};
+
+/** A `today` that carries a time is read as its day: the presets get the start of it. */
+export const RangePresetsDropTheTimeOfToday: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...presetArgs, today: new Date(2026, 0, 15, 14, 30), onChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+    const dialog = await dialogWithPresets();
+    await userEvent.click(dialog.getByRole('button', { name: 'Last 7 days' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 9), to: day(1, 15) });
+  },
+};
+
+/** `presetsLabel` names the group of presets, for a page in another language. */
+export const RangePresetsGroupTakesItsLabel: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...presetArgs, presetsLabel: 'Périodes', defaultOpen: true },
+  play: async () => {
+    const dialog = await dialogWithPresets();
+    await expect(dialog.getByRole('group', { name: 'Périodes' })).toBeVisible();
+    await expect(dialog.queryByRole('group', { name: 'Date range presets' })).toBeNull();
+  },
+};
