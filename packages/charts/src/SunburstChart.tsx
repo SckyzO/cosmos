@@ -4,7 +4,7 @@ import { ChartLegend, useHiddenSeries } from './core/ChartLegend';
 import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, TEXT, seriesColor } from './core/colors';
 import { seriesKey } from './core/data';
-import { ChartEmpty } from './core/frame';
+import { ChartEmpty, ChartSkeleton } from './core/frame';
 import { textOn } from './core/readable';
 import { shares } from './core/shares';
 import { useControllableState } from './core/useControllableState';
@@ -27,12 +27,13 @@ import {
   type Move,
   type SunburstNode,
 } from './sunburst';
-import type { ChartEmptyProps, ChartLegendProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type { SunburstNode } from './sunburst';
 
 export type SunburstChartProps = Omit<ChartProps, 'children'> &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps & {
     /**
      * The first ring: its nodes share the whole circle by their values, and
@@ -79,6 +80,8 @@ export type SunburstChartProps = Omit<ChartProps, 'children'> &
     defaultSelected?: string[];
   };
 
+// The height of the message and of the skeleton, which have no circle to take one from.
+const PLACEHOLDER_HEIGHT = 240;
 // The circle is as large as its box allows, up to this many pixels, unless `height` is set.
 const MAX_SIZE = 380;
 // The sectors that are not on the line from the first ring to the active one.
@@ -139,6 +142,7 @@ export const SunburstChart = ({
   selected,
   defaultSelected,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   height,
   width,
@@ -166,9 +170,17 @@ export const SunburstChart = ({
   );
   const { arcs, total } = partition(data, off);
   const name = ariaLabel ?? `Sunburst chart: ${legendItems.map((item) => item.name).join(', ')}`;
+  if (loading) {
+    return <ChartSkeleton ariaLabel={name} height={height ?? PLACEHOLDER_HEIGHT} width={width} />;
+  }
   if (legendItems.length === 0) {
     return (
-      <ChartEmpty message={emptyMessage} ariaLabel={name} height={height ?? 240} width={width} />
+      <ChartEmpty
+        message={emptyMessage}
+        ariaLabel={name}
+        height={height ?? PLACEHOLDER_HEIGHT}
+        width={width}
+      />
     );
   }
 
