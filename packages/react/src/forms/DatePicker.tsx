@@ -51,6 +51,7 @@ type RangeProps = {
   mode: 'range';
   value?: DateRange;
   defaultValue?: DateRange;
+  /** Called with the range. After the first day picked in the calendar `to` is `undefined`. */
   onChange?: (range: DateRange) => void;
   /** Placeholder for the FROM trigger. */
   fromPlaceholder?: string;
@@ -306,9 +307,13 @@ export const DatePicker = (props: DatePickerProps) => {
     </div>
   );
 
+  // `resetOnSelect`: the first click starts the range (`to` unset) and the calendar stays open, the
+  // second finishes it and closes it; on a finished range a click starts another. Without it
+  // react-day-picker answers the first click with a one-day range, which closed the calendar.
   const rangeCalendar = (
     <Calendar
       mode="range"
+      resetOnSelect
       selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
       onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
       month={month}
