@@ -134,7 +134,9 @@ under them as bars over the days they cover.
   swap in right to left), Page Up and Page Down a week (a day, in the day view), Home and End to
   the first and the last slot of the day, Enter or Space calls `onSlotClick`. A move past the
   period shown goes to the next or the previous one. A status line under the grid says where the
-  cursor is. Without `onSlotClick` the grid is an area you can scroll, and nothing more.
+  cursor is. A click on a slot does not show the cursor, nor the line (the grid is focused by the
+  pointer, not the keyboard): the first key pressed after it does. Without `onSlotClick` the grid is
+  an area you can scroll, and nothing more.
 - **Keyboard and screen readers.** The hour grid is not an ARIA `grid`: events that overlap and run
   over several rows are not cells. Each day is a group named by its date and holds a list of its
   timed events in time order, each a button when `onEventClick` is set; the all-day events are one
@@ -148,6 +150,13 @@ under them as bars over the days they cover.
 - **Dates and times** come from `Intl` in the `locale`: the title of a week is `May 4 – 10, 2026`
   and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
   the locale; the toolbar's labels stay in English.
+
+**Changed since 0.5.0.** `month`, `defaultMonth` and `onMonthChange` are now `date`, `defaultDate`
+and `onDateChange`, with no alias: rename them, and the month view behaves as before (any day of
+the month shows that month, and the callback gets its first day). And a timed event now ends at its
+exact `end`, where 0.5.0 counted the whole day of `end`: one that ends at exactly 00:00 stops on the
+day before, so 22:00 to 00:00 the next day is one day, not two. An event made of dates alone is
+still all-day and still includes the day of its `end`.
 
 ## Totals and amounts
 

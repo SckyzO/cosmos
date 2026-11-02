@@ -144,6 +144,8 @@ export function useOutsideClick<T extends HTMLElement>({
   return { onMouseDownCapture };
 }
 
+const isVisible = (el: HTMLElement) => el.getClientRects().length > 0;
+
 /**
  * Focus management for modal overlays. While `active`:
  * - moves focus to the first focusable element inside the container (or the
@@ -167,7 +169,10 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean): RefObject<
     if (!node) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const focusables = () => Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    // A control drawn with `display: none` (a strip hidden below a breakpoint) takes no focus:
+    // as the first or the last item it would let Tab leave the container, or go nowhere.
+    const focusables = () =>
+      Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(isVisible);
 
     (focusables()[0] ?? node).focus();
 
@@ -200,8 +205,6 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean): RefObject<
 
   return ref;
 }
-
-const isVisible = (el: HTMLElement) => el.getClientRects().length > 0;
 
 export type PortalFocusOptions = {
   /** Panel is open. Focus moves in once the panel element is mounted. */

@@ -471,6 +471,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
         <input
           type="hidden"
           name={name}
+          disabled={disabled}
           value={typeof current === 'string' ? current : JSON.stringify(current)}
         />
       )}

@@ -1556,6 +1556,25 @@ export const DisabledDoesNothing: Story = {
   },
 };
 
+/** In a form, `name` posts the value as on a Textarea: a read-only editor posts it, a disabled one does not. */
+export const FormPostsWhatATextareaPosts: Story = {
+  ...test,
+  render: () => (
+    <form aria-label="Notes">
+      <RichTextEditor name="open" label="Open" defaultValue="<p>Kept</p>" />
+      <RichTextEditor name="fixed" label="Fixed" defaultValue="<p>Fixed</p>" readOnly />
+      <RichTextEditor name="locked" label="Locked" defaultValue="<p>Locked</p>" disabled />
+    </form>
+  ),
+  play: async ({ canvasElement }) => {
+    await textbox(canvasElement, 'Locked');
+    const data = new FormData(canvasElement.querySelector('form')!);
+    await expect(data.get('open')).toContain('Kept');
+    await expect(data.get('fixed')).toContain('Fixed');
+    await expect(data.has('locked')).toBe(false);
+  },
+};
+
 export const BubbleOpensOverTheSelection: Story = {
   ...test,
   tags: ['!dev', '!autodocs'],

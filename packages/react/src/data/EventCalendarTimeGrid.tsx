@@ -227,8 +227,22 @@ export const EventCalendarTimeGrid = ({
   const timeOn = (event: CalendarEvent, day: Date) =>
     !isAllDay(event) && sameDay(event.start, day) ? fmt.time(event.start) : undefined;
 
+  // Where the area is looking now: the first slot under the sticky header.
+  const showCursor = () => {
+    setActive(true);
+    if (shownCursor) return;
+    const first = slotAt((scroller.current?.scrollTop ?? 0) + (top.current?.offsetHeight ?? 0));
+    setCursor({ date: days.find((day) => sameDay(day, now)) ?? days[0], minutes: first });
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!interactive || e.target !== e.currentTarget || e.ctrlKey || e.metaKey || e.altKey) return;
+    // A click focused the area without showing the cursor: the first key shows it.
+    if (!active && (e.key === 'Enter' || e.key === ' ' || CURSOR_KEYS.has(e.key))) {
+      e.preventDefault();
+      showCursor();
+      return;
+    }
     if (!shownCursor) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -247,11 +261,9 @@ export const EventCalendarTimeGrid = ({
 
   const onFocus = (e: FocusEvent<HTMLDivElement>) => {
     if (!interactive || e.target !== e.currentTarget) return;
-    setActive(true);
-    if (shownCursor) return;
-    // Where the area is looking now: the first slot under the sticky header.
-    const first = slotAt((scroller.current?.scrollTop ?? 0) + (top.current?.offsetHeight ?? 0));
-    setCursor({ date: days.find((day) => sameDay(day, now)) ?? days[0], minutes: first });
+    // A click on a slot focuses the area too, and would draw a ring on another slot: only the
+    // keyboard shows the cursor.
+    if (e.currentTarget.matches(':focus-visible')) showCursor();
   };
 
   const onBlur = (e: FocusEvent<HTMLDivElement>) => {

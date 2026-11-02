@@ -992,6 +992,32 @@ export const ThumbnailsAreHiddenOnAPhone: Story = {
   },
 };
 
+/** The strip is hidden below `sm`: Tab wraps round the visible controls, and so does Shift+Tab. */
+export const FocusWrapsRoundTheVisibleControlsOnAPhone: Story = {
+  ...ThumbnailsAreHiddenOnAPhone,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    const viewer = await findViewer();
+    const { prev, next } = arrows(viewer);
+    const close = within(viewer).getByRole('button', { name: 'Close' });
+    await waitFor(() => expect(close).toHaveFocus());
+    // The strip is in the DOM, drawn with `display: none`: the trap must not count its buttons.
+    const strip = viewer.querySelector('[role="group"]')!.parentElement!;
+    await expect(strip.querySelectorAll('button').length).toBe(PHOTOS.length);
+    await expect(getComputedStyle(strip).display).toBe('none');
+    // Tab from the Next arrow, the last visible control, goes back to Close.
+    for (const control of [prev, next, close]) {
+      await userEvent.tab();
+      await expect(control).toHaveFocus();
+    }
+    // Shift+Tab from Close, the first one, goes to the Next arrow.
+    for (const control of [next, prev, close, next]) {
+      await userEvent.tab({ shift: true });
+      await expect(control).toHaveFocus();
+    }
+  },
+};
+
 // The white ring of a control on the dark surface: 2px, the theme's white, no halo. Read from
 // the box-shadow by hand: `expectFocusRing` only knows the colour syntaxes of the accent.
 const expectWhiteRing = async (control: HTMLElement) => {
