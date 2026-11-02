@@ -33,3 +33,17 @@ export {
   type SidebarSectionProps,
 } from './Sidebar';
 export { SidebarToggle, type SidebarToggleProps, type SidebarToggleVariant } from './SidebarToggle';
+export {
+  SiteFooter,
+  type SiteFooterProps,
+  type SiteFooterVariant,
+  type SiteFooterTheme,
+  type SiteFooterBrandProps,
+  type SiteFooterColumnProps,
+  type SiteFooterLinkProps,
+  type SiteFooterTitleProps,
+  type SiteFooterAsideProps,
+  type SiteFooterBannerProps,
+  type SiteFooterBottomProps,
+  type SiteFooterBottomLink,
+} from './SiteFooter';
