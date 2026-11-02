@@ -1024,6 +1024,45 @@ export const KeyboardWalksTheWholeMap: Story = {
 };
 
 /**
+ * A key pressed with Alt, Ctrl or Meta is not the map's: Alt+ArrowLeft is the browser's Back. The
+ * map neither moves the keyboard nor selects with it, and leaves its default alone.
+ */
+export const KeyboardLeavesModifiedKeysAlone: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  play: async ({ canvasElement, args }) => {
+    await waitFor(() => expect(mapOf(canvasElement)).toHaveAttribute('tabindex', '0'));
+    await userEvent.tab();
+    await waitFor(() =>
+      expect(statusOf(canvasElement)).toBe('United States of America, visitors: 48.2k')
+    );
+    const prevented: string[] = [];
+    const note = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) prevented.push(event.key);
+    };
+    document.addEventListener('keydown', note);
+    try {
+      for (const modifier of ['Alt', 'Control', 'Meta']) {
+        for (const key of ['{ArrowRight}', '{ArrowDown}', '{End}', '{PageDown}', '{Enter}']) {
+          await userEvent.keyboard(`{${modifier}>}${key}{/${modifier}}`);
+          await expect(statusOf(canvasElement), `${modifier} ${key}`).toBe(
+            'United States of America, visitors: 48.2k'
+          );
+        }
+      }
+      await expect(args.onSelect).not.toHaveBeenCalled();
+      await expect(prevented).toEqual([]);
+      // The same key without the modifier is the map's.
+      await userEvent.keyboard('{ArrowRight}');
+      await waitFor(() => expect(statusOf(canvasElement)).toBe('Germany, visitors: 21.3k'));
+      await expect(prevented).toEqual(['ArrowRight']);
+    } finally {
+      document.removeEventListener('keydown', note);
+    }
+  },
+};
+
+/**
  * The map keeps its left-to-right layout in a right-to-left page, as a chart's axis does: the
  * legend's steps climb from the left, its "No data" item closes the row at the right with the space
  * before it, and the keys of the sizes and of the widths follow them.

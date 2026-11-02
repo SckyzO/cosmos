@@ -728,6 +728,43 @@ export const KeyboardWalksTheRings: Story = {
   },
 };
 
+/**
+ * A key pressed with Alt, Ctrl or Meta is not the chart's: Alt+ArrowLeft is the browser's Back. The
+ * chart neither moves the keyboard nor selects with it, and leaves its default alone.
+ */
+export const KeyboardLeavesModifiedKeysAlone: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  play: async ({ canvasElement, args }) => {
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(NODES));
+    await userEvent.tab();
+    await waitFor(() => expect(document.activeElement).toBe(arcEl(canvasElement, ID.engineering)));
+    const prevented: string[] = [];
+    const note = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) prevented.push(event.key);
+    };
+    document.addEventListener('keydown', note);
+    try {
+      for (const modifier of ['Alt', 'Control', 'Meta']) {
+        for (const key of ['{ArrowRight}', '{ArrowDown}', '{End}', '{Enter}', '[Space]']) {
+          await userEvent.keyboard(`{${modifier}>}${key}{/${modifier}}`);
+          await expect(document.activeElement, `${modifier} ${key}`).toBe(
+            arcEl(canvasElement, ID.engineering)
+          );
+        }
+      }
+      await expect(args.onSelect).not.toHaveBeenCalled();
+      await expect(prevented).toEqual([]);
+      // The same key without the modifier is the chart's.
+      await userEvent.keyboard('{ArrowRight}');
+      await waitFor(() => expect(document.activeElement).toBe(arcEl(canvasElement, ID.sales)));
+      await expect(prevented).toEqual(['ArrowRight']);
+    } finally {
+      document.removeEventListener('keydown', note);
+    }
+  },
+};
+
 /** `ariaLabel` names the chart for screen readers; without one, the branches name it. */
 export const AccessibleName: Story = {
   tags: ['!dev', '!autodocs'],
