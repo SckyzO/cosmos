@@ -1,6 +1,6 @@
 # Data
 
-Storybook group: Data. Audit entries, kanban boards, KPI cards, totals and amounts, dates and clocks.
+Storybook group: Data. Audit entries, kanban boards, KPI cards, totals and amounts, plan cards, dates and clocks.
 
 ## Audit diff
 
@@ -202,12 +202,73 @@ formatMoney(1234, { currency: 'JPY', locale: 'en-US' }); // "¥1,234"
 - `Amount` sits in a `<bdi>`, so in a right-to-left page the sign and the digits keep their order
   and a minus never jumps to the other side of the figure. It is one line (`whitespace-nowrap`) in
   tabular digits, and takes the colour and weight of the text around it: tint it with `className`.
-- `format` writes the value yourself, in place of `currency`, `locale` and `signDisplay`.
+- `trailingZeroDisplay="stripIfInteger"` writes a whole amount with no decimals (`$24`) and keeps them
+  on the others (`$24.50`), for a price tag; `formatMoney` takes it too. Default `auto`.
+- `format` writes the value yourself, in place of `currency`, `locale`, `signDisplay` and the rest.
 - An unknown locale or a malformed currency code throws a `RangeError`, from `Intl`: a wrong amount
   on a page is worse than an error. The formatters are built once per combination of options.
 
 `TableAmountCell` is an `Amount` with a plus in front of a gain (`signDisplay="exceptZero"`),
 tinted by its sign: a table, a totals block and a sentence write the same figure the same way.
+
+## Plan cards
+
+Storybook: [Plan Card](https://sckyzo.github.io/cosmos/?path=/docs/data-plan-card--docs).
+
+`PlanCard` is one plan of a pricing page or of the plan picker in billing: its name, a short
+description, the price and what it covers, the action right under the price, then the list of what
+the plan includes. Put the cards in a grid; they stack at 375px. The card computes nothing: the
+yearly price, "Save 20%" and the billed total are yours to pass.
+
+```tsx
+<div className="grid gap-6 md:grid-cols-3">
+  <PlanCard
+    name="Pro"
+    description="For a team that ships every week."
+    price={19}
+    currency="USD"
+    locale="en-US"
+    period="/ month"
+    priceNote="Billed $228 yearly"
+    highlighted
+    highlightLabel="Most popular"
+    action={<Button size="lg">Start free trial</Button>}
+    features={[
+      { label: 'Unlimited projects' },
+      { label: 'Priority support' },
+      { label: 'Single sign-on', included: false },
+    ]}
+  />
+  {/* … */}
+</div>
+```
+
+- `price` is a number or a node. A number is written by `formatMoney`, in units and in tabular
+  digits, with no decimals when it is whole (`$24`, but `$24.50`): that is `Amount` with
+  `trailingZeroDisplay="stripIfInteger"`, which `formatMoney` and `Amount` take for any price tag.
+  `currency` and `locale` work as on `Totals`. A node ("Free", "Custom") is drawn as it is, at the
+  size of a figure. `period` follows the price, `priceNote` sits under it.
+- The description keeps room for two lines and the price note for one, so cards side by side keep
+  their actions level, with or without a description or a note. Keep a description to two lines: a
+  third pushes that card's action down.
+- `action` is a `Button`, as wide as the card. Give every action `size="lg"`, the height the card
+  keeps for it; the card draws its own `current` button at that size. `current` marks the plan the
+  customer is on: the card draws a disabled `secondary` button (`currentLabel`, default "Current
+  plan") in place of `action`.
+- `highlighted` is the plan to look at first: an accent outline and a shadow. `highlightLabel`
+  ("Most popular") is a `Ribbon` pill in the corner, and the name wraps before it. Keep the label
+  short.
+- `features` is a list of `{ label, included? }`. An excluded feature gets a muted dash and muted
+  text, never a strike-through. A screen reader hears "Included:" or "Not included:" before each
+  (`includedLabel` and `notIncludedLabel` translate them). `children` go under the list, or in its
+  place.
+- The name is the heading of the card, an `h3` by default (`headingLevel`, 2 to 6). The card is an
+  `<article>` named by it.
+
+The monthly and yearly switch is a `SegmentedControl` above the grid that you place and read: swap
+the prices and the notes you pass. For the billing page, give each card one button and open a
+`ConfirmationModal` from it; there is no radio group and no `selected` prop, because the page
+changes the plan only after the customer confirms. Both pages are stories of `Data/Plan Card`.
 
 ## Dates, clocks and countdowns
 

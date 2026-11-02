@@ -141,3 +141,36 @@ describe('formatMoney: sign', () => {
     expect(plain(formatMoney(-1234.5, o))).toBe('-1 234,50 €');
   });
 });
+
+describe('formatMoney: trailing zeros', () => {
+  const usd = { currency: 'USD', locale: 'en-US' } as const;
+
+  it('drops the decimals of a whole amount with stripIfInteger, and only of a whole one', () => {
+    const o = { ...usd, trailingZeroDisplay: 'stripIfInteger' } as const;
+    expect(formatMoney(24, o)).toBe('$24');
+    expect(formatMoney(24.5, o)).toBe('$24.50');
+    expect(formatMoney(24.99, o)).toBe('$24.99');
+    expect(formatMoney(1234, o)).toBe('$1,234');
+    expect(formatMoney(0, o)).toBe('$0');
+    // A figure that rounds to a whole number is whole.
+    expect(formatMoney(24.001, o)).toBe('$24');
+  });
+
+  it('keeps the sign, the locale and the currency of the amount', () => {
+    const o = { trailingZeroDisplay: 'stripIfInteger' } as const;
+    expect(formatMoney(-12, { ...usd, ...o })).toBe('-$12');
+    expect(formatMoney(12, { ...usd, ...o, signDisplay: 'always' })).toBe('+$12');
+    expect(plain(formatMoney(1200, { currency: 'EUR', locale: 'fr-FR', ...o }))).toBe('1 200 €');
+    expect(formatMoney(12, { locale: 'en-US', ...o })).toBe('12');
+  });
+
+  it('writes every decimal by default and with auto', () => {
+    expect(formatMoney(24, usd)).toBe('$24.00');
+    expect(formatMoney(24, { ...usd, trailingZeroDisplay: 'auto' })).toBe('$24.00');
+  });
+
+  it('keeps each combination apart from the same one without it', () => {
+    expect(formatMoney(24, { ...usd, trailingZeroDisplay: 'stripIfInteger' })).toBe('$24');
+    expect(formatMoney(24, usd)).toBe('$24.00');
+  });
+});

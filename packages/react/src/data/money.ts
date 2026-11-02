@@ -4,6 +4,9 @@
 /** When the sign of an amount is written: the values of `Intl.NumberFormat`'s `signDisplay`. */
 export type MoneySignDisplay = 'auto' | 'always' | 'exceptZero' | 'negative' | 'never';
 
+/** When the zeros after the decimal point are written: `Intl.NumberFormat`'s `trailingZeroDisplay`. */
+export type MoneyTrailingZeroDisplay = 'auto' | 'stripIfInteger';
+
 export type FormatMoneyOptions = {
   /** ISO 4217 code (`'EUR'`): writes the value as a price. Without it, as a plain number. */
   currency?: string;
@@ -15,6 +18,11 @@ export type FormatMoneyOptions = {
    * front of a gain, `always` and `never` write a sign in front of every amount or none.
    */
   signDisplay?: MoneySignDisplay;
+  /**
+   * Default `auto`: every decimal of the currency (`$24.00`). `stripIfInteger` drops them from a
+   * whole amount and only from a whole one (`$24`, but `$24.50`), for a price tag.
+   */
+  trailingZeroDisplay?: MoneyTrailingZeroDisplay;
 };
 
 // Building a formatter costs far more than using one, and a table writes an amount per row: one
@@ -24,16 +32,19 @@ const formatters = new Map<string, Intl.NumberFormat>();
 const formatterFor = (
   currency: string | undefined,
   locale: string | undefined,
-  signDisplay: MoneySignDisplay
+  signDisplay: MoneySignDisplay,
+  trailingZeroDisplay: MoneyTrailingZeroDisplay
 ) => {
-  const key = `${locale ?? ''}|${currency ?? ''}|${signDisplay}`;
+  const key = `${locale ?? ''}|${currency ?? ''}|${signDisplay}|${trailingZeroDisplay}`;
   let formatter = formatters.get(key);
   if (!formatter) {
+    // `negative` and `trailingZeroDisplay` (ES2023) are not in the ES2022 typings the repository
+    // compiles against.
     formatter = new Intl.NumberFormat(locale, {
       ...(currency ? { style: 'currency', currency } : {}),
-      // `negative` (ES2023) is not in the ES2022 typings the repository compiles against.
-      signDisplay: signDisplay as Intl.NumberFormatOptions['signDisplay'],
-    });
+      signDisplay,
+      trailingZeroDisplay,
+    } as Intl.NumberFormatOptions);
     formatters.set(key, formatter);
   }
   return formatter;
@@ -50,5 +61,10 @@ const formatterFor = (
  */
 export const formatMoney = (
   value: number,
-  { currency, locale, signDisplay = 'negative' }: FormatMoneyOptions = {}
-): string => formatterFor(currency, locale, signDisplay).format(value);
+  {
+    currency,
+    locale,
+    signDisplay = 'negative',
+    trailingZeroDisplay = 'auto',
+  }: FormatMoneyOptions = {}
+): string => formatterFor(currency, locale, signDisplay, trailingZeroDisplay).format(value);
