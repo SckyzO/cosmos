@@ -953,6 +953,58 @@ export const WeekKeyboardCursorChecks: Story = {
   },
 };
 
+/** A click on a slot focuses the grid without starting the keyboard cursor: no ring, no status row. A key then shows it. */
+export const WeekPointerFocusKeepsTheCursorHidden: Story = {
+  ...WeekWithSlots,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ args, canvas }) => {
+    const grid = canvas.getByRole('application', { name: /^Schedule for/ });
+    const status = canvas.getByRole('status');
+    const ring = () => grid.querySelector('[class*="ring-2"]');
+    // The status line is visually hidden (1px) until the cursor shows.
+    const rowHeight = () => status.getBoundingClientRect().height;
+    await expect(rowHeight()).toBeLessThanOrEqual(1);
+
+    // The focus a person's click gives: a click made by a test is scripted, and Chromium counts
+    // its focus as the keyboard's.
+    grid.focus({ focusVisible: false } as FocusOptions);
+    await expect(grid).toHaveFocus();
+    await expect(grid.matches(':focus-visible')).toBe(false);
+    const wednesday = canvas.getByRole('group', { name: 'Wednesday, May 6, 2026' });
+    const rect = wednesday.getBoundingClientRect();
+    await userEvent.pointer({
+      keys: '[MouseLeft]',
+      target: wednesday,
+      coords: { clientX: rect.left + 8, clientY: rect.top + ((8 * 60 + 15) / 60) * 48 },
+    });
+    await expect(args.onSlotClick).toHaveBeenLastCalledWith(at(6, 8, 0), { allDay: false });
+    // Let React draw what the focus would have started.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await expect(ring()).toBeNull();
+    await expect(status.textContent).toBe('');
+    await expect(rowHeight()).toBeLessThanOrEqual(1);
+
+    // The first key shows the cursor where the keyboard would have started, the next ones move it.
+    await userEvent.keyboard('{ArrowDown}');
+    await waitFor(() => expect(status).toHaveTextContent(/^Thursday, May 7, 2026, .*Press Enter/));
+    await expect(ring()).not.toBeNull();
+    await expect(rowHeight()).toBeGreaterThan(1);
+    await expect(args.onSlotClick).toHaveBeenCalledTimes(1);
+    const first = plain(status.textContent);
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(plain(status.textContent)).not.toBe(first);
+
+    // Focus from the keyboard shows it at once.
+    grid.blur();
+    await waitFor(() => expect(status.textContent).toBe(''));
+    await expect(ring()).toBeNull();
+    grid.focus();
+    await expect(grid.matches(':focus-visible')).toBe(true);
+    await waitFor(() => expect(status).toHaveTextContent(/Press Enter/));
+    await expect(ring()).not.toBeNull();
+  },
+};
+
 /** Without `onSlotClick` the grid is a region you can scroll with the keyboard, and nothing else. */
 export const WeekWithoutSlotsChecks: Story = {
   ...Week,
