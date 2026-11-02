@@ -25,6 +25,7 @@ import {
   minorUnitDigits,
   subtotalOf,
   summarizeLineItems,
+  type LineControl,
   type LineItem,
   type LineItemsSummary,
 } from './lineItems';
@@ -178,10 +179,10 @@ const ColumnTitle = ({ children, end }: { children: ReactNode; end?: boolean }) 
  * Each amount is rounded to the minor unit of the currency, then the amounts shown are added up,
  * so the subtotal is always what the rows say. Enter in a field does not add a line (it submits
  * the form around, or picks the option of the list): "Add line" is one Tab after the last field.
- * A removed line hands the focus to the item field of the line that took its place, the one
- * before when it was the last, or "Add line" when none is left. A polite status announces a line
- * added or removed, and the subtotal once a cell is committed (focus leaves it, or Enter), never
- * on each keystroke.
+ * A removed line hands the focus to the remove button of the line that took its place, the one
+ * of the new last line when it was the last, or "Add line" when none is left. A polite status
+ * announces a line added or removed, and the subtotal once a cell is committed (focus leaves it,
+ * or Enter), never on each keystroke.
  */
 export const LineItemsEditor = ({
   value: valueProp,
@@ -235,7 +236,7 @@ export const LineItemsEditor = ({
   const rows = useRef(new Map<string, HTMLElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   // Where the focus goes once the render that adds or removes a line has drawn it.
-  const focusRequest = useRef<{ line: string } | 'add' | null>(null);
+  const focusRequest = useRef<{ line: string; control: LineControl } | 'add' | null>(null);
   const serial = useRef(0);
   // The subtotal as last announced (or as it was when the editor mounted).
   const announced = useRef(subtotal);
@@ -252,7 +253,11 @@ export const LineItemsEditor = ({
     const target =
       request === 'add'
         ? addButton.current
-        : rows.current.get(request.line)?.querySelector<HTMLElement>('input');
+        : rows.current
+            .get(request.line)
+            ?.querySelector<HTMLElement>(
+              request.control === 'remove' ? '[data-line-remove]' : 'input'
+            );
     target?.focus();
   });
 
@@ -275,7 +280,7 @@ export const LineItemsEditor = ({
     let id = `${baseId}-${serial.current++}`;
     while (lines.some((line) => line.id === id)) id = `${baseId}-${serial.current++}`;
     setLines([...lines, { id, item: '', quantity: Math.max(1, quantityMin), rate: 0 }]);
-    focusRequest.current = { line: id };
+    focusRequest.current = { line: id, control: 'item' };
     setMessage(labels.added(lines.length + 1, lines.length + 1));
   };
 
@@ -283,7 +288,8 @@ export const LineItemsEditor = ({
     const next = lines.filter((_, i) => i !== index);
     setLines(next);
     const target = focusAfterRemove(index, lines.length);
-    focusRequest.current = target === 'add' ? 'add' : { line: next[target].id };
+    focusRequest.current =
+      target === 'add' ? 'add' : { line: next[target.line].id, control: target.control };
     // Removing moves the subtotal: say it here, not as a second message when the button goes.
     announced.current = subtotalOf(next, digits);
     setMessage(
@@ -469,6 +475,7 @@ export const LineItemsEditor = ({
                 shape="square"
                 icon={Trash2}
                 aria-label={labels.remove(n, line.item)}
+                data-line-remove
                 onClick={() => remove(index)}
               />
             </div>

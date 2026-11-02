@@ -118,14 +118,14 @@ describe('subtotalOf', () => {
 });
 
 describe('focusAfterRemove', () => {
-  it('goes to the line that took the place of the one removed', () => {
-    expect(focusAfterRemove(0, 3)).toBe(0);
-    expect(focusAfterRemove(1, 3)).toBe(1);
+  it('goes to the remove button of the line that took the place of the one removed', () => {
+    expect(focusAfterRemove(0, 3)).toEqual({ line: 0, control: 'remove' });
+    expect(focusAfterRemove(1, 3)).toEqual({ line: 1, control: 'remove' });
   });
 
-  it('goes to the line before when the last one is removed', () => {
-    expect(focusAfterRemove(2, 3)).toBe(1);
-    expect(focusAfterRemove(1, 2)).toBe(0);
+  it('goes to the remove button of the new last line when the last one is removed', () => {
+    expect(focusAfterRemove(2, 3)).toEqual({ line: 1, control: 'remove' });
+    expect(focusAfterRemove(1, 2)).toEqual({ line: 0, control: 'remove' });
   });
 
   it('goes to the add button when no line is left', () => {

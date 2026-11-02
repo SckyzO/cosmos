@@ -251,8 +251,9 @@ const [lines, setLines] = useState<LineItem[]>([]);
 - **Keyboard.** Tab goes through the item, the quantity, the rate and the remove button of each
   line, then "Add line". Enter in a field does what it does without the editor: it submits the form
   around it, or picks the option of the list; it never adds a line. A removed line hands the focus
-  to the item field of the line that took its place, the one before it when the last line is
-  removed, or "Add line" when none is left. A new line takes the focus in its item field.
+  to the remove button of the line that took its place, the one of the new last line when the last
+  line is removed, or "Add line" when none is left (never into a field, which would open the list of
+  a catalogue), so the same key removes the next line. A new line takes the focus in its item field.
 - **Announcements.** A polite status says "Line 3 added. 3 lines." and "Line 2 removed. 2 lines
   left. Subtotal $1,900.00." and, when a cell is committed (focus leaves it, or Enter) and the
   subtotal changed, "Subtotal $1,900.00". Nothing is said on a keystroke.

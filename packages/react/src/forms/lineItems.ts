@@ -82,13 +82,20 @@ export const subtotalOf = (
     0
   );
 
+/** The part of a line the focus can be sent to. */
+export type LineControl = 'item' | 'remove';
+
+/** Where the focus goes: a control of the line at `line`, or the button that adds one. */
+export type FocusTarget = { line: number; control: LineControl } | 'add';
+
 /**
  * Where the focus goes once the line at `removed` (of `count` lines before the removal) is gone:
- * the index, among the lines left, of the one that took its place, the one before when the last
- * line was removed, or `'add'` when none is left. Focus never falls back to the page.
+ * the remove button of the line that took its place (`line` is its index among the lines left),
+ * the one of the new last line when the last was removed, or the add button when none is left.
+ * It is never a field, whose focus would open the list of a catalogue, and never the page.
  */
-export const focusAfterRemove = (removed: number, count: number): number | 'add' =>
-  count <= 1 ? 'add' : Math.min(removed, count - 2);
+export const focusAfterRemove = (removed: number, count: number): FocusTarget =>
+  count <= 1 ? 'add' : { line: Math.min(removed, count - 2), control: 'remove' };
 
 /**
  * The summary of `lines` as the editor reports it to `onChange`, for a page that holds lines it
