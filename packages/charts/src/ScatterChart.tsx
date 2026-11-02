@@ -15,9 +15,15 @@ import { TooltipCard } from './core/ChartTooltip';
 import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { referenceMarks } from './core/reference';
-import type { ChartEmptyProps, ChartLegendProps, ChartProps, ChartReferenceProps } from './types';
+import type {
+  ChartEmptyProps,
+  ChartLegendProps,
+  ChartLoadingProps,
+  ChartProps,
+  ChartReferenceProps,
+} from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -33,6 +39,7 @@ export type BubblePoint = ScatterPoint & {
 
 type XYChartProps = ChartProps &
   ChartEmptyProps &
+  ChartLoadingProps &
   ChartLegendProps &
   ChartReferenceProps & {
     /** Title under the x-axis. Also labels the x value in the tooltip (default `x`). */
@@ -89,6 +96,7 @@ const XYChart = ({
   showLegend,
   legendPosition = 'top',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -98,6 +106,7 @@ const XYChart = ({
   const axis = useAxis();
   const name =
     ariaLabel ?? `${bubbles ? 'Bubble' : 'Scatter'} chart: ${series.map((s) => s.name).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData(series)) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

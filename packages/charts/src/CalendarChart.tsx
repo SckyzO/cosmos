@@ -1,6 +1,6 @@
 import { TEXT_SIZE } from './core/axes';
 import { CALENDAR_DARK_CLASS, CALENDAR_STEPS, MUTED, TEXT } from './core/colors';
-import { ChartEmpty } from './core/frame';
+import { ChartEmpty, ChartSkeleton } from './core/frame';
 import { HeatGrid, type HeatCell } from './core/HeatGrid';
 import {
   cellMetrics,
@@ -15,7 +15,7 @@ import {
   yearSpans,
   type WeekStart,
 } from './calendarGrid';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type CalendarDay = {
   /** The date, `YYYY-MM-DD`. A day listed twice adds up; anything else is ignored. */
@@ -24,7 +24,8 @@ export type CalendarDay = {
 };
 
 export type CalendarChartProps = Omit<ChartProps, 'children' | 'height'> &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     data: CalendarDay[];
     /**
      * First day shown, `YYYY-MM-DD`. Default: the first day of the earliest
@@ -71,10 +72,12 @@ export const CalendarChart = ({
   lessLabel = 'Less',
   moreLabel = 'More',
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   width,
 }: CalendarChartProps) => {
   const name = ariaLabel ?? 'Calendar chart';
+  if (loading) return <ChartSkeleton ariaLabel={name} height={EMPTY_HEIGHT} width={width} />;
   const days = collectDays(data);
   if (!days) {
     return (

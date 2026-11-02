@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, SERIES, TEXT, TRACK, seriesColor } from './core/colors';
-import { ChartEmpty } from './core/frame';
+import { ChartEmpty, ChartSkeleton } from './core/frame';
 import { useElementWidth } from './core/useElementWidth';
 import {
   fadeShare,
@@ -21,12 +21,13 @@ import {
   type FunnelRow,
 } from './funnel';
 import { TEXT_SIZE } from './core/axes';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type { FunnelStage } from './funnel';
 
 export type FunnelChartProps = Omit<ChartProps, 'children'> &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     /**
      * The stages, drawn top to bottom in the order given: the wrapper does not
      * sort them. Each bar is as wide as its value against the largest stage,
@@ -81,6 +82,7 @@ export const FunnelChart = ({
   formatValue = String,
   showConversion = true,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   height,
   width,
@@ -100,6 +102,7 @@ export const FunnelChart = ({
   const [roving, setRoving] = useState(0);
   const [hover, setHover] = useState<Tip>();
   const [focus, setFocus] = useState<Tip>();
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height ?? 160} width={width} />;
   if (isEmptyFunnel(stages)) {
     return (
       <ChartEmpty message={emptyMessage} ariaLabel={name} height={height ?? 160} width={width} />

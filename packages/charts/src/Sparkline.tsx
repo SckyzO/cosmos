@@ -4,12 +4,13 @@ import { ANIMATION } from './core/animation';
 import { ChartTooltip } from './core/ChartTooltip';
 import { BORDER, ERROR, PANEL, SERIES } from './core/colors';
 import { hasNoData, safeId } from './core/data';
-import { ChartEmpty, frameProps } from './core/frame';
+import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { roundedBarShape } from './core/roundedBar';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type SparklineProps = ChartProps &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     data: number[];
     /** A CSS color. Default: the accent. */
     color?: string;
@@ -42,6 +43,7 @@ export const Sparkline = ({
   min,
   max,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 60,
@@ -49,6 +51,7 @@ export const Sparkline = ({
 }: SparklineProps) => {
   const uid = safeId(useId());
   const name = ariaLabel ?? `Trend of ${label}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   if (hasNoData([{ data }])) {
     return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
   }

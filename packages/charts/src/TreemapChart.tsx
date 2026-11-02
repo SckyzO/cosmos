@@ -4,14 +4,15 @@ import { ANIMATION } from './core/animation';
 import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, TEXT, TRACK, seriesColor } from './core/colors';
 import { hasNoData } from './core/data';
-import { ChartEmpty } from './core/frame';
+import { ChartEmpty, ChartSkeleton } from './core/frame';
 import { textOn } from './core/readable';
-import type { ChartEmptyProps, ChartProps } from './types';
+import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
 export type TreemapDatum = { x: string; y: number };
 
 export type TreemapChartProps = ChartProps &
-  ChartEmptyProps & {
+  ChartEmptyProps &
+  ChartLoadingProps & {
     series: { name?: string; data: TreemapDatum[] }[];
     /**
      * Override the default Cosmos palette. Tiles are colored by name, in the
@@ -214,6 +215,7 @@ export const TreemapChart = ({
   formatValue = String,
   showValues = false,
   emptyMessage = 'No data',
+  loading,
   ariaLabel,
   children,
   height = 320,
@@ -223,6 +225,7 @@ export const TreemapChart = ({
   const [roving, setRoving] = useState(0);
   const [ringed, setRinged] = useState<number>();
   const name = ariaLabel ?? `Treemap: ${series.flatMap((s) => s.data.map((d) => d.x)).join(', ')}`;
+  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
   // A tile with no area cannot be seen, hovered or focused.
   const drawn = series.map((s) => ({ ...s, data: s.data.filter((d) => d.y > 0) }));
   if (hasNoData(drawn)) {
