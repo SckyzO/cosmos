@@ -57,6 +57,7 @@ const docsPagesTakingFocus = [
   'overlays-popover--docs',
   'overlays-user-menu--docs',
   'examples-auth-auth-layout--docs',
+  'examples-auth-new-password-form--docs',
   'examples-auth-reset-password-form--docs',
   'examples-auth-sign-in-form--docs',
   'examples-auth-sign-up-form--docs',

@@ -3,18 +3,34 @@ import { Check, X } from 'lucide-react';
 
 export type PasswordRule = { label: string; ok: boolean };
 
+/** What a screen reader hears after each rule, since the tick and the cross are drawn. */
+export type PasswordPolicyLabels = {
+  /** Default "met". */
+  met?: string;
+  /** Default "not met". */
+  notMet?: string;
+};
+
 export type PasswordPolicyCheckerProps = {
   rules: PasswordRule[];
   /** Title shown above the rules list. Pass `null` to hide it. */
   title?: string | null;
+  /**
+   * The words said after each rule's label for a screen reader only ("At least 12 characters, not
+   * met"), to translate with the rest of the page.
+   */
+  labels?: PasswordPolicyLabels;
   className?: string;
 };
 
 export const PasswordPolicyChecker = ({
   rules,
   title = 'Password requirements',
+  labels,
   className,
 }: PasswordPolicyCheckerProps) => {
+  const met = labels?.met ?? 'met';
+  const notMet = labels?.notMet ?? 'not met';
   if (rules.length === 0) {
     return (
       <p className={clsx('text-xs text-gray-500 dark:text-gray-400', className)}>
@@ -40,6 +56,7 @@ export const PasswordPolicyChecker = ({
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span>{r.label}</span>
+              <span className="sr-only">, {r.ok ? met : notMet}</span>
             </li>
           );
         })}
