@@ -103,7 +103,7 @@ const CHARTS: Record<string, Chart> = {
   },
   SunburstChart: {
     plot: '[data-sunburst] svg',
-    filled: () => (
+    filled: (props) => (
       <SunburstChart
         data={[
           {
@@ -115,6 +115,7 @@ const CHARTS: Record<string, Chart> = {
           },
           { name: 'b', value: 4 },
         ]}
+        {...props}
       />
     ),
     empty: (props) => <SunburstChart data={[]} {...props} />,

@@ -862,6 +862,124 @@ export const FixedHeight: Story = {
   },
 };
 
+/**
+ * `loading` draws a skeleton of the chart's height in place of the circle and
+ * the legend, until the data is there: a busy group named by `ariaLabel` and
+ * the word "loading", still under `prefers-reduced-motion`.
+ */
+export const Loading: Story = {
+  args: { loading: true, height: 240, ariaLabel: 'Headcount by division' },
+};
+
+export const LoadingChecks: Story = {
+  ...Loading,
+  tags: ['!dev', '!autodocs'],
+  args: { ...Loading.args, width: 300 },
+  play: async ({ canvasElement }) => {
+    const block = await waitFor(() => {
+      const found = canvasElement.querySelector<HTMLElement>('[data-chart-loading]');
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    await expect(block).toHaveAttribute('aria-busy', 'true');
+    await expect(block).toHaveAttribute('role', 'group');
+    await expect(block).toHaveAccessibleName('Headcount by division, loading');
+    // The size the chart would have: `height` and `width`.
+    const { width, height } = block.getBoundingClientRect();
+    await expect([width, height]).toEqual([300, 240]);
+    // Nothing of the chart: no circle, legend, outline or message.
+    await expect(canvasElement.querySelector('svg')).toBeNull();
+    await expect(canvasElement.querySelector('button')).toBeNull();
+    await expect(canvasElement.querySelector('[data-sunburst]')).toBeNull();
+    await expect(canvasElement.querySelector('[data-chart-empty]')).toBeNull();
+    await expect(canvasElement.querySelectorAll('[aria-busy]')).toHaveLength(1);
+  },
+};
+
+/** A chart that is loading has no data yet, or has some: the skeleton wins over the message and over the data. */
+export const LoadingWinsOverNoDataAndData: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { loading: true, data: [], emptyMessage: 'Nobody here' },
+  render: (args) => (
+    <>
+      <div data-testid="empty">
+        <SunburstChart {...args} />
+      </div>
+      <div data-testid="filled">
+        <SunburstChart {...args} data={ORG} />
+      </div>
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const id of ['empty', 'filled']) {
+      const box = canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+      await waitFor(() => expect(box.querySelector('[data-chart-loading]')).not.toBeNull());
+      await expect(box.querySelector('[data-chart-empty]'), id).toBeNull();
+      await expect(box.querySelector('svg'), id).toBeNull();
+    }
+    await expect(canvasElement.textContent).not.toContain('Nobody here');
+  },
+};
+
+/** The chart goes from its skeleton to its data and back as `loading` flips: its hooks run the same either way. */
+export const LoadingToDataAndBackChecks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ariaLabel: 'Headcount by division' },
+  render: (args) => {
+    const [loading, setLoading] = useState(true);
+    return (
+      <>
+        <button type="button" onClick={() => setLoading((value) => !value)}>
+          Toggle
+        </button>
+        <SunburstChart {...args} loading={loading} />
+      </>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const skeleton = () => canvasElement.querySelector('[data-chart-loading]');
+    const toggle = canvasElement.querySelector('button') as HTMLButtonElement;
+    await waitFor(() => expect(skeleton()).not.toBeNull());
+    await expect(arcs(canvasElement)).toHaveLength(0);
+    // The data comes: the circle and the legend, and nothing busy left.
+    await userEvent.click(toggle);
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(NODES));
+    await expect(skeleton()).toBeNull();
+    await expect(canvasElement.querySelector('[aria-busy="true"]')).toBeNull();
+    await expect(legendNames(canvasElement)).toEqual(DIVISIONS);
+    // Loading again: the skeleton, and the circle gone.
+    await userEvent.click(toggle);
+    await waitFor(() => expect(skeleton()).not.toBeNull());
+    await expect(arcs(canvasElement)).toHaveLength(0);
+    // And the data once more: the chart is whole, with its center and its sectors.
+    await userEvent.click(toggle);
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(NODES));
+    await expect(centerOf(canvasElement)[0]).toBe(String(TOTAL));
+    await expect(skeleton()).toBeNull();
+    toggle.blur();
+  },
+};
+
+/** The skeleton is cut to its box, like the chart it stands for: a narrow screen never scrolls sideways. */
+export const LoadingFitsNarrowBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { loading: true, width: 900 },
+  render: (args) => (
+    <NarrowBox>
+      <SunburstChart {...args} />
+    </NarrowBox>
+  ),
+  play: async ({ canvasElement }) => {
+    const box = canvasElement.querySelector<HTMLElement>('[data-testid="box"]') as HTMLElement;
+    await waitFor(() => expect(canvasElement.querySelector('[data-chart-loading]')).not.toBeNull());
+    await expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+    const block = canvasElement.querySelector('[data-chart-loading]') as Element;
+    await expect(block.getBoundingClientRect().width).toBeLessThanOrEqual(375);
+    const root = document.documentElement;
+    await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+  },
+};
+
 /** No data: `emptyMessage` in place of the circle, and nothing around it. */
 export const Empty: Story = {
   args: { data: [] },
