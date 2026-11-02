@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { Fragment, useState } from 'react';
+import { expect, spyOn, userEvent, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { Input } from './Input';
 import { Select } from './Select';
@@ -86,6 +87,81 @@ export const WordingFollowsTheCount: Story = {
     await expect(three).toHaveTextContent(
       'Fix 3 fields and try again: Organisation name, Booking URL and Plan need attention.'
     );
+  },
+};
+
+/** `message` writes the sentence around the links, for another language or another wording. */
+export const MessageRewordsTheSentence: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <ErrorSummary
+      title="Il y a un problème"
+      errors={ERRORS}
+      message={(count, links) => (
+        <>
+          Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
+          {links.map((link, i) => (
+            <Fragment key={i}>
+              {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
+              {link}
+            </Fragment>
+          ))}
+          .
+        </>
+      )}
+    />
+  ),
+  play: async ({ canvas }) => {
+    const summary = canvas.getByRole('alert');
+    await expect(summary).toHaveTextContent(
+      'Il y a un problèmeCorrigez 3 champs : Organisation name, Booking URL et Plan.'
+    );
+    await expect(within(summary).getAllByRole('link')).toHaveLength(3);
+    await expect(within(summary).getByRole('link', { name: 'Plan' })).toHaveAttribute(
+      'href',
+      '#plan'
+    );
+  },
+};
+
+/** Two entries that name the same field keep a link each, with no key warning from React. */
+export const TwoEntriesForOneFieldKeepBothLinks: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [shown, setShown] = useState(false);
+    return (
+      <div className="max-w-xl space-y-4">
+        <button type="button" onClick={() => setShown(true)}>
+          Submit
+        </button>
+        {shown && (
+          <ErrorSummary
+            errors={[
+              { field: 'stay', label: 'Arrival' },
+              { field: 'stay', label: 'Departure' },
+            ]}
+          />
+        )}
+        <div id="stay">
+          <Input label="Arrival" error="Pick a date." />
+          <Input label="Departure" error="Pick a date." />
+        </div>
+      </div>
+    );
+  },
+  play: async ({ canvas }) => {
+    // The summary mounts on the click, after the spy is in place.
+    const error = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Submit' }));
+      const links = within(canvas.getByRole('alert')).getAllByRole('link');
+      await expect(links.map((link) => link.textContent)).toEqual(['Arrival', 'Departure']);
+      await expect(
+        error.mock.calls.filter(([message]) => String(message).includes('same key'))
+      ).toHaveLength(0);
+    } finally {
+      error.mockRestore();
+    }
   },
 };
 
