@@ -71,8 +71,11 @@ holds no selection, no read flags and no open row of its own.
 
 **`onClick` moved.** On a `StackedList.Item` it used to land on the `<li>`, with no keyboard access.
 It is now the handler of the title, which becomes a button (and with `href`, the link's handler).
-A click on a control, or on text in the row that is not the title, no longer reaches it. Move
-row-level handlers to the title's `onClick`, to `trailing`, or to your own wrapper.
+The title stretches over the whole row, so a click anywhere on it still reaches `onClick`, on the
+description, the avatar, the time or the `meta` as much as on the title itself. The exceptions are
+the controls drawn above it: the checkbox, the star, the actions (and the "More actions" menu they
+fold into) and what `trailing` holds. A click on one of them goes to that control and no longer
+reaches `onClick`: a handler that must see those clicks belongs on your own wrapper.
 
 ## Files and uploads
 
