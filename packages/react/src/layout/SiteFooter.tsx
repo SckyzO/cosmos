@@ -234,7 +234,9 @@ function SiteFooterColumn({ title, className, children, ref, ...rest }: SiteFoot
         {title}
       </SiteFooterTitle>
       <ul className={full ? 'grid gap-2.5' : 'flex flex-wrap gap-x-4 gap-y-1'}>
-        {Children.map(children, (child) => (
+        {/* `toArray` drops the null and false of `{admin && <SiteFooter.Link />}`: `map` alone
+            would give each an empty item. */}
+        {Children.map(Children.toArray(children), (child) => (
           <li>{child}</li>
         ))}
       </ul>
