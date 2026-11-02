@@ -862,6 +862,39 @@ export const FixedHeight: Story = {
   },
 };
 
+// With `height` set and the legend beside the circle, the plot is as tall as the chart: the circle
+// is drawn at what the box allows, 300px here, and the legend stays on its side of it.
+const expectCircleBesideLegend = async (root: HTMLElement, side: 'left' | 'right') => {
+  const chart = root.querySelector('[data-sunburst]') as HTMLElement;
+  await waitFor(() => expect(svgOf(root), 'the circle is not drawn').not.toBeNull());
+  await expect(chart.getBoundingClientRect().height).toBeCloseTo(300, 0);
+  await waitFor(() => expect(plotOf(root).getBoundingClientRect().height).toBeCloseTo(300, 0));
+  await waitFor(() => expect(sizeOf(root)).toBe(300));
+  const circle = svgOf(root).getBoundingClientRect();
+  const legend = (root.querySelector('ul')?.parentElement as HTMLElement).getBoundingClientRect();
+  await expect(legendNames(root)).toEqual(DIVISIONS);
+  if (side === 'left') await expect(legend.right).toBeLessThanOrEqual(circle.left + 1);
+  else await expect(legend.left).toBeGreaterThanOrEqual(circle.right - 1);
+  await expect(legend.top).toBeGreaterThanOrEqual(chart.getBoundingClientRect().top - 1);
+  await expect(legend.bottom).toBeLessThanOrEqual(chart.getBoundingClientRect().bottom + 1);
+};
+
+/** `height` with the legend on the right, the default: the circle takes the height, the legend sits beside it. */
+export const FixedHeightLegendOnTheRight: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: wideViewport,
+  args: { height: 300, legendPosition: 'right' },
+  play: async ({ canvasElement }) => expectCircleBesideLegend(canvasElement, 'right'),
+};
+
+/** `height` with the legend on the left. */
+export const FixedHeightLegendOnTheLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: wideViewport,
+  args: { height: 300, legendPosition: 'left' },
+  play: async ({ canvasElement }) => expectCircleBesideLegend(canvasElement, 'left'),
+};
+
 /**
  * `loading` draws a skeleton of the chart's height in place of the circle and
  * the legend, until the data is there: a busy group named by `ariaLabel` and
