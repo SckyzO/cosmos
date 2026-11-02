@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useId, type ComponentPropsWithoutRef } from 'react';
+import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { Camera, CirclePlay, Mail, Rss, TreePine, type LucideIcon } from 'lucide-react';
 import { expect, within } from 'storybook/test';
 import {
@@ -9,6 +9,7 @@ import {
   expectTextContrast,
   inDirection,
   inEachTheme,
+  mobileViewport,
   startEdge,
   startOffset,
 } from '../storybook-helpers';
@@ -32,13 +33,6 @@ const meta = {
   },
   parameters: {
     layout: 'fullscreen',
-    // The two widths of the stories below: a desktop and a phone. Every story pins one of them.
-    viewport: {
-      options: {
-        desktop1440: { name: 'Desktop (1440×900)', styles: { width: '1440px', height: '900px' } },
-        phone375: { name: 'Phone (375×812)', styles: { width: '375px', height: '812px' } },
-      },
-    },
   },
   tags: ['autodocs'],
   // Storybook 10 requires `args` when the component has required props.
@@ -48,8 +42,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const DESKTOP = { viewport: { value: 'desktop1440', isRotated: false } } as const;
-const PHONE = { viewport: { value: 'phone375', isRotated: false } } as const;
+// The two widths of the stories below, from the viewport presets: a laptop (1366px, past `lg` and
+// the 1280px of the content) and the toolbar's phone (393px, under `sm`). The checks that name
+// 375px measure in a box of that width (`PhoneBox`).
+const DESKTOP = { viewport: { value: 'laptop', isRotated: false } } as const;
+const PHONE = mobileViewport;
 // The checks of a visible story live in a hidden twin: out of the sidebar and the docs page.
 const HIDDEN = ['!dev', '!autodocs'];
 
@@ -203,6 +200,13 @@ const CompactStoreFooter = (props: Omit<StoreFooterProps, 'banner' | 'variant'>)
       <SocialLinks tone={props.theme === 'dark' ? 'dark' : 'light'} />
     </SiteFooter.Aside>
   </SiteFooter>
+);
+
+/** A column of exactly 375px inside the phone viewport, for the checks that name that width. */
+const PhoneBox = ({ children }: { children: ReactNode }) => (
+  <div className="w-[375px]" data-testid="phone">
+    {children}
+  </div>
 );
 
 // ── Stories ──────────────────────────────────────────────────────────────────
@@ -395,8 +399,15 @@ export const MaxWidthNoneFillsTheWindow: Story = {
 export const ColumnsGoTwoByTwoBelowSm: Story = {
   ...DefaultMobile,
   tags: HIDDEN,
+  render: () => (
+    <PhoneBox>
+      <StoreFooter />
+    </PhoneBox>
+  ),
   play: async ({ canvas }) => {
-    expectNoHorizontalOverflow();
+    const box = canvas.getByTestId('phone');
+    await expect(rect(box).width).toBe(375);
+    expectNoHorizontalOverflow(box);
     const [brand, shop, help, studio, aside] = [
       'brand',
       'column-shop',
@@ -422,8 +433,15 @@ export const ColumnsGoTwoByTwoBelowSm: Story = {
 export const CompactDoesNotScrollSidewaysAt375: Story = {
   ...CompactMobile,
   tags: HIDDEN,
+  render: () => (
+    <PhoneBox>
+      <CompactStoreFooter />
+    </PhoneBox>
+  ),
   play: async ({ canvas }) => {
-    expectNoHorizontalOverflow();
+    const box = canvas.getByTestId('phone');
+    await expect(rect(box).width).toBe(375);
+    expectNoHorizontalOverflow(box);
     const footer = rect(canvas.getByRole('contentinfo'));
     for (const id of ['brand', 'column-help', 'bottom', 'aside']) {
       const part = rect(canvas.getByTestId(id));
@@ -436,16 +454,30 @@ export const CompactDoesNotScrollSidewaysAt375: Story = {
 export const BannerDoesNotScrollSidewaysAt375: Story = {
   ...WithBannerMobile,
   tags: HIDDEN,
-  play: async () => {
-    expectNoHorizontalOverflow();
+  render: () => (
+    <PhoneBox>
+      <StoreFooter banner />
+    </PhoneBox>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('phone');
+    await expect(rect(box).width).toBe(375);
+    expectNoHorizontalOverflow(box);
   },
 };
 
 export const DarkDoesNotScrollSidewaysAt375: Story = {
   ...DarkMobile,
   tags: HIDDEN,
-  play: async () => {
-    expectNoHorizontalOverflow();
+  render: () => (
+    <PhoneBox>
+      <StoreFooter theme="dark" />
+    </PhoneBox>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('phone');
+    await expect(rect(box).width).toBe(375);
+    expectNoHorizontalOverflow(box);
   },
 };
 
