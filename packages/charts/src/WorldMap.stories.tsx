@@ -273,6 +273,12 @@ export const OnNarrowScreenChecks: Story = {
   },
 };
 
+/** The same box in a right-to-left page: the text hidden at the map's start edge does not make it scroll sideways. */
+export const OnNarrowScreenRightToLeftChecks: Story = {
+  ...OnNarrowScreenChecks,
+  globals: { direction: 'rtl' },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 const mapOf = (root: HTMLElement) =>
@@ -1014,6 +1020,79 @@ export const KeyboardWalksTheWholeMap: Story = {
     await userEvent.tab();
     await waitFor(() => expect(tooltipOf(canvasElement)).toBeNull());
     await expect(ringOf(canvasElement)).toBeNull();
+  },
+};
+
+/**
+ * A key pressed with Alt, Ctrl or Meta is not the map's: Alt+ArrowLeft is the browser's Back. The
+ * map neither moves the keyboard nor selects with it, and leaves its default alone.
+ */
+export const KeyboardLeavesModifiedKeysAlone: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onSelect: fn() },
+  play: async ({ canvasElement, args }) => {
+    await waitFor(() => expect(mapOf(canvasElement)).toHaveAttribute('tabindex', '0'));
+    await userEvent.tab();
+    await waitFor(() =>
+      expect(statusOf(canvasElement)).toBe('United States of America, visitors: 48.2k')
+    );
+    const prevented: string[] = [];
+    const note = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) prevented.push(event.key);
+    };
+    document.addEventListener('keydown', note);
+    try {
+      for (const modifier of ['Alt', 'Control', 'Meta']) {
+        for (const key of ['{ArrowRight}', '{ArrowDown}', '{End}', '{PageDown}', '{Enter}']) {
+          await userEvent.keyboard(`{${modifier}>}${key}{/${modifier}}`);
+          await expect(statusOf(canvasElement), `${modifier} ${key}`).toBe(
+            'United States of America, visitors: 48.2k'
+          );
+        }
+      }
+      await expect(args.onSelect).not.toHaveBeenCalled();
+      await expect(prevented).toEqual([]);
+      // The same key without the modifier is the map's.
+      await userEvent.keyboard('{ArrowRight}');
+      await waitFor(() => expect(statusOf(canvasElement)).toBe('Germany, visitors: 21.3k'));
+      await expect(prevented).toEqual(['ArrowRight']);
+    } finally {
+      document.removeEventListener('keydown', note);
+    }
+  },
+};
+
+/**
+ * The map keeps its left-to-right layout in a right-to-left page, as a chart's axis does: the
+ * legend's steps climb from the left, its "No data" item closes the row at the right with the space
+ * before it, and the keys of the sizes and of the widths follow them.
+ */
+export const KeepsItsDirection: Story = {
+  ...MarkersAndRoutes,
+  tags: ['!dev', '!autodocs'],
+  globals: { ...wideViewport, direction: 'rtl' },
+  play: async ({ canvasElement }) => {
+    const root = canvasElement.querySelector('[data-world-map]') as HTMLElement;
+    await waitFor(() =>
+      expect(canvasElement.querySelector('[data-world-width-key]')).not.toBeNull()
+    );
+    await expect(document.documentElement.dir).toBe('rtl');
+    await expect(getComputedStyle(root).direction).toBe('ltr');
+    const boxes = (selector: string) =>
+      [...canvasElement.querySelectorAll(selector)].map((el) => el.getBoundingClientRect());
+    const rising = (selector: string) => {
+      const lefts = boxes(selector).map((box) => box.left);
+      return lefts.length > 1 && lefts.every((left, i) => i === 0 || left > lefts[i - 1]);
+    };
+    // The steps, lowest first, then "No data".
+    await expect(legendTexts(canvasElement).at(-1)).toBe('No data');
+    await expect(rising('[data-world-legend] li'), 'the steps').toBe(true);
+    const items = boxes('[data-world-legend] li');
+    const [last, none] = items.slice(-2);
+    await expect(none.left - last.right).toBeGreaterThanOrEqual(11);
+    // The steps, the sizes and the widths, in the order they are written.
+    await expect(rising('[data-world-keys] > *'), 'the keys').toBe(true);
+    await expect(rising('[data-world-size-key] li'), 'the sizes').toBe(true);
   },
 };
 
