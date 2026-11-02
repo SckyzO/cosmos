@@ -151,6 +151,13 @@ under them as bars over the days they cover.
   and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
   the locale; the toolbar's labels stay in English.
 
+**Changed since 0.5.0.** `month`, `defaultMonth` and `onMonthChange` are now `date`, `defaultDate`
+and `onDateChange`, with no alias: rename them, and the month view behaves as before (any day of
+the month shows that month, and the callback gets its first day). And a timed event now ends at its
+exact `end`, where 0.5.0 counted the whole day of `end`: one that ends at exactly 00:00 stops on the
+day before, so 22:00 to 00:00 the next day is one day, not two. An event made of dates alone is
+still all-day and still includes the day of its `end`.
+
 ## Totals and amounts
 
 Storybook: [Totals](https://sckyzo.github.io/cosmos/?path=/docs/data-totals--docs), [Amount](https://sckyzo.github.io/cosmos/?path=/docs/data-amount--docs).
