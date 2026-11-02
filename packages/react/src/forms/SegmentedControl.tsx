@@ -11,7 +11,7 @@ export type SegmentOption<T extends string> = {
   icon?: ElementType;
   /**
    * A count or short text in a small pill after the label. It is part of the radio's accessible
-   * name ("Active 4"). Not shown when the group is `iconOnly`.
+   * name ("Active 4"). Not shown on an option that shows its icon alone (`iconOnly` and an `icon`).
    */
   badge?: ReactNode;
 };
@@ -34,7 +34,7 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   /**
    * Draws each option as its `icon` alone, in a square segment: a grid / list switch. The `label`
    * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus. An
-   * option with no `icon` keeps its text, and `badge` is not shown. Default `false`.
+   * option with no `icon` keeps its text and its `badge`. Default `false`.
    */
   iconOnly?: boolean;
   /** Icon shown in a cell before the first option, for the whole group. */

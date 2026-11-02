@@ -581,7 +581,10 @@ export const IconOnlyArrowKeysMoveSelection: Story = {
   },
 };
 
-/** An option with no icon keeps its text and has no tooltip; the others show their icon. */
+/**
+ * An option with no icon keeps its text, its badge and has no tooltip; the others show their icon
+ * alone, with no badge.
+ */
 export const IconOnlyKeepsTextWithoutAnIcon: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -589,15 +592,15 @@ export const IconOnlyKeepsTextWithoutAnIcon: Story = {
       aria-label="Layout"
       iconOnly
       options={[
-        { value: 'grid', label: 'Grid', icon: LayoutGrid },
-        { value: 'table', label: 'Table' },
+        { value: 'grid', label: 'Grid', icon: LayoutGrid, badge: 2 },
+        { value: 'table', label: 'Table', badge: 3 },
       ]}
       value="grid"
     />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('radio', { name: 'Grid' }).textContent).toBe('');
-    await expect(canvas.getByRole('radio', { name: 'Table' })).toHaveTextContent('Table');
+    await expect(canvas.getByRole('radio', { name: 'Table 3' })).toHaveTextContent('Table3');
     await expect(within(document.body).getAllByRole('tooltip')).toHaveLength(1);
   },
 };
