@@ -4,7 +4,7 @@ Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 
 Recharts-based chart wrappers, documented in Storybook 10.
 
 The [live Storybook](https://sckyzo.github.io/cosmos/) has every component with its docs and
-stories (more than 3,500), in four themes, twelve accent colors, three densities, four corner radii
+stories (more than 4,700), in four themes, twelve accent colors, three densities, four corner radii
 and both reading directions.
 
 <table>
@@ -153,7 +153,8 @@ direction are all a class or an attribute on `<html>`.
   [Monitoring](docs/components/monitoring.md), [Navigation](docs/components/navigation.md),
   [Lists](docs/components/lists.md), [Chat](docs/components/chat.md),
   [Forms](docs/components/forms.md), [Layout](docs/components/layout.md),
-  [Media](docs/components/media.md) and [variants worth knowing](docs/components/variants.md).
+  [Media](docs/components/media.md), [Typography](docs/components/typography.md) and
+  [variants worth knowing](docs/components/variants.md).
 - [Themes and accents specification](docs/specs/themes-accents.md): how the themes and accents are built.
 - [Storybook](https://sckyzo.github.io/cosmos/): every component, with its props, stories and
   accessibility checks. Its Welcome page lists the components by group and has a search.
@@ -177,10 +178,10 @@ Welcome → Examples → Foundations → Typography → Atoms → Actions → Fo
 Notable groups:
 
 - **Examples**: six screen recipes, each in its states (content, empty, loading, error, extreme content, phone): App Shell, List, Detail, Settings, Dashboard and Monitoring; then the auth forms and the error page
-- **Typography**: Headings, Paragraphs, Text, Blockquote, Kbd, Figure, Link, List, Description List, Divider
-- **Forms**: inputs, selects, pickers, upload and editing controls (Input, Select, Combobox, MultiSelect, TagInput, DatePicker, Slider, Rich Text Editor, …)
-- **Media**: Carousel, Image Grid, Video Embed, CodeBlock, code highlighting, Map View, QR Code
-- **Charts**: `@sckyzo/cosmos-charts`, one entry per chart type: line and area, bar and column, donut, radial bar, gauges, realtime, sparkline, treemap, heatmap, calendar, radar, scatter and bubble, box plot, range bar, mixed, bump, funnel, waterfall and world map
+- **Typography**: Headings, Paragraphs, Text, Blockquote, Kbd, Figure, Link, List, Description List, Divider, Highlight
+- **Forms**: inputs, selects, pickers, upload and editing controls (Input, Select, Combobox, MultiSelect, TagInput, DatePicker, Slider, Rich Text Editor, Line Items Editor, Permission Grid, Card Fields, …)
+- **Media**: Carousel, Image Grid, Lightbox, Video Embed, CodeBlock, code highlighting, Map View, QR Code
+- **Charts**: `@sckyzo/cosmos-charts`, one entry per chart type: line and area, bar and column, donut, radial bar, gauges, realtime, sparkline, treemap, sunburst, heatmap, calendar, radar, scatter and bubble, box plot, range bar, mixed, bump, funnel, waterfall and world map
 
 ## Development (everything in Docker)
 
