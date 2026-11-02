@@ -5,6 +5,19 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.5.0...@sckyzo/cosmos-charts@0.6.0) (2026-11-02)
+
+
+### Features
+
+* **charts:** add a loading state to every series chart ([7466c5a](https://github.com/SckyzO/cosmos/commit/7466c5a3ffc175f29832c0ad494e40c30124fee6))
+* **charts:** add loading to SunburstChart ([903dc88](https://github.com/SckyzO/cosmos/commit/903dc887de19fbb4db79c100c85d669ecbccccd7))
+* **charts:** add markers and routes to WorldMap ([d822612](https://github.com/SckyzO/cosmos/commit/d82261292a6ab0502395af9aea253b4688c230b7))
+* **charts:** add mirrored bars to BarChart ([a2692f0](https://github.com/SckyzO/cosmos/commit/a2692f031aff770d2713077f71fa863c89325d31))
+* **charts:** add SunburstChart ([b4d09b5](https://github.com/SckyzO/cosmos/commit/b4d09b53cb3b050c55767f3db2b0684b8d1f4a64))
+* **charts:** add zones and a needle to SemiCircleGauge ([b1d81dd](https://github.com/SckyzO/cosmos/commit/b1d81ddac16255cd5ccc394e9f703554387d6b95))
+* **charts:** draw the gauge needle as a dial ([43cba91](https://github.com/SckyzO/cosmos/commit/43cba9147f706ee746e6e78fe520fb166b219069))
+
 ## [0.5.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.4.1...@sckyzo/cosmos-charts@0.5.0) (2026-11-01)
 
 
