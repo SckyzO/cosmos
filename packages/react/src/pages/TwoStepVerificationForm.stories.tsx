@@ -345,6 +345,20 @@ export const SwitchesToTheBackupEntryAndBack: Story = {
   },
 };
 
+/**
+ * A field focused on mount scrolls the page that embeds the story (the docs page jumped down):
+ * focus moves to the backup field when the person switches to it, never on the first render.
+ */
+export const BackupEntryTakesNoFocusOnMount: Story = {
+  ...BackupCodeEntry,
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.getByLabelText(/^Backup code/)).not.toHaveFocus();
+    await expect(canvasElement.contains(document.activeElement)).toBe(false);
+  },
+};
+
 export const DefaultMethodStartsOnTheBackupEntry: Story = {
   tags: ['!dev', '!autodocs'],
   decorators: standaloneDecorator,
