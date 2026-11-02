@@ -1,6 +1,6 @@
 # Data
 
-Storybook group: Data. Audit entries, kanban boards, KPI cards, dates and clocks.
+Storybook group: Data. Audit entries, kanban boards, KPI cards, totals and amounts, dates and clocks.
 
 ## Audit diff
 
@@ -148,6 +148,66 @@ under them as bars over the days they cover.
 - **Dates and times** come from `Intl` in the `locale`: the title of a week is `May 4 – 10, 2026`
   and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
   the locale; the toolbar's labels stay in English.
+
+## Totals and amounts
+
+Storybook: [Totals](https://sckyzo.github.io/cosmos/?path=/docs/data-totals--docs), [Amount](https://sckyzo.github.io/cosmos/?path=/docs/data-amount--docs).
+
+`Totals` is the block that ends a cart, an order or an invoice: rows of a label and an amount, a
+total that stands out, and an optional note. It adds nothing up, every amount is yours. The
+currency and the locale are set once, on the block.
+
+```tsx
+<Totals currency="USD" locale="en-US" className="ms-auto max-w-sm">
+  <Totals.Row label="Subtotal" value={120} />
+  <Totals.Row label="Discount (SPRING10)" value={-12} />
+  <Totals.Row label="Shipping">Free</Totals.Row>
+  <Totals.Row label="Tax (20%)" value={21.6} />
+  <Totals.Total label="Total" value={129.6} />
+  <Totals.Note>Tax included</Totals.Note>
+</Totals>
+```
+
+- Amounts are in units (`24.5`, not 2450 cents). The figures sit at the end of the line, in tabular
+  digits that line up from one row to the next, and mirror in right to left. The label wraps on a
+  narrow screen, the amount stays on one line.
+- A discount is a negative amount: it shows with a minus sign, in the colour of the other rows, not
+  in red. By default only a negative amount gets a sign (`signDisplay="negative"`), so a subtotal
+  has no plus and an amount that rounds to zero never reads `-$0.00`. `exceptZero`, `always`,
+  `never` and `auto` (the platform's) are one prop away, on `Totals`.
+- `children` of a row replace its `value`, for what is not a figure: "Free", "Calculated at the next
+  step". A row with neither shows no value.
+- `Totals.Total` takes the props of `Totals.Row`; it is the row with the rule above and the larger
+  type. `Totals.Note` is a line of small muted text under the rows, at the end of the line. The block
+  is a list (`<ul role="list">`) of its rows and notes, takes the width of its container and has no
+  live region: if the total changes as the shopper edits the cart, announce it where the edit
+  happens.
+
+`Amount` writes one figure outside a block: in a sentence, a card, a table cell. `formatMoney` gives
+the same text as a string, for a toast, an `aria-label` or an export. Both go through
+`Intl.NumberFormat`, so the separators, the digits, the decimals of the currency (none for `JPY`) and
+the place of the sign follow `locale`.
+
+```tsx
+<Amount value={order.total} currency="EUR" locale="fr-FR" />;
+
+formatMoney(1234.5, { currency: 'USD', locale: 'en-US' }); // "$1,234.50"
+formatMoney(-12.5, { currency: 'EUR', locale: 'fr-FR' }); // "-12,50 €"
+formatMoney(-0.001, { currency: 'USD', locale: 'en-US' }); // "$0.00"
+formatMoney(1234, { currency: 'JPY', locale: 'en-US' }); // "¥1,234"
+```
+
+- Without `currency`, the value is a plain number (up to three decimals). Without `locale`, it is
+  the user's: pass one when the text around it is in a given language, and in tests and stories.
+- `Amount` sits in a `<bdi>`, so in a right-to-left page the sign and the digits keep their order
+  and a minus never jumps to the other side of the figure. It is one line (`whitespace-nowrap`) in
+  tabular digits, and takes the colour and weight of the text around it: tint it with `className`.
+- `format` writes the value yourself, in place of `currency`, `locale` and `signDisplay`.
+- An unknown locale or a malformed currency code throws a `RangeError`, from `Intl`: a wrong amount
+  on a page is worse than an error. The formatters are built once per combination of options.
+
+`TableAmountCell` is an `Amount` with a plus in front of a gain (`signDisplay="exceptZero"`),
+tinted by its sign: a table, a totals block and a sentence write the same figure the same way.
 
 ## Dates, clocks and countdowns
 

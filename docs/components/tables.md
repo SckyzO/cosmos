@@ -55,7 +55,8 @@ row click. `RowActionsMenu` is the ⋮ button and menu of a row, for
 `intent="danger"`. On a narrow screen the edge of a table that scrolls sideways
 fades, and `Table`'s `stickyFirstColumn` pins its first column (`DataTable` pins
 columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
-`TableAmountCell` are the cells tables keep rebuilding.
+`TableAmountCell` are the cells tables keep rebuilding. `TableAmountCell` is an `Amount` (see
+[Data](data.md)) with a plus in front of a gain, so it writes a figure like the rest of the page.
 
 `DataTable`'s column filters can be controlled: `filters`, `defaultFilters` and
 `onFiltersChange(filters)` hold a record of column `key` to the set of selected
