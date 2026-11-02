@@ -71,10 +71,9 @@ the summary names the fields, it does not repeat the messages.
 `errors` is one `{ field, label }` per field in error, in the order of the page. `field` is the
 `id` of the field or of any box around it: the link focuses the field if that is the `id` of the
 input, else the first enabled input, select, textarea or button inside the box. A `field` that is
-not on the page leaves the link to the browser, which follows `#field`. An empty list draws
-nothing, so the summary can stay in the markup. `title` defaults to "There is a problem". It is an
-`AlertBanner` in `danger`, so it is announced as it appears. The sentence around the links ("Fix 3
-fields and try again: … need attention.") is English.
+not on the page leaves the link to the browser, which follows `#field`. Entries that name the same
+field each keep their link. An empty list draws nothing, so the summary can stay in the markup. `title` defaults to "There is a problem". It is an
+`AlertBanner` in `danger`, so it is announced as it appears.
 
 ```tsx
 <ErrorSummary
@@ -86,6 +85,30 @@ fields and try again: … need attention.") is English.
 />
 <Input id="name" label="Organisation name" error="Enter a name." />
 <Input id="booking-url" label="Booking URL" error="That address is taken." />
+```
+
+The sentence around the links ("Fix 3 fields and try again: … need attention.") is English by
+default. `message` writes it for another language or another wording: a function of the number of
+fields and the array of links, one per entry, in order, that returns the sentence. It owns the words
+that depend on the count ("field" and "fields", "needs" and "need") and how the links are joined.
+
+```tsx
+<ErrorSummary
+  title="Nous n’avons pas pu enregistrer"
+  errors={errors}
+  message={(count, links) => (
+    <>
+      Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
+      {links.map((link, i) => (
+        <Fragment key={i}>
+          {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
+          {link}
+        </Fragment>
+      ))}
+      .
+    </>
+  )}
+/>
 ```
 
 ## Date range presets
@@ -112,15 +135,21 @@ const presets: DateRangePreset[] = [
 />;
 ```
 
-Picking a preset does what picking its two days does: the range is set, `onChange` is called with
-it and the calendar closes. The preset whose days are the current range is marked `aria-current` and
+Picking a range by hand takes two clicks. The first day starts it: `onChange` gets
+`{ from, to: undefined }` and the calendar stays open. The second ends it, in order whichever day
+comes first, and the calendar closes; the same day twice is a range of one day. Opened on a finished
+range, a click starts another. Picking a preset does what picking its two days does: the range is
+set, `onChange` is called with it and the calendar closes. The preset whose days are the current range is marked `aria-current` and
 tinted, so reopening the calendar shows which one is on. A preset that falls outside `fromDate` or
-`toDate` is disabled.
+`toDate` is disabled. The group of presets is named "Date range presets" for a screen reader;
+`presetsLabel` replaces it, for a page in another language.
 
 `today` is the date the presets count from, and the one the calendar marks as today; it defaults to
-now. Pass a fixed date in a test, so the days a preset makes do not depend on the day it runs. The
-presets are a column at the end of the calendar from `sm` up, and wrap under it below `sm`; they come
-after the calendar in the tab order at both widths.
+now. A preset gets it at the start of its day, as a day picked in the calendar is, so `to: today`
+covers that whole day for a host that filters on `<= to`. Pass a fixed date in a test, so the days a
+preset makes do not depend on the day it runs. The presets are a column at the end of the calendar
+from `sm` up, and wrap under it below `sm`; they come after the calendar in the tab order at both
+widths.
 
 ## Combobox with typed text
 
@@ -259,8 +288,11 @@ const [lines, setLines] = useState<LineItem[]>([]);
   subtotal changed, "Subtotal $1,900.00". Nothing is said on a keystroke.
 - **Read only.** `readOnly` shows the lines as text, with no field, no "Add line" and no remove
   button, in the same grid and cards, for a sent invoice.
-- **Words.** `labels` replaces every text, including the functions that write the names of the fields
-  and the announcements, for another language.
+- **Words.** `labels` replaces the texts of the editor itself, for another language: the column
+  titles, the item placeholder, "Add line", the subtotal row, the empty state, and the functions
+  that write the names of the fields, the title of a line, the remove buttons and the announcements.
+  The two controls it borrows keep their English names: the toggle of the catalogue's combobox
+  ("Toggle options") and the arrows of the quantity ("Increase", "Decrease").
 
 There is no reordering of lines and no limit on their number.
 

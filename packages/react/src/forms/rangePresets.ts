@@ -6,9 +6,12 @@ export const resolvePreset = (
   today: Date
 ): DateRange => (typeof range === 'function' ? range(today) : range);
 
+/** A date at the start of its calendar day, in local time: what a day picked in the calendar is. */
+export const startOfDay = (date: Date): Date =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
 // A date as its calendar day, so days compare whatever the time of day they carry.
-const dayOf = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+const dayOf = (date: Date) => startOfDay(date).getTime();
 
 /** Whether both ranges are complete and cover the same days. */
 export const sameRange = (a: DateRange, b: DateRange): boolean =>

@@ -15,7 +15,7 @@ import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
 import { RequiredMark } from './RequiredMark';
-import { outsideBounds, resolvePreset, sameRange } from './rangePresets';
+import { outsideBounds, resolvePreset, sameRange, startOfDay } from './rangePresets';
 
 export type DateRange = {
   from: Date | undefined;
@@ -51,6 +51,7 @@ type RangeProps = {
   mode: 'range';
   value?: DateRange;
   defaultValue?: DateRange;
+  /** Called with the range. After the first day picked in the calendar `to` is `undefined`. */
   onChange?: (range: DateRange) => void;
   /** Placeholder for the FROM trigger. */
   fromPlaceholder?: string;
@@ -65,8 +66,13 @@ type RangeProps = {
    */
   presets?: DateRangePreset[];
   /**
+   * The name of the group of `presets`, for assistive technology, to translate with the rest of
+   * the page. Default "Date range presets".
+   */
+  presetsLabel?: string;
+  /**
    * The date `presets` count from, and the one the calendar marks as today. Default now. Pass a
-   * fixed date to test the dates a preset makes.
+   * fixed date to test the dates a preset makes. A preset gets it at the start of its day.
    */
   today?: Date;
 };
@@ -244,8 +250,9 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Presets (range mode) ────────────────────────────────────────────────────
   // Each preset with the range it makes today, whether that is the current range, and whether
-  // the bounds rule it out.
-  const presetToday = range?.today ?? new Date();
+  // the bounds rule it out. A preset counts from the start of the day, as a day picked in the
+  // calendar is: `to: today` at the time the page was drawn would drop the rest of that day.
+  const presetToday = startOfDay(range?.today ?? new Date());
   const presets = (range?.presets ?? []).map((preset) => {
     const made = resolvePreset(preset.range, presetToday);
     return {
@@ -300,9 +307,13 @@ export const DatePicker = (props: DatePickerProps) => {
     </div>
   );
 
+  // `resetOnSelect`: the first click starts the range (`to` unset) and the calendar stays open, the
+  // second finishes it and closes it; on a finished range a click starts another. Without it
+  // react-day-picker answers the first click with a one-day range, which closed the calendar.
   const rangeCalendar = (
     <Calendar
       mode="range"
+      resetOnSelect
       selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
       onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
       month={month}
@@ -433,7 +444,7 @@ export const DatePicker = (props: DatePickerProps) => {
               {rangeCalendar}
               <div
                 role="group"
-                aria-label="Date range presets"
+                aria-label={range?.presetsLabel ?? 'Date range presets'}
                 className="flex flex-wrap gap-1 border-t border-gray-200 p-3 sm:w-44 sm:flex-col sm:flex-nowrap sm:border-s sm:border-t-0 dark:border-gray-700"
               >
                 {presets.map((preset) => (

@@ -146,14 +146,52 @@ export const MismatchShowsWhenLeavingTheField: Story = {
     await userEvent.type(canvas.getByLabelText(/^New password/), 'SuperSecret_123!');
     await userEvent.type(confirm, 'SuperSecret_1');
     // Not on every key.
-    await expect(canvas.queryByText('Passwords don’t match')).toBeNull();
+    await expect(confirm).not.toBeInvalid();
+    // The show/hide button is part of the field; the next stop is out of it.
     await userEvent.tab();
-    await expect(canvas.getByText('Passwords don’t match')).toBeInTheDocument();
+    await userEvent.tab();
     await expect(confirm).toBeInvalid();
+    await expect(confirm).toHaveAccessibleDescription('Passwords don’t match');
     // Once they match, the error gives way to a polite confirmation.
     await userEvent.type(confirm, '23!');
-    await expect(canvas.queryByText('Passwords don’t match')).toBeNull();
-    await expect(canvas.getByText('Passwords match')).toBeInTheDocument();
+    await expect(confirm).not.toBeInvalid();
+    await expect(confirm).toHaveAccessibleDescription('Passwords match');
+  },
+};
+
+/** The field is left, so nothing else says it: an alert announces the mismatch as it appears. */
+export const MismatchIsAnnounced: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  play: async ({ canvas }) => {
+    const confirm = canvas.getByLabelText(/^Confirm password/);
+    await userEvent.type(canvas.getByLabelText(/^New password/), 'SuperSecret_123!');
+    await userEvent.type(confirm, 'SuperSecret_1');
+    await expect(canvas.queryByRole('alert')).toBeNull();
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect(canvas.getByRole('alert')).toHaveTextContent('Passwords don’t match');
+    // Typing the rest takes the alert away, and the polite status takes over.
+    await userEvent.type(confirm, '23!');
+    await expect(canvas.queryByRole('alert')).toBeNull();
+  },
+};
+
+/** Moving the focus to the show/hide button stays in the field: no mismatch shows mid-typing. */
+export const MismatchWaitsForTheWholeFieldToBeLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  play: async ({ canvas }) => {
+    const confirm = canvas.getByLabelText(/^Confirm password/);
+    await userEvent.type(canvas.getByLabelText(/^New password/), 'SuperSecret_123!');
+    await userEvent.type(confirm, 'SuperSecret_1');
+    await userEvent.tab();
+    await expect(canvas.getAllByRole('button', { name: 'Show password' })[1]).toHaveFocus();
+    await expect(confirm).not.toBeInvalid();
+    await expect(canvas.queryByRole('alert')).toBeNull();
+    // Out of the button, the field is left.
+    await userEvent.tab();
+    await expect(confirm).toBeInvalid();
   },
 };
 

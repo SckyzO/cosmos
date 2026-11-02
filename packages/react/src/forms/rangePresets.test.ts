@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { outsideBounds, resolvePreset, sameRange } from './rangePresets';
+import { outsideBounds, resolvePreset, sameRange, startOfDay } from './rangePresets';
 
 // A fixed "today": a Thursday, mid-month, so a preset that counts back crosses nothing odd.
 const TODAY = new Date(2026, 0, 15, 14, 30);
@@ -31,6 +31,19 @@ describe('resolvePreset', () => {
     expect(resolvePreset(sinceMonday, TODAY).from).toEqual(day(1, 12));
     expect(resolvePreset(sinceMonday, new Date(2026, 0, 18)).from).toEqual(day(1, 12));
     expect(resolvePreset(sinceMonday, new Date(2026, 0, 19)).from).toEqual(day(1, 19));
+  });
+});
+
+describe('startOfDay', () => {
+  it('drops the time of day', () => {
+    expect(startOfDay(new Date(2026, 0, 15, 14, 30, 12, 500))).toEqual(day(1, 15));
+  });
+
+  it('keeps a start of day as it is, and leaves its argument alone', () => {
+    expect(startOfDay(day(1, 15))).toEqual(day(1, 15));
+    const given = new Date(2026, 0, 15, 14, 30);
+    startOfDay(given);
+    expect(given).toEqual(TODAY);
   });
 });
 

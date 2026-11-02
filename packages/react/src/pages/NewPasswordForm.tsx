@@ -7,6 +7,8 @@ import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
 import { NewPasswordField } from './NewPasswordField';
 
+const MISMATCH = 'Passwords don’t match';
+
 /** `form` asks for the password, `expired` is a link that no longer works, `done` is the end. */
 export type NewPasswordFormView = 'form' | 'expired' | 'done';
 
@@ -71,6 +73,7 @@ export const NewPasswordForm = ({
 
   const rules = rulesOf(password);
   const matches = confirm === password;
+  const mismatch = confirmLeft && !matches;
   const canSubmit =
     password.length > 0 && rules.every((r) => r.ok) && confirm.length > 0 && matches && !loading;
 
@@ -158,18 +161,30 @@ export const NewPasswordForm = ({
           rules={rules.length > 0 ? rules : null}
           score={strength && password.length > 0 ? strength(password) : undefined}
         />
-        <PasswordInput
-          label="Confirm password"
-          autoComplete="new-password"
-          required
-          placeholder="Repeat the password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          onBlur={() => setConfirmLeft(true)}
-          error={confirmLeft && !matches ? 'Passwords don’t match' : undefined}
-          success={confirm.length > 0 && matches ? 'Passwords match' : undefined}
-          disabled={loading}
-        />
+        {/* The show/hide button is part of the field: only a blur that goes elsewhere leaves it. */}
+        <div
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setConfirmLeft(true);
+          }}
+        >
+          <PasswordInput
+            label="Confirm password"
+            autoComplete="new-password"
+            required
+            placeholder="Repeat the password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            error={mismatch ? MISMATCH : undefined}
+            success={confirm.length > 0 && matches ? 'Passwords match' : undefined}
+            disabled={loading}
+          />
+          {/* The focus has left the field, so its description is not read: the alert says it. */}
+          {mismatch && (
+            <span role="alert" className="sr-only">
+              {MISMATCH}
+            </span>
+          )}
+        </div>
         <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
           {submitLabel}
         </Button>

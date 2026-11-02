@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Link } from '../ui/Link';
 
@@ -17,8 +17,29 @@ export type ErrorSummaryProps = {
   errors: ErrorSummaryItem[];
   /** Bold first line of the banner. Default "There is a problem". */
   title?: string;
+  /**
+   * The sentence under the title, for another language or another wording. It gets the number of
+   * fields and a link to each, in order, and returns what to draw around them:
+   * `(count, links) => <>Corrigez {count} champs : {links}.</>`. Default: "Fix 3 fields and try
+   * again: A, B and C need attention." ("Fix 1 field and try again: A needs attention.").
+   */
+  message?: (count: number, links: ReactNode[]) => ReactNode;
   className?: string;
 };
+
+// The default sentence: the count words it, and the links are joined by commas and an "and".
+const defaultMessage = (count: number, links: ReactNode[]): ReactNode => (
+  <>
+    Fix {count} {count === 1 ? 'field' : 'fields'} and try again:{' '}
+    {links.map((link, i) => (
+      <Fragment key={i}>
+        {i > 0 && (i === links.length - 1 ? ' and ' : ', ')}
+        {link}
+      </Fragment>
+    ))}{' '}
+    {count === 1 ? 'needs' : 'need'} attention.
+  </>
+);
 
 const ENABLED_CONTROL =
   ':is(input:not([type=file]):not([type=hidden]), select, textarea, button):enabled';
@@ -48,28 +69,27 @@ const focusField = (id: string): boolean => {
 export const ErrorSummary = ({
   errors,
   title = 'There is a problem',
+  message = defaultMessage,
   className,
 }: ErrorSummaryProps) => {
   if (errors.length === 0) return null;
+  // Two entries may name the same field (the two ends of a range, one box): `field` alone is not a key.
+  const links = errors.map((entry, i) => (
+    <Link
+      key={`${entry.field}-${i}`}
+      variant="underline"
+      href={`#${entry.field}`}
+      onClick={(e) => {
+        // A field that is not on the page leaves the link to the browser.
+        if (focusField(entry.field)) e.preventDefault();
+      }}
+    >
+      {entry.label}
+    </Link>
+  ));
   return (
     <AlertBanner intent="danger" title={title} className={className}>
-      Fix {errors.length} {errors.length === 1 ? 'field' : 'fields'} and try again:{' '}
-      {errors.map((entry, i) => (
-        <Fragment key={entry.field}>
-          {i > 0 && (i === errors.length - 1 ? ' and ' : ', ')}
-          <Link
-            variant="underline"
-            href={`#${entry.field}`}
-            onClick={(e) => {
-              // A field that is not on the page leaves the link to the browser.
-              if (focusField(entry.field)) e.preventDefault();
-            }}
-          >
-            {entry.label}
-          </Link>
-        </Fragment>
-      ))}{' '}
-      {errors.length === 1 ? 'needs' : 'need'} attention.
+      {message(errors.length, links)}
     </AlertBanner>
   );
 };
