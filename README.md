@@ -144,7 +144,7 @@ direction are all a class or an attribute on `<html>`.
     the pickers, and the theme without Tailwind.
   - [Tokens and focus](docs/guides/tokens.md): the design tokens and the focus utilities.
   - [Charts](docs/guides/charts.md): `@sckyzo/cosmos-charts`.
-  - [Optional entries](docs/guides/optional-entries.md): `/code`, `/editor` and `/map`, and
+  - [Optional entries](docs/guides/optional-entries.md): `/code`, `/editor`, `/map` and `/qr`, and
     their peer dependencies.
   - [Right to left](docs/guides/right-to-left.md).
   - [Refs and routing](docs/guides/refs-and-routing.md): refs, and sending links through your router.
@@ -179,7 +179,7 @@ Notable groups:
 - **Examples**: six screen recipes, each in its states (content, empty, loading, error, extreme content, phone): App Shell, List, Detail, Settings, Dashboard and Monitoring; then the auth forms and the error page
 - **Typography**: Headings, Paragraphs, Text, Blockquote, Kbd, Figure, Link, List, Description List, Divider
 - **Forms**: inputs, selects, pickers, upload and editing controls (Input, Select, Combobox, MultiSelect, TagInput, DatePicker, Slider, Rich Text Editor, …)
-- **Media**: Carousel, Image Grid, Video Embed, CodeBlock, code highlighting, Map View
+- **Media**: Carousel, Image Grid, Video Embed, CodeBlock, code highlighting, Map View, QR Code
 - **Charts**: `@sckyzo/cosmos-charts`, one entry per chart type: line and area, bar and column, donut, radial bar, gauges, realtime, sparkline, treemap, heatmap, calendar, radar, scatter and bubble, box plot, range bar, mixed, bump, funnel, waterfall and world map
 
 ## Development (everything in Docker)

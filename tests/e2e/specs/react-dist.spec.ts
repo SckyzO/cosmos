@@ -65,6 +65,8 @@ test('every JS file starts with the "use client" directive', () => {
       'editor/index.cjs',
       'map/index.js',
       'map/index.cjs',
+      'qr/index.js',
+      'qr/index.cjs',
     ])
   );
   for (const name of files) {
@@ -93,12 +95,13 @@ test('Shiki is an optional peer dependency, and a dev dependency of the repo onl
   expect(pkg.dependencies.shiki).toBeUndefined();
 });
 
-test('the root entry carries no Shiki nor MapLibre and does not import a sub-path entry', () => {
-  for (const name of distFiles().filter((file) => !/^(?:code|editor|map)\//.test(file))) {
+test('the root entry carries no Shiki, MapLibre nor qr and does not import a sub-path entry', () => {
+  for (const name of distFiles().filter((file) => !/^(?:code|editor|map|qr)\//.test(file))) {
     const code = read(`${pkgDir}dist/${name}`);
     expect(code, name).not.toMatch(/shiki/i);
     expect(code, name).not.toMatch(/maplibre/i);
-    expect(code, name).not.toMatch(/['"]\.{1,2}\/(?:code|editor|map)\//);
+    expect(code, name).not.toMatch(/(?:from |require\(|import\()['"]qr['"]/);
+    expect(code, name).not.toMatch(/['"]\.{1,2}\/(?:code|editor|map|qr)\//);
     expect(code, name).not.toContain('@sckyzo/cosmos-react');
   }
 });
@@ -362,6 +365,89 @@ test('the map entry loads in Node as ESM and as CJS, without importing MapLibre'
     { encoding: 'utf8', cwd: pkgDir }
   );
   const expected = { view: 'function', list: 'function', names: ['MapMarkerList', 'MapView'] };
+  expect(JSON.parse(esmOut)).toEqual(expected);
+  expect(JSON.parse(cjsOut)).toEqual(expected);
+});
+
+// ── `@sckyzo/cosmos-react/qr`: the QR code, with `qr` as an optional peer ───────────────────────
+// Same contract as the map entry: the root entry and the other entries never import `qr`, so an app
+// that draws no QR code ships none of it. `qr` ships ES modules only and stays external in both
+// builds: the CommonJS file `require`s it, which Node loads from 20.19 and 22.12 on (the versions
+// `qr` itself asks for), so the entry has to load from CommonJS with it installed.
+
+const qrEsm = `${pkgDir}dist/qr/index.js`;
+const qrCjs = `${pkgDir}dist/qr/index.cjs`;
+
+test('qr is an optional peer dependency kept inside 0.7, and an exact dev dependency of the repo only', () => {
+  const pkg = JSON.parse(read(`${pkgDir}package.json`));
+  // Below 1.0 a minor can break: the range stops at the next one, and a new minor is a deliberate bump.
+  expect(pkg.peerDependencies.qr).toMatch(/^~0\.7\.\d+$/);
+  expect(pkg.peerDependenciesMeta.qr).toEqual({ optional: true });
+  expect(pkg.dependencies.qr).toBeUndefined();
+  expect(pkg.devDependencies.qr).toMatch(/^0\.7\.\d+$/);
+});
+
+test('no entry but the qr one imports qr', () => {
+  for (const name of distFiles().filter((file) => !file.startsWith('qr/'))) {
+    expect(read(`${pkgDir}dist/${name}`), name).not.toMatch(
+      /(?:from |require\(|import\()['"]qr['"]/
+    );
+  }
+});
+
+test('the qr entry resolves for import and require, each with its own types', () => {
+  expectSubpathOwnTypes(pkgDir, 'qr');
+});
+
+test('the qr entry leaves qr external in both builds and copies nothing of the rest in', () => {
+  for (const file of [qrEsm, qrCjs]) {
+    const code = read(file);
+    expect(code, file).toMatch(/(?:from |require\()['"]qr['"]/);
+    // The encoder is not bundled (it is 40 KB on its own), nor a component of the root entry, and
+    // the entry imports no other file of the package.
+    expect(code.length, file).toBeLessThan(10_000);
+    expect(code, file).not.toContain('Clipboard');
+    expect(code, file).not.toMatch(/(?:from |require\()['"]\./);
+    expect(code, file).not.toContain('@sckyzo/cosmos-react');
+  }
+});
+
+test('the qr entry loads in Node as ESM and as CJS, and draws a code from the ESM-only qr', () => {
+  const script = (load: string) => `
+    import { createRequire } from 'node:module';
+    import { createElement } from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    const require = createRequire(import.meta.url);
+    ${load}
+    const html = renderToStaticMarkup(createElement(qr.QrCode, { value: 'hello', label: 'Hello' }));
+    console.log(JSON.stringify({
+      names: Object.keys(qr).sort(),
+      role: /role="img"/.test(html),
+      name: /aria-label="Hello"/.test(html),
+      crisp: /shape-rendering="crispEdges"/.test(html),
+      viewBox: /viewBox="0 0 29 29"/.test(html),
+      paths: html.match(/<path /g)?.length,
+    }));
+  `;
+  const esmOut = execFileSync(
+    process.execPath,
+    ['--input-type=module', '-e', script(`const qr = await import(${JSON.stringify(qrEsm)});`)],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const cjsOut = execFileSync(
+    process.execPath,
+    ['--input-type=module', '-e', script(`const qr = require(${JSON.stringify(qrCjs)});`)],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const expected = {
+    names: ['QrCode'],
+    role: true,
+    name: true,
+    crisp: true,
+    // 21 modules for the smallest symbol, and the four-module quiet zone on each side.
+    viewBox: true,
+    paths: 1,
+  };
   expect(JSON.parse(esmOut)).toEqual(expected);
   expect(JSON.parse(cjsOut)).toEqual(expected);
 });

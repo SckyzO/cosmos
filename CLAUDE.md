@@ -174,7 +174,7 @@ charts ───────────── storybook      (charts imports ne
   `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
   files.
   **Sub-path entries** (`@sckyzo/cosmos-react/code` with `shiki`, `/editor` with Tiptap, `/map`
-  with `maplibre-gl`) are a folder of `src/` built next to the root one (`tsup.config.ts`:
+  with `maplibre-gl`, `/qr` with `qr`) are a folder of `src/` built next to the root one (`tsup.config.ts`:
   `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with their library as an
   optional peer, kept external. The root entry imports none of them. What the folder imports from
   the rest of the package is rewritten to an import of `@sckyzo/cosmos-react` itself
@@ -185,6 +185,9 @@ charts ───────────── storybook      (charts imports ne
   copied in by value (`/editor` takes `useControllableState`, `directionOf`, `mergeRefs`,
   `fieldRecipe`, `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
   never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
+  `qr` ships ESM only and stays external in the CJS build too: `/qr`'s `.cjs` `require`s it, which
+  Node does from 20.19 and 22.12 (what `qr` itself asks for), and the spec loads that build. Its
+  peer range is `~0.7.2`, since a `qr` minor can break below 1.0 (`dependabot.yml` skips its minors).
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a

@@ -56,6 +56,16 @@
         "default": "./dist/map/index.cjs"
       }
     },
+    "./qr": {
+      "import": {
+        "types": "./dist/qr/index.d.ts",
+        "default": "./dist/qr/index.js"
+      },
+      "require": {
+        "types": "./dist/qr/index.d.cts",
+        "default": "./dist/qr/index.cjs"
+      }
+    },
     "./calendar.css": "./calendar.css",
     "./package.json": "./package.json"
   },
@@ -69,6 +79,9 @@
       ],
       "map": [
         "./dist/map/index.d.ts"
+      ],
+      "qr": [
+        "./dist/qr/index.d.ts"
       ]
     }
   },
@@ -97,6 +110,7 @@
     "@tiptap/react": "^3.32.0",
     "@tiptap/starter-kit": "^3.32.0",
     "maplibre-gl": "^5.24.0 || ^6.4.1",
+    "qr": "~0.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "shiki": "^4.5.0"
@@ -118,6 +132,9 @@
       "optional": true
     },
     "maplibre-gl": {
+      "optional": true
+    },
+    "qr": {
       "optional": true
     },
     "shiki": {
@@ -151,6 +168,7 @@
     "@types/react-dom": "^19.3.0",
     "hast-util-to-jsx-runtime": "2.3.6",
     "maplibre-gl": "6.16.0",
+    "qr": "0.7.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "shiki": "4.5.0",

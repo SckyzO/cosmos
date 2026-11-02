@@ -66,7 +66,7 @@ function Example() {
 
 - [Getting started](https://github.com/SckyzO/cosmos/blob/main/docs/getting-started.md): the setup explained, with a Vite and a Next.js recipe.
 - [Appearance](https://github.com/SckyzO/cosmos/blob/main/docs/guides/appearance.md): themes, accents, fonts, density, radius, and the pickers.
-- [Optional entries](https://github.com/SckyzO/cosmos/blob/main/docs/guides/optional-entries.md): `@sckyzo/cosmos-react/code`, `/editor` and `/map`.
+- [Optional entries](https://github.com/SckyzO/cosmos/blob/main/docs/guides/optional-entries.md): `@sckyzo/cosmos-react/code`, `/editor`, `/map` and `/qr`.
 - [Right to left](https://github.com/SckyzO/cosmos/blob/main/docs/guides/right-to-left.md) and [refs and routing](https://github.com/SckyzO/cosmos/blob/main/docs/guides/refs-and-routing.md).
 - [Component notes](https://github.com/SckyzO/cosmos/blob/main/docs/README.md#components): tables, monitoring, logs, chat, the application shell and more.
 - [Charts](https://github.com/SckyzO/cosmos/blob/main/docs/guides/charts.md) live in `@sckyzo/cosmos-charts`, so apps that don't render charts

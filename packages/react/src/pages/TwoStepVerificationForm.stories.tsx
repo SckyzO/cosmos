@@ -10,6 +10,8 @@ import {
   mobileViewport,
   portalDocsParams,
 } from '../storybook-helpers';
+import { QrCode } from '../qr';
+import { SecretValue } from '../ui/SecretValue';
 import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
 
@@ -52,6 +54,49 @@ export const WithError: Story = {
 
 export const Loading: Story = {
   args: { loading: true, sentTo: 'john@example.com', cancelHref: '#' },
+};
+
+// ── Authenticator setup ──────────────────────────────────────────────────────
+
+// What the app is enrolled with: the secret, and the `otpauth://` URI that carries it. The host
+// generates and keeps both.
+const SETUP_KEY = 'JBSWY3DPEHPK3PXP';
+const SETUP_URI = `otpauth://totp/Cosmos:ann@example.com?secret=${SETUP_KEY}&issuer=Cosmos`;
+
+const AuthenticatorSetupSteps = () => (
+  <div className="mb-8 border-b border-[var(--color-border)] pb-8">
+    <p className="text-center text-sm text-[var(--color-text-secondary)]">
+      Scan this code with an authenticator app.
+    </p>
+    <div className="mt-4 flex justify-center">
+      <QrCode value={SETUP_URI} label="Authenticator setup code" />
+    </div>
+    <p className="mt-6 mb-2 text-xs text-[var(--color-text-muted)]">
+      Can&apos;t scan it? Enter this key in the app instead.
+    </p>
+    <SecretValue label="Setup key" value={SETUP_KEY} defaultRevealed />
+  </div>
+);
+
+/**
+ * Enrolling an authenticator app: the QR code from the `/qr` entry, the same secret as text next to
+ * it for a person who can't scan, then the form that confirms the first code.
+ */
+export const AuthenticatorSetup: Story = {
+  parameters: portalDocsParams(940),
+  args: { title: 'Confirm the code', cancelHref: '#' },
+  render: (args) => (
+    <>
+      <AuthenticatorSetupSteps />
+      <TwoStepVerificationForm {...args} />
+    </>
+  ),
+};
+
+/** The code and the key stay inside a phone-wide card. */
+export const AuthenticatorSetupOnAPhone: Story = {
+  ...AuthenticatorSetup,
+  globals: mobileViewport,
 };
 
 export const FourDigits: Story = {
@@ -181,5 +226,37 @@ export const MirrorsInRightToLeft: Story = {
       await expect(getComputedStyle(arrow).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expectReadsLeftToRight(box.querySelector('bdi')!);
     }
+  },
+};
+
+// ── Authenticator setup (checks) ─────────────────────────────────────────────
+
+export const AuthenticatorSetupChecks: Story = {
+  ...AuthenticatorSetup,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const code = canvas.getByRole('img', { name: 'Authenticator setup code' });
+    // The key is text, for a person who can't scan: shown, and named by what it is.
+    const key = canvas.getByRole('group', { name: 'Setup key' });
+    await expect(key).toHaveTextContent(SETUP_KEY);
+    // The order is the order of the task: scan, or type the key, then confirm the first code.
+    const field = canvas.getAllByRole('textbox')[0];
+    await expect(code.compareDocumentPosition(key) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await expect(
+      key.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  },
+};
+
+export const AuthenticatorSetupOnAPhoneChecks: Story = {
+  ...AuthenticatorSetupOnAPhone,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    const code = canvas.getByRole('img', { name: 'Authenticator setup code' });
+    const card = code.closest('form')?.parentElement ?? canvasElement;
+    await expect(code.getBoundingClientRect().right).toBeLessThanOrEqual(
+      card.getBoundingClientRect().right
+    );
+    expectNoHorizontalOverflow(canvasElement);
   },
 };

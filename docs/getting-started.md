@@ -37,8 +37,8 @@ pnpm add @sckyzo/cosmos-theme @sckyzo/cosmos-react
 yarn add @sckyzo/cosmos-theme @sckyzo/cosmos-react
 ```
 
-Add `@sckyzo/cosmos-charts` the same way when you need it. Three entries of `cosmos-react`
-(`/code`, `/editor`, `/map`) need an optional peer dependency each:
+Add `@sckyzo/cosmos-charts` the same way when you need it. Four entries of `cosmos-react`
+(`/code`, `/editor`, `/map`, `/qr`) need an optional peer dependency each:
 [Optional entries](guides/optional-entries.md).
 
 ## Set up the styles
