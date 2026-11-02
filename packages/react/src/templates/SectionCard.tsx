@@ -70,6 +70,8 @@ export type SectionCardProps = {
   error?: boolean;
   /** What went wrong, as the title of the error. Default 'Something went wrong.' */
   errorMessage?: string;
+  /** A line under `errorMessage`: the cause, or what to do next. */
+  errorDescription?: string;
   /** With `error`, shows a "Try again" button that calls it. */
   onRetry?: () => void;
   /** There is nothing to show: a compact `EmptyState` replaces the body. */
@@ -110,6 +112,7 @@ export const SectionCard = ({
   loading = false,
   error = false,
   errorMessage,
+  errorDescription,
   onRetry,
   empty = false,
   emptyMessage = 'No data',
@@ -131,7 +134,7 @@ export const SectionCard = ({
     >
       <Card padding="lg" className="flex flex-1 flex-col">
         {/* Below `sm` the action goes under the title; from `sm` it ends the row. */}
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             {Icon && (
               <div
@@ -150,7 +153,7 @@ export const SectionCard = ({
               >
                 {title}
               </Heading>
-              {desc && <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{desc}</p>}
+              {desc && <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">{desc}</p>}
             </div>
           </div>
           {action && <div className="shrink-0 max-sm:max-w-full max-sm:self-start">{action}</div>}
@@ -165,7 +168,13 @@ export const SectionCard = ({
               <Sk h="h-auto" round="rounded-lg" className="min-h-40 flex-1" />
             </>
           ) : error ? (
-            <ErrorState compact title={errorMessage} onRetry={onRetry} className="flex-1" />
+            <ErrorState
+              compact
+              title={errorMessage}
+              description={errorDescription}
+              onRetry={onRetry}
+              className="flex-1"
+            />
           ) : empty ? (
             <EmptyState compact title={emptyMessage} action={emptyAction} className="flex-1" />
           ) : (

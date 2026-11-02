@@ -165,6 +165,7 @@ error.
   loading={query.isPending}
   error={query.isError}
   errorMessage="Couldn't load revenue"
+  errorDescription="The request timed out."
   onRetry={() => query.refetch()}
   empty={query.data?.length === 0}
   emptyMessage="No revenue yet"
@@ -177,7 +178,7 @@ error.
 - `loading` draws a skeleton, sets `aria-busy` on the card and adds a status line for screen
   readers ("Loading Revenue over time…").
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
-  `errorMessage` defaults to "Something went wrong."
+  `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
 - `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
   under it. For a richer one (an icon, a description), leave `empty` off and pass your own
   `EmptyState` as `children`.
@@ -188,7 +189,8 @@ error.
   has a fixed height: the body keeps that height in every state, so the card does not jump when
   the data arrives.
 
-The title is 16px (it was 14px up to 0.5.0).
+The title is 16px and the description 14px (they were 14px and 12px up to 0.5.0), with 16px
+between the header and the body.
 
 ## Split panes
 
