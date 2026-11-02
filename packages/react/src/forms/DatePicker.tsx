@@ -15,7 +15,7 @@ import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
 import { RequiredMark } from './RequiredMark';
-import { outsideBounds, resolvePreset, sameRange } from './rangePresets';
+import { outsideBounds, resolvePreset, sameRange, startOfDay } from './rangePresets';
 
 export type DateRange = {
   from: Date | undefined;
@@ -66,7 +66,7 @@ type RangeProps = {
   presets?: DateRangePreset[];
   /**
    * The date `presets` count from, and the one the calendar marks as today. Default now. Pass a
-   * fixed date to test the dates a preset makes.
+   * fixed date to test the dates a preset makes. A preset gets it at the start of its day.
    */
   today?: Date;
 };
@@ -244,8 +244,9 @@ export const DatePicker = (props: DatePickerProps) => {
 
   // ── Presets (range mode) ────────────────────────────────────────────────────
   // Each preset with the range it makes today, whether that is the current range, and whether
-  // the bounds rule it out.
-  const presetToday = range?.today ?? new Date();
+  // the bounds rule it out. A preset counts from the start of the day, as a day picked in the
+  // calendar is: `to: today` at the time the page was drawn would drop the rest of that day.
+  const presetToday = startOfDay(range?.today ?? new Date());
   const presets = (range?.presets ?? []).map((preset) => {
     const made = resolvePreset(preset.range, presetToday);
     return {

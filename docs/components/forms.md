@@ -118,9 +118,11 @@ tinted, so reopening the calendar shows which one is on. A preset that falls out
 `toDate` is disabled.
 
 `today` is the date the presets count from, and the one the calendar marks as today; it defaults to
-now. Pass a fixed date in a test, so the days a preset makes do not depend on the day it runs. The
-presets are a column at the end of the calendar from `sm` up, and wrap under it below `sm`; they come
-after the calendar in the tab order at both widths.
+now. A preset gets it at the start of its day, as a day picked in the calendar is, so `to: today`
+covers that whole day for a host that filters on `<= to`. Pass a fixed date in a test, so the days a
+preset makes do not depend on the day it runs. The presets are a column at the end of the calendar
+from `sm` up, and wrap under it below `sm`; they come after the calendar in the tab order at both
+widths.
 
 ## Combobox with typed text
 
