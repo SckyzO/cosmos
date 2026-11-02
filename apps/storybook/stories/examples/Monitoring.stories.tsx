@@ -612,6 +612,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// The order of the stories is the order the story tests run them in, and it matters (#583). Before
+// each story the tests set its viewport (`setViewport` of addon-vitest) while the page of the story
+// before it is still mounted. The extreme state is 7,459 elements: resizing it to the phone's 393px
+// took 1.4 s on a quiet machine, against 20 to 50 ms for any other page, and several times that
+// under load, enough for the first phone story after it to time out at 15 s. So the stories of the
+// extreme state, here and at the end of the file, stay after every story at the phone viewport.
+
 /** An incident, nine nodes out of 96 needing attention, four services, the scheduler, the power draw and the last events. */
 export const Content: Story = {
   args: {},
@@ -631,11 +638,6 @@ export const Loading: Story = {
 export const LoadError: Story = {
   name: 'Error',
   args: { state: 'error' },
-};
-
-/** 2,048 nodes with 300 critical at once, very long hostnames, a long incident title, events that wrap. */
-export const ExtremeContent: Story = {
-  args: { state: 'extreme' },
 };
 
 /** On a phone: the incident and the roll-up come first, the matrix scrolls in a box of its own. */
@@ -664,6 +666,11 @@ export const PhoneNodeChecks: Story = {
   play: async () => {
     expectNoHorizontalOverflow();
   },
+};
+
+/** 2,048 nodes with 300 critical at once, very long hostnames, a long incident title, events that wrap. */
+export const ExtremeContent: Story = {
+  args: { state: 'extreme' },
 };
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -768,6 +775,45 @@ export const ErrorKeepsTheLastDataStale: Story = {
   },
 };
 
+/** On a phone the incident and the roll-up come before the matrix, which scrolls in a box of its own. */
+export const PhoneOrdersIncidentSummaryAndMatrix: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  args: {},
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    const incident = canvas.getByRole('alert');
+    const summary = canvas.getByRole('group', { name: 'System health' });
+    const strip = canvas.getByRole('list', { name: 'Needs attention' });
+    const grid = canvas.getByRole('grid', { name: 'Nodes by rack' });
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING);
+    await expect(before(incident, summary)).toBe(true);
+    await expect(before(summary, strip)).toBe(true);
+    await expect(before(strip, grid)).toBe(true);
+    // The matrix is compacted: a box shorter than its grid, scrolled by itself.
+    const box = grid.parentElement!;
+    await expect(box.scrollHeight).toBeGreaterThan(box.clientHeight);
+  },
+};
+
+/** A node on a phone: the failing check is open to read first, and the healthy groups are folded. */
+export const PhoneNodeListsFailingChecksFirst: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  args: { state: 'node' },
+  play: async ({ canvas }) => {
+    expectNoHorizontalOverflow();
+    await expect(canvas.getByRole('heading', { level: 1, name: 'gpu-b01-04' })).toBeVisible();
+    const checks = canvas.getByRole('region', { name: 'Health checks' });
+    await expect(checks).toHaveTextContent('2 need attention');
+    await expect(within(checks).getByText('GPU 3 · Xid errors')).toBeVisible();
+    await expect(within(checks).getByText('DRAIN: Xid 79 on GPU 3, 0 jobs left')).toBeVisible();
+    // Healthy groups start folded: their checks are not in the way.
+    await expect(within(checks).getByText('InfiniBand ib0')).not.toBeVisible();
+  },
+};
+
 /** Extreme content: the counts, the cut names, the nines, the long incident and events that wrap. */
 export const ExtremeContentHoldsTogether: Story = {
   tags: ['!dev', '!autodocs'],
@@ -835,44 +881,5 @@ export const AttentionChipScrollsItsRackIntoView: Story = {
     await expect(document.activeElement?.getAttribute('aria-label')).toMatch(
       new RegExp(`^${rack.label} on `)
     );
-  },
-};
-
-/** On a phone the incident and the roll-up come before the matrix, which scrolls in a box of its own. */
-export const PhoneOrdersIncidentSummaryAndMatrix: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: mobileViewport,
-  args: {},
-  play: async ({ canvas }) => {
-    expectNoHorizontalOverflow();
-    const incident = canvas.getByRole('alert');
-    const summary = canvas.getByRole('group', { name: 'System health' });
-    const strip = canvas.getByRole('list', { name: 'Needs attention' });
-    const grid = canvas.getByRole('grid', { name: 'Nodes by rack' });
-    const before = (a: Element, b: Element) =>
-      Boolean(a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING);
-    await expect(before(incident, summary)).toBe(true);
-    await expect(before(summary, strip)).toBe(true);
-    await expect(before(strip, grid)).toBe(true);
-    // The matrix is compacted: a box shorter than its grid, scrolled by itself.
-    const box = grid.parentElement!;
-    await expect(box.scrollHeight).toBeGreaterThan(box.clientHeight);
-  },
-};
-
-/** A node on a phone: the failing check is open to read first, and the healthy groups are folded. */
-export const PhoneNodeListsFailingChecksFirst: Story = {
-  tags: ['!dev', '!autodocs'],
-  globals: mobileViewport,
-  args: { state: 'node' },
-  play: async ({ canvas }) => {
-    expectNoHorizontalOverflow();
-    await expect(canvas.getByRole('heading', { level: 1, name: 'gpu-b01-04' })).toBeVisible();
-    const checks = canvas.getByRole('region', { name: 'Health checks' });
-    await expect(checks).toHaveTextContent('2 need attention');
-    await expect(within(checks).getByText('GPU 3 · Xid errors')).toBeVisible();
-    await expect(within(checks).getByText('DRAIN: Xid 79 on GPU 3, 0 jobs left')).toBeVisible();
-    // Healthy groups start folded: their checks are not in the way.
-    await expect(within(checks).getByText('InfiniBand ib0')).not.toBeVisible();
   },
 };
