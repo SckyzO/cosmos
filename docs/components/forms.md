@@ -71,10 +71,9 @@ the summary names the fields, it does not repeat the messages.
 `errors` is one `{ field, label }` per field in error, in the order of the page. `field` is the
 `id` of the field or of any box around it: the link focuses the field if that is the `id` of the
 input, else the first enabled input, select, textarea or button inside the box. A `field` that is
-not on the page leaves the link to the browser, which follows `#field`. An empty list draws
-nothing, so the summary can stay in the markup. `title` defaults to "There is a problem". It is an
-`AlertBanner` in `danger`, so it is announced as it appears. The sentence around the links ("Fix 3
-fields and try again: … need attention.") is English.
+not on the page leaves the link to the browser, which follows `#field`. Entries that name the same
+field each keep their link. An empty list draws nothing, so the summary can stay in the markup. `title` defaults to "There is a problem". It is an
+`AlertBanner` in `danger`, so it is announced as it appears.
 
 ```tsx
 <ErrorSummary
@@ -86,6 +85,30 @@ fields and try again: … need attention.") is English.
 />
 <Input id="name" label="Organisation name" error="Enter a name." />
 <Input id="booking-url" label="Booking URL" error="That address is taken." />
+```
+
+The sentence around the links ("Fix 3 fields and try again: … need attention.") is English by
+default. `message` writes it for another language or another wording: a function of the number of
+fields and the array of links, one per entry, in order, that returns the sentence. It owns the words
+that depend on the count ("field" and "fields", "needs" and "need") and how the links are joined.
+
+```tsx
+<ErrorSummary
+  title="Nous n’avons pas pu enregistrer"
+  errors={errors}
+  message={(count, links) => (
+    <>
+      Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
+      {links.map((link, i) => (
+        <Fragment key={i}>
+          {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
+          {link}
+        </Fragment>
+      ))}
+      .
+    </>
+  )}
+/>
 ```
 
 ## Date range presets
