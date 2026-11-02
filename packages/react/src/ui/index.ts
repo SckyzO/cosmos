@@ -41,6 +41,7 @@ export * from './LinkProvider';
 export * from './List';
 export * from './Accordion';
 export * from './ImageGrid';
+export * from './Lightbox';
 export * from './VideoEmbed';
 export * from './Toast';
 export * from './AnnouncementBar';

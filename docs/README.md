@@ -41,7 +41,7 @@ Storybook page.
 | [Chat](components/chat.md)                       | Chat building blocks, the chatbot, rich replies                                       |
 | [Forms](components/forms.md)                     | The slider, the color and phone fields, the error summary, date range presets         |
 | [Layout](components/layout.md)                   | The application shell, search in the topbar, layout modes, split panes, auth layouts  |
-| [Media](components/media.md)                     | `CodeBlock`                                                                           |
+| [Media](components/media.md)                     | `CodeBlock`, `Lightbox`                                                               |
 | [Typography](components/typography.md)           | `Highlight`                                                                           |
 | [Variants worth knowing](components/variants.md) | Props that are easy to miss                                                           |
 
