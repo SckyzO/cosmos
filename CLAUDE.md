@@ -217,8 +217,8 @@ charts ───────────── storybook      (charts imports ne
     once a release fixes it).
   - **Series are keyed `s0`, `s1`…** (`seriesKey`, `toRows`): a name with a dot is a path to Recharts.
   - **`children`** (`ChartProps`): Recharts elements rendered inside the chart (reference line, brush,
-    extra axis), except on `HeatmapChart`, `CalendarChart`, `FunnelChart` and `WorldMap`, drawn in HTML
-    and SVG of their own. Tooltip and legend are React text, so nothing is escaped by hand. Every
+    extra axis), except on `HeatmapChart`, `CalendarChart`, `FunnelChart`, `SunburstChart` and
+    `WorldMap`, drawn in HTML and SVG of their own. Tooltip and legend are React text, so nothing is escaped by hand. Every
     wrapper takes `ariaLabel`; the series charts add `emptyMessage`, the ones with a legend
     `legendPosition` (`src/types.ts`).
   - **Stories**: one `<Name>.stories.tsx` per wrapper, helpers in `src/storybook-recharts.tsx` (the

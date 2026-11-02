@@ -9,6 +9,7 @@ export * from './StrokedGauge';
 export * from './DonutChart';
 export * from './Sparkline';
 export * from './TreemapChart';
+export * from './SunburstChart';
 export * from './BarChart';
 export * from './HeatmapChart';
 export * from './CalendarChart';
