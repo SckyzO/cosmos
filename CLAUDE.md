@@ -252,6 +252,11 @@ Miss any step and it compiles fine, shows up in Storybook, and is unreachable fr
 2. add `export * from './Foo'` to `packages/react/src/<group>/index.ts`
 3. ensure the group is re-exported from `packages/react/src/index.ts`
 
+Keep a logic module's name apart from its component's: `permissionGrid.ts` next to
+`PermissionGrid.tsx` typechecks and passes every test, then breaks the tsup build ("Detected cycle
+while resolving import"); it is `permissionGridModel.ts`. A scoped `make check-changed` runs no
+build, so run `make build` too on a branch that adds files.
+
 ### Styling conventions
 
 - **There is no `cn()` util.** Import `clsx` **named** (`import { clsx } from 'clsx'`) and use it
@@ -303,6 +308,12 @@ visible story makes no assertion: its play only sets the state it shows, and its
 hidden twin `{ ...Demo, tags: ['!dev', '!autodocs'], play }`. `visibleStoriesDontAssert` in
 `.storybook/vitest.setup.ts` fails a visible story whose play asserts (it counts `expect` calls,
 so helpers count too).
+
+A story's viewport is one of the presets in `preview.tsx` (`mobile`, `tablet`, `laptop`, `desktop`;
+`viewport-presets.spec.ts` refuses any other): to check an exact width such as 375px, render the
+component in a box of that width. A docs page stays at the top while its stories render
+(`docs-examples.spec.ts`): a component that focuses something on mount does it without scrolling
+(`preventScroll`), or waits for a user action, as `TwoStepVerificationForm`'s backup field does.
 
 Docs pages without stories (`apps/storybook/stories/*.mdx`, e.g. `Foundations/Fonts`) run no
 decorators: `<html>` gets no theme class nor `data-*`, so the Cosmos vars stay on light under a
