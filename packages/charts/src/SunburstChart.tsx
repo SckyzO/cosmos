@@ -271,7 +271,10 @@ export const SunburstChart = ({
       const tip = tipArc && tipAt(tipArc);
       const parentName = tipArc?.path.slice(0, -1).join(' › ');
       return (
-        <div style={{ position: 'relative', width: size, height: size }}>
+        // Auto margins center it, and, while the box has shrunk and the circle is not measured
+        // again, let it overflow toward the end of the line only: centered by the plot it would
+        // overflow toward the start too, which a right-to-left page can scroll to.
+        <div style={{ position: 'relative', width: size, height: size, margin: 'auto' }}>
           <svg
             width={size}
             height={size}
@@ -443,7 +446,15 @@ export const SunburstChart = ({
       ? side
         ? { flex: '1 1 16rem', minWidth: 0, maxWidth: MAX_SIZE, aspectRatio: '1' }
         : { width: '100%', maxWidth: MAX_SIZE, aspectRatio: '1' }
-      : { flex: '1 1 0', minWidth: 0, minHeight: 0, width: side ? undefined : '100%' };
+      : {
+          flex: '1 1 0',
+          minWidth: 0,
+          minHeight: 0,
+          width: side ? undefined : '100%',
+          // The row centers its children: a plot with no circle yet would be 0 high, never measure
+          // a height to draw the circle in, and leave the legend alone. It takes the row's height.
+          alignSelf: side ? 'stretch' : undefined,
+        };
 
   return (
     <div
@@ -469,11 +480,7 @@ export const SunburstChart = ({
       }}
     >
       {legendFirst && legend}
-      <div
-        ref={measure}
-        data-sunburst-plot=""
-        style={{ ...plot, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
+      <div ref={measure} data-sunburst-plot="" style={{ ...plot, display: 'flex' }}>
         {picture}
       </div>
       {!legendFirst && legend}
