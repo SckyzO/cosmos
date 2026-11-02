@@ -432,9 +432,11 @@ const SettingsScreen = ({
                     </div>
                   )}
                 </div>
-                {/* Sixty rows scroll inside the table, under a header that stays. */}
+                {/* Sixty rows scroll inside the table, under a header that stays. The scrolling box
+                    is a region named by the caption, and the section is one named "Members":
+                    two regions of one name fail axe's `landmark-unique`. */}
                 <Table stickyHeader containerClassName="max-h-96">
-                  <TableCaption className="sr-only">Members</TableCaption>
+                  <TableCaption className="sr-only">Member list</TableCaption>
                   <TableHead>
                     <TableRow>
                       <TableHeaderCell>Member</TableHeaderCell>
@@ -835,7 +837,7 @@ export const ExtremeContentTruncatesChecks: Story = {
     await expect(canvas.getByText(/^60 staff across 4 gyms/)).toBeVisible();
     // 60 members and the header row.
     await expect(
-      within(canvas.getByRole('table', { name: 'Members' })).getAllByRole('row')
+      within(canvas.getByRole('table', { name: 'Member list' })).getAllByRole('row')
     ).toHaveLength(61);
     const name = canvas
       .getByText('Maximilian-Alexander Featherstonehaugh-Delacroix')
