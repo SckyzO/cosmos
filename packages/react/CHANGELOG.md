@@ -5,6 +5,39 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.5.0...@sckyzo/cosmos-react@0.6.0) (2026-11-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** EventCalendar's `month`, `defaultMonth` and `onMonthChange` props are renamed `date`, `defaultDate` and `onDateChange`, with the same behavior. There is no alias.
+* **react:** StackedList.Item onClick moves from the <li> to the title, which becomes a <button> (with href, onClick runs on the link). A click on a control, or on a part of the row other than the title, no longer reaches it. Move a row-level handler to the title's onClick, to trailing, or to a wrapper of your own.
+
+### Features
+
+* **react:** add a badge slot to UserMenu.Header ([ef183bb](https://github.com/SckyzO/cosmos/commit/ef183bba11b554debd1809bb27aa4a11b35ac8f1)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add an action slot and states to SectionCard ([68986ee](https://github.com/SckyzO/cosmos/commit/68986ee85c572523d11f793f84b6f0ffc956aafd))
+* **react:** add chartPosition and featured to KpiCard ([6df386e](https://github.com/SckyzO/cosmos/commit/6df386eb3a6ff08c29e8ba189d581fb48f5a4e44)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add ErrorSummary ([dd3e539](https://github.com/SckyzO/cosmos/commit/dd3e539aa0e07012389a4e3509bb21f6fcc15702)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add Highlight ([a4b56d6](https://github.com/SckyzO/cosmos/commit/a4b56d6ca082360fa1003e6057627ace36fdfbac)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add icon-only segments to SegmentedControl ([bb89882](https://github.com/SckyzO/cosmos/commit/bb898826b1a1c3c80fe066a9722438eef13cbd80)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add more formats to the RichTextEditor toolbar ([47ab6ce](https://github.com/SckyzO/cosmos/commit/47ab6ce4778af220343289ef5daf51c5dd8444bb))
+* **react:** add NotificationRow with icon and actions ([e81d998](https://github.com/SckyzO/cosmos/commit/e81d998077df22d6aad5bf4d0d088541db3b5c17))
+* **react:** add presets to DatePicker in range mode ([4b1d88d](https://github.com/SckyzO/cosmos/commit/4b1d88d96408982aacf9bca406f894dfae65d894)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add selection, unread and star to StackedList rows ([d8e1bcd](https://github.com/SckyzO/cosmos/commit/d8e1bcdec0b7dfa468774ecb28ad1850e677eb99))
+* **react:** add the qr entry with QrCode ([83bbc73](https://github.com/SckyzO/cosmos/commit/83bbc732db4b1809a8dc779b9679e3dd08d19d90)), closes [#563](https://github.com/SckyzO/cosmos/issues/563)
+* **react:** add week and day views to EventCalendar ([b9ad01d](https://github.com/SckyzO/cosmos/commit/b9ad01d3bcc10447c59ddc1354fcdc929373eb83))
+* **react:** fit the EventCalendar week to a phone ([3eb99a6](https://github.com/SckyzO/cosmos/commit/3eb99a65b0c75ae59f3a233a6afd15c7895948d1))
+* **react:** let a conversation bring its own avatar ([45e0dd2](https://github.com/SckyzO/cosmos/commit/45e0dd2b9f114838cad748b8a55e3b996f08ba05)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** rename EventCalendar month props to date ([6ba3913](https://github.com/SckyzO/cosmos/commit/6ba3913b58b063a8c481c3ff79a50cb27a860071))
+* **react:** show the time on EventCalendar events ([04047ce](https://github.com/SckyzO/cosmos/commit/04047cebedea203bcb5bcbbd83a66a0c5d62f63a))
+* **react:** size the SectionCard description at 14px, add errorDescription ([b096d4c](https://github.com/SckyzO/cosmos/commit/b096d4ca7979173d6cdcd42cb5d1311fbe0c87de))
+
+
+### Bug Fixes
+
+* **react:** drop images pasted into the RichTextEditor ([aadbdea](https://github.com/SckyzO/cosmos/commit/aadbdeaece79950d6e43dcc4e39da700feee55a4))
+
 ## [0.5.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.4.1...@sckyzo/cosmos-react@0.5.0) (2026-11-01)
 
 
