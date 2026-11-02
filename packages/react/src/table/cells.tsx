@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { ElementType, ReactNode } from 'react';
+import { Amount } from '../data/Amount';
 import { Avatar } from '../ui/Avatar';
 import { IconBox } from '../ui/IconBox';
 
@@ -116,26 +117,24 @@ export type TableAmountCellProps = {
   format?: (value: number) => string;
 };
 
-const defaultFormat = (value: number, currency?: string, locale?: string) =>
-  new Intl.NumberFormat(locale, {
-    ...(currency ? { style: 'currency', currency } : {}),
-    // A + in front of a gain as well as a - in front of a loss, and nothing in front of zero.
-    signDisplay: 'exceptZero',
-  }).format(value);
-
 /**
  * TableAmountCell — a signed amount tinted by its sign: green for a gain, red for a loss, plain
  * for zero. The sign is written too, so the colour is never the only cue. Put it in a numeric
- * column (`align="end"`, or `numeric` on `TableCell`).
+ * column (`align="end"`, or `numeric` on `TableCell`). It is an `Amount` with a plus in front of
+ * a gain (`signDisplay="exceptZero"`), so it writes the figure as the rest of the page does.
  */
 export const TableAmountCell = ({ value, currency, locale, format }: TableAmountCellProps) => (
-  <span
+  <Amount
+    value={value}
+    currency={currency}
+    locale={locale}
+    format={format}
+    // A + in front of a gain as well as a - in front of a loss, and nothing in front of zero.
+    signDisplay="exceptZero"
     className={clsx(
-      'font-medium whitespace-nowrap tabular-nums',
+      'font-medium',
       value > 0 && 'text-green-700 dark:text-green-400',
       value < 0 && 'text-red-700 dark:text-red-400'
     )}
-  >
-    {format ? format(value) : defaultFormat(value, currency, locale)}
-  </span>
+  />
 );
