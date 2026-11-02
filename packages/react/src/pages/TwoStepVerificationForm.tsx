@@ -1,5 +1,5 @@
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { Input } from '../forms/Input';
 import { OtpInput } from '../forms/OtpInput';
@@ -102,10 +102,20 @@ export const TwoStepVerificationForm = ({
   const isBackup = method === 'backup';
   const backupValue = backup.trim();
 
+  // Focus follows a switch the person asked for, never the first render: a field focused on mount
+  // scrolls the page (or a docs page embedding the form) down to where it sits.
+  const backupField = useRef<HTMLInputElement>(null);
+  const focusBackup = useRef(false);
+  useEffect(() => {
+    if (focusBackup.current) backupField.current?.focus();
+    focusBackup.current = false;
+  }, [isBackup]);
+
   // Each entry starts afresh: what was typed for one says nothing of the other.
   const switchTo = (next: TwoStepMethod) => {
     setCode('');
     setBackup('');
+    focusBackup.current = next === 'backup';
     setMethod(next);
   };
 
@@ -159,8 +169,8 @@ export const TwoStepVerificationForm = ({
         {isBackup ? (
           <Input
             label={labels?.backupField ?? 'Backup code'}
+            ref={backupField}
             required
-            autoFocus
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
