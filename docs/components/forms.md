@@ -285,8 +285,11 @@ const [lines, setLines] = useState<LineItem[]>([]);
   subtotal changed, "Subtotal $1,900.00". Nothing is said on a keystroke.
 - **Read only.** `readOnly` shows the lines as text, with no field, no "Add line" and no remove
   button, in the same grid and cards, for a sent invoice.
-- **Words.** `labels` replaces every text, including the functions that write the names of the fields
-  and the announcements, for another language.
+- **Words.** `labels` replaces the texts of the editor itself, for another language: the column
+  titles, the item placeholder, "Add line", the subtotal row, the empty state, and the functions
+  that write the names of the fields, the title of a line, the remove buttons and the announcements.
+  The two controls it borrows keep their English names: the toggle of the catalogue's combobox
+  ("Toggle options") and the arrows of the quantity ("Increase", "Decrease").
 
 There is no reordering of lines and no limit on their number.
 
