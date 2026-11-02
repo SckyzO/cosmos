@@ -5,6 +5,71 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.5.0...@sckyzo/cosmos-react@0.6.0) (2026-11-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** EventCalendar's `month`, `defaultMonth` and `onMonthChange` props are renamed `date`, `defaultDate` and `onDateChange`, with the same behavior. There is no alias.
+* **react:** StackedList.Item onClick moves from the <li> to the title, which becomes a <button> (with href, onClick runs on the link). A click on a control, or on a part of the row other than the title, no longer reaches it. Move a row-level handler to the title's onClick, to trailing, or to a wrapper of your own.
+
+### Features
+
+* **react:** add a badge slot to UserMenu.Header ([ef183bb](https://github.com/SckyzO/cosmos/commit/ef183bba11b554debd1809bb27aa4a11b35ac8f1)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add a prefix to NumberInput ([5dad310](https://github.com/SckyzO/cosmos/commit/5dad310de45f2597d5ff43a903c33480a946e909))
+* **react:** add a size to AuthLayout ([f0c945b](https://github.com/SckyzO/cosmos/commit/f0c945be16fb8ed0cca85473edfa675b1eca56a0)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add allowCustomValue and onSelect to Combobox ([92ad5c0](https://github.com/SckyzO/cosmos/commit/92ad5c0e02c5f307c05f226720412e0035bba26c))
+* **react:** add an action slot and states to SectionCard ([68986ee](https://github.com/SckyzO/cosmos/commit/68986ee85c572523d11f793f84b6f0ffc956aafd))
+* **react:** add an error state to NumberInput ([21b9e77](https://github.com/SckyzO/cosmos/commit/21b9e7788f529429caa8fd55ee028fea3b451e6e))
+* **react:** add backup codes and a resend wait to TwoStepVerificationForm ([83031c2](https://github.com/SckyzO/cosmos/commit/83031c2520a7a4b8293b8f8ba2fa6db8d1a23bea)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add card number, expiry and security code fields ([6659cae](https://github.com/SckyzO/cosmos/commit/6659caef07ea0175812eb765057154c1a70932ab)), closes [#576](https://github.com/SckyzO/cosmos/issues/576)
+* **react:** add chartPosition and featured to KpiCard ([6df386e](https://github.com/SckyzO/cosmos/commit/6df386eb3a6ff08c29e8ba189d581fb48f5a4e44)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add controls="none" to NumberInput ([360027b](https://github.com/SckyzO/cosmos/commit/360027b90b5279cce82af9f74fa8b570b59503af))
+* **react:** add ErrorSummary ([dd3e539](https://github.com/SckyzO/cosmos/commit/dd3e539aa0e07012389a4e3509bb21f6fcc15702)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add Highlight ([a4b56d6](https://github.com/SckyzO/cosmos/commit/a4b56d6ca082360fa1003e6057627ace36fdfbac)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add icon-only segments to SegmentedControl ([bb89882](https://github.com/SckyzO/cosmos/commit/bb898826b1a1c3c80fe066a9722438eef13cbd80)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add Lightbox ([edc4de4](https://github.com/SckyzO/cosmos/commit/edc4de44193e9b6545a7106d8589dfffa41ca7ea))
+* **react:** add LineItemsEditor ([70a0330](https://github.com/SckyzO/cosmos/commit/70a0330e959ce8525e8b8c6d0fcabbe8e182b242))
+* **react:** add more formats to the RichTextEditor toolbar ([47ab6ce](https://github.com/SckyzO/cosmos/commit/47ab6ce4778af220343289ef5daf51c5dd8444bb))
+* **react:** add NewPasswordForm ([f9178fb](https://github.com/SckyzO/cosmos/commit/f9178fbf49cba89882a77b5dea1ed3458c6ca96a)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add NotificationRow with icon and actions ([e81d998](https://github.com/SckyzO/cosmos/commit/e81d998077df22d6aad5bf4d0d088541db3b5c17))
+* **react:** add PasswordStrengthMeter ([0386d9f](https://github.com/SckyzO/cosmos/commit/0386d9fd6f739e537f51672bfff0458117fe1f08)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add PermissionGrid ([e43901e](https://github.com/SckyzO/cosmos/commit/e43901ee92d2b6d69a79bd52069b82e06f49b209)), closes [#556](https://github.com/SckyzO/cosmos/issues/556)
+* **react:** add PlanCard ([6fe6386](https://github.com/SckyzO/cosmos/commit/6fe6386157b697555879abe0914d290a63220049))
+* **react:** add presets to DatePicker in range mode ([4b1d88d](https://github.com/SckyzO/cosmos/commit/4b1d88d96408982aacf9bca406f894dfae65d894)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** add resendCooldown to ResetPasswordForm ([c82ae39](https://github.com/SckyzO/cosmos/commit/c82ae394ac12b23a7cc9c543c460f4ce28ba53db)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add rules and strength to SignUpForm ([7dfbb29](https://github.com/SckyzO/cosmos/commit/7dfbb29c4d9bd3cac120ed5c47f9500c53d41363)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** add selection, unread and star to StackedList rows ([d8e1bcd](https://github.com/SckyzO/cosmos/commit/d8e1bcdec0b7dfa468774ecb28ad1850e677eb99))
+* **react:** add SiteFooter for public pages ([1c231f7](https://github.com/SckyzO/cosmos/commit/1c231f7c352706fd735f7da6a8ec7937759c36f0)), closes [#575](https://github.com/SckyzO/cosmos/issues/575)
+* **react:** add the qr entry with QrCode ([83bbc73](https://github.com/SckyzO/cosmos/commit/83bbc732db4b1809a8dc779b9679e3dd08d19d90)), closes [#563](https://github.com/SckyzO/cosmos/issues/563)
+* **react:** add Totals, Amount and formatMoney ([0cb24e9](https://github.com/SckyzO/cosmos/commit/0cb24e9afcc2c84903d8622cf27830d29f6ef325))
+* **react:** add week and day views to EventCalendar ([b9ad01d](https://github.com/SckyzO/cosmos/commit/b9ad01d3bcc10447c59ddc1354fcdc929373eb83))
+* **react:** fit the EventCalendar week to a phone ([3eb99a6](https://github.com/SckyzO/cosmos/commit/3eb99a65b0c75ae59f3a233a6afd15c7895948d1))
+* **react:** let a conversation bring its own avatar ([45e0dd2](https://github.com/SckyzO/cosmos/commit/45e0dd2b9f114838cad748b8a55e3b996f08ba05)), closes [#561](https://github.com/SckyzO/cosmos/issues/561)
+* **react:** let Combobox take an aria-label ([d2c34c6](https://github.com/SckyzO/cosmos/commit/d2c34c64885a25eeee45073a0978ffa09e956d75))
+* **react:** rename EventCalendar month props to date ([6ba3913](https://github.com/SckyzO/cosmos/commit/6ba3913b58b063a8c481c3ff79a50cb27a860071))
+* **react:** show the time on EventCalendar events ([04047ce](https://github.com/SckyzO/cosmos/commit/04047cebedea203bcb5bcbbd83a66a0c5d62f63a))
+* **react:** size the SectionCard description at 14px, add errorDescription ([b096d4c](https://github.com/SckyzO/cosmos/commit/b096d4ca7979173d6cdcd42cb5d1311fbe0c87de))
+
+
+### Bug Fixes
+
+* **react:** announce the password mismatch of NewPasswordForm ([864574e](https://github.com/SckyzO/cosmos/commit/864574e71c7441a70a58b34c66c90dc7b633f8c2))
+* **react:** drop images pasted into the RichTextEditor ([aadbdea](https://github.com/SckyzO/cosmos/commit/aadbdeaece79950d6e43dcc4e39da700feee55a4))
+* **react:** finish a date range on the second click ([b1c2e00](https://github.com/SckyzO/cosmos/commit/b1c2e003b582ff9e0902dd1f8d3b9c5638ec5de6))
+* **react:** focus the backup field after a switch, not on mount ([cec3c26](https://github.com/SckyzO/cosmos/commit/cec3c26c87e4501fbe3d1b070ba392a199e4adba)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** focus the remove button after removing a line ([fe0050a](https://github.com/SckyzO/cosmos/commit/fe0050aca50e09f2d321493cf28739ca2dc06812))
+* **react:** keep hidden controls out of the dialog focus trap ([9257a6a](https://github.com/SckyzO/cosmos/commit/9257a6ab14cc71e5f2346af976bac91c0d52c80a))
+* **react:** let a page name the group of date range presets ([7abce9f](https://github.com/SckyzO/cosmos/commit/7abce9fe04cc4aeab6e0923113ff1a99c3bd01c0))
+* **react:** let ErrorSummary be translated and keep duplicate fields ([573de5b](https://github.com/SckyzO/cosmos/commit/573de5bab48c67df6b89f7823048e702f8f150cb))
+* **react:** merge a caller's aria-describedby into Input's own ([7321b04](https://github.com/SckyzO/cosmos/commit/7321b04c4b5acd7dee7d4a0897aad3f09ef84df1)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** post nothing from a disabled RichTextEditor ([f8e020e](https://github.com/SckyzO/cosmos/commit/f8e020ec42f3b9d4b5df9f9b5e7c47cb9db8961e))
+* **react:** say if each password rule is met for a screen reader ([a61f5b0](https://github.com/SckyzO/cosmos/commit/a61f5b0b81c44f5bdf471ae24319b4c9cdfa86a2)), closes [#555](https://github.com/SckyzO/cosmos/issues/555)
+* **react:** show the EventCalendar slot cursor for keyboard focus only ([1f2e54f](https://github.com/SckyzO/cosmos/commit/1f2e54f8547eb0e6789f65210eca780e20bc7832))
+* **react:** skip absent links in a SiteFooter column ([84ca841](https://github.com/SckyzO/cosmos/commit/84ca841d66bf574abc734e839a2e8d57c7652739))
+* **react:** start range presets at the beginning of the day ([78c990b](https://github.com/SckyzO/cosmos/commit/78c990b073e7a910c94362bdd1f2cb00f08f7f81))
+* **react:** wait for focus to leave the whole confirm field ([b65d351](https://github.com/SckyzO/cosmos/commit/b65d351fe7bcdd2ac5f21fbe7c5d1bb1ee3d9ff2))
+
 ## [0.5.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.4.1...@sckyzo/cosmos-react@0.5.0) (2026-11-01)
 
 
