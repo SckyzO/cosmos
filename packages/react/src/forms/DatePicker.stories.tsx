@@ -5,14 +5,17 @@ import {
   bothDirections,
   directionBox,
   expectFocusBorder,
+  expectNoHorizontalOverflow,
   expectRefFocuses,
   expectTextContrast,
   inEachTheme,
+  mobileViewport,
   portalDocsParams,
+  startOffset,
   withCanvasPadding,
 } from '../storybook-helpers';
 import { Calendar } from './Calendar';
-import { DatePicker, type DateRange } from './DatePicker';
+import { DatePicker, type DateRange, type DateRangePreset } from './DatePicker';
 
 const meta = {
   title: 'Forms/Date Picker',
@@ -481,5 +484,220 @@ export const RangeWrapsInANarrowBox: Story = {
     await expect(to!.getBoundingClientRect().top).toBeGreaterThanOrEqual(
       from!.getBoundingClientRect().bottom
     );
+  },
+};
+
+// ── Range presets ────────────────────────────────────────────────────────────
+// The stories hold `today` at a fixed day, a Thursday in mid-January 2026, so each preset makes
+// the same days on every run, and format the dates as `YYYY-MM-DD` whatever the locale.
+
+const TODAY = new Date(2026, 0, 15);
+const day = (month: number, date: number, year = 2026) => new Date(year, month - 1, date);
+const daysBefore = (from: Date, days: number) =>
+  new Date(from.getFullYear(), from.getMonth(), from.getDate() - days);
+const iso = (date: Date | undefined) =>
+  date
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    : '';
+
+const PRESETS: DateRangePreset[] = [
+  { label: 'Today', range: (today) => ({ from: today, to: today }) },
+  { label: 'Last 7 days', range: (today) => ({ from: daysBefore(today, 6), to: today }) },
+  { label: 'Last 30 days', range: (today) => ({ from: daysBefore(today, 29), to: today }) },
+  {
+    label: 'This month',
+    range: (today) => ({
+      from: new Date(today.getFullYear(), today.getMonth(), 1),
+      to: new Date(today.getFullYear(), today.getMonth() + 1, 0),
+    }),
+  },
+  {
+    label: 'Last month',
+    range: (today) => ({
+      from: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+      to: new Date(today.getFullYear(), today.getMonth(), 0),
+    }),
+  },
+  // A fixed range is a preset too.
+  { label: 'First quarter', range: { from: day(1, 1), to: day(3, 31) } },
+];
+
+const presetArgs = {
+  mode: 'range',
+  label: 'Report period',
+  presets: PRESETS,
+  today: TODAY,
+  format: iso,
+} as const;
+
+/** Presets in a column at the end of the calendar. */
+export const RangePresets: Story = {
+  parameters: portalDocsParams(520),
+  globals: { viewport: { value: 'laptop', isRotated: false } },
+  args: { ...presetArgs, defaultOpen: true },
+};
+
+/** On a phone they sit under the calendar and wrap. */
+export const RangePresetsOnMobile: Story = {
+  parameters: portalDocsParams(760),
+  globals: mobileViewport,
+  args: { ...presetArgs, defaultOpen: true },
+};
+
+const triggers = (canvasElement: HTMLElement) =>
+  [...canvasElement.querySelectorAll('button[aria-haspopup="dialog"]')].map((trigger) =>
+    (trigger.textContent ?? '').trim()
+  );
+
+const dialogWithPresets = async () => {
+  await waitFor(() => expect(calendarDialog()).not.toBeNull());
+  return within(calendarDialog()!);
+};
+
+const ControlledPresets = ({ onChange }: { onChange?: (range: DateRange) => void }) => {
+  const [range, setRange] = useState<DateRange>({ from: undefined, to: undefined });
+  return (
+    <DatePicker
+      mode="range"
+      label="Report period"
+      presets={PRESETS}
+      today={TODAY}
+      format={iso}
+      value={range}
+      onChange={(next) => {
+        setRange(next);
+        onChange?.(next);
+      }}
+    />
+  );
+};
+
+/** Each preset sets the range from the fixed `today`, closes the calendar and marks itself. */
+export const RangePresetsSetTheRange: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...presetArgs, onChange: fn() },
+  render: (args) => <ControlledPresets onChange={args.onChange as (range: DateRange) => void} />,
+  play: async ({ args, canvas, canvasElement }) => {
+    const cases: [string, string, string][] = [
+      ['Today', '2026-01-15', '2026-01-15'],
+      ['Last 7 days', '2026-01-09', '2026-01-15'],
+      ['Last 30 days', '2025-12-17', '2026-01-15'],
+      ['This month', '2026-01-01', '2026-01-31'],
+      ['Last month', '2025-12-01', '2025-12-31'],
+      ['First quarter', '2026-01-01', '2026-03-31'],
+    ];
+    for (const [name, from, to] of cases) {
+      await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+      const dialog = await dialogWithPresets();
+      await userEvent.click(dialog.getByRole('button', { name }));
+      await waitFor(() => expect(calendarDialog()).toBeNull());
+      await expect(triggers(canvasElement), name).toEqual([from, to]);
+    }
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 1), to: day(3, 31) });
+
+    // Reopened, the preset whose days are the range is the current one, and only it.
+    await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+    const dialog = await dialogWithPresets();
+    await expect(dialog.getByRole('button', { name: 'First quarter' })).toHaveAttribute(
+      'aria-current',
+      'true'
+    );
+    await expect(dialog.getAllByRole('button', { current: true })).toHaveLength(1);
+  },
+};
+
+/** The calendar opens on the month of `today`, and marks that day. */
+export const RangePresetsCalendarFollowsToday: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: presetArgs,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+    const dialog = await dialogWithPresets();
+    await expect(dialog.getByRole('button', { name: /Today.*January 15/ })).toBeVisible();
+  },
+};
+
+/** A preset that falls outside `fromDate` or `toDate` is disabled, and does nothing. */
+export const RangePresetsOutsideTheBoundsAreDisabled: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...presetArgs, fromDate: day(1, 10), toDate: day(1, 31), onChange: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+    const dialog = await dialogWithPresets();
+    // 9 to 15 January starts a day early; "This month" starts on the 1st; the quarter ends in March.
+    for (const name of [
+      'Last 7 days',
+      'Last 30 days',
+      'This month',
+      'Last month',
+      'First quarter',
+    ]) {
+      await expect(dialog.getByRole('button', { name }), name).toBeDisabled();
+    }
+    await expect(dialog.getByRole('button', { name: 'Today' })).toBeEnabled();
+    await userEvent.click(dialog.getByRole('button', { name: 'Last 7 days' }));
+    await expect(args.onChange).not.toHaveBeenCalled();
+    await userEvent.click(dialog.getByRole('button', { name: 'Today' }));
+    await expect(args.onChange).toHaveBeenCalledWith({ from: TODAY, to: TODAY });
+  },
+};
+
+/** The presets are a column at the end of the calendar, after it in the tab order. */
+export const RangePresetsBesideTheCalendar: Story = {
+  ...RangePresets,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    const dialog = await dialogWithPresets();
+    const calendar = dialog.getByRole('grid');
+    const group = dialog.getByRole('group', { name: 'Date range presets' });
+    const [grid, column] = [calendar, group].map((el) => el.getBoundingClientRect());
+    await expect(startOffset(group, calendarDialog()!)).toBeGreaterThan(
+      startOffset(calendar, calendarDialog()!)
+    );
+    // Side by side: the column starts where the calendar ends, and they overlap vertically.
+    await expect(column!.top).toBeLessThan(grid!.bottom);
+    await expect(
+      calendar.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const firstPreset = within(group).getByRole('button', { name: 'Today' });
+    await expect(firstPreset.getBoundingClientRect().width).toBeCloseTo(
+      group.getBoundingClientRect().width - 24 - 1,
+      0
+    );
+  },
+};
+
+/** Under the calendar on a phone, wrapped, and inside the screen. */
+export const RangePresetsUnderTheCalendarOnMobile: Story = {
+  ...RangePresetsOnMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    const dialog = await dialogWithPresets();
+    const grid = dialog.getByRole('grid').getBoundingClientRect();
+    const group = dialog.getByRole('group', { name: 'Date range presets' });
+    const column = group.getBoundingClientRect();
+    await expect(column.top).toBeGreaterThanOrEqual(grid.bottom);
+    const panel = calendarDialog()!.getBoundingClientRect();
+    await expect(panel.left).toBeGreaterThanOrEqual(0);
+    await expect(panel.right).toBeLessThanOrEqual(window.innerWidth);
+    // They wrap in rows of two or more instead of one tall column.
+    const tops = new Set(
+      within(group)
+        .getAllByRole('button')
+        .map((button) => Math.round(button.getBoundingClientRect().top))
+    );
+    await expect(tops.size).toBeLessThan(6);
+    expectNoHorizontalOverflow();
+  },
+};
+
+/** A range picker with no presets keeps the calendar alone. */
+export const RangeWithoutPresetsHasNoPresetColumn: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { mode: 'range', label: 'Plain', defaultOpen: true },
+  play: async () => {
+    const dialog = await dialogWithPresets();
+    await expect(dialog.queryByRole('group', { name: 'Date range presets' })).toBeNull();
+    await expect(dialog.getByRole('button', { name: 'Done' })).toBeVisible();
   },
 };

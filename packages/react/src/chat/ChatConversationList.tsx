@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
 
 export type ChatPresence = 'online' | 'away' | 'offline';
@@ -15,6 +16,14 @@ export type ChatConversation = {
   unread?: number;
   presence?: ChatPresence;
   avatarSrc?: string;
+  /**
+   * Drawn in place of the `Avatar` that `name` and `avatarSrc` make: an `AvatarGroup` or an
+   * `IconBox` for a group conversation. It sits in a 40px-high slot, centered, and a node
+   * wider than 40px pushes the text along. The `presence` dot still marks its end corner.
+   * Hidden from assistive technology, as the picture of the conversation: the row is named by
+   * `name`, so a stack of members does not turn into a long list of names to read.
+   */
+  avatar?: ReactNode;
 };
 
 export type ChatConversationListProps = {
@@ -39,7 +48,9 @@ const ON_SELECTED = 'text-gray-600 dark:text-gray-400';
 
 /**
  * Conversation picker for the start pane of a two-pane chat: name, last
- * message, time, unread count and presence of each thread.
+ * message, time, unread count and presence of each thread. A conversation
+ * with an `avatar` node (a group, a channel) shows it in place of the avatar
+ * made from its name.
  */
 export const ChatConversationList = ({
   conversations,
@@ -65,7 +76,13 @@ export const ChatConversationList = ({
               )}
             >
               <span className="relative shrink-0">
-                <Avatar name={c.name} src={c.avatarSrc} size="md" />
+                {c.avatar ? (
+                  <span aria-hidden className="flex h-10 min-w-10 items-center justify-center">
+                    {c.avatar}
+                  </span>
+                ) : (
+                  <Avatar name={c.name} src={c.avatarSrc} size="md" />
+                )}
                 {c.presence && (
                   <span
                     aria-hidden

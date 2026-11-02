@@ -3,6 +3,7 @@ import type { ElementType, ReactNode, Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { Tooltip } from '../ui/Tooltip';
 
 export type SegmentOption<T extends string> = {
   label: string;
@@ -10,7 +11,7 @@ export type SegmentOption<T extends string> = {
   icon?: ElementType;
   /**
    * A count or short text in a small pill after the label. It is part of the radio's accessible
-   * name ("Active 4").
+   * name ("Active 4"). Not shown when the group is `iconOnly`.
    */
   badge?: ReactNode;
 };
@@ -30,6 +31,12 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   appearance?: 'segments' | 'pills';
   /** Height and text size: `md` (default) or the more compact `sm`. */
   size?: 'sm' | 'md';
+  /**
+   * Draws each option as its `icon` alone, in a square segment: a grid / list switch. The `label`
+   * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus. An
+   * option with no `icon` keeps its text, and `badge` is not shown. Default `false`.
+   */
+  iconOnly?: boolean;
   /** Icon shown in a cell before the first option, for the whole group. */
   icon?: ElementType;
   /**
@@ -52,6 +59,7 @@ export const SegmentedControl = <T extends string>({
   onChange,
   appearance = 'segments',
   size = 'md',
+  iconOnly = false,
   icon: GroupIcon,
   fullWidth = false,
   className,
@@ -104,24 +112,37 @@ export const SegmentedControl = <T extends string>({
         const Icon = opt.icon;
         const isActive = opt.value === value;
         const tabIndex = radioTabIndex(isActive, i, anyChecked);
-        return (
+        // The segment shows its icon alone: its label is the name, and a tooltip.
+        const glyph = iconOnly && Icon !== undefined;
+        // The margin that sets the first and last pill in from the track's rounded ends.
+        const edge = pills && clsx(i === 0 && 'ms-1.5', i === options.length - 1 && 'me-1.5');
+        const segment = (
           <button
             key={opt.value}
             ref={tabIndex === 0 ? ref : undefined}
             type="button"
             role="radio"
             aria-checked={isActive}
+            aria-label={glyph ? opt.label : undefined}
             tabIndex={tabIndex}
             onClick={() => setValue(opt.value)}
             className={clsx(
-              'flex items-center gap-1.5 font-medium transition-colors focus-visible:ring-inset',
+              'flex items-center font-medium transition-colors focus-visible:ring-inset',
+              glyph ? 'justify-center' : 'gap-1.5',
               pills
                 ? clsx(
-                    'rounded-md text-xs first-of-type:ms-1.5 last-of-type:me-1.5',
-                    sm ? 'h-6 px-2.5' : 'h-7 px-3'
+                    'rounded-md text-xs',
+                    !glyph && edge,
+                    glyph ? (sm ? 'h-6 w-6' : 'h-7 w-7') : sm ? 'h-6 px-2.5' : 'h-7 px-3'
                   )
                 : clsx(
-                    sm ? 'py-row-6 px-2.5 text-xs' : 'py-row-8 px-3 text-sm',
+                    glyph
+                      ? sm
+                        ? 'h-ctrl-32 w-ctrl-32'
+                        : 'h-ctrl-36 w-ctrl-36'
+                      : sm
+                        ? 'py-row-6 px-2.5 text-xs'
+                        : 'py-row-8 px-3 text-sm',
                     i > 0 && 'border-s border-gray-200 dark:border-gray-700'
                   ),
               isActive
@@ -135,8 +156,8 @@ export const SegmentedControl = <T extends string>({
             )}
           >
             {Icon && <Icon className={sm ? 'h-3.5 w-3.5' : 'h-4 w-4'} />}
-            {opt.label}
-            {opt.badge !== undefined && (
+            {!glyph && opt.label}
+            {!glyph && opt.badge !== undefined && (
               <span
                 className={clsx(
                   'text-3xs rounded-full px-1.5 py-0.5 font-bold',
@@ -151,6 +172,13 @@ export const SegmentedControl = <T extends string>({
               </span>
             )}
           </button>
+        );
+        return glyph ? (
+          <span key={opt.value} className={clsx('flex', edge)}>
+            <Tooltip content={opt.label}>{segment}</Tooltip>
+          </span>
+        ) : (
+          segment
         );
       })}
     </div>

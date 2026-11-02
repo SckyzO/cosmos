@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { Filter, LayoutDashboard, List, Map } from 'lucide-react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { Filter, LayoutDashboard, LayoutGrid, List, Map } from 'lucide-react';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  endOffset,
   expectFocusRing,
   expectRefFocuses,
   keyToEnd,
@@ -428,5 +429,175 @@ export const ArrowKeysFollowTheReadingDirection: Story = {
     await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+  },
+};
+
+// ── Icon only ────────────────────────────────────────────────────────────────
+
+const LAYOUTS = [
+  { value: 'grid', label: 'Grid', icon: LayoutGrid },
+  { value: 'list', label: 'List', icon: List },
+] as const;
+
+/** A grid / list switch: each segment is its icon, the label is its name and its tooltip. */
+export const IconOnly: Story = {
+  args: {
+    options: LAYOUTS as unknown as never,
+    value: 'grid',
+    iconOnly: true,
+    'aria-label': 'Layout',
+  },
+};
+
+export const IconOnlyPills: Story = {
+  args: { ...IconOnly.args, appearance: 'pills' },
+};
+
+export const IconOnlySizes: Story = {
+  render: () => (
+    <div className="space-y-3">
+      <SegmentedControl<string> options={[...LAYOUTS]} value="grid" iconOnly size="sm" />
+      <SegmentedControl<string> options={[...LAYOUTS]} value="grid" iconOnly />
+      <div>
+        <SegmentedControl<string>
+          options={[...LAYOUTS]}
+          value="grid"
+          iconOnly
+          appearance="pills"
+          size="sm"
+        />
+      </div>
+      <div>
+        <SegmentedControl<string> options={[...LAYOUTS]} value="grid" iconOnly appearance="pills" />
+      </div>
+    </div>
+  ),
+};
+
+const ControlledLayout = () => {
+  const [v, setV] = useState<'grid' | 'list'>('grid');
+  return (
+    <SegmentedControl
+      aria-label="Layout"
+      iconOnly
+      options={LAYOUTS as unknown as never}
+      value={v}
+      onChange={setV}
+    />
+  );
+};
+
+export const IconOnlyChecks: Story = {
+  ...IconOnly,
+  tags: ['!dev', '!autodocs'],
+  // The label names the radio, the segment holds the icon and no text, and the label shows as a
+  // tooltip on hover and on keyboard focus.
+  play: async ({ canvas }) => {
+    const page = within(document.body);
+    const grid = canvas.getByRole('radio', { name: 'Grid', checked: true });
+    const list = canvas.getByRole('radio', { name: 'List', checked: false });
+    for (const radio of [grid, list]) {
+      await expect(radio.textContent).toBe('');
+      await expect(radio.querySelector('svg')).not.toBeNull();
+    }
+
+    await userEvent.hover(list);
+    const tip = page.getByRole('tooltip', { name: 'List' });
+    await waitFor(() => expect(tip).toBeVisible());
+    await expect(list).toHaveAccessibleDescription('List');
+    await userEvent.unhover(list);
+    await waitFor(() => expect(tip).not.toBeVisible());
+
+    await userEvent.tab();
+    await expect(grid).toHaveFocus();
+    await waitFor(() => expect(page.getByRole('tooltip', { name: 'Grid' })).toBeVisible());
+    await userEvent.tab();
+    await waitFor(() => expect(page.getByRole('tooltip', { name: 'Grid' })).not.toBeVisible());
+  },
+};
+
+export const IconOnlySegmentsAreSquare: Story = {
+  ...IconOnlySizes,
+  tags: ['!dev', '!autodocs'],
+  // Segments take the height of a control of their size, pills those of the pill; both as wide.
+  play: async ({ canvasElement }) => {
+    const groups = canvasElement.querySelectorAll<HTMLElement>('[role="radiogroup"]');
+    const sizes = [...groups].map((group) => {
+      const box = group.querySelector('[role="radio"]')!.getBoundingClientRect();
+      return [box.width, box.height];
+    });
+    await expect(sizes).toEqual([
+      [32, 32],
+      [36, 36],
+      [24, 24],
+      [28, 28],
+    ]);
+  },
+};
+
+export const IconOnlyPillsKeepTheirInset: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <SegmentedControl<string>
+        aria-label="Labelled"
+        appearance="pills"
+        options={[...LAYOUTS]}
+        value="grid"
+      />
+      <div>
+        <SegmentedControl<string>
+          aria-label="Icons"
+          appearance="pills"
+          iconOnly
+          options={[...LAYOUTS]}
+          value="grid"
+        />
+      </div>
+    </div>
+  ),
+  // The first and last pill sit in from the track's ends by the same 6px as labelled ones.
+  play: async ({ canvas }) => {
+    const inset = (name: string) => {
+      const group = canvas.getByRole('radiogroup', { name });
+      const radios = within(group).getAllByRole('radio');
+      return [startOffset(radios[0]!, group), endOffset(radios[radios.length - 1]!, group)];
+    };
+    await expect(inset('Icons')).toEqual(inset('Labelled'));
+    await expect(inset('Icons')[0]).toBeCloseTo(7, 0);
+  },
+};
+
+export const IconOnlyArrowKeysMoveSelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ControlledLayout />,
+  play: async ({ canvas }) => {
+    await userEvent.tab();
+    await expect(canvas.getByRole('radio', { name: 'Grid' })).toHaveFocus();
+    await userEvent.keyboard(`{${keyToEnd()}}`);
+    await expect(canvas.getByRole('radio', { name: 'List', checked: true })).toHaveFocus();
+    await userEvent.keyboard(`{${keyToEnd()}}`);
+    await expect(canvas.getByRole('radio', { name: 'Grid', checked: true })).toHaveFocus();
+  },
+};
+
+/** An option with no icon keeps its text and has no tooltip; the others show their icon. */
+export const IconOnlyKeepsTextWithoutAnIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <SegmentedControl<string>
+      aria-label="Layout"
+      iconOnly
+      options={[
+        { value: 'grid', label: 'Grid', icon: LayoutGrid },
+        { value: 'table', label: 'Table' },
+      ]}
+      value="grid"
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('radio', { name: 'Grid' }).textContent).toBe('');
+    await expect(canvas.getByRole('radio', { name: 'Table' })).toHaveTextContent('Table');
+    await expect(within(document.body).getAllByRole('tooltip')).toHaveLength(1);
   },
 };

@@ -33,15 +33,16 @@ Storybook page.
 | Page                                             | Holds                                                                                |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | [Tables](components/tables.md)                   | `DataTable` and the table primitives                                                 |
-| [Data](components/data.md)                       | Audit diff, kanban board, dates, clocks and countdowns                               |
+| [Data](components/data.md)                       | Audit diff, kanban board, KPI cards, dates, clocks and countdowns                    |
 | [Feedback](components/feedback.md)               | Progress bars and rings                                                              |
 | [Monitoring](components/monitoring.md)           | Health checks, uptime monitoring, log views and job logs                             |
 | [Navigation](components/navigation.md)           | The record pager                                                                     |
 | [Lists](components/lists.md)                     | Files and uploads, comments, notification rows and a notifications page              |
 | [Chat](components/chat.md)                       | Chat building blocks, the chatbot, rich replies                                      |
-| [Forms](components/forms.md)                     | The slider, the color and phone fields                                               |
+| [Forms](components/forms.md)                     | The slider, the color and phone fields, the error summary, date range presets        |
 | [Layout](components/layout.md)                   | The application shell, search in the topbar, layout modes, split panes, auth layouts |
 | [Media](components/media.md)                     | `CodeBlock`                                                                          |
+| [Typography](components/typography.md)           | `Highlight`                                                                          |
 | [Variants worth knowing](components/variants.md) | Props that are easy to miss                                                          |
 
 ## Specifications

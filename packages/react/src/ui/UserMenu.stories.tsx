@@ -12,6 +12,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { Badge } from './Badge';
 import { UserMenu } from './UserMenu';
 
 const meta = {
@@ -140,6 +141,100 @@ export const WithoutAvatarChecks: Story = {
     await expect(within(trigger).queryByRole('img')).toBeNull();
     const menu = await within(document.body).findByRole('menu');
     await expect(within(menu).queryByRole('img')).toBeNull();
+  },
+};
+
+export const WithRoleBadge: Story = {
+  render: () => (
+    <InTopbar>
+      <UserMenu defaultOpen>
+        <UserMenu.Trigger name="John Doe" avatarSrc={SAMPLE_AVATAR} />
+        <UserMenu.Content>
+          <UserMenu.Header
+            name="John Doe"
+            email="john@example.com"
+            avatarSrc={SAMPLE_AVATAR}
+            badge={
+              <Badge intent="brand" size="sm">
+                Admin
+              </Badge>
+            }
+          />
+          <UserMenu.Items>
+            <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+            <UserMenu.Item icon={Settings}>Settings</UserMenu.Item>
+            <UserMenu.Separator />
+            <UserMenu.Item icon={LogOut} intent="danger">
+              Sign Out
+            </UserMenu.Item>
+          </UserMenu.Items>
+        </UserMenu.Content>
+      </UserMenu>
+    </InTopbar>
+  ),
+};
+
+export const WithRoleBadgeChecks: Story = {
+  ...WithRoleBadge,
+  tags: ['!dev', '!autodocs'],
+  // The badge sits beside the name, after it along the line, on the same row.
+  play: async () => {
+    const menu = within(await within(document.body).findByRole('menu'));
+    const badge = menu.getByText('Admin');
+    const name = menu.getByText('John Doe');
+    await expect(startOffset(badge, name.closest('p')!.parentElement!)).toBeGreaterThan(
+      startOffset(name, name.closest('p')!.parentElement!)
+    );
+    const nameBox = name.getBoundingClientRect();
+    const badgeBox = badge.getBoundingClientRect();
+    await expect(
+      Math.abs(nameBox.top + nameBox.height / 2 - (badgeBox.top + badgeBox.height / 2))
+    ).toBeLessThan(4);
+    // The e-mail stays under the name, not beside it.
+    await expect(menu.getByText('john@example.com').getBoundingClientRect().top).toBeGreaterThan(
+      nameBox.bottom - 1
+    );
+  },
+};
+
+export const LongNameKeepsTheBadge: Story = {
+  render: () => (
+    <InTopbar>
+      <UserMenu defaultOpen>
+        <UserMenu.Trigger name="Alexandria Montgomery-Fitzgerald" />
+        <UserMenu.Content>
+          <UserMenu.Header
+            name="Alexandria Montgomery-Fitzgerald"
+            email="alexandria.montgomery-fitzgerald@example.com"
+            badge={
+              <Badge intent="brand" size="sm">
+                Administrator
+              </Badge>
+            }
+          />
+          <UserMenu.Items>
+            <UserMenu.Item icon={User}>Profile</UserMenu.Item>
+          </UserMenu.Items>
+        </UserMenu.Content>
+      </UserMenu>
+    </InTopbar>
+  ),
+};
+
+export const LongNameKeepsTheBadgeChecks: Story = {
+  ...LongNameKeepsTheBadge,
+  tags: ['!dev', '!autodocs'],
+  // The name gives way (ellipsis), the badge stays whole inside the panel.
+  play: async () => {
+    const menu = await within(document.body).findByRole('menu');
+    const badge = within(menu).getByText('Administrator');
+    const name = within(menu).getByText('Alexandria Montgomery-Fitzgerald').closest('p')!;
+    await expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
+    await expect(badge.scrollWidth).toBeLessThanOrEqual(badge.clientWidth);
+    const panel = menu.getBoundingClientRect();
+    const box = badge.getBoundingClientRect();
+    await expect(box.left).toBeGreaterThanOrEqual(panel.left);
+    await expect(box.right).toBeLessThanOrEqual(panel.right);
   },
 };
 
