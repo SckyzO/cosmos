@@ -671,6 +671,56 @@ export const ThreeLevelMenuChecks: Story = {
   },
 };
 
+/**
+ * `subMenuGuides={false}` leaves out the line along an open sub-menu's rows: the indent alone shows
+ * the depth.
+ */
+export const NoSubMenuGuides: Story = {
+  render: () => (
+    <Wrap>
+      <Sidebar subMenuGuides={false}>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+        <ThreeLevelNav />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+export const NoSubMenuGuidesChecks: Story = {
+  ...NoSubMenuGuides,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const start = (name: string) => startOffset(canvas.getByText(name), nav);
+    // Two sub-menus are open, and neither draws its line; the rows keep their indent.
+    await expect(canvas.getByText('Paris-1')).toBeVisible();
+    await expect(nav.querySelector('span.w-px')).toBeNull();
+    await expect(start('Paris-1') - start('Datacenters')).toBe(16);
+  },
+};
+
+/** The collapsed rail's panel follows the sidebar: no line there either. */
+export const NoSubMenuGuidesInTheCollapsedPanel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Sidebar collapsed subMenuGuides={false}>
+        <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" />
+        <ThreeLevelNav />
+      </Sidebar>
+    </Wrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Infrastructure' }));
+    const dialog = within(canvasElement.ownerDocument.body).getByRole('dialog', {
+      name: 'Infrastructure',
+    });
+    // Datacenters is open in the panel, where its line would be.
+    await expect(within(dialog).getByRole('button', { name: 'Paris-1' })).toBeVisible();
+    await expect(dialog.querySelector('span.w-px')).toBeNull();
+  },
+};
+
 // Data from an app, rackscope's infrastructure: sites and rooms have a page of their own (their
 // row splits into the label and a chevron), aisles only group racks (muted), racks are pages.
 const TreeNav = ({ onNavigate }: { onNavigate?: (page: string) => void }) => (
