@@ -137,6 +137,79 @@ against. Below `md` the items leave the bar and `Navbar.MobileMenuButton` opens 
 </Shell>
 ```
 
+## Site footer
+
+Storybook: [Site Footer](https://sckyzo.github.io/cosmos/?path=/docs/layout-site-footer--docs).
+
+`SiteFooter` is the footer of a public page, the counterpart of `Navbar`. It is a `footer`
+landmark, which the browser exposes as the page's `contentinfo` when it comes after `main`
+instead of sitting inside it, built from parts:
+
+- `SiteFooter.Brand`: the logo and name (any node), a link when it has an `href`, and a line
+  under it with `description`.
+- `SiteFooter.Column`: a list of `SiteFooter.Link`s under its `title`. Each column is a `nav`
+  named by its heading, so a screen reader lists "Shop", "Help" and "Studio" as three landmarks,
+  and the names have to differ.
+- `SiteFooter.Aside`: a free slot for what has no part of its own, a newsletter form or the
+  social links. Compose the form from `Input` and `Button`. To name the slot, give it
+  `role="group"` and an `aria-labelledby` pointing at a `SiteFooter.Title`, the heading of a
+  column, which also follows `theme`.
+- `SiteFooter.Banner`: a full-width band above the columns for one call to action, usually the
+  newsletter. It goes first and the bottom row goes last, wherever they come among the parts.
+- `SiteFooter.Bottom`: the copyright as children and the legal links as `links`
+  (`{ label, href }`, plus any anchor prop such as `aria-current`) in a `nav` named `Legal`
+  (`linksLabel` renames it).
+
+```tsx
+<SiteFooter>
+  <SiteFooter.Brand href="/" description="Slow-made ceramics and lighting.">
+    <Logo /> Harbor &amp; Pine
+  </SiteFooter.Brand>
+  <SiteFooter.Column title="Shop">
+    <SiteFooter.Link href="/shop">All products</SiteFooter.Link>
+    <SiteFooter.Link href="/shop/lighting">Lighting</SiteFooter.Link>
+  </SiteFooter.Column>
+  <SiteFooter.Column title="Help">
+    <SiteFooter.Link href="/help/shipping">Shipping</SiteFooter.Link>
+    <SiteFooter.Link href="/help/returns">Returns</SiteFooter.Link>
+  </SiteFooter.Column>
+  <SiteFooter.Aside role="group" aria-labelledby="letter">
+    <SiteFooter.Title id="letter">The studio letter</SiteFooter.Title>
+    <NewsletterForm />
+  </SiteFooter.Aside>
+  <SiteFooter.Bottom
+    links={[
+      { label: 'Terms of sale', href: '/terms' },
+      { label: 'Privacy', href: '/privacy' },
+    ]}
+  >
+    &copy; 2026 Harbor &amp; Pine Studio
+  </SiteFooter.Bottom>
+</SiteFooter>
+```
+
+The links go through `LinkProvider` like those of the other components, and `aria-current="page"`
+marks the current page in bolder text. The parts are direct pieces of one wrapping row, so any
+number of columns works and a part can sit inside a component of your own; the order you write
+them in is the reading and tab order.
+
+`variant="compact"` puts the same parts on one line at `lg` and up, for the pages where the big
+footer would push the main action away, the cart and the checkout: the brand name (its
+description is dropped), the links of the column with its title kept for screen readers only, the
+copyright and legal links, and the `Aside` at the end of the line. Below `lg` the parts stack and
+wrap. `SiteFooter.Banner` is for the `full` variant.
+
+`theme` is `light` (default, follows the page theme like the light `Navbar`) or `dark`, which
+stays dark in every theme, the usual footer of a storefront with a light page. Keep the same
+`theme` on the `Navbar` and the footer to have the two match. `maxWidth` is `7xl` (default, the
+width of `Navbar`'s content) or `none`.
+
+On a wide screen the brand, the columns and the `Aside` share one row (in the proportion 3, 2
+each, 4); from `sm` the columns take a third of the row each, with the brand above and the
+`Aside` below; under `sm` they go two by two, and the brand and the `Aside` take the full row.
+Everything is laid out with logical properties: in right to left the brand moves to the right
+and the order of the columns, the legal links and the icons reverses.
+
 ## Split panes
 
 Storybook: [SplitView](https://sckyzo.github.io/cosmos/?path=/docs/layout-splitview--docs).
