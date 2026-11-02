@@ -57,3 +57,82 @@ message for a number it rejects, so a host can plug `libphonenumber-js` in.
   validate={(v) => (isValidPhoneNumber(v) ? undefined : 'Enter a valid phone number.')}
 />
 ```
+
+## Password strength
+
+Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-strength-meter--docs), [Password Policy Checker](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-policy-checker--docs).
+
+`PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
+reader also hears "met" or "not met" after each label (`labels` translates both words).
+`PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
+rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four segments of a `ProgressBar` light
+up, and the level reads above them ("Password strength: Fair"). `labels` takes the words to
+translate:
+
+```tsx
+<PasswordStrengthMeter
+  score={2}
+  labels={{ name: 'Robustesse', levels: ['Très faible', 'Faible', 'Moyen', 'Bon', 'Fort'] }}
+/>
+```
+
+The bar is decoration (`aria-hidden`). The visible text is what a screen reader reads when the field
+takes focus, if you point the field at it: give the meter an `id` and pass it as the field's
+`aria-describedby`, which `Input` adds to its own description. A hidden polite status announces a
+new level once the score has held for 800 ms, so nobody is read to on every key, and says nothing
+when the meter first shows.
+
+```tsx
+const meterId = useId();
+
+<PasswordInput
+  label="New password"
+  autoComplete="new-password"
+  aria-describedby={meterId}
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
+<PasswordStrengthMeter id={meterId} score={estimate(password)} />
+```
+
+Cosmos bundles no estimator, so it adds no weight to a page that does not need one.
+`NewPasswordForm` and `SignUpForm` take one as `strength` (see [Auth forms](layout.md#auth-forms)).
+This one has no dependency and suits a page that wants a first version: it counts at most two characters for each
+distinct one, steps up at 8, 12, 16 and 20 of them, and moves one step for the kinds of character
+used.
+
+```ts
+const estimate = (password: string): number => {
+  const useful = Math.min(password.length, 2 * new Set(password).size);
+  const base = useful < 8 ? 0 : Math.min(4, 1 + Math.floor((useful - 8) / 4));
+  if (base === 0) return 0;
+  const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((c) => c.test(password)).length;
+  return Math.max(0, Math.min(4, base + (classes >= 3 ? 1 : classes === 1 ? -1 : 0)));
+};
+```
+
+For a real app, use [zxcvbn-ts](https://zxcvbn-ts.github.io/zxcvbn/): it knows common passwords,
+keyboard patterns and dates. Its dictionaries are large, so load them with `import()` when the
+password field appears, and keep a score of 0 until they are in:
+
+```tsx
+const [zxcvbn, setZxcvbn] = useState<ZxcvbnFactory | null>(null);
+useEffect(() => {
+  void (async () => {
+    const [{ ZxcvbnFactory }, common, en] = await Promise.all([
+      import('@zxcvbn-ts/core'),
+      import('@zxcvbn-ts/language-common'),
+      import('@zxcvbn-ts/language-en'),
+    ]);
+    setZxcvbn(
+      new ZxcvbnFactory({
+        translations: en.translations,
+        graphs: common.adjacencyGraphs,
+        dictionary: { ...common.dictionary, ...en.dictionary },
+      })
+    );
+  })();
+}, []);
+
+const score = zxcvbn ? zxcvbn.check(password).score : 0;
+```

@@ -112,3 +112,19 @@ const unmetRuleContrastIn = (theme: string): Story => ({
 export const UnmetRuleContrastInLight = unmetRuleContrastIn('light');
 export const UnmetRuleContrastInSand = unmetRuleContrastIn('sand');
 export const UnmetRuleContrastInDeepBlue = unmetRuleContrastIn('deep-blue');
+
+/** The tick and the cross are drawn, so each rule also says its state in words for a screen reader. */
+export const EachRuleSaysIfItIsMet: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { rules: mixed },
+  play: async ({ canvas }) => {
+    const items = canvas.getAllByRole('listitem');
+    await expect(items[0]).toHaveTextContent('At least 12 characters, not met');
+    await expect(items[1]).toHaveTextContent('One uppercase letter, met');
+    await expect(items[4]).toHaveTextContent('One symbol, not met');
+    // Said to assistive technology only: the drawn rows keep their look.
+    for (const item of items) {
+      await expect(item.querySelector('.sr-only')).not.toBeNull();
+    }
+  },
+};

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -39,6 +39,18 @@ export const SentConfirmation: Story = {
     sentEmail: 'john@example.com',
     signInHref: '#',
     onResend: fn(),
+  },
+};
+
+// The countdown depends on how long the story has been open: no capture.
+export const SentWithResendCooldown: Story = {
+  tags: ['no-capture'],
+  args: {
+    sent: true,
+    sentEmail: 'john@example.com',
+    signInHref: '#',
+    onResend: fn(),
+    resendCooldown: 30,
   },
 };
 
@@ -142,5 +154,51 @@ export const SentViewMirrorsInRightToLeft: Story = {
       await expect(getComputedStyle(arrow).scale, dir).toBe(dir === 'rtl' ? '-1 1' : 'none');
       expectReadsLeftToRight(box.querySelector('bdi')!);
     }
+  },
+};
+
+// ── Resend cooldown ──────────────────────────────────────────────────────────
+
+// Real seconds, so a 2 s cooldown and waits on what is checked, never a sleep.
+const resendButton = (canvas: { getByRole: (role: string, o: object) => HTMLElement }) =>
+  canvas.getByRole('button', { name: 'Resend' });
+
+export const SentViewCountsDownBeforeResend: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { sent: true, sentEmail: 'john@example.com', onResend: fn(), resendCooldown: 2 },
+  play: async ({ args, canvas }) => {
+    const resend = resendButton(canvas);
+    const status = canvas.getByRole('status');
+    // The e-mail was just sent: the button waits, dimmed but focusable, and a press does nothing.
+    await expect(resend).toHaveAttribute('aria-disabled', 'true');
+    await expect(resend).not.toBeDisabled();
+    await expect(resend).toHaveAccessibleDescription(/available in 0:0[12]/);
+    resend.focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onResend).not.toHaveBeenCalled();
+    await expect(resend).toHaveFocus();
+    await waitFor(() => expect(resend).not.toHaveAttribute('aria-disabled'), { timeout: 3500 });
+    await expect(status).toHaveTextContent('You can request a new link.');
+    // A press sends again and restarts the wait.
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onResend).toHaveBeenCalledTimes(1);
+    await expect(resend).toHaveAttribute('aria-disabled', 'true');
+    await expect(status).toHaveTextContent('We sent you a new link.');
+    await expect(resend).toHaveFocus();
+  },
+};
+
+export const SentViewWithoutCooldownIsAsItWas: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { sent: true, sentEmail: 'john@example.com', onResend: fn() },
+  play: async ({ args, canvas }) => {
+    const resend = resendButton(canvas);
+    await expect(resend).not.toHaveAttribute('aria-disabled');
+    await userEvent.click(resend);
+    await userEvent.click(resend);
+    await expect(args.onResend).toHaveBeenCalledTimes(2);
+    await expect(canvas.queryByRole('status')).toBeNull();
   },
 };

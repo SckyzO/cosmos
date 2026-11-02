@@ -3,6 +3,7 @@ import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { estimateStrength } from '../storybook-strength';
 import { AuthLayout } from './AuthLayout';
 import { SignUpForm } from './SignUpForm';
 
@@ -30,6 +31,10 @@ export const Default: Story = { args: { signInHref: '#' } };
 
 export const WithoutPolicy: Story = {
   args: { showPolicy: false, signInHref: '#' },
+};
+
+export const WithStrengthMeter: Story = {
+  args: { strength: estimateStrength, signInHref: '#' },
 };
 
 export const WithError: Story = {
@@ -133,6 +138,56 @@ export const WeakPasswordKeepsSubmitDisabled: Story = {
     await userEvent.click(canvas.getByLabelText(/i agree to the/i));
     const submit = canvas.getByRole('button', { name: /create account/i });
     await expect(submit).toBeDisabled();
+  },
+};
+
+/** `rules` replaces the default policy: here only the length counts. */
+export const CustomRulesDecideWhenSubmitOpens: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: {
+    rules: (password: string) => [{ label: 'At least 6 characters', ok: password.length >= 6 }],
+  },
+  play: async ({ canvas }) => {
+    const submit = canvas.getByRole('button', { name: /create account/i });
+    await userEvent.type(canvas.getByLabelText(/^First name/), 'John');
+    await userEvent.type(canvas.getByLabelText(/^Last name/), 'Doe');
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'john@example.com');
+    await userEvent.click(canvas.getByLabelText(/i agree to the/i));
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'abcde');
+    await expect(canvas.getByRole('listitem')).toHaveTextContent('At least 6 characters, not met');
+    await expect(canvas.queryByText(/One symbol/)).toBeNull();
+    await expect(submit).toBeDisabled();
+    await userEvent.type(canvas.getByLabelText(/^Password/), 'f');
+    await expect(submit).not.toBeDisabled();
+  },
+};
+
+/** `strength` draws the meter once something is typed, and the field is described by it. */
+export const StrengthDrawsTheMeterOnTyping: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  args: { strength: estimateStrength },
+  play: async ({ canvas }) => {
+    const password = canvas.getByLabelText(/^Password/);
+    await expect(canvas.queryByText(/Password strength/)).toBeNull();
+    await userEvent.type(password, 'Correct-Horse-9');
+    await expect(canvas.getByText(/Password strength/)).toHaveTextContent(
+      'Password strength: Good'
+    );
+    await expect(password).toHaveAccessibleDescription('Password strength: Good');
+  },
+};
+
+/** Without `strength` nothing changes: no meter, and the field has no description. */
+export const WithoutStrengthThereIsNoMeter: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  play: async ({ canvas }) => {
+    const password = canvas.getByLabelText(/^Password/);
+    await userEvent.type(password, 'Correct-Horse-9');
+    await expect(canvas.queryByText(/Password strength/)).toBeNull();
+    await expect(password).not.toHaveAttribute('aria-describedby');
   },
 };
 

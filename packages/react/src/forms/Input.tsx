@@ -77,6 +77,7 @@ export function Input({
   className,
   id,
   ref,
+  'aria-describedby': describedBy,
   ...rest
 }: InputProps) {
   const generatedId = useId();
@@ -87,9 +88,11 @@ export function Input({
   const descId = `${inputId}-desc`;
   const successText = error ? undefined : success || undefined;
   const hasDesc = !!(error || successText || description);
+  // The caller's ids (a strength meter, a hint below the field) come after the field's own message.
+  const describedByIds = [hasDesc && descId, describedBy].filter(Boolean).join(' ') || undefined;
   const controlProps = {
     readOnly,
-    'aria-describedby': hasDesc ? descId : undefined,
+    'aria-describedby': describedByIds,
     'aria-invalid': error ? true : undefined,
     'aria-required': required || undefined,
     required,

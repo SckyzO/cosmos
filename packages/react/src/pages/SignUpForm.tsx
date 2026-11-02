@@ -1,12 +1,12 @@
 import { Mail, User } from 'lucide-react';
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Input } from '../forms/Input';
-import { PasswordInput } from '../forms/PasswordInput';
-import { PasswordPolicyChecker, defaultPasswordRules } from '../forms/PasswordPolicyChecker';
+import { defaultPasswordRules, type PasswordRule } from '../forms/PasswordPolicyChecker';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
+import { NewPasswordField } from './NewPasswordField';
 
 export type SignUpFormValues = {
   firstName: string;
@@ -24,6 +24,17 @@ export type SignUpFormProps = {
   privacyHref?: string;
   /** Show PasswordPolicyChecker live below the password field. Default `true`. */
   showPolicy?: boolean;
+  /**
+   * The password policy: what the rules say of a password. Default `defaultPasswordRules`. They
+   * are listed once something is typed and keep the form closed until they all hold, unless
+   * `showPolicy` is `false`.
+   */
+  rules?: (password: string) => PasswordRule[];
+  /**
+   * Scores a password from 0 to 4 (zxcvbn's scale). Given, a `PasswordStrengthMeter` shows under
+   * the field once something is typed. Cosmos bundles no estimator: see the docs.
+   */
+  strength?: (password: string) => number;
   loading?: boolean;
   error?: string;
   title?: string;
@@ -41,6 +52,8 @@ export const SignUpForm = ({
   termsHref = '#',
   privacyHref = '#',
   showPolicy = true,
+  rules: rulesOf = defaultPasswordRules,
+  strength,
   loading = false,
   error,
   title = 'Create your account',
@@ -55,13 +68,14 @@ export const SignUpForm = ({
   const [password, setPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const rules = useMemo(() => defaultPasswordRules(password), [password]);
+  const rules = rulesOf(password);
   const allRulesPass = rules.every((r) => r.ok);
   const canSubmit =
     firstName.length > 0 &&
     lastName.length > 0 &&
     email.length > 0 &&
-    (showPolicy ? allRulesPass : password.length > 0) &&
+    password.length > 0 &&
+    (!showPolicy || allRulesPass) &&
     agreedToTerms &&
     !loading;
 
@@ -121,15 +135,14 @@ export const SignUpForm = ({
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
         />
-        <PasswordInput
+        <NewPasswordField
           label="Password"
-          autoComplete="new-password"
-          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
+          rules={showPolicy && password.length > 0 && rules.length > 0 ? rules : null}
+          score={strength && password.length > 0 ? strength(password) : undefined}
         />
-        {showPolicy && password.length > 0 && <PasswordPolicyChecker rules={rules} />}
         <Checkbox
           label={
             <span>

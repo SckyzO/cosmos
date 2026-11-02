@@ -588,3 +588,34 @@ export const AddonsAreIsolatedInRightToLeft: Story = {
     }
   },
 };
+
+// ── aria-describedby ─────────────────────────────────────────────────────────
+
+/** A caller's `aria-describedby` is added to the field's own, not a replacement for it. */
+export const CallerDescribedByIsMergedWithOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <Input label="Own only" description="Used on the invoice." />
+      <Input label="Caller only" aria-describedby="note" />
+      <Input label="Both" description="Used on the invoice." aria-describedby="note" />
+      <Input label="Error and caller" error="Required." aria-describedby="note" />
+      <Input label="Neither" />
+      <p id="note">Extra note</p>
+    </>
+  ),
+  play: ({ canvas }) => {
+    const field = (name: string) => canvas.getByLabelText(name);
+    const own = (name: string) => `${field(name).id}-desc`;
+    expect(field('Own only')).toHaveAttribute('aria-describedby', own('Own only'));
+    expect(field('Caller only')).toHaveAttribute('aria-describedby', 'note');
+    // The field's own message comes first, then the caller's.
+    expect(field('Both')).toHaveAttribute('aria-describedby', `${own('Both')} note`);
+    expect(field('Both')).toHaveAccessibleDescription('Used on the invoice. Extra note');
+    expect(field('Error and caller')).toHaveAttribute(
+      'aria-describedby',
+      `${own('Error and caller')} note`
+    );
+    expect(field('Neither')).not.toHaveAttribute('aria-describedby');
+  },
+};

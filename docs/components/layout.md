@@ -183,3 +183,114 @@ panel shows from `lg` up; below, the brand block sits above the form. In `cover`
 drawn under a dark scrim (`cover.alt` is empty unless set), and without it the card sits on a
 gradient of the accent. In every variant the built-in title is a paragraph: the forms carry the
 page's `h1`.
+
+`size` is the width of the card (of the form column in `split`): `md` (448px, the default), `lg`
+(512px) or `xl` (672px), the widths of `Modal`'s sizes. It suits a step of an onboarding wizard
+that needs more room than a sign-in form. `md` pads the card by 32px; `lg` and `xl` pad it by 24px
+below `sm` and 32px from there, so a phone keeps room for the form.
+
+```tsx
+<AuthLayout size="xl" logo={Activity} title="Cosmos">
+  <PlanStep />
+</AuthLayout>
+```
+
+## Auth forms
+
+Storybook: [New Password Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-new-password-form--docs), [Two Step Verification Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-two-step-verification-form--docs), [Sign Up Form](https://sckyzo.github.io/cosmos/?path=/docs/examples-auth-sign-up-form--docs).
+
+Reset a password in two routes, each with its own form. `ResetPasswordForm` takes the e-mail
+address on the first one and shows its `sent` view. `NewPasswordForm` is the page the e-mail link
+opens: a new password and its confirmation, with `view` choosing the screen.
+
+```tsx
+// /forgot-password
+<ResetPasswordForm onSubmit={sendLink} sent={sent} sentEmail={email} signInHref="/sign-in" />
+
+// /reset-password?token=…
+<NewPasswordForm
+  view={view} // 'form' (default) | 'expired' | 'done'
+  onSubmit={(password) => updatePassword(token, password)}
+  requestHref="/forgot-password"
+  signInHref="/sign-in"
+/>
+```
+
+On `form` the submit button stays disabled until the password follows every rule and the
+confirmation matches. The mismatch shows when the confirmation field is left, not on every key,
+and a match is confirmed in words. `expired` is the link that no longer works: it offers
+`requestHref` to ask for another and `signInHref` to go back. `done` thanks the person and links to
+`signInHref`. Each view has one `h1`; `loading` and `error` follow the request, as on the other
+auth forms.
+
+The password policy is `rules`, a function of the password that returns the rules to list (the
+`PasswordRule`s of `PasswordPolicyChecker`). It defaults to `defaultPasswordRules`; an empty list
+shows none and asks only for a non-empty password. `strength` takes a function that scores the
+password from 0 to 4 and shows a `PasswordStrengthMeter` under the field once something is typed;
+without it nothing is drawn, and Cosmos bundles no estimator (see
+[Password strength](forms.md#password-strength)). `SignUpForm` takes the same two props, so one
+policy and one meter can serve both pages:
+
+```tsx
+const policy = (password: string) => [
+  { label: 'At least 14 characters', ok: password.length >= 14 },
+  { label: 'One number', ok: /\d/.test(password) },
+];
+
+<NewPasswordForm rules={policy} strength={estimate} onSubmit={…} />
+<SignUpForm rules={policy} strength={estimate} onSubmit={…} />
+```
+
+### Waiting between two resends
+
+`ResetPasswordForm` takes `resendCooldown` for its `sent` view: the seconds the "Resend" button waits
+before it can be pressed again. It counts from the moment the view shows, since the e-mail was just
+sent, and restarts on each press. While it waits, the button is `aria-disabled`, not `disabled`: it
+stays in the tab order and keeps the focus a keyboard user gave it, a press does nothing, and a
+screen reader reads the countdown ("available in 0:30") as its description. The countdown changes
+every second and is not a live region. One polite status says when a new link went out and when the
+button works again, and nothing else. `loading` still disables the button for real, and without
+`resendCooldown` the button is as it was. The server stays the authority: show a refusal (a 429)
+through `error`. `resendLabels` takes the words to translate: `resent`, `ready` and
+`availableIn(seconds)`.
+
+```tsx
+<ResetPasswordForm
+  sent
+  sentEmail={email}
+  onResend={resend}
+  resendCooldown={30}
+  onSubmit={sendLink}
+/>
+```
+
+### Two-step verification
+
+`TwoStepVerificationForm` takes the six-digit code. Two opt-in props add to it, and a page that sets
+neither renders as before.
+
+`backupCode` offers a link to a backup-code entry in the same card: a text field with no length or
+format check, no automatic submit, and a link back to the code. `method` (`'code'` | `'backup'`),
+with `defaultMethod` and `onMethodChange(method)`, says which one shows; set `method` to own it.
+`onSubmit(code, method)` gets the method the code was typed for, and the backup code trimmed. Each
+entry starts empty when the other is picked, and focus moves to the new field. On the backup entry
+`error` shows under the field and does not say whether the code was already used; on the code it is
+the banner above the cells.
+
+`resendCooldown` makes the "Resend code" button wait as described in [Waiting between two
+resends](#waiting-between-two-resends), from the moment the form shows (a code was just sent). It is
+hidden on the backup entry, which has nothing to resend.
+
+```tsx
+<TwoStepVerificationForm
+  backupCode
+  sentTo="ada@example.com"
+  onSubmit={(code, method) => (method === 'backup' ? useBackupCode(code) : verify(code))}
+  onResend={resend}
+  resendCooldown={30}
+/>
+```
+
+`labels` takes the words to translate: the title, description and field of the backup entry
+(`backupTitle`, `backupDescription`, `backupField`), the two links (`useBackupCode`,
+`useVerificationCode`) and the three words of the wait (`resent`, `ready`, `availableIn`).
