@@ -115,7 +115,8 @@ const presets: DateRangePreset[] = [
 Picking a preset does what picking its two days does: the range is set, `onChange` is called with
 it and the calendar closes. The preset whose days are the current range is marked `aria-current` and
 tinted, so reopening the calendar shows which one is on. A preset that falls outside `fromDate` or
-`toDate` is disabled.
+`toDate` is disabled. The group of presets is named "Date range presets" for a screen reader;
+`presetsLabel` replaces it, for a page in another language.
 
 `today` is the date the presets count from, and the one the calendar marks as today; it defaults to
 now. A preset gets it at the start of its day, as a day picked in the calendar is, so `to: today`

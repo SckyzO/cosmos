@@ -65,6 +65,11 @@ type RangeProps = {
    */
   presets?: DateRangePreset[];
   /**
+   * The name of the group of `presets`, for assistive technology, to translate with the rest of
+   * the page. Default "Date range presets".
+   */
+  presetsLabel?: string;
+  /**
    * The date `presets` count from, and the one the calendar marks as today. Default now. Pass a
    * fixed date to test the dates a preset makes. A preset gets it at the start of its day.
    */
@@ -434,7 +439,7 @@ export const DatePicker = (props: DatePickerProps) => {
               {rangeCalendar}
               <div
                 role="group"
-                aria-label="Date range presets"
+                aria-label={range?.presetsLabel ?? 'Date range presets'}
                 className="flex flex-wrap gap-1 border-t border-gray-200 p-3 sm:w-44 sm:flex-col sm:flex-nowrap sm:border-s sm:border-t-0 dark:border-gray-700"
               >
                 {presets.map((preset) => (
