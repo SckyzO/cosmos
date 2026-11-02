@@ -31,5 +31,18 @@ export * from './TagInput';
 export * from './Slider';
 export * from './ColorInput';
 export * from './PhoneInput';
+export * from './CardNumberInput';
+export * from './CardExpiryInput';
+export * from './CardCvcInput';
+export * from './CardFields';
+// The pure helpers of the card fields: what a page calls to validate. Typing logic stays internal.
+export {
+  cardBrand,
+  cardCvcLength,
+  cardNumberLengths,
+  expiryValid,
+  luhnValid,
+  type CardBrand,
+} from './cardFormat';
 // forms/formatBytes (the file size shown by FileInput and Dropzone) is internal: not re-exported.
 export type { FieldSize } from './fieldRecipe';

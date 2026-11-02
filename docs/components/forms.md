@@ -412,3 +412,111 @@ useEffect(() => {
 
 const score = zxcvbn ? zxcvbn.check(password).score : 0;
 ```
+
+## Card fields
+
+> **Security.** Cosmos never handles real card data. A real checkout takes the card through its
+> payment provider's hosted fields (iframes the provider serves), which keep the number off your
+> app and out of its PCI scope. These fields are for demos, prototypes and providers that hand the
+> values to your own code: the value sits in your page's state, so the page is in scope. They set no
+> `name` attribute, so a plain form post never sends a card by accident, and they log and keep
+> nothing.
+
+Storybook: [Card Fields](https://sckyzo.github.io/cosmos/?path=/docs/forms-card-fields--docs).
+
+`CardNumberInput`, `CardExpiryInput` and `CardCvcInput` are three fields that work alone (an "add a
+card" page may only ask for a date) and take the usual field props: `label`, `description`,
+`error`, `required`, `size`, `disabled`, `labelTrailing`, and the attributes of the `<input>` such as
+`onBlur`. `className` goes on the wrapper. `CardFields` is an optional group around the three: a
+`<fieldset>` with a shared `legend` and `error`, the number on its own line, the expiry and the code
+in two equal columns (still two at 375px), and the brand handed from the number to the code through
+context.
+
+```tsx
+<CardFields
+  legend="Card details"
+  value={card}
+  onChange={setCard}
+  errors={{ number: errors.number, expiry: errors.expiry, cvc: errors.cvc }}
+  error="Your card was declined."
+/>
+
+<CardNumberInput label="Card number" value={number} onChange={setNumber} onBrandChange={setBrand} />
+<CardExpiryInput label="Expiry date" value={expiry} onChange={setExpiry} />
+<CardCvcInput label="Security code" brand={brand} value={cvc} onChange={setCvc} />
+```
+
+**Typing.** The number is grouped as it is typed, 4-4-4-4 and 4-6-5 for an Amex, and the caret stays
+where it was after a digit typed or a number pasted in the middle; Backspace on the space between
+two groups removes the digit before it. A pasted number with spaces or dashes is accepted, and
+anything that is not a digit is dropped. The expiry shows `MM / YY`: a first digit from 2 to 9
+becomes the month 02 to 09, and a pasted `12/2028` becomes `12 / 28`. The security code takes digits
+only, 4 of them for an Amex and 3 for every other brand and while there is no brand; a code longer
+than its brand allows is cut when the brand turns up. The `<input>`s carry `inputmode="numeric"` and
+`autocomplete="cc-number"`, `cc-exp` and `cc-csc`, so browsers and password managers fill them.
+Numbers, dates and codes read left to right in any page: each field is a `dir="ltr"` island, as
+`PhoneInput` is, and its label and message keep the page's side.
+
+**Brand.** The leading digits pick the brand: Visa, Mastercard, Amex, Discover, Diners Club, JCB or
+UnionPay. Its name shows as text in a pill at the end of the number field (no logos, nothing to keep
+up to date). `onBrandChange(brand)` reports it, with `null` once the digits no longer point to one.
+A lone leading digit that several brands share gives `null` until the next ones tell them apart.
+
+**Values.** `value`, `defaultValue` and `onChange(value)` carry digits only: the number as
+`4111111111111111`, the expiry as `MMYY` (`'1228'`), the code as `123`. `CardFields` carries the
+three as one `{ number, expiry, cvc }` (`CardValue`).
+
+**Validation belongs to the page.** Unlike `PhoneInput`, the fields write no error message of their
+own and never turn red by themselves: the page chooses when to check (on blur, on submit) and which
+words to use, and passes the text as `error`. The checks come as pure helpers you can call anywhere:
+
+- `cardBrand(number)` returns the brand or `null`.
+- `cardNumberLengths(brand)` lists the lengths the brand issues (12 to 19 for `null`).
+- `luhnValid(number)` is the checksum, which catches a mistyped digit and not a card that does not
+  exist (some UnionPay numbers are issued without it).
+- `expiryValid(expiry, today?)` is a real month that is not over, a card holding through the end of
+  its month; pass `today` to test it.
+- `cardCvcLength(brand)` is 4 for `'amex'` and 3 otherwise.
+
+```tsx
+const numberError = () => {
+  const brand = cardBrand(number);
+  if (!cardNumberLengths(brand).includes(number.length)) return 'The card number is incomplete.';
+  if (!luhnValid(number)) return 'Check the card number.';
+};
+
+<CardNumberInput
+  label="Card number"
+  value={number}
+  onChange={setNumber}
+  onBlur={() => setErrors((e) => ({ ...e, number: number ? numberError() : undefined }))}
+  error={errors.number}
+/>;
+```
+
+`CardFields` takes `errors` (one message per field) and `error` for the whole card, under the three
+fields and announced when it appears ("Your card was declined", a failed 3-D Secure check).
+`labels` renames the three labels (`Card number`, `Expiry date`, `Security code`), and
+`inputRefs` hands the three `<input>`s to the page, to focus the one a validation error names.
+
+**Hosted fields.** A payment provider mounts its own field into a container you give it, so no
+Cosmos component stands in for it. Keep the same layout: a `<fieldset>` and a `<legend>` as
+`CardFields` draws, a label and a container per field styled like a Cosmos field (the height,
+border and radius tokens, `h-ctrl-36` and `rounded-lg`), and the provider's SDK mounting into the
+containers.
+
+```tsx
+<fieldset className="grid min-w-0 grid-cols-2 gap-4">
+  <legend className="mb-3 text-sm font-medium text-gray-900 dark:text-white">Card details</legend>
+  <div className="col-span-2">
+    <label htmlFor="card-number" className="mb-1.5 block text-sm font-medium">
+      Card number
+    </label>
+    <div
+      id="card-number"
+      className="h-ctrl-36 rounded-lg border border-gray-200 px-3 dark:border-gray-700"
+    />
+  </div>
+  {/* the expiry and the code, one column each */}
+</fieldset>
+```

@@ -41,10 +41,10 @@ direction around for a Latin text and leave the room reserved for a trailing ico
 on the wrong side. A `PasswordInput` does the same once its value is shown; hidden, it keeps
 the page's direction, as HTML leaves password fields out of `dir="auto"`, so how it aligns
 says nothing of what is typed. A value that is a code reads left to right in any page: the cells of
-`OtpInput`, the country button and number of `PhoneInput`, and the swatch and hex of
-`ColorInput` are `dir="ltr"` islands. `Slider` and `Calendar` hand the direction to Radix and
-react-day-picker, which lay out the handles and read the arrow keys from a `dir` prop and not
-from the page.
+`OtpInput`, the country button and number of `PhoneInput`, the swatch and hex of
+`ColorInput`, and the card number, expiry and code fields are `dir="ltr"` islands. `Slider` and
+`Calendar` hand the direction to Radix and react-day-picker, which lay out the handles and read the
+arrow keys from a `dir` prop and not from the page.
 
 Tailwind's `rtl:` variant (redefined by the theme to follow the nearest `dir`) is the tool
 for what has no logical form, such as `rtl:-scale-x-100` on an arrow. In your own markup,
