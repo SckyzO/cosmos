@@ -82,6 +82,8 @@ type SidebarContextValue = {
   inDrawer: boolean;
   inset: RowInset;
   activeStyle: SidebarActiveStyle;
+  /** Whether an open sub-menu draws its guide line. */
+  subMenuGuides: boolean;
   /** Where the first nested level's label starts, when not under a top-level row (px). */
   labelOrigin?: number;
   /** The rows (by label id) whose label the width cap cuts: they show it in a tooltip. */
@@ -94,6 +96,7 @@ const SidebarContext = createContext<SidebarContextValue>({
   inDrawer: false,
   inset: 'wide',
   activeStyle: 'tint',
+  subMenuGuides: true,
 });
 
 // A row collapsed on its own (the `collapsed` prop) can't keep the wide margin.
@@ -343,6 +346,12 @@ export type SidebarProps = {
    */
   gutter?: SidebarGutter;
   /**
+   * The line an open `Sidebar.SubMenu` draws along its rows, under the parent's icon or just before
+   * its label. Default `true`; `false` leaves the lines out, in the collapsed rail's panel and the
+   * compact rail's flyout too, and the indent alone shows the depth.
+   */
+  subMenuGuides?: boolean;
+  /**
    * A strip along the sidebar's end edge that collapses or expands it on click, and shows a line
    * under the pointer: a large target next to the toggles, for the mouse (the keyboard has the
    * toggles). Default `false`, `true` in a floating Shell. Not on the compact rail nor in the
@@ -396,6 +405,7 @@ const SidebarRoot = ({
   footerDivider = 'full',
   activeStyle = 'tint',
   gutter: gutterProp,
+  subMenuGuides = true,
   edgeToggle: edgeToggleProp,
   onCollapsedChange,
   className,
@@ -447,6 +457,7 @@ const SidebarRoot = ({
     inDrawer,
     inset: rail || compact ? 'tight' : 'wide',
     activeStyle,
+    subMenuGuides,
     truncated: fit.truncated,
   };
   const overlay = expandOnHover === 'overlay' && !inDrawer && !compact;
@@ -999,6 +1010,7 @@ const SidebarSubMenu = ({
               inDrawer: false,
               inset: 'tight',
               activeStyle: ctx.activeStyle,
+              subMenuGuides: ctx.subMenuGuides,
               labelOrigin: 8 + NESTED_PADDING,
             }}
           >
@@ -1141,11 +1153,13 @@ const SidebarSubMenu = ({
         {trigger}
       </LabelTip>
       <div id={listId} hidden={!open} className="relative">
-        <span
-          aria-hidden
-          className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-          style={{ insetInlineStart: geometry.guideStart(depth) }}
-        />
+        {ctx.subMenuGuides && (
+          <span
+            aria-hidden
+            className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
+            style={{ insetInlineStart: geometry.guideStart(depth) }}
+          />
+        )}
         <SidebarDepthContext.Provider value={depth + 1}>
           <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
         </SidebarDepthContext.Provider>

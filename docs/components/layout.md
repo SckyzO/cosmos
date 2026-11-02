@@ -33,7 +33,10 @@ A `Sidebar.Section` or `Sidebar.Group` sets its block apart with 22px above its 
 written as given (not upper-cased) and starts on the column of the row icons, as the logo of
 `Sidebar.Brand` is centred on it. The rows stand 20px from the sidebar's edges; `gutter="tight"`
 brings them to 10px, the logo, the titles and the footer following. Both go through
-`--cosmos-sidebar-gutter`, which an app can set for another distance.
+`--cosmos-sidebar-gutter`, which an app can set for another distance. An open `Sidebar.SubMenu`
+draws a thin line along its rows, under the parent's icon or just before its label;
+`subMenuGuides={false}` leaves the lines out, in the collapsed rail's panel and the compact rail's
+flyout too, and the indent alone shows the depth.
 
 `<Shell variant="floating">` sets the sidebar and the page apart as two cards on the base
 background, 10px from the window and from each other: the sidebar with a border all round,
