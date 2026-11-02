@@ -500,6 +500,9 @@ export const WorldMap = ({
         height,
         maxWidth: '100%',
         minWidth: 0,
+        // The map and its legend keep their left-to-right order under `dir="rtl"`: the steps climb
+        // from the left, as the Recharts charts keep their axis.
+        direction: 'ltr',
       }}
     >
       <div
