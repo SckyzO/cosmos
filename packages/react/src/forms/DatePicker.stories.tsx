@@ -751,3 +751,80 @@ export const RangePresetsGroupTakesItsLabel: Story = {
     await expect(dialog.queryByRole('group', { name: 'Date range presets' })).toBeNull();
   },
 };
+
+// ── Picking a range in the calendar ──────────────────────────────────────────
+// The first day starts the range and leaves the calendar open, the second ends it and closes it.
+
+const pickArgs = {
+  mode: 'range',
+  label: 'Stay',
+  today: TODAY,
+  format: iso,
+  onChange: fn(),
+} as const;
+
+const openRangeCalendar = async (canvas: ReturnType<typeof within>) => {
+  await userEvent.click(canvas.getAllByRole('button', { expanded: false })[0]!);
+  return dialogWithPresets();
+};
+
+/** One click starts the range and the calendar stays open; the second click finishes it and closes. */
+export const RangeNeedsTwoClicks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: pickArgs,
+  play: async ({ args, canvas, canvasElement }) => {
+    const dialog = await openRangeCalendar(canvas);
+    await userEvent.click(dialog.getByRole('button', { name: /January 8/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 8), to: undefined });
+    await expect(calendarDialog()).not.toBeNull();
+    await expect(triggers(canvasElement)).toEqual(['2026-01-08', 'End date']);
+
+    await userEvent.click(dialog.getByRole('button', { name: /January 14/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 8), to: day(1, 14) });
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+    await expect(triggers(canvasElement)).toEqual(['2026-01-08', '2026-01-14']);
+  },
+};
+
+/** The same day twice is a range of one day. */
+export const RangeSameDayTwiceIsOneDay: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: pickArgs,
+  play: async ({ args, canvas }) => {
+    const dialog = await openRangeCalendar(canvas);
+    await userEvent.click(dialog.getByRole('button', { name: /January 8/ }));
+    await expect(calendarDialog()).not.toBeNull();
+    await userEvent.click(dialog.getByRole('button', { name: /January 8/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 8), to: day(1, 8) });
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+  },
+};
+
+/** A second click before the first gives the range in order. */
+export const RangeSecondClickBeforeTheFirstKeepsTheOrder: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: pickArgs,
+  play: async ({ args, canvas }) => {
+    const dialog = await openRangeCalendar(canvas);
+    await userEvent.click(dialog.getByRole('button', { name: /January 14/ }));
+    await expect(calendarDialog()).not.toBeNull();
+    await userEvent.click(dialog.getByRole('button', { name: /January 8/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 8), to: day(1, 14) });
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+  },
+};
+
+/** Opened on a finished range, the next click starts a new one instead of stretching the old. */
+export const RangeClickOnAFinishedRangeStartsANewOne: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...pickArgs, defaultValue: { from: day(1, 8), to: day(1, 14) } },
+  play: async ({ args, canvas }) => {
+    const dialog = await openRangeCalendar(canvas);
+    await userEvent.click(dialog.getByRole('button', { name: /January 20/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 20), to: undefined });
+    await expect(calendarDialog()).not.toBeNull();
+    await userEvent.click(dialog.getByRole('button', { name: /January 22/ }));
+    await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 20), to: day(1, 22) });
+    await waitFor(() => expect(calendarDialog()).toBeNull());
+  },
+};
