@@ -189,6 +189,7 @@ export const LoadError: Story = {
     ...REVENUE,
     error: true,
     errorMessage: "Couldn't load revenue",
+    errorDescription: 'The request timed out. Your other widgets are up to date.',
     onRetry: fn(),
     minBodyHeight: 'min-h-44',
   },
@@ -300,6 +301,25 @@ export const TitleIsSixteenPixels: Story = {
   },
 };
 
+/** The description is 14px under the title, and the body starts 16px under the header. */
+export const DescriptionIsFourteenPixels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: '' },
+  render: () => (
+    <SectionCard title="Revenue over time" desc="Weekly, last 30 days">
+      <Figures />
+    </SectionCard>
+  ),
+  play: async ({ canvas }) => {
+    const desc = canvas.getByText('Weekly, last 30 days');
+    await expect(getComputedStyle(desc).fontSize).toBe('14px');
+    const body = canvas.getByText(/Weekly revenue closed/);
+    await expect(
+      body.getBoundingClientRect().top - desc.getBoundingClientRect().bottom
+    ).toBeCloseTo(16, 0);
+  },
+};
+
 /** The card is a region named by its title: a screen reader lists the cards of a page. */
 export const RootIsARegionNamedByItsTitle: Story = {
   ...WithAction,
@@ -347,7 +367,15 @@ export const ErrorChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const card = region(canvas, 'Revenue over time');
-    await expect(within(card).getByRole('alert')).toHaveTextContent("Couldn't load revenue");
+    const alert = within(card).getByRole('alert');
+    await expect(alert).toHaveTextContent("Couldn't load revenue");
+    // The description sits under the message, inside the alert.
+    const description = within(alert).getByText(
+      'The request timed out. Your other widgets are up to date.'
+    );
+    await expect(description.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      within(alert).getByText("Couldn't load revenue").getBoundingClientRect().bottom
+    );
     await expect(within(card).queryByText(/Weekly revenue closed/)).toBeNull();
     await expectHeaderKept(card);
     await userEvent.click(within(card).getByRole('button', { name: 'Try again' }));
@@ -371,7 +399,8 @@ export const StatesHaveDefaultMessages: Story = {
   ),
   play: async ({ canvas }) => {
     const failing = region(canvas, 'Failing');
-    await expect(within(failing).getByRole('alert')).toHaveTextContent('Something went wrong.');
+    // No `errorDescription`: the alert holds the message and nothing else.
+    await expect(within(failing).getByRole('alert').textContent).toBe('Something went wrong.');
     await expect(within(failing).queryByRole('button')).toBeNull();
     await expect(within(region(canvas, 'Nothing')).getByText('No data')).toBeVisible();
   },
