@@ -5,6 +5,26 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.5.0...@sckyzo/cosmos-charts@0.6.0) (2026-11-02)
+
+
+### Features
+
+* **charts:** add a loading state to every series chart ([7466c5a](https://github.com/SckyzO/cosmos/commit/7466c5a3ffc175f29832c0ad494e40c30124fee6))
+* **charts:** add loading to SunburstChart ([903dc88](https://github.com/SckyzO/cosmos/commit/903dc887de19fbb4db79c100c85d669ecbccccd7))
+* **charts:** add markers and routes to WorldMap ([d822612](https://github.com/SckyzO/cosmos/commit/d82261292a6ab0502395af9aea253b4688c230b7))
+* **charts:** add mirrored bars to BarChart ([a2692f0](https://github.com/SckyzO/cosmos/commit/a2692f031aff770d2713077f71fa863c89325d31))
+* **charts:** add SunburstChart ([b4d09b5](https://github.com/SckyzO/cosmos/commit/b4d09b53cb3b050c55767f3db2b0684b8d1f4a64))
+* **charts:** add zones and a needle to SemiCircleGauge ([b1d81dd](https://github.com/SckyzO/cosmos/commit/b1d81ddac16255cd5ccc394e9f703554387d6b95))
+* **charts:** draw the gauge needle as a dial ([43cba91](https://github.com/SckyzO/cosmos/commit/43cba9147f706ee746e6e78fe520fb166b219069))
+
+
+### Bug Fixes
+
+* **charts:** draw SunburstChart's circle with height and a side legend ([ddd9ca5](https://github.com/SckyzO/cosmos/commit/ddd9ca5fb7c8700cbf3728e8f58f25de07a30f75))
+* **charts:** keep WorldMap's layout left to right in a right-to-left page ([6c23697](https://github.com/SckyzO/cosmos/commit/6c236979a8fbee39cf3c7a200ce82da6b1c1ca92))
+* **charts:** leave Alt, Ctrl and Meta keys to the browser in two charts ([92eb912](https://github.com/SckyzO/cosmos/commit/92eb912ea880a9858d7b22ae928886cbef016e69))
+
 ## [0.5.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.4.1...@sckyzo/cosmos-charts@0.5.0) (2026-11-01)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@sckyzo/cosmos-charts",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "React chart components for the Cosmos design system — themeable Recharts wrappers (bar, line, area, donut, radial gauges, sparkline, treemap, realtime, heatmap, radar, scatter, bubble, box plot, range bar, mixed) that follow the Cosmos theme and accent.",
   "license": "MIT",
   "author": "SckyzO",
