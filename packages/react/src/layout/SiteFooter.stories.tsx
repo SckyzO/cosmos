@@ -356,6 +356,31 @@ export const LegalNavNameFollowsLinksLabel: Story = {
   },
 };
 
+/** A link left out of a column (`{admin && <SiteFooter.Link />}`) leaves no empty list item behind. */
+export const ColumnSkipsLinksThatAreNotThere: Story = {
+  globals: DESKTOP,
+  tags: HIDDEN,
+  render: () => {
+    const user: { admin: boolean } = { admin: false };
+    return (
+      <SiteFooter>
+        <SiteFooter.Column title="Account">
+          <SiteFooter.Link href="#orders">Orders</SiteFooter.Link>
+          {user.admin && <SiteFooter.Link href="#admin">Admin</SiteFooter.Link>}
+          {null}
+          <SiteFooter.Link href="#profile">Profile</SiteFooter.Link>
+        </SiteFooter.Column>
+      </SiteFooter>
+    );
+  },
+  play: async ({ canvas }) => {
+    const items = within(canvas.getByRole('navigation', { name: 'Account' })).getAllByRole(
+      'listitem'
+    );
+    await expect(items.map((item) => item.textContent)).toEqual(['Orders', 'Profile']);
+  },
+};
+
 /** At desktop width the brand, the columns and the end column share one row, the bottom under it. */
 export const PartsShareOneRowAtDesktop: Story = {
   ...Default,
