@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚠ BREAKING CHANGES
 
 * **react:** EventCalendar's `month`, `defaultMonth` and `onMonthChange` props are renamed `date`, `defaultDate` and `onDateChange`, with the same behavior. There is no alias.
-* **react:** StackedList.Item onClick moves from the <li> to the title, which becomes a <button> (with href, onClick runs on the link). A click on a control, or on a part of the row other than the title, no longer reaches it. Move a row-level handler to the title's onClick, to trailing, or to a wrapper of your own.
+* **react:** StackedList.Item onClick moves from the <li> to the title, which becomes a <button> (with href, onClick runs on the link). The title stretches over the row, so a click anywhere on the row still reaches onClick, except on the controls drawn above it (the checkbox, the star, the actions and what trailing holds). Move a handler that must see those clicks to a wrapper of your own.
 
 ### Features
 
