@@ -134,7 +134,9 @@ under them as bars over the days they cover.
   swap in right to left), Page Up and Page Down a week (a day, in the day view), Home and End to
   the first and the last slot of the day, Enter or Space calls `onSlotClick`. A move past the
   period shown goes to the next or the previous one. A status line under the grid says where the
-  cursor is. Without `onSlotClick` the grid is an area you can scroll, and nothing more.
+  cursor is. A click on a slot does not show the cursor, nor the line (the grid is focused by the
+  pointer, not the keyboard): the first key pressed after it does. Without `onSlotClick` the grid is
+  an area you can scroll, and nothing more.
 - **Keyboard and screen readers.** The hour grid is not an ARIA `grid`: events that overlap and run
   over several rows are not cells. Each day is a group named by its date and holds a list of its
   timed events in time order, each a button when `onEventClick` is set; the all-day events are one
