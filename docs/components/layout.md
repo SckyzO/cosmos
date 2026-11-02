@@ -345,11 +345,11 @@ opens: a new password and its confirmation, with `view` choosing the screen.
 ```
 
 On `form` the submit button stays disabled until the password follows every rule and the
-confirmation matches. The mismatch shows when the confirmation field is left, not on every key,
-and a match is confirmed in words. `expired` is the link that no longer works: it offers
-`requestHref` to ask for another and `signInHref` to go back. `done` thanks the person and links to
-`signInHref`. Each view has one `h1`; `loading` and `error` follow the request, as on the other
-auth forms.
+confirmation matches. The mismatch shows when the confirmation field is left (its show/hide button
+is part of it), not on every key, and a screen reader announces it as it appears; a match is
+confirmed in words. `expired` is the link that no longer works: it offers `requestHref` to ask for
+another and `signInHref` to go back. `done` thanks the person and links to `signInHref`. Each view
+has one `h1`; `loading` and `error` follow the request, as on the other auth forms.
 
 The password policy is `rules`, a function of the password that returns the rules to list (the
 `PasswordRule`s of `PasswordPolicyChecker`). It defaults to `defaultPasswordRules`; an empty list
