@@ -336,22 +336,57 @@ export const KeyboardAddsALineOnlyFromTheButton: Story = {
   },
 };
 
-/** After a removal the focus goes to the item of the line that took its place, never to the page. */
+/**
+ * After a removal the focus goes to the remove button of the line that took its place, never to
+ * the page and never into a field: with a catalogue, a field would open its list.
+ */
 export const FocusAfterRemovingInTheMiddle: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <Editor aria-label="Invoice items" currency="USD" locale="en-US" />,
+  render: () => (
+    <Editor aria-label="Invoice items" currency="USD" locale="en-US" catalogue={CATALOGUE} />
+  ),
   play: async ({ canvas }) => {
     const group = invoiceGroup(canvas);
     canvas.getByRole('button', { name: /^Remove line 2/ }).focus();
     await userEvent.keyboard('{Enter}');
     await expect(lineRows(group)).toHaveLength(2);
-    const item = canvas.getByRole('textbox', { name: 'Item, line 2' });
-    await waitFor(() => expect(item).toHaveFocus());
-    await expect(item).toHaveValue('Copy editing (per page)');
+    // The line that was third is second now, and its button holds the focus.
+    const remove = canvas.getByRole('button', { name: 'Remove line 2: Copy editing (per page)' });
+    await waitFor(() => expect(remove).toHaveFocus());
+    await expect(page.queryByRole('listbox')).toBeNull();
+    await expect(canvas.getByRole('combobox', { name: 'Item, line 2' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    // So the same key removes the next line, and the one after.
+    await userEvent.keyboard('{Enter}');
+    await expect(lineRows(group)).toHaveLength(1);
+    await waitFor(() =>
+      expect(
+        canvas.getByRole('button', { name: 'Remove line 1: Brand identity workshop' })
+      ).toHaveFocus()
+    );
   },
 };
 
-/** From the first, then the last, then the only line: the next line, the one before, "Add line". */
+/** Removing the last of several lines leaves the focus on the button of the new last line. */
+export const FocusAfterRemovingTheLastLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Editor aria-label="Invoice items" currency="USD" locale="en-US" />,
+  play: async ({ canvas }) => {
+    const group = invoiceGroup(canvas);
+    canvas.getByRole('button', { name: /^Remove line 3/ }).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(lineRows(group)).toHaveLength(2);
+    await waitFor(() =>
+      expect(
+        canvas.getByRole('button', { name: 'Remove line 2: Landing page design' })
+      ).toHaveFocus()
+    );
+  },
+};
+
+/** From the first line, then the last of two, then the only line: the next, the one before, "Add line". */
 export const FocusAfterRemovingFirstLastAndOnly: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <Editor aria-label="Invoice items" currency="USD" locale="en-US" />,
@@ -362,21 +397,25 @@ export const FocusAfterRemovingFirstLastAndOnly: Story = {
       await userEvent.keyboard('{Enter}');
     };
 
+    // The first line goes: the second line, now first, has the focus on its button.
     await remove(1);
     await expect(lineRows(group)).toHaveLength(2);
-    const first = canvas.getByRole('textbox', { name: 'Item, line 1' });
-    await waitFor(() => expect(first).toHaveFocus());
-    await expect(first).toHaveValue('Landing page design');
+    await waitFor(() =>
+      expect(
+        canvas.getByRole('button', { name: 'Remove line 1: Landing page design' })
+      ).toHaveFocus()
+    );
 
+    // The last of two goes: the one before it is the last now.
     await remove(2);
     await expect(lineRows(group)).toHaveLength(1);
     await waitFor(() =>
-      expect(canvas.getByRole('textbox', { name: 'Item, line 1' })).toHaveFocus()
-    );
-    await expect(canvas.getByRole('textbox', { name: 'Item, line 1' })).toHaveValue(
-      'Landing page design'
+      expect(
+        canvas.getByRole('button', { name: 'Remove line 1: Landing page design' })
+      ).toHaveFocus()
     );
 
+    // Nothing is left to focus but the button that adds a line.
     await remove(1);
     await expect(canvas.getByText('No lines yet')).toBeVisible();
     await waitFor(() => expect(canvas.getByRole('button', { name: 'Add line' })).toHaveFocus());
