@@ -23,6 +23,7 @@ export * from './TimePicker';
 export * from './OtpInput';
 export * from './ActionPanel';
 export * from './Combobox';
+export * from './LineItemsEditor';
 export * from './MultiSelect';
 export * from './TagInput';
 export * from './Slider';

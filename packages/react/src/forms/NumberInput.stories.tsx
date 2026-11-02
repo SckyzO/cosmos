@@ -7,6 +7,8 @@ import {
   expectFocusBorder,
   expectMirrored,
   expectRefFocuses,
+  startEdge,
+  startOffset,
 } from '../storybook-helpers';
 import { NumberInput, type NumberInputProps } from './NumberInput';
 
@@ -338,6 +340,212 @@ export const StackedForwardsRef: Story = {
   ),
   play: async ({ canvas }) => {
     await expectRefFocuses(stackedRef, canvas.getByRole('spinbutton', { name: 'Quantity' }));
+  },
+};
+
+// ── Prefix ───────────────────────────────────────────────────────────────────
+
+/** `prefix` sits before the value as `unit` sits after it: a currency sign, a protocol. */
+export const WithPrefix: Story = {
+  args: { value: 1800, min: 0, step: 50, prefix: '$', controls: 'stacked', className: 'w-40' },
+};
+
+/** Before the value, inside the border, in both layouts and next to a `unit`. */
+export const PrefixSitsBeforeTheValue: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <NumberInput aria-label="Sides" value={8} onChange={() => {}} prefix="$" unit="/h" />
+      <NumberInput
+        aria-label="Stacked"
+        controls="stacked"
+        value={8}
+        onChange={() => {}}
+        prefix="$"
+        unit="/h"
+        className="w-36"
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    // The − button of the sides layout comes first: the prefix follows it, then the value.
+    for (const [name, room] of [
+      ['Sides', 48],
+      ['Stacked', 24],
+    ] as const) {
+      const input = canvas.getByRole('spinbutton', { name });
+      const control = input.closest<HTMLElement>('[class*="rounded-lg"]')!;
+      const prefix = within(control).getByText('$');
+      // Ahead of the value, close to the start edge, and the control clips none of it.
+      await expect(startEdge(prefix.getBoundingClientRect())).toBeLessThan(
+        startEdge(input.getBoundingClientRect())
+      );
+      await expect(startOffset(prefix, control)).toBeLessThan(room);
+      await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+      // The unit stays after the value.
+      await expect(
+        startEdge(within(control).getByText('/h').getBoundingClientRect())
+      ).toBeGreaterThan(startEdge(input.getBoundingClientRect()));
+      // It is no part of the value.
+      await expect(input).toHaveValue(8);
+    }
+  },
+};
+
+/** The prefix sits on the start edge, which is the right one in right to left. */
+export const PrefixSitsOnTheStartEdgeInRightToLeft: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="space-y-3">
+        <NumberInput aria-label="Sides" value={8} onChange={() => {}} prefix="$" />
+        <NumberInput
+          aria-label="Stacked"
+          controls="stacked"
+          value={8}
+          onChange={() => {}}
+          prefix="$"
+          className="w-28"
+        />
+      </div>
+    )),
+  play: ({ canvasElement }) => {
+    for (const name of ['Sides', 'Stacked']) {
+      expectMirrored(canvasElement, (box) =>
+        within(
+          within(box)
+            .getByRole('spinbutton', { name })
+            .closest<HTMLElement>('[class*="rounded-lg"]')!
+        ).getByText('$')
+      );
+    }
+  },
+};
+
+// ── Error ────────────────────────────────────────────────────────────────────
+
+/**
+ * `error` marks the field invalid: a red border and `aria-invalid`. It carries no message: the
+ * host writes it under the field and points `aria-describedby` at it.
+ */
+export const WithError: Story = {
+  render: () => (
+    <div>
+      <NumberInput
+        aria-label="Quantity"
+        aria-describedby="quantity-error"
+        controls="stacked"
+        value={0}
+        onChange={() => {}}
+        min={1}
+        error
+        className="w-28"
+      />
+      <p id="quantity-error" className="mt-1 text-xs text-red-700 dark:text-red-400">
+        Must be at least 1
+      </p>
+    </div>
+  ),
+};
+
+const idleBorder = (control: HTMLElement) => getComputedStyle(control).borderTopColor;
+
+/** Both layouts: `aria-invalid`, the message as the description, and a border that is not the neutral one. */
+export const ErrorMarksTheFieldInvalid: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-3">
+      <NumberInput
+        aria-label="Sides"
+        aria-describedby="sides-error"
+        value={0}
+        onChange={() => {}}
+        error
+      />
+      <p id="sides-error">Must be at least 1</p>
+      <NumberInput
+        aria-label="Stacked"
+        aria-describedby="sides-error"
+        controls="stacked"
+        value={0}
+        onChange={() => {}}
+        error
+      />
+      <NumberInput aria-label="Fine" value={1} onChange={() => {}} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const fine = canvas.getByRole('spinbutton', { name: 'Fine' });
+    await expect(fine).not.toHaveAttribute('aria-invalid');
+    const neutral = idleBorder(fine.closest<HTMLElement>('[class*="rounded-lg"]')!);
+    for (const name of ['Sides', 'Stacked']) {
+      const input = canvas.getByRole('spinbutton', { name });
+      await expect(input).toHaveAttribute('aria-invalid', 'true');
+      await expect(input).toHaveAccessibleDescription('Must be at least 1');
+      await expect(idleBorder(input.closest<HTMLElement>('[class*="rounded-lg"]')!)).not.toBe(
+        neutral
+      );
+    }
+  },
+};
+
+/** The focus border of an invalid field is red too, in the dark themes where `dark:` once won. */
+export const ErrorFocusShowsRedBorderInDark: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { theme: 'dark' },
+  args: { value: 0, error: true },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('spinbutton');
+    await expectFocusBorder(input, {
+      border: input.closest('.rounded-lg') as HTMLElement,
+      token: '--color-red-500',
+    });
+  },
+};
+
+// ── No step buttons ──────────────────────────────────────────────────────────
+
+/**
+ * `controls="none"`: the field alone, for a price or an amount where stepping by one means
+ * nothing. The arrow keys of the field still step.
+ */
+export const NoControls: Story = {
+  args: { controls: 'none', value: 950, min: 0, prefix: '$', className: 'w-36' },
+};
+
+/** No step button, in front of a prefix or after a unit; typing and the range work as before. */
+export const NoControlsDrawsOnlyTheField: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 10, min: 0, max: 100, onChange: fn() },
+  render: (args) => (
+    <div className="space-y-3">
+      <Stateful {...args} controls="none" aria-label="Plain" className="w-36" />
+      <Stateful
+        {...args}
+        controls="none"
+        aria-label="Priced"
+        prefix="$"
+        unit="/h"
+        className="w-36"
+      />
+    </div>
+  ),
+  play: async ({ args, canvas }) => {
+    await expect(canvas.queryByRole('button')).toBeNull();
+    const priced = canvas.getByRole('spinbutton', { name: 'Priced' });
+    const control = priced.closest<HTMLElement>('[class*="rounded-lg"]')!;
+    await expect(within(control).getByText('$')).toBeInTheDocument();
+    await expect(within(control).getByText('/h')).toBeInTheDocument();
+    // The value starts the field, as in the stacked layout, and the control clips nothing.
+    await expect(getComputedStyle(priced).textAlign).toBe('start');
+    await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+    await userEvent.clear(priced);
+    await userEvent.type(priced, '12.5');
+    await expect(args.onChange).toHaveBeenLastCalledWith(12.5);
+    await userEvent.clear(priced);
+    await userEvent.type(priced, '500');
+    await userEvent.tab();
+    await expect(priced).toHaveValue(100);
   },
 };
 
