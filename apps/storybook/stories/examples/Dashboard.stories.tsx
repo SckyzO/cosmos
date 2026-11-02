@@ -344,6 +344,7 @@ const RevenueCard = ({
       // Only this card failed: the others keep their data, and the way out is in the card.
       error={failed}
       errorMessage="Couldn't load revenue"
+      errorDescription="The request timed out. Your other widgets are up to date."
       onRetry={onRetry}
       empty={empty}
       emptyMessage="No revenue yet"
@@ -786,6 +787,9 @@ export const ErrorIsLimitedToRevenue: Story = {
     await expect(alerts).toHaveLength(1);
     const revenue = widget(canvas, 'Revenue over time');
     await expect(within(revenue).getByRole('alert')).toHaveTextContent("Couldn't load revenue");
+    await expect(within(revenue).getByRole('alert')).toHaveTextContent(
+      'Your other widgets are up to date.'
+    );
     await expect(canvas.getByText('€412.9k')).toBeVisible();
     await expect(
       await canvas.findByRole('application', { name: 'Subscribers by plan' })
