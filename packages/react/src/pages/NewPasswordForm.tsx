@@ -161,24 +161,30 @@ export const NewPasswordForm = ({
           rules={rules.length > 0 ? rules : null}
           score={strength && password.length > 0 ? strength(password) : undefined}
         />
-        <PasswordInput
-          label="Confirm password"
-          autoComplete="new-password"
-          required
-          placeholder="Repeat the password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          onBlur={() => setConfirmLeft(true)}
-          error={mismatch ? MISMATCH : undefined}
-          success={confirm.length > 0 && matches ? 'Passwords match' : undefined}
-          disabled={loading}
-        />
-        {/* The focus has left the field, so its description is not read: the alert says it. */}
-        {mismatch && (
-          <span role="alert" className="sr-only">
-            {MISMATCH}
-          </span>
-        )}
+        {/* The show/hide button is part of the field: only a blur that goes elsewhere leaves it. */}
+        <div
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setConfirmLeft(true);
+          }}
+        >
+          <PasswordInput
+            label="Confirm password"
+            autoComplete="new-password"
+            required
+            placeholder="Repeat the password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            error={mismatch ? MISMATCH : undefined}
+            success={confirm.length > 0 && matches ? 'Passwords match' : undefined}
+            disabled={loading}
+          />
+          {/* The focus has left the field, so its description is not read: the alert says it. */}
+          {mismatch && (
+            <span role="alert" className="sr-only">
+              {MISMATCH}
+            </span>
+          )}
+        </div>
         <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
           {submitLabel}
         </Button>
