@@ -182,6 +182,8 @@ const editorEsm = `${pkgDir}dist/editor/index.js`;
 const editorCjs = `${pkgDir}dist/editor/index.cjs`;
 const TIPTAP_PEERS = [
   '@tiptap/core',
+  '@tiptap/extension-image',
+  '@tiptap/extension-text-align',
   '@tiptap/extensions',
   '@tiptap/pm',
   '@tiptap/react',
@@ -218,6 +220,8 @@ test('the editor entry leaves Tiptap and the root entry external', () => {
       '@tiptap/react/menus',
       '@tiptap/starter-kit',
       '@tiptap/extensions',
+      '@tiptap/extension-image',
+      '@tiptap/extension-text-align',
     ]) {
       expect(code, file).toMatch(new RegExp(`(?:from |require\\()['"]${name}['"]`));
     }
@@ -295,8 +299,8 @@ test('the editor entry loads in Node as ESM and as CJS, next to the root entry',
     ],
     { encoding: 'utf8', cwd: pkgDir }
   );
-  expect(JSON.parse(esmOut)).toEqual({ editor: 'function', actions: 11 });
-  expect(JSON.parse(cjsOut)).toEqual({ editor: 'function', actions: 11 });
+  expect(JSON.parse(esmOut)).toEqual({ editor: 'function', actions: 15 });
+  expect(JSON.parse(cjsOut)).toEqual({ editor: 'function', actions: 15 });
 });
 
 // ── `@sckyzo/cosmos-react/map`: the map, with `maplibre-gl` as an optional peer ─────────────────
