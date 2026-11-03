@@ -1,12 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import {
   applyAppearance,
   COSMOS_THEMES,
   type CosmosAccent,
   type CosmosThemeChoice,
 } from '../settings/appearance';
+import { bothDirections, directionBox } from '../storybook-helpers';
+import { isFading, tokenMs, transitionMs, transitionValues } from '../storybook-motion';
 import { ThemeToggle } from './ThemeToggle';
 
 const meta = {
@@ -67,6 +69,7 @@ const ControlledToggle = ({ initial }: { initial: CosmosThemeChoice }) => {
 
 /** All four themes, then the system choice. Starts from the toolbar theme, and remounts when it changes. */
 export const Controlled: Story = {
+  parameters: { settleMotion: false },
   render: (_args, { globals }) => {
     const initial = (
       EVERY_THEME.includes(globals.theme) ? globals.theme : 'light'
@@ -213,7 +216,12 @@ export const IconShowsTheCurrentTheme: Story = {
       system: 'lucide-monitor',
     };
     for (const [theme, icon] of Object.entries(icons)) {
-      await expect(canvas.getByTestId(theme).querySelector('svg')).toHaveClass(icon);
+      // Every icon of the list is in the button; the one showing is the one that is opaque.
+      const shown = Array.from(canvas.getByTestId(theme).querySelectorAll('svg')).filter(
+        (svg) => getComputedStyle(svg).opacity === '1'
+      );
+      await expect(shown).toHaveLength(1);
+      await expect(shown[0]).toHaveClass(icon);
     }
   },
 };
@@ -290,5 +298,173 @@ export const CyclesThroughEveryTheme: Story = {
     } finally {
       root.className = saved;
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const iconOf = (button: Element, theme: string) =>
+  button.querySelector(`[data-theme-icon="${theme}"]`)!;
+const look = (icon: Element) => {
+  const { opacity, rotate } = getComputedStyle(icon);
+  return { opacity, rotate };
+};
+const AT_REST = { opacity: '1', rotate: 'none' };
+
+// The quarter before the current icon and the one after it. Right to left turns the other way, and
+// the stories hold under `dir="rtl"` on the page too (the direction pass).
+const quarter = (element: Element, side: 'past' | 'next') => {
+  const rtl = getComputedStyle(element).direction === 'rtl';
+  return (side === 'past') !== rtl ? '-90deg' : '90deg';
+};
+
+/**
+ * At rest the icon of the current theme is upright and opaque, the icons before it in the list
+ * have turned a quarter one way and the ones after it wait a quarter the other way, transparent,
+ * for every theme of the list; right to left mirrors the turn.
+ */
+export const IconsRestPerTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="flex gap-3">
+        {EVERY_THEME.map((theme) => (
+          <ThemeToggle
+            key={theme}
+            theme={theme}
+            themes={EVERY_THEME}
+            onChange={fn()}
+            data-testid={theme}
+          />
+        ))}
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      // The quarter before the current icon, and the one after it.
+      const past = { opacity: '0', rotate: dir === 'ltr' ? '-90deg' : '90deg' };
+      const next = { opacity: '0', rotate: dir === 'ltr' ? '90deg' : '-90deg' };
+      for (const [current, theme] of EVERY_THEME.entries()) {
+        const button = box.querySelector(`[data-testid="${theme}"]`)!;
+        await expect(button.querySelectorAll('svg')).toHaveLength(EVERY_THEME.length);
+        for (const [index, other] of EVERY_THEME.entries()) {
+          const expected = index === current ? AT_REST : index < current ? past : next;
+          await expect(look(iconOf(button, other)), `${dir} ${theme}: ${other}`).toEqual(expected);
+        }
+      }
+    }
+  },
+};
+
+// A toggle that turns through the four themes, as the page would drive it.
+const FOUR = ['light', 'sand', 'dark', 'deep-blue'] as const;
+const TurningToggle = () => {
+  const [theme, setTheme] = useState<(typeof FOUR)[number]>('light');
+  return <ThemeToggle theme={theme} themes={FOUR} onChange={setTheme} />;
+};
+
+/**
+ * A click turns the icon that leaves a quarter and the one that arrives a quarter, the same way
+ * round, fading one into the other; wrapping from the last theme back to the first turns them the
+ * other way. Read from the transitions that run, then from where they end.
+ */
+export const IconsTurnAQuarterBothWays: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <TurningToggle />,
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    // Forward: the old icon turns out to the quarter before, the new one comes from the quarter after.
+    await userEvent.click(button);
+    await expect(button).toHaveAttribute('data-theme', 'sand');
+    await expect(transitionValues(iconOf(button, 'light'), 'rotate').at(-1)).toBe(
+      quarter(button, 'past')
+    );
+    await expect(transitionValues(iconOf(button, 'sand'), 'rotate')[0]).toBe(
+      quarter(button, 'next')
+    );
+    await expect(transitionValues(iconOf(button, 'light'), 'opacity')).toEqual(['1', '0']);
+    await expect(transitionValues(iconOf(button, 'sand'), 'opacity')).toEqual(['0', '1']);
+    await waitFor(() => expect(look(iconOf(button, 'sand'))).toEqual(AT_REST));
+    await expect(look(iconOf(button, 'light'))).toEqual({
+      opacity: '0',
+      rotate: quarter(button, 'past'),
+    });
+
+    await userEvent.click(button);
+    await userEvent.click(button);
+    await expect(button).toHaveAttribute('data-theme', 'deep-blue');
+    await waitFor(() => expect(look(iconOf(button, 'deep-blue'))).toEqual(AT_REST));
+
+    // Back to the first theme: the other way round.
+    await userEvent.click(button);
+    await expect(button).toHaveAttribute('data-theme', 'light');
+    await expect(transitionValues(iconOf(button, 'deep-blue'), 'rotate').at(-1)).toBe(
+      quarter(button, 'next')
+    );
+    await expect(transitionValues(iconOf(button, 'light'), 'rotate')[0]).toBe(
+      quarter(button, 'past')
+    );
+    await waitFor(() => expect(look(iconOf(button, 'light'))).toEqual(AT_REST));
+    await expect(look(iconOf(button, 'deep-blue'))).toEqual({
+      opacity: '0',
+      rotate: quarter(button, 'next'),
+    });
+  },
+};
+
+/** The icons move over the base duration, 200 ms, and the box they turn in does not change size. */
+export const IconsTurnOnTheBaseToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <TurningToggle />,
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    await expect(tokenMs('--cosmos-motion-base')).toBe(200);
+    const icons = FOUR.map((theme) => iconOf(button, theme));
+    for (const icon of icons) await expect(transitionMs(icon)).toBe(200);
+    const box = button.getBoundingClientRect().toJSON();
+    const rects = icons.map((icon) => icon.getBoundingClientRect().toJSON());
+    await userEvent.click(button);
+    await expect(isFading(iconOf(button, 'sand'))).toBe(true);
+    await waitFor(() => expect(isFading(button)).toBe(false));
+    await expect(button.getBoundingClientRect().toJSON()).toEqual(box);
+    await expect(icons.map((icon) => icon.getBoundingClientRect().toJSON())).toEqual(rects);
+  },
+};
+
+/** With the reduced setting the icons swap at once, with no turn. */
+export const IconsSwapAtOnceWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <TurningToggle />,
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    for (const theme of FOUR) await expect(transitionMs(iconOf(button, theme))).toBe(0);
+    await userEvent.click(button);
+    await expect(isFading(iconOf(button, 'light'))).toBe(false);
+    await expect(isFading(iconOf(button, 'sand'))).toBe(false);
+    await expect(look(iconOf(button, 'sand'))).toEqual(AT_REST);
+    await expect(look(iconOf(button, 'light'))).toEqual({
+      opacity: '0',
+      rotate: quarter(button, 'past'),
+    });
+  },
+};
+
+/** A theme outside the list still has its icon, upright, and the list follows it. */
+export const ThemeOutsideTheListKeepsItsIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ThemeToggle theme="system" themes={['light', 'dark']} onChange={fn()} />,
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    await expect(button.querySelectorAll('svg')).toHaveLength(3);
+    await expect(look(iconOf(button, 'system'))).toEqual(AT_REST);
+    await expect(look(iconOf(button, 'light'))).toEqual({
+      opacity: '0',
+      rotate: quarter(button, 'next'),
+    });
   },
 };

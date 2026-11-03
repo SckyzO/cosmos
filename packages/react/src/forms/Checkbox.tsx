@@ -9,6 +9,7 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
+import { FieldMessage } from './FieldMessage';
 import { useControllableState } from '../hooks/useControllableState';
 
 export type CheckboxSize = 'sm' | 'md';
@@ -221,7 +222,9 @@ export const CheckboxGroup = ({
           />
         ))}
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-700 dark:text-red-400">{error}</p>}
+      <FieldMessage show={!!error} as="p" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+        {error}
+      </FieldMessage>
     </fieldset>
   );
 };

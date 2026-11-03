@@ -1,6 +1,7 @@
 // Helpers for the stories that check motion: a window leaving, the scrim's look, reduced motion.
 // Stories that watch a transition opt out of the story tests' 0 s reset with
 // `parameters: { settleMotion: false }`; the others read end states.
+import { expect } from 'storybook/test';
 
 /** One animation frame. */
 export const nextFrame = () =>
@@ -46,6 +47,16 @@ export const scrimLook = (scrim: Element) => {
 /** The computed duration of a transition, in ms (`transition-duration: 0.2s` reads 200). */
 export const transitionMs = (element: Element) => {
   const [first = '0s'] = getComputedStyle(element).transitionDuration.split(',');
+  const value = parseFloat(first);
+  return Math.round(first.trim().endsWith('ms') ? value : value * 1000);
+};
+
+/**
+ * The computed delay of a transition, in ms: what it waits before it starts. The first of the list,
+ * like `transitionMs`.
+ */
+export const transitionDelayMs = (element: Element) => {
+  const [first = '0s'] = getComputedStyle(element).transitionDelay.split(',');
   const value = parseFloat(first);
   return Math.round(first.trim().endsWith('ms') ? value : value * 1000);
 };
@@ -174,4 +185,135 @@ export const monthSlideNames = (root: Element, change: 'next' | 'previous') => {
   const incoming = fromEnd !== rtl ? 'right' : 'left';
   const outgoing = fromEnd !== rtl ? 'left' : 'right';
   return [`rdp-slide_in_${incoming}`, `rdp-slide_out_${outgoing}`];
+};
+
+/**
+ * What the style rules of the page declare for `element` while `pseudo` (`:active`, `:hover`,
+ * `:focus-visible`) holds: every rule whose selector ends in that pseudo-class and matches the
+ * element without it, in a media query that applies. A play function cannot press the pointer down
+ * or hover for real, so the rule itself is read. `pseudoElement` (`::after`) reads the rules of
+ * that pseudo-element of the element instead. Later rules win over earlier ones; specificity is
+ * not weighed, which suits the single-class rules of the utilities.
+ */
+export const declaredWhile = (element: Element, pseudo: string, pseudoElement = '') => {
+  const declared = new Map<string, string>();
+  // The pseudo-class itself, not the same letters in an escaped class name (`.active\:x`).
+  const state = new RegExp(`(?<!\\\\)${pseudo}(?![\\w-])`, 'g');
+  const visit = (rules: CSSRuleList) => {
+    for (const rule of rules) {
+      if (rule instanceof CSSMediaRule) {
+        if (window.matchMedia(rule.conditionText).matches) visit(rule.cssRules);
+      } else if (rule instanceof CSSStyleRule) {
+        const withoutState = rule.selectorText.replace(state, '');
+        if (withoutState === rule.selectorText) continue;
+        const endsIn = /::(?:before|after)$/.exec(withoutState)?.[0] ?? '';
+        if (endsIn !== pseudoElement) continue;
+        let applies = false;
+        try {
+          applies = element.matches(withoutState.slice(0, withoutState.length - endsIn.length));
+        } catch {
+          // A selector that is not valid without its pseudo-class cannot match the element.
+        }
+        if (!applies) continue;
+        for (const name of Array.from(rule.style)) {
+          declared.set(name, rule.style.getPropertyValue(name));
+        }
+      } else if ('cssRules' in rule) visit(rule.cssRules as CSSRuleList);
+    }
+  };
+  for (const sheet of document.styleSheets) visit(sheet.cssRules);
+  return declared;
+};
+
+/**
+ * The computed value of `property` for `element` while `pseudo` holds, from the rules
+ * `declaredWhile` reads, put on a probe: the initial value (`none` for `translate`) when no rule
+ * applies, as it is for a disabled button the `enabled:` variant leaves out.
+ */
+export const valueWhile = (
+  element: Element,
+  pseudo: string,
+  property: string,
+  pseudoElement = ''
+) => {
+  const probe = document.createElement('div');
+  for (const [name, value] of declaredWhile(element, pseudo, pseudoElement)) {
+    probe.style.setProperty(name, value);
+  }
+  document.body.append(probe);
+  const value = getComputedStyle(probe).getPropertyValue(property);
+  probe.remove();
+  return value;
+};
+
+/**
+ * Puts `element` in the state of `pseudo` for real: its rules, and those of its `::after`, are
+ * applied to it (inline for the element, in a style sheet for the pseudo-element), so what the
+ * state changes can be measured and hit-tested. Returns the function that puts it back.
+ */
+export const holdState = (element: HTMLElement, pseudo: string) => {
+  const style = element.getAttribute('style');
+  for (const [name, value] of declaredWhile(element, pseudo)) {
+    element.style.setProperty(name, value);
+  }
+  element.setAttribute('data-held-state', '');
+  const sheet = document.createElement('style');
+  sheet.textContent = `[data-held-state]::after { ${[...declaredWhile(element, pseudo, '::after')]
+    .map(([name, value]) => `${name}: ${value}`)
+    .join('; ')} }`;
+  document.head.append(sheet);
+  return () => {
+    sheet.remove();
+    element.removeAttribute('data-held-state');
+    if (style === null) element.removeAttribute('style');
+    else element.setAttribute('style', style);
+  };
+};
+
+/** What `translate` reads on a card lifted by 2px (see `ui/cardLift.ts`). */
+export const LIFTED = '0px -2px';
+
+/**
+ * A card that can be clicked rises 2px with a soft shadow under the pointer. At rest it is where
+ * it is; the rule of `:hover` is read (a hover cannot be forced), and says `LIFTED` and a shadow.
+ */
+export const expectLiftsOnHover = (card: HTMLElement) => {
+  expect(getComputedStyle(card).translate).toBe('none');
+  expect(valueWhile(card, ':hover', 'translate')).toBe(LIFTED);
+  expect(valueWhile(card, ':hover', 'box-shadow')).toContain('0px 4px 6px');
+};
+
+/** A card that cannot be clicked never moves under the pointer. */
+export const expectStaysUnderHover = (card: HTMLElement) => {
+  expect(getComputedStyle(card).translate).toBe('none');
+  expect(valueWhile(card, ':hover', 'translate')).toBe('none');
+};
+
+/**
+ * The lifted card keeps the place it had under the pointer. The hover rule is put on the card for
+ * real, so it can be measured and hit-tested: the card is 2px higher, the pointer on its old
+ * lower edge still finds it (it would find what is under it, with the lift alone: the card and
+ * the pointer would take turns), and a pointer clear of that edge finds something else.
+ */
+export const expectKeepsItsPlace = (card: HTMLElement) => {
+  const rest = card.getBoundingClientRect();
+  const x = rest.left + rest.width / 2;
+  const release = holdState(card, ':hover');
+  try {
+    const lifted = card.getBoundingClientRect();
+    expect(rest.top - lifted.top).toBe(2);
+    expect(rest.height).toBe(lifted.height);
+    expect(card.contains(document.elementFromPoint(x, rest.bottom - 0.5))).toBe(true);
+    expect(card.contains(document.elementFromPoint(x, rest.bottom + 1.5))).toBe(false);
+  } finally {
+    release();
+  }
+};
+
+/** Whether `element` transitions each of `properties`: by name, or all of them with `all`. */
+export const transitions = (element: Element, ...properties: string[]) => {
+  const named = getComputedStyle(element)
+    .transitionProperty.split(',')
+    .map((property) => property.trim());
+  return named.includes('all') || properties.every((property) => named.includes(property));
 };

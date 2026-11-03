@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { Select } from '../forms/Select';
+import { useIndicator } from '../hooks/useIndicator';
+import { SlidingIndicator } from '../ui/SlidingIndicator';
 
 export type StickyScrollNavSection = {
   id: string;
@@ -32,6 +34,9 @@ const BUTTON_IDLE =
   'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white';
 const BUTTON_READING =
   'bg-brand-500/10 text-brand-600 hover:bg-brand-500/15 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/20';
+// Once the marker is in place it draws the fill, and the button keeps its text.
+const BUTTON_READING_MARKED = 'text-brand-600 dark:text-brand-400';
+const MARKER_FILL = 'rounded-lg bg-brand-500/10 dark:bg-brand-500/15';
 
 // The scroll container the sticky nav sticks in: its nearest scrolling
 // ancestor, or null for the viewport.
@@ -45,9 +50,10 @@ const scrollContainerOf = (el: HTMLElement): HTMLElement | null => {
 /**
  * StickyScrollNav — on a long page, a row of buttons stays pinned at the top. Each one scrolls to
  * its section, found by `id`, and lands just under the bar, so the heading stays visible. The
- * button of the section being read is marked (`aria-current="location"`). On a phone the row
- * becomes a select that shows the section you are reading and moves to the one picked. For
- * settings pages, docs and long template pages.
+ * button of the section being read is marked (`aria-current="location"`), by a fill that slides
+ * from one button to the next as the page scrolls. On a phone the row becomes a select that shows
+ * the section you are reading and moves to the one picked. For settings pages, docs and long
+ * template pages.
  */
 export const StickyScrollNav = ({
   sections,
@@ -57,7 +63,16 @@ export const StickyScrollNav = ({
   className,
 }: StickyScrollNavProps) => {
   const navRef = useRef<HTMLElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(sections[0]?.id ?? '');
+  // The fill of the button being read is one element that slides from button to button. The row
+  // is hidden below `sm`: it has no layout there, and so no marker, and the buttons are not shown.
+  const marker = useIndicator(rowRef, {
+    active: 'button[aria-current="location"]',
+    options: 'button',
+  });
+  // Until it is in place (server render, the first frame of a hydration) the button fills itself.
+  const marked = marker.box !== null;
 
   // The section being read, which the jump menu names and the row of buttons marks: the last one
   // whose top has reached the bottom of the nav, or the last one at the end of the scroll, which
@@ -125,7 +140,9 @@ export const StickyScrollNav = ({
         className
       )}
     >
-      <div className="hidden gap-1 sm:flex">
+      {/* `relative isolate`: the marker is placed against the row and sits behind the buttons. */}
+      <div ref={rowRef} className="relative isolate hidden gap-1 sm:flex">
+        <SlidingIndicator marker={marker} axes="both" className={MARKER_FILL} />
         {sections.map(({ id, label }) => {
           const reading = id === current;
           return (
@@ -136,7 +153,7 @@ export const StickyScrollNav = ({
               aria-current={reading ? 'location' : undefined}
               className={clsx(
                 'focus-visible:focus-indicator py-row-6 shrink-0 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:ring-inset',
-                reading ? BUTTON_READING : BUTTON_IDLE
+                reading ? (marked ? BUTTON_READING_MARKED : BUTTON_READING) : BUTTON_IDLE
               )}
             >
               {label}

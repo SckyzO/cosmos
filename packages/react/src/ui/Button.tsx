@@ -173,6 +173,12 @@ const ICON_SIZE: Record<ButtonSize, string> = {
   '3xl': 'h-6 w-6',
 };
 
+/**
+ * Button — the action control. While pressed it sits 1px lower and comes back in
+ * `--cosmos-motion-exit`; a `disabled` or `loading` button, and the `link` variant (no box to
+ * push), stay still. Every component that renders a `Button` (`StatefulSaveButton`, the modals'
+ * actions, the forms) presses the same way.
+ */
 export const Button = ({
   variant = 'primary',
   intent = 'brand',
@@ -195,12 +201,17 @@ export const Button = ({
     className={clsx(
       // A label on one line in a button of fixed height: a row too narrow for it wraps or
       // scrolls the buttons, not the text.
-      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors',
+      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium whitespace-nowrap',
+      // The colours and the press share the exit duration: 80 ms, to be pushed in and to come back.
+      'transition-[color,background-color,border-color,text-decoration-color,translate] duration-(--cosmos-motion-exit) ease-(--cosmos-ease-out)',
       VARIANT_CLASS[variant][intent],
       TEXT_CLASS[size],
       variant === 'link'
         ? LINK_CLASS
         : [
+            // A press pushes the button 1px down, along the block axis (a `translate`, so the
+            // layout does not move). Not a disabled or loading one: it takes no press.
+            'enabled:active:translate-y-px',
             HEIGHT_CLASS[size],
             SHAPE_CLASS[shape],
             shape === 'circle' || shape === 'square' ? ICON_ONLY_WIDTH[size] : PADDING_X[size],

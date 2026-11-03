@@ -192,7 +192,8 @@ error.
 ```
 
 - `loading` draws a skeleton, sets `aria-busy` on the card and adds a status line for screen
-  readers ("Loading Revenue over time…").
+  readers ("Loading Revenue over time…"). When it ends, the body fades in over 200ms; a card that
+  never loaded does not fade.
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
   `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
 - `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
@@ -295,7 +296,11 @@ chat, a file manager). It fills the height of its parent and each pane scrolls o
 `collapseBelow` (`md`, `lg` by default, `xl`) only the active pane shows. Control it with
 `activePane` and `onActivePaneChange`, or start it with `defaultActivePane` and switch from
 inside with `useSplitView()`; the pane that appears takes focus. A Back button is yours to
-place.
+place. Below `collapseBelow` a change of pane moves the later of the two panes over the other: it
+slides in from the end of the line in 300ms (from the left in right to left), and slides out the
+same way when the view goes back to an earlier pane. The pane that stays is under it, out of reach
+and of the accessibility tree, until the slide has played. Side by side nothing moves, and under
+the reduced motion setting the panes change at once.
 
 ```tsx
 <SplitView activePane={pane} onActivePaneChange={setPane}>

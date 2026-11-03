@@ -10,6 +10,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { RequiredMark } from './RequiredMark';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
@@ -234,22 +235,21 @@ export function Select({
           )}
         />
       </div>
-      {hasDesc && (
-        <span
-          id={descId}
-          aria-live={successText ? 'polite' : undefined}
-          className={clsx(
-            'mt-1 block text-xs',
-            error
-              ? 'text-red-700 dark:text-red-400'
-              : successText
-                ? 'text-green-700 dark:text-green-400'
-                : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {successText ?? error ?? description}
-        </span>
-      )}
+      <FieldMessage
+        show={hasDesc}
+        id={descId}
+        aria-live={successText ? 'polite' : undefined}
+        className={clsx(
+          'mt-1 block text-xs',
+          error
+            ? 'text-red-700 dark:text-red-400'
+            : successText
+              ? 'text-green-700 dark:text-green-400'
+              : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {successText ?? error ?? description}
+      </FieldMessage>
     </div>
   );
 }

@@ -18,6 +18,21 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { COSMOS_ACCENTS } from '../settings/appearance';
+import {
+  expectFadesInAfterSkeleton,
+  expectNoFadeFromFirstRender,
+  fadeIns,
+  LoadToggle,
+} from '../storybook-arrival';
+import {
+  expectKeepsItsPlace,
+  expectLiftsOnHover,
+  expectStaysUnderHover,
+  LIFTED,
+  tokenMs,
+  transitionMs,
+  transitions,
+} from '../storybook-motion';
 import { ProgressBar } from '../ui/ProgressBar';
 import { ProgressRing } from '../ui/ProgressRing';
 import { KpiCard } from './KpiCard';
@@ -236,8 +251,9 @@ export const Loading: Story = {
   },
 };
 
-/** With `href` the whole card is one link: the border turns to the accent on hover. */
+/** With `href` the whole card is one link: the border turns to the accent on hover, and it rises. */
 export const AsLink: Story = {
+  parameters: { settleMotion: false },
   args: {
     label: 'Open tickets',
     value: '128',
@@ -249,6 +265,7 @@ export const AsLink: Story = {
 
 /** With `onClick` and no `href` the whole card is one button. */
 export const AsButton: Story = {
+  parameters: { settleMotion: false },
   args: {
     label: 'Open tickets',
     value: '128',
@@ -893,5 +910,128 @@ export const FeaturedStaysReadableInEveryThemeAndAccent: Story = {
       if (saved === null) root.removeAttribute('data-accent');
       else root.setAttribute('data-accent', saved);
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const LiftingCards = () => (
+  <div className="grid gap-6 p-4 sm:grid-cols-3">
+    <KpiCard label="Link card" value="1" href="#tickets" />
+    <KpiCard label="Button card" value="2" onClick={fn()} />
+    <KpiCard label="Plain card" value="3" />
+  </div>
+);
+
+/** A card that is a link or a button rises 2px with a soft shadow; a plain one never does. */
+export const ClickableCardsLift: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingCards />,
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: /Link card/ });
+    const button = canvas.getByRole('button', { name: /Button card/ });
+    const plain = canvas.getByText('Plain card').closest('div.rounded-2xl') as HTMLElement;
+    expectLiftsOnHover(link);
+    expectLiftsOnHover(button);
+    expectStaysUnderHover(plain);
+
+    await userEvent.tab();
+    await expect(link).toHaveFocus();
+    await expect(getComputedStyle(link).translate).toBe(LIFTED);
+    await userEvent.tab();
+    await expect(button).toHaveFocus();
+    await expect(getComputedStyle(button).translate).toBe(LIFTED);
+    await expect(getComputedStyle(link).translate).toBe('none');
+    await expect(getComputedStyle(plain).translate).toBe('none');
+  },
+};
+
+/** The raised card keeps the place it had under the pointer, so a pointer on its lower edge holds. */
+export const LiftedCardKeepsItsPlace: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingCards />,
+  play: async ({ canvas }) => {
+    expectKeepsItsPlace(canvas.getByRole('link', { name: /Link card/ }));
+    expectKeepsItsPlace(canvas.getByRole('button', { name: /Button card/ }));
+  },
+};
+
+/** At its real speed the card moves over the base duration, 200 ms, with its shadow and border. */
+export const LiftMovesOnTheBaseToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <LiftingCards />,
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: /Link card/ });
+    await expect(transitionMs(link)).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(transitions(link, 'translate', 'box-shadow', 'border-color')).toBe(true);
+  },
+};
+
+/** With the reduced setting the card is lifted at once, with no length to move over. */
+export const LiftSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <LiftingCards />,
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: /Link card/ });
+    await expect(transitionMs(link)).toBe(0);
+    await userEvent.tab();
+    await expect(getComputedStyle(link).translate).toBe(LIFTED);
+  },
+};
+
+// ── Skeleton to content ──────────────────────────────────────────────────────
+
+const ArrivingCard = ({ startLoading }: { startLoading: boolean }) => (
+  <LoadToggle startLoading={startLoading}>
+    {(loading) => (
+      <KpiCard
+        label="Sessions"
+        value="84 210"
+        icon={Server}
+        delta={<TrendDelta value={8.2} label="vs last week" />}
+        chart={<MiniLine />}
+        loading={loading}
+        className="w-72"
+      />
+    )}
+  </LoadToggle>
+);
+
+const sessionsCard = (canvas: ReturnType<typeof within>) => () =>
+  canvas.getByText('Sessions').closest('div.rounded-2xl')!;
+
+/** The figures fade in when the data arrives, then stand as they are; a reload plays it again. */
+export const FiguresFadeInAfterLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingCard startLoading />,
+  play: async ({ canvas }) => {
+    await expectFadesInAfterSkeleton(canvas, sessionsCard(canvas));
+  },
+};
+
+/** A card that has its figures from the first render does not fade them in. */
+export const FiguresFromTheFirstRenderDoNotFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingCard startLoading={false} />,
+  play: async ({ canvas }) => {
+    await expectNoFadeFromFirstRender(canvas, sessionsCard(canvas));
+  },
+};
+
+/** With the reduced setting the figures take the skeleton's place at once. */
+export const FiguresSkipTheFadeWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <ArrivingCard startLoading />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Load' }));
+    await waitFor(() => expect(fadeIns(sessionsCard(canvas)())).toHaveLength(0));
+    await expect(canvas.getByText('84 210')).toBeVisible();
   },
 };

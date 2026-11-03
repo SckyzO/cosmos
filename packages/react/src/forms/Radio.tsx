@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { useId, type ChangeEvent, type ReactNode, type ComponentPropsWithRef } from 'react';
+import { FieldMessage } from './FieldMessage';
 import { useControllableState } from '../hooks/useControllableState';
 
 export type RadioSize = 'sm' | 'md';
@@ -190,7 +191,9 @@ export const RadioGroup = ({
           />
         ))}
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-700 dark:text-red-400">{error}</p>}
+      <FieldMessage show={!!error} as="p" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+        {error}
+      </FieldMessage>
     </fieldset>
   );
 };

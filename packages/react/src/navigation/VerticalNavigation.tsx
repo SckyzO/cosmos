@@ -1,11 +1,18 @@
 import { clsx } from 'clsx';
 import {
+  createContext,
+  useContext,
+  useMemo,
+  useRef,
   type ComponentType,
   type HTMLAttributes,
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { useIndicator } from '../hooks/useIndicator';
 import { AppLink } from '../ui/AppLink';
+import { mergeRefs } from '../ui/mergeRefs';
+import { SlidingIndicator } from '../ui/SlidingIndicator';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <nav class="flex flex-1 flex-col">
@@ -22,6 +29,10 @@ import { AppLink } from '../ui/AppLink';
 // Pattern 2 — "With badges": same row + trailing badge pill.
 // Pattern 3 — "With icons": leading icon (size-6 text-gray-400 group-hover:text-indigo-600).
 // Pattern 6 — "On gray": switches the active state to white-on-gray-100 (subtle).
+
+// Whether the navigation's marker is in place: the active item then leaves its background to it.
+// Until it is (server render, the first frame of a hydration) the item draws it itself.
+const MarkedContext = createContext(false);
 
 // ── Item ─────────────────────────────────────────────────────────────────────
 
@@ -42,6 +53,7 @@ function Item({
   ref,
   ...rest
 }: VerticalNavigationItemProps) {
+  const marked = useContext(MarkedContext);
   return (
     <li>
       <AppLink
@@ -50,7 +62,7 @@ function Item({
         className={clsx(
           'group focus-visible:focus-indicator flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
           active
-            ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-indigo-400'
+            ? clsx('text-indigo-600 dark:text-indigo-400', !marked && 'bg-gray-50 dark:bg-white/5')
             : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-indigo-400',
           className
         )}
@@ -118,20 +130,32 @@ function VerticalNavigationRoot({
   ref,
   ...rest
 }: VerticalNavigationProps) {
+  // The background of the active item is one element that slides from item to item.
+  const navRef = useRef<HTMLElement>(null);
+  const marker = useIndicator(navRef, { active: 'a[aria-current="page"]', options: 'a' });
+  const mergedRef = useMemo(() => mergeRefs(navRef, ref), [ref]);
   return (
     <nav
-      ref={ref}
+      ref={mergedRef}
       aria-label="Sidebar"
       className={clsx(
-        'flex flex-1 flex-col',
+        // `relative isolate`: the marker is placed against the nav and sits behind the items.
+        'relative isolate flex flex-1 flex-col',
         variant === 'on-gray' && 'rounded-md bg-gray-50 p-3 dark:bg-gray-800/60',
         className
       )}
       {...rest}
     >
-      <ul role="list" className="-mx-2 space-y-1">
-        {children}
-      </ul>
+      <SlidingIndicator
+        marker={marker}
+        axes="both"
+        className="rounded-md bg-gray-50 dark:bg-white/5"
+      />
+      <MarkedContext value={marker.box !== null}>
+        <ul role="list" className="-mx-2 space-y-1">
+          {children}
+        </ul>
+      </MarkedContext>
     </nav>
   );
 }

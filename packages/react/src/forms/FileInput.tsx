@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Paperclip } from 'lucide-react';
 import { useId, useRef, useState, type ChangeEvent, type ComponentPropsWithRef } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
+import { FieldMessage } from './FieldMessage';
 import { formatBytes } from './formatBytes';
 
 export type FileInputProps = Omit<ComponentPropsWithRef<'input'>, 'type' | 'onChange' | 'value'> & {
@@ -114,16 +115,16 @@ export function FileInput({
           {...rest}
         />
       </div>
-      {(error || description) && (
-        <p
-          className={clsx(
-            'mt-1 text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {error ?? description}
-        </p>
-      )}
+      <FieldMessage
+        show={!!(error || description)}
+        as="p"
+        className={clsx(
+          'mt-1 text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {error ?? description}
+      </FieldMessage>
     </div>
   );
 }

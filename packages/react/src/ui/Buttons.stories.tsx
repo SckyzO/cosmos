@@ -12,6 +12,7 @@ import {
   mirroredIcon,
   textLines,
 } from '../storybook-helpers';
+import { tokenMs, transitionMs, valueWhile } from '../storybook-motion';
 import { Button, type ButtonSize } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
@@ -839,5 +840,141 @@ export const LabelKeepsOneLine: Story = {
       const icon = button.querySelector('svg')!.getBoundingClientRect();
       await expect(Math.round(icon.width)).toBe(Math.round(icon.height));
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/** A press pushes the button 1px down, and it comes back in 80 ms. Press and hold to see it. */
+export const PressPushesDown: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button>Primary</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="soft" icon={Plus}>
+          Soft
+        </Button>
+        <Button shape="circle" icon={Plus} aria-label="Add" />
+        <Button disabled>Disabled</Button>
+        <Button loading>Loading</Button>
+      </div>
+    </Wrap>
+  ),
+};
+
+// What a press does to the button, read from the rule of the page: a real pointer held down cannot
+// be simulated from a play function, so `:active` is read as the rule declares it.
+const pressed = (button: HTMLElement) => valueWhile(button, ':active', 'translate');
+const PUSHED = '0px 1px';
+
+/** Every variant, shape and size but `link` moves 1px down while pressed; the others hold still. */
+export const PressMovesOneStepDown: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-3">
+        {EMPHASES.map((variant) => (
+          <Fragment key={variant}>
+            {INTENTS.map((intent) => (
+              <Button key={intent} variant={variant} intent={intent}>
+                {`${variant} ${intent}`}
+              </Button>
+            ))}
+          </Fragment>
+        ))}
+        {SIZES.map((size) => (
+          <Button key={size} size={size}>
+            {`size ${size}`}
+          </Button>
+        ))}
+        <Button shape="pill">pill</Button>
+        <Button shape="circle" icon={Plus} aria-label="circle" />
+        <Button shape="square" icon={Plus} aria-label="square" />
+        <Button variant="link">link</Button>
+        <Button disabled>disabled</Button>
+        <Button loading>loading</Button>
+        <Button variant="link" disabled>
+          link disabled
+        </Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const buttons = canvas.getAllByRole('button');
+    await expect(buttons).toHaveLength(30);
+    for (const button of buttons) {
+      const name = button.getAttribute('aria-label') ?? button.textContent ?? '';
+      const stays = name === 'link' || (button as HTMLButtonElement).disabled;
+      await expect(pressed(button), name).toBe(stays ? 'none' : PUSHED);
+    }
+    // At rest nothing is pushed.
+    await expect(
+      getComputedStyle(canvas.getByRole('button', { name: 'primary brand' })).translate
+    ).toBe('none');
+  },
+};
+
+/** The press is a `translate`: the button keeps its place in the layout, to the pixel. */
+export const PressKeepsTheLayout: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex items-center gap-3">
+        <Button>Before</Button>
+        <Button>Pressed</Button>
+        <Button>After</Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const [before, target, after] = canvas.getAllByRole('button');
+    const rects = () => [before, target, after].map((b) => b.getBoundingClientRect().toJSON());
+    const rest = rects();
+    // The rule sets `translate` and nothing that takes room.
+    await expect(pressed(target)).toBe(PUSHED);
+    await expect(valueWhile(target, ':active', 'margin-top')).toBe('0px');
+    await expect(valueWhile(target, ':active', 'padding-top')).toBe('0px');
+    await expect(rects()).toEqual(rest);
+  },
+};
+
+/** At its real speed the button moves over the exit duration, 80 ms, and the colours with it. */
+export const PressMovesOnTheExitToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex gap-3">
+        <Button>Primary</Button>
+        <Button variant="link">Link</Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const primary = canvas.getByRole('button', { name: 'Primary' });
+    await expect(tokenMs('--cosmos-motion-exit')).toBe(80);
+    await expect(transitionMs(primary)).toBe(80);
+    await expect(getComputedStyle(primary).transitionProperty).toContain('translate');
+  },
+};
+
+/** With the reduced setting the press has no length: the button is pushed or back at once. */
+export const PressSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <Button>Primary</Button>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const primary = canvas.getByRole('button', { name: 'Primary' });
+    await expect(transitionMs(primary)).toBe(0);
+    await expect(pressed(primary)).toBe(PUSHED);
   },
 };

@@ -951,6 +951,8 @@ export const ActionsContrastInEveryTheme: Story = {
   play: async ({ canvasElement }) => {
     inEachTheme(() => {
       for (const icon of canvasElement.querySelectorAll('svg')) {
+        // The check of the copy button waits behind its icon, transparent.
+        if (getComputedStyle(icon).opacity === '0') continue;
         expectGraphicContrast(icon, 'color', 3);
       }
     });

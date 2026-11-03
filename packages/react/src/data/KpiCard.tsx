@@ -8,7 +8,9 @@ import {
   type Ref,
 } from 'react';
 import { Sk } from '../feedback/Skeleton';
+import { useAfterSkeleton, type AfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
+import { CARD_LIFT } from '../ui/cardLift';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 import { Tooltip } from '../ui/Tooltip';
 
@@ -87,17 +89,25 @@ const MUTED_ON_TINT = '[&_.text-gray-500]:text-gray-600 dark:[&_.text-gray-500]:
 // the skeleton is drawn over it.
 const Slot = ({
   loading,
+  arrival,
   skeleton,
   className,
   children,
 }: {
   loading: boolean;
+  /** Fades the content in once it replaces the skeleton. */
+  arrival: AfterSkeleton;
   skeleton: ReactNode;
   className?: string;
   children: ReactNode;
 }) => (
   <span className={clsx('relative block', className)}>
-    <span className={clsx('block', loading && 'invisible')}>{children}</span>
+    <span
+      className={clsx('block', loading && 'invisible', arrival.className)}
+      onAnimationEnd={arrival.onAnimationEnd}
+    >
+      {children}
+    </span>
     {loading && (
       <span aria-hidden className="absolute inset-0 flex items-center">
         {skeleton}
@@ -135,6 +145,7 @@ export const KpiCard = ({
   const tint = INTENT_STYLE[intent === 'neutral' ? 'brand' : intent];
   const chartEnd = chartPosition === 'end';
   const interactive = Boolean(href || onClick);
+  const arrival = useAfterSkeleton(loading);
   const withExact = Boolean(exactValue) && !loading;
   // The tooltip opens on the pointer or focus of the value (its own handlers), and on keyboard
   // focus of an interactive card, whose value takes no focus of its own inside a link or button.
@@ -154,8 +165,10 @@ export const KpiCard = ({
     featured
       ? [tint.surface, MUTED_ON_TINT]
       : ['bg-white dark:bg-gray-900', INTENT_STYLE[intent].border],
-    interactive &&
-      'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator cursor-pointer transition-shadow hover:shadow-sm',
+    interactive && [
+      'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator relative cursor-pointer transition-[translate,box-shadow,border-color]',
+      CARD_LIFT,
+    ],
     className
   );
   // The value, its delta and its sub line: one block, so the chart can sit beside it.
@@ -163,6 +176,7 @@ export const KpiCard = ({
     <>
       <Slot
         loading={loading}
+        arrival={arrival}
         className="mt-2"
         skeleton={<Sk as="span" h="h-[0.8em]" w="w-24" round="rounded-md" className="text-3xl" />}
       >
@@ -210,6 +224,7 @@ export const KpiCard = ({
       {delta && (
         <Slot
           loading={loading}
+          arrival={arrival}
           className="mt-2"
           skeleton={<Sk as="span" h="h-5" w="w-32" round="rounded-full" />}
         >
@@ -231,6 +246,7 @@ export const KpiCard = ({
   const chartSlot = chart && (
     <Slot
       loading={loading}
+      arrival={arrival}
       className={chartEnd ? 'shrink-0' : 'mt-3'}
       skeleton={<Sk as="span" h="h-full" round="rounded-lg" />}
     >

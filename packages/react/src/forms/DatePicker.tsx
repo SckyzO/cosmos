@@ -14,6 +14,7 @@ import { setRef } from '../ui/mergeRefs';
 import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { RequiredMark } from './RequiredMark';
 import { outsideBounds, resolvePreset, sameRange, startOfDay } from './rangePresets';
 
@@ -417,16 +418,16 @@ export const DatePicker = (props: DatePickerProps) => {
         )
       )}
 
-      {(error || description) && (
-        <p
-          className={clsx(
-            'mt-1 text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {error ?? description}
-        </p>
-      )}
+      <FieldMessage
+        show={!!(error || description)}
+        as="p"
+        className={clsx(
+          'mt-1 text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {error ?? description}
+      </FieldMessage>
 
       {/* Kept under the trigger that opened it while the page scrolls or resizes. A
           ref object per side, so switching sides re-measures. */}

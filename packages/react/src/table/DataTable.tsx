@@ -14,7 +14,8 @@ import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
-import { DIMMED, LoadingVeil } from './LoadingVeil';
+import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
@@ -689,6 +690,8 @@ export const DataTable = <T,>({
   const hasRows = sortedRows.length > 0;
   const showSkeleton = loading && !hasRows;
   const dimRows = loading && hasRows;
+  // The first load ends: the rows fade in where the placeholders were.
+  const arrive = useAfterSkeleton(showSkeleton);
 
   const columnCount =
     columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (actionColumn ? 1 : 0);
@@ -1525,7 +1528,12 @@ export const DataTable = <T,>({
             </thead>
             <tbody
               inert={dimRows || undefined}
-              className={clsx('divide-y divide-gray-100 dark:divide-gray-800', dimRows && DIMMED)}
+              onAnimationEnd={arrive.onAnimationEnd}
+              className={clsx(
+                'divide-y divide-gray-100 dark:divide-gray-800',
+                dimRows ? DIMMED : UNDIMMED,
+                arrive.className
+              )}
             >
               {showSkeleton ? (
                 Array.from({ length: loadingRows }, (_, i) => (

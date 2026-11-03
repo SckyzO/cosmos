@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { Input } from '../forms/Input';
 import { Textarea } from '../forms/Textarea';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { SectionCard } from '../templates';
 import { Clipboard } from './Clipboard';
 
@@ -17,9 +18,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const IconDefault: Story = {};
+/** Copying turns the icon into a check, with a cross-fade, for a second and a half. */
+export const IconDefault: Story = { parameters: { settleMotion: false } };
 
 export const ButtonWithLabel: Story = {
+  parameters: { settleMotion: false },
   args: { variant: 'button' },
 };
 
@@ -316,6 +319,178 @@ export const FeedbackResetsAfterDuration: Story = {
       await waitFor(
         () => expect(canvas.getByRole('button', { name: /^copy$/i })).toBeInTheDocument(),
         { timeout: 1500 }
+      );
+    } finally {
+      restore();
+    }
+  },
+};
+
+// ── Copied feedback ──────────────────────────────────────────────────────────
+
+const iconsOf = (button: HTMLElement) => {
+  const [copy, check] = Array.from(button.querySelectorAll<SVGElement>('svg'));
+  return { copy, check };
+};
+const opacities = (button: HTMLElement) => {
+  const { copy, check } = iconsOf(button);
+  return [getComputedStyle(copy).opacity, getComputedStyle(check).opacity];
+};
+const COPY_SHOWN = ['1', '0'];
+const CHECK_SHOWN = ['0', '1'];
+
+// Every look of the button, each with its own name to find it by.
+const LOOKS = ['Copy icon', 'Copy floating', 'Copy plain', 'Copy button'] as const;
+const Looks = ({ duration }: { duration: number }) => (
+  <div className="group relative flex flex-wrap items-center gap-4 p-4">
+    <Clipboard value="a" duration={duration} copyLabel="Copy icon" copiedLabel="Copied icon" />
+    <Clipboard
+      value="b"
+      duration={duration}
+      floating
+      copyLabel="Copy floating"
+      copiedLabel="Copied floating"
+    />
+    <Clipboard
+      value="c"
+      duration={duration}
+      plain
+      copyLabel="Copy plain"
+      copiedLabel="Copied plain"
+    />
+    <Clipboard
+      value="d"
+      duration={duration}
+      variant="button"
+      size="md"
+      copyLabel="Copy button"
+      copiedLabel="Copied button"
+    />
+  </div>
+);
+
+/** Both icons are in the button, hidden from assistive technology, one showing at a time. */
+export const BothIconsAreMounted: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Looks duration={300} />,
+  play: async ({ canvas }) => {
+    for (const name of LOOKS) {
+      const button = canvas.getByRole('button', { name });
+      const svgs = button.querySelectorAll('svg');
+      await expect(svgs).toHaveLength(2);
+      for (const svg of svgs) await expect(svg).toHaveAttribute('aria-hidden', 'true');
+      await expect(svgs[0]).toHaveClass('lucide-copy');
+      await expect(svgs[1]).toHaveClass('lucide-check');
+      await expect(opacities(button)).toEqual(COPY_SHOWN);
+    }
+  },
+};
+
+/** The check takes the copy icon's place and the copy icon comes back, and the button holds its size. */
+export const IconsSwapAndComeBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Looks duration={300} />,
+  play: async ({ canvas }) => {
+    const restore = stubClipboard();
+    try {
+      for (const name of LOOKS) {
+        const button = canvas.getByRole('button', { name });
+        const { copy, check } = iconsOf(button);
+        const before = {
+          button: button.getBoundingClientRect(),
+          copy: copy.getBoundingClientRect(),
+          check: check.getBoundingClientRect(),
+        };
+        await userEvent.click(button);
+        const copied = canvas.getByRole('button', { name: name.replace('Copy', 'Copied') });
+        await expect(opacities(copied)).toEqual(CHECK_SHOWN);
+        // Nothing moves: the box, and the two icons in it, are where they were. A labelled button
+        // changes its text, so only its height is kept.
+        await expect(copied.getBoundingClientRect().height).toBe(before.button.height);
+        if (name !== 'Copy button') {
+          await expect(copied.getBoundingClientRect().width).toBe(before.button.width);
+        }
+        await expect(copy.getBoundingClientRect().toJSON()).toEqual(before.copy.toJSON());
+        await expect(check.getBoundingClientRect().toJSON()).toEqual(before.check.toJSON());
+        await waitFor(
+          () => expect(opacities(canvas.getByRole('button', { name }))).toEqual(COPY_SHOWN),
+          {
+            timeout: 2000,
+          }
+        );
+      }
+    } finally {
+      restore();
+    }
+  },
+};
+
+/** The check stays for a second and a half unless `duration` says otherwise. */
+export const CheckStaysForTheDefaultDuration: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Clipboard value="a" />,
+  play: async ({ canvas }) => {
+    const restore = stubClipboard();
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Copy' }));
+      const copied = canvas.getByRole('button', { name: 'Copied!' });
+      await expect(opacities(copied)).toEqual(CHECK_SHOWN);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await expect(opacities(canvas.getByRole('button', { name: 'Copied!' }))).toEqual(CHECK_SHOWN);
+      await waitFor(
+        () => expect(opacities(canvas.getByRole('button', { name: 'Copy' }))).toEqual(COPY_SHOWN),
+        { timeout: 1500 }
+      );
+    } finally {
+      restore();
+    }
+  },
+};
+
+/** At its real speed the icons cross-fade over the fast duration, 120 ms. */
+export const IconsCrossFadeOnTheFastToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Looks duration={600} />,
+  play: async ({ canvas }) => {
+    const restore = stubClipboard();
+    try {
+      const button = canvas.getByRole('button', { name: 'Copy icon' });
+      const { copy, check } = iconsOf(button);
+      await expect(tokenMs('--cosmos-motion-fast')).toBe(120);
+      await expect(transitionMs(copy)).toBe(120);
+      await expect(transitionMs(check)).toBe(120);
+      await userEvent.click(button);
+      await expect(isFading(check)).toBe(true);
+      await expect(isFading(copy)).toBe(true);
+      await waitFor(() => expect(isFading(check)).toBe(false));
+      await expect(opacities(canvas.getByRole('button', { name: 'Copied icon' }))).toEqual(
+        CHECK_SHOWN
+      );
+    } finally {
+      restore();
+    }
+  },
+};
+
+/** With the reduced setting the icons swap at once. */
+export const IconsSwapAtOnceWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <Looks duration={600} />,
+  play: async ({ canvas }) => {
+    const restore = stubClipboard();
+    try {
+      const button = canvas.getByRole('button', { name: 'Copy icon' });
+      const { copy, check } = iconsOf(button);
+      await expect(transitionMs(copy)).toBe(0);
+      await expect(transitionMs(check)).toBe(0);
+      await userEvent.click(button);
+      await expect(isFading(copy)).toBe(false);
+      await expect(isFading(check)).toBe(false);
+      await expect(opacities(canvas.getByRole('button', { name: 'Copied icon' }))).toEqual(
+        CHECK_SHOWN
       );
     } finally {
       restore();

@@ -1,5 +1,14 @@
-import { useLayoutEffect, useRef, useState, type ReactNode, type TransitionEvent } from 'react';
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type TransitionEvent,
+} from 'react';
 import { clsx } from 'clsx';
+import { mergeRefs } from './mergeRefs';
 
 export type FoldProps = {
   /** Whether the content is unfolded. */
@@ -29,6 +38,11 @@ export type FoldProps = {
    * is mounted while closed.
    */
   lazy?: boolean;
+  /**
+   * The folding box, for `useExitTransition` to wait on when the host unmounts the fold once it
+   * has folded back.
+   */
+  ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 };
 
@@ -57,9 +71,11 @@ export const Fold = ({
   slide = true,
   appear = false,
   lazy = false,
+  ref,
   children,
 }: FoldProps) => {
   const box = useRef<HTMLDivElement>(null);
+  const boxRef = useMemo(() => mergeRefs(box, ref), [ref]);
   const [opened, setOpened] = useState(open);
   if (open && !opened) setOpened(true);
   // Mounted open with `appear`, it still has to unfold: it is not at rest yet.
@@ -86,7 +102,7 @@ export const Fold = ({
 
   return (
     <div
-      ref={box}
+      ref={boxRef}
       id={id}
       inert={!open}
       aria-hidden={open ? undefined : true}

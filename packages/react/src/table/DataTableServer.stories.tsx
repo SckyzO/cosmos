@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { nextFrame, isFading, tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
 import { DataTable } from './DataTable';
 import {
   ORDER_STATUSES,
@@ -526,5 +527,271 @@ export const NoPageChangeFromPageOne: Story = {
     await userEvent.type(canvas.getByRole('searchbox', { name: 'Search rows' }), 'ord');
     await userEvent.click(canvas.getByRole('button', { name: /Order/ }));
     await expect(args.onPageChange).not.toHaveBeenCalled();
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// A table of orders the host reloads: it keeps its rows, and `loading` is what the buttons turn on.
+// "Quick reload" is one that answers within a couple of frames.
+const ReloadHost = () => {
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(true)}
+        >
+          Reload
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(false)}
+        >
+          Done
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => {
+            setLoading(true);
+            void nextFrame()
+              .then(nextFrame)
+              .then(() => setLoading(false));
+          }}
+        >
+          Quick reload
+        </button>
+      </div>
+      <DataTable
+        manual
+        rows={PAGE}
+        rowCount={95}
+        pageSize={10}
+        columns={columns}
+        rowKey={(o) => o.id}
+        loading={loading}
+        aria-label="Orders"
+      />
+    </div>
+  );
+};
+
+/**
+ * A reload with rows on screen dims them and shows the spinner after 150 ms, fading in over 120
+ * ms, so one that answers at once shows neither. Press Reload and wait, then Done; Quick reload
+ * answers in two frames. The table is `aria-busy` from the first moment either way.
+ */
+export const ReloadWaitsBeforeTheVeil: Story = {
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+};
+
+const veilOf = (canvas: ReturnType<typeof within>) =>
+  (canvas.getByRole('status', { hidden: true, name: 'Loading' }) as HTMLElement).closest(
+    '[aria-hidden="true"]'
+  ) as HTMLElement;
+
+/**
+ * The wait is in the CSS of the dimming and of the spinner: 150 ms, then a fade over the fast
+ * token. The table is busy at once (`aria-busy`, the status, inert rows), and shows the veil once
+ * the wait is over; when the rows are back it goes at once.
+ */
+export const VeilWaitsThenFades: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await expect(table).not.toHaveAttribute('aria-busy');
+    await expect(getComputedStyle(body).opacity).toBe('1');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    // At once: the announced state, and the rows out of reach.
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    await expect(canvas.getByRole('status')).toHaveTextContent('Loading…');
+    await expect(body.inert).toBe(true);
+    // Not yet: the wait, then the fade.
+    const veil = veilOf(canvas);
+    await expect(getComputedStyle(veil).opacity).toBe('0');
+    await expect(getComputedStyle(body).opacity).toBe('1');
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await expect(transitionMs(veil)).toBe(tokenMs('--cosmos-motion-fast'));
+    await expect(transitionDelayMs(body)).toBe(150);
+    await expect(transitionMs(body)).toBe(tokenMs('--cosmos-motion-fast'));
+
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+    await waitFor(() => expect(getComputedStyle(body).opacity).toBe('0.5'), { timeout: 3000 });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Done' }));
+    await expect(table).not.toHaveAttribute('aria-busy');
+    await expect(canvas.queryByRole('status', { hidden: true, name: 'Loading' })).toBeNull();
+    await expect(body.inert).toBe(false);
+    // The rows come back to full opacity without waiting.
+    await expect(transitionDelayMs(body)).toBe(0);
+    await waitFor(() => expect(getComputedStyle(body).opacity).toBe('1'), { timeout: 3000 });
+  },
+};
+
+/** A reload that answers in two frames never dims the rows and never shows the spinner. */
+export const QuickReloadShowsNoVeil: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Quick reload' }));
+    // Busy at once, though nothing shows.
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    let darkest = 1;
+    let brightestVeil = 0;
+    while (table.hasAttribute('aria-busy')) {
+      darkest = Math.min(darkest, Number(getComputedStyle(body).opacity));
+      const veil = canvas.queryByRole('status', { hidden: true, name: 'Loading' });
+      if (veil)
+        brightestVeil = Math.max(brightestVeil, Number(getComputedStyle(veilOf(canvas)).opacity));
+      await nextFrame();
+    }
+    await expect(darkest).toBe(1);
+    await expect(brightestVeil).toBe(0);
+    await expect(canvas.queryByRole('status', { hidden: true, name: 'Loading' })).toBeNull();
+    await expect(getComputedStyle(body).opacity).toBe('1');
+  },
+};
+
+/**
+ * With the reduced setting the fade is 0 ms and nothing moves, and the wait stays: it is not a
+ * movement, and a short reload still shows nothing.
+ */
+export const VeilKeepsItsWaitUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    const veil = veilOf(canvas);
+    await expect(transitionMs(veil)).toBe(0);
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await expect(transitionMs(body)).toBe(0);
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+    await expect(getComputedStyle(body).opacity).toBe('0.5');
+    // No fade to wait for: the wait ended, it was there.
+    await expect(isFading(veil)).toBe(false);
+  },
+};
+
+// A table that loads for the first time: the placeholders, then the rows.
+const FirstLoadHost = ({ withRowsAtStart = false }: { withRowsAtStart?: boolean }) => {
+  const [rows, setRows] = useState<Order[]>(withRowsAtStart ? PAGE : []);
+  const [loading, setLoading] = useState(!withRowsAtStart);
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => {
+            setRows(PAGE);
+            setLoading(false);
+          }}
+        >
+          Rows arrive
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(true)}
+        >
+          Reload
+        </button>
+      </div>
+      <DataTable
+        manual
+        rows={rows}
+        columns={columns}
+        rowKey={(o) => o.id}
+        loading={loading}
+        loadingRows={4}
+        aria-label="Orders"
+      />
+    </div>
+  );
+};
+
+/** The first load swaps the placeholders for the rows, which fade in instead of replacing them. */
+export const RowsFadeInAfterThePlaceholders: Story = {
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+};
+
+/**
+ * The rows fade in over the base token when they replace the placeholders, once: the animation is
+ * gone when it has played, so a reload dims them as it does any rows. Rows drawn from the first
+ * render fade in nothing.
+ */
+export const RowsFadeInOnlyAfterPlaceholders: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = () => table.querySelector('tbody')!;
+    await expect(canvas.queryByText('BK-20415')).toBeNull();
+    await expect(isFading(body())).toBe(false);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Rows arrive' }));
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(table).not.toHaveAttribute('aria-busy');
+    const animation = body()
+      .getAnimations()
+      .find((a) => 'animationName' in a) as CSSAnimation;
+    await expect(animation.animationName).toBe('cosmos-fade-in');
+    await expect(Number((animation.effect as KeyframeEffect).getTiming().duration)).toBe(
+      tokenMs('--cosmos-motion-base')
+    );
+    await waitFor(() => expect(body().getAnimations()).toHaveLength(0), { timeout: 3000 });
+    await expect(getComputedStyle(body()).opacity).toBe('1');
+
+    // Then it is a table like any: a reload dims the rows, nothing holds their opacity.
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await waitFor(() => expect(getComputedStyle(body()).opacity).toBe('0.5'), { timeout: 3000 });
+  },
+};
+
+/** Rows that are there from the first render, with no placeholders before them, fade in nothing. */
+export const RowsFromTheStartFadeInNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost withRowsAtStart />,
+  play: async ({ canvas }) => {
+    const body = canvas.getByRole('table', { name: 'Orders' }).querySelector('tbody')!;
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(isFading(body)).toBe(false);
+    await expect(body.getAnimations()).toHaveLength(0);
+  },
+};
+
+/** With the reduced setting the rows arrive with no fade to play. */
+export const RowsArriveAtOnceUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+  play: async ({ canvas }) => {
+    const body = canvas.getByRole('table', { name: 'Orders' }).querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Rows arrive' }));
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(isFading(body)).toBe(false);
+    await waitFor(() => expect(body.getAnimations()).toHaveLength(0));
+    await expect(getComputedStyle(body).opacity).toBe('1');
   },
 };

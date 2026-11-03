@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Sk } from '../feedback/Skeleton';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
 import type { Intent } from '../ui/intent';
 import { barPercent, largestValue } from './bar-list';
@@ -100,6 +101,7 @@ export const BarList = ({
   className,
 }: BarListProps) => {
   const List = showRank ? 'ol' : 'ul';
+  const arrival = useAfterSkeleton(loading);
   const listClass = clsx('m-0 flex list-none flex-col gap-3 p-0', className);
 
   if (loading) {
@@ -125,14 +127,23 @@ export const BarList = ({
 
   if (items.length === 0)
     return (
-      <p className={clsx('text-sm text-[var(--color-text-muted)]', className)}>{emptyMessage}</p>
+      <p
+        className={clsx('text-sm text-[var(--color-text-muted)]', arrival.className, className)}
+        onAnimationEnd={arrival.onAnimationEnd}
+      >
+        {emptyMessage}
+      </p>
     );
 
   const rows = sort === 'desc' ? [...items].sort((a, b) => b.value - a.value) : items;
   const scale = max ?? largestValue(items.map((item) => item.value));
 
   return (
-    <List aria-label={ariaLabel} className={listClass}>
+    <List
+      aria-label={ariaLabel}
+      className={clsx(listClass, arrival.className)}
+      onAnimationEnd={arrival.onAnimationEnd}
+    >
       {rows.map((item, index) => {
         const href = item.href;
         const interactive = Boolean(href || onItemClick);

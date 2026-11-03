@@ -310,7 +310,12 @@ is on page 1 already).
 `loading` with rows on screen keeps them, dimmed and inert (nothing in them can
 be clicked meanwhile), under a centered spinner, with the pager still there and
 `aria-busy` on the table; with no rows yet it draws the `loadingRows`
-placeholders as before. Use it for every request, the first or the next page.
+placeholders as before. Use it for every request, the first or the next page. The dimming and the
+spinner show after 150ms and fade in over 120ms, so a reload that answers at once shows neither;
+the busy state, the "Loading…" status and the inert rows are there at once. The wait is not a
+movement and stays under the reduced motion setting, where the fade is 0ms. When the first load
+ends, the rows (or the cards, on a phone) fade in over 200ms where the placeholders were; rows
+drawn from the first render fade in nothing.
 
 ```tsx
 const [sort, setSort] = useState<DataTableSort>(null);
