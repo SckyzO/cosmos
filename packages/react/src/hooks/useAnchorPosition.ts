@@ -238,6 +238,10 @@ export type AnchorPosition = {
  * new element before the browser paints. Whoever moves the ref re-renders the panel's component
  * in the same update, which is what makes the hook look again.
  *
+ * Before its first measure the hook gives the anchor's `direction` and the `side` that follows
+ * from it, as read at mount, so a panel kept mounted while hidden already waits on the side it
+ * will open on (not yet flipped: that needs the measures).
+ *
  * A panel rendered in `container`, the element of a modal dialog (`usePortalContainer`), is
  * placed relative to that element's origin rather than the viewport's, which is what its
  * fixed position means once the container has a transform (the sliding Drawer panel).
@@ -264,6 +268,15 @@ export function useAnchorPosition(
   useLayoutEffect(() => {
     if (open) setFollowed(anchorRef.current);
   });
+  // The anchor's direction before the first measure, read when the hook mounts (and when it is
+  // given another ref): from the first open on, `measures` carries it. A panel kept mounted
+  // while hidden (the tooltip) has a side before it ever opens, and in `rtl` the `start` and
+  // `end` sides are the other way round.
+  const [restDirection, setRestDirection] = useState<Direction>('ltr');
+  useLayoutEffect(() => {
+    const element = anchorRef.current;
+    if (element) setRestDirection(directionOf(element));
+  }, [anchorRef]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -304,8 +317,8 @@ export function useAnchorPosition(
   if (!measures) {
     return {
       style: null,
-      side: physicalSide(placement.side ?? 'bottom', 'ltr'),
-      direction: 'ltr',
+      side: physicalSide(placement.side ?? 'bottom', restDirection),
+      direction: restDirection,
       panelRef: setPanel,
     };
   }
