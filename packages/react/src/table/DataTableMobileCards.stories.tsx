@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Menu } from '../ui/Menu';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import {
   SlowFolds,
@@ -589,5 +590,64 @@ export const CardsFollowPageDensity: Story = {
       canvas,
       (_scope, region) => region.querySelectorAll<HTMLElement>('dl > div')[1]!
     );
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const ReloadingCards = () => {
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+        onClick={() => setLoading((on) => !on)}
+      >
+        Reload
+      </button>
+      <DataTable
+        aria-label="Users"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        loading={loading}
+      />
+    </div>
+  );
+};
+
+/** A reload with rows on screen: the cards dim and the spinner shows after the wait, as the table does. */
+export const CardsWaitBeforeTheVeil: Story = {
+  globals: mobileViewport,
+  parameters: { settleMotion: false },
+  render: () => <ReloadingCards />,
+};
+
+export const CardsWaitBeforeTheVeilChecks: Story = {
+  ...CardsWaitBeforeTheVeil,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getAllByRole('list').find((el) => el.tagName === 'UL')!;
+    await expect(getComputedStyle(list).opacity).toBe('1');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    // The same list element, kept: its dimming has a before to come from.
+    await expect(canvas.getAllByRole('list', { hidden: true }).includes(list)).toBe(true);
+    await expect(list.inert).toBe(true);
+    await expect(getComputedStyle(list).opacity).toBe('1');
+    await expect(transitionDelayMs(list)).toBe(150);
+    await expect(transitionMs(list)).toBe(tokenMs('--cosmos-motion-fast'));
+    // The spinner of the cards: the wrapper of the list holds it (the table's own is hidden).
+    const veil = list.parentElement!.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!;
+    await expect(getComputedStyle(veil).opacity).toBe('0');
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await waitFor(() => expect(getComputedStyle(list).opacity).toBe('0.5'), { timeout: 3000 });
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await expect(list.inert).toBe(false);
+    await waitFor(() => expect(getComputedStyle(list).opacity).toBe('1'), { timeout: 3000 });
   },
 };
