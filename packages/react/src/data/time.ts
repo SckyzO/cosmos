@@ -4,7 +4,8 @@
 export type DateTimeValue = Date | number | string;
 
 /** Presets of `DateTime`'s `format`, each a set of `Intl.DateTimeFormat` options. */
-export type DateTimeFormat = 'date' | 'time' | 'datetime' | 'long' | 'full';
+export type DateTimeFormat =
+  'date' | 'time' | 'datetime' | 'long' | 'full' | 'short' | 'monthDay' | 'weekday' | 'iso';
 
 export const DATE_TIME_PRESETS: Record<DateTimeFormat, Intl.DateTimeFormatOptions> = {
   date: { dateStyle: 'medium' },
@@ -13,7 +14,16 @@ export const DATE_TIME_PRESETS: Record<DateTimeFormat, Intl.DateTimeFormatOption
   long: { dateStyle: 'long', timeStyle: 'medium' },
   // The tooltip's: weekday and zone name included.
   full: { dateStyle: 'full', timeStyle: 'long' },
+  // The numeric date in the locale's order: 01/15/2026, 15/01/2026.
+  short: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  monthDay: { month: 'short', day: 'numeric' },
+  weekday: { weekday: 'long' },
+  // Year, month, day, whatever the locale (see `ISO_LOCALE`).
+  iso: { year: 'numeric', month: '2-digit', day: '2-digit' },
 };
+
+// A locale that writes the date as 2026-01-15: `iso` is not the reader's order, it is ISO 8601's.
+const ISO_LOCALE = 'sv-SE';
 
 /** Milliseconds since the epoch, `NaN` for a string or a date that does not parse. */
 export const toTimestamp = (value: DateTimeValue): number =>
@@ -42,15 +52,95 @@ const dateTimeFormatter = (locale: string | undefined, options: Intl.DateTimeFor
   return formatter;
 };
 
-/** `ms` written by a preset or by Intl options, in `timeZone` (the browser's when unset). */
+const DATE_KEYS = ['weekday', 'era', 'year', 'month', 'day', 'dateStyle'] as const;
+const TIME_KEYS = [
+  'hour',
+  'minute',
+  'second',
+  'fractionalSecondDigits',
+  'dayPeriod',
+  'hourCycle',
+  'hour12',
+  'timeStyle',
+  'timeZoneName',
+] as const;
+
+const optionsOf = (format: DateTimeFormat | Intl.DateTimeFormatOptions) =>
+  typeof format === 'string' ? DATE_TIME_PRESETS[format] : format;
+
+const has = (
+  options: Intl.DateTimeFormatOptions,
+  keys: readonly (keyof Intl.DateTimeFormatOptions)[]
+) => keys.some((key) => options[key] !== undefined);
+
+const pick = (
+  options: Intl.DateTimeFormatOptions,
+  keys: readonly (keyof Intl.DateTimeFormatOptions)[]
+) =>
+  Object.fromEntries(
+    keys.flatMap((key) => (options[key] === undefined ? [] : [[key, options[key]]]))
+  ) as Intl.DateTimeFormatOptions;
+
+// The zone's short name ("UTC", "GMT+9") at `ms`: it changes with daylight saving time.
+const zoneName = (ms: number, locale: string | undefined, timeZone: string | undefined) =>
+  dateTimeFormatter(locale, { timeZone, timeZoneName: 'short' })
+    .formatToParts(ms)
+    .find((part) => part.type === 'timeZoneName')?.value ?? '';
+
+// A format that already names the zone (`full`, `timeZoneName`) needs no second one.
+const namesZone = (options: Intl.DateTimeFormatOptions) =>
+  options.timeZoneName !== undefined ||
+  options.timeStyle === 'long' ||
+  options.timeStyle === 'full';
+
+export type DateTimeExtras = {
+  /** 12-hour clock when `true`, 24-hour when `false`, the locale's when unset. */
+  hour12?: boolean;
+  /** Adds the zone's short name after a time. */
+  showZone?: boolean;
+};
+
+/**
+ * `ms` written by a preset or by Intl options, in `timeZone` (the browser's when unset). `hour12`
+ * and `showZone` only act on a format that has a time.
+ */
 export const formatDateTime = (
   ms: number,
   format: DateTimeFormat | Intl.DateTimeFormatOptions,
   locale?: string,
-  timeZone?: string
+  timeZone?: string,
+  { hour12, showZone = false }: DateTimeExtras = {}
 ): string => {
-  const options = typeof format === 'string' ? DATE_TIME_PRESETS[format] : format;
-  return dateTimeFormatter(locale, timeZone ? { ...options, timeZone } : options).format(ms);
+  const options = optionsOf(format);
+  const withTime = has(options, TIME_KEYS);
+  const text = dateTimeFormatter(format === 'iso' ? ISO_LOCALE : locale, {
+    ...options,
+    ...(timeZone ? { timeZone } : null),
+    ...(withTime && hour12 !== undefined ? { hour12 } : null),
+  }).format(ms);
+  return showZone && withTime && !namesZone(options)
+    ? `${text} ${zoneName(ms, locale, timeZone)}`
+    : text;
+};
+
+/**
+ * The date and the time of `format` as two lines for a stacked layout: the date fields, then the
+ * time fields. A format with only one of them (`date`, `time`, `iso`) is one line.
+ */
+export const formatDateTimeLines = (
+  ms: number,
+  format: DateTimeFormat | Intl.DateTimeFormatOptions,
+  locale?: string,
+  timeZone?: string,
+  extras: DateTimeExtras = {}
+): string[] => {
+  const options = optionsOf(format);
+  if (!has(options, DATE_KEYS) || !has(options, TIME_KEYS))
+    return [formatDateTime(ms, format, locale, timeZone, extras)];
+  return [
+    formatDateTime(ms, pick(options, DATE_KEYS), locale, timeZone),
+    formatDateTime(ms, pick(options, TIME_KEYS), locale, timeZone, extras),
+  ];
 };
 
 // ── Relative time ───────────────────────────────────────────────────────────

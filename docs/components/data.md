@@ -294,9 +294,14 @@ the locale nor the zone, and keep the room of their text until then.
 <Countdown target="2026-03-01T09:00:00Z" onComplete={() => reload()} />
 ```
 
-- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, or `Intl.DateTimeFormat`
-  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `tooltip` adds the full date
-  and zone, and makes the `<time>` a tab stop so a keyboard reaches it.
+- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, `short` for the numeric
+  date, `monthDay`, `weekday`, `iso` for `2026-01-15` in every locale, or `Intl.DateTimeFormat`
+  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `hour12` forces the clock and
+  `showZone` adds the zone's short name after a time, as `Clock` does for `hour12`. `variant` is
+  `inline` (plain text), `stacked` (the date, and the time under it in a smaller muted line) or
+  `badge` (a neutral pill, built on `Badge`), and `icon` puts a Lucide icon before any of them.
+  `tooltip` adds the full date and zone, and makes the `<time>` a tab stop so a keyboard reaches
+  it.
 - `RelativeTime` reads "5 minutes ago", "yesterday", "in 2 days". Every instance shares one timer and
   wakes only when its text changes: each second in the first minute, each minute in the first hour,
   and rarely after, so a long list costs nothing.

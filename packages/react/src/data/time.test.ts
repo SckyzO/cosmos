@@ -7,6 +7,7 @@ import {
   formatCountdownClock,
   formatCountdownInline,
   formatDateTime,
+  formatDateTimeLines,
   formatRelative,
   nextClockDelay,
   nextCountdownDelay,
@@ -74,6 +75,78 @@ describe('formatDateTime', () => {
     } as const;
     expect(formatDateTime(AT, options, 'en-GB', 'Asia/Tokyo')).toBe('23:05');
     expect(formatDateTime(AT, options, 'en-GB')).toBe('14:05');
+  });
+});
+
+describe('formatDateTime, more presets', () => {
+  it('writes the numeric date in the locale order, and the short ones', () => {
+    expect(formatDateTime(AT, 'short', 'en-US', 'UTC')).toBe('01/15/2026');
+    expect(formatDateTime(AT, 'short', 'fr-FR', 'UTC')).toBe('15/01/2026');
+    expect(formatDateTime(AT, 'monthDay', 'en-US', 'UTC')).toBe('Jan 15');
+    expect(formatDateTime(AT, 'weekday', 'en-US', 'UTC')).toBe('Thursday');
+    expect(formatDateTime(AT, 'weekday', 'fr-FR', 'UTC')).toBe('jeudi');
+  });
+
+  it('writes `iso` as year, month, day in any locale and any zone', () => {
+    for (const locale of ['en-US', 'fr-FR', 'de-DE', 'ja-JP'])
+      expect(formatDateTime(AT, 'iso', locale, 'UTC')).toBe('2026-01-15');
+    // Tokyo is already on the 16th.
+    expect(formatDateTime(Date.UTC(2026, 0, 15, 20, 30), 'iso', 'en-US', 'Asia/Tokyo')).toBe(
+      '2026-01-16'
+    );
+  });
+
+  it('forces the clock with `hour12` on a format that has a time', () => {
+    expect(plain(formatDateTime(AT, 'time', 'en-US', 'UTC', { hour12: false }))).toBe('14:05');
+    expect(plain(formatDateTime(AT, 'time', 'en-GB', 'UTC', { hour12: true }))).toMatch(
+      /^0?2:05 pm$/i
+    );
+    // Nothing to force on a date.
+    expect(formatDateTime(AT, 'date', 'en-US', 'UTC', { hour12: true })).toBe('Jan 15, 2026');
+  });
+
+  it('adds the zone after a time with `showZone`, once', () => {
+    expect(plain(formatDateTime(AT, 'time', 'en-US', 'UTC', { showZone: true }))).toBe(
+      '2:05 PM UTC'
+    );
+    expect(plain(formatDateTime(AT, 'time', 'en-US', 'Asia/Tokyo', { showZone: true }))).toBe(
+      '11:05 PM GMT+9'
+    );
+    // `full` already names it; a date has no time to put it after.
+    expect(plain(formatDateTime(AT, 'full', 'en-US', 'UTC', { showZone: true }))).toBe(
+      'Thursday, January 15, 2026 at 2:05:09 PM UTC'
+    );
+    expect(formatDateTime(AT, 'date', 'en-US', 'UTC', { showZone: true })).toBe('Jan 15, 2026');
+  });
+});
+
+describe('formatDateTimeLines', () => {
+  it('splits a date and time format into two lines', () => {
+    expect(formatDateTimeLines(AT, 'datetime', 'en-US', 'UTC').map(plain)).toEqual([
+      'Jan 15, 2026',
+      '2:05 PM',
+    ]);
+    expect(formatDateTimeLines(AT, 'long', 'en-US', 'UTC').map(plain)).toEqual([
+      'January 15, 2026',
+      '2:05:09 PM',
+    ]);
+    expect(
+      formatDateTimeLines(AT, { dateStyle: 'short', timeStyle: 'short' }, 'fr-FR', 'UTC')
+    ).toEqual(['15/01/2026', '14:05']);
+  });
+
+  it('keeps one line for a format with only a date or only a time', () => {
+    expect(formatDateTimeLines(AT, 'date', 'en-US', 'UTC')).toEqual(['Jan 15, 2026']);
+    expect(formatDateTimeLines(AT, 'iso', 'fr-FR', 'UTC')).toEqual(['2026-01-15']);
+    expect(formatDateTimeLines(AT, 'time', 'fr-FR', 'UTC')).toEqual(['14:05']);
+  });
+
+  it('gives `hour12` and `showZone` to the time line only', () => {
+    expect(
+      formatDateTimeLines(AT, 'datetime', 'en-US', 'UTC', { hour12: false, showZone: true }).map(
+        plain
+      )
+    ).toEqual(['Jan 15, 2026', '14:05 UTC']);
   });
 });
 
