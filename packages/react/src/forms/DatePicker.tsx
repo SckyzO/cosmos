@@ -354,7 +354,10 @@ export const DatePicker = (props: DatePickerProps) => {
       onClick={() => toggle(!open, side)}
       className={clsx(
         fullWidth
-          ? 'flex flex-1'
+          ? // A range's two triggers share a flex row and grow in it; a single one has to ask.
+            isRange
+            ? 'flex flex-1'
+            : 'flex w-full'
           : isRange
             ? 'inline-flex min-w-[180px]'
             : 'inline-flex min-w-[200px]',

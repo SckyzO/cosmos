@@ -204,6 +204,67 @@ export const StackedNarrowWidthKeepsArrowsInside: Story = {
   },
 };
 
+// The field draws a 1px border, so what sits on its end edge is 1px inside it.
+const borderOf = (field: HTMLElement) => parseFloat(getComputedStyle(field).borderInlineEndWidth);
+
+/**
+ * A width set through `className` is taken by the input, so the arrows stay on the end edge of the
+ * field: they used to float with dead space after them.
+ */
+export const StackedWideWidthKeepsArrowsOnTheEndEdge: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    controls: 'stacked',
+    value: 60,
+    min: 5,
+    max: 3600,
+    step: 5,
+    unit: 's',
+    className: 'w-72',
+  },
+  play: async ({ canvas }) => {
+    const increase = canvas.getByRole('button', { name: 'Increase' });
+    const arrows = increase.closest('div')!;
+    const control = arrows.parentElement!;
+    await expect(control.getBoundingClientRect().width).toBeCloseTo(288, 0);
+    await expect(endOffset(arrows, control)).toBeCloseTo(borderOf(control), 0);
+  },
+};
+
+/** `fullWidth` in the `sides` layout: the buttons stay on both edges, and the value fills between. */
+export const SidesFullWidthKeepsButtonsOnTheEdges: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 8, min: 1, max: 20, unit: 'h', fullWidth: true },
+  decorators: [
+    (Story) => (
+      <div className="w-80">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const decrease = canvas.getByRole('button', { name: 'Decrease' });
+    const increase = canvas.getByRole('button', { name: 'Increase' });
+    const control = decrease.parentElement!;
+    await expect(control.getBoundingClientRect().width).toBeCloseTo(320, 0);
+    await expect(startOffset(decrease, control)).toBeCloseTo(borderOf(control), 0);
+    await expect(endOffset(increase, control)).toBeCloseTo(borderOf(control), 0);
+    await expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
+  },
+};
+
+/** A width set through `className` in the `sides` layout: the buttons stay on the edges too. */
+export const SidesWideWidthKeepsButtonsOnTheEdges: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { value: 8, min: 1, max: 20, className: 'w-72' },
+  play: async ({ canvas }) => {
+    const increase = canvas.getByRole('button', { name: 'Increase' });
+    const control = increase.parentElement!;
+    await expect(control.getBoundingClientRect().width).toBeCloseTo(288, 0);
+    await expect(endOffset(increase, control)).toBeCloseTo(borderOf(control), 0);
+  },
+};
+
 // The inner input drops its outline: the wrapper shows focus with its border (#151).
 export const FocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
@@ -348,6 +409,17 @@ export const StackedForwardsRef: Story = {
 /** `prefix` sits before the value as `unit` sits after it: a currency sign, a protocol. */
 export const WithPrefix: Story = {
   args: { value: 1800, min: 0, step: 50, prefix: '$', controls: 'stacked', className: 'w-40' },
+};
+
+/** The field `WithPrefix` shows is wider than its content: the arrows are still on the end edge. */
+export const WithPrefixKeepsArrowsOnTheEndEdge: Story = {
+  ...WithPrefix,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const arrows = canvas.getByRole('button', { name: 'Increase' }).closest('div')!;
+    const control = arrows.parentElement!;
+    await expect(endOffset(arrows, control)).toBeCloseTo(borderOf(control), 0);
+  },
 };
 
 /** Before the value, inside the border, in both layouts and next to a `unit`. */

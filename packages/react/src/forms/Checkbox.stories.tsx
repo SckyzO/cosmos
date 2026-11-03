@@ -363,6 +363,54 @@ export const GroupVerticalStacksItems: Story = {
   },
 };
 
+// The vertical middle of an element, for lining the box up with a line of text.
+const middleOf = (element: Element) => {
+  const rect = element.getBoundingClientRect();
+  return rect.top + rect.height / 2;
+};
+
+/**
+ * The box is centred on the first line of the label, within half a pixel, at the default text size
+ * and at the largest: its size is fixed in pixels while the text follows `data-text-size`. A
+ * description under the label does not move it.
+ */
+export const BoxIsCenteredOnTheFirstLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-6">
+      {[undefined, 'xl'].map((textSize) => (
+        <div
+          key={textSize ?? 'default'}
+          data-text-size={textSize}
+          data-testid={textSize ?? 'default'}
+          className="space-y-3"
+        >
+          <Checkbox label="Subscribe to newsletter" />
+          <Checkbox
+            label="Marketing emails"
+            description="Get tips, product updates and best practices once a week."
+          />
+          <Checkbox size="sm" label="Compact" />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const textSize of ['default', 'xl']) {
+      const scope = within(canvas.getByTestId(textSize));
+      for (const label of ['Subscribe to newsletter', 'Marketing emails', 'Compact']) {
+        // The input is visually hidden: the box next to it is what is drawn.
+        const box = scope.getByLabelText(label, { exact: false }).nextElementSibling!;
+        const line = scope.getByText(label);
+        await expect(
+          Math.abs(middleOf(box) - middleOf(line)),
+          `${label} at the ${textSize} text size`
+        ).toBeLessThanOrEqual(0.5);
+      }
+    }
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The box is at the start of its label, and a horizontal group starts at the start edge. */

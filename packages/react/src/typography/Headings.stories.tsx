@@ -1,12 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-// Headings live as pure Tailwind classes — wrapping every H1-H6 in a
-// dedicated component would add ceremony without buying anything. This
-// stories file is the canonical reference for the typographic ramp + the
-// most common heading decorations (mark, gradient, badge, subtitle).
 const meta: Meta = {
   title: 'Typography/Headings',
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Headings are Tailwind classes on `<h1>` to `<h6>`: a component for each would add ceremony and nothing else. This page is the reference for the typographic ramp and for the usual decorations: a highlighted word, a mark, a gradient, an underline, a badge, a subtitle, a link.',
+      },
+    },
+  },
   tags: ['autodocs'],
 };
 export default meta;

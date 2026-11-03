@@ -53,7 +53,14 @@ export function Radio({
         className
       )}
     >
-      <span className="relative inline-flex shrink-0 items-center justify-center">
+      <span
+        className={clsx(
+          'relative inline-flex shrink-0 items-center justify-center',
+          // The box is centred on the first line of the text, whatever the text size: the
+          // wrapper is one line of the label tall, so the fixed-size box sits in its middle.
+          (label || description) && clsx(sizes.label, 'h-lh')
+        )}
+      >
         <input
           ref={ref}
           id={fieldId}

@@ -1,11 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-// Inline text utilities (italic, bold, mark, code, kbd-handled-elsewhere, …).
-// Same approach as Headings: showcase the Tailwind / HTML primitives rather
-// than wrap every emphasis in a dedicated Cosmos component.
 const meta: Meta = {
   title: 'Typography/Text',
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Inline text (italic, bold, mark, code, an abbreviation…), its sizes, weights and colours. These are Tailwind classes on plain HTML elements, as for `Headings`: a component per emphasis would add ceremony and nothing else. `Kbd` and `Highlight` are components of their own.',
+      },
+    },
+  },
   tags: ['autodocs'],
 };
 export default meta;

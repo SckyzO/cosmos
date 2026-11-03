@@ -297,7 +297,11 @@ const AppTopbar = ({
               )}
             </NotificationsPanel.Content>
           </NotificationsPanel>
-          <ThemeToggle isDark={isDark} onChange={setDark} className="max-sm:hidden" />
+          <ThemeToggle
+            theme={isDark ? 'dark' : 'light'}
+            onChange={(theme) => setDark(theme === 'dark')}
+            className="max-sm:hidden"
+          />
           <UserMenu>
             {/* Name hidden: a name of any length would push the search aside. */}
             <UserMenu.Trigger name={user.name} hideName />

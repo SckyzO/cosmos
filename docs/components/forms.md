@@ -184,6 +184,23 @@ a field that suggests (a catalogue, a list of tags) and lets the user write thei
 - Without a visible `label`, `aria-label` names the input, as for a field in a row of lines. A
   `label` wins: the name is the one on screen.
 
+## Select
+
+Storybook: [Select](https://sckyzo.github.io/cosmos/?path=/docs/forms-select--docs).
+
+`Select` is a native `<select>`: `onChange` gets the native event, `ref` is the `<select>`, and a
+form, a label and the platform's keyboard and phone picker work as they do for any select. The
+closed field is drawn by Cosmos in every browser. The open list is the browser's:
+
+- Where the browser can draw it from CSS (`appearance: base-select`, Chromium for now), the list
+  takes the look of the `Combobox` list: the same panel, rows of `py-row-8 px-3` (36px at the
+  default density), a check mark on the picked option, the accent under the pointer or the
+  keyboard focus. Nothing changes for the closed field.
+- Elsewhere, and in a phone's picker, the list is the system's own, native and unstyled by us: its
+  rows are as tall as the platform makes them.
+- For a list that looks the same in every browser, with typing to filter, descriptions or an icon on
+  each option, use [`Combobox`](#combobox-with-typed-text).
+
 ## Number input
 
 Storybook: [Number Input](https://sckyzo.github.io/cosmos/?path=/docs/forms-number-input--docs).
@@ -207,6 +224,9 @@ comes before it: a currency sign, a protocol.
 - `prefix` takes text or a node. It sits on the start edge of the value (the right one in right to
   left, in a `<bdi>` of its own), small and dimmed like `unit`. It is part of neither the value nor
   the accessible name: name the field with `aria-label` or a `FormRow`.
+- A field made wider than its content, by a width in `className` or by `fullWidth`, gives the room
+  to the value: the arrows stay on the end edge (with `controls="sides"`, the buttons stay on both
+  edges and the value is centred between them).
 - `error` marks the field invalid: a red border and `aria-invalid`. It carries no message, a
   `NumberInput` having no text of its own: write it under the field and point `aria-describedby` at
   it (a `FormRow` does the same with its description).
@@ -373,9 +393,10 @@ Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs
 `PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
 reader also hears "met" or "not met" after each label (`labels` translates both words).
 `PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
-rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four segments of a `ProgressBar` light
-up, and the level reads above them ("Password strength: Fair"). `labels` takes the words to
-translate:
+rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four slots of the bar fill, and the
+level reads above them ("Password strength: Fair"). A slot grows in from the start edge when the
+score reaches it, and the colour fades from one level to the next, over 300 ms; with reduced motion
+each level shows at once. `labels` takes the words to translate:
 
 ```tsx
 <PasswordStrengthMeter

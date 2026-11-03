@@ -154,6 +154,20 @@ the attributes in its root layout instead, as the
   for example in `Topbar`'s `endActions`. Set `onReset` to add a Reset button under the groups.
 - **`Customizer`** is a panel on the end side (a `Drawer`) with every choice above, plus the
   shell's layout, sidebar mode and container ([below](#customizer)).
+- **`ThemeToggle`** is one icon button for the theme alone, for a topbar. It cycles through the
+  `themes` you list, light and dark by default, and its icon shows the current one (a sun, a
+  sunset for sand, a moon, a moon with a star for deep blue, a monitor for `system`). It is
+  controlled: `onChange` gets the next theme, and you apply it.
+
+```tsx
+const [theme, setTheme] = useState<CosmosThemeChoice>('light');
+useEffect(() => applyAppearance({ theme, accent: 'blue' }), [theme]);
+
+<ThemeToggle theme={theme} themes={['light', 'dark', 'deep-blue']} onChange={setTheme} />;
+```
+
+`labels` renames the button for the theme a click goes to ("Switch to dark theme" by default), for
+an app in another language.
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -191,7 +205,7 @@ other groups the same way.
 To offer a **System** choice that follows the device's `prefers-color-scheme`, add
 `COSMOS_SYSTEM_THEME` to the themes and apply again when the device switches (it resolves to
 `light` or `dark`; set `systemThemes` for another pair). Nothing changes for an app that doesn't
-opt in (`ThemeToggleTri` takes a `system` prop for the same choice at the end of its cycle):
+opt in (`ThemeToggle` offers the same choice when its `themes` list `'system'`):
 
 ```tsx
 const [appearance, setAppearance] = useState<CosmosAppearance>({ theme: 'system', accent: 'blue' });

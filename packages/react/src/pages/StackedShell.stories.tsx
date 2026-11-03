@@ -9,14 +9,18 @@ import { PageHeader } from '../templates/PageHeader';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { expect } from 'storybook/test';
 
-// TUI Plus "Application Shells / Stacked" — top navbar with horizontal nav,
-// no sidebar, full-width main content beneath. Builds on Cosmos `Shell` by
-// omitting the `sidebar` slot and using a `<Navbar>` (not `<Topbar>`) as
-// the top bar.
-
 const meta = {
   title: 'Layout/Stacked Shell',
-  parameters: portalDocsParams.full(),
+  parameters: {
+    ...portalDocsParams.full(),
+    docs: {
+      ...portalDocsParams.full().docs,
+      description: {
+        component:
+          'An app with no sidebar: a `Shell` whose `topbar` is a `Navbar` with the horizontal navigation, and the page content full width beneath it. The stories compose `Shell`, `Navbar` and `PageHeader`; the last two are the multi-column variant, with a sidebar and a secondary panel.',
+      },
+    },
+  },
   tags: ['autodocs'],
 } satisfies Meta;
 
