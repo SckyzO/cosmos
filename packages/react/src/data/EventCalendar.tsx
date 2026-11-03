@@ -400,7 +400,8 @@ export const EventCalendar = ({
                   role="group"
                   aria-label={label}
                   className={clsx(
-                    'min-h-20 min-w-0 border-b border-gray-200 p-1.5 sm:min-h-28 dark:border-gray-800',
+                    // A container: its chips stack the time over the title when the cell is narrow.
+                    '@container min-h-20 min-w-0 border-b border-gray-200 p-1.5 sm:min-h-28 dark:border-gray-800',
                     i % 7 !== 6 && 'border-e',
                     outside && 'bg-gray-50 dark:bg-white/[0.02]'
                   )}

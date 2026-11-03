@@ -57,7 +57,10 @@ export const EventChip = ({
   flat,
 }: {
   event: CalendarEvent;
-  /** The start time to write before the title: none for an all-day event. */
+  /**
+   * The start time to write before the title: none for an all-day event. In a day cell
+   * (`compact`) narrower than 9rem the title goes under it.
+   */
   time?: string;
   /** Read by a screen reader after the title, not shown (the dates of a run of days). */
   description?: string;
@@ -70,6 +73,9 @@ export const EventChip = ({
   flat?: 'start' | 'end';
 }) => {
   const intent = event.intent ?? 'brand';
+  // In a day cell too narrow for the time and a readable title on one line (a tablet), the title
+  // goes under the time rather than being cut to a few pixels.
+  const stacks = compact && time !== undefined && !continuation;
   const content = (
     <>
       <span aria-hidden className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', INTENT_DOT[intent])} />
@@ -83,7 +89,13 @@ export const EventChip = ({
           <bdi>{time}</bdi>
         </span>
       )}
-      <span className={clsx('truncate', continuation ? 'sr-only' : compact && 'max-sm:sr-only')}>
+      <span
+        className={clsx(
+          'truncate',
+          continuation ? 'sr-only' : compact && 'max-sm:sr-only',
+          stacks && '@max-[9rem]:basis-full'
+        )}
+      >
         <bdi>{event.title}</bdi>
       </span>
       {description && <span className="sr-only">, {description}</span>}
@@ -92,6 +104,7 @@ export const EventChip = ({
   const className = clsx(
     'flex min-w-0 items-center gap-1.5 px-1.5 py-0.5 text-start text-xs text-gray-700 dark:text-gray-200',
     flat === 'start' ? 'rounded-e-md' : flat === 'end' ? 'rounded-s-md' : 'rounded-md',
+    stacks && '@max-[9rem]:flex-wrap @max-[9rem]:gap-y-0',
     // Without a title the chip keeps the height of one that has it, so the rows stay aligned.
     continuation && 'min-h-5',
     INTENT_CHIP[intent],
