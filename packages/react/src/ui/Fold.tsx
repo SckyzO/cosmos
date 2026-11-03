@@ -13,6 +13,11 @@ export type FoldProps = {
    */
   className?: string;
   /**
+   * Fade only: the content does not slide 4px as it goes in and out. For a bar that folds away
+   * and has nothing to come from. Default `true`.
+   */
+  slide?: boolean;
+  /**
    * Unfold when it mounts open, instead of being there: for a block mounted by the very change
    * that opens it (a detail row that appears under its row). Only for a fold that mounts open
    * after the page is drawn, never one that starts open with it. Default `false`.
@@ -31,11 +36,11 @@ export type FoldProps = {
  * Fold — a block of content that unfolds and folds back, internal to the package (not exported).
  *
  * The height runs from 0 to its natural size (`grid-template-rows` from `0fr` to `1fr`, so the
- * content is never measured), while the content fades and slides 4px along the block axis, in
- * `--cosmos-motion-base`: out when it opens, in when it closes. The content stays mounted (`lazy`
- * waits for the first opening): a closed fold is `inert` (out of the tab order and of the
- * pointer's reach) and hidden from assistive technology at once, whatever the animation still has
- * to play.
+ * content is never measured), while the content fades and slides 4px along the block axis (only
+ * fades with `slide={false}`), in `--cosmos-motion-base`: out when it opens, in when it closes.
+ * The content stays mounted (`lazy` waits for the first opening): a closed fold is `inert` (out of
+ * the tab order and of the pointer's reach) and hidden from assistive technology at once,
+ * whatever the animation still has to play.
  *
  * A fold that is there from the first render is simply open. One that a change mounts open (a
  * detail row that appears when its row opens) takes `appear` to unfold on arrival; to leave, its
@@ -49,6 +54,7 @@ export const Fold = ({
   open,
   id,
   className,
+  slide = true,
   appear = false,
   lazy = false,
   children,
@@ -102,9 +108,13 @@ export const Fold = ({
             open
               ? clsx(
                   'translate-none opacity-100 ease-(--cosmos-ease-out)',
-                  appear && 'starting:-translate-y-1 starting:opacity-0'
+                  appear &&
+                    (slide ? 'starting:-translate-y-1 starting:opacity-0' : 'starting:opacity-0')
                 )
-              : '-translate-y-1 opacity-0 ease-(--cosmos-ease-in)'
+              : clsx(
+                  'opacity-0 ease-(--cosmos-ease-in)',
+                  slide ? '-translate-y-1' : 'translate-none'
+                )
           )}
         >
           {(opened || !lazy) && children}
