@@ -118,7 +118,7 @@ function Picture({ item, current, errorLabel, retryLabel }: PictureProps) {
     <>
       {status === 'loading' && (
         <div className="absolute inset-x-0 inset-y-0 grid place-items-center sm:px-18">
-          <div className="grid aspect-[3/2] max-h-full w-[min(100%,48rem)] animate-pulse place-items-center rounded-lg bg-white/10">
+          <div className="grid aspect-[3/2] max-h-full w-[min(100%,48rem)] animate-pulse place-items-center rounded-lg bg-white/10 motion-reduce:animate-none">
             {current && <Spinner size="lg" onDark />}
           </div>
         </div>

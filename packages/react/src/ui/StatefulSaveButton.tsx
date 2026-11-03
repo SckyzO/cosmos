@@ -15,7 +15,7 @@ type StateConfig = {
 
 const STATE_CONFIG: Record<SaveState, StateConfig> = {
   idle: { label: 'Save Changes', icon: Save },
-  dirty: { label: 'Save Changes', icon: Save, cls: 'animate-pulse' },
+  dirty: { label: 'Save Changes', icon: Save, cls: 'animate-pulse motion-reduce:animate-none' },
   saving: { label: 'Saving…', loading: true },
   // The `success` intent carries the dark text on green (white on green-500 is about 2.3:1).
   saved: { label: 'Saved', icon: Check, intent: 'success' },

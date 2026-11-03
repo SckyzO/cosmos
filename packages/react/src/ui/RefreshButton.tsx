@@ -93,7 +93,7 @@ export const RefreshButton = ({
         <span>Refresh</span>
         {isAutoActive && (
           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-400 motion-reduce:animate-none" />
             {currentLabel}
           </span>
         )}
