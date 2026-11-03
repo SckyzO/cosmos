@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag as TagIcon, Zap } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { Tag } from './Tag';
+import { Tag, type TagSize } from './Tag';
 import type { Intent } from './intent';
 import { SectionCard } from '../templates/SectionCard';
 import {
@@ -27,6 +27,19 @@ type Story = StoryObj<typeof meta>;
 
 const INTENTS: Intent[] = ['neutral', 'brand', 'info', 'success', 'warning', 'danger'];
 
+// The height and the text of each size, in px. Every size is listed (the compiler checks it), and
+// the stories read their sizes from here.
+const PX = {
+  xs: { height: 18, text: 10 },
+  sm: { height: 22, text: 11 },
+  md: { height: 26, text: 14 },
+  lg: { height: 30, text: 16 },
+  xl: { height: 34, text: 18 },
+  '2xl': { height: 40, text: 20 },
+  '3xl': { height: 48, text: 24 },
+} as const satisfies Record<TagSize, { height: number; text: number }>;
+const SIZES = Object.keys(PX) as TagSize[];
+
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
 );
@@ -36,7 +49,7 @@ export const Intents: Story = {
     <Wrap>
       <SectionCard title="Intents × sizes">
         <div className="space-y-3">
-          {(['sm', 'md'] as const).map((size) => (
+          {SIZES.map((size) => (
             <div key={size} className="flex flex-wrap items-center gap-2">
               <span className="text-3xs w-6 font-mono text-[var(--color-text-muted)] uppercase">
                 {size}
@@ -52,6 +65,33 @@ export const Intents: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+/** Seven sizes: the tag is 18px to 48px high, its text and icon grow with it, its X stays a 24px target. */
+export const SizesChecks: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-2">
+        {SIZES.map((size) => (
+          <Tag key={size} size={size} icon={TagIcon} onRemove={() => {}}>
+            {size}
+          </Tag>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const size of SIZES) {
+      const remove = within(canvasElement).getByRole('button', { name: `Remove ${size}` });
+      const tag = remove.parentElement!;
+      await expect(tag.getBoundingClientRect().height, `${size} height`).toBe(PX[size].height);
+      await expect(parseFloat(getComputedStyle(tag).fontSize), `${size} text`).toBe(PX[size].text);
+      const target = getComputedStyle(remove, '::before');
+      await expect(parseFloat(target.width), `${size} target width`).toBeGreaterThanOrEqual(24);
+      await expect(parseFloat(target.height), `${size} target height`).toBeGreaterThanOrEqual(24);
+    }
+  },
 };
 
 export const WithIcon: Story = {
@@ -150,6 +190,47 @@ export const RemoveButtonHitArea: Story = {
       expect(parseFloat(box.width)).toBeGreaterThanOrEqual(24);
       expect(parseFloat(box.height)).toBeGreaterThanOrEqual(24);
       expect(button.getBoundingClientRect().width).toBeLessThan(24);
+    }
+  },
+};
+
+/**
+ * A link or button tag of the two smallest sizes has a 24px target, drawn like the remove button's
+ * (a pseudo-element), so the tag keeps its height.
+ */
+export const InteractiveSmallTagsHaveA24pxTarget: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex items-center gap-4">
+        {(['xs', 'sm'] as const).map((size) => (
+          <span key={size} className="flex items-center gap-2">
+            <Tag size={size} href="#alerts">
+              {size} link
+            </Tag>
+            <Tag size={size} onClick={() => {}}>
+              {size} button
+            </Tag>
+          </span>
+        ))}
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    for (const size of ['xs', 'sm'] as const) {
+      const heights = [
+        canvas.getByRole('link', { name: `${size} link` }),
+        canvas.getByRole('button', { name: `${size} button` }),
+      ].map((main) => {
+        // The text is drawn smaller than 24px; its pseudo-element is the target (WCAG 2.5.8).
+        const box = getComputedStyle(main, '::before');
+        expect(parseFloat(box.width), `${size} width`).toBeGreaterThanOrEqual(24);
+        expect(parseFloat(box.height), `${size} height`).toBeGreaterThanOrEqual(24);
+        return main.parentElement!.getBoundingClientRect().height;
+      });
+      // The target is no taller than the tag asks for: nothing moved.
+      expect(heights).toEqual([PX[size].height, PX[size].height]);
     }
   },
 };
