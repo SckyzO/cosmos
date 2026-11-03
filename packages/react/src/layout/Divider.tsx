@@ -79,7 +79,7 @@ const Root = ({
       <div className={clsx('relative flex', justify)}>
         <span
           className={clsx(
-            'px-2',
+            'px-4',
             insetBg,
             emphasis
               ? 'text-base font-semibold text-gray-900 dark:text-white'
@@ -117,7 +117,7 @@ const Icon = ({
         <div className="w-full border-t border-gray-200 dark:border-white/10" />
       </div>
       <div className={clsx('relative flex', justify)}>
-        <span className={clsx('flex px-2', insetBg)}>
+        <span className={clsx('flex px-4', insetBg)}>
           <IconCmp className={iconClassName} aria-hidden />
         </span>
       </div>
