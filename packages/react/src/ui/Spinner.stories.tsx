@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Plus } from 'lucide-react';
 import { expect } from 'storybook/test';
-import { inEachTheme } from '../storybook-helpers';
+import { inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { Spinner, type SpinnerIntent } from './Spinner';
 
@@ -54,10 +54,12 @@ export const Intents: Story = {
   ),
 };
 
-// `Intents` follows the toolbar's theme menu; this one stays in light.
+// `Intents` follows the toolbar's theme menu; this one stays in light, in a frame of its own so the
+// docs page keeps the toolbar's theme.
 export const IntentsInLight: Story = {
   ...Intents,
   globals: { theme: 'light' },
+  parameters: { ...portalDocsParams(160), layout: 'centered' },
 };
 
 export const OnDark: Story = {

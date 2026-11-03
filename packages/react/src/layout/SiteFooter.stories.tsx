@@ -10,6 +10,7 @@ import {
   inDirection,
   inEachTheme,
   mobileViewport,
+  portalDocsParams,
   startEdge,
   startOffset,
 } from '../storybook-helpers';
@@ -247,11 +248,14 @@ export const WithBannerMobile: Story = {
 /** `theme="dark"` stays dark in every theme: shown here on a light page. */
 export const Dark: Story = {
   globals: { ...DESKTOP, theme: 'light' },
+  // A frame of its own: pinning the theme there leaves the docs page on the toolbar's.
+  parameters: portalDocsParams(360),
   render: () => <StoreFooter theme="dark" />,
 };
 
 export const DarkMobile: Story = {
   globals: { ...PHONE, theme: 'light' },
+  parameters: portalDocsParams(360),
   render: () => <StoreFooter theme="dark" />,
 };
 

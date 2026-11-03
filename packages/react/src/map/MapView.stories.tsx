@@ -10,6 +10,7 @@ import {
   expectTextContrast,
   inDirection,
   mobileViewport,
+  portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
 import { MapMarkerList } from './MapMarkerList';
@@ -88,6 +89,8 @@ const Locator = (args: MapViewProps) => {
 export const DarkStyle: Story = {
   args: { defaultSelectedId: 'station' },
   globals: { theme: 'dark' },
+  // A frame of its own: pinning the theme there leaves the docs page on the toolbar's.
+  parameters: { ...portalDocsParams(440), layout: 'padded' },
 };
 
 /** At 375 px the list stacks under the map and the page does not scroll sideways. */
