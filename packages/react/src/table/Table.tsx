@@ -42,16 +42,15 @@ const ALIGN_CLASS = {
 type CellAlignProps = {
   /** Text alignment. Default `start`, or `end` when `numeric` is set. */
   align?: 'start' | 'center' | 'end';
-  /** Numbers: aligned to the end, with tabular figures so the digits line up, on one line. */
+  /**
+   * Numbers: aligned to the end, with tabular figures so the digits line up. In a body cell the
+   * value stays on one line with its unit: the table scrolls before it wraps. A header may wrap.
+   */
   numeric?: boolean;
 };
 
-// A number stays whole in a narrow column, with its unit: the table scrolls before it wraps.
 const alignClass = ({ align, numeric }: CellAlignProps) =>
-  clsx(
-    ALIGN_CLASS[align ?? (numeric ? 'end' : 'start')],
-    numeric && 'whitespace-nowrap tabular-nums'
-  );
+  clsx(ALIGN_CLASS[align ?? (numeric ? 'end' : 'start')], numeric && 'tabular-nums');
 
 export type TableProps = ComponentProps<'table'> & {
   /**
@@ -281,7 +280,13 @@ export type TableCellProps = Omit<ComponentProps<'td'>, 'align'> & CellAlignProp
 /** TableCell — a `<td>`, padded to the table's `density`. */
 export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps) => (
   <td
-    className={clsx('px-4', BODY_CELL_PADDING, alignClass({ align, numeric }), className)}
+    className={clsx(
+      'px-4',
+      BODY_CELL_PADDING,
+      alignClass({ align, numeric }),
+      numeric && 'whitespace-nowrap',
+      className
+    )}
     {...rest}
   />
 );
