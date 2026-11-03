@@ -5,6 +5,52 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.6.0...@sckyzo/cosmos-react@0.7.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** ThemeToggleTri, ThemeMode and ThemeModeChoice are removed (use ThemeToggle with CosmosTheme and CosmosThemeChoice). The isDark, lightLabel and darkLabel props of ThemeToggle become theme (a CosmosThemeChoice), onChange(next theme), themes and labels; the system prop of ThemeToggleTri becomes 'system' in themes. The default accessible names are now "Switch to dark theme" and so on.
+
+### Features
+
+* **react:** add 2xl and 3xl sizes to Button ([25d0aea](https://github.com/SckyzO/cosmos/commit/25d0aea1a2c23d8d589e0dfb96d4597f26674aea))
+* **react:** add 2xl and 3xl sizes to Spinner ([4ed9726](https://github.com/SckyzO/cosmos/commit/4ed9726fc47740e8d96f2837b636b8b7cc6198df))
+* **react:** add as and size props to SectionLabel ([fc93ff8](https://github.com/SckyzO/cosmos/commit/fc93ff810c4d2cc7ba0453a2ec8713edc69cc4b7))
+* **react:** add ignoreAccents to Highlight ([7dc7635](https://github.com/SckyzO/cosmos/commit/7dc7635527536dc37b28bf5611f50c963fcf5c0d))
+* **react:** add NodeGrid, a per-group grid of node marks ([62bc5e0](https://github.com/SckyzO/cosmos/commit/62bc5e0b7d50831605bfa7cf857756ece9a38db0))
+* **react:** add presets, stacked and badge variants to DateTime ([b495d7c](https://github.com/SckyzO/cosmos/commit/b495d7c45e0506dd77e88051ed37606c8e5a8ad6))
+* **react:** add size lg, intent, labelPosition and name to Toggle ([db55501](https://github.com/SckyzO/cosmos/commit/db55501c6537c5df2621ed8c522bb03a8295757d))
+* **react:** add size to HealthDot ([3dde92a](https://github.com/SckyzO/cosmos/commit/3dde92a3e364826629561304107e44c6fc6c15ae))
+* **react:** add size, card, display and urgency to Countdown ([0aecf51](https://github.com/SckyzO/cosmos/commit/0aecf51665bae01e601126cd293b58c82e415a04))
+* **react:** add subMenuGuides to Sidebar to hide the sub-menu lines ([f550b94](https://github.com/SckyzO/cosmos/commit/f550b94104ab3ccc8a05bc0c8ba70ab98daad52c))
+* **react:** add xs, lg, xl, 2xl and 3xl sizes to Tag ([f33a754](https://github.com/SckyzO/cosmos/commit/f33a754e06005ed21f12a9a59df3111ec153e105))
+* **react:** add xs, xl, 2xl and 3xl sizes to IconBox ([9841832](https://github.com/SckyzO/cosmos/commit/98418320cb471c8eaed9f6c27711fe9d0632fe91))
+* **react:** animate the PasswordStrengthMeter fills ([1c593dc](https://github.com/SckyzO/cosmos/commit/1c593dcf5597a428d59c125b5b5546d7daf76c26))
+* **react:** build the LogLevelBadge surface tone on Badge ([54a95f4](https://github.com/SckyzO/cosmos/commit/54a95f45a66574e372a7c8a0288c1d5bc6b7866d))
+* **react:** give the open Select list the listbox look where it can ([2aea74e](https://github.com/SckyzO/cosmos/commit/2aea74ecad9a07f0ab38f8cec2bd7f0dea816462))
+* **react:** mark the section being read in StickyScrollNav ([11c3186](https://github.com/SckyzO/cosmos/commit/11c31862da477b8f573758c1e4d951a45e9d5db5))
+* **react:** merge ThemeToggleTri into ThemeToggle ([83df924](https://github.com/SckyzO/cosmos/commit/83df92468385c088d82932a177269118f4a65d89))
+* **react:** show the tag count of a TagInput with maxTags ([f79a0ef](https://github.com/SckyzO/cosmos/commit/f79a0ef487541c4312d853a25f5ab37748037e61))
+
+
+### Bug Fixes
+
+* **react:** align TagInput and MultiSelect label and helper on Input ([66f647e](https://github.com/SckyzO/cosmos/commit/66f647e2dcf1fe7f19ce24803586e7b43b5f8bf0))
+* **react:** center Checkbox and Radio boxes on the label's first line ([1e1361b](https://github.com/SckyzO/cosmos/commit/1e1361ba20e962ccc0a6e5267034875715d2a68c))
+* **react:** draw the CommentThread line from avatar to last reply ([240191e](https://github.com/SckyzO/cosmos/commit/240191e09c374e61138d1db3f037d94747664747))
+* **react:** give TagInput and MultiSelect tags a surface of their own ([4a39306](https://github.com/SckyzO/cosmos/commit/4a393068a955555fdc8f576045f4d7eb17c3de3b))
+* **react:** keep ordered list numbers off their text ([fe31a73](https://github.com/SckyzO/cosmos/commit/fe31a7319dad03e9327cb65135b71ecf20acc2c5))
+* **react:** keep two Timeline markers 24px apart ([39313dd](https://github.com/SckyzO/cosmos/commit/39313dd61e8ca80edb3b500b7b354dde1525603d))
+* **react:** let NumberInput's input take the width of a wider field ([a057018](https://github.com/SckyzO/cosmos/commit/a05701860df659fa5c14cd5953b81887ce1ddcb1))
+* **react:** make DatePicker fullWidth fill the parent in single mode ([b5514fb](https://github.com/SckyzO/cosmos/commit/b5514fb329b0df7a73fd46f42b6db59b18f12973))
+* **react:** pause the log follow when a row or a step opens ([21bcce7](https://github.com/SckyzO/cosmos/commit/21bcce738f5d4e6e9a39a70cbb9d28793d961bd7))
+* **react:** put the NotificationRow actions on the badge line ([d7328bf](https://github.com/SckyzO/cosmos/commit/d7328bfcc5649ef446ed718aacd8170903d5d0bb))
+* **react:** show StackedList delete actions muted until hovered ([d194fbe](https://github.com/SckyzO/cosmos/commit/d194fbefd88b9c173f84ca595b7fa19a852bbf63))
+* **react:** space the ColorInput swatch as the field pads ([4ea64c4](https://github.com/SckyzO/cosmos/commit/4ea64c43eea22e26a6cd2571812f4d9242a0fd05))
+* **react:** spread SiteFooter.Bottom over the line when it is alone ([98ba25d](https://github.com/SckyzO/cosmos/commit/98ba25dc01831ed86c430018ddf23bde0d8c62d8))
+* **react:** widen the gap between a Divider line and its label ([b6ffc36](https://github.com/SckyzO/cosmos/commit/b6ffc36e2f6c41f5d1c08b5584b8ca68c4c99680))
+
 ## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.5.0...@sckyzo/cosmos-react@0.6.0) (2026-11-02)
 
 
