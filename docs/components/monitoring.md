@@ -1,6 +1,6 @@
 # Monitoring
 
-Storybook group: Monitoring. Health checks, uptime and logs. The host brings the data: these components draw what they are given.
+Storybook group: Monitoring. Health checks, the node grid, uptime and logs. The host brings the data: these components draw what they are given.
 
 ## Health checks
 
@@ -74,6 +74,64 @@ cell, the monitor's state chip). The statuses shown stay those of the last data.
 
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
+
+## Node grid
+
+Storybook: [Node Grid](https://sckyzo.github.io/cosmos/?path=/docs/monitoring-node-grid--docs).
+
+`NodeGrid` is the "Node health" card of a fleet: one small mark per node, a grid for each group (a
+room, a rack, a cluster), and the counts above ("40 CRIT 19 WARN 77 OK"). Where `HealthMatrix` crosses
+services with nodes, this one answers "how many of my machines are in trouble, and which" at a
+glance, for a few hundred nodes. The host brings the data, in the order it wants the marks drawn: the
+grid does not sort, since the position can mean a place in a room.
+
+```tsx
+const groups: NodeGridGroup[] = [
+  {
+    id: 'a',
+    label: 'Room A',
+    nodes: [
+      { id: 'a-01', status: 'CRIT', label: 'node-a-01', detail: 'Disk 98% full' },
+      { id: 'a-02', status: 'OK', label: 'node-a-02' },
+    ],
+  },
+];
+
+<NodeGrid
+  title="Node health"
+  groups={groups}
+  marks={{ CRIT: 'square', WARN: 'diamond', OK: 'circle' }}
+  legend
+/>;
+```
+
+- `show` is `all` (default) or `alerting`. `alerting` draws the nodes that are not OK (warning,
+  critical, unknown and info) and leaves out a group with none; the header still counts every node,
+  the OK ones included. When nothing is drawn the card says "All nodes healthy" (`emptyMessage`
+  changes it; a grid with no node at all says "No nodes").
+- `marks` is the shape of each status: `square`, `diamond` or `circle`. Every status is a **square**
+  until you list it, so a grid is read by colors and names alone unless you pick shapes that tell
+  the statuses apart. Each node sits in a 16px box with 4px between two; the marks take the colors of
+  the status palette, which the themes and accents repaint.
+- The header holds `title` and, at the end edge, the counts (`showCounts`, on by default). Critical,
+  warning, unknown and info appear only above 0, OK always, worst first. `labels` rewrites the words
+  for another language: `labels.counts` is what follows each count (`CRIT`, `WARN`, `OK`, `UNKNOWN`,
+  `INFO`), `labels.statuses` the status in full (`Critical`, `Warning`, `OK`, `Unknown`, `Info`),
+  used in a node's name, its tooltip and the legend.
+- `legend` adds one entry per status that is drawn, each with its mark, under the groups.
+- Hovering or focusing a node shows a tooltip with its label (its `id` when it has none), its
+  status and its `detail`, which is plain text since the tooltip is not interactive. Escape hides it.
+- `onNodeSelect(node, group)` makes every node a button, reached with Enter, Space or a click.
+  Without it a node is not interactive besides the tooltip.
+- `maxHeight` scrolls the groups in the card, the header and the legend staying in view.
+
+**Keyboard and screen readers.** The grid is one tab stop. The arrow keys move across it: left and
+right in reading order (the other way round in right to left, and on to the next group at the end
+of one), up and down by the visual column, which is read from where the marks are drawn since the
+wrapping depends on the width; Home and End go to the first and the last node. Each group is a list
+named by its label, and each node is named like "node-a-01, Critical", so no status rests on its
+color: with the default squares, the name and the tooltip still say it. It is a list and not a
+`role="grid"` because the marks wrap with the width: there are no stable rows or columns to announce.
 
 ## Uptime monitoring
 
