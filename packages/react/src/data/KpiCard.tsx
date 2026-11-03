@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
+import { CARD_LIFT } from '../ui/cardLift';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 import { Tooltip } from '../ui/Tooltip';
 
@@ -154,8 +155,10 @@ export const KpiCard = ({
     featured
       ? [tint.surface, MUTED_ON_TINT]
       : ['bg-white dark:bg-gray-900', INTENT_STYLE[intent].border],
-    interactive &&
-      'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator cursor-pointer transition-shadow hover:shadow-sm',
+    interactive && [
+      'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator relative cursor-pointer transition-[translate,box-shadow,border-color]',
+      CARD_LIFT,
+    ],
     className
   );
   // The value, its delta and its sub line: one block, so the chart can sit beside it.

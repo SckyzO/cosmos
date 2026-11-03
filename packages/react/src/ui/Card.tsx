@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { createContext, useContext } from 'react';
 import type { ImgHTMLAttributes, ReactNode } from 'react';
+import { CARD_LIFT_WITHIN } from './cardLift';
 
 export type CardProps = {
   children: ReactNode;
@@ -10,7 +11,10 @@ export type CardProps = {
    * `Card.Body` and `Card.Footer` pad themselves, so pair them with `none`.
    */
   padding?: 'none' | 'sm' | 'md' | 'lg';
-  /** Adds hover-lift + cursor-pointer affordance. Pair with `as="a"` or wrap in your router's Link. */
+  /**
+   * The card rises 2px with a soft shadow under the pointer, and on keyboard focus when it holds a
+   * link or a button, and shows the pointer cursor. Wrap it in your router's Link, or put one in it.
+   */
   interactive?: boolean;
   /**
    * When `true`, the card is flush with the viewport edges on mobile
@@ -56,8 +60,10 @@ const Root = ({
         edgeToEdgeMobile
           ? 'border-y border-[var(--card-border)] sm:rounded-2xl sm:border'
           : 'rounded-2xl border border-[var(--card-border)]',
-        interactive &&
-          'has-focus-visible:focus-indicator cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
+        interactive && [
+          'has-focus-visible:focus-indicator cursor-pointer transition-all',
+          CARD_LIFT_WITHIN,
+        ],
         orientation === 'horizontal' && 'flex flex-col sm:flex-row',
         PADDING_CLASS[padding],
         className

@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { ReactNode, Ref } from 'react';
+import { CARD_LIFT } from '../ui/cardLift';
 import { PICKER_SELECTED_BORDER, SelectedMark } from './SelectedMark';
 
 export type OptionCardProps = {
@@ -45,6 +46,7 @@ export const OptionCard = ({
     aria-label={label}
     className={clsx(
       'focus-visible:focus-indicator relative flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 transition-all',
+      CARD_LIFT,
       active
         ? clsx(PICKER_SELECTED_BORDER, 'bg-brand-50 dark:bg-brand-500/10')
         : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
