@@ -164,7 +164,7 @@ export const UptimeStat = ({
             <dt className="text-xs text-[var(--color-text-secondary)]">Certificate</dt>
             <dd
               className={clsx(
-                'm-0 inline-flex items-center gap-1.5 text-xl font-semibold',
+                'm-0 inline-flex flex-wrap items-center gap-1.5 text-xl font-semibold',
                 expired
                   ? 'text-red-700 dark:text-red-400'
                   : expiring
@@ -175,7 +175,8 @@ export const UptimeStat = ({
               {expiring && (
                 <AlertTriangle role="img" aria-label="Warning" className="size-4 shrink-0" />
               )}
-              <bdi>{daysLeftText(certificate.daysLeft)}</bdi>
+              {/* One phrase: a narrow cell moves it whole, it never leaves "left" alone. */}
+              <bdi className="whitespace-nowrap">{daysLeftText(certificate.daysLeft)}</bdi>
             </dd>
           </div>
         )}
