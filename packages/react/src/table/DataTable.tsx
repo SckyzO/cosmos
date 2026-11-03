@@ -15,7 +15,7 @@ import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
 import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
-import { useRowsArrive } from './useRowsArrive';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
@@ -691,7 +691,7 @@ export const DataTable = <T,>({
   const showSkeleton = loading && !hasRows;
   const dimRows = loading && hasRows;
   // The first load ends: the rows fade in where the placeholders were.
-  const arrive = useRowsArrive(showSkeleton);
+  const arrive = useAfterSkeleton(showSkeleton);
 
   const columnCount =
     columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (actionColumn ? 1 : 0);

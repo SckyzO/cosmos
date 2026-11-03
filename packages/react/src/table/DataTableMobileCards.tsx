@@ -10,7 +10,7 @@ import { AppLink } from '../ui/AppLink';
 import { CardDetail } from './ExpandedDetail';
 import { detailRowId } from './expandedRows';
 import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
-import { useRowsArrive } from './useRowsArrive';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { RowChevron } from './RowChevron';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
@@ -92,7 +92,7 @@ export const DataTableMobileCards = <T,>({
   'aria-labelledby': ariaLabelledBy,
 }: DataTableMobileCardsProps<T>) => {
   const { title, pairs } = splitMobileColumns(columns);
-  const arrive = useRowsArrive(loading);
+  const arrive = useAfterSkeleton(loading);
 
   if (loading) {
     return (

@@ -10,7 +10,8 @@ export type AfterSkeleton = {
 
 /**
  * Fades content in when it replaces a skeleton, for the components that swap one for the other on
- * a `loading` prop (`KpiCard`, `BarList`, `KanbanBoard`, `SectionCard`). The fade plays when
+ * a `loading` prop (`KpiCard`, `BarList`, `KanbanBoard`, `SectionCard`, and the rows of `DataTable`
+ * and its mobile cards after their placeholders). The fade plays when
  * `loading` turns off after it was on, over `--cosmos-motion-base`, easing out, instead of the
  * content taking the skeleton's place at once. Content drawn from the first render, with no
  * loading phase before it, does not fade: nothing moves when a page loads. A reload plays it again.
