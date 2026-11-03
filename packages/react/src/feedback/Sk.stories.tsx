@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { loopStops } from '../storybook-motion';
 import { Sk, SkeletonAvatarText, SkeletonList, SkeletonTable, SkeletonText } from './Skeleton';
 
 const meta = {
@@ -69,5 +70,24 @@ export const BusyRegion: Story = {
       'true'
     );
     await expect(canvas.getByRole('status')).toHaveTextContent('Loading comments…');
+  },
+};
+
+/** The pulse is a decorative loop: it runs, and stops under reduced motion. */
+export const PulseStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div>
+      <Sk />
+      <SkeletonList rows={1} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const pulses = canvasElement.querySelectorAll('.animate-pulse');
+    // The primitive, and the list's own wrapper.
+    await expect(pulses.length).toBeGreaterThanOrEqual(2);
+    for (const pulse of pulses) {
+      await expect(loopStops(pulse)).toMatchObject({ running: 'pulse', reduced: 'none' });
+    }
   },
 };

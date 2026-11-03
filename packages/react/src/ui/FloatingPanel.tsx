@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import {
   useMemo,
+  useRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
   type ReactNode,
@@ -13,6 +14,8 @@ import {
   type AnchorSide,
 } from '../hooks/useAnchorPosition';
 import type { Direction } from '../hooks/direction';
+import { useExitTransition } from '../hooks/useExitTransition';
+import { HoldWhileClosed } from './HoldWhileClosed';
 import { mergeRefs } from './mergeRefs';
 import {
   OverlayLayerProvider,
@@ -22,6 +25,7 @@ import {
   usePortalFocus,
   type PortalFocusOptions,
 } from './overlayA11y';
+import { panelOrigin } from './panelOrigin';
 
 // Internal to the package: the floating panel of Popover, UserMenu,
 // NotificationsPanel, DatePicker, Dropdown, Combobox, the table column filter
@@ -78,9 +82,15 @@ export type FloatingPanelProps = Omit<ComponentPropsWithoutRef<'div'>, 'style' |
  * it, or into the modal dialog it was opened in (`usePortalContainer`), where `aria-modal`
  * keeps it reachable. Kept next to its anchor in fixed position (`useAnchorPosition`), with
  * the focus handling of `usePortalFocus`, the outside click of `useOutsideClick` and a place
- * in the overlay stack (`useOverlayLayer`). Renders nothing while closed or before the anchor
- * is measured. It opens where `placement` says, flipped to the other side or moved along the
- * anchor when the viewport would cut it there.
+ * in the overlay stack (`useOverlayLayer`). Renders nothing while closed, once its exit has
+ * played, or before the anchor is measured. It opens where `placement` says, flipped to the other
+ * side or moved along the anchor when the viewport would cut it there.
+ *
+ * It fades in and scales up from 95% out of the corner of the panel nearest the trigger (the
+ * side it opened on and its alignment, mirrored in right to left), in 120 ms easing out, and
+ * back into it in 80 ms easing in. Once closed it is out of the overlay stack, focus is back on
+ * the trigger, and the panel is `inert` and takes no pointer events while it fades out; it is
+ * removed at once when nothing animates (durations at 0).
  */
 export function FloatingPanel({
   open,
@@ -108,15 +118,19 @@ export function FloatingPanel({
     triggerRef,
     initialFocus,
   });
-  // Both are state setters: stable, so the merged ref is too.
-  const ref = useMemo(() => mergeRefs(focusRef, panelRef), [focusRef, panelRef]);
+  // The element the exit waits on, kept next to the two setters: all three are stable, so the
+  // merged ref is too.
+  const exitRef = useRef<HTMLDivElement | null>(null);
+  const ref = useMemo(() => mergeRefs(focusRef, panelRef, exitRef), [focusRef, panelRef]);
   const outsideProps = useOutsideClick<HTMLDivElement>({
     open,
     onOutsideClick: onClose,
     insideRefs: [triggerRef, anchorRef],
   });
   const layer = useOverlayLayer(open, onClose);
-  if (!open || !anchored || container === null) return null;
+  // Stays mounted while it fades out, once `open` is false.
+  const present = useExitTransition(open, exitRef);
+  if (!present || !anchored || container === null) return null;
   return createPortal(
     <OverlayLayerProvider value={layer}>
       <div
@@ -124,12 +138,28 @@ export function FloatingPanel({
         dir={direction}
         {...rest}
         ref={ref}
+        inert={!open}
         onFocusCapture={onFocusCapture}
         {...outsideProps}
-        style={{ ...anchored, ...style }}
-        className={clsx('fixed', FLOATING_PANEL_Z, className)}
+        style={{
+          ...anchored,
+          transformOrigin: panelOrigin(side, placement.align, direction),
+          ...style,
+        }}
+        className={clsx(
+          'fixed transition-[opacity,scale]',
+          FLOATING_PANEL_Z,
+          // In: from 95% and transparent on the first frame (`starting:`), 120 ms easing out.
+          // Out: 80 ms easing in, and out of the pointer's reach for those 80 ms.
+          open
+            ? 'scale-none opacity-100 duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out) starting:scale-95 starting:opacity-0'
+            : 'pointer-events-none scale-95 opacity-0 duration-(--cosmos-motion-exit) ease-(--cosmos-ease-in)',
+          className
+        )}
       >
-        {typeof children === 'function' ? children(side, direction) : children}
+        <HoldWhileClosed open={open}>
+          {typeof children === 'function' ? children(side, direction) : children}
+        </HoldWhileClosed>
       </div>
     </OverlayLayerProvider>,
     container ?? document.body

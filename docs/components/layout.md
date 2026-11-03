@@ -16,7 +16,8 @@ drawer over a scrim (`defaultSidebarOpen`, or `sidebarOpen` and `onSidebarOpenCh
 to control it). It is always expanded there, with a close button in `Sidebar.Brand`, and it
 closes on the scrim, Escape, a swipe toward its edge, a click on a `Sidebar.Item` and when the
 viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
-view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
+view while the sidebar is off screen. `drawerBackdrop` picks the drawer's scrim (`dim` by default,
+`blur` or `blur-dark`, see [Scrims](../guides/tokens.md#scrims)). Any `Drawer` can close on a swipe too, with
 `swipeToClose`: toward its edge on `side="start"` and `side="end"` (the left and right, swapped
 under `dir="rtl"`), downward on `side="bottom"`, the
 bottom sheet (full width, as tall as its content up to 85% of the viewport, a grab `handle`
@@ -37,6 +38,18 @@ brings them to 10px, the logo, the titles and the footer following. Both go thro
 draws a thin line along its rows, under the parent's icon or just before its label;
 `subMenuGuides={false}` leaves the lines out, in the collapsed rail's panel and the compact rail's
 flyout too, and the indent alone shows the depth.
+
+A `Sidebar.SubMenu` or a `Sidebar.Group` unfolds and folds back in 200 ms: its height runs from 0
+to its natural size while its rows fade in and slide 4px, and the chevron turns with it. A closed
+list stays mounted, `inert` and hidden from assistive technology from the moment it starts to
+close, so a `Sidebar.Group` no longer unmounts its rows. The width that follows the labels is the
+one of the end state: it counts the rows of a list as it opens and leaves them out as it closes,
+whatever the height is doing. Collapsing the sidebar to its rail keeps the 300 ms of the width; the
+labels, badges, section titles and the name next to the logo fade out in 120 ms as it narrows, and
+come back once it has widened by a third. The rows draw the rail when the fade has played, and the
+labels are out of the tab order and of the accessibility tree there, as they were. All of it
+follows the motion setting: `prefers-reduced-motion`, or `data-motion="reduced"` on `<html>`, takes
+the durations to 0 and everything happens at once.
 
 `<Shell variant="floating">` sets the sidebar and the page apart as two cards on the base
 background, 10px from the window and from each other: the sidebar with a border all round,

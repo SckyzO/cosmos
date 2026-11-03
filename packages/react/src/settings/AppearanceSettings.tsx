@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { AccentPicker } from './AccentPicker';
 import { OptionPicker } from './OptionPicker';
 import { PalettePicker } from './PalettePicker';
@@ -7,6 +7,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_MOTIONS,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
   type CosmosAccent,
@@ -15,6 +16,8 @@ import {
   type CosmosDensityMeta,
   type CosmosFont,
   type CosmosFontMeta,
+  type CosmosMotion,
+  type CosmosMotionMeta,
   type CosmosTextSize,
   type CosmosTextSizeMeta,
   type CosmosSystemThemeMeta,
@@ -55,12 +58,18 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   density?: CosmosDensity;
   /** Shows the density group. */
   onDensityChange?: (density: CosmosDensity) => void;
+  /** Selected motion setting. Default `'full'`. */
+  motion?: CosmosMotion;
+  /** Shows the animations group: normal or reduced. */
+  onMotionChange?: (motion: CosmosMotion) => void;
   /** Heading of the font group. Default `'Font'`. */
   fontLabel?: string;
   /** Heading of the text size group. Default `'Text size'`. */
   textSizeLabel?: string;
   /** Heading of the density group. Default `'Density'`. */
   densityLabel?: string;
+  /** Heading of the animations group. Default `'Animations'`. */
+  motionLabel?: string;
   /**
    * Fonts to offer. Default: all of `COSMOS_FONTS`. Offer only the fonts whose
    * CSS the app imports (`@sckyzo/cosmos-theme/fonts/<id>`).
@@ -70,6 +79,8 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   textSizes?: CosmosTextSizeMeta[];
   /** Densities to offer. Default: all of `COSMOS_DENSITIES`. */
   densities?: CosmosDensityMeta[];
+  /** Motion settings to offer. Default: all of `COSMOS_MOTIONS`. */
+  motions?: CosmosMotionMeta[];
   /**
    * Pin each group's heading to the top of the scrolling ancestor while its group is in view.
    * For a panel that scrolls (`AppearanceMenu` sets it): the headings paint the `Popover` surface
@@ -88,9 +99,24 @@ const DENSITY_PREVIEW_GAP: Record<CosmosDensity, string> = {
 };
 
 /**
+ * A motion setting in miniature: a dot with the trail of its movement, or the dot alone. Static
+ * itself, so the setting it shows doesn't change it.
+ */
+const MOTION_PREVIEW: Record<CosmosMotion, ReactNode> = {
+  full: (
+    <span aria-hidden className="flex items-center gap-[3px]">
+      <span className="size-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+      <span className="size-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+      <span className="size-2 rounded-full bg-gray-700 dark:bg-gray-200" />
+    </span>
+  ),
+  reduced: <span aria-hidden className="size-2 rounded-full bg-gray-700 dark:bg-gray-200" />,
+};
+
+/**
  * AppearanceSettings — theme and accent pickers for the Cosmos themes, built
- * on `<PalettePicker>` and `<AccentPicker>`, plus font, text size and density
- * pickers when their `on…Change` handlers are set. Controlled: pass the result to
+ * on `<PalettePicker>` and `<AccentPicker>`, plus font, text size, density and
+ * animations pickers when their `on…Change` handlers are set. Controlled: pass the result to
  * `applyAppearance` (or your own theme switcher) to update the page.
  */
 export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
@@ -109,12 +135,16 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   onTextSizeChange,
   density = 'default',
   onDensityChange,
+  motion = 'full',
+  onMotionChange,
   fontLabel = 'Font',
   textSizeLabel = 'Text size',
   densityLabel = 'Density',
+  motionLabel = 'Animations',
   fonts = COSMOS_FONTS,
   textSizes = COSMOS_TEXT_SIZES,
   densities = COSMOS_DENSITIES,
+  motions = COSMOS_MOTIONS,
   stickyHeadings = false,
   className,
 }: AppearanceSettingsProps<T>) => {
@@ -123,6 +153,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   const fontHeadingId = useId();
   const textSizeHeadingId = useId();
   const densityHeadingId = useId();
+  const motionHeadingId = useId();
   const headingClass = clsx(
     'text-sm font-medium text-gray-700 dark:text-gray-300',
     stickyHeadings && 'sticky -top-4 z-10 -mx-4 bg-white px-4 py-2 dark:bg-gray-900'
@@ -236,6 +267,26 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
                   ))}
                 </span>
               ),
+            }))}
+          />
+        </div>
+      )}
+      {onMotionChange && (
+        <div>
+          <p id={motionHeadingId} className={headingClass}>
+            {motionLabel}
+          </p>
+          <OptionPicker
+            aria-labelledby={motionHeadingId}
+            className="mt-3"
+            cols={2}
+            value={motion}
+            // ids come from `motions`, so they are CosmosMotion values.
+            onChange={(id) => onMotionChange(id as CosmosMotion)}
+            options={motions.map((m) => ({
+              id: m.id,
+              label: m.label,
+              preview: MOTION_PREVIEW[m.id],
             }))}
           />
         </div>

@@ -59,6 +59,16 @@
   /* ── Accent ────────────────────────────────────────────────────────────── */
   --color-accent: var(--color-brand-500);
 
+  /* ── Scrim ─────────────────────────────────────────────────────────────── */
+  /* The veil behind a window (Backdrop, and every window built on it). dim is
+   * the colour alone; blur and blur-dark sit under an 8px backdrop blur, so
+   * their veil is lighter (blur) or darker (blur-dark) to keep the page
+   * readable behind it, or hide it. One set per theme: a dark theme's veil is
+   * black, a light theme's a deep blue-gray. */
+  --color-scrim-dim: rgb(16 24 40 / 0.45);
+  --color-scrim-blur: rgb(16 24 40 / 0.18);
+  --color-scrim-blur-dark: rgb(2 6 23 / 0.62);
+
   /* ── Chart series ──────────────────────────────────────────────────────── */
   /* Series 2 to 8 of the charts, after the accent (series 1 is
    * --color-brand-500, which the accents redefine). Each accent below lists its
@@ -86,6 +96,10 @@
   --color-text-primary: #1e1711;
   --color-text-secondary: #746656;
   --color-text-muted: #7a6c5b;
+
+  --color-scrim-dim: rgb(16 24 40 / 0.45);
+  --color-scrim-blur: rgb(16 24 40 / 0.18);
+  --color-scrim-blur-dark: rgb(2 6 23 / 0.62);
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
@@ -122,6 +136,10 @@
   --color-text-primary: #fff;
   --color-text-secondary: #a3a3a3;
   --color-text-muted: #8f8f8f;
+
+  --color-scrim-dim: rgb(0 0 0 / 0.6);
+  --color-scrim-blur: rgb(0 0 0 / 0.3);
+  --color-scrim-blur-dark: rgb(0 0 0 / 0.72);
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
@@ -169,6 +187,10 @@
   --color-text-primary: #fff;
   --color-text-secondary: #98a2b3;
   --color-text-muted: #8792a5;
+
+  --color-scrim-dim: rgb(0 0 0 / 0.6);
+  --color-scrim-blur: rgb(0 0 0 / 0.3);
+  --color-scrim-blur-dark: rgb(0 0 0 / 0.72);
 
   /* ── Code ──────────────────────────────────────────────────────────────── */
   /* Syntax highlighting on CodeBlock (gray-50 / gray-900), read by Shiki's
@@ -605,6 +627,48 @@
   --radius-2xl: 2px;
   --radius-3xl: 2px;
   --radius-4xl: 2px;
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────────
+ * One set of durations and easings for every component, read as
+ * `duration-(--cosmos-motion-base)` and `ease-(--cosmos-ease-out)`. fast is a
+ * panel coming in, a check or an icon that changes; exit a floating panel
+ * leaving, exit-lg a dialog leaving; base a fold, a dialog or an indicator
+ * that slides; slow the sidebar width and the Drawer. Entrances ease out,
+ * exits ease in, moves ease in and out.
+ *
+ * Reduced motion sets every duration to 0: the device's
+ * prefers-reduced-motion, or data-motion="reduced" on <html> (applyAppearance,
+ * the Customizer), for a reader who wants it in this app only. A component
+ * whose exit waits for its animation must not wait when the duration is 0.
+ * On html, not :root: check-contrast.mjs reads the :root blocks as palettes. */
+html {
+  --cosmos-motion-fast: 120ms;
+  --cosmos-motion-exit: 80ms;
+  --cosmos-motion-exit-lg: 120ms;
+  --cosmos-motion-base: 200ms;
+  --cosmos-motion-slow: 300ms;
+  --cosmos-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --cosmos-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --cosmos-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    --cosmos-motion-fast: 0ms;
+    --cosmos-motion-exit: 0ms;
+    --cosmos-motion-exit-lg: 0ms;
+    --cosmos-motion-base: 0ms;
+    --cosmos-motion-slow: 0ms;
+  }
+}
+
+html[data-motion='reduced'] {
+  --cosmos-motion-fast: 0ms;
+  --cosmos-motion-exit: 0ms;
+  --cosmos-motion-exit-lg: 0ms;
+  --cosmos-motion-base: 0ms;
+  --cosmos-motion-slow: 0ms;
 }
 
 /* Smooth theme switching transition — opt-in via .cosmos-bg-transition class

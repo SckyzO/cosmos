@@ -11,6 +11,8 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, scrimLook, themeColor } from '../storybook-motion';
+import type { BackdropVariant } from './Backdrop';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
@@ -930,5 +932,200 @@ export const HorizontalAlertFollowsTheDirection: Story = {
         expect(endOffset(go, dialog)).toBeLessThan(startOffset(go, dialog));
       });
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const scrimOf = (dialog: HTMLElement) =>
+  dialog.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+// The surface is the scrim's sibling.
+const surfaceOf = (dialog: HTMLElement) => dialog.lastElementChild as HTMLElement;
+
+/**
+ * The dialog opening and closing at its real speed: the scrim fades and the surface fades and
+ * scales up from 95% in 200 ms, then fades out and shrinks back in 120 ms. Press Escape or Cancel
+ * to see it leave.
+ */
+export const OpensAndLeavesWithMotion: Story = {
+  parameters: { settleMotion: false },
+  render: () => <OpenFromButton />,
+};
+
+/** Open, the surface is opaque at its full size and the scrim is up. */
+export const OpenIsAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open modal' }));
+    const dialog = await within(document.body).findByRole('dialog');
+    await expect(getComputedStyle(surfaceOf(dialog)).opacity).toBe('1');
+    await expect(getComputedStyle(surfaceOf(dialog)).scale).toBe('none');
+    await expect(getComputedStyle(scrimOf(dialog)).opacity).toBe('1');
+    await expect(dialog).not.toHaveAttribute('inert');
+  },
+};
+
+/** Closing with nothing to animate (0 s, as in these tests): the dialog is gone in the same render. */
+export const ClosingAtZeroSecondsUnmountsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    await userEvent.click(canvas.getByRole('button', { name: 'Open modal' }));
+    await body.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+    await expect(body.queryByRole('dialog')).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Open modal' })).toHaveFocus();
+  },
+};
+
+/**
+ * At its real speed, a closed dialog is already out of the way while it fades: focus is back on
+ * its trigger, it is `inert` and takes no pointer events, and the page under the fading scrim
+ * answers a click. It is gone once the fade has played.
+ */
+export const LeavingDialogIsInertAndFocusIsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    const trigger = canvas.getByRole('button', { name: 'Open modal' });
+    await userEvent.click(trigger);
+    const dialog = await body.findByRole('dialog');
+    await waitFor(() => expect(getComputedStyle(surfaceOf(dialog)).opacity).toBe('1'));
+
+    await userEvent.keyboard('{Escape}');
+    // Still on screen, fading...
+    await expect(dialog).toBeInTheDocument();
+    await expect(isFading(dialog)).toBe(true);
+    // ...and already out of the way.
+    await expect(dialog).toHaveAttribute('inert');
+    await expect(getComputedStyle(dialog).pointerEvents).toBe('none');
+    await expect(trigger).toHaveFocus();
+    await userEvent.click(canvas.getByRole('button', { name: 'After' }));
+    await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};
+
+/** Opening it again while it leaves brings the same dialog back, not a second one. */
+export const ReopeningWhileItLeavesKeepsTheDialog: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <OpenFromButton />,
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    const trigger = canvas.getByRole('button', { name: 'Open modal' });
+    await userEvent.click(trigger);
+    const dialog = await body.findByRole('dialog');
+    await waitFor(() => expect(getComputedStyle(surfaceOf(dialog)).opacity).toBe('1'));
+    await userEvent.keyboard('{Escape}');
+    await expect(isFading(dialog)).toBe(true);
+    await userEvent.click(trigger);
+    await expect(body.getAllByRole('dialog')).toHaveLength(1);
+    await expect(body.getByRole('dialog')).toBe(dialog);
+    await expect(dialog).not.toHaveAttribute('inert');
+    await waitFor(() => expect(getComputedStyle(surfaceOf(dialog)).opacity).toBe('1'));
+  },
+};
+
+const PanelInDialog = ({ onClose }: { onClose: () => void }) => {
+  const [open, setOpen] = useState(true);
+  return (
+    <Modal
+      open={open}
+      onClose={() => {
+        onClose();
+        setOpen(false);
+      }}
+    >
+      <Modal.Header title="Project settings" />
+      <Modal.Body>
+        <Dropdown label="Actions" options={ACTIONS} />
+      </Modal.Body>
+    </Modal>
+  );
+};
+
+/**
+ * A panel closed in a dialog is out of the Escape stack as soon as it closes, while it is still
+ * fading: the next Escape, pressed at once, closes the dialog and is not lost on the panel.
+ */
+export const EscapeGoesToTheDialogWhileThePanelLeaves: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  args: { onClose: fn() },
+  render: (args) => <PanelInDialog onClose={args.onClose} />,
+  play: async ({ args }) => {
+    const body = within(document.body);
+    const dialog = within(await body.findByRole('dialog', { name: 'Project settings' }));
+    await userEvent.click(dialog.getByRole('button', { name: 'Actions' }));
+    // Let the menu finish coming in: one closed before it moved has no exit to play.
+    const menu = await body.findByRole('menu');
+    await waitFor(() => expect(getComputedStyle(menu).opacity).toBe('1'));
+    await userEvent.keyboard('{Escape}');
+    // The menu is leaving...
+    await expect(menu).toHaveAttribute('inert');
+    await expect(isFading(menu)).toBe(true);
+    await expect(args.onClose).not.toHaveBeenCalled();
+    // ...and the next Escape belongs to the dialog.
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};
+
+/** The `backdrop` prop picks the scrim of the dialog and of the alert: colour, and blur or none. */
+export const BackdropPropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [variant, setVariant] = useState<BackdropVariant>('dim');
+    return (
+      <Wrap>
+        {(['dim', 'blur', 'blur-dark'] as const).map((v) => (
+          <Button key={v} onClick={() => setVariant(v)}>
+            {v}
+          </Button>
+        ))}
+        <Modal open onClose={() => {}} backdrop={variant}>
+          <Modal.Header title="Scrim" />
+        </Modal>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const body = within(document.body);
+    const dialog = await body.findByRole('dialog', { name: 'Scrim' });
+    // The default is dim: the colour alone.
+    await expect(scrimLook(scrimOf(dialog))).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
+    await userEvent.click(canvas.getByRole('button', { name: 'blur' }));
+    await expect(scrimLook(scrimOf(dialog))).toEqual({
+      colour: themeColor('--color-scrim-blur'),
+      filter: 'blur(8px)',
+    });
+    await userEvent.click(canvas.getByRole('button', { name: 'blur-dark' }));
+    await expect(scrimLook(scrimOf(dialog))).toEqual({
+      colour: themeColor('--color-scrim-blur-dark'),
+      filter: 'blur(8px)',
+    });
+  },
+};
+
+/** The alert shares the scrim: dim by default, and `backdrop` on `Modal.Alert` changes it. */
+export const AlertTakesTheBackdropProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Modal.Alert open onClose={() => {}} title="Heads up" backdrop="blur-dark" />,
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog');
+    await expect(scrimLook(scrimOf(dialog))).toEqual({
+      colour: themeColor('--color-scrim-blur-dark'),
+      filter: 'blur(8px)',
+    });
   },
 };

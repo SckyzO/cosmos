@@ -4,6 +4,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_MOTIONS,
   COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
@@ -120,7 +121,7 @@ const menuItems = (menu: string, items: { id: string; label: string }[]) =>
 
 /** Sets `data-<key>` on <html>, or removes it for the theme's default value. */
 const setRootData = (
-  key: 'accent' | 'font' | 'textSize' | 'density' | 'radius',
+  key: 'accent' | 'font' | 'textSize' | 'density' | 'radius' | 'motion',
   value: unknown,
   byDefault: string
 ) => {
@@ -130,9 +131,9 @@ const setRootData = (
 };
 
 /**
- * Apply the `accent`, `font`, `textSize`, `density` and `radius` toolbar globals as
- * data-accent, data-font, data-text-size, data-density and data-radius on <html>;
- * each default (blue, Outfit, md, default, default) removes its attribute. Set before the story renders so charts read the right
+ * Apply the `accent`, `font`, `textSize`, `density`, `radius` and `motion` toolbar globals as
+ * data-accent, data-font, data-text-size, data-density, data-radius and data-motion on <html>;
+ * each default (blue, Outfit, md, default, default, full) removes its attribute. Set before the story renders so charts read the right
  * --color-brand-500 on mount.
  */
 const withAppearanceAttributes: Decorator = (Story, ctx) => {
@@ -141,6 +142,7 @@ const withAppearanceAttributes: Decorator = (Story, ctx) => {
   setRootData('textSize', ctx.globals.textSize, 'md');
   setRootData('density', ctx.globals.density, 'default');
   setRootData('radius', ctx.globals.radius, 'default');
+  setRootData('motion', ctx.globals.motion, 'full');
   return <Story />;
 };
 
@@ -256,6 +258,15 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    motion: {
+      description: 'Motion',
+      toolbar: {
+        title: 'Motion',
+        icon: 'play',
+        items: menuItems('Motion', COSMOS_MOTIONS),
+        dynamicTitle: true,
+      },
+    },
     direction: {
       description: 'Text direction',
       toolbar: {
@@ -274,6 +285,7 @@ const preview: Preview = {
     textSize: 'md',
     density: 'default',
     radius: 'default',
+    motion: 'full',
     direction: 'ltr',
   },
   parameters: {

@@ -29,6 +29,9 @@ plain `var(--color-…)`.
   themes (checked by the theme package's contrast check).
 - **Density and radius**: `--spacing-ctrl-*`, `--spacing-row-*`, `--spacing-cell-*` and the
   `--radius-*` scale, see [Appearance](appearance.md#density).
+- **Scrim** (theme-aware): `--color-scrim-{dim,blur,blur-dark}`, the veil behind a window, see
+  [Scrims](#scrims).
+- **Motion**: `--cosmos-motion-*` durations and `--cosmos-ease-*` easings, see [Motion](#motion).
 
 Accent-colored **text** (links, active labels) is `text-brand-600 dark:text-brand-400`, never
 `text-brand-500`: brand-500 text drops under 4.5:1 on the sand theme. `bg-`, `border-` and
@@ -63,11 +66,58 @@ There is no ring offset. Add `ring-inset` where an ancestor clips with `overflow
 neighbor covers the outer ring. The utilities use `outline-hidden`, so the indicator survives
 forced-colors mode, where box shadows are not painted.
 
+## Motion
+
+Every animation of a component reads one set of durations and easings, declared once on `<html>`,
+so your own markup can move at the same pace:
+
+| Token                     | Value | A component uses it for                                 |
+| ------------------------- | ----- | ------------------------------------------------------- |
+| `--cosmos-motion-fast`    | 120ms | a floating panel coming in, a check, an icon that swaps |
+| `--cosmos-motion-exit`    | 80ms  | a floating panel leaving                                |
+| `--cosmos-motion-exit-lg` | 120ms | a window leaving (`Modal`, the scrim, `Lightbox`)       |
+| `--cosmos-motion-base`    | 200ms | a window coming in, a fold, an indicator that slides    |
+| `--cosmos-motion-slow`    | 300ms | the sidebar's width, the `Drawer` sliding in            |
+| `--cosmos-ease-out`       |       | `cubic-bezier(0.2, 0, 0, 1)`, for what comes in         |
+| `--cosmos-ease-in`        |       | `cubic-bezier(0.4, 0, 1, 1)`, for what leaves           |
+| `--cosmos-ease-in-out`    |       | `cubic-bezier(0.4, 0, 0.2, 1)`, for what moves          |
+
+Read them as utilities: `transition-opacity duration-(--cosmos-motion-base)
+ease-(--cosmos-ease-out)`, never a millisecond value of your own. The durations read 0ms under
+`prefers-reduced-motion` and under `data-motion="reduced"` on `<html>`
+([Appearance](appearance.md#animations)), so an element built on them stops moving with the rest.
+
+A panel that leaves is an element whose classes turn to the closed look; it has to stay on screen
+until that transition ends. `@starting-style` (Tailwind's `starting:` variant) gives an entrance
+with no script: `opacity-100 starting:opacity-0` fades an element in the first time it is drawn.
+
+## Scrims
+
+`Backdrop` is the one veil behind every window, and its `variant` picks the look: `dim` (the
+default, the colour alone, the cheapest on a large page), `blur` (an 8px blur under a light
+veil, the page stays recognisable) or `blur-dark` (the same blur under a dark veil). The colour
+of each is a variable of the theme, set again by each of the four themes:
+`--color-scrim-dim`, `--color-scrim-blur` and `--color-scrim-blur-dark`.
+
+`Modal`, `Modal.Alert`, `ConfirmationModal`, `HelpOverlay`, `Drawer`, `CommandPalette` and
+`Customizer` take the same three values as `backdrop`, and `Shell` as `drawerBackdrop` for its
+mobile drawer. An app picks it window by window; there is no global switch. `Lightbox` keeps its
+own near-black surface in every theme.
+
+```tsx
+<Modal open={open} onClose={close} backdrop="blur">
+  …
+</Modal>
+```
+
 ## Variants
 
-The theme redefines two Tailwind variants:
+The theme redefines four Tailwind variants:
 
 - `dark:` is on for the `dark` and `deep-blue` themes. It has zero specificity (`:where()`), so
   `focus:` and `hover:` classes still win over a plain `dark:` class: add `dark:hover:` or
   `dark:focus:` when a state needs its own dark color.
 - `rtl:` follows the nearest `dir` attribute: [Right to left](right-to-left.md).
+- `motion-safe:` and `motion-reduce:` follow `data-motion="reduced"` on `<html>` as well as the
+  device's `prefers-reduced-motion`. Put a loop that only decorates behind `motion-safe:` or take
+  it off with `motion-reduce:animate-none`; keep a spinner running.

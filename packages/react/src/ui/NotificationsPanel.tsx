@@ -123,7 +123,7 @@ function NotificationsPanelTrigger({
       {count > 0 && (
         <span className="inset-e-0.5 absolute top-0.5 flex min-w-[16px] items-center justify-center">
           {showPing && (
-            <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25" />
+            <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25 motion-reduce:animate-none" />
           )}
           <span className="relative flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] leading-none font-bold text-white">
             <bdi>{display}</bdi>

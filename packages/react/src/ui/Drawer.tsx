@@ -20,6 +20,8 @@ import {
   useOverlayLayer,
 } from './overlayA11y';
 import { directionOf } from '../hooks/direction';
+import { useExitTransition } from '../hooks/useExitTransition';
+import { Backdrop, type BackdropVariant } from './Backdrop';
 import { useIsClient } from '../hooks/useIsClient';
 
 /** `start` and `end` are the edges of the line: the left and the right, swapped under `dir="rtl"`. */
@@ -114,6 +116,11 @@ export type DrawerProps = {
    */
   withBackdrop?: boolean;
   /**
+   * The scrim behind the panel, when there is one: `dim` (default) is the colour alone, `blur`
+   * blurs the page by 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
+  /**
    * Render the close button on the backdrop (outside the panel), opposite
    * the chosen `side`. Mirrors the TUI "With close button on outside"
    * pattern. When `true`, no close button is rendered inside `Drawer.Header`
@@ -149,6 +156,7 @@ const Root = ({
   size = 'md',
   handle = true,
   withBackdrop = true,
+  backdrop = 'dim',
   closeOutside = false,
   swipeToClose = false,
   ariaLabel,
@@ -157,14 +165,12 @@ const Root = ({
 }: DrawerProps) => {
   const titleId = useId();
   const trapRef = useFocusTrap<HTMLDivElement>(open);
+  const scrimRef = useRef<HTMLDivElement>(null);
   const isClient = useIsClient();
-  // `hidden` turns true once the slide-out ends, false as soon as it reopens.
-  const [hidden, setHidden] = useState(!open);
-  const [wasOpen, setWasOpen] = useState(open);
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setHidden(false);
-  }
+  // The drawer stays on screen while it slides out, and is hidden once the slide has played, at
+  // once when nothing moves (durations at 0, or closed before it moved). It stays in the DOM
+  // either way, so what it holds keeps its state while it is closed.
+  const present = useExitTransition(open, trapRef, scrimRef);
 
   // Escape closes the drawer, unless an overlay opened above it takes it.
   const layer = useOverlayLayer(open, onClose);
@@ -177,19 +183,6 @@ const Root = ({
   useLayoutEffect(() => {
     setContainer(isClient ? trapRef.current : null);
   }, [isClient, trapRef]);
-
-  // A slide-out that starts no transition fires no `transitionend`: transitions at `0s` (a
-  // reduced-motion reset, a user stylesheet) or a drawer closed before its slide-in moved. Once
-  // the closed position is committed, `getAnimations()`, which applies the pending style first,
-  // tells whether the slide runs; when it doesn't, the drawer hides at once.
-  useLayoutEffect(() => {
-    const panel = trapRef.current;
-    if (open || hidden || !panel) return;
-    const slides = panel
-      .getAnimations()
-      .some((a) => a instanceof CSSTransition && a.transitionProperty === 'translate');
-    if (!slides) setHidden(true);
-  }, [open, hidden, trapRef]);
 
   // Swipe to close: the panel's offset while the finger drags it (`null` at rest), and whether
   // the spring-back skips its animation (`prefers-reduced-motion`).
@@ -271,20 +264,14 @@ const Root = ({
   // Drawer from inside e.g. a SectionCard or modal renders it in a
   // confined coordinate space and the panel never appears.
   //
-  // A closed drawer stays mounted so it can slide out, but it is `inert`
-  // at once and turns `invisible` when the slide ends, so its content leaves
-  // the tab order and the accessibility tree.
+  // A closed drawer stays mounted so it can slide out, but it is `inert` at once (focus is back
+  // on its trigger, Escape goes to the overlay under it, and the page under the fading scrim is
+  // usable) and turns `invisible` when the slide ends, so its content leaves the accessibility
+  // tree.
   return createPortal(
     <>
       {withBackdrop && (
-        <div
-          className={clsx(
-            'fixed inset-0 z-40 bg-gray-500/75 transition-opacity duration-300 dark:bg-gray-900/75',
-            open ? 'opacity-100' : 'pointer-events-none opacity-0'
-          )}
-          onClick={onClose}
-          aria-hidden
-        />
+        <Backdrop ref={scrimRef} variant={backdrop} zIndex={40} open={open} onClick={onClose} />
       )}
       {/* A `div`, not an `aside`: the `complementary` role of an `aside` forbids `dialog`. */}
       <div
@@ -306,22 +293,20 @@ const Root = ({
               }
             : undefined
         }
-        onTransitionEnd={(e) => {
-          // Tailwind 4 slides the panel with the `translate` property, so that
-          // is the one that ends, not `transform`.
-          if (!open && e.target === e.currentTarget && e.propertyName === 'translate') {
-            setHidden(true);
-          }
-        }}
         className={clsx(
-          'fixed z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900',
+          'fixed z-50 flex flex-col border-gray-200 bg-white shadow-2xl transition-transform dark:border-gray-800 dark:bg-gray-900',
+          // In slower than out: 300 ms easing out, then 200 ms easing in. Tailwind slides the panel
+          // with the `translate` property.
+          open
+            ? 'duration-(--cosmos-motion-slow) ease-(--cosmos-ease-out)'
+            : 'pointer-events-none duration-(--cosmos-motion-base) ease-(--cosmos-ease-in)',
           SIDE_CLASS[side],
           !vertical && SIZE_CLASS[size],
           // On a screen narrower than the size, the panel stops short of the far edge; with the
           // close-outside button, short enough to leave it on screen.
           !vertical && (withBackdrop && closeOutside ? 'max-w-[calc(100%-3rem)]' : 'max-w-full'),
           open ? SIDE_TRANSFORM[side].open : SIDE_TRANSFORM[side].closed,
-          hidden && 'invisible',
+          !present && 'invisible',
           className
         )}
         role="dialog"
@@ -349,7 +334,7 @@ const Root = ({
             onClick={onClose}
             aria-label="Close drawer"
             className={clsx(
-              'absolute flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+              'absolute flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-(--cosmos-motion-base) hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
               OUTSIDE_POSITION[side],
               open ? 'opacity-100' : 'opacity-0'
             )}

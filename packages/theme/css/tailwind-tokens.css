@@ -25,6 +25,29 @@
    `tests/e2e/specs/rtl-variant.spec.ts` checks it in the static build. */
 @custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *):not(:where([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)));
 
+/* Tailwind's motion-safe and motion-reduce, redefined to follow data-motion="reduced" on <html>
+   (applyAppearance, the Customizer) as well as the device's prefers-reduced-motion. The built-in
+   ones read the media query alone, so a loop behind `motion-safe:` kept running for a reader who
+   asked for reduced motion in the app. Same names, so every `motion-safe:` and `motion-reduce:`
+   of a component follows. Zero specificity, like `dark` and `rtl`, so the variant never beats a
+   state class. */
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-motion='reduced']) *) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+  &:where([data-motion='reduced'], [data-motion='reduced'] *) {
+    @slot;
+  }
+}
+
 /* The colors the charts read as plain CSS variables (var(--color-brand-500),
  * var(--color-status-warn)…), with no utility behind them. Tailwind only emits
  * a theme variable that a utility uses, so these are `static`: always in the
@@ -68,6 +91,49 @@
   --color-warning-100: #fef0c7;
   --color-warning-500: #f79009;
   --color-warning-600: #dc6803;
+}
+
+@theme {
+  /* ── Window animations ──────────────────────────────────────────────────── */
+  /* Keyframes for the one window whose exit has to be an animation: the CommandPalette is built
+     on a Radix dialog, which keeps a closing dialog mounted by waiting for an animation to end
+     (a transition never holds it). The other windows move with transitions of their own. Same
+     durations and easings as they have, from the motion tokens of css-vars.css: a dialog fades
+     in and scales up from 95% in --cosmos-motion-base, easing out, and fades out in
+     --cosmos-motion-exit-lg, easing in; the palette also drops 8px from the top on its way in.
+     The palette is centred with `translate`, so its drop uses `transform`, which stacks on it. */
+  --animate-cosmos-fade-in: cosmos-fade-in var(--cosmos-motion-base) var(--cosmos-ease-out) both;
+  --animate-cosmos-fade-out: cosmos-fade-out var(--cosmos-motion-exit-lg) var(--cosmos-ease-in) both;
+  --animate-cosmos-palette-in: cosmos-palette-in var(--cosmos-motion-base) var(--cosmos-ease-out)
+    both;
+  --animate-cosmos-palette-out: cosmos-palette-out var(--cosmos-motion-exit-lg)
+    var(--cosmos-ease-in) both;
+
+  @keyframes cosmos-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmos-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmos-palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
+    }
+  }
+
+  @keyframes cosmos-palette-out {
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
 }
 
 @theme {

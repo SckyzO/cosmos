@@ -7,6 +7,7 @@ import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { Navbar } from '../navigation/Navbar';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { scrimLook, themeColor } from '../storybook-motion';
 import { Button } from '../ui/Button';
 import {
   Customizer,
@@ -99,6 +100,7 @@ const ROOT_ATTRIBUTES = [
   'data-text-size',
   'data-density',
   'data-radius',
+  'data-motion',
   'dir',
 ];
 
@@ -112,6 +114,7 @@ const valueOfPage = (): CustomizerValue => {
     accent: (root.dataset.accent as CosmosAccent | undefined) ?? 'blue',
     textSize: (root.dataset.textSize as CosmosTextSize | undefined) ?? 'md',
     radius: (root.dataset.radius as CosmosRadius | undefined) ?? 'default',
+    motion: root.dataset.motion === 'reduced' ? 'reduced' : 'full',
     direction: root.dir === 'rtl' ? 'rtl' : 'ltr',
   };
 };
@@ -250,9 +253,9 @@ const App = () => {
 
 /**
  * The whole wiring. The value is kept in `localStorage` and applied on every change:
- * `applyAppearance` for the theme, accent, font, text size, density, radius and direction; `container`,
- * the sidebar mode (`sidebarCollapsed`, `expandOnHover`, `variant`) and the layout (a `Navbar` in
- * place of the `Sidebar`) as props of `Shell` and `Sidebar`.
+ * `applyAppearance` for the theme, accent, font, text size, density, radius, animations and
+ * direction; `container`, the sidebar mode (`sidebarCollapsed`, `expandOnHover`, `variant`) and the
+ * layout (a `Navbar` in place of the `Sidebar`) as props of `Shell` and `Sidebar`.
  */
 export const InAnApp: Story = {
   parameters: portalDocsParams.full(),
@@ -281,6 +284,7 @@ export const EachOptionCallsOnChange: Story = {
       ['Text size', 'Large', { textSize: 'lg' }],
       ['Density', 'Compact', { density: 'compact' }],
       ['Corner radius', 'Large', { radius: 'lg' }],
+      ['Animations', 'Reduced', { motion: 'reduced' }],
       ['Direction', 'Right to left', { direction: 'rtl' }],
       ['Layout', 'Horizontal', { layout: 'horizontal' }],
       ['Sidebar', 'Compact', { sidebar: 'compact' }],
@@ -313,6 +317,7 @@ export const SectionsAreInTheDocumentedOrder: Story = {
       'Text size',
       'Density',
       'Corner radius',
+      'Animations',
       'Direction',
       'Layout',
       'Sidebar',
@@ -541,5 +546,34 @@ export const InAnAppAppliesTheChoice: Story = {
         // Nothing was stored.
       }
     }
+  },
+};
+
+// ── Scrim ────────────────────────────────────────────────────────────────────
+
+/** `backdrop` picks the scrim behind the panel: dim by default, `blur` blurs the page. */
+export const BackdropPropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { backdrop: 'blur' },
+  play: async () => {
+    await within(document.body).findByRole('dialog', { name: 'Customize' });
+    const scrim = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+    await expect(scrimLook(scrim)).toEqual({
+      colour: themeColor('--color-scrim-blur'),
+      filter: 'blur(8px)',
+    });
+  },
+};
+
+/** Without `backdrop`, dim: the colour alone. */
+export const ScrimIsDimByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    await within(document.body).findByRole('dialog', { name: 'Customize' });
+    const scrim = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+    await expect(scrimLook(scrim)).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
   },
 };

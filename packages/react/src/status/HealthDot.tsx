@@ -45,7 +45,7 @@ export const HealthDot = ({
     {pulse && (
       <span
         className={clsx(
-          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
+          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:animate-none',
           STATUS_DOT[status]
         )}
       />

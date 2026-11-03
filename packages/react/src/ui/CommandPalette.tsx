@@ -12,6 +12,7 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { BACKDROP_VARIANT_CLASS, type BackdropVariant } from './backdropStyle';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { SectionLabel } from './SectionLabel';
 
@@ -25,10 +26,16 @@ export type CommandPaletteProps = ComponentPropsWithoutRef<typeof Command.Dialog
    * to skip registering a hotkey.
    */
   hotkey?: 'mod+k' | 'mod+/' | '/' | string | null;
+  /**
+   * The scrim behind the palette: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. Same look as `Backdrop`'s `variant`.
+   */
+  backdrop?: BackdropVariant;
 };
 
 const CommandPaletteRoot = ({
   hotkey = 'mod+k',
+  backdrop = 'dim',
   open,
   onOpenChange,
   className,
@@ -62,11 +69,18 @@ const CommandPaletteRoot = ({
       onOpenChange={onOpenChange}
       label={label}
       overlayClassName={clsx(
-        'fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm',
+        'fixed inset-0 z-[9998]',
+        BACKDROP_VARIANT_CLASS[backdrop],
+        // The scrim fades like `Backdrop`, with keyframes: Radix keeps a closing dialog mounted by
+        // waiting for an animation, never a transition. Under reduced motion there is none to wait
+        // for, and the palette unmounts at once.
+        'motion-safe:data-[state=closed]:animate-cosmos-fade-out motion-safe:data-[state=open]:animate-cosmos-fade-in',
         overlayClassName
       )}
       contentClassName={clsx(
         'inset-s-1/2 fixed top-[20%] z-[9999] w-[640px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl rtl:translate-x-1/2 dark:border-gray-700 dark:bg-gray-900',
+        // Fades in and scales up from 95% while dropping 8px, fades out and shrinks back.
+        'motion-safe:data-[state=closed]:animate-cosmos-palette-out motion-safe:data-[state=open]:animate-cosmos-palette-in',
         contentClassName
       )}
       className={className}

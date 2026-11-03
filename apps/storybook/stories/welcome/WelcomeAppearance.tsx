@@ -37,8 +37,11 @@ const CUSTOMIZER_SECTIONS: CustomizerSection[] = [
   'direction',
 ];
 
-/** What the page starts from: the toolbar's values, the Cosmos defaults for the rest. */
-export type WelcomeAppearance = Required<Omit<CosmosAppearance, 'systemThemes'>>;
+/**
+ * What the page starts from: the toolbar's values, the Cosmos defaults for the rest. The page
+ * leaves the motion setting to the toolbar's Motion menu: `applyAppearance` keeps `data-motion`.
+ */
+export type WelcomeAppearance = Required<Omit<CosmosAppearance, 'systemThemes' | 'motion'>>;
 
 // ── Previews ─────────────────────────────────────────────────────────────────
 

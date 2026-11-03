@@ -10,6 +10,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, transitionMs } from '../storybook-motion';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 import { Popover, type PopoverPosition } from './Popover';
@@ -603,6 +604,192 @@ export const EndSideFlipsAtTheEdge: Story = {
       expect(
         Math.abs(arrow.left + arrow.width / 2 - (dir === 'ltr' ? p.right : p.left))
       ).toBeLessThanOrEqual(1.5);
+    }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/**
+ * A floating panel at its real speed: it fades in and scales up from 95% out of the corner of the
+ * panel nearest the trigger, in 120 ms, and back into it in 80 ms. The origin follows the side it
+ * opened on and its alignment, and is mirrored in right to left. Menu, Dropdown, UserMenu and the
+ * pickers share it.
+ */
+export const GrowsFromTheTriggerWithMotion: Story = {
+  parameters: { ...portalDocsParams.sm(), settleMotion: false },
+  render: () => (
+    <div className="flex h-48 items-center justify-center">
+      <Popover>
+        <Popover.Trigger className="bg-brand-500 hover:bg-brand-600 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors">
+          Open popover
+        </Popover.Trigger>
+        <Popover.Content align="end" aria-label="Basic popover">
+          <p>It grows out of the corner nearest the button.</p>
+        </Popover.Content>
+      </Popover>
+    </div>
+  ),
+};
+
+const MotionPanel = () => (
+  <div className="flex h-48 items-center justify-center">
+    <Popover>
+      <Popover.Trigger className="rounded-lg border px-3 py-2 text-sm">Click</Popover.Trigger>
+      <Popover.Content aria-label="Panel">
+        <p>Panel</p>
+      </Popover.Content>
+    </Popover>
+  </div>
+);
+
+const panelNow = () => document.querySelector<HTMLElement>('[role="dialog"]');
+
+/** Open, the panel is at rest: opaque, at its full size. */
+export const OpenIsAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MotionPanel />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Click' }));
+    await waitFor(() => expect(panelNow()).not.toBeNull());
+    await expect(getComputedStyle(panelNow()!).opacity).toBe('1');
+    await expect(getComputedStyle(panelNow()!).scale).toBe('none');
+    await expect(panelNow()).not.toHaveAttribute('inert');
+  },
+};
+
+/** Nothing to animate (0 s, as in these tests): the panel is gone in the render that closes it. */
+export const ClosingAtZeroSecondsUnmountsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MotionPanel />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Click' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(panelNow()).not.toBeNull());
+    await userEvent.keyboard('{Escape}');
+    await expect(panelNow()).toBeNull();
+    await expect(trigger).toHaveFocus();
+  },
+};
+
+/** In 120 ms, out in 80 ms, and a panel that leaves is inert with focus already back on the trigger. */
+export const LeavingPanelIsInertAndFocusIsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionPanel />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Click' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(panelNow()).not.toBeNull());
+    const panel = panelNow()!;
+    await expect(transitionMs(panel)).toBe(120);
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+
+    await userEvent.keyboard('{Escape}');
+    // Still there, fading, and already out of the way.
+    await expect(panel).toBeInTheDocument();
+    await expect(transitionMs(panel)).toBe(80);
+    await expect(panel).toHaveAttribute('inert');
+    await expect(getComputedStyle(panel).pointerEvents).toBe('none');
+    await expect(trigger).toHaveFocus();
+    await expect(isFading(panel)).toBe(true);
+
+    await waitFor(() => expect(panelNow()).toBeNull());
+  },
+};
+
+/** Opening it again while it leaves brings the same panel back. */
+export const ReopeningWhileItLeavesKeepsThePanel: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionPanel />,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Click' });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(panelNow()).not.toBeNull());
+    const panel = panelNow()!;
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(trigger);
+    await expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+    await expect(panelNow()).toBe(panel);
+    await expect(panel).not.toHaveAttribute('inert');
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+  },
+};
+
+// Which corner or edge of the panel the origin sits on, read back from the computed origin (in
+// px, against the panel's layout size, which its scale does not change).
+const originOf = (panel: HTMLElement) => {
+  const [x = '0', y = '0'] = getComputedStyle(panel)
+    .transformOrigin.split(' ')
+    .map(parseFloat)
+    .map(String);
+  const place = (value: string, size: number, low: string, high: string) =>
+    Math.abs(parseFloat(value)) < 1
+      ? low
+      : Math.abs(parseFloat(value) - size) < 1
+        ? high
+        : 'center';
+  return `${place(y, panel.offsetHeight, 'top', 'bottom')} ${place(x, panel.offsetWidth, 'left', 'right')}`;
+};
+
+/**
+ * The panel grows from the corner nearest its trigger: the top edge of one under it, the bottom
+ * edge of one over it, the end edge when `align="end"` lines it up with the trigger's (the right
+ * one, the left in right to left), and the middle of the edge facing it at the side.
+ */
+export const GrowsFromTheCornerNearestTheTrigger: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams(400),
+  render: () =>
+    bothDirections(() => (
+      <div className="grid grid-cols-3 place-items-center gap-x-2 gap-y-16 px-2 py-14">
+        {(
+          [
+            ['bottom', 'center'],
+            ['bottom', 'end'],
+            ['top', 'center'],
+            ['top', 'end'],
+            ['end', 'center'],
+          ] as const
+        ).map(([position, align]) => (
+          <Popover key={`${position}-${align}`} defaultOpen>
+            <Popover.Trigger className="rounded-lg border px-3 py-2 text-xs">
+              {position} {align}
+            </Popover.Trigger>
+            <Popover.Content
+              position={position}
+              align={align}
+              width="w-16"
+              padding="p-1"
+              aria-label={`${position} ${align}`}
+            >
+              <p className="text-xs">x</p>
+            </Popover.Content>
+          </Popover>
+        ))}
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    const body = within(document.body);
+    await waitFor(() => expect(body.getAllByRole('dialog')).toHaveLength(10));
+    // Ten panels, five per direction, in the order they were rendered: left to right first.
+    const panels = (dir: 'ltr' | 'rtl') =>
+      within(directionBox(canvasElement, dir))
+        .getAllByRole('button')
+        .map((trigger) => {
+          const name = trigger.textContent!.trim();
+          return body
+            .getAllByRole('dialog', { name })
+            .find((panel) => panel.getAttribute('dir') === dir)!;
+        });
+    const expected = {
+      ltr: ['top center', 'top right', 'bottom center', 'bottom right', 'center left'],
+      rtl: ['top center', 'top left', 'bottom center', 'bottom left', 'center right'],
+    };
+    for (const dir of ['ltr', 'rtl'] as const) {
+      expect(panels(dir).map(originOf), dir).toEqual(expected[dir]);
     }
   },
 };
