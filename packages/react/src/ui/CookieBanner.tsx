@@ -1,10 +1,24 @@
 import { clsx } from 'clsx';
 import { Cookie } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useExitTransition } from '../hooks/useExitTransition';
 import { Button } from './Button';
 
 export type CookieBannerPosition = 'bottom' | 'top' | 'floating';
+
+// Where the banner waits out of sight: past the edge it is fixed to, along the block axis. It rises
+// (or drops) in from there as it fades in, and leaves the same way. `starting:` gives it the same
+// place on its first frame, so it comes in when it mounts, not only when it is shown again.
+const AWAY: Record<CookieBannerPosition, { rest: string; first: string }> = {
+  bottom: { rest: 'translate-y-full', first: 'starting:translate-y-full' },
+  top: { rest: '-translate-y-full', first: 'starting:-translate-y-full' },
+  // It floats 1rem off the edge: the whole of that gap goes too.
+  floating: {
+    rest: 'translate-y-[calc(100%_+_1rem)]',
+    first: 'starting:translate-y-[calc(100%_+_1rem)]',
+  },
+};
 
 export type CookieBannerProps = {
   open?: boolean;
@@ -56,6 +70,10 @@ export const CookieBanner = ({
     name: 'CookieBanner.open',
   });
 
+  // Once closed, the banner stays until it has left; at once when nothing animates (durations at 0).
+  const ref = useRef<HTMLDivElement>(null);
+  const present = useExitTransition(open, ref);
+
   const handleAccept = () => {
     onAccept();
     setOpen(false);
@@ -69,7 +87,7 @@ export const CookieBanner = ({
     // Settings doesn't auto-close — typically opens a sub-modal.
   };
 
-  if (!open) return null;
+  if (!present) return null;
 
   const positionClass: Record<CookieBannerPosition, string> = {
     bottom: 'fixed inset-x-0 bottom-0 border-t',
@@ -79,11 +97,24 @@ export const CookieBanner = ({
 
   return (
     <div
+      ref={ref}
       role="dialog"
       aria-label={ariaLabel ?? (title || undefined)}
+      // Leaving, it is out of the way: no focus, no clicks, and out of the accessibility tree.
+      inert={!open}
       className={clsx(
-        'z-50 border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900',
+        'z-50 border-gray-200 bg-white p-4 transition-[opacity,translate] dark:border-gray-700 dark:bg-gray-900',
         positionClass[position],
+        // In over the base duration easing out, out over the shorter exit easing in.
+        open
+          ? clsx(
+              'translate-none opacity-100 duration-(--cosmos-motion-base) ease-(--cosmos-ease-out) starting:opacity-0',
+              AWAY[position].first
+            )
+          : clsx(
+              'pointer-events-none opacity-0 duration-(--cosmos-motion-exit-lg) ease-(--cosmos-ease-in)',
+              AWAY[position].rest
+            ),
         className
       )}
     >
