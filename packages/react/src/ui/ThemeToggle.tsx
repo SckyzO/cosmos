@@ -51,10 +51,23 @@ const NAME_FOR = {
   system: 'system',
 } as Record<CosmosThemeChoice, string>;
 
+// The icons of the list share one cell: the current one is upright and opaque, the ones before it
+// have turned a quarter one way and the ones after it wait a quarter the other way, both
+// transparent. A click turns the old icon out as the new one turns in, the same way round, and
+// the list wrapping back to its first turns them the other way. A quarter turn has a direction, so
+// right to left mirrors it (`rtl:`).
+const TURN =
+  'transition-[opacity,rotate] duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)';
+const CURRENT_ICON = 'rotate-none opacity-100';
+const PAST_ICON = '-rotate-90 opacity-0 rtl:rotate-90';
+const NEXT_ICON = 'rotate-90 opacity-0 rtl:-rotate-90';
+
 /**
  * ThemeToggle — an icon button that cycles through `themes`: light and dark by default, or any
  * of the four Cosmos themes and `system`. The icon shows the current theme, and the name says
- * what the click does ("Switch to dark theme"), so the button carries no `aria-pressed`.
+ * what the click does ("Switch to dark theme"), so the button carries no `aria-pressed`. The
+ * icons turn a quarter and fade from one theme to the next, over `--cosmos-motion-base`, and
+ * swap at once under the reduced motion setting.
  *
  * It is controlled: a click calls `onChange` with the next theme and changes nothing else, so
  * apply the theme there (for example with `applyAppearance`). For a choice by name, with a
@@ -72,7 +85,10 @@ export function ThemeToggle<T extends CosmosThemeChoice = CosmosThemeChoice>({
 }: ThemeToggleProps<T>) {
   const next = themes[(themes.indexOf(theme) + 1) % themes.length] ?? theme;
   const label = labels?.[next] ?? `Switch to ${NAME_FOR[next]} theme`;
-  const Icon: LucideIcon = ICON_FOR[theme];
+  // Every icon of the list is drawn, so the one that leaves and the one that arrives can move
+  // together. A `theme` outside the list leads it.
+  const order = [...new Set(themes.includes(theme) ? themes : [theme, ...themes])];
+  const current = order.indexOf(theme);
   const { box, icon } = SIZE_CLASS[size];
   return (
     <button
@@ -89,7 +105,23 @@ export function ThemeToggle<T extends CosmosThemeChoice = CosmosThemeChoice>({
       )}
       {...rest}
     >
-      <Icon className={icon} aria-hidden />
+      <span className="inline-grid place-items-center *:col-start-1 *:row-start-1">
+        {order.map((id, index) => {
+          const Icon: LucideIcon = ICON_FOR[id];
+          return (
+            <Icon
+              key={id}
+              data-theme-icon={id}
+              className={clsx(
+                icon,
+                TURN,
+                index === current ? CURRENT_ICON : index < current ? PAST_ICON : NEXT_ICON
+              )}
+              aria-hidden
+            />
+          );
+        })}
+      </span>
     </button>
   );
 }
