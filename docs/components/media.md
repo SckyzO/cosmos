@@ -94,6 +94,11 @@ the others are not.
 A picture that is loading shows a skeleton and a spinner. One that can't be loaded shows "This
 picture could not be loaded." with a "Try again" button that requests it again.
 
+It opens like a dialog: the dark surface fades in and the picture grows from 95%, over 200ms, and
+both leave over 120ms. Moving to another picture with the arrows, the keys or a thumbnail
+cross-fades: the picture left stays over the new one and fades out in 200ms. A swipe keeps the drag
+of the carousel. Under the reduced motion setting all of it happens at once.
+
 Below `sm` the picture takes the width of the screen, the arrows leave the edges for the band under
 it (44px each, where a thumb reaches them) and the strip is not drawn. In right to left the previous
 arrow moves to the right with its chevron turned around, the arrow keys and the direction of the

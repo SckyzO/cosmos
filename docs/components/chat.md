@@ -53,6 +53,10 @@ the messages and answers `onSend`:
 
 A bot message with `streaming: true` shows a caret while its text grows.
 
+The panel opens like a dialog: it fades in, rises 16px and grows from 95% out of the corner by the
+launcher (the bottom left in right to left) over 200ms, and leaves over 120ms. While it leaves it
+is out of the way, `inert` and out of the focus order, with focus already back on the launcher.
+
 ### Rich replies (AI assistant, generators)
 
 The same blocks build an assistant page; the app owns the conversation and renders any

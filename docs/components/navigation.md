@@ -57,3 +57,14 @@ goes to the one picked.
 <section id="profile">…</section>
 <section id="security">…</section>
 ```
+
+## Tabs
+
+Storybook: [Tabs](https://sckyzo.github.io/cosmos/?path=/docs/navigation-tabs--docs).
+
+In `Tabs` the underline of the `underline` variant, and the fill of `pills` and `raised`, are one
+element that slides from the active tab to the next in 200ms, easing in and out, along the line
+(from the end in right to left, as the tabs are). It is measured again when a tab changes size, with
+the text size or a web font, and it is placed with no transition the first time. Until it is
+measured (a server render) the active tab draws its own line or fill. `folder` has no marker: its
+active tab is joined to the panel. Under the reduced motion setting the marker jumps.
