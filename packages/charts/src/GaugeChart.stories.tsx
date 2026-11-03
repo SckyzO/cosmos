@@ -9,6 +9,7 @@ import { StrokedGauge } from './StrokedGauge';
 import {
   alphaOf,
   centerText,
+  contrastRatio,
   expectColorInThemes,
   NarrowBox,
   opaqueColor,
@@ -332,6 +333,111 @@ export const SemiCircleTargetFollowsTheTheme: Story = {
       dark: '--color-text-primary',
       'deep-blue': '--color-text-primary',
     });
+  },
+};
+
+/**
+ * The mark is painted over the arc, and over the track, the zones and the needle: when the value
+ * is at the target or past it, the arc runs under the mark instead of covering it, which is the
+ * case the mark matters most for.
+ */
+export const SemiCircleTargetIsPaintedAboveTheArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-4">
+      <div data-case="below">
+        <SemiCircleGauge value={60} target={80} />
+      </div>
+      <div data-case="at">
+        <SemiCircleGauge value={80} target={80} />
+      </div>
+      <div data-case="past">
+        <SemiCircleGauge value={95} target={80} />
+      </div>
+      <div data-case="dial">
+        <SemiCircleGauge value={95} target={80} warnAt={70} critAt={90} showZones showNeedle />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(4)
+    );
+    // SVG paints in document order: what follows is on top.
+    const above = (under: Element | null, mark: Element, what: string) =>
+      expect(
+        under && under.compareDocumentPosition(mark) & Node.DOCUMENT_POSITION_FOLLOWING,
+        what
+      ).toBeTruthy();
+    for (const name of ['below', 'at', 'past']) {
+      const root = canvasElement.querySelector(`[data-case="${name}"]`) as HTMLElement;
+      const mark = root.querySelector('[data-chart-target]') as Element;
+      await waitFor(() => expect(arcOf(root), `${name}: the arc is drawn`).not.toBeNull());
+      above(arcOf(root), mark, `${name}: over the arc`);
+      above(trackOf(root), mark, `${name}: over the track`);
+    }
+    const dial = canvasElement.querySelector('[data-case="dial"]') as HTMLElement;
+    const mark = dial.querySelector('[data-chart-target]') as Element;
+    above(trackOf(dial), mark, 'dial: over the track');
+    above(dial.querySelector('[data-chart-zones]'), mark, 'dial: over the zones');
+    above(dial.querySelector('[data-chart-needle]'), mark, 'dial: over the needle');
+  },
+};
+
+/**
+ * The mark reads on the arc in the four themes, whatever the arc's color: the accent and the
+ * three status colors. Its line, in the text color, or its halo, in the card's, is 3:1 or more
+ * against the arc (the contrast of a graphic, WCAG 1.4.11), which the halo makes up for where the
+ * text color alone would not.
+ */
+export const SemiCircleTargetStandsOutOfTheArc: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-4">
+      <div data-case="accent">
+        <SemiCircleGauge value={85} target={80} />
+      </div>
+      <div data-case="ok">
+        <SemiCircleGauge value={55} target={50} warnAt={70} critAt={90} />
+      </div>
+      <div data-case="warn">
+        <SemiCircleGauge value={75} target={50} warnAt={70} critAt={90} />
+      </div>
+      <div data-case="crit">
+        <SemiCircleGauge value={95} target={50} warnAt={70} critAt={90} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll('[data-chart-target]')).toHaveLength(4)
+    );
+    for (const theme of ['', 'sand', 'dark', 'deep-blue']) {
+      const restore = switchTheme(theme);
+      try {
+        await waitFor(() => {
+          for (const root of canvasElement.querySelectorAll<HTMLElement>('[data-case]')) {
+            const colorOf = (el: Element | null, property: 'fill' | 'stroke') =>
+              opaqueColor(getComputedStyle(el as Element)[property]);
+            const arc = colorOf(arcOf(root), 'fill');
+            const halo = colorOf(
+              root.querySelector('[data-chart-target] line:first-child'),
+              'stroke'
+            );
+            const line = colorOf(
+              root.querySelector('[data-chart-target] line:last-child'),
+              'stroke'
+            );
+            expect(
+              Math.max(contrastRatio(line, arc), contrastRatio(halo, arc)),
+              `${theme || 'light'} ${root.dataset.case}`
+            ).toBeGreaterThanOrEqual(3);
+          }
+        });
+      } finally {
+        restore();
+      }
+    }
   },
 };
 
