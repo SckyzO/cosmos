@@ -503,7 +503,7 @@ export const EventCalendarTimeGrid = ({
                       events={dayEvents}
                       timeOn={(event) => timeOn(event, day)}
                       onEventClick={onEventClick}
-                      triggerClassName="text-2xs absolute z-10 h-[18px] min-w-6 rounded-full border border-gray-200 bg-gray-100 px-1 font-semibold text-gray-700 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                      triggerClassName="text-2xs h-ctrl-28 min-w-ctrl-28 absolute z-10 rounded-full border border-gray-200 bg-gray-100 px-1 font-semibold text-gray-700 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                       triggerStyle={{ top: minutesToPx(group.startMin) + 2, insetInlineEnd: 1 }}
                     >
                       <bdi>+{group.indices.length}</bdi>
