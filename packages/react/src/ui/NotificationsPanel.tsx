@@ -80,7 +80,11 @@ export type NotificationsPanelTriggerProps = Omit<
   ComponentPropsWithRef<'button'>,
   'onClick' | 'children'
 > & {
-  /** Number to show in the badge. 0 hides the badge. Values > 9999 render as "9999+". */
+  /**
+   * Number to show in the badge. 0 hides the badge. Values > 9999 render as "9999+". Up to two
+   * characters the badge sits in the corner of the bell; from three it sits beside it, and the
+   * button is wider.
+   */
   count?: number;
   /** When true, shows the BellOff icon and dims the badge ping animation. */
   muted?: boolean;

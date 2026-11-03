@@ -72,7 +72,8 @@ const renderSeparator = (sep: BreadcrumbSeparator): ReactNode => {
  *
  * Each item except the last is clickable. Last item renders as plain text
  * (the current page). Use icons for the most important items in the path,
- * or `homeIcon` for the Home icon of a page header.
+ * or `homeIcon` for the Home icon of a page header. In a box too narrow for the
+ * trail, at any screen width, the labels shrink and end with an ellipsis.
  */
 export const Breadcrumb = ({
   items,
