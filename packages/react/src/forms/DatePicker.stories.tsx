@@ -128,6 +128,18 @@ export const RangePreselected: Story = {
   },
 };
 
+/** `fullWidth` stretches the trigger to the width of its parent. */
+export const FullWidth: Story = {
+  args: { label: 'Due date', fullWidth: true },
+  decorators: [
+    (Story) => (
+      <div className="w-80 max-w-full">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
 export const RangeFullWidth: Story = {
   args: {
     mode: 'range',
@@ -310,6 +322,20 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Date must be in the future.'));
+  },
+};
+
+/** A single date with `fullWidth` fills its parent: the trigger is a button, which does not stretch alone. */
+export const FullWidthFillsTheParent: Story = {
+  ...FullWidth,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /due date/i });
+    const parent = trigger.parentElement!;
+    await expect(trigger.getBoundingClientRect().width).toBeCloseTo(
+      parent.getBoundingClientRect().width,
+      0
+    );
   },
 };
 
