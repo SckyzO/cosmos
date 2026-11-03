@@ -241,6 +241,17 @@ if (!(radiusScale('sm') < 1) || !(radiusScale('lg') > 1)) {
   drift.push(`--cosmos-radius-scale must be under 1 for 'sm' and over 1 for 'lg'`);
 }
 
+// The scrim: every theme sets the three colours Backdrop reads (--color-scrim-dim, -blur and
+// -blur-dark). A theme that left one out would show its windows over a page with no veil, since
+// nothing inherits it from another theme.
+for (const { id, selector } of THEMES) {
+  for (const name of ['scrim-dim', 'scrim-blur', 'scrim-blur-dark']) {
+    if (!vars.get(selector)?.[name]) {
+      drift.push(`theme '${id}' (${selector}) sets no --color-${name}`);
+    }
+  }
+}
+
 if (drift.length) {
   console.error(
     `\nThe theme metadata and the CSS disagree (packages/react/src/settings/appearance.ts vs packages/theme/css):\n` +
