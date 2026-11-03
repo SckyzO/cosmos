@@ -44,6 +44,13 @@ export type CosmosDensity = 'compact' | 'default' | 'comfortable';
  */
 export type CosmosRadius = 'none' | 'sm' | 'default' | 'lg';
 
+/**
+ * A Cosmos motion setting: the `data-motion` attribute on `<html>`, none for `full`. `reduced`
+ * sets every animation and transition duration of the theme to 0, on top of the device's
+ * `prefers-reduced-motion`, which `full` still follows.
+ */
+export type CosmosMotion = 'full' | 'reduced';
+
 /** The reading direction of the page. */
 export type CosmosDirection = 'ltr' | 'rtl';
 
@@ -57,9 +64,10 @@ export type CosmosFontMeta = { id: CosmosFont; label: string; family: string };
 export type CosmosTextSizeMeta = { id: CosmosTextSize; label: string; scale: number };
 export type CosmosDensityMeta = { id: CosmosDensity; label: string };
 export type CosmosRadiusMeta = { id: CosmosRadius; label: string };
+export type CosmosMotionMeta = { id: CosmosMotion; label: string };
 
 /**
- * The page's appearance. `font`, `textSize`, `density`, `radius` and `direction`
+ * The page's appearance. `font`, `textSize`, `density`, `radius`, `motion` and `direction`
  * are optional: leave them out and `applyAppearance` doesn't touch their attributes.
  */
 export type CosmosAppearance = {
@@ -72,6 +80,8 @@ export type CosmosAppearance = {
   textSize?: CosmosTextSize;
   density?: CosmosDensity;
   radius?: CosmosRadius;
+  /** Whether animations play: the `data-motion` attribute on `<html>`, none for `full`. */
+  motion?: CosmosMotion;
   /** The reading direction: the `dir` attribute on `<html>`, none for `ltr`. */
   direction?: CosmosDirection;
 };
@@ -183,6 +193,15 @@ export const COSMOS_RADII: CosmosRadiusMeta[] = [
   { id: 'lg', label: 'Large' },
 ];
 
+/**
+ * The two motion settings of `@sckyzo/cosmos-theme`. `full` plays every animation the device
+ * allows; `reduced` sets the theme's durations to 0, so panels and windows appear and leave at once.
+ */
+export const COSMOS_MOTIONS: CosmosMotionMeta[] = [
+  { id: 'full', label: 'Normal' },
+  { id: 'reduced', label: 'Reduced' },
+];
+
 const THEME_CLASSES = COSMOS_THEMES.map((t) => t.id).filter((id) => id !== 'light');
 
 /** `true` for the themes that enable Tailwind's `dark:` variant. */
@@ -221,12 +240,13 @@ export const watchSystemTheme = (onChange: (prefersDark: boolean) => void): (() 
 
 /**
  * Apply an appearance to `root` (default `<html>`): swaps the theme class and
- * sets `data-accent`, `data-font`, `data-text-size`, `data-density` and
- * `data-radius`, and `dir="rtl"` for a `direction` of `rtl`, removing each one
- * for its default (blue, Outfit, `md`, `default`, `default`, `ltr`). A `system`
- * theme is resolved with `prefers-color-scheme` when applied: call this again
- * on `watchSystemTheme`. A `font`, `textSize`, `density`, `radius` or `direction`
- * left out keeps its attribute as it is. No-op during SSR.
+ * sets `data-accent`, `data-font`, `data-text-size`, `data-density`,
+ * `data-radius` and `data-motion`, and `dir="rtl"` for a `direction` of `rtl`,
+ * removing each one for its default (blue, Outfit, `md`, `default`, `default`,
+ * `full`, `ltr`). A `system` theme is resolved with `prefers-color-scheme`
+ * when applied: call this again on `watchSystemTheme`. A `font`, `textSize`,
+ * `density`, `radius`, `motion` or `direction` left out keeps its attribute as
+ * it is. No-op during SSR.
  */
 export const applyAppearance = (
   {
@@ -237,6 +257,7 @@ export const applyAppearance = (
     textSize,
     density,
     radius,
+    motion,
     direction,
   }: CosmosAppearance,
   root?: HTMLElement
@@ -256,6 +277,8 @@ export const applyAppearance = (
   else if (density) el.dataset.density = density;
   if (radius === 'default') delete el.dataset.radius;
   else if (radius) el.dataset.radius = radius;
+  if (motion === 'full') delete el.dataset.motion;
+  else if (motion) el.dataset.motion = motion;
   if (direction === 'ltr') el.removeAttribute('dir');
   else if (direction) el.setAttribute('dir', direction);
 };

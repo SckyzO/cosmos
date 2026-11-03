@@ -9,8 +9,9 @@
  * Before that, it checks that the themes and accents of the CSS are the ones
  * COSMOS_THEMES and COSMOS_ACCENTS list in react/src/settings/appearance.ts
  * (read as text), with the same `dark` flag and the same brand-500 as `hex`,
- * and that the [data-density] blocks are the COSMOS_DENSITIES and the [data-radius] blocks
- * the COSMOS_RADII.
+ * and that the [data-density] blocks are the COSMOS_DENSITIES, the [data-radius] blocks
+ * the COSMOS_RADII and the html[data-motion] blocks, with `full` for no attribute, the
+ * COSMOS_MOTIONS.
  *
  *   node scripts/check-contrast.mjs
  */
@@ -241,6 +242,50 @@ if (!(radiusScale('sm') < 1) || !(radiusScale('lg') > 1)) {
   drift.push(`--cosmos-radius-scale must be under 1 for 'sm' and over 1 for 'lg'`);
 }
 
+// The motion settings: `full` is the absence of the attribute, every other id is an
+// `html[data-motion='…']` block of css-vars.css. The durations (--cosmos-motion-fast to -slow) are
+// declared once on html, and both ways to ask for reduced motion, the media query and the
+// attribute, set every one of them to 0ms: a duration left out would keep a panel animating for a
+// reader who asked it not to. Easings (--cosmos-ease-*) have nothing to reduce.
+// Read from the text: `blocks` keeps one entry per selector, and the media query's `html` block
+// would replace the base one.
+const metaMotions = metaEntries('COSMOS_MOTIONS');
+const motions = [...vars.keys()]
+  .map((sel) => sel.match(/^html\[data-motion='([\w-]+)'\]$/)?.[1])
+  .filter(Boolean);
+if (!metaMotions.has('full')) {
+  drift.push(`COSMOS_MOTIONS has no 'full' (no data-motion attribute, the default)`);
+}
+for (const id of motions) {
+  if (!metaMotions.has(id)) drift.push(`motion '${id}' is in the CSS but not in COSMOS_MOTIONS`);
+}
+for (const id of metaMotions.keys()) {
+  if (id !== 'full' && !motions.includes(id)) {
+    drift.push(
+      `motion '${id}' is in COSMOS_MOTIONS but has no html[data-motion='${id}'] block in css-vars.css`
+    );
+  }
+}
+const noComments = stripComments(varsCss);
+const baseMotion = [...noComments.matchAll(/(?:^|\})\s*html\s*\{([^{}]*)\}/g)]
+  .map(([, body]) => declarations(body))
+  .find((decls) => decls['cosmos-ease-out']);
+const durations = Object.keys(baseMotion ?? {}).filter((name) => name.startsWith('cosmos-motion-'));
+if (durations.length === 0) drift.push(`html declares no --cosmos-motion-* duration`);
+const reducedMotion = {
+  'prefers-reduced-motion: reduce': declarations(
+    noComments.match(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{\s*html\s*\{([^{}]*)\}/
+    )?.[1] ?? ''
+  ),
+  "html[data-motion='reduced']": vars.get(`html[data-motion='reduced']`) ?? {},
+};
+for (const [where, decls] of Object.entries(reducedMotion)) {
+  for (const name of durations.filter((n) => decls[n] !== '0ms')) {
+    drift.push(`--${name} is not 0ms under ${where}`);
+  }
+}
+
 // The scrim: every theme sets the three colours Backdrop reads (--color-scrim-dim, -blur and
 // -blur-dark). A theme that left one out would show its windows over a page with no veil, since
 // nothing inherits it from another theme.
@@ -256,12 +301,12 @@ if (drift.length) {
   console.error(
     `\nThe theme metadata and the CSS disagree (packages/react/src/settings/appearance.ts vs packages/theme/css):\n` +
       drift.map((d) => `  - ${d}`).join('\n') +
-      `\n\nUpdate appearance.ts or the CSS so that both list the same themes, accents, densities and radii.`
+      `\n\nUpdate appearance.ts or the CSS so that both list the same themes, accents, densities, radii and motions.`
   );
   process.exit(1);
 }
 console.log(
-  `ok   metadata   ${THEMES.length} themes, ${accents.length} accents and ${densities.length} densities and ${radii.length} radii match appearance.ts`
+  `ok   metadata   ${THEMES.length} themes, ${accents.length} accents, ${densities.length} densities, ${radii.length} radii and ${metaMotions.size} motions match appearance.ts`
 );
 
 // ── Color math ────────────────────────────────────────────────────────────
