@@ -163,6 +163,14 @@ charts ───────────── storybook      (charts imports ne
   A corner must go through the scale: a bare `rounded` is a fixed 0.25rem in Tailwind 4, write
   `rounded-sm`; `repo-policy.spec.ts` refuses it, an arbitrary `rounded-[…]` that doesn't read
   `var(--radius-…)` and a `borderRadius` (kept ones go in `RADIUS_ALLOWED`, with the reason).
+  **Motion** is `data-motion` (`reduced`, none = full): the `--cosmos-motion-*` durations and
+  `--cosmos-ease-*` easings (`css-vars.css`, on `html`, not `:root`: `check-contrast.mjs` reads the
+  `:root` blocks as palettes) drop to 0 ms under it and under `prefers-reduced-motion`. Components
+  take them as `duration-(--cosmos-motion-base)`, never a ms value. `motion-safe:` and
+  `motion-reduce:` are redefined in `tailwind-tokens.css` to read the attribute too. A window that
+  leaves stays mounted through `hooks/useExitTransition.ts` (out of the overlay stack, inert and
+  focus back at once; unmounts at once when nothing animates); a block that folds goes through the
+  internal `ui/Fold.tsx`. Every scrim is `Backdrop` (`variant`, colours `--color-scrim-*`).
   **Themes** are one class on `<html>`: none (light), `.sand`, `.dark` (neutral black/gray),
   `.deep-blue` (the old navy dark); `.dark` and `.deep-blue` enable `dark:`. **Accents** are
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,
@@ -278,12 +286,12 @@ The toolbar has a **Theme** menu (a `theme` global put on `<html>` by the `withT
 before the story renders: light, sand, dark, deep-blue; default
 `dark` via `initialGlobals`). The manager and the docs pages follow it too: `manager.ts` re-themes
 the UI on SET_GLOBALS/GLOBALS_UPDATED, `CosmosDocsContainer.tsx` does the same for docs, both from
-the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font**, **Text size**, **Density** and **Radius** menus
-(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES`/`DENSITIES`/`RADII` in
+the palettes in `cosmos-theme.ts`. There are also **Accent**, **Font**, **Text size**, **Density**, **Radius** and **Motion** menus
+(`globalTypes`, all derived from `COSMOS_THEMES`/`ACCENTS`/`FONTS`/`TEXT_SIZES`/`DENSITIES`/`RADII`/`MOTIONS` in
 `packages/react/src/settings/appearance.ts`; `check-contrast.mjs` fails if that file drifts from the
 theme CSS), applied by the `withAppearanceAttributes` decorator as `data-accent`,
-`data-font`, `data-text-size`, `data-density` and `data-radius` before the story renders. In URLs:
-`&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact;radius:lg`. A story that needs the current values reads them from the render
+`data-font`, `data-text-size`, `data-density`, `data-radius` and `data-motion` before the story renders. In URLs:
+`&globals=theme:sand;accent:teal;font:inter;textSize:lg;density:compact;radius:lg;motion:reduced`. A story that needs the current values reads them from the render
 context (`(_args, { globals }) => …`); `Foundations/Appearance` and the Welcome page apply a picked
 combination with `applyAppearance` and remount when the toolbar changes. The **Direction** menu
 (`direction` global, `ltr` | `rtl`, `&globals=direction:rtl`) is Storybook's own: the `withDirection`
