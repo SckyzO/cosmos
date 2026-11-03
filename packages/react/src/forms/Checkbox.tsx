@@ -13,6 +13,12 @@ import { useControllableState } from '../hooks/useControllableState';
 
 export type CheckboxSize = 'sm' | 'md';
 
+// The mark grows from half its size as it fades in, over the fast duration easing out, and shrinks
+// back as it fades out. At rest it is full size and opaque.
+const MARK = 'transition-[opacity,scale] duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)';
+const MARK_SHOWN = 'scale-none opacity-100';
+const MARK_HIDDEN = 'scale-50 opacity-0';
+
 export type CheckboxProps = Omit<
   ComponentPropsWithRef<'input'>,
   'size' | 'type' | 'onChange' | 'children'
@@ -95,7 +101,7 @@ export function Checkbox({
         <span
           aria-hidden
           className={clsx(
-            'peer-focus-visible:focus-indicator relative flex items-center justify-center rounded-md border transition-colors',
+            'peer-focus-visible:focus-indicator relative flex items-center justify-center rounded-md border transition-colors duration-(--cosmos-motion-fast)',
             sizes.box,
             showFilled
               ? 'border-brand-500 bg-brand-500'
@@ -104,15 +110,23 @@ export function Checkbox({
         >
           {/* Always render both icons; toggle visibility via opacity to keep
               the box's intrinsic baseline stable (prevents text from
-              shifting when checked/unchecked). */}
+              shifting when checked/unchecked), and to let each one grow in and fade out. */}
           <Check
             className={clsx(
-              'block text-white transition-opacity',
+              'block text-white',
+              MARK,
               sizes.icon,
-              isChecked && !indeterminate ? 'opacity-100' : 'opacity-0'
+              isChecked && !indeterminate ? MARK_SHOWN : MARK_HIDDEN
             )}
           />
-          {indeterminate && <Minus className={clsx('absolute block text-white', sizes.icon)} />}
+          <Minus
+            className={clsx(
+              'absolute block text-white',
+              MARK,
+              sizes.icon,
+              indeterminate ? MARK_SHOWN : MARK_HIDDEN
+            )}
+          />
         </span>
       </span>
       {(label || description) && (
