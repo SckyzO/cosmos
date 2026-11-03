@@ -1,6 +1,7 @@
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Input } from '../forms/Input';
+import { useFocusOnSwitch } from '../hooks/useFocusOnSwitch';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
@@ -10,7 +11,11 @@ export type ResetPasswordFormProps = {
   onSubmit: (email: string) => void | Promise<void>;
   signInHref?: string;
   signInLabel?: string;
-  /** Switch to the post-submit confirmation view. Default `false`. */
+  /**
+   * Switch to the post-submit confirmation view. Default `false`. When it changes, the focus goes
+   * to the heading of the new view, since the button that was pressed is gone with the old one;
+   * focus the person had moved elsewhere on the page stays there.
+   */
   sent?: boolean;
   /** Email displayed in the `sent` view. Falls back to the form's last value. */
   sentEmail?: string;
@@ -53,6 +58,9 @@ export const ResetPasswordForm = ({
   className,
 }: ResetPasswordFormProps) => {
   const [email, setEmail] = useState('');
+  // When the host shows or leaves the `sent` view, the button that was pressed is gone: the focus
+  // goes to the heading of the new one.
+  const heading = useFocusOnSwitch(sent ? 'sent' : 'form');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -66,7 +74,11 @@ export const ResetPasswordForm = ({
         <div className="bg-brand-500/10 text-brand-600 dark:text-brand-400 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
           <MailCheck className="h-6 w-6" aria-hidden />
         </div>
-        <h1 className="mt-4 text-center text-xl font-semibold text-gray-900 dark:text-white">
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
+        >
           Check your inbox
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -101,7 +113,13 @@ export const ResetPasswordForm = ({
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
+        >
+          {title}
+        </h1>
         {description && (
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
         )}

@@ -2,6 +2,7 @@ import { ArrowLeft, CircleCheck, Clock } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { PasswordInput } from '../forms/PasswordInput';
 import { defaultPasswordRules, type PasswordRule } from '../forms/PasswordPolicyChecker';
+import { useFocusOnSwitch } from '../hooks/useFocusOnSwitch';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
@@ -47,7 +48,9 @@ export type NewPasswordFormProps = {
 /**
  * The page the e-mail link of `ResetPasswordForm` opens: a new password and its confirmation, then
  * a confirmation screen, or an offer to ask for another link when this one has expired. Each
- * screen is its own `h1`.
+ * screen is its own `h1`. When the host switches `view`, the focus goes to the new heading, since
+ * the button that was pressed is gone with its screen; focus the person had moved elsewhere on
+ * the page stays there, and the first screen takes none when it mounts.
  */
 export const NewPasswordForm = ({
   onSubmit,
@@ -70,6 +73,9 @@ export const NewPasswordForm = ({
   const [confirm, setConfirm] = useState('');
   // The mismatch shows when the field is left, not on every key.
   const [confirmLeft, setConfirmLeft] = useState(false);
+  // When the host switches the screen, the button that was pressed is gone: the focus goes to the
+  // heading of the new one.
+  const heading = useFocusOnSwitch(view);
 
   const rules = rulesOf(password);
   const matches = confirm === password;
@@ -90,7 +96,11 @@ export const NewPasswordForm = ({
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400">
           <Clock className="h-6 w-6" aria-hidden />
         </div>
-        <h1 className="mt-4 text-center text-xl font-semibold text-gray-900 dark:text-white">
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
+        >
           This link is no longer valid
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -114,7 +124,11 @@ export const NewPasswordForm = ({
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
           <CircleCheck className="h-6 w-6" aria-hidden />
         </div>
-        <h1 className="mt-4 text-center text-xl font-semibold text-gray-900 dark:text-white">
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
+        >
           Password updated
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -140,7 +154,13 @@ export const NewPasswordForm = ({
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
+        >
+          {title}
+        </h1>
         {description && (
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
         )}
