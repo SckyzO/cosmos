@@ -88,6 +88,12 @@ export type Host = {
   status: HealthStatus;
   /** What the host last raised an alert about. */
   metric: string;
+  /** Power draw, in watts. */
+  power: number;
+  /** The change of the power draw over 24 hours, in percent. */
+  trend: number;
+  /** What the host cost over 24 hours, in euros: a negative figure is a credit. */
+  cost: number;
 };
 
 /** Seven hosts with values of their own: the stories that name a host (`node-a02`) read these. */
@@ -102,10 +108,13 @@ export const HOSTS: Host[] = [
     memory: 52,
     disk: 48,
     owner: 'Platform',
-    note: '',
+    note: 'Primary database replica, nightly backup runs at 02:00.',
     updated: '2 min ago',
     status: 'OK',
     metric: 'cpu',
+    power: 412,
+    trend: 3.2,
+    cost: 12.4,
   },
   {
     host: 'node-a02',
@@ -121,6 +130,9 @@ export const HOSTS: Host[] = [
     updated: '5 min ago',
     status: 'WARN',
     metric: 'temp',
+    power: 538,
+    trend: 8.4,
+    cost: -3.15,
   },
   {
     host: 'node-b07',
@@ -132,10 +144,13 @@ export const HOSTS: Host[] = [
     memory: 91,
     disk: 88,
     owner: 'Storage',
-    note: '',
+    note: 'Fan 3 failed: ticket opened with the vendor, replacement due Friday.',
     updated: '1 min ago',
     status: 'CRIT',
     metric: 'cpu',
+    power: 604,
+    trend: 12.1,
+    cost: 148.9,
   },
   {
     host: 'node-b08',
@@ -151,6 +166,9 @@ export const HOSTS: Host[] = [
     updated: '9 min ago',
     status: 'OK',
     metric: 'disk',
+    power: 296,
+    trend: -1.5,
+    cost: 0,
   },
   {
     host: 'node-c03',
@@ -162,10 +180,13 @@ export const HOSTS: Host[] = [
     memory: 61,
     disk: 52,
     owner: 'Compute',
-    note: '',
+    note: 'Batch workers.',
     updated: '3 min ago',
     status: 'OK',
     metric: 'memory',
+    power: 351,
+    trend: -4.0,
+    cost: -27.8,
   },
   {
     host: 'node-c04',
@@ -177,10 +198,13 @@ export const HOSTS: Host[] = [
     memory: 28,
     disk: 19,
     owner: 'Compute',
-    note: '',
+    note: 'Decommissioning planned for next quarter.',
     updated: '12 min ago',
     status: 'OK',
     metric: 'network',
+    power: 248,
+    trend: 0.6,
+    cost: 1042.5,
   },
   {
     host: 'node-c05',
@@ -196,6 +220,9 @@ export const HOSTS: Host[] = [
     updated: '4 min ago',
     status: 'WARN',
     metric: 'power',
+    power: 330,
+    trend: 5.1,
+    cost: 7.2,
   },
 ];
 
@@ -227,6 +254,9 @@ export const makeHosts = (count: number): Host[] =>
       updated: `${(i % 59) + 1} min ago`,
       status: STATUSES[i % STATUSES.length],
       metric: METRICS[i % METRICS.length],
+      power: 200 + ((i * 37) % 450),
+      trend: ((i * 17) % 250) / 10 - 10,
+      cost: ((i * 7919) % 20_000) / 100 - 50,
     };
   });
 
