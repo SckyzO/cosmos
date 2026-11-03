@@ -6,6 +6,18 @@ export type FoldProps = {
   open: boolean;
   /** `id` of the folding box, for the `aria-controls` of the button that toggles it. */
   id?: string;
+  /**
+   * Classes of the folding box, for what sits around the content: a margin, a background. Not
+   * padding, a border or a margin on the content's own side: those would not fold with it, and
+   * belong inside `children`.
+   */
+  className?: string;
+  /**
+   * Mount `children` the first time the fold opens, not before, and keep them mounted after: for
+   * a block that is heavy or that the host only computes on demand. Default `false`: the content
+   * is mounted while closed.
+   */
+  lazy?: boolean;
   children: ReactNode;
 };
 
@@ -14,16 +26,19 @@ export type FoldProps = {
  *
  * The height runs from 0 to its natural size (`grid-template-rows` from `0fr` to `1fr`, so the
  * content is never measured), while the content fades and slides 4px along the block axis, in
- * `--cosmos-motion-base`: out when it opens, in when it closes. The content stays mounted: a
- * closed fold is `inert` (out of the tab order and of the pointer's reach) and hidden from
- * assistive technology at once, whatever the animation still has to play.
+ * `--cosmos-motion-base`: out when it opens, in when it closes. The content stays mounted (`lazy`
+ * waits for the first opening): a closed fold is `inert` (out of the tab order and of the
+ * pointer's reach) and hidden from assistive technology at once, whatever the animation still has
+ * to play.
  *
  * Unfolded and at rest the box stops clipping, so a focus ring or a shadow at the content's edge
  * is not cut. With no motion (`0s` durations, reduced motion) there is no animation to wait for:
  * it is at rest as soon as it opens.
  */
-export const Fold = ({ open, id, children }: FoldProps) => {
+export const Fold = ({ open, id, className, lazy = false, children }: FoldProps) => {
   const box = useRef<HTMLDivElement>(null);
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) setOpened(true);
   const [rest, setRest] = useState(open);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -58,7 +73,8 @@ export const Fold = ({ open, id, children }: FoldProps) => {
         'grid grid-cols-1 transition-[grid-template-rows] duration-(--cosmos-motion-base)',
         open
           ? 'grid-rows-[1fr] ease-(--cosmos-ease-out)'
-          : 'grid-rows-[0fr] ease-(--cosmos-ease-in)'
+          : 'grid-rows-[0fr] ease-(--cosmos-ease-in)',
+        className
       )}
     >
       <div className={clsx('min-h-0', open && rest ? 'overflow-visible' : 'overflow-hidden')}>
@@ -70,7 +86,7 @@ export const Fold = ({ open, id, children }: FoldProps) => {
               : '-translate-y-1 opacity-0 ease-(--cosmos-ease-in)'
           )}
         >
-          {children}
+          {(opened || !lazy) && children}
         </div>
       </div>
     </div>

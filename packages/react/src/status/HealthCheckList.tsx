@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import { RelativeTime } from '../data/RelativeTime';
 import { useControllableState } from '../hooks/useControllableState';
 import { CodeBlock } from '../ui/CodeBlock';
+import { Fold } from '../ui/Fold';
 import {
   STATUS_NAME,
   countStatuses,
@@ -58,6 +59,18 @@ const CARD_EDGE: Record<HealthStatus, string> = {
   INFO: 'border-t-blue-500',
 };
 
+// The disclosure chevron of a check and of a group: it points to the end of the line when closed
+// (turned around in right to left) and turns down as the block unfolds.
+const Chevron = ({ open }: { open: boolean }) => (
+  <ChevronRight
+    aria-hidden="true"
+    className={clsx(
+      'size-4 shrink-0 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
+      open ? 'rotate-90' : 'rtl:rotate-180'
+    )}
+  />
+);
+
 type CheckProps = {
   check: HealthCheck;
   open: boolean;
@@ -80,22 +93,29 @@ const CheckName = ({ check, open, onToggle, outputId }: Omit<CheckProps, 'now'>)
       onClick={onToggle}
       className="focus-visible:focus-indicator -mx-1 flex min-w-0 items-center gap-1 rounded-sm px-1 text-start font-medium text-[var(--color-text-primary)] focus-visible:ring-inset"
     >
-      {open ? (
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
-      ) : (
-        <ChevronRight aria-hidden="true" className="size-4 shrink-0 rtl:-scale-x-100" />
-      )}
+      <Chevron open={open} />
       <span className="min-w-0 break-words">
         <bdi>{check.name}</bdi>
       </span>
     </button>
   );
 
-const Output = ({ check, open, outputId }: Pick<CheckProps, 'check' | 'open' | 'outputId'>) =>
+// The output of a check, unfolding under it. The space above it is inside the fold, so a closed
+// output takes none: a row adds it as padding, a card as the gap its flex column would leave
+// (`-mt-1.5` takes the gap back while it is folded).
+const Output = ({
+  check,
+  open,
+  outputId,
+  className,
+  inset,
+}: Pick<CheckProps, 'check' | 'open' | 'outputId'> & { className?: string; inset: string }) =>
   check.output === undefined ? null : (
-    <div id={outputId} hidden={!open} className="min-w-0">
-      {open && <CodeBlock code={check.output} />}
-    </div>
+    <Fold id={outputId} open={open} lazy className={className}>
+      <div className={inset}>
+        <CodeBlock code={check.output} />
+      </div>
+    </Fold>
   );
 
 const Dash = () => (
@@ -148,11 +168,13 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
         <Dash />
       )}
     </div>
-    {check.output !== undefined && (
-      <div className={clsx(open && 'mt-3 @min-[48rem]:ms-[7.25rem]')}>
-        <Output check={check} open={open} outputId={outputId} />
-      </div>
-    )}
+    <Output
+      check={check}
+      open={open}
+      outputId={outputId}
+      className="@min-[48rem]:ms-[7.25rem]"
+      inset="pt-3"
+    />
   </li>
 );
 
@@ -179,7 +201,7 @@ const CheckCard = ({ check, open, onToggle, outputId, now }: CheckProps) => (
         <bdi>{check.message}</bdi>
       </p>
     )}
-    <Output check={check} open={open} outputId={outputId} />
+    <Output check={check} open={open} outputId={outputId} className="-mt-1.5" inset="pt-1.5" />
     {(check.latency !== undefined || check.checkedAt !== undefined) && (
       <div className="mt-auto flex justify-between gap-2 pt-1 text-xs text-[var(--color-text-secondary)]">
         <span className="tabular-nums">
@@ -284,11 +306,7 @@ export const HealthCheckList = ({
           style={{ paddingInlineStart: `${1 + depth * 1.25}rem` }}
           className="focus-visible:focus-indicator min-h-ctrl-44 flex w-full flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[var(--color-border)] bg-gray-50 py-2 pe-4 text-start text-sm font-semibold text-[var(--color-text-primary)] focus-visible:ring-inset dark:bg-black/20"
         >
-          {isCollapsed ? (
-            <ChevronRight aria-hidden="true" className="size-4 shrink-0 rtl:-scale-x-100" />
-          ) : (
-            <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
-          )}
+          <Chevron open={!isCollapsed} />
           <span className="min-w-0 break-words">
             <bdi>{group.name}</bdi>
           </span>
@@ -297,10 +315,10 @@ export const HealthCheckList = ({
             <bdi>{countsText(counts)}</bdi>
           </span>
         </button>
-        <div id={panelId} hidden={isCollapsed}>
+        <Fold id={panelId} open={!isCollapsed}>
           {renderChecks(group.checks ?? [], path)}
           {(group.groups ?? []).map((child, i) => renderGroup(child, `${path}-${i}`, depth + 1))}
-        </div>
+        </Fold>
       </div>
     );
   };
