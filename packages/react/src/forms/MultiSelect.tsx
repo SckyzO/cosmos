@@ -140,6 +140,7 @@ export const MultiSelect = ({
     [options, values, atMax]
   );
   const filtered = useFilteredOptions(items, query);
+  const noMatch = filtered.length === 0;
 
   const toggle = (opt: MultiSelectOption) => {
     if (opt.disabled) return;
@@ -290,67 +291,69 @@ export const MultiSelect = ({
           id={listboxId}
           role="listbox"
           aria-multiselectable="true"
+          // Nothing to list: the message below says so, and an empty listbox is no listbox.
+          hidden={noMatch}
           className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
         >
-          {filtered.length === 0 ? (
-            <li
-              role="option"
-              aria-selected={false}
-              aria-disabled
-              className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400"
-            >
-              {emptyMessage}
-            </li>
-          ) : (
-            filtered.map((opt, i) => {
-              const isActive = i === activeIndex;
-              const isChosen = values.includes(opt.value);
-              return (
-                <li
-                  id={`${id}-opt-${i}`}
-                  key={opt.value}
-                  role="option"
-                  aria-selected={isChosen}
-                  aria-disabled={opt.disabled || undefined}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onMouseDown={(e) => {
-                    // mousedown fires before the input blurs: keep the focus where it is.
-                    e.preventDefault();
-                    toggle(opt);
-                  }}
+          {filtered.map((opt, i) => {
+            const isActive = i === activeIndex;
+            const isChosen = values.includes(opt.value);
+            return (
+              <li
+                id={`${id}-opt-${i}`}
+                key={opt.value}
+                role="option"
+                aria-selected={isChosen}
+                aria-disabled={opt.disabled || undefined}
+                onMouseEnter={() => setActiveIndex(i)}
+                onMouseDown={(e) => {
+                  // mousedown fires before the input blurs: keep the focus where it is.
+                  e.preventDefault();
+                  toggle(opt);
+                }}
+                className={clsx(
+                  'py-row-8 flex items-center gap-2.5 px-3 text-gray-900 select-none dark:text-gray-100',
+                  isActive && 'bg-gray-50 dark:bg-white/5',
+                  opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                )}
+              >
+                <span
+                  aria-hidden
                   className={clsx(
-                    'py-row-8 flex items-center gap-2.5 px-3 text-gray-900 select-none dark:text-gray-100',
-                    isActive && 'bg-gray-50 dark:bg-white/5',
-                    opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    'flex size-[18px] shrink-0 items-center justify-center rounded-md border transition-colors',
+                    isChosen
+                      ? 'border-brand-500 bg-brand-500'
+                      : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
                   )}
                 >
-                  <span
-                    aria-hidden
-                    className={clsx(
-                      'flex size-[18px] shrink-0 items-center justify-center rounded-md border transition-colors',
-                      isChosen
-                        ? 'border-brand-500 bg-brand-500'
-                        : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
-                    )}
-                  >
-                    {isChosen && <Check className="size-3.5 text-white" />}
-                  </span>
-                  {opt.leading && <span className="shrink-0">{opt.leading}</span>}
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className={clsx('truncate', isChosen && 'font-semibold')}>
-                      {opt.label}
+                  {isChosen && <Check className="size-3.5 text-white" />}
+                </span>
+                {opt.leading && <span className="shrink-0">{opt.leading}</span>}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className={clsx('truncate', isChosen && 'font-semibold')}>{opt.label}</span>
+                  {opt.secondary && (
+                    <span className="truncate text-xs text-gray-500 dark:text-gray-400">
+                      {opt.secondary}
                     </span>
-                    {opt.secondary && (
-                      <span className="truncate text-xs text-gray-500 dark:text-gray-400">
-                        {opt.secondary}
-                      </span>
-                    )}
-                  </span>
-                </li>
-              );
-            })
-          )}
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ul>
+        {/* The message for an empty list is a status line, not an option: a disabled option is
+            never the active descendant, so nothing would read it, and it would count as a choice.
+            One element for as long as the panel is open, so the change of its text is what a
+            screen reader announces; it takes the panel's surface only while it has something to
+            say. */}
+        <div className={clsx('w-full text-sm', noMatch && FIELD_LISTBOX_PANEL)}>
+          <p
+            role="status"
+            className={noMatch ? 'py-row-8 px-3 text-gray-500 dark:text-gray-400' : 'sr-only'}
+          >
+            {noMatch ? emptyMessage : ''}
+          </p>
+        </div>
       </FloatingPanel>
       <TagFieldDescription show={hasDesc} id={descId} error={!!error}>
         {error ?? helperText}
