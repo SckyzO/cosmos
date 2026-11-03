@@ -11,7 +11,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import { HOSTS, hostColumns, type Host } from './storybook-hosts';
+import { HOSTS, hostColumns, type Host } from './storybook-fixtures';
 import type { ColumnDef } from './types';
 
 // Expandable rows (`renderExpandedRow`) and pinned columns (`pin`), in their own file with the

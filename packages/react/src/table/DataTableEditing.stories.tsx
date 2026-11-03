@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DataTable } from './DataTable';
-import { editableColumns, REFUSED_HOST, useFakeSaves } from './storybook-hosts';
+import { editableColumns, REFUSED_HOST, useFakeSaves } from './storybook-fixtures';
 
 // Inline editing (`edit` on a column, `editTrigger`, `onCellEdit`, `onRowEdit`), in its own file
 // with the other DataTable additions: DataTable.stories.tsx is already one of the largest stories

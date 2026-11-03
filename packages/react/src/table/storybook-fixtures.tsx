@@ -5,8 +5,12 @@ import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
 import type { ColumnDef, ColumnEdit } from './types';
 
-// The hosts the stories of expandable rows, pinned columns and inline editing share: fixed values,
-// and a fake save that always refuses one of them. Stories only, not part of the package.
+// The rows and columns the table stories share, by domain: hosts, people and orders. Fixed values
+// and generators with nothing random in them, so every run draws the same table. A story takes its
+// rows from here and changes a variant with a column transform, instead of building a table of its
+// own. Stories only, not part of the package.
+
+// ── Hosts ────────────────────────────────────────────────────────────────────
 
 export type Host = {
   host: string;
