@@ -156,7 +156,9 @@ export const NumberInput = ({
               // The prefix carries the start padding, and the value sits close to it.
               prefix !== undefined ? 'ps-1' : FIELD_PAD_START[size],
               endPad,
-              fullWidth ? 'flex-1' : width
+              // The input takes the room a wider field leaves (`fullWidth`, or a width in
+              // `className`), so the arrows stay on the end edge. `grow` leaves its size alone.
+              fullWidth ? 'flex-1' : clsx(width, 'grow')
             )}
           />
           {unit && (
@@ -209,7 +211,14 @@ export const NumberInput = ({
               −
             </span>
           </button>
-          <div className="flex items-center">
+          {/* The value, its prefix and its unit take the room a wider field leaves, centred
+              between the buttons, so the `+` stays on the end edge. */}
+          <div
+            className={clsx(
+              'flex items-center justify-center',
+              fullWidth ? 'min-w-0 flex-1' : 'grow'
+            )}
+          >
             {prefix !== undefined && (
               <span className="ps-1.5 text-xs text-gray-500 select-none dark:text-gray-400">
                 <bdi>{prefix}</bdi>
@@ -230,7 +239,7 @@ export const NumberInput = ({
               className={clsx(
                 'h-full [appearance:textfield] border-0 bg-transparent text-center font-medium text-gray-700 focus:outline-none disabled:cursor-not-allowed dark:text-gray-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
                 FIELD_TEXT[size],
-                width
+                fullWidth ? 'min-w-0 flex-1' : width
               )}
             />
             {unit && (
