@@ -149,8 +149,8 @@ export const BrandDismissFocusShowsWhiteRingInDark: Story = {
 };
 
 export const BrandDismissFocusShowsWhiteRingInLight: Story = {
-  tags: ['!dev'],
   ...BrandDismissFocusShowsWhiteRingInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

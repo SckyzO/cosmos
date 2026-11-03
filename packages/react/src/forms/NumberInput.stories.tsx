@@ -290,26 +290,26 @@ export const BlurClampsOrRestores: Story = {
 
 // The behaviour stories above run unchanged against the stacked layout.
 export const StackedFocusShowsAccentBorderInDark: Story = {
-  tags: ['!dev'],
   ...FocusShowsAccentBorderInDark,
+  tags: ['!dev', '!autodocs'],
   args: { ...FocusShowsAccentBorderInDark.args, controls: 'stacked' },
 };
 
 export const StackedTypingPassesThroughInvalidValues: Story = {
-  tags: ['!dev'],
   ...TypingPassesThroughInvalidValues,
+  tags: ['!dev', '!autodocs'],
   args: { ...TypingPassesThroughInvalidValues.args, controls: 'stacked' },
 };
 
 export const StackedTypingANegativeValue: Story = {
-  tags: ['!dev'],
   ...TypingANegativeValue,
+  tags: ['!dev', '!autodocs'],
   args: { ...TypingANegativeValue.args, controls: 'stacked' },
 };
 
 export const StackedBlurClampsOrRestores: Story = {
-  tags: ['!dev'],
   ...BlurClampsOrRestores,
+  tags: ['!dev', '!autodocs'],
   args: { ...BlurClampsOrRestores.args, controls: 'stacked' },
 };
 

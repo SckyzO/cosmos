@@ -399,9 +399,15 @@ const timeContrastIn = (theme: string): Story => ({
   },
 });
 
-export const TimeContrastInLight = timeContrastIn('light');
-export const TimeContrastInSand = timeContrastIn('sand');
-export const TimeContrastInDeepBlue = timeContrastIn('deep-blue');
+export const TimeContrastInLight: Story = {
+  ...timeContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const TimeContrastInSand: Story = { ...timeContrastIn('sand'), tags: ['!dev', '!autodocs'] };
+export const TimeContrastInDeepBlue: Story = {
+  ...timeContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 const INTENT_CIRCLES = {
   brand: ['bg-brand-100', 'text-brand-700'],

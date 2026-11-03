@@ -492,8 +492,8 @@ export const InteractiveFocusShowsRingOnTheCardInDark: Story = {
 };
 
 export const InteractiveFocusShowsRingOnTheCardInLight: Story = {
-  tags: ['!dev'],
   ...InteractiveFocusShowsRingOnTheCardInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -535,8 +535,8 @@ export const BorderIsStrongerInDark: Story = {
 };
 
 export const BorderKeepsThemeColorInLight: Story = {
-  tags: ['!dev'],
   ...BorderIsStrongerInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     const card = canvas.getByText('Body').parentElement!;

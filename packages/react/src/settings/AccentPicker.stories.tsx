@@ -72,10 +72,22 @@ const swatchLabelContrastIn = (theme: string): Story => ({
   },
 });
 
-export const SwatchLabelContrastInLight = swatchLabelContrastIn('light');
-export const SwatchLabelContrastInSand = swatchLabelContrastIn('sand');
-export const SwatchLabelContrastInDark = swatchLabelContrastIn('dark');
-export const SwatchLabelContrastInDeepBlue = swatchLabelContrastIn('deep-blue');
+export const SwatchLabelContrastInLight: Story = {
+  ...swatchLabelContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const SwatchLabelContrastInSand: Story = {
+  ...swatchLabelContrastIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+export const SwatchLabelContrastInDark: Story = {
+  ...swatchLabelContrastIn('dark'),
+  tags: ['!dev', '!autodocs'],
+};
+export const SwatchLabelContrastInDeepBlue: Story = {
+  ...swatchLabelContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 // ── Interaction tests ────────────────────────────────────────────────────────
 
@@ -224,21 +236,22 @@ const columnsAt = (
 });
 
 /** From the `sm` breakpoint up, `smCols` sets the number of grid columns. */
-export const SmColsSetsTheColumnsFromSm = columnsAt(
-  'tw-sm',
-  { cols: 4, smCols: 6 },
-  { sm: true, columns: 6 }
-);
+export const SmColsSetsTheColumnsFromSm: Story = {
+  ...columnsAt('tw-sm', { cols: 4, smCols: 6 }, { sm: true, columns: 6 }),
+  tags: ['!dev', '!autodocs'],
+};
 
 /** Below `sm`, `cols` still sets the number of grid columns, whatever `smCols` is. */
-export const ColsStillAppliesBelowSm = columnsAt(
-  'mobile',
-  { cols: 4, smCols: 6 },
-  { sm: false, columns: 4 }
-);
+export const ColsStillAppliesBelowSm: Story = {
+  ...columnsAt('mobile', { cols: 4, smCols: 6 }, { sm: false, columns: 4 }),
+  tags: ['!dev', '!autodocs'],
+};
 
 /** Without `smCols`, the grid keeps `cols` columns from `sm` up. */
-export const SmColsDefaultsToCols = columnsAt('tw-sm', { cols: 4 }, { sm: true, columns: 4 });
+export const SmColsDefaultsToCols: Story = {
+  ...columnsAt('tw-sm', { cols: 4 }, { sm: true, columns: 4 }),
+  tags: ['!dev', '!autodocs'],
+};
 
 const swatchRef = createRef<HTMLButtonElement>();
 

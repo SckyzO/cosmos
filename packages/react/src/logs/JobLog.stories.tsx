@@ -451,6 +451,7 @@ export const ColoursOnColoursReadOnTheTerminalTone: Story = {
 
 export const ColoursOnColoursReadOnTheSurfaceTone: Story = {
   ...ColoursOnColoursReadOnTheTerminalTone,
+  tags: ['!dev', '!autodocs'],
   args: { tone: 'surface' },
 };
 

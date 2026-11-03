@@ -344,7 +344,13 @@ const columnsAt = (viewport: 'mobile' | 'tw-sm', sm: boolean, columns: number): 
 });
 
 /** Two columns below `sm` (640px), whatever `cols` is. */
-export const TwoColumnsBelowSm = columnsAt('mobile', false, 2);
+export const TwoColumnsBelowSm: Story = {
+  ...columnsAt('mobile', false, 2),
+  tags: ['!dev', '!autodocs'],
+};
 
 /** From `sm` up, `cols` sets the number of columns. */
-export const ColsApplyFromSm = columnsAt('tw-sm', true, 4);
+export const ColsApplyFromSm: Story = {
+  ...columnsAt('tw-sm', true, 4),
+  tags: ['!dev', '!autodocs'],
+};

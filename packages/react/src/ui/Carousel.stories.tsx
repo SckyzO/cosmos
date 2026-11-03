@@ -325,9 +325,9 @@ const arrowsStory = (theme: string): Story => ({
 });
 
 /** The arrows over a slide are a dark scrim with white glyphs and sit off the edge, in any theme. */
-export const OverlayArrowsInLight: Story = arrowsStory('light');
-export const OverlayArrowsInDark: Story = arrowsStory('dark');
-export const OverlayArrowsInSand: Story = arrowsStory('sand');
+export const OverlayArrowsInLight: Story = { ...arrowsStory('light'), tags: ['!dev', '!autodocs'] };
+export const OverlayArrowsInDark: Story = { ...arrowsStory('dark'), tags: ['!dev', '!autodocs'] };
+export const OverlayArrowsInSand: Story = { ...arrowsStory('sand'), tags: ['!dev', '!autodocs'] };
 
 export const DotsHaveA24pxTarget: Story = {
   tags: ['!dev', '!autodocs'],
@@ -407,6 +407,7 @@ export const InsideIndicatorsKeepTheirBehaviour: Story = {
 /** The pill is 50% black and the dots white: the active one solid, the others at 60%. */
 export const InsideIndicatorsReadOnAPill: Story = {
   ...insideStory(),
+  tags: ['!dev', '!autodocs'],
 };
 
 export const InsideIndicatorsReadOnAPillChecks: Story = {

@@ -443,10 +443,22 @@ const headingContrastIn = (theme: string): Story => ({
   },
 });
 
-export const GroupHeadingContrastInLight = headingContrastIn('light');
-export const GroupHeadingContrastInSand = headingContrastIn('sand');
-export const GroupHeadingContrastInDark = headingContrastIn('dark');
-export const GroupHeadingContrastInDeepBlue = headingContrastIn('deep-blue');
+export const GroupHeadingContrastInLight: Story = {
+  ...headingContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInSand: Story = {
+  ...headingContrastIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInDark: Story = {
+  ...headingContrastIn('dark'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInDeepBlue: Story = {
+  ...headingContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 // A bare-key hotkey like `/` opened the palette while typing in a field (#151).
 export const BareHotkeyIgnoredWhileTyping: Story = {
