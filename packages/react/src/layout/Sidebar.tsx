@@ -13,9 +13,10 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { AppLink } from '../ui/AppLink';
+import { Fold } from '../ui/Fold';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
@@ -113,6 +114,30 @@ const useSidebarCollapsed = (override?: boolean): boolean => {
 // Nesting level: each Sidebar.SubMenu gives its children its own depth + 1, so
 // nested items indent without a `depth` prop.
 const SidebarDepthContext = createContext(0);
+
+// The rows of a folded list stay mounted, and an inert row has a box: the width that follows the
+// labels would grow for them. A row below a folded list leaves its label out of that measure, as
+// when the list was `display: none`.
+const FoldedContext = createContext(false);
+
+// A list of rows that unfolds and folds (a sub-menu's, a group's), and tells the rows in it
+// whether it is folded.
+const SidebarFold = ({
+  id,
+  open,
+  children,
+}: {
+  id?: string;
+  open: boolean;
+  children: ReactNode;
+}) => {
+  const folded = useContext(FoldedContext);
+  return (
+    <Fold id={id} open={open}>
+      <FoldedContext.Provider value={folded || !open}>{children}</FoldedContext.Provider>
+    </Fold>
+  );
+};
 
 // Margin of a row, the width a `<button>` row needs to keep it (an `<a>` row is a block and fills
 // the rest by itself), and the margin as a CSS length. Rows stand 4 px apart (`mb-1`: one margin,
@@ -789,6 +814,7 @@ const SidebarItem = ({
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
   const labelId = useId();
+  const folded = useContext(FoldedContext);
   const [compactLabel, setCompactLabel] = useState<HTMLSpanElement | null>(null);
   const clamped = useClamped(compactLabel);
   useReportActive(active);
@@ -833,7 +859,7 @@ const SidebarItem = ({
       {!nested && <Icon className="size-4 shrink-0" />}
       {!collapsed && (
         <>
-          <span className="flex-1 truncate" {...fitLabel(labelId)}>
+          <span className="flex-1 truncate" {...(folded ? undefined : fitLabel(labelId))}>
             {label}
           </span>
           {badge && <span className="shrink-0">{badge}</span>}
@@ -950,6 +976,7 @@ const SidebarSubMenu = ({
   const depth = useContext(SidebarDepthContext);
   const listId = useId();
   const labelId = useId();
+  const folded = useContext(FoldedContext);
   // The trigger is a new element when the sidebar collapses or expands: focus follows it.
   const triggerRef = useKeepFocus();
   const [open, setOpen] = useControllableState({
@@ -1055,7 +1082,7 @@ const SidebarSubMenu = ({
   const content = (
     <>
       {!nested && <Icon className="size-4 shrink-0" />}
-      <span className="flex-1 truncate" {...fitLabel(labelId)}>
+      <span className="flex-1 truncate" {...(folded ? undefined : fitLabel(labelId))}>
         {label}
       </span>
       {badge && <span className="shrink-0">{badge}</span>}
@@ -1065,7 +1092,7 @@ const SidebarSubMenu = ({
     <ChevronRight
       aria-hidden
       className={clsx(
-        'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform',
+        'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
         // Closed it points to the end of the line (turned around where that is the left); open it
         // points down in both directions.
         open ? 'rotate-90' : 'rtl:rotate-180'
@@ -1152,18 +1179,20 @@ const SidebarSubMenu = ({
       <LabelTip id={labelId} label={label}>
         {trigger}
       </LabelTip>
-      <div id={listId} hidden={!open} className="relative">
-        {ctx.subMenuGuides && (
-          <span
-            aria-hidden
-            className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-            style={{ insetInlineStart: geometry.guideStart(depth) }}
-          />
-        )}
-        <SidebarDepthContext.Provider value={depth + 1}>
-          <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
-        </SidebarDepthContext.Provider>
-      </div>
+      <SidebarFold id={listId} open={open}>
+        <div className="relative">
+          {ctx.subMenuGuides && (
+            <span
+              aria-hidden
+              className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
+              style={{ insetInlineStart: geometry.guideStart(depth) }}
+            />
+          )}
+          <SidebarDepthContext.Provider value={depth + 1}>
+            <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
+          </SidebarDepthContext.Provider>
+        </div>
+      </SidebarFold>
     </div>
   );
 };
@@ -1219,14 +1248,17 @@ const SidebarGroup = ({
           ROW_INSET.wide.width
         )}
       >
-        {open ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronRight className="h-3 w-3 rtl:-scale-x-100" />
-        )}
+        <ChevronRight
+          aria-hidden
+          className={clsx(
+            'h-3 w-3 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
+            // As the sub-menus' chevron: closed it points to the end of the line, open it points down.
+            open ? 'rotate-90' : 'rtl:rotate-180'
+          )}
+        />
         {label}
       </button>
-      {open && <div>{children}</div>}
+      <SidebarFold open={open}>{children}</SidebarFold>
     </div>
   );
 };
