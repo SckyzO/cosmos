@@ -1,5 +1,5 @@
 export type ColBoxProps = {
-  /** Label shown centered (typically a percentage like "50%") */
+  /** Label shown centered, typically the width the layout gives the box, like "50%" or "18rem". */
   label: string;
   /** Min height in px. Default: 80 */
   height?: number;
@@ -7,11 +7,12 @@ export type ColBoxProps = {
 };
 
 /**
- * ColBox — styled placeholder box for layout demos.
+ * ColBox — placeholder boxes for layout demos.
  *
- * Useful when prototyping page layouts to visualize column proportions
- * (e.g. "20% / 60% / 20%"). Same visual treatment as SectionCard but
- * with a centered monospace label.
+ * A bordered panel with a centered monospace label, in the same treatment as
+ * SectionCard. It fills the cell its parent gives it, so the grid or the width
+ * around it sets the proportions; the label says what they are (e.g. "20%",
+ * "60%", "20%").
  */
 export const ColBox = ({ label, height = 80, className }: ColBoxProps) => (
   <div
