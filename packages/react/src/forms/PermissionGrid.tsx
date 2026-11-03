@@ -31,13 +31,17 @@ export type { PermissionGridColumn, PermissionGridGroup, PermissionGridLabels };
 export type { PermissionGridRow } from './permissionGridModel';
 
 export type PermissionGridProps = {
-  /** The permissions, grouped by area: a header row per group, then one row per permission. */
+  /**
+   * The permissions, grouped by area: a header row per group, then one row per permission. Row ids
+   * are unique across the whole grid, group ids among the groups.
+   */
   groups: PermissionGridGroup[];
   /** What the permissions are granted for: actions (view, edit, delete) or roles. */
   columns: PermissionGridColumn[];
   /**
-   * The granted cells, as `cellKey(rowId, columnId)` keys: the row id, a colon and the column id.
-   * With `defaultValue` and `onChange(value)`, as for every control. Keys the grid does not own (a
+   * The granted cells, as `cellKey(rowId, columnId)` keys: the row id, a colon and the column id
+   * (a colon or a backslash in a column id is escaped: build the keys with `cellKey`). With
+   * `defaultValue` and `onChange(value)`, as for every control. Keys the grid does not own (a
    * read-only column's grants, a cell that does not apply) are kept as they are.
    */
   value?: string[];

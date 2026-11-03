@@ -46,6 +46,28 @@ describe('cellKey', () => {
   it('joins the row and the column ids', () => {
     expect(cellKey('invoices.edit', 'admin')).toBe('invoices.edit:admin');
   });
+
+  it('keeps `row:column` for a row id with colons, as `resource:action` ids have', () => {
+    expect(cellKey('invoices:edit', 'admin')).toBe('invoices:edit:admin');
+    expect(cellKey('org:billing:read', 'viewer')).toBe('org:billing:read:viewer');
+  });
+
+  it('tells ("a:b", "c") from ("a", "b:c")', () => {
+    expect(cellKey('a:b', 'c')).not.toBe(cellKey('a', 'b:c'));
+  });
+
+  it('gives two different cells two different keys, whatever the ids hold', () => {
+    // Every id of one to three characters out of `a`, a colon and a backslash.
+    let layer = [''];
+    const ids: string[] = [];
+    for (let length = 1; length <= 3; length += 1) {
+      layer = layer.flatMap((id) => ['a', ':', '\\'].map((char) => id + char));
+      ids.push(...layer);
+    }
+    const keys = new Set<string>();
+    for (const row of ids) for (const column of ids) keys.add(cellKey(row, column));
+    expect(keys.size).toBe(ids.length * ids.length);
+  });
 });
 
 describe('gridCells', () => {
