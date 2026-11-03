@@ -449,8 +449,7 @@ export const OpeningDetailsPausesFollow: Story = {
     // is no good: its details can fall past the window and never render.
     const box = log.getBoundingClientRect();
     const middle = box.top + box.height / 2;
-    const distance = (button: HTMLElement) =>
-      Math.abs(button.getBoundingClientRect().top - middle);
+    const distance = (button: HTMLElement) => Math.abs(button.getBoundingClientRect().top - middle);
     const chevron = canvas
       .getAllByRole('button', { name: 'Show details' })
       .filter((button) => {
