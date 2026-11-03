@@ -172,7 +172,10 @@ charts ───────────── storybook      (charts imports ne
   focus back at once; unmounts at once when nothing animates); a block that folds goes through the
   internal `ui/Fold.tsx` (`lazy` mounts on the first opening, `appear` unfolds on mount,
   `slide={false}` only fades); a marker that slides between options (Tabs, SegmentedControl) goes
-  through `hooks/useIndicator.ts` and `ui/SlidingIndicator.tsx`. Every scrim is `Backdrop` (`variant`, colours `--color-scrim-*`).
+  through `hooks/useIndicator.ts` and `ui/SlidingIndicator.tsx`. A block that comes and goes with the
+  data takes `hooks/useArrival.ts`, a message under a field `forms/FieldMessage.tsx`, content that
+  replaces a skeleton `feedback/useAfterSkeleton.ts` (no fade without a skeleton before it), and a
+  clickable card the `ui/cardLift.ts` classes. Every scrim is `Backdrop` (`variant`, colours `--color-scrim-*`).
   **Themes** are one class on `<html>`: none (light), `.sand`, `.dark` (neutral black/gray),
   `.deep-blue` (the old navy dark); `.dark` and `.deep-blue` enable `dark:`. **Accents** are
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,
