@@ -142,3 +142,36 @@ export const transitionValues = (element: Element, property: string) => {
   const frames = (animation?.effect as KeyframeEffect | null | undefined)?.getKeyframes() ?? [];
   return frames.map((frame) => String((frame as Record<string, unknown>)[property]));
 };
+
+/**
+ * The month-change animations react-day-picker is playing in `root`: the CSS animations of the
+ * `animate` option (`rdp-slide_in_right`, `rdp-fade_out`…), with the length and the easing they run
+ * at. A calendar at rest has none. The easing is the element's `animation-timing-function`: a CSS
+ * animation applies it between its keyframes, and the timing of its effect stays `linear`.
+ */
+export const monthAnimations = (root: Element) =>
+  root
+    .getAnimations({ subtree: true })
+    .filter((animation): animation is CSSAnimation => 'animationName' in animation)
+    .filter((animation) => animation.animationName.startsWith('rdp-'))
+    .map((animation) => {
+      const effect = animation.effect as KeyframeEffect | null;
+      return {
+        name: animation.animationName,
+        duration: Number(effect?.getTiming().duration ?? 0),
+        easing: effect?.target ? getComputedStyle(effect.target).animationTimingFunction : '',
+      };
+    });
+
+/**
+ * The two slides of a month change, as the page reads them: the next month comes in from the end
+ * of the line and pushes the old one out toward the start, the previous month the other way round.
+ * `rdp-slide_in_right` and `rdp-slide_out_left` in left to right, the same swapped in right to left.
+ */
+export const monthSlideNames = (root: Element, change: 'next' | 'previous') => {
+  const rtl = getComputedStyle(root).direction === 'rtl';
+  const fromEnd = change === 'next';
+  const incoming = fromEnd !== rtl ? 'right' : 'left';
+  const outgoing = fromEnd !== rtl ? 'left' : 'right';
+  return [`rdp-slide_in_${incoming}`, `rdp-slide_out_${outgoing}`];
+};

@@ -4,6 +4,7 @@ import type { DateRange, Matcher } from 'react-day-picker';
 import { fr, ja } from 'react-day-picker/locale';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { bothDirections, directionBox, expectMirrored, keyToEnd } from '../storybook-helpers';
+import { monthAnimations, monthSlideNames, tokenMs } from '../storybook-motion';
 import { Calendar } from './Calendar';
 
 const meta = {
@@ -481,5 +482,166 @@ export const RangeEndsRoundOnTheirLogicalSides: Story = {
       await expect(radius('14', 'StartStart'), `${dir}: last day, start side`).toBe('0px');
       await expect(radius('14', 'StartEnd')).not.toBe('0px');
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// The element holding a calendar: where react-day-picker plays the month change.
+const rootOf = (box: Element) => box.querySelector<HTMLElement>('.rdp-root')!;
+// The sliding copy of the month that is leaving, while it slides.
+const leavingMonth = (root: Element) =>
+  root.querySelector<HTMLElement>('[data-animated-month][aria-hidden="true"]');
+
+/**
+ * The month slides when it changes, over 200 ms easing in and out: the next one comes in from the
+ * end of the line, the previous one from the start. The reduced setting stops it.
+ */
+export const MonthSlides: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <PickADay />,
+};
+
+/**
+ * The month change plays react-day-picker's own animation on the theme's tokens: the length is the
+ * base duration, the easing the in-out one, and the month that leaves is a copy nobody can reach.
+ */
+export const MonthSlideRunsOnTheTokens: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <PickADay />,
+  play: async ({ canvas, canvasElement }) => {
+    const root = rootOf(canvasElement);
+    await expect(monthAnimations(root)).toEqual([]);
+    await expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Go to the Next Month' }));
+    await expect(canvas.getByRole('grid', { name: 'June 2026' })).toBeVisible();
+    const running = monthAnimations(root);
+    await expect(running.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(monthSlideNames(root, 'next'))
+    );
+    for (const { duration, easing } of running) {
+      await expect(duration).toBe(tokenMs('--cosmos-motion-base'));
+      await expect(easing).toBe('cubic-bezier(0.4, 0, 0.2, 1)');
+    }
+    // The month that leaves is a copy kept until the slide is over: hidden, and out of reach.
+    const leaving = leavingMonth(root)!;
+    await expect(leaving).toHaveAttribute('inert');
+
+    await waitFor(() => expect(leavingMonth(root)).toBeNull(), { timeout: 2000 });
+    await expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1);
+    await expect(monthAnimations(root)).toEqual([]);
+
+    // And back: the previous month comes in from the start.
+    await userEvent.click(canvas.getByRole('button', { name: 'Go to the Previous Month' }));
+    await expect(monthAnimations(root).map(({ name }) => name)).toEqual(
+      expect.arrayContaining(monthSlideNames(root, 'previous'))
+    );
+    await waitFor(() => expect(leavingMonth(root)).toBeNull(), { timeout: 2000 });
+  },
+};
+
+/** The month enters from the end of the line: from the right in left to right, from the left in right to left. */
+export const MonthSlideFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => {
+    let count = 0;
+    return bothDirections(() => {
+      const nav = `Navigation ${++count}`;
+      return (
+        <Calendar
+          mode="single"
+          defaultMonth={new Date(2026, 4)}
+          today={new Date(2026, 4, 7)}
+          labels={{ labelNav: () => nav }}
+        />
+      );
+    });
+  },
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const root = rootOf(box);
+      await userEvent.click(within(box).getByRole('button', { name: 'Go to the Next Month' }));
+      const names = monthAnimations(root).map(({ name }) => name);
+      await expect(names, dir).toContain(
+        dir === 'ltr' ? 'rdp-slide_in_right' : 'rdp-slide_in_left'
+      );
+      await expect(names, dir).toContain(
+        dir === 'ltr' ? 'rdp-slide_out_left' : 'rdp-slide_out_right'
+      );
+      await waitFor(() => expect(leavingMonth(root)).toBeNull(), { timeout: 2000 });
+    }
+  },
+};
+
+/**
+ * With dropdowns in the caption, the month that leaves keeps its dropdowns out of sight: two sets of
+ * selects on top of each other would show for the length of the slide. A label caption crosses over.
+ */
+export const LeavingDropdownsAreHidden: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <PickADay
+      captionLayout="dropdown"
+      startMonth={new Date(2024, 0)}
+      endMonth={new Date(2028, 11)}
+    />
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const root = rootOf(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: 'Go to the Next Month' }));
+    const leaving = leavingMonth(root)!;
+    const caption = leaving.querySelector<HTMLElement>('[data-animated-caption]')!;
+    await expect(getComputedStyle(caption).visibility).toBe('hidden');
+    // The new month's caption is the only one showing, with its two selects.
+    const visible = [...root.querySelectorAll('select')].filter(
+      (select) => getComputedStyle(select).visibility !== 'hidden'
+    );
+    await expect(visible).toHaveLength(2);
+    await waitFor(() => expect(leavingMonth(root)).toBeNull(), { timeout: 2000 });
+  },
+};
+
+/** With the reduced setting the duration of the slide is 0: the month is there, and nothing is left over. */
+export const MonthSlideIsInstantWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <PickADay />,
+  play: async ({ canvas, canvasElement }) => {
+    const root = rootOf(canvasElement);
+    await expect(getComputedStyle(root).getPropertyValue('--rdp-animation_duration').trim()).toBe(
+      '0ms'
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Go to the Next Month' }));
+    await expect(canvas.getByRole('grid', { name: 'June 2026' })).toBeVisible();
+    for (const { duration } of monthAnimations(root)) await expect(duration).toBe(0);
+    await waitFor(() => expect(leavingMonth(root)).toBeNull(), { timeout: 2000 });
+    await expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1);
+  },
+};
+
+/** At rest, after any number of changes, the calendar holds one month and nothing is inert. */
+export const OnlyOneMonthIsLeftAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PickADay />,
+  play: async ({ canvas, canvasElement }) => {
+    const root = rootOf(canvasElement);
+    for (const name of [
+      'Go to the Next Month',
+      'Go to the Next Month',
+      'Go to the Previous Month',
+    ]) {
+      await userEvent.click(canvas.getByRole('button', { name }));
+    }
+    await expect(canvas.getByRole('grid', { name: 'June 2026' })).toBeVisible();
+    await waitFor(() => expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1));
+    await expect(root.querySelectorAll('[inert]')).toHaveLength(0);
+    await expect(monthAnimations(root)).toEqual([]);
   },
 };
