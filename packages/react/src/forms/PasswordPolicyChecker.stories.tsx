@@ -109,9 +109,18 @@ const unmetRuleContrastIn = (theme: string): Story => ({
   },
 });
 
-export const UnmetRuleContrastInLight = unmetRuleContrastIn('light');
-export const UnmetRuleContrastInSand = unmetRuleContrastIn('sand');
-export const UnmetRuleContrastInDeepBlue = unmetRuleContrastIn('deep-blue');
+export const UnmetRuleContrastInLight: Story = {
+  ...unmetRuleContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const UnmetRuleContrastInSand: Story = {
+  ...unmetRuleContrastIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+export const UnmetRuleContrastInDeepBlue: Story = {
+  ...unmetRuleContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 /** The tick and the cross are drawn, so each rule also says its state in words for a screen reader. */
 export const EachRuleSaysIfItIsMet: Story = {

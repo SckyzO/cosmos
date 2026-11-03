@@ -354,9 +354,18 @@ const pendingLabelContrastIn = (theme: string): Story => ({
   },
 });
 
-export const PendingLabelContrastInLight = pendingLabelContrastIn('light');
-export const PendingLabelContrastInSand = pendingLabelContrastIn('sand');
-export const PendingLabelContrastInDeepBlue = pendingLabelContrastIn('deep-blue');
+export const PendingLabelContrastInLight: Story = {
+  ...pendingLabelContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const PendingLabelContrastInSand: Story = {
+  ...pendingLabelContrastIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+export const PendingLabelContrastInDeepBlue: Story = {
+  ...pendingLabelContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its

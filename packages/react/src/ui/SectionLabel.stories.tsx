@@ -35,10 +35,13 @@ const contrastIn = (theme: string): Story => ({
   },
 });
 
-export const ContrastInLight = contrastIn('light');
-export const ContrastInSand = contrastIn('sand');
-export const ContrastInDark = contrastIn('dark');
-export const ContrastInDeepBlue = contrastIn('deep-blue');
+export const ContrastInLight: Story = { ...contrastIn('light'), tags: ['!dev', '!autodocs'] };
+export const ContrastInSand: Story = { ...contrastIn('sand'), tags: ['!dev', '!autodocs'] };
+export const ContrastInDark: Story = { ...contrastIn('dark'), tags: ['!dev', '!autodocs'] };
+export const ContrastInDeepBlue: Story = {
+  ...contrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 /** Letter spacing breaks the joins of Arabic script: right to left sets none. */
 export const NoLetterSpacingInRightToLeft: Story = {

@@ -314,8 +314,8 @@ export const CardFocusShowsRingInDark: Story = {
 };
 
 export const CardFocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...CardFocusShowsRingInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

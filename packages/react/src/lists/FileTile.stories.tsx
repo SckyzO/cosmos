@@ -392,6 +392,7 @@ export const NameIsTextWithoutHandler: Story = {
 /** The name truncates on one line, in both layouts, and the full name stays in its `title`. */
 export const LongNameTruncates: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="w-64">
       <ul>
@@ -446,6 +447,7 @@ export const ThumbnailHasEmptyAlt: Story = {
 /** `selected` sets `aria-current` on the name and draws the accent border, in every theme. */
 export const SelectedMarksTheName: Story = {
   ...HiddenTile,
+  tags: ['!dev', '!autodocs'],
   args: { selected: true, onOpen: fn() },
 };
 
@@ -472,6 +474,7 @@ export const SelectedMarksTheNameChecks: Story = {
 /** The kind tint is not the neutral one for a PDF, a spreadsheet, a folder: in every theme. */
 export const KindsAreTintedApart: Story = {
   ...Hidden,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <GridList cols={4}>
       {(['pdf', 'spreadsheet', 'folder', 'other'] as const).map((kind) => (

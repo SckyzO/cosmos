@@ -7,9 +7,11 @@ import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
 
+/** Empty, error and loading share one layout: tile, title, description, action. */
 const meta = {
   title: 'Feedback/States',
   parameters: { layout: 'padded' },
+  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
@@ -47,7 +49,6 @@ const Row = ({ compact }: { compact?: boolean }) => (
   </div>
 );
 
-/** Empty, error and loading share one layout: tile, title, description, action. */
 export const SideBySide: Story = { render: () => <Row /> };
 
 /** `compact` for a card or a table body. */

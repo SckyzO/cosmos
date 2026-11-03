@@ -1003,7 +1003,7 @@ const alphaOf = (color: string) => {
 
 /** A sticky header must be opaque in dark themes, or the rows scrolling under it show through. */
 export const StickyHeaderIsOpaqueInDarkThemes: Story = {
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
   render: () => (
     <StackedList>

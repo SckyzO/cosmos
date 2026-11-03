@@ -257,6 +257,10 @@ description is dropped), the links of the column with its title kept for screen 
 copyright and legal links, and the `Aside` at the end of the line. Below `lg` the parts stack and
 wrap. `SiteFooter.Banner` is for the `full` variant.
 
+For a simple footer, give `compact` a `SiteFooter.Bottom` and nothing else. Alone, it spreads over
+the line by itself: the copyright at the start, the legal links at the end, and the two stack on a
+phone.
+
 `theme` is `light` (default, follows the page theme like the light `Navbar`) or `dark`, which
 stays dark in every theme, the usual footer of a storefront with a light page. Keep the same
 `theme` on the `Navbar` and the footer to have the two match. `maxWidth` is `7xl` (default, the

@@ -235,7 +235,11 @@ const ProductPage = ({ startOpen = false, startIndex = 0 }: DemoProps) => {
  * A gallery whose tiles open the viewer: the page keeps `open` and `index`, and sets both from
  * `ImageGrid.Item onClick`. The viewer shows the large `src`; the grid keeps its own small picture.
  */
-export const FromAGallery: Story = { render: () => <Gallery /> };
+export const FromAGallery: Story = {
+  // A frame the size of the closed page, not the 800px of the meta: the viewer fills whatever it gets.
+  parameters: portalDocsParams(520),
+  render: () => <Gallery />,
+};
 
 /** The viewer open on picture 3 of 12: counter and close on top, arrows on the sides, the caption below. */
 export const Open: Story = {
@@ -291,7 +295,10 @@ export const Failed: Story = {
 };
 
 /** A product page: each slide of the carousel is a button that opens the viewer at its own picture. */
-export const FromAProductCarousel: Story = { render: () => <ProductPage /> };
+export const FromAProductCarousel: Story = {
+  parameters: portalDocsParams(460),
+  render: () => <ProductPage />,
+};
 
 /** Below `sm` the picture takes the width, and the arrows leave the edges for the band under it, 44px each. */
 export const OnAPhone: Story = {

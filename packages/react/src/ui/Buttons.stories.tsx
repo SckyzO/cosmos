@@ -731,7 +731,7 @@ export const FocusShowsRingInDark: Story = {
 
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

@@ -350,7 +350,7 @@ export const MenuItemFocusShowsRingInDark: Story = {
 
 export const MenuItemFocusShowsRingInLight: Story = {
   ...MenuItemFocusShowsRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

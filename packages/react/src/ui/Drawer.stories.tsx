@@ -387,8 +387,14 @@ const fitsAPhone = (size: 'md' | 'lg', side: 'start' | 'end'): Story => ({
   },
 });
 
-export const MediumDrawerFitsAPhone = fitsAPhone('md', 'end');
-export const LargeDrawerFitsAPhone = fitsAPhone('lg', 'start');
+export const MediumDrawerFitsAPhone: Story = {
+  ...fitsAPhone('md', 'end'),
+  tags: ['!dev', '!autodocs'],
+};
+export const LargeDrawerFitsAPhone: Story = {
+  ...fitsAPhone('lg', 'start'),
+  tags: ['!dev', '!autodocs'],
+};
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -1523,10 +1529,10 @@ const drawerMirrors = (side: 'start' | 'end'): Story => ({
 });
 
 /** A start drawer sits at the left edge, and at the right one in right to left. */
-export const StartDrawerMirrors: Story = drawerMirrors('start');
+export const StartDrawerMirrors: Story = { ...drawerMirrors('start'), tags: ['!dev', '!autodocs'] };
 
 /** An end drawer sits at the right edge, and at the left one in right to left. */
-export const EndDrawerMirrors: Story = drawerMirrors('end');
+export const EndDrawerMirrors: Story = { ...drawerMirrors('end'), tags: ['!dev', '!autodocs'] };
 
 /**
  * The title is an `h2`, as a `Modal`'s is: a drawer opens over a page whose title is the `h1`

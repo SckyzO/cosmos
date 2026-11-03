@@ -1559,6 +1559,7 @@ export const DisabledDoesNothing: Story = {
 /** In a form, `name` posts the value as on a Textarea: a read-only editor posts it, a disabled one does not. */
 export const FormPostsWhatATextareaPosts: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <form aria-label="Notes">
       <RichTextEditor name="open" label="Open" defaultValue="<p>Kept</p>" />

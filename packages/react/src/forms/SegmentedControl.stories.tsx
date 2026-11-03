@@ -202,8 +202,8 @@ export const FocusShowsWhiteRingOnCheckedSegmentInDark: Story = {
 };
 
 export const FocusShowsWhiteRingOnCheckedSegmentInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsWhiteRingOnCheckedSegmentInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
