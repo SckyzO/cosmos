@@ -438,8 +438,10 @@ function StackedListItem({
     </IconButton>
   );
 
+  // Transparent, not gone, so a keyboard reaches them; and out of the pointer's way while they are,
+  // or a tap near the time, on a touch screen that reports `(hover: hover)`, would hit one unseen.
   const actionButtons = inlineActions && (
-    <div className="relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+    <div className="pointer-events-none relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:pointer-events-auto group-focus-within/row:opacity-100 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
       {rowActions.map(({ label, icon: Icon, intent, disabled, onSelect }, i) => (
         <IconButton
           key={label}
