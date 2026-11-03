@@ -1,8 +1,12 @@
 import { clsx } from 'clsx';
 import { type HealthStatus, STATUS_DOT } from './types';
 
+type HealthDotSize = 'xs' | 'sm' | 'md' | 'lg';
+
 export type HealthDotProps = {
   status: HealthStatus;
+  /** `xs` 6px, `sm` 8px, `md` 10px or `lg` 12px. Default `md`. */
+  size?: HealthDotSize;
   /** Show a pulsing animation around the dot */
   pulse?: boolean;
   /**
@@ -13,17 +17,30 @@ export type HealthDotProps = {
   className?: string;
 };
 
+const SIZE: Record<HealthDotSize, string> = {
+  xs: 'size-1.5',
+  sm: 'size-2',
+  md: 'size-2.5',
+  lg: 'size-3',
+};
+
 /**
- * HealthDot — small colored circle indicator (10px).
+ * HealthDot — small colored circle indicator (10px by default, 6 to 12px with `size`).
  *
  * Use for compact status displays (next to a label, in a row, in a chart legend).
  * Set `pulse` to draw attention (recommended for CRIT).
  */
-export const HealthDot = ({ status, pulse = false, label, className }: HealthDotProps) => (
+export const HealthDot = ({
+  status,
+  size = 'md',
+  pulse = false,
+  label,
+  className,
+}: HealthDotProps) => (
   <span
     role={label ? 'img' : undefined}
     aria-label={label}
-    className={clsx('relative flex h-2.5 w-2.5 shrink-0', className)}
+    className={clsx('relative flex shrink-0', SIZE[size], className)}
   >
     {pulse && (
       <span
@@ -33,7 +50,7 @@ export const HealthDot = ({ status, pulse = false, label, className }: HealthDot
         )}
       />
     )}
-    <span className={clsx('relative inline-flex h-2.5 w-2.5 rounded-full', STATUS_DOT[status])} />
+    <span className={clsx('relative inline-flex size-full rounded-full', STATUS_DOT[status])} />
     {!label && <span className="sr-only">{status}</span>}
   </span>
 );
