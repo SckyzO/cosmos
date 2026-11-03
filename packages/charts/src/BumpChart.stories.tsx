@@ -68,6 +68,22 @@ const Box = ({ width, ...props }: BumpChartProps & { width: number }) => (
   </div>
 );
 
+/**
+ * A box that is narrow on purpose, in a card that is far wider: a dashed frame and a caption say
+ * so, or it reads as a chart that failed to fill its card.
+ */
+const NarrowBox = ({ caption, ...props }: BumpChartProps & { width: number; caption: string }) => (
+  <figure className="m-0">
+    <div
+      className="rounded-lg border border-dashed border-gray-300 p-2 dark:border-gray-600"
+      style={{ width: props.width + 18, maxWidth: '100%' }}
+    >
+      <Box {...props} />
+    </div>
+    <figcaption className="mt-2 text-xs text-[var(--color-text-secondary)]">{caption}</figcaption>
+  </figure>
+);
+
 const meta = {
   title: 'Charts/Bump',
   component: BumpChart,
@@ -187,7 +203,9 @@ export const ReferenceLineInChildrenChecks: Story = {
  */
 export const Narrow: Story = {
   args: { series: PRODUCTS },
-  render: (args) => <Box {...args} width={343} />,
+  render: (args) => (
+    <NarrowBox {...args} width={343} caption="A 343px box, as on a phone: narrow on purpose." />
+  ),
 };
 
 /**
@@ -197,7 +215,13 @@ export const Narrow: Story = {
 export const TooNarrowForDiscs: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: PRODUCTS },
-  render: (args) => <Box {...args} width={260} />,
+  render: (args) => (
+    <NarrowBox
+      {...args}
+      width={260}
+      caption="A 260px box: narrow on purpose, too narrow for the discs."
+    />
+  ),
   play: async ({ canvasElement }) => {
     await drawn(canvasElement, 5);
     await waitFor(() => expect(smallDots(canvasElement)).toHaveLength(40));
