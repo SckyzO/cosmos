@@ -17,15 +17,19 @@ const animationOf = (page: Page, selector: string) =>
     .locator(selector)
     .first()
     .evaluate((el) => getComputedStyle(el).animationName);
+// In ms: the built stylesheet is minified, which writes 200ms as .2s.
 const baseDuration = (page: Page) =>
-  page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--cosmos-motion-base').trim()
-  );
+  page.evaluate(() => {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--cosmos-motion-base')
+      .trim();
+    return Math.round(parseFloat(raw) * (raw.endsWith('ms') ? 1 : 1000));
+  });
 
 test('a decorative loop runs by default', async ({ page }) => {
   await open(page, PULSING_DOT);
   expect(await animationOf(page, '[class*="animate-ping"]')).toBe('ping');
-  expect(await baseDuration(page)).toBe('200ms');
+  expect(await baseDuration(page)).toBe(200);
 });
 
 test('prefers-reduced-motion stops a decorative loop and zeroes the durations', async ({
@@ -34,7 +38,7 @@ test('prefers-reduced-motion stops a decorative loop and zeroes the durations', 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page, PULSING_DOT);
   expect(await animationOf(page, '[class*="animate-ping"]')).toBe('none');
-  expect(await baseDuration(page)).toBe('0ms');
+  expect(await baseDuration(page)).toBe(0);
 });
 
 test('data-motion="reduced" does the same, whatever the device asks', async ({ page }) => {
@@ -42,11 +46,11 @@ test('data-motion="reduced" does the same, whatever the device asks', async ({ p
   await open(page, PULSING_DOT);
   await page.evaluate(() => document.documentElement.setAttribute('data-motion', 'reduced'));
   expect(await animationOf(page, '[class*="animate-ping"]')).toBe('none');
-  expect(await baseDuration(page)).toBe('0ms');
+  expect(await baseDuration(page)).toBe(0);
 
   await page.evaluate(() => document.documentElement.removeAttribute('data-motion'));
   expect(await animationOf(page, '[class*="animate-ping"]')).toBe('ping');
-  expect(await baseDuration(page)).toBe('200ms');
+  expect(await baseDuration(page)).toBe(200);
 });
 
 test('a spinner keeps turning under reduced motion: it says "in progress"', async ({ page }) => {
