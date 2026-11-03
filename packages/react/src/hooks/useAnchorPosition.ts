@@ -233,6 +233,11 @@ export type AnchorPosition = {
  * stays in place. It measures in a layout effect, so the panel is placed before the browser
  * paints it. Pass another ref object to anchor the panel to another element.
  *
+ * `anchorRef` may point at another element while the panel stays open (a tooltip that follows
+ * the focus from one mark to the next): the hook reads it after every commit, and measures the
+ * new element before the browser paints. Whoever moves the ref re-renders the panel's component
+ * in the same update, which is what makes the hook look again.
+ *
  * A panel rendered in `container`, the element of a modal dialog (`usePortalContainer`), is
  * placed relative to that element's origin rather than the viewport's, which is what its
  * fixed position means once the container has a transform (the sliding Drawer panel).
@@ -250,6 +255,15 @@ export function useAnchorPosition(
   // Set when the anchor wasn't attached yet: a compound component's trigger written after
   // its panel gets its ref after the panel's layout effect ran. Re-runs the effect once.
   const [missed, setMissed] = useState(false);
+  // The element the ref points at, read after every commit while open: the ref is a mutable box
+  // the host can move to another element, which re-renders this panel but changes none of the
+  // effect's other dependencies. The state moves only with the element, so this does not loop.
+  const [followed, setFollowed] = useState<HTMLElement | null>(null);
+  // After every commit on purpose, as `useParentDirection` does.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (open) setFollowed(anchorRef.current);
+  });
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -285,7 +299,7 @@ export function useAnchorPosition(
       window.removeEventListener('scroll', measure, true);
       observer.disconnect();
     };
-  }, [open, anchorRef, missed, panel, container]);
+  }, [open, anchorRef, followed, missed, panel, container]);
 
   if (!measures) {
     return {
