@@ -191,7 +191,8 @@ const NAV_BUTTON = clsx(
  * dots, and picking a day lists its events under the grid.
  *
  * The week and day views draw a scrolling grid of 24 hours, 48px each, opened at 7 AM (or an hour
- * before the first event). All-day events sit in a row above it; timed ones are placed at their
+ * before the first event, also when the events arrive after the grid is drawn, unless the person
+ * has scrolled it). All-day events sit in a row above it; timed ones are placed at their
  * time, side by side when they overlap, as many as the width allows (72px each, two at least),
  * the rest behind a "+N" button. A line marks the current time. Below `sm` a week is a strip of
  * its seven days and the grid of the picked day.

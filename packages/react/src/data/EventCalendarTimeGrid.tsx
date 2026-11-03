@@ -213,12 +213,28 @@ export const EventCalendarTimeGrid = ({
   );
   const bars = useMemo(() => layoutAllDay(events, days), [events, days]);
 
-  // Opens on 7 AM, or the hour before the first event. Only when the grid appears: moving on to
-  // another week keeps the scroll.
-  const [opensAt] = useState(() => openHour(firstStart(events, days)));
+  // Opens on 7 AM, or the hour before the first event. When the grid appears, and when the events
+  // of the days it shows arrive or change after that (a fetch's answer) as long as the person has
+  // not scrolled it themselves. Moving on to another week keeps the scroll.
+  const opensAt = openHour(firstStart(events, days));
+  const period = `${isoDate(days[0])}/${days.length}`;
+  const opened = useRef<{ period: string; hour: number } | null>(null);
+  // The scroll position the grid put itself at, to tell the scroll event it causes from a person's.
+  const placed = useRef<number | null>(null);
+  const takenOver = useRef(false);
   useLayoutEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = opensAt * HOUR_HEIGHT;
-  }, [opensAt]);
+    const last = opened.current;
+    opened.current = { period, hour: opensAt };
+    const box = scroller.current;
+    const follows =
+      last === null || (last.period === period && last.hour !== opensAt && !takenOver.current);
+    if (!box || !follows) return;
+    box.scrollTop = opensAt * HOUR_HEIGHT;
+    placed.current = box.scrollTop;
+  }, [opensAt, period]);
+  const onScroll = () => {
+    if (scroller.current?.scrollTop !== placed.current) takenOver.current = true;
+  };
 
   const shownCursor = cursor && days.some((day) => sameDay(day, cursor.date)) ? cursor : null;
   useEffect(() => {
@@ -298,6 +314,7 @@ export const EventCalendarTimeGrid = ({
         role={interactive ? 'application' : 'group'}
         aria-label={label}
         tabIndex={0}
+        onScroll={onScroll}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
