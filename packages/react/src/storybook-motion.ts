@@ -52,6 +52,16 @@ export const transitionMs = (element: Element) => {
 };
 
 /**
+ * The computed delay of a transition, in ms: what it waits before it starts. The first of the list,
+ * like `transitionMs`.
+ */
+export const transitionDelayMs = (element: Element) => {
+  const [first = '0s'] = getComputedStyle(element).transitionDelay.split(',');
+  const value = parseFloat(first);
+  return Math.round(first.trim().endsWith('ms') ? value : value * 1000);
+};
+
+/**
  * The `animation-name` of a loop (a ping, a pulse, a spinner) as it is, and once reduced motion is
  * asked for with `data-motion="reduced"`: `motion-reduce:` follows it like the device's
  * `prefers-reduced-motion`, which `tests/e2e/specs/reduced-motion.spec.ts` checks in a real
