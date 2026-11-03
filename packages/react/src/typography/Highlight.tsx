@@ -10,6 +10,12 @@ export type HighlightProps = {
    * for an empty query.
    */
   query: string;
+  /**
+   * Match a letter whatever its accents, on both sides: `ete` marks `été` and `café` finds `cafe`.
+   * The text is drawn as written, accents included. Letters Unicode does not decompose (`ø`, `ß`)
+   * stay themselves. Default `false`.
+   */
+  ignoreAccents?: boolean;
 };
 
 /**
@@ -21,9 +27,9 @@ export type HighlightProps = {
  *
  * Built from text nodes and `<mark>` elements only, never `dangerouslySetInnerHTML`.
  */
-export const Highlight = ({ text, query }: HighlightProps) => (
+export const Highlight = ({ text, query, ignoreAccents = false }: HighlightProps) => (
   <>
-    {highlightParts(text, query).map((part, index) =>
+    {highlightParts(text, query, { ignoreAccents }).map((part, index) =>
       part.match ? (
         <mark
           key={index}

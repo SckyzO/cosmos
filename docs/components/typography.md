@@ -27,5 +27,9 @@ a snippet or a table cell:
 - The mark is the accent tint with the primary text colour on top, so it reads in the four themes
   and on every accent, even over muted or coloured text.
 
-Matching is on the letters as written: it does not ignore accents (`cafe` does not mark `café`).
-Filter the list yourself: `Highlight` only marks what you decide to show.
+Matching is on the letters as written: by default it does not ignore accents (`cafe` does not mark
+`café`). Set `ignoreAccents` and both sides are compared without their accents: `ete` marks `été`
+and `café` marks `cafe`, while the text is still drawn as written. It covers the accents Unicode
+decomposes (`é`, `ü`, `å`, `ñ`); a letter such as `ø` or `ß` is its own letter and only matches
+itself. Filter the list yourself: `Highlight` only marks what you decide to show, so a filter that
+ignores accents needs the same rule on your side.
