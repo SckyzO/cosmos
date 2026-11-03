@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ⚠ BREAKING CHANGES
 
-* **react:** Backdrop's blur prop is replaced by variant ('dim' by default, no blur; 'blur' for an 8px blur under a light veil, 'blur-dark' under a dark one). The scrim of Modal, ConfirmationModal, HelpOverlay, Drawer, Customizer, Shell's drawer and CommandPalette is now Backdrop's dim: its colour changes (a 4px blur is gone from the Modal, the Drawer's grey is replaced by the theme's dim veil). Pass backdrop="blur-dark" for a blur.
+* **react:** Backdrop's blur prop is replaced by variant ('dim' by default, no blur; 'blur' for an 8px blur under a light veil, 'blur-dark' under a dark one). The scrim of Modal, ConfirmationModal, HelpOverlay, Drawer, Customizer, Shell's drawer and CommandPalette is now Backdrop's dim: its colour changes (an 8px blur is gone from the Modal, the Drawer's grey is replaced by the theme's dim veil). Pass backdrop="blur-dark" for a blur.
 
 ### Features
 
