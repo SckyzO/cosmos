@@ -5,6 +5,7 @@ import { useControllableState } from '../hooks/useControllableState';
 import { markInk, normalizeHex } from './colorHex';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { RequiredMark } from './RequiredMark';
 
@@ -240,17 +241,16 @@ export const ColorInput = ({
           )}
         />
       </div>
-      {helper && (
-        <span
-          id={descId}
-          className={clsx(
-            'mt-1 block text-xs',
-            message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {helper}
-        </span>
-      )}
+      <FieldMessage
+        show={!!helper}
+        id={descId}
+        className={clsx(
+          'mt-1 block text-xs',
+          message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {helper}
+      </FieldMessage>
     </div>
   );
 };

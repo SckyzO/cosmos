@@ -15,6 +15,7 @@ import { useControllableState } from '../hooks/useControllableState';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { useListboxNavigation } from './listboxNavigation';
 import { PHONE_COUNTRIES } from './phoneCountries';
 import {
@@ -432,17 +433,16 @@ export const PhoneInput = ({
           )}
         </div>
       </FloatingPanel>
-      {helper && (
-        <span
-          id={descId}
-          className={clsx(
-            'mt-1 block text-xs',
-            message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {helper}
-        </span>
-      )}
+      <FieldMessage
+        show={!!helper}
+        id={descId}
+        className={clsx(
+          'mt-1 block text-xs',
+          message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {helper}
+      </FieldMessage>
     </div>
   );
 };

@@ -11,6 +11,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 
@@ -316,17 +317,17 @@ export const Combobox = ({
           )}
         </ul>
       </FloatingPanel>
-      {hasDesc && (
-        <p
-          id={descId}
-          className={clsx(
-            'mt-1.5 text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {error ?? helperText}
-        </p>
-      )}
+      <FieldMessage
+        show={hasDesc}
+        as="p"
+        id={descId}
+        className={clsx(
+          'mt-1.5 text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {error ?? helperText}
+      </FieldMessage>
     </div>
   );
 };

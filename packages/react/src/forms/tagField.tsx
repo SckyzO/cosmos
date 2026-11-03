@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useCallback, useState, type ReactNode } from 'react';
 import type { TagSize } from '../ui/Tag';
+import { FieldMessage } from './FieldMessage';
 import { FIELD_PLACEHOLDER, FIELD_PLAINTEXT, fieldClass, type FieldSize } from './fieldRecipe';
 
 // Shared by MultiSelect and TagInput: a field whose values are Tags that wrap onto more lines,
@@ -63,17 +64,20 @@ export const focusInputOnBoxPress = (
 /**
  * Helper or error text under a field; the error replaces the helper. `end` is a short text at the
  * end of the line (a count): it is for sight only, the field says it to assistive technology
- * itself.
+ * itself. Without `end` the text is the field's message line (`FieldMessage`): `show` false folds
+ * it away, where a field that has its text from the start leaves it out.
  */
 export const TagFieldDescription = ({
   id,
   error,
   end,
+  show = true,
   children,
 }: {
   id: string;
   error?: boolean;
   end?: ReactNode;
+  show?: boolean;
   children?: ReactNode;
 }) => {
   const text = clsx(
@@ -82,9 +86,9 @@ export const TagFieldDescription = ({
   );
   if (end === undefined) {
     return (
-      <p id={id} className={clsx('mt-1', text)}>
+      <FieldMessage show={show} as="p" id={id} className={clsx('mt-1', text)}>
         {children}
-      </p>
+      </FieldMessage>
     );
   }
   return (

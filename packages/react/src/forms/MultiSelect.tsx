@@ -352,11 +352,9 @@ export const MultiSelect = ({
           )}
         </ul>
       </FloatingPanel>
-      {hasDesc && (
-        <TagFieldDescription id={descId} error={!!error}>
-          {error ?? helperText}
-        </TagFieldDescription>
-      )}
+      <TagFieldDescription show={hasDesc} id={descId} error={!!error}>
+        {error ?? helperText}
+      </TagFieldDescription>
       <LiveRegion message={message} />
     </div>
   );
