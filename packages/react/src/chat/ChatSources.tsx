@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { useId } from 'react';
+import { SectionLabel } from '../ui/SectionLabel';
 import { hostOf, isHttpUrl } from './httpUrl';
 
 export type ChatSource = {
@@ -37,12 +38,9 @@ export const ChatSources = ({ sources, label = 'Sources', className }: ChatSourc
   if (sources.length === 0) return null;
   return (
     <div className={className}>
-      <p
-        id={captionId}
-        className="text-3xs mb-1.5 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase"
-      >
+      <SectionLabel id={captionId} className="mb-1.5">
         {label}
-      </p>
+      </SectionLabel>
       <ol aria-labelledby={captionId} className="flex flex-wrap gap-1.5">
         {sources.map(({ title, href, domain }, i) => {
           const link = isHttpUrl(href);
