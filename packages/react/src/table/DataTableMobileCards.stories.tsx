@@ -4,6 +4,16 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Menu } from '../ui/Menu';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  foldOf,
+  closedRotation,
+  rotationOf,
+} from '../storybook-folds';
 import { DataTable } from './DataTable';
 import { RowActionsMenu } from './RowActionsMenu';
 import {
@@ -467,9 +477,11 @@ export const CardChevronExpandsAndCollapses: Story = {
     const detailBox = document.getElementById(open.getAttribute('aria-controls')!)!;
     await expect(card('1').contains(detailBox)).toBe(true);
     await expect(within(detailBox).getByText(/joined the Core team/)).toBeVisible();
-    await expect(detailBox.getBoundingClientRect().top).toBeGreaterThan(
-      within(card('1')).getByText('Squad').getBoundingClientRect().bottom
-    );
+    await expect(
+      within(detailBox)
+        .getByText(/joined the Core team/)
+        .getBoundingClientRect().top
+    ).toBeGreaterThan(within(card('1')).getByText('Squad').getBoundingClientRect().bottom);
     expectNoHorizontalOverflow();
     // The keyboard does the same, and the toggle does not select the card.
     chevron('1', true).focus();
@@ -479,6 +491,78 @@ export const CardChevronExpandsAndCollapses: Story = {
     await expect(
       within(card('1')).getByRole('checkbox', { name: 'Select row user-1' })
     ).not.toBeChecked();
+  },
+};
+
+/**
+ * A card's detail unfolds under its fields in 200 ms and folds back, the chevron turning with it,
+ * as the detail row of the table does.
+ */
+export const CardDetailUnfolds: Story = {
+  ...ExpandableCards,
+  parameters: { settleMotion: false },
+  render: () => (
+    <DataTable
+      aria-label="Users"
+      rows={rows.slice(0, 4)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      renderExpandedRow={userDetail}
+    />
+  ),
+};
+
+export const CardDetailUnfoldsAndFoldsBack: Story = {
+  ...ExpandableCards,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowFolds>
+      <DataTable
+        aria-label="Users"
+        rows={rows.slice(0, 4)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        renderExpandedRow={userDetail}
+        defaultExpandedRows={new Set(['user-2'])}
+      />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const toggle = (id: string, open: boolean) =>
+      canvas.getByRole('button', { name: `${open ? 'Hide' : 'Show'} details for user-${id}` });
+
+    // Open from the first render: there, at rest, nothing played.
+    const started = foldOf(toggle('2', true));
+    await expectFoldOpen(started);
+    await expect(started.getAnimations()).toHaveLength(0);
+
+    // Opening: reachable at once, clipping and growing, then at rest.
+    const first = toggle('1', false);
+    const chevron = first.querySelector('svg')!;
+    await expect(rotationOf(chevron)).toBe(closedRotation(chevron));
+    await userEvent.click(first);
+    const fold = foldOf(toggle('1', true));
+    await expect(fold.inert).toBe(false);
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('hidden');
+    await expect(fold.getAnimations().length).toBeGreaterThan(0);
+    const midway = fold.getBoundingClientRect().height;
+    await finishAnimations(fold.closest('li')!);
+    await expectFoldOpen(fold);
+    await expect(midway).toBeLessThan(fold.getBoundingClientRect().height);
+    await expect(rotationOf(chevron)).toBe('90deg');
+
+    // Closing: inert and hidden at once, still there while it folds, gone once it has.
+    await userEvent.click(toggle('1', true));
+    await expect(fold.isConnected).toBe(true);
+    expectFoldClosed(fold);
+    await expect(fold.getBoundingClientRect().height).toBeGreaterThan(0);
+    await finishAnimations(fold.closest('li')!);
+    await waitFor(() => expect(fold.isConnected).toBe(false));
+    await expect(toggle('1', false)).not.toHaveAttribute('aria-controls');
+    expectNoHorizontalOverflow();
   },
 };
 
