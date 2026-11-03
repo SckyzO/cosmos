@@ -57,8 +57,11 @@ holds no selection, no read flags and no open row of its own.
 - `actions` is data: `label`, `icon`, `onSelect`, and `intent="danger"` or `disabled` when needed.
   On a wide screen they are icon buttons in place of the `timestamp`, transparent until the row is
   hovered or has focus. They stay in the tab order and the accessibility tree the whole time, so a
-  keyboard reaches them. Below `sm`, and on a screen with no hover, they fold into one "More
-  actions" menu next to the star. `trailing` stays for anything else.
+  keyboard reaches them, but they take no pointer until they are shown: a tap near the time, on a
+  touch screen that still reports hover, lands on the row and not on an action nobody can see.
+  Below `sm`, and on a screen with no hover, they fold into one "More actions" menu next to the
+  star. `trailing` stays for anything else. A `timestamp` ends at the end of the row, in a row with
+  or without content after it.
 - `StackedList.Header` becomes a selection bar when it gets `checked` or `onCheckedChange`: a
   select-all checkbox (mixed with `indeterminate`), the count as its children, and `actions` at the
   end for the bulk buttons. It does not wrap, so make those icon-only on a phone.
