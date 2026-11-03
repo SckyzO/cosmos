@@ -509,7 +509,10 @@ export const IconOnlyChecks: Story = {
     await userEvent.hover(list);
     const tip = page.getByRole('tooltip', { name: 'List' });
     await waitFor(() => expect(tip).toBeVisible());
-    await expect(list).toHaveAccessibleDescription('List');
+    // The label is the name and nothing else: the tooltip is not read a second time as a description.
+    await expect(list).toHaveAccessibleName('List');
+    await expect(list).not.toHaveAccessibleDescription();
+    await expect(list).not.toHaveAttribute('aria-describedby');
     await userEvent.unhover(list);
     await waitFor(() => expect(tip).not.toBeVisible());
 
