@@ -276,6 +276,21 @@ export const LineItemsEditor = ({
   const patch = (id: string, changes: Partial<Omit<LineItem, 'id'>>) =>
     setLines((current) => current.map((line) => (line.id === id ? { ...line, ...changes } : line)));
 
+  // Picking an entry makes the combobox call `onChange` with its label and, right after in the same
+  // event, `onSelect` with the entry. That is one edit: a label that is an entry's waits a
+  // microtask for the `onSelect` that sets it with the rate, and is applied alone when none comes
+  // (the whole label typed). The combobox keeps its own text, so the wait changes nothing on screen.
+  const heldItem = useRef<{ id: string; item: string } | null>(null);
+  const holdItem = (id: string, item: string) => {
+    heldItem.current = { id, item };
+    queueMicrotask(() => {
+      const held = heldItem.current;
+      if (!held) return;
+      heldItem.current = null;
+      patch(held.id, { item: held.item });
+    });
+  };
+
   const add = () => {
     let id = `${baseId}-${serial.current++}`;
     while (lines.some((line) => line.id === id)) id = `${baseId}-${serial.current++}`;
@@ -396,8 +411,13 @@ export const LineItemsEditor = ({
                   allowCustomValue
                   options={options}
                   value={line.item}
-                  onChange={(item) => patch(line.id, { item })}
+                  onChange={(item) =>
+                    options.some((option) => option.value === item)
+                      ? holdItem(line.id, item)
+                      : patch(line.id, { item })
+                  }
                   onSelect={(option) => {
+                    heldItem.current = null;
                     const rate = rateOf(option.label);
                     patch(line.id, { item: option.label, ...(rate === undefined ? {} : { rate }) });
                   }}
