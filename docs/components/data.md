@@ -64,7 +64,7 @@ or Enter to drop it, Escape to put it back; a live region announces each step. E
 an actions menu ("Move to" the other columns, "Move up", "Move down"), so the board works without
 dragging. `onCardOpen` makes the whole card a button, `onAddCard` adds an "Add card" button to each
 column, `renderCard` replaces what is inside a card (the grip and the actions menu stay), and
-`loading` shows skeleton columns. A column takes an `intent` for the dot before its title and an
+`loading` shows skeleton columns, and the board fades in when the cards arrive. A column takes an `intent` for the dot before its title and an
 `empty` node for when it has no cards. Below `sm` the columns scroll sideways, one column wide.
 
 Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
@@ -335,6 +335,11 @@ the line: a `ProgressRing` next to a percentage. The figure keeps at least 9rem,
 narrow for both the chart drops under it, at the start of the line, and nothing widens the page. The
 default, `chartPosition="bottom"`, is the chart under the delta at the full width of the card, for a
 sparkline.
+
+With `href` or `onClick` the whole card is one link or button: its border turns to the accent and it
+rises 2px with a soft shadow under the pointer, and rises 2px on keyboard focus, over 200ms (on
+focus the ring stands where the shadow would). While `loading`, the figures are skeletons; when they arrive
+they fade in over 200ms, unless the card had them from the first render.
 
 `featured` is for the one figure a dashboard leads with. The card takes the tinted surface of its
 meaning, the accent for a neutral card and the intent's color for `warning` and `danger`, and its

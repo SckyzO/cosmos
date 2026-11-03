@@ -192,7 +192,8 @@ error.
 ```
 
 - `loading` draws a skeleton, sets `aria-busy` on the card and adds a status line for screen
-  readers ("Loading Revenue over time…").
+  readers ("Loading Revenue over time…"). When it ends, the body fades in over 200ms; a card that
+  never loaded does not fade.
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
   `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
 - `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`

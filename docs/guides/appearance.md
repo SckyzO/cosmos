@@ -136,6 +136,16 @@ who asked their system for less motion gets it with no attribute. With both off,
 default. A panel that closes unmounts at once when nothing is left to play, so nothing waits for
 an animation that does not run.
 
+Some small ones answer an action or a state, and follow the same tokens. A pressed `Button` sits 1px
+lower and comes back over 80ms (`variant="link"`, a disabled and a loading button stay still).
+A card that can be clicked, a `Card` with `interactive`, a `KpiCard` with `href` or `onClick`, the
+cards of `OptionPicker` and `PalettePicker`, rises 2px with a soft shadow under the pointer, and
+2px on keyboard focus, over 200ms. The copy icon of `Clipboard` (and of the copy button of
+`CodeBlock`) cross-fades into a check over 120ms and back after its 1.5 seconds, and the icons of
+`ThemeToggle` turn a quarter as one theme gives way to the next. Content takes the place of a
+skeleton with a fade over 200ms (`KpiCard`, `BarList`, `KanbanBoard` and `SectionCard`, on their
+`loading` prop), unless it was there from the first render: nothing fades when a page loads.
+
 The decorative loops, which never end (the ping of `HealthDot` and of the `NotificationsPanel`
 count, the pulse of `Skeleton`, of the auto refresh dot, of `StatefulSaveButton` when it has
 unsaved changes and of the `Lightbox` while a picture loads), stop under either. Spinners keep
@@ -179,7 +189,8 @@ the attributes in its root layout instead, as the
   shell's layout, sidebar mode and container ([below](#customizer)).
 - **`ThemeToggle`** is one icon button for the theme alone, for a topbar. It cycles through the
   `themes` you list, light and dark by default, and its icon shows the current one (a sun, a
-  sunset for sand, a moon, a moon with a star for deep blue, a monitor for `system`). It is
+  sunset for sand, a moon, a moon with a star for deep blue, a monitor for `system`). The icons
+  turn a quarter and fade from one theme to the next, and the turn mirrors in right to left. It is
   controlled: `onChange` gets the next theme, and you apply it.
 
 ```tsx
