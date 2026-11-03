@@ -20,7 +20,6 @@ import {
   type ProgressBarSegment,
   type ProgressBarSize,
 } from './ProgressBar';
-import { SectionLabel } from './SectionLabel';
 
 const meta = {
   title: 'Feedback/Progress Bar',
@@ -40,7 +39,7 @@ export const Sizes: Story = {
     <div className="space-y-3">
       {(['xs', 'sm', 'md', 'lg'] as ProgressBarSize[]).map((s) => (
         <div key={s} className="flex items-center gap-3">
-          <SectionLabel className="w-6">{s}</SectionLabel>
+          <span className="w-6 text-xs text-gray-600 dark:text-gray-400">{s}</span>
           <ProgressBar value={62} size={s} aria-label={`Size ${s}`} className="flex-1" />
         </div>
       ))}
@@ -55,7 +54,7 @@ export const Intents: Story = {
     <div className="space-y-3">
       {INTENTS.map((i) => (
         <div key={i} className="flex items-center gap-3">
-          <SectionLabel className="w-16">{i}</SectionLabel>
+          <span className="w-16 text-xs text-gray-600 dark:text-gray-400">{i}</span>
           <ProgressBar
             value={75}
             intent={i}

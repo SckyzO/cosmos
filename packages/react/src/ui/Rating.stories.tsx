@@ -15,7 +15,6 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { Rating } from './Rating';
-import { SectionLabel } from './SectionLabel';
 
 const meta = {
   title: 'Feedback/Rating',
@@ -71,7 +70,7 @@ export const Sizes: Story = {
     <div className="flex flex-col gap-4">
       {(['sm', 'md', 'lg'] as const).map((s) => (
         <div key={s} className="flex flex-col gap-1">
-          <SectionLabel>{s}</SectionLabel>
+          <span className="text-xs text-gray-600 dark:text-gray-400">{s}</span>
           <Rating {...args} size={s} />
         </div>
       ))}
