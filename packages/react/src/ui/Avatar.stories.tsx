@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
-import { Avatar } from './Avatar';
+import { Avatar, type AvatarSize } from './Avatar';
+import { AVATAR_SIZE_CLASS } from './avatarSizes';
 import { placeholderAvatar } from '../storybook-avatars';
 import {
   bothDirections,
@@ -23,6 +24,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Every size the component has: read from its size map, so a new size shows up here by itself.
+const SIZES = Object.keys(AVATAR_SIZE_CLASS) as AvatarSize[];
+
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
 );
@@ -32,10 +36,10 @@ export const InitialsAndImage: Story = {
     <Wrap>
       <SectionCard title="Sizes">
         <div className="flex flex-wrap items-center gap-4">
-          {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-            <div key={size} className="flex flex-col items-center gap-1">
+          {SIZES.map((size) => (
+            <div key={size} data-size={size} className="flex flex-col items-center gap-1">
               <Avatar size={size} name="John Doe" />
-              <span className="text-[10px] text-gray-500 uppercase dark:text-gray-400">{size}</span>
+              <span className="text-3xs text-gray-500 uppercase dark:text-gray-400">{size}</span>
             </div>
           ))}
         </div>
@@ -54,6 +58,18 @@ export const InitialsAndImage: Story = {
   ),
 };
 
+/** The seven sizes are on the page, each a size apart from the next. */
+export const InitialsAndImageChecks: Story = {
+  ...InitialsAndImage,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const boxes = [...canvasElement.querySelectorAll('[data-size]')].map(
+      (cell) => cell.firstElementChild!.getBoundingClientRect().width
+    );
+    await expect(boxes).toEqual([24, 32, 40, 48, 64, 80, 96]);
+  },
+};
+
 export const Statuses: Story = {
   render: () => (
     <Wrap>
@@ -62,7 +78,7 @@ export const Statuses: Story = {
           {(['online', 'away', 'busy', 'offline'] as const).map((status) => (
             <div key={status} className="flex flex-wrap items-center gap-4">
               <span className="w-16 text-xs text-gray-500 dark:text-gray-400">{status}</span>
-              {(['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'] as const).map((size) => (
+              {SIZES.map((size) => (
                 <Avatar key={size} size={size} name="Ana Costa" status={status} />
               ))}
             </div>
