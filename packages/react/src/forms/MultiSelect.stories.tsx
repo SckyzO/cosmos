@@ -230,6 +230,37 @@ export const TypingFiltersTheList: Story = {
   },
 };
 
+/**
+ * With no match the list says so in a status line, not as an option (nothing in the listbox is a
+ * choice, and it would count as one): the input points at none, and the message is a polite
+ * status that keeps its element, so a screen reader reads the change of its text.
+ */
+export const EmptyListIsAStatusNotAnOption: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Roles', options: ROLES, onChange: fn() },
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('combobox');
+    await userEvent.type(input, 'zzz');
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+    // The live region of the added and removed values is the first status, this one the second.
+    const status = (await page.findAllByRole('status')).find((el) =>
+      el.textContent?.includes('No matches found.')
+    )!;
+    await expect(status).toBeVisible();
+    await expect(page.queryAllByRole('option')).toHaveLength(0);
+    await expect(input).not.toHaveAttribute('aria-activedescendant');
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+    await expect(args.onChange).not.toHaveBeenCalled();
+
+    await userEvent.clear(input);
+    await waitFor(() => expect(page.getAllByRole('option')).toHaveLength(ROLES.length));
+    await expect(status).toBeInTheDocument();
+    await expect(status).toBeEmptyDOMElement();
+    await userEvent.type(input, 'zzz');
+    await expect(status).toHaveTextContent('No matches found.');
+  },
+};
+
 export const BackspaceRemovesTheLastValueOnlyWhenEmpty: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
