@@ -4,6 +4,7 @@ import { Card } from '../ui/Card';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 
 export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
 
@@ -126,6 +127,7 @@ export const SectionCard = ({
   const finalIconColor = tonePreset?.color ?? iconColor ?? 'text-[var(--color-text-muted)]';
   const finalIconBg = tonePreset?.bg ?? iconBg ?? 'bg-black/5 dark:bg-white/5';
   const inState = loading || error || empty;
+  const arrival = useAfterSkeleton(loading);
   return (
     <section
       aria-labelledby={titleId}
@@ -159,7 +161,10 @@ export const SectionCard = ({
           {action && <div className="shrink-0 max-sm:max-w-full max-sm:self-start">{action}</div>}
         </div>
         {/* The body takes what the row gives the card; a state fills it and centres itself. */}
-        <div className={clsx('flex-1', inState && 'flex flex-col', minBodyHeight)}>
+        <div
+          className={clsx('flex-1', inState && 'flex flex-col', minBodyHeight, arrival.className)}
+          onAnimationEnd={arrival.onAnimationEnd}
+        >
           {loading ? (
             <>
               <p role="status" className="sr-only">

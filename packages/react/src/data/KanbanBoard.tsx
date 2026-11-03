@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import { Sk } from '../feedback/Skeleton';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { useControllableState } from '../hooks/useControllableState';
 import { useScrollFade } from '../hooks/useScrollFade';
 import type { Intent } from '../ui/intent';
@@ -548,6 +549,8 @@ export const KanbanBoard = ({
       ?.focus();
   }, [columns]);
 
+  const arrival = useAfterSkeleton(loading);
+
   if (loading) {
     return (
       <div ref={ref} role="group" aria-label={ariaLabel} aria-busy="true" className={className}>
@@ -566,7 +569,8 @@ export const KanbanBoard = ({
       ref={mergeRefs(ref, rootRef)}
       role="group"
       aria-label={ariaLabel}
-      className={clsx('max-w-full', className)}
+      className={clsx('max-w-full', arrival.className, className)}
+      onAnimationEnd={arrival.onAnimationEnd}
     >
       <DragDropProvider
         plugins={plugins}
