@@ -53,6 +53,7 @@ import {
   type JobStatus,
 } from './job-log';
 import { FRAME, STATUS, ansiClass } from './job-log-styles';
+import { GROW_IN } from './growIn';
 import { compileLogSearch, stepLogMatch } from './log-lines';
 
 export type JobLogProps = {
@@ -456,6 +457,9 @@ export const JobLog = ({
     return byStep;
   }, [matches]);
   const [matchIndex, setMatchIndex] = useState(0);
+  // The step the reader has just opened by hand: its body grows in. A body open from the start, or
+  // opened by a search or by a step starting, is simply there.
+  const [arriving, setArriving] = useState<string | null>(null);
   const activeIndex = matches.length > 0 ? Math.min(matchIndex, matches.length - 1) : -1;
   const activeMatch = activeIndex >= 0 ? matches[activeIndex]! : null;
 
@@ -731,6 +735,7 @@ export const JobLog = ({
             // Opening a step by hand is leaving the running one: stop following, so the header
             // stays where it is and the step opens under it.
             if (!open && following) setFollow(false);
+            if (!open) setArriving(job.id);
             setExpanded((ids) => toggleStep(ids, job.id));
           }}
           className={clsx(
@@ -743,8 +748,8 @@ export const JobLog = ({
           <ChevronRight
             aria-hidden
             className={clsx(
-              'size-4 shrink-0 transition-transform motion-reduce:transition-none',
-              open ? 'rotate-90' : 'rtl:-scale-x-100',
+              'size-4 shrink-0 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
+              open ? 'rotate-90' : 'rtl:rotate-180',
               palette.muted
             )}
           />
@@ -761,7 +766,10 @@ export const JobLog = ({
             id={bodyId}
             role="group"
             aria-label={`${job.name} output`}
-            className={clsx('py-row-6 border-t', palette.divider)}
+            onTransitionEnd={(e) => {
+              if (e.target === e.currentTarget) setArriving(null);
+            }}
+            className={clsx('py-row-6 border-t', palette.divider, arriving === job.id && GROW_IN)}
           >
             {count === 0 ? (
               <p className={clsx('m-0 px-4 py-1 font-sans text-xs', palette.muted)}>
