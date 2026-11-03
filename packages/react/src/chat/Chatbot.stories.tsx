@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { endOffset, portalDocsParams, startOffset } from '../storybook-helpers';
+import { isFading, tokenMs, transitionMs, transitionValues } from '../storybook-motion';
 import { Modal } from '../ui/Modal';
 import { Chatbot, type ChatbotMessage } from './Chatbot';
 
@@ -185,11 +186,7 @@ export const FocusManagement: Story = {
 
     // The close button does the same.
     await userEvent.keyboard('{Enter}');
-    // The panel ignores the pointer until its enter transition starts, a frame
-    // after it mounts. Focus moves in on mount, before that frame, so wait for
-    // the pointer itself.
     const reopened = await body.findByRole('dialog', { name: 'Cosmos assistant' });
-    await waitFor(() => expect(getComputedStyle(reopened).pointerEvents).not.toBe('none'));
     await userEvent.click(within(reopened).getByRole('button', { name: 'Close chat' }));
     await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
     await expect(launcher).toHaveFocus();
@@ -229,5 +226,151 @@ export const LauncherAndPanelSitInTheEndCorner: Story = {
     const theirs = body.getByText('Two racks: B4 (86%) and C1 (82%).');
     await expect(endOffset(mine, panel)).toBeLessThan(startOffset(mine, panel));
     await expect(startOffset(theirs, panel)).toBeLessThan(endOffset(theirs, panel));
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/**
+ * The panel opens like a dialog: it fades in, rises 16px and grows from 95% out of the corner
+ * nearest the launcher over 200 ms, then leaves over 120 ms. Click the launcher, Close or Escape.
+ */
+export const PanelOpensAndLeaves: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  args: { messages: history },
+};
+
+const body = within(document.body);
+const launcherOf = () => body.getByRole('button', { name: /Open chat/ });
+
+/** Open, the panel is opaque at its full size, in its place, and takes events. */
+export const PanelIsAtRestWhenOpen: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { messages: history },
+  play: async () => {
+    await userEvent.click(launcherOf());
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await expect(getComputedStyle(panel).opacity).toBe('1');
+    await expect(getComputedStyle(panel).scale).toBe('none');
+    await expect(getComputedStyle(panel).translate).toBe('none');
+    await expect(panel).not.toHaveAttribute('inert');
+    await expect(getComputedStyle(panel).pointerEvents).not.toBe('none');
+  },
+};
+
+/** Closing with nothing to animate (0 s, as in these tests): the panel is gone in the same render. */
+export const ClosingAtZeroSecondsUnmountsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { messages: history, defaultOpen: true },
+  play: async () => {
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await userEvent.click(within(panel).getByRole('button', { name: 'Close chat' }));
+    await expect(body.queryByRole('dialog')).toBeNull();
+    await expect(launcherOf()).toHaveFocus();
+    await expect(launcherOf()).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+/**
+ * At its real speed the panel opens over the base duration and leaves over the exit one, easing out
+ * then in, from 16px down and 95%; closed, it is already out of the way while it leaves.
+ */
+export const LeavingPanelIsInertAndFocusIsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  args: { messages: history },
+  play: async () => {
+    const launcher = launcherOf();
+    await userEvent.click(launcher);
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await expect(transitionMs(panel)).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(isFading(panel)).toBe(true);
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+
+    await userEvent.keyboard('{Escape}');
+    // Still on screen, fading, with the shorter exit...
+    await expect(panel).toBeInTheDocument();
+    await expect(isFading(panel)).toBe(true);
+    await expect(transitionMs(panel)).toBe(tokenMs('--cosmos-motion-exit-lg'));
+    // ...heading back down and shrinking: 16px and 95%.
+    await expect(transitionValues(panel, 'translate').at(-1)).toBe('0px 16px');
+    await expect(transitionValues(panel, 'scale').at(-1)).toMatch(/^(0\.95|95%)/);
+    // ...and already out of the way.
+    await expect(panel).toHaveAttribute('inert');
+    await expect(getComputedStyle(panel).pointerEvents).toBe('none');
+    await expect(launcher).toHaveFocus();
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false');
+
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};
+
+/** Opened again while it leaves, the same panel comes back, not a second one. */
+export const ReopeningWhileItLeavesKeepsThePanel: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  args: { messages: history },
+  play: async () => {
+    await userEvent.click(launcherOf());
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+    await userEvent.keyboard('{Escape}');
+    await expect(isFading(panel)).toBe(true);
+    await userEvent.click(launcherOf());
+    await expect(body.getAllByRole('dialog')).toHaveLength(1);
+    await expect(body.getByRole('dialog')).toBe(panel);
+    await expect(panel).not.toHaveAttribute('inert');
+    await waitFor(() => expect(getComputedStyle(panel).opacity).toBe('1'));
+    await expect(getComputedStyle(panel).scale).toBe('none');
+  },
+};
+
+/** It grows out of the corner by the launcher: the bottom right, and the bottom left in right to left. */
+export const PanelGrowsFromTheLauncherCorner: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { viewport: { value: 'desktop', isRotated: false } },
+  args: { messages: history, defaultOpen: true },
+  play: async ({ canvasElement }) => {
+    const page = canvasElement.ownerDocument.documentElement;
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    // `transform-origin` computes to pixels: the size of the panel is its bottom end.
+    const origin = () => {
+      const [x, y] = getComputedStyle(panel).transformOrigin.split(' ').map(parseFloat);
+      return { x: x!, y: y!, width: panel.offsetWidth, height: panel.offsetHeight };
+    };
+    const was = page.getAttribute('dir');
+    try {
+      for (const dir of ['ltr', 'rtl'] as const) {
+        page.setAttribute('dir', dir);
+        // The page's direction is followed: the origin moves with it.
+        await waitFor(() => {
+          const { x, y, width, height } = origin();
+          expect(y, `${dir}: bottom`).toBeCloseTo(height, 0);
+          expect(x, `${dir}: end`).toBeCloseTo(dir === 'ltr' ? width : 0, 0);
+        });
+      }
+    } finally {
+      if (was === null) page.removeAttribute('dir');
+      else page.setAttribute('dir', was);
+    }
+  },
+};
+
+/** With the reduced setting the panel is there as it opens and gone as it closes. */
+export const PanelSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  args: { messages: history },
+  play: async () => {
+    await userEvent.click(launcherOf());
+    const panel = await body.findByRole('dialog', { name: 'Cosmos assistant' });
+    await expect(transitionMs(panel)).toBe(0);
+    await expect(isFading(panel)).toBe(false);
+    await expect(getComputedStyle(panel).opacity).toBe('1');
+    await userEvent.keyboard('{Escape}');
+    await expect(body.queryByRole('dialog')).toBeNull();
+    await expect(launcherOf()).toHaveFocus();
   },
 };
