@@ -376,6 +376,12 @@ confirmed in words. `expired` is the link that no longer works: it offers `reque
 another and `signInHref` to go back. `done` thanks the person and links to `signInHref`. Each view
 has one `h1`; `loading` and `error` follow the request, as on the other auth forms.
 
+When you switch `view` (or `sent`, on `ResetPasswordForm`), the button that was pressed leaves with
+its screen and the focus would fall to the page. The form moves it to the heading of the new
+screen instead, so a keyboard or screen reader user starts reading from the top of it. It does so
+only when the focus was lost with the old screen: if the person had moved it elsewhere on the page,
+it stays there, and the first screen never takes the focus when it mounts (it would scroll the page).
+
 The password policy is `rules`, a function of the password that returns the rules to list (the
 `PasswordRule`s of `PasswordPolicyChecker`). It defaults to `defaultPasswordRules`; an empty list
 shows none and asks only for a non-empty password. `strength` takes a function that scores the
