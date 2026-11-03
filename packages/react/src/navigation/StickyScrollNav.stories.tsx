@@ -7,6 +7,7 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
 
 const meta = {
   title: 'Navigation/Sticky Scroll Nav',
@@ -57,6 +58,16 @@ export const Default: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * The fill behind the button of the section being read is one marker that slides to the next
+ * button as the page scrolls, in 200 ms easing in and out; with the reduced setting it moves at
+ * once. Scroll the box, or click a button.
+ */
+export const MarkerSlidesWhileReading: Story = {
+  ...Default,
+  parameters: { settleMotion: false },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -303,5 +314,155 @@ export const SectionsRunFromTheStartEdge: Story = {
     expect(startOffset(first, row)).toBeLessThan(endOffset(first, row));
     expect(startOffset(first, row)).toBeLessThan(startOffset(last, row));
     expect(first.getBoundingClientRect().left).toBeGreaterThan(last.getBoundingClientRect().left);
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// Whether the marker sits on the button, along the line and across it.
+const sitsOn = (marker: HTMLElement, button: HTMLElement) => {
+  const gap = indicatorGap(marker, button);
+  expect(gap.start, 'start along the line').toBeLessThan(0.6);
+  expect(gap.inline, 'size along the line').toBeLessThan(0.6);
+  expect(gap.blockStart, 'start across the line').toBeLessThan(0.6);
+  expect(gap.block, 'size across the line').toBeLessThan(0.6);
+};
+
+// Scrolls the box by hand until the top of a section meets the bottom of the nav.
+const scrollToSection = (nav: HTMLElement, section: HTMLElement) =>
+  nav.parentElement!.scrollBy({
+    top: section.getBoundingClientRect().top - nav.getBoundingClientRect().bottom,
+    behavior: 'instant',
+  });
+
+/**
+ * The marker has the box of the button of the section being read: at the top, after a scroll to a
+ * section further down, back up, to the end, and after a click. The button leaves its fill to it.
+ */
+export const MarkerSitsOnTheButtonBeingRead: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    const button = (name: string) => canvas.getByRole('button', { name });
+    await waitFor(() => sitsOn(marker, button('Profile')));
+    // The fill is the marker's: the button has none of its own, and the marker has one.
+    await expect(getComputedStyle(button('Profile')).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(marker).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+
+    // Down, then up, then to the end of the scroll: both ways.
+    for (const name of ['Security', 'Notifications']) {
+      scrollToSection(nav, canvas.getByRole('region', { name }));
+      await waitFor(() => expect(button(name)).toHaveAttribute('aria-current', 'location'), {
+        timeout: 3000,
+      });
+      await waitFor(() => sitsOn(marker, button(name)));
+    }
+    nav.parentElement!.scrollBy({ top: nav.parentElement!.scrollHeight, behavior: 'instant' });
+    await waitFor(() => sitsOn(marker, button('Billing')), { timeout: 3000 });
+    await expect(nav.querySelectorAll('[aria-current="location"]')).toHaveLength(1);
+
+    // A click scrolls there, and the marker ends on the button.
+    await userEvent.click(button('Profile'));
+    await waitFor(() => expect(button('Profile')).toHaveAttribute('aria-current', 'location'), {
+      timeout: 3000,
+    });
+    await waitFor(() => sitsOn(marker, button('Profile')));
+  },
+};
+
+/**
+ * No transition on the first paint: the marker is where the button of the first section is when
+ * the nav appears. Reading on then starts the slide, over the base duration of the theme.
+ */
+export const MarkerDoesNotSlideInOnFirstPaint: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await expect(isSliding(nav)).toBe(false);
+    sitsOn(marker, canvas.getByRole('button', { name: 'Profile' }));
+    await expect(transitionMs(marker)).toBe(0);
+
+    scrollToSection(nav, canvas.getByRole('region', { name: 'Security' }));
+    await waitFor(() => expect(isSliding(nav)).toBe(true), { timeout: 3000 });
+    await expect(transitionMs(marker)).toBe(tokenMs('--cosmos-motion-base'));
+    await waitFor(() => expect(isSliding(nav)).toBe(false), { timeout: 3000 });
+    sitsOn(marker, canvas.getByRole('button', { name: 'Security' }));
+  },
+};
+
+/** With the reduced setting the marker jumps: no transition runs, and it is already there. */
+export const MarkerJumpsUnderReducedMotion: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    scrollToSection(nav, canvas.getByRole('region', { name: 'Security' }));
+    await waitFor(
+      () =>
+        expect(canvas.getByRole('button', { name: 'Security' })).toHaveAttribute('aria-current'),
+      { timeout: 3000 }
+    );
+    await expect(isSliding(nav)).toBe(false);
+    await expect(transitionMs(marker)).toBe(0);
+    sitsOn(marker, canvas.getByRole('button', { name: 'Security' }));
+  },
+};
+
+/** Below `sm` the row of buttons is a menu: there is no marker to place. */
+export const NoMarkerOnThePhone: Story = {
+  ...MobileJumpMenu,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    await expect(nav.querySelector('[data-slot="indicator"]')).toBeNull();
+    await expect(canvas.getByRole('combobox', { name: 'Jump to section' })).toBeVisible();
+  },
+};
+
+/** The marker is decoration: assistive technology reads the buttons as before, and it takes no clicks. */
+export const MarkerIsDecoration: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await expect(marker).toHaveAttribute('aria-hidden', 'true');
+    await expect(getComputedStyle(marker).pointerEvents).toBe('none');
+    await expect(canvas.getAllByRole('button')).toHaveLength(SETTINGS.length);
+  },
+};
+
+/** In right to left the first button is on the right, and the marker starts from the right too. */
+export const MarkerFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" data-direction="rtl" className="bg-[var(--color-bg-base)] p-6">
+      <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <StickyScrollNav sections={SETTINGS} topOffset={8} />
+        {SETTINGS.map(({ id, label, text }) => (
+          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
+            <h2 className="text-lg font-semibold">{label}</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
+          </section>
+        ))}
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await waitFor(() => sitsOn(marker, canvas.getByRole('button', { name: 'Profile' })));
+    for (const name of ['Security', 'Notifications']) {
+      scrollToSection(nav, canvas.getByRole('region', { name }));
+      await waitFor(() => sitsOn(marker, canvas.getByRole('button', { name })), { timeout: 3000 });
+    }
   },
 };
