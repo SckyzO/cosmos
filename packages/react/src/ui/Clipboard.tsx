@@ -42,6 +42,25 @@ const SIZE_BUTTON: Record<ClipboardSize, string> = {
   md: 'h-ctrl-36 px-3 text-sm gap-2',
 };
 
+// The two icons share one cell and cross-fade, so the button keeps its size and the label its place.
+// Both stay mounted, hidden from assistive technology: the name is the label.
+const FADE = 'transition-opacity duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)';
+
+const CopyIcons = ({
+  copied,
+  size,
+  checkClass,
+}: {
+  copied: boolean;
+  size: string;
+  checkClass: string;
+}) => (
+  <span className="inline-grid shrink-0 place-items-center *:col-start-1 *:row-start-1">
+    <Copy className={clsx(size, FADE, copied && 'opacity-0')} aria-hidden />
+    <Check className={clsx(size, FADE, checkClass, !copied && 'opacity-0')} aria-hidden />
+  </span>
+);
+
 export function Clipboard({
   value,
   variant = 'icon',
@@ -84,12 +103,14 @@ export function Clipboard({
     []
   );
 
-  const Icon = copied ? Check : Copy;
   const label = copied ? copiedLabel : copyLabel;
   const flatStyle = plain && !floating;
-  const iconClass = clsx(
-    SIZE_ICON[size].icon,
-    copied && (flatStyle ? 'text-green-600 dark:text-green-400' : 'text-green-500')
+  const icons = (
+    <CopyIcons
+      copied={copied}
+      size={SIZE_ICON[size].icon}
+      checkClass={flatStyle ? 'text-green-600 dark:text-green-400' : 'text-green-500'}
+    />
   );
 
   const baseClass = floating
@@ -114,7 +135,7 @@ export function Clipboard({
         )}
         {...rest}
       >
-        <Icon className={iconClass} aria-hidden />
+        {icons}
       </button>
     );
   }
@@ -132,7 +153,7 @@ export function Clipboard({
       )}
       {...rest}
     >
-      <Icon className={iconClass} aria-hidden />
+      {icons}
       {label}
     </button>
   );
