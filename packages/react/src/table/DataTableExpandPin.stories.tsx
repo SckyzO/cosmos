@@ -11,7 +11,14 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import { HOSTS, hostColumns, type Host } from './storybook-fixtures';
+import {
+  HOSTS,
+  hostColumns,
+  patchColumns,
+  pickColumns,
+  withPins,
+  type Host,
+} from './storybook-fixtures';
 import type { ColumnDef } from './types';
 
 // Expandable rows (`renderExpandedRow`) and pinned columns (`pin`), in their own file with the
@@ -27,12 +34,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-const Wrap = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
-    <div className={className}>{children}</div>
-  </div>
-);
 
 const EVENTS = [
   ['06:12', 'CPU above 80% for 10 minutes'],
@@ -69,28 +70,26 @@ const detail = (r: Host) => (
   </div>
 );
 
-const summaryColumns: ColumnDef<Host>[] = [
-  hostColumns[0],
-  hostColumns[1],
-  hostColumns[9],
-  hostColumns[4],
-  hostColumns[7],
-  hostColumns[8],
-].map((c) => ({ ...c, width: undefined }));
+const summaryColumns: ColumnDef<Host>[] = pickColumns(hostColumns, [
+  'host',
+  'rack',
+  'status',
+  'cpu',
+  'owner',
+  'updated',
+]).map((c) => ({ ...c, width: undefined }));
 
 /** `renderExpandedRow` adds a chevron column; the detail opens in a row below, over every column. */
 export const ExpandableRows: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 5)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        defaultExpandedRows={new Set(['node-a02'])}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 5)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      defaultExpandedRows={new Set(['node-a02'])}
+    />
   ),
 };
 
@@ -101,15 +100,13 @@ export const ExpandAndCollapseByKeyboard: Story = {
   ...ExpandableRows,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+    />
   ),
   play: async ({ canvas }) => {
     // The sortable Host header is the first Tab stop, the first row's toggle the next.
@@ -144,18 +141,16 @@ export const TogglingNeverSelectsOrClicksTheRow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onRowClick: fn(), onSelectionChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        selectable
-        onRowClick={args.onRowClick}
-        onSelectionChange={args.onSelectionChange}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      selectable
+      onRowClick={args.onRowClick}
+      onSelectionChange={args.onSelectionChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(toggleOf(canvas, 'node-a01'));
@@ -173,20 +168,18 @@ export const ControlledExpandedRows: Story = {
   render: (args) => {
     const [expanded, setExpanded] = useState<Set<string | number>>(new Set(['node-a02']));
     return (
-      <Wrap>
-        <DataTable
-          aria-label="Hosts"
-          rows={HOSTS.slice(0, 3)}
-          columns={summaryColumns}
-          rowKey={(r) => r.host}
-          renderExpandedRow={detail}
-          expandedRows={expanded}
-          onExpandedRowsChange={(next) => {
-            args.onExpandedRowsChange?.(next);
-            setExpanded(next);
-          }}
-        />
-      </Wrap>
+      <DataTable
+        aria-label="Hosts"
+        rows={HOSTS.slice(0, 3)}
+        columns={summaryColumns}
+        rowKey={(r) => r.host}
+        renderExpandedRow={detail}
+        expandedRows={expanded}
+        onExpandedRowsChange={(next) => {
+          args.onExpandedRowsChange?.(next);
+          setExpanded(next);
+        }}
+      />
     );
   },
   play: async ({ canvas, args }) => {
@@ -210,17 +203,15 @@ export const ControlledExpandedRowsFollowTheHost: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onExpandedRowsChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        expandedRows={new Set()}
-        onExpandedRowsChange={args.onExpandedRowsChange}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      expandedRows={new Set()}
+      onExpandedRowsChange={args.onExpandedRowsChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(toggleOf(canvas, 'node-a01'));
@@ -233,18 +224,16 @@ export const VirtualizedTablesDoNotExpand: Story = {
   ...ExpandableRows,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        virtualize
-        pageSize={HOSTS.length}
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      virtualize
+      pageSize={HOSTS.length}
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Hosts' })).toBeVisible();
@@ -254,12 +243,10 @@ export const VirtualizedTablesDoNotExpand: Story = {
 
 // ── Pinned columns ──────────────────────────────────────────────────────────
 
-const pinnedColumns: ColumnDef<Host>[] = hostColumns.map((c) =>
-  c.key === 'host' ? { ...c, pin: 'start' } : c.key === 'status' ? { ...c, pin: 'end' } : c
-);
+const pinnedColumns = withPins(hostColumns, { start: ['host'], end: ['status'] });
 
 const PinnedTable = ({ columns = pinnedColumns }: { columns?: ColumnDef<Host>[] }) => (
-  <Wrap className="max-w-3xl">
+  <div className="max-w-3xl">
     <DataTable
       aria-label="Hosts"
       rows={HOSTS}
@@ -276,7 +263,7 @@ const PinnedTable = ({ columns = pinnedColumns }: { columns?: ColumnDef<Host>[] 
         </button>
       )}
     />
-  </Wrap>
+  </div>
 );
 
 /**
@@ -371,13 +358,7 @@ export const SeveralPinnedColumnsAddUp: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <PinnedTable
-      columns={hostColumns.map((c) =>
-        c.key === 'host' || c.key === 'rack'
-          ? { ...c, pin: 'start' }
-          : c.key === 'status' || c.key === 'updated'
-            ? { ...c, pin: 'end' }
-            : c
-      )}
+      columns={withPins(hostColumns, { start: ['host', 'rack'], end: ['updated', 'status'] })}
     />
   ),
   play: async ({ canvas }) => {
@@ -398,12 +379,9 @@ export const PinnedOffsetsFollowTheTextSizeAndTheWidth: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <PinnedTable
-      columns={hostColumns.map((c) =>
-        c.key === 'host'
-          ? { ...c, width: '20%', pin: 'start' }
-          : c.key === 'rack'
-            ? { ...c, width: '12%', pin: 'start' }
-            : c
+      columns={withPins(
+        patchColumns(hostColumns, { host: { width: '20%' }, rack: { width: '12%' } }),
+        { start: ['host', 'rack'] }
       )}
     />
   ),
