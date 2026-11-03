@@ -129,3 +129,16 @@ export const isSliding = (element: Element) =>
           String(animation.transitionProperty)
         )
     );
+
+/**
+ * The values a running transition of `property` goes through, from its first keyframe to its last
+ * (`translate` of a banner that comes in: where it starts, then `none`). Empty when nothing runs
+ * for that property. For the end a transition is heading to when the test cannot wait for it.
+ */
+export const transitionValues = (element: Element, property: string) => {
+  const animation = element
+    .getAnimations()
+    .find((a) => 'transitionProperty' in a && a.transitionProperty === property);
+  const frames = (animation?.effect as KeyframeEffect | null | undefined)?.getKeyframes() ?? [];
+  return frames.map((frame) => String((frame as Record<string, unknown>)[property]));
+};
