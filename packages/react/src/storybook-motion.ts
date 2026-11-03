@@ -79,3 +79,12 @@ export const isFading = (element: Element) =>
         animation.playState === 'running' &&
         Number.isFinite(animation.effect?.getComputedTiming().endTime)
     );
+
+/**
+ * A duration token of the theme, in ms: `--cosmos-motion-base` reads 200 by default and 0 under
+ * reduced motion. A built stylesheet is minified, which writes `200ms` as `.2s`: read both.
+ */
+export const tokenMs = (token: string) => {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  return Math.round(parseFloat(raw) * (raw.endsWith('ms') ? 1 : 1000));
+};

@@ -17,6 +17,7 @@ import {
   type CosmosThemeChoice,
 } from './appearance';
 import { keyToEnd } from '../storybook-helpers';
+import { tokenMs } from '../storybook-motion';
 
 const meta = {
   title: 'Settings/Appearance Settings',
@@ -302,7 +303,6 @@ export const ReducedMotionZeroesTheDurations: Story = {
   },
   play: async ({ canvas }) => {
     const root = document.documentElement;
-    const duration = (token: string) => getComputedStyle(root).getPropertyValue(token).trim();
     const tokens = [
       '--cosmos-motion-fast',
       '--cosmos-motion-exit',
@@ -314,15 +314,15 @@ export const ReducedMotionZeroesTheDurations: Story = {
     const wasAttributes = ['data-accent', 'data-motion'].map((n) => [n, root.getAttribute(n)]);
     try {
       await expect(root).not.toHaveAttribute('data-motion');
-      await expect(duration('--cosmos-motion-base')).toBe('200ms');
+      await expect(tokenMs('--cosmos-motion-base')).toBe(200);
 
       await userEvent.click(canvas.getByRole('radio', { name: 'Reduced' }));
       await expect(root).toHaveAttribute('data-motion', 'reduced');
-      for (const token of tokens) await expect(duration(token), token).toBe('0ms');
+      for (const token of tokens) await expect(tokenMs(token), token).toBe(0);
 
       await userEvent.click(canvas.getByRole('radio', { name: 'Normal' }));
       await expect(root).not.toHaveAttribute('data-motion');
-      await expect(duration('--cosmos-motion-base')).toBe('200ms');
+      await expect(tokenMs('--cosmos-motion-base')).toBe(200);
     } finally {
       root.className = was;
       for (const [name, value] of wasAttributes) {
