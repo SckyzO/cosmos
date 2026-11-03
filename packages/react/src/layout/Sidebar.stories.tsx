@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { clsx } from 'clsx';
-import { createRef, useId, useState } from 'react';
+import { createRef, useId, useState, type CSSProperties } from 'react';
 import {
   Bell,
   Box,
@@ -1297,6 +1297,312 @@ export const CollapsedGroupsShowTheirItemsFlat: Story = {
     // Even the group that starts closed: its items are all one tap away.
     await expect(canvas.getByRole('button', { name: 'Servers' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Old reports' })).toBeVisible();
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// A wrapper that slows one token down, so a check reads the motion mid-way without racing the
+// clock of a loaded machine: the tokens are inherited, the ones set here win under it.
+const SlowWrap = ({ tokens, children }: { tokens: CSSProperties; children: React.ReactNode }) => (
+  <div className="flex h-screen bg-[var(--color-bg-base)]" style={tokens}>
+    {children}
+  </div>
+);
+
+// Jumps every animation under `el` to its end, so a check does not wait for a slow one.
+const finishAnimations = async (el: Element) => {
+  const animations = el.getAnimations({ subtree: true });
+  animations.forEach((animation) => animation.finish());
+  await Promise.all(animations.map((animation) => animation.finished));
+};
+
+const playsOpacity = (el: Element) =>
+  el
+    .getAnimations()
+    .some(
+      (animation) =>
+        animation instanceof CSSTransition && animation.transitionProperty === 'opacity'
+    );
+
+// The sidebar of the folding stories: a sub-menu open, one closed, and two groups.
+const FoldingNav = () => (
+  <>
+    <Sidebar.Brand logo={<Box className="h-5 w-5" />} title="Cosmos" subtitle="Design system" />
+    <div className="py-3">
+      <Sidebar.Item icon={LayoutDashboard} label="Dashboard" />
+      <Sidebar.SubMenu icon={Layers} label="Library" defaultOpen>
+        <Sidebar.Item label="Tokens" active />
+        <Sidebar.Item label="Components" />
+        <Sidebar.Item label="Templates" />
+      </Sidebar.SubMenu>
+      <Sidebar.SubMenu icon={Globe} label="Monitoring">
+        <Sidebar.Item label="Servers" />
+        <Sidebar.Item label="Network" />
+      </Sidebar.SubMenu>
+      <Sidebar.Group label="Workspace">
+        <Sidebar.Item icon={Bell} label="Notifications" />
+        <Sidebar.Item icon={Settings} label="Settings" />
+      </Sidebar.Group>
+      <Sidebar.Group label="Archive" defaultOpen={false}>
+        <Sidebar.Item icon={FileText} label="Old reports" />
+      </Sidebar.Group>
+    </div>
+  </>
+);
+
+/**
+ * A sub-menu or a group unfolds and folds back in 200 ms: its height runs from 0 to its natural
+ * size while its rows fade in and slide 4 px, and the chevron turns with it. A closed list is out
+ * of the tab order and of the accessibility tree from the first frame. The sidebar's width, which
+ * follows its labels, moves to the end state at once.
+ */
+export const SubMenusAndGroupsFold: Story = {
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <Sidebar>
+        <FoldingNav />
+      </Sidebar>
+    </Wrap>
+  ),
+};
+
+export const SubMenuFoldChecks: Story = {
+  ...SubMenusAndGroupsFold,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <SlowWrap tokens={{ '--cosmos-motion-base': '2s' } as CSSProperties}>
+      <Sidebar>
+        <FoldingNav />
+      </Sidebar>
+    </SlowWrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const library = canvas.getByRole('button', { name: 'Library' });
+    const list = canvasElement.ownerDocument.getElementById(
+      library.getAttribute('aria-controls')!
+    )!;
+    const clip = list.firstElementChild as HTMLElement;
+    const row = (hidden: boolean) => canvas.queryByRole('button', { name: 'Tokens', hidden });
+
+    // Open and at rest: reachable, and no longer clipping, so a focus ring is not cut.
+    await expect(library).toHaveAttribute('aria-expanded', 'true');
+    await expect(list.inert).toBe(false);
+    await expect(list).not.toHaveAttribute('aria-hidden');
+    await expect(getComputedStyle(clip).overflow).toBe('visible');
+    await expect(row(false)).not.toBeNull();
+
+    // Closing: inert and out of the accessibility tree at once, while the height is still moving.
+    await userEvent.click(library);
+    await expect(library).toHaveAttribute('aria-expanded', 'false');
+    await expect(list.inert).toBe(true);
+    await expect(list).toHaveAttribute('aria-hidden', 'true');
+    await expect(row(false)).toBeNull();
+    await expect(row(true)).not.toBeNull();
+    await expect(list.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(list.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(clip).overflow).toBe('hidden');
+    await finishAnimations(list);
+    await expect(list.getBoundingClientRect().height).toBe(0);
+
+    // The closed rows take no focus.
+    row(true)!.focus();
+    await expect(row(true)).not.toHaveFocus();
+
+    // Opening: reachable at once, unclipped once at rest.
+    await userEvent.click(library);
+    await expect(library).toHaveAttribute('aria-expanded', 'true');
+    await expect(list.inert).toBe(false);
+    await expect(list).not.toHaveAttribute('aria-hidden');
+    await expect(row(false)).not.toBeNull();
+    await expect(getComputedStyle(clip).overflow).toBe('hidden');
+    await finishAnimations(list);
+    await waitFor(() => expect(getComputedStyle(clip).overflow).toBe('visible'));
+    await expect(list.getBoundingClientRect().height).toBeGreaterThan(0);
+    row(false)!.focus();
+    await expect(row(false)).toHaveFocus();
+
+    // Enter and Space toggle it, and the state follows.
+    library.focus();
+    await userEvent.keyboard('{Enter}');
+    await expect(library).toHaveAttribute('aria-expanded', 'false');
+    await expect(list.inert).toBe(true);
+    await userEvent.keyboard(' ');
+    await expect(library).toHaveAttribute('aria-expanded', 'true');
+    await expect(list.inert).toBe(false);
+    await finishAnimations(list);
+  },
+};
+
+export const GroupKeepsItsRowsMounted: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <GroupedNav />,
+  play: async ({ canvas }) => {
+    const archive = canvas.getByRole('button', { name: 'Archive' });
+    // Closed, the rows stay in the page: inert, and out of the accessibility tree.
+    const row = canvas.getByRole('button', { name: 'Old reports', hidden: true });
+    const fold = row.closest('[inert]');
+    await expect(fold).not.toBeNull();
+    await expect(fold).toHaveAttribute('aria-hidden', 'true');
+    await expect(canvas.queryByRole('button', { name: 'Old reports' })).toBeNull();
+
+    await userEvent.click(archive);
+    await expect(canvas.getByRole('button', { name: 'Old reports' })).toBe(row);
+    await expect(row.closest('[inert]')).toBeNull();
+
+    // The same element goes back to hiding: nothing was unmounted on the way.
+    await userEvent.click(archive);
+    await expect(canvas.getByRole('button', { name: 'Old reports', hidden: true })).toBe(row);
+    await expect(row.closest('[inert]')).toBe(fold);
+  },
+};
+
+/**
+ * The width follows the labels of the end state. Unfolding a sub-menu sets the width its rows ask
+ * for as it starts, and folding it takes them out as it starts, while they are still on screen.
+ */
+export const WidthIsTheEndStateOfASubMenu: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowWrap tokens={{ '--cosmos-motion-base': '2s' } as CSSProperties}>
+      <Sidebar>
+        <SitesNav />
+      </Sidebar>
+    </SlowWrap>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const asked = () => parseFloat(nav.style.width);
+    const lyon = canvas.getByRole('button', { name: 'Lyon Datacenter' });
+    const list = canvasElement.ownerDocument.getElementById(lyon.getAttribute('aria-controls')!)!;
+    const folded = await settledWidth(nav);
+
+    await userEvent.click(lyon);
+    await waitFor(() => expect(asked()).toBeGreaterThan(folded));
+    const unfolded = asked();
+    const midway = list.getBoundingClientRect().height;
+    await finishAnimations(list);
+    await expect(midway).toBeLessThan(list.getBoundingClientRect().height);
+    await expect(await settledWidth(nav)).toBe(unfolded);
+
+    await userEvent.click(lyon);
+    await waitFor(() => expect(asked()).toBe(folded));
+    await expect(list.getBoundingClientRect().height).toBeGreaterThan(0);
+    await finishAnimations(list);
+    await expect(await settledWidth(nav)).toBe(folded);
+  },
+};
+
+/**
+ * Collapsing: the width takes 300 ms; the labels, the section titles and the brand's name fade
+ * out in 120 ms as the sidebar narrows, and come back once it has widened by a third.
+ */
+export const CollapseFadesTheText: Story = {
+  parameters: { settleMotion: false },
+  render: WithCollapseButton.render,
+};
+
+export const CollapseFadesTheTextChecks: Story = {
+  ...CollapseFadesTheText,
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [collapsed, setCollapsed] = useState(false);
+    return (
+      <SlowWrap tokens={{ '--cosmos-motion-fast': '1s' } as CSSProperties}>
+        <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed}>
+          <Sidebar.Brand
+            logo={<Box className="h-5 w-5" />}
+            title="Cosmos"
+            subtitle="Design system"
+          />
+          <Nav />
+        </Sidebar>
+      </SlowWrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    await expect(canvas.getByText('Dashboard')).toBeVisible();
+    // The width keeps its 300 ms, from the first frames on.
+    await waitFor(() => expect(getComputedStyle(nav).transitionDuration).toBe('0.3s'));
+
+    // Collapsing: the text stays where it is and fades; the rows still draw the full width.
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    for (const text of ['Dashboard', 'Account', 'Cosmos']) {
+      await expect(playsOpacity(canvas.getByText(text).closest('[data-sidebar-fade]')!)).toBe(true);
+    }
+    await expect(canvas.getByRole('button', { name: 'Dashboard' })).not.toHaveAttribute(
+      'aria-label'
+    );
+    // The brand's name narrows with the width and fades in this story's 1 s.
+    const name = getComputedStyle(canvas.getByText('Cosmos').closest('[data-sidebar-fade]')!);
+    await expect(name.transitionProperty).toBe('max-width, opacity');
+    await expect(name.transitionDuration).toBe('0.3s, 1s');
+
+    // The fade over, the rows draw the rail: no text left to focus or to announce, a name instead.
+    await waitFor(() => expect(canvas.queryByText('Dashboard')).toBeNull(), { timeout: 3000 });
+    await expect(canvas.queryByText('Account')).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Dashboard' })).toHaveAttribute(
+      'aria-label',
+      'Dashboard'
+    );
+    await expect(canvas.getByRole('button', { name: 'Dashboard' }).textContent).toBe('');
+    await expect(canvas.getByText('Cosmos')).not.toBeVisible();
+    await transitionsEnd(nav);
+    await expect(widthOf(nav)).toBe(72);
+
+    // Expanding: the rows are full width at once with their text hidden, which comes back after
+    // a third of the width's 300 ms, then fades in.
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    const returning = await canvas.findByText('Dashboard');
+    await waitFor(() => expect(playsOpacity(returning)).toBe(true), { timeout: 2000 });
+    await expect(getComputedStyle(returning).transitionDelay).toBe('0.1s');
+    await waitFor(() => expect(getComputedStyle(returning).opacity).toBe('1'), { timeout: 4000 });
+    await expect(canvas.getByText('Account')).toBeVisible();
+    await transitionsEnd(nav);
+    await expect(widthOf(nav)).toBe(264);
+  },
+};
+
+/** With the reduced motion setting nothing waits for an animation: folds and collapses are at once. */
+export const ReducedMotionFoldsAndCollapsesAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  beforeEach: () => {
+    document.documentElement.dataset.motion = 'reduced';
+    return () => {
+      delete document.documentElement.dataset.motion;
+    };
+  },
+  render: WithCollapseButton.render,
+  play: async ({ canvas, canvasElement }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
+    const library = canvas.getByRole('button', { name: 'Library' });
+    const list = canvasElement.ownerDocument.getElementById(
+      library.getAttribute('aria-controls')!
+    )!;
+    const clip = list.firstElementChild as HTMLElement;
+    await expect(getComputedStyle(list).transitionDuration).toBe('0s');
+
+    await userEvent.click(library);
+    await expect(list.inert).toBe(true);
+    await expect(list.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(list.getBoundingClientRect().height).toBe(0);
+    await userEvent.click(library);
+    await expect(list.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(list.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(getComputedStyle(clip).overflow).toBe('visible');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
+    await expect(canvas.queryByText('Dashboard')).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Dashboard' })).toHaveAttribute('aria-label');
+    await expect(widthOf(nav)).toBe(72);
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand sidebar' }));
+    await expect(canvas.getByText('Dashboard')).toBeVisible();
+    await expect(getComputedStyle(canvas.getByText('Dashboard')).opacity).toBe('1');
+    await expect(widthOf(nav)).toBe(264);
   },
 };
 
