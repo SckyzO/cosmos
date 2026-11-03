@@ -806,10 +806,10 @@ const oneH1Per = (state: keyof typeof ONE_H1): Story => ({
   },
 });
 
-export const EmptyHasOneH1: Story = oneH1Per('empty');
-export const LoadingHasOneH1: Story = oneH1Per('loading');
-export const ErrorHasOneH1: Story = oneH1Per('error');
-export const ExtremeHasOneH1: Story = oneH1Per('extreme');
+export const EmptyHasOneH1: Story = { ...oneH1Per('empty'), tags: ['!dev', '!autodocs'] };
+export const LoadingHasOneH1: Story = { ...oneH1Per('loading'), tags: ['!dev', '!autodocs'] };
+export const ErrorHasOneH1: Story = { ...oneH1Per('error'), tags: ['!dev', '!autodocs'] };
+export const ExtremeHasOneH1: Story = { ...oneH1Per('extreme'), tags: ['!dev', '!autodocs'] };
 
 /** On the phone the Topbar hides its title; the page header is still the one `h1`. */
 export const PhoneHasOneH1: Story = {
