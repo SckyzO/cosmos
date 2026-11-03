@@ -1,5 +1,5 @@
+import { clsx } from 'clsx';
 import { useEffect, useId, useRef, useState } from 'react';
-import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 
 /** The five levels a score of 0 to 4 stands for, from the weakest. */
 export type PasswordStrengthLevels = readonly [string, string, string, string, string];
@@ -35,15 +35,24 @@ const ANNOUNCE_DELAY = 800;
 const DEFAULT_NAME = 'Password strength';
 const DEFAULT_LEVELS: PasswordStrengthLevels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
-// The colour of the lit segments for each score. A score of 0 lights none.
-const INTENT: readonly ProgressBarIntent[] = ['neutral', 'danger', 'warning', 'success', 'success'];
+// The colour of the lit segments for each score. A score of 0 lights none: its colour is the one the
+// first segment is already wearing when it grows in.
+const FILL: readonly string[] = [
+  'bg-red-500',
+  'bg-red-500',
+  'bg-amber-500',
+  'bg-green-500',
+  'bg-green-500',
+];
 
 const toLevel = (score: number) =>
   Number.isFinite(score) ? Math.max(0, Math.min(SEGMENTS, Math.round(score))) : 0;
 
 /**
- * A strength gauge for a password field: the level in words, and a bar of four segments with as
- * many lit as the score (the segments of `ProgressBar`). It draws what the page works out and bundles no estimator.
+ * A strength gauge for a password field: the level in words, and a bar of four slots with as many
+ * lit as the score. A slot fills from the start edge when the score reaches it and empties when it
+ * falls back, the colour fading as the level changes, in 300 ms; nothing moves with reduced motion.
+ * It draws what the page works out and bundles no estimator.
  *
  * The bar is decoration (`aria-hidden`); the text says the level. A polite status announces a new
  * level once the score has held for 800 ms, so a screen reader is not read to on every key, and
@@ -84,16 +93,23 @@ export const PasswordStrengthMeter = ({
         {name}: <span className="font-medium text-[var(--color-text-primary)]">{levelName}</span>
       </p>
       {/* The bar repeats the text: a screen reader skips it. */}
-      <div aria-hidden>
-        <ProgressBar
-          size="sm"
-          max={SEGMENTS}
-          segments={Array.from({ length: level }, () => ({
-            value: 1,
-            intent: INTENT[level],
-            label: levelName,
-          }))}
-        />
+      <div aria-hidden className="grid grid-cols-4 gap-0.5">
+        {Array.from({ length: SEGMENTS }, (_, slot) => (
+          <div key={slot} className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+            <div
+              // Only a lit fill is a segment. The unlit ones stay in place, shrunk to nothing, so
+              // the next score grows them in from the start edge, mirrored in right to left.
+              // `scale-x-*` sets the `scale` property (Tailwind 4), not `transform`: that is what
+              // the transition names.
+              data-segment={slot < level ? '' : undefined}
+              className={clsx(
+                'h-full origin-left transition-[scale,background-color] duration-300 ease-out motion-reduce:transition-none rtl:origin-right',
+                FILL[level],
+                slot < level ? 'scale-x-100' : 'scale-x-0'
+              )}
+            />
+          </div>
+        ))}
       </div>
       <span role="status" className="sr-only">
         {announcement}
