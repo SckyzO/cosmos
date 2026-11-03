@@ -1570,12 +1570,9 @@ export const CollapseFadesTheTextChecks: Story = {
 export const ReducedMotionFoldsAndCollapsesAtOnce: Story = {
   tags: ['!dev', '!autodocs'],
   parameters: { settleMotion: false },
-  beforeEach: () => {
-    document.documentElement.dataset.motion = 'reduced';
-    return () => {
-      delete document.documentElement.dataset.motion;
-    };
-  },
+  // Through the toolbar's Motion global: its decorator sets `data-motion` on every render, so an
+  // attribute set by hand before the render would be taken off again.
+  globals: { motion: 'reduced' },
   render: WithCollapseButton.render,
   play: async ({ canvas, canvasElement }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
