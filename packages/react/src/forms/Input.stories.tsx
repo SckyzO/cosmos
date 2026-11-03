@@ -173,13 +173,13 @@ export const ErrorFocusShowsRedBorderInDark: Story = {
 
 export const FocusShowsAccentBorderInLight: Story = {
   ...FocusShowsAccentBorderInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
 export const ErrorFocusShowsRedBorderInLight: Story = {
   ...ErrorFocusShowsRedBorderInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

@@ -611,7 +611,7 @@ export const FocusShowsRingInDark: Story = {
 
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -664,7 +664,7 @@ export const FolderOutlineIsStrongerInDark: Story = {
 /** In light, the folder keeps the theme's own border. */
 export const FolderOutlineKeepsBorderInLight: Story = {
   ...FolderOutlineIsStrongerInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     const plain = colorOf('var(--color-border)');
@@ -1286,7 +1286,7 @@ export const RaisedActiveIsRaisedInDark: Story = {
 /** In light, the active tab is white on the gray-100 track, with gray-900 text. */
 export const RaisedActiveIsRaisedInLight: Story = {
   ...RaisedActiveIsRaisedInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) =>
     expectRaisedColors(canvas, {
@@ -1397,7 +1397,7 @@ export const RaisedFocusRingInDark: Story = {
 
 export const RaisedFocusRingInLight: Story = {
   ...RaisedFocusRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
