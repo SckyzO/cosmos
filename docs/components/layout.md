@@ -16,7 +16,8 @@ drawer over a scrim (`defaultSidebarOpen`, or `sidebarOpen` and `onSidebarOpenCh
 to control it). It is always expanded there, with a close button in `Sidebar.Brand`, and it
 closes on the scrim, Escape, a swipe toward its edge, a click on a `Sidebar.Item` and when the
 viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
-view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
+view while the sidebar is off screen. `drawerBackdrop` picks the drawer's scrim (`dim` by default,
+`blur` or `blur-dark`, see [Scrims](../guides/tokens.md#scrims)). Any `Drawer` can close on a swipe too, with
 `swipeToClose`: toward its edge on `side="start"` and `side="end"` (the left and right, swapped
 under `dir="rtl"`), downward on `side="bottom"`, the
 bottom sheet (full width, as tall as its content up to 85% of the viewport, a grab `handle`
