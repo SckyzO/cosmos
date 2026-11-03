@@ -10,6 +10,7 @@ import { AppLink } from '../ui/AppLink';
 import { CardDetail } from './ExpandedDetail';
 import { detailRowId } from './expandedRows';
 import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
+import { useRowsArrive } from './useRowsArrive';
 import { RowChevron } from './RowChevron';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
@@ -91,6 +92,7 @@ export const DataTableMobileCards = <T,>({
   'aria-labelledby': ariaLabelledBy,
 }: DataTableMobileCardsProps<T>) => {
   const { title, pairs } = splitMobileColumns(columns);
+  const arrive = useRowsArrive(loading);
 
   if (loading) {
     return (
@@ -114,7 +116,10 @@ export const DataTableMobileCards = <T,>({
 
   if ((error && !dimmed) || rows.length === 0) {
     return (
-      <div className="flex justify-center px-4 sm:hidden">
+      <div
+        onAnimationEnd={arrive.onAnimationEnd}
+        className={clsx('flex justify-center px-4 sm:hidden', arrive.className)}
+      >
         {error ? (
           <ErrorState message={error} onRetry={onRetry} />
         ) : (
@@ -130,7 +135,13 @@ export const DataTableMobileCards = <T,>({
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       inert={dimmed || undefined}
-      className={clsx(ROW_DIVIDER, !dimmed && 'sm:hidden', dimmed ? DIMMED : UNDIMMED)}
+      onAnimationEnd={arrive.onAnimationEnd}
+      className={clsx(
+        ROW_DIVIDER,
+        !dimmed && 'sm:hidden',
+        dimmed ? DIMMED : UNDIMMED,
+        arrive.className
+      )}
     >
       {rows.map((row) => {
         const key = rowKey(row);
