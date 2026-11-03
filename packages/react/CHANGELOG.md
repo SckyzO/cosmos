@@ -5,6 +5,52 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.7.0...@sckyzo/cosmos-react@0.8.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** Backdrop's blur prop is replaced by variant ('dim' by default, no blur; 'blur' for an 8px blur under a light veil, 'blur-dark' under a dark one). The scrim of Modal, ConfirmationModal, HelpOverlay, Drawer, Customizer, Shell's drawer and CommandPalette is now Backdrop's dim: its colour changes (a 4px blur is gone from the Modal, the Drawer's grey is replaced by the theme's dim veil). Pass backdrop="blur-dark" for a blur.
+
+### Features
+
+* **react:** add a motion setting to applyAppearance and the settings panels ([be3872a](https://github.com/SckyzO/cosmos/commit/be3872adcd0bb56dea13357a4fbb873cd8502dd9))
+* **react:** cross-fade the copy icon into a check in Clipboard ([970a34b](https://github.com/SckyzO/cosmos/commit/970a34ba89b3fdc5afde37a9a8da915b37948bd8))
+* **react:** fade and scale the dialogs and floating panels in and out ([e21a4e0](https://github.com/SckyzO/cosmos/commit/e21a4e099b4479d2487d96f99d42d0a1177b74b4))
+* **react:** fade content in when it replaces a skeleton ([10d8f69](https://github.com/SckyzO/cosmos/commit/10d8f69f45d689d119c8db85a6e64530c02d488d))
+* **react:** fade the DataTable selection bar in and out ([b3157f4](https://github.com/SckyzO/cosmos/commit/b3157f47f93146c7e56752ea7a62878a50c38f76))
+* **react:** fade the rows of a DataTable in after its placeholders ([f4edf4b](https://github.com/SckyzO/cosmos/commit/f4edf4b27ed5032d93ad469d8df02c403ddfc1d0))
+* **react:** fade the sidebar labels during a collapse ([4288eb6](https://github.com/SckyzO/cosmos/commit/4288eb60281f313193bedcd4689348d55a7cef80))
+* **react:** fill the Stepper connector, then show the check ([0fe0b8b](https://github.com/SckyzO/cosmos/commit/0fe0b8bc74ee61b565750c218a703bc4bc99bfb4))
+* **react:** fold the Accordion content on the motion tokens ([f19ef18](https://github.com/SckyzO/cosmos/commit/f19ef18ad9a492374dcdd88be8817d13b4dee8dd))
+* **react:** fold the AnnouncementBar away when it is dismissed ([032c158](https://github.com/SckyzO/cosmos/commit/032c158278d941a7f0b58f9dc720d536bc6f9539))
+* **react:** fold the details of a chat tool call ([e193262](https://github.com/SckyzO/cosmos/commit/e193262d106d6a63d5d3f9adc8ef22122696d215))
+* **react:** fold the health check outputs and groups ([65e5a07](https://github.com/SckyzO/cosmos/commit/65e5a07a8f2c186249950027b6ea418d72d481d1))
+* **react:** fold the sidebar sub-menus and groups ([e9bc499](https://github.com/SckyzO/cosmos/commit/e9bc499faa81b094a16b2f774de3c8344c88b5f5))
+* **react:** grow in the details of a log row and the body of a step ([4b29d17](https://github.com/SckyzO/cosmos/commit/4b29d17a5cae0e798699b42fb1b1cf1f19b59b11))
+* **react:** grow the Checkbox and Radio marks in on the fast token ([876fbd9](https://github.com/SckyzO/cosmos/commit/876fbd9f736d4d8de24718afbac3e3a1a3e4a26d))
+* **react:** lift the cards that can be clicked on hover and focus ([6a01456](https://github.com/SckyzO/cosmos/commit/6a01456da9b5ee1ca9eeb1d117fdea8d90440bb5))
+* **react:** make Backdrop the one scrim, with a variant and a backdrop prop ([695564e](https://github.com/SckyzO/cosmos/commit/695564e1c6f7c977082d7543c0da8d7f32326571))
+* **react:** move the Tooltip fade to the tokens and slide it from its trigger ([848e5b9](https://github.com/SckyzO/cosmos/commit/848e5b90cb9b11f4533001fa004f54690a16b89b))
+* **react:** open and close the Chatbot panel like a dialog ([65bc8f8](https://github.com/SckyzO/cosmos/commit/65bc8f8afdadb34bd75c58e0de11826b630f1004))
+* **react:** open the Lightbox like a dialog and cross-fade its pictures ([2f76978](https://github.com/SckyzO/cosmos/commit/2f7697836cfad5f4a600a6f4a44fab92f5fd7671))
+* **react:** push a pressed Button down 1px ([1b17fb5](https://github.com/SckyzO/cosmos/commit/1b17fb5479273491358c37649e9ed6ae35f54120))
+* **react:** rise the CookieBanner in and out through the exit transition ([94cfdef](https://github.com/SckyzO/cosmos/commit/94cfdef8b5c762323b45ea263153354abbe51547))
+* **react:** share one exit between the panels that leave, on the Drawer first ([9ad727a](https://github.com/SckyzO/cosmos/commit/9ad727a51268e5a8a2ce7fcdd8f882135d1704ca))
+* **react:** slide the active marker of VerticalNavigation and StickyScrollNav ([1cf5a01](https://github.com/SckyzO/cosmos/commit/1cf5a0135b24f377793bcf3c69ead32a3e01c379))
+* **react:** slide the Calendar month on the theme tokens ([5fe9f18](https://github.com/SckyzO/cosmos/commit/5fe9f182de08f36e7218cfca26fe74ca20e0cb80))
+* **react:** slide the SplitView detail in and out on a narrow screen ([dc0cfaa](https://github.com/SckyzO/cosmos/commit/dc0cfaa73ef9e26e116b6fb176d51d8f7046e45d))
+* **react:** slide the Tabs and SegmentedControl marker to the active option ([4d14cb7](https://github.com/SckyzO/cosmos/commit/4d14cb78d4a4737ad33a8741c50956e27cbd700c))
+* **react:** turn the ThemeToggle icons a quarter between themes ([9d7682c](https://github.com/SckyzO/cosmos/commit/9d7682c86e80b1284b1423796418a3328784a3bd))
+* **react:** unfold the detail row of an expanded DataTable row ([9934ffc](https://github.com/SckyzO/cosmos/commit/9934ffcc896c2dd77f50475e42c1327acd32f18f))
+* **react:** unfold the message under a field instead of pushing the form ([f3b4321](https://github.com/SckyzO/cosmos/commit/f3b4321c06fa2bbb93799f9f5f4918e8f99fdd7f))
+* **react:** wait before dimming a DataTable that reloads with rows ([4690b88](https://github.com/SckyzO/cosmos/commit/4690b886eec14b8ddd1f41cbeac892cfcdaa8e45))
+
+
+### Bug Fixes
+
+* **react:** stop the decorative loops under reduced motion ([1e0ef1b](https://github.com/SckyzO/cosmos/commit/1e0ef1bb0e2f0035fab0694cc2fad911bfa59130))
+
 ## [0.7.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.6.0...@sckyzo/cosmos-react@0.7.0) (2026-11-03)
 
 
