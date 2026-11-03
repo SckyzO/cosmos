@@ -203,6 +203,15 @@ const CompactStoreFooter = (props: Omit<StoreFooterProps, 'banner' | 'variant'>)
   </SiteFooter>
 );
 
+/** The simplest footer: the copyright and the legal links, `compact` with `Bottom` alone. */
+const SimpleStoreFooter = () => (
+  <SiteFooter variant="compact">
+    <SiteFooter.Bottom links={LEGAL} data-testid="bottom">
+      <span data-testid="copyright">&copy; 2026 Harbor &amp; Pine</span>
+    </SiteFooter.Bottom>
+  </SiteFooter>
+);
+
 /** A column of exactly 375px inside the phone viewport, for the checks that name that width. */
 const PhoneBox = ({ children }: { children: ReactNode }) => (
   <div className="w-[375px]" data-testid="phone">
@@ -232,6 +241,20 @@ export const Compact: Story = {
 export const CompactMobile: Story = {
   globals: PHONE,
   render: () => <CompactStoreFooter />,
+};
+
+/**
+ * The copyright and the legal links on one line: `compact` with only `Bottom`, which spreads over
+ * the line by itself, the copyright at the start and the links at the end.
+ */
+export const Simple: Story = {
+  globals: DESKTOP,
+  render: () => <SimpleStoreFooter />,
+};
+
+export const SimpleMobile: Story = {
+  globals: PHONE,
+  render: () => <SimpleStoreFooter />,
 };
 
 /** A full-width banner above the columns takes the letter, and the end column goes. */
@@ -528,6 +551,57 @@ export const CompactIsOneLineAtDesktop: Story = {
     await expect(canvas.getByRole('navigation', { name: 'Help' })).toBeInTheDocument();
     await expect(canvas.getByRole('navigation', { name: 'Legal' })).toBeInTheDocument();
     await expect(canvas.getAllByRole('navigation')).toHaveLength(2);
+  },
+};
+
+/** Alone in a compact footer, `Bottom` spreads over the line: the copyright at the start edge, the links at the end edge. */
+export const SimpleIsOneLineWithLinksAtTheEnd: Story = {
+  ...Simple,
+  tags: HIDDEN,
+  play: async ({ canvas }) => {
+    // The row the parts sit in, inside the footer's side padding.
+    const row = canvas.getByRole('contentinfo').firstElementChild!.firstElementChild!;
+    const copyright = canvas.getByTestId('copyright');
+    const links = canvas.getByRole('navigation', { name: 'Legal' });
+    await expect(midY(links)).toBeCloseTo(midY(copyright), -1);
+    await expect(startOffset(copyright, row)).toBeCloseTo(0, 0);
+    await expect(endOffset(links, row)).toBeCloseTo(0, 0);
+  },
+};
+
+/** In a 375px column the copyright and the links stack, and nothing scrolls sideways. */
+export const SimpleStacksAt375: Story = {
+  ...SimpleMobile,
+  tags: HIDDEN,
+  render: () => (
+    <PhoneBox>
+      <SimpleStoreFooter />
+    </PhoneBox>
+  ),
+  play: async ({ canvas }) => {
+    const box = canvas.getByTestId('phone');
+    await expect(rect(box).width).toBe(375);
+    expectNoHorizontalOverflow(box);
+    await expect(
+      rect(canvas.getByRole('navigation', { name: 'Legal' })).top
+    ).toBeGreaterThanOrEqual(rect(canvas.getByTestId('copyright')).bottom);
+    const footer = rect(canvas.getByRole('contentinfo'));
+    for (const id of ['copyright', 'bottom']) {
+      const part = rect(canvas.getByTestId(id));
+      await expect(part.left, id).toBeGreaterThanOrEqual(footer.left);
+      await expect(part.right, id).toBeLessThanOrEqual(footer.right);
+    }
+  },
+};
+
+/** One `contentinfo`, one `nav`, named by what it holds. */
+export const SimpleLandmarksAreUnique: Story = {
+  ...Simple,
+  tags: HIDDEN,
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('contentinfo')).toHaveLength(1);
+    await expect(canvas.getAllByRole('navigation')).toHaveLength(1);
+    await expect(canvas.getByRole('navigation', { name: 'Legal' })).toBeInTheDocument();
   },
 };
 
