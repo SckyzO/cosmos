@@ -213,11 +213,25 @@ export const Default: Story = {
   args: { defaultValue: sprint() },
 };
 
+// Written by hand: Storybook's own snippet prints the `value` prop, and this board is made during
+// the render (`useState(sprint)`), so its cards carry React's owner fibers; the printer follows
+// them through the whole component tree until the string overflows, and the docs page hangs.
+const CONTROLLED_SOURCE = `const [board, setBoard] = useState<KanbanColumn[]>(initialBoard);
+const [last, setLast] = useState<KanbanMove>();
+
+<KanbanBoard
+  ariaLabel="Sprint board"
+  value={board}
+  onChange={setBoard}
+  onCardMove={setLast}
+/>`;
+
 /**
  * With `value` and `onChange` the host owns the board: a card moves once the host passes the new
  * board back. `onCardMove` carries the move on its own, which is what a server needs.
  */
 export const Controlled: Story = {
+  parameters: { docs: { source: { code: CONTROLLED_SOURCE } } },
   render: (args) => {
     const [value, setValue] = useState(sprint);
     const [last, setLast] = useState<KanbanMove>();
@@ -970,7 +984,10 @@ export const ControlledBoardWaitsForTheHost: Story = {
 /** Controlled by a host that does keep the board, the move shows, and `onCardMove` names it. */
 export const ControlledBoardFollowsTheHost: Story = {
   tags: ['!dev', '!autodocs'],
-  parameters: portalDocsParams.md(),
+  parameters: {
+    ...portalDocsParams.md(),
+    docs: { ...portalDocsParams.md().docs, source: { code: CONTROLLED_SOURCE } },
+  },
   render: Controlled.render,
   args: {},
   play: async ({ canvas }) => {
