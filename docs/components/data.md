@@ -303,9 +303,14 @@ the locale nor the zone, and keep the room of their text until then.
 - `Clock` has the variants `inline`, `card` and `display`, and takes `hour12`, `showSeconds`,
   `showDate` and a `label` for the zone. It ticks on the second boundary. A world clock is a grid of
   `Clock`s.
-- `Countdown` has the variants `tiles`, `inline` and `compact`. `onComplete` is called once, at zero,
-  and the countdown stops there. `labels`, `shortLabels`, `label` and `completedLabel` translate its
-  text.
+- `Countdown` has the variants `tiles`, `inline`, `compact`, `card` and `display`. `card` is one
+  bordered card with a caption over the clock, like `Clock`'s, and `display` is huge digits for a
+  wall screen or a kiosk. `size` (`sm`, `md`, `lg`) sizes the tiles, and `units` picks which ones
+  `tiles`, `card` and `display` show: a unit left out rolls into the next smaller one, so without
+  days 2 days 4 hours read 52 hours. In `card` and `display` the days leave the clock once there are
+  none. `intent` colors the count, and `urgentBelow` (seconds left) turns it `danger` for the last
+  stretch, whatever the `intent`. `onComplete` is called once, at zero, and the countdown stops
+  there. `labels`, `shortLabels`, `label` and `completedLabel` translate its text.
 
 `Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for

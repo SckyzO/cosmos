@@ -4,7 +4,7 @@ import {
   countdownParts,
   formatClockDate,
   formatClockTime,
-  formatCountdownCompact,
+  formatCountdownClock,
   formatCountdownInline,
   formatDateTime,
   formatRelative,
@@ -243,10 +243,44 @@ describe('countdown', () => {
     expect(countdownParts(-5)).toEqual({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   });
 
-  it('writes the compact form, days first when there are some', () => {
-    expect(formatCountdownCompact(countdownParts(2 * 3600 + 4 * 60 + 15), 'd')).toBe('02:04:15');
-    expect(formatCountdownCompact(countdownParts(86400 + 5), 'd')).toBe('1d 00:00:05');
-    expect(formatCountdownCompact(countdownParts(86400 + 5), 'j')).toBe('1j 00:00:05');
+  it('rolls a unit that is left out into the next smaller one', () => {
+    const total = 2 * 86400 + 4 * 3600 + 15 * 60 + 30;
+    const noDays = ['hours', 'minutes', 'seconds'] as const;
+    expect(countdownParts(total, noDays)).toEqual({ days: 0, hours: 52, minutes: 15, seconds: 30 });
+    expect(countdownParts(total, ['days', 'minutes'])).toEqual({
+      days: 2,
+      hours: 0,
+      minutes: 255,
+      seconds: 0,
+    });
+    // Seconds left out: what is under a minute is cut.
+    expect(countdownParts(125, ['minutes'])).toEqual({ days: 0, hours: 0, minutes: 2, seconds: 0 });
+  });
+
+  it('writes the clock of the units shown, the days only when some are left', () => {
+    const all = ['days', 'hours', 'minutes', 'seconds'] as const;
+    const noDays = ['hours', 'minutes', 'seconds'] as const;
+    const total = 2 * 86400 + 4 * 3600 + 15 * 60 + 30;
+    expect(formatCountdownClock(countdownParts(total, all), all, 'd')).toBe('2d 04:15:30');
+    expect(formatCountdownClock(countdownParts(total, noDays), noDays, 'd')).toBe('52:15:30');
+    expect(formatCountdownClock(countdownParts(3600 + 5, all), all, 'd')).toBe('01:00:05');
+    expect(
+      formatCountdownClock(
+        countdownParts(total, ['minutes', 'seconds']),
+        ['minutes', 'seconds'],
+        'd'
+      )
+    ).toBe('3135:30');
+    expect(formatCountdownClock(countdownParts(total, ['days']), ['days'], 'j')).toBe('2j');
+  });
+
+  it('writes the full clock, days first when there are some', () => {
+    const all = ['days', 'hours', 'minutes', 'seconds'] as const;
+    const clock = (seconds: number, dayLabel: string) =>
+      formatCountdownClock(countdownParts(seconds), all, dayLabel);
+    expect(clock(2 * 3600 + 4 * 60 + 15, 'd')).toBe('02:04:15');
+    expect(clock(86400 + 5, 'd')).toBe('1d 00:00:05');
+    expect(clock(86400 + 5, 'j')).toBe('1j 00:00:05');
   });
 
   it('writes the inline form with the two largest units left', () => {

@@ -182,22 +182,48 @@ export const nextCountdownDelay = (targetMs: number, nowMs: number): number | nu
   return left - (Math.ceil(left / SECOND) - 1) * SECOND;
 };
 
-export const countdownParts = (totalSeconds: number): CountdownParts => {
-  const total = Math.max(0, Math.floor(totalSeconds));
-  return {
-    days: Math.floor(total / 86400),
-    hours: Math.floor((total % 86400) / 3600),
-    minutes: Math.floor((total % 3600) / 60),
-    seconds: total % 60,
-  };
+const UNIT_SECONDS: Record<CountdownUnit, number> = {
+  days: 86400,
+  hours: 3600,
+  minutes: 60,
+  seconds: 1,
+};
+
+/**
+ * `totalSeconds` split into `units` (all four by default): a unit that is left out rolls into the
+ * next smaller one that is shown, so without days 2 days 4 hours read 52 hours. What is smaller
+ * than the smallest unit shown is cut.
+ */
+export const countdownParts = (
+  totalSeconds: number,
+  units: readonly CountdownUnit[] = COUNTDOWN_UNITS
+): CountdownParts => {
+  let rest = Math.max(0, Math.floor(totalSeconds));
+  const parts: CountdownParts = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  for (const unit of COUNTDOWN_UNITS) {
+    if (!units.includes(unit)) continue;
+    parts[unit] = Math.floor(rest / UNIT_SECONDS[unit]);
+    rest -= parts[unit] * UNIT_SECONDS[unit];
+  }
+  return parts;
 };
 
 const two = (n: number) => String(n).padStart(2, '0');
 
-/** "02:04:15", with the days before it ("2d 04:15:30") once there are some. */
-export const formatCountdownCompact = (parts: CountdownParts, dayLabel: string): string => {
-  const clock = `${two(parts.hours)}:${two(parts.minutes)}:${two(parts.seconds)}`;
-  return parts.days > 0 ? `${parts.days}${dayLabel} ${clock}` : clock;
+/**
+ * The count as a clock: the hours, minutes and seconds in `units` as two digits between colons
+ * ("02:04:15"), with the days before them ("2d 04:15:30") when `units` has days and some are left.
+ */
+export const formatCountdownClock = (
+  parts: CountdownParts,
+  units: readonly CountdownUnit[],
+  dayLabel: string
+): string => {
+  const clock = COUNTDOWN_UNITS.filter((unit) => unit !== 'days' && units.includes(unit))
+    .map((unit) => two(parts[unit]))
+    .join(':');
+  const days = units.includes('days') && parts.days > 0 ? `${parts.days}${dayLabel}` : '';
+  return [days, clock].filter(Boolean).join(' ');
 };
 
 /** "2d 4h": the largest unit left and the one after it, "30s" at the end. */
