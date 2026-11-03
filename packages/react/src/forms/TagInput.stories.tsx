@@ -3,6 +3,7 @@ import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
   expectFocusBorder,
+  expectGraphicContrast,
   expectNoHorizontalOverflow,
   expectPlaceholderContrast,
   expectRefFocuses,
@@ -10,6 +11,8 @@ import {
   mobileViewport,
   portalDocsParams,
 } from '../storybook-helpers';
+import { Input } from './Input';
+import { MultiSelect } from './MultiSelect';
 import { TagInput } from './TagInput';
 
 const meta = {
@@ -30,7 +33,7 @@ export const Basic: Story = {
   render: () => {
     const [v, setV] = useState<string[]>(['design', 'release']);
     return (
-      <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+      <div className="max-w-md">
         <TagInput label="Tags" placeholder="Add a tag" value={v} onChange={setV} />
       </div>
     );
@@ -40,7 +43,7 @@ export const Basic: Story = {
 export const WithSuggestions: Story = {
   parameters: portalDocsParams.lg(),
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md">
       <TagInput
         label="Tags"
         placeholder="Add a tag"
@@ -55,7 +58,7 @@ export const WithSuggestions: Story = {
 /** `validate` turns a text down: it stays in the input and the field says why. */
 export const WithValidation: Story = {
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md">
       <TagInput
         label="Invite by email"
         placeholder="name@example.com"
@@ -79,7 +82,7 @@ export const WithValidation: Story = {
 export const PasteAList: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md">
       <TagInput label="Tags" placeholder="Paste a list" />
     </div>
   ),
@@ -90,17 +93,23 @@ export const PasteAList: Story = {
   },
 };
 
+/** With `maxTags` the count shows at the end of the helper line, and the limit once it is reached. */
 export const MaxTags: Story = {
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
-      <TagInput label="Tags" maxTags={3} defaultValue={['design', 'docs', 'release']} />
+    <div className="max-w-md space-y-4">
+      <TagInput label="Tags" maxTags={5} defaultValue={['design', 'docs', 'release']} />
+      <TagInput
+        label="Tags, limit reached"
+        maxTags={3}
+        defaultValue={['design', 'docs', 'release']}
+      />
     </div>
   ),
 };
 
 export const WithError: Story = {
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md">
       <TagInput label="Tags" required error="Add at least one tag." />
     </div>
   ),
@@ -108,7 +117,7 @@ export const WithError: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div className="max-w-md space-y-4 bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md space-y-4">
       {(['sm', 'md', 'lg'] as const).map((size) => (
         <TagInput key={size} label={size} size={size} defaultValue={['design', 'docs']} />
       ))}
@@ -118,7 +127,7 @@ export const Sizes: Story = {
 
 export const Disabled: Story = {
   render: () => (
-    <div className="max-w-md bg-white p-8 dark:bg-gray-900">
+    <div className="max-w-md">
       <TagInput label="Tags" disabled defaultValue={['design', 'docs']} />
     </div>
   ),
@@ -128,7 +137,7 @@ export const Controlled: Story = {
   render: () => {
     const [v, setV] = useState<string[]>(['design']);
     return (
-      <div className="max-w-md space-y-3 bg-white p-8 dark:bg-gray-900">
+      <div className="max-w-md space-y-3">
         <TagInput label="Tags" value={v} onChange={setV} />
         <p className="text-sm text-gray-600 dark:text-gray-300" data-testid="value">
           {v.length ? v.join(', ') : 'no tags'}
@@ -357,6 +366,132 @@ export const AnnouncesAdditionsAndRemovals: Story = {
     await expect(status).toHaveTextContent('two removed, 1 tags');
     await userEvent.paste('a,b');
     await expect(status).toHaveTextContent('a, b added, 3 tags');
+  },
+};
+
+/** The count follows the tags, and `limitLabel` takes its place at the limit. */
+export const MaxTagsShowsTheCount: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Tags', maxTags: 3, defaultValue: ['one'] },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox', { name: 'Tags' });
+    await expect(canvas.getByText('1 / 3')).toBeVisible();
+    await userEvent.type(input, 'two{Enter}');
+    await expect(canvas.getByText('2 / 3')).toBeVisible();
+    await userEvent.type(input, 'three{Enter}');
+    await expect(canvas.getByText('Limit reached')).toBeVisible();
+    await expect(canvas.queryByText('3 / 3')).toBeNull();
+    // The text for assistive technology stays, and the helper keeps its line.
+    await expect(canvas.getByText('3 of 3 tags')).toHaveClass('sr-only');
+    await expect(canvas.getByText('Press Enter or comma to add a tag.')).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Remove three' }));
+    await expect(canvas.getByText('2 / 3')).toBeVisible();
+  },
+};
+
+/** The count and the limit text are props, for another language. */
+export const CountAndLimitCanBeTranslated: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: 'Étiquettes',
+    maxTags: 2,
+    defaultValue: ['un'],
+    countLabel: (count, max) => `${count} sur ${max}`,
+    limitLabel: 'Limite atteinte',
+    helperText: 'Entrée ou virgule pour ajouter.',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('1 sur 2')).toBeVisible();
+    await userEvent.type(canvas.getByRole('textbox', { name: 'Étiquettes' }), 'deux{Enter}');
+    await expect(canvas.getByText('Limite atteinte')).toBeVisible();
+  },
+};
+
+export const NoLimitNoCount: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Tags', defaultValue: ['one', 'two'] },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).not.toMatch(/\d+ \/ \d+|Limit reached/);
+  },
+};
+
+/** The count has its own place at the end of the line, even without a helper text. */
+export const CountWithoutHelperText: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Tags', maxTags: 4, defaultValue: ['one'], separators: [] },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('1 / 4')).toBeVisible();
+  },
+};
+
+/**
+ * A tag in the field has a surface of its own: its background was the field's, 1:1 in the dark
+ * themes, and 1.1:1 in the light ones. The ratio is the one a person sees, whatever the theme.
+ */
+export const ChipsStandOutFromTheFieldInEveryTheme: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="max-w-md space-y-4">
+      <TagInput label="Tags" defaultValue={['design', 'docs']} />
+      <MultiSelect
+        label="Teams"
+        options={[
+          { value: 'a', label: 'Platform' },
+          { value: 'b', label: 'Billing' },
+        ]}
+        defaultValue={['a', 'b']}
+      />
+    </div>
+  ),
+  play: ({ canvas }) => {
+    const chips = canvas
+      .getAllByRole('button', { name: /^Remove / })
+      .map((remove) => remove.parentElement!);
+    expect(chips).toHaveLength(4);
+    inEachTheme(() => {
+      for (const chip of chips) expectGraphicContrast(chip, 'backgroundColor', 1.3);
+    });
+  },
+};
+
+/** Label, spacing and helper are the ones of Input: same colour, 6px under the label, 4px over the helper. */
+export const LabelAndHelperMatchInput: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="max-w-md space-y-4">
+      <Input label="Input" description="Helper text" />
+      <TagInput label="TagInput" helperText="Helper text" />
+      <MultiSelect label="MultiSelect" options={[]} helperText="Helper text" />
+    </div>
+  ),
+  play: ({ canvas }) => {
+    const helpers = canvas.getAllByText('Helper text');
+    // The box of each field: the input itself, or the box around the input of the two others.
+    const rows = [
+      { name: 'Input', box: canvas.getByRole('textbox', { name: 'Input' }) },
+      {
+        name: 'TagInput',
+        box: canvas.getByRole('textbox', { name: 'TagInput' }).parentElement!,
+      },
+      {
+        name: 'MultiSelect',
+        box: canvas.getByRole('combobox', { name: 'MultiSelect' }).parentElement!,
+      },
+    ].map(({ name, box }, i) => {
+      const label = canvas.getByText(name, { selector: 'label' });
+      const helper = helpers[i]!;
+      return {
+        color: getComputedStyle(label).color,
+        size: getComputedStyle(label).fontSize,
+        above: Math.round(box.getBoundingClientRect().top - label.getBoundingClientRect().bottom),
+        below: Math.round(helper.getBoundingClientRect().top - box.getBoundingClientRect().bottom),
+        helperColor: getComputedStyle(helper).color,
+      };
+    });
+    expect(rows[1], 'TagInput').toEqual(rows[0]);
+    expect(rows[2], 'MultiSelect').toEqual(rows[0]);
+    expect(rows[0]!.above).toBe(6);
+    expect(rows[0]!.below).toBe(4);
   },
 };
 
