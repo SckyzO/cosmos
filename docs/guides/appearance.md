@@ -87,7 +87,7 @@ user's choice wins.
 
 | Token                          | Default    | `compact` | `comfortable` | Used by                     |
 | ------------------------------ | ---------- | --------- | ------------- | --------------------------- |
-| `h-ctrl-28` … `h-ctrl-48`      | 28–48px    | 4px less  | 4px more      | buttons, fields, segments   |
+| `h-ctrl-28` … `h-ctrl-64`      | 28–64px    | 4px less  | 4px more      | buttons, fields, segments   |
 | `py-row-4` … `py-row-24`       | 4–24px     | 2px less  | 2px more      | list rows, menu items, tabs |
 | `py-cell-head`, `py-cell-body` | 12px, 14px | 8px, 10px | 16px, 20px    | table cells                 |
 
