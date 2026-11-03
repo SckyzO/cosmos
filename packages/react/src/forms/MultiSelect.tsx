@@ -227,6 +227,7 @@ export const MultiSelect = ({
           <Tag
             key={v}
             size={TAG_SIZE[size]}
+            inField
             disabled={disabled}
             onRemove={() => remove(v)}
             className="shrink-0"

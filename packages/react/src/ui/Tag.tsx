@@ -15,6 +15,12 @@ export type TagProps = {
   size?: TagSize;
   /** Optional leading Lucide icon. */
   icon?: ElementType;
+  /**
+   * The tag sits in a text field (the values of a `TagInput` or a `MultiSelect`). A neutral tag
+   * then takes a surface the field's own background does not match, in any theme: it has the
+   * same one as a loose tag otherwise. Default `false`.
+   */
+  inField?: boolean;
   /** Faded and inert: the tag can't be clicked, followed or removed. */
   disabled?: boolean;
   /** Shows a remove button; it is called when the button is pressed. */
@@ -47,6 +53,11 @@ const SIZE = {
   '2xl': { box: 'h-10 text-xl', gap: 'gap-2', pad: 'ps-3.5', padEnd: 'pe-3.5', icon: 'size-5' },
   '3xl': { box: 'h-12 text-2xl', gap: 'gap-2.5', pad: 'ps-4', padEnd: 'pe-4', icon: 'size-6' },
 } satisfies Record<TagSize, Record<string, string>>;
+
+// A neutral tag in a field: the loose tag's gray-100 (gray-800 in the dark themes) is the field's
+// own background there. gray-300 and gray-700 keep 1.3:1 or more against it in the four themes
+// (gray-200 is 1.24:1 on white).
+const FIELD_NEUTRAL_TILE = 'bg-gray-300 dark:bg-gray-700';
 
 // The X is drawn small; up to `lg` the pseudo-element stretches its hit area to 24px (WCAG 2.5.8).
 // From `xl` up the button is 24px or more already, and the pseudo-element only fills it.
@@ -101,6 +112,7 @@ export const Tag = ({
   intent = 'neutral',
   size = 'md',
   icon: Icon,
+  inField = false,
   disabled = false,
   onRemove,
   removeLabel,
@@ -168,7 +180,7 @@ export const Tag = ({
       aria-disabled={disabled ? true : undefined}
       className={clsx(
         'inline-flex max-w-full items-center rounded-md font-medium',
-        style.tile,
+        inField && intent === 'neutral' ? FIELD_NEUTRAL_TILE : style.tile,
         style.text,
         sizing.box,
         sizing.gap,
