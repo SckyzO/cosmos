@@ -1,7 +1,10 @@
 import {
+  Children,
   createContext,
+  isValidElement,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -9,6 +12,7 @@ import {
   type Ref,
 } from 'react';
 import { clsx } from 'clsx';
+import { exitAnimations } from '../hooks/exitAnimations';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { mergeRefs } from '../ui/mergeRefs';
@@ -54,10 +58,21 @@ export type SplitViewPaneProps = {
   ref?: Ref<HTMLElement>;
 };
 
+/**
+ * A change of pane below the breakpoint, while it plays. The pane that sits later along the line
+ * is the one that moves, over the other: `in` when the view goes to it (it comes in from the end of
+ * the line), `out` when the view goes back to an earlier pane (it leaves toward the end). The other
+ * stays where it is, under it, until the move is over.
+ */
+type PaneMove = { from: string; to: string; direction: 'in' | 'out' };
+
 type SplitViewContextValue = {
   activePane: string | undefined;
   setActivePane: (id: string) => void;
   collapseBelow: SplitViewBreakpoint;
+  /** Whether the panes are collapsed to one: below the breakpoint. */
+  collapsed: boolean;
+  move: PaneMove | null;
 };
 
 const SplitViewContext = createContext<SplitViewContextValue | null>(null);
@@ -79,6 +94,32 @@ const HIDDEN_CLASS: Record<
   md: { active: 'max-md:w-full', inactive: 'max-md:hidden', first: 'max-md:not-first:hidden' },
   lg: { active: 'max-lg:w-full', inactive: 'max-lg:hidden', first: 'max-lg:not-first:hidden' },
   xl: { active: 'max-xl:w-full', inactive: 'max-xl:hidden', first: 'max-xl:not-first:hidden' },
+};
+
+// What the pane that moves is dressed with while it does, per breakpoint (Tailwind reads whole
+// class names). It stays in the flow, as wide as the view, and takes the place of the pane before
+// it with a margin of minus its own width: no positioned ancestor, so the view's own classes are
+// left alone. It is opaque, with a soft edge, over `--cosmos-motion-slow`.
+const MOVING_CLASS: Record<SplitViewBreakpoint, { over: string; enter: string; leave: string }> = {
+  md: {
+    over: 'max-md:-ms-[100%] max-md:w-full max-md:bg-[var(--color-bg-panel)] max-md:shadow-lg max-md:transition-[translate] max-md:duration-(--cosmos-motion-slow) max-md:ease-(--cosmos-ease-in-out)',
+    // It comes in from the end of the line: the right in left to right, the left in right to left.
+    enter:
+      'max-md:translate-none max-md:starting:translate-x-full max-md:rtl:starting:-translate-x-full',
+    leave: 'max-md:translate-x-full max-md:rtl:-translate-x-full',
+  },
+  lg: {
+    over: 'max-lg:-ms-[100%] max-lg:w-full max-lg:bg-[var(--color-bg-panel)] max-lg:shadow-lg max-lg:transition-[translate] max-lg:duration-(--cosmos-motion-slow) max-lg:ease-(--cosmos-ease-in-out)',
+    enter:
+      'max-lg:translate-none max-lg:starting:translate-x-full max-lg:rtl:starting:-translate-x-full',
+    leave: 'max-lg:translate-x-full max-lg:rtl:-translate-x-full',
+  },
+  xl: {
+    over: 'max-xl:-ms-[100%] max-xl:w-full max-xl:bg-[var(--color-bg-panel)] max-xl:shadow-lg max-xl:transition-[translate] max-xl:duration-(--cosmos-motion-slow) max-xl:ease-(--cosmos-ease-in-out)',
+    enter:
+      'max-xl:translate-none max-xl:starting:translate-x-full max-xl:rtl:starting:-translate-x-full',
+    leave: 'max-xl:translate-x-full max-xl:rtl:-translate-x-full',
+  },
 };
 
 const FOCUSABLE =
@@ -109,6 +150,46 @@ const Root = ({
   // The desktop layout is the server's, as in Shell.
   const collapsed = !useMediaQuery(`(min-width: ${BREAKPOINT_REM[collapseBelow]}rem)`, true);
 
+  // A change of pane below the breakpoint moves the later of the two over the other. Without an
+  // active pane the first one shows. A pane the view cannot place (an id it does not know, a pane
+  // wrapped in another element) changes with no movement.
+  const order = Children.toArray(children).flatMap((child) =>
+    isValidElement<SplitViewPaneProps>(child) && child.type === Pane ? [child.props.id] : []
+  );
+  const shownPane = activePane ?? order[0];
+  const [settled, setSettled] = useState(shownPane);
+  const [move, setMove] = useState<PaneMove | null>(null);
+  if (shownPane !== settled) {
+    setSettled(shownPane);
+    const from = order.indexOf(settled ?? '');
+    const to = order.indexOf(shownPane ?? '');
+    setMove(
+      collapsed && from >= 0 && to >= 0
+        ? { from: settled!, to: shownPane!, direction: to > from ? 'in' : 'out' }
+        : null
+    );
+  }
+  // The move is over when the transition of the pane has played, or at once when none runs (the
+  // durations are 0, or the view is wide): the pane that left is then out of the layout. A
+  // transition that is cancelled (the view widened, another pane picked) ends the wait too.
+  useLayoutEffect(() => {
+    if (!move) return;
+    const running = exitAnimations(rootRef.current?.getAnimations?.({ subtree: true }) ?? []);
+    if (running.length === 0) {
+      // Reading the browser's animations is the whole point of the effect: the state follows what
+      // is running in the document, once the classes of the move are committed.
+      setMove(null);
+      return;
+    }
+    let cancelled = false;
+    void Promise.allSettled(running.map((animation) => animation.finished)).then(() => {
+      if (!cancelled) setMove(null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [move]);
+
   // A pane that appears takes focus, so a keyboard or screen-reader user lands in it. Side by side
   // every pane is already there, and the first render has nothing to announce.
   const shown = useRef(activePane);
@@ -119,12 +200,13 @@ const Root = ({
     const pane = Array.from(rootRef.current.children).find(
       (el): el is HTMLElement => el instanceof HTMLElement && el.dataset.splitPane === activePane
     );
-    pane?.focus();
+    // Without scrolling: the pane comes in from outside the view, which would scroll to it.
+    pane?.focus({ preventScroll: true });
   }, [activePane, collapsed]);
 
   const context = useMemo(
-    () => ({ activePane, setActivePane, collapseBelow }),
-    [activePane, setActivePane, collapseBelow]
+    () => ({ activePane, setActivePane, collapseBelow, collapsed, move }),
+    [activePane, setActivePane, collapseBelow, collapsed, move]
   );
 
   return (
@@ -148,8 +230,22 @@ const Root = ({
 const Pane = ({ id, label, width, children, className, ref }: SplitViewPaneProps) => {
   const context = useContext(SplitViewContext);
   if (!context) throw new Error('SplitView.Pane must be rendered inside a SplitView');
-  const { activePane, collapseBelow } = context;
+  const { activePane, collapseBelow, move } = context;
   const hidden = HIDDEN_CLASS[collapseBelow];
+  const moving = MOVING_CLASS[collapseBelow];
+  // While the view changes pane, the two panes involved are both there: the one that moves lies
+  // over the other, which has no use any more (out of reach and of the accessibility tree).
+  const role =
+    move?.to === id
+      ? move.direction === 'in'
+        ? 'comes-in'
+        : 'revealed'
+      : move?.from === id
+        ? move.direction === 'in'
+          ? 'beneath'
+          : 'leaves'
+        : undefined;
+  const leaving = role === 'beneath' || role === 'leaves';
 
   const element = useRef<HTMLElement | null>(null);
   const [tabStop, setTabStop] = useState(false);
@@ -174,17 +270,25 @@ const Pane = ({ id, label, width, children, className, ref }: SplitViewPaneProps
       ref={mergeRefs(element, ref)}
       aria-label={label}
       data-split-pane={id}
+      inert={leaving || undefined}
+      aria-hidden={leaving || undefined}
       tabIndex={tabStop ? 0 : -1}
       className={clsx(
         'focus-visible:focus-indicator min-h-0 min-w-0 overflow-y-auto outline-hidden focus-visible:ring-inset',
         width ? ['shrink-0', width] : 'flex-1',
         // Below the breakpoint the shown pane is the whole view: `max-lg:w-full` sorts after the
         // plain width class, and the others leave the layout and the accessibility tree.
-        activePane === undefined
-          ? [hidden.active, hidden.first]
-          : activePane === id
-            ? hidden.active
-            : hidden.inactive,
+        role === 'comes-in'
+          ? [moving.over, moving.enter]
+          : role === 'leaves'
+            ? [moving.over, moving.leave]
+            : role === 'revealed' || role === 'beneath'
+              ? hidden.active
+              : activePane === undefined
+                ? [hidden.active, hidden.first]
+                : activePane === id
+                  ? hidden.active
+                  : hidden.inactive,
         className
       )}
     >
