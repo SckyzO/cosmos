@@ -58,21 +58,55 @@ const withCosmosSurface: Decorator = (Story, ctx) => {
  */
 const THEMES = COSMOS_THEMES.map(({ id }) => ({ id, className: id === 'light' ? '' : id }));
 
+/** Put the class of the theme `id` on <html> and take the other themes' classes off. */
+const setThemeClass = (id: string) => {
+  const root = document.documentElement;
+  for (const t of THEMES) {
+    if (t.id !== id && t.className) root.classList.remove(t.className);
+  }
+  const current = THEMES.find((t) => t.id === id)?.className;
+  if (current) root.classList.add(current);
+};
+
+type DocsPreview = {
+  __STORYBOOK_PREVIEW__?: { storyStore: { userGlobals: { get: () => { theme?: unknown } } } };
+};
+
+/**
+ * The toolbar's theme, read from the docs page this document is a frame of; `undefined` when it is
+ * not one. A story with `portalDocsParams` (`inline: false`) renders in an iframe of its own, which
+ * starts on the default globals: nothing sends it the toolbar's, and its channel talks to the page,
+ * not to the manager. The page is of the same origin, so its preview is in reach. Its own globals
+ * are read, not its channel, which also carries what its frames report. A toolbar change renders
+ * the page again, frames included, so reading once per render is enough. In the manager, or on a
+ * story alone, the parent is not a preview.
+ */
+const docsPageTheme = (): string | undefined => {
+  try {
+    const host = window.parent as unknown as DocsPreview;
+    if (host === (window as unknown)) return undefined;
+    return host.__STORYBOOK_PREVIEW__?.storyStore.userGlobals.get().theme as string | undefined;
+  } catch {
+    // A parent of another origin.
+    return undefined;
+  }
+};
+
 /**
  * Put the `theme` global's class on <html>, as addon-themes'
  * withThemeByClassName did: remove the classes of the other themes, then add
  * the selected one; classes that are not theme classes stay. Unlike the addon
  * (an effect after render), it runs before the story renders, like
  * withAppearanceAttributes, so components read the right theme on mount.
+ * A story in a frame of a docs page takes the page's theme, unless the story
+ * pins its own with `globals`.
  */
 const withThemeClass: Decorator = (Story, ctx) => {
-  const selected = (ctx.globals.theme as string | undefined) || DEFAULT_THEME;
-  const root = document.documentElement;
-  for (const t of THEMES) {
-    if (t.id !== selected && t.className) root.classList.remove(t.className);
-  }
-  const current = THEMES.find((t) => t.id === selected)?.className;
-  if (current) root.classList.add(current);
+  const selected =
+    (ctx.storyGlobals.theme as string | undefined) ??
+    docsPageTheme() ??
+    (ctx.globals.theme as string | undefined);
+  setThemeClass(selected || DEFAULT_THEME);
   return <Story />;
 };
 
