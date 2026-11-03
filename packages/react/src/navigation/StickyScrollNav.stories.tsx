@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
-import { SectionCard } from '../templates/SectionCard';
 import {
   endOffset,
   expectNoHorizontalOverflow,
@@ -20,24 +19,40 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// A settings page: each section heading matches the button that goes to it.
+const SETTINGS = [
+  {
+    id: 'profile',
+    label: 'Profile',
+    text: 'Your name, your photo and the address people see on your public page.',
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    text: 'Choose what reaches you by email and what stays in the app.',
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    text: 'Your password, two-step verification and the devices signed in to your account.',
+  },
+  { id: 'billing', label: 'Billing', text: 'Your plan, the card on file and your past invoices.' },
+];
+
+/**
+ * A settings page in a scroll box. The row of buttons stays pinned at the top while the page
+ * scrolls: each button goes to its section, and the one of the section being read is marked.
+ */
 export const Default: Story = {
   render: () => (
-    <div className="min-h-screen bg-[var(--color-bg-base)] p-6">
-      <StickyScrollNav
-        sections={[
-          { id: 's1', label: 'Realtime' },
-          { id: 's2', label: 'Line / Area' },
-          { id: 's3', label: 'Donut' },
-          { id: 's4', label: 'Treemap' },
-        ]}
-      />
-      <div className="space-y-6 pt-6">
-        {['s1', 's2', 's3', 's4'].map((id) => (
-          <div key={id} id={id}>
-            <SectionCard title={id.toUpperCase()}>
-              <div className="h-48 rounded-xl bg-gray-100 dark:bg-gray-800/50" />
-            </SectionCard>
-          </div>
+    <div className="bg-[var(--color-bg-base)] p-6">
+      <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <StickyScrollNav sections={SETTINGS} topOffset={8} />
+        {SETTINGS.map(({ id, label, text }) => (
+          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
+            <h2 className="text-lg font-semibold">{label}</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
+          </section>
         ))}
       </div>
     </div>
@@ -130,6 +145,44 @@ export const ButtonScrollsInsideAScrollContainer: Story = {
     await expect(nav.parentElement?.scrollTop).toBeGreaterThan(0);
     await expect(window.scrollY).toBe(0);
     await expect(topOf(nav)).toBeCloseTo(stuckTop, 0);
+  },
+};
+
+/** The button of the section being read is marked, whether it got there by a click or by scrolling. */
+export const ButtonMarksTheSectionBeingRead: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const box = nav.parentElement!;
+    const reading = () =>
+      canvas
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('aria-current') === 'location')
+        .map((button) => button.textContent);
+    // At the top, the first section is the one being read.
+    await expect(reading()).toEqual(['Profile']);
+
+    // Scrolled by hand until a section's top reaches the nav: its button takes the mark.
+    const scrollTo = (id: string) =>
+      box.scrollBy({
+        top: topOf(canvas.getByRole('region', { name: id })) - nav.getBoundingClientRect().bottom,
+        behavior: 'instant',
+      });
+    scrollTo('Security');
+    await waitFor(() => expect(reading()).toEqual(['Security']), { timeout: 3000 });
+    scrollTo('Notifications');
+    await waitFor(() => expect(reading()).toEqual(['Notifications']), { timeout: 3000 });
+    // The last section may never reach the nav: the end of the scroll counts as reading it.
+    box.scrollBy({ top: box.scrollHeight, behavior: 'instant' });
+    await waitFor(() => expect(reading()).toEqual(['Billing']), { timeout: 3000 });
+
+    // A click scrolls there, and the mark follows.
+    await userEvent.click(canvas.getByRole('button', { name: 'Profile' }));
+    await waitFor(() => expect(reading()).toEqual(['Profile']), { timeout: 3000 });
+    await expect(canvas.getByRole('button', { name: 'Billing' })).not.toHaveAttribute(
+      'aria-current'
+    );
   },
 };
 
