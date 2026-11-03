@@ -63,7 +63,8 @@ export type NotificationRowProps = ComponentPropsWithRef<'button'> & {
    * (`aria-label="Delete: {title}"`), or a menu. They come after the row's own button and are
    * siblings of it, never inside it, so each is a stop of its own for the keyboard and a click
    * on one is not a click on the row. With `actions` the row is a `<div>` around that button and
-   * them: `className` styles the `<div>`, and `ref` and the other props stay on the button.
+   * them: `className` styles the `<div>`, and `ref` and the other props stay on the button. They
+   * line up with the badge, at the top of the row.
    */
   actions?: ReactNode;
 };
@@ -152,7 +153,17 @@ export function NotificationRow({
   return (
     <div className={clsx('flex transition-colors', tint, className)}>
       {renderButton('min-w-0 flex-1 ps-4 pe-2')}
-      <div className="flex shrink-0 items-center gap-1 self-center pe-3">{actions}</div>
+      {/*
+        The actions sit on the badge's line, not on the middle of the row: the same top padding as
+        the button, then a box as tall as the badge (its text line and its 2px of padding), which
+        centres them. They hang past it, so a 32px button is centred on the badge. The glyph of the
+        last one ends where the badge of a row without actions does (8px of gap and 8px in the box).
+      */}
+      <div className="py-row-12 flex shrink-0 items-start pe-2">
+        <div className="mt-0.5 flex h-[calc(var(--text-3xs)*1.5+0.25rem)] items-center gap-1">
+          {actions}
+        </div>
+      </div>
     </div>
   );
 }

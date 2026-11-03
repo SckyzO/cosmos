@@ -211,7 +211,13 @@ go with it.
   its own for the keyboard, and a click on one is not a click on the row. With `actions` the row
   is a `<div>` around the button and them, so `className` styles the `<div>` while `ref` and the
   other props stay on the button; without them the row is the button, as before. Give every row of
-  a list the same actions, so the badges line up. In a panel an action does not close it.
+  a list the same actions, so the badges line up. In a panel an action does not close it. The
+  actions are centred on the badge's line, at the top of the row, not on the middle of it, and the
+  last one ends where the badge of a row without actions does. The stories draw them with the
+  package's internal icon button: a 32px box around a 16px icon, muted at rest, tinted on hover,
+  and for a delete the red only on hover and focus, so six rows do not show six red icons. It is
+  not exported; an `<button>` with those classes, or your own `Button` with `variant="ghost"`,
+  does the same.
 - `closeOnClick` belongs to `NotificationsPanel.Item`: outside a panel there is nothing to close.
 
 ### A notifications page
