@@ -934,6 +934,7 @@ export const WeekFollowsEventsThatArriveLate: Story = {
 /** The day is the same grid. */
 export const DayFollowsEventsThatArriveLate: Story = {
   ...WeekFollowsEventsThatArriveLate,
+  tags: ['!dev', '!autodocs'],
   args: { ...gridArgs, defaultView: 'day' },
   play: async ({ canvas }) => {
     const area = canvas.getByRole('group', { name: /^Schedule for/ });
@@ -946,6 +947,7 @@ export const DayFollowsEventsThatArriveLate: Story = {
 /** A person who already scrolled keeps their place: late events do not pull the grid back. */
 export const WeekLeavesAScrolledGridAlone: Story = {
   ...WeekFollowsEventsThatArriveLate,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const area = canvas.getByRole('group', { name: /^Schedule for/ });
     area.scrollTop = 600;
