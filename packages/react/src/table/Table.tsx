@@ -42,12 +42,16 @@ const ALIGN_CLASS = {
 type CellAlignProps = {
   /** Text alignment. Default `start`, or `end` when `numeric` is set. */
   align?: 'start' | 'center' | 'end';
-  /** Numbers: aligned to the end, with tabular figures so the digits line up. */
+  /** Numbers: aligned to the end, with tabular figures so the digits line up, on one line. */
   numeric?: boolean;
 };
 
+// A number stays whole in a narrow column, with its unit: the table scrolls before it wraps.
 const alignClass = ({ align, numeric }: CellAlignProps) =>
-  clsx(ALIGN_CLASS[align ?? (numeric ? 'end' : 'start')], numeric && 'tabular-nums');
+  clsx(
+    ALIGN_CLASS[align ?? (numeric ? 'end' : 'start')],
+    numeric && 'whitespace-nowrap tabular-nums'
+  );
 
 export type TableProps = ComponentProps<'table'> & {
   /**

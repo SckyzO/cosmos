@@ -370,6 +370,9 @@ page's by default),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
 loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
-(`start`, `center` or `end`; `numeric` aligns to the end, with tabular figures). `TableHeaderCell` sets `scope` to `col` in the
+(`start`, `center` or `end`; `numeric` aligns to the end, with tabular figures, and keeps the value on
+one line with its unit). `TableHeaderCell` sets `scope` to `col` in the
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
-stays inside the page on small screens.
+stays inside the page on small screens. In a narrow column a cell wraps at every space and
+hyphen: put `whitespace-nowrap` in the `className` of a cell that holds a host name or any
+identifier, so the table scrolls sideways before it breaks the name.
