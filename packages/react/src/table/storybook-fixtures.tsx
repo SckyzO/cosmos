@@ -499,3 +499,108 @@ export const peopleColumns: ColumnDef<Person>[] = [
   },
   { key: 'lastSeen', label: 'Last seen', render: (p) => p.lastSeen },
 ];
+
+// ── Orders ───────────────────────────────────────────────────────────────────
+
+export type Order = {
+  id: string;
+  customer: string;
+  status: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  payment: 'Paid' | 'Pending' | 'Failed' | 'Refunded';
+  /** In euros. */
+  total: number;
+};
+
+/** Every status an order goes through, in the order of the flow. */
+export const ORDER_STATUSES: Order['status'][] = [
+  'Pending',
+  'Packed',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+];
+
+// The eight orders with values of their own: the stories that name one (`BK-20420`) read these.
+const ORDERS_HEAD: [string, Order['status'], Order['payment'], number][] = [
+  ['Maya Lindqvist', 'Pending', 'Pending', 64.8],
+  ['Tomás Herrera', 'Packed', 'Paid', 18.5],
+  ['Aiko Tanaka', 'Packed', 'Paid', 112.3],
+  ['Oliver Brandt', 'Shipped', 'Paid', 39],
+  ['Fatima Okonkwo', 'Packed', 'Paid', 87.4],
+  ['Lucas Moreau', 'Delivered', 'Paid', 24.9],
+  ['Sofia Petrov', 'Cancelled', 'Failed', 41.6],
+  ['Daniel Whitfield', 'Delivered', 'Paid', 143.2],
+];
+
+/**
+ * `count` orders, the newest first: `BK-20421`, `BK-20420`… The first eight are the ones with
+ * values of their own (Maya Lindqvist is `BK-20421`); the others cycle through the same customers,
+ * with statuses and totals that are a function of the row's index, so every run gets the same
+ * list: 8 to select from, 10,000 for a server to page.
+ */
+export const makeOrders = (count: number): Order[] =>
+  Array.from({ length: count }, (_, i) => {
+    const id = `BK-${20421 - i}`;
+    const head = ORDERS_HEAD[i];
+    if (head) {
+      const [customer, status, payment, total] = head;
+      return { id, customer, status, payment, total };
+    }
+    const status = ORDER_STATUSES[(i * 3 + Math.floor(i / 7)) % ORDER_STATUSES.length];
+    return {
+      id,
+      customer: ORDERS_HEAD[(i * 5) % ORDERS_HEAD.length][0],
+      status,
+      payment:
+        status === 'Pending'
+          ? 'Pending'
+          : status !== 'Cancelled'
+            ? 'Paid'
+            : i % 2
+              ? 'Refunded'
+              : 'Failed',
+      total: ((i * 7919) % 49_900) / 100 + 5,
+    };
+  });
+
+/** The columns of an orders list: sortable order number, customer and total; filterable status and payment. */
+export const orderColumns: ColumnDef<Order>[] = [
+  {
+    key: 'id',
+    label: 'Order',
+    mobile: 'title',
+    sortable: true,
+    sortValue: (r) => r.id,
+    render: (r) => r.id,
+  },
+  {
+    key: 'customer',
+    label: 'Customer',
+    sortable: true,
+    sortValue: (r) => r.customer,
+    searchValue: (r) => r.customer,
+    render: (r) => r.customer,
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    filterable: true,
+    filterValue: (r) => r.status,
+    render: (r) => r.status,
+  },
+  {
+    key: 'payment',
+    label: 'Payment',
+    filterable: true,
+    filterValue: (r) => r.payment,
+    render: (r) => r.payment,
+  },
+  {
+    key: 'total',
+    label: 'Total',
+    align: 'end',
+    sortable: true,
+    sortValue: (r) => r.total,
+    render: (r) => `€${r.total.toFixed(2)}`,
+  },
+];
