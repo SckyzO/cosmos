@@ -1,7 +1,8 @@
 import { useState, type RefObject } from 'react';
-import { useExitTransition } from '../hooks/useExitTransition';
+import { useExitTransition } from './useExitTransition';
 
-// Internal to the table: how a block that comes and goes with the data arrives and leaves.
+// Internal to the package: how a block that comes and goes with the data arrives and leaves. Not
+// exported from the barrel.
 
 /**
  * Whether a block is on screen, and whether it moves in as it arrives. It is on screen while

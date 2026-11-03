@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { useRef, type ReactNode } from 'react';
 import { HoldWhileClosed } from '../ui/HoldWhileClosed';
-import { useArrival } from './useArrival';
+import { useArrival } from '../hooks/useArrival';
 
 // The "N selected" bar of a DataTable. Internal: not re-exported.
 

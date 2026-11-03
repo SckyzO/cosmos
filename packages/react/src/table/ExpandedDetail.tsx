@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from 'react';
 import { Fold } from '../ui/Fold';
-import { useArrival } from './useArrival';
+import { useArrival } from '../hooks/useArrival';
 
 // The detail of an expanded row, in the table and in the cards of a phone. Internal: not
 // re-exported.
