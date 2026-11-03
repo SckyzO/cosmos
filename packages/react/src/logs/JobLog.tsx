@@ -727,7 +727,12 @@ export const JobLog = ({
           data-step-header={job.id}
           aria-expanded={open}
           aria-controls={open ? bodyId : undefined}
-          onClick={() => setExpanded((ids) => toggleStep(ids, job.id))}
+          onClick={() => {
+            // Opening a step by hand is leaving the running one: stop following, so the header
+            // stays where it is and the step opens under it.
+            if (!open && following) setFollow(false);
+            setExpanded((ids) => toggleStep(ids, job.id));
+          }}
           className={clsx(
             'focus-visible:focus-indicator h-ctrl-40 sticky top-0 z-10 flex w-full items-center gap-2.5 px-4 text-start text-sm font-medium focus-visible:ring-inset',
             index > 0 && clsx('border-t', palette.divider),
