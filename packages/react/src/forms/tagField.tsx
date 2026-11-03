@@ -73,7 +73,7 @@ export const TagFieldDescription = ({
   <p
     id={id}
     className={clsx(
-      'mt-1.5 text-xs',
+      'mt-1 text-xs',
       error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
     )}
   >

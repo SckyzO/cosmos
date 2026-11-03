@@ -298,7 +298,10 @@ export const TagInput = ({
       }}
     >
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
+        <label
+          htmlFor={id}
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           {label}
           {required && <RequiredMark />}
         </label>
@@ -309,7 +312,7 @@ export const TagInput = ({
       <div
         ref={fieldRef}
         onMouseDown={(e) => !disabled && focusInputOnBoxPress(e, inputRef.current)}
-        className={clsx(label && 'mt-2', tagFieldClass({ size, invalid: !!errorText, disabled }))}
+        className={tagFieldClass({ size, invalid: !!errorText, disabled })}
       >
         {values.map((v) => (
           <Tag
