@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import type { ColumnDef } from './types';
+import { PEOPLE, patchColumns, peopleColumns, pickColumns } from './storybook-fixtures';
 
 // The CSV export of DataTable lives in its own file, with the same `Tables/DataTable` family:
 // DataTable.stories.tsx is already one of the largest stories files of the package.
@@ -17,57 +17,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type User = { id: string; name: string; role: string; team: string; city: string };
+// The shared people, in four columns: City starts hidden, so the export leaves it out.
+const rows = PEOPLE;
 
-const rows: User[] = [
-  ['Ada Lovelace', 'Engineer', 'Core', 'London'],
-  ['Grace Hopper', 'Admiral', 'Navy', 'New York'],
-  ['Linus Torvalds', 'Engineer', 'Kernel', 'Portland'],
-  ['Margaret Hamilton', 'Director', 'Core', 'Boston'],
-  ['Alan Turing', 'Researcher', 'Crypto', 'Manchester'],
-  ['Zoë Kowalski', 'Engineer', 'Core', 'Kraków'],
-  ['Edsger Dijkstra', 'Engineer', 'Core', 'Eindhoven'],
-  ['Barbara Liskov', 'Engineer', 'Core', 'Boston'],
-  ['Ken Thompson', 'Engineer', 'Core', 'New Orleans'],
-  ['Dennis Ritchie', 'Engineer', 'Core', 'Bronxville'],
-  ['Donald "Don" Knuth', 'Engineer', 'Core', 'Milwaukee'],
-  ['Tim Berners-Lee', 'Engineer', 'Web', 'London'],
-].map(([name, role, team, city], i) => ({ id: `user-${i + 1}`, name, role, team, city }));
+const columns = patchColumns(pickColumns(peopleColumns, ['name', 'role', 'team', 'city']), {
+  city: { defaultHidden: true, exportValue: (r) => r.city },
+});
 
-const columns: ColumnDef<User>[] = [
-  {
-    key: 'name',
-    label: 'Name',
-    sortable: true,
-    sortValue: (r) => r.name,
-    searchValue: (r) => r.name,
-    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
-  },
-  {
-    key: 'role',
-    label: 'Role',
-    filterable: true,
-    filterValue: (r) => r.role,
-    render: (r) => r.role,
-  },
-  {
-    key: 'team',
-    label: 'Team',
-    filterable: true,
-    filterValue: (r) => r.team,
-    render: (r) => r.team,
-  },
-  {
-    key: 'city',
-    label: 'City',
-    defaultHidden: true,
-    exportValue: (r) => r.city,
-    render: (r) => r.city,
-  },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
+// The check of the file's text needs a name with quotes in it, which the CSV doubles: the shared
+// list with that one name changed.
+const QUOTED = PEOPLE.map((p) =>
+  p.name === 'Donald Knuth' ? { ...p, name: 'Donald "Don" Knuth' } : p
 );
 
 type Canvas = ReturnType<typeof within>;
@@ -119,19 +79,17 @@ const readBlob = async (blob: Blob) => {
 /** `exportable` adds the Export button before Columns. `City` starts hidden, so it is not exported. */
 export const Export: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={5}
-        exportable
-        exportFileName="team.csv"
-        columnsMenu
-        defaultSearchValue=""
-        searchPlaceholder="Search users…"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={5}
+      exportable
+      exportFileName="team.csv"
+      columnsMenu
+      defaultSearchValue=""
+      searchPlaceholder="Search users…"
+    />
   ),
 };
 
@@ -148,11 +106,7 @@ export const ExportChecks: Story = {
 /** Without a search field the toolbar still shows, for the button alone. */
 export const ExportWithoutSearch: Story = {
   tags: ['!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} exportable />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} exportable />,
 };
 
 export const ExportWithoutSearchChecks: Story = {
@@ -167,11 +121,7 @@ export const ExportWithoutSearchChecks: Story = {
 /** A table without `exportable` has no button. */
 export const NoExportByDefault: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />,
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: 'Export' })).toBeNull();
   },
@@ -184,21 +134,19 @@ export const NoExportByDefault: Story = {
 export const ExportFollowsSearchFiltersSortAndColumns: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={3}
-        selectable
-        renderRowAction={() => <span>⋮</span>}
-        exportable
-        exportFileName="engineers.csv"
-        columnsMenu
-        defaultSearchValue=""
-        defaultFilters={FILTERS}
-      />
-    </Wrap>
+    <DataTable
+      rows={QUOTED}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={3}
+      selectable
+      renderRowAction={() => <span>⋮</span>}
+      exportable
+      exportFileName="engineers.csv"
+      columnsMenu
+      defaultSearchValue=""
+      defaultFilters={FILTERS}
+    />
   ),
   play: async ({ canvas }) => {
     await setUpTable(canvas);
@@ -234,19 +182,17 @@ export const OnExportReceivesTheQueryAndBuildsNoFile: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onExport: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={3}
-        exportable
-        onExport={args.onExport}
-        columnsMenu
-        defaultSearchValue=""
-        defaultFilters={FILTERS}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      pageSize={3}
+      exportable
+      onExport={args.onExport}
+      columnsMenu
+      defaultSearchValue=""
+      defaultFilters={FILTERS}
+    />
   ),
   play: async ({ canvas, args }) => {
     await setUpTable(canvas);
@@ -271,11 +217,7 @@ export const OnExportReceivesTheQueryAndBuildsNoFile: Story = {
 /** The file name defaults to `export.csv`. */
 export const ExportFileNameDefaultsToExportCsv: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} exportable />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} exportable />,
   play: async ({ canvas }) => {
     const download = interceptDownload();
     try {
@@ -291,16 +233,14 @@ export const ExportFileNameDefaultsToExportCsv: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        exportable
-        columnsMenu
-        defaultSearchValue=""
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      exportable
+      columnsMenu
+      defaultSearchValue=""
+    />
   ),
 };
 
