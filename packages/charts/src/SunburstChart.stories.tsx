@@ -407,6 +407,55 @@ export const HoverReadsASector: Story = {
   },
 };
 
+// Nodes that count how many times their value is read: only the partition of the data reads it.
+let nodeReads = 0;
+const counted = (name: string, value: number): SunburstNode => ({
+  name,
+  get value() {
+    nodeReads += 1;
+    return value;
+  },
+});
+const COUNTED: SunburstNode[] = [
+  { name: 'North', children: [counted('Oslo', 3), counted('Bergen', 5)] },
+  { name: 'South', children: [counted('Rome', 8), counted('Milan', 4)] },
+];
+
+/**
+ * The tree work, the partition of the data and the indexes over it, is done when the data or the
+ * hidden branches change. The pointer moving over the sectors does none: it only changes which
+ * sector is faded and shown, and the same ancestors are still on the line.
+ */
+export const HoverDoesNoTreeWork: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { data: COUNTED },
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(6));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    nodeReads = 0;
+    await userEvent.hover(arcEl(canvasElement, '0.1'));
+    await waitFor(() => expect(tooltipOf(canvasElement)).not.toBeNull());
+    await userEvent.hover(arcEl(canvasElement, '1.0'));
+    await waitFor(() => expect(centerOf(canvasElement)[1]).toBe('Rome'));
+    await userEvent.unhover(arcEl(canvasElement, '1.0'));
+    await expect(nodeReads).toBe(0);
+    // The same line is lit while it is hovered: the sector, its parent and nothing else.
+    await userEvent.hover(arcEl(canvasElement, '0.1'));
+    await waitFor(() => expect(opacityOf(canvasElement, '1') as string).toBe('0.3'));
+    await expect(opacityOf(canvasElement, '0')).toBe('1');
+    await expect(opacityOf(canvasElement, '0.0')).toBe('0.3');
+    await expect(opacityOf(canvasElement, '0.1')).toBe('1');
+    await userEvent.unhover(arcEl(canvasElement, '0.1'));
+    await expect(nodeReads).toBe(0);
+    // A branch hidden from the legend is a change of the data shown, and the tree is read again.
+    await userEvent.click(legendButtons(canvasElement)[0]);
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(3));
+    await expect(nodeReads).toBeGreaterThan(0);
+    await userEvent.click(legendButtons(canvasElement)[0]);
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(6));
+  },
+};
+
 /**
  * `centerValue` and `centerLabel` replace the total and "Total" while nothing is
  * hovered or selected; the card stays inside the plot.
