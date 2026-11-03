@@ -488,6 +488,59 @@ export const CatalogueAndFreeText: Story = {
   },
 };
 
+/**
+ * Picking an entry is one edit: `onChange` hears the label and the rate together, once, whether the
+ * pick is a key or a pointer. Typing the whole label of an entry is still typing, and reaches it.
+ */
+export const PickingAnEntryIsOneChange: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onChange: fn() },
+  render: (args) => (
+    <Editor
+      aria-label="Invoice items"
+      initial={[{ id: 'one', item: '', quantity: 1, rate: 0 }]}
+      currency="USD"
+      locale="en-US"
+      catalogue={CATALOGUE}
+      onChange={args.onChange}
+    />
+  ),
+  play: async ({ args, canvas }) => {
+    const item = canvas.getByRole('combobox', { name: 'Item, line 1' });
+    const onChange = args.onChange as ReturnType<typeof fn>;
+    const line = (label: string, rate: number) => [{ id: 'one', item: label, quantity: 1, rate }];
+
+    // By key: type to narrow the list, then an arrow and Enter.
+    await userEvent.type(item, 'Land');
+    await page.findAllByRole('option');
+    onChange.mockClear();
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+    await expect(onChange).toHaveBeenCalledTimes(1);
+    await expect(onChange).toHaveBeenLastCalledWith(line('Landing page design', 950), {
+      subtotal: 950,
+    });
+
+    // By pointer.
+    await userEvent.clear(item);
+    await userEvent.type(item, 'Brand');
+    const option = await page.findByRole('option', { name: /Brand identity workshop/ });
+    onChange.mockClear();
+    await userEvent.click(option);
+    await expect(onChange).toHaveBeenCalledTimes(1);
+    await expect(onChange).toHaveBeenLastCalledWith(line('Brand identity workshop', 1800), {
+      subtotal: 1800,
+    });
+
+    // The whole label typed is no pick: the item changes, the rate stays.
+    await userEvent.clear(item);
+    onChange.mockClear();
+    await userEvent.type(item, 'Copy editing (per page)');
+    await expect(onChange).toHaveBeenLastCalledWith(line('Copy editing (per page)', 1800), {
+      subtotal: 1800,
+    });
+  },
+};
+
 // ── Amounts ──────────────────────────────────────────────────────────────────
 
 /**

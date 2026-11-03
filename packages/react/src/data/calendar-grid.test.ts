@@ -515,8 +515,11 @@ describe('slotAt', () => {
 describe('moveCursor', () => {
   const at = (d: number, h: number, m = 0) => ({ date: day(d), minutes: h * 60 + m });
   const week = { periodDays: 7, rtl: false };
-  const key = (from: ReturnType<typeof at>, k: Parameters<typeof moveCursor>[1], opts = week) =>
-    moveCursor(from, k, opts);
+  const key = (
+    from: Parameters<typeof moveCursor>[0],
+    k: Parameters<typeof moveCursor>[1],
+    opts: Parameters<typeof moveCursor>[2] = week
+  ) => moveCursor(from, k, opts);
 
   it('moves a day with the left and right arrows, and a slot with up and down', () => {
     expect(key(at(7, 14), 'ArrowRight')).toEqual(at(8, 14));
@@ -535,6 +538,38 @@ describe('moveCursor', () => {
   it('holds up and down to the day', () => {
     expect(key(at(7, 0), 'ArrowUp')).toEqual(at(7, 0));
     expect(key(at(7, 23, 30), 'ArrowDown')).toEqual(at(7, 23, 30));
+  });
+
+  describe('with an all-day row above the slots', () => {
+    const row = { periodDays: 7, rtl: false, allDayRow: true };
+    const allDay = (d: number) => ({ date: day(d), minutes: 0, allDay: true });
+
+    it('goes up from the first slot to the row of the same day, and no further', () => {
+      expect(key(at(7, 0), 'ArrowUp', row)).toEqual(allDay(7));
+      expect(key(allDay(7), 'ArrowUp', row)).toEqual(allDay(7));
+      expect(key(at(7, 0, 30), 'ArrowUp', row)).toEqual(at(7, 0));
+    });
+
+    it('comes down from the row to the first slot of the day', () => {
+      expect(key(allDay(7), 'ArrowDown', row)).toEqual(at(7, 0));
+    });
+
+    it('moves along the row by days and periods, staying in it', () => {
+      expect(key(allDay(7), 'ArrowRight', row)).toEqual(allDay(8));
+      expect(key(allDay(7), 'ArrowLeft', row)).toEqual(allDay(6));
+      expect(key(allDay(7), 'PageDown', row)).toEqual(allDay(14));
+      expect(key(allDay(7), 'ArrowLeft', { ...row, rtl: true })).toEqual(allDay(8));
+    });
+
+    it('leaves the row with Home and End, for the first and the last slot', () => {
+      expect(key(allDay(7), 'Home', row)).toEqual(at(7, 0));
+      expect(key(allDay(7), 'End', row)).toEqual(at(7, 23, 30));
+    });
+
+    it('is the same from a slot as without a row, from the second slot on', () => {
+      expect(key(at(7, 14), 'ArrowUp', row)).toEqual(at(7, 13, 30));
+      expect(key(at(7, 14), 'ArrowDown', row)).toEqual(at(7, 14, 30));
+    });
   });
 
   it('goes to the first and the last slot of the day with Home and End', () => {

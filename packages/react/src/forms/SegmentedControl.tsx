@@ -35,8 +35,9 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   size?: 'sm' | 'md';
   /**
    * Draws each option as its `icon` alone, in a square segment: a grid / list switch. The `label`
-   * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus. An
-   * option with no `icon` keeps its text and its `badge`. Default `false`.
+   * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus (a
+   * visual one: it is not read again as the description). An option with no `icon` keeps its text
+   * and its `badge`. Default `false`.
    */
   iconOnly?: boolean;
   /** Icon shown in a cell before the first option, for the whole group. */
@@ -196,7 +197,13 @@ export const SegmentedControl = <T extends string>({
         );
         return glyph ? (
           <span key={opt.value} className={clsx('flex', edge)}>
-            <Tooltip content={opt.label}>{segment}</Tooltip>
+            {/* The tooltip points `aria-describedby` at itself on the element it wraps. On the radio
+                that would read the label a second time, as its description: it goes on a wrapper
+                that draws nothing, and the tooltip stays what a sighted pointer or keyboard user
+                gets. */}
+            <Tooltip content={opt.label}>
+              <span className="contents">{segment}</span>
+            </Tooltip>
           </span>
         ) : (
           segment

@@ -1,4 +1,11 @@
-import { useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+} from 'react';
 import type { LegendPayload } from 'recharts';
 import { ChartLegend, useHiddenSeries } from './core/ChartLegend';
 import { TooltipCard } from './core/ChartTooltip';
@@ -14,6 +21,7 @@ import {
   arcPath,
   branches,
   findArc,
+  groupByParent,
   isRelated,
   labelFits,
   labelPlacement,
@@ -162,13 +170,37 @@ export const SunburstChart = ({
   });
   const selectable = onSelect !== undefined;
 
-  const legendItems = branches(data);
+  // The tree work is done when `data` or the hidden branches change, not on a hover or a focus:
+  // those only move `hover`, `ringed` and `roving`, and read what is kept here.
+  const legendItems = useMemo(() => branches(data), [data]);
   // The rings are those of the whole data, so hiding a branch does not change their thickness.
-  const { rings } = partition(data);
-  const off = new Set(
-    legendItems.filter((item) => hidden.hidden.has(seriesKey(item.index))).map((item) => item.index)
+  const whole = useMemo(() => partition(data), [data]);
+  const { rings } = whole;
+  const { arcs, total } = useMemo(() => {
+    const off = new Set(
+      legendItems
+        .filter((item) => hidden.hidden.has(seriesKey(item.index)))
+        .map((item) => item.index)
+    );
+    // Nothing hidden is the whole data again.
+    return off.size === 0 ? whole : partition(data, off);
+  }, [data, legendItems, hidden.hidden, whole]);
+  const byId = useMemo(() => new Map(arcs.map((arc) => [arc.id, arc])), [arcs]);
+  const byParent = useMemo(() => groupByParent(arcs), [arcs]);
+  const selectedArc = useMemo(
+    () => (path.length > 0 ? findArc(arcs, path) : undefined),
+    [arcs, path]
   );
-  const { arcs, total } = partition(data, off);
+  const percents = useMemo(() => shares(legendItems.map((item) => item.value)), [legendItems]);
+  const entries = useMemo<LegendPayload[]>(
+    () =>
+      legendItems.map((item) => ({
+        dataKey: seriesKey(item.index),
+        value: item.name,
+        color: seriesColor(item.index, colors),
+      })),
+    [legendItems, colors]
+  );
   const name = ariaLabel ?? `Sunburst chart: ${legendItems.map((item) => item.name).join(', ')}`;
   if (loading) {
     return <ChartSkeleton ariaLabel={name} height={height ?? PLACEHOLDER_HEIGHT} width={width} />;
@@ -184,8 +216,6 @@ export const SunburstChart = ({
     );
   }
 
-  const byId = new Map(arcs.map((arc) => [arc.id, arc]));
-  const selectedArc = path.length > 0 ? findArc(arcs, path) : undefined;
   const hovered = hover === undefined ? undefined : byId.get(hover);
   const focused = ringed === undefined ? undefined : byId.get(ringed);
   const tipArc = hovered ?? focused;
@@ -415,12 +445,6 @@ export const SunburstChart = ({
       );
     })();
 
-  const percents = shares(legendItems.map((item) => item.value));
-  const entries: LegendPayload[] = legendItems.map((item) => ({
-    dataKey: seriesKey(item.index),
-    value: item.name,
-    color: seriesColor(item.index, colors),
-  }));
   const legend = (
     <div style={side ? { flex: '0 1 15.5rem', minWidth: 0 } : { width: '100%' }}>
       <ChartLegend
@@ -439,9 +463,6 @@ export const SunburstChart = ({
       />
     </div>
   );
-
-  const byParent = new Map<string | undefined, Arc[]>();
-  for (const arc of arcs) byParent.set(arc.parent, [...(byParent.get(arc.parent) ?? []), arc]);
 
   const plot: CSSProperties =
     height === undefined

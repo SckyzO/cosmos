@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { EventCalendar, type CalendarEvent } from './EventCalendar';
+import { EventCalendar, type CalendarEvent, type EventCalendarProps } from './EventCalendar';
 import {
   bothDirections,
   directionBox,
@@ -495,9 +496,51 @@ export const WeekdayNamesKeepTheirOrderInRightToLeft: Story = {
 // ── Week and day views (#557) ───────────────────────────────────────────────
 
 const laptop = { viewport: { value: 'laptop', isRotated: false } } as const;
+const tablet = { viewport: { value: 'tablet', isRotated: false } } as const;
 const at = (day: number, hour: number, minute = 0) => new Date(2026, 4, day, hour, minute);
 // ICU writes thin and narrow no-break spaces around a dash and before AM and PM.
 const plain = (text: string | null) => (text ?? '').replace(/[\u202f\u2009\u00a0]/g, ' ');
+
+/**
+ * A day cell is about 100px wide on a tablet: a timed chip's time and title do not share a line
+ * there, so the title goes under the time and still reads, instead of being cut to a few pixels.
+ * A bare chip of a multi-day event is meant to be a dot: its title is for screen readers.
+ */
+export const MonthChipsKeepTheirTitleOnATablet: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: tablet,
+  play: async ({ canvas }) => {
+    const day = canvas.getByRole('group', { name: 'Thursday, May 7, 2026' });
+    const titles = [...day.querySelectorAll<HTMLElement>('li span.truncate')];
+    await expect(titles).toHaveLength(3);
+    for (const title of titles) {
+      await expect(title.getBoundingClientRect().width, title.textContent!).toBeGreaterThanOrEqual(
+        48
+      );
+    }
+    // Under the time, not beside it.
+    const chip = titles[0]!.parentElement!;
+    const time = chip.querySelector<HTMLElement>('span.tabular-nums')!;
+    await expect(titles[0]!.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      time.getBoundingClientRect().bottom - 1
+    );
+  },
+};
+
+/** With the room, the time and the title stay on one line. */
+export const MonthChipsStayOnOneLineWithRoom: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: laptop,
+  play: async ({ canvas }) => {
+    const day = canvas.getByRole('group', { name: 'Thursday, May 7, 2026' });
+    const chip = day.querySelector<HTMLElement>('li span.truncate')!.parentElement!;
+    const title = chip.querySelector<HTMLElement>('span.truncate')!;
+    const time = chip.querySelector<HTMLElement>('span.tabular-nums')!;
+    await expect(
+      Math.abs(title.getBoundingClientRect().top - time.getBoundingClientRect().top)
+    ).toBeLessThan(4);
+  },
+};
 
 // The week of May 4 to 10, 2026, as `today` (Thursday, 10:42) sees it: a standup each morning, a busy
 // Thursday afternoon, an event over midnight on Friday, and three events above the grid.
@@ -743,6 +786,71 @@ export const WeekOverlapChecks: Story = {
   },
 };
 
+/** The "+N" button is a target of at least 24px, in every density. */
+export const WeekMoreButtonIsATarget: Story = {
+  ...Week,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const more = canvas
+      .getByRole('group', { name: 'Thursday, May 7, 2026' })
+      .querySelector<HTMLElement>('[aria-label^="+3 more"]')!;
+    const root = document.documentElement;
+    const before = root.dataset.density;
+    try {
+      for (const density of ['compact', 'default', 'comfortable']) {
+        root.dataset.density = density;
+        const { width, height } = more.getBoundingClientRect();
+        await expect(Math.min(width, height), density).toBeGreaterThanOrEqual(24);
+      }
+    } finally {
+      if (before === undefined) delete root.dataset.density;
+      else root.dataset.density = before;
+    }
+  },
+};
+
+// An event that counts how many times its title is read: only a draw of the chip reads it.
+let titleReads = 0;
+const COUNTED: CalendarEvent[] = [
+  {
+    id: 'counted',
+    get title() {
+      titleReads += 1;
+      return 'Standup';
+    },
+    start: at(7, 9),
+    end: at(7, 9, 15),
+  },
+];
+
+/** The pointer moving inside one slot is not a change: the grid does not draw its events again. */
+export const WeekHoverInOneSlotDrawsOnce: Story = {
+  ...WeekWithSlots,
+  args: { ...WeekWithSlots.args, events: COUNTED },
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const wednesday = canvas.getByRole('group', { name: 'Wednesday, May 6, 2026' });
+    const rect = wednesday.getBoundingClientRect();
+    const move = (minutes: number) =>
+      userEvent.pointer({
+        target: wednesday,
+        coords: { clientX: rect.left + 8, clientY: rect.top + (minutes / 60) * 48 },
+      });
+    await move(8 * 60 + 5);
+    // The 8:00 slot is shown under the pointer.
+    await expect(wednesday.querySelector('.bg-brand-500\\/10')).not.toBeNull();
+    // Let what that move set going settle, then count from here.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    titleReads = 0;
+    await move(8 * 60 + 10);
+    await move(8 * 60 + 25);
+    await expect(titleReads).toBe(0);
+    // Another slot is a change, and draws.
+    await move(9 * 60 + 10);
+    await expect(titleReads).toBeGreaterThan(0);
+  },
+};
+
 /** An event over midnight is cut at 24:00 and picks up at 00:00, square where it was cut. */
 export const WeekMidnightChecks: Story = {
   ...Week,
@@ -781,6 +889,75 @@ export const WeekOpensBeforeAnEarlyEvent: Story = {
   play: async ({ canvas }) => {
     // 6:30 is in the hour of 6, so it opens on 5.
     await expect(canvas.getByRole('group', { name: /^Schedule for/ }).scrollTop).toBe(5 * 48);
+  },
+};
+
+// Events that load after the grid is drawn arrive in a later render, as a fetch's answer would.
+const LoadsLater = (args: EventCalendarProps) => {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          setEvents([
+            { id: 'flight', title: 'Flight to Lisbon', start: at(7, 5, 30), end: at(7, 7) },
+          ])
+        }
+      >
+        Load events
+      </button>
+      <EventCalendar {...args} events={events} />
+    </>
+  );
+};
+
+/**
+ * Events that arrive after the grid is drawn bring it to the first one, as if it had opened with
+ * them: 5:30 is in the hour of 5, so the hours open on 4. Moving on to another period keeps them.
+ */
+export const WeekFollowsEventsThatArriveLate: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { ...gridArgs, defaultView: 'week' },
+  render: (args) => <LoadsLater {...args} />,
+  play: async ({ canvas }) => {
+    const area = canvas.getByRole('group', { name: /^Schedule for/ });
+    await expect(area.scrollTop).toBe(7 * 48);
+    await userEvent.click(canvas.getByRole('button', { name: 'Load events' }));
+    await waitFor(() => expect(area.scrollTop).toBe(4 * 48));
+    await userEvent.click(canvas.getByRole('button', { name: 'Next week' }));
+    await expect(canvas.getByRole('heading', { name: /^May 11\s*–\s*17, 2026$/ })).toBeVisible();
+    await expect(area.scrollTop).toBe(4 * 48);
+  },
+};
+
+/** The day is the same grid. */
+export const DayFollowsEventsThatArriveLate: Story = {
+  ...WeekFollowsEventsThatArriveLate,
+  tags: ['!dev', '!autodocs'],
+  args: { ...gridArgs, defaultView: 'day' },
+  play: async ({ canvas }) => {
+    const area = canvas.getByRole('group', { name: /^Schedule for/ });
+    await expect(area.scrollTop).toBe(7 * 48);
+    await userEvent.click(canvas.getByRole('button', { name: 'Load events' }));
+    await waitFor(() => expect(area.scrollTop).toBe(4 * 48));
+  },
+};
+
+/** A person who already scrolled keeps their place: late events do not pull the grid back. */
+export const WeekLeavesAScrolledGridAlone: Story = {
+  ...WeekFollowsEventsThatArriveLate,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const area = canvas.getByRole('group', { name: /^Schedule for/ });
+    area.scrollTop = 600;
+    // The scroll event comes with the next frame; let it be heard.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await expect(area.scrollTop).toBe(600);
+    await userEvent.click(canvas.getByRole('button', { name: 'Load events' }));
+    await expect(canvas.getByRole('button', { name: /^Flight to Lisbon/ })).toBeVisible();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await expect(area.scrollTop).toBe(600);
   },
 };
 
@@ -913,7 +1090,7 @@ export const WeekKeyboardCursorChecks: Story = {
   ...WeekWithSlots,
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
-    const grid = canvas.getByRole('application', { name: /^Schedule for/ });
+    const grid = canvas.getByRole('group', { name: /^Schedule for/ });
     const status = canvas.getByRole('status');
     await expect(status.textContent).toBe('');
     // A focus the test gives by hand is not inside the `act` of a user event: let React draw it.
@@ -953,12 +1130,53 @@ export const WeekKeyboardCursorChecks: Story = {
   },
 };
 
+/**
+ * The grid is a group, not an application: the status line says where the cursor is. Up from the
+ * first slot of a day goes to the all-day row, along it the arrows go from day to day, Enter picks
+ * the day as `allDay`, and Down comes back to the first slot.
+ */
+export const WeekKeyboardCursorReachesTheAllDayRow: Story = {
+  ...WeekWithSlots,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ args, canvas }) => {
+    await expect(canvas.queryByRole('application')).toBeNull();
+    const grid = canvas.getByRole('group', { name: /^Schedule for/ });
+    const status = canvas.getByRole('status');
+    const ring = () =>
+      canvas.getByRole('group', { name: 'All-day events' }).querySelector('[class*="ring-2"]');
+    grid.focus();
+    await waitFor(() => expect(status).toHaveTextContent(/Press Enter/));
+    await userEvent.keyboard('{Home}');
+    await expect(plain(status.textContent)).toMatch(/^Thursday, May 7, 2026, 12:00 AM\./);
+    await expect(ring()).toBeNull();
+
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(plain(status.textContent)).toMatch(
+      /^Thursday, May 7, 2026, all-day\. Press Enter/
+    );
+    await expect(ring()).not.toBeNull();
+    // Along the row it is a day at a time, and Up has nowhere further to go.
+    await userEvent.keyboard(`{${keyToEnd()}}{ArrowUp}`);
+    await expect(plain(status.textContent)).toMatch(/^Friday, May 8, 2026, all-day\./);
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onSlotClick).toHaveBeenLastCalledWith(at(8, 0), { allDay: true });
+
+    // Down is the first slot of the day, and the ring leaves the row.
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(plain(status.textContent)).toMatch(/^Friday, May 8, 2026, 12:00 AM\./);
+    await expect(ring()).toBeNull();
+    // Home and End from the row are the first and last slots of the day, as everywhere.
+    await userEvent.keyboard('{ArrowUp}{End}');
+    await expect(plain(status.textContent)).toMatch(/^Friday, May 8, 2026, 11:30 PM\./);
+  },
+};
+
 /** A click on a slot focuses the grid without starting the keyboard cursor: no ring, no status row. A key then shows it. */
 export const WeekPointerFocusKeepsTheCursorHidden: Story = {
   ...WeekWithSlots,
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
-    const grid = canvas.getByRole('application', { name: /^Schedule for/ });
+    const grid = canvas.getByRole('group', { name: /^Schedule for/ });
     const status = canvas.getByRole('status');
     const ring = () => grid.querySelector('[class*="ring-2"]');
     // The status line is visually hidden (1px) until the cursor shows.

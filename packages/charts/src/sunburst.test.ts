@@ -3,6 +3,7 @@ import {
   arcPath,
   branches,
   findArc,
+  groupByParent,
   isRelated,
   labelFits,
   labelPlacement,
@@ -401,5 +402,41 @@ describe('percentLabel', () => {
 
   it('is 0% with nothing to share', () => {
     expect(percentLabel(0, 0)).toBe('0%');
+  });
+});
+
+describe('groupByParent', () => {
+  it('lists the arcs under the id of their parent, the first ring under none', () => {
+    const { arcs } = partition(ORG);
+    const byParent = groupByParent(arcs);
+    expect(byParent.get(undefined)?.map((arc) => arc.name)).toEqual([
+      'Engineering',
+      'Sales',
+      'Legal',
+    ]);
+    expect(byParent.get('0')?.map((arc) => arc.name)).toEqual(['Platform', 'Product']);
+    expect(byParent.get('0.0')?.map((arc) => arc.name)).toEqual(['Infra', 'Data']);
+    expect(byParent.get('2')).toBeUndefined();
+    // Every arc is in exactly one list.
+    expect([...byParent.values()].flat()).toHaveLength(arcs.length);
+  });
+
+  it('keeps each list in the order of the circle', () => {
+    const { arcs } = partition(ORG);
+    for (const siblings of groupByParent(arcs).values()) {
+      expect(siblings.map((arc) => arc.start)).toEqual(
+        [...siblings.map((arc) => arc.start)].sort((a, b) => a - b)
+      );
+    }
+  });
+
+  it('has no cost per child that grows with the number of children', () => {
+    // Copying the list at each child would make 100 000 of them 5 billion copies: seconds.
+    const children = Array.from({ length: 100_000 }, (_, i) => ({ name: `n${i}`, value: 1 }));
+    const { arcs } = partition([{ name: 'Wide', children }]);
+    const started = performance.now();
+    const byParent = groupByParent(arcs);
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(byParent.get('0')).toHaveLength(100_000);
   });
 });

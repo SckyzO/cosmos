@@ -286,7 +286,8 @@ const [lines, setLines] = useState<LineItem[]>([]);
   2450 cents). `value`, `defaultValue` and `onChange(lines, { subtotal })` follow the usual
   controlled and uncontrolled pair; only `undefined` means uncontrolled. The editor starts with no
   line (`defaultValue` to change that) and gives an `id` to every line it adds: use it as the key of
-  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed.
+  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed. A pick
+  from the catalogue is one call, with the label and the rate together.
 - **Layout.** From 42rem of its own width (a container query, so a card beside a summary switches on
   its own width, not the window's) the lines are a grid with the amounts aligned in a column, and
   the titles are drawn once above it. Narrower, each line is a card with the titles of its fields in
@@ -344,6 +345,14 @@ each cell. It is the same grid either way, read in the other direction. The valu
 granted cells, each written `cellKey(rowId, columnId)` (the row id, a colon, the column id), with
 `defaultValue` and `onChange(value)` as for every control.
 
+Ids are how the grid tells things apart, so each must be unique: a row id across the whole grid
+(not only inside its group), a group id among the groups, a column id among the columns. Two rows
+with one id share their cells, and two groups with one id merge their box and their count. Build
+the keys with `cellKey` rather than by hand: it escapes a colon or a backslash in a column id (and
+a backslash in a row id) with a backslash, so `('a:b', 'c')` and `('a', 'b:c')` are two cells.
+For any other id, a row id with colons such as `invoices:edit` included, the key is plain
+`row:column`.
+
 ```tsx
 const columns = [
   { id: 'admin', label: 'Admin', readOnly: true }, // built in: shown, not editable
@@ -389,7 +398,7 @@ const groups = [
   Tab stop, and the arrow keys move between cells (Left and Right follow the reading direction),
   Home and End go to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid, and Space
   toggles the box in focus. A group's header row has one cell, so moving down onto it lands on its
-  box. Nothing wraps. The focus goes to the box itself, so a screen reader announces its name and
+  box, and moving on takes the focus back to the column it came along. Nothing wraps. The focus goes to the box itself, so a screen reader announces its name and
   state; a read-only or empty cell takes the focus itself. The whole cell is the click target, not
   only the 18px box.
 - **Announcements.** After a box that grants or clears several cells, a polite status says how many

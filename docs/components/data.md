@@ -101,7 +101,10 @@ colours it (`brand` by default, `violet` as a category colour that carries no me
   its time. Leave it unset in an app, where it is now and the line moves every minute; set it to
   freeze the calendar in a story or a test.
 - **Time.** An event with a time writes its start before its title on a month chip ("9:30 AM
-  Release 2.4", in the `locale`). An all-day event writes none.
+  Release 2.4", in the `locale`). An all-day event writes none. In a day cell narrower than 9rem
+  (about a tablet, 640 to 1000px) the title goes under the time, so it still reads. A multi-day
+  event writes its title once, on its first day: each later day has a bare chip, a coloured dot in
+  a pill, whose title is there for screen readers.
 - **All-day.** `allDay` is inferred: an event is all-day when `start` is at 00:00 and `end` is
   missing or at 00:00, so an event made of dates alone (`new Date(2026, 4, 7)`) stays all-day. For
   an all-day event `end` is the last day, included. Set `allDay` to force the answer either way: a
@@ -114,7 +117,10 @@ colours it (`brand` by default, `violet` as a category colour that carries no me
 ### Week and day
 
 The week and the day draw a grid of 24 hours, 48px each, in a scrolling area. It opens at 7 AM, or
-an hour before the first event of the period when that starts earlier. The area is as tall as the
+an hour before the first event of the period when that starts earlier. Events that arrive after the
+grid is drawn (a host that loads them per period, once `onDateChange` has fired) count the same: the
+grid goes to the first of them, unless the person has scrolled it themselves, in which case it
+stays where they left it. Moving on to another period keeps the scroll. The area is as tall as the
 card: give the card a height with `className` (`h-[640px]`) and the grid scrolls inside it, or leave
 it and the grid is 36rem tall. The day names stay in view at the top, with the all-day events
 under them as bars over the days they cover.
@@ -122,6 +128,7 @@ under them as bars over the days they cover.
 - **Overlaps.** Events that overlap sit side by side and share the width, as many columns as fit:
   72px each, and two at least. A group with more has the rest behind a "+N" button at its first
   hidden event, which opens the list of the whole day, the same one the month's "+N more" opens.
+  The button is at least 24px by 24px, and follows the page's density.
 - **Short and long events.** An event shorter than 20px (about 25 minutes) is drawn at 20px, on one
   line with its start time. One that runs past midnight is cut at 24:00, square where it is cut, and
   carries on at 00:00 the next day; a screen reader hears that it continues.
@@ -132,9 +139,13 @@ under them as bars over the days they cover.
   00:00 with `allDay: true`. Setting it also gives the grid one tab stop for a cursor on the slots:
   the arrow keys move it a day or 30 minutes (the arrows toward the start and the end of the line
   swap in right to left), Page Up and Page Down a week (a day, in the day view), Home and End to
-  the first and the last slot of the day, Enter or Space calls `onSlotClick`. A move past the
-  period shown goes to the next or the previous one. A status line under the grid says where the
-  cursor is. A click on a slot does not show the cursor, nor the line (the grid is focused by the
+  the first and the last slot of the day, Enter or Space calls `onSlotClick`. Up from the first
+  slot of a day goes to the all-day row of that day (Enter there calls it with `allDay: true`, the
+  arrows move along the row, Down comes back to the first slot). A move past the period shown goes
+  to the next or the previous one. A status line under the grid says where the cursor is, and it
+  is how a screen reader hears it: the grid is a plain group, not an `application`, so a screen
+  reader keeps its own reading keys over it, and its focus mode is the one that passes the arrows
+  to the grid. A click on a slot does not show the cursor, nor the line (the grid is focused by the
   pointer, not the keyboard): the first key pressed after it does. Without `onSlotClick` the grid is
   an area you can scroll, and nothing more.
 - **Keyboard and screen readers.** The hour grid is not an ARIA `grid`: events that overlap and run

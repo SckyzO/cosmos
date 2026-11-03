@@ -46,6 +46,28 @@ describe('cellKey', () => {
   it('joins the row and the column ids', () => {
     expect(cellKey('invoices.edit', 'admin')).toBe('invoices.edit:admin');
   });
+
+  it('keeps `row:column` for a row id with colons, as `resource:action` ids have', () => {
+    expect(cellKey('invoices:edit', 'admin')).toBe('invoices:edit:admin');
+    expect(cellKey('org:billing:read', 'viewer')).toBe('org:billing:read:viewer');
+  });
+
+  it('tells ("a:b", "c") from ("a", "b:c")', () => {
+    expect(cellKey('a:b', 'c')).not.toBe(cellKey('a', 'b:c'));
+  });
+
+  it('gives two different cells two different keys, whatever the ids hold', () => {
+    // Every id of one to three characters out of `a`, a colon and a backslash.
+    let layer = [''];
+    const ids: string[] = [];
+    for (let length = 1; length <= 3; length += 1) {
+      layer = layer.flatMap((id) => ['a', ':', '\\'].map((char) => id + char));
+      ids.push(...layer);
+    }
+    const keys = new Set<string>();
+    for (const row of ids) for (const column of ids) keys.add(cellKey(row, column));
+    expect(keys.size).toBe(ids.length * ids.length);
+  });
 });
 
 describe('gridCells', () => {
@@ -331,6 +353,22 @@ describe('moveFocus', () => {
     expect(moveFocus(lengths, { row: 0, col: 3 }, 'down')).toEqual({ row: 1, col: 0 });
     expect(moveFocus(lengths, { row: 3, col: 2 }, 'down')).toEqual({ row: 4, col: 0 });
     expect(moveFocus(lengths, { row: 5, col: 2 }, 'up')).toEqual({ row: 4, col: 0 });
+  });
+
+  it('goes back to the column it was asked to keep when it leaves a group row', () => {
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', 3)).toEqual({ row: 2, col: 3 });
+    expect(moveFocus(lengths, { row: 4, col: 0 }, 'up', 2)).toEqual({ row: 3, col: 2 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'up', 3)).toEqual({ row: 0, col: 3 });
+  });
+
+  it('still lands on the only cell of a group row when it keeps a column', () => {
+    expect(moveFocus(lengths, { row: 3, col: 2 }, 'down', 2)).toEqual({ row: 4, col: 0 });
+  });
+
+  it('aims at the column of the position when none is given, and keeps a column in range', () => {
+    expect(moveFocus(lengths, { row: 2, col: 2 }, 'down')).toEqual({ row: 3, col: 2 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', 9)).toEqual({ row: 2, col: 3 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', -1)).toEqual({ row: 2, col: 0 });
   });
 
   it('does not move along a group row, which has one cell', () => {

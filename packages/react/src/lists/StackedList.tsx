@@ -438,8 +438,10 @@ function StackedListItem({
     </IconButton>
   );
 
+  // Transparent, not gone, so a keyboard reaches them; and out of the pointer's way while they are,
+  // or a tap near the time, on a touch screen that reports `(hover: hover)`, would hit one unseen.
   const actionButtons = inlineActions && (
-    <div className="relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+    <div className="pointer-events-none relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:pointer-events-auto group-focus-within/row:opacity-100 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
       {rowActions.map(({ label, icon: Icon, intent, disabled, onSelect }, i) => (
         <IconButton
           key={label}
@@ -546,7 +548,9 @@ function StackedListItem({
           )}
         />
       )}
-      <div className="flex min-w-0 gap-x-4">
+      {/* `flex-auto`: the block fills the row, so a timestamp at its end sits at the row's end
+          whatever the length of the text, with or without content after it. */}
+      <div className="flex min-w-0 flex-auto gap-x-4">
         {checkable && (
           // The first control of the row in tab order, so it is raised above the title's overlay
           // by hand. The label is a 26px target around the 18px box; the negative margins keep
