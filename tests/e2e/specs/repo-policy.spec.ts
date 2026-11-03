@@ -479,6 +479,12 @@ const SIDE_ALLOWED: { file: string; holder: string; reason: string }[] = [
     holder: 'AnchorRect',
     reason: 'the keys of a DOMRect, which are physical by definition',
   },
+  {
+    file: 'packages/react/src/status/nodeGridModel.ts',
+    holder: 'Box',
+    reason:
+      'the keys of a DOMRect: the up and down keys pick a mark by its rendered column, in screen coordinates',
+  },
 ];
 
 const SIDE_LITERAL = /(?:^|-)(?:left|right)(?:-|$)/;
