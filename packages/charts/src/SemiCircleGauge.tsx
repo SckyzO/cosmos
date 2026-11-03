@@ -1,5 +1,13 @@
 import { useId } from 'react';
-import { PolarAngleAxis, RadialBar, RadialBarChart, Sector, usePlotArea } from 'recharts';
+import {
+  DefaultZIndexes,
+  PolarAngleAxis,
+  RadialBar,
+  RadialBarChart,
+  Sector,
+  usePlotArea,
+  ZIndexLayer,
+} from 'recharts';
 import { ANIMATION } from './core/animation';
 import { MUTED, PANEL, SERIES, TEXT, TRACK } from './core/colors';
 import { safeId } from './core/data';
@@ -179,8 +187,14 @@ const Face = ({ radius, value, label, showRange, range, dial }: FaceProps) => {
 
 type TargetProps = { radius: number; thickness: number; share: number };
 
+// The layer of the target: over the arc, which a `RadialBar` draws at `DefaultZIndexes.bar` (the
+// default layer, where the zones and the needle are, sits under it), and under the lines, the
+// axes and the labels. SVG paints in document order, so a layer is the only way up.
+const TARGET_LAYER = DefaultZIndexes.bar + 1;
+
 // A radial mark across the arc, a little longer than it is thick: a dark line over a
-// halo in the card's color, so it reads on the arc, on the track and on the card.
+// halo in the card's color, so it reads on the arc, on the track and on the card. Over the
+// arc once the value reaches the target, which is when the mark matters most.
 const Target = ({ radius, thickness, share }: TargetProps) => {
   const area = usePlotArea();
   if (!area) return null;
@@ -190,10 +204,12 @@ const Target = ({ radius, thickness, share }: TargetProps) => {
     share
   );
   return (
-    <g data-chart-target="" pointerEvents="none" strokeLinecap="round">
-      <line {...mark} stroke={PANEL} strokeWidth={6} />
-      <line {...mark} stroke={TEXT} strokeWidth={3} />
-    </g>
+    <ZIndexLayer zIndex={TARGET_LAYER}>
+      <g data-chart-target="" pointerEvents="none" strokeLinecap="round">
+        <line {...mark} stroke={PANEL} strokeWidth={6} />
+        <line {...mark} stroke={TEXT} strokeWidth={3} />
+      </g>
+    </ZIndexLayer>
   );
 };
 

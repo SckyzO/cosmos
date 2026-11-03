@@ -342,9 +342,6 @@ export const NodeGrid = ({
         </ul>
       )}
       <FloatingPanel
-        // One panel per node: it is placed against its anchor once, and the node it follows is
-        // another element.
-        key={shown ?? ''}
         id={tipId}
         open={shownEntry !== undefined}
         onClose={() => {
