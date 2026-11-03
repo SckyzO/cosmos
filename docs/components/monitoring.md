@@ -51,7 +51,11 @@ nothing in it is `UNKNOWN`.
   (`collapsedGroups` / `defaultCollapsedGroups` / `onCollapsedGroupsChange`, by group id).
   `sort="severity"` puts the failing checks, and the groups holding them, first. `variant="list"` is
   rows, `variant="grid"` one small card per check, for a wall screen. A list narrower than 48rem, on
-  a phone or in a card, stacks each check's fields instead of laying them out in columns.
+  a phone or in a card, stacks each check's fields instead of laying them out in columns. A check's
+  output and a group's checks unfold and fold back in 200 ms: the height runs from 0 to its size
+  while the content fades in and slides 4px, and the chevron turns with it. A closed one is out of
+  the tab order and of the accessibility tree from the moment it starts to close. A group keeps its
+  checks mounted; an output is mounted the first time it opens, and stays.
 - `HealthMatrix` is one cell per service (`rows`) and per environment, node or region (`columns`),
   with sticky headers, in a `role="grid"` that takes one tab stop: arrow keys move between cells,
   Home and End go to the ends of the row. A cell opens its detail in a popover (`message`, `latency`,
@@ -281,7 +285,10 @@ and to count the lines that arrived while it was paused.
   (and Enter / Shift+Enter), wrapping around the ends.
 - A row with `fields` or a `stack` has a button that expands it in place
   (`expandedIds` / `defaultExpandedIds` / `onExpandedIdsChange`). `onOpenLine` adds an "Open
-  details" button to the expanded row, to open a `LogEntryDetail` in a drawer.
+  details" button to the expanded row, to open a `LogEntryDetail` in a drawer. The details a reader
+  opens fade in and are revealed from the top in 200 ms, under their row; they go at once when
+  closed. The room they take is set from the first frame, so the list does not move while they
+  play, and details open from the start, or drawn again as the list scrolls, are simply there.
 - Messages, sources, fields and stacks are text, never HTML. A bidirectional control character
   stays inside its own message.
 
@@ -366,7 +373,9 @@ const steps: JobLogStep[] = [
   starts running later opens. `expandedSteps` / `defaultExpandedSteps` / `onExpandedStepsChange`
   work as on other controls. The header of an open step sticks to the top of the log while its
   lines scroll, and each step is windowed on its own, so a step of tens of thousands of lines
-  stays smooth.
+  stays smooth. A step the reader opens by hand fades in and is revealed from the top in 200 ms
+  under its header, without moving the lines; it goes at once when closed. A step open from the
+  start, or opened by a search, a current line or "expand all", is simply there.
 - **Line numbers.** They restart at 1 in each step and are links: `href="#<idPrefix><step id>-L<n>"`.
   A click calls `onCurrentLineChange({ step, line })` and does not touch `location`; a click with a
   modifier key is the browser's own, so "open in a new tab" works. `currentLine` /

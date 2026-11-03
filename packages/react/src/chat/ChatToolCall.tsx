@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { AlertCircle, Check, ChevronRight, Wrench } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { Fold } from '../ui/Fold';
 import { Spinner } from '../ui/Spinner';
 import { SectionLabel } from '../ui/SectionLabel';
 import { INTENT_STYLE } from '../ui/intent';
@@ -83,14 +84,14 @@ export const ChatToolCall = ({
       <button
         type="button"
         aria-expanded={open}
-        aria-controls={open ? bodyId : undefined}
+        aria-controls={bodyId}
         onClick={() => setOpen(!open)}
         className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-2 px-3 text-start hover:bg-gray-50 focus-visible:ring-inset dark:hover:bg-white/5"
       >
         <ChevronRight
           aria-hidden
           className={clsx(
-            'h-4 w-4 shrink-0 text-[var(--color-text-muted)] motion-safe:transition-transform',
+            'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
             open ? 'rotate-90' : 'rtl:rotate-180'
           )}
         />
@@ -118,11 +119,9 @@ export const ChatToolCall = ({
           </span>
         </span>
       </button>
-      {open && (
-        <div
-          id={bodyId}
-          className="grid gap-3 border-t border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2.5"
-        >
+      {/* The body is mounted when the call first opens, and stays: it folds back, it does not go. */}
+      <Fold id={bodyId} open={open} lazy className="bg-[var(--color-bg-base)]">
+        <div className="grid gap-3 border-t border-[var(--color-border)] px-3 py-2.5">
           {input !== undefined && (
             <div className="min-w-0">
               <Caption>Input</Caption>
@@ -136,7 +135,7 @@ export const ChatToolCall = ({
             </div>
           )}
         </div>
-      )}
+      </Fold>
     </div>
   );
 };

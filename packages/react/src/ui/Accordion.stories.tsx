@@ -2,7 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Bug, CreditCard, Info, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  rotationOf,
+} from '../storybook-folds';
 import { bothDirections, expectMirrored, inEachTheme } from '../storybook-helpers';
 import { Accordion } from './Accordion';
 import { Button } from './Button';
@@ -44,6 +52,24 @@ const FAQ_ICONS = [Info, ShieldCheck, CreditCard, Bug];
 // ── Stories ──────────────────────────────────────────────────────────────────
 
 export const Single: Story = {
+  render: () => (
+    <Accordion type="single" defaultValue="item-0" collapsible>
+      {FAQ.map((row, i) => (
+        <Accordion.Item key={i} value={`item-${i}`}>
+          <Accordion.Trigger>{row.q}</Accordion.Trigger>
+          <Accordion.Content>{row.a}</Accordion.Content>
+        </Accordion.Item>
+      ))}
+    </Accordion>
+  ),
+};
+
+/**
+ * An item opens and closes in 200 ms: the height runs from 0 to its size while the content fades
+ * in and slides 4 px, and the chevron turns with it.
+ */
+export const Unfolds: Story = {
+  parameters: { settleMotion: false },
   render: () => (
     <Accordion type="single" defaultValue="item-0" collapsible>
       {FAQ.map((row, i) => (
@@ -293,6 +319,180 @@ export const SingleClosesOthers: Story = {
     await expect(second).toHaveAttribute('aria-expanded', 'true');
     // type=single → opening Second closes First.
     await expect(first).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+// The region of an item, and the fold in it. Radix names the region in the trigger's
+// `aria-controls` only while the item is open, so it is found from the item.
+const regionOf = (trigger: HTMLElement) => {
+  const item = trigger.closest('h3')!.parentElement!;
+  const region = item.querySelector<HTMLElement>('[role="region"]')!;
+  return { region, fold: region.firstElementChild as HTMLElement };
+};
+
+/**
+ * The content of an item is a fold: closed, it is inert and out of the accessibility tree at once
+ * (the region with it) while the height is still moving, and nothing of it is gone; open, it is
+ * reachable at once and unclipped at rest. An item never opened has not mounted its content.
+ * Slowed to 2 s to read the middle.
+ */
+export const ContentFoldsAndKeepsItsRegion: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowFolds>
+      <Accordion type="multiple" defaultValue={['a']}>
+        <Accordion.Item value="a">
+          <Accordion.Trigger>Row A</Accordion.Trigger>
+          <Accordion.Content>Body A</Accordion.Content>
+        </Accordion.Item>
+        <Accordion.Item value="b">
+          <Accordion.Trigger>Row B</Accordion.Trigger>
+          <Accordion.Content>Body B</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const a = canvas.getByRole('button', { name: 'Row A' });
+    const b = canvas.getByRole('button', { name: 'Row B' });
+    const chevron = (trigger: HTMLElement) => trigger.querySelector('svg:last-of-type')!;
+
+    // Open at rest, and the closed one not mounted yet.
+    const first = regionOf(a);
+    await expectFoldOpen(first.fold);
+    await expect(canvas.getByRole('region', { name: 'Row A' })).toBeVisible();
+    await expect(canvas.queryByText('Body B')).toBeNull();
+    const second = regionOf(b);
+    expectFoldClosed(second.fold);
+    await expect(canvas.queryByRole('region', { name: 'Row B' })).toBeNull();
+
+    // Closing: inert, the region gone from the accessibility tree, the content still there.
+    await userEvent.click(a);
+    await expect(a).toHaveAttribute('aria-expanded', 'false');
+    expectFoldClosed(first.fold);
+    await expect(first.region).toHaveAttribute('aria-hidden', 'true');
+    await expect(canvas.queryByRole('region', { name: 'Row A' })).toBeNull();
+    await expect(canvas.getByText('Body A')).toBeInTheDocument();
+    await expect(first.fold.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(first.fold.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(clipOf(first.fold)).overflow).toBe('hidden');
+    await finishAnimations(first.region);
+    await expect(first.fold.getBoundingClientRect().height).toBe(0);
+    await expect(canvas.getByText('Body A')).not.toBeVisible();
+
+    // Opening: reachable at once, clipping while it moves, then at rest; the content mounts.
+    await userEvent.click(b);
+    await expect(second.fold.inert).toBe(false);
+    await expect(second.region).not.toHaveAttribute('aria-hidden');
+    await expect(canvas.getByText('Body B')).toBeInTheDocument();
+    await expect(getComputedStyle(clipOf(second.fold)).overflow).toBe('hidden');
+    await finishAnimations(b.closest('[data-orientation]')!);
+    await expectFoldOpen(second.fold);
+    await expect(canvas.getByRole('region', { name: 'Row B' })).toBeVisible();
+    await expect(rotationOf(chevron(b))).toBe('180deg');
+    await expect(rotationOf(chevron(a))).toBe('none');
+  },
+};
+
+/** The root's `value` and `onValueChange` still drive the items, controlled or not, one at a time or several. */
+export const ValueStillDrivesTheItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onValueChange: fn() },
+  render: (args) => {
+    const [value, setValue] = useState('a');
+    return (
+      <>
+        <button type="button" onClick={() => setValue('b')}>
+          pick B
+        </button>
+        <Accordion
+          type="single"
+          collapsible
+          value={value}
+          onValueChange={(next) => {
+            args.onValueChange?.(next as never);
+            setValue(next);
+          }}
+        >
+          {['a', 'b'].map((id) => (
+            <Accordion.Item key={id} value={id}>
+              <Accordion.Trigger>{`Row ${id.toUpperCase()}`}</Accordion.Trigger>
+              <Accordion.Content>{`Body ${id.toUpperCase()}`}</Accordion.Content>
+            </Accordion.Item>
+          ))}
+        </Accordion>
+      </>
+    );
+  },
+  play: async ({ args, canvas }) => {
+    const a = canvas.getByRole('button', { name: 'Row A' });
+    const b = canvas.getByRole('button', { name: 'Row B' });
+    await expect(regionOf(a).fold.inert).toBe(false);
+    // The host moves the value: the other item opens, this one folds.
+    await userEvent.click(canvas.getByRole('button', { name: 'pick B' }));
+    await expect(b).toHaveAttribute('aria-expanded', 'true');
+    await expect(a).toHaveAttribute('aria-expanded', 'false');
+    await expect(regionOf(a).fold.inert).toBe(true);
+    await expect(regionOf(b).fold.inert).toBe(false);
+    // A click is reported, and a collapsible single item reports the empty value.
+    await userEvent.click(b);
+    await expect(args.onValueChange).toHaveBeenLastCalledWith('');
+    await expect(regionOf(b).fold.inert).toBe(true);
+    await userEvent.click(a);
+    await expect(args.onValueChange).toHaveBeenLastCalledWith('a');
+    await expect(regionOf(a).fold.inert).toBe(false);
+  },
+};
+
+/** The entrance and exit come from the tokens: no keyframes of its own are left, and the chevron turns in the base duration. */
+export const NoKeyframesOfItsOwn: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Accordion type="single" defaultValue="item-0" collapsible>
+      <Accordion.Item value="item-0">
+        <Accordion.Trigger>Row</Accordion.Trigger>
+        <Accordion.Content>Body</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const trigger = canvas.getByRole('button', { name: 'Row' });
+    const { region, fold } = regionOf(trigger);
+    await expect(canvasElement.querySelectorAll('style')).toHaveLength(0);
+    await expect(getComputedStyle(region).animationName).toBe('none');
+    await expect(getComputedStyle(fold).animationName).toBe('none');
+    await expect(getComputedStyle(fold).transitionProperty).toBe('grid-template-rows');
+    await expect(getComputedStyle(trigger.querySelector('svg')!).transitionProperty).toContain(
+      'transform'
+    );
+  },
+};
+
+/** With the Animations setting on "Reduced", an item opens and closes at once. */
+export const ReducedMotionFoldsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  render: () => (
+    <Accordion type="single" defaultValue="item-0" collapsible>
+      <Accordion.Item value="item-0">
+        <Accordion.Trigger>Row</Accordion.Trigger>
+        <Accordion.Content>Body</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Row' });
+    const { region, fold } = regionOf(trigger);
+    await expect(getComputedStyle(fold).transitionDuration).toBe('0s');
+    await userEvent.click(trigger);
+    expectFoldClosed(fold);
+    await expect(region.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(fold.getBoundingClientRect().height).toBe(0);
+    await userEvent.click(trigger);
+    await expect(region.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('visible');
   },
 };
 

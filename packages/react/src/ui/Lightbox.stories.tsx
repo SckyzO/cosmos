@@ -13,7 +13,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
-import { isFading, loopStops } from '../storybook-motion';
+import { isFading, loopStops, tokenMs, transitionMs } from '../storybook-motion';
 import { Button } from './Button';
 import { Carousel } from './Carousel';
 import { ImageGrid } from './ImageGrid';
@@ -929,7 +929,7 @@ export const ControlsStayDarkInEveryTheme: Story = {
     const counter = within(viewer).getByText('3 / 12');
     const surfaces: string[] = [];
     inEachTheme(() => {
-      const surface = toRgba(getComputedStyle(viewer).backgroundColor);
+      const surface = toRgba(getComputedStyle(surfaceOf(viewer)).backgroundColor);
       surfaces.push(surface.join());
       expect(surface.slice(0, 3), 'the surface is black').toEqual([0, 0, 0]);
       expect(surface[3]! / 255, 'the surface is nearly opaque').toBeGreaterThanOrEqual(0.85);
@@ -1105,8 +1105,9 @@ export const ProductPageOnAPhoneChecks: Story = {
 // ── Motion ───────────────────────────────────────────────────────────────────
 
 /**
- * The viewer at its real speed: the whole dark surface fades in over 200 ms, and out over 120 ms.
- * It keeps its own near-black surface in every theme and does not scale: it fills the screen.
+ * The viewer at its real speed, opening like a dialog: the dark surface fades in and the picture
+ * grows from 95% over 200 ms, then both leave over 120 ms. It keeps its own near-black surface in
+ * every theme.
  */
 export const OpensAndLeavesWithMotion: Story = {
   tags: ['!autodocs'],
@@ -1114,15 +1115,197 @@ export const OpensAndLeavesWithMotion: Story = {
   render: () => <Opener />,
 };
 
-/** Open, the viewer is opaque and takes events. */
+// The dark surface and what stands on it, the two layers that open and leave.
+const surfaceOf = (viewer: HTMLElement) =>
+  viewer.querySelector<HTMLElement>('[data-slot="surface"]')!;
+const stageOf = (viewer: HTMLElement) => viewer.querySelector<HTMLElement>('[data-slot="stage"]')!;
+// The copy of the picture just left, while it fades out.
+const leavingOf = (viewer: HTMLElement) =>
+  viewer.querySelector<HTMLElement>('[data-slot="leaving-picture"]');
+
+/** Open, the viewer is opaque at its full size and takes events. */
 export const OpenIsAtRest: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => <Opener />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Open viewer' }));
     const viewer = await findViewer();
-    await expect(getComputedStyle(viewer).opacity).toBe('1');
+    await expect(getComputedStyle(surfaceOf(viewer)).opacity).toBe('1');
+    await expect(getComputedStyle(stageOf(viewer)).opacity).toBe('1');
+    await expect(getComputedStyle(stageOf(viewer)).scale).toBe('none');
+    await expect(leavingOf(viewer)).toBeNull();
     await expect(viewer).not.toHaveAttribute('inert');
+    // The picture is opaque once loaded.
+    const picture = currentPicture(viewer);
+    await loaded(picture);
+    await waitFor(() => expect(getComputedStyle(picture).opacity).toBe('1'));
+  },
+};
+
+/**
+ * After a move to the next or the previous picture, a key, a thumbnail or a jump to the end, the
+ * viewer is at rest again: the new picture opaque and in place, nothing left over it, the stage
+ * at its full size.
+ */
+export const PicturesAreAtRestAfterAMove: Story = {
+  ...WithThumbnails,
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    const viewer = await findViewer();
+    const { prev, next } = arrows(viewer);
+    const atRest = async (at: string) => {
+      await waitFor(() => expect(shown(viewer)).toBe(at));
+      const picture = currentPicture(viewer);
+      await loaded(picture);
+      await waitFor(() => expect(getComputedStyle(picture).opacity).toBe('1'));
+      await expect(leavingOf(viewer)).toBeNull();
+      await expect(getComputedStyle(stageOf(viewer)).scale).toBe('none');
+      await expect(getComputedStyle(stageOf(viewer)).opacity).toBe('1');
+      await settled(viewer);
+    };
+    await userEvent.click(next);
+    await atRest('4 / 12');
+    await userEvent.click(prev);
+    await atRest('3 / 12');
+    await userEvent.click(prev);
+    await atRest('2 / 12');
+    await userEvent.keyboard('{End}');
+    await atRest('12 / 12');
+    await userEvent.click(
+      within(within(viewer).getByRole('group', { name: 'Picture thumbnails' })).getAllByRole(
+        'button'
+      )[4]!
+    );
+    await atRest('5 / 12');
+  },
+};
+
+/**
+ * The pictures cross-fade at their real speed: the one left stays over the new one for 200 ms,
+ * fading out, out of reach of the pointer and of assistive technology; use the arrows, the keys
+ * or the thumbnails.
+ */
+export const PicturesCrossFade: Story = {
+  tags: ['!autodocs'],
+  parameters: { ...portalDocsParams(520), settleMotion: false },
+  render: () => <Gallery startOpen startIndex={2} thumbnails />,
+};
+
+/** A move leaves a copy of the picture it left, which fades out over the base duration and goes. */
+export const LeftPictureFadesOverTheNewOne: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Gallery startOpen startIndex={2} />,
+  play: async () => {
+    const viewer = await findViewer();
+    await loaded(currentPicture(viewer));
+    await waitFor(() => expect(isFading(viewer)).toBe(false));
+    await expect(leavingOf(viewer)).toBeNull();
+
+    await userEvent.click(arrows(viewer).next);
+    const leaving = leavingOf(viewer)!;
+    await expect(leaving).not.toBeNull();
+    // The picture it shows is the one left, the viewer is already on the next.
+    await expect(leaving.querySelector('img')).toHaveAttribute('src', PHOTOS[2]!.src);
+    await expect(shown(viewer)).toBe('4 / 12');
+    await expect(currentPicture(viewer)).toHaveAttribute('alt', 'Studio photo 4');
+    await expect(isFading(leaving)).toBe(true);
+    await expect(transitionMs(leaving)).toBe(tokenMs('--cosmos-motion-base'));
+    // Decoration: no pointer, no assistive technology.
+    await expect(leaving).toHaveAttribute('aria-hidden', 'true');
+    await expect(leaving).toHaveAttribute('inert');
+    await expect(getComputedStyle(leaving).pointerEvents).toBe('none');
+    await expect(within(viewer).getAllByRole('img')).toHaveLength(1);
+
+    await waitFor(() => expect(leavingOf(viewer)).toBeNull());
+    await expect(getComputedStyle(currentPicture(viewer)).opacity).toBe('1');
+  },
+};
+
+/** The picture shown does not wait for the copy: moving again at once replaces it. */
+export const MovingAgainReplacesTheLeavingPicture: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Gallery startOpen startIndex={2} />,
+  play: async () => {
+    const viewer = await findViewer();
+    await loaded(currentPicture(viewer));
+    await userEvent.click(arrows(viewer).next);
+    await userEvent.click(arrows(viewer).next);
+    await expect(shown(viewer)).toBe('5 / 12');
+    // One copy at a time, of the picture left last.
+    await expect(viewer.querySelectorAll('[data-slot="leaving-picture"]')).toHaveLength(1);
+    await expect(leavingOf(viewer)!.querySelector('img')).toHaveAttribute('src', PHOTOS[3]!.src);
+    await waitFor(() => expect(leavingOf(viewer)).toBeNull());
+  },
+};
+
+/** A swipe brings the next picture in with Embla's own drag: it has nothing to cross over. */
+export const SwipeLeavesNoCopy: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Opener startOpen />,
+  play: async () => {
+    const viewer = await findViewer();
+    const picture = currentPicture(viewer);
+    await loaded(picture);
+    await swipe(picture, true);
+    await waitFor(() => expect(shown(viewer)).toBe('2 / 12'));
+    await expect(leavingOf(viewer)).toBeNull();
+    await settled(viewer);
+  },
+};
+
+/** The surface and the stage run on the theme's tokens: 200 ms in, 120 ms out. */
+export const ViewerOpensAndLeavesLikeADialog: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Opener />,
+  play: async ({ canvas }) => {
+    const opener = canvas.getByRole('button', { name: 'Open viewer' });
+    await userEvent.click(opener);
+    const viewer = await findViewer();
+    await expect(transitionMs(surfaceOf(viewer))).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(transitionMs(stageOf(viewer))).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(isFading(viewer)).toBe(true);
+    await waitFor(() => expect(getComputedStyle(stageOf(viewer)).opacity).toBe('1'));
+    await expect(getComputedStyle(stageOf(viewer)).scale).toBe('none');
+
+    await userEvent.keyboard('{Escape}');
+    await expect(transitionMs(surfaceOf(viewer))).toBe(tokenMs('--cosmos-motion-exit-lg'));
+    await expect(transitionMs(stageOf(viewer))).toBe(tokenMs('--cosmos-motion-exit-lg'));
+    await expect(getComputedStyle(stageOf(viewer)).scale).not.toBe('none');
+    await expect(viewer).toHaveAttribute('inert');
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Picture viewer' })).toBeNull());
+  },
+};
+
+/** Under the reduced setting the viewer opens at once, the pictures change at once, and it goes at once. */
+export const ViewerSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <Opener />,
+  play: async ({ canvas }) => {
+    const opener = canvas.getByRole('button', { name: 'Open viewer' });
+    await userEvent.click(opener);
+    const viewer = await findViewer();
+    // Neither layer has a transition of its own to play (the colours of the controls inside the
+    // stage are another matter).
+    await expect(surfaceOf(viewer).getAnimations()).toHaveLength(0);
+    await expect(stageOf(viewer).getAnimations()).toHaveLength(0);
+    await expect(transitionMs(stageOf(viewer))).toBe(0);
+    await expect(getComputedStyle(surfaceOf(viewer)).opacity).toBe('1');
+    await expect(getComputedStyle(stageOf(viewer)).opacity).toBe('1');
+    await expect(getComputedStyle(stageOf(viewer)).scale).toBe('none');
+
+    await userEvent.click(arrows(viewer).next);
+    await expect(shown(viewer)).toBe('2 / 12');
+    await expect(leavingOf(viewer)).toBeNull();
+
+    await userEvent.keyboard('{Escape}');
+    await expect(body.queryByRole('dialog', { name: 'Picture viewer' })).toBeNull();
+    await expect(opener).toHaveFocus();
   },
 };
 
@@ -1149,7 +1332,7 @@ export const LeavingViewerIsInertAndFocusIsBack: Story = {
     const opener = canvas.getByRole('button', { name: 'Open viewer' });
     await userEvent.click(opener);
     const viewer = await findViewer();
-    await waitFor(() => expect(getComputedStyle(viewer).opacity).toBe('1'));
+    await waitFor(() => expect(getComputedStyle(stageOf(viewer)).opacity).toBe('1'));
 
     await userEvent.keyboard('{Escape}');
     await expect(viewer).toBeInTheDocument();

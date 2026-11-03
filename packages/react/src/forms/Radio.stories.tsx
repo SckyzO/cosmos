@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Radio, RadioGroup } from './Radio';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import {
   bothDirections,
   endOffset,
@@ -352,5 +353,84 @@ export const DotAndGroupMirrorInRightToLeft: Story = {
   play: ({ canvasElement }) => {
     expectMirrored(canvasElement, (box) => box.querySelector('label span[aria-hidden]'));
     expectMirrored(canvasElement, (box) => box.querySelectorAll('label')[1]);
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// The dot inside the circle of a radio.
+const dotOf = (radio: HTMLElement) => radio.nextElementSibling!.firstElementChild!;
+const shown = (dot: Element) => {
+  const style = getComputedStyle(dot);
+  return { opacity: style.opacity, scale: style.scale };
+};
+const REST = { opacity: '1', scale: 'none' };
+const HALF = { opacity: '0', scale: '0.5' };
+
+const MotionRadios = () => {
+  const [value, setValue] = useState('a');
+  return (
+    <RadioGroup
+      legend="Plan"
+      value={value}
+      onChange={setValue}
+      options={[
+        { value: 'a', label: 'Starter' },
+        { value: 'b', label: 'Team' },
+        { value: 'c', label: 'Business' },
+      ]}
+    />
+  );
+};
+
+/** The dot grows from half its size as it fades in, 120 ms, and shrinks back as it fades out. */
+export const DotGrowsIn: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionRadios />,
+};
+
+/** At rest the dot of the picked radio is full size and opaque, and the others have none showing. */
+export const DotIsAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MotionRadios />,
+  play: async ({ canvas }) => {
+    const [a, b] = ['Starter', 'Team'].map((name) => canvas.getByRole('radio', { name }));
+    await expect(shown(dotOf(a!))).toEqual(REST);
+    await expect(shown(dotOf(b!))).toEqual(HALF);
+    await userEvent.click(b!);
+    await expect(shown(dotOf(b!))).toEqual(REST);
+    await expect(shown(dotOf(a!))).toEqual(HALF);
+  },
+};
+
+/** At its real speed the dot moves over the fast duration, and ends at rest. */
+export const DotMovesOnTheFastToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionRadios />,
+  play: async ({ canvas }) => {
+    const [a, b] = ['Starter', 'Team'].map((name) => canvas.getByRole('radio', { name }));
+    await expect(transitionMs(dotOf(b!))).toBe(tokenMs('--cosmos-motion-fast'));
+    await userEvent.click(b!);
+    await expect(isFading(dotOf(b!))).toBe(true);
+    await expect(isFading(dotOf(a!))).toBe(true);
+    await waitFor(() => expect(shown(dotOf(b!))).toEqual(REST));
+    await waitFor(() => expect(shown(dotOf(a!))).toEqual(HALF));
+  },
+};
+
+/** With the reduced setting the dot is there as the radio is picked: nothing plays. */
+export const DotSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <MotionRadios />,
+  play: async ({ canvas }) => {
+    const b = canvas.getByRole('radio', { name: 'Team' });
+    await userEvent.click(b);
+    await expect(transitionMs(dotOf(b))).toBe(0);
+    await expect(isFading(dotOf(b))).toBe(false);
+    await expect(shown(dotOf(b))).toEqual(REST);
   },
 };

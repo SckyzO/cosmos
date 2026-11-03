@@ -1,8 +1,10 @@
 import { clsx } from 'clsx';
-import type { ElementType, ReactNode, Ref } from 'react';
+import { useRef, type ElementType, type ReactNode, type Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useIndicator } from '../hooks/useIndicator';
+import { SlidingIndicator } from '../ui/SlidingIndicator';
 import { Tooltip } from '../ui/Tooltip';
 
 export type SegmentOption<T extends string> = {
@@ -76,12 +78,23 @@ export const SegmentedControl = <T extends string>({
   const anyChecked = options.some((opt) => opt.value === value);
   const pills = appearance === 'pills';
   const sm = size === 'sm';
+  // The accent fill of the selected option is one element that slides from option to option.
+  const groupRef = useRef<HTMLDivElement>(null);
+  const marker = useIndicator(groupRef, {
+    active: '[role="radio"][aria-checked="true"]',
+    options: '[role="radio"]',
+  });
+  // Until it is in place (server render, the first frame of a hydration) the option fills itself.
+  const marked = marker.box !== null;
   return (
     <div
+      ref={groupRef}
       role="radiogroup"
       {...fieldA11y}
       onKeyDown={onRadioGroupKeyDown}
       className={clsx(
+        // `relative isolate`: the fill is placed against the group and sits behind the options.
+        'relative isolate',
         fullWidth ? 'flex w-full' : 'inline-flex',
         'overflow-hidden rounded-lg border',
         pills
@@ -90,6 +103,11 @@ export const SegmentedControl = <T extends string>({
         className
       )}
     >
+      <SlidingIndicator
+        marker={marker}
+        axes="both"
+        className={clsx('bg-brand-500', pills && 'rounded-md')}
+      />
       {GroupIcon && (
         <span
           aria-hidden="true"
@@ -146,7 +164,10 @@ export const SegmentedControl = <T extends string>({
                     i > 0 && 'border-s border-gray-200 dark:border-gray-700'
                   ),
               isActive
-                ? 'bg-brand-500 focus-visible:focus-indicator-on-accent text-white'
+                ? clsx(
+                    'focus-visible:focus-indicator-on-accent text-white',
+                    !marked && 'bg-brand-500'
+                  )
                 : clsx(
                     'focus-visible:focus-indicator',
                     pills

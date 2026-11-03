@@ -8,6 +8,7 @@ import {
   expectNoHorizontalOverflow,
   mobileViewport,
 } from '../storybook-helpers';
+import { SlowFolds, closedRotation, finishAnimations, rotationOf } from '../storybook-folds';
 import { JobLog, type JobLogProps } from './JobLog';
 import { parseJobLogHash, type JobLogLineRef } from './job-log';
 import {
@@ -277,6 +278,86 @@ export const LongLogMobileChecks: Story = {
 };
 
 // ── Tests ───────────────────────────────────────────────────────────────────
+
+/**
+ * Open a step: its output fades in and is revealed from the top in 200 ms under its header, which
+ * stays where it is. It goes at once when the step is closed.
+ */
+export const StepsGrowIn: Story = {
+  ...FailedBuild,
+  parameters: { settleMotion: false },
+};
+
+/**
+ * The test of `StepsGrowIn`, hidden. The body of a step the reader opens plays its entrance and,
+ * once it is over, is plain again; a body open from the start, or opened by "expand all", is simply
+ * there. The room it takes is the same before, during and after. Slowed to 2 s to read the middle.
+ */
+export const StepBodyGrowsInWhenOpenedByHand: Story = {
+  ...FailedBuild,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: (args) => (
+    <SlowFolds>
+      <JobLog {...args} />
+    </SlowFolds>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The failed step starts open: there, plain.
+    const started = canvas.getByRole('group', { name: 'Run tests output' });
+    await expect(started.getAnimations()).toHaveLength(0);
+    await expect(getComputedStyle(started).clipPath).toBe('none');
+
+    // Opened by the reader: it plays, clipped, while the header keeps its place.
+    const header = canvas.getByRole('button', { name: /Install dependencies/ });
+    const before = header.getBoundingClientRect().top;
+    await expect(rotationOf(header.querySelector('svg')!)).toBe(
+      closedRotation(header.querySelector('svg')!)
+    );
+    await userEvent.click(header);
+    const body = canvas.getByRole('group', { name: 'Install dependencies output' });
+    await expect(body.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(body).clipPath).toContain('inset');
+    const box = body.getBoundingClientRect();
+    await finishAnimations(body);
+    await waitFor(() => expect(getComputedStyle(body).clipPath).toBe('none'));
+    await expect(body.getBoundingClientRect().height).toBe(box.height);
+    await expect(body.getBoundingClientRect().top).toBe(box.top);
+    await expect(Math.abs(header.getBoundingClientRect().top - before)).toBeLessThanOrEqual(1);
+    await finishAnimations(header);
+    await expect(rotationOf(header.querySelector('svg')!)).toBe('90deg');
+
+    // Closed, it goes at once; opened again, it plays again.
+    await userEvent.click(header);
+    await expect(canvas.queryByRole('group', { name: 'Install dependencies output' })).toBeNull();
+    await userEvent.click(header);
+    const again = canvas.getByRole('group', { name: 'Install dependencies output' });
+    await expect(again.getAnimations().length).toBeGreaterThan(0);
+    await finishAnimations(again);
+
+    // "Expand all" is not the reader opening one: the bodies are simply there.
+    await userEvent.click(canvas.getByRole('button', { name: 'Expand all steps' }));
+    for (const body of canvas.getAllByRole('group', { name: /output$/ })) {
+      await expect(body.getAnimations()).toHaveLength(0);
+    }
+  },
+};
+
+/** With the Animations setting on "Reduced", a step opens at once and plain. */
+export const ReducedMotionStepAtOnce: Story = {
+  ...FailedBuild,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /Install dependencies/ }));
+    const body = canvas.getByRole('group', { name: 'Install dependencies output' });
+    await expect(body.getAnimations()).toHaveLength(0);
+    await expect(getComputedStyle(body).opacity).toBe('1');
+  },
+};
 
 /** A step opens and closes from its header with Enter and with Space, and says so with `aria-expanded`. */
 export const StepsToggleByKeyboard: Story = {
@@ -677,13 +758,11 @@ export const StepsFollowThePageAndLinesKeepTheirOrder: Story = {
       const box = directionBox(canvasElement, dir);
       const canvas = within(box);
       const closed = canvas.getByRole('button', { name: /Install dependencies/ });
-      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed chevron`).toBe(
-        dir === 'rtl' ? '-1 1' : 'none'
+      expect(rotationOf(closed.querySelector('svg')!), `${dir}: closed chevron`).toBe(
+        dir === 'rtl' ? '180deg' : 'none'
       );
       const open = canvas.getByRole('button', { name: /Run tests/ });
-      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open chevron`).toBe(
-        'none'
-      );
+      expect(rotationOf(open.querySelector('svg')!), `${dir}: open chevron`).toBe('90deg');
       const lines = box.querySelector<HTMLElement>('[data-lines]')!;
       expect(getComputedStyle(lines).direction, `${dir}: the lines`).toBe('ltr');
       const number = within(lines).getByRole('link', { name: 'Line 1' });

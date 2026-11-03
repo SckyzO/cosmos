@@ -1,9 +1,13 @@
 import { clsx } from 'clsx';
 import { MessageCircle, RotateCcw, X } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useOverlayLayer, usePortalFocus } from '../ui/overlayA11y';
+import { mergeRefs } from '../ui/mergeRefs';
+import { panelOrigin } from '../ui/panelOrigin';
 import { useControllableState } from '../hooks/useControllableState';
+import { useDocumentDirection } from '../hooks/direction';
+import { useExitTransition } from '../hooks/useExitTransition';
 import { ChatComposer } from './ChatComposer';
 import { ChatMessage, type ChatMessageStatus } from './ChatMessage';
 import { ChatSuggestions } from './ChatSuggestions';
@@ -51,16 +55,16 @@ export type ChatbotProps = {
   launcherLabel?: string;
 };
 
-// Exit transition length: the panel stays mounted this long after closing.
-const EXIT_MS = 150;
-
 /**
  * Floating chat widget: a launcher at the bottom right opens a chat panel,
  * full-screen under 480px. No network code: the app owns `messages` and
  * answers `onSend`, so any backend fits.
  *
  * The panel is portaled to `<body>`. Opening moves focus to the composer,
- * Escape closes and focus goes back to the launcher.
+ * Escape closes and focus goes back to the launcher. It opens like a dialog: it fades in,
+ * rises 16px and grows from 95% out of the corner nearest the launcher (mirrored in right to
+ * left), over the base duration, and leaves over the shorter exit one. Once closed it is out of
+ * the way (`inert`) while it leaves, and gone at once when nothing animates.
  */
 export const Chatbot = ({
   messages,
@@ -85,22 +89,9 @@ export const Chatbot = ({
     name: 'Chatbot.open',
   });
 
-  // `visible` turns on a frame after opening, so the enter transition runs,
-  // and off once the exit transition is over: the panel stays mounted meanwhile.
-  const [visible, setVisible] = useState(open);
-  useEffect(() => {
-    if (open) {
-      const frame = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(frame);
-    }
-    const timer = setTimeout(() => setVisible(false), EXIT_MS);
-    return () => clearTimeout(timer);
-  }, [open]);
-  const shown = open && visible;
-
   const launcherRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
-  const panelFocus = usePortalFocus<HTMLDivElement>({
+  const { ref: focusRef, onFocusCapture } = usePortalFocus<HTMLDivElement>({
     open,
     onClose: () => setOpen(false),
     triggerRef: launcherRef,
@@ -108,21 +99,36 @@ export const Chatbot = ({
   });
   // Escape closes it, unless an overlay opened above it takes it.
   useOverlayLayer(open, () => setOpen(false));
+  // The panel stays on screen while it leaves, once `open` is false: focus is already back on the
+  // launcher and Escape already goes to the overlay under it.
+  const exitRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useMemo(() => mergeRefs(focusRef, exitRef), [focusRef]);
+  const present = useExitTransition(open, exitRef);
+  // The panel is portaled to `<body>`: it grows from the corner it is fixed to in the page's direction.
+  const direction = useDocumentDirection();
 
   const unread = !open && unreadCount > 0;
 
   return createPortal(
     <>
-      {(open || visible) && (
+      {present && (
         <div
-          {...panelFocus}
+          ref={panelRef}
+          onFocusCapture={onFocusCapture}
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
+          inert={!open}
+          style={{ transformOrigin: panelOrigin('top', 'end', direction) }}
           className={clsx(
-            'fixed inset-0 z-50 flex flex-col overflow-hidden bg-[var(--color-bg-panel)] shadow-2xl focus:outline-none motion-safe:transition-all motion-safe:duration-150',
+            'fixed inset-0 z-50 flex flex-col overflow-hidden bg-[var(--color-bg-panel)] shadow-2xl transition-[opacity,translate,scale] focus:outline-none',
             'min-[480px]:inset-e-6 min-[480px]:inset-auto min-[480px]:bottom-24 min-[480px]:h-[min(600px,calc(100dvh-8rem))] min-[480px]:w-96 min-[480px]:rounded-2xl min-[480px]:border min-[480px]:border-[var(--color-border)]',
-            shown ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
+            // In: from 16px below and 95%, transparent on the first frame (`starting:`), over the
+            // base duration easing out. Out: back there over the shorter exit, easing in, and out
+            // of the pointer's reach.
+            open
+              ? 'translate-none scale-none opacity-100 duration-(--cosmos-motion-base) ease-(--cosmos-ease-out) starting:translate-y-4 starting:scale-95 starting:opacity-0'
+              : 'pointer-events-none translate-y-4 scale-95 opacity-0 duration-(--cosmos-motion-exit-lg) ease-(--cosmos-ease-in)'
           )}
         >
           <header className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">

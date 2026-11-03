@@ -10,6 +10,7 @@ import {
   keyToStart,
   startOffset,
 } from '../storybook-helpers';
+import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
 import { SegmentedControl } from './SegmentedControl';
 
 const meta = {
@@ -291,14 +292,18 @@ export const PillsSelectedHasAccentBackground: Story = {
   play: async ({ canvas }) => {
     const selected = getComputedStyle(canvas.getByRole('radio', { name: 'WARN' }));
     const other = getComputedStyle(canvas.getByRole('radio', { name: 'All' }));
+    // The accent fill is the marker's, behind the selected pill.
+    const fill = getComputedStyle(
+      indicatorOf(canvas.getByRole('radiogroup', { name: 'Severity' }))
+    );
     const probe = document.createElement('span');
     probe.className = 'bg-brand-500 text-white';
     document.body.append(probe);
     const accent = getComputedStyle(probe);
-    await expect(selected.backgroundColor).toBe(accent.backgroundColor);
+    await expect(fill.backgroundColor).toBe(accent.backgroundColor);
     await expect(selected.color).toBe(accent.color);
     probe.remove();
-    await expect(other.backgroundColor).not.toBe(selected.backgroundColor);
+    await expect(other.backgroundColor).not.toBe(fill.backgroundColor);
     await expect(other.color).not.toBe(selected.color);
   },
 };
@@ -602,5 +607,172 @@ export const IconOnlyKeepsTextWithoutAnIcon: Story = {
     await expect(canvas.getByRole('radio', { name: 'Grid' }).textContent).toBe('');
     await expect(canvas.getByRole('radio', { name: 'Table 3' })).toHaveTextContent('Table3');
     await expect(within(document.body).getAllByRole('tooltip')).toHaveLength(1);
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const MotionGroup = ({
+  name,
+  ...props
+}: Omit<Parameters<typeof SegmentedControl<string>>[0], 'value' | 'onChange'> & {
+  name: string;
+}) => {
+  const [v, setV] = useState(props.options[0]!.value);
+  return (
+    <div data-testid={name}>
+      <SegmentedControl<string> {...props} aria-label={name} value={v} onChange={setV} />
+    </div>
+  );
+};
+
+// The fill of the selected option is one marker that slides from option to option.
+const MarkedGroups = () => (
+  <div className="space-y-4">
+    <MotionGroup name="Segments" options={[...VIEWS]} />
+    <MotionGroup name="Pills" appearance="pills" options={SEVERITY} />
+    <MotionGroup name="Small" size="sm" options={[...VIEWS]} />
+    <MotionGroup name="Icons" iconOnly options={[...LAYOUTS]} />
+  </div>
+);
+
+/**
+ * The fill slides to the option you pick, in 200 ms easing in and out; with the reduced setting it
+ * moves at once.
+ */
+export const FillSlidesToTheOptionPicked: Story = {
+  parameters: { settleMotion: false },
+  render: () => <MarkedGroups />,
+};
+
+// Whether the marker sits on the option: same start and size along the line and across it.
+const fills = (marker: HTMLElement, option: HTMLElement) => {
+  const gap = indicatorGap(marker, option);
+  for (const [axis, value] of Object.entries(gap)) {
+    expect(value, axis).toBeLessThan(0.6);
+  }
+};
+
+/** After a change, whichever way it goes, the fill is the selected option's own box. */
+export const FillSitsOnTheSelectedOption: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MarkedGroups />,
+  play: async ({ canvas }) => {
+    for (const name of ['Segments', 'Pills', 'Small', 'Icons']) {
+      const group = canvas.getByRole('radiogroup', { name });
+      const marker = indicatorOf(group);
+      const radios = within(group).getAllByRole('radio');
+      const last = radios.length - 1;
+      await waitFor(() => fills(marker, radios[0]!));
+      // To the last, back to the first, then one step: both ways.
+      for (const i of [last, 0, last, Math.max(last - 1, 0)]) {
+        await userEvent.click(radios[i]!);
+        await waitFor(() => fills(marker, radios[i]!));
+      }
+      // The keys move it too.
+      await userEvent.keyboard(`{${keyToStart()}}`);
+      await waitFor(() => fills(marker, within(group).getByRole('radio', { checked: true })));
+    }
+  },
+};
+
+/** In right to left the fill is measured from the right: it still covers the option. */
+export const FillFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl">
+      <MarkedGroups />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const name of ['Segments', 'Pills']) {
+      const group = canvas.getByRole('radiogroup', { name });
+      const marker = indicatorOf(group);
+      const radios = within(group).getAllByRole('radio');
+      for (const i of [2, 0, 1]) {
+        await userEvent.click(radios[i]!);
+        await waitFor(() => fills(marker, radios[i]!));
+      }
+    }
+  },
+};
+
+/** The fill keeps the selected option when the text grows: a re-measure, with no slide to catch up. */
+export const FillFollowsAResize: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MarkedGroups />,
+  play: async ({ canvas }) => {
+    const root = document.documentElement;
+    const was = root.getAttribute('data-text-size');
+    try {
+      const group = canvas.getByRole('radiogroup', { name: 'Pills' });
+      const marker = indicatorOf(group);
+      const option = within(group).getByRole('radio', { name: 'WARN' });
+      await userEvent.click(option);
+      await waitFor(() => expect(isSliding(group)).toBe(false));
+      const before = marker.getBoundingClientRect().width;
+      root.setAttribute('data-text-size', 'xl');
+      await waitFor(() => expect(marker.getBoundingClientRect().width).toBeGreaterThan(before));
+      await waitFor(() => fills(marker, option));
+      await expect(isSliding(group)).toBe(false);
+    } finally {
+      if (was === null) root.removeAttribute('data-text-size');
+      else root.setAttribute('data-text-size', was);
+    }
+  },
+};
+
+/**
+ * No transition on the first paint: the fill is on the selected option when the group appears. A
+ * pick then starts the slide, over the base duration of the theme.
+ */
+export const FillDoesNotSlideInOnFirstPaint: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MarkedGroups />,
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Segments' });
+    const marker = indicatorOf(group);
+    await expect(isSliding(group)).toBe(false);
+    fills(marker, within(group).getByRole('radio', { name: 'List' }));
+    // Nothing to slide with until the selection changes.
+    await expect(transitionMs(marker)).toBe(0);
+
+    await userEvent.click(within(group).getByRole('radio', { name: 'Map' }));
+    await expect(isSliding(group)).toBe(true);
+    await expect(transitionMs(marker)).toBe(tokenMs('--cosmos-motion-base'));
+    await waitFor(() => expect(isSliding(group)).toBe(false), { timeout: 2000 });
+    fills(marker, within(group).getByRole('radio', { name: 'Map' }));
+  },
+};
+
+/** With the reduced setting the fill jumps: no transition runs, and it is already there. */
+export const FillJumpsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <MarkedGroups />,
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Segments' });
+    const marker = indicatorOf(group);
+    await userEvent.click(within(group).getByRole('radio', { name: 'Map' }));
+    await expect(isSliding(group)).toBe(false);
+    await expect(transitionMs(marker)).toBe(0);
+    fills(marker, within(group).getByRole('radio', { name: 'Map' }));
+  },
+};
+
+/** A group with nothing selected has no fill, and gets one when an option is picked. */
+export const NoFillWithoutASelection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SegmentedControl<string> aria-label="Nothing" options={[...VIEWS]} />,
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Nothing' });
+    await expect(group.querySelector('[data-slot="indicator"]')).toBeNull();
+    await userEvent.click(within(group).getByRole('radio', { name: 'Grid' }));
+    await waitFor(() =>
+      fills(indicatorOf(group), within(group).getByRole('radio', { name: 'Grid' }))
+    );
   },
 };

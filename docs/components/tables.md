@@ -92,7 +92,9 @@ an icon button named by its `label`. `bulkActions(selectedRows)` still renders
 any node after them, as given at every width. While rows are selected the
 toolbar's Export follows them ("Export 3" downloads those rows, in the table's
 sort order, and `onExport` gets their keys as `selection`); with none selected it
-exports the filtered rows.
+exports the filtered rows. The bar of the count and the actions fades in and slides 4px
+in 120 ms when the first row is ticked, and out in 80 ms over the search row when the
+last one is cleared; while it leaves it is inert and still reads what it read.
 
 `emptyAction` puts a call to action under the empty state ("Create the first
 order"). When a search or filters hide every row it gives way to a "Clear
@@ -107,6 +109,11 @@ selection: `expandedRows`, `defaultExpandedRows` and
 click on it. Limit: with `virtualize` nothing expands (its rows have one fixed
 height), and the prop is ignored. With `mobileLayout="cards"` the chevron sits on
 the card's title line and the content opens inside the card, under its fields.
+The detail unfolds in 200 ms, in its row or its card, while the content fades in and
+slides 4px and the chevron (the same icon, turned a quarter) follows; closing plays the
+same backwards, then the detail is removed. It is inert and out of the accessibility
+tree from the moment it starts to close, and `renderExpandedRow` is only called for the
+rows that are open. A row open from the first render is simply there.
 
 `pin: 'start' | 'end'` on a column keeps it in place while the table scrolls
 sideways, several per side: list the `start` ones first and the `end` ones last

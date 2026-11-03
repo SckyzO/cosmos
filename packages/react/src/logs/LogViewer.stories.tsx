@@ -11,6 +11,7 @@ import {
   mobileViewport,
 } from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
+import { SlowFolds, finishAnimations, rotationOf } from '../storybook-folds';
 import { LogViewer } from './LogViewer';
 import { LogConsole, SOURCES, fakeLine, fakeLines } from './storybook-logs';
 import type { LogLevelKey, LogLine } from './types';
@@ -78,6 +79,26 @@ export const ExpandedRow: Story = {
         lines={fakeLines(60)}
         aria-label="Backend logs"
         defaultExpandedIds={[8, 23]}
+        lineNumbers
+        follow={false}
+        onFollowChange={() => {}}
+        height={360}
+      />
+    </Card>
+  ),
+};
+
+/**
+ * Open a row: its details fade in and are revealed from the top in 200 ms, under the row, which
+ * stays where it is. They go at once when closed.
+ */
+export const DetailsGrowIn: Story = {
+  parameters: { settleMotion: false },
+  render: () => (
+    <Card padding="none" className="overflow-hidden">
+      <LogViewer
+        lines={fakeLines(60)}
+        aria-label="Backend logs"
         lineNumbers
         follow={false}
         onFollowChange={() => {}}
@@ -430,6 +451,90 @@ export const RowExpandsInPlace: Story = {
     await waitFor(() =>
       expect(canvas.queryByRole('group', { name: /Details of line/ })).toBeNull()
     );
+  },
+};
+
+const detailsOf = (canvas: ReturnType<typeof within>): HTMLElement[] =>
+  canvas.queryAllByRole('group', { name: /Details of line/ });
+
+/**
+ * The test of `DetailsGrowIn`, hidden. The details a reader opens play their entrance and, once it
+ * is over, are plain again; details open from the start, or drawn again because the window moved
+ * (scrolling away and back), are simply there. Nothing the window measures changes while they
+ * play: the row below keeps the place it was given. Slowed to 2 s to read the middle.
+ */
+export const DetailsGrowInWhenOpened: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowFolds>
+      <LogViewer
+        lines={fakeLines(60)}
+        aria-label="Backend logs"
+        defaultExpandedIds={[8]}
+        lineNumbers
+        follow={false}
+        onFollowChange={() => {}}
+        height={360}
+      />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    // Open from the start: there, plain.
+    const [started] = detailsOf(canvas);
+    await expect(started!.getAnimations()).toHaveLength(0);
+    await expect(getComputedStyle(started!).clipPath).toBe('none');
+    await expect(
+      rotationOf(canvas.getAllByRole('button', { name: 'Hide details' })[0]!.querySelector('svg')!)
+    ).toBe('90deg');
+
+    // Opened by the reader: it plays, clipped and fading, and the room it takes stays the same.
+    const toggle = canvas.getAllByRole('button', { name: 'Show details' })[0]!;
+    await userEvent.click(toggle);
+    const opened = detailsOf(canvas).find((group) => group !== started)!;
+    await expect(opened.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(opened).clipPath).toContain('inset');
+    await expect(opened).toHaveTextContent('request_id');
+    const box = opened.getBoundingClientRect();
+    const below = opened.nextElementSibling!.getBoundingClientRect();
+    await finishAnimations(opened);
+    await waitFor(() => expect(getComputedStyle(opened).clipPath).toBe('none'));
+    await expect(opened.getBoundingClientRect().height).toBe(box.height);
+    await expect(opened.getBoundingClientRect().top).toBe(box.top);
+    await expect(opened.nextElementSibling!.getBoundingClientRect().top).toBe(below.top);
+    await expect(opened.getAnimations()).toHaveLength(0);
+
+    // Scrolled out of the window and back: drawn again, and still plain.
+    const log = canvas.getByRole('log');
+    log.scrollTop = log.scrollHeight;
+    await waitFor(() => expect(detailsOf(canvas)).toHaveLength(0));
+    log.scrollTop = 0;
+    await waitFor(() => expect(detailsOf(canvas).length).toBeGreaterThan(0));
+    for (const group of detailsOf(canvas)) {
+      await expect(group.getAnimations()).toHaveLength(0);
+      await expect(getComputedStyle(group).clipPath).toBe('none');
+    }
+  },
+};
+
+/** With the Animations setting on "Reduced", the details are there at once and plain. */
+export const ReducedMotionDetailsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  render: () => (
+    <LogViewer
+      lines={fakeLines(40)}
+      aria-label="Backend logs"
+      follow={false}
+      onFollowChange={() => {}}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getAllByRole('button', { name: 'Show details' })[0]!);
+    const [details] = detailsOf(canvas);
+    await expect(details!.getAnimations()).toHaveLength(0);
+    await expect(getComputedStyle(details!).opacity).toBe('1');
   },
 };
 

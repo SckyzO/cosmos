@@ -4,6 +4,10 @@ import { useControllableState } from '../hooks/useControllableState';
 
 export type RadioSize = 'sm' | 'md';
 
+// The dot grows from half its size as it fades in, over the fast duration easing out, and shrinks
+// back as it fades out. At rest it is full size and opaque.
+const DOT = 'transition-[opacity,scale] duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)';
+
 export type RadioProps = Omit<
   ComponentPropsWithRef<'input'>,
   'size' | 'type' | 'onChange' | 'children'
@@ -75,14 +79,22 @@ export function Radio({
         <span
           aria-hidden
           className={clsx(
-            'peer-focus-visible:focus-indicator flex items-center justify-center rounded-full border transition-colors',
+            'peer-focus-visible:focus-indicator flex items-center justify-center rounded-full border transition-colors duration-(--cosmos-motion-fast)',
             sizes.box,
             isChecked
               ? 'border-brand-500 bg-white dark:bg-gray-800'
               : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
           )}
         >
-          {isChecked && <span className={clsx('bg-brand-500 rounded-full', sizes.dot)} />}
+          {/* Always rendered, so the dot can fade out as well as in. */}
+          <span
+            className={clsx(
+              'bg-brand-500 rounded-full',
+              DOT,
+              sizes.dot,
+              isChecked ? 'scale-none opacity-100' : 'scale-50 opacity-0'
+            )}
+          />
         </span>
       </span>
       {(label || description) && (

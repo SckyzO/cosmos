@@ -170,7 +170,9 @@ charts ───────────── storybook      (charts imports ne
   `motion-reduce:` are redefined in `tailwind-tokens.css` to read the attribute too. A window that
   leaves stays mounted through `hooks/useExitTransition.ts` (out of the overlay stack, inert and
   focus back at once; unmounts at once when nothing animates); a block that folds goes through the
-  internal `ui/Fold.tsx`. Every scrim is `Backdrop` (`variant`, colours `--color-scrim-*`).
+  internal `ui/Fold.tsx` (`lazy` mounts on the first opening, `appear` unfolds on mount,
+  `slide={false}` only fades); a marker that slides between options (Tabs, SegmentedControl) goes
+  through `hooks/useIndicator.ts` and `ui/SlidingIndicator.tsx`. Every scrim is `Backdrop` (`variant`, colours `--color-scrim-*`).
   **Themes** are one class on `<html>`: none (light), `.sand`, `.dark` (neutral black/gray),
   `.deep-blue` (the old navy dark); `.dark` and `.deep-blue` enable `dark:`. **Accents** are
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,

@@ -20,6 +20,16 @@ import {
   mobileViewport,
 } from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  foldOf,
+  closedRotation,
+  rotationOf,
+} from '../storybook-folds';
 import { HealthCheckList } from './HealthCheckList';
 import { StatusBadge } from './StatusBadge';
 
@@ -89,6 +99,16 @@ export const DependencyTree: Story = {
 /** The same tree, worst branch first. */
 export const DependencyTreeBySeverity: Story = {
   args: { groups: DEPENDENCY_TREE, sort: 'severity' },
+};
+
+/**
+ * A check's output and a group unfold and fold back in 200 ms: the height runs from 0 to its size
+ * while the content fades in and slides 4 px, and the chevron turns with it. A closed one is out of
+ * the tab order and of the accessibility tree from the first frame.
+ */
+export const Folds: Story = {
+  parameters: { settleMotion: false },
+  args: { sort: 'severity' },
 };
 
 // A plain SVG line, as the stories of KpiCard draw: react stays chart-free. In an app, give the
@@ -271,8 +291,139 @@ export const OutputToggles: Story = {
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(canvas.getByText(/oldest=94s/)).toBeVisible();
+    // Closed again, the block is folded, not unmounted: out of the page's reach and not shown.
     await userEvent.click(toggle);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(canvas.getByText(/oldest=94s/)).not.toBeVisible();
+  },
+};
+
+/**
+ * A group's panel and a check's output are folds: closed, they are inert and out of the
+ * accessibility tree at once, while the height is still moving, with their content mounted; open,
+ * they are reachable at once and unclipped once at rest. Slowed to 2 s to read the middle.
+ */
+export const FoldsAreInertAtOnceAndKeepTheirContent: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: (args) => (
+    <SlowFolds>
+      <HealthCheckList {...args} />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    // A group: open and at rest to begin with.
+    const header = canvas.getByRole('button', { name: /^External APIs/ });
+    const panel = foldOf(header);
+    await expectFoldOpen(panel);
+    await expect(canvas.getByRole('button', { name: 'Job queue' })).toBeVisible();
+
+    // Closing: inert and hidden at once, the height still moving, the rows still mounted.
+    await userEvent.click(header);
+    await expect(header).toHaveAttribute('aria-expanded', 'false');
+    expectFoldClosed(panel);
+    await expect(panel.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(panel.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(clipOf(panel)).overflow).toBe('hidden');
+    await expect(canvas.getByText('Alertmanager')).toBeInTheDocument();
+    await finishAnimations(panel);
+    await expect(panel.getBoundingClientRect().height).toBe(0);
+    await expect(canvas.getByText('Alertmanager')).not.toBeVisible();
+
+    // Opening: reachable at once, clipping while it moves, then at rest.
+    await userEvent.click(header);
+    await expect(header).toHaveAttribute('aria-expanded', 'true');
+    await expect(panel.inert).toBe(false);
+    await expect(getComputedStyle(clipOf(panel)).overflow).toBe('hidden');
+    await finishAnimations(panel);
+    await expectFoldOpen(panel);
+    await expect(panel.getBoundingClientRect().height).toBeGreaterThan(0);
+
+    // An output: not mounted before it is first opened, then mounted for good.
+    const toggle = canvas.getByRole('button', { name: 'Job queue' });
+    const output = foldOf(toggle);
+    expectFoldClosed(output);
     await expect(canvas.queryByText(/oldest=94s/)).toBeNull();
+    await userEvent.click(toggle);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(output.inert).toBe(false);
+    await expect(canvas.getByText(/oldest=94s/)).toBeInTheDocument();
+    await finishAnimations(output);
+    await expectFoldOpen(output);
+    await userEvent.click(toggle);
+    expectFoldClosed(output);
+    await expect(canvas.getByText(/oldest=94s/)).toBeInTheDocument();
+    await finishAnimations(output);
+    await expect(output.getBoundingClientRect().height).toBe(0);
+    await expect(canvas.getByText(/oldest=94s/)).not.toBeVisible();
+  },
+};
+
+/** The chevron turns a quarter as the block opens: the same icon in both states, not a swap. */
+export const ChevronTurnsWithTheBlock: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('button', { name: /^External APIs/ });
+    const check = canvas.getByRole('button', { name: 'Job queue' });
+    const icon = group.querySelector('svg')!;
+    await expect(rotationOf(icon)).toBe('90deg');
+    await expect(rotationOf(check.querySelector('svg')!)).toBe(
+      closedRotation(check.querySelector('svg')!)
+    );
+    await userEvent.click(group);
+    await userEvent.click(check);
+    await expect(group.querySelector('svg')).toBe(icon);
+    await expect(rotationOf(icon)).toBe(closedRotation(icon));
+    await expect(rotationOf(check.querySelector('svg')!)).toBe('90deg');
+  },
+};
+
+/** Closed, an output takes no room: a row and a card are as tall as the same check with none. */
+export const ClosedOutputTakesNoRoom: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [withOutput, without] = [
+      EVERY_STATUS.find((c) => c.id === 'crit')!,
+      { ...EVERY_STATUS.find((c) => c.id === 'crit')!, id: 'plain', output: undefined },
+    ];
+    return (
+      <div className="max-w-md space-y-4">
+        {(['list', 'grid'] as const).map((variant) => (
+          <div key={variant} data-variant={variant} className="space-y-4">
+            <HealthCheckList variant={variant} checks={[withOutput]} now={HEALTH_NOW} />
+            <HealthCheckList variant={variant} checks={[without]} now={HEALTH_NOW} />
+          </div>
+        ))}
+      </div>
+    );
+  },
+  play: ({ canvasElement }) => {
+    for (const variant of ['list', 'grid']) {
+      const box = canvasElement.querySelector(`[data-variant="${variant}"]`)!;
+      const [withOutput, without] = [...box.querySelectorAll('li')];
+      expect(withOutput!.getBoundingClientRect().height, variant).toBe(
+        without!.getBoundingClientRect().height
+      );
+    }
+  },
+};
+
+/** With the Animations setting on "Reduced", a block opens and closes at once: nothing animates. */
+export const ReducedMotionFoldsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('button', { name: /^External APIs/ });
+    const panel = foldOf(group);
+    await expect(getComputedStyle(panel).transitionDuration).toBe('0s');
+    await userEvent.click(group);
+    expectFoldClosed(panel);
+    await expect(panel.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(panel.getBoundingClientRect().height).toBe(0);
+    await userEvent.click(group);
+    await expect(panel.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(getComputedStyle(clipOf(panel)).overflow).toBe('visible');
   },
 };
 
@@ -335,13 +486,13 @@ export const RowsAndGroupsFollowTheReadingDirection: Story = {
       const closed = canvas
         .getAllByRole('button', { expanded: false })
         .find((button) => button.textContent?.includes('Database'))!;
-      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed group`).toBe(
-        dir === 'rtl' ? '-1 1' : 'none'
+      expect(rotationOf(closed.querySelector('svg')!), `${dir}: closed group`).toBe(
+        dir === 'rtl' ? '180deg' : 'none'
       );
       const open = canvas
         .getAllByRole('button', { expanded: true })
         .find((button) => button.textContent?.includes('Queue'))!;
-      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open group`).toBe('none');
+      expect(rotationOf(open.querySelector('svg')!), `${dir}: open group`).toBe('90deg');
       expectReadsLeftToRight(canvas.getByText('312 jobs waiting (limit 200)'));
       expectReadsLeftToRight(canvas.getByText('redis://queue:6379/0'));
     }

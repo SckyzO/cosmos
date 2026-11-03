@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { createContext, use, type ReactNode, type RefCallback } from 'react';
+import { createContext, use, type CSSProperties, type ReactNode, type RefCallback } from 'react';
 import {
   Day,
   DayButton,
@@ -46,8 +46,27 @@ const NamedDay = ({ children, ...props }: DayProps) => (
 // sits in, and it gives it back as that prop.
 const DirectionRef = createContext<RefCallback<HTMLDivElement> | null>(null);
 
+// While the month changes, the library keeps a copy of the month it leaves, marked `aria-hidden`,
+// until its slide has played. A copy of a live month holds days a keyboard can still reach, so it
+// is made inert the moment it appears; the library removes it when the slide is over.
+const keepLeavingMonthInert: RefCallback<HTMLDivElement> = (root) => {
+  if (!root) return;
+  const observer = new MutationObserver(() => {
+    for (const month of root.querySelectorAll('[data-animated-month][aria-hidden="true"]')) {
+      month.setAttribute('inert', '');
+    }
+  });
+  observer.observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['aria-hidden'],
+  });
+  return () => observer.disconnect();
+};
+
 const CalendarRoot = ({ rootRef, ...props }: RootProps) => (
-  <div {...props} ref={mergeRefs(rootRef, use(DirectionRef))} />
+  <div {...props} ref={mergeRefs(rootRef, use(DirectionRef), keepLeavingMonthInert)} />
 );
 
 /**
@@ -61,27 +80,47 @@ const CalendarRoot = ({ rootRef, ...props }: RootProps) => (
  * 1st, 2026"), so a voice user can say "click 1". Pass your own `components.Day`
  * and `components.DayButton` to name the days yourself.
  *
+ * The month slides when it changes, through react-day-picker's own `animate` option, over the
+ * theme's base duration and in-out easing; the reduced setting stops it (the durations are 0).
+ * Pass `animate={false}` to switch it off.
+ *
  * react-day-picker's structural styles are not imported here (a CSS import in
  * the bundle breaks `require` in Node): load `@sckyzo/cosmos-react/calendar.css`
  * once in your app.
  */
-export const Calendar = ({ classNames, components, className, ...rest }: CalendarProps) => {
+export const Calendar = ({ classNames, components, className, style, ...rest }: CalendarProps) => {
   const def = getDefaultClassNames();
   const [direction, directionRef] = useParentDirection<HTMLDivElement>();
   const showLabel = (rest.captionLayout ?? 'label') === 'label';
   return (
-    // `animate` is intentionally OFF: with our custom caption (mode/year
-    // dropdowns), the cross-fade transition renders the outgoing caption on
-    // top of the incoming one for ~150 ms, producing a visible ghost of
-    // "May 2026" overlapping the dropdowns. Static caption swaps look clean.
     <DirectionRef value={directionRef}>
       <DayPicker
+        // The month slides. Its duration and timing are variables of the library's own stylesheet,
+        // which loads unlayered and would beat a utility class on the root: they are set inline, from
+        // the theme's tokens, so the reduced setting (0 ms) and the real `prefers-reduced-motion`
+        // reach it. The library plays the animation whatever the duration; at 0 it ends at once.
+        animate
+        style={
+          {
+            '--rdp-animation_duration': 'var(--cosmos-motion-base, 200ms)',
+            '--rdp-animation_timing': 'var(--cosmos-ease-in-out, cubic-bezier(0.4, 0, 0.2, 1))',
+            ...style,
+          } as CSSProperties
+        }
         // Left alone in left to right, so that markup is what it was.
         dir={direction === 'rtl' ? 'rtl' : undefined}
         classNames={{
           root: clsx(def.root, 'p-3 text-sm', className),
           months: clsx(def.months, 'gap-4'),
-          month: clsx(def.month, 'space-y-2'),
+          month: clsx(
+            def.month,
+            'space-y-2',
+            // Dropdown captions: the month that is leaving fades out over the one coming in, two
+            // sets of dropdowns on top of each other for the length of the slide. Its caption goes
+            // at once instead (the library marks the leaving month `aria-hidden`; its animation
+            // still plays, the library waits for its end to clean up).
+            !showLabel && '[&[aria-hidden=true]_[data-animated-caption]]:invisible'
+          ),
           // Reserve horizontal padding so the absolute Nav prev/next chevrons sit
           // OUTSIDE of the caption content (dropdowns or label), never overlapping.
           month_caption: clsx(

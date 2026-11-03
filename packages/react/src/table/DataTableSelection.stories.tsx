@@ -3,6 +3,7 @@ import { Archive, Printer, Trash2, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
+import { SlowFolds, finishAnimations } from '../storybook-folds';
 import {
   expectNoHorizontalOverflow,
   mobileViewport,
@@ -283,6 +284,16 @@ export const FiltersHideEveryRow: Story = {
   },
 };
 
+/**
+ * Tick a row: the "N selected" bar fades in and slides 4 px in 120 ms, in the place of the search
+ * row. Clear the selection: it fades out over the search row in 80 ms.
+ */
+export const SelectionBarFadesInAndOut: Story = {
+  parameters: { settleMotion: false },
+  globals: laptop,
+  render: () => <Orders />,
+};
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 /** Typing in the search while rows are selected keeps the selection. */
@@ -315,6 +326,98 @@ export const ClearLeavesTheToolbar: Story = {
     await expect(canvas.queryByText(/selected/)).toBeNull();
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Export' })).toBeVisible();
+  },
+};
+
+const SLOW_BAR = ['--cosmos-motion-fast', '--cosmos-motion-exit'];
+
+// The box that moves the "N selected" bar.
+const barOf = (scope: HTMLElement) => scope.querySelector<HTMLElement>('[data-selection-bar]');
+
+/**
+ * The bar comes with the first row ticked and leaves with the last one cleared. Leaving, it is out
+ * of the layout (the search row is already back in its place), inert and out of the accessibility
+ * tree at once, and it still reads what it read; ticking again brings the same bar back. A
+ * selection restored with the table is simply there. Slowed to 2 s to read the middle.
+ */
+export const SelectionBarComesAndGoes: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: laptop,
+  render: () => (
+    <SlowFolds tokens={SLOW_BAR}>
+      <div data-testid="live">
+        <Orders />
+      </div>
+      <div data-testid="restored">
+        <Orders aria-label="Restored" defaultSelection={selected} />
+      </div>
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const restored = barOf(canvas.getByTestId('restored'))!;
+    const live = within(canvas.getByTestId('live'));
+    const tick = () => userEvent.click(live.getByRole('checkbox', { name: 'Select row BK-20420' }));
+    const searchboxes = () => live.getAllByRole('searchbox', { name: 'Search rows', hidden: true });
+
+    // A selection restored with the table: there, nothing played.
+    await expect(restored).toHaveTextContent('3 selected');
+    await expect(restored.getAnimations()).toHaveLength(0);
+
+    // Arriving: the first row ticked brings the bar, fading in.
+    await expect(barOf(canvas.getByTestId('live'))).toBeNull();
+    await tick();
+    const bar = barOf(canvas.getByTestId('live'))!;
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.inert).toBe(false);
+    await expect(bar.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(bar).position).not.toBe('absolute');
+    await expect(searchboxes()).toHaveLength(1);
+    await finishAnimations(bar);
+
+    // Leaving: inert and hidden at once, over the search row that is already back, still reading
+    // "1 selected" and not "0 selected".
+    await userEvent.click(within(bar).getByRole('button', { name: 'Clear' }));
+    await expect(bar.isConnected).toBe(true);
+    await expect(bar.inert).toBe(true);
+    await expect(bar).toHaveAttribute('aria-hidden', 'true');
+    await expect(getComputedStyle(bar).position).toBe('absolute');
+    await expect(getComputedStyle(bar).pointerEvents).toBe('none');
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.getAnimations().length).toBeGreaterThan(0);
+    await expect(searchboxes()).toHaveLength(2);
+    await expect(live.getAllByRole('searchbox', { name: 'Search rows' })).toHaveLength(1);
+
+    // Ticked again while it leaves: the same bar comes back.
+    await tick();
+    await expect(barOf(canvas.getByTestId('live'))).toBe(bar);
+    await expect(bar.inert).toBe(false);
+    await expect(bar).not.toHaveAttribute('aria-hidden');
+    await expect(getComputedStyle(bar).position).not.toBe('absolute');
+    await expect(searchboxes()).toHaveLength(1);
+
+    // Cleared for good: the bar goes once it has faded.
+    await userEvent.click(within(bar).getByRole('button', { name: 'Clear' }));
+    await finishAnimations(bar);
+    await waitFor(() => expect(bar.isConnected).toBe(false));
+    await expect(searchboxes()).toHaveLength(1);
+  },
+};
+
+/** With the Animations setting on "Reduced", the bar is there with the first row and gone with the last. */
+export const ReducedMotionSelectionBarAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { ...laptop, motion: 'reduced' },
+  render: () => <Orders />,
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row BK-20420' }));
+    const bar = barOf(canvasElement)!;
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.getAnimations({ subtree: true })).toHaveLength(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear' }));
+    await expect(bar.isConnected).toBe(false);
+    await expect(canvas.queryByText(/selected/)).toBeNull();
   },
 };
 

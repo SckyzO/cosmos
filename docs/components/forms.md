@@ -573,3 +573,26 @@ containers.
   {/* the expiry and the code, one column each */}
 </fieldset>
 ```
+
+## Calendar month
+
+Storybook: [Calendar](https://sckyzo.github.io/cosmos/?path=/docs/forms-calendar--docs), [Date Picker](https://sckyzo.github.io/cosmos/?path=/docs/forms-date-picker--docs).
+
+The month slides when it changes, in `Calendar` and so in `DatePicker`: react-day-picker's own
+`animate` option is on, over `--cosmos-motion-base` (200ms) with the in-out easing, and the next
+month comes in from the end of the line. Both are set inline on the root from the theme's tokens
+(`--rdp-animation_duration`, `--rdp-animation_timing`), so `data-motion="reduced"` and the device's
+`prefers-reduced-motion` take the length to 0. The month that leaves is a copy the library keeps
+until the slide has played; it is inert, and with `captionLayout="dropdown"` its dropdowns are
+hidden, so two sets never overlap. `<Calendar animate={false} />` turns the slide off.
+
+## Segmented control, checkbox and radio
+
+Storybook: [Segmented Control](https://sckyzo.github.io/cosmos/?path=/docs/forms-segmented-control--docs), [Checkbox](https://sckyzo.github.io/cosmos/?path=/docs/forms-checkbox--docs), [Radio](https://sckyzo.github.io/cosmos/?path=/docs/forms-radio--docs).
+
+The accent fill of a `SegmentedControl` is one element that slides to the option you pick, in
+200ms, easing in and out, along the line (so it follows the reading direction). It is measured
+again when an option changes size, with the text size or a web font, and it is placed with no
+transition the first time. Until it is measured (a server render) the selected option draws its own
+fill. In a `Checkbox` and a `Radio` the check, the dash of the indeterminate state and the dot grow
+from half their size as they fade in, in 120ms, and shrink back as they fade out.
