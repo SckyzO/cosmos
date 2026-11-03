@@ -3,6 +3,9 @@ import { Input } from '../forms/Input';
 import { Select } from '../forms/Select';
 import { StatusBadge } from '../status/StatusBadge';
 import type { HealthStatus } from '../status/types';
+import { placeholderAvatar } from '../storybook-avatars';
+import { Badge } from '../ui/Badge';
+import { TableIdentityCell } from './cells';
 import type { ColumnDef, ColumnEdit } from './types';
 
 // The rows and columns the table stories share, by domain: hosts, people and orders. Fixed values
@@ -10,11 +13,70 @@ import type { ColumnDef, ColumnEdit } from './types';
 // rows from here and changes a variant with a column transform, instead of building a table of its
 // own. Stories only, not part of the package.
 
+// ── Column transforms ────────────────────────────────────────────────────────
+// A variant of a table is its columns changed, not a table of its own.
+
+const columnOf = <T,>(columns: ColumnDef<T>[], key: string): ColumnDef<T> => {
+  const found = columns.find((c) => c.key === key);
+  if (!found) throw new Error(`No column "${key}" among ${columns.map((c) => c.key).join(', ')}`);
+  return found;
+};
+
+/** The columns with these keys, in the order given. */
+export const pickColumns = <T,>(columns: ColumnDef<T>[], keys: string[]): ColumnDef<T>[] =>
+  keys.map((key) => columnOf(columns, key));
+
+/** The same columns with each key of `patches` changed: a label, a width, `defaultHidden`… */
+export const patchColumns = <T,>(
+  columns: ColumnDef<T>[],
+  patches: Record<string, Partial<ColumnDef<T>>>
+): ColumnDef<T>[] => {
+  for (const key of Object.keys(patches)) columnOf(columns, key);
+  return columns.map((c) => (c.key in patches ? { ...c, ...patches[c.key] } : c));
+};
+
+/**
+ * Pins the columns of `start` to the start edge and those of `end` to the end edge. They move
+ * there, in the order given: a pinned column keeps its place in the list, first or last.
+ */
+export const withPins = <T,>(
+  columns: ColumnDef<T>[],
+  { start = [], end = [] }: { start?: string[]; end?: string[] }
+): ColumnDef<T>[] => {
+  const pinned = new Set([...start, ...end]);
+  return [
+    ...start.map((key) => ({ ...columnOf(columns, key), pin: 'start' as const })),
+    ...columns.filter((c) => !pinned.has(c.key)),
+    ...end.map((key) => ({ ...columnOf(columns, key), pin: 'end' as const })),
+  ];
+};
+
+/**
+ * A 5rem minimum on every column. A table of percentage widths needs its smallest column over its
+ * share (8rem at 12% is 1067px), so with the default minimum it scrolls in a docs page; with this
+ * one it fits.
+ */
+export const narrowMins = <T,>(columns: ColumnDef<T>[]): ColumnDef<T>[] =>
+  columns.map((c) => ({ ...c, minWidth: '5rem' }));
+
+/** The Name column drawn as a person: a placeholder avatar, the name and the email under it. */
+export const withIdentity = <T extends { name: string; email: string }>(
+  columns: ColumnDef<T>[]
+): ColumnDef<T>[] =>
+  patchColumns(columns, {
+    name: {
+      render: (r) => (
+        <TableIdentityCell title={r.name} subtitle={r.email} src={placeholderAvatar(r.name, 80)} />
+      ),
+    },
+  });
+
 // ── Hosts ────────────────────────────────────────────────────────────────────
 
 export type Host = {
   host: string;
   rack: string;
+  room: string;
   dc: string;
   ip: string;
   cpu: number;
@@ -24,41 +86,149 @@ export type Host = {
   note: string;
   updated: string;
   status: HealthStatus;
+  /** What the host last raised an alert about. */
+  metric: string;
 };
 
-const row = (
-  host: string,
-  rack: string,
-  dc: string,
-  ip: string,
-  [cpu, memory, disk]: [number, number, number],
-  owner: string,
-  updated: string,
-  status: HealthStatus,
-  note = ''
-): Host => ({ host, rack, dc, ip, cpu, memory, disk, owner, note, updated, status });
-
+/** Seven hosts with values of their own: the stories that name a host (`node-a02`) read these. */
 export const HOSTS: Host[] = [
-  row('node-a01', 'R-12', 'PAR-1', '10.0.12.41', [34, 52, 48], 'Platform', '2 min ago', 'OK'),
-  row(
-    'node-a02',
-    'R-12',
-    'PAR-1',
-    '10.0.12.42',
-    [81, 77, 63],
-    'Platform',
-    '5 min ago',
-    'WARN',
-    'Fan 3 replaced on 10/24'
-  ),
-  row('node-b07', 'R-14', 'PAR-1', '10.0.14.17', [97, 91, 88], 'Storage', '1 min ago', 'CRIT'),
-  row('node-b08', 'R-14', 'PAR-1', '10.0.14.18', [22, 40, 35], 'Storage', '9 min ago', 'OK'),
-  row('node-c03', 'R-20', 'PAR-2', '10.0.20.13', [45, 61, 52], 'Compute', '3 min ago', 'OK'),
-  row('node-c04', 'R-20', 'PAR-2', '10.0.20.14', [12, 28, 19], 'Compute', '12 min ago', 'OK'),
-  row('node-c05', 'R-20', 'PAR-2', '10.0.20.15', [66, 70, 57], 'Compute', '4 min ago', 'WARN'),
+  {
+    host: 'node-a01',
+    rack: 'R-12',
+    room: 'Room A',
+    dc: 'PAR-1',
+    ip: '10.0.12.41',
+    cpu: 34,
+    memory: 52,
+    disk: 48,
+    owner: 'Platform',
+    note: '',
+    updated: '2 min ago',
+    status: 'OK',
+    metric: 'cpu',
+  },
+  {
+    host: 'node-a02',
+    rack: 'R-12',
+    room: 'Room A',
+    dc: 'PAR-1',
+    ip: '10.0.12.42',
+    cpu: 81,
+    memory: 77,
+    disk: 63,
+    owner: 'Platform',
+    note: 'Fan 3 replaced on 10/24',
+    updated: '5 min ago',
+    status: 'WARN',
+    metric: 'temp',
+  },
+  {
+    host: 'node-b07',
+    rack: 'R-14',
+    room: 'Room B',
+    dc: 'PAR-1',
+    ip: '10.0.14.17',
+    cpu: 97,
+    memory: 91,
+    disk: 88,
+    owner: 'Storage',
+    note: '',
+    updated: '1 min ago',
+    status: 'CRIT',
+    metric: 'cpu',
+  },
+  {
+    host: 'node-b08',
+    rack: 'R-14',
+    room: 'Room B',
+    dc: 'PAR-1',
+    ip: '10.0.14.18',
+    cpu: 22,
+    memory: 40,
+    disk: 35,
+    owner: 'Storage',
+    note: '',
+    updated: '9 min ago',
+    status: 'OK',
+    metric: 'disk',
+  },
+  {
+    host: 'node-c03',
+    rack: 'R-20',
+    room: 'Room C',
+    dc: 'PAR-2',
+    ip: '10.0.20.13',
+    cpu: 45,
+    memory: 61,
+    disk: 52,
+    owner: 'Compute',
+    note: '',
+    updated: '3 min ago',
+    status: 'OK',
+    metric: 'memory',
+  },
+  {
+    host: 'node-c04',
+    rack: 'R-20',
+    room: 'Room C',
+    dc: 'PAR-2',
+    ip: '10.0.20.14',
+    cpu: 12,
+    memory: 28,
+    disk: 19,
+    owner: 'Compute',
+    note: '',
+    updated: '12 min ago',
+    status: 'OK',
+    metric: 'network',
+  },
+  {
+    host: 'node-c05',
+    rack: 'R-20',
+    room: 'Room C',
+    dc: 'PAR-2',
+    ip: '10.0.20.15',
+    cpu: 66,
+    memory: 70,
+    disk: 57,
+    owner: 'Compute',
+    note: '',
+    updated: '4 min ago',
+    status: 'WARN',
+    metric: 'power',
+  },
 ];
 
 export const OWNERS = ['Platform', 'Storage', 'Compute'];
+const STATUSES: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'INFO'];
+const METRICS = ['cpu', 'memory', 'temp', 'power', 'disk', 'network'];
+const DCS = ['PAR-1', 'PAR-2', 'LYS-1'];
+const ROOMS = ['Room A', 'Room B', 'Room C'];
+
+/**
+ * `count` hosts named `node-00001`, `node-00002`…, for the stories that need a long list (60 rows to
+ * page, 10,000 to window). Their values are a function of the row's index: the same list on every
+ * run.
+ */
+export const makeHosts = (count: number): Host[] =>
+  Array.from({ length: count }, (_, i) => {
+    const rack = 10 + (i % 12);
+    return {
+      host: `node-${String(i + 1).padStart(5, '0')}`,
+      rack: `R-${rack}`,
+      room: ROOMS[i % ROOMS.length],
+      dc: DCS[i % DCS.length],
+      ip: `10.0.${rack}.${(i % 250) + 1}`,
+      cpu: (i * 37) % 100,
+      memory: (i * 53 + 11) % 100,
+      disk: (i * 29 + 7) % 100,
+      owner: OWNERS[i % OWNERS.length],
+      note: '',
+      updated: `${(i % 59) + 1} min ago`,
+      status: STATUSES[i % STATUSES.length],
+      metric: METRICS[i % METRICS.length],
+    };
+  });
 
 const STATUS_LABEL: Record<HealthStatus, string> = {
   OK: 'Healthy',
@@ -131,6 +301,70 @@ export const hostColumns: ColumnDef<Host>[] = [
   },
 ];
 
+/**
+ * The columns of an alerts list, the table a page of the docs shows: sortable, filterable and
+ * searchable by name. Percentage widths with a narrow minimum, so the table fits the docs page.
+ */
+export const alertColumns = narrowMins<Host>([
+  {
+    key: 'status',
+    label: 'Severity',
+    width: '12%',
+    sortable: true,
+    filterable: true,
+    sortValue: (r) => r.status,
+    filterValue: (r) => r.status,
+    render: (r) => <StatusBadge status={r.status} size="md" />,
+  },
+  {
+    key: 'host',
+    label: 'Name',
+    width: '20%',
+    sortable: true,
+    sortValue: (r) => r.host,
+    searchValue: (r) => r.host,
+    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.host}</span>,
+  },
+  {
+    key: 'metric',
+    label: 'Type',
+    width: '12%',
+    sortable: true,
+    filterable: true,
+    sortValue: (r) => r.metric,
+    filterValue: (r) => r.metric,
+    render: (r) => r.metric,
+  },
+  {
+    key: 'dc',
+    label: 'Location',
+    width: '12%',
+    sortable: true,
+    filterable: true,
+    sortValue: (r) => r.dc,
+    filterValue: (r) => r.dc,
+    render: (r) => r.dc,
+  },
+  {
+    key: 'rack',
+    label: 'Rack',
+    width: '12%',
+    sortable: true,
+    sortValue: (r) => r.rack,
+    render: (r) => r.rack,
+  },
+  {
+    key: 'room',
+    label: 'Room',
+    width: '12%',
+    sortable: true,
+    filterable: true,
+    sortValue: (r) => r.room,
+    filterValue: (r) => r.room,
+    render: (r) => r.room,
+  },
+]);
+
 /** The columns of the editing stories: Rack, Owner and Note take an editor. */
 export const editableColumns: ColumnDef<Host>[] = [
   hostColumns[0],
@@ -172,3 +406,96 @@ export const useFakeSaves = (delay = 40) => {
     onRowEdit: (r: Host, changes: Record<string, string>) => apply(r.host, changes),
   };
 };
+
+// ── People ───────────────────────────────────────────────────────────────────
+
+export type Person = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  team: string;
+  city: string;
+  status: 'Active' | 'Invited' | 'Suspended';
+  lastSeen: string;
+};
+
+const PEOPLE_ROWS: [string, string, string, string, Person['status'], string][] = [
+  ['Ada Lovelace', 'Engineer', 'Core', 'London', 'Active', '2 min ago'],
+  ['Grace Hopper', 'Admiral', 'Navy', 'New York', 'Active', '1 h ago'],
+  ['Linus Torvalds', 'Engineer', 'Kernel', 'Portland', 'Suspended', '3 weeks ago'],
+  ['Margaret Hamilton', 'Director', 'Core', 'Boston', 'Active', 'yesterday'],
+  ['Alan Turing', 'Researcher', 'Crypto', 'Manchester', 'Invited', 'never'],
+  ['Zoë Kowalski', 'Engineer', 'Core', 'Kraków', 'Active', '5 min ago'],
+  ['Edsger Dijkstra', 'Engineer', 'Core', 'Eindhoven', 'Active', '4 h ago'],
+  ['Barbara Liskov', 'Engineer', 'Core', 'Boston', 'Invited', 'never'],
+  ['Ken Thompson', 'Engineer', 'Core', 'New Orleans', 'Suspended', '3 days ago'],
+  ['Dennis Ritchie', 'Engineer', 'Core', 'Bronxville', 'Active', '2 days ago'],
+  ['Donald Knuth', 'Engineer', 'Core', 'Milwaukee', 'Invited', 'never'],
+  ['Tim Berners-Lee', 'Engineer', 'Web', 'London', 'Active', '12 min ago'],
+];
+
+/**
+ * Twelve people, in this order: `user-1` is Ada Lovelace. Seven are active, three invited and two
+ * suspended; five engineers of the Core team have an "o" in their name (Zoë Kowalski, Ken
+ * Thompson, Donald Knuth, Barbara Liskov, Ada Lovelace).
+ */
+export const PEOPLE: Person[] = PEOPLE_ROWS.map(
+  ([name, role, team, city, status, lastSeen], i) => ({
+    id: `user-${i + 1}`,
+    name,
+    email: `${name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(' ', '.')}@example.com`,
+    role,
+    team,
+    city,
+    status,
+    lastSeen,
+  })
+);
+
+const PERSON_STATUS_INTENT = { Active: 'success', Invited: 'info', Suspended: 'danger' } as const;
+
+/**
+ * The columns of a people list: Name (sortable, searched), Email, Role (sortable, filterable),
+ * Team and Status (filterable), City and Last seen.
+ */
+export const peopleColumns: ColumnDef<Person>[] = [
+  {
+    key: 'name',
+    label: 'Name',
+    sortable: true,
+    sortValue: (p) => p.name,
+    searchValue: (p) => p.name,
+    render: (p) => <span className="font-medium text-gray-900 dark:text-white">{p.name}</span>,
+  },
+  { key: 'email', label: 'Email', render: (p) => p.email },
+  {
+    key: 'role',
+    label: 'Role',
+    sortable: true,
+    filterable: true,
+    sortValue: (p) => p.role,
+    filterValue: (p) => p.role,
+    render: (p) => p.role,
+  },
+  {
+    key: 'team',
+    label: 'Team',
+    filterable: true,
+    filterValue: (p) => p.team,
+    render: (p) => p.team,
+  },
+  { key: 'city', label: 'City', render: (p) => p.city },
+  {
+    key: 'status',
+    label: 'Status',
+    filterable: true,
+    filterValue: (p) => p.status,
+    render: (p) => <Badge intent={PERSON_STATUS_INTENT[p.status]}>{p.status}</Badge>,
+  },
+  { key: 'lastSeen', label: 'Last seen', render: (p) => p.lastSeen },
+];
