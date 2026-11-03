@@ -189,7 +189,9 @@ export const Stores = () => {
   visitor. `style` is a MapLibre style (a URL or an object) and its attribution stays visible.
   `darkStyle` is optional: under the dark themes (`.dark`, `.deep-blue`) the map switches to it,
   and without it keeps `style`. Pass constants, not a new object on each render. A markers array
-  is the same: define it once, or the pins are redrawn each time.
+  is the same: define it once, or the pins are redrawn each time. A style needs no tile server:
+  the stories draw a fictional city, and a world view from the country outlines of `world-atlas`
+  (Natural Earth), each a GeoJSON source with fill and line layers.
 - **Pins, popups and buttons are React and HTML**, colored by `intent` with the theme's classes,
   so a theme, accent or text size switch repaints them with no code. A title or description with
   markup shows as text.
