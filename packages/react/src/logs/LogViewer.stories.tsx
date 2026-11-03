@@ -66,6 +66,35 @@ export const PausedWithNewLines: Story = {
   },
 };
 
+/** The "Jump to latest" button has a strip of its own: no line runs under it, at either end. */
+export const JumpButtonLeavesRoomUnderTheLines: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex flex-col gap-4">
+      {(['newest-last', 'newest-first'] as const).map((order) => (
+        <LogViewer
+          key={order}
+          lines={fakeLines(200)}
+          order={order}
+          aria-label={order}
+          follow={false}
+          onFollowChange={() => {}}
+        />
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const order of ['newest-last', 'newest-first']) {
+      const log = canvas.getByRole('log', { name: order }).getBoundingClientRect();
+      const jump = within(canvas.getByRole('log', { name: order }).parentElement!)
+        .getByRole('button', { name: /Jump to latest/ })
+        .getBoundingClientRect();
+      if (order === 'newest-last') await expect(jump.top).toBeGreaterThanOrEqual(log.bottom);
+      else await expect(jump.bottom).toBeLessThanOrEqual(log.top);
+    }
+  },
+};
+
 /** A search for "timeout": every match is highlighted and the active one is stronger. */
 export const SearchWithMatches: Story = {
   render: () => <LogConsole count={300} search="timeout" />,

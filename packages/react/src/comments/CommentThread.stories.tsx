@@ -689,27 +689,36 @@ export const FewRepliesAreNotFolded: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Frame>
-      <Comment
-        author="Marta Ilves"
-        text="Hello."
-        replies={[1, 2].map((n) => (
-          <Comment key={n} author="Ben Okafor" text={`Reply ${n}.`} />
-        ))}
-      />
-      <Comment
-        author="Marta Ilves"
-        text="Again."
-        maxReplies={2}
-        replies={[1, 2, 3].map((n) => (
-          <Comment key={n} author="Ben Okafor" text={`Other ${n}.`} />
-        ))}
-      />
+      <CommentThread>
+        <Comment
+          author="Marta Ilves"
+          text="Hello."
+          replies={[1, 2].map((n) => (
+            <Comment key={n} author="Ben Okafor" text={`Reply ${n}.`} />
+          ))}
+        />
+        <Comment
+          author="Marta Ilves"
+          text="Again."
+          maxReplies={2}
+          replies={[1, 2, 3].map((n) => (
+            <Comment key={n} author="Ben Okafor" text={`Other ${n}.`} />
+          ))}
+        />
+      </CommentThread>
     </Frame>
   ),
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(canvas.getByText('Reply 2.')).toBeVisible();
     await expect(canvas.getAllByRole('button')).toHaveLength(1);
     await expect(canvas.getByRole('button', { name: 'Show 1 more reply' })).toBeVisible();
+    // The next comment starts under the last reply of the thread, not against it.
+    const [first, second] = [...canvasElement.querySelectorAll('article')].filter(
+      (comment) => !comment.parentElement?.closest('article')
+    );
+    await expect(
+      second!.getBoundingClientRect().top - first!.getBoundingClientRect().bottom
+    ).toBeGreaterThanOrEqual(16);
   },
 };
 

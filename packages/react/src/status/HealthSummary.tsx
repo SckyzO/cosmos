@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { Fragment } from 'react';
 import {
   AlertTriangle,
   CheckCircle,
@@ -15,7 +16,6 @@ import {
   SEVERITY_ORDER,
   attentionCount,
   countStatuses,
-  countsText,
   latestCheck,
   worstStatus,
   type HealthCheck,
@@ -71,6 +71,10 @@ const DEFAULT_SUMMARY_LABELS: Record<HealthStatus, string> = {
   UNKNOWN: 'Status unknown',
   INFO: 'Operational, with notices',
 };
+
+// The separator of a line of facts stays with the fact before it, so a line that wraps ends with it
+// and never starts with it.
+const Separator = () => <span className="whitespace-nowrap"> ·</span>;
 
 const ICON: Record<HealthStatus, LucideIcon> = {
   OK: CheckCircle,
@@ -133,6 +137,7 @@ export const HealthSummary = ({
   const counts = countStatuses(checks);
   const shown = status ?? worstStatus(checks.map((check) => check.status));
   const headline = labels?.[shown] ?? DEFAULT_SUMMARY_LABELS[shown];
+  const present = SEVERITY_ORDER.filter((status) => counts[status] > 0);
   const attention = attentionCount(counts);
   const detail =
     checks.length === 0
@@ -144,7 +149,8 @@ export const HealthSummary = ({
   const lastCheck =
     last !== undefined && Number.isFinite(last) ? (
       <>
-        {' · last check '}
+        <Separator />
+        {' last check '}
         <RelativeTime value={last} now={now} />
       </>
     ) : null;
@@ -173,7 +179,13 @@ export const HealthSummary = ({
         </b>
         <span className="text-[var(--color-text-secondary)]">
           <bdi>
-            {countsText(counts)}
+            {present.map((status, index) => (
+              <Fragment key={status}>
+                {index > 0 && <Separator />}
+                {index > 0 && ' '}
+                <span className="whitespace-nowrap">{`${counts[status]} ${STATUS_NAME[status]}`}</span>
+              </Fragment>
+            ))}
             {lastCheck}
           </bdi>
         </span>

@@ -42,7 +42,10 @@ const ALIGN_CLASS = {
 type CellAlignProps = {
   /** Text alignment. Default `start`, or `end` when `numeric` is set. */
   align?: 'start' | 'center' | 'end';
-  /** Numbers: aligned to the end, with tabular figures so the digits line up. */
+  /**
+   * Numbers: aligned to the end, with tabular figures so the digits line up. In a body cell the
+   * value stays on one line with its unit: the table scrolls before it wraps. A header may wrap.
+   */
   numeric?: boolean;
 };
 
@@ -277,7 +280,13 @@ export type TableCellProps = Omit<ComponentProps<'td'>, 'align'> & CellAlignProp
 /** TableCell — a `<td>`, padded to the table's `density`. */
 export const TableCell = ({ align, numeric, className, ...rest }: TableCellProps) => (
   <td
-    className={clsx('px-4', BODY_CELL_PADDING, alignClass({ align, numeric }), className)}
+    className={clsx(
+      'px-4',
+      BODY_CELL_PADDING,
+      alignClass({ align, numeric }),
+      numeric && 'whitespace-nowrap',
+      className
+    )}
     {...rest}
   />
 );

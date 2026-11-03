@@ -267,7 +267,8 @@ and to count the lines that arrived while it was paused.
   `comfortable` puts the message under its time, level and source. `columns` hides parts of the
   row (`['time']`), `lineNumbers` numbers the lines in the order of `lines`.
 - `follow` / `defaultFollow` / `onFollowChange`: it stays at the newest line while lines arrive.
-  Scrolling away from the end pauses it and shows "Jump to latest (12 new)"; the button, or
+  Scrolling away from the end pauses it and shows "Jump to latest (12 new)" in a strip of its
+  own under the lines (above them with `newest-first`), so it covers none; the button, or
   scrolling back to the end, resumes it; a filter that shortens the list does not. Opening a row's
   details pauses it too, so the row stays where it is and its details open under it. `order` puts
   the newest line last (`newest-last`, the default, a tail) or first.

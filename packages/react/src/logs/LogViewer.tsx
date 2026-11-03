@@ -756,18 +756,19 @@ export const LogViewer = ({
   const rows: ReactNode[] = [];
   for (let d = shown.first; d <= shown.last; d++) rows.push(rowFor(d, !wrap));
 
+  // The button has a strip of its own at the end the log is read from, so no line runs under it.
   const jump = (
     <div
       className={clsx(
-        'pointer-events-none absolute inset-x-0 flex justify-center',
-        newest ? 'bottom-3' : 'top-3'
+        'absolute inset-x-0 flex h-12 items-center justify-center',
+        newest ? 'bottom-0' : 'top-0'
       )}
     >
       <Button
         size="sm"
         shape="pill"
         icon={newest ? ArrowDown : ArrowUp}
-        className="pointer-events-auto shadow-lg"
+        className="shadow-lg"
         onClick={() => setFollow(true)}
       >
         <bdi>
@@ -796,7 +797,11 @@ export const LogViewer = ({
         // A log is output: its records keep their column order and scroll from the left,
         // whatever the page reads. The toolbar and the jump button around it follow the page.
         dir="ltr"
-        className="focus-visible:focus-indicator relative h-full overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset"
+        className={clsx(
+          'focus-visible:focus-indicator relative overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset',
+          // Paused: the strip of the "Jump to latest" button is taken off the log's height.
+          follow ? 'h-full' : newest ? 'h-[calc(100%-3rem)]' : 'mt-12 h-[calc(100%-3rem)]'
+        )}
       >
         {/* Measures a row, so the window knows how tall one is at this text size. */}
         <div

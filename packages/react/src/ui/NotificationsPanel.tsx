@@ -80,7 +80,11 @@ export type NotificationsPanelTriggerProps = Omit<
   ComponentPropsWithRef<'button'>,
   'onClick' | 'children'
 > & {
-  /** Number to show in the badge. 0 hides the badge. Values > 9999 render as "9999+". */
+  /**
+   * Number to show in the badge. 0 hides the badge. Values > 9999 render as "9999+". Up to two
+   * characters the badge sits in the corner of the bell; from three it sits beside it, and the
+   * button is wider.
+   */
   count?: number;
   /** When true, shows the BellOff icon and dims the badge ping animation. */
   muted?: boolean;
@@ -100,6 +104,8 @@ function NotificationsPanelTrigger({
   const showPing = ping ?? (count > 0 && !muted);
   const Icon = muted ? BellOff : Bell;
   const display = count > 9999 ? '9999+' : String(count);
+  // From three characters the count would cover the bell in the corner: it sits beside it.
+  const wide = display.length > 2;
   return (
     <button
       ref={mergeRefs(triggerRef, ref)}
@@ -111,7 +117,8 @@ function NotificationsPanelTrigger({
       className={clsx(
         // The ping around the count grows to twice its size: clipped to the bell, it never widens
         // the row that holds it. The focus ring is a shadow, outside the clip.
-        'focus-visible:focus-indicator h-ctrl-40 w-ctrl-40 relative flex items-center justify-center overflow-hidden rounded-lg border transition-colors',
+        'focus-visible:focus-indicator h-ctrl-40 relative flex items-center justify-center overflow-hidden rounded-lg border transition-colors',
+        count > 0 && wide ? 'min-w-ctrl-40 gap-1 px-2' : 'w-ctrl-40',
         muted
           ? 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600'
           : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
@@ -121,7 +128,12 @@ function NotificationsPanelTrigger({
     >
       <Icon className="h-5 w-5" />
       {count > 0 && (
-        <span className="inset-e-0.5 absolute top-0.5 flex min-w-[16px] items-center justify-center">
+        <span
+          className={clsx(
+            'flex min-w-[16px] items-center justify-center',
+            wide ? 'relative' : 'inset-e-0.5 absolute top-0.5'
+          )}
+        >
           {showPing && (
             <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-red-400 opacity-25 motion-reduce:animate-none" />
           )}

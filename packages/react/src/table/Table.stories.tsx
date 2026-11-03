@@ -62,7 +62,7 @@ const NodeHead = () => (
 
 const NodeRow = ({ node }: { node: Host }) => (
   <TableRow>
-    <TableCell className="font-medium">{node.host}</TableCell>
+    <TableCell className="font-medium whitespace-nowrap">{node.host}</TableCell>
     <TableCell>{node.room}</TableCell>
     <TableCell numeric>{node.cpu}%</TableCell>
     <TableCell numeric>{node.memory}%</TableCell>
@@ -230,37 +230,39 @@ export const ScrollingTableWithoutCaptionIsFocusableNotARegion: Story = {
   },
 };
 
+const PowerTotals = () => {
+  const total = NODES.reduce((sum, n) => sum + n.power, 0);
+  return (
+    <Table>
+      <TableCaption>Power draw per node</TableCaption>
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Name</TableHeaderCell>
+          <TableHeaderCell>Room</TableHeaderCell>
+          <TableHeaderCell numeric>Power</TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {NODES.map((n) => (
+          <TableRow key={n.host}>
+            <TableCell className="font-medium whitespace-nowrap">{n.host}</TableCell>
+            <TableCell>{n.room}</TableCell>
+            <TableCell numeric>{n.power} W</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFoot>
+        <TableRow>
+          <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
+          <TableCell numeric>{total} W</TableCell>
+        </TableRow>
+      </TableFoot>
+    </Table>
+  );
+};
+
 export const FooterTotals: Story = {
-  render: () => {
-    const total = NODES.reduce((sum, n) => sum + n.power, 0);
-    return (
-      <Table>
-        <TableCaption>Power draw per node</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Room</TableHeaderCell>
-            <TableHeaderCell numeric>Power</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {NODES.map((n) => (
-            <TableRow key={n.host}>
-              <TableCell className="font-medium">{n.host}</TableCell>
-              <TableCell>{n.room}</TableCell>
-              <TableCell numeric>{n.power} W</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFoot>
-          <TableRow>
-            <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
-            <TableCell numeric>{total} W</TableCell>
-          </TableRow>
-        </TableFoot>
-      </Table>
-    );
-  },
+  render: () => <PowerTotals />,
 };
 
 export const FooterTotalsChecks: Story = {
@@ -268,6 +270,68 @@ export const FooterTotalsChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('rowheader', { name: 'Total' })).toHaveAttribute('scope', 'row');
+  },
+};
+
+// The lines a cell's text takes: the distinct tops of the rectangles of its content.
+const linesOf = (cell: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(cell);
+  return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+};
+
+/**
+ * In a column a phone's width, a host name is not broken after its hyphen and a value is not
+ * parted from its unit: a narrow column is scrolled, not wrapped inside a word.
+ */
+export const NarrowColumnsKeepNamesAndValuesWhole: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4" style={{ width: 343 }}>
+      <Table>
+        <NodeHead />
+        <TableBody>
+          {NODES.map((n) => (
+            <NodeRow key={n.host} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+      <PowerTotals />
+      {/* A column whose header is shorter than its values: the squeezed table gives it the
+          header's width, which the values then wrap inside. */}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>Room</TableHeaderCell>
+            <TableHeaderCell numeric>CPU</TableHeaderCell>
+            <TableHeaderCell numeric>Memory</TableHeaderCell>
+            <TableHeaderCell numeric>W</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {NODES.map((n) => (
+            <TableRow key={n.host}>
+              <TableCell className="font-medium whitespace-nowrap">{n.host}</TableCell>
+              <TableCell>{n.room}</TableCell>
+              <TableCell numeric>{n.cpu}%</TableCell>
+              <TableCell numeric>{n.memory}%</TableCell>
+              <TableCell numeric>{n.power * 5} W</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    // The name and the value of every row, and the total: the other columns may wrap at a space.
+    const cells = [...canvasElement.querySelectorAll('tr')].flatMap((row) =>
+      row.closest('thead') ? [] : [row.firstElementChild!, row.lastElementChild!]
+    );
+    expect(cells.length).toBeGreaterThan(20);
+    for (const cell of cells) {
+      expect(linesOf(cell), `"${cell.textContent}" wraps`).toBe(1);
+    }
   },
 };
 
@@ -422,19 +486,29 @@ export const ExpandableRowsOpenByDefaultChecks: Story = {
   },
 };
 
-export const Empty: Story = {
-  render: () => (
-    <Table>
-      <NodeHead />
-      <TableBody>
-        <TableRow>
-          <TableCell colSpan={5}>
+// A cell that spans the columns is as wide as the table, which scrolls on a phone: the empty state
+// would be centred on the whole table, off to one side and under the fade of the end edge. The
+// container query unit takes the width of the part in view (`@container` on the wrapper): the
+// block is that wide less the cell's 2rem of padding, sticks 1rem from the start of it, and its own
+// padding clears the 1.5rem of the fade. It adds nothing to the table's width, so a table that fits
+// still fits.
+const EmptyNodes = () => (
+  <Table containerClassName="@container">
+    <NodeHead />
+    <TableBody>
+      <TableRow>
+        <TableCell colSpan={5}>
+          <div className="inset-s-4 sticky w-[calc(100cqw-2rem)] px-6">
             <EmptyState title="No nodes" description="No node reports to this site yet." />
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  ),
+          </div>
+        </TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+);
+
+export const Empty: Story = {
+  render: () => <EmptyNodes />,
 };
 
 export const EmptyChecks: Story = {
@@ -443,6 +517,46 @@ export const EmptyChecks: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
     await expect(canvas.getByText('No nodes')).toBeInTheDocument();
+  },
+};
+
+/**
+ * In a table that scrolls (here a phone's width) the empty state is centred on the part that is
+ * in view, and its text stays out of the fade of the edges.
+ */
+export const EmptyIsCentredOnTheVisibleWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" style={{ width: 343 }}>
+      <EmptyNodes />
+    </div>
+  ),
+  play: ({ canvas, canvasElement }) => {
+    const container = canvasElement.querySelector('table')!.parentElement!;
+    // The table is wider than what is in view.
+    expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
+    const view = container.getBoundingClientRect();
+    const title = canvas.getByText('No nodes').getBoundingClientRect();
+    const description = canvas.getByText('No node reports to this site yet.');
+    const lines = description.getBoundingClientRect();
+    expect(Math.abs(title.left + title.width / 2 - (view.left + view.width / 2))).toBeLessThan(2);
+    // The fade covers 1.5rem at each edge.
+    expect(lines.left).toBeGreaterThanOrEqual(view.left + 24);
+    expect(lines.right).toBeLessThanOrEqual(view.right - 24);
+  },
+};
+
+/** In a box the table fits, the empty state adds nothing to its width: the table does not scroll. */
+export const EmptyStateKeepsAFittingTableFromScrolling: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 900 }}>
+      <EmptyNodes />
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const container = canvasElement.querySelector('table')!.parentElement!;
+    expect(container.scrollWidth).toBeLessThanOrEqual(container.clientWidth);
   },
 };
 

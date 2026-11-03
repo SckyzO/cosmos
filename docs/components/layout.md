@@ -88,7 +88,8 @@ hotkey as a key hint, `⌘K` on Apple platforms and `Ctrl K` elsewhere) that ope
 `CommandPalette`. It is not an input: the palette holds the field, so a screen reader announces a
 button that opens a dialog. Put it in the Topbar's `center` slot. Below `sm` it is a square icon
 button, and the placeholder stays as its accessible name. `size` takes the form fields' `sm`, `md`
-and `lg`.
+and `lg`. From `sm` up the `center` slot asks for 12rem: a long `pageTitle` is cut before the
+search is squeezed.
 
 The palette owns the hotkey (`hotkey`, `mod+k` by default) and the open state; the button
 registers no listener of its own. Open the palette from its `onClick`, and pass the same hotkey
