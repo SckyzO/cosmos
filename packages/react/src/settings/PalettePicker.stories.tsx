@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectPickerSelected, expectRefFocuses, keyToEnd, keyToStart } from '../storybook-helpers';
-import { PaletteCard, type PaletteMeta } from './PaletteCard';
+import { COSMOS_SYSTEM_THEME, COSMOS_THEMES } from './appearance';
+import { PaletteCard } from './PaletteCard';
 import { PalettePicker } from './PalettePicker';
 
 const meta = {
@@ -20,66 +21,13 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
 );
 
-const LIGHT_THEMES: PaletteMeta[] = [
-  {
-    id: 'pure',
-    label: 'Pure',
-    desc: 'White surfaces',
-    preview: { bg: '#f9fafb', surface: '#ffffff', border: '#e5e7eb', text: '#667085' },
-  },
-  {
-    id: 'warm',
-    label: 'Warm',
-    desc: 'Cream tone',
-    preview: { bg: '#fefcf8', surface: '#fffaf0', border: '#f3e8d0', text: '#667085' },
-  },
-  {
-    id: 'cool',
-    label: 'Cool',
-    desc: 'Blue tint',
-    preview: { bg: '#f3f6fc', surface: '#ffffff', border: '#dbe5f5', text: '#667085' },
-  },
-  {
-    id: 'paper',
-    label: 'Paper',
-    desc: 'Slight grain',
-    preview: { bg: '#f4f3ee', surface: '#fafaf7', border: '#dad8d0', text: '#667085' },
-  },
-];
-
-const DARK_THEMES: PaletteMeta[] = [
-  {
-    id: 'cosmos',
-    label: 'Cosmos',
-    desc: 'Default deep blue',
-    preview: { bg: '#0c111d', surface: '#101828', border: '#1f2937', text: '#a3a3a3' },
-  },
-  {
-    id: 'void',
-    label: 'Void',
-    desc: 'NOC near-black',
-    preview: { bg: '#000000', surface: '#0a0a0a', border: '#262626', text: '#a3a3a3' },
-  },
-  {
-    id: 'slate',
-    label: 'Slate',
-    desc: 'Neutral grey',
-    preview: { bg: '#1f2937', surface: '#293241', border: '#3a4659', text: '#a3a3a3' },
-  },
-  {
-    id: 'midnight',
-    label: 'Midnight',
-    desc: 'Indigo wash',
-    preview: { bg: '#10162b', surface: '#1a2240', border: '#2d3563', text: '#a3a3a3' },
-  },
-];
-
-export const LightThemes: Story = {
+/** The four themes of `@sckyzo/cosmos-theme`, from `COSMOS_THEMES`: what `AppearanceSettings` and `Customizer` hand to the picker. */
+export const CosmosThemes: Story = {
   render: () => {
-    const [value, setValue] = useState('pure');
+    const [value, setValue] = useState('dark');
     return (
       <Wrap>
-        <PalettePicker palettes={LIGHT_THEMES} value={value} onChange={setValue} />
+        <PalettePicker palettes={COSMOS_THEMES} value={value} onChange={setValue} />
         <p className="mt-4 text-xs text-[var(--color-text-muted)]">
           Selected: <code>{value}</code>
         </p>
@@ -88,12 +36,18 @@ export const LightThemes: Story = {
   },
 };
 
-export const DarkThemes: Story = {
+/** `COSMOS_SYSTEM_THEME` first adds the opt-in `system` choice, which follows the device. */
+export const WithSystem: Story = {
   render: () => {
-    const [value, setValue] = useState('cosmos');
+    const [value, setValue] = useState('system');
     return (
       <Wrap>
-        <PalettePicker palettes={DARK_THEMES} value={value} onChange={setValue} />
+        <PalettePicker
+          palettes={[COSMOS_SYSTEM_THEME, ...COSMOS_THEMES]}
+          value={value}
+          cols={5}
+          onChange={setValue}
+        />
         <p className="mt-4 text-xs text-[var(--color-text-muted)]">
           Selected: <code>{value}</code>
         </p>
@@ -112,22 +66,23 @@ export const DarkThemes: Story = {
 export const LabelsWithoutTextReadOnTheirSurface: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => {
-    const withoutText = [LIGHT_THEMES[0], LIGHT_THEMES[1], DARK_THEMES[0], DARK_THEMES[2]].map(
-      (palette) => ({ ...palette, preview: { ...palette.preview, text: undefined } })
-    );
+    const withoutText = COSMOS_THEMES.map((theme) => ({
+      ...theme,
+      preview: { ...theme.preview, text: undefined },
+    }));
     return (
       <Wrap>
-        <PalettePicker palettes={withoutText} value="cosmos" onChange={() => {}} />
+        <PalettePicker palettes={withoutText} value="dark" onChange={() => {}} />
       </Wrap>
     );
   },
   play: async ({ canvas }) => {
     const labelColor = (name: string) =>
       getComputedStyle(canvas.getByText(name)).getPropertyValue('color');
-    await expect(labelColor('Pure')).toBe('rgb(75, 85, 99)');
-    await expect(labelColor('Warm')).toBe('rgb(75, 85, 99)');
-    await expect(labelColor('Cosmos')).toBe('rgb(209, 213, 219)');
-    await expect(labelColor('Slate')).toBe('rgb(209, 213, 219)');
+    await expect(labelColor('Light')).toBe('rgb(75, 85, 99)');
+    await expect(labelColor('Sand')).toBe('rgb(75, 85, 99)');
+    await expect(labelColor('Dark')).toBe('rgb(209, 213, 219)');
+    await expect(labelColor('Deep Blue')).toBe('rgb(209, 213, 219)');
   },
 };
 
@@ -136,25 +91,21 @@ export const LabelsWithoutTextReadOnTheirSurface: Story = {
  * label row must still reach the bottom of the card, with no gap under it.
  */
 export const UnevenLabelsFillCards: Story = {
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
       <div className="w-80 max-w-full">
         <PalettePicker
           palettes={[
-            ...LIGHT_THEMES.slice(0, 3),
-            { ...LIGHT_THEMES[3], label: 'Paper with a long name' },
+            ...COSMOS_THEMES.slice(0, 3),
+            { ...COSMOS_THEMES[3], label: 'Deep Blue with a long name' },
           ]}
-          value="pure"
+          value="light"
           onChange={() => {}}
         />
       </div>
     </Wrap>
   ),
-};
-
-export const UnevenLabelsFillCardsChecks: Story = {
-  ...UnevenLabelsFillCards,
-  tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const cards = canvas.getAllByRole('radio');
     const heights = new Set(cards.map((c) => c.getBoundingClientRect().height));
@@ -182,8 +133,8 @@ const ControlledPalettes = ({
   return (
     <Wrap>
       <PalettePicker
-        aria-label="Light palette"
-        palettes={LIGHT_THEMES}
+        aria-label="Theme"
+        palettes={COSMOS_THEMES}
         value={value}
         onChange={(id) => {
           onChange?.(id);
@@ -198,17 +149,17 @@ const ControlledPalettes = ({
 export const ClickSelectsAPalette: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onChange: fn() },
-  render: (args) => <ControlledPalettes initial="pure" onChange={args.onChange} />,
+  render: (args) => <ControlledPalettes initial="light" onChange={args.onChange} />,
   play: async ({ args, canvas }) => {
-    await expect(canvas.getByRole('radiogroup', { name: 'Light palette' })).toBeVisible();
-    await expect(canvas.getAllByRole('radio')).toHaveLength(LIGHT_THEMES.length);
-    await expect(canvas.getByRole('radio', { name: 'Pure', checked: true })).toBeVisible();
+    await expect(canvas.getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
+    await expect(canvas.getAllByRole('radio')).toHaveLength(COSMOS_THEMES.length);
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: true })).toBeVisible();
 
-    await userEvent.click(canvas.getByRole('radio', { name: 'Cool' }));
+    await userEvent.click(canvas.getByRole('radio', { name: 'Dark' }));
     await expect(args.onChange).toHaveBeenCalledTimes(1);
-    await expect(args.onChange).toHaveBeenCalledWith('cool');
-    await expect(canvas.getByRole('radio', { name: 'Cool', checked: true })).toBeVisible();
-    await expect(canvas.getByRole('radio', { name: 'Pure', checked: false })).toBeVisible();
+    await expect(args.onChange).toHaveBeenCalledWith('dark');
+    await expect(canvas.getByRole('radio', { name: 'Dark', checked: true })).toBeVisible();
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: false })).toBeVisible();
     await expect(canvas.getAllByRole('radio', { checked: true })).toHaveLength(1);
   },
 };
@@ -217,28 +168,28 @@ export const ClickSelectsAPalette: Story = {
 export const ArrowKeysMoveTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onChange: fn() },
-  render: (args) => <ControlledPalettes initial="pure" onChange={args.onChange} />,
+  render: (args) => <ControlledPalettes initial="light" onChange={args.onChange} />,
   play: async ({ args, canvas }) => {
-    await expect(canvas.getByRole('radio', { name: 'Pure' })).toHaveAttribute('tabindex', '0');
-    await expect(canvas.getByRole('radio', { name: 'Warm' })).toHaveAttribute('tabindex', '-1');
+    await expect(canvas.getByRole('radio', { name: 'Light' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveAttribute('tabindex', '-1');
 
     await userEvent.tab();
-    await expect(canvas.getByRole('radio', { name: 'Pure' })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Light' })).toHaveFocus();
     await userEvent.keyboard(`{${keyToEnd()}}`);
-    await expect(canvas.getByRole('radio', { name: 'Warm', checked: true })).toHaveFocus();
-    await expect(args.onChange).toHaveBeenLastCalledWith('warm');
+    await expect(canvas.getByRole('radio', { name: 'Sand', checked: true })).toHaveFocus();
+    await expect(args.onChange).toHaveBeenLastCalledWith('sand');
     // The tab stop follows the selection.
-    await expect(canvas.getByRole('radio', { name: 'Warm' })).toHaveAttribute('tabindex', '0');
-    await expect(canvas.getByRole('radio', { name: 'Pure' })).toHaveAttribute('tabindex', '-1');
+    await expect(canvas.getByRole('radio', { name: 'Sand' })).toHaveAttribute('tabindex', '0');
+    await expect(canvas.getByRole('radio', { name: 'Light' })).toHaveAttribute('tabindex', '-1');
 
     await userEvent.keyboard(`{${keyToStart()}}{${keyToStart()}}`);
-    await expect(canvas.getByRole('radio', { name: 'Paper', checked: true })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Deep Blue', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
-    await expect(canvas.getByRole('radio', { name: 'Pure', checked: true })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: true })).toHaveFocus();
     await userEvent.keyboard('{End}');
-    await expect(canvas.getByRole('radio', { name: 'Paper', checked: true })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Deep Blue', checked: true })).toHaveFocus();
     await userEvent.keyboard('{Home}');
-    await expect(canvas.getByRole('radio', { name: 'Pure', checked: true })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: true })).toHaveFocus();
   },
 };
 
@@ -250,17 +201,17 @@ export const NothingCheckedEntersOnTheFirstPalette: Story = {
   play: async ({ args, canvas }) => {
     await expect(canvas.queryByRole('radio', { checked: true })).toBeNull();
     await userEvent.tab();
-    await expect(canvas.getByRole('radio', { name: 'Pure', checked: false })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: 'Light', checked: false })).toHaveFocus();
 
-    canvas.getByRole('radio', { name: 'Cool' }).focus();
+    canvas.getByRole('radio', { name: 'Dark' }).focus();
     await userEvent.keyboard(' ');
-    await expect(args.onChange).toHaveBeenLastCalledWith('cool');
-    await expect(canvas.getByRole('radio', { name: 'Cool', checked: true })).toHaveFocus();
+    await expect(args.onChange).toHaveBeenLastCalledWith('dark');
+    await expect(canvas.getByRole('radio', { name: 'Dark', checked: true })).toHaveFocus();
 
-    canvas.getByRole('radio', { name: 'Warm' }).focus();
+    canvas.getByRole('radio', { name: 'Sand' }).focus();
     await userEvent.keyboard('{Enter}');
-    await expect(args.onChange).toHaveBeenLastCalledWith('warm');
-    await expect(canvas.getByRole('radio', { name: 'Warm', checked: true })).toHaveFocus();
+    await expect(args.onChange).toHaveBeenLastCalledWith('sand');
+    await expect(canvas.getByRole('radio', { name: 'Sand', checked: true })).toHaveFocus();
   },
 };
 
@@ -269,9 +220,9 @@ const cardRef = createRef<HTMLButtonElement>();
 /** The ref gets the card's `<button role="radio">`, and focusing through it works. */
 export const PaletteCardForwardsRef: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <PaletteCard ref={cardRef} meta={LIGHT_THEMES[0]} />,
+  render: () => <PaletteCard ref={cardRef} meta={COSMOS_THEMES[0]} />,
   play: async ({ canvas }) => {
-    await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Pure' }));
+    await expectRefFocuses(cardRef, canvas.getByRole('radio', { name: 'Light' }));
   },
 };
 
@@ -288,14 +239,14 @@ export const DefaultValueOrControlled: Story = {
       <div className="space-y-6">
         <PalettePicker
           aria-label="Uncontrolled"
-          palettes={LIGHT_THEMES}
-          defaultValue="warm"
+          palettes={COSMOS_THEMES}
+          defaultValue="sand"
           onChange={args.onChange}
         />
         <PalettePicker
           aria-label="Controlled"
-          palettes={LIGHT_THEMES}
-          value="pure"
+          palettes={COSMOS_THEMES}
+          value="light"
           onChange={args.onChange}
         />
       </div>
@@ -303,15 +254,15 @@ export const DefaultValueOrControlled: Story = {
   ),
   play: async ({ args, canvas }) => {
     const own = within(canvas.getByRole('radiogroup', { name: 'Uncontrolled' }));
-    await expect(own.getByRole('radio', { name: 'Warm' })).toBeChecked();
-    await userEvent.click(own.getByRole('radio', { name: 'Cool' }));
-    await expect(args.onChange).toHaveBeenLastCalledWith('cool');
-    await expect(own.getByRole('radio', { name: 'Cool' })).toBeChecked();
+    await expect(own.getByRole('radio', { name: 'Sand' })).toBeChecked();
+    await userEvent.click(own.getByRole('radio', { name: 'Dark' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('dark');
+    await expect(own.getByRole('radio', { name: 'Dark' })).toBeChecked();
 
     const held = within(canvas.getByRole('radiogroup', { name: 'Controlled' }));
-    await userEvent.click(held.getByRole('radio', { name: 'Cool' }));
-    await expect(args.onChange).toHaveBeenLastCalledWith('cool');
-    await expect(held.getByRole('radio', { name: 'Pure' })).toBeChecked();
+    await userEvent.click(held.getByRole('radio', { name: 'Dark' }));
+    await expect(args.onChange).toHaveBeenLastCalledWith('dark');
+    await expect(held.getByRole('radio', { name: 'Light' })).toBeChecked();
   },
 };
 
@@ -320,7 +271,7 @@ export const SelectedSharesThePickerTreatment: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Wrap>
-      <PalettePicker aria-label="Palette" palettes={LIGHT_THEMES} value="cool" />
+      <PalettePicker aria-label="Palette" palettes={COSMOS_THEMES} value="dark" />
     </Wrap>
   ),
   play: async ({ canvas }) => {
@@ -333,7 +284,7 @@ const columnsAt = (viewport: 'mobile' | 'tw-sm', sm: boolean, columns: number): 
   globals: { viewport: { value: viewport, isRotated: false } },
   render: () => (
     <Wrap>
-      <PalettePicker aria-label="Palette" palettes={LIGHT_THEMES} cols={4} />
+      <PalettePicker aria-label="Palette" palettes={COSMOS_THEMES} cols={4} />
     </Wrap>
   ),
   play: async ({ canvas }) => {
