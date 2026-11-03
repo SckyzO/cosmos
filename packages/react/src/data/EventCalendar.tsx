@@ -7,6 +7,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useTicker } from '../hooks/useTicker';
 import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
+import { SectionLabel } from '../ui/SectionLabel';
 import { Tooltip } from '../ui/Tooltip';
 import {
   addDays,
@@ -367,13 +368,10 @@ export const EventCalendar = ({
             aria-hidden
           >
             {fmt.weekdays.map((d, i) => (
-              <span
-                key={i}
-                className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
-              >
+              <SectionLabel key={i} as="span" size="md" className="py-2 text-center">
                 <bdi className="max-sm:hidden">{d}</bdi>
                 <span className="sm:hidden">{fmt.weekdaysNarrow[i]}</span>
-              </span>
+              </SectionLabel>
             ))}
           </div>
 
