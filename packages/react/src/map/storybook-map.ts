@@ -1,9 +1,12 @@
 import type { StyleSpecification } from 'maplibre-gl';
+import { feature } from 'topojson-client';
+import world from 'world-atlas/countries-110m.json';
 import type { MapMarker } from './types';
 
 // A fictional city for the stories and the tests: drawn by hand and by loops, never copied from a
 // tile provider. A MapLibre style with one GeoJSON source and no glyphs, sprite or tile server,
-// so a story never leaves Storybook's origin.
+// so a story never leaves Storybook's origin. The world view is the same idea with the country
+// outlines of `world-atlas` (Natural Earth), read from the package, not from the network.
 
 const W = 4.8;
 const S = 45.7;
@@ -189,4 +192,49 @@ export const CITY_STORES: MapMarker[] = [
   { id: 'airport-road', label: 'Airport Road', position: at(7, 5) },
   { id: 'north-gate', label: 'North Gate', position: at(0, 5) },
   { id: 'lakeside', label: 'Lakeside', position: at(1, 0), intent: 'info' },
+];
+
+// ── The world ───────────────────────────────────────────────────────────────
+
+// The countries as GeoJSON, once: `world-atlas` is TopoJSON, which MapLibre does not read.
+const countries = feature(
+  world as unknown as Parameters<typeof feature>[0],
+  (world as unknown as { objects: { countries: Parameters<typeof feature>[1] } }).objects.countries
+);
+
+const worldPalette = (c: { ocean: string; land: string; border: string }): StyleSpecification => ({
+  version: 8,
+  sources: {
+    countries: { type: 'geojson', data: countries, attribution: 'Natural Earth' },
+  },
+  layers: [
+    { id: 'ocean', type: 'background', paint: { 'background-color': c.ocean } },
+    { id: 'land', type: 'fill', source: 'countries', paint: { 'fill-color': c.land } },
+    {
+      id: 'borders',
+      type: 'line',
+      source: 'countries',
+      paint: { 'line-color': c.border, 'line-width': 0.75 },
+    },
+  ],
+});
+
+export const WORLD_LIGHT = worldPalette({ ocean: '#dbe8f4', land: '#f4f5f7', border: '#c3cad6' });
+
+export const WORLD_DARK = worldPalette({ ocean: '#0d1117', land: '#1b202b', border: '#2f3849' });
+
+/** Twelve sites across the world: Paris, London and Frankfurt cluster when the view is wide. */
+export const WORLD_SITES: MapMarker[] = [
+  { id: 'london', label: 'London', position: [-0.13, 51.51], description: 'Edge, 4 racks' },
+  { id: 'paris', label: 'Paris', position: [2.35, 48.86], intent: 'success', icon: 3 },
+  { id: 'frankfurt', label: 'Frankfurt', position: [8.68, 50.11], intent: 'warning' },
+  { id: 'new-york', label: 'New York', position: [-74.0, 40.71], description: 'Primary region' },
+  { id: 'chicago', label: 'Chicago', position: [-87.63, 41.88], intent: 'info' },
+  { id: 'sao-paulo', label: 'São Paulo', position: [-46.63, -23.55] },
+  { id: 'lagos', label: 'Lagos', position: [3.38, 6.52], intent: 'danger' },
+  { id: 'dubai', label: 'Dubai', position: [55.27, 25.2], intent: 'success' },
+  { id: 'mumbai', label: 'Mumbai', position: [72.88, 19.08] },
+  { id: 'singapore', label: 'Singapore', position: [103.85, 1.29], intent: 'info' },
+  { id: 'tokyo', label: 'Tokyo', position: [139.69, 35.69] },
+  { id: 'sydney', label: 'Sydney', position: [151.21, -33.87], intent: 'warning' },
 ];
