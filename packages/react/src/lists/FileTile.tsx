@@ -4,6 +4,7 @@ import { useState, type ReactNode, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { AppLink } from '../ui/AppLink';
 import { Badge } from '../ui/Badge';
+import { IconButton } from '../ui/IconButton';
 import { INTENT_STYLE } from '../ui/intent';
 import { FILE_KIND_VISUAL, type FileKind } from './fileKind';
 
@@ -44,9 +45,6 @@ export type FileTileProps = {
   /** Ref to the `<li>`. */
   ref?: Ref<HTMLLIElement>;
 };
-
-const ICON_BUTTON =
-  'focus-visible:focus-indicator flex shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10';
 
 const NAME_CLASS =
   'focus-visible:focus-indicator block max-w-full truncate rounded-sm text-start text-sm font-semibold text-[var(--color-text-primary)] hover:underline';
@@ -129,23 +127,19 @@ export const FileTile = ({
   );
 
   const starNode = showStar && (
-    <button
-      type="button"
+    <IconButton
       aria-label={`Star ${name}`}
       aria-pressed={starred}
       onClick={() => setStarred(!starred)}
-      className={clsx(
-        ICON_BUTTON,
-        // Over the preview the star sits on a panel-coloured square, so it reads over a photo.
-        isTile ? 'inset-e-2 absolute top-2 size-8 bg-[var(--color-bg-panel)]/85' : 'size-8'
-      )}
+      // Over the preview the star sits on a panel-coloured square, so it reads over a photo.
+      className={isTile ? 'inset-e-2 absolute top-2 bg-[var(--color-bg-panel)]/85' : undefined}
     >
       {/* warning-600, as on `Rating`: it holds 3:1 on a sand page, where amber-600 does not. */}
       <Star
-        className={clsx('size-4', starred && 'text-warning-600 fill-current dark:text-amber-400')}
+        className={starred ? 'text-warning-600 fill-current dark:text-amber-400' : undefined}
         aria-hidden
       />
-    </button>
+    </IconButton>
   );
 
   const actionsNode = actions && <div className="shrink-0">{actions}</div>;
