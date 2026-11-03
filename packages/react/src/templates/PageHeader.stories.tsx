@@ -164,6 +164,24 @@ export const NarrowChecks: Story = {
   },
 };
 
+/**
+ * The breadcrumb in a box too narrow for its trail, on a wide screen: the crumbs give way, and the
+ * current one is cut with an ellipsis in place of being clipped at the edge of a trail that scrolls.
+ */
+export const NarrowBreadcrumbCutsTheCurrentCrumb: Story = {
+  ...Narrow,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    const current = nav.querySelector('[aria-current="page"]')!;
+    await expect(nav.scrollWidth).toBeLessThanOrEqual(nav.clientWidth);
+    await expect(endOffset(current, nav)).toBeGreaterThanOrEqual(0);
+    const label = current.querySelector('span')!;
+    await expect(getComputedStyle(label).textOverflow).toBe('ellipsis');
+    await expect(label.scrollWidth).toBeGreaterThan(label.clientWidth);
+  },
+};
+
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const MetaRendersWhenProvided: Story = {
