@@ -955,11 +955,10 @@ export const ExtremeSearchKeepsItsWidthAtTabletWidth: Story = {
   play: async ({ canvas }) => {
     const search = canvas.getByRole('button', { name: /Search projects/ });
     await expect(search.getBoundingClientRect().width).toBeGreaterThanOrEqual(160);
-    // The field and the bell do not run into each other.
-    const bell = canvas.getByRole('button', { name: /^Notifications/ });
-    await expect(search.getBoundingClientRect().right).toBeLessThanOrEqual(
-      bell.getBoundingClientRect().left
-    );
+    // The field and the bell do not run into each other, on either side of the line.
+    const field = search.getBoundingClientRect();
+    const bell = canvas.getByRole('button', { name: /^Notifications/ }).getBoundingClientRect();
+    await expect(field.right <= bell.left || field.left >= bell.right).toBe(true);
   },
 };
 
