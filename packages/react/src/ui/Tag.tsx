@@ -5,12 +5,13 @@ import type { ElementType, ReactNode, Ref } from 'react';
 import { AppLink } from './AppLink';
 import { INTENT_STYLE, type Intent } from './intent';
 
-export type TagSize = 'sm' | 'md';
+export type TagSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
 export type TagProps = {
   children: ReactNode;
   /** Color of the tag. Default `neutral`. */
   intent?: Intent;
+  /** Seven steps, `xs` (18px high) to `3xl` (48px), `md` (26px) by default. */
   size?: TagSize;
   /** Optional leading Lucide icon. */
   icon?: ElementType;
@@ -35,19 +36,47 @@ export type TagProps = {
   className?: string;
 };
 
-// 26px and 22px high; a tag keeps `rounded-md` so it never reads as a status pill (Badge).
+// 18, 22, 26, 30, 34, 40 and 48px high, with the text at 10, 11, 14, 16, 18, 20 and 24px; a tag
+// keeps `rounded-md` so it never reads as a status pill (Badge).
 const SIZE = {
+  xs: { box: 'h-4.5 text-3xs', gap: 'gap-1', pad: 'ps-1', padEnd: 'pe-1', icon: 'size-2.5' },
   sm: { box: 'h-5.5 text-2xs', gap: 'gap-1', pad: 'ps-1.5', padEnd: 'pe-1.5', icon: 'size-3' },
   md: { box: 'h-6.5 text-sm', gap: 'gap-1.5', pad: 'ps-2', padEnd: 'pe-2', icon: 'size-3.5' },
+  lg: { box: 'h-7.5 text-base', gap: 'gap-1.5', pad: 'ps-2.5', padEnd: 'pe-2.5', icon: 'size-4' },
+  xl: { box: 'h-8.5 text-lg', gap: 'gap-2', pad: 'ps-3', padEnd: 'pe-3', icon: 'size-4.5' },
+  '2xl': { box: 'h-10 text-xl', gap: 'gap-2', pad: 'ps-3.5', padEnd: 'pe-3.5', icon: 'size-5' },
+  '3xl': { box: 'h-12 text-2xl', gap: 'gap-2.5', pad: 'ps-4', padEnd: 'pe-4', icon: 'size-6' },
 } satisfies Record<TagSize, Record<string, string>>;
 
-// The X is drawn small; the pseudo-element stretches its hit area to 24px (WCAG 2.5.8).
+// The X is drawn small; up to `lg` the pseudo-element stretches its hit area to 24px (WCAG 2.5.8).
+// From `xl` up the button is 24px or more already, and the pseudo-element only fills it.
 const REMOVE_SIZE = {
+  xs: 'size-3 before:-inset-1.5',
   sm: 'size-3.5 before:-inset-[5px]',
   md: 'size-4 before:-inset-1',
+  lg: 'size-5 before:-inset-0.5',
+  xl: 'size-6 before:inset-0',
+  '2xl': 'size-7 before:inset-0',
+  '3xl': 'size-8 before:inset-0',
 } satisfies Record<TagSize, string>;
 
-const REMOVE_ICON = { sm: 'size-2.5', md: 'size-3' } satisfies Record<TagSize, string>;
+const REMOVE_ICON = {
+  xs: 'size-2',
+  sm: 'size-2.5',
+  md: 'size-3',
+  lg: 'size-3.5',
+  xl: 'size-4',
+  '2xl': 'size-4.5',
+  '3xl': 'size-5',
+} satisfies Record<TagSize, string>;
+
+// The text of a link or button tag is as high as its line, 14px or less on the two smallest sizes:
+// the pseudo-element gives it a 24px target the way the remove button has one, without moving
+// anything. It runs to the edges of the tag across, and is 24px high, centred on the text.
+const MAIN_HIT_AREA: Partial<Record<TagSize, string>> = {
+  xs: 'relative before:absolute before:-inset-x-1 before:top-1/2 before:h-6 before:-translate-y-1/2 before:content-[""]',
+  sm: 'relative before:absolute before:-inset-x-1.5 before:top-1/2 before:h-6 before:-translate-y-1/2 before:content-[""]',
+};
 
 const textOf = (node: ReactNode): string =>
   Children.toArray(node)
@@ -90,8 +119,10 @@ export const Tag = ({
     </>
   );
   const mainClass = clsx('flex min-w-0 items-center rounded-sm', sizing.gap);
-  const interactiveClass =
-    'focus-visible:focus-indicator cursor-pointer transition-opacity hover:opacity-80';
+  const interactiveClass = clsx(
+    'focus-visible:focus-indicator cursor-pointer transition-opacity hover:opacity-80',
+    MAIN_HIT_AREA[size]
+  );
   const name = textOf(children);
 
   let main: ReactNode;
