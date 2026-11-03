@@ -69,6 +69,11 @@ const STATUS_INDICATOR: Record<StepStatus, string> = {
     'border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400',
 };
 
+// The fill of a connector: the track is gray, and the fill grows along it toward the next step when
+// the step completes, and shrinks back when the stepper goes back.
+const CONNECTOR_FILL =
+  'absolute bg-brand-500 duration-(--cosmos-motion-slow) ease-(--cosmos-ease-in-out)';
+
 const STATUS_LABEL: Record<StepStatus, string> = {
   done: 'text-gray-700 dark:text-gray-200',
   active: 'text-gray-900 dark:text-white font-semibold',
@@ -197,21 +202,37 @@ const StepperStep = ({
     );
   }
 
+  // A step that has completed shows a check in place of its number or icon. Both are always
+  // there and cross-fade, so a change of status plays and a first render has nothing to play: the
+  // check comes in once the connector toward the next step has filled, and goes with no wait.
+  const done = __status === 'done';
+  const markSize = __size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const swap =
+    'col-start-1 row-start-1 transition-[opacity,scale] duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)';
   const indicator = (
     <span
       className={clsx(
-        'relative z-10 flex shrink-0 items-center justify-center rounded-full border-2 font-semibold transition-colors',
+        'relative z-10 grid shrink-0 place-items-center rounded-full border-2 font-semibold transition-colors duration-(--cosmos-motion-fast)',
         INDICATOR_SIZE[__size],
         STATUS_INDICATOR[__status]
       )}
     >
-      {__status === 'done' ? (
-        <Check className={clsx(__size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4')} aria-hidden />
-      ) : Icon ? (
-        <Icon className={clsx(__size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
-      ) : (
-        <span>{__index + 1}</span>
-      )}
+      <span
+        aria-hidden={done ? true : undefined}
+        className={clsx(swap, done ? 'scale-50 opacity-0' : 'scale-100 opacity-100')}
+      >
+        {Icon ? <Icon className={markSize} /> : <span>{__index + 1}</span>}
+      </span>
+      <Check
+        className={clsx(
+          swap,
+          markSize,
+          done
+            ? clsx('scale-100 opacity-100', !__isLast && 'delay-(--cosmos-motion-slow)')
+            : 'scale-50 opacity-0'
+        )}
+        aria-hidden
+      />
     </span>
   );
 
@@ -240,11 +261,19 @@ const StepperStep = ({
           <span
             aria-hidden
             className={clsx(
-              'inset-s-1/2 absolute top-0 h-0.5 w-full',
-              __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
+              'inset-s-1/2 absolute top-0 h-0.5 w-full bg-gray-200 dark:bg-gray-700',
               __size === 'sm' ? 'mt-[14px]' : 'mt-[18px]'
             )}
-          />
+          >
+            {/* Fills from the start of the line, so it runs from the right in right to left. */}
+            <span
+              className={clsx(
+                CONNECTOR_FILL,
+                'inset-s-0 inset-y-0 transition-[width]',
+                done ? 'w-full' : 'w-0'
+              )}
+            />
+          </span>
         )}
         {renderAsButton ? (
           <button
@@ -275,11 +304,18 @@ const StepperStep = ({
         <span
           aria-hidden
           className={clsx(
-            'absolute h-full w-0.5 -translate-x-1/2 rtl:translate-x-1/2',
-            __status === 'done' ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
+            'absolute h-full w-0.5 -translate-x-1/2 bg-gray-200 rtl:translate-x-1/2 dark:bg-gray-700',
             __size === 'sm' ? 'inset-s-[13px] top-7' : 'inset-s-[17px] top-9'
           )}
-        />
+        >
+          <span
+            className={clsx(
+              CONNECTOR_FILL,
+              'inset-x-0 top-0 transition-[height]',
+              done ? 'h-full' : 'h-0'
+            )}
+          />
+        </span>
       )}
       {renderAsButton ? (
         <button
