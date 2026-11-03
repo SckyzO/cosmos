@@ -62,7 +62,7 @@ const NodeHead = () => (
 
 const NodeRow = ({ node }: { node: Host }) => (
   <TableRow>
-    <TableCell className="font-medium">{node.host}</TableCell>
+    <TableCell className="font-medium whitespace-nowrap">{node.host}</TableCell>
     <TableCell>{node.room}</TableCell>
     <TableCell numeric>{node.cpu}%</TableCell>
     <TableCell numeric>{node.memory}%</TableCell>
@@ -230,37 +230,39 @@ export const ScrollingTableWithoutCaptionIsFocusableNotARegion: Story = {
   },
 };
 
+const PowerTotals = () => {
+  const total = NODES.reduce((sum, n) => sum + n.power, 0);
+  return (
+    <Table>
+      <TableCaption>Power draw per node</TableCaption>
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Name</TableHeaderCell>
+          <TableHeaderCell>Room</TableHeaderCell>
+          <TableHeaderCell numeric>Power</TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {NODES.map((n) => (
+          <TableRow key={n.host}>
+            <TableCell className="font-medium whitespace-nowrap">{n.host}</TableCell>
+            <TableCell>{n.room}</TableCell>
+            <TableCell numeric>{n.power} W</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFoot>
+        <TableRow>
+          <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
+          <TableCell numeric>{total} W</TableCell>
+        </TableRow>
+      </TableFoot>
+    </Table>
+  );
+};
+
 export const FooterTotals: Story = {
-  render: () => {
-    const total = NODES.reduce((sum, n) => sum + n.power, 0);
-    return (
-      <Table>
-        <TableCaption>Power draw per node</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Room</TableHeaderCell>
-            <TableHeaderCell numeric>Power</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {NODES.map((n) => (
-            <TableRow key={n.host}>
-              <TableCell className="font-medium">{n.host}</TableCell>
-              <TableCell>{n.room}</TableCell>
-              <TableCell numeric>{n.power} W</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFoot>
-          <TableRow>
-            <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
-            <TableCell numeric>{total} W</TableCell>
-          </TableRow>
-        </TableFoot>
-      </Table>
-    );
-  },
+  render: () => <PowerTotals />,
 };
 
 export const FooterTotalsChecks: Story = {
@@ -268,6 +270,68 @@ export const FooterTotalsChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('rowheader', { name: 'Total' })).toHaveAttribute('scope', 'row');
+  },
+};
+
+// The lines a cell's text takes: the distinct tops of the rectangles of its content.
+const linesOf = (cell: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(cell);
+  return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+};
+
+/**
+ * In a column a phone's width, a host name is not broken after its hyphen and a value is not
+ * parted from its unit: a narrow column is scrolled, not wrapped inside a word.
+ */
+export const NarrowColumnsKeepNamesAndValuesWhole: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4" style={{ width: 343 }}>
+      <Table>
+        <NodeHead />
+        <TableBody>
+          {NODES.map((n) => (
+            <NodeRow key={n.host} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+      <PowerTotals />
+      {/* A column whose header is shorter than its values: the squeezed table gives it the
+          header's width, which the values then wrap inside. */}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>Room</TableHeaderCell>
+            <TableHeaderCell numeric>CPU</TableHeaderCell>
+            <TableHeaderCell numeric>Memory</TableHeaderCell>
+            <TableHeaderCell numeric>W</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {NODES.map((n) => (
+            <TableRow key={n.host}>
+              <TableCell className="font-medium whitespace-nowrap">{n.host}</TableCell>
+              <TableCell>{n.room}</TableCell>
+              <TableCell numeric>{n.cpu}%</TableCell>
+              <TableCell numeric>{n.memory}%</TableCell>
+              <TableCell numeric>{n.power * 5} W</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    // The name and the value of every row, and the total: the other columns may wrap at a space.
+    const cells = [...canvasElement.querySelectorAll('tr')].flatMap((row) =>
+      row.closest('thead') ? [] : [row.firstElementChild!, row.lastElementChild!]
+    );
+    expect(cells.length).toBeGreaterThan(20);
+    for (const cell of cells) {
+      expect(linesOf(cell), `"${cell.textContent}" wraps`).toBe(1);
+    }
   },
 };
 
