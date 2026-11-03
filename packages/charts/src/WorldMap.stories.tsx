@@ -276,6 +276,7 @@ export const OnNarrowScreenChecks: Story = {
 /** The same box in a right-to-left page: the text hidden at the map's start edge does not make it scroll sideways. */
 export const OnNarrowScreenRightToLeftChecks: Story = {
   ...OnNarrowScreenChecks,
+  tags: ['!dev', '!autodocs'],
   globals: { direction: 'rtl' },
 };
 
