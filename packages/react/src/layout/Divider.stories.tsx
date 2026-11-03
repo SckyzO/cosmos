@@ -191,6 +191,28 @@ export const IconVariantRendersIconChip: Story = {
   },
 };
 
+/** 16px between the line and the label, and between the line and the icon chip. */
+export const InsetKeepsSixteenPixelsFromTheLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div>
+      <Divider inset="Continue" data-testid="label" />
+      <Divider.Icon icon={Plus} data-testid="icon" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const label = canvasElement.querySelector('[data-testid="label"] bdi')!.parentElement!;
+    const labelStyle = getComputedStyle(label);
+    await expect(labelStyle.paddingInlineStart).toBe('16px');
+    await expect(labelStyle.paddingInlineEnd).toBe('16px');
+    const chip = canvasElement.querySelector('[data-testid="icon"] svg')!.parentElement!;
+    const chipRect = chip.getBoundingClientRect();
+    const svgRect = chip.querySelector('svg')!.getBoundingClientRect();
+    await expect(Math.round(svgRect.left - chipRect.left)).toBe(16);
+    await expect(Math.round(chipRect.right - svgRect.right)).toBe(16);
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** `start` and `end` name the reading direction: the inset sits on the right in right to left. */
