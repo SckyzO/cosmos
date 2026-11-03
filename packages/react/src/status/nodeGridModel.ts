@@ -67,7 +67,7 @@ export const nodeKey = (groupId: string, nodeId: string): string =>
   JSON.stringify([groupId, nodeId]);
 
 /** The box of a mark on screen, as `getBoundingClientRect` gives it. */
-export type Box = { top: number; left: number; width: number; height: number };
+export type Box = Pick<DOMRectReadOnly, 'top' | 'left' | 'width' | 'height'>;
 
 /**
  * The mark one row down (`step` 1) or up (`step` -1) from `from`, in the same visual column: the
