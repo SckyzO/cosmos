@@ -815,6 +815,39 @@ export const HiddenTooltipWaitsTowardItsTrigger: Story = {
   },
 };
 
+/**
+ * A tooltip never shown yet already waits where it will open from: 4px toward its trigger, on the
+ * side the box opens on. Under `dir="rtl"` that is the mirror image from the first show on, with
+ * no hover before it to settle it (`start` is the trigger's right, `end` its left).
+ */
+export const FirstShowInRtlStartsFromTheRightSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { direction: 'rtl' },
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div className="flex gap-40 px-48 py-16">
+      {SIDES.map(([position]) => (
+        <Tooltip key={position} content={`Position: ${position}`} position={position}>
+          <Button variant="secondary" size="sm">
+            {position}
+          </Button>
+        </Tooltip>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const [position, , rtl] of SIDES) {
+      const trigger = canvas.getByRole('button', { name: position });
+      const tip = document.getElementById(trigger.getAttribute('aria-describedby')!)!;
+      await expect(tip, `${position}: reads in the direction of its trigger`).toHaveAttribute(
+        'dir',
+        'rtl'
+      );
+      await expect(slideOf(tip), `${position}: waits before its first show`).toEqual(rtl);
+    }
+  },
+};
+
 /** In 120 ms easing out, then out in 80 ms easing in: the theme's fast and exit durations. */
 export const TooltipMovesOnTheTokens: Story = {
   tags: ['!dev', '!autodocs'],
