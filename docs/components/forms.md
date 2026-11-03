@@ -195,7 +195,10 @@ a field that suggests (a catalogue, a list of tags) and lets the user write thei
   first match. With no option active, Enter closes the list and goes on to submit the form around
   the field; with one active, it picks it and the form stays put.
 - When no option matches, the list stays closed: the text is accepted. `emptyMessage` opens it with
-  that message ("Press Enter to use this text").
+  that message ("Press Enter to use this text"). Without `allowCustomValue` the list opens on
+  "No matches found." (`emptyMessage` changes it). The message is a status line under the list, not
+  an option, so the input points at nothing and a screen reader reads it when the list turns empty.
+  `MultiSelect` says it the same way.
 - Without a visible `label`, `aria-label` names the input, as for a field in a row of lines. A
   `label` wins: the name is the one on screen.
 
