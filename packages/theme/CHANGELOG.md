@@ -5,6 +5,16 @@ All notable changes to `@sckyzo/cosmos-theme` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.7.0...@sckyzo/cosmos-theme@0.8.0) (2026-11-03)
+
+
+### Features
+
+* **react:** add a motion setting to applyAppearance and the settings panels ([be3872a](https://github.com/SckyzO/cosmos/commit/be3872adcd0bb56dea13357a4fbb873cd8502dd9))
+* **react:** fade and scale the dialogs and floating panels in and out ([e21a4e0](https://github.com/SckyzO/cosmos/commit/e21a4e099b4479d2487d96f99d42d0a1177b74b4))
+* **theme:** add the motion tokens and the reduced motion setting ([6902ec8](https://github.com/SckyzO/cosmos/commit/6902ec8e789da098d7a580bd4a005c37089d5d7c))
+* **theme:** add the scrim colours and motion variants that read data-motion ([5e7cb87](https://github.com/SckyzO/cosmos/commit/5e7cb870bb7827b780c7e34926a6dcfb7fe9d166))
+
 ## [0.7.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-theme@0.6.0...@sckyzo/cosmos-theme@0.7.0) (2026-11-03)
 
 
