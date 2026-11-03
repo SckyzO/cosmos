@@ -154,7 +154,9 @@ only http(s) URLs become links.
   Cancel and Escape return the focus to the button that opened it. Delete calls back at once:
   confirm in the host if needed.
 - Replies are one level, `Comment`s passed as `replies`, folded beyond `maxReplies` (default
-  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own. For a ticket, where
+  `2`) behind a "Show 3 more replies" button. A thread line runs from just under the parent's
+  avatar, at its centre, to the end of the last reply (or of the open composer, or of the fold
+  button), and the replies start where the parent's text does. A reply has no Reply of its own. For a ticket, where
   the latest exchanges matter, `keepReplies="last"` keeps the last `maxReplies` visible and folds
   the older ones behind a button above them ("Show 3 earlier replies", `labels.showEarlierReplies`).
 - `variant="internal"` tints a note and labels it "Internal note" with a lock, so it reads as one
