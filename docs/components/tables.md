@@ -387,7 +387,7 @@ empty state in a block that sticks to the start of the part in view:
   <TableBody>
     <TableRow>
       <TableCell colSpan={5}>
-        <div className="inset-s-0 sticky -ms-4 w-[100cqw] px-6">
+        <div className="inset-s-4 sticky w-[calc(100cqw-2rem)] px-6">
           <EmptyState title="No nodes" description="No node reports to this site yet." />
         </div>
       </TableCell>
@@ -396,5 +396,6 @@ empty state in a block that sticks to the start of the part in view:
 </Table>
 ```
 
-`100cqw` is the width of the wrapper, `-ms-4` takes back the padding of the cell and `px-6` clears
-the fade.
+`100cqw` is the width of the wrapper: the block is that wide less the 2rem of padding of the cell,
+sticks 1rem from the start of the part in view, and `px-6` clears the fade. It adds nothing to the
+width of the table.

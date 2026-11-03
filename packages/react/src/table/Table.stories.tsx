@@ -488,15 +488,17 @@ export const ExpandableRowsOpenByDefaultChecks: Story = {
 
 // A cell that spans the columns is as wide as the table, which scrolls on a phone: the empty state
 // would be centred on the whole table, off to one side and under the fade of the end edge. The
-// container query unit takes the width of the part in view (`@container` on the wrapper), the
-// block sticks to the start of it, and its padding clears the 1.5rem of the fade.
+// container query unit takes the width of the part in view (`@container` on the wrapper): the
+// block is that wide less the cell's 2rem of padding, sticks 1rem from the start of it, and its own
+// padding clears the 1.5rem of the fade. It adds nothing to the table's width, so a table that fits
+// still fits.
 const EmptyNodes = () => (
   <Table containerClassName="@container">
     <NodeHead />
     <TableBody>
       <TableRow>
         <TableCell colSpan={5}>
-          <div className="inset-s-0 sticky -ms-4 w-[100cqw] px-6">
+          <div className="inset-s-4 sticky w-[calc(100cqw-2rem)] px-6">
             <EmptyState title="No nodes" description="No node reports to this site yet." />
           </div>
         </TableCell>
@@ -541,6 +543,20 @@ export const EmptyIsCentredOnTheVisibleWidth: Story = {
     // The fade covers 1.5rem at each edge.
     expect(lines.left).toBeGreaterThanOrEqual(view.left + 24);
     expect(lines.right).toBeLessThanOrEqual(view.right - 24);
+  },
+};
+
+/** In a box the table fits, the empty state adds nothing to its width: the table does not scroll. */
+export const EmptyStateKeepsAFittingTableFromScrolling: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 900 }}>
+      <EmptyNodes />
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    const container = canvasElement.querySelector('table')!.parentElement!;
+    expect(container.scrollWidth).toBeLessThanOrEqual(container.clientWidth);
   },
 };
 
