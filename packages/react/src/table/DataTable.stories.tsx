@@ -76,11 +76,14 @@ const rows: Alert[] = Array.from({ length: 60 }, (_, i) => ({
   room: ROOMS[i % ROOMS.length],
 }));
 
+// A column of 12% would need 8rem / 0.12 = 1067px at the default minimum, wider than the 1000px of
+// the docs content: 5rem brings the table to about 700px, so it fits and does not fade.
 const columns: ColumnDef<Alert>[] = [
   {
     key: 'severity',
     label: 'Severity',
     width: '12%',
+    minWidth: '5rem',
     sortable: true,
     filterable: true,
     sortValue: (r) => r.severity,
@@ -91,6 +94,7 @@ const columns: ColumnDef<Alert>[] = [
     key: 'name',
     label: 'Name',
     width: '20%',
+    minWidth: '5rem',
     sortable: true,
     sortValue: (r) => r.name,
     searchValue: (r) => r.name,
@@ -100,6 +104,7 @@ const columns: ColumnDef<Alert>[] = [
     key: 'type',
     label: 'Type',
     width: '12%',
+    minWidth: '5rem',
     sortable: true,
     filterable: true,
     sortValue: (r) => r.type,
@@ -110,6 +115,7 @@ const columns: ColumnDef<Alert>[] = [
     key: 'location',
     label: 'Location',
     width: '12%',
+    minWidth: '5rem',
     sortable: true,
     filterable: true,
     sortValue: (r) => r.location,
@@ -120,6 +126,7 @@ const columns: ColumnDef<Alert>[] = [
     key: 'rack',
     label: 'Rack',
     width: '12%',
+    minWidth: '5rem',
     sortable: true,
     sortValue: (r) => r.rack,
     render: (r) => r.rack,
@@ -128,6 +135,7 @@ const columns: ColumnDef<Alert>[] = [
     key: 'room',
     label: 'Room',
     width: '12%',
+    minWidth: '5rem',
     sortable: true,
     filterable: true,
     sortValue: (r) => r.room,
@@ -137,6 +145,14 @@ const columns: ColumnDef<Alert>[] = [
 ];
 
 export const Alerts: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When a table is wider than its box it scrolls sideways, and the edge that has more content fades.',
+      },
+    },
+  },
   render: () => (
     <Wrap>
       <SectionCard title="DataTable — sortable, filterable, paginated">
@@ -150,6 +166,33 @@ export const Alerts: Story = {
       </SectionCard>
     </Wrap>
   ),
+};
+
+/**
+ * The base table fits the docs page: with its selection and action columns it needs less than the
+ * 790px a card of the docs page leaves it, so it does not scroll sideways and its edge does not
+ * fade. `MobileScrollsWithAnEdgeFade` is the story where the table is wider than its box.
+ */
+export const AlertsFitTheDocsWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 790 }}>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        pageSize={10}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.clientWidth).toBeGreaterThan(780);
+    await expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
+    await expect(getComputedStyle(scroller).maskImage).toBe('none');
+  },
 };
 
 export const Loading: Story = {
@@ -1458,7 +1501,13 @@ export const PercentColumnsScrollOnAPhone: Story = {
   globals: mobileViewport,
   render: () => (
     <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={5} />
+      {/* The fixture's own 5rem minimums off: this is about the default one. */}
+      <DataTable
+        rows={rows}
+        columns={columns.map(({ minWidth: _minWidth, ...c }) => c)}
+        rowKey={(r) => r.id}
+        pageSize={5}
+      />
     </Wrap>
   ),
   play: async ({ canvas, canvasElement }) => {
