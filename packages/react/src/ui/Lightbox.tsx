@@ -4,16 +4,20 @@ import { ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useDocumentDirection } from '../hooks/direction';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
+import { useExitTransition } from '../hooks/useExitTransition';
+import { mergeRefs } from './mergeRefs';
 import { clampIndex, indexForKey, isNearby } from './lightboxNav';
 import { OverlayLayerProvider, useFocusTrap, useOverlayLayer } from './overlayA11y';
 import { Spinner } from './Spinner';
@@ -210,11 +214,19 @@ type ViewerProps = Required<
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  /** False while the viewer fades out: it is already closed for focus, Escape and scrolling. */
+  open: boolean;
+  /** The viewer's root, which the exit waits on. */
+  exitRef: RefObject<HTMLDivElement | null>;
 };
 
-// The open viewer: mounted when `open` turns true and gone when it turns false, so the focus trap,
-// the overlay layer, the scroll lock and Embla all follow the viewer's own lifetime.
+// The viewer: mounted when `open` turns true and gone once it has faded out, so the focus trap,
+// the overlay layer, the scroll lock and Embla all follow the viewer's own lifetime. While it
+// fades out `open` is false: focus is back on the tile that opened it, Escape goes to the overlay
+// under it and the page scrolls, and the viewer is `inert`.
 function Viewer({
+  open,
+  exitRef,
   items,
   index,
   onIndexChange,
@@ -235,9 +247,11 @@ function Viewer({
   const direction = useDocumentDirection();
   // Moves focus in on open, keeps Tab inside, and puts focus back on the tile that opened the
   // viewer on close. Escape closes the top overlay only, so a viewer opened from a modal leaves it.
-  const rootRef = useFocusTrap<HTMLDivElement>(true);
-  const layer = useOverlayLayer(true, onClose);
-  useBodyScrollLock(true);
+  const rootRef = useFocusTrap<HTMLDivElement>(open);
+  const layer = useOverlayLayer(open, onClose);
+  useBodyScrollLock(open);
+  // Both refs hold the root: the trap's, and the one the exit hook waits on.
+  const mergedRootRef = useMemo(() => mergeRefs(rootRef, exitRef), [rootRef, exitRef]);
 
   // Embla lays the slides out and drags them the way the page reads, but only when told. The
   // viewer opens on the picture the page asked for; after that the index moves Embla, not its options.
@@ -320,14 +334,23 @@ function Viewer({
   return createPortal(
     <OverlayLayerProvider value={layer}>
       <div
-        ref={rootRef}
+        ref={mergedRootRef}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
+        inert={!open}
         onKeyDown={onKeyDown}
         onClick={closeOnBackdrop}
-        className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white outline-hidden"
+        className={clsx(
+          'fixed inset-0 z-50 flex flex-col bg-black/95 text-white outline-hidden transition-opacity',
+          // The whole viewer fades, as the scrim of a window does: in over the base duration easing
+          // out (from the first frame, `starting:`), out over the shorter exit easing in. It keeps
+          // its own near-black surface in every theme, and does not scale: it fills the screen.
+          open
+            ? 'opacity-100 duration-(--cosmos-motion-base) ease-(--cosmos-ease-out) starting:opacity-0'
+            : 'pointer-events-none opacity-0 duration-(--cosmos-motion-exit-lg) ease-(--cosmos-ease-in)'
+        )}
       >
         <div
           onClick={closeOnBackdrop}
@@ -472,9 +495,16 @@ export const Lightbox = ({
     onChange: onIndexChange,
     name: 'Lightbox.index',
   });
-  if (!open || items.length === 0) return null;
+  // The viewer stays on screen while it fades out, and renders nothing without a picture: a host
+  // that empties `items` as it closes has nothing left to show.
+  const active = open && items.length > 0;
+  const exitRef = useRef<HTMLDivElement | null>(null);
+  const present = useExitTransition(active, exitRef);
+  if (!present || items.length === 0) return null;
   return (
     <Viewer
+      open={active}
+      exitRef={exitRef}
       items={items}
       index={clampIndex(current, items.length)}
       onIndexChange={setIndex}

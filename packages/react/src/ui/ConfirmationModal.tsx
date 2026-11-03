@@ -90,7 +90,7 @@ const ConfirmationContent = ({
   messageId,
 }: Omit<ConfirmationModalProps, 'open'> & { messageId: string }) => {
   const titleId = useDialogTitleId();
-  // Rendered inside the Dialog, which unmounts its content on close: the field starts empty.
+  // Rendered inside the Dialog, which unmounts its content once it has closed: the field starts empty.
   const [typed, setTyped] = useState('');
   const danger = intent === 'danger';
   const confirmed = requireText === undefined || typed === requireText;

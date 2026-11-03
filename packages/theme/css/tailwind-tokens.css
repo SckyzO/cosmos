@@ -94,6 +94,49 @@
 }
 
 @theme {
+  /* ── Window animations ──────────────────────────────────────────────────── */
+  /* Keyframes for the one window whose exit has to be an animation: the CommandPalette is built
+     on a Radix dialog, which keeps a closing dialog mounted by waiting for an animation to end
+     (a transition never holds it). The other windows move with transitions of their own. Same
+     durations and easings as they have, from the motion tokens of css-vars.css: a dialog fades
+     in and scales up from 95% in --cosmos-motion-base, easing out, and fades out in
+     --cosmos-motion-exit-lg, easing in; the palette also drops 8px from the top on its way in.
+     The palette is centred with `translate`, so its drop uses `transform`, which stacks on it. */
+  --animate-cosmos-fade-in: cosmos-fade-in var(--cosmos-motion-base) var(--cosmos-ease-out) both;
+  --animate-cosmos-fade-out: cosmos-fade-out var(--cosmos-motion-exit-lg) var(--cosmos-ease-in) both;
+  --animate-cosmos-palette-in: cosmos-palette-in var(--cosmos-motion-base) var(--cosmos-ease-out)
+    both;
+  --animate-cosmos-palette-out: cosmos-palette-out var(--cosmos-motion-exit-lg)
+    var(--cosmos-ease-in) both;
+
+  @keyframes cosmos-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmos-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmos-palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
+    }
+  }
+
+  @keyframes cosmos-palette-out {
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+}
+
+@theme {
   /* ── Typography ─────────────────────────────────────────────────────────── */
   --font-sans: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

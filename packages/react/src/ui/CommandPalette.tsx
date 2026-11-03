@@ -71,10 +71,16 @@ const CommandPaletteRoot = ({
       overlayClassName={clsx(
         'fixed inset-0 z-[9998]',
         BACKDROP_VARIANT_CLASS[backdrop],
+        // The scrim fades like `Backdrop`, with keyframes: Radix keeps a closing dialog mounted by
+        // waiting for an animation, never a transition. Under reduced motion there is none to wait
+        // for, and the palette unmounts at once.
+        'motion-safe:data-[state=closed]:animate-cosmos-fade-out motion-safe:data-[state=open]:animate-cosmos-fade-in',
         overlayClassName
       )}
       contentClassName={clsx(
         'inset-s-1/2 fixed top-[20%] z-[9999] w-[640px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl rtl:translate-x-1/2 dark:border-gray-700 dark:bg-gray-900',
+        // Fades in and scales up from 95% while dropping 8px, fades out and shrinks back.
+        'motion-safe:data-[state=closed]:animate-cosmos-palette-out motion-safe:data-[state=open]:animate-cosmos-palette-in',
         contentClassName
       )}
       className={className}
