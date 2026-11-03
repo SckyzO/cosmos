@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
+import { SectionLabel } from '../ui/SectionLabel';
 import type { Intent } from '../ui/intent';
 import { TIMESTAMP_CLASS } from '../ui/timestamp';
 
@@ -384,12 +385,9 @@ const GroupHeader = ({ id, label, centred }: { id: string; label: string; centre
       </span>
     </h3>
   ) : (
-    <h3
-      id={id}
-      className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
-    >
+    <SectionLabel as="h3" size="lg" id={id} className="mb-3">
       {label}
-    </h3>
+    </SectionLabel>
   );
 
 // ── Main component ──────────────────────────────────────────────────────────

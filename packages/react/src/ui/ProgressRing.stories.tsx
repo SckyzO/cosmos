@@ -15,7 +15,6 @@ import {
 } from '../storybook-helpers';
 import type { ProgressBarIntent } from './ProgressBar';
 import { ProgressRing, type ProgressRingSize } from './ProgressRing';
-import { SectionLabel } from './SectionLabel';
 
 const meta = {
   title: 'Feedback/Progress Ring',
@@ -40,7 +39,7 @@ export const Sizes: Story = {
           <ProgressRing size={s} value={64} aria-label={`Size ${s}`}>
             {s === 'sm' ? null : '64%'}
           </ProgressRing>
-          <SectionLabel>{s}</SectionLabel>
+          <span className="text-xs text-gray-600 dark:text-gray-400">{s}</span>
         </div>
       ))}
     </div>
@@ -55,7 +54,7 @@ export const Intents: Story = {
           <ProgressRing intent={i} value={72} aria-label={`${i} progress`}>
             72%
           </ProgressRing>
-          <SectionLabel>{i}</SectionLabel>
+          <span className="text-xs text-gray-600 dark:text-gray-400">{i}</span>
         </div>
       ))}
     </div>

@@ -4,6 +4,7 @@ import { Fragment, useEffect, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { Modal } from './Modal';
+import { SectionLabel } from './SectionLabel';
 
 // ── Key rendering ────────────────────────────────────────────────────────────
 
@@ -159,9 +160,9 @@ export type HelpOverlaySectionProps = {
 
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
-    <h3 className="text-2xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+    <SectionLabel as="h3" size="md">
       <bdi>{title}</bdi>
-    </h3>
+    </SectionLabel>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
   </section>
 );

@@ -8,6 +8,7 @@ import { useIsClient } from '../hooks/useIsClient';
 import { Button } from '../ui/Button';
 import { Clipboard } from '../ui/Clipboard';
 import { CodeBlock } from '../ui/CodeBlock';
+import { SectionLabel } from '../ui/SectionLabel';
 import { LogLevelBadge, LOG_MESSAGE_CLASS } from './LogLevelBadge';
 import { LogViewer } from './LogViewer';
 import { formatLogField, parseLogLevel, stringifyLogLine } from './log-lines';
@@ -58,9 +59,9 @@ const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 const Heading = ({ children }: { children: string }) => (
-  <h3 className="m-0 mb-2 text-xs font-semibold tracking-wide text-[var(--color-text-secondary)] uppercase">
+  <SectionLabel as="h3" size="lg" className="mb-2">
     {children}
-  </h3>
+  </SectionLabel>
 );
 
 /**

@@ -184,12 +184,17 @@ export const MultiSelect = ({
         if (!wrapperRef.current?.contains(e.relatedTarget)) setOpen(false);
       }}
     >
-      <div className="flex items-baseline justify-between gap-3">
+      <div
+        className={clsx(
+          'flex items-baseline justify-between gap-3',
+          (label || values.length > 0) && !labelHidden && 'mb-1.5'
+        )}
+      >
         {label ? (
           <label
             htmlFor={id}
             className={clsx(
-              'block text-sm font-medium text-gray-900 dark:text-white',
+              'block text-sm font-medium text-gray-700 dark:text-gray-300',
               labelHidden && 'sr-only'
             )}
           >
@@ -214,7 +219,6 @@ export const MultiSelect = ({
         onMouseDown={(e) => !disabled && focusInputOnBoxPress(e, inputRef.current)}
         className={clsx(
           'relative',
-          (label || values.length > 0) && !labelHidden && 'mt-2',
           tagFieldClass({
             size,
             invalid: !!error,
@@ -227,6 +231,7 @@ export const MultiSelect = ({
           <Tag
             key={v}
             size={TAG_SIZE[size]}
+            inField
             disabled={disabled}
             onRemove={() => remove(v)}
             className="shrink-0"

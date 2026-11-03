@@ -17,6 +17,7 @@ import { AppLink } from './AppLink';
 import { FloatingPanel } from './FloatingPanel';
 import type { Intent } from './intent';
 import { mergeRefs } from './mergeRefs';
+import { SectionLabel } from './SectionLabel';
 import { useControllableState } from '../hooks/useControllableState';
 
 // An action menu: a button that opens a list of commands (WAI-ARIA menu button pattern). It is
@@ -205,13 +206,15 @@ const MenuGroup = ({ label, className, children }: MenuGroupProps) => {
   return (
     <div role="group" aria-labelledby={label ? labelId : undefined} className={className}>
       {label && (
-        <div
+        <SectionLabel
+          as="div"
+          size="md"
           id={labelId}
           role="presentation"
-          className="text-2xs px-4 pt-2 pb-1 font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+          className="px-4 pt-2 pb-1"
         >
           <bdi>{label}</bdi>
-        </div>
+        </SectionLabel>
       )}
       {children}
     </div>

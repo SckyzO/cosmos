@@ -3,6 +3,7 @@ import { AlertCircle, Check, ChevronRight, Wrench } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { Spinner } from '../ui/Spinner';
+import { SectionLabel } from '../ui/SectionLabel';
 import { INTENT_STYLE } from '../ui/intent';
 
 export type ChatToolCallStatus = 'running' | 'done' | 'failed';
@@ -27,9 +28,7 @@ export type ChatToolCallProps = {
 };
 
 const Caption = ({ children }: { children: ReactNode }) => (
-  <p className="text-3xs mb-1 font-semibold tracking-wider text-[var(--color-text-muted)] uppercase">
-    {children}
-  </p>
+  <SectionLabel className="mb-1">{children}</SectionLabel>
 );
 
 /**

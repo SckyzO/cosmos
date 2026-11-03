@@ -9,7 +9,8 @@ import {
   directionBox,
 } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
-import { Avatar } from './Avatar';
+import { Avatar, type AvatarSize } from './Avatar';
+import { AVATAR_SIZE_CLASS } from './avatarSizes';
 import { AvatarGroup } from './AvatarGroup';
 
 const meta = {
@@ -44,18 +45,38 @@ export const Overflow: Story = {
   args: { avatars: PEOPLE },
 };
 
+// Every size the component has: read from its size map, so a new size shows up here by itself.
+const SIZES = Object.keys(AVATAR_SIZE_CLASS) as AvatarSize[];
+
 export const Sizes: Story = {
   render: (args) => (
     <Wrap>
       <SectionCard title="Sizes">
         <div className="flex flex-col gap-4">
-          {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((size) => (
-            <AvatarGroup key={size} {...args} size={size} avatars={PEOPLE} max={3} />
+          {SIZES.map((size) => (
+            <div key={size} className="flex items-center gap-3">
+              <span className="text-3xs w-6 shrink-0 text-gray-500 uppercase dark:text-gray-400">
+                {size}
+              </span>
+              <AvatarGroup {...args} size={size} avatars={PEOPLE} max={3} />
+            </div>
           ))}
         </div>
       </SectionCard>
     </Wrap>
   ),
+};
+
+/** The seven sizes are on the page, each group a size apart from the next. */
+export const SizesChecks: Story = {
+  ...Sizes,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const first = canvas
+      .getAllByRole('group')
+      .map((group) => within(group).getAllByRole('img')[0]!.getBoundingClientRect().width);
+    await expect(first).toEqual([24, 32, 40, 48, 64, 80, 96]);
+  },
 };
 
 export const Spacing: Story = {
@@ -357,7 +378,6 @@ export const CustomOverflowReplacesTheCount: Story = {
   },
 };
 
-const SIZES = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'] as const;
 // Two initials of the usual widths. The "MI" is the one Kanban's xs cards cut ("MI(").
 const PAIRS = [
   { name: 'Mei Ito' },

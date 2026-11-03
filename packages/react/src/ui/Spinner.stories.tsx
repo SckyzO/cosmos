@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { expect } from 'storybook/test';
 import { inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
-import { Spinner, type SpinnerIntent } from './Spinner';
+import { Spinner, type SpinnerIntent, type SpinnerSize } from './Spinner';
 
 const meta = {
   title: 'Atoms/Spinner',
@@ -15,20 +15,29 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Xs: Story = { args: { size: 'xs' } };
-export const Sm: Story = { args: { size: 'sm' } };
-export const Md: Story = { args: { size: 'md' } };
-export const Lg: Story = { args: { size: 'lg' } };
-export const Xl: Story = { args: { size: 'xl' } };
+// The box and the border of each size, in px. Every size is listed (the compiler checks it), and
+// the stories read their sizes from here.
+const PX = {
+  xs: { box: 12, border: 2 },
+  sm: { box: 16, border: 2 },
+  md: { box: 24, border: 2 },
+  lg: { box: 32, border: 3 },
+  xl: { box: 40, border: 4 },
+  '2xl': { box: 48, border: 4 },
+  '3xl': { box: 64, border: 5 },
+} as const satisfies Record<SpinnerSize, { box: number; border: number }>;
+const SIZES = Object.keys(PX) as SpinnerSize[];
 
+/** Seven sizes, `xs` to `3xl`. `md` is the default. */
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-6">
-      <Spinner size="xs" />
-      <Spinner size="sm" />
-      <Spinner size="md" />
-      <Spinner size="lg" />
-      <Spinner size="xl" />
+      {SIZES.map((size) => (
+        <div key={size} className="flex flex-col items-center gap-2">
+          <Spinner size={size} />
+          <span className="text-3xs text-gray-600 uppercase dark:text-gray-400">{size}</span>
+        </div>
+      ))}
     </div>
   ),
 };
@@ -170,6 +179,26 @@ export const OnDarkIsWhiteInEveryTheme: Story = {
           'color-mix(in oklab, var(--color-white) 30%, transparent)'
         );
       }
+    });
+  },
+};
+
+export const EverySizeHasItsBox: Story = {
+  ...AllSizes,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const spinners = canvas.getAllByRole('status', { name: 'Loading' });
+    await expect(spinners).toHaveLength(SIZES.length);
+    SIZES.forEach((size, i) => {
+      const spinner = spinners[i]!;
+      // `offsetWidth`, not the bounding box: the spinner is rotating.
+      expect([spinner.offsetWidth, spinner.offsetHeight], `${size} box`).toEqual([
+        PX[size].box,
+        PX[size].box,
+      ]);
+      expect(getComputedStyle(spinner).borderTopWidth, `${size} border`).toBe(
+        `${PX[size].border}px`
+      );
     });
   },
 };

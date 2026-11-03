@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { isTypingTarget, matchesHotkey } from './hotkey';
+import { SectionLabel } from './SectionLabel';
 
 // ── Root (wraps cmdk's Command.Dialog) ───────────────────────────────────────
 
@@ -144,12 +145,21 @@ function CommandPaletteList({ className, ref, ...rest }: CommandPaletteListProps
 
 export type CommandPaletteGroupProps = ComponentPropsWithRef<typeof Command.Group>;
 
-function CommandPaletteGroup({ className, ref, ...rest }: CommandPaletteGroupProps) {
+function CommandPaletteGroup({ className, ref, heading, ...rest }: CommandPaletteGroupProps) {
   return (
     <Command.Group
       ref={ref}
+      // cmdk draws the heading in a `div` of its own, which holds the label: the padding and the
+      // text size of its line box are set here.
+      heading={
+        heading === undefined ? undefined : (
+          <SectionLabel as="span" size="md">
+            {heading}
+          </SectionLabel>
+        )
+      }
       className={clsx(
-        '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gray-500 [&_[cmdk-group-heading]]:uppercase dark:[&_[cmdk-group-heading]]:text-gray-400',
+        '[&_[cmdk-group-heading]]:text-2xs px-1 pb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1.5',
         className
       )}
       {...rest}
