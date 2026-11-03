@@ -100,7 +100,8 @@ export type EventCalendarProps = {
    * for a click on the all-day row, whose start is 00:00. With it set, the hour grid is a single
    * tab stop for a cursor on the slots: the arrow keys move it a day or 30 minutes, Page Up and
    * Page Down a week (a day, in the day view), Home and End to the first and the last slot of
-   * the day.
+   * the day. Up from the first slot goes to the all-day row of that day, where Enter calls it with
+   * `allDay: true` and Down comes back.
    */
   onSlotClick?: (start: Date, info: { allDay: boolean }) => void;
   /**

@@ -262,8 +262,11 @@ export const slotAt = (offsetY: number, hourHeight = HOUR_HEIGHT, slot = SLOT_MI
     DAY_MINUTES - slot
   );
 
-/** The slot the keyboard sits on: a day and the minutes at which its slot starts. */
-export type SlotCursor = { date: Date; minutes: number };
+/**
+ * The slot the keyboard sits on: a day and the minutes at which its slot starts, or the all-day row
+ * of that day (`allDay`, where `minutes` is not read).
+ */
+export type SlotCursor = { date: Date; minutes: number; allDay?: boolean };
 
 export type CursorKey =
   'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | 'PageUp' | 'PageDown' | 'Home' | 'End';
@@ -273,31 +276,40 @@ export type CursorKey =
  * left), a slot up or down (held to the day), a whole period of `periodDays` days back or
  * forward, the first or the last slot of the day. A move off the days shown is the caller's to
  * follow: it shows the day the cursor is on.
+ *
+ * With `allDayRow`, the grid has an all-day row above its slots: up from the first slot goes to
+ * the row of that day, the days along the row are the same arrows, down comes back to the first
+ * slot, and Home and End leave the row for the first and the last slot. Without it, up stops at
+ * the first slot.
  */
 export const moveCursor = (
   cursor: SlotCursor,
   key: CursorKey,
-  { periodDays, rtl }: { periodDays: number; rtl: boolean }
+  { periodDays, rtl, allDayRow = false }: { periodDays: number; rtl: boolean; allDayRow?: boolean }
 ): SlotCursor => {
   const lastSlot = DAY_MINUTES - SLOT_MINUTES;
   const byDays = (n: number) => ({ ...cursor, date: addDays(cursor.date, n) });
+  const slot = (minutes: number): SlotCursor => ({ date: cursor.date, minutes });
   switch (key) {
     case 'ArrowLeft':
       return byDays(rtl ? 1 : -1);
     case 'ArrowRight':
       return byDays(rtl ? -1 : 1);
     case 'ArrowUp':
+      if (cursor.allDay) return cursor;
+      if (allDayRow && cursor.minutes === 0) return { ...cursor, allDay: true };
       return { ...cursor, minutes: Math.max(0, cursor.minutes - SLOT_MINUTES) };
     case 'ArrowDown':
+      if (cursor.allDay) return slot(0);
       return { ...cursor, minutes: Math.min(lastSlot, cursor.minutes + SLOT_MINUTES) };
     case 'PageUp':
       return byDays(-periodDays);
     case 'PageDown':
       return byDays(periodDays);
     case 'Home':
-      return { ...cursor, minutes: 0 };
+      return slot(0);
     case 'End':
-      return { ...cursor, minutes: lastSlot };
+      return slot(lastSlot);
   }
 };
 

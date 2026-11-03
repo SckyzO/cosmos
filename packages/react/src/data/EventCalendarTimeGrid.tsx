@@ -267,7 +267,8 @@ export const EventCalendarTimeGrid = ({
     if (!shownCursor) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSlotClick(slotStart(shownCursor.date, shownCursor.minutes), { allDay: false });
+      if (shownCursor.allDay) onSlotClick(startOfDay(shownCursor.date), { allDay: true });
+      else onSlotClick(slotStart(shownCursor.date, shownCursor.minutes), { allDay: false });
       return;
     }
     if (!CURSOR_KEYS.has(e.key)) return;
@@ -275,6 +276,7 @@ export const EventCalendarTimeGrid = ({
     const next = moveCursor(shownCursor, e.key as CursorKey, {
       periodDays,
       rtl: directionOf(e.currentTarget) === 'rtl',
+      allDayRow: true,
     });
     setCursor(next);
     if (!days.some((day) => sameDay(day, next.date))) onShowDay(next.date);
@@ -304,14 +306,16 @@ export const EventCalendarTimeGrid = ({
   const nowInView = days.some((day) => sameDay(day, now));
   const status =
     active && shownCursor
-      ? `${fmt.fullDate(shownCursor.date)}, ${fmt.time(slotStart(shownCursor.date, shownCursor.minutes))}. Press Enter to choose this time.`
+      ? shownCursor.allDay
+        ? `${fmt.fullDate(shownCursor.date)}, all-day. Press Enter to choose this day.`
+        : `${fmt.fullDate(shownCursor.date)}, ${fmt.time(slotStart(shownCursor.date, shownCursor.minutes))}. Press Enter to choose this time.`
       : '';
 
   return (
     <>
       <div
         ref={scroller}
-        role={interactive ? 'application' : 'group'}
+        role="group"
         aria-label={label}
         tabIndex={0}
         onScroll={onScroll}
@@ -388,7 +392,12 @@ export const EventCalendarTimeGrid = ({
                     }
                     className={clsx(
                       'border-s border-gray-200 dark:border-gray-800',
-                      onSlotClick && 'hover:bg-brand-500/10'
+                      onSlotClick && 'hover:bg-brand-500/10',
+                      // The keyboard cursor on the all-day row of this day.
+                      active &&
+                        shownCursor?.allDay &&
+                        sameDay(shownCursor.date, day) &&
+                        'ring-brand-500 ring-2 ring-inset'
                     )}
                   />
                 ))}
@@ -554,7 +563,7 @@ export const EventCalendarTimeGrid = ({
                     {fmt.time(slotStart(day, hover.minutes))}
                   </div>
                 )}
-                {active && shownCursor && sameDay(shownCursor.date, day) && (
+                {active && shownCursor && !shownCursor.allDay && sameDay(shownCursor.date, day) && (
                   <div
                     ref={cursorBox}
                     aria-hidden
