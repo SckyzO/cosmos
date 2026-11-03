@@ -930,6 +930,8 @@ export const ErrorKeepsTheNavAndRetries: Story = {
   },
 };
 
+const tabletViewport = { viewport: { value: 'tablet', isRotated: false } } as const;
+
 /** The count of the bell, past 9999, is read beside the bell and not drawn over it. */
 export const ExtremeBellCountDoesNotCoverTheBell: Story = {
   tags: ['!dev', '!autodocs'],
@@ -942,6 +944,22 @@ export const ExtremeBellCountDoesNotCoverTheBell: Story = {
       Math.min(icon.right, count.right) > Math.max(icon.left, count.left) &&
       Math.min(icon.bottom, count.bottom) > Math.max(icon.top, count.top);
     await expect(overlap).toBe(false);
+  },
+};
+
+/** At 768px, with the long title of the extreme page, the search keeps a field you can type in. */
+export const ExtremeSearchKeepsItsWidthAtTabletWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: tabletViewport,
+  render: () => <AppShellScreen state="extreme" />,
+  play: async ({ canvas }) => {
+    const search = canvas.getByRole('button', { name: /Search projects/ });
+    await expect(search.getBoundingClientRect().width).toBeGreaterThanOrEqual(160);
+    // The field and the bell do not run into each other.
+    const bell = canvas.getByRole('button', { name: /^Notifications/ });
+    await expect(search.getBoundingClientRect().right).toBeLessThanOrEqual(
+      bell.getBoundingClientRect().left
+    );
   },
 };
 
