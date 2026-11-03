@@ -3,25 +3,43 @@ import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { createContext, use, useLayoutEffect, useMemo, useState } from 'react';
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
+import { useControllableState } from '../hooks/useControllableState';
+import { Fold } from './Fold';
 
 export type AccordionSize = 'sm' | 'md';
 
-// The root owns the size and the open-item accent; triggers and content read them so one prop
-// sets the whole list.
-type AccordionListState = { size: AccordionSize; accentOpen: boolean };
-const AccordionListContext = createContext<AccordionListState>({ size: 'sm', accentOpen: false });
+// The root owns the size, the open-item accent and which items are open; triggers and content
+// read them so one prop sets the whole list.
+type AccordionListState = {
+  size: AccordionSize;
+  accentOpen: boolean;
+  openItems: ReadonlySet<string>;
+};
+const AccordionListContext = createContext<AccordionListState>({
+  size: 'sm',
+  accentOpen: false,
+  openItems: new Set(),
+});
 
-// An item owns whether its trigger has an icon: the trigger records it, the content, which has no
-// access to the trigger, reads it to line its text up under the title.
-type AccordionItemState = { hasIcon: boolean; setHasIcon: (hasIcon: boolean) => void };
+// An item owns whether it is open and whether its trigger has an icon: the content, which has no
+// access to the trigger, reads the icon to line its text up under the title, and the open state to
+// fold.
+type AccordionItemState = {
+  open: boolean;
+  hasIcon: boolean;
+  setHasIcon: (hasIcon: boolean) => void;
+};
 const AccordionItemContext = createContext<AccordionItemState>({
+  open: false,
   hasIcon: false,
   setHasIcon: () => undefined,
 });
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export type AccordionProps = ComponentPropsWithRef<typeof RadixAccordion.Root> & {
+type RootProps = ComponentPropsWithRef<typeof RadixAccordion.Root>;
+
+export type AccordionProps = RootProps & {
   /** Visual variant. `bordered` (default) wraps each item in a border; `seamless` strips borders for a tighter look. */
   appearance?: 'bordered' | 'seamless';
   /** Row size. `sm` (default) is the compact list, `md` gives larger text and more padding. */
@@ -43,7 +61,31 @@ function AccordionRoot({
   ref,
   ...rest
 }: AccordionProps) {
-  const list = useMemo(() => ({ size, accentOpen }), [size, accentOpen]);
+  // Radix keeps the open items to itself, and an item that folds back has to know it is closed to
+  // play it: the root holds the state, controlled or not, and hands it to Radix as a controlled
+  // value. `single` has one string (empty for none), `multiple` a list.
+  const { value, defaultValue, onValueChange, ...radix } = rest as RootProps & {
+    value?: string | string[];
+    defaultValue?: string | string[];
+    onValueChange?: (value: string | string[]) => void;
+  };
+  const [current, setCurrent] = useControllableState<string | string[]>({
+    value,
+    defaultValue: defaultValue ?? (radix.type === 'multiple' ? [] : ''),
+    onChange: onValueChange,
+    name: 'Accordion.value',
+  });
+  // The value is one string or a list according to `type`, which the union of props cannot follow
+  // through a spread: the two are written together.
+  const radixProps = { ...radix, value: current, onValueChange: setCurrent } as RootProps;
+  const list = useMemo(
+    () => ({
+      size,
+      accentOpen,
+      openItems: new Set(typeof current === 'string' ? (current ? [current] : []) : current),
+    }),
+    [size, accentOpen, current]
+  );
   return (
     <AccordionListContext value={list}>
       <RadixAccordion.Root
@@ -54,7 +96,7 @@ function AccordionRoot({
             'overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900',
           className
         )}
-        {...rest}
+        {...radixProps}
       >
         {children}
       </RadixAccordion.Root>
@@ -67,8 +109,10 @@ function AccordionRoot({
 export type AccordionItemProps = ComponentPropsWithRef<typeof RadixAccordion.Item>;
 
 function AccordionItem({ className, ref, ...rest }: AccordionItemProps) {
+  const { openItems } = use(AccordionListContext);
+  const open = openItems.has(rest.value);
   const [hasIcon, setHasIcon] = useState(false);
-  const item = useMemo(() => ({ hasIcon, setHasIcon }), [hasIcon]);
+  const item = useMemo(() => ({ open, hasIcon, setHasIcon }), [open, hasIcon]);
   return (
     <AccordionItemContext value={item}>
       <RadixAccordion.Item
@@ -150,7 +194,7 @@ function AccordionTrigger({
         {!hideChevron && (
           <ChevronDown
             className={clsx(
-              'h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180',
+              'h-4 w-4 shrink-0 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out) group-data-[state=open]:rotate-180',
               CHEVRON_COLOR[tone]
             )}
             aria-hidden
@@ -175,30 +219,25 @@ export type AccordionContentProps = ComponentPropsWithRef<typeof RadixAccordion.
 
 function AccordionContent({ className, children, ref, ...rest }: AccordionContentProps) {
   const { size } = use(AccordionListContext);
-  const { hasIcon } = use(AccordionItemContext);
+  const { open, hasIcon } = use(AccordionItemContext);
   return (
+    // Radix mounts the content of an open item and drops it the moment the item closes, which
+    // leaves nothing to fold back: it is kept mounted (`forceMount`) and `Fold` hides it. The
+    // region is hidden from assistive technology with it, so a closed item adds no landmark.
     <RadixAccordion.Content
       ref={ref}
-      // Animate using Radix's CSS var `--radix-accordion-content-height`.
-      // `motion-safe` honours `prefers-reduced-motion`.
+      forceMount
+      aria-hidden={open ? undefined : true}
       className={clsx(
-        'overflow-hidden text-gray-700 motion-safe:data-[state=closed]:animate-[accordionUp_180ms_ease-out] motion-safe:data-[state=open]:animate-[accordionDown_180ms_ease-out] dark:text-gray-300',
+        'text-gray-700 dark:text-gray-300',
         size === 'md' ? 'text-base' : 'text-sm',
         className
       )}
       {...rest}
     >
-      <div className={clsx('pt-0', contentPadding(size, hasIcon))}>{children}</div>
-      <style>{`
-        @keyframes accordionDown {
-          from { height: 0; }
-          to { height: var(--radix-accordion-content-height); }
-        }
-        @keyframes accordionUp {
-          from { height: var(--radix-accordion-content-height); }
-          to { height: 0; }
-        }
-      `}</style>
+      <Fold open={open} lazy>
+        <div className={clsx('pt-0', contentPadding(size, hasIcon))}>{children}</div>
+      </Fold>
     </RadixAccordion.Content>
   );
 }
