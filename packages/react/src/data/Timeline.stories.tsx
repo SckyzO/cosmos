@@ -582,6 +582,51 @@ export const TimeStyle: Story = {
   },
 };
 
+/**
+ * Two markers are at least 24px apart in the `dot`, `avatar` and `stepper` lines, with a
+ * description or without: the connector has a floor, so a title-only entry does not pull the next
+ * marker up against this one.
+ */
+export const MarkersKeepTheirDistance: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-6">
+      {(['dot', 'avatar', 'stepper'] as const).flatMap((variant) =>
+        [true, false].map((withDescription) => (
+          <div key={`${variant}-${withDescription}`} data-case={`${variant}:${withDescription}`}>
+            <Timeline
+              variant={variant}
+              items={[1, 2, 3].map((n) => ({
+                id: String(n),
+                title: `Entry ${n}`,
+                description: withDescription ? 'A line of detail.' : undefined,
+                icon: Server,
+                avatarName: `Person ${n}`,
+              }))}
+            />
+          </div>
+        ))
+      )}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const box of canvasElement.querySelectorAll<HTMLElement>('[data-case]')) {
+      const markers = [...box.querySelectorAll('li')].map((row) =>
+        row.firstElementChild!.firstElementChild!.getBoundingClientRect()
+      );
+      expect(markers).toHaveLength(3);
+      for (let i = 1; i < markers.length; i++) {
+        const gap = markers[i]!.top - markers[i - 1]!.bottom;
+        try {
+          expect(gap).toBeGreaterThanOrEqual(24);
+        } catch (error) {
+          throw new Error(`${box.dataset.case}: ${gap}px between two markers`, { cause: error });
+        }
+      }
+    }
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The dots sit at the start with their rail and the time at the end of the title row. */
