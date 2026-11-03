@@ -602,11 +602,7 @@ export const TimestampsAlignWithoutTrailingContent: Story = {
     const list = canvasElement.querySelector('ul')!;
     const times = [...canvasElement.querySelectorAll('time')];
     await expect(times.length).toBeGreaterThan(1);
-    for (const time of times) {
-      await expect(
-        Math.abs(list.getBoundingClientRect().right - time.getBoundingClientRect().right)
-      ).toBeLessThanOrEqual(1);
-    }
+    for (const time of times) await expect(Math.abs(endOffset(time, list))).toBeLessThanOrEqual(1);
   },
 };
 
