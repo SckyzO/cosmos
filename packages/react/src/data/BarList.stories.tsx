@@ -14,6 +14,11 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import {
+  expectFadesInAfterSkeleton,
+  expectNoFadeFromFirstRender,
+  LoadToggle,
+} from '../storybook-arrival';
 import { BarList, type BarListItem } from './BarList';
 import { TrendDelta } from './TrendDelta';
 
@@ -570,5 +575,35 @@ export const BarsFillFromTheStartInRightToLeft: Story = {
       widthOf(within(directionBox(canvasElement, dir)).getAllByRole('listitem')[1])
     );
     expect(rtl).toBeCloseTo(ltr, 3);
+  },
+};
+
+// ── Skeleton to content ──────────────────────────────────────────────────────
+
+const ArrivingList = ({ startLoading }: { startLoading: boolean }) => (
+  <LoadToggle startLoading={startLoading}>
+    {(loading) => <BarList items={PAGES} showRank loading={loading} aria-label="Top pages" />}
+  </LoadToggle>
+);
+
+/** The rows fade in when the data arrives, then stand as they are; a reload plays it again. */
+export const RowsFadeInAfterLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingList startLoading />,
+  play: async ({ canvas }) => {
+    await expectFadesInAfterSkeleton(canvas, () => canvas.getByRole('list', { name: 'Top pages' }));
+  },
+};
+
+/** A list that has its rows from the first render does not fade them in. */
+export const RowsFromTheFirstRenderDoNotFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingList startLoading={false} />,
+  play: async ({ canvas }) => {
+    await expectNoFadeFromFirstRender(canvas, () =>
+      canvas.getByRole('list', { name: 'Top pages' })
+    );
   },
 };

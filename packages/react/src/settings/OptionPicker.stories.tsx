@@ -9,6 +9,14 @@ import {
   keyToEnd,
   keyToStart,
 } from '../storybook-helpers';
+import {
+  expectKeepsItsPlace,
+  expectLiftsOnHover,
+  LIFTED,
+  tokenMs,
+  transitionMs,
+  transitions,
+} from '../storybook-motion';
 import { OptionCard } from './OptionCard';
 import { OptionPicker, type OptionItem } from './OptionPicker';
 
@@ -108,6 +116,7 @@ const VIEW_MODES: OptionItem[] = [
 ];
 
 export const IconStylePicker: Story = {
+  parameters: { settleMotion: false },
   render: () => {
     const [value, setValue] = useState('soft');
     return (
@@ -336,5 +345,65 @@ export const SelectedSharesThePickerTreatment: Story = {
   ),
   play: async ({ canvas }) => {
     expectPickerSelected(canvas.getByRole('radiogroup', { name: 'Options' }));
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const LiftingOptions = () => (
+  <Wrap>
+    <OptionPicker aria-label="View" cols={3} value="grid" options={FOCUS_OPTIONS.slice(0, 3)} />
+  </Wrap>
+);
+
+/** The cards rise 2px with a soft shadow under the pointer, and the one with the focus rises. */
+export const OptionCardsLift: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingOptions />,
+  play: async ({ canvas }) => {
+    const cards = canvas.getAllByRole('radio');
+    for (const card of cards) expectLiftsOnHover(card);
+
+    await userEvent.tab();
+    const checked = canvas.getByRole('radio', { checked: true });
+    await expect(checked).toHaveFocus();
+    await expect(getComputedStyle(checked).translate).toBe(LIFTED);
+    for (const card of cards.filter((other) => other !== checked)) {
+      await expect(getComputedStyle(card).translate).toBe('none');
+    }
+  },
+};
+
+/** The raised card keeps the place it had under the pointer, so a pointer on its lower edge holds. */
+export const OptionCardKeepsItsPlace: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingOptions />,
+  play: async ({ canvas }) => {
+    for (const card of canvas.getAllByRole('radio')) expectKeepsItsPlace(card);
+  },
+};
+
+/** At its real speed the card moves over the base duration, 200 ms. */
+export const OptionCardMovesOnTheBaseToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <LiftingOptions />,
+  play: async ({ canvas }) => {
+    const [card] = canvas.getAllByRole('radio');
+    await expect(transitionMs(card)).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(
+      transitions(card, 'translate', 'box-shadow', 'border-color', 'background-color')
+    ).toBe(true);
+  },
+};
+
+/** With the reduced setting the card is lifted at once, with no length to move over. */
+export const OptionCardSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <LiftingOptions />,
+  play: async ({ canvas }) => {
+    await expect(transitionMs(canvas.getAllByRole('radio')[0])).toBe(0);
   },
 };

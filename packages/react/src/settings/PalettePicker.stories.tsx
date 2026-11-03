@@ -2,6 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { expectPickerSelected, expectRefFocuses, keyToEnd, keyToStart } from '../storybook-helpers';
+import {
+  expectKeepsItsPlace,
+  expectLiftsOnHover,
+  LIFTED,
+  tokenMs,
+  transitionMs,
+  transitions,
+} from '../storybook-motion';
 import { COSMOS_SYSTEM_THEME, COSMOS_THEMES } from './appearance';
 import { PaletteCard } from './PaletteCard';
 import { PalettePicker } from './PalettePicker';
@@ -23,6 +31,7 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 /** The four themes of `@sckyzo/cosmos-theme`, from `COSMOS_THEMES`: what `AppearanceSettings` and `Customizer` hand to the picker. */
 export const CosmosThemes: Story = {
+  parameters: { settleMotion: false },
   render: () => {
     const [value, setValue] = useState('dark');
     return (
@@ -304,4 +313,77 @@ export const TwoColumnsBelowSm: Story = {
 export const ColsApplyFromSm: Story = {
   ...columnsAt('tw-sm', true, 4),
   tags: ['!dev', '!autodocs'],
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const LiftingPalettes = () => (
+  <Wrap>
+    <PalettePicker palettes={COSMOS_THEMES} value="light" onChange={() => {}} />
+  </Wrap>
+);
+
+/** The cards rise 2px with a soft shadow under the pointer, and the one with the focus rises. */
+export const PaletteCardsLift: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingPalettes />,
+  play: async ({ canvas }) => {
+    const cards = canvas.getAllByRole('radio');
+    for (const card of cards) expectLiftsOnHover(card);
+
+    await userEvent.tab();
+    const checked = canvas.getByRole('radio', { checked: true });
+    await expect(checked).toHaveFocus();
+    await expect(getComputedStyle(checked).translate).toBe(LIFTED);
+    for (const card of cards.filter((other) => other !== checked)) {
+      await expect(getComputedStyle(card).translate).toBe('none');
+    }
+  },
+};
+
+/** The raised card keeps the place it had under the pointer, so a pointer on its lower edge holds. */
+export const PaletteCardKeepsItsPlace: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingPalettes />,
+  play: async ({ canvas }) => {
+    for (const card of canvas.getAllByRole('radio')) expectKeepsItsPlace(card);
+  },
+};
+
+/**
+ * The card no longer clips its parts (a clip would cut the strip that keeps its place): each part
+ * rounds its own outer corners to the card's, one border's width inside, and clips its content.
+ */
+export const PaletteCardPartsRoundTheCorners: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <LiftingPalettes />,
+  play: async ({ canvas }) => {
+    for (const card of canvas.getAllByRole('radio')) {
+      const outer = parseFloat(getComputedStyle(card).borderTopLeftRadius);
+      const border = parseFloat(getComputedStyle(card).borderTopWidth);
+      await expect(getComputedStyle(card).overflow).toBe('visible');
+      const [mockup, label] = Array.from(card.children) as HTMLElement[];
+      for (const [part, corners] of [
+        [mockup, ['borderTopLeftRadius', 'borderTopRightRadius']],
+        [label, ['borderBottomLeftRadius', 'borderBottomRightRadius']],
+      ] as const) {
+        await expect(getComputedStyle(part).overflow).toBe('hidden');
+        for (const corner of corners) {
+          await expect(parseFloat(getComputedStyle(part)[corner])).toBe(outer - border);
+        }
+      }
+    }
+  },
+};
+
+/** At its real speed the card moves over the base duration, 200 ms. */
+export const PaletteCardMovesOnTheBaseToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <LiftingPalettes />,
+  play: async ({ canvas }) => {
+    const [card] = canvas.getAllByRole('radio');
+    await expect(transitionMs(card)).toBe(tokenMs('--cosmos-motion-base'));
+    await expect(transitions(card, 'translate', 'box-shadow', 'border-color')).toBe(true);
+  },
 };

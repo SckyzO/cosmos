@@ -16,6 +16,11 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import {
+  expectFadesInAfterSkeleton,
+  expectNoFadeFromFirstRender,
+  LoadToggle,
+} from '../storybook-arrival';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Drawer } from '../ui/Drawer';
 import { Tag } from '../ui/Tag';
@@ -1240,5 +1245,39 @@ export const CardGripAndActionsMirrorInRightToLeft: Story = {
     const lane = (box: HTMLElement) => within(box).getByRole('region', { name: /^To do/ });
     const gap = (box: HTMLElement) => endOffset(actions(box), lane(box));
     expect(gap(rtl)).toBeCloseTo(gap(ltr), 0);
+  },
+};
+
+// ── Skeleton to content ──────────────────────────────────────────────────────
+
+const ArrivingBoard = ({ startLoading }: { startLoading: boolean }) => (
+  <LoadToggle startLoading={startLoading}>
+    {(loading) => (
+      <KanbanBoard defaultValue={sprint()} loading={loading} ariaLabel="Sprint board" />
+    )}
+  </LoadToggle>
+);
+
+/** The board fades in when the data arrives, then stands as it is; a reload plays it again. */
+export const BoardFadesInAfterLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingBoard startLoading />,
+  play: async ({ canvas }) => {
+    await expectFadesInAfterSkeleton(canvas, () =>
+      canvas.getByRole('group', { name: 'Sprint board' })
+    );
+  },
+};
+
+/** A board that has its cards from the first render does not fade in. */
+export const BoardFromTheFirstRenderDoesNotFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingBoard startLoading={false} />,
+  play: async ({ canvas }) => {
+    await expectNoFadeFromFirstRender(canvas, () =>
+      canvas.getByRole('group', { name: 'Sprint board' })
+    );
   },
 };

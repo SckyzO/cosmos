@@ -18,6 +18,7 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { CodeBlock as ShikiCodeBlock } from '../code/CodeBlock';
 import { CodeBlock } from './CodeBlock';
 
@@ -977,6 +978,54 @@ export const ColoursFollowTheTheme: Story = {
       await expect(getComputedStyle(comment).color).toBe('rgb(1, 2, 3)');
     } finally {
       root.style.removeProperty('--color-code-token-comment');
+    }
+  },
+};
+
+// ── Copy button ──────────────────────────────────────────────────────────────
+
+const copyIcons = (button: Element) => {
+  const [copy, check] = Array.from(button.querySelectorAll('svg'));
+  return { copy, check };
+};
+
+/**
+ * Copying turns the icon of the button into a check with a cross-fade, over the fast duration,
+ * and back after its 1.5 seconds: in the block and in the one of `/code` with its highlighter,
+ * which share the button. The button keeps its size, since both icons are in it.
+ */
+export const CopyButtonSwapsItsIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex flex-col gap-4">
+        <CodeBlock language="yaml" code="a: 1" />
+        <ShikiCodeBlock language="yaml" code="b: 2" filename="values.yaml" />
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const clipboard = captureClipboard();
+    try {
+      const buttons = canvas.getAllByRole('button', { name: 'Copy' });
+      await expect(buttons).toHaveLength(2);
+      for (const button of buttons) {
+        const { copy, check } = copyIcons(button);
+        await expect(transitionMs(copy)).toBe(tokenMs('--cosmos-motion-fast'));
+        const box = button.getBoundingClientRect().toJSON();
+        const shown = () => [getComputedStyle(copy).opacity, getComputedStyle(check).opacity];
+        await expect(shown()).toEqual(['1', '0']);
+        await userEvent.click(button);
+        await expect(isFading(check)).toBe(true);
+        await waitFor(() => expect(shown()).toEqual(['0', '1']));
+        await expect(button.getBoundingClientRect().toJSON()).toEqual(box);
+        // Back after the 1.5 s of the button, the icon that was there.
+        await waitFor(() => expect(shown()).toEqual(['1', '0']), { timeout: 3000 });
+      }
+      await expect(clipboard.written).toEqual(['a: 1', 'b: 2']);
+    } finally {
+      clipboard.restore();
     }
   },
 };

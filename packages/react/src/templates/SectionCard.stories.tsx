@@ -2,6 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { ChevronDown, KeyRound, Lock, Server, Trash2, User, Users, Zap } from 'lucide-react';
+import {
+  expectFadesInAfterSkeleton,
+  expectNoFadeFromFirstRender,
+  LoadToggle,
+} from '../storybook-arrival';
 import { Button } from '../ui/Button';
 import { SectionCard, type SectionCardIconTone } from './SectionCard';
 import {
@@ -524,5 +529,39 @@ export const HeaderFollowsTheReadingDirection: Story = {
   play: ({ canvasElement }) => {
     expectMirrored(canvasElement, (box) => box.querySelector('svg'));
     expectMirrored(canvasElement, (box) => box.querySelector('h3'));
+  },
+};
+
+// ── Skeleton to content ──────────────────────────────────────────────────────
+
+const ArrivingSection = ({ startLoading }: { startLoading: boolean }) => (
+  <LoadToggle startLoading={startLoading}>
+    {(loading) => (
+      <SectionCard {...REVENUE} loading={loading} minBodyHeight="min-h-44" className="w-96" />
+    )}
+  </LoadToggle>
+);
+
+/** The body fades in when the data arrives, then stands as it is; a reload plays it again. */
+export const BodyFadesInAfterLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingSection startLoading />,
+  play: async ({ canvas }) => {
+    await expectFadesInAfterSkeleton(canvas, () =>
+      canvas.getByRole('region', { name: 'Revenue over time' })
+    );
+  },
+};
+
+/** A card that has its body from the first render does not fade it in. */
+export const BodyFromTheFirstRenderDoesNotFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingSection startLoading={false} />,
+  play: async ({ canvas }) => {
+    await expectNoFadeFromFirstRender(canvas, () =>
+      canvas.getByRole('region', { name: 'Revenue over time' })
+    );
   },
 };
