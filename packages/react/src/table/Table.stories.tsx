@@ -486,19 +486,27 @@ export const ExpandableRowsOpenByDefaultChecks: Story = {
   },
 };
 
-export const Empty: Story = {
-  render: () => (
-    <Table>
-      <NodeHead />
-      <TableBody>
-        <TableRow>
-          <TableCell colSpan={5}>
+// A cell that spans the columns is as wide as the table, which scrolls on a phone: the empty state
+// would be centred on the whole table, off to one side and under the fade of the end edge. The
+// container query unit takes the width of the part in view (`@container` on the wrapper), the
+// block sticks to the start of it, and its padding clears the 1.5rem of the fade.
+const EmptyNodes = () => (
+  <Table containerClassName="@container">
+    <NodeHead />
+    <TableBody>
+      <TableRow>
+        <TableCell colSpan={5}>
+          <div className="inset-s-0 sticky -ms-4 w-[100cqw] px-6">
             <EmptyState title="No nodes" description="No node reports to this site yet." />
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  ),
+          </div>
+        </TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+);
+
+export const Empty: Story = {
+  render: () => <EmptyNodes />,
 };
 
 export const EmptyChecks: Story = {
@@ -507,6 +515,32 @@ export const EmptyChecks: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('columnheader')).toHaveLength(5);
     await expect(canvas.getByText('No nodes')).toBeInTheDocument();
+  },
+};
+
+/**
+ * In a table that scrolls (here a phone's width) the empty state is centred on the part that is
+ * in view, and its text stays out of the fade of the edges.
+ */
+export const EmptyIsCentredOnTheVisibleWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" style={{ width: 343 }}>
+      <EmptyNodes />
+    </div>
+  ),
+  play: ({ canvas, canvasElement }) => {
+    const container = canvasElement.querySelector('table')!.parentElement!;
+    // The table is wider than what is in view.
+    expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
+    const view = container.getBoundingClientRect();
+    const title = canvas.getByText('No nodes').getBoundingClientRect();
+    const description = canvas.getByText('No node reports to this site yet.');
+    const lines = description.getBoundingClientRect();
+    expect(Math.abs(title.left + title.width / 2 - (view.left + view.width / 2))).toBeLessThan(2);
+    // The fade covers 1.5rem at each edge.
+    expect(lines.left).toBeGreaterThanOrEqual(view.left + 24);
+    expect(lines.right).toBeLessThanOrEqual(view.right - 24);
   },
 };
 

@@ -376,3 +376,25 @@ head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
 stays inside the page on small screens. In a narrow column a cell wraps at every space and
 hyphen: put `whitespace-nowrap` in the `className` of a cell that holds a host name or any
 identifier, so the table scrolls sideways before it breaks the name.
+
+An empty `Table` is a row with one cell that spans the columns. That cell is as wide as the table,
+which scrolls on a phone, so an `EmptyState` in it is centred on the whole table and its text can
+sit under the fade of the end edge. Put `containerClassName="@container"` on the `Table` and the
+empty state in a block that sticks to the start of the part in view:
+
+```tsx
+<Table containerClassName="@container">
+  <TableBody>
+    <TableRow>
+      <TableCell colSpan={5}>
+        <div className="inset-s-0 sticky -ms-4 w-[100cqw] px-6">
+          <EmptyState title="No nodes" description="No node reports to this site yet." />
+        </div>
+      </TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+```
+
+`100cqw` is the width of the wrapper, `-ms-4` takes back the padding of the cell and `px-6` clears
+the fade.
