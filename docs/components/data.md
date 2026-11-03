@@ -294,18 +294,28 @@ the locale nor the zone, and keep the room of their text until then.
 <Countdown target="2026-03-01T09:00:00Z" onComplete={() => reload()} />
 ```
 
-- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, or `Intl.DateTimeFormat`
-  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `tooltip` adds the full date
-  and zone, and makes the `<time>` a tab stop so a keyboard reaches it.
+- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, `short` for the numeric
+  date, `monthDay`, `weekday`, `iso` for `2026-01-15` in every locale, or `Intl.DateTimeFormat`
+  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `hour12` forces the clock and
+  `showZone` adds the zone's short name after a time, as `Clock` does for `hour12`. `variant` is
+  `inline` (plain text), `stacked` (the date, and the time under it in a smaller muted line) or
+  `badge` (a neutral pill, built on `Badge`), and `icon` puts a Lucide icon before any of them.
+  `tooltip` adds the full date and zone, and makes the `<time>` a tab stop so a keyboard reaches
+  it.
 - `RelativeTime` reads "5 minutes ago", "yesterday", "in 2 days". Every instance shares one timer and
   wakes only when its text changes: each second in the first minute, each minute in the first hour,
   and rarely after, so a long list costs nothing.
 - `Clock` has the variants `inline`, `card` and `display`, and takes `hour12`, `showSeconds`,
   `showDate` and a `label` for the zone. It ticks on the second boundary. A world clock is a grid of
   `Clock`s.
-- `Countdown` has the variants `tiles`, `inline` and `compact`. `onComplete` is called once, at zero,
-  and the countdown stops there. `labels`, `shortLabels`, `label` and `completedLabel` translate its
-  text.
+- `Countdown` has the variants `tiles`, `inline`, `compact`, `card` and `display`. `card` is one
+  bordered card with a caption over the clock, like `Clock`'s, and `display` is huge digits for a
+  wall screen or a kiosk. `size` (`sm`, `md`, `lg`) sizes the tiles, and `units` picks which ones
+  `tiles`, `card` and `display` show: a unit left out rolls into the next smaller one, so without
+  days 2 days 4 hours read 52 hours. In `card` and `display` the days leave the clock once there are
+  none. `intent` colors the count, and `urgentBelow` (seconds left) turns it `danger` for the last
+  stretch, whatever the `intent`. `onComplete` is called once, at zero, and the countdown stops
+  there. `labels`, `shortLabels`, `label` and `completedLabel` translate its text.
 
 `Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for

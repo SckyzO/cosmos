@@ -21,7 +21,7 @@ files, which sit in the same `dist` folder.
 
 ## Code
 
-Storybook: [CodeBlock](https://sckyzo.github.io/cosmos/?path=/docs/media-codeblock--docs), [Code highlighting](https://sckyzo.github.io/cosmos/?path=/docs/media-code-highlighting--docs).
+Storybook: [CodeBlock](https://sckyzo.github.io/cosmos/?path=/docs/media-codeblock--docs), whose last stories show the `/code` entry.
 
 `CodeBlock` itself, in the main entry, needs no highlighter: its variants are in
 [Media](../components/media.md#codeblock). To color it, use the `/code` entry. It needs
@@ -189,7 +189,9 @@ export const Stores = () => {
   visitor. `style` is a MapLibre style (a URL or an object) and its attribution stays visible.
   `darkStyle` is optional: under the dark themes (`.dark`, `.deep-blue`) the map switches to it,
   and without it keeps `style`. Pass constants, not a new object on each render. A markers array
-  is the same: define it once, or the pins are redrawn each time.
+  is the same: define it once, or the pins are redrawn each time. A style needs no tile server:
+  the stories draw a fictional city, and a world view from the country outlines of `world-atlas`
+  (Natural Earth), each a GeoJSON source with fill and line layers.
 - **Pins, popups and buttons are React and HTML**, colored by `intent` with the theme's classes,
   so a theme, accent or text size switch repaints them with no code. A title or description with
   markup shows as text.

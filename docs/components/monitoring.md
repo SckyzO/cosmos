@@ -206,7 +206,8 @@ and to count the lines that arrived while it was paused.
   row (`['time']`), `lineNumbers` numbers the lines in the order of `lines`.
 - `follow` / `defaultFollow` / `onFollowChange`: it stays at the newest line while lines arrive.
   Scrolling away from the end pauses it and shows "Jump to latest (12 new)"; the button, or
-  scrolling back to the end, resumes it; a filter that shortens the list does not. `order` puts
+  scrolling back to the end, resumes it; a filter that shortens the list does not. Opening a row's
+  details pauses it too, so the row stays where it is and its details open under it. `order` puts
   the newest line last (`newest-last`, the default, a tail) or first.
 - The row follows the width of the viewer, not the screen's: the viewer is a container. Under
   28rem the source column is hidden; without `wrap` the row stays on one line and the viewer
@@ -237,7 +238,10 @@ filters are active (levels narrowed, sources chosen). The state pairs (`live`, `
 fields. It holds none of the log: pass the same filters to the viewer.
 
 **`LogLevelBadge`** is the level as a word in its color (`ERROR`, `WARN`), on the `surface` tone
-by default or the `terminal` one. Use it in a table cell, a card or a detail.
+by default or the `terminal` one. Use it in a table cell, a card or a detail. On the `surface` tone
+it is a `Badge` pill like `StatusBadge` (`trace`, `debug` and `unknown` neutral, `info`, `warn` and
+`error` in their intents, `fatal` solid red), all of one width; the `terminal` tone keeps its
+monospace face and small corners for the dark panel.
 
 **`LogEntryDetail`** shows one record in full for a drawer or a side panel: level, time, source
 and message, the fields as key / value pairs with a copy button each, the stack trace, the raw
@@ -324,7 +328,8 @@ const steps: JobLogStep[] = [
   `+0:04.2`.
 - **Following.** While a step runs the log stays at the end, pauses when the reader scrolls up,
   and has a footer button: Pause, then "Jump to latest (12 new)". `follow` / `defaultFollow` /
-  `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too.
+  `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too, and so
+  does opening a step by hand: its header stays where it is and the step opens under it.
 - **Tone.** `terminal` (default) is a dark panel in every theme, `surface` follows the theme.
 
 **ANSI.** Color codes are read into styled spans, never HTML. Kept: the 16 colors and their

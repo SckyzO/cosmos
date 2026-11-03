@@ -3,12 +3,14 @@ import { useState, type ReactNode } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
+  directionBox,
   expectMirrored,
   expectNoHorizontalOverflow,
   expectTextContrast,
   inEachTheme,
   keyToEnd,
   mobileViewport,
+  startOffset,
 } from '../storybook-helpers';
 import { RelativeTime } from '../data/RelativeTime';
 import { Comment } from './Comment';
@@ -278,59 +280,59 @@ const HostileStory = () => (
 /** Markup and a `javascript:` URL show as written; only http(s) URLs become links. */
 export const HostileText: Story = { render: () => <HostileStory /> };
 
+const FoldedRepliesStory = () => (
+  <Frame>
+    <CommentThread>
+      <Comment
+        author="Marta Ilves"
+        role="Customer"
+        time={time('2026-10-26T09:12')}
+        text="Is anyone looking at this?"
+        maxReplies={2}
+        replies={[1, 2, 3, 4, 5].map((n) => (
+          <Comment
+            key={n}
+            author={n % 2 ? 'Ben Okafor' : 'Marta Ilves'}
+            time={time(`2026-10-26T09:${10 + n}`)}
+            text={`Reply number ${n}.`}
+          />
+        ))}
+      />
+    </CommentThread>
+  </Frame>
+);
+
 /** Past `maxReplies` the replies fold behind a button that says how many. */
-export const FoldedReplies: Story = {
-  render: () => (
-    <Frame>
-      <CommentThread>
-        <Comment
-          author="Marta Ilves"
-          role="Customer"
-          time={time('2026-10-26T09:12')}
-          text="Is anyone looking at this?"
-          maxReplies={2}
-          replies={[1, 2, 3, 4, 5].map((n) => (
-            <Comment
-              key={n}
-              author={n % 2 ? 'Ben Okafor' : 'Marta Ilves'}
-              time={time(`2026-10-26T09:${10 + n}`)}
-              text={`Reply number ${n}.`}
-            />
-          ))}
-        />
-      </CommentThread>
-    </Frame>
-  ),
-};
+export const FoldedReplies: Story = { render: () => <FoldedRepliesStory /> };
+
+const LatestRepliesKeptStory = () => (
+  <Frame>
+    <CommentThread>
+      <Comment
+        author="Marta Ilves"
+        role="Customer"
+        time={time('2026-10-26T09:12')}
+        text="Is anyone looking at this?"
+        maxReplies={2}
+        keepReplies="last"
+        replies={[1, 2, 3, 4, 5, 6].map((n) => (
+          <Comment
+            key={n}
+            author={n % 2 ? 'Ben Okafor' : 'Marta Ilves'}
+            time={time(`2026-10-26T09:${10 + n}`)}
+            text={`Reply number ${n}.`}
+          />
+        ))}
+      />
+    </CommentThread>
+  </Frame>
+);
 
 /**
  * `keepReplies="last"` keeps the latest replies on screen and folds the older ones behind a button
  * above them: a ticket, where the last exchanges matter.
  */
-export const LatestRepliesKept: Story = {
-  render: () => (
-    <Frame>
-      <CommentThread>
-        <Comment
-          author="Marta Ilves"
-          role="Customer"
-          time={time('2026-10-26T09:12')}
-          text="Is anyone looking at this?"
-          maxReplies={2}
-          keepReplies="last"
-          replies={[1, 2, 3, 4, 5, 6].map((n) => (
-            <Comment
-              key={n}
-              author={n % 2 ? 'Ben Okafor' : 'Marta Ilves'}
-              time={time(`2026-10-26T09:${10 + n}`)}
-              text={`Reply number ${n}.`}
-            />
-          ))}
-        />
-      </CommentThread>
-    </Frame>
-  ),
-};
+export const LatestRepliesKept: Story = { render: () => <LatestRepliesKeptStory /> };
 
 /** Every text in another language: on the thread for all its comments, or on a single comment. */
 export const Translated: Story = {
@@ -937,6 +939,157 @@ export const DiscussionRoundTrip: Story = {
   },
 };
 
+// ── The thread line ─────────────────────────────────────────────────────────
+
+const rectOf = (element: Element) => element.getBoundingClientRect();
+
+// The parts of a comment with replies: its row (avatar and text), the line, the replies.
+const partsOf = (article: HTMLElement) => {
+  const row = article.firstElementChild as HTMLElement;
+  return {
+    row,
+    avatar: row.firstElementChild!.firstElementChild!,
+    text: row.lastElementChild!,
+    line: article.querySelector<HTMLElement>(':scope > [data-thread-line]'),
+    list: article.querySelector('ul[aria-label^="Replies"]'),
+  };
+};
+
+/** The line starts just under the parent's avatar, at its centre, and is 2px wide. */
+const expectLineFromTheAvatar = (article: HTMLElement) => {
+  const { avatar, line } = partsOf(article);
+  expect(line, 'the thread line').not.toBeNull();
+  const a = rectOf(avatar);
+  const l = rectOf(line!);
+  expect(l.top - a.bottom, 'gap under the avatar').toBeGreaterThanOrEqual(0);
+  expect(l.top - a.bottom, 'gap under the avatar').toBeLessThanOrEqual(12);
+  expect(
+    Math.abs(l.left + l.width / 2 - (a.left + a.width / 2)),
+    'centre of the avatar'
+  ).toBeLessThan(1);
+  expect(l.width).toBe(2);
+};
+
+/**
+ * The thread line of `LongText`: from under the parent's avatar, far above the reply, down to the
+ * bottom of the last reply; the replies hang from the parent's text. Both directions.
+ */
+export const ThreadLineRunsFromTheAvatarToTheLastReply: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => bothDirections(() => <LongTextStory />),
+  play: ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const article = box.querySelector('article')!;
+      const { text, line, list } = partsOf(article);
+      expectLineFromTheAvatar(article);
+      const replies = list!.querySelectorAll(':scope > li > article');
+      const last = replies[replies.length - 1]!;
+      expect(
+        Math.abs(rectOf(line!).bottom - rectOf(last).bottom),
+        `${dir}: end of the line`
+      ).toBeLessThanOrEqual(1);
+      // The parent is a long comment: the line is much longer than the reply it ends at.
+      expect(rectOf(line!).height).toBeGreaterThan(rectOf(last).height * 2);
+      for (const reply of replies) {
+        expect(
+          Math.abs(startOffset(reply, box) - startOffset(text, box)),
+          `${dir}: a reply starts where the parent's text does`
+        ).toBeLessThanOrEqual(1);
+      }
+    }
+  },
+};
+
+/** A comment without replies, and without a composer open, draws no line. */
+export const NoRepliesNoThreadLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame>
+      <CommentThread>
+        <Comment author="Ben Okafor" text="Nothing to add." onReply={() => {}} />
+      </CommentThread>
+    </Frame>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const article = canvasElement.querySelector('article')!;
+    expect(partsOf(article).line).toBeNull();
+    // Reply opens a composer: the line is there, down to its end.
+    await userEvent.click(canvas.getByRole('button', { name: 'Reply' }));
+    await canvas.findByRole('textbox');
+    expectLineFromTheAvatar(article);
+    expect(
+      Math.abs(rectOf(partsOf(article).line!).bottom - rectOf(article).bottom)
+    ).toBeLessThanOrEqual(1);
+  },
+};
+
+/**
+ * Folded, the line goes on to the end of the "Show n more replies" button, which belongs to the
+ * thread; with `keepReplies="last"` the button is above the replies, and the line passes it.
+ */
+export const ThreadLineCoversTheFoldButton: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <>
+      <div data-case="first">
+        <FoldedRepliesStory />
+      </div>
+      <div data-case="last">
+        <LatestRepliesKeptStory />
+      </div>
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const name of ['first', 'last']) {
+      const box = canvasElement.querySelector<HTMLElement>(`[data-case="${name}"]`)!;
+      const article = box.querySelector('article')!;
+      const { line, list } = partsOf(article);
+      expectLineFromTheAvatar(article);
+      const button = within(box).getByRole('button', { name: /more replies|earlier replies/ });
+      const replies = list!.querySelectorAll(':scope > li > article');
+      const last = rectOf(replies[replies.length - 1]!);
+      const l = rectOf(line!);
+      if (name === 'first') {
+        // The line runs to the end of the thread, the button's line included.
+        expect(Math.abs(l.bottom - rectOf(article).bottom)).toBeLessThanOrEqual(1);
+        expect(l.bottom).toBeGreaterThanOrEqual(rectOf(button).bottom);
+        expect(l.bottom).toBeGreaterThan(last.bottom);
+      } else {
+        expect(l.top).toBeLessThan(rectOf(button).top);
+        expect(
+          Math.abs(l.bottom - last.bottom),
+          'the line ends with the last reply'
+        ).toBeLessThanOrEqual(1);
+      }
+    }
+  },
+};
+
+/** An internal note with a reply: the line starts at the avatar inside the tinted box. */
+export const ThreadLineStartsInsideAnInternalNote: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <InternalNotesStory />,
+  play: ({ canvasElement }) => {
+    const internal = canvasElement.querySelector<HTMLElement>('article[data-variant="internal"]')!;
+    expectLineFromTheAvatar(internal);
+    const { line, list, text } = partsOf(internal);
+    const replies = list!.querySelectorAll(':scope > li > article');
+    expect(
+      Math.abs(rectOf(line!).bottom - rectOf(replies[replies.length - 1]!).bottom)
+    ).toBeLessThanOrEqual(1);
+    // The replies start where the note's text does, from the start edge in either direction.
+    expect(
+      Math.abs(startOffset(replies[0]!, internal) - startOffset(text, internal))
+    ).toBeLessThanOrEqual(1);
+    // The comments around it have no replies and no line.
+    for (const article of canvasElement.querySelectorAll<HTMLElement>('article')) {
+      if (article === internal || internal.contains(article)) continue;
+      expect(partsOf(article).line).toBeNull();
+    }
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The avatar and the text are at the start, and the replies hang from a rule at the start too. */
@@ -963,12 +1116,15 @@ export const RepliesHangFromTheStartInRightToLeft: Story = {
     );
     // The reply button sits under the text, nudged back to the start edge by its padding.
     expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Reply' }));
-    const rule = canvasElement.querySelector('[data-direction="rtl"] .border-s-2')!;
-    expect(getComputedStyle(rule).borderInlineStartWidth).toBe('2px');
-    expect(getComputedStyle(rule).borderRightWidth).toBe('2px');
-    expect(getComputedStyle(rule).borderLeftWidth).toBe('0px');
+    // The thread line is one rule at the start edge, the same distance from it in both directions.
+    const rule = directionBox(canvasElement, 'rtl').querySelector<HTMLElement>(
+      '[data-thread-line]'
+    )!;
+    expect(getComputedStyle(rule).insetInlineStart).not.toBe('auto');
+    expect(rule.getBoundingClientRect().width).toBe(2);
+    expectMirrored(canvasElement, (box) => box.querySelector('[data-thread-line]'));
     // The replies are indented from the start, the same distance in both directions.
-    expectMirrored(canvasElement, (box) => box.querySelector('.border-s-2'));
+    expectMirrored(canvasElement, (box) => box.querySelector('ul[aria-label^="Replies"]'));
   },
 };
 

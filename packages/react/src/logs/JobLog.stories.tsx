@@ -494,6 +494,28 @@ export const ScrollingUpPausesFollowing: Story = {
   },
 };
 
+/**
+ * Opening a step by hand while the log follows the running one pauses it: the header stays where
+ * it is and the step opens below it, instead of the log scrolling to the end again.
+ */
+export const OpeningAStepPausesFollowing: Story = {
+  ...RunningStepStill,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const scroller = scrollerOf(canvasElement);
+    await waitFor(() => expect(atEnd(scroller)).toBe(true));
+    await expect(canvas.getByText('Following the running step')).toBeInTheDocument();
+    const header = canvas.getByRole('button', { name: /Roll out/ });
+    const before = header.getBoundingClientRect().top;
+    await userEvent.click(header);
+    await expect(header).toHaveAttribute('aria-expanded', 'true');
+    await canvas.findByText('Paused');
+    await expect(canvas.getByRole('button', { name: /Jump to latest/ })).toBeInTheDocument();
+    await expect(Math.abs(header.getBoundingClientRect().top - before)).toBeLessThanOrEqual(1);
+  },
+};
+
 /** The Pause button stops following without scrolling, and the log stays where it is. */
 export const PauseButton: Story = {
   ...RunningStepStill,

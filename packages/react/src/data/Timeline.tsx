@@ -281,7 +281,9 @@ const TimelineList = ({
             >
               <div className="col-start-1 row-start-1 flex flex-col items-center md:col-start-2">
                 <StepperIndicator icon={item.icon} intent={item.intent} />
-                {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
+                {!isLast && (
+                  <span className="my-1 min-h-4 w-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                )}
               </div>
               <div
                 className={clsx(
@@ -345,7 +347,9 @@ const TimelineList = ({
               ) : (
                 <DotIndicator icon={item.icon} intent={item.intent} />
               )}
-              {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
+              {!isLast && (
+                <span className="my-1 min-h-4 w-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              )}
             </div>
             {/* Content. */}
             <Body item={item} variant={variant} isLast={isLast} />

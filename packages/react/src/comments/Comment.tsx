@@ -104,6 +104,16 @@ const ReplyContext = createContext(false);
 const INTERNAL_BOX =
   'rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10';
 
+// The thread line and the replies hang from the parent's avatar and text: the line is drawn on the
+// article, at the avatar's centre, from 8px under the avatar to the end of the last reply or of the
+// composer; the replies start where the parent's text does (32px avatar, 12px gap). An internal
+// note's box adds its 1px border and its padding (12px at the start, 10px on top).
+const THREAD_LINE = {
+  default: 'inset-s-4 top-10',
+  internal: 'inset-s-[29px] top-[51px]',
+};
+const REPLIES_INDENT = { default: 'ms-11', internal: 'ms-[57px]' };
+
 /**
  * One comment on a record: avatar, author, role, time, body, and the actions the host allows.
  * Reply and Edit open a `CommentComposer` in place; the host receives the text and owns the data.
@@ -160,6 +170,8 @@ export function Comment({
       : replyList.slice(0, maxReplies);
   const hiddenCount = replyList.length - maxReplies;
   const hasActions = canReply || onEdit !== undefined || onDelete !== undefined;
+  const hasThread = replyList.length > 0 || replying;
+  const place = internal ? 'internal' : 'default';
 
   const foldToggle = replyList.length > maxReplies && (
     <Button
@@ -191,7 +203,7 @@ export function Comment({
       ref={ref}
       aria-labelledby={nameId}
       data-variant={variant}
-      className={clsx('min-w-0', className)}
+      className={clsx('relative min-w-0', className)}
     >
       <div className={clsx('flex gap-3', internal && INTERNAL_BOX)}>
         <span aria-hidden className="shrink-0">
@@ -269,37 +281,47 @@ export function Comment({
           )}
         </div>
       </div>
-      {(replyList.length > 0 || replying) && (
-        <div className="ms-4 mt-3 min-w-0 border-s-2 border-[var(--color-border)] ps-4 sm:ms-5">
-          {keepLast && foldToggle}
-          {replyList.length > 0 && (
-            <ReplyContext value>
-              <ul role="list" aria-label={labels.replies(author)} className="space-y-4">
-                {shown.map((reply, index) => (
-                  <li key={isValidElement(reply) && reply.key !== null ? reply.key : index}>
-                    {reply}
-                  </li>
-                ))}
-              </ul>
-            </ReplyContext>
-          )}
-          {!keepLast && foldToggle}
-          {replying && (
-            <CommentComposer
-              className={replyList.length > 0 ? 'mt-3' : undefined}
-              autoFocus
-              label={labels.replyField(author)}
-              placeholder={labels.replyPlaceholder}
-              submitLabel={labels.replySubmit}
-              cancelLabel={labels.cancel}
-              onCancel={closeReply}
-              onSubmit={(value) => {
-                onReply?.(value);
-                closeReply();
-              }}
-            />
-          )}
-        </div>
+      {hasThread && (
+        <>
+          <span
+            aria-hidden
+            data-thread-line
+            className={clsx(
+              'absolute bottom-0 -ms-px w-0.5 bg-[var(--color-border)]',
+              THREAD_LINE[place]
+            )}
+          />
+          <div className={clsx('mt-3 min-w-0', REPLIES_INDENT[place])}>
+            {keepLast && foldToggle}
+            {replyList.length > 0 && (
+              <ReplyContext value>
+                <ul role="list" aria-label={labels.replies(author)} className="space-y-4">
+                  {shown.map((reply, index) => (
+                    <li key={isValidElement(reply) && reply.key !== null ? reply.key : index}>
+                      {reply}
+                    </li>
+                  ))}
+                </ul>
+              </ReplyContext>
+            )}
+            {!keepLast && foldToggle}
+            {replying && (
+              <CommentComposer
+                className={replyList.length > 0 ? 'mt-3' : undefined}
+                autoFocus
+                label={labels.replyField(author)}
+                placeholder={labels.replyPlaceholder}
+                submitLabel={labels.replySubmit}
+                cancelLabel={labels.cancel}
+                onCancel={closeReply}
+                onSubmit={(value) => {
+                  onReply?.(value);
+                  closeReply();
+                }}
+              />
+            )}
+          </div>
+        </>
       )}
     </article>
   );

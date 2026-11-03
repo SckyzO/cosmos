@@ -433,6 +433,54 @@ export const RowExpandsInPlace: Story = {
   },
 };
 
+/**
+ * The test of `Terminal`, hidden: opening a row's details while the viewer follows the end pauses
+ * it, so the row stays where it is and its details open downward, not the row sliding up.
+ */
+export const OpeningDetailsPausesFollow: Story = {
+  ...Terminal,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const log = canvas.getByRole('log');
+    await waitFor(() => expect(atEnd(log)).toBe(true));
+    expect(canvas.queryByRole('button', { name: /Jump to latest/ })).toBeNull();
+    // The last row in view that has details: the one the end pulls up the most.
+    const chevron = canvas.getAllByRole('button', { name: 'Show details' }).at(-1)!;
+    const before = chevron.getBoundingClientRect().top;
+    await userEvent.click(chevron);
+    const details = await canvas.findByRole('group', { name: /Details of line/ });
+    await canvas.findByRole('button', { name: /Jump to latest/ });
+    expect(Math.abs(chevron.getBoundingClientRect().top - before)).toBeLessThanOrEqual(1);
+    // The details open below the row.
+    expect(details.getBoundingClientRect().top).toBeGreaterThan(before);
+  },
+};
+
+/** The test of the surface tone, hidden: the level badge, a `Badge` pill, fits inside a compact row. */
+export const SurfaceBadgeFitsTheRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LogViewer
+      lines={fakeLines(40)}
+      aria-label="Backend logs"
+      tone="surface"
+      follow={false}
+      onFollowChange={() => {}}
+    />
+  ),
+  play: ({ canvasElement }) => {
+    const rows = canvasElement.querySelectorAll<HTMLElement>('[data-index]');
+    expect(rows.length).toBeGreaterThan(10);
+    for (const row of rows) {
+      const box = row.getBoundingClientRect();
+      const badge = row.querySelector('[data-level]')!.getBoundingClientRect();
+      expect(badge.height).toBeLessThanOrEqual(box.height);
+      expect(badge.top).toBeGreaterThanOrEqual(box.top);
+      expect(badge.bottom).toBeLessThanOrEqual(box.bottom);
+    }
+  },
+};
+
 /** The test of `LargeBuffer`, hidden: 50,000 lines draw a few dozen rows. */
 export const LargeBufferDrawsTheWindowOnly: Story = {
   ...LargeBuffer,

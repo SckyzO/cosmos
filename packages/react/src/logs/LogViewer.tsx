@@ -681,10 +681,14 @@ export const LogViewer = ({
   }
 
   // ── Rows ──────────────────────────────────────────────────────────────────
-  const toggle = (line: LogLine) =>
+  const toggle = (line: LogLine) => {
+    // Opening a row is leaving the end: the viewer stops following, so the row stays where it is
+    // and its details open under it, not the end pulling the whole list up.
+    if (!expandedSet.has(line.id)) setFollow(false);
     setExpandedIds((ids) =>
       ids.includes(line.id) ? ids.filter((id) => id !== line.id) : [...ids, line.id]
     );
+  };
   const rowFor = (d: number, fixed: boolean) => {
     const line = lineAtDrawn(d);
     const i = newest ? d : count - 1 - d;
