@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { AppearanceSettings } from './AppearanceSettings';
 import {
+  applyAppearance,
   COSMOS_ACCENTS,
   COSMOS_FONTS,
   COSMOS_SYSTEM_THEME,
@@ -10,6 +11,7 @@ import {
   type CosmosAccent,
   type CosmosFont,
   type CosmosDensity,
+  type CosmosMotion,
   type CosmosTextSize,
   type CosmosTheme,
   type CosmosThemeChoice,
@@ -65,6 +67,15 @@ export const WithFontAndTextSize: Story = {
  */
 export const WithDensity: Story = {
   args: { density: 'compact', onDensityChange: fn() },
+};
+
+/**
+ * `onMotionChange` adds the animations group: normal, or reduced, which sets every duration of the
+ * theme to 0 (`applyAppearance({ motion: 'reduced' })` sets `data-motion="reduced"` on `<html>`).
+ * Each card draws a dot, with the trail of its movement or without.
+ */
+export const WithMotion: Story = {
+  args: { motion: 'full', onMotionChange: fn() },
 };
 
 /** `fonts` narrows the font choice to the ones the app loads. */
@@ -243,5 +254,81 @@ export const ArrowKeysRoveAndPick: Story = {
     await expect(canvas.getByRole('radio', { name: 'Outfit', checked: true })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     await expect(args.onFontChange).toHaveBeenCalledWith('inter');
+  },
+};
+
+// ── Animations ───────────────────────────────────────────────────────────────
+
+export const MotionGroupCallsOnMotionChange: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { motion: 'full', onMotionChange: fn() },
+  play: async ({ args, canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Animations' });
+    await expect(within(group).getByRole('radio', { name: 'Normal' })).toBeChecked();
+    await userEvent.click(within(group).getByRole('radio', { name: 'Reduced' }));
+    await expect(args.onMotionChange).toHaveBeenCalledWith('reduced');
+  },
+};
+
+/** Without `onMotionChange` there is no animations group, as for the other optional groups. */
+export const NoMotionGroupByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('radiogroup', { name: 'Animations' })).toBeNull();
+  },
+};
+
+/**
+ * `applyAppearance({ motion: 'reduced' })` sets `data-motion` on `<html>` and every duration of
+ * the theme reads 0; `full` takes the attribute off and the durations come back.
+ */
+export const ReducedMotionZeroesTheDurations: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const [motion, setMotion] = useState<CosmosMotion>('full');
+    return (
+      <AppearanceSettings
+        theme="light"
+        accent="blue"
+        motion={motion}
+        onThemeChange={() => {}}
+        onAccentChange={() => {}}
+        onMotionChange={(next) => {
+          setMotion(next);
+          applyAppearance({ theme: 'light', accent: 'blue', motion: next });
+        }}
+      />
+    );
+  },
+  play: async ({ canvas }) => {
+    const root = document.documentElement;
+    const duration = (token: string) => getComputedStyle(root).getPropertyValue(token).trim();
+    const tokens = [
+      '--cosmos-motion-fast',
+      '--cosmos-motion-exit',
+      '--cosmos-motion-exit-lg',
+      '--cosmos-motion-base',
+      '--cosmos-motion-slow',
+    ];
+    const was = root.className;
+    const wasAttributes = ['data-accent', 'data-motion'].map((n) => [n, root.getAttribute(n)]);
+    try {
+      await expect(root).not.toHaveAttribute('data-motion');
+      await expect(duration('--cosmos-motion-base')).toBe('200ms');
+
+      await userEvent.click(canvas.getByRole('radio', { name: 'Reduced' }));
+      await expect(root).toHaveAttribute('data-motion', 'reduced');
+      for (const token of tokens) await expect(duration(token), token).toBe('0ms');
+
+      await userEvent.click(canvas.getByRole('radio', { name: 'Normal' }));
+      await expect(root).not.toHaveAttribute('data-motion');
+      await expect(duration('--cosmos-motion-base')).toBe('200ms');
+    } finally {
+      root.className = was;
+      for (const [name, value] of wasAttributes) {
+        if (value === null) root.removeAttribute(name!);
+        else root.setAttribute(name!, value);
+      }
+    }
   },
 };

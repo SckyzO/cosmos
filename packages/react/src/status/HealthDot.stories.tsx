@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { loopStops } from '../storybook-motion';
 import { HealthDot } from './HealthDot';
 import type { HealthStatus } from './types';
 
@@ -156,5 +157,15 @@ export const SizesAreMeasured: Story = {
       );
       await expect(`${size} dot ${dot.width}x${dot.height}`).toBe(`${size} dot ${px}x${px}`);
     }
+  },
+};
+
+/** The ping is a decorative loop: it runs, and stops under reduced motion. */
+export const PingStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { status: 'CRIT', pulse: true, label: 'Database: critical' },
+  play: async ({ canvas }) => {
+    const ping = canvas.getByRole('img').firstElementChild!;
+    await expect(loopStops(ping)).toMatchObject({ running: 'ping', reduced: 'none' });
   },
 };

@@ -9,6 +9,7 @@ import {
   expectOutsideClip,
   scrollAnchor,
 } from '../storybook-helpers';
+import { loopStops } from '../storybook-motion';
 import { RefreshButton, useAutoRefresh } from './RefreshButton';
 
 const meta = {
@@ -152,5 +153,25 @@ export const MenuAlignsToTheEndInRightToLeft: Story = {
       await userEvent.keyboard('{Escape}');
       await waitFor(() => expect(intervalMenu()).toBeNull());
     }
+  },
+};
+
+/** The dot beside the interval pulses while auto refresh is on: a loop that stops under reduced motion. */
+export const AutoRefreshDotStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { autoRefreshMs: 30_000, onRefresh: () => {}, onIntervalChange: () => {} },
+  play: async ({ canvasElement }) => {
+    const dot = canvasElement.querySelector<HTMLElement>('.animate-pulse')!;
+    await expect(loopStops(dot)).toMatchObject({ running: 'pulse', reduced: 'none' });
+  },
+};
+
+/** The spinner on a refresh in progress says "working": it keeps turning under reduced motion. */
+export const SpinnerKeepsTurningUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { refreshing: true, autoRefreshMs: 0, onRefresh: () => {}, onIntervalChange: () => {} },
+  play: async ({ canvasElement }) => {
+    const spinner = canvasElement.querySelector<HTMLElement>('.animate-spin')!;
+    await expect(loopStops(spinner)).toMatchObject({ running: 'spin', reduced: 'spin' });
   },
 };

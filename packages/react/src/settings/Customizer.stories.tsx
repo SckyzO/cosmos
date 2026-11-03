@@ -7,6 +7,7 @@ import { Sidebar } from '../layout/Sidebar';
 import { Topbar } from '../layout/Topbar';
 import { Navbar } from '../navigation/Navbar';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { scrimLook, themeColor } from '../storybook-motion';
 import { Button } from '../ui/Button';
 import {
   Customizer,
@@ -545,5 +546,34 @@ export const InAnAppAppliesTheChoice: Story = {
         // Nothing was stored.
       }
     }
+  },
+};
+
+// ── Scrim ────────────────────────────────────────────────────────────────────
+
+/** `backdrop` picks the scrim behind the panel: dim by default, `blur` blurs the page. */
+export const BackdropPropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { backdrop: 'blur' },
+  play: async () => {
+    await within(document.body).findByRole('dialog', { name: 'Customize' });
+    const scrim = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+    await expect(scrimLook(scrim)).toEqual({
+      colour: themeColor('--color-scrim-blur'),
+      filter: 'blur(8px)',
+    });
+  },
+};
+
+/** Without `backdrop`, dim: the colour alone. */
+export const ScrimIsDimByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async () => {
+    await within(document.body).findByRole('dialog', { name: 'Customize' });
+    const scrim = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+    await expect(scrimLook(scrim)).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
   },
 };

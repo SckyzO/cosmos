@@ -23,6 +23,7 @@ import {
   startOffset,
   transitionsEnd,
 } from '../storybook-helpers';
+import { scrimLook, themeColor } from '../storybook-motion';
 
 const meta = {
   title: 'Layout/Shell',
@@ -1023,5 +1024,36 @@ export const SecondaryPanelSitsAtTheEndEdge: Story = {
     await expect(endOffset(secondary, page)).toBe(0);
     await expect(getComputedStyle(secondary).borderRightWidth).toBe('1px');
     await expect(getComputedStyle(secondary).borderLeftWidth).toBe('0px');
+  },
+};
+
+// ── Scrim ────────────────────────────────────────────────────────────────────
+
+/** `drawerBackdrop` picks the scrim behind the mobile drawer; without it, dim. */
+export const DrawerBackdropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => <MobileShell drawerBackdrop="blur-dark" />,
+  play: async () => {
+    await openDrawer();
+    await expect(scrimLook(scrim())).toEqual({
+      colour: themeColor('--color-scrim-blur-dark'),
+      filter: 'blur(8px)',
+    });
+  },
+};
+
+export const DrawerScrimIsDimByDefault: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  parameters: mobileDocs,
+  render: () => <MobileShell />,
+  play: async () => {
+    await openDrawer();
+    await expect(scrimLook(scrim())).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
   },
 };

@@ -14,6 +14,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, reduceMotion, scrimLook, themeColor, transitionMs } from '../storybook-motion';
 import { Drawer } from './Drawer';
 import type { DrawerProps } from './Drawer';
 import { Button } from './Button';
@@ -1552,5 +1553,118 @@ export const TitleFollowsThePageHeading: Story = {
   play: async () => {
     const panel = await within(document.body).findByRole('dialog', { name: 'Filters' });
     await expect(within(panel).getByRole('heading', { level: 2, name: 'Filters' })).toBeVisible();
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const panelOf = () => within(document.body).getByRole('dialog');
+
+/**
+ * The drawer at its real speed: it slides in over 300 ms, easing out, and out over 200 ms, easing
+ * in, while the scrim fades. Open one of the sides, then close it.
+ */
+export const SlidesInAndOutWithMotion: Story = {
+  parameters: { settleMotion: false },
+  render: Sides.render,
+};
+
+/** A drawer that leaves is already out of the way: inert, with focus back and the page usable. */
+export const LeavingDrawerIsInertAndFocusIsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: ClosedDrawerIsNotFocusable.render,
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Open drawer' });
+    await userEvent.click(trigger);
+    const panel = await within(document.body).findByRole('dialog');
+    await Promise.all(panel.getAnimations().map((a) => a.finished));
+
+    await userEvent.keyboard('{Escape}');
+    // Sliding out: still painted...
+    await expect(isFading(panel)).toBe(true);
+    await expect(panel).toBeVisible();
+    // ...and already out of the way.
+    await expect(panel).toHaveAttribute('inert');
+    await expect(getComputedStyle(panel).pointerEvents).toBe('none');
+    await expect(trigger).toHaveFocus();
+    await userEvent.click(canvas.getByRole('button', { name: 'After' }));
+    await expect(canvas.getByRole('button', { name: 'After' })).toHaveFocus();
+
+    await waitFor(() => expect(panel).not.toBeVisible());
+  },
+};
+
+/** In, the slide takes the `slow` token (300 ms); out, the `base` one (200 ms). */
+export const SlideIsSlowerInThanOut: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: ClosedDrawerIsNotFocusable.render,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open drawer' }));
+    const panel = await within(document.body).findByRole('dialog');
+    await expect(transitionMs(panel)).toBe(300);
+    await Promise.all(panel.getAnimations().map((a) => a.finished));
+
+    await userEvent.keyboard('{Escape}');
+    await expect(transitionMs(panel)).toBe(200);
+    await waitFor(() => expect(panel).not.toBeVisible());
+  },
+};
+
+/** Under reduced motion every duration reads 0: the drawer is out of sight in the render that closes it. */
+export const ReducedMotionClosesAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: ClosedDrawerIsNotFocusable.render,
+  play: async ({ canvas }) => {
+    const restore = reduceMotion();
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: 'Open drawer' }));
+      const panel = await within(document.body).findByRole('dialog');
+      await expect(transitionMs(panel)).toBe(0);
+      await userEvent.keyboard('{Escape}');
+      await expect(panel).not.toBeVisible();
+    } finally {
+      restore();
+    }
+  },
+};
+
+/** The `backdrop` prop picks the scrim: colour, and blur or none. */
+export const BackdropPropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [variant, setVariant] = useState<NonNullable<DrawerProps['backdrop']>>('dim');
+    return (
+      <Wrap>
+        {(['dim', 'blur', 'blur-dark'] as const).map((v) => (
+          <Button key={v} onClick={() => setVariant(v)}>
+            {v}
+          </Button>
+        ))}
+        <Drawer open onClose={() => {}} backdrop={variant}>
+          <Drawer.Header title="Scrim" />
+        </Drawer>
+      </Wrap>
+    );
+  },
+  play: async ({ canvas }) => {
+    const scrim = () => document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
+    await waitFor(() => expect(panelOf()).toBeVisible());
+    await expect(scrimLook(scrim())).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
+    await userEvent.click(canvas.getByRole('button', { name: 'blur' }));
+    await expect(scrimLook(scrim())).toEqual({
+      colour: themeColor('--color-scrim-blur'),
+      filter: 'blur(8px)',
+    });
+    await userEvent.click(canvas.getByRole('button', { name: 'blur-dark' }));
+    await expect(scrimLook(scrim())).toEqual({
+      colour: themeColor('--color-scrim-blur-dark'),
+      filter: 'blur(8px)',
+    });
   },
 };

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { expectRefFocuses } from '../storybook-helpers';
+import { loopStops } from '../storybook-motion';
 import { StatefulSaveButton, type SaveState } from './StatefulSaveButton';
 
 const meta = {
@@ -114,5 +115,15 @@ export const ErrorOffersToTryAgain: Story = {
   args: { state: 'error', onClick: () => {} },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Try again' })).toBeVisible();
+  },
+};
+
+/** The unsaved-changes pulse is a decorative loop: it runs, and stops under reduced motion. */
+export const DirtyPulseStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { state: 'dirty', onClick: () => {} },
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button');
+    await expect(loopStops(button)).toMatchObject({ running: 'pulse', reduced: 'none' });
   },
 };

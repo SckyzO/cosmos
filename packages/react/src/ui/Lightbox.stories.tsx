@@ -13,6 +13,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, loopStops } from '../storybook-motion';
 import { Button } from './Button';
 import { Carousel } from './Carousel';
 import { ImageGrid } from './ImageGrid';
@@ -1098,5 +1099,77 @@ export const ProductPageOnAPhoneChecks: Story = {
     expectNoHorizontalOverflow();
     await userEvent.click(arrows(viewer).next);
     await waitFor(() => expect(shown(viewer)).toBe('2 / 6'));
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/**
+ * The viewer at its real speed: the whole dark surface fades in over 200 ms, and out over 120 ms.
+ * It keeps its own near-black surface in every theme and does not scale: it fills the screen.
+ */
+export const OpensAndLeavesWithMotion: Story = {
+  tags: ['!autodocs'],
+  parameters: { ...portalDocsParams(520), settleMotion: false },
+  render: () => <Opener />,
+};
+
+/** Open, the viewer is opaque and takes events. */
+export const OpenIsAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Opener />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open viewer' }));
+    const viewer = await findViewer();
+    await expect(getComputedStyle(viewer).opacity).toBe('1');
+    await expect(viewer).not.toHaveAttribute('inert');
+  },
+};
+
+/** Closing with nothing to animate (0 s, as in these tests): the viewer is gone in the same render. */
+export const ClosingAtZeroSecondsUnmountsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Opener />,
+  play: async ({ canvas }) => {
+    const opener = canvas.getByRole('button', { name: 'Open viewer' });
+    await userEvent.click(opener);
+    await findViewer();
+    await userEvent.keyboard('{Escape}');
+    await expect(body.queryByRole('dialog', { name: 'Picture viewer' })).toBeNull();
+    await expect(opener).toHaveFocus();
+  },
+};
+
+/** At its real speed, a viewer that closes is already out of the way while it fades. */
+export const LeavingViewerIsInertAndFocusIsBack: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <Opener />,
+  play: async ({ canvas }) => {
+    const opener = canvas.getByRole('button', { name: 'Open viewer' });
+    await userEvent.click(opener);
+    const viewer = await findViewer();
+    await waitFor(() => expect(getComputedStyle(viewer).opacity).toBe('1'));
+
+    await userEvent.keyboard('{Escape}');
+    await expect(viewer).toBeInTheDocument();
+    await expect(isFading(viewer)).toBe(true);
+    await expect(viewer).toHaveAttribute('inert');
+    await expect(getComputedStyle(viewer).pointerEvents).toBe('none');
+    await expect(opener).toHaveFocus();
+
+    await waitFor(() => expect(body.queryByRole('dialog', { name: 'Picture viewer' })).toBeNull());
+  },
+};
+
+/** The skeleton of a picture that is loading pulses: a loop that stops under reduced motion. */
+export const LoadingPulseStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs', 'no-capture'],
+  beforeEach: picturesThatNeverLoad,
+  render: Loading.render,
+  play: async () => {
+    const viewer = await findViewer();
+    const pulse = viewer.querySelector<HTMLElement>('.animate-pulse')!;
+    await expect(loopStops(pulse)).toMatchObject({ running: 'pulse', reduced: 'none' });
   },
 };
