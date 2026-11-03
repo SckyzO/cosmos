@@ -50,8 +50,15 @@ export type TagInputProps = {
    * the characters among them (and on line breaks when `Enter` is one).
    */
   separators?: string[];
-  /** The most tags the field holds. No limit when omitted. */
+  /**
+   * The most tags the field holds. No limit when omitted. The count shows at the end of the
+   * helper line (`3 / 5`), and `limitLabel` replaces it once the limit is reached.
+   */
   maxTags?: number;
+  /** The count shown with `maxTags`, from the tags added and the limit. Default `"3 / 5"`. */
+  countLabel?: (count: number, max: number) => string;
+  /** Shown in place of the count once `maxTags` is reached. Default `"Limit reached"`. */
+  limitLabel?: string;
   /** Disable the field: the tags cannot be removed. */
   disabled?: boolean;
   /** Helper text under the field. Default names the `separators` ("Press Enter or comma to add a tag."). */
@@ -123,6 +130,8 @@ export const TagInput = ({
   invalidMessage,
   separators = DEFAULT_SEPARATORS,
   maxTags,
+  countLabel = (count, max) => `${count} / ${max}`,
+  limitLabel = 'Limit reached',
   disabled = false,
   helperText,
   error,
@@ -388,8 +397,18 @@ export const TagInput = ({
           </ul>
         </FloatingPanel>
       )}
-      {description && (
-        <TagFieldDescription id={descId} error={!!errorText}>
+      {(description || maxTags !== undefined) && (
+        <TagFieldDescription
+          id={descId}
+          error={!!errorText}
+          end={
+            maxTags === undefined
+              ? undefined
+              : values.length >= maxTags
+                ? limitLabel
+                : countLabel(values.length, maxTags)
+          }
+        >
           {description}
         </TagFieldDescription>
       )}

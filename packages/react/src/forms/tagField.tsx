@@ -60,26 +60,49 @@ export const focusInputOnBoxPress = (
   input?.focus();
 };
 
-/** Helper or error text under a field; the error replaces the helper. */
+/**
+ * Helper or error text under a field; the error replaces the helper. `end` is a short text at the
+ * end of the line (a count): it is for sight only, the field says it to assistive technology
+ * itself.
+ */
 export const TagFieldDescription = ({
   id,
   error,
+  end,
   children,
 }: {
   id: string;
   error?: boolean;
-  children: ReactNode;
-}) => (
-  <p
-    id={id}
-    className={clsx(
-      'mt-1 text-xs',
-      error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-    )}
-  >
-    {children}
-  </p>
-);
+  end?: ReactNode;
+  children?: ReactNode;
+}) => {
+  const text = clsx(
+    'text-xs',
+    error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+  );
+  if (end === undefined) {
+    return (
+      <p id={id} className={clsx('mt-1', text)}>
+        {children}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-1 flex items-start justify-between gap-3">
+      {children ? (
+        <p id={id} className={clsx('min-w-0', text)}>
+          {children}
+        </p>
+      ) : null}
+      <span
+        aria-hidden
+        className="ms-auto shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400"
+      >
+        {end}
+      </span>
+    </div>
+  );
+};
 
 /**
  * Messages for screen readers: a tag added or removed changes nothing the focused input
