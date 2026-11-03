@@ -28,7 +28,6 @@ export * from './NotificationCard';
 export * from './Menu';
 export * from './UserMenu';
 export * from './ThemeToggle';
-export * from './ThemeToggleTri';
 export * from './ButtonGroup';
 export * from './Carousel';
 export * from './Rating';
