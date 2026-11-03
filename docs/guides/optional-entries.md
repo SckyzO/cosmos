@@ -21,7 +21,7 @@ files, which sit in the same `dist` folder.
 
 ## Code
 
-Storybook: [CodeBlock](https://sckyzo.github.io/cosmos/?path=/docs/media-codeblock--docs), [Code highlighting](https://sckyzo.github.io/cosmos/?path=/docs/media-code-highlighting--docs).
+Storybook: [CodeBlock](https://sckyzo.github.io/cosmos/?path=/docs/media-codeblock--docs), whose last stories show the `/code` entry.
 
 `CodeBlock` itself, in the main entry, needs no highlighter: its variants are in
 [Media](../components/media.md#codeblock). To color it, use the `/code` entry. It needs
