@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import type { ColumnDef, DataTableView } from './types';
+import { PEOPLE, patchColumns, peopleColumns, pickColumns } from './storybook-fixtures';
+import type { DataTableView } from './types';
 
 // The saved views of DataTable live in their own file, with the same `Tables/DataTable` family:
 // DataTable.stories.tsx is already one of the largest stories files of the package.
@@ -18,48 +19,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type User = { id: string; name: string; role: string; team: string; city: string };
+// The shared people, in four columns, with City hidden to start with.
+const rows = PEOPLE;
 
-const rows: User[] = [
-  ['Ada Lovelace', 'Engineer', 'Core', 'London'],
-  ['Grace Hopper', 'Admiral', 'Navy', 'New York'],
-  ['Linus Torvalds', 'Engineer', 'Kernel', 'Portland'],
-  ['Margaret Hamilton', 'Director', 'Core', 'Boston'],
-  ['Alan Turing', 'Researcher', 'Crypto', 'Manchester'],
-  ['Zoë Kowalski', 'Engineer', 'Core', 'Kraków'],
-  ['Edsger Dijkstra', 'Engineer', 'Core', 'Eindhoven'],
-  ['Barbara Liskov', 'Engineer', 'Core', 'Boston'],
-  ['Ken Thompson', 'Engineer', 'Core', 'New Orleans'],
-  ['Dennis Ritchie', 'Engineer', 'Core', 'Bronxville'],
-  ['Donald Knuth', 'Engineer', 'Core', 'Milwaukee'],
-  ['Tim Berners-Lee', 'Engineer', 'Web', 'London'],
-].map(([name, role, team, city], i) => ({ id: `user-${i + 1}`, name, role, team, city }));
-
-const columns: ColumnDef<User>[] = [
-  {
-    key: 'name',
-    label: 'Name',
-    sortable: true,
-    sortValue: (r) => r.name,
-    searchValue: (r) => r.name,
-    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
-  },
-  {
-    key: 'role',
-    label: 'Role',
-    filterable: true,
-    filterValue: (r) => r.role,
-    render: (r) => r.role,
-  },
-  {
-    key: 'team',
-    label: 'Team',
-    filterable: true,
-    filterValue: (r) => r.team,
-    render: (r) => r.team,
-  },
-  { key: 'city', label: 'City', defaultHidden: true, render: (r) => r.city },
-];
+const columns = patchColumns(pickColumns(peopleColumns, ['name', 'role', 'team', 'city']), {
+  city: { defaultHidden: true },
+});
 
 // Every part differs from the table's defaults (25 rows, no search, filter or sort, `City`
 // hidden, default density): applying it moves the whole state. Five engineers of the Core team
@@ -85,10 +50,6 @@ const EVERYONE: DataTableView = {
   density: 'default',
 };
 const VIEWS = [CORE_ENGINEERS, EVERYONE];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
 
 type Canvas = {
   getByRole: (role: string, options?: { name: string | RegExp }) => HTMLElement;
@@ -131,23 +92,21 @@ export const SavedViews: Story = {
       const [views, setViews] = useState<DataTableView[]>(VIEWS);
       const [active, setActive] = useState<string | null>(null);
       return (
-        <Wrap>
-          <DataTable
-            rows={rows}
-            columns={columns}
-            rowKey={(r) => r.id}
-            defaultPageSize={5}
-            pageSizeOptions={[3, 5, 10]}
-            defaultSearchValue=""
-            searchPlaceholder="Search users…"
-            columnsMenu
-            exportable
-            views={views}
-            onViewsChange={setViews}
-            activeView={active}
-            onActiveViewChange={setActive}
-          />
-        </Wrap>
+        <DataTable
+          rows={rows}
+          columns={columns}
+          rowKey={(r) => r.id}
+          defaultPageSize={5}
+          pageSizeOptions={[3, 5, 10]}
+          defaultSearchValue=""
+          searchPlaceholder="Search users…"
+          columnsMenu
+          exportable
+          views={views}
+          onViewsChange={setViews}
+          activeView={active}
+          onActiveViewChange={setActive}
+        />
       );
     };
     return <Host />;
@@ -169,9 +128,7 @@ export const SavedViewsChecks: Story = {
 export const ViewsWithoutSearch: Story = {
   tags: ['!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultViews={VIEWS} />
-    </Wrap>
+    <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultViews={VIEWS} />
   ),
 };
 
@@ -188,9 +145,7 @@ export const ViewsWithoutSearchChecks: Story = {
 export const NoViewsByDefault: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultSearchValue="" />
-    </Wrap>
+    <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultSearchValue="" />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /views/i })).toBeNull();
@@ -205,18 +160,16 @@ const bodyPadding = (root: HTMLElement) =>
 export const ApplyingAViewRestoresEveryPart: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={5}
-        pageSizeOptions={[3, 5, 10]}
-        defaultSearchValue=""
-        columnsMenu
-        defaultViews={VIEWS}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultPageSize={5}
+      pageSizeOptions={[3, 5, 10]}
+      defaultSearchValue=""
+      columnsMenu
+      defaultViews={VIEWS}
+    />
   ),
   play: async ({ canvas, canvasElement }) => {
     await expect(headers(canvas)).toEqual(['Name', 'Role', 'Team']);
@@ -254,15 +207,13 @@ export const ApplyingAViewRestoresEveryPart: Story = {
 export const ApplyingAViewGoesBackToTheFirstPage: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={5}
-        defaultViews={[{ ...EVERYONE, pageSize: 5 }]}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultPageSize={5}
+      defaultViews={[{ ...EVERYONE, pageSize: 5 }]}
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
@@ -284,20 +235,18 @@ export const ApplyingAViewCallsTheChangeCallbacks: Story = {
     onActiveViewChange: fn(),
   },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultViews={VIEWS}
-        onSearchChange={args.onSearchChange}
-        onFiltersChange={args.onFiltersChange}
-        onColumnVisibilityChange={args.onColumnVisibilityChange}
-        onPageSizeChange={args.onPageSizeChange}
-        onDensityChange={args.onDensityChange}
-        onActiveViewChange={args.onActiveViewChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultViews={VIEWS}
+      onSearchChange={args.onSearchChange}
+      onFiltersChange={args.onFiltersChange}
+      onColumnVisibilityChange={args.onColumnVisibilityChange}
+      onPageSizeChange={args.onPageSizeChange}
+      onDensityChange={args.onDensityChange}
+      onActiveViewChange={args.onActiveViewChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await pick(canvas, 'Core engineers');
@@ -320,19 +269,17 @@ export const SaveAsAddsTheCurrentState: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onViewsChange: fn(), onActiveViewChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={5}
-        defaultSearchValue=""
-        defaultDensity="comfortable"
-        defaultViews={[]}
-        onViewsChange={args.onViewsChange}
-        onActiveViewChange={args.onActiveViewChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultPageSize={5}
+      defaultSearchValue=""
+      defaultDensity="comfortable"
+      defaultViews={[]}
+      onViewsChange={args.onViewsChange}
+      onActiveViewChange={args.onActiveViewChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.type(canvas.getByRole('searchbox', { name: 'Search rows' }), 'o');
@@ -373,17 +320,15 @@ export const SaveAsAddsTheCurrentState: Story = {
 export const TheButtonSaysWhenTheViewIsModified: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={5}
-        pageSizeOptions={[3, 5, 10]}
-        defaultSearchValue=""
-        defaultViews={VIEWS}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultPageSize={5}
+      pageSizeOptions={[3, 5, 10]}
+      defaultSearchValue=""
+      defaultViews={VIEWS}
+    />
   ),
   play: async ({ canvas }) => {
     await pick(canvas, 'Core engineers');
@@ -403,9 +348,7 @@ export const TheButtonSaysWhenTheViewIsModified: Story = {
 export const RenameAndDeleteNeedAnActiveView: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultViews={VIEWS} />
-    </Wrap>
+    <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultViews={VIEWS} />
   ),
   play: async ({ canvas }) => {
     const menu = await openViews(canvas);
@@ -427,16 +370,14 @@ export const RenameAView: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onViewsChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultViews={VIEWS}
-        defaultActiveView="everyone"
-        onViewsChange={args.onViewsChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultViews={VIEWS}
+      defaultActiveView="everyone"
+      onViewsChange={args.onViewsChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await command(canvas, 'Rename…', /^Everyone/);
@@ -459,15 +400,13 @@ export const NameMustBeFilledAndNew: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onViewsChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultViews={VIEWS}
-        onViewsChange={args.onViewsChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultViews={VIEWS}
+      onViewsChange={args.onViewsChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await command(canvas, 'Save as…');
@@ -496,17 +435,15 @@ export const DeleteAfterConfirmation: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onViewsChange: fn(), onActiveViewChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultViews={VIEWS}
-        defaultActiveView="everyone"
-        onViewsChange={args.onViewsChange}
-        onActiveViewChange={args.onActiveViewChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultViews={VIEWS}
+      defaultActiveView="everyone"
+      onViewsChange={args.onViewsChange}
+      onActiveViewChange={args.onActiveViewChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await command(canvas, 'Delete', /^Everyone/);
@@ -531,16 +468,14 @@ export const ControlledViewsFollowTheHost: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onViewsChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        views={VIEWS}
-        activeView={null}
-        onViewsChange={args.onViewsChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      views={VIEWS}
+      activeView={null}
+      onViewsChange={args.onViewsChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await command(canvas, 'Save as…');
@@ -559,18 +494,16 @@ export const ControlledViewsFollowTheHost: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultSearchValue=""
-        columnsMenu
-        exportable
-        defaultViews={VIEWS}
-        defaultActiveView="core-engineers"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultSearchValue=""
+      columnsMenu
+      exportable
+      defaultViews={VIEWS}
+      defaultActiveView="core-engineers"
+    />
   ),
 };
 
