@@ -237,7 +237,10 @@ filters are active (levels narrowed, sources chosen). The state pairs (`live`, `
 fields. It holds none of the log: pass the same filters to the viewer.
 
 **`LogLevelBadge`** is the level as a word in its color (`ERROR`, `WARN`), on the `surface` tone
-by default or the `terminal` one. Use it in a table cell, a card or a detail.
+by default or the `terminal` one. Use it in a table cell, a card or a detail. On the `surface` tone
+it is a `Badge` pill like `StatusBadge` (`trace`, `debug` and `unknown` neutral, `info`, `warn` and
+`error` in their intents, `fatal` solid red), all of one width; the `terminal` tone keeps its
+monospace face and small corners for the dark panel.
 
 **`LogEntryDetail`** shows one record in full for a drawer or a side panel: level, time, source
 and message, the fields as key / value pairs with a copy button each, the stack trace, the raw
