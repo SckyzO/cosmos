@@ -72,6 +72,7 @@ Markdown itself.
 - `ChatComposer` takes `footer` (a line under the field: attach, a model `Select`, a hint) and
   `generating` + `onStop`: the send button becomes Stop (`stopLabel`), and Enter does not send.
 - `ChatToolCall` (`name`, `status` of `running | done | failed`, `duration`, `input`, `output`)
-  is a disclosure row for what the assistant did; `ChatSources` (`sources`, `label`) lists where
-  an answer comes from. Only http(s) sources become links.
+  is a disclosure row for what the assistant did: its details unfold and fold back in 200 ms, the
+  chevron turning with them, and are mounted the first time the row opens. `ChatSources`
+  (`sources`, `label`) lists where an answer comes from. Only http(s) sources become links.
 - `Clipboard plain` is the borderless copy button of that row.
