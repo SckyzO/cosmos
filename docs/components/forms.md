@@ -111,6 +111,21 @@ that depend on the count ("field" and "fields", "needs" and "need") and how the 
 />
 ```
 
+## Messages under a field
+
+Storybook: [Field errors](https://sckyzo.github.io/cosmos/?path=/docs/forms-field-errors--docs).
+
+The line under a field (its `description`, `error` or `success` message) is the same piece in
+`Input`, `Select`, `Combobox`, `MultiSelect`, `PhoneInput`, `ColorInput`, `DatePicker`,
+`FileInput`, `TimePicker`, the card fields and the `CheckboxGroup` and `RadioGroup`. A message that
+shows after the first render, such as an error after a submit, unfolds under the field in 200ms
+instead of pushing the rest of the form down at once, and folds back and is removed when it clears.
+A field that has its message from the first render simply has it, and an error that takes the place
+of a description changes its text in place. How it is read does not change: it is the same element
+with the same `id` and `aria-live`, in the accessibility tree and named by the field from the
+render that shows it, and out of both from the render that hides it. `Textarea` keeps a line for
+its message and counter, so its error shows in place and nothing moves.
+
 ## Date range presets
 
 Storybook: [Date Picker](https://sckyzo.github.io/cosmos/?path=/docs/forms-date-picker--docs).
