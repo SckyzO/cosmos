@@ -109,3 +109,20 @@ export const ARowOpensOnItsDetail: Story = {
     await expect(within(table).queryByRole('heading', { name: 'Fields' })).toBeNull();
   },
 };
+
+/** The level badge, a `Badge` pill, fits the width of its column, whatever the level. */
+export const LevelBadgeFitsItsColumn: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Logs' });
+    const badges = table.querySelectorAll<HTMLElement>('td [data-level]');
+    expect(badges.length).toBeGreaterThan(5);
+    for (const badge of badges) {
+      const cell = badge.closest('td')!.getBoundingClientRect();
+      const box = badge.getBoundingClientRect();
+      expect(box.left).toBeGreaterThanOrEqual(cell.left);
+      expect(box.right).toBeLessThanOrEqual(cell.right);
+    }
+  },
+};
