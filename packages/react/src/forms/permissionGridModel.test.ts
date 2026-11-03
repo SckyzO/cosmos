@@ -333,6 +333,22 @@ describe('moveFocus', () => {
     expect(moveFocus(lengths, { row: 5, col: 2 }, 'up')).toEqual({ row: 4, col: 0 });
   });
 
+  it('goes back to the column it was asked to keep when it leaves a group row', () => {
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', 3)).toEqual({ row: 2, col: 3 });
+    expect(moveFocus(lengths, { row: 4, col: 0 }, 'up', 2)).toEqual({ row: 3, col: 2 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'up', 3)).toEqual({ row: 0, col: 3 });
+  });
+
+  it('still lands on the only cell of a group row when it keeps a column', () => {
+    expect(moveFocus(lengths, { row: 3, col: 2 }, 'down', 2)).toEqual({ row: 4, col: 0 });
+  });
+
+  it('aims at the column of the position when none is given, and keeps a column in range', () => {
+    expect(moveFocus(lengths, { row: 2, col: 2 }, 'down')).toEqual({ row: 3, col: 2 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', 9)).toEqual({ row: 2, col: 3 });
+    expect(moveFocus(lengths, { row: 1, col: 0 }, 'down', -1)).toEqual({ row: 2, col: 0 });
+  });
+
   it('does not move along a group row, which has one cell', () => {
     expect(moveFocus(lengths, { row: 1, col: 0 }, 'end')).toEqual({ row: 1, col: 0 });
     expect(moveFocus(lengths, { row: 1, col: 0 }, 'start')).toEqual({ row: 1, col: 0 });
