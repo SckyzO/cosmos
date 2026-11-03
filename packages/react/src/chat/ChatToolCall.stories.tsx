@@ -9,6 +9,16 @@ import {
   inEachTheme,
   mobileViewport,
 } from '../storybook-helpers';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  foldOf,
+  closedRotation,
+  rotationOf,
+} from '../storybook-folds';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ChatToolCall } from './ChatToolCall';
 
@@ -72,6 +82,14 @@ export const Open: Story = {
   args: { defaultOpen: true },
 };
 
+/**
+ * The details unfold and fold back in 200 ms: the height runs from 0 to its size while the input
+ * and the output fade in and slide 4 px, and the chevron turns with it.
+ */
+export const Unfolds: Story = {
+  parameters: { settleMotion: false },
+};
+
 export const InEachStatus: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2">
@@ -97,8 +115,69 @@ export const OutputShowsOnlyWhenExpanded: Story = {
     // The button controls the region it opens.
     const id = row.getAttribute('aria-controls');
     await expect(id && document.getElementById(id)).toContainElement(canvas.getByText('Output'));
+    // Closed again, the details are folded, not unmounted: not shown and out of reach.
     await userEvent.click(row);
-    await expect(canvas.queryByText('Output')).toBeNull();
+    await expect(canvas.getByText('Output')).not.toBeVisible();
+    await expect(foldOf(row)).toContainElement(canvas.getByText('Output'));
+  },
+};
+
+/**
+ * The details are a fold: closed, inert and out of the accessibility tree at once while the height
+ * is still moving, their content kept; open, reachable at once and unclipped at rest. Slowed to
+ * 2 s to read the middle.
+ */
+export const DetailsFoldAndStayMounted: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: (args) => (
+    <SlowFolds>
+      <ChatToolCall {...args} />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('button', { name: /search_docs/ });
+    const body = foldOf(row);
+    expectFoldClosed(body);
+    await expect(rotationOf(row.querySelector('svg')!)).toBe(
+      closedRotation(row.querySelector('svg')!)
+    );
+
+    await userEvent.click(row);
+    await expect(body.inert).toBe(false);
+    await expect(body).not.toHaveAttribute('aria-hidden');
+    await expect(getComputedStyle(clipOf(body)).overflow).toBe('hidden');
+    await finishAnimations(body);
+    await expectFoldOpen(body);
+    await finishAnimations(row);
+    await expect(rotationOf(row.querySelector('svg')!)).toBe('90deg');
+    await expect(body.getBoundingClientRect().height).toBeGreaterThan(0);
+
+    await userEvent.click(row);
+    expectFoldClosed(body);
+    await expect(body.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(body.getAnimations().length).toBeGreaterThan(0);
+    await expect(canvas.getByText('Output')).toBeInTheDocument();
+    await finishAnimations(body);
+    await expect(body.getBoundingClientRect().height).toBe(0);
+  },
+};
+
+/** With the Animations setting on "Reduced", the details open and close at once. */
+export const ReducedMotionFoldsAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  play: async ({ canvas }) => {
+    const row = canvas.getByRole('button', { name: /search_docs/ });
+    const body = foldOf(row);
+    await expect(getComputedStyle(body).transitionDuration).toBe('0s');
+    await userEvent.click(row);
+    await expect(body.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(getComputedStyle(clipOf(body)).overflow).toBe('visible');
+    await userEvent.click(row);
+    await expect(body.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(body.getBoundingClientRect().height).toBe(0);
   },
 };
 
