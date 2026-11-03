@@ -30,6 +30,14 @@ const DEFAULT_PRESETS: ColorPreset[] = [
 
 const INVALID_MESSAGE = 'Enter a hex colour, such as #14b8a6.';
 
+// The space between the swatch and the code follows the field's own padding, so the swatch has as
+// much air on its end as on its start.
+const SWATCH_GAP: Record<FieldSize, string> = {
+  sm: 'gap-2.5',
+  md: 'gap-3',
+  lg: 'gap-4',
+};
+
 export type ColorInputProps = FieldA11yProps & {
   label?: string;
   /** Helper text under the field. */
@@ -180,7 +188,8 @@ export const ColorInput = ({
         // the digits, the caret and the swatch beside them keep their order.
         dir="ltr"
         className={clsx(
-          'flex w-50 max-w-full items-center gap-2.5',
+          'flex w-50 max-w-full items-center',
+          SWATCH_GAP[size],
           fieldClass({ size, invalid: !!message, within: true }),
           FIELD_PAD_X[size],
           disabled && 'cursor-not-allowed opacity-50'
