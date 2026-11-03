@@ -548,7 +548,9 @@ function StackedListItem({
           )}
         />
       )}
-      <div className="flex min-w-0 gap-x-4">
+      {/* `flex-auto`: the block fills the row, so a timestamp at its end sits at the row's end
+          whatever the length of the text, with or without content after it. */}
+      <div className="flex min-w-0 flex-auto gap-x-4">
         {checkable && (
           // The first control of the row in tab order, so it is raised above the title's overlay
           // by hand. The label is a 26px target around the 18px box; the negative margins keep
