@@ -444,8 +444,19 @@ export const OpeningDetailsPausesFollow: Story = {
     const log = canvas.getByRole('log');
     await waitFor(() => expect(atEnd(log)).toBe(true));
     expect(canvas.queryByRole('button', { name: /Jump to latest/ })).toBeNull();
-    // The last row in view that has details: the one the end pulls up the most.
-    const chevron = canvas.getAllByRole('button', { name: 'Show details' }).at(-1)!;
+    // A row in the middle of the view: following the end would pull it up by the height of its
+    // details, and those details still fit in the rows the windowed list draws. The last row drawn
+    // is no good: its details can fall past the window and never render.
+    const box = log.getBoundingClientRect();
+    const middle = box.top + box.height / 2;
+    const distance = (button: HTMLElement) => Math.abs(button.getBoundingClientRect().top - middle);
+    const chevron = canvas
+      .getAllByRole('button', { name: 'Show details' })
+      .filter((button) => {
+        const { top, bottom } = button.getBoundingClientRect();
+        return top >= box.top && bottom <= box.bottom;
+      })
+      .sort((a, b) => distance(a) - distance(b))[0]!;
     const before = chevron.getBoundingClientRect().top;
     await userEvent.click(chevron);
     const details = await canvas.findByRole('group', { name: /Details of line/ });
