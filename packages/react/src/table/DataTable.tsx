@@ -14,7 +14,7 @@ import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
-import { DIMMED, LoadingVeil } from './LoadingVeil';
+import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
@@ -1525,7 +1525,10 @@ export const DataTable = <T,>({
             </thead>
             <tbody
               inert={dimRows || undefined}
-              className={clsx('divide-y divide-gray-100 dark:divide-gray-800', dimRows && DIMMED)}
+              className={clsx(
+                'divide-y divide-gray-100 dark:divide-gray-800',
+                dimRows ? DIMMED : UNDIMMED
+              )}
             >
               {showSkeleton ? (
                 Array.from({ length: loadingRows }, (_, i) => (
