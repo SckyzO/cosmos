@@ -4,7 +4,11 @@ Props that are easy to miss, one line each. The Storybook page of each component
 
 - `Tabs variant="pills"`: rounded triggers on a tinted track, the active one filled with the accent, horizontal or vertical.
 - `Tabs variant="raised"`: the same neutral gray track, but the active tab is raised on it in white (a lighter gray in the dark themes) with no accent, horizontal or vertical.
-- `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`.
+- `Toggle size="sm"`: a 36×20 track; the label stays in the same `<label>`. `size="lg"` is a 52×28 track with a 24px thumb, for a settings page.
+- `Toggle intent="success"`: the track takes that colour while the switch is on (`brand`, the default, `success`, `warning` or `danger`); it is gray while off, whatever the intent.
+- `Toggle labelPosition="start"`: the label before the switch, which rests on the end edge of the row, for a settings list. The order follows the reading direction.
+- `Toggle name="alerts" value="weekly"`: a native form posts `value` (`on` by default) while the switch is on, and nothing while it is off or disabled, as it does for a checkbox.
+- `ThemeToggle themes={['light', 'sand', 'dark', 'system']}`: the themes a click cycles through, light and dark by default; the icon shows the current one.
 - `Textarea autoResize maxRows={6}`: `rows` is the minimum, the field grows with its content up to `maxRows`, then scrolls.
 - `Input`, `Select` and `Textarea` `success="Username is available."`: the message under a field whose value is valid, with a green border (and a check icon on `Input` and `Select`). It is linked as the description and announced politely; `error` wins when both are set. `OtpInput success`: a green border on every cell, the message is yours.
 - `SegmentedControl` options take a `badge` (a count in a small pill, part of the radio's accessible name).
