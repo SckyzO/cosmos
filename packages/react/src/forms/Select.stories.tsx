@@ -476,6 +476,66 @@ export const NoSuccessKeepsTheNeutralLook: Story = {
   },
 };
 
+// ── The open list ───────────────────────────────────────────────────────────
+
+/** `select` as the browser draws it when it can restyle its list, or as it always does. */
+const canStyleTheList = () => CSS.supports('appearance', 'base-select');
+
+/**
+ * Where the browser can draw the open list from CSS, it takes the look of the field listboxes: the
+ * panel of the field itself (its surface, a border, rounded corners, a shadow), rows of
+ * `py-row-8 px-3`, a check mark on the picked row only. The closed control keeps one chevron, ours,
+ * and its text centred. Elsewhere the select stays native: `appearance: none`, no restyled list.
+ * The list is read through the computed style of its pseudo-elements, since a script cannot open
+ * it without a click from a person.
+ */
+export const OpenListTakesTheListboxLook: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { label: 'Region', options: REGIONS, defaultValue: 'eu-west-3' },
+  play: async ({ canvas }) => {
+    const select = canvas.getByRole('combobox', { name: 'Region' }) as HTMLSelectElement;
+    const field = getComputedStyle(select);
+    if (!canStyleTheList()) {
+      await expect(field.appearance).toBe('none');
+      return;
+    }
+    await expect(field.appearance).toBe('base-select');
+    await expect(field.alignItems).toBe('center');
+    // Our chevron is the only one.
+    await expect(getComputedStyle(select, '::picker-icon').display).toBe('none');
+    await expect(select.getBoundingClientRect().height).toBe(36);
+
+    // A row is a `py-row-8 px-3` (the token a Combobox row takes), and a gap before its check.
+    const probe = document.createElement('div');
+    probe.className = 'py-row-8 px-3';
+    document.body.append(probe);
+    const row = getComputedStyle(probe);
+    const [picked, other] = [select.options[1]!, select.options[0]!];
+    for (const option of [picked, other]) {
+      const style = getComputedStyle(option);
+      await expect(style.paddingTop).toBe(row.paddingTop);
+      await expect(style.paddingBottom).toBe(row.paddingBottom);
+      await expect(style.paddingLeft).toBe(row.paddingLeft);
+      await expect(style.paddingRight).toBe(row.paddingRight);
+    }
+    probe.remove();
+
+    // The mark is on the picked row only.
+    await expect(getComputedStyle(picked, '::checkmark').display).not.toBe('none');
+    await expect(getComputedStyle(other, '::checkmark').display).toBe('none');
+
+    // The panel is the field's own surface, in every theme, with a border and rounded corners.
+    inEachTheme(() => {
+      const panel = getComputedStyle(select, '::picker(select)');
+      expect(panel.backgroundColor, 'panel surface').toBe(getComputedStyle(select).backgroundColor);
+      expect(panel.borderTopWidth).toBe('1px');
+      expect(panel.borderTopColor, 'panel border').toBe(getComputedStyle(select).borderTopColor);
+      expect(parseFloat(panel.borderTopLeftRadius)).toBeGreaterThan(0);
+      expect(panel.boxShadow).not.toBe('none');
+    });
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The chevron, and the check beside it, sit on the end edge, and the text clears them. */
