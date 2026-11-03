@@ -185,6 +185,11 @@ export const EventCalendarTimeGrid = ({
   const [cursor, setCursor] = useState<SlotCursor | null>(null);
   const [active, setActive] = useState(false);
   const [hover, setHover] = useState<{ key: string; minutes: number } | null>(null);
+  // The pointer moving inside one slot is no change: the same object keeps the grid from drawing.
+  const hoverSlot = (next: { key: string; minutes: number } | null) =>
+    setHover((current) =>
+      current?.key === next?.key && current?.minutes === next?.minutes ? current : next
+    );
   const interactive = onSlotClick !== undefined;
   const count = days.length;
 
@@ -443,11 +448,11 @@ export const EventCalendarTimeGrid = ({
                   interactive
                     ? (e) => {
                         if (e.pointerType !== 'mouse') return;
-                        setHover(overSlot(e) ? { key, minutes: slotUnder(e) } : null);
+                        hoverSlot(overSlot(e) ? { key, minutes: slotUnder(e) } : null);
                       }
                     : undefined
                 }
-                onPointerLeave={interactive ? () => setHover(null) : undefined}
+                onPointerLeave={interactive ? () => hoverSlot(null) : undefined}
                 onClick={
                   onSlotClick
                     ? (e) => {
