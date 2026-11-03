@@ -13,6 +13,12 @@ export type FoldProps = {
    */
   className?: string;
   /**
+   * Unfold when it mounts open, instead of being there: for a block mounted by the very change
+   * that opens it (a detail row that appears under its row). Only for a fold that mounts open
+   * after the page is drawn, never one that starts open with it. Default `false`.
+   */
+  appear?: boolean;
+  /**
    * Mount `children` the first time the fold opens, not before, and keep them mounted after: for
    * a block that is heavy or that the host only computes on demand. Default `false`: the content
    * is mounted while closed.
@@ -31,15 +37,27 @@ export type FoldProps = {
  * pointer's reach) and hidden from assistive technology at once, whatever the animation still has
  * to play.
  *
+ * A fold that is there from the first render is simply open. One that a change mounts open (a
+ * detail row that appears when its row opens) takes `appear` to unfold on arrival; to leave, its
+ * host keeps it mounted until `useExitTransition` says its exit has played.
+ *
  * Unfolded and at rest the box stops clipping, so a focus ring or a shadow at the content's edge
  * is not cut. With no motion (`0s` durations, reduced motion) there is no animation to wait for:
  * it is at rest as soon as it opens.
  */
-export const Fold = ({ open, id, className, lazy = false, children }: FoldProps) => {
+export const Fold = ({
+  open,
+  id,
+  className,
+  appear = false,
+  lazy = false,
+  children,
+}: FoldProps) => {
   const box = useRef<HTMLDivElement>(null);
   const [opened, setOpened] = useState(open);
   if (open && !opened) setOpened(true);
-  const [rest, setRest] = useState(open);
+  // Mounted open with `appear`, it still has to unfold: it is not at rest yet.
+  const [rest, setRest] = useState(open && !appear);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -72,7 +90,7 @@ export const Fold = ({ open, id, className, lazy = false, children }: FoldProps)
         // One column that never outgrows the box: an `auto` one would take the content's own width.
         'grid grid-cols-1 transition-[grid-template-rows] duration-(--cosmos-motion-base)',
         open
-          ? 'grid-rows-[1fr] ease-(--cosmos-ease-out)'
+          ? clsx('grid-rows-[1fr] ease-(--cosmos-ease-out)', appear && 'starting:grid-rows-[0fr]')
           : 'grid-rows-[0fr] ease-(--cosmos-ease-in)',
         className
       )}
@@ -82,7 +100,10 @@ export const Fold = ({ open, id, className, lazy = false, children }: FoldProps)
           className={clsx(
             'transition-[opacity,translate] duration-(--cosmos-motion-base)',
             open
-              ? 'translate-none opacity-100 ease-(--cosmos-ease-out)'
+              ? clsx(
+                  'translate-none opacity-100 ease-(--cosmos-ease-out)',
+                  appear && 'starting:-translate-y-1 starting:opacity-0'
+                )
               : '-translate-y-1 opacity-0 ease-(--cosmos-ease-in)'
           )}
         >

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ChevronDown, Download, Search, X } from 'lucide-react';
+import { Download, Search, X } from 'lucide-react';
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
@@ -46,6 +46,7 @@ import { rowInitials, triggerId } from './editing';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
 import { usePinnedWidths } from './usePinnedWidths';
+import { DetailRow } from './ExpandedDetail';
 import { RowChevron } from './RowChevron';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
@@ -1036,6 +1037,8 @@ export const DataTable = <T,>({
               : (isOpen || rowInEdit) && 'bg-gray-50 dark:bg-white/[0.03]',
             // The detail or error row below is part of it: no divider between the two.
             (isOpen || rowInEdit?.error) && 'border-b-0',
+            // ... and while the detail still folds back, after the row has closed.
+            'has-[+[data-detail-row]]:border-b-0',
             (onRowClick || href) && 'cursor-pointer',
             'group/row',
             focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
@@ -1057,7 +1060,7 @@ export const DataTable = <T,>({
                 variant="ghost"
                 size="sm"
                 shape="square"
-                icon={isOpen ? ChevronDown : RowChevron}
+                icon={RowChevron}
                 aria-expanded={isOpen}
                 // Only while the detail row exists: an id that is not there names nothing.
                 aria-controls={isOpen ? detailId : undefined}
@@ -1213,12 +1216,13 @@ export const DataTable = <T,>({
         {rowInEdit?.error && (
           <RowEditError id={rowErrorId} message={rowInEdit.error} colSpan={columnCount} />
         )}
-        {isOpen && renderExpandedRow && (
-          <tr id={detailId} className="bg-gray-50 dark:bg-white/[0.03] print:break-inside-avoid">
-            <td colSpan={columnCount} className="ps-15 pe-4 pt-1 pb-5 text-sm">
-              {renderExpandedRow(row)}
-            </td>
-          </tr>
+        {expandable && renderExpandedRow && (
+          <DetailRow
+            id={detailId}
+            open={isOpen}
+            colSpan={columnCount}
+            render={() => renderExpandedRow(row)}
+          />
         )}
       </Fragment>
     );
