@@ -5,6 +5,13 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.6.0...@sckyzo/cosmos-charts@0.7.0) (2026-11-03)
+
+
+### Miscellaneous Chores
+
+* **@sckyzo/cosmos-charts:** Synchronize cosmos versions
+
 ## [0.6.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.5.0...@sckyzo/cosmos-charts@0.6.0) (2026-11-02)
 
 
