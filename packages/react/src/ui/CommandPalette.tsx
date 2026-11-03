@@ -12,6 +12,7 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { BACKDROP_VARIANT_CLASS, type BackdropVariant } from './backdropStyle';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { SectionLabel } from './SectionLabel';
 
@@ -25,10 +26,16 @@ export type CommandPaletteProps = ComponentPropsWithoutRef<typeof Command.Dialog
    * to skip registering a hotkey.
    */
   hotkey?: 'mod+k' | 'mod+/' | '/' | string | null;
+  /**
+   * The scrim behind the palette: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. Same look as `Backdrop`'s `variant`.
+   */
+  backdrop?: BackdropVariant;
 };
 
 const CommandPaletteRoot = ({
   hotkey = 'mod+k',
+  backdrop = 'dim',
   open,
   onOpenChange,
   className,
@@ -62,7 +69,8 @@ const CommandPaletteRoot = ({
       onOpenChange={onOpenChange}
       label={label}
       overlayClassName={clsx(
-        'fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm',
+        'fixed inset-0 z-[9998]',
+        BACKDROP_VARIANT_CLASS[backdrop],
         overlayClassName
       )}
       contentClassName={clsx(

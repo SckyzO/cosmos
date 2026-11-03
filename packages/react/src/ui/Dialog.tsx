@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Backdrop } from './Backdrop';
 import type { ModalProps, ModalSize } from './Modal';
 import {
   DialogTitleProvider,
@@ -33,6 +34,7 @@ export const Dialog = ({
   open,
   onClose,
   size = 'md',
+  backdrop = 'dim',
   className,
   ariaLabel,
   role = 'dialog',
@@ -79,11 +81,7 @@ export const Dialog = ({
       aria-labelledby={!ariaLabel && hasTitle ? titleId : undefined}
       aria-describedby={ariaDescribedBy}
     >
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
+      <Backdrop variant={backdrop} zIndex={0} onClick={onClose} />
       <div
         className={clsx(
           'relative w-full overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900',

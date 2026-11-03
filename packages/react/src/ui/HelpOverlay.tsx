@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Fragment, useEffect, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import type { BackdropVariant } from './Backdrop';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { Modal } from './Modal';
 import { SectionLabel } from './SectionLabel';
@@ -67,6 +68,8 @@ export type HelpOverlayProps = {
   description?: ReactNode;
   /** Footer hint text. Defaults to `Press Esc to close`. */
   footer?: ReactNode;
+  /** The scrim behind the overlay, as `Modal`'s `backdrop`. Default `dim`. */
+  backdrop?: BackdropVariant;
   className?: string;
   children: ReactNode;
 };
@@ -79,6 +82,7 @@ const HelpOverlayRoot = ({
   title = 'Keyboard shortcuts',
   description,
   footer,
+  backdrop,
   className,
   children,
 }: HelpOverlayProps) => {
@@ -111,6 +115,7 @@ const HelpOverlayRoot = ({
       open={open}
       onClose={() => setOpen(false)}
       size="xl"
+      backdrop={backdrop}
       ariaLabel={typeof title === 'string' ? title : 'Keyboard shortcuts'}
       className={clsx('flex max-h-[80vh] flex-col', className)}
     >

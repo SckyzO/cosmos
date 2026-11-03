@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import type { BackdropVariant } from '../ui/Backdrop';
 import { Drawer } from '../ui/Drawer';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
@@ -93,6 +94,11 @@ export type ShellProps = {
    * a click on a `Sidebar.Item`, or the viewport growing past `lg`), with the new open state.
    */
   onSidebarOpenChange?: (open: boolean) => void;
+  /**
+   * The scrim behind the sidebar drawer, below `lg`: `dim` (default) is the colour alone, `blur`
+   * blurs the page by 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  drawerBackdrop?: BackdropVariant;
   /** Optional className override on the root element. */
   className?: string;
 };
@@ -136,6 +142,7 @@ export const Shell = ({
   defaultSidebarOpen = false,
   sidebarOpen: controlledOpen,
   onSidebarOpenChange,
+  drawerBackdrop,
   className,
 }: ShellProps) => {
   // Every SidebarToggle passes the state to move to.
@@ -193,6 +200,7 @@ export const Shell = ({
             onClose={() => setOpen(false)}
             side="start"
             size="sm"
+            backdrop={drawerBackdrop}
             swipeToClose
             ariaLabel="Navigation menu"
           >

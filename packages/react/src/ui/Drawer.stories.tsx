@@ -498,16 +498,15 @@ export const NoBackdropOmitsOverlay: Story = {
     </Drawer>
   ),
   // Drawer portals into `document.body` — query there, not in `canvasElement`.
-  // With `withBackdrop={false}`, the overlay <div class="bg-gray-500/75 …">
-  // must NOT be rendered. `previousElementSibling` would now match Storybook's
-  // own canvas wrapper since both share document.body, so check the absence
-  // of the backdrop class directly instead.
+  // With `withBackdrop={false}`, the scrim (`data-slot="backdrop"`) must NOT be rendered.
+  // `previousElementSibling` would match Storybook's own canvas wrapper, which shares
+  // document.body, so look for the scrim itself.
   play: async () => {
     const drawer = document.body.querySelector('[role="dialog"]');
     await expect(drawer).not.toBeNull();
     // Without a backdrop the page stays interactive: the drawer is not modal.
     await expect(drawer).not.toHaveAttribute('aria-modal');
-    const backdrop = document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]');
+    const backdrop = document.body.querySelector('[data-slot="backdrop"]');
     await expect(backdrop).toBeNull();
   },
 };
@@ -686,7 +685,7 @@ export const CloseTriggers: Story = {
     const body = within(document.body);
     await body.findByRole('dialog');
     // The backdrop is the dimmed layer behind the panel.
-    await userEvent.click(document.body.querySelector('div[aria-hidden][class*="bg-gray-500"]')!);
+    await userEvent.click(document.body.querySelector('[data-slot="backdrop"]')!);
     await expect(args.onClose).toHaveBeenCalledTimes(1);
     await userEvent.click(body.getByRole('button', { name: 'Close drawer' }));
     await expect(args.onClose).toHaveBeenCalledTimes(2);
@@ -1101,8 +1100,7 @@ const sheetOpen = async (name: string) => {
   await waitFor(() => expect(sheet.getBoundingClientRect().bottom).toBe(viewportBottom()));
   return sheet;
 };
-const scrim = () =>
-  document.body.querySelector<HTMLElement>('div[aria-hidden][class*="bg-gray-500"]')!;
+const scrim = () => document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
 
 /** The sheet enters and leaves by the bottom edge, never the top or a side. */
 export const BottomSheetSlidesFromTheBottom: Story = {

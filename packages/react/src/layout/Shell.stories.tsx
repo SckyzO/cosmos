@@ -582,8 +582,7 @@ const expectClosed = async (dialog: HTMLElement) => {
   await waitFor(() => expect(dialog).not.toBeVisible());
   await expect(body().queryByRole('dialog')).toBeNull();
 };
-const scrim = () =>
-  document.body.querySelector<HTMLElement>('div[aria-hidden][class*="bg-gray-500"]')!;
+const scrim = () => document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
 
 /** At 375px the sidebar is off screen: the Topbar shows the hamburger and the logo. */
 export const Mobile: Story = {

@@ -848,9 +848,7 @@ export const HamburgerTogglesTheSidebar: Story = {
     await expect(within(dialog).getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
     await expect(within(dialog).getByText('Fernhill Studio')).toBeVisible();
     await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
-    const backdrop = document.body.querySelector<HTMLElement>(
-      'div[aria-hidden][class*="bg-gray-500"]'
-    );
+    const backdrop = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]');
     await expect(backdrop).not.toBeNull();
 
     await userEvent.click(backdrop!);

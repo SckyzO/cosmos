@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button, type ButtonIntent } from './Button';
+import type { BackdropVariant } from './Backdrop';
 import { Dialog } from './Dialog';
 import type { Intent } from './intent';
 import { useDialogTitleId } from './overlayA11y';
@@ -12,6 +13,11 @@ export type ModalProps = {
   open: boolean;
   onClose: () => void;
   size?: ModalSize;
+  /**
+   * The scrim behind the dialog: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
   className?: string;
   /**
    * Accessible name for the dialog when it has no `Modal.Header` title to point
@@ -140,6 +146,8 @@ export type ModalAlertProps = {
    * Has no effect in `horizontal` layout.
    */
   fullWidthAction?: boolean;
+  /** The scrim behind the alert, as `Modal`'s `backdrop`. Default `dim`. */
+  backdrop?: BackdropVariant;
 };
 
 const Alert = ({
@@ -155,6 +163,7 @@ const Alert = ({
   loading = false,
   layout = 'centered',
   fullWidthAction = false,
+  backdrop,
 }: ModalAlertProps) => {
   const Icon = ALERT_ICON[intent];
   const buttonIntent = ALERT_BUTTON_INTENT[intent];
@@ -163,7 +172,14 @@ const Alert = ({
 
   if (layout === 'horizontal') {
     return (
-      <Dialog open={open} onClose={onClose} size="lg" ariaLabel={title} role="alertdialog">
+      <Dialog
+        open={open}
+        onClose={onClose}
+        size="lg"
+        backdrop={backdrop}
+        ariaLabel={title}
+        role="alertdialog"
+      >
         <div className="bg-white sm:flex sm:items-start sm:p-6 dark:bg-gray-900">
           <div
             className={clsx(
@@ -202,7 +218,14 @@ const Alert = ({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} size="sm" ariaLabel={title} role="alertdialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      size="sm"
+      backdrop={backdrop}
+      ariaLabel={title}
+      role="alertdialog"
+    >
       <div className="p-6 text-center">
         <div
           className={clsx(

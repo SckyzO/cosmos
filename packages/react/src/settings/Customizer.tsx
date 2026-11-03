@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, Copy, RotateCcw } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import type { BackdropVariant } from '../ui/Backdrop';
 import { Drawer, type DrawerSize } from '../ui/Drawer';
 import { Button } from '../ui/Button';
 import { SegmentedControl } from '../forms/SegmentedControl';
@@ -168,6 +169,11 @@ export type CustomizerProps = {
   subtitle?: string;
   /** Width of the panel. Default `lg`. */
   size?: DrawerSize;
+  /**
+   * The scrim behind the panel: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
 };
 
 // ── Previews ─────────────────────────────────────────────────────────────────
@@ -376,6 +382,7 @@ export const Customizer = ({
   title = 'Customize',
   subtitle = 'Changes apply at once.',
   size = 'lg',
+  backdrop,
 }: CustomizerProps) => {
   const [announcement, setAnnouncement] = useState('');
   const announceTimer = useRef<number | null>(null);
@@ -414,7 +421,7 @@ export const Customizer = ({
   };
 
   return (
-    <Drawer open={open} onClose={onClose} side="end" size={size}>
+    <Drawer open={open} onClose={onClose} side="end" size={size} backdrop={backdrop}>
       <Drawer.Header title={title} description={subtitle} onClose={onClose} />
       <Drawer.Body className="space-y-6">
         {shown('presets') && presets.length > 0 && (

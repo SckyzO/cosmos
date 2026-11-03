@@ -21,6 +21,7 @@ import {
 } from './overlayA11y';
 import { directionOf } from '../hooks/direction';
 import { useExitTransition } from '../hooks/useExitTransition';
+import { Backdrop, type BackdropVariant } from './Backdrop';
 import { useIsClient } from '../hooks/useIsClient';
 
 /** `start` and `end` are the edges of the line: the left and the right, swapped under `dir="rtl"`. */
@@ -115,6 +116,11 @@ export type DrawerProps = {
    */
   withBackdrop?: boolean;
   /**
+   * The scrim behind the panel, when there is one: `dim` (default) is the colour alone, `blur`
+   * blurs the page by 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
+  /**
    * Render the close button on the backdrop (outside the panel), opposite
    * the chosen `side`. Mirrors the TUI "With close button on outside"
    * pattern. When `true`, no close button is rendered inside `Drawer.Header`
@@ -150,6 +156,7 @@ const Root = ({
   size = 'md',
   handle = true,
   withBackdrop = true,
+  backdrop = 'dim',
   closeOutside = false,
   swipeToClose = false,
   ariaLabel,
@@ -264,15 +271,7 @@ const Root = ({
   return createPortal(
     <>
       {withBackdrop && (
-        <div
-          ref={scrimRef}
-          className={clsx(
-            'fixed inset-0 z-40 bg-gray-500/75 transition-opacity duration-300 dark:bg-gray-900/75',
-            open ? 'opacity-100' : 'pointer-events-none opacity-0'
-          )}
-          onClick={onClose}
-          aria-hidden
-        />
+        <Backdrop ref={scrimRef} variant={backdrop} zIndex={40} open={open} onClick={onClose} />
       )}
       {/* A `div`, not an `aside`: the `complementary` role of an `aside` forbids `dialog`. */}
       <div
