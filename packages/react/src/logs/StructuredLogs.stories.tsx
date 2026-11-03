@@ -15,10 +15,9 @@ import type { LogLine } from './types';
  */
 const meta = {
   title: 'Monitoring/Structured Logs',
-  component: DataTable,
   parameters: { layout: 'padded' },
-  args: { rows: [], columns: [], rowKey: () => '' },
-} satisfies Meta<typeof DataTable>;
+  tags: ['autodocs'],
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
