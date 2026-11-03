@@ -930,6 +930,21 @@ export const ErrorKeepsTheNavAndRetries: Story = {
   },
 };
 
+/** The count of the bell, past 9999, is read beside the bell and not drawn over it. */
+export const ExtremeBellCountDoesNotCoverTheBell: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <AppShellScreen state="extreme" />,
+  play: async ({ canvas }) => {
+    const bell = canvas.getByRole('button', { name: /^Notifications/ });
+    const icon = bell.querySelector('svg')!.getBoundingClientRect();
+    const count = within(bell).getByText('9999+').getBoundingClientRect();
+    const overlap =
+      Math.min(icon.right, count.right) > Math.max(icon.left, count.left) &&
+      Math.min(icon.bottom, count.bottom) > Math.max(icon.top, count.top);
+    await expect(overlap).toBe(false);
+  },
+};
+
 /** Long names are cut, counts stay short, the nav scrolls and the breadcrumb folds. */
 export const ExtremeContentFits: Story = {
   tags: ['!dev', '!autodocs'],
