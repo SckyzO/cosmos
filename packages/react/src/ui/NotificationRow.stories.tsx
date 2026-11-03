@@ -26,6 +26,7 @@ import {
 } from '../storybook-helpers';
 import { Button } from './Button';
 import { Card } from './Card';
+import { IconButton } from './IconButton';
 import { NotificationRow, type NotificationRowIntent } from './NotificationRow';
 import { Tabs } from './Tabs';
 
@@ -57,21 +58,12 @@ const rowButton = (root: HTMLElement, title: string) =>
 
 const actionButtons = (title: string, unread: boolean) => (
   <>
-    <Button
-      variant="ghost"
-      shape="square"
-      size="sm"
-      icon={unread ? MailOpen : Mail}
-      aria-label={`${unread ? 'Mark as read' : 'Mark as unread'}: ${title}`}
-    />
-    <Button
-      variant="ghost"
-      intent="danger"
-      shape="square"
-      size="sm"
-      icon={Trash2}
-      aria-label={`Delete: ${title}`}
-    />
+    <IconButton aria-label={`${unread ? 'Mark as read' : 'Mark as unread'}: ${title}`}>
+      {unread ? <MailOpen aria-hidden /> : <Mail aria-hidden />}
+    </IconButton>
+    <IconButton intent="danger" aria-label={`Delete: ${title}`}>
+      <Trash2 aria-hidden />
+    </IconButton>
   </>
 );
 
@@ -208,6 +200,67 @@ export const WithActionsChecks: Story = {
     await expect(args.onClick).not.toHaveBeenCalled();
     await userEvent.click(row);
     await expect(args.onClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+/**
+ * The actions sit on the badge's line, not centred on the row: their vertical centre is the
+ * badge's, to the pixel, and the badge, then the actions, share one end gap.
+ */
+export const ActionsShareTheBadgeLine: Story = {
+  ...WithActions,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas, canvasElement }) => {
+    const row = rowButton(canvasElement, 'Ana Costa commented');
+    const badge = within(row).getByText('INFO').parentElement!;
+    const centre = (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      return rect.top + rect.height / 2;
+    };
+    for (const name of [/^Mark as read/, /^Delete/]) {
+      const action = canvas.getByRole('button', { name });
+      await expect(Math.abs(centre(action) - centre(badge))).toBeLessThanOrEqual(1);
+    }
+  },
+};
+
+/**
+ * The actions are 32px boxes around 16px icons, muted at rest: the delete one too, which turns red
+ * only under the pointer or the keyboard, so six rows do not show six red icons.
+ */
+export const ActionsAreNeutralAtRest: Story = {
+  ...WithActions,
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <>
+      {/* The red the delete action turns to, written out. */}
+      <span data-probe className="text-red-700 dark:text-red-400" />
+      <Frame>
+        <NotificationRow {...args} actions={actionButtons(args.title, Boolean(args.unread))} />
+      </Frame>
+    </>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const mark = canvas.getByRole('button', { name: /^Mark as read/ });
+    const remove = canvas.getByRole('button', { name: /^Delete/ });
+    for (const button of [mark, remove]) {
+      const box = button.getBoundingClientRect();
+      await expect([box.width, box.height]).toEqual([32, 32]);
+      const glyph = button.querySelector('svg')!.getBoundingClientRect();
+      await expect([glyph.width, glyph.height]).toEqual([16, 16]);
+    }
+    const red = getComputedStyle(canvasElement.querySelector('[data-probe]')!).color;
+    const rest = getComputedStyle(mark).color;
+    await expect(getComputedStyle(remove).color).toBe(rest);
+    await expect(rest).not.toBe(red);
+    // Red comes from `hover:` and `focus-visible:`: a synthetic hover sets no `:hover`, so the
+    // classes are read, and the keyboard focus is real.
+    await expect(remove).toHaveClass('hover:text-red-700', 'focus-visible:text-red-700');
+    await expect(mark).not.toHaveClass('hover:text-red-700');
+    mark.focus();
+    await userEvent.tab();
+    await expect(remove).toHaveFocus();
+    await expect(getComputedStyle(remove).color).toBe(red);
   },
 };
 
@@ -409,23 +462,19 @@ const NotificationsPage = ({ initial = NOTICES }: { initial?: Notice[] }) => {
                     onClick={() => setUnread(n.id, false)}
                     actions={
                       <>
-                        <Button
-                          variant="ghost"
-                          shape="square"
-                          size="sm"
-                          icon={n.unread ? MailOpen : Mail}
+                        <IconButton
                           aria-label={`${n.unread ? 'Mark as read' : 'Mark as unread'}: ${n.title}`}
                           onClick={() => setUnread(n.id, !n.unread)}
-                        />
-                        <Button
-                          variant="ghost"
+                        >
+                          {n.unread ? <MailOpen aria-hidden /> : <Mail aria-hidden />}
+                        </IconButton>
+                        <IconButton
                           intent="danger"
-                          shape="square"
-                          size="sm"
-                          icon={Trash2}
                           aria-label={`Delete: ${n.title}`}
                           onClick={() => remove(n.id)}
-                        />
+                        >
+                          <Trash2 aria-hidden />
+                        </IconButton>
                       </>
                     }
                   />
