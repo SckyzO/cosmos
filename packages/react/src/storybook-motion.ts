@@ -88,3 +88,44 @@ export const tokenMs = (token: string) => {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
   return Math.round(parseFloat(raw) * (raw.endsWith('ms') ? 1 : 1000));
 };
+
+/**
+ * The sliding marker of a `Tabs.List` or a `SegmentedControl` (what draws the accent line, the
+ * pill or the segment fill behind the active option).
+ */
+export const indicatorOf = (host: Element) =>
+  host.querySelector<HTMLElement>('[data-slot="indicator"]')!;
+
+/**
+ * How far a marker is from the option it should sit on or under: the gaps of its start and of its
+ * size along the line (`inline`) and across it (`block`), in px, with the line's direction taken
+ * from the host. All 0 when it is exactly there; a marker mid-slide has a gap.
+ */
+export const indicatorGap = (marker: Element, option: Element) => {
+  const a = marker.getBoundingClientRect();
+  const b = option.getBoundingClientRect();
+  const rtl = getComputedStyle(marker).direction === 'rtl';
+  return {
+    start: Math.abs(rtl ? a.right - b.right : a.left - b.left),
+    inline: Math.abs(a.width - b.width),
+    blockStart: Math.abs(a.top - b.top),
+    block: Math.abs(a.height - b.height),
+  };
+};
+
+/**
+ * Whether anything in `element` is running a transition that moves or resizes a box: the slide of
+ * a marker. The browser reports the logical `inset-inline-start` and `inline-size` it was given as
+ * the physical property they resolve to (`left` or `right`, `width`), so those are matched too.
+ */
+export const isSliding = (element: Element) =>
+  element
+    .getAnimations({ subtree: true })
+    .some(
+      (animation) =>
+        animation.playState === 'running' &&
+        'transitionProperty' in animation &&
+        /^(inset|left$|right$|top$|bottom$|width$|height$|inline-size$|block-size$)/.test(
+          String(animation.transitionProperty)
+        )
+    );
