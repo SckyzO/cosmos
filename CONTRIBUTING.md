@@ -50,6 +50,12 @@ required "Lint + typecheck + test + build" check still reports, and passes.
   story that exists only to test takes those tags itself. The story tests fail a visible story whose
   play makes an assertion, including one made by a helper such as `expectNoHorizontalOverflow`.
 
+  Table stories take their rows and columns from `packages/react/src/table/storybook-fixtures.tsx`
+  (hosts, people, orders, with `makeHosts(n)`, `makeOrders(n)` and column transforms such as
+  `pickColumns` and `patchColumns`) and change a variant with a transform, instead of declaring a
+  data model of their own. A hidden test keeps local rows only when the shared ones would make it
+  unreadable, and says so in a comment.
+
 - **E2E** — Playwright against Storybook, in `tests/e2e`.
 
 `pnpm --filter '@cosmos/storybook' test` runs both Vitest projects, so `make test`, `make ci` and

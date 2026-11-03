@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DataTable } from './DataTable';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
-import type { ColumnDef } from './types';
+import { hostColumns, makeHosts, pickColumns } from './storybook-fixtures';
 
 // `virtualize` has its own file, in the `Tables/DataTable` family: DataTable.stories.tsx is already
 // one of the largest stories files of the package.
@@ -17,34 +17,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Node = { id: string; name: string; team: string; cpu: number };
-
-const TEAMS = ['Core', 'Kernel', 'Web', 'Data', 'Infra'];
 const COUNT = 10_000;
 
-// 10,000 rows with nothing random in them: the same table on every run.
-const rows: Node[] = Array.from({ length: COUNT }, (_, i) => ({
-  id: `node-${String(i + 1).padStart(5, '0')}`,
-  name: `node-${String(i + 1).padStart(5, '0')}`,
-  team: TEAMS[i % TEAMS.length],
-  cpu: (i * 37) % 100,
-}));
-
-const columns: ColumnDef<Node>[] = [
-  {
-    key: 'name',
-    label: 'Name',
-    sortable: true,
-    sortValue: (r) => r.name,
-    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
-  },
-  { key: 'team', label: 'Team', render: (r) => r.team },
-  { key: 'cpu', label: 'CPU %', align: 'end', render: (r) => `${r.cpu}%` },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
+// 10,000 hosts, `node-00001` to `node-10000`, with nothing random in them: the same table on every
+// run. The host, its owner and its CPU are what the window draws.
+const rows = makeHosts(COUNT);
+const columns = pickColumns(hostColumns, ['host', 'owner', 'cpu']);
 
 /** The rows of the table's body that are drawn: the spacers are `aria-hidden`, so not rows. */
 const bodyRows = (table: HTMLElement) =>
@@ -62,18 +40,16 @@ const scrollerOf = (table: HTMLElement) => table.parentElement as HTMLElement;
  */
 export const TenThousandRows: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        selectable
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      selectable
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
 };
 
@@ -81,18 +57,16 @@ export const TenThousandRows: Story = {
 export const Compact: Story = {
   tags: ['!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        density="compact"
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      density="compact"
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
 };
 
@@ -100,18 +74,16 @@ export const Compact: Story = {
 export const Comfortable: Story = {
   tags: ['!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        density="comfortable"
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      density="comfortable"
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
 };
 
@@ -119,17 +91,15 @@ export const Comfortable: Story = {
 export const OnlyTheWindowIsDrawn: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Nodes' });
@@ -170,38 +140,36 @@ export const OnlyTheWindowIsDrawn: Story = {
 export const RowIsAsTallAsAStandardRow: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-6">
-        {(['compact', 'default', 'comfortable'] as const).map((density) => (
-          <div key={density} className="flex gap-6">
-            <div className="min-w-0 flex-1">
-              <DataTable
-                rows={rows.slice(0, 20)}
-                columns={columns}
-                rowKey={(r) => r.id}
-                density={density}
-                pageSize={20}
-                selectable
-                aria-label={`Standard ${density}`}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <DataTable
-                rows={rows}
-                columns={columns}
-                rowKey={(r) => r.id}
-                density={density}
-                pageSize={COUNT}
-                selectable
-                virtualize
-                aria-label={`Windowed ${density}`}
-                className="max-h-96"
-              />
-            </div>
+    <div className="flex flex-col gap-6">
+      {(['compact', 'default', 'comfortable'] as const).map((density) => (
+        <div key={density} className="flex gap-6">
+          <div className="min-w-0 flex-1">
+            <DataTable
+              rows={rows.slice(0, 20)}
+              columns={columns}
+              rowKey={(r) => r.host}
+              density={density}
+              pageSize={20}
+              selectable
+              aria-label={`Standard ${density}`}
+            />
           </div>
-        ))}
-      </div>
-    </Wrap>
+          <div className="min-w-0 flex-1">
+            <DataTable
+              rows={rows}
+              columns={columns}
+              rowKey={(r) => r.host}
+              density={density}
+              pageSize={COUNT}
+              selectable
+              virtualize
+              aria-label={`Windowed ${density}`}
+              className="max-h-96"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   ),
   play: async ({ canvas }) => {
     for (const density of ['compact', 'default', 'comfortable']) {
@@ -222,34 +190,32 @@ export const RowIsAsTallAsAStandardRow: Story = {
 export const RowFollowsThePageDensity: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-6">
-        {(['compact', 'comfortable'] as const).map((page) => (
-          <div key={page} data-density={page} className="flex gap-6">
-            <div className="min-w-0 flex-1">
-              <DataTable
-                rows={rows.slice(0, 20)}
-                columns={columns}
-                rowKey={(r) => r.id}
-                pageSize={20}
-                aria-label={`Standard ${page}`}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <DataTable
-                rows={rows}
-                columns={columns}
-                rowKey={(r) => r.id}
-                pageSize={COUNT}
-                virtualize
-                aria-label={`Windowed ${page}`}
-                className="max-h-96"
-              />
-            </div>
+    <div className="flex flex-col gap-6">
+      {(['compact', 'comfortable'] as const).map((page) => (
+        <div key={page} data-density={page} className="flex gap-6">
+          <div className="min-w-0 flex-1">
+            <DataTable
+              rows={rows.slice(0, 20)}
+              columns={columns}
+              rowKey={(r) => r.host}
+              pageSize={20}
+              aria-label={`Standard ${page}`}
+            />
           </div>
-        ))}
-      </div>
-    </Wrap>
+          <div className="min-w-0 flex-1">
+            <DataTable
+              rows={rows}
+              columns={columns}
+              rowKey={(r) => r.host}
+              pageSize={COUNT}
+              virtualize
+              aria-label={`Windowed ${page}`}
+              className="max-h-96"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   ),
   play: async ({ canvas }) => {
     const heights: number[] = [];
@@ -268,29 +234,27 @@ export const RowFollowsThePageDensity: Story = {
 export const TallContentIsClipped: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 50)}
-        columns={[
-          {
-            key: 'name',
-            label: 'Name',
-            render: (r) => (
-              <div>
-                <p>{r.name}</p>
-                <p>second line</p>
-                <p>third line</p>
-              </div>
-            ),
-          },
-        ]}
-        rowKey={(r) => r.id}
-        pageSize={50}
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 50)}
+      columns={[
+        {
+          key: 'name',
+          label: 'Name',
+          render: (r) => (
+            <div>
+              <p>{r.host}</p>
+              <p>second line</p>
+              <p>third line</p>
+            </div>
+          ),
+        },
+      ]}
+      rowKey={(r) => r.host}
+      pageSize={50}
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Nodes' });
@@ -309,19 +273,17 @@ export const ScrollingKeepsTheFocusAndTheSelection: Story = {
   render: () => {
     const Host = () => {
       return (
-        <Wrap>
-          <DataTable
-            rows={rows}
-            columns={columns}
-            rowKey={(r) => r.id}
-            pageSize={COUNT}
-            selectable
-            virtualize
-            defaultSelection={new Set(['node-00002', 'node-09000'])}
-            aria-label="Nodes"
-            className="max-h-96"
-          />
-        </Wrap>
+        <DataTable
+          rows={rows}
+          columns={columns}
+          rowKey={(r) => r.host}
+          pageSize={COUNT}
+          selectable
+          virtualize
+          defaultSelection={new Set(['node-00002', 'node-09000'])}
+          aria-label="Nodes"
+          className="max-h-96"
+        />
       );
     };
     return <Host />;
@@ -368,19 +330,17 @@ export const SelectionWorksInTheWindow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onSelectionChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        selectable
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      selectable
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row node-00003' }));
@@ -394,17 +354,15 @@ export const OnAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
 };
 
@@ -425,16 +383,14 @@ export const CardsKeepThePagination: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        virtualize
-        mobileLayout="cards"
-        aria-label="Nodes"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      virtualize
+      mobileLayout="cards"
+      aria-label="Nodes"
+    />
   ),
   play: async ({ canvas }) => {
     // The default page size: 25 cards, and the pager that goes to the others.
@@ -457,18 +413,16 @@ export const RowsFollowTheTextSize: Story = {
   // The toolbar's Text size menu, set by the story: the appearance decorator puts it on <html>.
   globals: { textSize: 'xl' },
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        selectable
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      selectable
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Nodes' });
@@ -516,17 +470,15 @@ export const RowsFollowTheTextSize: Story = {
 export const EndColumnIsJustifiedInTheWindow: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={COUNT}
-        virtualize
-        aria-label="Nodes"
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={COUNT}
+      virtualize
+      aria-label="Nodes"
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Nodes' });

@@ -52,9 +52,9 @@ buttons and links out of that column). A click on a control inside the row (the
 checkbox, the action column, a link or button in another cell) never counts as a
 row click. `RowActionsMenu` is the ⋮ button and menu of a row, for
 `renderRowAction`: give it `Menu.Item`s, a destructive one with
-`intent="danger"`. On a narrow screen the edge of a table that scrolls sideways
-fades, and `Table`'s `stickyFirstColumn` pins its first column (`DataTable` pins
-columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
+`intent="danger"`. A table wider than its box (a narrow screen, many columns) scrolls
+sideways, and the edge that has more content fades; `Table`'s `stickyFirstColumn` pins its
+first column (`DataTable` pins columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
 `TableAmountCell` are the cells tables keep rebuilding. `TableAmountCell` is an `Amount` (see
 [Data](data.md)) with a plus in front of a gain, so it writes a figure like the rest of the page.
 

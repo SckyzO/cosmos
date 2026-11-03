@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DataTable } from './DataTable';
-import { editableColumns, REFUSED_HOST, useFakeSaves } from './storybook-hosts';
+import { editableColumns, REFUSED_HOST, useFakeSaves } from './storybook-fixtures';
 
 // Inline editing (`edit` on a column, `editTrigger`, `onCellEdit`, `onRowEdit`), in its own file
 // with the other DataTable additions: DataTable.stories.tsx is already one of the largest stories
@@ -17,10 +17,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
-
 // What the tests read: the calls the table made to its handlers.
 const cellSaved = fn();
 const rowSaved = fn();
@@ -28,23 +24,21 @@ const rowSaved = fn();
 const Hosts = ({ trigger, delay }: { trigger: 'cell' | 'button' | 'row'; delay?: number }) => {
   const { rows, onCellEdit, onRowEdit } = useFakeSaves(delay);
   return (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={rows}
-        columns={editableColumns}
-        rowKey={(r) => r.host}
-        editTrigger={trigger}
-        onCellEdit={(row, key, value) => {
-          cellSaved(row.host, key, value);
-          return onCellEdit(row, key, value);
-        }}
-        onRowEdit={(row, changes) => {
-          rowSaved(row.host, changes);
-          return onRowEdit(row, changes);
-        }}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={rows}
+      columns={editableColumns}
+      rowKey={(r) => r.host}
+      editTrigger={trigger}
+      onCellEdit={(row, key, value) => {
+        cellSaved(row.host, key, value);
+        return onCellEdit(row, key, value);
+      }}
+      onRowEdit={(row, changes) => {
+        rowSaved(row.host, changes);
+        return onRowEdit(row, changes);
+      }}
+    />
   );
 };
 

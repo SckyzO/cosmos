@@ -14,10 +14,10 @@ import {
   TableSkeletonRows,
 } from './Table';
 import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
+import { HOSTS, makeHosts, type Host } from './storybook-fixtures';
 import { EmptyState } from '../feedback/EmptyState';
 import { Badge } from '../ui/Badge';
 import { StatusBadge } from '../status/StatusBadge';
-import type { HealthStatus } from '../status/types';
 import { ProgressBar, type ProgressBarIntent } from '../ui/ProgressBar';
 import { RowActionButton } from '../ui/RowActionButton';
 import {
@@ -44,60 +44,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Node = {
-  name: string;
-  status: HealthStatus;
-  room: string;
-  cpu: number;
-  memory: number;
-  power: number;
-  trend: number;
-};
-
-const NODES: Node[] = [
-  { name: 'node-101', status: 'OK', room: 'Room A', cpu: 42, memory: 61, power: 412, trend: 3.2 },
-  { name: 'node-102', status: 'WARN', room: 'Room A', cpu: 78, memory: 83, power: 538, trend: 8.4 },
-  { name: 'node-103', status: 'OK', room: 'Room B', cpu: 18, memory: 37, power: 296, trend: -1.5 },
-  {
-    name: 'node-104',
-    status: 'CRIT',
-    room: 'Room B',
-    cpu: 96,
-    memory: 94,
-    power: 604,
-    trend: 12.1,
-  },
-  { name: 'node-105', status: 'OK', room: 'Room C', cpu: 33, memory: 48, power: 351, trend: -4.0 },
-  { name: 'node-106', status: 'INFO', room: 'Room C', cpu: 9, memory: 22, power: 248, trend: 0.6 },
-];
-
-// What the dashboard story's cells show beside the node's metrics.
-const NOTES: Record<string, string> = {
-  'node-101': 'Primary database replica, nightly backup runs at 02:00.',
-  'node-102': 'Memory above the usual ceiling since the last firmware update.',
-  'node-103': 'Idle, kept as a spare for the Room B racks.',
-  'node-104': 'Fan 3 failed: ticket opened with the vendor, replacement due Friday.',
-  'node-105': 'Batch workers.',
-  'node-106': 'Decommissioning planned for next quarter.',
-};
-
-const COSTS: Record<string, number> = {
-  'node-101': 12.4,
-  'node-102': -3.15,
-  'node-103': 0,
-  'node-104': 148.9,
-  'node-105': -27.8,
-  'node-106': 1042.5,
-};
-
-const MANY_NODES: Node[] = Array.from({ length: 24 }, (_, i) => ({
-  ...NODES[i % NODES.length],
-  name: `node-${101 + i}`,
-}));
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
+// The seven hosts of the shared fixtures, and 24 generated ones for the tables that scroll.
+const NODES = HOSTS;
+const MANY_NODES = makeHosts(24);
 
 const NodeHead = () => (
   <TableHead>
@@ -111,9 +60,9 @@ const NodeHead = () => (
   </TableHead>
 );
 
-const NodeRow = ({ node }: { node: Node }) => (
+const NodeRow = ({ node }: { node: Host }) => (
   <TableRow>
-    <TableCell className="font-medium">{node.name}</TableCell>
+    <TableCell className="font-medium">{node.host}</TableCell>
     <TableCell>{node.room}</TableCell>
     <TableCell numeric>{node.cpu}%</TableCell>
     <TableCell numeric>{node.memory}%</TableCell>
@@ -123,17 +72,15 @@ const NodeRow = ({ node }: { node: Node }) => (
 
 export const Basic: Story = {
   render: (args) => (
-    <Wrap>
-      <Table {...args}>
-        <TableCaption>Compute nodes</TableCaption>
-        <NodeHead />
-        <TableBody>
-          {NODES.map((n) => (
-            <NodeRow key={n.name} node={n} />
-          ))}
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table {...args}>
+      <TableCaption>Compute nodes</TableCaption>
+      <NodeHead />
+      <TableBody>
+        {NODES.map((n) => (
+          <NodeRow key={n.host} node={n} />
+        ))}
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -176,38 +123,34 @@ export const StripedChecks: Story = {
 
 export const Densities: Story = {
   render: () => (
-    <Wrap>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {(['compact', 'default', 'comfortable'] as const).map((density) => (
-          <Table key={density} density={density}>
-            <TableCaption>Density: {density}</TableCaption>
-            <NodeHead />
-            <TableBody>
-              {NODES.slice(0, 3).map((n) => (
-                <NodeRow key={n.name} node={n} />
-              ))}
-            </TableBody>
-          </Table>
-        ))}
-      </div>
-    </Wrap>
+    <div className="grid gap-6 lg:grid-cols-2">
+      {(['compact', 'default', 'comfortable'] as const).map((density) => (
+        <Table key={density} density={density}>
+          <TableCaption>Density: {density}</TableCaption>
+          <NodeHead />
+          <TableBody>
+            {NODES.slice(0, 3).map((n) => (
+              <NodeRow key={n.host} node={n} />
+            ))}
+          </TableBody>
+        </Table>
+      ))}
+    </div>
   ),
 };
 
 export const StickyHeader: Story = {
   args: { stickyHeader: true, containerClassName: 'max-h-80' },
   render: (args) => (
-    <Wrap>
-      <Table {...args}>
-        <TableCaption>All compute nodes</TableCaption>
-        <NodeHead />
-        <TableBody>
-          {MANY_NODES.map((n) => (
-            <NodeRow key={n.name} node={n} />
-          ))}
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table {...args}>
+      <TableCaption>All compute nodes</TableCaption>
+      <NodeHead />
+      <TableBody>
+        {MANY_NODES.map((n) => (
+          <NodeRow key={n.host} node={n} />
+        ))}
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -225,28 +168,26 @@ export const StickyHeaderChecks: Story = {
 export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        <Table stickyHeader containerClassName="max-h-32">
-          <TableCaption>Scrolls</TableCaption>
-          <NodeHead />
-          <TableBody>
-            {MANY_NODES.map((n) => (
-              <NodeRow key={n.name} node={n} />
-            ))}
-          </TableBody>
-        </Table>
-        <Table>
-          <TableCaption>Fits</TableCaption>
-          <NodeHead />
-          <TableBody>
-            {NODES.slice(0, 2).map((n) => (
-              <NodeRow key={n.name} node={n} />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      <Table stickyHeader containerClassName="max-h-32">
+        <TableCaption>Scrolls</TableCaption>
+        <NodeHead />
+        <TableBody>
+          {MANY_NODES.map((n) => (
+            <NodeRow key={n.host} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+      <Table>
+        <TableCaption>Fits</TableCaption>
+        <NodeHead />
+        <TableBody>
+          {NODES.slice(0, 2).map((n) => (
+            <NodeRow key={n.host} node={n} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   ),
   play: async ({ canvas }) => {
     const region = await canvas.findByRole('region', { name: 'Scrolls' });
@@ -268,16 +209,14 @@ export const ScrollingTableIsFocusableOneThatFitsIsNot: Story = {
 export const ScrollingTableWithoutCaptionIsFocusableNotARegion: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <Table stickyHeader containerClassName="max-h-32">
-        <NodeHead />
-        <TableBody>
-          {MANY_NODES.map((n) => (
-            <NodeRow key={n.name} node={n} />
-          ))}
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table stickyHeader containerClassName="max-h-32">
+      <NodeHead />
+      <TableBody>
+        {MANY_NODES.map((n) => (
+          <NodeRow key={n.host} node={n} />
+        ))}
+      </TableBody>
+    </Table>
   ),
   play: async ({ canvas }) => {
     const container = canvas.getByRole('table').parentElement!;
@@ -295,33 +234,31 @@ export const FooterTotals: Story = {
   render: () => {
     const total = NODES.reduce((sum, n) => sum + n.power, 0);
     return (
-      <Wrap>
-        <Table>
-          <TableCaption>Power draw per node</TableCaption>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>Room</TableHeaderCell>
-              <TableHeaderCell numeric>Power</TableHeaderCell>
+      <Table>
+        <TableCaption>Power draw per node</TableCaption>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>Room</TableHeaderCell>
+            <TableHeaderCell numeric>Power</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {NODES.map((n) => (
+            <TableRow key={n.host}>
+              <TableCell className="font-medium">{n.host}</TableCell>
+              <TableCell>{n.room}</TableCell>
+              <TableCell numeric>{n.power} W</TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {NODES.map((n) => (
-              <TableRow key={n.name}>
-                <TableCell className="font-medium">{n.name}</TableCell>
-                <TableCell>{n.room}</TableCell>
-                <TableCell numeric>{n.power} W</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFoot>
-            <TableRow>
-              <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
-              <TableCell numeric>{total} W</TableCell>
-            </TableRow>
-          </TableFoot>
-        </Table>
-      </Wrap>
+          ))}
+        </TableBody>
+        <TableFoot>
+          <TableRow>
+            <TableHeaderCell colSpan={2}>Total</TableHeaderCell>
+            <TableCell numeric>{total} W</TableCell>
+          </TableRow>
+        </TableFoot>
+      </Table>
     );
   },
 };
@@ -338,36 +275,34 @@ export const GroupedRows: Story = {
   render: () => {
     const rooms = [...new Set(NODES.map((n) => n.room))];
     return (
-      <Wrap>
-        <Table>
-          <TableCaption>Nodes by room</TableCaption>
-          <NodeHead />
-          {rooms.map((room) => {
-            const nodes = NODES.filter((n) => n.room === room);
-            return (
-              <TableBody key={room}>
-                <TableRow className="bg-gray-100 dark:bg-white/[0.06]">
-                  <TableHeaderCell
-                    scope="rowgroup"
-                    colSpan={5}
-                    className="text-[var(--color-text-primary)]"
-                  >
-                    <span className="flex items-center gap-2">
-                      {room}
-                      <Badge size="sm">
-                        {nodes.length} {nodes.length === 1 ? 'node' : 'nodes'}
-                      </Badge>
-                    </span>
-                  </TableHeaderCell>
-                </TableRow>
-                {nodes.map((n) => (
-                  <NodeRow key={n.name} node={n} />
-                ))}
-              </TableBody>
-            );
-          })}
-        </Table>
-      </Wrap>
+      <Table>
+        <TableCaption>Nodes by room</TableCaption>
+        <NodeHead />
+        {rooms.map((room) => {
+          const nodes = NODES.filter((n) => n.room === room);
+          return (
+            <TableBody key={room}>
+              <TableRow className="bg-gray-100 dark:bg-white/[0.06]">
+                <TableHeaderCell
+                  scope="rowgroup"
+                  colSpan={5}
+                  className="text-[var(--color-text-primary)]"
+                >
+                  <span className="flex items-center gap-2">
+                    {room}
+                    <Badge size="sm">
+                      {nodes.length} {nodes.length === 1 ? 'node' : 'nodes'}
+                    </Badge>
+                  </span>
+                </TableHeaderCell>
+              </TableRow>
+              {nodes.map((n) => (
+                <NodeRow key={n.host} node={n} />
+              ))}
+            </TableBody>
+          );
+        })}
+      </Table>
     );
   },
 };
@@ -408,18 +343,18 @@ const ExpandableTable = ({ initiallyOpen = [] }: { initiallyOpen?: string[] }) =
       </TableHead>
       <TableBody>
         {NODES.slice(0, 4).map((n) => {
-          const expanded = open.has(n.name);
-          const detailsId = `details-${n.name}`;
+          const expanded = open.has(n.host);
+          const detailsId = `details-${n.host}`;
           return (
-            <Fragment key={n.name}>
+            <Fragment key={n.host}>
               <TableRow>
                 <TableCell>
                   <button
                     type="button"
                     aria-expanded={expanded}
                     aria-controls={expanded ? detailsId : undefined}
-                    aria-label={`Details for ${n.name}`}
-                    onClick={() => toggle(n.name)}
+                    aria-label={`Details for ${n.host}`}
+                    onClick={() => toggle(n.host)}
                     className="focus-visible:ring-brand-500 rounded p-1 text-[var(--color-text-secondary)] hover:bg-gray-100 focus-visible:ring-2 focus-visible:outline-none dark:hover:bg-white/10"
                   >
                     <ChevronRight
@@ -428,7 +363,7 @@ const ExpandableTable = ({ initiallyOpen = [] }: { initiallyOpen?: string[] }) =
                     />
                   </button>
                 </TableCell>
-                <TableCell className="font-medium">{n.name}</TableCell>
+                <TableCell className="font-medium">{n.host}</TableCell>
                 <TableCell>{n.room}</TableCell>
                 <TableCell numeric>{n.cpu}%</TableCell>
               </TableRow>
@@ -448,46 +383,38 @@ const ExpandableTable = ({ initiallyOpen = [] }: { initiallyOpen?: string[] }) =
 };
 
 export const ExpandableRows: Story = {
-  render: () => (
-    <Wrap>
-      <ExpandableTable />
-    </Wrap>
-  ),
+  render: () => <ExpandableTable />,
 };
 
 export const ExpandableRowsChecks: Story = {
   ...ExpandableRows,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
-    const toggle = canvas.getByRole('button', { name: 'Details for node-101' });
+    const toggle = canvas.getByRole('button', { name: 'Details for node-a01' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(canvas.getByText(/Memory 61%/)).toBeInTheDocument();
+    await expect(canvas.getByText(/Memory 52%/)).toBeInTheDocument();
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect(canvas.queryByText(/Memory 61%/)).toBeNull();
+    await expect(canvas.queryByText(/Memory 52%/)).toBeNull();
   },
 };
 
 /** Rows that start open: the first node shows its details at once. */
 export const ExpandableRowsOpenByDefault: Story = {
-  render: () => (
-    <Wrap>
-      <ExpandableTable initiallyOpen={['node-101']} />
-    </Wrap>
-  ),
+  render: () => <ExpandableTable initiallyOpen={['node-a01']} />,
 };
 
 export const ExpandableRowsOpenByDefaultChecks: Story = {
   ...ExpandableRowsOpenByDefault,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
-    const toggle = canvas.getByRole('button', { name: 'Details for node-101' });
+    const toggle = canvas.getByRole('button', { name: 'Details for node-a01' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(canvas.getByText(/Memory 61%/)).toBeInTheDocument();
+    await expect(canvas.getByText(/Memory 52%/)).toBeInTheDocument();
     // The others stay closed, and the caret of an open row has turned.
-    await expect(canvas.getByRole('button', { name: 'Details for node-102' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: 'Details for node-a02' })).toHaveAttribute(
       'aria-expanded',
       'false'
     );
@@ -497,18 +424,16 @@ export const ExpandableRowsOpenByDefaultChecks: Story = {
 
 export const Empty: Story = {
   render: () => (
-    <Wrap>
-      <Table>
-        <NodeHead />
-        <TableBody>
-          <TableRow>
-            <TableCell colSpan={5}>
-              <EmptyState title="No nodes" description="No node reports to this site yet." />
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table>
+      <NodeHead />
+      <TableBody>
+        <TableRow>
+          <TableCell colSpan={5}>
+            <EmptyState title="No nodes" description="No node reports to this site yet." />
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -523,15 +448,13 @@ export const EmptyChecks: Story = {
 
 export const Loading: Story = {
   render: () => (
-    <Wrap>
-      <Table aria-busy="true">
-        <TableCaption>Compute nodes</TableCaption>
-        <NodeHead />
-        <TableBody>
-          <TableSkeletonRows rows={4} columns={5} numericColumns={[2, 3, 4]} />
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table aria-busy="true">
+      <TableCaption>Compute nodes</TableCaption>
+      <NodeHead />
+      <TableBody>
+        <TableSkeletonRows rows={4} columns={5} numericColumns={[2, 3, 4]} />
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -551,7 +474,7 @@ export const LoadingChecks: Story = {
 export const LoadingRowsFollowTheDensity: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
+    <>
       {(['default', 'comfortable'] as const).map((density) => (
         <Table key={density} density={density} aria-label={density} className="mb-4">
           <TableBody>
@@ -559,7 +482,7 @@ export const LoadingRowsFollowTheDensity: Story = {
           </TableBody>
         </Table>
       ))}
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const height = (name: string) =>
@@ -573,7 +496,7 @@ export const LoadingRowsFollowTheDensity: Story = {
 export const CellsFollowThePageDensity: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
+    <>
       {(['compact', 'default', 'comfortable'] as const).map((page) => (
         <div key={page} data-density={page}>
           <Table aria-label={`${page} page`} className="mb-4">
@@ -592,7 +515,7 @@ export const CellsFollowThePageDensity: Story = {
           </TableRow>
         </TableBody>
       </Table>
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const padding = (name: string) =>
@@ -625,59 +548,57 @@ const Trend = ({ value }: { value: number }) => {
 
 export const DashboardCells: Story = {
   render: () => (
-    <Wrap>
-      <Table>
-        <TableCaption>Node health</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>ID</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell className="min-w-40">Memory</TableHeaderCell>
-            <TableHeaderCell>Note</TableHeaderCell>
-            <TableHeaderCell numeric>Power 24h</TableHeaderCell>
-            <TableHeaderCell numeric>Cost, 24h</TableHeaderCell>
-            <TableHeaderCell align="end">Action</TableHeaderCell>
+    <Table>
+      <TableCaption>Node health</TableCaption>
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Name</TableHeaderCell>
+          <TableHeaderCell>ID</TableHeaderCell>
+          <TableHeaderCell>Status</TableHeaderCell>
+          <TableHeaderCell className="min-w-40">Memory</TableHeaderCell>
+          <TableHeaderCell>Note</TableHeaderCell>
+          <TableHeaderCell numeric>Power 24h</TableHeaderCell>
+          <TableHeaderCell numeric>Cost, 24h</TableHeaderCell>
+          <TableHeaderCell align="end">Action</TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {NODES.map((n) => (
+          <TableRow key={n.host}>
+            <TableCell>
+              <TableIdentityCell title={n.host} subtitle={n.room} icon={Server} />
+            </TableCell>
+            <TableCell>
+              <TableIdCell>{`i-${n.host.slice(-3)}a9f${n.power}c0e41d7`}</TableIdCell>
+            </TableCell>
+            <TableCell>
+              <StatusBadge status={n.status} size="sm" />
+            </TableCell>
+            <TableCell>
+              <ProgressBar
+                value={n.memory}
+                size="xs"
+                intent={usageIntent(n.memory)}
+                label="outside"
+                aria-label={`Memory used on ${n.host}`}
+              />
+            </TableCell>
+            <TableCell>
+              <TableDescriptionCell className="max-w-48">{n.note || '—'}</TableDescriptionCell>
+            </TableCell>
+            <TableCell numeric>
+              <Trend value={n.trend} />
+            </TableCell>
+            <TableCell numeric>
+              <TableAmountCell value={n.cost} currency="EUR" locale="en-GB" />
+            </TableCell>
+            <TableCell align="end">
+              <RowActionButton aria-label={`View ${n.host}`} />
+            </TableCell>
           </TableRow>
-        </TableHead>
-        <TableBody>
-          {NODES.map((n) => (
-            <TableRow key={n.name}>
-              <TableCell>
-                <TableIdentityCell title={n.name} subtitle={n.room} icon={Server} />
-              </TableCell>
-              <TableCell>
-                <TableIdCell>{`i-${n.name.slice(-3)}a9f${n.power}c0e41d7`}</TableIdCell>
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={n.status} size="sm" />
-              </TableCell>
-              <TableCell>
-                <ProgressBar
-                  value={n.memory}
-                  size="xs"
-                  intent={usageIntent(n.memory)}
-                  label="outside"
-                  aria-label={`Memory used on ${n.name}`}
-                />
-              </TableCell>
-              <TableCell>
-                <TableDescriptionCell className="max-w-48">{NOTES[n.name]}</TableDescriptionCell>
-              </TableCell>
-              <TableCell numeric>
-                <Trend value={n.trend} />
-              </TableCell>
-              <TableCell numeric>
-                <TableAmountCell value={COSTS[n.name]} currency="EUR" locale="en-GB" />
-              </TableCell>
-              <TableCell align="end">
-                <RowActionButton aria-label={`View ${n.name}`} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Wrap>
+        ))}
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -685,20 +606,20 @@ export const DashboardCellsChecks: Story = {
   ...DashboardCells,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
-    const row = canvas.getByRole('row', { name: /node-104/ });
+    const row = canvas.getByRole('row', { name: /node-b07/ });
     // The identity cell: the name, then its detail line, under an icon that says nothing more.
-    await expect(within(row).getByText('node-104')).toBeVisible();
+    await expect(within(row).getByText('node-b07')).toBeVisible();
     await expect(within(row).getByText('Room B')).toBeVisible();
     // The identifier is monospaced, and the note is cut with its whole text as a tooltip.
-    await expect(getComputedStyle(within(row).getByText(/^i-104/)).fontFamily).toMatch(/mono/i);
+    await expect(getComputedStyle(within(row).getByText(/^i-b07/)).fontFamily).toMatch(/mono/i);
     const note = within(row).getByText(/Fan 3 failed/);
     await expect(note).toHaveAttribute('title', expect.stringContaining('replacement due Friday.'));
     await expect(note.scrollWidth).toBeGreaterThan(note.clientWidth);
     // Gains are green and losses red, signed so the colour is not the only cue, and readable in
     // every theme.
     const gain = within(row).getByText('+€148.90');
-    const loss = within(canvas.getByRole('row', { name: /node-102/ })).getByText('-€3.15');
-    const zero = within(canvas.getByRole('row', { name: /node-103/ })).getByText('€0.00');
+    const loss = within(canvas.getByRole('row', { name: /node-a02/ })).getByText('-€3.15');
+    const zero = within(canvas.getByRole('row', { name: /node-b08/ })).getByText('€0.00');
     await expect(getComputedStyle(gain).color).not.toBe(getComputedStyle(loss).color);
     await expect(zero.className).not.toMatch(/green|red/);
     inEachTheme(() => {
@@ -722,13 +643,13 @@ const AMOUNT_CELLS = [
 export const AmountCellKeepsItsOutput: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
+    <>
       {AMOUNT_CELLS.map(({ id, cell }) => (
         <div key={id} data-testid={id}>
           {cell}
         </div>
       ))}
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const cell = (id: string) => canvas.getByTestId(id).firstElementChild as HTMLElement;
@@ -768,31 +689,29 @@ export const AmountCellKeepsItsOutput: Story = {
 export const MobileStickyFirstColumn: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Table stickyFirstColumn striped>
-        <TableCaption>Compute nodes</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell className="min-w-40">Room</TableHeaderCell>
-            <TableHeaderCell numeric className="min-w-32">
-              CPU
-            </TableHeaderCell>
-            <TableHeaderCell numeric className="min-w-32">
-              Memory
-            </TableHeaderCell>
-            <TableHeaderCell numeric className="min-w-32">
-              Power
-            </TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {NODES.map((n) => (
-            <NodeRow key={n.name} node={n} />
-          ))}
-        </TableBody>
-      </Table>
-    </Wrap>
+    <Table stickyFirstColumn striped>
+      <TableCaption>Compute nodes</TableCaption>
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Name</TableHeaderCell>
+          <TableHeaderCell className="min-w-40">Room</TableHeaderCell>
+          <TableHeaderCell numeric className="min-w-32">
+            CPU
+          </TableHeaderCell>
+          <TableHeaderCell numeric className="min-w-32">
+            Memory
+          </TableHeaderCell>
+          <TableHeaderCell numeric className="min-w-32">
+            Power
+          </TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {NODES.map((n) => (
+          <NodeRow key={n.host} node={n} />
+        ))}
+      </TableBody>
+    </Table>
   ),
 };
 
@@ -902,10 +821,10 @@ export const StickyFirstColumnFollowsTheReadingDirection: Story = {
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell>node-101</TableCell>
-                <TableCell>Room A</TableCell>
-                <TableCell numeric>41%</TableCell>
-                <TableCell numeric>63%</TableCell>
+                <TableCell>{NODES[0]!.host}</TableCell>
+                <TableCell>{NODES[0]!.room}</TableCell>
+                <TableCell numeric>{NODES[0]!.cpu}%</TableCell>
+                <TableCell numeric>{NODES[0]!.memory}%</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -918,7 +837,7 @@ export const StickyFirstColumnFollowsTheReadingDirection: Story = {
       const box = directionBox(canvasElement, dir);
       const table = within(box).getByRole('table');
       const scroller = table.parentElement as HTMLElement;
-      const cell = within(box).getByText('node-101');
+      const cell = within(box).getByText('node-a01');
       await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
       // At rest the first column is at the start edge of the scroller (inside its 1px border).
       await expect(startOffset(cell, scroller) - scroller.clientLeft, dir).toBeLessThan(

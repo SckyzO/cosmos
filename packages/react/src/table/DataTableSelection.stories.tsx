@@ -10,7 +10,8 @@ import {
   textLines,
 } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import type { ColumnDef, DataTableBulkAction } from './types';
+import { makeOrders, orderColumns, type Order } from './storybook-fixtures';
+import type { DataTableBulkAction } from './types';
 
 // What DataTable does around a selection and on a phone: the toolbar that stays while rows are
 // selected, the Export that follows the selection, the filters sheet of the cards and the empty
@@ -26,61 +27,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Order = {
-  id: string;
-  customer: string;
-  status: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
-  payment: 'Paid' | 'Pending' | 'Failed';
-  total: string;
-};
-
-const rows: Order[] = [
-  ['Maya Lindqvist', 'Pending', 'Pending', '€64.80'],
-  ['Tomás Herrera', 'Packed', 'Paid', '€18.50'],
-  ['Aiko Tanaka', 'Packed', 'Paid', '€112.30'],
-  ['Oliver Brandt', 'Shipped', 'Paid', '€39.00'],
-  ['Fatima Okonkwo', 'Packed', 'Paid', '€87.40'],
-  ['Lucas Moreau', 'Delivered', 'Paid', '€24.90'],
-  ['Sofia Petrov', 'Cancelled', 'Failed', '€41.60'],
-  ['Daniel Whitfield', 'Delivered', 'Paid', '€143.20'],
-].map(([customer, status, payment, total], i) => ({
-  id: `BK-${20421 - i}`,
-  customer: customer!,
-  status: status as Order['status'],
-  payment: payment as Order['payment'],
-  total: total!,
-}));
-
-const columns: ColumnDef<Order>[] = [
-  { key: 'id', label: 'Order', mobile: 'title', render: (r) => r.id },
-  {
-    key: 'customer',
-    label: 'Customer',
-    sortable: true,
-    sortValue: (r) => r.customer,
-    searchValue: (r) => r.customer,
-    render: (r) => r.customer,
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    filterable: true,
-    filterValue: (r) => r.status,
-    render: (r) => r.status,
-  },
-  {
-    key: 'payment',
-    label: 'Payment',
-    filterable: true,
-    filterValue: (r) => r.payment,
-    render: (r) => r.payment,
-  },
-  { key: 'total', label: 'Total', align: 'end', render: (r) => r.total },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-4 text-[var(--color-text-base)]">{children}</div>
-);
+// The eight orders of the shared fixtures: `BK-20421` is the newest, and the stories select
+// `BK-20420`, `BK-20419` and `BK-20417`.
+const rows = makeOrders(8);
+const columns = orderColumns;
 
 const laptop = { viewport: { value: 'laptop', isRotated: false } } as const;
 const tablet = { viewport: { value: 'tablet', isRotated: false } } as const;
@@ -120,11 +70,7 @@ const Orders = (props: OrdersProps) => (
 export const SelectionKeepsTheToolbar: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByText('3 selected')).toBeVisible();
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toBeVisible();
@@ -149,11 +95,7 @@ export const SelectionKeepsTheToolbar: Story = {
 export const BulkActionsFoldIntoAMenu: Story = {
   tags: ['!dev', '!autodocs'],
   globals: tablet,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Mark as shipped' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Actions' })).toBeVisible();
@@ -172,11 +114,7 @@ export const BulkActionsFoldIntoAMenu: Story = {
  */
 export const BulkActionsOnAPhone: Story = {
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <Orders mobileLayout="cards" defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders mobileLayout="cards" defaultSelection={selected} />,
 };
 
 export const BulkActionsOnAPhoneChecks: Story = {
@@ -207,12 +145,12 @@ export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
+    <>
       {/* The card of a 375px phone, a little narrower than the viewport's own. */}
       <div style={{ maxWidth: 296 }}>
         <Orders defaultSelection={selected} />
       </div>
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const ship = canvas.getByRole('button', { name: 'Mark as shipped' });
@@ -234,17 +172,15 @@ export const BulkActionsAsNodes: Story = {
   globals: laptop,
   tags: ['!autodocs'],
   render: () => (
-    <Wrap>
-      <Orders
-        bulkActionItems={undefined}
-        defaultSelection={selected}
-        bulkActions={(rows) => (
-          <Button variant="secondary" size="md" icon={Archive}>
-            Archive {rows.length}
-          </Button>
-        )}
-      />
-    </Wrap>
+    <Orders
+      bulkActionItems={undefined}
+      defaultSelection={selected}
+      bulkActions={(rows) => (
+        <Button variant="secondary" size="md" icon={Archive}>
+          Archive {rows.length}
+        </Button>
+      )}
+    />
   ),
 };
 
@@ -264,12 +200,10 @@ export const BulkActionsAsNodesChecks: Story = {
 export const FiltersOnAPhone: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        mobileLayout="cards"
-        defaultFilters={{ status: new Set(['Packed']), payment: new Set(['Paid']) }}
-      />
-    </Wrap>
+    <Orders
+      mobileLayout="cards"
+      defaultFilters={{ status: new Set(['Packed']), payment: new Set(['Paid']) }}
+    />
   ),
 };
 
@@ -289,13 +223,11 @@ export const FiltersSheetOpen: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <Orders
-        mobileLayout="cards"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        selectable={false}
-      />
-    </Wrap>
+    <Orders
+      mobileLayout="cards"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      selectable={false}
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /^Filters/ }));
@@ -311,18 +243,16 @@ export const FiltersSheetOpen: Story = {
 export const EmptyWithAnAction: Story = {
   globals: laptop,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Orders"
-        rows={[]}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultSearchValue=""
-        emptyTitle="No orders yet"
-        emptyDescription="Orders appear here as soon as a customer checks out."
-        emptyAction={<Button size="sm">Create the first order</Button>}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Orders"
+      rows={[]}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultSearchValue=""
+      emptyTitle="No orders yet"
+      emptyDescription="Orders appear here as soon as a customer checks out."
+      emptyAction={<Button size="sm">Create the first order</Button>}
+    />
   ),
 };
 
@@ -340,14 +270,12 @@ export const FiltersHideEveryRow: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        defaultSearchValue="zzz"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        emptyAction={<Button size="sm">Create the first order</Button>}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      defaultSearchValue="zzz"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      emptyAction={<Button size="sm">Create the first order</Button>}
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Clear filters' })).toBeVisible();
@@ -361,11 +289,7 @@ export const FiltersHideEveryRow: Story = {
 export const TypingKeepsTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     const search = canvas.getByRole('searchbox', { name: 'Search rows' });
     await userEvent.type(search, 'aiko');
@@ -385,11 +309,7 @@ export const TypingKeepsTheSelection: Story = {
 export const ClearLeavesTheToolbar: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Clear' }));
     await expect(canvas.queryByText(/selected/)).toBeNull();
@@ -405,7 +325,7 @@ export const BulkActionsReceiveTheRows: Story = {
   render: () => {
     const [last, setLast] = useState('none');
     return (
-      <Wrap>
+      <>
         <p data-testid="last">{last}</p>
         <Orders
           defaultSelection={selected}
@@ -418,7 +338,7 @@ export const BulkActionsReceiveTheRows: Story = {
             )
           )}
         />
-      </Wrap>
+      </>
     );
   },
   play: async ({ canvas }) => {
@@ -438,10 +358,10 @@ export const FoldedMenuRunsAnAction: Story = {
       onClick: (selectedRows) => setLast(`${a.label}:${selectedRows.length}`),
     }));
     return (
-      <Wrap>
+      <>
         <p data-testid="last">{last}</p>
         <Orders defaultSelection={selected} bulkActionItems={items} />
-      </Wrap>
+      </>
     );
   },
   play: async ({ canvas }) => {
@@ -476,11 +396,7 @@ const csvOf = async (blob: Blob) =>
 export const ExportFollowsTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders />
-    </Wrap>
-  ),
+  render: () => <Orders />,
   play: async ({ canvas }) => {
     const download = interceptDownload();
     try {
@@ -514,11 +430,7 @@ export const ExportQueryCarriesTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   args: { onExport: fn() },
-  render: (args) => (
-    <Wrap>
-      <Orders onExport={args.onExport} />
-    </Wrap>
-  ),
+  render: (args) => <Orders onExport={args.onExport} />,
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Export' }));
     await expect(args.onExport).toHaveBeenLastCalledWith(
@@ -540,17 +452,15 @@ export const FiltersSheetDrivesTheFilters: Story = {
   render: (args) => {
     const [filters, setFilters] = useState<Record<string, Set<string>>>({});
     return (
-      <Wrap>
-        <Orders
-          selectable={false}
-          mobileLayout="cards"
-          filters={filters}
-          onFiltersChange={(next) => {
-            args.onFiltersChange?.(next);
-            setFilters(next);
-          }}
-        />
-      </Wrap>
+      <Orders
+        selectable={false}
+        mobileLayout="cards"
+        filters={filters}
+        onFiltersChange={(next) => {
+          args.onFiltersChange?.(next);
+          setFilters(next);
+        }}
+      />
     );
   },
   play: async ({ args, canvas }) => {
@@ -592,13 +502,11 @@ export const FiltersSheetUncontrolled: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        mobileLayout="cards"
-        defaultFilters={{ payment: new Set(['Failed']) }}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      mobileLayout="cards"
+      defaultFilters={{ payment: new Set(['Failed']) }}
+    />
   ),
   play: async ({ canvas }) => {
     const cards = () => canvas.getAllByRole('listitem');
@@ -618,11 +526,7 @@ export const FiltersSheetUncontrolled: Story = {
 export const FiltersSheetClosesOnEscape: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <Orders selectable={false} mobileLayout="cards" />
-    </Wrap>
-  ),
+  render: () => <Orders selectable={false} mobileLayout="cards" />,
   play: async ({ canvas }) => {
     const open = canvas.getByRole('button', { name: /^Filters/ });
     await expect(open).toHaveAttribute('aria-expanded', 'false');
@@ -640,11 +544,7 @@ export const FiltersSheetClosesOnEscape: Story = {
 export const NoFiltersButtonOnADesktop: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders selectable={false} mobileLayout="cards" />
-    </Wrap>
-  ),
+  render: () => <Orders selectable={false} mobileLayout="cards" />,
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /^Filters/ })).toBeNull();
   },
@@ -655,13 +555,11 @@ export const NoFiltersButtonWithoutFilterableColumns: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        mobileLayout="cards"
-        columns={columns.map((c) => ({ ...c, filterable: false }))}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      mobileLayout="cards"
+      columns={columns.map((c) => ({ ...c, filterable: false }))}
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /^Filters/ })).toBeNull();
@@ -674,15 +572,13 @@ export const ClearFiltersGivesTheRowsBack: Story = {
   globals: laptop,
   args: { onSearchChange: fn(), onFiltersChange: fn() },
   render: (args) => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        defaultSearchValue="zzz"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        onSearchChange={args.onSearchChange}
-        onFiltersChange={args.onFiltersChange}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      defaultSearchValue="zzz"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      onSearchChange={args.onSearchChange}
+      onFiltersChange={args.onFiltersChange}
+    />
   ),
   play: async ({ args, canvas }) => {
     await expect(canvas.getByText('No results')).toBeVisible();
@@ -700,26 +596,24 @@ export const ClearFiltersOnlyWhenTheyHideRows: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-4">
-        <DataTable
-          aria-label="No data"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          defaultSearchValue=""
-          emptyAction={<Button size="sm">Create the first order</Button>}
-        />
-        <DataTable
-          aria-label="Filtered"
-          rows={rows}
-          columns={columns}
-          rowKey={(r) => r.id}
-          defaultSearchValue="zzz"
-          emptyAction={<Button size="sm">Create another order</Button>}
-        />
-      </div>
-    </Wrap>
+    <div className="flex flex-col gap-4">
+      <DataTable
+        aria-label="No data"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultSearchValue=""
+        emptyAction={<Button size="sm">Create the first order</Button>}
+      />
+      <DataTable
+        aria-label="Filtered"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultSearchValue="zzz"
+        emptyAction={<Button size="sm">Create another order</Button>}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     const none = within(canvas.getByRole('table', { name: 'No data' }));
@@ -736,27 +630,25 @@ export const CardsEmptyActions: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-4">
-        <DataTable
-          aria-label="No data"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          emptyAction={<Button size="sm">Create the first order</Button>}
-        />
-        <DataTable
-          aria-label="Filtered"
-          rows={rows}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          defaultFilters={{ status: new Set(['Cancelled']), payment: new Set(['Paid']) }}
-          emptyAction={<Button size="sm">Create another order</Button>}
-        />
-      </div>
-    </Wrap>
+    <div className="flex flex-col gap-4">
+      <DataTable
+        aria-label="No data"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        emptyAction={<Button size="sm">Create the first order</Button>}
+      />
+      <DataTable
+        aria-label="Filtered"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        defaultFilters={{ status: new Set(['Cancelled']), payment: new Set(['Paid']) }}
+        emptyAction={<Button size="sm">Create another order</Button>}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
