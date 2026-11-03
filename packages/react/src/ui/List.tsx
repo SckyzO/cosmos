@@ -77,7 +77,7 @@ const ListRoot = ({
   const useNativeMarker = variant === 'ordered' || effectiveMarker === 'disc';
   const listStyle =
     variant === 'ordered'
-      ? 'list-decimal ps-5 marker:text-gray-400'
+      ? 'list-decimal ps-6 marker:text-gray-400'
       : effectiveMarker === 'disc'
         ? 'list-disc ps-5 marker:text-gray-400'
         : 'list-none';
@@ -117,8 +117,13 @@ export type ListItemProps = {
 
 const ListItem = ({ icon, iconColor, className, children }: ListItemProps) => {
   const { variant, marker } = useCtx();
-  // Ordered + disc + native: render plain <li> and let CSS draw the marker.
-  if (variant === 'ordered' || marker === 'disc') {
+  // Ordered: the number is an outside marker, so the padding of the item (not the list) is what
+  // keeps the text off it.
+  if (variant === 'ordered') {
+    return <li className={clsx('ps-1.5', className)}>{children}</li>;
+  }
+  // Disc + native: render plain <li> and let CSS draw the marker.
+  if (marker === 'disc') {
     return <li className={className}>{children}</li>;
   }
   if (marker === 'none' && !icon) {
