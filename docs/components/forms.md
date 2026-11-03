@@ -283,7 +283,8 @@ const [lines, setLines] = useState<LineItem[]>([]);
   2450 cents). `value`, `defaultValue` and `onChange(lines, { subtotal })` follow the usual
   controlled and uncontrolled pair; only `undefined` means uncontrolled. The editor starts with no
   line (`defaultValue` to change that) and gives an `id` to every line it adds: use it as the key of
-  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed.
+  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed. A pick
+  from the catalogue is one call, with the label and the rate together.
 - **Layout.** From 42rem of its own width (a container query, so a card beside a summary switches on
   its own width, not the window's) the lines are a grid with the amounts aligned in a column, and
   the titles are drawn once above it. Narrower, each line is a card with the titles of its fields in
