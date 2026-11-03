@@ -33,3 +33,27 @@ list are the host's to keep (URL or state).
 - Shortcuts are off unless `hotkeys` is given. They listen on the document, do nothing while a
   field is being typed in, and click the control, so a link goes through your router. List them
   yourself in a `HelpOverlay`.
+
+## Sticky scroll nav
+
+Storybook: [Sticky Scroll Nav](https://sckyzo.github.io/cosmos/?path=/docs/navigation-sticky-scroll-nav--docs).
+
+On a long page, `StickyScrollNav` pins a row of buttons at the top, one per section
+(`sections={[{ id, label }]}`), as on a settings page. A button scrolls to the element with its `id`
+and lands it just under the row, so the heading stays visible. The button of the section being
+read carries `aria-current="location"` and the accent tint, and follows the scroll. `topOffset`
+keeps the row below a fixed header, and `onNavigate` replaces the scroll with your own. Below
+`sm` the row becomes a native select named by `jumpLabel` that shows the section being read and
+goes to the one picked.
+
+```tsx
+<StickyScrollNav
+  topOffset={8}
+  sections={[
+    { id: 'profile', label: 'Profile' },
+    { id: 'security', label: 'Security' },
+  ]}
+/>
+<section id="profile">…</section>
+<section id="security">…</section>
+```

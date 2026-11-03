@@ -27,6 +27,12 @@ export type StickyScrollNavProps = {
   className?: string;
 };
 
+// Idle and being read are exclusive: the read button's hover would otherwise repaint it.
+const BUTTON_IDLE =
+  'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white';
+const BUTTON_READING =
+  'bg-brand-500/10 text-brand-600 hover:bg-brand-500/15 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/20';
+
 // The scroll container the sticky nav sticks in: its nearest scrolling
 // ancestor, or null for the viewport.
 const scrollContainerOf = (el: HTMLElement): HTMLElement | null => {
@@ -37,11 +43,11 @@ const scrollContainerOf = (el: HTMLElement): HTMLElement | null => {
 };
 
 /**
- * StickyScrollNav — sticky horizontal nav row that scrolls to in-page
- * sections by id, each landing just below the nav. Useful for long template
- * gallery pages, docs and settings pages. Below `sm` the row folds into a jump
- * menu (a native select) that shows the section being read and moves to the
- * one picked.
+ * StickyScrollNav — on a long page, a row of buttons stays pinned at the top. Each one scrolls to
+ * its section, found by `id`, and lands just under the bar, so the heading stays visible. The
+ * button of the section being read is marked (`aria-current="location"`). On a phone the row
+ * becomes a select that shows the section you are reading and moves to the one picked. For
+ * settings pages, docs and long template pages.
  */
 export const StickyScrollNav = ({
   sections,
@@ -53,8 +59,9 @@ export const StickyScrollNav = ({
   const navRef = useRef<HTMLElement>(null);
   const [current, setCurrent] = useState(sections[0]?.id ?? '');
 
-  // The jump menu names the section being read: the last one whose top has reached the bottom
-  // of the nav, or the last one at the end of the scroll, which may never reach it.
+  // The section being read, which the jump menu names and the row of buttons marks: the last one
+  // whose top has reached the bottom of the nav, or the last one at the end of the scroll, which
+  // may never reach it.
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
@@ -119,16 +126,23 @@ export const StickyScrollNav = ({
       )}
     >
       <div className="hidden gap-1 sm:flex">
-        {sections.map(({ id, label }) => (
-          <button
-            type="button"
-            key={id}
-            onClick={() => handleClick(id)}
-            className="focus-visible:focus-indicator py-row-6 shrink-0 rounded-lg px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
-          >
-            {label}
-          </button>
-        ))}
+        {sections.map(({ id, label }) => {
+          const reading = id === current;
+          return (
+            <button
+              type="button"
+              key={id}
+              onClick={() => handleClick(id)}
+              aria-current={reading ? 'location' : undefined}
+              className={clsx(
+                'focus-visible:focus-indicator py-row-6 shrink-0 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:ring-inset',
+                reading ? BUTTON_READING : BUTTON_IDLE
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
       <div className="sm:hidden">
         <Select
