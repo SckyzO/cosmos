@@ -193,9 +193,13 @@ const Panel = ({
   >
     <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
       <h2 className="m-0 min-w-0 text-base font-semibold [overflow-wrap:anywhere] text-[var(--color-text-primary)]">
-        {title}
+        <bdi>{title}</bdi>
       </h2>
-      {aside && <div className="ms-auto text-sm text-[var(--color-text-secondary)]">{aside}</div>}
+      {aside && (
+        <div className="ms-auto text-sm text-[var(--color-text-secondary)]">
+          <bdi>{aside}</bdi>
+        </div>
+      )}
     </div>
     {children}
   </section>
@@ -413,6 +417,8 @@ const SeverityPanels = ({
         sub={loading ? '\u00A0' : stale ? STALE_TEXT : notes?.[severity]}
         loading={loading}
         {...SEVERITY_PANEL[severity]}
+        // No border or figure in the color of a severity before there is a count to give it.
+        {...(loading ? { intent: 'neutral' as const } : {})}
         {...(onPick
           ? {
               href: `#${tableId}`,
@@ -457,7 +463,7 @@ const GaugePanel = ({ gauge, loading }: { gauge: GaugeSpec; loading?: boolean })
           />
           <p className="m-0 mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-[var(--color-text-secondary)]">
             <StatusBadge status={status} label={label} />
-            {gauge.note}
+            <bdi>{gauge.note}</bdi>
           </p>
         </>
       )}
@@ -590,9 +596,11 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
     render: (alert) => (
       <span className="block min-w-0">
         <span className="block font-mono text-xs font-semibold [overflow-wrap:anywhere] text-[var(--color-text-primary)]">
-          {alert.name}
+          <bdi>{alert.name}</bdi>
         </span>
-        <span className="block text-xs text-[var(--color-text-secondary)]">{alert.summary}</span>
+        <span className="block text-xs text-[var(--color-text-secondary)]">
+          <bdi>{alert.summary}</bdi>
+        </span>
       </span>
     ),
   },
@@ -603,7 +611,7 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
     minWidth: '9rem',
     render: (alert) => (
       <span title={alert.target} className="block max-w-[18rem] truncate font-mono text-xs">
-        {alert.target}
+        <bdi>{alert.target}</bdi>
       </span>
     ),
   },
@@ -624,7 +632,9 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
     label: 'For',
     width: '6.5rem',
     render: (alert) => (
-      <span className="whitespace-nowrap tabular-nums">{since(alert.startedAt)}</span>
+      <span className="whitespace-nowrap tabular-nums">
+        <bdi>{since(alert.startedAt)}</bdi>
+      </span>
     ),
   },
   {
@@ -774,7 +784,9 @@ const Jobs = ({
         />
         {!loading && (
           <p className="m-0 text-xs text-[var(--color-text-secondary)]">
-            {grouped(jobs.Stalled)} stalled jobs wait on {stalledOn}.
+            <bdi>
+              {grouped(jobs.Stalled)} stalled jobs wait on {stalledOn}.
+            </bdi>
           </p>
         )}
       </div>
@@ -1642,7 +1654,9 @@ export const ExtremeContentHoldsTogether: Story = {
     await expect(
       within(table).getByText(/^atlas-MDT0000 lost quorum after the 03:12 power-feed failover/)
     ).toBeVisible();
-    const target = within(table).getByText(/^mds-c02-001\.fs\.atlas/);
+    const target = within(table)
+      .getByText(/^mds-c02-001\.fs\.atlas/)
+      .closest('span.truncate')!;
     await expect(target.scrollWidth).toBeGreaterThan(target.clientWidth);
     expectNoHorizontalOverflow();
 
