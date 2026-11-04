@@ -8,6 +8,7 @@ import {
   expectReadsLeftToRight,
   portalDocsParams,
 } from '../storybook-helpers';
+import { Button } from '../ui/Button';
 import { AuthLayout } from './AuthLayout';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
@@ -147,9 +148,9 @@ const SendingHost = () => {
   return (
     <>
       <ResetPasswordForm sent={sent} sentEmail="john@example.com" onSubmit={() => setSent(true)} />
-      <button type="button" onClick={() => setSent(true)}>
+      <Button variant="secondary" size="sm" onClick={() => setSent(true)}>
         Pretend it was sent
-      </button>
+      </Button>
     </>
   );
 };

@@ -28,15 +28,18 @@ import {
   Countdown,
   DateTime,
   DescriptionList,
+  Divider,
   ErrorState,
   Menu,
   PageHeader,
   RecordPager,
   RelativeTime,
+  SectionCard,
   Shell,
   Sidebar,
   Sk,
   SkeletonText,
+  StackedList,
   Tabs,
   Tag,
   Timeline,
@@ -108,8 +111,6 @@ const usePhone = () =>
     () => window.matchMedia(PHONE).matches,
     () => false
   );
-
-const cardTitle = 'text-sm font-semibold text-[var(--color-text-primary)]';
 
 const RELATED_INTENT = { Open: 'info', Resolved: 'success', Closed: 'neutral' } as const;
 
@@ -380,97 +381,84 @@ const Person = ({ name, email }: { name: string; email?: string }) => (
 );
 
 const Related = ({ tickets, empty }: { tickets: RelatedTicket[]; empty: string }) => (
-  <Card padding="none">
-    <Card.Header>
-      <h2 className={cardTitle}>Related tickets</h2>
-    </Card.Header>
-    <Card.Body>
-      {tickets.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-secondary)]">{empty}</p>
-      ) : (
-        <ul role="list" className="divide-y divide-[var(--color-border)]">
-          {tickets.map((related) => (
-            <li
-              key={related.id}
-              className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium break-words text-[var(--color-text-primary)]">
-                  <bdi>{related.title}</bdi>
-                </p>
-                <p className="text-xs text-[var(--color-text-secondary)]">#{related.id}</p>
-              </div>
+  <SectionCard as="h2" title="Related tickets">
+    {tickets.length === 0 ? (
+      <p className="text-sm text-[var(--color-text-secondary)]">{empty}</p>
+    ) : (
+      <StackedList aria-label="Related tickets">
+        {tickets.map((related) => (
+          <StackedList.Item
+            key={related.id}
+            title={related.title}
+            subtitle={`#${related.id}`}
+            trailing={
               <Badge size="sm" intent={RELATED_INTENT[related.status]}>
                 {related.status}
               </Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card.Body>
-  </Card>
+            }
+          />
+        ))}
+      </StackedList>
+    )}
+  </SectionCard>
 );
 
 const Aside = ({ ticket }: { ticket: Ticket }) => (
   <div className="min-w-0 space-y-6">
-    <Card padding="none">
-      <Card.Header>
-        <h2 className={cardTitle}>Details</h2>
-      </Card.Header>
-      <Card.Body>
-        <DescriptionList compact>
-          <DescriptionList.Item label="Requester">
-            <Person name={ticket.requester.name} email={ticket.requester.email} />
-          </DescriptionList.Item>
-          <DescriptionList.Item label="Assignee">
-            {ticket.assignee ? (
-              <Person name={ticket.assignee} />
-            ) : (
-              <span className="font-normal text-[var(--color-text-secondary)]">Unassigned</span>
-            )}
-          </DescriptionList.Item>
-          <DescriptionList.Item label={ticket.sla.label}>
-            {/* `now` freezes the count so the story reads the same on every run; an app leaves it out. */}
-            <Countdown
-              variant="inline"
-              target={ticket.sla.due}
-              now={NOW}
-              label="in"
-              completedLabel={
-                <Badge size="sm" intent="danger">
-                  Breached
-                </Badge>
-              }
-            />
-          </DescriptionList.Item>
-          <DescriptionList.Item label="Channel">{ticket.channel}</DescriptionList.Item>
-          <DescriptionList.Item label="Created">
-            <span className="block text-end">
-              <When value={ticket.createdAt} />
-              <span className="block text-xs font-normal text-[var(--color-text-secondary)]">
-                <RelativeTime value={ticket.createdAt} now={NOW} />
-              </span>
-            </span>
-          </DescriptionList.Item>
-        </DescriptionList>
-        <div className="mt-1 border-t border-gray-100 pt-3 dark:border-white/5">
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            {ticket.tags.length > 0 ? `Tags (${ticket.tags.length})` : 'Tags'}
-          </p>
-          {ticket.tags.length === 0 ? (
-            <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">No tags</p>
+    <SectionCard as="h2" title="Details">
+      <DescriptionList compact>
+        <DescriptionList.Item label="Requester">
+          <Person name={ticket.requester.name} email={ticket.requester.email} />
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Assignee">
+          {ticket.assignee ? (
+            <Person name={ticket.assignee} />
           ) : (
-            <ul role="list" className="mt-2 flex flex-wrap gap-1.5">
-              {ticket.tags.map((tag) => (
-                <li key={tag}>
-                  <Tag size="sm">{tag}</Tag>
-                </li>
-              ))}
-            </ul>
+            <span className="font-normal text-[var(--color-text-secondary)]">Unassigned</span>
           )}
-        </div>
-      </Card.Body>
-    </Card>
+        </DescriptionList.Item>
+        <DescriptionList.Item label={ticket.sla.label}>
+          {/* `now` freezes the count so the story reads the same on every run; an app leaves it out. */}
+          <Countdown
+            variant="inline"
+            target={ticket.sla.due}
+            now={NOW}
+            label="in"
+            completedLabel={
+              <Badge size="sm" intent="danger">
+                Breached
+              </Badge>
+            }
+          />
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Channel">{ticket.channel}</DescriptionList.Item>
+        <DescriptionList.Item label="Created">
+          <span className="block text-end">
+            <When value={ticket.createdAt} />
+            <span className="block text-xs font-normal text-[var(--color-text-secondary)]">
+              <RelativeTime value={ticket.createdAt} now={NOW} />
+            </span>
+          </span>
+        </DescriptionList.Item>
+      </DescriptionList>
+      <Divider className="mt-1" />
+      <div className="pt-3">
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {ticket.tags.length > 0 ? `Tags (${ticket.tags.length})` : 'Tags'}
+        </p>
+        {ticket.tags.length === 0 ? (
+          <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">No tags</p>
+        ) : (
+          <ul role="list" className="mt-2 flex flex-wrap gap-1.5">
+            {ticket.tags.map((tag) => (
+              <li key={tag}>
+                <Tag size="sm">{tag}</Tag>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </SectionCard>
     <Related tickets={ticket.related} empty={ticket.noRelated} />
   </div>
 );

@@ -1319,6 +1319,33 @@ export const UnreadStates: Story = {
   ),
 };
 
+/**
+ * A checklist: the row's checkbox ticks a task off, so `selectLabel` names it "Mark done: …" in
+ * place of the default "Select …".
+ */
+export const Checklist: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <StackedList card title="My tasks">
+        <StackedList.Item
+          selectLabel="Mark done:"
+          defaultChecked={false}
+          title="Review the pricing page copy"
+          subtitle="Atlas Redesign"
+          trailing={<Badge intent="danger">Today</Badge>}
+        />
+        <StackedList.Item
+          selectLabel="Mark done:"
+          defaultChecked
+          title="Fix invoice rounding on EU plans"
+          subtitle="Billing Revamp"
+          trailing={<Badge intent="warning">Tomorrow</Badge>}
+        />
+      </StackedList>
+    </div>
+  ),
+};
+
 // ── Interaction tests: selection, read state, star and actions ───────────────
 
 // What takes the focus or a click. A row must hold none of these inside another.
@@ -1591,6 +1618,38 @@ export const UnreadOmittedKeepsTheCurrentLook: Story = {
     await expect(startOffset(canvas.getByText('Unread'), list)).toBe(
       startOffset(canvas.getByText('Not tracked'), list)
     );
+  },
+};
+
+/** The checkbox is named with `selectLabel` and the title, and ticks like any other. */
+export const SelectLabelNamesTheCheckbox: Story = {
+  ...Checklist,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const open = canvas.getByRole('checkbox', { name: 'Mark done: Review the pricing page copy' });
+    const done = canvas.getByRole('checkbox', {
+      name: 'Mark done: Fix invoice rounding on EU plans',
+    });
+    await expect(canvas.getAllByRole('checkbox')).toHaveLength(2);
+    await expect(canvas.queryByRole('checkbox', { name: /^Select / })).toBeNull();
+    await expect(open).not.toBeChecked();
+    await expect(done).toBeChecked();
+    await userEvent.click(open);
+    await expect(open).toBeChecked();
+  },
+};
+
+/** Without `selectLabel` the checkbox is named "Select" and the title, as it always was. */
+export const SelectLabelDefaultsToSelect: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <StackedList>
+      <StackedList.Item defaultChecked={false} title="Ana Ruiz" />
+    </StackedList>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('checkbox', { name: 'Select Ana Ruiz' })).toBeVisible();
+    await expect(canvas.queryByRole('checkbox', { name: /Mark done/ })).toBeNull();
   },
 };
 

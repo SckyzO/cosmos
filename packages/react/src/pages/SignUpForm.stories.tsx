@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { estimateStrength } from '../storybook-strength';
+import { Toaster, toast } from '../ui/Toast';
 import { AuthLayout } from './AuthLayout';
 import { SignUpForm } from './SignUpForm';
 
@@ -52,7 +53,6 @@ export const Interactive: Story = {
   render: () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | undefined>();
-    const [created, setCreated] = useState<string | null>(null);
     return (
       <>
         <SignUpForm
@@ -67,16 +67,12 @@ export const Interactive: Story = {
               if (email.endsWith('@taken.com')) {
                 setError('An account already exists with this email.');
               } else {
-                setCreated(email);
+                toast.success(`Account created for ${email}`);
               }
             }, 1200);
           }}
         />
-        {created && (
-          <div className="inset-s-4 fixed bottom-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
-            Account created for {created}
-          </div>
-        )}
+        <Toaster />
       </>
     );
   },

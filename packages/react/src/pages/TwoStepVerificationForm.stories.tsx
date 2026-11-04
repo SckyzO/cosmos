@@ -11,7 +11,9 @@ import {
   portalDocsParams,
 } from '../storybook-helpers';
 import { QrCode } from '../qr';
+import { Divider } from '../layout/Divider';
 import { SecretValue } from '../ui/SecretValue';
+import { Toaster, toast } from '../ui/Toast';
 import { AuthLayout } from './AuthLayout';
 import { TwoStepVerificationForm } from './TwoStepVerificationForm';
 
@@ -64,7 +66,7 @@ const SETUP_KEY = 'JBSWY3DPEHPK3PXP';
 const SETUP_URI = `otpauth://totp/Cosmos:ann@example.com?secret=${SETUP_KEY}&issuer=Cosmos`;
 
 const AuthenticatorSetupSteps = () => (
-  <div className="mb-8 border-b border-[var(--color-border)] pb-8">
+  <div className="mb-8">
     <p className="text-center text-sm text-[var(--color-text-secondary)]">
       Scan this code with an authenticator app.
     </p>
@@ -75,6 +77,7 @@ const AuthenticatorSetupSteps = () => (
       Can&apos;t scan it? Enter this key in the app instead.
     </p>
     <SecretValue label="Setup key" value={SETUP_KEY} defaultRevealed />
+    <Divider className="mt-8" />
   </div>
 );
 
@@ -142,7 +145,6 @@ export const Interactive: Story = {
   render: () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | undefined>();
-    const [verified, setVerified] = useState(false);
     return (
       <>
         <TwoStepVerificationForm
@@ -160,7 +162,7 @@ export const Interactive: Story = {
             window.setTimeout(() => {
               setSubmitting(false);
               if (code === '123456' || (method === 'backup' && code === '4f7a-91bc')) {
-                setVerified(true);
+                toast.success('Account verified!');
               } else {
                 setError(
                   method === 'backup'
@@ -171,11 +173,7 @@ export const Interactive: Story = {
             }, 1200);
           }}
         />
-        {verified && (
-          <div className="inset-s-4 fixed bottom-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
-            Account verified!
-          </div>
-        )}
+        <Toaster />
       </>
     );
   },

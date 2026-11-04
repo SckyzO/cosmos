@@ -36,19 +36,18 @@ import {
   Badge,
   Breadcrumb,
   Button,
+  CodeBlock,
   CommandPalette,
   CommandPaletteTrigger,
   DataTable,
   DateTime,
   DescriptionList,
   EmptyState,
-  ErrorState,
   HealthBadge,
   HealthCheckList,
   HealthMatrix,
   HeartbeatBar,
   KpiCard,
-  LogLevelBadge,
   LogToolbar,
   LogViewer,
   MonitorRow,
@@ -56,9 +55,10 @@ import {
   PageContainer,
   PageHeader,
   RowActionButton,
+  SectionCard,
+  SectionLabel,
   Shell,
   Sidebar,
-  Sk,
   SkeletonList,
   SkeletonTable,
   StatusBadge,
@@ -175,34 +175,11 @@ const usePhone = () =>
     () => false
   );
 
-// A titled card: the `h2` of a section of the page.
-const Panel = ({
-  title,
-  aside,
-  className,
-  children,
-}: {
-  title: string;
-  aside?: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) => (
-  <section
-    aria-label={title}
-    className={`min-w-0 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-5 ${className ?? ''}`}
-  >
-    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-      <h2 className="m-0 min-w-0 text-base font-semibold [overflow-wrap:anywhere] text-[var(--color-text-primary)]">
-        <bdi>{title}</bdi>
-      </h2>
-      {aside && (
-        <div className="ms-auto text-sm text-[var(--color-text-secondary)]">
-          <bdi>{aside}</bdi>
-        </div>
-      )}
-    </div>
-    {children}
-  </section>
+// The line at the end of a card's header (`SectionCard`'s `action`): a scope, a count, a freshness.
+const Aside = ({ children }: { children: ReactNode }) => (
+  <span className="text-sm text-[var(--color-text-secondary)]">
+    <bdi>{children}</bdi>
+  </span>
 );
 
 // ── The frame ────────────────────────────────────────────────────────────────
@@ -447,27 +424,27 @@ const gaugeStatus = (gauge: GaugeSpec): { status: HealthStatus; label: string } 
 const GaugePanel = ({ gauge, loading }: { gauge: GaugeSpec; loading?: boolean }) => {
   const { status, label } = gaugeStatus(gauge);
   return (
-    <Panel title={gauge.title} aside={gauge.scope}>
-      {loading ? (
-        <Sk h="h-28" round="rounded-xl" />
-      ) : (
-        <>
-          <SemiCircleGauge
-            ariaLabel={gauge.title}
-            value={gauge.value}
-            max={gauge.max}
-            warnAt={gauge.warnAt}
-            critAt={gauge.critAt}
-            showZones
-            formatValue={gauge.format}
-          />
-          <p className="m-0 mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-[var(--color-text-secondary)]">
-            <StatusBadge status={status} label={label} />
-            <bdi>{gauge.note}</bdi>
-          </p>
-        </>
-      )}
-    </Panel>
+    <SectionCard
+      as="h2"
+      title={gauge.title}
+      action={<Aside>{gauge.scope}</Aside>}
+      loading={loading}
+      className="min-w-0"
+    >
+      <SemiCircleGauge
+        ariaLabel={gauge.title}
+        value={gauge.value}
+        max={gauge.max}
+        warnAt={gauge.warnAt}
+        critAt={gauge.critAt}
+        showZones
+        formatValue={gauge.format}
+      />
+      <p className="m-0 mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-[var(--color-text-secondary)]">
+        <StatusBadge status={status} label={label} />
+        <bdi>{gauge.note}</bdi>
+      </p>
+    </SectionCard>
   );
 };
 
@@ -529,7 +506,12 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
   const series = nodeStates(cluster);
   const [ok = 0, warn = 0, crit = 0, unknown = 0] = series;
   return (
-    <Panel title="Node states" aside={stale ? STALE_TEXT : undefined} className="flex-[1_1_15rem]">
+    <SectionCard
+      as="h2"
+      title="Node states"
+      action={stale ? <Aside>{STALE_TEXT}</Aside> : undefined}
+      className="min-w-0 flex-[1_1_15rem]"
+    >
       <DonutChart
         series={series}
         labels={['OK', 'Warning', 'Critical', 'Unknown']}
@@ -540,7 +522,7 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
         height={280}
         ariaLabel={`${grouped(ok + warn + crit + unknown)} nodes: ${grouped(ok)} OK, ${grouped(warn)} warning, ${grouped(crit)} critical, ${grouped(unknown)} unknown`}
       />
-    </Panel>
+    </SectionCard>
   );
 };
 
@@ -735,10 +717,11 @@ const Temperatures = ({
   temps: { rack: string; celsius: number }[];
   loading?: boolean;
 }) => (
-  <Panel
+  <SectionCard
+    as="h2"
     title="Inlet temperature by rack"
-    aside={`Warning above ${celsius(INLET_WARNING)}`}
-    className="flex-[2_1_35rem]"
+    action={<Aside>{`Warning above ${celsius(INLET_WARNING)}`}</Aside>}
+    className="min-w-0 flex-[2_1_35rem]"
   >
     <BarChart
       categories={temps.map((rack) => rack.rack)}
@@ -753,7 +736,7 @@ const Temperatures = ({
       height={240}
       ariaLabel={loading ? 'Inlet temperature by rack' : temperatureName(temps)}
     />
-  </Panel>
+  </SectionCard>
 );
 
 const JOB_COLORS = ['var(--color-brand-500)', 'var(--color-chart-2)', 'var(--color-status-crit)'];
@@ -769,7 +752,7 @@ const Jobs = ({
 }) => {
   const total = jobs.Running + jobs.Pending + jobs.Stalled;
   return (
-    <Panel title="Jobs" className="flex-[1_1_18rem]">
+    <SectionCard as="h2" title="Jobs" className="min-w-0 flex-[1_1_18rem]">
       <div className="flex flex-col gap-3">
         <DonutChart
           series={[jobs.Running, jobs.Pending, jobs.Stalled]}
@@ -790,7 +773,7 @@ const Jobs = ({
           </p>
         )}
       </div>
-    </Panel>
+    </SectionCard>
   );
 };
 
@@ -799,7 +782,12 @@ const Jobs = ({
 const Services = ({ services, stale }: { services: Service[]; stale?: boolean }) => {
   const healthy = services.filter((s) => s.beats[s.beats.length - 1]?.status === 'up').length;
   return (
-    <Panel title="Services" aside={`${healthy} of ${services.length} healthy`}>
+    <SectionCard
+      as="h2"
+      title="Services"
+      action={<Aside>{`${healthy} of ${services.length} healthy`}</Aside>}
+      className="min-w-0"
+    >
       <ul className="m-0 list-none divide-y divide-[var(--color-border)] p-0">
         {services.map((service) => (
           <li key={service.id}>
@@ -815,18 +803,23 @@ const Services = ({ services, stale }: { services: Service[]; stale?: boolean })
           </li>
         ))}
       </ul>
-    </Panel>
+    </SectionCard>
   );
 };
 
 const Scheduler = () => (
-  <Panel title="Scheduler · slurmctld" aside={<HealthBadge status="OK" label="Healthy" />}>
+  <SectionCard
+    as="h2"
+    title="Scheduler · slurmctld"
+    action={<HealthBadge status="OK" label="Healthy" />}
+    className="min-w-0"
+  >
     <div className="flex flex-col gap-5">
       <HeartbeatBar beats={SERVICES[0]!.beats} legend ariaLabel="Scheduler: recent checks" />
       <UptimeStat periods={SCHEDULER_PERIODS} responseTime={4} ariaLabel="slurmctld uptime" />
       <UptimeBars days={SCHEDULER_DAYS} period={30} title="Last 30 days" />
     </div>
-  </Panel>
+  </SectionCard>
 );
 
 const Power = () => {
@@ -838,7 +831,16 @@ const Power = () => {
     return () => POWER_TRACE[i++ % POWER_TRACE.length]!;
   });
   return (
-    <Panel title="Cluster power" aside={<b className="tabular-nums">452 kW</b>}>
+    <SectionCard
+      as="h2"
+      title="Cluster power"
+      action={
+        <Aside>
+          <b className="tabular-nums">452 kW</b>
+        </Aside>
+      }
+      className="min-w-0"
+    >
       <RealtimeChart
         ariaLabel="Cluster power over the last hour, 452 kW now"
         generator={generator}
@@ -852,7 +854,7 @@ const Power = () => {
         formatValue={(kw) => `${kw} kW`}
         height={200}
       />
-    </Panel>
+    </SectionCard>
   );
 };
 
@@ -876,56 +878,49 @@ const Events = ({
   const shown = LOG_LEVEL_KEYS.filter((level) => level !== 'unknown' && counts[level] > 0);
 
   return (
-    <Panel title="Events" aside={failed ? undefined : 'updated 12 s ago'}>
-      {failed ? (
-        <ErrorState
-          compact
-          title="Event stream lost"
-          description="Last line received 14:28:11."
-          onRetry={onRetry}
+    <SectionCard
+      as="h2"
+      title="Events"
+      action={failed ? undefined : <Aside>updated 12 s ago</Aside>}
+      // The stream is lost: the card keeps its header and says so, with the way back.
+      error={failed}
+      errorMessage="Event stream lost"
+      errorDescription="Last line received 14:28:11."
+      onRetry={onRetry}
+      className="min-w-0"
+    >
+      <div className="flex flex-col gap-3">
+        <LogToolbar
+          levels={shown}
+          levelCounts={counts}
+          activeLevels={levels}
+          onActiveLevelsChange={setLevels}
+          search={search}
+          onSearchChange={(text) => {
+            setSearch(text);
+            setActive(0);
+          }}
+          matchCount={matches}
+          activeMatch={active}
+          onActiveMatchChange={setActive}
         />
-      ) : (
-        <div className="flex flex-col gap-3">
-          <ul aria-label="Lines per level" className="m-0 flex list-none flex-wrap gap-3 p-0">
-            {shown.map((level) => (
-              <li key={level} className="flex items-center gap-1.5 text-sm tabular-nums">
-                <LogLevelBadge level={level} />
-                {counts[level]}
-              </li>
-            ))}
-          </ul>
-          <LogToolbar
-            levels={shown}
-            levelCounts={counts}
-            activeLevels={levels}
-            onActiveLevelsChange={setLevels}
-            search={search}
-            onSearchChange={(text) => {
-              setSearch(text);
-              setActive(0);
-            }}
-            matchCount={matches}
-            activeMatch={active}
-            onActiveMatchChange={setActive}
-          />
-          <LogViewer
-            aria-label="Recent events"
-            // Oldest first, as the viewer wants them; it draws the newest on top.
-            lines={lines}
-            order="newest-first"
-            tone="surface"
-            height={260}
-            wrap={wrap}
-            activeLevels={levels}
-            search={search}
-            activeMatch={active}
-            onMatchCountChange={setMatches}
-            locale="en-GB"
-            timeZone="UTC"
-          />
-        </div>
-      )}
-    </Panel>
+        <LogViewer
+          aria-label="Recent events"
+          // Oldest first, as the viewer wants them; it draws the newest on top.
+          lines={lines}
+          order="newest-first"
+          tone="surface"
+          height={260}
+          wrap={wrap}
+          activeLevels={levels}
+          search={search}
+          activeMatch={active}
+          onMatchCountChange={setMatches}
+          locale="en-GB"
+          timeZone="UTC"
+        />
+      </div>
+    </SectionCard>
   );
 };
 
@@ -1059,9 +1054,9 @@ const EmptyPage = () => (
         </div>
       }
     >
-      <p className="m-0 mb-3 text-xs font-semibold tracking-wide text-[var(--color-text-secondary)] uppercase">
+      <SectionLabel size="lg" className="mb-3">
         Three steps, about ten minutes
-      </p>
+      </SectionLabel>
       <ol aria-label="Setup steps" className="m-0 flex list-none flex-col gap-4 p-0">
         {SETUP_STEPS.map((step, i) => (
           <li key={step.title} className="flex gap-3">
@@ -1076,9 +1071,7 @@ const EmptyPage = () => (
                 {step.title}
               </p>
               <p className="m-0 text-sm text-[var(--color-text-secondary)]">{step.text}</p>
-              <code className="mt-1.5 block rounded-md bg-gray-100 px-2 py-1 font-mono text-xs break-all text-[var(--color-text-primary)] dark:bg-gray-800">
-                {step.code}
-              </code>
+              <CodeBlock code={step.code} wrap className="mt-1.5" />
             </div>
           </li>
         ))}
@@ -1107,12 +1100,12 @@ const LoadingPage = () => (
       <SeverityPanels alerts={[]} loading />
       <Gauges gauges={GAUGES} loading />
       <div className="flex flex-wrap items-stretch gap-6">
-        <Panel title="Nodes by rack" className="flex-[3_1_52.5rem]">
+        <SectionCard as="h2" title="Nodes by rack" className="min-w-0 flex-[3_1_52.5rem]">
           <SkeletonTable rows={8} cols={12} />
-        </Panel>
-        <Panel title="Node states" className="flex-[1_1_15rem]">
+        </SectionCard>
+        <SectionCard as="h2" title="Node states" className="min-w-0 flex-[1_1_15rem]">
           <DonutChart series={[]} labels={[]} loading height={220} ariaLabel="Node states" />
-        </Panel>
+        </SectionCard>
       </div>
       <DataTable
         rows={[]}
@@ -1126,9 +1119,9 @@ const LoadingPage = () => (
         <Temperatures temps={INLET_TEMPS} loading />
         <Jobs jobs={JOBS} stalledOn="" loading />
       </div>
-      <Panel title="Events">
+      <SectionCard as="h2" title="Events">
         <SkeletonList rows={6} showAction={false} />
-      </Panel>
+      </SectionCard>
     </div>
   </>
 );
@@ -1156,7 +1149,7 @@ const NodePage = () => (
         </DescriptionList.Item>
       ))}
     </DescriptionList>
-    <Panel title="Health checks" aside="2 need attention">
+    <SectionCard as="h2" title="Health checks" action={<Aside>2 need attention</Aside>}>
       <HealthCheckList
         groups={NODE_CHECKS}
         sort="severity"
@@ -1164,7 +1157,7 @@ const NodePage = () => (
         ariaLabel="Health checks of gpu-b01-04"
         now={NOW}
       />
-    </Panel>
+    </SectionCard>
   </>
 );
 
