@@ -48,6 +48,12 @@ export type SectionCardVariant = 'outline' | 'tinted' | 'solid';
 /** How far the `halo` reaches past the card: `sm`, `md` (default) or `lg`. */
 export type SectionCardHaloSize = 'sm' | 'md' | 'lg';
 
+/** Where the icon tile sits: before the title (default), at the end of the title block, or above it. */
+export type SectionCardIconPosition = 'start' | 'end' | 'top';
+
+/** The shape of the icon tile: a rounded square (default) or a circle. */
+export type SectionCardIconShape = 'square' | 'round';
+
 /** The side of the card the `accent` band sits on. `start` and `end` follow the reading direction. */
 export type SectionCardAccentSide = 'top' | 'end' | 'bottom' | 'start';
 
@@ -180,6 +186,14 @@ export type SectionCardProps = {
   /** Tailwind bg-* class for the icon container. Overridden by `iconTone` when both are set. */
   iconBg?: string;
   /**
+   * Where the icon tile sits. `start` (default) leads the title, `end` closes the title block,
+   * before the `action`, and `top` stacks it above the title. `start` and `end` follow the
+   * reading direction.
+   */
+  iconPosition?: SectionCardIconPosition;
+  /** The shape of the icon tile: `square` (default, rounded corners) or `round`. */
+  iconShape?: SectionCardIconShape;
+  /**
    * At the end of the header: a button, a menu, a link. Below `sm` it goes under the title. It
    * stays in every state; remove it yourself where it makes no sense (`action={empty ? undefined : …}`).
    */
@@ -270,6 +284,8 @@ export const SectionCard = ({
   iconTone,
   iconColor,
   iconBg,
+  iconPosition = 'start',
+  iconShape = 'square',
   action,
   loading = false,
   error = false,
@@ -303,6 +319,17 @@ export const SectionCard = ({
         color:
           tonePreset?.color ?? iconColor ?? intentPreset?.color ?? 'text-[var(--color-text-muted)]',
       };
+  const iconTile = Icon && (
+    <div
+      className={clsx(
+        'flex h-9 w-9 shrink-0 items-center justify-center',
+        iconShape === 'round' ? 'rounded-full' : 'rounded-lg',
+        tile.bg
+      )}
+    >
+      <Icon className={clsx('h-5 w-5', tile.color)} />
+    </div>
+  );
   const inState = loading || error || empty;
   const arrival = useAfterSkeleton(loading);
   const surface = clsx(
@@ -350,18 +377,15 @@ export const SectionCard = ({
         )}
         {/* Below `sm` the action goes under the title; from `sm` it ends the row. */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            {Icon && (
-              <div
-                className={clsx(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                  tile.bg
-                )}
-              >
-                <Icon className={clsx('h-5 w-5', tile.color)} />
-              </div>
+          <div
+            className={clsx(
+              'flex min-w-0 gap-3',
+              iconPosition === 'top' ? 'flex-col items-start' : 'items-center',
+              iconPosition === 'end' && 'sm:flex-1'
             )}
-            <div className="min-w-0">
+          >
+            {iconPosition !== 'end' && iconTile}
+            <div className={clsx('min-w-0', iconPosition === 'end' && 'flex-1')}>
               <Heading
                 id={titleId}
                 className={clsx(
@@ -379,6 +403,7 @@ export const SectionCard = ({
                 </p>
               )}
             </div>
+            {iconPosition === 'end' && iconTile}
           </div>
           {action && <div className="shrink-0 max-sm:max-w-full max-sm:self-start">{action}</div>}
         </div>
