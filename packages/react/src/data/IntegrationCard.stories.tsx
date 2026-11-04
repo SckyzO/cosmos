@@ -272,6 +272,8 @@ export const ClickPrimaryFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Connect' }));
     await expect(args.onAction).toHaveBeenCalledTimes(1);
+    // The props are `() => void`: the click event stays with the button.
+    await expect(args.onAction).toHaveBeenCalledWith();
   },
 };
 
@@ -288,6 +290,7 @@ export const ClickSecondaryFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Configure' }));
     await expect(args.onSecondary).toHaveBeenCalledTimes(1);
+    await expect(args.onSecondary).toHaveBeenCalledWith();
     await expect(args.onAction).not.toHaveBeenCalled();
   },
 };

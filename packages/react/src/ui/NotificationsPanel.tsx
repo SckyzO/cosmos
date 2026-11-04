@@ -215,7 +215,7 @@ const NotificationsPanelHeader = ({
         {onMarkAllRead && (
           <button
             type="button"
-            onClick={onMarkAllRead}
+            onClick={() => onMarkAllRead()}
             className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
           >
             Mark all as read

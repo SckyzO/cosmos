@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -92,6 +92,36 @@ export const SimpleRendersTitleAndDismiss: Story = {
     await expect(status).not.toBeNull();
     const dismiss = canvasElement.querySelector('button[aria-label="Dismiss notification"]');
     await expect(dismiss).not.toBeNull();
+  },
+};
+
+const onSimpleDismiss = fn();
+const onUndo = fn();
+const onCondensedDismiss = fn();
+
+/** The dismiss buttons and the action are `() => void`: the click event stays with the button. */
+export const ActionAndDismissGetNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <NotificationCard.Simple title="Saved" onDismiss={onSimpleDismiss} />
+      <NotificationCard.Condensed
+        title="Removed"
+        actionLabel="Undo"
+        onAction={onUndo}
+        onDismiss={onCondensedDismiss}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const [simple, condensed] = canvas.getAllByRole('button', { name: 'Dismiss notification' });
+    await userEvent.click(simple!);
+    await userEvent.click(canvas.getByRole('button', { name: 'Undo' }));
+    await userEvent.click(condensed!);
+    for (const handler of [onSimpleDismiss, onUndo, onCondensedDismiss]) {
+      await expect(handler).toHaveBeenCalledTimes(1);
+      await expect(handler).toHaveBeenCalledWith();
+    }
   },
 };
 

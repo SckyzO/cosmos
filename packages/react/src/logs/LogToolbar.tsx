@@ -134,7 +134,7 @@ const ToggleButton = ({
     aria-pressed={pressed}
     aria-label={iconOnly ? children : undefined}
     title={iconOnly ? children : undefined}
-    onClick={onToggle}
+    onClick={() => onToggle()}
     className={clsx(
       CONTROL,
       pressed ? CONTROL_ON : CONTROL_IDLE,
@@ -422,7 +422,7 @@ export const LogToolbar = ({
       shape={wide ? 'square' : 'rounded'}
       aria-label={wide ? 'Download' : undefined}
       title={wide ? 'Download' : undefined}
-      onClick={onDownload}
+      onClick={() => onDownload()}
     >
       {wide ? undefined : 'Download'}
     </Button>
@@ -435,7 +435,7 @@ export const LogToolbar = ({
       shape={wide ? 'square' : 'rounded'}
       aria-label={wide ? 'Clear' : undefined}
       title={wide ? 'Clear' : undefined}
-      onClick={onClear}
+      onClick={() => onClear()}
     >
       {wide ? undefined : 'Clear'}
     </Button>

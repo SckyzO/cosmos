@@ -22,7 +22,7 @@ export const DataTableFiltersButton = ({ count, open, onClick }: FiltersButtonPr
     icon={SlidersHorizontal}
     aria-haspopup="dialog"
     aria-expanded={open}
-    onClick={onClick}
+    onClick={() => onClick()}
     className="shrink-0"
   >
     Filters
@@ -83,10 +83,12 @@ export const DataTableFiltersSheet = <T,>({
       ))}
     </Drawer.Body>
     <Drawer.Footer className="justify-between">
-      <Button variant="secondary" disabled={count === 0} onClick={onClearAll}>
+      <Button variant="secondary" disabled={count === 0} onClick={() => onClearAll()}>
         Clear all
       </Button>
-      <Button onClick={onClose}>{`Show ${rowCount} ${rowCount === 1 ? 'row' : 'rows'}`}</Button>
+      <Button
+        onClick={() => onClose()}
+      >{`Show ${rowCount} ${rowCount === 1 ? 'row' : 'rows'}`}</Button>
     </Drawer.Footer>
   </Drawer>
 );

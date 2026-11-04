@@ -101,7 +101,7 @@ export const FileTile = ({
       type="button"
       title={name}
       aria-current={selected || undefined}
-      onClick={onOpen}
+      onClick={() => onOpen()}
       className={NAME_CLASS}
     >
       <bdi>{name}</bdi>

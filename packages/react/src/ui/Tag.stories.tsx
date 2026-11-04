@@ -287,10 +287,6 @@ export const LinkChecks: Story = {
 export const Clickable: Story = {
   args: { children: 'Filter', intent: 'brand', onClick: fn() },
   tags: ['!autodocs'],
-  // The tag hands its click event to `onClick`. A mock Storybook has named would log it in the
-  // Actions panel, by walking the event through `window`, which warns that the Story Store is
-  // deprecated: the mock gets no event.
-  render: ({ onClick, ...args }) => <Tag {...args} onClick={() => onClick?.()} />,
 };
 
 export const ClickableChecks: Story = {
@@ -300,8 +296,21 @@ export const ClickableChecks: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Filter' }));
     await expect(args.onClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClick).toHaveBeenCalledWith();
     await userEvent.keyboard('{Enter}');
     await expect(args.onClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+export const RemoveCallsOnRemove: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: 'Filter', intent: 'brand', onRemove: fn() },
+  play: async ({ args, canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Remove Filter' }));
+    await expect(args.onRemove).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onRemove).toHaveBeenCalledWith();
   },
 };
 

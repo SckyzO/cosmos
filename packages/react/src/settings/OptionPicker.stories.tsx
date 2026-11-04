@@ -266,6 +266,19 @@ export const OptionCardForwardsRef: Story = {
   },
 };
 
+const onCardClick = fn();
+
+export const OptionCardCallsOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <OptionCard id="soft" label="Soft" onClick={onCardClick} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('radio', { name: 'Soft' }));
+    await expect(onCardClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onCardClick).toHaveBeenCalledWith();
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports

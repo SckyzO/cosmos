@@ -86,7 +86,7 @@ const SimpleVariant = ({
             <div className="ms-4 flex shrink-0">
               <button
                 type="button"
-                onClick={onDismiss}
+                onClick={() => onDismiss()}
                 aria-label="Dismiss notification"
                 className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
               >
@@ -135,7 +135,7 @@ const CondensedVariant = ({
     {actionLabel && (
       <button
         type="button"
-        onClick={onAction}
+        onClick={() => onAction?.()}
         className="focus-visible:focus-indicator text-sm font-medium text-indigo-400 hover:text-indigo-300"
       >
         {actionLabel}
@@ -144,7 +144,7 @@ const CondensedVariant = ({
     {onDismiss && (
       <button
         type="button"
-        onClick={onDismiss}
+        onClick={() => onDismiss()}
         aria-label="Dismiss notification"
         className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-200"
       >

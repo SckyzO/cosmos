@@ -1719,6 +1719,23 @@ export const ForwardsRef: Story = {
   },
 };
 
+const onBrandClick = fn();
+
+export const BrandButtonCallsOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Sidebar>
+      <Sidebar.Brand title="Pressed brand" onClick={onBrandClick} />
+    </Sidebar>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /Pressed brand/ }));
+    await expect(onBrandClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onBrandClick).toHaveBeenCalledWith();
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports

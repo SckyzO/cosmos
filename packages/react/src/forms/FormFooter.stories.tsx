@@ -114,6 +114,8 @@ export const ClickCancelFiresHandler: Story = {
     const cancel = canvas.getByRole('button', { name: /cancel/i });
     await userEvent.click(cancel);
     await expect(args.onCancel).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onCancel).toHaveBeenCalledWith();
   },
 };
 

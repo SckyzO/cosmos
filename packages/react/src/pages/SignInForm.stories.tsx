@@ -111,6 +111,8 @@ export const ForgotFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /forgot password/i }));
     await expect(args.onForgotPassword).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onForgotPassword).toHaveBeenCalledWith();
   },
 };
 

@@ -394,6 +394,40 @@ export const Composer: Story = {
   ),
 };
 
+const onCancel = fn();
+
+export const ComposerCancelCallsOnCancel: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame>
+      <CommentComposer onSubmit={fn()} onCancel={onCancel} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }));
+    await expect(onCancel).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onCancel).toHaveBeenCalledWith();
+  },
+};
+
+const onDelete = fn();
+
+export const DeleteCallsOnDelete: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Frame>
+      <Comment author="Marta Ilves" text="Nothing changed on our side." onDelete={onDelete} />
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Delete' }));
+    await expect(onDelete).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onDelete).toHaveBeenCalledWith();
+  },
+};
+
 /** The comment is being sent: the field is read-only and the button spins. */
 export const ComposerSubmitting: Story = {
   render: () => (

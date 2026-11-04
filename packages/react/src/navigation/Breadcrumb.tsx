@@ -145,7 +145,7 @@ export const Breadcrumb = ({
                 </span>
               </span>
             ) : onClick ? (
-              <button type="button" onClick={onClick} className={linkClass}>
+              <button type="button" onClick={() => onClick()} className={linkClass}>
                 {renderIcon('h-4 w-4 shrink-0')}
                 <span className="truncate">
                   <bdi>{label}</bdi>

@@ -332,6 +332,15 @@ The same prop means the same thing on every component.
   `onChange(value)`, `onCollapsedChange(collapsed)`, `onChange(isDark)`. A callback that reports a
   state change carries the state to move to, never a bare `onToggle()` that makes the host work it
   out.
+- **A callback with no payload is called with no argument.** A prop typed `() => void` (`onRetry`,
+  `onDismiss`, `onCancel`, `onClose`, `onOpen`, a card's or a row's `onClick`) is wired from the
+  control that fires it as `onClick={() => onRetry()}`, never `onClick={onRetry}`: handed over as it
+  is, the host's function receives the click event, and a handler with an optional parameter
+  (`reload(force?: boolean)`) takes it for its own while the type promises it gets nothing. A prop
+  that reports the event on purpose says so in its type (`MouseEventHandler`, `onChange(event)`).
+  The story that clicks the control checks `toHaveBeenCalledWith()`, and `void-callbacks.spec.ts`
+  reads the package with the type checker and fails on `onClick={onRetry}` when `onRetry` is a
+  `() => void` that comes from outside the component.
 - **State the host may own comes in a controlled/uncontrolled pair.** The value (`value`,
   `checked`, `page`, `collapsed`, `open`…), its default (`defaultValue`, `defaultChecked`,
   `defaultPage`, `defaultCollapsed`, `defaultOpen`…) and its change callback. Only `undefined`

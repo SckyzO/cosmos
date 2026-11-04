@@ -598,6 +598,8 @@ export const ErrorOffersARetry: Story = {
     await expect(canvas.getByRole('tab', { name: /^Unfulfilled/ })).toBeVisible();
     await userEvent.click(canvas.getByRole('button', { name: 'Try again' }));
     await expect(args.onRetry).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onRetry).toHaveBeenCalledWith();
   },
 };
 

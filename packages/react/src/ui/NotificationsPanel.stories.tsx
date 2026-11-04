@@ -456,6 +456,8 @@ export const MarkAllReadFiresHandler: Story = {
     const dialog = await within(document.body).findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Mark all as read' }));
     await expect(onMarkAllRead).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onMarkAllRead).toHaveBeenCalledWith();
     await expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   },
 };

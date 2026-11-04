@@ -68,7 +68,7 @@ export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
           </div>
           {onReset && (
             <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-              <Button type="button" variant="ghost" size="sm" onClick={onReset}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => onReset()}>
                 Reset
               </Button>
             </div>

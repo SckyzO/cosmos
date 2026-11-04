@@ -55,7 +55,7 @@ export const ActiveFiltersBar = ({
       ))}
       <button
         type="button"
-        onClick={onClearAll}
+        onClick={() => onClearAll()}
         className="focus-visible:focus-indicator ms-1 rounded-sm text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Clear all

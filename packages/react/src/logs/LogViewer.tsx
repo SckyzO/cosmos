@@ -258,7 +258,7 @@ const LogRow = ({
   const toggle = onToggle ? (
     <button
       type="button"
-      onClick={onToggle}
+      onClick={() => onToggle()}
       aria-expanded={expanded}
       aria-controls={expanded ? detailsId : undefined}
       aria-label={expanded ? 'Hide details' : 'Show details'}
@@ -441,7 +441,7 @@ const LogDetails = ({
         {onOpen && (
           <button
             type="button"
-            onClick={onOpen}
+            onClick={() => onOpen()}
             className={clsx(
               'focus-visible:focus-indicator mt-1 rounded-sm underline underline-offset-2',
               tone === 'terminal' ? 'text-sky-300' : 'text-brand-600 dark:text-brand-400'

@@ -385,6 +385,8 @@ export const ErrorChecks: Story = {
     await expectHeaderKept(card);
     await userEvent.click(within(card).getByRole('button', { name: 'Try again' }));
     await expect(args.onRetry).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onRetry).toHaveBeenCalledWith();
   },
 };
 

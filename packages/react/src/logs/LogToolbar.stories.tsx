@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -124,6 +124,20 @@ const FullBar = ({ width }: { width: number }) => {
 };
 
 const FullBarWide: Story = { render: () => <FullBar width={1100} /> };
+
+/** Download and Clear call their props with no argument: the click event stays with the button. */
+export const DownloadAndClearGetNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onDownload: fn(), onClear: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Download' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear' }));
+    await expect(args.onDownload).toHaveBeenCalledTimes(1);
+    await expect(args.onDownload).toHaveBeenCalledWith();
+    await expect(args.onClear).toHaveBeenCalledTimes(1);
+    await expect(args.onClear).toHaveBeenCalledWith();
+  },
+};
 
 /** The icon of an icon-only toggle keeps its size, in a square button of the control height. */
 export const IconToggleKeepsItsSize: Story = {

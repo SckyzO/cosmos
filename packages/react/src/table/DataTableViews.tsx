@@ -182,7 +182,7 @@ const NameForm = ({
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="button" variant="secondary" onClick={() => onCancel()}>
             Cancel
           </Button>
           <Button type="submit">{submitLabel}</Button>

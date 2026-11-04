@@ -93,7 +93,12 @@ export const IntegrationCard = ({
     {(actionLabel || secondaryLabel) && (
       <div className="mt-4 flex items-center justify-end gap-2">
         {secondaryLabel && (
-          <Button variant="ghost" size="sm" onClick={onSecondary} disabled={loading}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onSecondary && (() => onSecondary())}
+            disabled={loading}
+          >
             {secondaryLabel}
           </Button>
         )}
@@ -102,7 +107,7 @@ export const IntegrationCard = ({
             variant={actionVariant}
             intent={actionIntent}
             size="sm"
-            onClick={onAction}
+            onClick={onAction && (() => onAction())}
             loading={loading}
             disabled={loading}
           >

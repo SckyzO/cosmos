@@ -449,7 +449,7 @@ function StackedListItem({
           intent={intent === 'danger' ? 'danger' : 'neutral'}
           disabled={disabled}
           aria-labelledby={`${id}-a${i} ${titleId}`}
-          onClick={onSelect}
+          onClick={() => onSelect()}
           className={disabled ? 'cursor-not-allowed opacity-50' : undefined}
         >
           <span id={`${id}-a${i}`} className="sr-only">

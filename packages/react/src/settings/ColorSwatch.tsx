@@ -33,7 +33,7 @@ export const ColorSwatch = ({
   <button
     ref={ref}
     type="button"
-    onClick={onClick}
+    onClick={onClick && (() => onClick())}
     title={label}
     aria-label={label}
     role="radio"

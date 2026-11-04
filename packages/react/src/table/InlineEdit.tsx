@@ -231,7 +231,7 @@ export const CellEditorBox = <T,>({
             shape="square"
             icon={X}
             aria-label="Cancel"
-            onClick={cancel}
+            onClick={() => cancel()}
           />
         </div>
       ) : (
@@ -309,10 +309,10 @@ export const RowEditActions = ({
 }: RowActionsProps) =>
   editing ? (
     <div className="flex items-center justify-end gap-1.5">
-      <Button variant="secondary" size="sm" disabled={saving} onClick={cancel}>
+      <Button variant="secondary" size="sm" disabled={saving} onClick={() => cancel()}>
         Cancel
       </Button>
-      <Button ref={registerSave} size="sm" loading={saving} onClick={save}>
+      <Button ref={registerSave} size="sm" loading={saving} onClick={() => save()}>
         Save
       </Button>
     </div>

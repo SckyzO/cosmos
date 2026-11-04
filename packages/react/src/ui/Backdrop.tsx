@@ -38,7 +38,7 @@ export const Backdrop = ({
 }: BackdropProps) => (
   <div
     ref={ref}
-    onClick={onClick}
+    onClick={onClick && (() => onClick())}
     aria-hidden
     data-slot="backdrop"
     style={{ zIndex }}

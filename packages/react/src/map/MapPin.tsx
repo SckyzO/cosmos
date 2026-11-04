@@ -81,7 +81,7 @@ export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: Pin
           <button
             type="button"
             aria-label="Close"
-            onClick={onClose}
+            onClick={() => onClose()}
             className="focus-visible:focus-indicator inset-e-1.5 absolute top-1.5 flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:bg-gray-100 dark:hover:bg-white/10"
           >
             <X className="size-4" aria-hidden="true" />
@@ -114,7 +114,7 @@ export const ClusterPin = ({ count, interactive, onOpen }: ClusterPinProps) => {
       tabIndex={-1}
       aria-label={`${count} places, zoom in`}
       className={clsx(className, 'focus-visible:focus-indicator cursor-pointer')}
-      onClick={onOpen}
+      onClick={() => onOpen()}
     >
       {count}
     </button>

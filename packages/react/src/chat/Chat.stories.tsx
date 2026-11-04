@@ -939,6 +939,8 @@ export const RegenerateCallsBack: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Regenerate' }));
     await expect(onRegenerate).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onRegenerate).toHaveBeenCalledWith();
     // Only the actions that were asked for.
     await expect(canvas.queryByRole('button', { name: 'Copy reply' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Good response' })).toBeNull();
@@ -1054,6 +1056,8 @@ export const StopReplacesSend: Story = {
     await expect(input).toBeEnabled();
     await userEvent.click(stop);
     await expect(onStop).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onStop).toHaveBeenCalledWith();
   },
 };
 

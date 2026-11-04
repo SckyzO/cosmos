@@ -64,7 +64,7 @@ const IconButton = ({
     aria-label={label}
     aria-pressed={pressed}
     title={label}
-    onClick={onClick}
+    onClick={() => onClick()}
     className={clsx(ICON_BUTTON, pressed ? FRAME[tone].iconButtonOn : FRAME[tone].iconButton)}
   >
     <Icon aria-hidden className={clsx('size-4', rtlFlip && 'rtl:-scale-x-100')} />
