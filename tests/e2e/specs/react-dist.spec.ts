@@ -1,22 +1,30 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import { build } from 'esbuild';
 import { expectOwnTypesPerFormat, expectSubpathOwnTypes } from './package-exports';
 
-// The published @sckyzo/cosmos-react bundles are plain JS: a CSS import in them
+// The published @sckyzo/cosmos-react files are plain JS: a CSS import in them
 // would break `require` in Node, Jest and any non-bundler consumer.
 
 const pkgDir = fileURLToPath(new URL('../../../packages/react/', import.meta.url));
 const cjs = `${pkgDir}dist/index.cjs`;
 const esm = `${pkgDir}dist/index.js`;
+const SUBPATHS = ['code', 'editor', 'map', 'qr'];
+const read = (file: string) => readFileSync(file, 'utf8');
+const distFiles = () =>
+  readdirSync(`${pkgDir}dist`, { recursive: true, encoding: 'utf8' }).filter((name) =>
+    /\.c?js$/.test(name)
+  );
 
 test.skip(
   !existsSync(cjs) && !process.env.CI,
   'needs the tsup build (`make build`); CI always builds first'
 );
 
-test('the CJS bundle loads in Node without requiring a stylesheet', () => {
+test('the CJS build loads in Node without requiring a stylesheet', () => {
   const script = `
     const Module = require('node:module');
     const css = [];
@@ -32,9 +40,9 @@ test('the CJS bundle loads in Node without requiring a stylesheet', () => {
   expect(JSON.parse(out)).toEqual({ css: [], hasCalendar: 'function' });
 });
 
-test('neither bundle imports CSS, and the Calendar stylesheet is an explicit export', () => {
-  for (const file of [cjs, esm]) {
-    expect(readFileSync(file, 'utf8'), file).not.toMatch(/\.css['"]/);
+test('no file imports CSS, and the Calendar stylesheet is an explicit export', () => {
+  for (const name of distFiles()) {
+    expect(readFileSync(`${pkgDir}dist/${name}`, 'utf8'), name).not.toMatch(/\.css['"]/);
   }
   const pkg = JSON.parse(readFileSync(`${pkgDir}package.json`, 'utf8'));
   expect(pkg.exports['./calendar.css']).toBe('./calendar.css');
@@ -47,46 +55,137 @@ test('import and require each resolve their own type declarations', () => {
   expectOwnTypesPerFormat(pkgDir);
 });
 
-test('every JS file starts with the "use client" directive', () => {
+// Code left once comments and blank lines are gone: a file that only re-exports others is a list
+// of `export … from` statements, and a module that only declares types is empty.
+const statements = (code: string) =>
+  code
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .split(';')
+    .map((statement) => statement.trim())
+    .filter(
+      (statement) => statement && statement !== '"use client"' && statement !== "'use strict'"
+    );
+const REEXPORT = /^export\s*(?:\*|\{[^}]*\})\s*from\s*['"][^'"]+['"]$/;
+
+test('every module is a file of its own, which starts with the "use client" directive', () => {
   // React Server Components bundlers read it to treat the components as client
   // modules. tsup's Rollup pass drops it from the build, so the tsup config
   // prepends it once the files are written.
   const directive = '"use client";\n';
-  const files = readdirSync(`${pkgDir}dist`, { recursive: true, encoding: 'utf8' }).filter((name) =>
-    /\.c?js$/.test(name)
-  );
+  const files = distFiles();
   expect(files).toEqual(
     expect.arrayContaining([
       'index.js',
       'index.cjs',
-      'code/index.js',
-      'code/index.cjs',
-      'editor/index.js',
-      'editor/index.cjs',
-      'map/index.js',
-      'map/index.cjs',
-      'qr/index.js',
-      'qr/index.cjs',
+      'ui/index.js',
+      'ui/Button.js',
+      'ui/Button.cjs',
+      'ui/overlayStack.js',
+      'table/DataTable.js',
+      ...SUBPATHS.flatMap((dir) => [`${dir}/index.js`, `${dir}/index.cjs`]),
     ])
   );
-  for (const name of files) {
-    const code = readFileSync(`${pkgDir}dist/${name}`, 'utf8');
-    expect(code.slice(0, directive.length), name).toBe(directive);
+  for (const name of files.filter((file) => file.endsWith('.js'))) {
+    const code = read(`${pkgDir}dist/${name}`);
+    const twin = read(`${pkgDir}dist/${name.replace(/\.js$/, '.cjs')}`);
+    const left = statements(code);
+    // A file that only re-exports others goes without: Next.js refuses `export *` in a client
+    // boundary, and each file it names carries the directive. So does its CommonJS twin.
+    const expected = left.every((statement) => REEXPORT.test(statement)) ? '' : directive;
+    expect(code.slice(0, directive.length) === directive ? directive : '', name).toBe(expected);
+    expect(twin.slice(0, directive.length) === directive ? directive : '', `${name} (cjs)`).toBe(
+      expected
+    );
+    if (expected) expect(code, name).not.toMatch(/^export \*/m);
+  }
+  // The entry and each group's index only re-export.
+  expect(read(esm).startsWith(directive)).toBe(false);
+  expect(read(`${pkgDir}dist/ui/index.js`).startsWith(directive)).toBe(false);
+  expect(read(`${pkgDir}dist/ui/Button.js`).startsWith(directive)).toBe(true);
+});
+
+// An app's bundler keeps the files its imports reach (`sideEffects` in package.json says the JS
+// files have none) and drops the rest of the library, with the dependencies only they use.
+const bundleApp = async (code: string) => {
+  const { metafile } = await build({
+    stdin: { contents: code, resolveDir: pkgDir, loader: 'js' },
+    bundle: true,
+    write: false,
+    format: 'esm',
+    platform: 'browser',
+    metafile: true,
+    logLevel: 'silent',
+    alias: { '@sckyzo/cosmos-react': esm },
+    external: ['react', 'react-dom', 'react/*', 'react-dom/*'],
+  });
+  const [output] = Object.values(metafile.outputs);
+  const kept = Object.entries(output.inputs).filter(([, input]) => input.bytesInOutput > 0);
+  return {
+    cosmos: kept
+      .map(([file]) => file)
+      .filter((file) => file.includes('packages/react/dist/'))
+      .map((file) => file.slice(file.indexOf('dist/') + 'dist/'.length))
+      .sort(),
+    dependencies: [
+      ...new Set(
+        kept.flatMap(([file]) => {
+          const name = /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?((?:@[^/]+\/)?[^/]+)/.exec(
+            file
+          )?.[1];
+          return name ? [name] : [];
+        })
+      ),
+    ].sort(),
+  };
+};
+
+test('an app that imports one component ships that component, not the library', async () => {
+  expect(
+    await bundleApp(`import { Button } from '@sckyzo/cosmos-react'; console.log(Button);`)
+  ).toEqual({
+    cosmos: ['ui/Button.js'],
+    dependencies: ['clsx'],
+  });
+  // A modal brings the overlay layer it opens through, and none of the components it does not
+  // render: no table, no command palette (cmdk), no carousel (Embla), no toaster (Sonner).
+  const modal = await bundleApp(
+    `import { Modal } from '@sckyzo/cosmos-react'; console.log(Modal);`
+  );
+  expect(modal.cosmos).toContain('ui/Modal.js');
+  expect(modal.cosmos).toContain('ui/overlayStack.js');
+  expect(modal.cosmos.filter((file) => /^(?:table|data|forms|chat|logs)\//.test(file))).toEqual([]);
+  expect(modal.dependencies.filter((name) => !['clsx', 'lucide-react'].includes(name))).toEqual([]);
+});
+
+// A sub-path entry bundles its own folder and imports what it needs from the rest of the package
+// as the built files of those modules: one copy of each, so contexts and the overlay stack are the
+// ones the root entry uses.
+test('each sub-path entry imports the rest of the package as files that exist, never a copy', () => {
+  for (const dir of SUBPATHS) {
+    for (const extension of ['.js', '.cjs']) {
+      const file = `${pkgDir}dist/${dir}/index${extension}`;
+      const code = read(file);
+      expect(code, file).not.toMatch(/(?:from |require\(|import\()['"]@sckyzo\/cosmos-react/);
+      const imports = [...code.matchAll(/(?:from |require\()['"](\.{1,2}\/[^'"]+)['"]/g)].map(
+        ([, path]) => path
+      );
+      for (const path of imports) {
+        const target = join(dirname(file), path);
+        expect(existsSync(target), `${dir}/index${extension} → ${path}`).toBe(true);
+        expect(relative(`${pkgDir}dist/${dir}`, target).startsWith('..'), path).toBe(true);
+        expect(path.endsWith(extension), path).toBe(true);
+      }
+    }
   }
 });
 
 // ── `@sckyzo/cosmos-react/code`: syntax highlighting, with `shiki` as an optional peer ──────────
 // The root entry never imports the code entry nor Shiki: an app that renders no highlighted block
-// ships no highlighter. The code entry imports the root entry as the package itself, never a copy
-// of it: a second copy would hold its own contexts and overlay stack.
+// ships no highlighter.
 
 const codeEsm = `${pkgDir}dist/code/index.js`;
 const codeCjs = `${pkgDir}dist/code/index.cjs`;
-const read = (file: string) => readFileSync(file, 'utf8');
-const distFiles = () =>
-  readdirSync(`${pkgDir}dist`, { recursive: true, encoding: 'utf8' }).filter((name) =>
-    /\.c?js$/.test(name)
-  );
 
 test('Shiki is an optional peer dependency, and a dev dependency of the repo only', () => {
   const pkg = JSON.parse(read(`${pkgDir}package.json`));
@@ -110,12 +209,11 @@ test('the code entry resolves for import and require, each with its own types', 
   expectSubpathOwnTypes(pkgDir, 'code');
 });
 
-test('the code entry leaves Shiki and the root entry external, and loads each language on demand', () => {
+test('the code entry leaves Shiki and the rest of the package external, and loads each language on demand', () => {
   for (const file of [codeEsm, codeCjs]) {
     const code = read(file);
-    // The root entry is the package imported from itself, not bundled again: no component of
-    // it is in this file.
-    expect(code, file).toMatch(/(?:from |require\()['"]@sckyzo\/cosmos-react['"]/);
+    // The block it draws in is the built file of the root entry's CodeBlock, not a copy.
+    expect(code, file).toMatch(/(?:from |require\()['"]\.\.\/ui\/CodeBlock\.c?js['"]/);
     expect(code, file).not.toContain('Clipboard');
     expect(code.length, file).toBeLessThan(60_000);
     // Shiki is only ever imported dynamically, so the app's bundler splits it and each language.
@@ -175,8 +273,7 @@ test('the code entry loads in Node as ESM and as CJS, next to the root entry', (
 
 // ── `@sckyzo/cosmos-react/editor`: formatted text, with Tiptap as optional peers ────────────────
 // Same contract as the code entry: the root entry ships no Tiptap, and the editor entry imports the
-// root entry as the package itself. It also takes by value a few internal helpers the root entry
-// does not export, so every name it asks of the root entry has to exist there.
+// rest of the package as its built files.
 
 const editorEsm = `${pkgDir}dist/editor/index.js`;
 const editorCjs = `${pkgDir}dist/editor/index.cjs`;
@@ -211,10 +308,10 @@ test('the editor entry resolves for import and require, each with its own types'
   expectSubpathOwnTypes(pkgDir, 'editor');
 });
 
-test('the editor entry leaves Tiptap and the root entry external', () => {
+test('the editor entry leaves Tiptap and the rest of the package external', () => {
   for (const file of [editorEsm, editorCjs]) {
     const code = read(file);
-    expect(code, file).toMatch(/(?:from |require\()['"]@sckyzo\/cosmos-react['"]/);
+    expect(code, file).toMatch(/(?:from |require\()['"]\.\.\/forms\/Checkbox\.c?js['"]/);
     for (const name of [
       '@tiptap/react',
       '@tiptap/react/menus',
@@ -230,43 +327,6 @@ test('the editor entry leaves Tiptap and the root entry external', () => {
     expect(code, file).not.toContain('Clipboard');
     expect(code.length, file).toBeLessThan(60_000);
   }
-});
-
-test('the editor entry only asks the root entry for names it exports', () => {
-  const cosmos: string[] = JSON.parse(
-    execFileSync(
-      process.execPath,
-      [
-        '--input-type=module',
-        '-e',
-        `const c = await import(${JSON.stringify(esm)}); console.log(JSON.stringify(Object.keys(c)));`,
-      ],
-      { encoding: 'utf8', cwd: pkgDir }
-    )
-  );
-  const esmSource = read(editorEsm);
-  const imported = [
-    ...esmSource.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@sckyzo\/cosmos-react['"]/g),
-  ].flatMap(([, list]) =>
-    list
-      .split(',')
-      .map((item) => item.split(' as ')[0].trim())
-      .filter(Boolean)
-  );
-  expect(imported.length).toBeGreaterThan(0);
-  expect(imported.filter((name) => !cosmos.includes(name))).toEqual([]);
-
-  const cjsSource = read(editorCjs);
-  const binding =
-    /(?:var|const|let) (\w+) = (?:__toESM\()?require\(['"]@sckyzo\/cosmos-react['"]\)/.exec(
-      cjsSource
-    )?.[1];
-  expect(binding).toBeTruthy();
-  const used = [...cjsSource.matchAll(new RegExp(`\\b${binding}\\.(\\w+)`, 'g'))].map(
-    ([, name]) => name
-  );
-  expect(used.length).toBeGreaterThan(0);
-  expect(used.filter((name) => !cosmos.includes(name))).toEqual([]);
 });
 
 test('the editor entry loads in Node as ESM and as CJS, next to the root entry', () => {

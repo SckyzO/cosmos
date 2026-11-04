@@ -73,7 +73,7 @@ belongs to a story, unless it can take the element as a parameter (as `applyAppe
 stand-in object with the few members it touches is enough in Node. Logic buried in a component moves
 to a module of its own first, in a separate `refactor` commit that changes nothing else.
 
-`*.test.ts` files stay out of the published packages (tsup bundles from `src/index.ts` only) and
+`*.test.ts` files stay out of the published packages (tsup builds what `src/index.ts` reaches) and
 are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
 its `tsconfig.json` because the packages do not depend on it.
 
@@ -458,7 +458,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 - **Tests**: one `<Name>.stories.tsx` per wrapper, with the helpers of `src/storybook-recharts.tsx`.
   Each keeps a `HtmlInLabelsRendersAsText` story, one that repaints with the theme and one for the
   empty state. `tests/e2e/specs/charts-dist.spec.ts` guards the build: one file per wrapper, Recharts
-  external, `"use client"` on every file.
+  external, `"use client"` on every file but the entry, which only re-exports them.
 
 ## PR checklist
 

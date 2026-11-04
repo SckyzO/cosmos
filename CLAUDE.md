@@ -181,23 +181,27 @@ charts ───────────── storybook      (charts imports ne
   `data-accent="teal"` etc. (none = blue). Both redefine Tailwind's palette vars (`--color-white`,
   `--color-gray-*`, `--color-brand-*`) in `css-vars.css`, **outside any `@layer`** so they beat the
   `@theme` block. Components never need per-theme classes. Spec: `docs/specs/themes-accents.md`.
-- **`packages/react`** — React 19 components, built by tsup to ESM + CJS + DTS. Both tsup configs
-  prepend `"use client"` in `onSuccess` (`config/tsup/use-client.ts`): with `treeshake`, Rollup
-  drops an esbuild banner. `exports` gives `import` and `require` their own types (`index.d.ts` /
-  `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and charts' per-wrapper
-  files.
+- **`packages/react`** — React 19 components, built by tsup to ESM + CJS + DTS, **one file per
+  module**: `src/ui/Button.tsx` is `dist/ui/Button.js` and `.cjs`, its relative imports left as
+  imports of the built files (`config/tsup/preserve-modules.ts`; the entries are the modules
+  `src/index.ts` and the sub-path entries reach at run time, so stories, tests and the Storybook
+  helpers are never built). With `sideEffects` (only `*.css`), an app's bundler keeps the files
+  its imports reach: `import { Button }` ships `ui/Button.js` and `clsx`, nothing else
+  (`react-dist.spec.ts` bundles it with esbuild). A module that does something on load for others
+  would be dropped: a module's state lives in the module that uses it. The types stay one
+  declaration file per `exports` entry. Both tsup configs prepend `"use client"` in `onSuccess`
+  (`config/tsup/use-client.ts`): with `treeshake`, Rollup drops an esbuild banner. A file that
+  only re-exports others (the entry, each group's `index`) goes without, since Next.js refuses
+  `export *` in a client boundary. `exports` gives `import` and `require` their own types
+  (`index.d.ts` / `index.d.cts`). `tests/e2e/specs/{react,charts}-dist.spec.ts` guard both, and
+  charts' per-wrapper files.
   **Sub-path entries** (`@sckyzo/cosmos-react/code` with `shiki`, `/editor` with Tiptap, `/map`
-  with `maplibre-gl`, `/qr` with `qr`) are a folder of `src/` built next to the root one (`tsup.config.ts`:
-  `code/index` → `dist/code/`, `exports["./code"]`, `typesVersions`), with their library as an
-  optional peer, kept external. The root entry imports none of them. What the folder imports from
-  the rest of the package is rewritten to an import of `@sckyzo/cosmos-react` itself
-  (`config/tsup/self-reference.ts`, one plugin instance per folder), so contexts and the overlay
-  stack are never duplicated; the source keeps relative imports, which means the names it imports
-  must be exported by the root entry (`Popover`, `Tooltip`, `Button`). An internal helper the root
-  does not export, and that shares no state with it, is listed in that entry's `bundle` option and
-  copied in by value (`/editor` takes `useControllableState`, `directionOf`, `mergeRefs`,
-  `fieldRecipe`, `RequiredMark` and `httpUrl` that way, `/map` takes `useControllableState` and `useCosmosTheme`);
-  never list a module that creates or reads a context. `react-dist.spec.ts` guards the pattern.
+  with `maplibre-gl`, `/qr` with `qr`) are a folder of `src/` bundled into one file next to the
+  root tree (`tsup.config.ts`: `code/index` → `dist/code/index.js`, `exports["./code"]`,
+  `typesVersions`), with their library as an optional peer, kept external. The root entry imports
+  none of them, and a folder imports no other sub-path folder (the build fails). What the folder
+  imports from the rest of `src` is the built file of that module (`../ui/CodeBlock.js`), never a
+  copy, so contexts and the overlay stack exist once. `react-dist.spec.ts` guards the pattern.
   `qr` ships ESM only and stays external in the CJS build too: `/qr`'s `.cjs` `require`s it, which
   Node does from 20.19 and 22.12 (what `qr` itself asks for), and the spec loads that build. Its
   peer range is `~0.7.2`, since a `qr` minor can break below 1.0 (`dependabot.yml` skips its minors).
