@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, Archive, MessageCircle, MoreVertical, Trash2 } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { placeholderAvatar } from '../storybook-avatars';
 import {
   bothDirections,
@@ -1895,6 +1895,28 @@ export const ActionsRunTheirCallback: Story = {
     await userEvent.click(archive);
     await userEvent.click(archive);
     await expect(canvas.getByRole('status')).toHaveTextContent('archive, archive');
+  },
+};
+
+const onArchive = fn();
+
+/** An action's `onSelect` is `() => void`: the click event stays with the button. */
+export const ActionCallbackGetsNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <StackedList>
+      <StackedList.Item
+        title="Disk alert"
+        actions={[{ label: 'Archive', icon: Archive, onSelect: onArchive }]}
+      />
+    </StackedList>
+  ),
+  play: async ({ canvas }) => {
+    const archive = canvas.getByRole('button', { name: 'Archive Disk alert' });
+    archive.focus();
+    await userEvent.click(archive);
+    await expect(onArchive).toHaveBeenCalledTimes(1);
+    await expect(onArchive).toHaveBeenCalledWith();
   },
 };
 

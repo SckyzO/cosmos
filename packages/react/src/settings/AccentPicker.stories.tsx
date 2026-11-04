@@ -264,6 +264,19 @@ export const ColorSwatchForwardsRef: Story = {
   },
 };
 
+const onSwatchClick = fn();
+
+export const ColorSwatchCallsOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <ColorSwatch hex="#465fff" label="Brand" onClick={onSwatchClick} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('radio', { name: 'Brand' }));
+    await expect(onSwatchClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onSwatchClick).toHaveBeenCalledWith();
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports
