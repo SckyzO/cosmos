@@ -82,6 +82,18 @@ export const ErrorAndRetry: Story = {
   },
 };
 
+export const RetryCallsOnRetry: Story = {
+  ...ErrorAndRetry,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ args }) => {
+    const panel = await within(document.body).findByRole('dialog', { name: 'Cosmos assistant' });
+    await userEvent.click(within(panel).getByRole('button', { name: 'Retry' }));
+    await expect(args.onRetry).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onRetry).toHaveBeenCalledWith();
+  },
+};
+
 const REPLY = 'Two racks are over 80%: B4 at 86% and C1 at 82%. Want me to open an incident?';
 
 /** Fake backend: types for a moment, then streams the reply word by word. */
