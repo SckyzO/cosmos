@@ -70,11 +70,50 @@ const INTENT_TONE: Partial<Record<Intent, SectionCardIconTone>> = {
   danger: 'red',
 };
 
-// The padding of the card, and the gap between the header and the body, which follows it.
-const SIZE: Record<SectionCardSize, { pad: string; gap: string }> = {
-  sm: { pad: 'p-4', gap: 'mb-3' },
-  md: { pad: 'p-5', gap: 'mb-3' },
-  lg: { pad: 'p-6', gap: 'mb-4' },
+// The padding of the card and what follows it. `gap` separates the header from the body (it is a
+// margin on the header); `bleed` takes a part (a footer, a flush body) out to the card's edges,
+// `inset` pads it back, and `padBleed` is the padding of a card whose last part ends on its edge.
+// `tableInset` pads the first and last cells of a flush table to the card's own padding, as a
+// `Table` or `DataTable` pads its cells by 16px: `sm` is the same, so it has nothing to add.
+const SIZE: Record<
+  SectionCardSize,
+  {
+    pad: string;
+    padBleed: string;
+    gap: string;
+    gapTop: string;
+    bleed: string;
+    inset: string;
+    tableInset: string;
+  }
+> = {
+  sm: {
+    pad: 'p-4',
+    padBleed: 'px-4 pt-4',
+    gap: 'mb-3',
+    gapTop: 'mt-3',
+    bleed: '-mx-4',
+    inset: 'px-4',
+    tableInset: '',
+  },
+  md: {
+    pad: 'p-5',
+    padBleed: 'px-5 pt-5',
+    gap: 'mb-3',
+    gapTop: 'mt-3',
+    bleed: '-mx-5',
+    inset: 'px-5',
+    tableInset: '[&_tr>:first-child]:ps-5 [&_tr>:last-child]:pe-5',
+  },
+  lg: {
+    pad: 'p-6',
+    padBleed: 'px-6 pt-6',
+    gap: 'mb-4',
+    gapTop: 'mt-4',
+    bleed: '-mx-6',
+    inset: 'px-6',
+    tableInset: '[&_tr>:first-child]:ps-6 [&_tr>:last-child]:pe-6',
+  },
 };
 
 // ── Surface ───────────────────────────────────────────────────────────────────
@@ -130,6 +169,16 @@ const SOLID_TILE: Record<Intent, { bg: string; color: string }> = {
   success: { bg: 'bg-black/15', color: 'text-white' },
   warning: { bg: 'bg-black/15', color: 'text-white' },
   danger: { bg: 'bg-black/15', color: 'text-white' },
+};
+
+// The line above a footer or a flush body on a `solid` card: a veil of the ink.
+const SOLID_RULE: Record<Intent, string> = {
+  neutral: 'border-white/25 dark:border-gray-900/25',
+  brand: 'border-white/30',
+  info: 'border-white/30',
+  success: 'border-white/30',
+  warning: 'border-white/30',
+  danger: 'border-white/30',
 };
 
 // ── Halo ──────────────────────────────────────────────────────────────────────
@@ -195,6 +244,11 @@ export type SectionCardProps = {
   iconColor?: string;
   /** Tailwind bg-* class for the icon container. Overridden by `iconTone` when both are set. */
   iconBg?: string;
+  /**
+   * A node next to the title: a `StatusBadge`, a count. It wraps under the title when the row is
+   * too narrow.
+   */
+  badge?: ReactNode;
   /**
    * Where the icon tile sits. `start` (default) leads the title, `end` closes the title block,
    * before the `action`, and `top` stacks it above the title. `start` and `end` follow the
@@ -269,6 +323,20 @@ export type SectionCardProps = {
    */
   accentSide?: SectionCardAccentSide;
   /**
+   * Under the body, full width and set off by a line: a timestamp, a link to the details, a pair
+   * of them (the node's children sit at the two ends of the row). It stays at the bottom of the
+   * card, whatever the height the row of a grid gives it, and in every state, as `action` does:
+   * remove it yourself where it makes no sense.
+   */
+  footer?: ReactNode;
+  /**
+   * The body runs edge to edge under the header, with a line above it and no padding, and ends on
+   * the card's bottom edge (or on the `footer`): for a `Table` or a list, whose rows run the full
+   * width. A `Table` or `DataTable` put directly in it loses its own border and corners, the card
+   * draws them. A card in `loading`, `error` or `empty` pads its state as usual.
+   */
+  flush?: boolean;
+  /**
    * The padding of the card: `sm` (16px), `md` (20px) or `lg` (24px, default). The gap between
    * the header and the body shrinks with it, from 16px to 12px.
    */
@@ -299,6 +367,7 @@ export const SectionCard = ({
   iconTone,
   iconColor,
   iconBg,
+  badge,
   iconPosition = 'start',
   iconShape = 'square',
   action,
@@ -317,6 +386,8 @@ export const SectionCard = ({
   haloSize = 'md',
   accent,
   accentSide = 'top',
+  footer,
+  flush = false,
   size = 'lg',
   children,
   className,
@@ -348,9 +419,14 @@ export const SectionCard = ({
   );
   const inState = loading || error || empty;
   const arrival = useAfterSkeleton(loading);
+  // A state is padded like any body: `flush` is for the content it replaces.
+  const flushBody = flush && !inState;
+  const hasFooter = footer != null && footer !== false;
+  const rule = solid ? SOLID_RULE[intent] : 'border-[var(--color-border)]';
   const surface = clsx(
     'flex flex-1 flex-col overflow-hidden rounded-2xl border',
-    SIZE[size].pad,
+    // The last part of a card that bleeds ends on its edge: no padding under it.
+    flushBody || hasFooter ? SIZE[size].padBleed : SIZE[size].pad,
     accent && 'relative',
     solid ? SOLID[intent].fill : variant === 'tinted' ? TINT[intent] : 'bg-[var(--color-bg-panel)]',
     // With a halo the card's own border is clear and its background stops at the padding box, so
@@ -408,15 +484,18 @@ export const SectionCard = ({
           >
             {iconPosition !== 'end' && iconTile}
             <div className={clsx('min-w-0', iconPosition === 'end' && 'flex-1')}>
-              <Heading
-                id={titleId}
-                className={clsx(
-                  'text-base font-semibold',
-                  solid ? 'text-inherit' : 'text-[var(--color-text-primary)]'
-                )}
-              >
-                {title}
-              </Heading>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <Heading
+                  id={titleId}
+                  className={clsx(
+                    'text-base font-semibold',
+                    solid ? 'text-inherit' : 'text-[var(--color-text-primary)]'
+                  )}
+                >
+                  {title}
+                </Heading>
+                {badge}
+              </div>
               {desc && (
                 <p
                   className={clsx('mt-0.5 text-sm', !solid && 'text-[var(--color-text-secondary)]')}
@@ -431,7 +510,20 @@ export const SectionCard = ({
         </div>
         {/* The body takes what the row gives the card; a state fills it and centres itself. */}
         <div
-          className={clsx('flex-1', inState && 'flex flex-col', minBodyHeight, arrival.className)}
+          className={clsx(
+            'flex-1',
+            inState && 'flex flex-col',
+            // The table inside sits on the card's edges: the card draws the border and the corners,
+            // and its first and last cells line up with the card's padding.
+            flushBody && [
+              SIZE[size].bleed,
+              'border-t [&>div]:rounded-none [&>div]:border-0 [&>div]:bg-transparent',
+              SIZE[size].tableInset,
+              rule,
+            ],
+            minBodyHeight,
+            arrival.className
+          )}
           onAnimationEnd={arrival.onAnimationEnd}
         >
           {loading ? (
@@ -455,6 +547,20 @@ export const SectionCard = ({
             children
           )}
         </div>
+        {hasFooter && (
+          <div
+            className={clsx(
+              'py-row-12 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t text-sm',
+              SIZE[size].bleed,
+              SIZE[size].inset,
+              !flushBody && SIZE[size].gapTop,
+              rule,
+              !solid && 'text-[var(--color-text-secondary)]'
+            )}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </section>
   );
