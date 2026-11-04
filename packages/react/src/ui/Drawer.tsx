@@ -331,7 +331,7 @@ const Root = ({
         {withBackdrop && closeOutside && (
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose()}
             aria-label="Close drawer"
             className={clsx(
               'absolute flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-(--cosmos-motion-base) hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
@@ -398,7 +398,7 @@ const Header = ({
         {onClose && (
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose()}
             aria-label="Close drawer"
             className="focus-visible:focus-indicator rounded-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
