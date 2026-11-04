@@ -13,6 +13,8 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { SectionLabel } from '../ui/SectionLabel';
 import { Input } from '../forms/Input';
 import { PasswordInput } from '../forms/PasswordInput';
 import { AuthLayout } from './AuthLayout';
@@ -78,9 +80,7 @@ export const CustomBrand: Story = {
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <Sparkles className="text-brand-500 h-10 w-10" aria-hidden />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">cosmos</h1>
-          <p className="text-xs tracking-widest text-gray-500 uppercase dark:text-gray-400">
-            design system
-          </p>
+          <SectionLabel size="lg">design system</SectionLabel>
         </div>
       }
     >
@@ -98,10 +98,10 @@ const OnboardingStep = () => (
     </div>
     <div className="grid gap-3 sm:grid-cols-2">
       {['Team', 'Business'].map((plan) => (
-        <div key={plan} className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <Card key={plan}>
           <p className="font-medium text-gray-900 dark:text-white">{plan}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Up to 50 racks.</p>
-        </div>
+        </Card>
       ))}
     </div>
     <Button className="w-full">Continue</Button>
