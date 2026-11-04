@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { clsx } from 'clsx';
 
 const meta: Meta = {
   title: 'Typography/Text',
@@ -87,14 +88,29 @@ export const Sizes: Story = {
   ),
 };
 
+// The same sentence in every weight: the steps from 500 to 700 are small, and lines that differ
+// hide them.
+const WEIGHTS = [
+  { className: 'font-light', weight: 300, use: 'marketing display copy' },
+  { className: 'font-normal', weight: 400, use: 'the default' },
+  { className: 'font-medium', weight: 500, use: 'emphasised body' },
+  { className: 'font-semibold', weight: 600, use: 'the default for headings' },
+  { className: 'font-bold', weight: 700, use: 'hero titles' },
+];
+
 export const Weights: Story = {
   render: () => (
-    <div className="max-w-prose space-y-2 text-base text-gray-700 dark:text-gray-300">
-      <p className="font-light">font-light — 300, for marketing display copy.</p>
-      <p className="font-normal">font-normal — 400, the default.</p>
-      <p className="font-medium">font-medium — 500, used for emphasised body.</p>
-      <p className="font-semibold">font-semibold — 600, the default for headings.</p>
-      <p className="font-bold">font-bold — 700, for hero titles.</p>
+    <div className="max-w-prose">
+      {WEIGHTS.map(({ className, weight, use }) => (
+        <Row key={className} label={`${className} · ${weight}`}>
+          <p className={clsx('text-base', className)}>
+            Servers stay healthy when alerts stay quiet.
+          </p>
+          <p className="mt-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+            Used for {use}.
+          </p>
+        </Row>
+      ))}
     </div>
   ),
 };
