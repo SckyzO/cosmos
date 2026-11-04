@@ -110,7 +110,7 @@ export function ChatComposer({
         type="button"
         aria-label={generating ? stopLabel : sendLabel}
         disabled={generating ? false : !canSend}
-        onClick={generating ? onStop : send}
+        onClick={generating ? () => onStop?.() : send}
         onFocus={() => {
           actionFocused.current = generating;
         }}

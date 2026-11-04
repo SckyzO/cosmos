@@ -181,7 +181,7 @@ export const Chatbot = ({
               {onRetry && (
                 <button
                   type="button"
-                  onClick={onRetry}
+                  onClick={() => onRetry()}
                   className="focus-visible:focus-indicator inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
                   <RotateCcw className="h-3 w-3" aria-hidden />

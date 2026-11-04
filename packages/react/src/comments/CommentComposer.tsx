@@ -213,7 +213,7 @@ export function CommentComposer({
           </p>
         )}
         {onCancel && (
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={() => onCancel()}>
             {cancelLabel}
           </Button>
         )}
