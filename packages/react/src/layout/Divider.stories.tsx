@@ -112,11 +112,17 @@ export const WithToolbar: Story = {
   ),
 };
 
-// Plain line (no inset) — base case.
+// Plain line (no inset) — base case, between the two blocks it separates.
 export const PlainLine: Story = {
   render: () => (
     <div className="bg-white p-8 dark:bg-gray-900">
-      <Divider />
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Billing address</h3>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Used on invoices and receipts.
+      </p>
+      <Divider className="my-6" />
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Payment method</h3>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Visa ending in 4242.</p>
     </div>
   ),
 };

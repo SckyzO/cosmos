@@ -96,21 +96,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// What the page starts from: the toolbar's values, so the picker shows the page as it is.
+const appearanceOf = (globals: Record<string, unknown>): WelcomeAppearance => ({
+  theme: (globals.theme as WelcomeAppearance['theme']) || 'dark',
+  accent: (globals.accent as WelcomeAppearance['accent']) || 'blue',
+  font: (globals.font as WelcomeAppearance['font']) || 'outfit',
+  textSize: (globals.textSize as WelcomeAppearance['textSize']) || 'md',
+  density: (globals.density as WelcomeAppearance['density']) || 'default',
+  radius: (globals.radius as WelcomeAppearance['radius']) || 'default',
+  direction: globals.direction === 'rtl' ? 'rtl' : 'ltr',
+});
+
 export const Default: Story = {
   name: 'Welcome',
-  render: (_args, { globals }) => (
-    <WelcomePage
-      appearance={{
-        theme: globals.theme || 'dark',
-        accent: globals.accent || 'blue',
-        font: globals.font || 'outfit',
-        textSize: globals.textSize || 'md',
-        density: globals.density || 'default',
-        radius: globals.radius || 'default',
-        direction: globals.direction === 'rtl' ? 'rtl' : 'ltr',
-      }}
-    />
-  ),
+  render: (_args, { globals }) => <WelcomePage appearance={appearanceOf(globals)} />,
 };
 
 // A fixed index, so the test doesn't depend on the stories that exist.
@@ -373,7 +372,7 @@ const MANY_GROUPS: IndexEntry[] = [
 /** The page on a phone: the sections stack, nothing scrolls sideways. */
 export const Phone: Story = {
   globals: mobileViewport,
-  render: () => <WelcomePage />,
+  render: (_args, { globals }) => <WelcomePage appearance={appearanceOf(globals)} />,
 };
 
 export const PhoneChecks: Story = {
@@ -381,6 +380,17 @@ export const PhoneChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
+  },
+};
+
+/** The picker starts from the toolbar's theme, here Sand, not from the default. Test only. */
+export const PhonePickerFollowsTheToolbar: Story = {
+  ...Phone,
+  globals: { ...mobileViewport, theme: 'sand' },
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('radio', { name: /Sand/ })).toBeChecked();
+    await expect(canvas.getByRole('radio', { name: /Dark/ })).not.toBeChecked();
   },
 };
 

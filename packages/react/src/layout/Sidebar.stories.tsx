@@ -1877,7 +1877,7 @@ export const Variants: Story = {
   render: () => {
     const [collapsed, setCollapsed] = useState(false);
     return (
-      <div className="flex min-h-screen flex-wrap items-start gap-10 bg-[var(--color-bg-base)] p-6 text-sm text-[var(--color-text-secondary)]">
+      <div className="flex flex-wrap items-start gap-10 bg-[var(--color-bg-base)] p-6 text-sm text-[var(--color-text-secondary)]">
         <div className="space-y-2">
           <p>hamburger</p>
           <SidebarToggle collapsed={collapsed} onCollapsedChange={setCollapsed} />
@@ -1892,7 +1892,6 @@ export const Variants: Story = {
             <SidebarToggle variant="panel" collapsed={collapsed} onCollapsedChange={setCollapsed} />
           </div>
         </div>
-        <p>collapsed = {String(collapsed)}</p>
       </div>
     );
   },
@@ -1964,7 +1963,7 @@ export const ControlledOutsideShell: Story = {
             </Sidebar>
           </div>
           <main className="min-w-0 flex-1">
-            <Page>The host keeps the state: collapsed = {String(collapsed)}.</Page>
+            <Page>The host keeps the state of the sidebar and hands it to the toggle.</Page>
           </main>
         </div>
       </div>
@@ -2142,7 +2141,6 @@ export const ControlledToggleNamesItsTarget: Story = {
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
     await userEvent.click(toggle);
-    await expect(canvas.getByText(/collapsed = true/)).toBeVisible();
     await waitFor(() => expect(nav.getBoundingClientRect().width).toBe(72));
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   },

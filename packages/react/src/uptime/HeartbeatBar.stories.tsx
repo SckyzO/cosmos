@@ -96,8 +96,23 @@ export const LongGaps: Story = { args: { beats: GAPPY_BEATS, legend: true } };
 /** Fewer beats than the width holds: the bar is as long as the history. */
 export const FewBeats: Story = { args: { beats: MIXED_BEATS.slice(-8) } };
 
-/** No check has run yet. */
-export const NoBeats: Story = { args: { beats: [] } };
+/**
+ * No check has run yet: the bar draws nothing. Its frame is dashed here, to show the room it keeps
+ * for the checks to come; a screen reader hears "No checks yet".
+ */
+export const NoBeats: Story = {
+  args: { beats: [] },
+  render: (args) => (
+    <div className="space-y-2 p-4">
+      <div className="rounded-lg border border-dashed border-gray-300 p-2 dark:border-gray-600">
+        <HeartbeatBar {...args} />
+      </div>
+      <p className="text-sm text-[var(--color-text-secondary)]">
+        The monitor was just added: no check has run yet.
+      </p>
+    </div>
+  ),
+};
 
 /** A narrow container keeps the newest beats and drops the oldest. */
 export const NarrowContainer: Story = {

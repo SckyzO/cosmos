@@ -320,10 +320,7 @@ export const Controlled: Story = {
           </Sidebar>
         }
       >
-        <PageContent
-          title="Controlled"
-          description={`The host owns the state and can persist it (collapsed = ${String(collapsed)}).`}
-        />
+        <PageContent title="Controlled" description="The host owns the state and can persist it." />
       </Shell>
     );
   },
@@ -441,9 +438,13 @@ export const ControlledHostOwnsTheState: Story = {
   render: Controlled.render,
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Main navigation' });
-    await expect(canvas.getByText(/collapsed = false/)).toBeVisible();
-    await userEvent.click(canvas.getByRole('button', { name: 'Collapse sidebar' }));
-    await expect(canvas.getByText(/collapsed = true/)).toBeVisible();
+    const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(toggle);
+    await expect(canvas.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     await transitionsEnd(nav);
     await expect(nav.getBoundingClientRect().width).toBe(72);
   },
@@ -634,18 +635,7 @@ export const MobileControlled: Story = {
   parameters: mobileDocs,
   render: () => {
     const [open, setOpen] = useState(false);
-    return (
-      <MobileShell
-        sidebarOpen={open}
-        onSidebarOpenChange={setOpen}
-        topbar={
-          <Topbar
-            brand={<AppLogo />}
-            endActions={<span className="text-xs">open = {String(open)}</span>}
-          />
-        }
-      />
-    );
+    return <MobileShell sidebarOpen={open} onSidebarOpenChange={setOpen} />;
   },
 };
 
@@ -653,10 +643,13 @@ export const MobileControlledChecks: Story = {
   ...MobileControlled,
   tags: ['!dev', '!autodocs'],
   play: async () => {
+    const hamburger = body().getByRole('button', { name: 'Open navigation' });
     await openDrawer();
-    await expect(body().getByText('open = true')).toBeVisible();
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
     await userEvent.keyboard('{Escape}');
-    await waitFor(() => expect(body().getByText('open = false')).toBeVisible());
+    // The host took the state the Drawer reported: the hamburger offers to open it again.
+    await waitFor(() => expect(hamburger).toHaveAttribute('aria-expanded', 'false'));
+    await expect(hamburger).toHaveAccessibleName('Open navigation');
   },
 };
 
