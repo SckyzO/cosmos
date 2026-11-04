@@ -5,6 +5,44 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.8.0...@sckyzo/cosmos-react@0.8.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **react:** align the StackedList timestamp at the end of the row ([a8eab92](https://github.com/SckyzO/cosmos/commit/a8eab92d54ef6b4d9ec095fc7d2104b8651e7dfc))
+* **react:** call LineItemsEditor onChange once when an entry is picked ([4b392d8](https://github.com/SckyzO/cosmos/commit/4b392d840f7f90b56f216ee7f662056611ca3c90))
+* **react:** call onRetry and onDismiss without the click event ([9529870](https://github.com/SckyzO/cosmos/commit/952987035ed990de2b3924dae9e7c11ce0dab058))
+* **react:** call the card, row, tag and crumb props without the event ([abc3549](https://github.com/SckyzO/cosmos/commit/abc354976a7e56b1b0e8e4c28bef6e57d3a457a5))
+* **react:** call the chat and comment props without the click event ([f93c65b](https://github.com/SckyzO/cosmos/commit/f93c65b6d466c6318a01c4fb2159e544cafa320a))
+* **react:** call the dialog, palette and card props with no event ([7574210](https://github.com/SckyzO/cosmos/commit/75742102aeb5e73b7d08b3f56066431bf16bd7f7))
+* **react:** call the form and action props without the click event ([37fec3f](https://github.com/SckyzO/cosmos/commit/37fec3fd8c3cfd3ea263eaf38a35bb6e9abcaa69))
+* **react:** call the overlay close and action props without the event ([9adebad](https://github.com/SckyzO/cosmos/commit/9adebadb55072b09b18cab269aaa4747790b3a0d))
+* **react:** call the picker, action and brand props without the event ([30d49ef](https://github.com/SckyzO/cosmos/commit/30d49efe3bf3153670af2e4200629229c95c0703))
+* **react:** call the table, log, map and carousel props with no event ([21a62a1](https://github.com/SckyzO/cosmos/commit/21a62a1df6cb735b2cca2024685a0257b7dcfd37))
+* **react:** draw a long notification count beside the bell ([049b1fc](https://github.com/SckyzO/cosmos/commit/049b1fc5a7236e3cbcdd29aefdc176b0d5b93159))
+* **react:** draw the EventCalendar grid once for the pointer in a slot ([e1907ca](https://github.com/SckyzO/cosmos/commit/e1907cadc42569cbdcf087de52360ca0797eaf83))
+* **react:** follow a new anchor while a floating panel stays open ([4af234a](https://github.com/SckyzO/cosmos/commit/4af234af4a7a42948b59c57fcf872ecbe5c0c336))
+* **react:** give a hidden tooltip its side before it first opens ([d8d45ec](https://github.com/SckyzO/cosmos/commit/d8d45ec171a1b12a8a228568365ecf3625e936fc))
+* **react:** give the LogViewer jump button a strip of its own ([a5a639d](https://github.com/SckyzO/cosmos/commit/a5a639da1ac3b296f7b9f9ffa497cd03990c3879))
+* **react:** keep a numeric Table cell on one line ([c930151](https://github.com/SckyzO/cosmos/commit/c930151eb0ac15774b4b0ae8c6b551f999dfd6e0))
+* **react:** keep StackedList row actions out of the tap until shown ([2106020](https://github.com/SckyzO/cosmos/commit/210602033d4bf919fd5a01814e9e90750130e1a9))
+* **react:** keep the column through a PermissionGrid group row ([213efaf](https://github.com/SckyzO/cosmos/commit/213efaf64b837c51aa50954001a8ae4e62790aa6))
+* **react:** keep the separator of HealthSummary at the end of a line ([06dca23](https://github.com/SckyzO/cosmos/commit/06dca2398c77849e0b8696a4152eaaa3dd15f1a1))
+* **react:** keep the Topbar search from being squeezed by a long title ([99f39c8](https://github.com/SckyzO/cosmos/commit/99f39c80d86ad7fcac3d90b854fa96f5f15586e0))
+* **react:** keep the UptimeStat certificate figure on one line ([7a479fa](https://github.com/SckyzO/cosmos/commit/7a479fa0ea69cb986202bc5e42f93d1a1d65a1b0))
+* **react:** keep timed EventCalendar month chips readable on a tablet ([47022f7](https://github.com/SckyzO/cosmos/commit/47022f7848bf2cc3c7648a8de6618a0f32322d88))
+* **react:** leave room between the error code and the title ([840c2e2](https://github.com/SckyzO/cosmos/commit/840c2e25e26fe1190b6edc7fae0a4420e724726a))
+* **react:** leave the wrapping of numeric Table header cells alone ([ffd1875](https://github.com/SckyzO/cosmos/commit/ffd1875a165bc22a23e27bc34e0a47763eb6de0e))
+* **react:** make PermissionGrid cell keys unambiguous ([8033862](https://github.com/SckyzO/cosmos/commit/8033862123ba4ac9daa1ee5cd099bec73a5c1df8))
+* **react:** make the EventCalendar "+N" button a 24px target ([b7a69e8](https://github.com/SckyzO/cosmos/commit/b7a69e8e4bc56234303a57e0e43f42835595f803))
+* **react:** make the EventCalendar hour grid a group with an all-day stop ([60e4de9](https://github.com/SckyzO/cosmos/commit/60e4de9a42b40f755a4834044b7190fa55069d2c))
+* **react:** move focus to the new heading when an auth form switches view ([af61fcc](https://github.com/SckyzO/cosmos/commit/af61fcc1cf697e93a35d5391ab822b0b87097fbf))
+* **react:** open the EventCalendar hours on events that arrive late ([7ffa70b](https://github.com/SckyzO/cosmos/commit/7ffa70bd4bbf8d2b7d49ec6df5c195aca566be59))
+* **react:** read an icon-only SegmentedControl label once ([0bdb27d](https://github.com/SckyzO/cosmos/commit/0bdb27ddc8212d7c1be6f09d45cc128a17550cae))
+* **react:** say an empty list in a status line, not an option ([37240b9](https://github.com/SckyzO/cosmos/commit/37240b97c077bd30e2a517311be069ad623ea78e))
+* **react:** truncate Breadcrumb crumbs in a narrow box above sm ([42e56f4](https://github.com/SckyzO/cosmos/commit/42e56f4cc96ab1af7338785c1b533bf2a9e616e7))
+
 ## [0.8.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.7.0...@sckyzo/cosmos-react@0.8.0) (2026-11-03)
 
 
