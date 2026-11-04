@@ -258,9 +258,9 @@ add.
 
 ### Server and client components
 
-Both packages start every file of their build with `"use client"`, so a component such as
-`Badge` or `Button` imports into a Server Component and renders on the server, as in `page.tsx`
-above. Two things still need a client file (`'use client'` at its top, as `demo.tsx` has):
+Both packages start every file of their build that holds code with `"use client"` (the entry
+files, which only re-export the others, go without), so a component such as `Badge` or `Button`
+imports into a Server Component and renders on the server, as in `page.tsx` above. Two things still need a client file (`'use client'` at its top, as `demo.tsx` has):
 
 - **The compound components.** `Card.Header`, `Card.Body`, `Modal.Body`, `Tabs.List`,
   `Menu.Item`, `Sidebar.Item` and the others written `Component.Part` are properties of a client

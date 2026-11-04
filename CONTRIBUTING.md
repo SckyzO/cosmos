@@ -458,7 +458,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 - **Tests**: one `<Name>.stories.tsx` per wrapper, with the helpers of `src/storybook-recharts.tsx`.
   Each keeps a `HtmlInLabelsRendersAsText` story, one that repaints with the theme and one for the
   empty state. `tests/e2e/specs/charts-dist.spec.ts` guards the build: one file per wrapper, Recharts
-  external, `"use client"` on every file.
+  external, `"use client"` on every file but the entry, which only re-exports them.
 
 ## PR checklist
 

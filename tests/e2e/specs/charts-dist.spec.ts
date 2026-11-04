@@ -87,10 +87,12 @@ test('the map libraries load with WorldMap alone', () => {
   }
 });
 
-test('every entry and chunk starts with the "use client" directive', () => {
+test('every wrapper and chunk starts with the "use client" directive, the entry does not', () => {
   // React Server Components bundlers read it to treat the charts as client
   // modules. tsup's Rollup pass drops it from the build, so the tsup config
-  // prepends it once the files are written.
+  // prepends it once the files are written. The entry only re-exports the
+  // wrappers' files, and Next.js refuses `export *` in a client boundary: it
+  // goes without, and each file it names carries the directive.
   const directive = '"use client";\n';
   const files = readdirSync(dist).filter((name) => /\.c?js$/.test(name));
   expect(files).toEqual(
@@ -98,8 +100,16 @@ test('every entry and chunk starts with the "use client" directive', () => {
   );
   expect(files.filter((name) => name.startsWith('chunk-')).length).toBeGreaterThan(0);
   for (const name of files) {
-    expect(read(`${dist}${name}`).slice(0, directive.length), name).toBe(directive);
+    const starts = read(`${dist}${name}`).startsWith(directive);
+    expect(starts, name).toBe(!/^index\.c?js$/.test(name));
   }
+  expect(read(`${dist}index.js`)).toMatch(/^export \* from '\.\/\w+\.js';$/m);
+  expect(
+    read(`${dist}index.js`)
+      .replace(/^\/\/# sourceMappingURL=.*$/gm, '')
+      .split('\n')
+      .filter((line) => line.trim() && !/^export \* from '\.\/\w+\.js';$/.test(line))
+  ).toEqual([]);
 });
 
 test('import and require each resolve their own type declarations', () => {
