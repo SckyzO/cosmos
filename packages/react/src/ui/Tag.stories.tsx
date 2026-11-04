@@ -287,6 +287,10 @@ export const LinkChecks: Story = {
 export const Clickable: Story = {
   args: { children: 'Filter', intent: 'brand', onClick: fn() },
   tags: ['!autodocs'],
+  // The tag hands its click event to `onClick`. A mock Storybook has named would log it in the
+  // Actions panel, by walking the event through `window`, which warns that the Story Store is
+  // deprecated: the mock gets no event.
+  render: ({ onClick, ...args }) => <Tag {...args} onClick={() => onClick?.()} />,
 };
 
 export const ClickableChecks: Story = {

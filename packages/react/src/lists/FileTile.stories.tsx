@@ -347,6 +347,9 @@ export const NameIsTheOnlyButton: Story = {
     defaultStarred: false,
     actions: <ActionsMenu name="Q3 report.pdf" />,
   },
+  // The name hands its click event to `onOpen`; the mock gets none, so Storybook's Actions panel
+  // does not serialise it (a walk through `window` that warns the Story Store is deprecated).
+  render: ({ onOpen, ...args }) => <FileTile {...args} onOpen={onOpen && (() => onOpen())} />,
   play: async ({ canvas, args }) => {
     const name = canvas.getByRole('button', { name: 'Q3 report.pdf' });
     await expect(canvas.queryAllByRole('link')).toHaveLength(0);
