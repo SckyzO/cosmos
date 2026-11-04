@@ -270,6 +270,11 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title' | '
   defaultChecked?: boolean;
   /** Called with the state the checkbox moves to. */
   onCheckedChange?: (checked: boolean) => void;
+  /**
+   * The word the row's checkbox is named with, before the title: "Select Ana Ruiz". Default
+   * `Select`. When the box does something else than pick the row, say it ("Mark done:" for a task).
+   */
+  selectLabel?: string;
   /** Controlled state of the star. Setting it, `defaultStarred` or `onStarredChange` adds the star toggle. */
   starred?: boolean;
   defaultStarred?: boolean;
@@ -309,6 +314,7 @@ function StackedListItem({
   checked: checkedProp,
   defaultChecked,
   onCheckedChange,
+  selectLabel = 'Select',
   starred: starredProp,
   defaultStarred,
   onStarredChange,
@@ -557,7 +563,7 @@ function StackedListItem({
           // the box where a 18px one would sit, level with the first line of the title.
           <div className="relative z-[1] -mx-1 -mt-px -mb-1 flex self-start">
             <span id={`${id}-select`} hidden>
-              Select
+              {selectLabel}
             </span>
             <Checkbox
               {...labelled('select')}
