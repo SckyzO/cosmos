@@ -73,7 +73,7 @@ export const ColumnHeader = ({
         {sortable ? (
           <button
             type="button"
-            onClick={onSortToggle}
+            onClick={onSortToggle && (() => onSortToggle())}
             className="focus-visible:focus-indicator flex items-center gap-1 rounded-sm uppercase transition-colors hover:text-gray-700 dark:hover:text-gray-200"
           >
             <bdi>{label}</bdi>

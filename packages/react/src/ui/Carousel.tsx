@@ -178,7 +178,7 @@ const CarouselControls = ({
           type="button"
           aria-label={prevLabel}
           disabled={!canScrollPrev}
-          onClick={scrollPrev}
+          onClick={() => scrollPrev()}
           className={baseBtn}
         >
           <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
@@ -187,7 +187,7 @@ const CarouselControls = ({
           type="button"
           aria-label={nextLabel}
           disabled={!canScrollNext}
-          onClick={scrollNext}
+          onClick={() => scrollNext()}
           className={baseBtn}
         >
           <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
@@ -201,7 +201,7 @@ const CarouselControls = ({
         type="button"
         aria-label={prevLabel}
         disabled={!canScrollPrev}
-        onClick={scrollPrev}
+        onClick={() => scrollPrev()}
         className={clsx('inset-s-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
       >
         <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
@@ -210,7 +210,7 @@ const CarouselControls = ({
         type="button"
         aria-label={nextLabel}
         disabled={!canScrollNext}
-        onClick={scrollNext}
+        onClick={() => scrollNext()}
         className={clsx('inset-e-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
       >
         <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
