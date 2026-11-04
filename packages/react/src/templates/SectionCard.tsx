@@ -198,6 +198,12 @@ const SOLID_TOGGLE: Record<Intent, string> = {
   danger: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
 };
 
+// The label of a `stale` card, by the title: amber as the `StaleBadge` of the status components,
+// and in the card's ink on a `solid` one, where an amber pill would vanish.
+const STALE_LABEL =
+  'inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap';
+const STALE_LABEL_COLOR = 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300';
+
 // ── Halo ──────────────────────────────────────────────────────────────────────
 // Two layers behind the card, in the `section` that does not clip: the card's edge in a gradient,
 // and a blurred copy of that gradient around it. Both read the two hues the intent sets on the
@@ -354,6 +360,19 @@ export type SectionCardProps = {
    */
   flush?: boolean;
   /**
+   * The data on show is old: the body is dimmed and `staleLabel` stands by the title. Only that:
+   * the header, `action` included, stays as it is, and the last data under a failure is the
+   * host's to put together (the cause in `desc`, "Retry" in `action`). The body is dimmed to
+   * 65%, and inside it the secondary and muted text colors read as the primary one, since their
+   * own would fall under 4.5:1 once dimmed (a color you set with a class of your own is only
+   * dimmed). A `solid` card is not dimmed, white ink dimmed over its fill would be unreadable,
+   * and neither is a `loading`, `error` or `empty` state, a message and not data: the label alone
+   * says it.
+   */
+  stale?: boolean;
+  /** What the label by the title says. Default 'Stale'; say how old: 'Stale · 4 min ago'. */
+  staleLabel?: string;
+  /**
    * A toggle at the end of the header folds the body away, and the footer with it: the header,
    * with its `badge` and `action`, stays. The toggle is a button named "Toggle" and the title,
    * with `aria-expanded` and `aria-controls`; the folded body is out of the tab order and of the
@@ -421,6 +440,8 @@ export const SectionCard = ({
   accentSide = 'top',
   footer,
   flush = false,
+  stale = false,
+  staleLabel = 'Stale',
   collapsible = false,
   open: openProp,
   defaultOpen = true,
@@ -489,6 +510,14 @@ export const SectionCard = ({
             SIZE[size].tableInset,
             rule,
           ],
+          // Dimmed, and the text colors the library reads from the theme take the primary one: the
+          // secondary and the muted would fall under 4.5:1 at this opacity. Not a state, which is
+          // a message, nor a solid card, whose white ink cannot be dimmed over its fill: the label
+          // alone says it.
+          stale &&
+            !solid &&
+            !inState &&
+            'opacity-65 [--color-text-muted:var(--color-text-primary)] [--color-text-secondary:var(--color-text-primary)]',
           // The gap above the body is inside the fold, so a folded card does not keep it.
           collapsible && SIZE[size].gapTop,
           // A fold that bleeds for a footer or a table leaves a plain body to pad itself.
@@ -616,6 +645,18 @@ export const SectionCard = ({
                   {title}
                 </Heading>
                 {badge}
+                {stale && (
+                  <span
+                    className={clsx(
+                      STALE_LABEL,
+                      solid
+                        ? clsx(SOLID_TILE[intent].bg, SOLID_TILE[intent].color)
+                        : STALE_LABEL_COLOR
+                    )}
+                  >
+                    {staleLabel}
+                  </span>
+                )}
               </div>
               {desc && (
                 <p
