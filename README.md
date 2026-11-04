@@ -66,7 +66,7 @@ and both reading directions.
         <picture>
           <source media="(prefers-color-scheme: dark)" srcset="docs/images/example-monitoring-dark.webp">
           <source media="(prefers-color-scheme: light)" srcset="docs/images/example-monitoring-light.webp">
-          <img alt="A cluster overview: an incident banner, a health summary and a rack by node status matrix" src="docs/images/example-monitoring-light.webp" width="100%">
+          <img alt="A cluster overview: alert counts by severity, four gauges with their ok, warning and critical zones, and a rack by node status matrix" src="docs/images/example-monitoring-light.webp" width="100%">
         </picture>
         <br>Monitoring
       </a>
