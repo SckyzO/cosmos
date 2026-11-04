@@ -19,25 +19,30 @@ import {
   Badge,
   Breadcrumb,
   Card,
-  Checkbox,
   CommandPalette,
   CommandPaletteTrigger,
   EmptyState,
   ErrorState,
+  Link,
+  MediaObject,
   Menu,
   NotificationsPanel,
   PageActionButton,
   PageContainer,
   PageHeader,
   ProgressBar,
+  SectionCard,
   Shell,
   Sidebar,
   Sk,
+  StackedList,
   ThemeToggle,
+  Timeline,
   Topbar,
   UserMenu,
   applyAppearance,
   type CosmosAccent,
+  type TimelineItem,
 } from '../../../../packages/react/src';
 import {
   expectHamburgerTogglesSidebar,
@@ -167,19 +172,21 @@ const AppSidebar = ({
     footer={
       // Collapsed to the 72px rail, the name and email would not fit: the avatar stays. The
       // collapsed state is the Shell's; the screen passes it down.
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar name={user.name} size="sm" />
+      <MediaObject align="center" gapClassName="gap-x-3" className="min-w-0">
+        <MediaObject.Image>
+          <Avatar name={user.name} size="sm" />
+        </MediaObject.Image>
         {!collapsed && (
-          <div className="min-w-0 flex-1">
+          <MediaObject.Body>
             <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
               <bdi>{user.name}</bdi>
             </p>
             <p className="truncate text-xs text-[var(--color-text-muted)]">
               <bdi>{user.email}</bdi>
             </p>
-          </div>
+          </MediaObject.Body>
         )}
-      </div>
+      </MediaObject>
     }
   >
     <Sidebar.Brand
@@ -338,21 +345,18 @@ const homeCrumbs = (workspace: Workspace) => (
 );
 
 const TaskRow = ({ task }: { task: Task }) => (
-  <li className="py-row-12 flex items-center gap-3 px-4">
-    <Checkbox aria-label={`Mark done: ${task.title}`} />
-    <div className="min-w-0 flex-1">
-      <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-        <bdi>{task.title}</bdi>
-      </p>
-      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-        <ProjectDot color={task.color} className="size-2" />
-        <span className="truncate">
-          <bdi>{task.project}</bdi>
-        </span>
-      </p>
-    </div>
-    <DueBadge due={task.due} />
-  </li>
+  <StackedList.Item
+    // The row's own checkbox (named after the task) ticks the task off; the host keeps the state.
+    defaultChecked={false}
+    title={task.title}
+    subtitle={
+      <>
+        <ProjectDot color={task.color} className="me-1.5 inline-block size-2 align-middle" />
+        {task.project}
+      </>
+    }
+    trailing={<DueBadge due={task.due} />}
+  />
 );
 
 const ProjectCard = ({ project }: { project: Project }) => (
@@ -381,36 +385,26 @@ const ProjectCard = ({ project }: { project: Project }) => (
   </Card>
 );
 
+// The heading of a block of the page that is not a card (the projects are cards of their own).
 const SectionTitle = ({ children, action }: { children: string; action?: string }) => (
   <div className="mb-3 flex items-center justify-between gap-3">
     <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{children}</h2>
-    {action && (
-      <a
-        href="#all"
-        className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator rounded-sm text-sm font-medium"
-      >
-        {action}
-      </a>
-    )}
+    {action && <Link href="#all">{action}</Link>}
   </div>
 );
 
-const ActivityFeed = ({ items }: { items: Workspace['activity'] }) => (
-  <ul className="divide-y divide-[var(--color-border)] px-4">
-    {items.map((item) => (
-      <li key={item.id} className="flex gap-3 py-2.5">
-        <Avatar name={item.who} size="sm" />
-        <p className="min-w-0 text-sm text-[var(--color-text-secondary)]">
-          <b className="font-semibold text-[var(--color-text-primary)]">
-            <bdi>{item.who}</bdi>
-          </b>{' '}
-          <bdi>{item.what}</bdi>
-          <time className="mt-0.5 block text-xs text-[var(--color-text-muted)]">{item.when}</time>
-        </p>
-      </li>
-    ))}
-  </ul>
-);
+// Who did what, and when: a `Timeline` with the person's avatar on each entry.
+const activityItems = (items: Workspace['activity']): TimelineItem[] =>
+  items.map((item) => ({
+    id: item.id,
+    title: (
+      <>
+        <bdi>{item.who}</bdi> <bdi>{item.what}</bdi>
+      </>
+    ),
+    time: item.when,
+    avatarName: item.who,
+  }));
 
 // The home: a greeting, the tasks due this week and the recent projects in the main column,
 // the activity feed beside them from `xl`.
@@ -435,16 +429,13 @@ const HomePage = ({ workspace }: { workspace: Workspace }) => (
     />
     <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
       <div className="min-w-0 space-y-6">
-        <section>
-          <SectionTitle>My tasks due this week</SectionTitle>
-          <Card padding="none">
-            <ul className="divide-y divide-[var(--color-border)]">
-              {workspace.tasks.map((task) => (
-                <TaskRow key={task.id} task={task} />
-              ))}
-            </ul>
-          </Card>
-        </section>
+        <SectionCard as="h2" title="My tasks due this week">
+          <StackedList aria-label="My tasks due this week">
+            {workspace.tasks.map((task) => (
+              <TaskRow key={task.id} task={task} />
+            ))}
+          </StackedList>
+        </SectionCard>
         <section>
           <SectionTitle action="All projects">Recent projects</SectionTitle>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
@@ -454,12 +445,9 @@ const HomePage = ({ workspace }: { workspace: Workspace }) => (
           </div>
         </section>
       </div>
-      <section>
-        <SectionTitle action="See all">Activity</SectionTitle>
-        <Card padding="none">
-          <ActivityFeed items={workspace.activity} />
-        </Card>
-      </section>
+      <SectionCard as="h2" title="Activity" action={<Link href="#all">See all</Link>}>
+        <Timeline variant="avatar" items={activityItems(workspace.activity)} />
+      </SectionCard>
     </div>
   </>
 );
@@ -491,28 +479,22 @@ const EmptyHome = ({ workspace }: { workspace: Workspace }) => (
         />
       </Card>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section>
-          <SectionTitle>My tasks due this week</SectionTitle>
-          <Card>
-            <EmptyState
-              compact
-              icon={ListChecks}
-              title="No tasks yet"
-              description="Tasks assigned to you show up here."
-            />
-          </Card>
-        </section>
-        <section>
-          <SectionTitle>Activity</SectionTitle>
-          <Card>
-            <EmptyState
-              compact
-              icon={MessageSquare}
-              title="Nothing has happened yet"
-              description="Updates from your team appear here."
-            />
-          </Card>
-        </section>
+        <SectionCard as="h2" title="My tasks due this week">
+          <EmptyState
+            compact
+            icon={ListChecks}
+            title="No tasks yet"
+            description="Tasks assigned to you show up here."
+          />
+        </SectionCard>
+        <SectionCard as="h2" title="Activity">
+          <EmptyState
+            compact
+            icon={MessageSquare}
+            title="Nothing has happened yet"
+            description="Updates from your team appear here."
+          />
+        </SectionCard>
       </div>
     </div>
   </>
@@ -604,25 +586,25 @@ const ReviewPage = () => (
         </>
       }
     />
-    <section className="mt-6">
-      <SectionTitle>Open comments</SectionTitle>
-      <Card padding="none">
-        <ul className="divide-y divide-[var(--color-border)]">
-          {REVIEW_PAGE.threads.map((thread) => (
-            <li key={thread.id} className="py-row-12 flex items-center gap-3 px-4">
-              <Avatar name={thread.who} size="sm" />
-              <p className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--color-text-primary)]">
-                <bdi>{thread.title}</bdi>
-              </p>
-              <DueBadge due={thread.due} />
-              <Badge size="sm" icon={MessageSquare} className="shrink-0">
-                {thread.replies}
-              </Badge>
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </section>
+    <SectionCard as="h2" title="Open comments" className="mt-6">
+      <StackedList aria-label="Open comments">
+        {REVIEW_PAGE.threads.map((thread) => (
+          <StackedList.Item
+            key={thread.id}
+            avatar={<Avatar name={thread.who} size="sm" />}
+            title={thread.title}
+            trailing={
+              <>
+                <DueBadge due={thread.due} />
+                <Badge size="sm" icon={MessageSquare} className="shrink-0">
+                  {thread.replies}
+                </Badge>
+              </>
+            }
+          />
+        ))}
+      </StackedList>
+    </SectionCard>
   </>
 );
 
