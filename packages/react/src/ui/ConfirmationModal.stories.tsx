@@ -79,7 +79,8 @@ export const StayClosesModal: Story = {
     // ConfirmationModal portals into document.body: query the document.
     const stay = within(document.body).getByRole('button', { name: 'Stay' });
     await userEvent.click(stay);
-    await expect(args.onClose).toHaveBeenCalled();
+    // The props are `() => void`: the click event stays with the button.
+    await expect(args.onClose).toHaveBeenCalledWith();
   },
 };
 
@@ -187,6 +188,11 @@ export const ActionsCallTheirHandlers: Story = {
     // The backdrop is the dialog's first child.
     await userEvent.click(dialog.firstElementChild as HTMLElement);
     await expect(args.onClose).toHaveBeenCalledTimes(2);
+    // The props are `() => void`: no click event reaches them.
+    await expect(args.onDiscard).toHaveBeenCalledWith();
+    await expect(args.onSave).toHaveBeenCalledWith();
+    await expect(args.onClose).toHaveBeenNthCalledWith(1);
+    await expect(args.onClose).toHaveBeenNthCalledWith(2);
   },
 };
 
